@@ -359,6 +359,37 @@ async function abaPt(p, a) {
   temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
   ok(temPix, "com a chave configurada o botão 💠 Pix aparece");
 
+  /* ---- Financeiro repaginado (tela 2e) ---- */
+  {
+    const b2e = await p.evaluate(() => {
+      const t = (id) => (document.getElementById(id) || {}).textContent || "";
+      return {
+        mes: t("pgMesRot"),
+        resumo: t("pgResumo"),
+        atrasados: t("pgAtrasados"),
+        acoes: [...document.querySelectorAll("#pgAtrasados .dac button")].map((b) => b.textContent),
+        seis: t("pg6meses"),
+        como: t("pgComo"),
+        hoje: t("pgHoje"),
+        botoes: !!document.getElementById("pgVerPlanos") && !!document.getElementById("pgLancar"),
+      };
+    });
+    const MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    ok(b2e.mes === MES[new Date().getMonth()] && /recebidos/.test(b2e.resumo) && b2e.botoes,
+      "🎨 2e: o Financeiro abre com o mês, o recebido e os dois atalhos (Planos, Lançar)");
+    if (diaHoje > 1) {
+      ok(/João Cliente/.test(b2e.atrasados) && /Atrasados/.test(b2e.atrasados),
+        "🎨 2e: quem passou do vencimento aparece no bloco vermelho de Atrasados");
+      ok(b2e.acoes.includes("Link") && b2e.acoes.includes("Pix") && b2e.acoes.includes("Recebi"),
+        "🎨 2e: cada linha de atrasado carrega a ação (Link, Pix, Recebi)");
+    }
+    ok(/Últimos 6 meses/.test(b2e.seis) && /projeção/.test(b2e.seis),
+      "🎨 2e: o histórico de 6 meses diz que o mês corrente é projeção");
+    ok(/Como você recebe/.test(b2e.como) && /Pix/.test(b2e.como),
+      "🎨 2e: o card do gateway mostra o que está ligado (Pix configurado)");
+    ok(/Entrou hoje/.test(b2e.hoje), "🎨 2e: o card Entrou hoje fecha a coluna da direita");
+  }
+
   // abre o Pix e valida o BR Code oficial (EMV do BC + CRC16)
   await p.evaluate(() => document.querySelector("#pendentes [data-pix]").click());
   await p.waitForFunction(() => document.getElementById("dlgPix").open);
@@ -1294,6 +1325,52 @@ async function abaPt(p, a) {
   });
   await p.fill("#sHora", "07:30");
   await p.click("#sAdd");
+
+  /* ---- Agenda repaginada (tela 2c): a semana em grade ---- */
+  {
+    await p.evaluate(() => window.__agAba("sessoes"));
+    const b2c = await p.evaluate(() => {
+      const g = document.getElementById("agGrade");
+      const cel = [...g.querySelectorAll(".agc:not(.vazio)")];
+      return {
+        rot: (document.getElementById("agSemRot") || {}).textContent || "",
+        resumo: (document.getElementById("agSemResumo") || {}).textContent || "",
+        cabs: [...g.querySelectorAll(".agh")].length,
+        hoje: [...g.querySelectorAll(".agh.hoje")].length,
+        horas: [...g.querySelectorAll(".aghr")].map((x) => x.textContent),
+        celulas: cel.length,
+        primeira: cel.length ? cel[0].textContent : "",
+        vazias: g.querySelectorAll(".agc.vazio").length,
+      };
+    });
+    ok(b2c.cabs === 7 && b2c.hoje === 1, "🎨 2c: a grade tem os 7 dias da semana e marca o de hoje");
+    ok(/ a /.test(b2c.rot) && /sess/.test(b2c.resumo),
+      "🎨 2c: o cabeçalho diz o intervalo da semana e quantas sessões tem");
+    ok(b2c.horas.includes("07:30"), "🎨 2c: a coluna da esquerda traz os horários que existem de verdade");
+    ok(b2c.celulas >= 1 && /João|Maria|Ana/.test(b2c.primeira),
+      "🎨 2c: a sessão vira uma célula com o nome do aluno");
+    // andar de semana e voltar pra hoje
+    const anda = await p.evaluate(() => {
+      const rot = () => document.getElementById("agSemRot").textContent;
+      const a = rot();
+      document.getElementById("agSemProx").click();
+      const b = rot();
+      document.getElementById("agSemHoje").click();
+      return { a, b, volta: rot(), hoje: document.querySelectorAll("#agGrade .agh.hoje").length };
+    });
+    ok(anda.a !== anda.b && anda.volta === anda.a && anda.hoje === 1,
+      "🎨 2c: Semana › anda 7 dias e Hoje volta pra semana de agora");
+    // buraco na agenda leva pro formulário já preenchido
+    const vaga = await p.evaluate(() => {
+      const v = document.querySelector("#agGrade .agc.vazio");
+      if (!v) return null;
+      const alvo = v.getAttribute("data-agnovo").split("|");
+      v.click();
+      return { alvo: alvo, data: document.getElementById("sData").value, hora: document.getElementById("sHora").value };
+    });
+    if (vaga) ok(vaga.data === vaga.alvo[0] && (!vaga.alvo[1] || vaga.hora === vaga.alvo[1]),
+      "🎨 2c: tocar num buraco da agenda abre Agendar com o dia e a hora prontos");
+  }
   await abaPt(p, "treinos");
 
   // formulário único: aluno primeiro, métricas no meio, % de gordura como RESULTADO no salvar

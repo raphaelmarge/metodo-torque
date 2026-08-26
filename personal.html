@@ -324,6 +324,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .altopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #8a8695; }
   .altopo .alh { font-size: 24px; font-weight: 900; letter-spacing: -.03em; margin-top: 2px; }
   .altopo .dbt { margin-left: auto; }
+  /* no fundo escuro da pagina o botao principal e ROXO (no topo roxo ele e branco) */
+  .altopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
+  .altopo .dbt.sec { background: #141218; border: 1px solid #2a2536; color: #cfcbdb; }
   .albusca { margin-bottom: 12px; }
   .albusca input { width: 100%; height: 46px; border-radius: 14px; background: #141218; border: 1px solid #26222f;
                    color: #f2f0f6; font-family: inherit; font-size: 14px; padding: 0 16px; }
@@ -334,10 +337,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .alrow:first-child { border-top: 0; }
   .alrow.devendo { background: rgba(124,58,237,.10); }
   .alrow .alq { display: flex; align-items: center; gap: 11px; min-width: 0; }
-  .alrow .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: #241a3d; color: #c4b5fd;
+  .alrow .alav, .pgatrlin .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: #241a3d; color: #c4b5fd;
                  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
-  .alrow .alnm { font-size: 14.5px; font-weight: 800; color: #f2f0f6; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
-  .alrow .alsub { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
+  .alrow .alnm, .pgatrlin .alnm { font-size: 14.5px; font-weight: 800; color: #f2f0f6; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
+  .alrow .alsub, .pgatrlin .alsub { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
   .alrow .alp1 { font-size: 13px; font-weight: 700; color: #cfcbdb; }
   .alrow .alp2 { font-size: 12px; font-weight: 700; margin-top: 2px; }
   .alrow .albar { height: 5px; border-radius: 99px; background: #221f2b; margin-top: 5px; overflow: hidden; }
@@ -349,6 +352,57 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     .alrow { grid-template-columns: 1fr auto; row-gap: 8px; }
     .alrow > :nth-child(n+2):nth-child(-n+5) { grid-column: 1 / -1; }
   }
+  /* ---------- Financeiro na tela 2e: bloco vermelho dos atrasados ---------- */
+  .pgatr { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.32); border-radius: 18px;
+           overflow: hidden; margin-bottom: 14px; }
+  .pgatrcab { display: flex; align-items: center; gap: 10px; padding: 11px 18px; background: rgba(248,113,113,.10);
+              border-bottom: 1px solid rgba(248,113,113,.22); }
+  .pgatrcab i { width: 8px; height: 8px; flex: none; border-radius: 99px; background: #f87171; }
+  .pgatrcab b { font-size: 13px; font-weight: 900; color: #fca5a5; letter-spacing: .02em; }
+  .pgatrcab span { font-size: 12px; font-weight: 700; color: #f8717199; }
+  .pgatrlin { display: flex; align-items: center; gap: 11px; padding: 12px 18px; border-top: 1px solid rgba(248,113,113,.16); }
+  .pgatrlin:first-of-type { border-top: 0; }
+  .pgatrlin .dac { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 760px) {
+    .pgatrlin { flex-wrap: wrap; }
+    .pgatrlin .dac { width: 100%; justify-content: flex-start; }
+  }
+  /* ---------- Agenda na tela 2c: a semana em grade ---------- */
+  .agfaixa { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 14px; border-radius: 16px;
+             background: rgba(124,58,237,.20); border: 1px solid rgba(124,58,237,.42); flex-wrap: wrap; }
+  .agfaixa .agn { width: 26px; height: 26px; flex: none; border-radius: 9px; background: #7c3aed; color: #fff;
+                  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; }
+  .agfaixa .agt { font-size: 13.5px; font-weight: 700; color: #e6e2f2; min-width: 0; }
+  .agfaixa .agb { margin-left: auto; display: flex; gap: 8px; }
+  .agrol { overflow-x: auto; background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 12px; }
+  .agsem { display: grid; gap: 6px; min-width: 780px; align-items: stretch; }
+  .agsem .agh { text-align: center; padding: 9px 4px; border-radius: 12px; background: #1b1822; border: 1px solid #26222f; }
+  .agsem .agh.hoje { background: #241a3d; border-color: rgba(124,58,237,.55); }
+  .agsem .agh .agd { font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #8a8695; }
+  .agsem .agh.hoje .agd { color: #c4b5fd; }
+  .agsem .agh .agdn { font-size: 17px; font-weight: 900; letter-spacing: -.02em; margin-top: 1px; }
+  .agsem .aghr { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: #6e6a78; display: flex;
+                 align-items: center; justify-content: flex-end; padding-right: 8px; }
+  .agc { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; cursor: pointer;
+         background: #1b1822; border: 1px solid #2a2536; color: inherit; font-family: inherit; min-height: 46px; }
+  .agc .agnm { font-size: 12.5px; font-weight: 800; color: #f2f0f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agc .ages { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #a78bfa; margin-top: 2px; }
+  .agc.agora { background: #7c3aed; border-color: #7c3aed; }
+  .agc.agora .ages { color: rgba(255,255,255,.86); }
+  .agc.feita { background: #17151d; border-color: #221f2b; }
+  .agc.feita .agnm { color: #6e6a78; }
+  .agc.feita .ages { color: #4ade80; }
+  .agc.faltou { background: rgba(248,113,113,.14); border-color: rgba(248,113,113,.32); }
+  .agc.faltou .ages { color: #f87171; }
+  .agc.pedido { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
+  .agc.pedido .ages { color: #fbbf24; }
+  .agc.dev .ages { color: #f87171; }
+  .agc.vazio { background: transparent; border-style: dashed; border-color: #221f2b; }
+  .agc.vazio .agmais { display: block; text-align: center; font-size: 15px; font-weight: 800; color: #322e3d; line-height: 28px; }
+  .agc.vazio:hover .agmais { color: var(--roxo, #7c3aed); }
+  .agc.vazio:hover { border-color: var(--roxo); border-style: solid; }
+  .agoff { border-radius: 14px; border: 1px dashed #221f2b; display: flex; align-items: center; justify-content: center; }
+  .agoff span { font-size: 10px; font-weight: 800; letter-spacing: .22em; color: #4b4855; writing-mode: vertical-rl; }
   /* radar de retenção com a linha do desenho */
   .drad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid #1d1a24; }
   .drad:first-child { border-top: 0; }
@@ -675,6 +729,21 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </details>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque <b>Feita</b> quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão. Aluno que não veio? Marque <b>Faltou</b>: entra na assiduidade e a sessão sai da lista.</p>
     </div>
+    <!-- tela 2c do canvas: a semana em grade, com o estado de cada sessao na celula -->
+    <div class="altopo" data-agsec="sessoes">
+      <div>
+        <div class="alk" id="agSemRot">—</div>
+        <div class="alh" id="agSemResumo">—</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="dbt sec" id="agSemAnt" title="semana anterior">‹ Semana</button>
+        <button type="button" class="dbt sec" id="agSemHoje">Hoje</button>
+        <button type="button" class="dbt sec" id="agSemProx" title="próxima semana">Semana ›</button>
+        <button type="button" class="dbt" id="agMarcar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Marcar sessão</button>
+      </div>
+    </div>
+    <div id="agPedFaixa" data-agsec="sessoes" hidden></div>
+    <div class="agrol" data-agsec="sessoes" style="margin-bottom:14px;"><div class="agsem" id="agGrade"></div></div>
     <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
       <h2>Pedidos de horário pelo app</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
@@ -775,6 +844,24 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div id="dpResumo" style="margin-top: 10px;"></div>
       <div id="dpCats" style="margin-top: 10px;"></div>
       <div id="dpLista" class="muted" style="margin-top: 10px; font-size: 13px;">Nenhuma despesa lançada.</div>
+    </div>
+    <!-- tela 2e do canvas: o mês em uma linha, os atrasados em bloco vermelho
+         com a ação em cada linha, o histórico de 6 meses e o que entrou hoje -->
+    <div class="altopo" data-pgsec="receb">
+      <div>
+        <div class="alk" id="pgMesRot">—</div>
+        <div class="alh" id="pgResumo">—</div>
+      </div>
+      <button type="button" class="dbt sec" id="pgVerPlanos" style="margin-left:auto;">Planos</button>
+      <button type="button" class="dbt" id="pgLancar" style="margin-left:0;">+ Lançar recebimento</button>
+    </div>
+    <div id="pgAtrasados" data-pgsec="receb"></div>
+    <div class="dcols" data-pgsec="receb" style="margin-bottom:14px;">
+      <div class="pfbox" id="pg6meses"></div>
+      <div class="dcol2">
+        <div class="pfbox" id="pgComo"></div>
+        <div class="pfbox" id="pgHoje"></div>
+      </div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Registrar pagamento</h2>
@@ -2445,7 +2532,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" title="falar no WhatsApp" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "");
       return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : "") + '">' +
         '<div class="alq"><div class="alav">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
-        '<div style="min-width:0;"><button class="alnm" data-perfil="' + a.id + '">' + esc(a.nome) + "</button>" +
+        '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
         (est === "devendo" ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:#f87171;">DEVENDO</span>'
           : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:#fb923c;">SUMINDO</span>' : "") +
         '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
@@ -5398,6 +5485,141 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.bloqueios = (st.bloqueios || []).filter(function (b) { return b.id !== rm; });
     save(st);
   });
+  // ---------- a semana em grade (tela 2c) ----------
+  // agSemOff = 0 e a semana que COMECA hoje; -1 volta 7 dias, +1 avanca 7 dias.
+  var agSemOff = 0;
+  var agPedCache = null; // pedidos do app; chega da nuvem depois, entao fica guardado
+  var AG_DIAS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+  var AG_MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  function agISO(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function agSemanaDias() {
+    var base = new Date(S.todayISO() + "T12:00:00");
+    base.setDate(base.getDate() + agSemOff * 7);
+    var out = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(base.getTime());
+      d.setDate(d.getDate() + i);
+      out.push({ iso: agISO(d), dia: AG_DIAS[d.getDay()], n: d.getDate(), mes: d.getMonth() });
+    }
+    return out;
+  }
+  // o treino prescrito pro dia DA CELULA (o treinoDoDiaTxt so sabe do dia de hoje)
+  function agTreinoTxt(st, alunoId, iso) {
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t) return "";
+    var dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+    var pl = ((t.plano || {}).dias || {})[dia];
+    if (!pl) return "";
+    if (pl.tp === "ficha") {
+      var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
+      return f ? (f.titulo || "Ficha").split("—")[0].trim() : "";
+    }
+    if (pl.tp === "wod") return "Circuito";
+    if (pl.tp === "cardio") return "Corrida";
+    return "";
+  }
+  // o rotulo da celula: o que essa sessao E hoje, em uma palavra
+  function agEstado(st, x, hoje) {
+    if (x.pedido) return { cls: "pedido", txt: "PEDIDO" };
+    if (x.faltou) return { cls: "faltou", txt: "FALTOU" };
+    if (x.feita) return { cls: "feita", txt: "FEITA" };
+    var a = st.alunos.find(function (y) { return y.id === x.alunoId; });
+    if (a && alEstado(st, a) === "devendo") return { cls: "dev", txt: "DEVENDO" };
+    var tr = agTreinoTxt(st, x.alunoId, x.data);
+    if (tr) return { cls: "", txt: tr };
+    return { cls: "", txt: x.data < hoje ? "SEM MARCAR" : "AGENDADA" };
+  }
+  function pintaSemana(st) {
+    var grade = $("agGrade");
+    if (!grade) return;
+    var hoje = S.todayISO();
+    var dias = agSemanaDias();
+    var ini = dias[0], fim = dias[6];
+    // cabecalho: "25 a 31 de agosto" (com os dois meses quando a semana vira o mes)
+    var rot = ini.n + (ini.mes === fim.mes ? "" : " de " + AG_MESES[ini.mes]) + " a " + fim.n + " de " + AG_MESES[fim.mes];
+    var rEl = $("agSemRot"); if (rEl) rEl.textContent = rot;
+    var noIntervalo = {};
+    dias.forEach(function (d) { noIntervalo[d.iso] = []; });
+    st.sessoes.forEach(function (x) { if (noIntervalo[x.data]) noIntervalo[x.data].push(x); });
+    (agPedCache || []).forEach(function (pd) {
+      if (noIntervalo[pd.dia]) noIntervalo[pd.dia].push({ id: "ped:" + pd.id, alunoId: pd.alunoId, data: pd.dia, hora: pd.hora || "", pedido: true });
+    });
+    // as linhas sao os horarios que existem de verdade nesta semana
+    var horas = {};
+    dias.forEach(function (d) { noIntervalo[d.iso].forEach(function (x) { horas[x.hora || "--:--"] = 1; }); });
+    var linhas = Object.keys(horas).sort();
+    var totalSes = 0, vagas = 0;
+    dias.forEach(function (d) { totalSes += noIntervalo[d.iso].filter(function (x) { return !x.pedido; }).length; });
+    var diasOff = {}, agFaixa = {};
+    dias.forEach(function (d) {
+      if (!noIntervalo[d.iso].length) { diasOff[d.iso] = 1; return; }
+      var hs = noIntervalo[d.iso].map(function (x) { return x.hora || "--:--"; }).sort();
+      agFaixa[d.iso] = { de: hs[0], ate: hs[hs.length - 1] };
+    });
+    grade.style.gridTemplateColumns = "58px repeat(7, minmax(104px, 1fr))";
+    var html = '<div></div>' +
+      dias.map(function (d) {
+        return '<div class="agh' + (d.iso === hoje ? " hoje" : "") + '" style="grid-column:' + (dias.indexOf(d) + 2) + ';grid-row:1;">' +
+          '<div class="agd">' + d.dia + "</div><div class=\"agdn\">" + d.n + "</div></div>";
+      }).join("");
+    if (!linhas.length) {
+      grade.innerHTML = html;
+      var resVaz = $("agSemResumo");
+      if (resVaz) resVaz.textContent = "Nenhuma sessão nesta semana";
+      return;
+    }
+    linhas.forEach(function (h, li) {
+      html += '<div class="aghr" style="grid-column:1;grid-row:' + (li + 2) + ';">' + (h === "--:--" ? "sem hora" : h) + "</div>";
+      dias.forEach(function (d, di) {
+        if (diasOff[d.iso]) return; // coluna de descanso: um bloco so, colocado depois
+        var aqui = noIntervalo[d.iso].filter(function (x) { return (x.hora || "--:--") === h; });
+        var pos = 'grid-column:' + (di + 2) + ';grid-row:' + (li + 2) + ';';
+        if (!aqui.length) {
+          // so conta como VAGA o buraco entre a primeira e a ultima sessao do dia:
+          // horario fora do expediente daquele dia nao e vaga, e hora de folga
+          var faixa = agFaixa[d.iso];
+          if (faixa && h >= faixa.de && h <= faixa.ate) vagas++;
+          html += '<button type="button" class="agc vazio" style="' + pos + '" data-agnovo="' + d.iso + "|" + (h === "--:--" ? "" : h) +
+            '" title="marcar uma sessão nesse horário"><span class="agmais">+</span></button>';
+          return;
+        }
+        html += aqui.map(function (x) {
+          var es = agEstado(st, x, hoje);
+          var nome = ((st.alunos.find(function (y) { return y.id === x.alunoId; }) || {}).nome || "?").split(" ")[0];
+          var agora = !x.feita && !x.faltou && !x.pedido && d.iso === hoje;
+          return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" style="' + pos + '" data-agcel="' + d.iso + '">' +
+            '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>";
+        }).join("");
+      });
+    });
+    dias.forEach(function (d, di) {
+      if (!diasOff[d.iso]) return;
+      html += '<div class="agoff" style="grid-column:' + (di + 2) + ";grid-row:2 / span " + linhas.length + ';"><span>DESCANSO</span></div>';
+    });
+    grade.innerHTML = html;
+    var res = $("agSemResumo");
+    if (res) res.textContent = S.plural(totalSes, "sessão", "sessões") + " · " + S.plural(vagas, "vaga livre", "vagas livres");
+  }
+  window.__agSemana = { pinta: pintaSemana, dias: agSemanaDias, estado: agEstado }; // testes
+  $("agSemAnt").addEventListener("click", function () { agSemOff--; pintaSemana(load()); });
+  $("agSemProx").addEventListener("click", function () { agSemOff++; pintaSemana(load()); });
+  $("agSemHoje").addEventListener("click", function () { agSemOff = 0; pintaSemana(load()); });
+  $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
+  $("agGrade").addEventListener("click", function (e) {
+    var nv = e.target.closest && e.target.closest("[data-agnovo]");
+    if (nv) {
+      // buraco na agenda: leva pro formulario ja com o dia e a hora preenchidos
+      var pr = nv.getAttribute("data-agnovo").split("|");
+      if (window.__agAba) window.__agAba("agendar");
+      $("sData").value = pr[0];
+      if (pr[1]) $("sHora").value = pr[1];
+      $("sAluno").focus();
+      return;
+    }
+    var cel = e.target.closest && e.target.closest("[data-agcel]");
+    if (cel) window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
+  });
+
   function renderAgenda(st) {
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
@@ -5484,6 +5706,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         antigas.map(function (x) { return linhaSes(x, true); }).join("");
     }
     $("listaSessoes").innerHTML = htmlSes;
+    pintaSemana(st);
     renderPedidosApp(st);
   }
   $("calAgenda").addEventListener("click", function (e) {
@@ -5502,7 +5725,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // pedidos de horário vindos do app do aluno (nuvem)
   function renderPedidosApp(st) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { $("cardPedidosApp").removeAttribute("data-tem"); $("cardPedidosApp").hidden = true; return; }
+    if (!nuvem) {
+      $("cardPedidosApp").removeAttribute("data-tem"); $("cardPedidosApp").hidden = true;
+      agPedCache = null; $("agPedFaixa").hidden = true; $("agPedFaixa").innerHTML = "";
+      return;
+    }
     nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
       .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
         var pedidos = r.data || [];
@@ -5521,8 +5748,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<button class="btn mini" data-agok="' + p.id + '" data-tok="' + esc(p.token) + '" data-dia="' + p.dia + '" data-hora="' + esc(p.hora || "") + '">Confirmar</button>' +
             '<button class="btn sec mini" data-agno="' + p.id + '" data-tok="' + esc(p.token) + '">Recusar</button></span></div>';
         }).join("");
+        // a faixa roxa da tela 2c + os pedidos aparecendo dentro da grade da semana
+        agPedCache = pedidos.map(function (p) {
+          return { id: p.id, dia: p.dia, hora: p.hora || "", alunoId: alunoPorToken[p.token].id };
+        });
+        var fx = $("agPedFaixa");
+        if (fx) {
+          fx.hidden = !pedidos.length;
+          fx.innerHTML = !pedidos.length ? "" :
+            '<div class="agfaixa"><span class="agn">' + pedidos.length + "</span>" +
+            '<span class="agt">' + (pedidos.length === 1 ? "Pedido de horário esperando resposta" : "Pedidos de horário esperando resposta") + " — " +
+            pedidos.slice(0, 3).map(function (p) {
+              var aF = alunoPorToken[p.token];
+              return esc(aF.nome.split(" ")[0]) + " quer " + S.fmtData(p.dia) + (p.hora ? " " + esc(p.hora) : "");
+            }).join(", ") + (pedidos.length > 3 ? " e mais " + (pedidos.length - 3) : "") + "</span>" +
+            '<span class="agb"><button type="button" class="dbt" id="agPedTodos">' +
+            (pedidos.length === 1 ? "Aceitar" : "Aceitar " + (pedidos.length === 2 ? "os dois" : "todos")) + "</button>" +
+            '<button type="button" class="dbt sec" id="agPedVer">Ver</button></span></div>';
+        }
+        pintaSemana(st);
       });
   }
+  $("agPedFaixa").addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#agPedVer")) {
+      $("cardPedidosApp").scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!(e.target.closest && e.target.closest("#agPedTodos"))) return;
+    var bts = $("listaPedidosApp").querySelectorAll("[data-agok]");
+    if (!bts.length) return;
+    if (!confirm("Confirmar " + S.plural(bts.length, "pedido", "pedidos") + " de horário?")) return;
+    // um clique por pedido: reusa o MESMO caminho do botao Confirmar (nada de
+    // outra rota pra nuvem, que sairia do compasso com ele na primeira mudanca)
+    Array.prototype.forEach.call(bts, function (b) { b.click(); });
+  });
   $("listaPedidosApp").addEventListener("click", function (e) {
     var okId = e.target.getAttribute && e.target.getAttribute("data-agok");
     var noId = e.target.getAttribute && e.target.getAttribute("data-agno");
@@ -6320,6 +6579,133 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__zapFila = filaZapDe; // testes
   window.__zapMarca = zapMarca; // testes
+  /* ---------- Financeiro na tela 2e ----------
+   * O mês numa linha, os ATRASADOS num bloco vermelho com Link/Pix/Recebi em
+   * cada linha (regra 1 do handoff), o histórico de 6 meses com a projeção
+   * hachurada e o que entrou hoje. As contas são as mesmas do resto do painel. */
+  function pintaFin2e(st) {
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var d = dadosDoMes(st, mes);
+    var diaHoje = +hoje.slice(8, 10);
+    // atrasados: não pagou o mês E passou do vencimento (mesma conta do resto)
+    var atr = st.alunos.filter(function (a) {
+      if (a.ativo === false) return false;
+      var ct = contratoDe(st, a.id);
+      var pl = ct ? planoDe(st, ct.planoId) : null;
+      if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) return false;
+      if (!ct && !+a.valor) return false;
+      if (idxDe(st).pagouMes(a.id, mes)) return false;
+      return !ct || diaHoje > ct.diaVenc + atrasoTol(st);
+    }).map(function (a) {
+      var ct = contratoDe(st, a.id);
+      var pl = ct ? planoDe(st, ct.planoId) : null;
+      var dv = dividaDe(st, a);
+      return { a: a, ct: ct, valor: dv && dv.meses > 1 ? dv.total : (pl ? +pl.valor : +a.valor || 0),
+        meses: (dv || {}).meses || 1, dias: ct ? Math.max(0, diaHoje - ct.diaVenc) : 0 };
+    }).sort(function (x, y) { return y.dias - x.dias; });
+    var totalAtr = atr.reduce(function (t, x) { return t + x.valor; }, 0);
+    // a receber: tudo em aberto entre os ativos com cobrança
+    var aReceber = 0;
+    st.alunos.forEach(function (a) {
+      if (a.ativo === false) return;
+      var dv = dividaDe(st, a);
+      if (dv && dv.total) aReceber += dv.total;
+    });
+    var rot = $("pgMesRot"); if (rot) rot.textContent = MES[+mes.slice(5, 7) - 1];
+    var res = $("pgResumo");
+    if (res) res.innerHTML = S.fmtBRL(d.fat) + " recebidos" +
+      (aReceber ? ' · <span style="color:#fb923c;">' + S.fmtBRL(aReceber) + " a receber</span>" : "");
+    // ---- bloco vermelho dos atrasados ----
+    var box = $("pgAtrasados");
+    if (box) {
+      box.innerHTML = !atr.length ? "" :
+        '<div class="pgatr"><div class="pgatrcab"><i></i><b>Atrasados</b>' +
+        "<span>" + S.plural(atr.length, "aluno", "alunos") + " · " + S.fmtBRL(totalAtr) + "</span>" +
+        (atr.length > 1 ? '<button type="button" class="btn mini" id="pgCobrarTodos" style="margin-left:auto;">Cobrar todos</button>' : "") +
+        "</div>" +
+        atr.map(function (x) {
+          var a = x.a;
+          return '<div class="pgatrlin"><div class="alav" style="background:rgba(248,113,113,.16);color:#f87171;">' +
+            esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
+            '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
+            (a.cartaoFalhouEm ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:#f87171;">CARTÃO RECUSADO</span>' : "") +
+            '<div class="alsub">' + (x.meses > 1 ? S.plural(x.meses, "mês em aberto", "meses em aberto") : "Mensalidade de " + MES[+mes.slice(5, 7) - 1]) +
+            (x.ct ? " · venceu dia " + x.ct.diaVenc + (x.dias ? " · " + S.plural(x.dias, "dia", "dias") : "") : " · sem contrato") + "</div></div>" +
+            '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + S.fmtBRL(x.valor) + "</b>" +
+            '<div class="dac">' +
+            '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + x.valor + '" data-origem="mensal">Link</button>' +
+            ((st.config || {}).pixChave ? '<button class="btn sec mini" data-pix="' + a.id + '" data-v="' + x.valor + '">Pix</button>' : "") +
+            '<button class="btn whats mini" data-receb="' + a.id + '" data-v="' + x.valor + '">Recebi</button></div></div>';
+        }).join("") + "</div>";
+    }
+    // ---- últimos 6 meses, com o mês corrente hachurado (projeção) ----
+    var el6 = $("pg6meses");
+    if (el6) {
+      var meses = [], soma = 0;
+      for (var i = 5; i >= 0; i--) {
+        var dRef = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 1 - i, 1);
+        var k = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
+        var v = st.pagamentos.filter(function (x) { return (x.data || "").slice(0, 7) === k; })
+          .reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+        meses.push({ k: k, v: v, rot: MES[dRef.getMonth()].slice(0, 3).toUpperCase(), atual: k === mes });
+        if (k !== mes) soma += v;
+      }
+      var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+      var proj = Math.round(d.fat / diaHoje * diasNoMes);
+      var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
+      var media = Math.round(soma / 5);
+      el6.innerHTML = '<h3>Últimos 6 meses<span style="float:right;font-size:12px;font-weight:800;color:#4ade80;">média ' + S.fmtBRL(media) + "</span></h3>" +
+        '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:6px;">' +
+        meses.map(function (m) {
+          var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
+          var altReal = m.atual ? Math.round(110 * m.v / max) : alt;
+          return '<div style="flex:1;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "#c4b5fd" : "#8a8695") + ';">' +
+            (m.v >= 1000 ? (Math.round(m.v / 100) / 10).toFixed(1).replace(".", ",") : Math.round(m.v)) + "</div>" +
+            '<div style="height:' + (114 - alt) + 'px;"></div>' +
+            '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
+            (m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "#221f2b") + ';"></div>' +
+            '<div style="font-size:10px;font-weight:800;color:' + (m.atual ? "#a78bfa" : "#6e6a78") + ';margin-top:5px;">' + m.rot + "</div></div>";
+        }).join("") + "</div>" +
+        '<div style="font-size:11.5px;color:#6e6a78;margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
+        S.fmtBRL(proj) + ") · valores em milhares</div>";
+    }
+    // ---- como voce recebe: o que ESTA ligado hoje, sem prometer o que nao esta ----
+    var elC = $("pgComo");
+    if (elC) {
+      var cfgC = st.config || {};
+      var pApi = cfgC.pagApi || {};
+      var NOMES_PG = { mercadopago: "Mercado Pago", asaas: "Asaas", pagarme: "Pagar.me", outro: "link próprio" };
+      var vias = [];
+      if (cfgC.pixChave) vias.push({ n: "Pix", d: "chave no seu nome", ok: 1 });
+      if (pApi.ligado && pApi.provedor) vias.push({ n: NOMES_PG[pApi.provedor] || pApi.provedor,
+        d: pApi.provedor === "outro" ? "seu link de cobrança" : "cartão, Pix e boleto — o dinheiro cai na SUA conta", ok: 1 });
+      elC.innerHTML = "<h3>Como você recebe</h3>" +
+        (vias.length ? vias.map(function (v) {
+          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:#4ade80;">✓</div>' +
+            '<div style="min-width:0;"><div class="dnm">' + esc(v.n) + '</div><div class="dfi">' + esc(v.d) + "</div></div></div>";
+        }).join("") : '<div class="muted" style="font-size:12.5px;padding:8px 0;">Nada configurado ainda — sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.</div>') +
+        '<button type="button" class="btn sec mini" id="pgIrConfig" style="margin-top:10px;">Configurar em Configurações</button>';
+    }
+    // ---- entrou hoje ----
+    var elH = $("pgHoje");
+    if (elH) {
+      var doDia = st.pagamentos.filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
+      var totH = doDia.reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+      var nomes = {};
+      st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
+      elH.innerHTML = '<h3>Entrou hoje<span style="float:right;font-size:13px;font-weight:800;color:' +
+        (totH ? "#4ade80" : "#6e6a78") + ';">' + (totH ? "+" + S.fmtBRL(totH) : "nada ainda") + "</span></h3>" +
+        (doDia.length ? doDia.map(function (x) {
+          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:#4ade80;">✓</div>' +
+            '<div style="min-width:0;"><div class="dnm">' + esc(nomes[x.alunoId] || "Avulso") + "</div>" +
+            '<div class="dfi">' + esc(x.forma || "pagamento") + (x.desc ? " · " + esc(x.desc) : "") + "</div></div>" +
+            '<b style="margin-left:auto;">' + S.fmtBRL(+x.valor || 0) + "</b></div>";
+        }).join("") : '<div class="muted" style="font-size:13px;padding:10px 0;">Nenhum pagamento registrado hoje.</div>');
+    }
+  }
   function renderPagamentos(st) {
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
@@ -6461,8 +6847,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           linhasSaude.map(function (l) { return l.html; }).join("")
         : "Registre pagamentos por pelo menos 1 mês que o raio-X aparece aqui.";
     }
+    pintaFin2e(st);
   }
-  $("pendentes").addEventListener("click", function (e) {
+  // um handler para os DOIS blocos de cobranca: a lista de pendentes de sempre
+  // e o bloco vermelho de Atrasados do topo (2e). Os botoes sao os mesmos.
+  function cliqueCobranca(e) {
+    // "Cobrar todos": abre o WhatsApp de cada atrasado que tem numero. O navegador
+    // costuma bloquear a 2a aba em diante, entao a gente CONTA o que foi bloqueado
+    // e avisa, em vez de fingir que mandou tudo.
+    if (e.target.closest && e.target.closest("#pgCobrarTodos")) {
+      var stT = load();
+      var mesT = S.todayISO().slice(0, 7);
+      var diaT = +S.todayISO().slice(8, 10);
+      var alvos = stT.alunos.filter(function (a) {
+        if (a.ativo === false || !a.zap) return false;
+        var ctT = contratoDe(stT, a.id);
+        var plT = ctT ? planoDe(stT, ctT.planoId) : null;
+        if ((plT && plT.cobranca === "sessao") || (!plT && a.modo === "sessao")) return false;
+        if (!ctT && !+a.valor) return false;
+        if (idxDe(stT).pagouMes(a.id, mesT)) return false;
+        return !ctT || diaT > ctT.diaVenc + atrasoTol(stT);
+      });
+      if (!alvos.length) { alert("Ninguem atrasado com WhatsApp no cadastro."); return; }
+      if (!confirm("Abrir o WhatsApp de " + S.plural(alvos.length, "aluno", "alunos") + " pra cobrar?")) return;
+      var bloqueadas = 0;
+      alvos.forEach(function (a) {
+        var ctA = contratoDe(stT, a.id);
+        var dvA = dividaDe(stT, a);
+        var msgA = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" +
+          (dvA && dvA.meses > 1 ? " — ficaram " + dvA.meses + " meses em aberto (" + S.fmtBRL(dvA.total) + " no total)" : " deste mes") +
+          (ctA ? " — vence dia " + ctA.diaVenc : "") + ". Te mando o Pix? 💪";
+        var w = window.open("https://wa.me/55" + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgA), "_blank");
+        if (!w) bloqueadas++;
+      });
+      if (bloqueadas) alert("O navegador bloqueou " + bloqueadas + " aba(s). Libere pop-ups pra este site e tente de novo, ou cobre um por um pelo botao Cobrar de cada linha.");
+      return;
+    }
     var rb = e.target.closest("[data-receb]");
     if (rb) {
       var stR = load();
@@ -6521,7 +6941,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === b.getAttribute("data-pix"); });
     if (a) abrePix(a, +b.getAttribute("data-v"));
-  });
+  }
+  $("pendentes").addEventListener("click", cliqueCobranca);
+  $("pgAtrasados").addEventListener("click", cliqueCobranca);
   // Pagar.me: gera o link de checkout seguro (cartão/Pix/boleto) pela função da nuvem
   function geraLinkPagamento(alunoId, valor, cb, origem) {
     cb = cb || function () {};
@@ -8335,6 +8757,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__pgAba = mostraPgAba; // testes
   mostraPgAba("receb");
+  // atalhos do cabecalho da tela 2e
+  $("pgVerPlanos").addEventListener("click", function () { mostraPgAba("planos"); });
+  $("pgComo").addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#pgIrConfig")) vaiAba("config");
+  });
+  $("pgLancar").addEventListener("click", function () {
+    var cx = $("pValor");
+    if (!cx) return;
+    cx.scrollIntoView({ behavior: "smooth", block: "center" });
+    cx.focus();
+  });
 
   // ---------- despesas do studio (pra saber onde o dinheiro está indo) ----------
   var dpMes = S.todayISO().slice(0, 7);
