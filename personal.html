@@ -227,6 +227,52 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pt-contador { display: inline-flex; align-items: center; justify-content: center;
                  min-width: 19px; height: 19px; padding: 0 6px; border-radius: 8px;
                  font-size: 11px; font-weight: 800; }
+  /* ============================================================
+   * A CAMADA DE BAIXO — o que o apps.css impoe e o handoff refaz
+   *
+   * O apps.css e a folha COMPARTILHADA (portal, Nutri, Personal). Ela da ao
+   * painel um .card com sombra e SEM borda, um h2 minusculo em CAIXA ALTA
+   * cinza (que inverte a hierarquia: o titulo do card fica menor que o texto),
+   * botao em pilula de 46px e um fundo um tom fora do token. O handoff pede o
+   * contrario em
+   * todos eles — e como TODA tela usa essas classes, um desvio aqui reaparecia
+   * nas 16 telas de uma vez. Foi por isso que o redesenho continuava "diferente"
+   * mesmo com cada tela refeita.
+   *
+   * Fica aqui, no <style> do painel, e nao no apps.css: aquele arquivo tambem
+   * veste o nutricao.html e o index.html, que nao passaram pelo handoff.
+   * ============================================================ */
+  :root, html[data-tema="claro"] {
+    --fundo: var(--pt-fundo); --card: var(--pt-card); --linha: var(--pt-borda);
+    --texto: var(--pt-txt); --cinza: var(--pt-txt-4); --cinza-2: var(--pt-txt-5);
+  }
+  /* o respiro da area de conteudo e do desenho (22px em cima, 26px dos lados).
+   * As duas medidas viram variavel porque a faixa roxa do Inicio precisa
+   * DESENCOSTAR exatamente delas pra ir de ponta a ponta. */
+  .corpo { --corpo-px: 26px; --corpo-py: 22px; padding: var(--corpo-py) var(--corpo-px) 88px; }
+  .card { background: var(--pt-card); border: 1px solid var(--pt-borda); box-shadow: none;
+          border-radius: 18px; padding: 17px 18px 18px; }
+  /* titulo de card: 15,5px em caixa mista. O apps.css fazia dele um rotulo
+   * cinza de 10,5px em CAIXA ALTA — quem precisa desse rotulo usa .pt-rotulo. */
+  .card h2, .card .titulo { margin: 0 0 12px; font-size: 15.5px; font-weight: 800;
+                            letter-spacing: -.01em; color: var(--pt-txt); text-transform: none; }
+  .btn { padding: 0 18px; min-height: var(--pt-h-bt); border-radius: var(--pt-r-bt);
+         font-size: 13px; font-weight: 800; letter-spacing: 0; }
+  .btn:hover { transform: none; box-shadow: none; }
+  .btn.sec { background: var(--pt-elev); border: 1px solid var(--pt-borda-forte);
+             color: var(--pt-txt-2); font-weight: 800; }
+  .btn.sec:hover { background: var(--pt-elev); border-color: var(--pt-roxo); color: var(--pt-roxo-claro); }
+  .btn.mini { min-height: var(--pt-h-bt-3); padding: 0 13px; border-radius: 10px; font-size: 12px; }
+  /* verde chapado de 46px dominava o card; no desenho a acao de WhatsApp e
+   * um botao secundario com a TINTA verde, igual aos outros da linha */
+  .btn.whats { background: var(--pt-elev); border: 1px solid var(--pt-borda-forte); color: var(--pt-ok); }
+  .btn.whats:hover { background: var(--pt-elev); color: var(--pt-ok); box-shadow: none; }
+  .muted { color: var(--pt-txt-4); }
+  @media (max-width: 760px) {
+    .corpo { --corpo-px: 12px; --corpo-py: 18px; }
+    .card { padding: 15px 16px; }
+    .btn { padding: 0 16px; }
+  }
   /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
   #sRepDias label { cursor: pointer; }
   #sRepDias label:has(.srd:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
@@ -236,6 +282,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .busca-topo { position: relative; margin-left: auto; flex: 1 1 170px; min-width: 150px; max-width: 260px; }
   @media (max-width: 560px) { .busca-topo { flex-basis: 100%; max-width: 100%; margin-left: 0; margin-top: 4px; } }
   .hamb-pt:hover { background: rgba(255,255,255,.22); }
+  /* No desenho a area de conteudo COMECA na faixa roxa: nao existe um bloco
+   * preto com o nome do studio ocupando um terco da primeira dobra. A barra
+   * fica (ela guarda a busca global e o nome do professor), mas vira uma
+   * FAIXA fina — 30px de titulo eram maiores que o "Bom treino, Raphael". */
+  .topo { padding: 12px 26px; background: var(--pt-fundo); border-bottom: 1px solid var(--pt-borda); gap: 10px; }
+  .topo h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+  .topo .kicker { display: none; }
+  .topo p { display: none; }
+  .topo .logo-cliente { max-height: 34px; max-width: 130px; }
+  html[data-tema="claro"] .topo { background: var(--pt-fundo); border-bottom-color: var(--pt-borda); }
   .mi { vertical-align: -2.5px; }
   .abas-pt button .mi { margin-right: 9px; vertical-align: -3px; }
   /* menu inferior fixo (estilo app do aluno) */
@@ -260,14 +316,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .arq-oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; opacity: 0; }
   .abas-pt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
-    background: #14121a; border-right: none; display: flex; flex-direction: column;
+    background: var(--pt-gaveta); border-right: none; display: flex; flex-direction: column;
     padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
   }
   body.menu-aberto .abas-pt { transform: none; box-shadow: 0 0 40px rgba(18,16,22,.45); }
   .abas-pt .menu-cab { padding: 6px 18px 14px; color: var(--tk-tx3); font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid var(--tk-bd3); margin-bottom: 8px; }
-  .abas-pt .menu-cab b { display: block; color: #fff; font-size: 15px; letter-spacing: .04em; margin-top: 3px; }
+  /* so o "TORQUE ON" e caixa alta; o nome do modulo e caixa mista, como no
+   * desenho — o text-transform do pai subia "Modulo Personal" junto */
+  .abas-pt .menu-cab b { display: block; color: #fff; font-size: 15px; letter-spacing: .04em; margin-top: 3px; text-transform: none; }
   .abas-pt button {
-    display: flex; align-items: center; gap: 12px; text-align: left;
+    display: flex; align-items: center; gap: 0; text-align: left;
     background: none; border: none; border-left: 3px solid transparent;
     padding: 12px 18px; margin-right: 8px; border-radius: 0 8px 8px 0;
     color: var(--tk-tx3); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
@@ -275,7 +333,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   }
   .abas-pt button:hover { background: rgba(255,255,255,.06); color: #fff; }
   .abas-pt button.ativa { color: #fff; border-left-color: var(--roxo); background: rgba(124,58,237,.18); }
-  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid var(--tk-bd3); color: var(--tk-tx3); font-size: 13.5px; font-weight: 700; }
+  /* "Modo claro" mora no PE da gaveta (margin-top:auto), como no desenho —
+   * antes ele vinha logo depois do ultimo botao, no meio da barra */
+  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px 0; margin-top: auto; border-top: 1px solid var(--tk-bd3); color: var(--tk-tx3); font-size: 13.5px; font-weight: 700; }
   .menu-tema span { display: inline-flex; align-items: center; gap: 9px; }
   .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid var(--tk-swBd); background: var(--tk-swBg); position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
   .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--tk-tx4); transition: transform .2s, background .2s; }
@@ -341,7 +401,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     body.menu-fino .abas-pt button.pouco { min-height: 0; opacity: 1; }
     /* o contador vira bolinha: numero nao cabe numa faixa de 66px */
     body.menu-fino .abas-pt .cnt { position: absolute; top: 9px; right: 13px; min-width: 8px; width: 8px;
-                                   height: 8px; padding: 0; font-size: 0; margin: 0; }
+                                   height: 8px; padding: 0; font-size: 0; margin: 0; background: var(--pt-roxo); }
+    body.menu-fino .abas-pt .cnt.aten { background: var(--pt-erro); }
+    body.menu-fino .abas-pt .cnt.leve { background: var(--pt-txt-5); }
     body.menu-fino .menu-tema { justify-content: center; padding: 14px 0; gap: 0; }
     body.menu-fino .menu-tema > span { font-size: 0; gap: 0; }
     body.menu-fino .menu-tema .sw { margin-left: 0; }
@@ -477,7 +539,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* ---------- Início do desenho novo (canvas "Painel do professor") ----------
      Topo roxo com o dia, a próxima sessão e o Resolver hoje. As cores e os
      raios vêm do canvas: #7c3aed / var(--tk-sup) / var(--tk-bd), raio 16-20. */
-  .dtopo { background: var(--pt-grad-faixa); border-radius: var(--pt-r-frame); padding: 22px 26px; margin-bottom: 14px; color: #fff; }
+  /* a faixa roxa e FULL-BLEED: no desenho ela nao e um card com canto, e o
+   * topo da area de conteudo. Desencosta do padding do .corpo pelas variaveis
+   * --corpo-px/--corpo-py, entao continua certa quando o padding muda. */
+  .dtopo { background: var(--pt-grad-faixa); border-radius: 0; padding: 22px 26px 24px; color: #fff;
+           margin: calc(-1 * var(--corpo-py, 22px)) calc(-1 * var(--corpo-px, 26px)) 20px; }
+  /* ...menos quando ha um aviso ACIMA dela (boas-vindas, guia, modo teste,
+   * assinatura vencida). Ai a faixa nao e mais o topo da tela, e o -22px
+   * subiria por cima do aviso. Os avisos nascem com [hidden]: e o proprio
+   * atributo que o CSS le. */
+  .corpo:has(> #boasVindas:not([hidden])) #vDash .dtopo,
+  .corpo:has(> #obGuia:not([hidden])) #vDash .dtopo,
+  .corpo:has(> #faixaTeste:not([hidden])) #vDash .dtopo,
+  .corpo:has(> #faixaAssinatura:not([hidden])) #vDash .dtopo { margin-top: 0; }
   .dtopo .dlin { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
   .dtopo .ddata { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.72); }
   .dtopo h2 { font-size: 27px; font-weight: 900; letter-spacing: -.03em; margin: 3px 0 4px; color: #fff; text-transform: none; }
@@ -525,7 +599,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     /* o cabecalho do app sai: no desenho a tela comeca no proprio conteudo */
     .topo { display: none; }
     /* a faixa roxa desencosta do padding do .corpo e vai de ponta a ponta */
-    #vDash .dtopo { margin: -18px -12px 14px; border-radius: 0;
+    #vDash .dtopo { margin-bottom: 14px;
                     padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
     #vDash .dtopo .dlin { gap: 10px; flex-wrap: nowrap; align-items: center; }
     #vDash .dtopo .ddata { font-size: 9.5px; letter-spacing: .18em; color: var(--pt-sobre-roxo-lbl); }
@@ -595,9 +669,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dcols > .card, .dcol2 > .card { margin: 0; }
   .dcol2 { display: grid; gap: 12px; }
   @media (max-width: 980px) { .dcols { grid-template-columns: 1fr; } }
-  .dnota { display: block; line-height: 1.6; padding: 14px 18px; border-radius: 16px;
-           border: 1px dashed var(--tk-bd4); color: var(--tk-tx4); font-size: 12.5px; font-weight: 600; }
+  .dnota { display: block; line-height: 1.6; padding: 13px 16px; border-radius: var(--pt-r-caixa);
+           background: var(--pt-caixa); border: 1px solid var(--pt-borda);
+           color: var(--tk-tx4); font-size: 12.5px; font-weight: 600; }
+  /* texto a esquerda, botao a direita, na MESMA linha: sem o flex-basis o
+   * <span> tomava a largura toda e o botao caia sozinho pra baixo */
   .dnota.lado { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .dnota.lado > span { flex: 1 1 320px; min-width: 0; }
+  .dnota.lado > .btn { flex: none; margin-left: 0; }
   .dnota b { color: var(--tk-roxoTx2); }
   .dnota .btn { margin-left: auto; }
   /* linha do tempo do dia (tela 1a) */
@@ -620,6 +699,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dlinha.faltou .dhh { color: var(--tk-erro); }
   .dlinha.prox { background: rgba(124,58,237,.18); border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; padding-left: 12px; }
   .dlinha.prox .dfi { color: var(--tk-roxoTx); }
+  .dlinha.prox .dhh { color: var(--pt-roxo-claro); }
   .dlinha.vaga .dnm { color: var(--tk-tx3); }
   .dok { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: var(--tk-ok); }
   /* card do mês, na coluna da direita */
@@ -823,9 +903,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* no fundo escuro da pagina o botao principal e ROXO (no topo roxo ele e branco) */
   .altopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
   .altopo .dbt.sec { background: var(--tk-sup); border: 1px solid var(--tk-bd3); color: var(--tk-tx2); }
-  .albusca { margin-bottom: 12px; }
+  .alfind { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .alfind .albusca { flex: 1 1 300px; min-width: 0; margin: 0; }
+  .alfind #alFiltro { margin: 0; flex: none; }
+  .albusca { margin-bottom: 12px; position: relative; }
+  .albusca .albup { position: absolute; left: 15px; top: 50%; margin-top: -8px; color: var(--pt-txt-5); pointer-events: none; }
   .albusca input { width: 100%; height: 46px; border-radius: 14px; background: var(--tk-sup); border: 1px solid var(--tk-bd);
-                   color: var(--tk-tx); font-family: inherit; font-size: 14px; padding: 0 16px; }
+                   color: var(--tk-tx); font-family: inherit; font-size: 14px; padding: 0 16px 0 42px; }
   .altab { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; }
   /* larguras FIXAS nas duas faixas: com fracoes, a 6a coluna do cabecalho
    * (um span vazio) e a da linha (94px de botoes) resolviam diferente e o
@@ -842,7 +926,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .alrow.devendo .alav { background: var(--pt-erro-bg); color: var(--pt-erro); }
   .alrow.sumindo .alav { background: var(--pt-atencao-bg); color: var(--pt-atencao); }
   .alrow .alq { display: flex; align-items: center; gap: 11px; min-width: 0; }
-  .alrow .alav, .pgatrlin .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
+  .alrow .alav, .pgatrlin .alav { width: 44px; height: 44px; flex: none; border-radius: 13px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
   .alrow .alnm, .pgatrlin .alnm { font-size: 14.5px; font-weight: 800; color: var(--tk-tx); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
   .alrow .alsub, .pgatrlin .alsub { font-size: 12px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
@@ -856,6 +940,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .alrow .albar { height: 5px; border-radius: 99px; background: var(--tk-trilha); margin-top: 5px; overflow: hidden; }
   .alrow .albar i { display: block; height: 100%; border-radius: 99px; }
   .alrow .alac { display: flex; gap: 6px; justify-content: flex-end; }
+  /* botao so de icone: quadrado, do tamanho de toque secundario do handoff */
+  .alrow .alac .al-ic { width: var(--pt-h-bt-3); padding: 0; justify-content: center; }
   .alsel { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 2px 7px; border-radius: 6px; margin-left: 7px; vertical-align: 2px; }
   /* display:contents = "nao desenhe esta caixa, use os filhos": no computador a
    * tabela continua com as mesmas 6 colunas de sempre */
@@ -881,6 +967,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #btnNovoAluno .mi { width: 18px; height: 18px; margin: 0; stroke-width: 2.2; }
     /* o cabecalho de colunas nao existe no celular — a linha nao e mais tabela */
     #vAlunos .alcab { display: none; }
+    /* no celular a busca e os filtros voltam a empilhar */
+    #vAlunos .alfind { display: block; }
+    #vAlunos .alfind .albusca { margin: 0 0 10px; }
     /* busca de 44px com a lupa */
     #vAlunos .albusca input { height: 44px; border-radius: 12px; font-size: 13px; }
     /* chips de filtro numa fita que rola de lado (o desenho corta "Encerrados") */
@@ -1457,12 +1546,22 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dbarra i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
   @media (max-width: 900px) { .dplacar { grid-template-columns: 1fr; } }
   /* barra lateral: o grupo "menos usado" fica compacto */
-  .navgrupo { margin: 10px 0 4px; padding: 0 14px; font-size: 9.5px; font-weight: 800; letter-spacing: .18em;
-              text-transform: uppercase; color: #6e6a78; }
-  .abas-pt .cnt, nav .cnt { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: #7c3aed;
-             color: #fff; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
-  .abas-pt button.pouco, nav button.pouco { min-height: 34px; padding-top: 9px; padding-bottom: 9px; font-size: 12.5px; opacity: .78; }
-  .abas-pt button.pouco .mi, nav button.pouco .mi { opacity: .7; }
+  .navgrupo { margin: 0; padding: 16px 18px 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .18em;
+              text-transform: uppercase; color: var(--pt-txt-5); }
+  /* contador da aba: fundo na cor com .18 e texto na cor CHEIA — a regra 2 do
+   * handoff. O que estava aqui era pilula roxa chapada com texto branco, que e
+   * justamente o que o desenho proibe. Tres pesos: .leve (so o numero, pra
+   * "quantos alunos"), o roxo padrao (chat) e .aten (o que pede acao hoje). */
+  .abas-pt .cnt, nav .cnt { margin-left: auto; min-width: 19px; height: 19px; padding: 0 6px; border-radius: 8px;
+             background: var(--pt-sel); color: var(--pt-roxo-claro); font-size: 11px; font-weight: 800;
+             display: inline-flex; align-items: center; justify-content: center; }
+  .abas-pt .cnt.aten, nav .cnt.aten { background: var(--pt-erro-selo); color: var(--pt-erro); }
+  .abas-pt .cnt.leve, nav .cnt.leve { background: none; color: var(--pt-txt-5); font-size: 12.5px; font-weight: 700; padding: 0; min-width: 0; }
+  .abas-pt button.pouco, nav button.pouco { min-height: 0; padding: 9px 18px; font-size: 13px; font-weight: 600;
+             color: var(--pt-txt-4); opacity: 1; }
+  /* no desenho o grupo de baixo e uma LISTA DE TEXTO, sem icone. Com o menu
+   * encolhido o icone volta, porque la ele e a unica pista do que e cada botao. */
+  body:not(.menu-fino) .abas-pt button.pouco .mi, nav button.pouco .mi { display: none; }
 </style>
 </head>
 <body>
@@ -1721,12 +1820,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <button type="button" class="dbt" id="btnNovoAluno"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Novo aluno</button>
     </div>
-    <div class="albusca"><input id="alBusca" placeholder="Buscar por nome ou telefone" autocomplete="off"></div>
-    <div class="abas" id="alFiltro" style="margin: 0 0 12px;">
+    <!-- no desenho a busca e os filtros dividem UMA linha; no celular voltam
+         a empilhar, porque la nao cabem lado a lado -->
+    <div class="alfind">
+    <div class="albusca"><svg class='mi albup' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='m16 16 4.5 4.5'/></svg><input id="alBusca" placeholder="Buscar por nome ou telefone" autocomplete="off"></div>
+    <div class="abas" id="alFiltro">
       <button data-alf="ativos" class="ativa">Ativos</button>
       <button data-alf="sumindo">Sumindo</button>
       <button data-alf="devendo">Devendo</button>
       <button data-alf="encerrados">Encerrados</button>
+    </div>
     </div>
     <div class="altab">
       <div class="alcab"><span>Aluno</span><span>Plano</span><span>Mês</span><span>Ficha</span><span>Próxima</span><span></span></div>
@@ -3739,7 +3842,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
             "?text=" + encodeURIComponent("Oi " + String(a.nome).split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '">Chamar</a>'
           : '<button type="button" class="btn sec mini" data-perfil="' + a.id + '">Ver</button>')
-        : (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" title="falar no WhatsApp" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "");
+        : (a.zap ? '<a class="btn sec mini al-ic" target="_blank" rel="noopener" title="falar no WhatsApp"' +
+            ' aria-label="falar no WhatsApp com ' + esc(a.nome) + '" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">' +
+            "<svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg></a>" : "");
       /* A tela 17 do handoff (Alunos no celular) pede: avatar, nome com o selo
        * de estado colado e a proxima sessao no canto; embaixo UMA linha com
        * ficha, treinos do mes e situacao. O desktop continua com as 6 colunas
@@ -5656,7 +5761,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
-        (p.menosMelhor ? ' <span style="background:#f8717122;color:var(--tk-erro);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
+        (p.menosMelhor ? ' <span style="background:var(--pt-erro-selo);color:var(--tk-erro);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qpinv="' + p.id + '" title="trocar o sentido da nota">' + (p.menosMelhor ? "maior é melhor" : "menor é melhor") + "</button>" +
         '<button class="btn sec mini" data-qprm="' + p.id + '" aria-label="excluir a pergunta ' + esc(p.sigla) + '">✕</button></div>';
@@ -12842,7 +12947,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var d = Math.round((atual - anterior) * 10) / 10;
       if (!d) return " <span class='muted'>=</span>";
       var bom = invertido ? d > 0 : d < 0;
-      return " <b style='color:" + (bom ? "#16a34a" : "#dc2626") + ";font-size:12px;'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
+      return " <b style='color:" + (bom ? "var(--pt-ok)" : "var(--pt-erro)") + ";font-size:12px;'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
     }
     // preserva o que está aberto no re-render (o toggle é assíncrono — lê o DOM real)
     document.querySelectorAll("#listaAvaliacoes details[data-avdet]").forEach(function (d) {
@@ -12865,7 +12970,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
             (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:var(--tk-ok);">bioimpedância</span>' : "") +
-            (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">câmera</span>' : "") +
+            (v.scan ? '<span class="tag" style="font-size:10px;background:var(--pt-sel);color:var(--pt-roxo-claro);">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
             '<button class="btn sec mini" data-avrm="' + v.id + '" aria-label="excluir a avaliação">✕</button></div>';
@@ -12999,7 +13104,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function kpiRow(el, itens) {
     el.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + itens.map(function (k) {
-      return '<div style="flex:1;min-width:130px;background:#faf9fc;border:1px solid var(--linha);border-radius:10px;padding:10px 12px;">' +
+      /* a caixa acompanha o tema: com o branco cravado, os numeros do mes
+       * sairam em cartoes BRANCOS no meio do painel escuro */
+      return '<div style="flex:1;min-width:130px;background:var(--pt-caixa);border:1px solid var(--pt-borda);border-radius:12px;padding:11px 13px;">' +
         '<div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--cinza);font-weight:700;">' + k.t + "</div>" +
         '<div style="font-size:20px;font-weight:800;' + (k.cor ? "color:" + k.cor + ";" : "") + '">' + k.v + "</div>" +
         (k.sub ? '<div style="font-size:11.5px;color:var(--cinza);">' + k.sub + "</div>" : "") + "</div>";
@@ -13085,13 +13192,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="pfbox"><h3>Sessões por semana<small style="font-weight:600;color:var(--tk-tx5);font-size:12px;margin-left:8px;">e quanto disso virou falta</small>' +
       '<span style="float:right;font-size:11px;font-weight:700;color:var(--tk-tx4);">' +
       '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#7c3aed;margin-right:4px;"></i>feitas ' +
-      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#5b2b2b;margin:0 4px 0 8px;"></i>faltas</span></h3>' +
+      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--pt-erro-selo);margin:0 4px 0 8px;"></i>faltas</span></h3>' +
       '<div style="display:flex;gap:12px;align-items:flex-end;height:150px;margin-top:10px;">' +
       sems.map(function (w) {
         var hF = Math.round(110 * w.feitas / topo), hX = Math.round(110 * w.faltas / topo);
         return '<div style="flex:1;text-align:center;">' +
           '<div style="height:' + Math.max(0, 114 - hF - hX) + 'px;"></div>' +
-          (hX ? '<div style="height:' + Math.max(4, hX) + 'px;border-radius:8px 8px 0 0;background:#5b2b2b;" title="' + w.faltas + ' falta(s)"></div>' : "") +
+          (hX ? '<div style="height:' + Math.max(4, hX) + 'px;border-radius:8px 8px 0 0;background:var(--pt-erro-selo);" title="' + w.faltas + ' falta(s)"></div>' : "") +
           '<div style="height:' + Math.max(4, hF) + "px;border-radius:" + (hX ? "0 0 3px 3px" : "8px 8px 3px 3px") +
           ";background:" + (w.agora ? "var(--tk-roxoTx2)" : "#7c3aed") + ';" title="' + w.feitas + ' feita(s)"></div>' +
           '<div style="font-size:10px;font-weight:800;color:' + (w.agora ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:6px;">' + w.rot + "</div></div>";
@@ -13129,8 +13236,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var sessMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesAtual; }).length;
     kpiRow($("relResumo"), [
       { t: "Alunos ativos", v: ativos.length },
-      { t: "Recebido no mês", v: fmtR(recebidoMes), cor: "#16a34a" },
-      { t: "Falta receber", v: fmtR(Math.max(0, previstoMes - recebidoMes)), cor: previstoMes > recebidoMes ? "#d97706" : "#16a34a" },
+      { t: "Recebido no mês", v: fmtR(recebidoMes), cor: "var(--pt-ok)" },
+      { t: "Falta receber", v: fmtR(Math.max(0, previstoMes - recebidoMes)), cor: previstoMes > recebidoMes ? "var(--pt-atencao)" : "var(--pt-ok)" },
       { t: "Sessões no mês", v: sessMes },
       // "recebido" e "previsto" são contas diferentes — o rótulo tem que dizer qual é
       { t: "Ticket médio recebido", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s) — média de quem pagou" : "" },
@@ -13146,7 +13253,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("relPrevisto").innerHTML =
         '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
         "<span>Recebido: " + fmtR(recebidoMes) + "</span><span>Previsto: " + fmtR(previstoMes) + "</span></div>" +
-        '<div style="height:14px;background:#eee;border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),var(--tk-roxoTx2));"></div></div>' +
+        '<div style="height:14px;background:var(--pt-trilha);border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),var(--tk-roxoTx2));"></div></div>' +
         '<div style="font-size:12px;color:var(--cinza);margin:4px 0 10px;">' + pct + "% da receita prevista já entrou.</div>" +
         (faltam.length ? faltam.map(function (a) {
           var ct = contratoDe(st, a.id);
@@ -13172,9 +13279,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("relCarteira").innerHTML = linhasCart.map(function (l) {
         var saldo = l.novos - l.sairam;
         return '<div class="sessao-pt"><b style="width:56px;">' + l.rot + "</b>" +
-          '<span style="color:#16a34a;font-weight:700;">+' + l.novos + " novo(s)</span>" +
-          '<span style="color:#dc2626;font-weight:700;">−' + l.sairam + " encerrado(s)</span>" +
-          '<span style="margin-left:auto;font-weight:800;color:' + (saldo >= 0 ? "#16a34a" : "#dc2626") + ';">saldo ' + (saldo >= 0 ? "+" : "") + saldo + "</span></div>";
+          '<span style="color:var(--pt-ok);font-weight:700;">+' + l.novos + " novo(s)</span>" +
+          '<span style="color:var(--pt-erro);font-weight:700;">−' + l.sairam + " encerrado(s)</span>" +
+          '<span style="margin-left:auto;font-weight:800;color:' + (saldo >= 0 ? "var(--pt-ok)" : "var(--pt-erro)") + ';">saldo ' + (saldo >= 0 ? "+" : "") + saldo + "</span></div>";
       }).join("");
     } else $("relCarteira").textContent = "Sem dados ainda.";
 
@@ -13182,7 +13289,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ses = meses.map(function (m) {
       return { rot: m.rot, v: st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === m.chave; }).length };
     });
-    if (ses.some(function (x) { return x.v; })) barras($("relSessoes"), ses, "#16a34a");
+    if (ses.some(function (x) { return x.v; })) barras($("relSessoes"), ses, "var(--pt-ok)");
     else $("relSessoes").textContent = "Sem sessões feitas ainda.";
 
     // ---- ocupação da agenda (8 semanas): dia da semana + horários mais usados ----
@@ -13197,7 +13304,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         porDia[new Date(x.data + "T12:00").getDay()]++;
         if (x.hora) porHora[x.hora.slice(0, 2) + "h"] = (porHora[x.hora.slice(0, 2) + "h"] || 0) + 1;
       });
-      barras($("relOcupacao"), DIAS.map(function (r, idx) { return { rot: r, v: porDia[idx] }; }), "#0891b2");
+      barras($("relOcupacao"), DIAS.map(function (r, idx) { return { rot: r, v: porDia[idx] }; }), "var(--pt-roxo-claro)");
       var topH = Object.keys(porHora).sort(function (a, b) { return porHora[b] - porHora[a]; }).slice(0, 5);
       var menor = 1;
       for (var di = 2; di <= 6; di++) if (porDia[di] < porDia[menor]) menor = di;
@@ -13218,11 +13325,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("relAssiduidade").innerHTML = ativos.length ? ativos.map(function (a) {
       var n = porAluno[a.id] || 0;
       var f = faltasDe[a.id] || 0;
-      var cor = n >= 8 ? "#16a34a" : n >= 4 ? "var(--roxo)" : n >= 1 ? "#d97706" : "#dc2626";
+      var cor = n >= 8 ? "var(--pt-ok)" : n >= 4 ? "var(--roxo)" : n >= 1 ? "var(--pt-atencao)" : "var(--pt-erro)";
       var taxa = n + f ? Math.round(100 * n / (n + f)) : null;
       return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
         (taxa !== null ? '<span class="muted">presença ' + taxa + "%</span>" : "") +
-        (f ? '<span style="color:#d97706;font-weight:700;">' + S.plural(f, "falta", "faltas") + "</span>" : "") +
+        (f ? '<span style="color:var(--pt-atencao);font-weight:700;">' + S.plural(f, "falta", "faltas") + "</span>" : "") +
         '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + S.plural(n, "sessão", "sessões") + "</span>" +
         (n === 0 ? ' <span class="tag erro">sumido — chame!</span>' : "") + "</div>";
     }).join("") : "Cadastre alunos primeiro.";
@@ -13244,8 +13351,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div style="font-size:13px;margin-bottom:8px;"><b>' + melhoraram + " de " + evols.length + "</b> aluno(s) com evolução (peso ou % gordura caiu) — prova social pronta pro Instagram.</div>" +
         evols.sort(function (x, y) { return (x.dPeso || 0) - (y.dPeso || 0); }).map(function (e) {
           return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
-            (e.dPeso !== null ? '<span style="font-weight:800;color:' + (e.dPeso <= 0 ? "#16a34a" : "#d97706") + ';">' + (e.dPeso > 0 ? "+" : "") + String(e.dPeso).replace(".", ",") + " kg</span>" : "") +
-            (e.dGord !== null ? '<span style="font-weight:700;color:' + (e.dGord <= 0 ? "#16a34a" : "#d97706") + ';">' + (e.dGord > 0 ? "+" : "") + String(e.dGord).replace(".", ",") + "% gordura</span>" : "") +
+            (e.dPeso !== null ? '<span style="font-weight:800;color:' + (e.dPeso <= 0 ? "var(--pt-ok)" : "var(--pt-atencao)") + ';">' + (e.dPeso > 0 ? "+" : "") + String(e.dPeso).replace(".", ",") + " kg</span>" : "") +
+            (e.dGord !== null ? '<span style="font-weight:700;color:' + (e.dGord <= 0 ? "var(--pt-ok)" : "var(--pt-atencao)") + ';">' + (e.dGord > 0 ? "+" : "") + String(e.dGord).replace(".", ",") + "% gordura</span>" : "") +
             '<span class="muted" style="margin-left:auto;">' + e.n + " avaliações</span></div>";
         }).join("");
     } else $("relResultados").textContent = "Registre pelo menos 2 avaliações por aluno para ver a evolução.";
@@ -13343,7 +13450,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var grupos = ordem.map(function (g) { return porG[g]; })
         .sort(function (x, y) { return peso[x.tipo] - peso[y.tipo] || y.itens.length - x.itens.length; });
       function linha(al, escondida) {
-        var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
+        var borda = al.tipo === "erro" ? "var(--pt-erro)" : al.tipo === "aviso" ? "var(--pt-atencao)" : "var(--roxo)";
         return '<div' + (escondida ? ' data-alresto="1" hidden' : "") + ' style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
           // dentro do grupo o assunto já está no título — a linha fica só com
           // o nome e o dado que muda de aluno pra aluno
@@ -13353,7 +13460,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var total = alertas.length;
       return '<div class="muted" style="font-size:12.5px;margin-bottom:10px;">' + total + (total === 1 ? " alerta" : " alertas") + " em " + grupos.length + (grupos.length === 1 ? " assunto" : " assuntos") + " — comece de cima.</div>" +
         grupos.map(function (gr, gi) {
-          var cor = gr.tipo === "erro" ? "#dc2626" : gr.tipo === "aviso" ? "#d97706" : "var(--roxo)";
+          var cor = gr.tipo === "erro" ? "var(--pt-erro)" : gr.tipo === "aviso" ? "var(--pt-atencao)" : "var(--roxo)";
           var resto = gr.itens.length - 3;
           return '<div data-algrupo="' + gi + '" style="margin-bottom:14px;">' +
             '<div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + cor + ';margin-bottom:6px;">' +
@@ -13430,7 +13537,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var aP = st.alunos.find(function (y) { return y.id === x.alunoId; }) || {};
       return '<div class="dlinha' + cls + '"><div class="dhh">' + (x.hora || "—") + "</div>" +
         '<div style="min-width:0;">' +
-        '<button class="dnm" data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;">' +
+        '<button class="dnm" data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;font-family:inherit;cursor:pointer;text-align:left;">' +
         esc(nomeHj[x.alunoId] || "?") + "</button>" +
         '<div class="dfi">' + (x.faltou ? "Faltou" : treinoDoDiaTxt(st, x.alunoId, true)) + "</div></div>" +
         '<div class="dac">' +
@@ -13496,7 +13603,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var msgR = "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪";
       // linha do Radar no desenho da 1a: iniciais, nome, o motivo e o atalho
       radar.push('<div class="drad"><div class="dav2">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
-        '<div style="min-width:0;"><button class="dnm" data-vernome="' + a.id + '" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;">' +
+        '<div style="min-width:0;"><button class="dnm" data-vernome="' + a.id + '" style="background:none;border:0;padding:0;font-family:inherit;cursor:pointer;text-align:left;">' +
         esc(a.nome) + '</button><div class="dfi" style="color:' + (diasP >= 10 ? "var(--tk-erro)" : "var(--tk-tx4)") + ';">' +
         S.plural(diasP, "dia sem treinar", "dias sem treinar") + "</div></div>" +
         '<div class="dac">' +
@@ -13756,13 +13863,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nomes = toks.slice(0, 3).map(function (k) { return String(nomePorTok[k]).split(" ")[0]; }).join(", ");
       var d = document.createElement("div");
       d.className = "dcard";
-      d.innerHTML = '<div class="dsel" style="color:#60a5fa;"><i></i>SEM RESPOSTA</div>' +
+      d.innerHTML = '<div class="dsel" style="color:var(--pt-roxo-claro);"><i></i>SEM RESPOSTA</div>' +
         '<div><div class="dqu">' + S.plural(total, "mensagem no chat", "mensagens no chat") + "</div>" +
         '<div class="dpq">' + esc(nomes) + (toks.length > 3 ? " e mais " + (toks.length - 3) : "") + "</div></div>" +
         '<div class="dacs"><button type="button" class="btn sec" id="dVaiChat">Abrir chat</button></div>';
       grade.appendChild(d);
       var t = el.querySelector(".dtit span");
-      if (t) t.textContent = "· " + grade.children.length;
+      if (t) t.textContent = S.plural(grade.children.length, "coisa", "coisas");
       var bc = document.querySelector('#abas [data-a="chat"]');
       if (bc) {
         var ec = bc.querySelector(".cnt");
@@ -13930,7 +14037,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     el.className = "dres";
     el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>' +
-      "· " + itens.length + "</span></div>" +
+      S.plural(itens.length, "coisa", "coisas") + "</span></div>" +
       '<div class="dgrid">' + itens.map(function (it, i) {
         /* so o PRIMEIRO card leva o botao cheio de roxo — e a hierarquia do
          * desenho (tela 02): o mais urgente puxa o olho, o resto e secundario */
@@ -15140,7 +15247,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!b) return;
       var e = b.querySelector(".cnt");
       if (!n[k]) { if (e) e.remove(); return; }
-      if (!e) { e = document.createElement("span"); e.className = "cnt"; b.appendChild(e); }
+      if (!e) { e = document.createElement("span"); b.appendChild(e); }
+      /* peso do contador (handoff): "quantos alunos" e informacao, entao sai
+       * em cinza sem selo; sessao de hoje ainda sem marcar PEDE acao, entao
+       * leva o selo de atencao. Nunca pilula chapada com texto branco. */
+      e.className = "cnt " + (k === "alunos" ? "leve" : "aten");
       e.textContent = n[k] > 99 ? "99+" : n[k];
     });
   }

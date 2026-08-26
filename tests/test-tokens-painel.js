@@ -169,6 +169,41 @@ const ESPERADO = {
     "o roxo da marca NÃO muda entre temas (" + cla.roxo + ")");
   t(cla.fundo !== esc.fundo, "o fundo do painel troca de tema (" + esc.fundo + " → " + cla.fundo + ")");
 
+  /* ---------------------------------------------------------------
+   * A CAMADA DE BAIXO — o apps.css e compartilhado com o portal e o Nutri,
+   * e o que ele impoe (card com sombra e sem borda, h2 minusculo em CAIXA
+   * ALTA, botao em pilula de 46px) reaparecia nas 16 telas de uma vez. Foi
+   * o motivo de o redesenho continuar "diferente" mesmo com cada tela feita.
+   * Medimos o que o professor VE — a geometria calculada —, nunca a classe.
+   * ------------------------------------------------------------- */
+  await p.evaluate(() => document.getElementById("btnTemaPt").click()); // volta pro escuro
+  await p.waitForTimeout(250);
+  console.log("\nA base que o handoff refaz (card, titulo, botao):");
+  const base = await p.evaluate(() => {
+    const som = (s) => { const d = document.createElement("div"); d.className = s; d.style.position = "absolute";
+      d.style.left = "-9999px"; document.body.appendChild(d); const c = getComputedStyle(d);
+      const r = { bd: c.borderTopWidth, sombra: c.boxShadow, pad: c.paddingTop, raio: c.borderTopLeftRadius,
+                  alt: c.minHeight, fs: c.fontSize, cx: c.textTransform, bg: c.backgroundColor, cor: c.color };
+      d.remove(); return r; };
+    const h2 = (() => { const d = document.createElement("div"); d.className = "card";
+      d.style.position = "absolute"; d.style.left = "-9999px"; d.innerHTML = "<h2>x</h2>";
+      document.body.appendChild(d); const c = getComputedStyle(d.firstChild);
+      const r = { fs: c.fontSize, peso: c.fontWeight, cx: c.textTransform, cor: c.color }; d.remove(); return r; })();
+    return { card: som("card"), btn: som("btn"), sec: som("btn sec"), zap: som("btn whats"), h2: h2,
+             corpo: getComputedStyle(document.querySelector(".corpo")).paddingLeft };
+  });
+  t(parseFloat(base.card.bd) >= 1 && base.card.sombra === "none",
+    "o card tem BORDA e nao tem sombra (o apps.css faz o contrario) — " + base.card.bd + " / " + base.card.sombra);
+  t(Math.round(parseFloat(base.card.pad)) === 17, "padding do card e o do desenho (" + base.card.pad + ")");
+  t(parseFloat(base.h2.fs) >= 15 && base.h2.cx === "none" && base.h2.peso === "800",
+    "titulo de card e 15,5px em caixa mista, nao rotulo cinza em CAIXA ALTA (" +
+    base.h2.fs + " / " + base.h2.cx + " / " + base.h2.peso + ")");
+  t(Math.round(parseFloat(base.btn.raio)) === 11 && Math.round(parseFloat(base.btn.alt)) === 44,
+    "botao e retangulo de 44px com raio 11, nao pilula de 46 (" + base.btn.raio + " / " + base.btn.alt + ")");
+  t(parseFloat(base.sec.bd) >= 1, "o botao secundario tem borda (" + base.sec.bd + ")");
+  t(base.zap.bg === base.sec.bg, "o botao de WhatsApp e secundario com tinta verde, nao verde chapado");
+  t(Math.round(parseFloat(base.corpo)) === 26, "a area de conteudo respira 26px dos lados (" + base.corpo + ")");
+
   await b.close();
   console.log("\n" + ok + " ok, " + falhas + " falhas");
   process.exit(falhas ? 1 : 0);
