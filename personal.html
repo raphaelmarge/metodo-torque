@@ -31,6 +31,65 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 </script>
 <script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
+  /* ---------- paleta do painel: um token por papel ----------
+   * O modo claro (tela 3d do canvas) e SO a troca destes valores. Antes cada
+   * tela nova cravava o hex escuro na mao e o tema claro nao alcancava. */
+  :root {
+    --tk-sup: #141218;
+    --tk-sup2: #121016;
+    --tk-sup3: #1b1822;
+    --tk-sup4: #17151d;
+    --tk-bd: #26222f;
+    --tk-bd2: #1d1a24;
+    --tk-bd3: #2a2536;
+    --tk-bd4: #322e3d;
+    --tk-trilha: #221f2b;
+    --tk-tx: #f2f0f6;
+    --tk-tx1: #e6e2f2;
+    --tk-tx2: #cfcbdb;
+    --tk-tx3: #a9a4b5;
+    --tk-tx4: #8a8695;
+    --tk-tx5: #6e6a78;
+    --tk-tx6: #4b4855;
+    --tk-roxoFraco: #241a3d;
+    --tk-roxoTx: #c4b5fd;
+    --tk-roxoTx2: #a78bfa;
+    --tk-ok: #4ade80;
+    --tk-erro: #f87171;
+    --tk-erro2: #fca5a5;
+    --tk-aten: #fb923c;
+    --tk-aten2: #fbbf24;
+    --tk-swBg: #24202e;
+    --tk-swBd: #3a3546;
+  }
+  html[data-tema="claro"] {
+    --tk-sup: #ffffff;
+    --tk-sup2: #f7f6fa;
+    --tk-sup3: #f4f3f7;
+    --tk-sup4: #faf9fc;
+    --tk-bd: #e4e1eb;
+    --tk-bd2: #eeecf3;
+    --tk-bd3: #e4e1eb;
+    --tk-bd4: #d9d5e3;
+    --tk-trilha: #e9e7ef;
+    --tk-tx: #191622;
+    --tk-tx1: #191622;
+    --tk-tx2: #443f52;
+    --tk-tx3: #6c6678;
+    --tk-tx4: #77718a;
+    --tk-tx5: #8b8599;
+    --tk-tx6: #b5b0c0;
+    --tk-roxoFraco: rgba(124,58,237,.12);
+    --tk-roxoTx: #6d28d9;
+    --tk-roxoTx2: #7c3aed;
+    --tk-ok: #15803d;
+    --tk-erro: #b91c1c;
+    --tk-erro2: #991b1b;
+    --tk-aten: #c2410c;
+    --tk-aten2: #b45309;
+    --tk-swBg: #dcd8e6;
+    --tk-swBd: #c3bed3;
+  }
   /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
   #sRepDias label { cursor: pointer; }
   #sRepDias label:has(.srd:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
@@ -44,11 +103,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .abas-pt button .mi { margin-right: 9px; vertical-align: -3px; }
   /* menu inferior fixo (estilo app do aluno) */
   #navPt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(13,12,16,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
-  #navPt button { position: relative; background: none; border: 0; color: #8a8695; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  #navPt button { position: relative; background: none; border: 0; color: var(--tk-tx4); font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
   .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
-  #navPt button.ativa { color: #a78bfa; }
+  #navPt button.ativa { color: var(--tk-roxoTx2); }
   #navPt button:active { background: rgba(255,255,255,.06); }
   .corpo { padding-bottom: 88px; }
+  /* no modo claro (tela 3d) a faixa do topo acompanha a pagina — o --escuro do
+     apps.css segue escuro de proposito, e ele e compartilhado com os outros produtos */
+  html[data-tema="claro"] .topo { background: #ffffff; border-bottom: 1px solid #e4e1eb; color: #191622; }
+  html[data-tema="claro"] .topo h1 { color: #191622; }
+  html[data-tema="claro"] .hamb-pt { background: rgba(19,17,24,.06); color: #443f52; }
+  .buscaTopoIn { width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid transparent;
+                 background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px; }
+  html[data-tema="claro"] .buscaTopoIn { background: #f4f3f7; border-color: #e4e1eb; color: #191622; }
   html[data-tema="claro"] #navPt { background: rgba(255,255,255,.96); border-top-color: #e3e0ec; }
   html[data-tema="claro"] #navPt button.ativa { color: var(--roxo); }
   /* input de arquivo com display:none NÃO abre o seletor no Safari do iPhone
@@ -60,27 +127,27 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
   }
   body.menu-aberto .abas-pt { transform: none; box-shadow: 0 0 40px rgba(18,16,22,.45); }
-  .abas-pt .menu-cab { padding: 6px 18px 14px; color: #a9a4b5; font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid #2a2536; margin-bottom: 8px; }
+  .abas-pt .menu-cab { padding: 6px 18px 14px; color: var(--tk-tx3); font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid var(--tk-bd3); margin-bottom: 8px; }
   .abas-pt .menu-cab b { display: block; color: #fff; font-size: 15px; letter-spacing: .04em; margin-top: 3px; }
   .abas-pt button {
     display: flex; align-items: center; gap: 12px; text-align: left;
     background: none; border: none; border-left: 3px solid transparent;
     padding: 12px 18px; margin-right: 8px; border-radius: 0 8px 8px 0;
-    color: #a9a4b5; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    color: var(--tk-tx3); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
     transition: background .12s ease, color .12s ease;
   }
   .abas-pt button:hover { background: rgba(255,255,255,.06); color: #fff; }
   .abas-pt button.ativa { color: #fff; border-left-color: var(--roxo); background: rgba(124,58,237,.18); }
-  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid #2a2536; color: #a9a4b5; font-size: 13.5px; font-weight: 700; }
+  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid var(--tk-bd3); color: var(--tk-tx3); font-size: 13.5px; font-weight: 700; }
   .menu-tema span { display: inline-flex; align-items: center; gap: 9px; }
-  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid #3a3546; background: #24202e; position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
-  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #8a8695; transition: transform .2s, background .2s; }
+  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid var(--tk-swBd); background: var(--tk-swBg); position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
+  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--tk-tx4); transition: transform .2s, background .2s; }
   .menu-tema .sw[aria-checked="true"] { background: var(--roxo); border-color: var(--roxo); }
   .menu-tema .sw[aria-checked="true"] .sw-bola { transform: translateX(20px); background: #fff; }
   /* calendário da agenda */
   #calAgenda .cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  #calAgenda .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, #a9a4b5); text-transform: uppercase; padding: 4px 0; text-align: center; }
-  #calAgenda .cal-dia { position: relative; border: 1px solid var(--linha, #2a2536); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
+  #calAgenda .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, var(--tk-tx3)); text-transform: uppercase; padding: 4px 0; text-align: center; }
+  #calAgenda .cal-dia { position: relative; border: 1px solid var(--linha, var(--tk-bd3)); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
   /* receita da foto: o professor precisa saber o que subir SEM perguntar */
   .fotoguia { background: rgba(124,58,237,.10); border-left: 3px solid var(--roxo); border-radius: 10px; padding: 11px 14px; margin: 0 0 12px; font-size: 12.5px; line-height: 1.7; }
   .fotoguia .fgt { display: block; font-weight: 800; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 5px; opacity: .8; }
@@ -97,7 +164,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* No computador o menu fica sempre à vista: cada aba vira 1 clique só
      (no celular continua sendo a gaveta do ☰ com a barra de baixo). */
   @media (min-width: 1100px) {
-    .abas-pt { transform: none; transition: none; border-right: 1px solid #2a2536; }
+    .abas-pt { transform: none; transition: none; border-right: 1px solid var(--tk-bd3); }
     body.menu-aberto .abas-pt { box-shadow: none; }
     .menu-fundo { display: none !important; }
     #navPt { display: none; }
@@ -220,7 +287,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   /* ---------- Início do desenho novo (canvas "Painel do professor") ----------
      Topo roxo com o dia, a próxima sessão e o Resolver hoje. As cores e os
-     raios vêm do canvas: #7c3aed / #141218 / #26222f, raio 16-20. */
+     raios vêm do canvas: #7c3aed / var(--tk-sup) / var(--tk-bd), raio 16-20. */
   .dtopo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 20px; padding: 22px 26px; margin-bottom: 14px; color: #fff; }
   .dtopo .dlin { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
   .dtopo .ddata { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.72); }
@@ -243,14 +310,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* Resolver hoje */
   .dres { margin-bottom: 16px; }
   .dres .dtit { display: flex; align-items: baseline; gap: 9px; margin-bottom: 11px; }
-  .dres .dtit b { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; color: #8a8695; text-transform: uppercase; }
-  .dres .dtit span { font-size: 12px; font-weight: 700; color: #6e6a78; }
+  .dres .dtit b { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; color: var(--tk-tx4); text-transform: uppercase; }
+  .dres .dtit span { font-size: 12px; font-weight: 700; color: var(--tk-tx5); }
   .dres .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-  .dcard { background: #141218; border: 1px solid #26222f; border-radius: 16px; padding: 15px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .dcard { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 16px; padding: 15px 16px; display: flex; flex-direction: column; gap: 12px; }
   .dcard .dsel { display: flex; align-items: center; gap: 8px; font-size: 9.5px; font-weight: 800; letter-spacing: .18em; }
   .dcard .dsel i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: block; }
-  .dcard .dqu { font-size: 15px; font-weight: 800; color: #f2f0f6; }
-  .dcard .dpq { font-size: 12.5px; font-weight: 600; color: #8a8695; margin-top: 3px; }
+  .dcard .dqu { font-size: 15px; font-weight: 800; color: var(--tk-tx); }
+  .dcard .dpq { font-size: 12.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 3px; }
   .dcard .dacs { display: flex; gap: 7px; margin-top: auto; }
   .dcard .dacs .btn { flex: 1; justify-content: center; height: 40px; border-radius: 11px; font-size: 12.5px; }
   .dcard .dacs .btn.ic { flex: none; width: 40px; padding: 0; }
@@ -260,31 +327,31 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dcol2 { display: grid; gap: 12px; }
   @media (max-width: 980px) { .dcols { grid-template-columns: 1fr; } }
   .dnota { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 16px;
-           border: 1px dashed #322e3d; color: #8a8695; font-size: 12.5px; font-weight: 600; }
-  .dnota b { color: #a78bfa; }
+           border: 1px dashed var(--tk-bd4); color: var(--tk-tx4); font-size: 12.5px; font-weight: 600; }
+  .dnota b { color: var(--tk-roxoTx2); }
   .dnota .btn { margin-left: auto; }
   /* linha do tempo do dia (tela 1a) */
-  .dlinha { display: flex; align-items: center; gap: 14px; padding: 11px 4px; border-top: 1px solid #1d1a24; }
+  .dlinha { display: flex; align-items: center; gap: 14px; padding: 11px 4px; border-top: 1px solid var(--tk-bd2); }
   .dlinha:first-child { border-top: 0; }
-  .dlinha .dhh { width: 52px; flex: none; font-size: 12.5px; font-weight: 800; color: #8a8695; font-variant-numeric: tabular-nums; }
-  .dlinha .dnm { font-size: 14px; font-weight: 800; color: #f2f0f6; }
-  .dlinha .dfi { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
+  .dlinha .dhh { width: 52px; flex: none; font-size: 12.5px; font-weight: 800; color: var(--tk-tx4); font-variant-numeric: tabular-nums; }
+  .dlinha .dnm { font-size: 14px; font-weight: 800; color: var(--tk-tx); }
+  .dlinha .dfi { font-size: 12px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
   .dlinha .dac { margin-left: auto; display: flex; gap: 7px; align-items: center; }
   .dlinha.feita { opacity: .5; }
-  .dlinha.faltou .dhh { color: #f87171; }
+  .dlinha.faltou .dhh { color: var(--tk-erro); }
   .dlinha.prox { background: rgba(124,58,237,.18); border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; padding-left: 12px; }
-  .dlinha.prox .dfi { color: #c4b5fd; }
-  .dlinha.vaga .dnm { color: #a9a4b5; }
-  .dok { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: #4ade80; }
+  .dlinha.prox .dfi { color: var(--tk-roxoTx); }
+  .dlinha.vaga .dnm { color: var(--tk-tx3); }
+  .dok { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: var(--tk-ok); }
   /* card do mês, na coluna da direita */
   .dmes .dtop { display: flex; align-items: baseline; gap: 8px; }
   .dmes .dtop b { font-size: 17px; font-weight: 900; letter-spacing: -.02em; }
-  .dmes .dtop span { font-size: 12px; font-weight: 700; color: #8a8695; }
+  .dmes .dtop span { font-size: 12px; font-weight: 700; color: var(--tk-tx4); }
   .dmes .dfat { font-size: 34px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 6px; }
   .dmes .dkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin-top: 16px; }
-  .dmes .dkpis .dk { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: #8a8695; }
+  .dmes .dkpis .dk { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: var(--tk-tx4); }
   .dmes .dkpis .dv { font-size: 22px; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
-  .dmes .dkpis .ds { font-size: 11.5px; font-weight: 700; color: #6e6a78; margin-top: 1px; }
+  .dmes .dkpis .ds { font-size: 11.5px; font-weight: 700; color: var(--tk-tx5); margin-top: 1px; }
   /* ---------- Ficha do aluno na tela 2b ---------- */
   .pftopo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 20px; padding: 18px 22px 16px; color: #fff; margin-bottom: 12px; }
   .pftopo .pfvolta { display: flex; align-items: center; margin-bottom: 12px; }
@@ -304,46 +371,46 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfprox { margin-top: 12px; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.85); }
   /* Resumo: 4 números + a semana + a ficha atual */
   .pfkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-  .pfkpi { background: #141218; border: 1px solid #26222f; border-radius: 16px; padding: 15px 17px; }
-  .pfkpi .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: #8a8695; }
+  .pfkpi { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 16px; padding: 15px 17px; }
+  .pfkpi .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: var(--tk-tx4); }
   .pfkpi .v { font-size: 28px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 3px; }
-  .pfkpi .v small { font-size: 13px; font-weight: 800; color: #8a8695; }
+  .pfkpi .v small { font-size: 13px; font-weight: 800; color: var(--tk-tx4); }
   .pfkpi .s { font-size: 12px; font-weight: 700; margin-top: 3px; }
   .pfcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 12px; align-items: start; }
   @media (max-width: 900px) { .pfcols { grid-template-columns: 1fr; } }
-  .pfbox { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 16px 18px; }
+  .pfbox { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 16px 18px; }
   .pfbox h3 { font-size: 16px; font-weight: 900; letter-spacing: -.02em; margin: 0 0 10px; }
   .pfsem { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-  .pfsem .d { font-size: 10px; font-weight: 800; color: #6e6a78; }
-  .pfsem .c { height: 38px; border-radius: 11px; background: #1d1a24; border: 1px solid #26222f; color: #8a8695;
+  .pfsem .d { font-size: 10px; font-weight: 800; color: var(--tk-tx5); }
+  .pfsem .c { height: 38px; border-radius: 11px; background: var(--tk-bd2); border: 1px solid var(--tk-bd); color: var(--tk-tx4);
               display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; margin-top: 5px; }
-  .pfsem .c.tem { background: #241a3d; border-color: rgba(124,58,237,.5); color: #c4b5fd; }
+  .pfsem .c.tem { background: var(--tk-roxoFraco); border-color: rgba(124,58,237,.5); color: var(--tk-roxoTx); }
   .pfsem .c.hoje { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   /* ---------- Alunos na tela 2a ---------- */
   .altopo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-  .altopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #8a8695; }
+  .altopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); }
   .altopo .alh { font-size: 24px; font-weight: 900; letter-spacing: -.03em; margin-top: 2px; }
   .altopo .dbt { margin-left: auto; }
   /* no fundo escuro da pagina o botao principal e ROXO (no topo roxo ele e branco) */
   .altopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
-  .altopo .dbt.sec { background: #141218; border: 1px solid #2a2536; color: #cfcbdb; }
+  .altopo .dbt.sec { background: var(--tk-sup); border: 1px solid var(--tk-bd3); color: var(--tk-tx2); }
   .albusca { margin-bottom: 12px; }
-  .albusca input { width: 100%; height: 46px; border-radius: 14px; background: #141218; border: 1px solid #26222f;
-                   color: #f2f0f6; font-family: inherit; font-size: 14px; padding: 0 16px; }
-  .altab { background: #141218; border: 1px solid #26222f; border-radius: 18px; overflow: hidden; }
+  .albusca input { width: 100%; height: 46px; border-radius: 14px; background: var(--tk-sup); border: 1px solid var(--tk-bd);
+                   color: var(--tk-tx); font-family: inherit; font-size: 14px; padding: 0 16px; }
+  .altab { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; }
   .alcab, .alrow { display: grid; grid-template-columns: 2fr 1.4fr 1.1fr 1.2fr 1.2fr auto; gap: 14px; align-items: center; padding: 12px 18px; }
-  .alcab { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #6e6a78; border-bottom: 1px solid #1d1a24; }
-  .alrow { border-top: 1px solid #1d1a24; }
+  .alcab { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--tk-tx5); border-bottom: 1px solid var(--tk-bd2); }
+  .alrow { border-top: 1px solid var(--tk-bd2); }
   .alrow:first-child { border-top: 0; }
   .alrow.devendo { background: rgba(124,58,237,.10); }
   .alrow .alq { display: flex; align-items: center; gap: 11px; min-width: 0; }
-  .alrow .alav, .pgatrlin .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: #241a3d; color: #c4b5fd;
+  .alrow .alav, .pgatrlin .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
-  .alrow .alnm, .pgatrlin .alnm { font-size: 14.5px; font-weight: 800; color: #f2f0f6; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
-  .alrow .alsub, .pgatrlin .alsub { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
-  .alrow .alp1 { font-size: 13px; font-weight: 700; color: #cfcbdb; }
+  .alrow .alnm, .pgatrlin .alnm { font-size: 14.5px; font-weight: 800; color: var(--tk-tx); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
+  .alrow .alsub, .pgatrlin .alsub { font-size: 12px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
+  .alrow .alp1 { font-size: 13px; font-weight: 700; color: var(--tk-tx2); }
   .alrow .alp2 { font-size: 12px; font-weight: 700; margin-top: 2px; }
-  .alrow .albar { height: 5px; border-radius: 99px; background: #221f2b; margin-top: 5px; overflow: hidden; }
+  .alrow .albar { height: 5px; border-radius: 99px; background: var(--tk-trilha); margin-top: 5px; overflow: hidden; }
   .alrow .albar i { display: block; height: 100%; border-radius: 99px; }
   .alrow .alac { display: flex; gap: 6px; justify-content: flex-end; }
   .alsel { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 2px 7px; border-radius: 6px; margin-left: 7px; vertical-align: 2px; }
@@ -357,8 +424,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
            overflow: hidden; margin-bottom: 14px; }
   .pgatrcab { display: flex; align-items: center; gap: 10px; padding: 11px 18px; background: rgba(248,113,113,.10);
               border-bottom: 1px solid rgba(248,113,113,.22); }
-  .pgatrcab i { width: 8px; height: 8px; flex: none; border-radius: 99px; background: #f87171; }
-  .pgatrcab b { font-size: 13px; font-weight: 900; color: #fca5a5; letter-spacing: .02em; }
+  .pgatrcab i { width: 8px; height: 8px; flex: none; border-radius: 99px; background: var(--tk-erro); }
+  .pgatrcab b { font-size: 13px; font-weight: 900; color: var(--tk-erro2); letter-spacing: .02em; }
   .pgatrcab span { font-size: 12px; font-weight: 700; color: #f8717199; }
   .pgatrlin { display: flex; align-items: center; gap: 11px; padding: 12px 18px; border-top: 1px solid rgba(248,113,113,.16); }
   .pgatrlin:first-of-type { border-top: 0; }
@@ -368,38 +435,42 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     .pgatrlin .dac { width: 100%; justify-content: flex-start; }
   }
   /* ---------- Comunidade na tela 4d ---------- */
-  .fdpost { padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: #121016; border: 1px solid #26222f; }
+  .fdpost { padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: var(--tk-sup2); border: 1px solid var(--tk-bd); }
   .fdpost.off { opacity: .55; }
   .fdcab { display: flex; align-items: center; gap: 11px; }
-  .fdtxt { font-size: 14px; font-weight: 700; line-height: 1.5; margin-top: 10px; white-space: pre-wrap; color: #f2f0f6; }
+  .fdtxt { font-size: 14px; font-weight: 700; line-height: 1.5; margin-top: 10px; white-space: pre-wrap; color: var(--tk-tx); }
   /* ---------- Configurações na tela 4a ---------- */
   .cfgnuvem { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 12px;
-              background: #141218; border: 1px solid #26222f; font-size: 12.5px; font-weight: 700; color: #8a8695; }
-  .cfgnuvem.on { color: #4ade80; }
-  .cfgnuvem::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: #6e6a78; }
-  .cfgnuvem.on::before { background: #4ade80; }
+              background: var(--tk-sup); border: 1px solid var(--tk-bd); font-size: 12.5px; font-weight: 700; color: var(--tk-tx4); }
+  .cfgnuvem.on { color: var(--tk-ok); }
+  .cfgnuvem::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: var(--tk-tx5); }
+  .cfgnuvem.on::before { background: var(--tk-ok); }
   .cfgcard { display: flex; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 12px; border-radius: 18px;
-             background: #141218; border: 1px solid #26222f; flex-wrap: wrap; }
+             background: var(--tk-sup); border: 1px solid var(--tk-bd); flex-wrap: wrap; }
   .cfgcard .cfgic { width: 38px; height: 38px; flex: none; border-radius: 12px; display: flex; align-items: center;
                     justify-content: center; font-size: 16px; font-weight: 900; }
   .cfgcard .cfgt { font-size: 15px; font-weight: 900; }
-  .cfgcard .cfgs { font-size: 12.5px; font-weight: 600; color: #8a8695; margin-top: 2px; }
+  .cfgcard .cfgs { font-size: 12.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 2px; }
   .cfgselo { display: inline-block; margin-left: 9px; padding: 3px 8px; border-radius: 7px; font-size: 9.5px;
-             font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: #241a3d; color: #c4b5fd; vertical-align: 2px; }
-  .cfgselo.on { background: rgba(74,222,128,.14); color: #4ade80; }
+             font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--tk-roxoFraco); color: var(--tk-roxoTx); vertical-align: 2px; }
+  .cfgselo.on { background: rgba(74,222,128,.14); color: var(--tk-ok); }
   .pfbox.pq { padding: 12px 14px; }
   .cfgv { font-size: 13.5px; font-weight: 800; margin-top: 4px; }
-  .cfgv.on { color: #4ade80; }
-  .cfgsw { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 4px 18px; margin-bottom: 12px; }
+  .cfgv.on { color: var(--tk-ok); }
+  .cfgsw { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 4px 18px; margin-bottom: 12px; }
   .cfgln { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0;
-           padding: 13px 0; border-top: 1px solid #1d1a24; font-size: 13.5px; font-weight: 700; }
+           padding: 13px 0; border-top: 1px solid var(--tk-bd2); font-size: 13.5px; font-weight: 700; }
   .cfgln:first-child { border-top: 0; }
   input[type="checkbox"].sw2 { appearance: none; -webkit-appearance: none; width: 46px; height: 26px; flex: none; border-radius: 99px;
-         background: #24202e; border: 1px solid #3a3546; position: relative; cursor: pointer; margin: 0; }
+         background: var(--tk-swBg); border: 1px solid var(--tk-swBd); position: relative; cursor: pointer; margin: 0; }
   input[type="checkbox"].sw2::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 99px;
-                background: #6e6a78; transition: transform .15s, background .15s; }
+                background: var(--tk-tx5); transition: transform .15s, background .15s; }
   input[type="checkbox"].sw2:checked { background: var(--roxo, #7c3aed); border-color: var(--roxo, #7c3aed); }
   input[type="checkbox"].sw2:checked::after { transform: translateX(20px); background: #fff; }
+  /* o apps.css tem html[data-tema="claro"] input[type="checkbox"]{background:none;border:none},
+     que e MAIS forte que a classe: sem esta regra o interruptor sumia no modo claro */
+  html[data-tema="claro"] input[type="checkbox"].sw2 { background: var(--tk-swBg); border: 1px solid var(--tk-swBd); }
+  html[data-tema="claro"] input[type="checkbox"].sw2:checked { background: var(--roxo); border-color: var(--roxo); }
   /* ---------- Relatórios na tela 4c ---------- */
   .rel3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
   @media (max-width: 900px) { .rel3 { grid-template-columns: 1fr; } }
@@ -408,192 +479,192 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* ---------- Chat na tela 3c ---------- */
   .chpanel { display: grid; grid-template-columns: 280px 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
   @media (max-width: 900px) { .chpanel { grid-template-columns: 1fr; } }
-  .chlado { background: #141218; border: 1px solid #26222f; border-radius: 18px; overflow: hidden; padding-bottom: 6px; }
+  .chlado { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; padding-bottom: 6px; }
   .chcab { display: flex; align-items: center; gap: 10px; padding: 15px 16px 10px; }
   .chcab b { font-size: 17px; font-weight: 900; }
   .chbusca { padding: 0 12px 10px; }
   .chbusca input { width: 100%; height: 40px; }
   .chn { display: inline-flex; align-items: center; justify-content: center; min-width: 19px; height: 19px;
          padding: 0 6px; border-radius: 99px; background: #7c3aed; color: #fff; font-size: 11px; font-weight: 800; margin-top: 4px; }
-  .chconv { background: #141218; border: 1px solid #26222f; border-radius: 18px; display: flex; flex-direction: column;
+  .chconv { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; display: flex; flex-direction: column;
             min-height: 460px; overflow: hidden; }
-  .chtopo { display: flex; align-items: center; gap: 13px; padding: 14px 18px; border-bottom: 1px solid #1d1a24; flex-wrap: wrap; }
-  .chchip { padding: 7px 12px; border-radius: 10px; background: #1b1822; border: 1px solid #2a2536;
-            font-size: 12px; font-weight: 700; color: #cfcbdb; }
+  .chtopo { display: flex; align-items: center; gap: 13px; padding: 14px 18px; border-bottom: 1px solid var(--tk-bd2); flex-wrap: wrap; }
+  .chchip { padding: 7px 12px; border-radius: 10px; background: var(--tk-sup3); border: 1px solid var(--tk-bd3);
+            font-size: 12px; font-weight: 700; color: var(--tk-tx2); }
   #chatMsgs { flex: 1; overflow-y: auto; max-height: 420px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
   .chdia { text-align: center; margin: 4px 0; }
-  .chdia span { display: inline-block; padding: 4px 12px; border-radius: 99px; background: #1b1822;
-                border: 1px solid #2a2536; font-size: 10px; font-weight: 800; letter-spacing: .16em; color: #8a8695; }
+  .chdia span { display: inline-block; padding: 4px 12px; border-radius: 99px; background: var(--tk-sup3);
+                border: 1px solid var(--tk-bd3); font-size: 10px; font-weight: 800; letter-spacing: .16em; color: var(--tk-tx4); }
   .chbolha { display: flex; align-items: flex-end; gap: 8px; max-width: 78%; }
   .chbolha.minha { align-self: flex-end; flex-direction: row-reverse; }
-  .chbolha .cht { padding: 11px 15px; border-radius: 16px; background: #1b1822; border: 1px solid #2a2536;
-                  font-size: 13.5px; font-weight: 600; line-height: 1.5; color: #f2f0f6; }
+  .chbolha .cht { padding: 11px 15px; border-radius: 16px; background: var(--tk-sup3); border: 1px solid var(--tk-bd3);
+                  font-size: 13.5px; font-weight: 600; line-height: 1.5; color: var(--tk-tx); }
   .chbolha.minha .cht { background: #7c3aed; border-color: #7c3aed; color: #fff; }
-  .chbolha .chm { font-size: 10.5px; font-weight: 700; color: #6e6a78; margin-top: 4px; }
+  .chbolha .chm { font-size: 10.5px; font-weight: 700; color: var(--tk-tx5); margin-top: 4px; }
   .chbolha.minha .chm { text-align: right; }
-  #chatEnvio { padding: 12px 16px 16px; border-top: 1px solid #1d1a24; }
+  #chatEnvio { padding: 12px 16px 16px; border-top: 1px solid var(--tk-bd2); }
   .chrapidas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .chrb { padding: 8px 13px; border-radius: 10px; background: #1b1822; border: 1px solid #2a2536; color: #cfcbdb;
+  .chrb { padding: 8px 13px; border-radius: 10px; background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2);
           font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .chrb:hover { border-color: var(--roxo, #7c3aed); }
   /* ---------- Questionários na tela 3b ---------- */
   .qspanel { display: grid; grid-template-columns: 268px 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
   @media (max-width: 900px) { .qspanel { grid-template-columns: 1fr; } }
   .qslista:empty { display: none; }
-  .qslista { background: #141218; border: 1px solid #26222f; border-radius: 18px; overflow: hidden; padding-bottom: 6px; }
+  .qslista { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; padding-bottom: 6px; }
   .qsgrupo { display: flex; align-items: center; gap: 8px; padding: 12px 16px 6px; font-size: 9.5px; font-weight: 800;
-             letter-spacing: .18em; text-transform: uppercase; color: #6e6a78; }
-  .qsn { min-width: 20px; height: 19px; padding: 0 6px; border-radius: 99px; background: #241a3d; color: #c4b5fd;
+             letter-spacing: .18em; text-transform: uppercase; color: var(--tk-tx5); }
+  .qsn { min-width: 20px; height: 19px; padding: 0 6px; border-radius: 99px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
          font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center;
          letter-spacing: 0; margin-left: auto; }
-  .qsn.erro { background: rgba(248,113,113,.18); color: #f87171; }
-  .qsn.ok { background: rgba(74,222,128,.14); color: #4ade80; }
+  .qsn.erro { background: rgba(248,113,113,.18); color: var(--tk-erro); }
+  .qsn.ok { background: rgba(74,222,128,.14); color: var(--tk-ok); }
   .qsit { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; padding: 10px 16px;
           background: none; border: 0; border-left: 3px solid transparent; cursor: pointer; font-family: inherit; color: inherit; }
   .qsit:hover { background: rgba(124,58,237,.08); }
   .qsit.on { background: rgba(124,58,237,.18); border-left-color: #7c3aed; }
-  .qsav { width: 34px; height: 34px; flex: none; border-radius: 11px; background: #241a3d; color: #c4b5fd;
+  .qsav { width: 34px; height: 34px; flex: none; border-radius: 11px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
           display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; }
   .qsav.grande { width: 44px; height: 44px; border-radius: 14px; font-size: 14px; }
-  .qsnm { display: block; font-size: 13.5px; font-weight: 800; color: #f2f0f6; overflow: hidden;
+  .qsnm { display: block; font-size: 13.5px; font-weight: 800; color: var(--tk-tx); overflow: hidden;
           text-overflow: ellipsis; white-space: nowrap; }
-  .qssub { display: block; font-size: 11.5px; font-weight: 700; color: #8a8695; margin-top: 1px;
+  .qssub { display: block; font-size: 11.5px; font-weight: 700; color: var(--tk-tx4); margin-top: 1px;
            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .qssub.alerta { color: #f87171; }
-  .qsp { margin-left: auto; flex: none; font-size: 13px; font-weight: 800; color: #4ade80; }
+  .qssub.alerta { color: var(--tk-erro); }
+  .qsp { margin-left: auto; flex: none; font-size: 13px; font-weight: 800; color: var(--tk-ok); }
   .qscab { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; }
   .qsalerta { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 12px 15px; border-radius: 14px;
               background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.32); }
-  .qsalerta b { font-size: 12px; font-weight: 900; color: #fca5a5; letter-spacing: .02em; }
-  .qsalerta span { font-size: 12.5px; font-weight: 600; color: #e6e2f2; }
-  .qstexto { padding: 14px 16px; border-radius: 14px; background: #121016; border: 1px solid #26222f;
-             font-size: 13.5px; font-weight: 600; line-height: 1.55; color: #cfcbdb; }
+  .qsalerta b { font-size: 12px; font-weight: 900; color: var(--tk-erro2); letter-spacing: .02em; }
+  .qsalerta span { font-size: 12.5px; font-weight: 600; color: var(--tk-tx1); }
+  .qstexto { padding: 14px 16px; border-radius: 14px; background: var(--tk-sup2); border: 1px solid var(--tk-bd);
+             font-size: 13.5px; font-weight: 600; line-height: 1.55; color: var(--tk-tx2); }
   /* ---------- Avaliação física na tela 3a ---------- */
   .avtiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
   @media (max-width: 720px) { .avtiles { grid-template-columns: repeat(2, 1fr); } }
-  .avt { background: #121016; border: 1px solid #26222f; border-radius: 14px; padding: 12px 13px; }
-  .avt .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #8a8695; }
+  .avt { background: var(--tk-sup2); border: 1px solid var(--tk-bd); border-radius: 14px; padding: 12px 13px; }
+  .avt .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--tk-tx4); }
   .avt .v { font-size: 25px; font-weight: 900; letter-spacing: -.03em; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .avt .v small { font-size: 12px; font-weight: 700; color: #8a8695; margin-left: 3px; }
+  .avt .v small { font-size: 12px; font-weight: 700; color: var(--tk-tx4); margin-left: 3px; }
   .avt .d { font-size: 11.5px; font-weight: 800; margin-top: 4px; }
   .avlin { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
-  .avlin .avr { flex: none; width: 88px; font-size: 12.5px; font-weight: 700; color: #cfcbdb; }
-  .avlin .avb { flex: 1; height: 9px; border-radius: 99px; background: #221f2b; overflow: hidden; }
+  .avlin .avr { flex: none; width: 88px; font-size: 12.5px; font-weight: 700; color: var(--tk-tx2); }
+  .avlin .avb { flex: 1; height: 9px; border-radius: 99px; background: var(--tk-trilha); overflow: hidden; }
   .avlin .avb i { display: block; height: 100%; border-radius: 99px; }
   .avlin .avv { flex: none; width: 118px; text-align: right; font-size: 12px; font-weight: 800;
-                color: #cfcbdb; font-variant-numeric: tabular-nums; }
+                color: var(--tk-tx2); font-variant-numeric: tabular-nums; }
   .avkv { display: flex; align-items: center; justify-content: space-between; padding: 8px 0;
-          border-top: 1px solid #1d1a24; font-size: 13px; font-weight: 700; }
-  .avkv span { color: #a9a4b5; }
+          border-top: 1px solid var(--tk-bd2); font-size: 13px; font-weight: 700; }
+  .avkv span { color: var(--tk-tx3); }
   .avkv b { font-variant-numeric: tabular-nums; }
   /* ---------- Montar treino na tela 2d ---------- */
   .tdtopo { display: flex; align-items: center; gap: 14px; padding: 16px 20px; margin-bottom: 14px; border-radius: 18px;
-            background: #141218; border: 1px solid #26222f; flex-wrap: wrap; }
-  .tdtopo .tdav { width: 44px; height: 44px; flex: none; border-radius: 14px; background: #241a3d; color: #c4b5fd;
+            background: var(--tk-sup); border: 1px solid var(--tk-bd); flex-wrap: wrap; }
+  .tdtopo .tdav { width: 44px; height: 44px; flex: none; border-radius: 14px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                   display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; }
-  .tdtopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #8a8695; }
+  .tdtopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); }
   .tdtopo .alh { font-size: 21px; font-weight: 900; letter-spacing: -.03em; margin-top: 1px; }
   .tdtopo .tdacoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
   .tdtopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
-  .tdtopo .dbt.sec { background: #1b1822; border: 1px solid #2a2536; color: #cfcbdb; }
+  .tdtopo .dbt.sec { background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2); }
   .tdcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 1000px) { .tdcols { grid-template-columns: 1fr; } }
-  .tdrot { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #8a8695; margin-bottom: 8px; }
-  .tdrot small { letter-spacing: 0; text-transform: none; font-size: 11.5px; font-weight: 600; color: #6e6a78; margin-left: 8px; }
+  .tdrot { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); margin-bottom: 8px; }
+  .tdrot small { letter-spacing: 0; text-transform: none; font-size: 11.5px; font-weight: 600; color: var(--tk-tx5); margin-left: 8px; }
   .tdcasc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
   @media (max-width: 620px) { .tdcasc { grid-template-columns: 1fr; } }
   .tdcasc label { display: block; margin: 0; font-size: 9.5px; font-weight: 800; letter-spacing: .18em;
-                  text-transform: uppercase; color: #6e6a78; }
+                  text-transform: uppercase; color: var(--tk-tx5); }
   .tdcasc select { width: 100%; margin-top: 5px; height: 44px; }
   .tdbusca { position: relative; margin-bottom: 10px; }
   .tdbusca input { width: 100%; height: 44px; padding-right: 96px; }
   .tdbusca .tdn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 10.5px;
-                  font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #6e6a78; pointer-events: none; }
+                  font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--tk-tx5); pointer-events: none; }
   .tdchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .tdchip { padding: 9px 14px; border-radius: 11px; background: #1b1822; border: 1px solid #2a2536; color: #cfcbdb;
+  .tdchip { padding: 9px 14px; border-radius: 11px; background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2);
             font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .tdchip:hover { border-color: var(--roxo, #7c3aed); }
   .tdchip.on { background: var(--roxo, #7c3aed); border-color: var(--roxo, #7c3aed); color: #fff; }
-  .tdchip.mais { border-style: dashed; color: #8a8695; }
-  .tdficha { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 14px 16px; }
+  .tdchip.mais { border-style: dashed; color: var(--tk-tx4); }
+  .tdficha { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 14px 16px; }
   .tdfcab { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
   .tdfcab .tdl { width: 34px; height: 34px; flex: none; border-radius: 11px; background: var(--roxo, #7c3aed); color: #fff;
                  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; }
   .tdfcab .tdn2 { font-size: 15px; font-weight: 800; }
-  .tdfcab .tds { font-size: 11.5px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
+  .tdfcab .tds { font-size: 11.5px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
   .tdex { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 13px;
-          background: #1b1822; border: 1px solid #2a2536; margin-bottom: 8px; }
-  .tdex .tdh { flex: none; color: #4b4855; font-size: 14px; cursor: default; }
-  .tdex .tdnm { font-size: 13.5px; font-weight: 800; color: #f2f0f6; }
-  .tdex .tdsub { font-size: 11.5px; font-weight: 600; color: #8a8695; margin-top: 2px; display: flex;
+          background: var(--tk-sup3); border: 1px solid var(--tk-bd3); margin-bottom: 8px; }
+  .tdex .tdh { flex: none; color: var(--tk-tx6); font-size: 14px; cursor: default; }
+  .tdex .tdnm { font-size: 13.5px; font-weight: 800; color: var(--tk-tx); }
+  .tdex .tdsub { font-size: 11.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 2px; display: flex;
                  flex-wrap: wrap; align-items: center; gap: 4px; }
-  .tdex .tdsub button { background: none; border: 0; padding: 0; font: inherit; color: #a78bfa; cursor: pointer; }
+  .tdex .tdsub button { background: none; border: 0; padding: 0; font: inherit; color: var(--tk-roxoTx2); cursor: pointer; }
   .tdex .tdsub button:hover { text-decoration: underline; }
   .tdex .tdac { margin-left: auto; display: flex; gap: 4px; flex: none; }
-  .tdex .tdac button { background: none; border: 0; color: #6e6a78; font-size: 13px; cursor: pointer; padding: 3px 5px;
+  .tdex .tdac button { background: none; border: 0; color: var(--tk-tx5); font-size: 13px; cursor: pointer; padding: 3px 5px;
                        border-radius: 7px; font-family: inherit; }
-  .tdex .tdac button:hover { background: #241a3d; color: #c4b5fd; }
+  .tdex .tdac button:hover { background: var(--tk-roxoFraco); color: var(--tk-roxoTx); }
   .tecchip3 { height: 21px; padding: 0 4px; margin-left: 7px; border-radius: 6px; font-size: 9.5px; font-weight: 800;
-              background: #17151d; border: 1px solid #2a2536; color: #6e6a78; width: auto; vertical-align: 2px; }
-  .tecchip3.on { background: rgba(251,146,60,.18); border-color: rgba(251,146,60,.32); color: #fb923c; }
+              background: var(--tk-sup4); border: 1px solid var(--tk-bd3); color: var(--tk-tx5); width: auto; vertical-align: 2px; }
+  .tecchip3.on { background: rgba(251,146,60,.18); border-color: rgba(251,146,60,.32); color: var(--tk-aten); }
   .tecchip2 { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 2px 7px;
-              border-radius: 6px; background: rgba(251,146,60,.18); color: #fb923c; margin-left: 7px; vertical-align: 1px; }
-  .tdvazio { padding: 12px; border: 1px dashed #2a2536; border-radius: 13px; text-align: center;
-             font-size: 12.5px; font-weight: 700; color: #6e6a78; }
+              border-radius: 6px; background: rgba(251,146,60,.18); color: var(--tk-aten); margin-left: 7px; vertical-align: 1px; }
+  .tdvazio { padding: 12px; border: 1px dashed var(--tk-bd3); border-radius: 13px; text-align: center;
+             font-size: 12.5px; font-weight: 700; color: var(--tk-tx5); }
   .tdnota { display: flex; align-items: center; gap: 10px; padding: 13px 15px; margin-top: 12px; border-radius: 14px;
             background: rgba(124,58,237,.18); border: 1px solid rgba(124,58,237,.38); font-size: 12.5px;
-            font-weight: 600; color: #e6e2f2; }
-  .tdp2 { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #2a2536; }
+            font-weight: 600; color: var(--tk-tx1); }
+  .tdp2 { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--tk-bd3); }
   .tdp2cab { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .tdp2cab .tdb { flex: none; padding: 5px 10px; border-radius: 9px; background: #241a3d; color: #c4b5fd;
+  .tdp2cab .tdb { flex: none; padding: 5px 10px; border-radius: 9px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                   font-size: 12px; font-weight: 900; }
   /* ---------- Agenda na tela 2c: a semana em grade ---------- */
   .agfaixa { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 14px; border-radius: 16px;
              background: rgba(124,58,237,.20); border: 1px solid rgba(124,58,237,.42); flex-wrap: wrap; }
   .agfaixa .agn { width: 26px; height: 26px; flex: none; border-radius: 9px; background: #7c3aed; color: #fff;
                   display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; }
-  .agfaixa .agt { font-size: 13.5px; font-weight: 700; color: #e6e2f2; min-width: 0; }
+  .agfaixa .agt { font-size: 13.5px; font-weight: 700; color: var(--tk-tx1); min-width: 0; }
   .agfaixa .agb { margin-left: auto; display: flex; gap: 8px; }
-  .agrol { overflow-x: auto; background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 12px; }
+  .agrol { overflow-x: auto; background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 12px; }
   .agsem { display: grid; gap: 6px; min-width: 780px; align-items: stretch; }
-  .agsem .agh { text-align: center; padding: 9px 4px; border-radius: 12px; background: #1b1822; border: 1px solid #26222f; }
-  .agsem .agh.hoje { background: #241a3d; border-color: rgba(124,58,237,.55); }
-  .agsem .agh .agd { font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #8a8695; }
-  .agsem .agh.hoje .agd { color: #c4b5fd; }
+  .agsem .agh { text-align: center; padding: 9px 4px; border-radius: 12px; background: var(--tk-sup3); border: 1px solid var(--tk-bd); }
+  .agsem .agh.hoje { background: var(--tk-roxoFraco); border-color: rgba(124,58,237,.55); }
+  .agsem .agh .agd { font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--tk-tx4); }
+  .agsem .agh.hoje .agd { color: var(--tk-roxoTx); }
   .agsem .agh .agdn { font-size: 17px; font-weight: 900; letter-spacing: -.02em; margin-top: 1px; }
-  .agsem .aghr { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: #6e6a78; display: flex;
+  .agsem .aghr { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: var(--tk-tx5); display: flex;
                  align-items: center; justify-content: flex-end; padding-right: 8px; }
   .agc { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; cursor: pointer;
-         background: #1b1822; border: 1px solid #2a2536; color: inherit; font-family: inherit; min-height: 46px; }
-  .agc .agnm { font-size: 12.5px; font-weight: 800; color: #f2f0f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .agc .ages { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #a78bfa; margin-top: 2px; }
+         background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: inherit; font-family: inherit; min-height: 46px; }
+  .agc .agnm { font-size: 12.5px; font-weight: 800; color: var(--tk-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agc .ages { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--tk-roxoTx2); margin-top: 2px; }
   .agc.agora { background: #7c3aed; border-color: #7c3aed; }
   .agc.agora .ages { color: rgba(255,255,255,.86); }
-  .agc.feita { background: #17151d; border-color: #221f2b; }
-  .agc.feita .agnm { color: #6e6a78; }
-  .agc.feita .ages { color: #4ade80; }
+  .agc.feita { background: var(--tk-sup4); border-color: var(--tk-trilha); }
+  .agc.feita .agnm { color: var(--tk-tx5); }
+  .agc.feita .ages { color: var(--tk-ok); }
   .agc.faltou { background: rgba(248,113,113,.14); border-color: rgba(248,113,113,.32); }
-  .agc.faltou .ages { color: #f87171; }
+  .agc.faltou .ages { color: var(--tk-erro); }
   .agc.pedido { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
-  .agc.pedido .ages { color: #fbbf24; }
-  .agc.dev .ages { color: #f87171; }
-  .agc.vazio { background: transparent; border-style: dashed; border-color: #221f2b; }
-  .agc.vazio .agmais { display: block; text-align: center; font-size: 15px; font-weight: 800; color: #322e3d; line-height: 28px; }
+  .agc.pedido .ages { color: var(--tk-aten2); }
+  .agc.dev .ages { color: var(--tk-erro); }
+  .agc.vazio { background: transparent; border-style: dashed; border-color: var(--tk-trilha); }
+  .agc.vazio .agmais { display: block; text-align: center; font-size: 15px; font-weight: 800; color: var(--tk-bd4); line-height: 28px; }
   .agc.vazio:hover .agmais { color: var(--roxo, #7c3aed); }
   .agc.vazio:hover { border-color: var(--roxo); border-style: solid; }
-  .agoff { border-radius: 14px; border: 1px dashed #221f2b; display: flex; align-items: center; justify-content: center; }
-  .agoff span { font-size: 10px; font-weight: 800; letter-spacing: .22em; color: #4b4855; writing-mode: vertical-rl; }
+  .agoff { border-radius: 14px; border: 1px dashed var(--tk-trilha); display: flex; align-items: center; justify-content: center; }
+  .agoff span { font-size: 10px; font-weight: 800; letter-spacing: .22em; color: var(--tk-tx6); writing-mode: vertical-rl; }
   /* radar de retenção com a linha do desenho */
-  .drad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid #1d1a24; }
+  .drad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--tk-bd2); }
   .drad:first-child { border-top: 0; }
-  .drad .dav2 { width: 34px; height: 34px; flex: none; border-radius: 11px; background: #241a3d; color: #c4b5fd;
+  .drad .dav2 { width: 34px; height: 34px; flex: none; border-radius: 11px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                 display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; }
   /* Placar do mês */
   .dplacar { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .dplacar .dbox { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: center; }
+  .dplacar .dbox { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: center; }
   .dplacar .dcol { display: grid; gap: 12px; }
   .dfat { font-size: 34px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-  .dbarra { height: 10px; border-radius: 99px; background: #26222f; overflow: hidden; margin: 12px 0 10px; }
+  .dbarra { height: 10px; border-radius: 99px; background: var(--tk-bd); overflow: hidden; margin: 12px 0 10px; }
   .dbarra i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
   @media (max-width: 900px) { .dplacar { grid-template-columns: 1fr; } }
   /* barra lateral: o grupo "menos usado" fica compacto */
@@ -614,8 +685,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <h1 id="tituloStudio">Meu Studio</h1>
     </div>
     <div class="busca-topo">
-      <input id="buscaAluno" placeholder="Buscar aluno…" autocomplete="off"
-        style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid transparent; background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px;">
+      <input id="buscaAluno" class="buscaTopoIn" placeholder="Buscar aluno…" autocomplete="off">
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
@@ -768,9 +838,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div id="wpfTipos" style="display: flex; gap: 6px; margin-top: 14px;"></div>
     <div id="wpfCfg" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;"></div>
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-      <div id="wpfFase" style="font-size: clamp(16px, 4vw, 30px); font-weight: 800; letter-spacing: .18em; color: #a9a4b5; text-transform: uppercase;">Pronto?</div>
+      <div id="wpfFase" style="font-size: clamp(16px, 4vw, 30px); font-weight: 800; letter-spacing: .18em; color: var(--tk-tx3); text-transform: uppercase;">Pronto?</div>
       <div id="wpfTempo" style="font-size: clamp(80px, 24vw, 220px); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1;">0:00</div>
-      <div id="wpfInfo" style="font-size: clamp(13px, 2.5vw, 20px); color: #a9a4b5; margin-top: 6px;"></div>
+      <div id="wpfInfo" style="font-size: clamp(13px, 2.5vw, 20px); color: var(--tk-tx3); margin-top: 6px;"></div>
     </div>
     <div style="display: flex; gap: 10px;">
       <button class="btn" id="wpfGo" style="flex: 2; padding: 16px; font-size: 16px;">Iniciar</button>
@@ -1482,7 +1552,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div id="scanContagem" style="position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.6); pointer-events: none;"></div>
       </div>
       <div style="background: #14121a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));">
-        <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase;"></div>
+        <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--tk-roxoTx2); text-transform: uppercase;"></div>
         <div id="scanCamFala" style="font-size: 17px; font-weight: 700; margin-top: 4px; min-height: 46px; color: #fff;"></div>
         <div id="scanCamTec" hidden style="font-size: 10.5px; color: #6f6a7d; margin-top: 2px; word-break: break-word;"></div>
         <div class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;">
@@ -1733,7 +1803,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;" id="persPre"></div>
       <div class="linha-flex" style="gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Ou uma cor só sua
-          <input type="color" id="cfgCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid #322e3d; border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+          <input type="color" id="cfgCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--tk-bd4); border-radius: 8px; background: #14121a; cursor: pointer;"></label>
         <button class="btn sec mini" id="cfgCorReset">Voltar ao roxo TORQUE</button>
       </div>
       <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--linha);">
@@ -1742,7 +1812,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;" id="persFundos"></div>
         <div class="linha-flex" style="gap: 12px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
           <label style="margin: 0; font-size: 12.5px;">Ou um tom só seu
-            <input type="color" id="cfgFundo" value="#0d0c10" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid #322e3d; border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+            <input type="color" id="cfgFundo" value="#0d0c10" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--tk-bd4); border-radius: 8px; background: #14121a; cursor: pointer;"></label>
           <button class="btn sec mini" id="cfgFundoReset">Voltar ao preto padrão</button>
         </div>
       </div>
@@ -1870,7 +1940,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
         <button class="btn" id="autoSalva">Salvar automação</button>
         <button class="btn sec mini" id="autoCancela">Cancelar</button>
-        <button class="btn sec mini" id="autoApaga" hidden style="margin-left: auto; border-color: #7f2b2b; color: #fca5a5;">Apagar</button>
+        <button class="btn sec mini" id="autoApaga" hidden style="margin-left: auto; border-color: #7f2b2b; color: var(--tk-erro2);">Apagar</button>
       </div>
     </div>
   </dialog>
@@ -2125,7 +2195,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-top: 14px;">
       <div class="linha-flex" style="gap: 10px;">
         <button class="btn" id="cfgSalva">Salvar configurações</button>
-        <span class="muted" style="font-size: 12.5px;">vale pro que você mudou nas três abas</span>
+        <span class="muted" style="font-size: 12.5px;">vale pro que você mudou nas outras abas</span>
         <span id="cfgStatus" class="muted" style="font-size: 12.5px;"></span>
       </div>
     </div>
@@ -2197,7 +2267,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <div class="card" id="cardConta" hidden style="margin-top: 20px;">
     <h2>Sua ilha no TORQUE ON</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
-    <div id="assinaturaInfo" hidden style="margin: 0 0 12px; padding: 9px 12px; border: 1px solid #322e3d; border-radius: 11px; font-size: 12.5px; line-height: 1.6;"></div>
+    <div id="assinaturaInfo" hidden style="margin: 0 0 12px; padding: 9px 12px; border: 1px solid var(--tk-bd4); border-radius: 11px; font-size: 12.5px; line-height: 1.6;"></div>
     <div class="linha-flex" style="margin-bottom: 10px; gap: 14px;">
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (os alunos falam com você por ele)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 170px; display: block; margin-top: 4px;"></label>
@@ -2219,7 +2289,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
     </div>
     <p class="muted" id="syncInfoPt" hidden style="margin: 10px 0 0; font-size: 12px;"></p>
-    <div style="margin-top: 12px; padding: 10px 12px; border: 1px dashed #322e3d; border-radius: 12px;">
+    <div style="margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--tk-bd4); border-radius: 12px;">
       <b style="font-size: 13px;">Backup dos dados</b>
       <p class="muted" id="bkAviso" style="margin: 6px 0 8px; font-size: 12px;"></p>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
@@ -2710,11 +2780,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var hoje = S.todayISO();
     var s2 = idxDe(st).sessDe(a.id).filter(function (x) { return x.data >= hoje && !x.feita && !x.faltou; })
       .sort(function (x, y) { return (x.data + (x.hora || "")) < (y.data + (y.hora || "")) ? -1 : 1; })[0];
-    if (!s2) return { txt: "Sem sessão marcada", cor: "#fb923c" };
+    if (!s2) return { txt: "Sem sessão marcada", cor: "var(--tk-aten)" };
     var dias = Math.round((new Date(s2.data + "T12:00") - new Date(hoje + "T12:00")) / 864e5);
     var DS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     var quando = dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : dias < 7 ? DS[new Date(s2.data + "T12:00").getDay()] : S.fmtData(s2.data);
-    return { txt: quando + (s2.hora ? " " + s2.hora : ""), cor: dias === 0 ? "#a78bfa" : "" };
+    return { txt: quando + (s2.hora ? " " + s2.hora : ""), cor: dias === 0 ? "var(--tk-roxoTx2)" : "" };
   }
   // plano em duas linhas: o que é, e como está o pagamento
   function alPlano(st, a) {
@@ -2725,26 +2795,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // carteiraPT.saldo é DINHEIRO (pago − consumido), não quantidade de aulas
       return { o: pl ? esc(pl.nome) : "Hora-aula",
         st: "Saldo " + S.fmtBRL(cart.saldo),
-        cor: cart.saldo > 0 ? "#4ade80" : cart.saldo === 0 ? "#fb923c" : "#f87171" };
+        cor: cart.saldo > 0 ? "var(--tk-ok)" : cart.saldo === 0 ? "var(--tk-aten)" : "var(--tk-erro)" };
     }
     if (a.pacote && +a.pacote.total > 0) {
       var resta = Math.max(0, +a.pacote.total - (+a.pacote.usadas || 0));
-      return { o: "Pacote " + a.pacote.total + " aulas", st: resta + " na carteira", cor: resta ? "#8a8695" : "#fb923c" };
+      return { o: "Pacote " + a.pacote.total + " aulas", st: resta + " na carteira", cor: resta ? "var(--tk-tx4)" : "var(--tk-aten)" };
     }
-    if (!ct) return { o: +a.valor ? S.fmtBRL(+a.valor) + "/mês" : "Sem plano", st: "sem contrato", cor: "#6e6a78" };
+    if (!ct) return { o: +a.valor ? S.fmtBRL(+a.valor) + "/mês" : "Sem plano", st: "sem contrato", cor: "var(--tk-tx5)" };
     var nome = (pl ? pl.nome : "Mensal") + (pl && +pl.valor ? " " + S.fmtBRL(+pl.valor) : "");
-    if (a.cartaoFalhouEm) return { o: nome, st: "Recusado " + S.fmtData(String(a.cartaoFalhouEm).slice(0, 10)), cor: "#f87171" };
+    if (a.cartaoFalhouEm) return { o: nome, st: "Recusado " + S.fmtData(String(a.cartaoFalhouEm).slice(0, 10)), cor: "var(--tk-erro)" };
     var pgs = st.pagamentos.filter(function (x) { return x.alunoId === a.id && (x.data || "").slice(0, 7) === S.todayISO().slice(0, 7); })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
-    if (pgs.length) return { o: nome, st: "Pago dia " + (+pgs[0].data.slice(8, 10)), cor: "#4ade80" };
+    if (pgs.length) return { o: nome, st: "Pago dia " + (+pgs[0].data.slice(8, 10)), cor: "var(--tk-ok)" };
     var venc = S.todayISO().slice(0, 8) + ("0" + ct.diaVenc).slice(-2);
     var atrasado = +S.todayISO().slice(8, 10) > ct.diaVenc + atrasoTol(st);
-    return { o: nome, st: (atrasado ? "Venceu " : "Vence ") + S.fmtData(venc).slice(0, 5), cor: atrasado ? "#f87171" : "#8a8695" };
+    return { o: nome, st: (atrasado ? "Venceu " : "Vence ") + S.fmtData(venc).slice(0, 5), cor: atrasado ? "var(--tk-erro)" : "var(--tk-tx4)" };
   }
   // a ficha do aluno: letra, grupo e há quanto tempo é a mesma
   function alFicha(st, a) {
     var t = (st.treinosV2 || {})[a.id];
-    if (!t || !(t.fichas || []).length) return { o: "Sem ficha", sub: "—", cor: "#fb923c", velha: true };
+    if (!t || !(t.fichas || []).length) return { o: "Sem ficha", sub: "—", cor: "var(--tk-aten)", velha: true };
     var f = t.fichas[0];
     var tit = String(f.titulo || "Ficha A");
     var mesG = "";
@@ -2766,7 +2836,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sub: (/^\d{4}-\d{2}-\d{2}$/.test(venceEm) && vencida) ? "⏰ TREINO VENCIDO"
         : sem === null ? S.plural((t.fichas || []).length, "ficha", "fichas")
         : S.plural(sem, "semana", "semanas") + (vencida ? " · vencida" : ""),
-      cor: vencida ? "#f87171" : "#6e6a78", velha: vencida };
+      cor: vencida ? "var(--tk-erro)" : "var(--tk-tx5)", velha: vencida };
   }
   var alMostra = 60;      // quantos cards a lista desenha por vez (o resto entra no "Ver mais")
   function renderAlunos(st) {
@@ -2784,12 +2854,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#alFiltro button").forEach(function (b) {
       var k = b.getAttribute("data-alf");
       // o contador só aparece quando há o que resolver — "Sumindo 0" é ruído
-      b.innerHTML = rot[k] + (qtd[k] && k !== "ativos" ? ' <span class="alsel" style="background:rgba(251,146,60,.18);color:#fb923c;">' + qtd[k] + "</span>" : "");
+      b.innerHTML = rot[k] + (qtd[k] && k !== "ativos" ? ' <span class="alsel" style="background:rgba(251,146,60,.18);color:var(--tk-aten);">' + qtd[k] + "</span>" : "");
       b.classList.toggle("ativa", k === alFiltro);
     });
     var el = $("alResumo");
     if (el) el.innerHTML = qtd.ativos + (qtd.ativos === 1 ? " ativo" : " ativos") +
-      (qtd.sumindo ? ' · <span style="color:#fb923c;">' + qtd.sumindo + " sumindo</span>" : "");
+      (qtd.sumindo ? ' · <span style="color:var(--tk-aten);">' + qtd.sumindo + " sumindo</span>" : "");
     var lista = alFiltro === "ativos"
       ? todos.filter(function (a) { return a.ativo !== false; })
       : (porEstado[alFiltro] || []);
@@ -2812,7 +2882,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var px = alProxima(st, a);
       var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
       var pctM = Math.min(100, Math.round(nMes / META_MES * 100));
-      var corM = nMes >= META_MES * .75 ? "#4ade80" : nMes >= META_MES * .4 ? "#fb923c" : "#f87171";
+      var corM = nMes >= META_MES * .75 ? "var(--tk-ok)" : nMes >= META_MES * .4 ? "var(--tk-aten)" : "var(--tk-erro)";
       var desde = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2629800000)) : 0;
       /* a ação da linha é a que resolve o estado dela: quem deve, cobra; quem
        * está com a ficha velha, remonta; quem sumiu, chama. É a regra 1 do
@@ -2829,15 +2899,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : "") + '">' +
         '<div class="alq"><div class="alav">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
         '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
-        (est === "devendo" ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:#f87171;">DEVENDO</span>'
-          : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:#fb923c;">SUMINDO</span>' : "") +
+        (est === "devendo" ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:var(--tk-erro);">DEVENDO</span>'
+          : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:var(--tk-aten);">SUMINDO</span>' : "") +
         '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
         (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div></div></div>" +
         '<div><div class="alp1">' + pl.o + '</div><div class="alp2" style="color:' + pl.cor + ';">' + pl.st + "</div></div>" +
         '<div><div class="alp1">' + S.plural(nMes, "treino", "treinos") + '</div>' +
         '<div class="albar"><i style="width:' + Math.max(4, pctM) + "%;background:" + corM + ';"></i></div></div>' +
         '<div><div class="alp1">' + fi.o + '</div><div class="alp2" style="color:' + fi.cor + ';">' + fi.sub + "</div></div>" +
-        '<div class="alp1" style="color:' + (px.cor || "#cfcbdb") + ';">' + px.txt + "</div>" +
+        '<div class="alp1" style="color:' + (px.cor || "var(--tk-tx2)") + ';">' + px.txt + "</div>" +
         '<div class="alac">' + acao +
         '<button type="button" class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações">···</button></div>' +
         '<div class="al-acoes" data-acoes="' + a.id + '" hidden style="grid-column:1/-1;">' +
@@ -3080,7 +3150,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var h = Math.round(8 + 58 * m.n / max);
       return "<div style='flex:1;text-align:center;'><div style='font-size:11px;font-weight:800;color:" + cor + ";'>" + (m.n || "") + "</div>" +
         "<div style='height:" + (62 - h) + "px;'></div><div style='height:" + h + "px;background:" + (m.n ? cor : "#2c2739") + ";border-radius:5px 5px 0 0;'></div>" +
-        "<div style='font-size:10px;color:#8a8695;margin-top:3px;'>" + m.rot + "</div></div>";
+        "<div style='font-size:10px;color:var(--tk-tx4);margin-top:3px;'>" + m.rot + "</div></div>";
     }).join("") + "</div>";
   }
   // abas do perfil (pra tela não ficar tumultuada — pedido do Raphael)
@@ -3135,14 +3205,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fcMax = fcs.length ? Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; })) : 0;
     function kpi(k, v, un, s, cor) {
       return '<div class="pfkpi"><div class="k">' + k + '</div><div class="v">' + v +
-        (un ? "<small> " + un + "</small>" : "") + '</div><div class="s" style="color:' + (cor || "#8a8695") + ';">' + s + "</div></div>";
+        (un ? "<small> " + un + "</small>" : "") + '</div><div class="s" style="color:' + (cor || "var(--tk-tx4)") + ';">' + s + "</div></div>";
     }
     var kpis = '<div class="pfkpis">' +
       kpi("TREINOS NO MÊS", nMes, "de " + meta, nMes >= meta ? "bateu a meta do mês" : S.plural(meta - nMes, "treino", "treinos") + " pra bater",
-        nMes >= meta ? "#4ade80" : "#8a8695") +
+        nMes >= meta ? "var(--tk-ok)" : "var(--tk-tx4)") +
       kpi("PESO", pAtual ? String(pAtual).replace(".", ",") : "—", pAtual ? "kg" : "",
         pesos.length > 1 ? (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg desde o início" : "o aluno ainda não pesou no app",
-        dif < 0 ? "#4ade80" : "") +
+        dif < 0 ? "var(--tk-ok)" : "") +
       kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada") +
       kpi("CHECK-IN DA SEMANA", ret.ckNota || "—", ret.ckNota ? "/5" : "",
         ret.ckTexto ? esc(String(ret.ckTexto).slice(0, 40)) : "sem check-in esta semana") +
@@ -3167,13 +3237,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var f0 = (t.fichas || [])[0];
     var col = '<div class="pfcols">' +
       '<div class="pfbox"><h3>Semana do aluno</h3><div class="pfsem">' + cels + "</div>" +
-      '<div style="font-size:12.5px;color:#8a8695;margin-top:11px;">' +
+      '<div style="font-size:12.5px;color:var(--tk-tx4);margin-top:11px;">' +
       (Object.keys(dias).length ? "O app dele abre no treino do dia sozinho."
         : "Sem dias definidos — o app usa o rodízio das fichas. Defina em Treinos → Semana do aluno.") + "</div>" +
       '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '" style="margin-top:10px;">Editar a semana</button></div>' +
       '<div class="pfbox"><h3>Ficha atual</h3>' +
       (f0 ? '<div style="font-size:14.5px;font-weight:800;">' + esc(f0.titulo || "Ficha A") + "</div>" +
-        '<div style="font-size:12.5px;color:#8a8695;margin-top:3px;">' + S.plural((f0.itens || []).length, "exercício", "exercícios") +
+        '<div style="font-size:12.5px;color:var(--tk-tx4);margin-top:3px;">' + S.plural((f0.itens || []).length, "exercício", "exercícios") +
         (f0.p2 && f0.p2.n ? " · " + esc(f0.p2.n) : "") + "</div>" +
         '<div style="font-size:12.5px;font-weight:700;margin-top:10px;color:' + fi.cor + ';">' + fi.sub + "</div>"
         : '<div class="muted" style="font-size:13px;">Nenhuma ficha montada ainda.</div>') +
@@ -3255,10 +3325,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var situacao = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
       "<div style='background:" + (pagoMes ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (pagoMes ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
       "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>" + mesNome + "</div>" +
-      "<div style='font-size:17px;font-weight:800;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" + (pagoMes ? "✓ pago" : "em aberto") + "</div>" +
+      "<div style='font-size:17px;font-weight:800;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" + (pagoMes ? "✓ pago" : "em aberto") + "</div>" +
       (!pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") +
       (extrasMes ? "<div class='muted' style='font-size:11.5px;'>+ " + S.fmtBRL(extrasMes) + " em serviços/pacotes</div>" : "") + "</div>" +
-      "<div style='background:#121016;border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
+      "<div style='background:var(--tk-sup2);border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
       "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido em " + ano + "</div>" +
       "<div style='font-size:17px;font-weight:800;'>" + S.fmtBRL(totalAno) + "</div>" +
       "<div class='muted' style='font-size:11.5px;'>" + (nPagsAno === 1 ? "1 pagamento" : nPagsAno + " pagamentos") + "</div></div></div>";
@@ -3328,7 +3398,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cart = carteiraPT(st, a);
     var cartBloco = "";
     if (cart) {
-      var corSaldo = cart.saldo > 0 ? "#4ade80" : cart.saldo < 0 ? "#f87171" : "var(--cinza-2)";
+      var corSaldo = cart.saldo > 0 ? "var(--tk-ok)" : cart.saldo < 0 ? "var(--tk-erro)" : "var(--cinza-2)";
       var rotSaldo = cart.saldo > 0
         ? "sobram créditos — dá pra mais " + S.plural(Math.floor(cart.saldo / cart.valorSessao), "sessão", "sessões")
         : cart.saldo < 0
@@ -3338,7 +3408,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return "<div style='display:flex;justify-content:space-between;font-size:13px;padding:4px 0;'><span class='muted'>" + rot + "</span><b>" + val + "</b></div>";
       };
       cartBloco = rotSec("Carteira de sessões") +
-        "<div style='background:#121016;border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
+        "<div style='background:var(--tk-sup2);border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
         linhaCart("Valor da sessão", S.fmtBRL(cart.valorSessao)) +
         linhaCart("Total pago", S.fmtBRL(cart.pagos)) +
         linhaCart("Aulas realizadas", cart.feitas) +
@@ -3361,7 +3431,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
     var totalSes = idxDe(st).sessFeitasDe(id).length;
-    $("pfFreq").innerHTML = barrasMes(porMes, "#a78bfa") +
+    $("pfFreq").innerHTML = barrasMes(porMes, "var(--tk-roxoTx2)") +
       "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + S.plural(totalSes, "sessão feita", "sessões feitas") + " no total</div>";
     // relatório de avaliações físicas: laudo em cards + tabela + gráficos por medida
     pintaLaudoPerfil(st, id);
@@ -3376,9 +3446,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
       var faixa = (max - min) || 1;
       var dif = Math.round((vals[vals.length - 1] - vals[0]) * 10) / 10;
-      var corDif = dif < 0 ? "#4ade80" : dif > 0 ? "#f87171" : "#a9a4b5";
-      if (campo === "braco" && dif > 0) corDif = "#4ade80"; // braço crescendo é vitória
-      return "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>" + rot + "</b> — de " +
+      var corDif = dif < 0 ? "var(--tk-ok)" : dif > 0 ? "var(--tk-erro)" : "var(--tk-tx3)";
+      if (campo === "braco" && dif > 0) corDif = "var(--tk-ok)"; // braço crescendo é vitória
+      return "<div style='margin:12px 0 4px;font-size:12.5px;color:var(--tk-tx2);'><b>" + rot + "</b> — de " +
         fmtN(vals[0]) + " pra <b>" + fmtN(vals[vals.length - 1]) + " " + unid + "</b> " +
         "(<b style='color:" + corDif + ";'>" + (dif > 0 ? "+" : "") + fmtN(dif) + "</b>)</div>" +
         "<div style='display:flex;gap:5px;align-items:flex-end;height:76px;'>" + l.map(function (x) {
@@ -3387,7 +3457,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<div style='font-size:9.5px;font-weight:800;color:" + cor + ";'>" + fmtN(x.v) + "</div>" +
             "<div style='height:" + (58 - h) + "px;'></div>" +
             "<div style='height:" + h + "px;background:" + cor + ";border-radius:4px 4px 0 0;opacity:.85;'></div>" +
-            "<div style='font-size:8.5px;color:#8a8695;margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
+            "<div style='font-size:8.5px;color:var(--tk-tx4);margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
         }).join("") + "</div>";
     }
     if (avs.length) {
@@ -3397,27 +3467,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var temQ = avs.some(function (v) { return v.quadril != null && v.quadril !== ""; });
       var temR = avs.some(function (v) { return v.rcq; });
       var tabela = "<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:12.5px;'>" +
-        "<tr style='color:#a78bfa;text-align:left;'><th style='padding:4px 8px 4px 0;'>Data</th><th style='padding:4px 8px;'>Peso</th>" +
+        "<tr style='color:var(--tk-roxoTx2);text-align:left;'><th style='padding:4px 8px 4px 0;'>Data</th><th style='padding:4px 8px;'>Peso</th>" +
         (temG ? "<th style='padding:4px 8px;'>% gordura</th>" : "") +
         (temC ? "<th style='padding:4px 8px;'>Cintura</th>" : "") +
         (temQ ? "<th style='padding:4px 8px;'>Quadril</th>" : "") +
         (temR ? "<th style='padding:4px 8px;'>RCQ</th>" : "") +
         (temB ? "<th style='padding:4px 8px;'>Braço</th>" : "") + "</tr>" +
         avs.slice(-8).map(function (v) {
-          return "<tr style='border-top:1px solid #322e3d;'><td style='padding:5px 8px 5px 0;'>" + S.fmtData(v.data) + "</td>" +
+          return "<tr style='border-top:1px solid var(--tk-bd4);'><td style='padding:5px 8px 5px 0;'>" + S.fmtData(v.data) + "</td>" +
             "<td style='padding:5px 8px;'><b>" + (v.peso != null && v.peso !== "" ? fmtN(+v.peso) + " kg" : "—") + "</b></td>" +
             (temG ? "<td style='padding:5px 8px;'>" + (v.gordura != null && v.gordura !== "" ? fmtN(+v.gordura) + "%" : "—") + "</td>" : "") +
             (temC ? "<td style='padding:5px 8px;'>" + (v.cintura != null && v.cintura !== "" ? fmtN(+v.cintura) + " cm" : "—") + "</td>" : "") +
             (temQ ? "<td style='padding:5px 8px;'>" + (v.quadril != null && v.quadril !== "" ? fmtN(+v.quadril) + " cm" : "—") + "</td>" : "") +
-            (temR ? "<td style='padding:5px 8px;'>" + (v.rcq ? String(v.rcq).replace(".", ",") + (v.riscoRcq ? " <span style='font-size:10px;color:" + (v.riscoRcq === "alto" ? "#f87171" : v.riscoRcq === "moderado" ? "#fbbf24" : "#4ade80") + ";'>" + v.riscoRcq + "</span>" : "") : "—") + "</td>" : "") +
+            (temR ? "<td style='padding:5px 8px;'>" + (v.rcq ? String(v.rcq).replace(".", ",") + (v.riscoRcq ? " <span style='font-size:10px;color:" + (v.riscoRcq === "alto" ? "var(--tk-erro)" : v.riscoRcq === "moderado" ? "var(--tk-aten2)" : "var(--tk-ok)") + ";'>" + v.riscoRcq + "</span>" : "") : "—") + "</td>" : "") +
             (temB ? "<td style='padding:5px 8px;'>" + (v.braco != null && v.braco !== "" ? fmtN(+v.braco) + " cm" : "—") + "</td>" : "") + "</tr>";
         }).join("") + "</table></div>";
       $("pfPeso").innerHTML = tabela +
-        grafMedida("Peso", "kg", "peso", "#a78bfa") +
-        grafMedida("% de gordura", "%", "gordura", "#fbbf24") +
+        grafMedida("Peso", "kg", "peso", "var(--tk-roxoTx2)") +
+        grafMedida("% de gordura", "%", "gordura", "var(--tk-aten2)") +
         grafMedida("Cintura", "cm", "cintura", "#38bdf8") +
         grafMedida("Quadril", "cm", "quadril", "#f472b6") +
-        grafMedida("Braço", "cm", "braco", "#4ade80") +
+        grafMedida("Braço", "cm", "braco", "var(--tk-ok)") +
         "<div class='muted' style='font-size:11.5px;margin-top:6px;'>" + S.plural(avs.length, "avaliação registrada", "avaliações registradas") + " — as novas entram por aqui automaticamente.</div>";
     } else {
       $("pfPeso").textContent = "Sem avaliações ainda — registre a primeira na aba Avaliações e o relatório monta sozinho.";
@@ -3551,11 +3621,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var num = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
         var kpi = function (rot, val, sub) {
           return "<div style='background:rgba(124,58,237,.08);border:1px solid var(--linha);border-radius:8px;padding:9px 11px;'>" +
-            "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>" + rot + "</div>" +
+            "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--tk-tx4);text-transform:uppercase;'>" + rot + "</div>" +
             "<div style='font-size:19px;font-weight:900;'>" + val + "</div>" +
-            (sub ? "<div style='font-size:10.5px;color:#a9a4b5;'>" + sub + "</div>" : "") + "</div>";
+            (sub ? "<div style='font-size:10.5px;color:var(--tk-tx3);'>" + sub + "</div>" : "") + "</div>";
         };
-        var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:#cfcbdb;'><b>" + t + "</b></div>"; };
+        var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:var(--tk-tx2);'><b>" + t + "</b></div>"; };
         // séries validadas (tudo vem do aparelho do aluno — só números e datas passam)
         var pz = ret.peso || {};
         var ks = Object.keys(pz).filter(function (k) { return dataRe(k) && isFinite(+pz[k]) && +pz[k] > 20 && +pz[k] < 400; }).sort();
@@ -3586,7 +3656,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (ks.length) {
           var difTot = Math.round((+pz[ks[ks.length - 1]] - (+pz[ks[0]])) * 10) / 10;
           kpis.push(kpi("Peso atual", num(+pz[ks[ks.length - 1]]) + " kg",
-            "<b style='color:" + (difTot < 0 ? "#4ade80" : difTot > 0 ? "#f87171" : "#a9a4b5") + ";'>" + (difTot > 0 ? "+" : "") + num(difTot) + " kg</b> desde o início"));
+            "<b style='color:" + (difTot < 0 ? "var(--tk-ok)" : difTot > 0 ? "var(--tk-erro)" : "var(--tk-tx3)") + ";'>" + (difTot > 0 ? "+" : "") + num(difTot) + " kg</b> desde o início"));
         }
         if (diasTreino.length) {
           kpis.push(kpi("Treinos no mês", treinosMes, diasTreino.length + " no total"));
@@ -3621,7 +3691,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).sort();
         var idadeAl = (aluno && idadeDe(aluno.nasc)) || ((+ret.idade >= 8 && +ret.idade <= 99) ? +ret.idade : null);
         var fcMaxAl = idadeAl ? 220 - idadeAl : null;
-        var FCZC = ["#60a5fa", "#4ade80", "#facc15", "#fb923c", "#f87171"];
+        var FCZC = ["#60a5fa", "var(--tk-ok)", "#facc15", "var(--tk-aten)", "var(--tk-erro)"];
         var FCZN = ["Z1 leve", "Z2 tranquilo", "Z3 moderado", "Z4 forte", "Z5 máximo"];
         var fcZona = function (b) { if (!fcMaxAl) return -1; var p = b / fcMaxAl; return p < 0.6 ? 0 : p < 0.7 ? 1 : p < 0.8 ? 2 : p < 0.9 ? 3 : 4; };
         var crFc = (Array.isArray(ret.cardio) ? ret.cardio : []).filter(function (x) { return x && typeof x === "object" && bpmOk(x.fc); });
@@ -3805,10 +3875,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dataOk = function (d) { return String(d || "").replace(/[^0-9-]/g, ""); };
         var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
         if (fA) {
-          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>Fotos de progresso</b></div>" +
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:var(--tk-tx2);'><b>Fotos de progresso</b></div>" +
             "<div style='display:flex;gap:10px;max-width:400px;'>" +
-            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
-            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
             "</div>";
         }
         return html;
@@ -3817,7 +3887,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function htmlCheckinsApp(ret) {
     var num = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
     var dataRe = function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); };
-    var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:#cfcbdb;'><b>" + t + "</b></div>"; };
+    var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:var(--tk-tx2);'><b>" + t + "</b></div>"; };
     var cks = (ret && Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
       return c && typeof c === "object" && dataRe(String(c.d || ""));
     }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
@@ -4064,10 +4134,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     for (var q = 1; q <= 7; q++) if (an["parq" + q]) temSim = true;
     var respondido = Object.keys(an || {}).length > 0;
     $("pfParqBadge").innerHTML = !respondido
-      ? '<span style="color:#a9a4b5;">PAR-Q ainda não respondido</span>'
+      ? '<span style="color:var(--tk-tx3);">PAR-Q ainda não respondido</span>'
       : temSim
-        ? '<span style="color:#fbbf24;">PAR-Q com resposta SIM — peça liberação médica antes de treinos intensos</span>'
-        : '<span style="color:#4ade80;">✓ PAR-Q liberado — nenhuma resposta SIM</span>';
+        ? '<span style="color:var(--tk-aten2);">PAR-Q com resposta SIM — peça liberação médica antes de treinos intensos</span>'
+        : '<span style="color:var(--tk-ok);">✓ PAR-Q liberado — nenhuma resposta SIM</span>';
   }
   $("pfAnSalvar").addEventListener("click", function () {
     var st = load();
@@ -4402,14 +4472,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var r = a.assinaturaRec;
     var ra = a.assinaturaAs;
     if (r) {
-      box.innerHTML = "Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês)" +
+      box.innerHTML = "Mensalidade no cartão <b style='color:var(--tk-ok);'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês)" +
         '<div style="display:flex;gap:8px;margin-top:8px;">' +
         '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button>' +
         '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button></div>';
       return;
     }
     if (ra) {
-      box.innerHTML = "Cobrança automática (Asaas) <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(ra.desde) + " (" + S.fmtBRL(+ra.valor) + "/mês)" +
+      box.innerHTML = "Cobrança automática (Asaas) <b style='color:var(--tk-ok);'>ativa</b> desde " + S.fmtData(ra.desde) + " (" + S.fmtBRL(+ra.valor) + "/mês)" +
         '<div style="display:flex;gap:8px;margin-top:8px;">' +
         '<button class="btn sec mini" id="pfAssAsStatus">ver status</button>' +
         '<button class="btn sec mini" id="pfAssAsCancela">cancelar</button></div>';
@@ -4582,9 +4652,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML = achou.length ? achou.map(function (a) {
       var pagoMes = idxDe(st).pagouMes(a.id, mesAtual);
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
-        "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" +
+        "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
         (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
-    }).join("") : "<div style='padding:12px 14px;color:#8a8695;font-size:13px;'>Nenhum aluno com esse nome.</div>";
+    }).join("") : "<div style='padding:12px 14px;color:var(--tk-tx4);font-size:13px;'>Nenhum aluno com esse nome.</div>";
     box.hidden = false;
   }
   $("buscaAluno").addEventListener("input", pintaBuscaAluno);
@@ -4617,9 +4687,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = questSt(load());
     $("qpLista").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
       var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
-        (p.menosMelhor ? ' <span style="background:#f8717122;color:#f87171;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
+        (p.menosMelhor ? ' <span style="background:#f8717122;color:var(--tk-erro);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qpinv="' + p.id + '" title="trocar o sentido da nota">' + (p.menosMelhor ? "maior é melhor" : "menor é melhor") + "</button>" +
         '<button class="btn sec mini" data-qprm="' + p.id + '" aria-label="excluir a pergunta ' + esc(p.sigla) + '">✕</button></div>';
@@ -4630,7 +4700,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("")
       : "";
     $("qqLista").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qqrm="' + q.id + '" aria-label="excluir o questionário">✕</button></div>';
@@ -4811,8 +4881,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         box.innerHTML = rows.map(function (row) {
           var d = row.dados || {};
           var pts = d.pontuacao;
-          var corP = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
-          return '<div style="padding:10px 0;border-top:1px solid #322e3d;">' +
+          var corP = pts == null ? "var(--tk-tx3)" : pts > 0 ? "var(--tk-ok)" : pts < 0 ? "var(--tk-erro)" : "var(--tk-aten2)";
+          return '<div style="padding:10px 0;border-top:1px solid var(--tk-bd4);">' +
             "<b>" + esc(nomePorToken[row.token] || "Aluno") + "</b> · " + esc(row.questionario || "Check-in") +
             ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
@@ -4966,15 +5036,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="pfbox"><div class="qscab">' +
       '<span class="qsav grande">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</span>" +
       '<div style="min-width:0;"><div style="font-size:17px;font-weight:900;">' + esc(a.nome) + "</div>" +
-      '<div style="font-size:12px;font-weight:600;color:#8a8695;margin-top:2px;">' + quandoTxt + "</div></div>" +
+      '<div style="font-size:12px;font-weight:600;color:var(--tk-tx4);margin-top:2px;">' + quandoTxt + "</div></div>" +
       '<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">' +
       '<button type="button" class="btn" id="qsAjusta">Ajustar o treino de hoje</button>' +
       '<button type="button" class="btn sec" id="qsChat" aria-label="falar com o aluno" title="falar com o aluno">💬</button></div></div>' +
       (tiles.length ? '<div class="avtiles" style="margin-top:14px;">' + tiles.map(function (t) {
         return '<div class="avt"><div class="k">' + esc(t.k) + "</div>" +
-          '<div class="v" style="' + (t.ruim ? "color:#f87171;" : "") + '">' + avNum(t.v) + "</div>" +
+          '<div class="v" style="' + (t.ruim ? "color:var(--tk-erro);" : "") + '">' + avNum(t.v) + "</div>" +
           '<div class="dbarra" style="height:6px;margin:8px 0 0;"><i style="width:' +
-          Math.max(4, Math.min(100, t.v / t.max * 100)) + "%;background:" + (t.ruim ? "#f87171" : "#4ade80") + ';"></i></div></div>';
+          Math.max(4, Math.min(100, t.v / t.max * 100)) + "%;background:" + (t.ruim ? "var(--tk-erro)" : "var(--tk-ok)") + ';"></i></div></div>';
       }).join("") + "</div>" : "") +
       (reg.peso ? '<div class="avkv" style="margin-top:12px;"><span>Peso anotado no app</span><b>' + avNum(reg.peso) + " kg</b></div>" : "") +
       (reg.motivos.length ? '<div class="qsalerta"><b>Pede atenção</b><span>' + esc(reg.motivos.join(" · ")) + "</span></div>" : "") +
@@ -4982,7 +5052,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         esc(String(a.nome).split(" ")[0]) + " escreveu</div>" +
         '<div class="qstexto">' + (reg.texto ? "“" + esc(reg.texto) + "”" : "") +
         livres.map(function (r) {
-          return '<div style="margin-top:8px;"><span style="color:#8a8695;font-size:11.5px;">' +
+          return '<div style="margin-top:8px;"><span style="color:var(--tk-tx4);font-size:11.5px;">' +
             esc(String(r.pergunta || r.sigla || "")) + "</span><br>“" + esc(String(r.resposta)) + "”</div>";
         }).join("") + "</div>" : "") +
       (!reg.respondeu ? '<div class="dnota" style="margin-top:14px;">Nada desta semana ainda. ' +
@@ -5070,12 +5140,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var max = Math.max.apply(null, ranking.map(function (r) { return +r.dias; })) || 1;
     el.innerHTML = ranking.map(function (r, i) {
       var pct = Math.round(100 * (+r.dias) / max);
-      return "<div style='padding:8px 0;border-top:1px solid #322e3d;'>" +
+      return "<div style='padding:8px 0;border-top:1px solid var(--tk-bd4);'>" +
         "<div style='display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
         "<span>" + (med[i] || (i + 1) + "º") + " <b>" + esc(r.nome || "Aluno") + "</b></span>" +
         "<span><b>" + r.dias + "</b> treino(s)" + (r.ultimo ? " <span class='muted' style='font-size:11.5px;'>último " + r.ultimo.slice(8, 10) + "/" + r.ultimo.slice(5, 7) + "</span>" : "") + "</span></div>" +
         "<div style='height:8px;background:#14121a;border-radius:99px;margin-top:5px;overflow:hidden;'>" +
-        "<div style='height:100%;width:" + pct + "%;background:linear-gradient(90deg,#7c3aed,#a78bfa);'></div></div></div>";
+        "<div style='height:100%;width:" + pct + "%;background:linear-gradient(90deg,#7c3aed,var(--tk-roxoTx2));'></div></div></div>";
     }).join("") + (premio ? "<div class='muted' style='margin-top:10px;font-size:12.5px;'>Prêmio: <b>" + esc(premio) + "</b></div>" : "");
   }
   function carregaRankingDesafio() {
@@ -5118,7 +5188,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="fdcab"><span class="qsav">' + esc(nome.trim().slice(0, 2).toUpperCase()) + "</span>" +
         '<div style="min-width:0;"><div style="font-size:14px;font-weight:800;">' + esc(nome) +
         (p.oculto ? '<span class="cfgselo">escondido</span>' : "") + "</div>" +
-        '<div style="font-size:11.5px;font-weight:600;color:#8a8695;margin-top:1px;">' + esc(fdmQuando(p.criado)) +
+        '<div style="font-size:11.5px;font-weight:600;color:var(--tk-tx4);margin-top:1px;">' + esc(fdmQuando(p.criado)) +
         (p.treino ? " · " + esc(p.treino) : "") + "</div></div>" +
         '<span style="margin-left:auto;display:inline-flex;gap:6px;flex:none;">' +
         "<button class='btn sec mini' data-fdmoc='" + esc(p.id) + "'>" + (p.oculto ? "Mostrar" : "Esconder") + "</button>" +
@@ -5256,7 +5326,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var a = st.alunos.find(function (x) { return x.id === id; });
         return a ? a.nome.split(" ")[0] : null;
       }).filter(Boolean);
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nomes.join(", ") + ")</span>" +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-grrm="' + g.id + '" aria-label="excluir a turma">✕</button></div>';
@@ -5266,7 +5336,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var t2 = (st.treinosV2 || {})[g.id];
       var nf = (t2 && t2.fichas) ? t2.fichas.length : 0;
       var nex = (t2 && t2.fichas) ? t2.fichas.reduce(function (s, f) { return s + f.itens.length; }, 0) : 0;
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nf + " ficha(s), " + nex + " exercício(s))</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
         '<button class="btn sec mini" data-gtedit="' + g.id + '">✎ montar</button>' +
@@ -5887,7 +5957,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       publicaAppDe(id, function (r) {
         b.disabled = false; b.innerHTML = rot;
         if (r.erro) { $(idStatus).textContent = r.erro; alert(r.erro); return; }
-        $(idStatus).innerHTML = "<b style='color:#4ade80;'>Enviado!</b> O treino de " + esc(r.nome.split(" ")[0]) +
+        $(idStatus).innerHTML = "<b style='color:var(--tk-ok);'>Enviado!</b> O treino de " + esc(r.nome.split(" ")[0]) +
           " já está no app dele — na próxima vez que abrir, aparece atualizado.";
       });
     });
@@ -7149,7 +7219,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rot = $("pgMesRot"); if (rot) rot.textContent = MES[+mes.slice(5, 7) - 1];
     var res = $("pgResumo");
     if (res) res.innerHTML = S.fmtBRL(d.fat) + " recebidos" +
-      (aReceber ? ' · <span style="color:#fb923c;">' + S.fmtBRL(aReceber) + " a receber</span>" : "");
+      (aReceber ? ' · <span style="color:var(--tk-aten);">' + S.fmtBRL(aReceber) + " a receber</span>" : "");
     // ---- bloco vermelho dos atrasados ----
     var box = $("pgAtrasados");
     if (box) {
@@ -7160,10 +7230,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "</div>" +
         atr.map(function (x) {
           var a = x.a;
-          return '<div class="pgatrlin"><div class="alav" style="background:rgba(248,113,113,.16);color:#f87171;">' +
+          return '<div class="pgatrlin"><div class="alav" style="background:rgba(248,113,113,.16);color:var(--tk-erro);">' +
             esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
             '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
-            (a.cartaoFalhouEm ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:#f87171;">CARTÃO RECUSADO</span>' : "") +
+            (a.cartaoFalhouEm ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:var(--tk-erro);">CARTÃO RECUSADO</span>' : "") +
             '<div class="alsub">' + (x.meses > 1 ? S.plural(x.meses, "mês em aberto", "meses em aberto") : "Mensalidade de " + MES[+mes.slice(5, 7) - 1]) +
             (x.ct ? " · venceu dia " + x.ct.diaVenc + (x.dias ? " · " + S.plural(x.dias, "dia", "dias") : "") : " · sem contrato") + "</div></div>" +
             '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + S.fmtBRL(x.valor) + "</b>" +
@@ -7189,20 +7259,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var proj = Math.round(d.fat / diaHoje * diasNoMes);
       var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
       var media = Math.round(soma / 5);
-      el6.innerHTML = '<h3>Últimos 6 meses<span style="float:right;font-size:12px;font-weight:800;color:#4ade80;">média ' + S.fmtBRL(media) + "</span></h3>" +
+      el6.innerHTML = '<h3>Últimos 6 meses<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-ok);">média ' + S.fmtBRL(media) + "</span></h3>" +
         '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:6px;">' +
         meses.map(function (m) {
           var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
           var altReal = m.atual ? Math.round(110 * m.v / max) : alt;
           return '<div style="flex:1;text-align:center;">' +
-            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "#c4b5fd" : "#8a8695") + ';">' +
+            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx)" : "var(--tk-tx4)") + ';">' +
             (m.v >= 1000 ? (Math.round(m.v / 100) / 10).toFixed(1).replace(".", ",") : Math.round(m.v)) + "</div>" +
             '<div style="height:' + (114 - alt) + 'px;"></div>' +
             '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
-            (m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "#221f2b") + ';"></div>' +
-            '<div style="font-size:10px;font-weight:800;color:' + (m.atual ? "#a78bfa" : "#6e6a78") + ';margin-top:5px;">' + m.rot + "</div></div>";
+            (m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "var(--tk-trilha)") + ';"></div>' +
+            '<div style="font-size:10px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:5px;">' + m.rot + "</div></div>";
         }).join("") + "</div>" +
-        '<div style="font-size:11.5px;color:#6e6a78;margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
+        '<div style="font-size:11.5px;color:var(--tk-tx5);margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
         S.fmtBRL(proj) + ") · valores em milhares</div>";
     }
     // ---- como voce recebe: o que ESTA ligado hoje, sem prometer o que nao esta ----
@@ -7217,7 +7287,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         d: pApi.provedor === "outro" ? "seu link de cobrança" : "cartão, Pix e boleto — o dinheiro cai na SUA conta", ok: 1 });
       elC.innerHTML = "<h3>Como você recebe</h3>" +
         (vias.length ? vias.map(function (v) {
-          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:#4ade80;">✓</div>' +
+          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:var(--tk-ok);">✓</div>' +
             '<div style="min-width:0;"><div class="dnm">' + esc(v.n) + '</div><div class="dfi">' + esc(v.d) + "</div></div></div>";
         }).join("") : '<div class="muted" style="font-size:12.5px;padding:8px 0;">Nada configurado ainda — sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.</div>') +
         '<button type="button" class="btn sec mini" id="pgIrConfig" style="margin-top:10px;">Configurar em Configurações</button>';
@@ -7230,9 +7300,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nomes = {};
       st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
       elH.innerHTML = '<h3>Entrou hoje<span style="float:right;font-size:13px;font-weight:800;color:' +
-        (totH ? "#4ade80" : "#6e6a78") + ';">' + (totH ? "+" + S.fmtBRL(totH) : "nada ainda") + "</span></h3>" +
+        (totH ? "var(--tk-ok)" : "var(--tk-tx5)") + ';">' + (totH ? "+" + S.fmtBRL(totH) : "nada ainda") + "</span></h3>" +
         (doDia.length ? doDia.map(function (x) {
-          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:#4ade80;">✓</div>' +
+          return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:var(--tk-ok);">✓</div>' +
             '<div style="min-width:0;"><div class="dnm">' + esc(nomes[x.alunoId] || "Avulso") + "</div>" +
             '<div class="dfi">' + esc(x.forma || "pagamento") + (x.desc ? " · " + esc(x.desc) : "") + "</div></div>" +
             '<b style="margin-left:auto;">' + S.fmtBRL(+x.valor || 0) + "</b></div>";
@@ -7720,7 +7790,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
          * entra na Semana do aluno sozinha e viaja grudada na ficha. */
         '<div class="tdp2"><div class="tdp2cab"><span class="tdb">' + esc(letraF + "2") + "</span>" +
         '<div style="min-width:0;"><div style="font-size:13.5px;font-weight:800;">' + esc(p2.n || "Cardio e alongamento") + "</div>" +
-        '<div style="font-size:11.5px;color:#6e6a78;font-weight:600;">parte 2 do dia — cardio ou alongamento depois da ficha</div></div>' +
+        '<div style="font-size:11.5px;color:var(--tk-tx5);font-weight:600;">parte 2 do dia — cardio ou alongamento depois da ficha</div></div>' +
         '<button class="btn sec mini" data-p2nome="' + f.id + '" style="margin-left:auto;" title="mudar o nome da parte 2">✎ nome</button></div>' +
         (p2l.length ? p2l.map(function (ln, li) {
           return '<div class="sessao-pt"><b>' + esc(ln.t) + "</b>" +
@@ -7747,7 +7817,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             // o tipo de serie e um SELECT com cara de selo, colado no nome — na
             // sub-linha ele empurrava tudo pra segunda fileira
             '<select class="tecsel tecchip3' + (it.tec ? " on" : "") + '" data-ttecsel="' + f.id + ":" + i + '" title="tipo de série neste exercício" aria-label="tipo de série">' + opcoesTec(it.tec, 1) + "</select>" +
-            (videoDoEx(ex) ? " <span title='tem vídeo' style='color:#6e6a78;'>▸</span>" : "") + "</div>" +
+            (videoDoEx(ex) ? " <span title='tem vídeo' style='color:var(--tk-tx5);'>▸</span>" : "") + "</div>" +
             '<div class="tdsub"><button data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + " × " + esc(String(it.reps)) + "</button>" +
             '<span>·</span><button data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">' + (+it.descanso || 60) + " s</button>" +
             '<span>·</span><button data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
@@ -8391,8 +8461,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var PROV_NOME = { mercadopago: "Mercado Pago", asaas: "Asaas", pagarme: "Pagar.me", outro: "link próprio" };
   function cfgCard(o) {
     return '<div class="cfgcard' + (o.pequeno ? " pq" : "") + '">' +
-      '<span class="cfgic" style="background:' + (o.on ? "rgba(74,222,128,.14)" : "#241a3d") + ";color:" +
-      (o.on ? "#4ade80" : "#c4b5fd") + ';">' + o.icone + "</span>" +
+      '<span class="cfgic" style="background:' + (o.on ? "rgba(74,222,128,.14)" : "var(--tk-roxoFraco)") + ";color:" +
+      (o.on ? "var(--tk-ok)" : "var(--tk-roxoTx)") + ';">' + o.icone + "</span>" +
       '<div style="min-width:0;"><div class="cfgt">' + esc(o.titulo) +
       (o.selo ? '<span class="cfgselo' + (o.on ? " on" : "") + '">' + esc(o.selo) + "</span>" : "") + "</div>" +
       '<div class="cfgs">' + o.sub + "</div></div>" +
@@ -8890,7 +8960,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("autoSalva").textContent = "Salvar automação";
     $("autoApaga").textContent = "Apagar";
     $("autoApaga").style.borderColor = "#7f2b2b";
-    $("autoApaga").style.color = "#fca5a5";
+    $("autoApaga").style.color = "var(--tk-erro2)";
     $("autoTitulo").textContent = idExistente ? "Editar automação" : "Nova automação";
     $("autoNome").value = base.nome || "";
     $("autoGat").value = base.gat || "sumido";
@@ -9448,7 +9518,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("");
     }
     function cfg() {
-      var inp = function (id, rot, val) { return '<label style="font-size:12px;color:#a9a4b5;">' + rot + '<input id="' + id + '" inputmode="numeric" value="' + val + '" style="display:block;width:110px;margin-top:3px;"></label>'; };
+      var inp = function (id, rot, val) { return '<label style="font-size:12px;color:var(--tk-tx3);">' + rot + '<input id="' + id + '" inputmode="numeric" value="' + val + '" style="display:block;width:110px;margin-top:3px;"></label>'; };
       var el = $("wpfCfg");
       if (wp.tipo === "fortime") el.innerHTML = inp("wpfCap", "Limite (min, 0 = livre)", 12);
       else if (wp.tipo === "tabata") el.innerHTML = inp("wpfRounds", "Rounds", 8) + inp("wpfWork", "Trabalho (s)", 20) + inp("wpfRest", "Descanso (s)", 10);
@@ -9501,7 +9571,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var faseAtual = trab ? "TRABALHA" : "DESCANSA";
       if (faseAtual !== wp.ultFase) { wp.ultFase = faseAtual; if (el2 > 0.5) { if (navigator.vibrate) navigator.vibrate(trab ? [200, 80, 200] : 120); bipP(trab ? 1100 : 600, 160); } }
       fase.textContent = faseAtual + " · ROUND " + (Math.floor(el2 / ciclo) + 1) + " DE " + rd;
-      fase.style.color = trab ? "#a78bfa" : "#22d3ee";
+      fase.style.color = trab ? "var(--tk-roxoTx2)" : "#22d3ee";
       tmp.textContent = fmt(trab ? wk - pos : ciclo - pos);
       info.textContent = wk + "s trabalho · " + rs + "s descanso";
       cdP(trab ? wk - pos : ciclo - pos);
@@ -9596,22 +9666,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
     var sobra = recebido - gasto;
     function cx(rot, val, cor) {
-      return "<div style='background:#121016;border-radius:12px;padding:10px;'><div style='font-weight:800;font-size:16px;color:" + cor + ";'>" + S.fmtBRL(val) + "</div><div class='muted' style='font-size:12px;'>" + rot + "</div></div>";
+      return "<div style='background:var(--tk-sup2);border-radius:12px;padding:10px;'><div style='font-weight:800;font-size:16px;color:" + cor + ";'>" + S.fmtBRL(val) + "</div><div class='muted' style='font-size:12px;'>" + rot + "</div></div>";
     }
     $("dpResumo").innerHTML = "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;'>" +
-      cx("recebido", recebido, "#86efac") + cx("gasto", gasto, "#fca5a5") +
-      cx(sobra >= 0 ? "sobrou" : "no vermelho", Math.abs(sobra), sobra >= 0 ? "#a78bfa" : "#fca5a5") + "</div>";
+      cx("recebido", recebido, "#86efac") + cx("gasto", gasto, "var(--tk-erro2)") +
+      cx(sobra >= 0 ? "sobrou" : "no vermelho", Math.abs(sobra), sobra >= 0 ? "var(--tk-roxoTx2)" : "var(--tk-erro2)") + "</div>";
     var porCat = {};
     doMes.forEach(function (d) { var c = d.cat || "Outros"; porCat[c] = (porCat[c] || 0) + (+d.valor || 0); });
     var cats = Object.keys(porCat).sort(function (a, b) { return porCat[b] - porCat[a]; });
     $("dpCats").innerHTML = cats.map(function (c) {
       var pc = gasto ? Math.round(100 * porCat[c] / gasto) : 0;
       return "<div style='margin:5px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;gap:8px;'><span>" + esc(c) + "</span><b style='white-space:nowrap;'>" + S.fmtBRL(porCat[c]) + " · " + pc + "%</b></div>" +
-        "<div style='background:#121016;border-radius:99px;height:7px;overflow:hidden;'><div style='width:" + pc + "%;height:100%;background:#7c3aed;'></div></div></div>";
+        "<div style='background:var(--tk-sup2);border-radius:99px;height:7px;overflow:hidden;'><div style='width:" + pc + "%;height:100%;background:#7c3aed;'></div></div></div>";
     }).join("");
     $("dpLista").innerHTML = doMes.length ? doMes.slice().sort(function (a, b) { return (b.data || "").localeCompare(a.data || ""); }).map(function (d) {
       return "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #211d2b;'>" +
-        "<span>" + (d.fixa ? "<b style='color:#a78bfa;'>fixa</b> · " : "") + esc(d.desc || d.cat || "Despesa") +
+        "<span>" + (d.fixa ? "<b style='color:var(--tk-roxoTx2);'>fixa</b> · " : "") + esc(d.desc || d.cat || "Despesa") +
         " <span class='muted' style='font-size:12px;'>" + esc(d.cat || "") + " · desde " + S.fmtData(d.data) + "</span></span>" +
         "<span style='white-space:nowrap;'><b>" + S.fmtBRL(+d.valor || 0) + "</b> " +
         (d.fixa && !d.fim ? "<button class='btn sec mini' data-dpfim='" + d.id + "' title='Para de contar a partir do mês seguinte'>encerrar</button> " : "") +
@@ -11250,7 +11320,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       scanDiz("Pronto. As fotos foram descartadas. ✅");
       pintaScanResultado(r, a);
     }).catch(function (e) {
-      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
+      scanDiz('<b style="color:var(--tk-erro);">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
     }).then(function () {
       bt.disabled = false;
       scanAtualizaBotao();
@@ -11284,7 +11354,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML =
       "<div class='linha-flex' style='gap:10px;flex-wrap:wrap;align-items:stretch;'>" +
       (r.rcest ? "<div style='flex:1;min-width:210px;background:rgba(124,58,237,.10);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;'>" +
-        "<div style='font-size:10px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>Razão cintura / altura</div>" +
+        "<div style='font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--tk-tx4);text-transform:uppercase;'>Razão cintura / altura</div>" +
         "<div style='font-size:30px;font-weight:900;'>" + nm(r.rcest, 2) + "</div>" +
         "<div class='muted' style='font-size:12px;'>abaixo de 0,50 é a faixa de menor risco — é a medida mais confiável daqui, porque não depende da altura estar certinha</div></div>" : "") +
       gordCard +
@@ -11344,7 +11414,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (camTimer) { clearTimeout(camTimer); camTimer = null; }
     $("scanCam").hidden = false;
     $("scanContagem").style.display = "none";
-    camDiz("Não deu certo", self.MT_VISAO.erroAmigavel(e), "#f87171");
+    camDiz("Não deu certo", self.MT_VISAO.erroAmigavel(e), "var(--tk-erro)");
     var tec = $("scanCamTec");
     tec.textContent = "Detalhe técnico: " + String((e && e.message) || e).slice(0, 220);
     tec.hidden = false;
@@ -11433,7 +11503,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       pintaScanResultado(r, a);
     }).catch(function (e) {
       camQuadros = { frente: null, lado: null };
-      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
+      scanDiz('<b style="color:var(--tk-erro);">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
     });
   }
   if ($("scanAoVivo")) $("scanAoVivo").addEventListener("click", function () {
@@ -11573,9 +11643,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function avDelta(agora, antes, bomSubir) {
     if (antes == null || agora == null) return "";
     var d = Math.round((agora - antes) * 10) / 10;
-    if (!d) return '<span style="color:#6e6a78;">= igual</span>';
+    if (!d) return '<span style="color:var(--tk-tx5);">= igual</span>';
     var bom = bomSubir ? d > 0 : d < 0;
-    return '<span style="color:' + (bom ? "#4ade80" : "#f87171") + ';">' + (d > 0 ? "↑ +" : "↓ ") + avNum(d) + "</span>";
+    return '<span style="color:' + (bom ? "var(--tk-ok)" : "var(--tk-erro)") + ';">' + (d > 0 ? "↑ +" : "↓ ") + avNum(d) + "</span>";
   }
   function avBarra(rot, kg, pct, cor) {
     return '<div class="avlin"><span class="avr">' + esc(rot) + "</span>" +
@@ -11608,12 +11678,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       { k: "Peso", v: avNum(l.peso), u: "kg", d: avDelta(l.peso, lpv.peso, false) },
       { k: "Gordura", v: l.gordura ? avNum(l.gordura) : "—", u: "%", d: l.gordura ? avDelta(l.gordura, lpv.gordura, false) : "" },
       { k: "Massa magra", v: l.massaMagra ? avNum(l.massaMagra) : "—", u: "kg", d: l.massaMagra ? avDelta(l.massaMagra, lpv.massaMagra, true) : "" },
-      { k: "IMC", v: avNum(l.imc), u: "", d: '<span style="color:#8a8695;">' + esc(l.classeImc || "") + "</span>" },
+      { k: "IMC", v: avNum(l.imc), u: "", d: '<span style="color:var(--tk-tx4);">' + esc(l.classeImc || "") + "</span>" },
     ];
     var fonte = l.medido && l.medido.gordura ? "bioimpedância · vence a estimativa"
       : ult.metodoDobras ? "dobras cutâneas" : l.estimadoPorFoto ? "estimado pela câmera" : "estimativa por fita e peso";
     var comps = [];
-    if (l.agua) comps.push(["Água", l.agua, "#a78bfa"]);
+    if (l.agua) comps.push(["Água", l.agua, "var(--tk-roxoTx2)"]);
     if (l.mme) comps.push(["Músculo", l.mme, "#7c3aed"]);
     if (l.proteina) comps.push(["Proteína", l.proteina, "#8b5cf6"]);
     if (l.mineral) comps.push(["Minerais", l.mineral, "#6d28d9"]);
@@ -11621,7 +11691,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML =
       '<div class="dcols" style="margin-bottom:14px;">' +
       '<div class="pfbox"><h3>' + (pen ? "De " + S.fmtData(pen.data) + " para " + S.fmtData(ult.data) : "Medição de " + S.fmtData(ult.data)) +
-      (semanas ? '<span style="float:right;font-size:12px;font-weight:800;color:#4ade80;">' + S.plural(semanas, "semana", "semanas") + "</span>" : "") + "</h3>" +
+      (semanas ? '<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-ok);">' + S.plural(semanas, "semana", "semanas") + "</span>" : "") + "</h3>" +
       '<div class="avtiles">' + tiles.map(function (t) {
         return '<div class="avt"><div class="k">' + esc(t.k) + "</div>" +
           '<div class="v">' + esc(t.v) + (t.u ? '<small>' + esc(t.u) + "</small>" : "") + "</div>" +
@@ -11634,17 +11704,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="pfbox"><h3>Gasto e metabolismo</h3>' +
       '<div class="tdrot" style="margin:10px 0 2px;">TMB</div>' +
       '<div style="font-size:34px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;">' +
-      l.tmb.toLocaleString("pt-BR") + '<small style="font-size:13px;font-weight:700;color:#8a8695;margin-left:6px;">kcal em repouso</small></div>' +
+      l.tmb.toLocaleString("pt-BR") + '<small style="font-size:13px;font-weight:700;color:var(--tk-tx4);margin-left:6px;">kcal em repouso</small></div>' +
       '<div class="avkv"><span>Dia leve</span><b>' + Math.round(l.tmb * 1.375).toLocaleString("pt-BR") + "</b></div>" +
       '<div class="avkv"><span>Dia de treino</span><b>' + Math.round(l.tmb * 1.55).toLocaleString("pt-BR") + "</b></div>" +
       (l.controlePeso != null ? '<div class="avkv"><span>Controle de peso</span><b style="color:' +
-        (Math.abs(l.controlePeso) < 0.5 ? "#4ade80" : "#fb923c") + ';">' + (l.controlePeso > 0 ? "+" : "") + avNum(l.controlePeso) + " kg</b></div>" : "") +
+        (Math.abs(l.controlePeso) < 0.5 ? "var(--tk-ok)" : "var(--tk-aten)") + ';">' + (l.controlePeso > 0 ? "+" : "") + avNum(l.controlePeso) + " kg</b></div>" : "") +
       '<div class="muted" style="font-size:11.5px;margin-top:8px;">' + esc(l.tmbFonte || "") + " · dia leve e dia de treino são o TMB vezes 1,375 e 1,55.</div></div>" +
       (l.pontuacao ? '<div class="pfbox"><h3>Pontuação' +
         (lp && lp.pontuacao && lp.pontuacao !== l.pontuacao ? '<span style="float:right;font-size:12px;font-weight:800;color:' +
-          (l.pontuacao >= lp.pontuacao ? "#4ade80" : "#f87171") + ';">' + (l.pontuacao > lp.pontuacao ? "+" : "") + (l.pontuacao - lp.pontuacao) + " pontos</span>" : "") + "</h3>" +
+          (l.pontuacao >= lp.pontuacao ? "var(--tk-ok)" : "var(--tk-erro)") + ';">' + (l.pontuacao > lp.pontuacao ? "+" : "") + (l.pontuacao - lp.pontuacao) + " pontos</span>" : "") + "</h3>" +
         '<div style="font-size:44px;font-weight:900;letter-spacing:-.04em;">' + l.pontuacao +
-        '<small style="font-size:14px;font-weight:700;color:#8a8695;margin-left:6px;">de 100</small></div>' +
+        '<small style="font-size:14px;font-weight:700;color:var(--tk-tx4);margin-left:6px;">de 100</small></div>' +
         '<div class="dbarra" style="margin:10px 0 8px;"><i style="width:' + l.pontuacao + '%;"></i></div>' +
         '<div class="muted" style="font-size:11.5px;">O laudo imprimível sai com esses números e o histórico das ' +
         S.plural(lista.length, "medição", "medições") + ".</div></div>" : "") +
@@ -11691,7 +11761,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.cintura ? "<span>cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
-            (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:#4ade80;">bioimpedância</span>' : "") +
+            (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:var(--tk-ok);">bioimpedância</span>' : "") +
             (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
@@ -11899,18 +11969,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML =
       '<div class="rel3" style="margin-bottom:14px;">' +
       '<div class="pfbox"><div class="tdrot">Movimentação</div>' +
-      relKv("Entraram", (d.novos ? "+" : "") + d.novos, d.novos ? "#4ade80" : null) +
-      relKv("Encerraram", d.encerrados ? "-" + d.encerrados : "0", d.encerrados ? "#f87171" : null) +
+      relKv("Entraram", (d.novos ? "+" : "") + d.novos, d.novos ? "var(--tk-ok)" : null) +
+      relKv("Encerraram", d.encerrados ? "-" + d.encerrados : "0", d.encerrados ? "var(--tk-erro)" : null) +
       relKv("Saldo", saldo) + "</div>" +
       '<div class="pfbox"><div class="tdrot">Indicadores</div>' +
       relKv("Ticket médio", S.fmtBRL(ticket)) +
       relKv("Tempo de casa", num1(casa) + " meses") +
-      relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "#f87171" : "#4ade80") + "</div>" +
+      relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "var(--tk-erro)" : "var(--tk-ok)") + "</div>" +
       '<div class="pfbox" id="rel4cNiver"><div class="tdrot">Aniversários · 7 dias</div></div>' +
       "</div>" +
       '<div class="dcols" style="margin-bottom:14px;">' +
-      '<div class="pfbox"><h3>Sessões por semana<small style="font-weight:600;color:#6e6a78;font-size:12px;margin-left:8px;">e quanto disso virou falta</small>' +
-      '<span style="float:right;font-size:11px;font-weight:700;color:#8a8695;">' +
+      '<div class="pfbox"><h3>Sessões por semana<small style="font-weight:600;color:var(--tk-tx5);font-size:12px;margin-left:8px;">e quanto disso virou falta</small>' +
+      '<span style="float:right;font-size:11px;font-weight:700;color:var(--tk-tx4);">' +
       '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#7c3aed;margin-right:4px;"></i>feitas ' +
       '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#5b2b2b;margin:0 4px 0 8px;"></i>faltas</span></h3>' +
       '<div style="display:flex;gap:12px;align-items:flex-end;height:150px;margin-top:10px;">' +
@@ -11920,8 +11990,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<div style="height:' + Math.max(0, 114 - hF - hX) + 'px;"></div>' +
           (hX ? '<div style="height:' + Math.max(4, hX) + 'px;border-radius:8px 8px 0 0;background:#5b2b2b;" title="' + w.faltas + ' falta(s)"></div>' : "") +
           '<div style="height:' + Math.max(4, hF) + "px;border-radius:" + (hX ? "0 0 3px 3px" : "8px 8px 3px 3px") +
-          ";background:" + (w.agora ? "#a78bfa" : "#7c3aed") + ';" title="' + w.feitas + ' feita(s)"></div>' +
-          '<div style="font-size:10px;font-weight:800;color:' + (w.agora ? "#a78bfa" : "#6e6a78") + ';margin-top:6px;">' + w.rot + "</div></div>";
+          ";background:" + (w.agora ? "var(--tk-roxoTx2)" : "#7c3aed") + ';" title="' + w.feitas + ' feita(s)"></div>' +
+          '<div style="font-size:10px;font-weight:800;color:' + (w.agora ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:6px;">' + w.rot + "</div></div>";
       }).join("") + "</div></div>" +
       '<div class="pfbox" id="rel4cAlertas"><div class="tdrot">Alertas do studio</div></div>' +
       "</div>";
@@ -11973,7 +12043,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("relPrevisto").innerHTML =
         '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
         "<span>Recebido: " + fmtR(recebidoMes) + "</span><span>Previsto: " + fmtR(previstoMes) + "</span></div>" +
-        '<div style="height:14px;background:#eee;border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),#a78bfa);"></div></div>' +
+        '<div style="height:14px;background:#eee;border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),var(--tk-roxoTx2));"></div></div>' +
         '<div style="font-size:12px;color:var(--cinza);margin:4px 0 10px;">' + pct + "% da receita prevista já entrou.</div>" +
         (faltam.length ? faltam.map(function (a) {
           var ct = contratoDe(st, a.id);
@@ -12244,7 +12314,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cab = $("dashDia") && $("dashDia").querySelector("h2");
     if (cab && sesHoje.length) {
       var hs = sesHoje.map(function (x) { return x.hora; }).filter(Boolean).sort();
-      cab.innerHTML = "Seu dia hoje " + (hs.length ? '<span style="font-size:12px;font-weight:700;color:#6e6a78;text-transform:none;letter-spacing:0;">' +
+      cab.innerHTML = "Seu dia hoje " + (hs.length ? '<span style="font-size:12px;font-weight:700;color:var(--tk-tx5);text-transform:none;letter-spacing:0;">' +
         hs[0] + " às " + hs[hs.length - 1] + "</span>" : "") +
         '<button type="button" class="btn sec mini" id="dVerSemana" style="float:right;">Ver semana</button>';
     }
@@ -12287,7 +12357,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span>' +
         // por que a última tentativa não saiu — com o caminho manual do lado
         (zapErros[z.chave]
-          ? '<span data-zaperro="1" class="muted" style="flex-basis:100%;font-size:11.5px;color:#f87171;">' + esc(zapErros[z.chave]) +
+          ? '<span data-zaperro="1" class="muted" style="flex-basis:100%;font-size:11.5px;color:var(--tk-erro);">' + esc(zapErros[z.chave]) +
             ' — <a class="whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") +
             "?text=" + encodeURIComponent(z.texto) + '">mandar pelo seu WhatsApp</a></span>'
           : "") + "</div>";
@@ -12320,7 +12390,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // linha do Radar no desenho da 1a: iniciais, nome, o motivo e o atalho
       radar.push('<div class="drad"><div class="dav2">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
         '<div style="min-width:0;"><button class="dnm" data-vernome="' + a.id + '" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;">' +
-        esc(a.nome) + '</button><div class="dfi" style="color:' + (diasP >= 10 ? "#f87171" : "#8a8695") + ';">' +
+        esc(a.nome) + '</button><div class="dfi" style="color:' + (diasP >= 10 ? "var(--tk-erro)" : "var(--tk-tx4)") + ';">' +
         S.plural(diasP, "dia sem treinar", "dias sem treinar") + "</div></div>" +
         '<div class="dac">' +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" title="chamar no WhatsApp" href="https://wa.me/55' +
@@ -12336,7 +12406,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="dac"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></div></div>');
     var cabR = $("dashRadar") && $("dashRadar").querySelector("h2");
     if (cabR) cabR.innerHTML = "Radar de retenção" + (radar.length ?
-      '<span style="float:right;font-size:12px;font-weight:800;color:#fb923c;text-transform:none;letter-spacing:0;">' + radar.length + " sumindo</span>" : "");
+      '<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-aten);text-transform:none;letter-spacing:0;">' + radar.length + " sumindo</span>" : "");
     $("bRadarP").innerHTML = radar.length ? radar.join("")
       : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
     // carteira: MRR, ticket, contratos
@@ -12366,8 +12436,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Recebido no mês", fmtR(d.fat)) +
       kv("Projeção no ritmo atual", fmtR(projFat)) +
       kv("Previsto da carteira (mês cheio)", fmtR(mrr)) +
-      kv("Ainda sem pagar", d.semPagar + " aluno(s)", d.semPagar ? "#fbbf24" : "#4ade80") +
-      kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "#f87171" : "#4ade80") +
+      kv("Ainda sem pagar", d.semPagar + " aluno(s)", d.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
+      kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "var(--tk-erro)" : "var(--tk-ok)") +
       (function () {
         var acum = 0;
         ativos.forEach(function (a) {
@@ -12375,7 +12445,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var scA = sessoesACobrar(st, a);
           if (scA && !scA.pacote) acum += scA.total;
         });
-        return kv("A receber acumulado (meses + sessões)", fmtR(acum), acum ? "#fbbf24" : "#4ade80");
+        return kv("A receber acumulado (meses + sessões)", fmtR(acum), acum ? "var(--tk-aten2)" : "var(--tk-ok)");
       })() +
       (Object.keys(formas).length ? kv("Por forma", Object.keys(formas).map(function (f) { return f + " " + fmtR(formas[f]); }).join(" · ")) : "");
     // status da base
@@ -12385,7 +12455,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Alunos ativos", ativos.length) +
       kv("Com contrato de plano", comContrato) +
       kv("Com valor avulso (sem plano)", pagantes - comContrato) +
-      kv("Sem cobrança definida", ativos.length - pagantes, ativos.length - pagantes ? "#fbbf24" : null) +
+      kv("Sem cobrança definida", ativos.length - pagantes, ativos.length - pagantes ? "var(--tk-aten2)" : null) +
       kv("Com acesso do app", comApp + " de " + ativos.length) +
       kv("Mensalidade no cartão", comRec + " aluno(s)");
     // movimentação
@@ -12393,10 +12463,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var churn = iniBase > 0 ? 100 * d.encerrados / iniBase : 0;
     var saldo = d.novos - d.encerrados;
     $("bMovP").innerHTML =
-      kv("Novos alunos no mês", d.novos, d.novos ? "#4ade80" : null) +
-      kv("Alunos que saíram no mês", d.encerrados, d.encerrados ? "#f87171" : null) +
-      kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "#4ade80" : saldo < 0 ? "#f87171" : null) +
-      kv("Churn do mês (% da carteira que saiu)", fmt1(churn) + "%", churn > 5 ? "#f87171" : null);
+      kv("Novos alunos no mês", d.novos, d.novos ? "var(--tk-ok)" : null) +
+      kv("Alunos que saíram no mês", d.encerrados, d.encerrados ? "var(--tk-erro)" : null) +
+      kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "var(--tk-ok)" : saldo < 0 ? "var(--tk-erro)" : null) +
+      kv("Churn do mês (% da carteira que saiu)", fmt1(churn) + "%", churn > 5 ? "var(--tk-erro)" : null);
     // indicadores
     var somaVida = 0, nVida = 0;
     (st.contratosPT || []).forEach(function (c) {
@@ -12423,8 +12493,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("bAgP").innerHTML =
       kv("Sessões dadas no mês", d.feitas) +
       kv("Projeção no ritmo atual", Math.round(d.feitas / diaAtual * diasNoMes)) +
-      kv("Faltas no mês", d.faltas, d.faltas ? "#fbbf24" : null) +
-      kv("Taxa de presença", presenca + "%", presenca < 80 ? "#fbbf24" : "#4ade80") +
+      kv("Faltas no mês", d.faltas, d.faltas ? "var(--tk-aten2)" : null) +
+      kv("Taxa de presença", presenca + "%", presenca < 80 ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Sessões nos próximos 7 dias", futuras7) +
       kv("Horário mais cheio (30 dias)", horaTop ? horaTop + " (" + horas[horaTop] + "x)" : "—");
     // app e treinos
@@ -12443,10 +12513,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return !ult || ult < S.todayISO(corte60);
     }).length;
     $("bAppP").innerHTML =
-      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "#fbbf24" : "#4ade80") +
+      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Com ficha de treino montada", comFicha + " de " + ativos.length) +
-      kv("Fichas com validade vencida", fichasVencidas, fichasVencidas ? "#fbbf24" : null) +
-      kv("Sem avaliação há 60+ dias", semAvaliacao, semAvaliacao ? "#fbbf24" : "#4ade80");
+      kv("Fichas com validade vencida", fichasVencidas, fichasVencidas ? "var(--tk-aten2)" : null) +
+      kv("Sem avaliação há 60+ dias", semAvaliacao, semAvaliacao ? "var(--tk-aten2)" : "var(--tk-ok)");
     // metas e projeção
     var metas = (st.config || {}).metasPT || {};
     if (!$("mtFatP").value && metas.fat) $("mtFatP").value = metas.fat;
@@ -12454,7 +12524,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!$("mtSesP").value && metas.ses) $("mtSesP").value = metas.ses;
     function linhaMeta(rot, atual, proj, meta, fmt) {
       var ok = meta > 0 ? proj >= meta : null;
-      var cor = ok == null ? null : ok ? "#4ade80" : "#f87171";
+      var cor = ok == null ? null : ok ? "var(--tk-ok)" : "var(--tk-erro)";
       return kv(rot + (meta > 0 ? ' <small style="color:var(--cinza);">(meta ' + fmt(meta) + ")</small>" : ""),
         fmt(atual) + ' <small style="font-weight:600;">→ projeção ' + fmt(proj) + (ok == null ? "" : ok ? " ✓" : " abaixo") + "</small>", cor);
     }
@@ -12728,7 +12798,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (velhos[0]) {
       var w = velhos[0];
       itens.push({
-        cor: "#fb923c", sel: "FICHA VENCENDO",
+        cor: "var(--tk-aten)", sel: "FICHA VENCENDO",
         qu: esc(w.a.nome),
         pq: "Sem prescrição nova há " + S.plural(w.sem, "semana", "semanas") + " · " + S.plural(w.n, "treino feito", "treinos feitos") +
           (velhos.length > 1 ? " · e mais " + (velhos.length - 1) : ""),
@@ -12798,18 +12868,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.className = "card dmes";
     el.innerHTML = '<div class="dtop"><b>' + MES[+mes.slice(5, 7) - 1].replace(/^./, function (c) { return c.toUpperCase(); }) +
       '</b><span>até hoje</span>' +
-      (fatAnt ? '<span style="margin-left:auto;font-weight:800;color:' + (vs >= 0 ? "#4ade80" : "#f87171") + ';">' +
+      (fatAnt ? '<span style="margin-left:auto;font-weight:800;color:' + (vs >= 0 ? "var(--tk-ok)" : "var(--tk-erro)") + ';">' +
         (vs >= 0 ? "+" : "") + vs + "% vs " + MES[dAnt.getMonth()] + "</span>" : "") + "</div>" +
       '<div style="display:flex;align-items:baseline;gap:9px;">' +
       '<div class="dfat">' + S.fmtBRL(d.fat) + "</div>" +
-      (meta ? '<div style="font-size:12.5px;font-weight:700;color:#8a8695;">de ' + S.fmtBRL(meta) + "</div>" : "") + "</div>" +
+      (meta ? '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">de ' + S.fmtBRL(meta) + "</div>" : "") + "</div>" +
       (meta ? '<div class="dbarra"><i style="width:' + pct + '%;"></i></div>' : '<div style="height:10px;"></div>') +
-      '<div style="font-size:12.5px;font-weight:700;color:#8a8695;">No ritmo de agora fecha em <b style="color:#a78bfa;">' +
+      '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">No ritmo de agora fecha em <b style="color:var(--tk-roxoTx2);">' +
       S.fmtBRL(proj) + "</b>" + (meta ? "" : ' · <button type="button" class="btn sec mini" id="dVerRel2" style="height:26px;">definir meta</button>') + "</div>" +
       '<div class="dkpis">' +
-      kpi("A RECEBER", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "nada vencido", vencidos ? "#f87171" : "") +
+      kpi("A RECEBER", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "nada vencido", vencidos ? "var(--tk-erro)" : "") +
       kpi("SESSÕES", d.feitas, metas.ses ? "meta " + metas.ses : S.plural(sesMes.length, "marcada", "marcadas") + " no mês") +
-      kpi("ALUNOS ATIVOS", d.ativos.length, novosMes ? "+" + novosMes + " no mês" : "sem entrada este mês", novosMes ? "#4ade80" : "") +
+      kpi("ALUNOS ATIVOS", d.ativos.length, novosMes ? "+" + novosMes + " no mês" : "sem entrada este mês", novosMes ? "var(--tk-ok)" : "") +
       kpi("PRESENÇA", marcadas ? pres + "%" : "—", marcadas ? S.plural(d.faltas, "falta", "faltas") : "sem sessão marcada") +
       "</div>";
   }
@@ -12861,7 +12931,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // tema do studio dentro do app gerado (cor válida ou padrão roxo)
     var COR = corOk((st.config || {}).cor) || "#7c3aed";
     var COR2 = corOk((st.config || {}).cor) ? escurece(COR, .18) : "#6d28d9";
-    var CORC = corOk((st.config || {}).cor) ? clareia(COR, .5) : "#a78bfa";
+    var CORC = corOk((st.config || {}).cor) ? clareia(COR, .5) : "var(--tk-roxoTx2)";
     var temCor = corOk((st.config || {}).cor);
     var CORE = temCor ? escurece(COR, .4) : "#4c1d95";
     var CORCL1 = temCor ? clareia(COR, .68) : "#d6c9f5";
@@ -12879,8 +12949,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     })();
     var temFundo = !!corOk((st.config || {}).fundo);
     // os 13 tons de fundo, na mesma ordem/força de antes
-    var PADFUNDO = ["#0d0c10", "#100e15", "#121016", "#141218", "#14121a", "#1b1724", "#1c1826",
-      "#1d1a24", "#221f2b", "#26222e", "#26222f", "#322e3d", "#3a3346"];
+    var PADFUNDO = ["#0d0c10", "#100e15", "var(--tk-sup2)", "var(--tk-sup)", "#14121a", "#1b1724", "#1c1826",
+      "var(--tk-bd2)", "var(--tk-trilha)", "#26222e", "var(--tk-bd)", "var(--tk-bd4)", "#3a3346"];
     var FORCA = [0, .035, .045, .05, .05, .09, .095, .10, .115, .13, .13, .2, .23];
     var PAL = PADFUNDO.map(function (padrao, i) { return temFundo ? (i ? clareia(FBASE, FORCA[i]) : FBASE) : padrao; });
     var zapPersonal = (st.config || {}).zap || "";
@@ -13294,15 +13364,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function emailAcessoHtml(studio, primeiro, email, senha) {
     var url = "https://www.torqueon.com.br/aluno-login.html";
-    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#121016;color:#fff;border-radius:16px;padding:28px;'>" +
-      "<div style='font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
+    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:var(--tk-sup2);color:#fff;border-radius:16px;padding:28px;'>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:var(--tk-roxoTx2);font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
       "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de treino está pronto, " + esc(primeiro) + "!</h1>" +
-      "<p style='color:#a9a4b5;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
-      "<div style='background:#1d1a24;border:1px solid #322e3d;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
-      "<div style='margin-bottom:6px;'><span style='color:#a9a4b5;'>Login:</span> <b>" + esc(email) + "</b></div>" +
-      "<div><span style='color:#a9a4b5;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
+      "<p style='color:var(--tk-tx3);font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
+      "<div style='background:var(--tk-bd2);border:1px solid var(--tk-bd4);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='margin-bottom:6px;'><span style='color:var(--tk-tx3);'>Login:</span> <b>" + esc(email) + "</b></div>" +
+      "<div><span style='color:var(--tk-tx3);'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
       "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
-      "<p style='color:#6e6a78;font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
+      "<p style='color:var(--tk-tx5);font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
   }
   function enviaEmailFn(nuvem, para, assunto, html) {
     return self.MT_FUNCAO.chama(nuvem.client, "envia-email",
@@ -13596,7 +13666,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<span style="min-width:0;flex:1;"><span class="qsnm">' + esc(x.a.nome) + "</span>" +
           '<span class="qssub">' + esc(prev.length > 32 ? prev.slice(0, 31) + "…" : prev) + "</span></span>" +
           '<span style="flex:none;text-align:right;">' +
-          '<span style="display:block;font-size:11px;font-weight:700;color:#6e6a78;">' + esc(chQuando(x.quando)) + "</span>" +
+          '<span style="display:block;font-size:11px;font-weight:700;color:var(--tk-tx5);">' + esc(chQuando(x.quando)) + "</span>" +
           (x.n ? '<span class="chn">' + x.n + "</span>" : "") + "</span></button>";
       }).join("") : '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Nenhum aluno com esse nome.</div>';
     });
@@ -13827,11 +13897,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var atras = ass.status === "atrasada";
     info.innerHTML = atras
-      ? "<b style=\"color:#fbbf24\">O pagamento da assinatura não caiu.</b> Confere a forma de pagamento na loja pra não perder o acesso."
-      : "<b style=\"color:#f87171\">Assinatura vencida.</b> Assine de novo pra manter a nuvem, o app dos alunos e a IA. Seus dados continuam guardados — nada é apagado.";
+      ? "<b style=\"color:var(--tk-aten2)\">O pagamento da assinatura não caiu.</b> Confere a forma de pagamento na loja pra não perder o acesso."
+      : "<b style=\"color:var(--tk-erro)\">Assinatura vencida.</b> Assine de novo pra manter a nuvem, o app dos alunos e a IA. Seus dados continuam guardados — nada é apagado.";
     faixa.hidden = false;
     faixa.style.background = atras ? "rgba(251,191,36,.1)" : "rgba(248,113,113,.1)";
-    faixa.style.border = "1px solid " + (atras ? "#fbbf24" : "#f87171");
+    faixa.style.border = "1px solid " + (atras ? "var(--tk-aten2)" : "var(--tk-erro)");
     $("faixaAssinaturaTxt").innerHTML = atras
       ? "<b>O pagamento da sua assinatura não caiu.</b> Sem pânico: você tem uns dias de carência — confere a forma de pagamento na loja que tudo volta ao normal."
       : "<b>Sua assinatura venceu.</b> O painel continua funcionando neste aparelho e nada é apagado, mas assine de novo pra manter a nuvem e o app dos alunos em dia.";
@@ -14248,9 +14318,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // a miniatura tem o formato do card do aluno (4:5) — a prévia tem que
         // mostrar o que ele vai ver, senão o professor enquadra errado
         (img ? '<img src="' + img + '" alt="" style="width:112px;height:140px;object-fit:cover;border-radius:9px;display:block;margin:0 auto;">'
-          : '<div style="width:112px;height:140px;margin:0 auto;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6e6a78;font-size:11.5px;">sem foto</div>') +
+          : '<div style="width:112px;height:140px;margin:0 auto;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--tk-tx5);font-size:11.5px;">sem foto</div>') +
         '<div style="font-size:13px;font-weight:700;margin:8px 0 2px;">' + esc(par[1]) + "</div>" +
-        '<div style="font-size:11.5px;font-weight:600;color:#6e6a78;margin-bottom:6px;">' +
+        '<div style="font-size:11.5px;font-weight:600;color:var(--tk-tx5);margin-bottom:6px;">' +
         (contaTipo[par[0]] ? S.plural(contaTipo[par[0]], "ficha", "fichas") : "nenhuma ficha ainda") + "</div>" +
         '<div class="linha-flex" style="gap:6px;">' +
         '<button class="btn sec mini" data-tpcapa="' + par[0] + '">' + (img ? "Trocar" : "Enviar") + "</button>" +
@@ -14422,9 +14492,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- login próprio do TORQUE PERSONAL ----------
   var contaP = self.MT_moduloConta({
     marca: "PERSONAL",
-    corTag: "#a78bfa",
+    corTag: "var(--tk-roxoTx2)",
     grad: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-    fundo: "#121016",
+    fundo: "var(--tk-sup2)",
     cardBg: "#1c1826",
     borda: "#2c2739",
     sub: "O sistema do personal trainer. Entre na SUA conta — seus alunos e treinos ficam na sua ilha, separados de todo mundo.",
@@ -14520,7 +14590,7 @@ addEventListener('load',function(){document.querySelectorAll('.kpi-pt .n').forEa
       "border:1px solid #7c5a1a;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;" +
       "justify-content:space-between;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.45);";
     var txt = document.createElement("div");
-    txt.style.cssText = "font-size:14px;line-height:1.5;flex:1 1 220px;color:#fbbf24;font-weight:700;";
+    txt.style.cssText = "font-size:14px;line-height:1.5;flex:1 1 220px;color:var(--tk-aten2);font-weight:700;";
     txt.textContent = "Sua sessão da nuvem caiu. Entre de novo pra voltar a usar a IA, os pagamentos e a publicação dos apps.";
     var acoes = document.createElement("div");
     acoes.style.cssText = "display:flex;gap:8px;";
