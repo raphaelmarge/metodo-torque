@@ -294,6 +294,22 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Montar treino no celular** (a partir da v627): tela 20 — a última das sete.
+Regra 6 do colapso: o formulário de escolher exercício vira **gaveta de baixo**
+(`border-radius: 22px 22px 0 0`, `box-shadow: 0 -18px 40px rgba(0,0,0,.5)`,
+puxador de 38×4), com a ficha visível atrás. A ficha (`.tddir`) ganha
+`order: 1` e o escolher (`.tdesq`) `order: 2`, e a cascata de 3 seletores vira
+**fita que rola** — empilhada, ela comia 180px da gaveta e a ficha sumia.
+⚠️ `position: sticky`, **não** `fixed`: com duas fichas abertas ao mesmo tempo,
+`fixed` daria duas gavetas empilhadas no mesmo pedaço da tela.
+⚠️ **Desvio consciente**: o desenho também apaga os controles de cada exercício
+(setas, ✕ e o seletor de tipo de série) e faz um toque na lista somar direto.
+As duas coisas juntas deixariam a tela **sem nenhum caminho** pra ajustar série,
+repetição e descanso depois — o próprio handoff avisa disso na anotação. Então
+a gaveta entra (é o ganho real: põe o "escolher" no alcance do polegar com a
+ficha atrás), mas os campos de série/repetição/descanso ficam **dentro dela** e
+os controles do item **continuam** no card. Bonito e sem como editar não serve.
+
 **Financeiro e Chat no celular** (a partir da v626): telas 21 e 22 do handoff.
 **21** — o dinheiro do mês vira um **card roxo** (`#pgHero`, gradiente
 `--pt-grad-card`, número de 34px, meta, barra e a linha "a receber ·
