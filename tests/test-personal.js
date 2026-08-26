@@ -8872,16 +8872,55 @@ async function abaPt(p, a) {
         return { wod: ler("[data-wi]"), cardio: ler("[data-cri]") };
       });
       const letras = (l) => l.map((x) => x.letra).join("");
-      ok(gavTr.wod.length >= 2 && letras(gavTr.wod) === "ABC".slice(0, gavTr.wod.length) &&
+      // A, B, C, D… — a demo pode ganhar treino novo (o "misto" entrou como D),
+      // entao a sequencia esperada nasce do TAMANHO da lista
+      const seq = (n) => Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i)).join("");
+      ok(gavTr.wod.length >= 2 && letras(gavTr.wod) === seq(gavTr.wod.length) &&
         gavTr.wod.filter((x) => x.aberta).length === 1 && /movimento/.test(gavTr.wod[0].sub),
         "🗂 os circuitos viraram gavetas A/B/C com o resumo na tampa e só uma aberta");
-      ok(gavTr.cardio.length >= 2 && letras(gavTr.cardio) === "ABC".slice(0, gavTr.cardio.length) &&
+      ok(gavTr.cardio.length >= 2 && letras(gavTr.cardio) === seq(gavTr.cardio.length) &&
         gavTr.cardio.filter((x) => x.aberta).length === 1 && /Corrida|Bike|Caminhada/.test(gavTr.cardio[0].sub),
         "🗂 as corridas e pedais viraram gavetas A/B/C, no mesmo desenho da ficha");
       // o rótulo do dia vem da Semana do aluno; qual deles cai em "hoje" muda
       // conforme o dia em que o teste roda, então a trava é só a de existir
       ok(gavTr.cardio.concat(gavTr.wod).some((x) => /· (hoje|segunda|terça|quarta|quinta|sexta|sábado|domingo)/.test(x.sub)),
         "a tampa da gaveta diz em que dia da semana aquele treino está marcado");
+      /* CONTINUO + TIROS na MESMA folha (pedido do Raphael): a tampa mostra as
+       * duas partes, e o player guiado enfileira continuo ANTES dos tiros —
+       * e a ordem que o corpo aguenta. */
+      const misto = await pA.evaluate(() => {
+        const g = Array.from(document.querySelectorAll("[data-cri]"))
+          .map((d) => (d.querySelector("summary") || d).textContent.replace(/\s+/g, " "));
+        const b = window.__crGuia
+          ? (window.__crGuia.monta({ t: "misto", n: "Longao", d: 6, tp: 35, p: "6:20", r: 3, ti: 45, de: 75 }) || []).map((x) => x.k)
+          : null;
+        const so = window.__crGuia
+          ? (window.__crGuia.monta({ t: "continuo", n: "Rodagem", d: 5, tp: 30, p: "6:00", r: 3, ti: 45, de: 75 }) || []).map((x) => x.k)
+          : null;
+        return { tampa: g.find((t) => /\+ \d+×/.test(t)) || "", blocos: (b || []).join(","), soCont: (so || []).join(",") };
+      });
+      ok(/km/.test(misto.tampa) && /\+ \d+× \d+s forte/.test(misto.tampa),
+        "🏃 treino misto: a tampa mostra a parte contínua E os tiros (" + misto.tampa.slice(0, 70) + ")");
+      ok(misto.blocos === "aq,c,f,l,f,l,f,l,vc",
+        "🏃 no player guiado o misto é aquecimento → contínuo → tiros → volta à calma, nessa ordem (" + misto.blocos + ")");
+      ok(misto.soCont === "aq,c,vc",
+        "🏃 treino só contínuo continua com um bloco de rodagem só (" + misto.soCont + ")");
+      /* O quadro do trajeto: a frase de "ligue o GPS" cabia em 22px cravado
+       * num celular de 390 e saía cortada nas DUAS pontas — parecia que o mapa
+       * tinha sumido. Agora ela encolhe até caber. */
+      const mapa = await pA.evaluate(() => {
+        const cv = document.getElementById("crMapa");
+        if (!cv) return null;
+        const g = cv.getContext("2d");
+        const W = cv.width / (window.devicePixelRatio > 1 ? Math.min(2, window.devicePixelRatio) : 1);
+        let fs = 20;
+        g.font = "700 " + fs + "px system-ui,sans-serif";
+        const msg = "Ligue o GPS pra desenhar o trajeto";
+        while (fs > 11 && g.measureText(msg).width > W - 30) { fs--; g.font = "700 " + fs + "px system-ui,sans-serif"; }
+        return { W: Math.round(W), largura: Math.round(g.measureText(msg).width), fs: fs };
+      });
+      ok(mapa && mapa.largura <= mapa.W - 20,
+        "🗺 a frase do quadro do trajeto cabe na largura do celular (" + (mapa && mapa.largura) + "px em " + (mapa && mapa.W) + "px)");
     }
     await pA.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
     // a demonstração de bonequinho saiu do app na v465 — aqui fica a trava de que
