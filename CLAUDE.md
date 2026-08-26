@@ -294,6 +294,35 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Financeiro e Chat no celular** (a partir da v626): telas 21 e 22 do handoff.
+**21** — o dinheiro do mês vira um **card roxo** (`#pgHero`, gradiente
+`--pt-grad-card`, número de 34px, meta, barra e a linha "a receber ·
+vencidos"), lendo os MESMOS números do card do mês do Início
+(`dadosDoMes` + `config.metasPT`), então as duas telas nunca contam diferente.
+Cada atrasado passa a caber em **duas fileiras** — quem é + quanto em cima, os
+três botões de 38px embaixo — e o cabeçalho troca o dinheiro pelo NOME da tela
+(era o mesmo número duas vezes na mesma dobra). O histórico de 6 meses e o
+"Como você recebe" ficam atrás de uma porta tracejada (`#pgVerMais`) — a regra
+9 do colapso. **22** — a conversa vira **tela cheia**: a lista some, entra o
+"‹" (`#chatVolta`), o chip de contexto vira faixa de ponta a ponta, as bolhas
+perdem o avatar (quem fala já está no cabeçalho) e ganham o rabinho
+(`16px 16px 16px 5px`), as respostas rápidas viram fita que rola e o Enviar
+vira o quadrado de 46px. Antes o celular herdava o layout de computador: a
+lista inteira empilhava em cima e a conversa só começava depois de 1.600px —
+tocar num aluno não mudava nada na tela.
+⚠️ **Duas coisas do desenho 22 continuam fora, por não existir dado**: o
+"digitando…" (o chat é polling de 25 s numa tabela sem coluna de estado — não
+há canal de presença) e o selo de reação "💪 1" (`app_chat` não tem coluna de
+reação; a tabela de reações é exclusiva do feed). É a mesma recusa da v618.
+⚠️ Mais dois estilos **inline** encontrados e movidos pro CSS (`#chatTitulo`,
+`#chatSub`) — media query não vence inline, e o nome do aluno saía em 17px no
+celular apesar da regra de 14px. Já são cinco casos: é o defeito mais comum
+deste arquivo.
+⚠️ `display: flex` numa caixa de texto corrido quebra a FRASE em itens: o
+`<b>Ver mais</b>` da porta do Financeiro sumiu numa caixa de 38px até a
+`.pgmais` virar `display: block`. Terceira vez (a `.dnota` na v621, o `<label>`
+do questionário na v623) — texto corrido nunca é flex.
+
 **Ficha do aluno e Agenda no celular** (a partir da v625): telas 18 e 19 do
 handoff. **18** — a faixa roxa vira cabeçalho **full-bleed**, o avatar é
 quadrado de 54px (raio 17, não círculo), o nome sobe pra 21px/900, as 4 ações
