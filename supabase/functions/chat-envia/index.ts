@@ -252,6 +252,11 @@ Deno.serve(async (req: Request) => {
       // o diagnóstico usa esta lista pra saber se a função publicada está
       // atualizada — uma versão velha responde o ping sem ela
       acoes: ["ping", "testar", "ajuda", "analisar", "ia_treino", "ia_dieta", "sugerir", "enviar"],
+      /* As REGRAS de prompt que ESTA versão carrega. O painel compara com o
+       * que ele espera e avisa quando a função publicada é velha demais —
+       * sem isso, uma chat-envia antiga ignorava a leitura do professor e
+       * nada na tela dizia por quê: o treino só saía "errado". */
+      regras: ["mes", "brief", "briefManda"],
     });
   }
 
@@ -376,7 +381,16 @@ Deno.serve(async (req: Request) => {
       "com ressalva. \"COMO O PROFESSOR QUER ESTE TREINO MONTADO\" define a estrutura (quantidade de " +
       "fichas, divisão, duração, exercícios obrigatórios): siga à risca mesmo que você faria diferente. " +
       "Se algum pedido do professor for perigoso pra saúde do aluno, cumpra o resto e explique a ressalva " +
-      "no resumo — nunca ignore em silêncio. ";
+      "no resumo — nunca ignore em silêncio. " +
+      "A ESTRUTURA QUE ELE PEDIR SUBSTITUI OS PADRÕES DESTAS INSTRUÇÕES: quantidade de fichas ou de " +
+      "treinos, divisão (ABC, ABCD, upper/lower, push-pull-legs), quantos exercícios por ficha e duração " +
+      "da sessão. Quando ele pedir, esqueça o \"1 ficha por dia disponível\" e a faixa de exercícios por " +
+      "ficha desta mensagem e faça do jeito dele. " +
+      "Se os dados trouxerem o bloco \"EXERCÍCIOS QUE O PROFESSOR CITOU\", cada nome dali é OBRIGATÓRIO: " +
+      "todos precisam aparecer no plano, escritos exatamente como estão na lista. " +
+      "No fim dos dados vem um \"LEMBRETE FINAL\" repetindo o texto do professor: antes de devolver o " +
+      "JSON, confira o seu plano linha a linha contra ele. Se descumprir alguma coisa de propósito, diga " +
+      "qual e por quê no campo resumo. ";
     const SISTEMAS: Record<string, string> = {
       musculacao: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +

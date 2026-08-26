@@ -4470,6 +4470,12 @@ async function abaPt(p, a) {
       "a regra do mês exige 4 semanas e manda a última ser deload — nunca a mais pesada");
     ok((fn.match(/BRIEF_REGRA/g) || []).length === 4 && /PRIORIDADE MÁXIMA/.test(fn) && /regra absoluta/.test(fn),
       "a chat-envia manda a leitura do professor vencer os números, e as adaptações serem regra absoluta");
+    ok(/A ESTRUTURA QUE ELE PEDIR SUBSTITUI OS PADRÕES/.test(fn) && /1 ficha por dia disponível/.test(fn),
+      "e a divisão pedida pelo professor vence o padrão de '1 ficha por dia' — era essa regra que ganhava dele");
+    ok(/EXERCÍCIOS QUE O PROFESSOR CITOU\\" *, *"? *é OBRIGATÓRIO|é OBRIGATÓRIO/.test(fn) && /LEMBRETE FINAL/.test(fn),
+      "a função sabe que o exercício citado é obrigatório e que existe um lembrete no fim dos dados");
+    ok(/regras: \["mes", "brief", "briefManda"\]/.test(fn),
+      "o ping devolve as REGRAS que a versão publicada carrega — é assim que o painel descobre função velha");
   }
   {
     // ✍️ a leitura do professor entra no prompt, na frente de tudo
@@ -4503,6 +4509,86 @@ async function abaPt(p, a) {
     ok(br.noPrompt.indexOf("A LEITURA DO PROFESSOR") < br.noPrompt.indexOf("ALUNO:"),
       "a leitura do professor vai na FRENTE dos dados do aluno no prompt");
     ok(br.vazio === "", "professor que não escreveu nada não gera bloco nenhum — o prompt fica como era");
+  }
+  {
+    /* ⚠️ O caminho de volta do pedido do professor. Três coisas foram medidas
+     * como quebradas antes desta suíte existir:
+     *   - a IA via só 436 dos 1828 exercícios (os 25 primeiros de cada grupo,
+     *     na ordem do arquivo) — pedir um exercício fora desses 25 era pedir
+     *     uma coisa que ela não sabia que existia;
+     *   - o nome citado pelo professor não virava obrigação nenhuma;
+     *   - "1 ficha por dia disponível" (regra do sistema) vencia a divisão
+     *     que ele tinha escrito. */
+    const ped = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const a = st.alunos.find((x) => x.id === id);
+      const guardaObs = a.obs, guardaAn = a.anamnese;
+      a.obs = "Chega cansada do trabalho.";
+      a.anamnese = Object.assign({}, a.anamnese || {}, { dias: 4, gosta: "agachamento livre", naogosta: "esteira" });
+      a.briefIA = {
+        desejo: "Quero ABCD, nao ABC. Terra romeno obrigatorio. Agachamento bulgaro tambem.",
+        quer: "Ela pediu mais gluteo.",
+        adapta: "Ombro direito trava acima de 90 graus - nada de desenvolvimento militar.",
+        leitura: "Estagnou no supino.",
+      };
+      const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
+      const bloco = (txt.match(/EXERCÍCIOS QUE O PROFESSOR CITOU[^\n]*/) || [""])[0];
+      const iCat = txt.indexOf("CATÁLOGO DISPONÍVEL");
+      const cat = iCat >= 0 ? txt.slice(iCat) : "";
+      const out = {
+        tam: txt.length,
+        // conta os nomes do catálogo: um por " | " mais um por linha de grupo
+        nomes: (cat.match(/\|/g) || []).length + Math.max(0, cat.split("\n").length - 2),
+        bloco: bloco,
+        temLembrete: txt.indexOf("LEMBRETE FINAL") > txt.length * 0.5,
+        obsCedo: txt.indexOf("OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO"),
+        posAluno: txt.indexOf("ALUNO:"),
+        diasCede: /vale o que ELE pediu/.test((txt.match(/OBJETIVO:[^\n]*/) || [""])[0]),
+      };
+      a.obs = guardaObs; a.anamnese = guardaAn; delete a.briefIA;
+      return out;
+    });
+    ok(ped.nomes > 1000, "a IA passa a enxergar o banco quase inteiro, não 25 por grupo (" + ped.nomes + " exercícios)");
+    ok(ped.tam < 60000, "e o envio continua dentro do envelope que a chat-envia aceita (" + ped.tam + " de 60000)");
+    ok(/Levantamento terra romeno/.test(ped.bloco) && /Agachamento búlgaro/.test(ped.bloco) && /Agachamento livre/.test(ped.bloco),
+      "o exercício citado pelo professor vira OBRIGATÓRIO — inclusive escrito sem acento e pelo apelido (terra romeno)");
+    ok(!/desenvolvimento militar/i.test(ped.bloco) && !/[Ee]steira/.test(ped.bloco),
+      "o que ele PROIBIU não vira obrigação — nada de 'nada de desenvolvimento militar' virar exercício pedido");
+    ok(!/Agachamento búlgaro com salto|Agachamento búlgaro 1 e/.test(ped.bloco),
+      "entra o movimento base, não as variações dele — senão a ficha vira repetição do mesmo exercício");
+    ok(ped.obsCedo >= 0 && ped.obsCedo < ped.posAluno,
+      "as observações do professor sobem pra junto da leitura dele, não ficam enterradas na anamnese");
+    ok(ped.temLembrete, "o pedido do professor é repetido no FIM do envio — é a última coisa que a IA lê antes de responder");
+    ok(ped.diasCede, "a linha de DIAS/SEMANA diz que a divisão pedida pelo professor vence o padrão da anamnese");
+  }
+  {
+    // 🔎 exercício que a IA prescreveu e o painel jogou fora aparece na tela
+    const fora = await p.evaluate(() => {
+      const orig = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ client: {} });
+      const cham = window.MT_FUNCAO.chama;
+      window.MT_FUNCAO.chama = () => Promise.resolve({ ok: true, texto: JSON.stringify({
+        fichas: [{ titulo: "A — Peito", itens: [
+          { nome: "Supino reto", series: 4, reps: "10", descanso: 60 },
+          { nome: "Voador invertido de marte", series: 3, reps: "12", descanso: 60 },
+          { nome: "AGACHAMENTO BULGARO", series: 3, reps: "10", descanso: 60 },
+        ] }],
+        resumo: "teste",
+      }) });
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      return new Promise((res) => {
+        window.__iaTreino(id, "hipertrofia", "academia", (r) => {
+          window.MTStore.cloud = orig; window.MT_FUNCAO.chama = cham;
+          res(r);
+        });
+      });
+    });
+    ok(fora.ignorados === 1 && (fora.nomesFora || []).some((n) => /marte/i.test(n)),
+      "o exercício inventado é contado E devolvido pelo nome, em vez de sumir calado");
+    ok(fora.exercicios === 2,
+      "o nome escrito sem acento e em caixa alta é RECUPERADO pelo banco (AGACHAMENTO BULGARO → Agachamento búlgaro)");
   }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
