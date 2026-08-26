@@ -31,65 +31,202 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 </script>
 <script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
-  /* ---------- paleta do painel: um token por papel ----------
-   * O modo claro (tela 3d do canvas) e SO a troca destes valores. Antes cada
-   * tela nova cravava o hex escuro na mao e o tema claro nao alcancava. */
+  /* ============================================================
+   * TOKENS DO PAINEL — colados do handoff do Claude Design
+   * (design_handoff_painel_personal/tokens-painel.css).
+   *
+   * Os nomes --pt-* sao os DO DESENHO: quando chegar um handoff novo, o valor
+   * bate sem traducao e "cor inventada" vira coisa que o teste pega. Os nomes
+   * --tk-*, que o painel usa em centenas de lugares desde a v620, viraram
+   * APELIDOS dos --pt-*: mesma cor, zero renomeacao e — o que mais importa —
+   * o modo claro passa a ter UM lugar so, porque apelido de variavel CSS se
+   * resolve na HORA DO USO. Redefinir --pt-txt-3 no tema claro muda o
+   * --tk-tx3 junto, sozinho.
+   *
+   * Regra 1 do handoff: nenhuma cor nova. Destaque e estado sao TINTA
+   * TRANSPARENTE sobre um token (rgba(124,58,237,.18)), nunca um hex novo.
+   * tests/test-tokens-painel.js reprova hex que nao esteja aqui.
+   * ============================================================ */
   :root {
-    --tk-sup: #141218;
-    --tk-sup2: #121016;
-    --tk-sup3: #1b1822;
-    --tk-sup4: #17151d;
-    --tk-bd: #26222f;
-    --tk-bd2: #1d1a24;
-    --tk-bd3: #2a2536;
-    --tk-bd4: #322e3d;
-    --tk-trilha: #221f2b;
-    --tk-tx: #f2f0f6;
-    --tk-tx1: #e6e2f2;
-    --tk-tx2: #cfcbdb;
-    --tk-tx3: #a9a4b5;
-    --tk-tx4: #8a8695;
-    --tk-tx5: #6e6a78;
-    --tk-tx6: #4b4855;
-    --tk-roxoFraco: #241a3d;
-    --tk-roxoTx: #c4b5fd;
-    --tk-roxoTx2: #a78bfa;
-    --tk-ok: #4ade80;
-    --tk-erro: #f87171;
+    /* --- superficies (tema escuro, o padrao) --- */
+    --pt-fundo:        #0d0c10;
+    --pt-card:         #141218;
+    --pt-caixa:        #121016;
+    --pt-gaveta:       #14121a;
+    --pt-elev:         #1d1a24;
+    --pt-trilha:       #221f2b;
+    --pt-toggle-off:   #24202e;
+
+    /* --- bordas --- */
+    --pt-borda:        #26222f;
+    --pt-hairline:     #1d1a24;
+    --pt-borda-forte:  #322e3d;
+    --pt-borda-gaveta: #2a2536;
+    --pt-borda-toggle: #3a3546;
+
+    /* --- texto --- */
+    --pt-txt:          #f2f0f6;
+    --pt-txt-2:        #cfcbdb;
+    --pt-txt-3:        #a9a4b5;
+    --pt-txt-4:        #8a8695;
+    --pt-txt-5:        #6e6a78;
+
+    /* --- roxo da marca (NAO muda entre temas) --- */
+    --pt-roxo:         #7c3aed;
+    --pt-roxo-esc:     #6d28d9;
+    --pt-roxo-claro:   #a78bfa;
+    --pt-roxo-clar2:   #c4b5fd;
+    --pt-roxo-avatar:  #241a3d;
+    --pt-roxo-fundo:   #4c1d95;
+    --pt-roxo-prof:    #2b1259;
+
+    /* --- semanticos --- */
+    --pt-ok:           #4ade80;
+    --pt-erro:         #f87171;
+    --pt-atencao:      #fb923c;
+    --pt-recorde:      #fcd34d;
+
+    /* --- estados: tinta transparente, NUNCA cor nova --- */
+    --pt-sel:          rgba(124,58,237,.18);
+    --pt-sel-borda:    rgba(124,58,237,.38);
+    --pt-erro-bg:      rgba(248,113,113,.14);
+    --pt-erro-bg-fofo: rgba(248,113,113,.10);
+    --pt-erro-borda:   rgba(248,113,113,.32);
+    --pt-erro-selo:    rgba(248,113,113,.18);
+    --pt-atencao-bg:   rgba(251,146,60,.14);
+    --pt-atencao-borda:rgba(251,146,60,.32);
+    --pt-atencao-selo: rgba(251,146,60,.18);
+    --pt-ok-bg:        rgba(74,222,128,.14);
+
+    /* --- sobre fundo roxo (faixa de cabecalho, card de gradiente) --- */
+    --pt-sobre-roxo-cx:     rgba(255,255,255,.14);
+    --pt-sobre-roxo-bd:     rgba(255,255,255,.18);
+    --pt-sobre-roxo-bd2:    rgba(255,255,255,.22);
+    --pt-sobre-roxo-txt:    rgba(255,255,255,.82);
+    --pt-sobre-roxo-lbl:    rgba(255,255,255,.70);
+    --pt-sobre-roxo-trilha: rgba(0,0,0,.28);
+
+    /* --- gradientes --- */
+    --pt-grad-faixa: linear-gradient(160deg, #7c3aed, #6d28d9);
+    --pt-grad-card:  linear-gradient(170deg, #7c3aed 0%, #6d28d9 52%, #2b1259 100%);
+    --pt-grad-barra: linear-gradient(90deg, #7c3aed, #a78bfa);
+
+    /* --- raios --- */
+    --pt-r-frame:  20px;
+    --pt-r-card:   17px;
+    --pt-r-card-p: 15px;
+    --pt-r-caixa:  13px;
+    --pt-r-bt:     11px;
+    --pt-r-selo:    7px;
+
+    /* --- alturas de toque (nunca abaixo destas) --- */
+    --pt-h-bt:   44px;   /* botao principal, item de menu, campo */
+    --pt-h-bt-2: 38px;   /* botao dentro de linha de lista */
+    --pt-h-bt-3: 36px;   /* botao de icone secundario */
+    --pt-h-chip: 32px;   /* minimo absoluto — so pilula de filtro */
+
+    /* ---------- apelidos: os nomes que o painel ja usa ---------- */
+    --tk-sup:   var(--pt-card);
+    --tk-sup2:  var(--pt-caixa);
+    --tk-sup3:  #1b1822;
+    --tk-sup4:  #17151d;
+    --tk-bd:    var(--pt-borda);
+    --tk-bd2:   var(--pt-hairline);
+    --tk-bd3:   var(--pt-borda-gaveta);
+    --tk-bd4:   var(--pt-borda-forte);
+    --tk-trilha: var(--pt-trilha);
+    --tk-tx:    var(--pt-txt);
+    --tk-tx1:   #e6e2f2;
+    --tk-tx2:   var(--pt-txt-2);
+    --tk-tx3:   var(--pt-txt-3);
+    --tk-tx4:   var(--pt-txt-4);
+    --tk-tx5:   var(--pt-txt-5);
+    --tk-tx6:   #4b4855;
+    --tk-roxoFraco: var(--pt-roxo-avatar);
+    --tk-roxoTx:    var(--pt-roxo-clar2);
+    --tk-roxoTx2:   var(--pt-roxo-claro);
+    --tk-ok:    var(--pt-ok);
+    --tk-erro:  var(--pt-erro);
     --tk-erro2: #fca5a5;
-    --tk-aten: #fb923c;
+    --tk-aten:  var(--pt-atencao);
     --tk-aten2: #fbbf24;
-    --tk-swBg: #24202e;
-    --tk-swBd: #3a3546;
+    --tk-swBg:  var(--pt-toggle-off);
+    --tk-swBd:  var(--pt-borda-toggle);
   }
+  /* MODO CLARO (tela 3d): so troca de variavel, nada de tela duplicada.
+   * O roxo da marca NAO muda entre temas. Os apelidos --tk-* acompanham
+   * sozinhos — so aparecem aqui os que nao tem par no handoff. */
   html[data-tema="claro"] {
-    --tk-sup: #ffffff;
-    --tk-sup2: #f7f6fa;
-    --tk-sup3: #f4f3f7;
-    --tk-sup4: #faf9fc;
-    --tk-bd: #e4e1eb;
-    --tk-bd2: #eeecf3;
-    --tk-bd3: #e4e1eb;
-    --tk-bd4: #d9d5e3;
-    --tk-trilha: #e9e7ef;
-    --tk-tx: #191622;
-    --tk-tx1: #191622;
-    --tk-tx2: #443f52;
-    --tk-tx3: #6c6678;
-    --tk-tx4: #77718a;
-    --tk-tx5: #8b8599;
-    --tk-tx6: #b5b0c0;
-    --tk-roxoFraco: rgba(124,58,237,.12);
-    --tk-roxoTx: #6d28d9;
-    --tk-roxoTx2: #7c3aed;
-    --tk-ok: #15803d;
-    --tk-erro: #b91c1c;
+    --pt-fundo:        #f4f3f7;
+    --pt-card:         #ffffff;
+    --pt-caixa:        #f4f3f7;
+    --pt-gaveta:       #ffffff;
+    --pt-elev:         #f4f3f7;
+    --pt-trilha:       #e4e1eb;
+    --pt-toggle-off:   #e4e1eb;
+
+    --pt-borda:        #e4e1eb;
+    --pt-hairline:     #e4e1eb;
+    --pt-borda-forte:  #d9d5e3;
+    --pt-borda-gaveta: #e3e0ec;
+    --pt-borda-toggle: #d9d5e3;
+
+    --pt-txt:          #191622;
+    --pt-txt-2:        #443f52;
+    --pt-txt-3:        #4a4657;
+    --pt-txt-4:        #6c6678;
+    --pt-txt-5:        #77718a;
+
+    --pt-roxo-claro:   #6d28d9;   /* no claro, roxo de TEXTO escurece pra ter contraste */
+    --pt-roxo-clar2:   #6d28d9;
+    --pt-roxo-avatar:  rgba(124,58,237,.12);
+
+    --pt-ok:           #15803d;
+    --pt-erro:         #b91c1c;
+    --pt-atencao:      #c2410c;
+
+    --pt-sel:          rgba(124,58,237,.12);
+    --pt-sel-borda:    rgba(124,58,237,.28);
+    --pt-erro-bg:      rgba(220,38,38,.10);
+    --pt-erro-bg-fofo: rgba(220,38,38,.06);
+    --pt-erro-borda:   rgba(220,38,38,.24);
+    --pt-erro-selo:    rgba(220,38,38,.12);
+    --pt-atencao-bg:   rgba(194,65,12,.10);
+    --pt-atencao-borda:rgba(194,65,12,.24);
+    --pt-atencao-selo: rgba(194,65,12,.12);
+    --pt-ok-bg:        rgba(21,128,61,.10);
+
+    /* sem par no handoff: seguem a mesma escada */
+    --tk-sup3:  #f4f3f7;
+    --tk-sup4:  #faf9fc;
+    --tk-tx1:   #191622;
+    --tk-tx6:   #b5b0c0;
     --tk-erro2: #991b1b;
-    --tk-aten: #c2410c;
     --tk-aten2: #b45309;
-    --tk-swBg: #dcd8e6;
-    --tk-swBd: #c3bed3;
   }
+  /* ---------- as escalas de tipografia do handoff ----------
+   * Sete, nao oito. Todo numero leva tabular-nums pra nao dancar ao atualizar. */
+  .pt-num-gigante { font-size: 34px; font-weight: 900; letter-spacing: -.035em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .pt-num-hero    { font-size: 52px; font-weight: 900; letter-spacing: -.04em; line-height: .95; font-variant-numeric: tabular-nums; }
+  .pt-titulo-tela { font-size: 23px; font-weight: 800; letter-spacing: -.02em; }
+  .pt-titulo-nome { font-size: 27px; font-weight: 900; letter-spacing: -.025em; }
+  .pt-num-card    { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .pt-card-titulo { font-size: 15.5px; font-weight: 800; }
+  .pt-nome-linha  { font-size: 14.5px; font-weight: 800; }
+  .pt-corpo       { font-size: 13px; font-weight: 600; }
+  .pt-legenda     { font-size: 11.5px; font-weight: 600; color: var(--pt-txt-4); }
+  .pt-rotulo      { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--pt-txt-4); }
+  .pt-rotulo-mini { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--pt-txt-4); }
+  /* selo de estado: fundo na cor com .18 e texto na cor CHEIA.
+   * Nunca texto escuro sobre cor cheia — e a regra 2 do handoff. */
+  .pt-selo { display: inline-flex; align-items: center; height: 20px; padding: 0 7px;
+             border-radius: 6px; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; }
+  .pt-selo-erro    { background: var(--pt-erro-selo);    color: var(--pt-erro); }
+  .pt-selo-atencao { background: var(--pt-atencao-selo); color: var(--pt-atencao); }
+  .pt-selo-ok      { background: var(--pt-ok-bg);        color: var(--pt-ok); }
+  .pt-contador { display: inline-flex; align-items: center; justify-content: center;
+                 min-width: 19px; height: 19px; padding: 0 6px; border-radius: 8px;
+                 font-size: 11px; font-weight: 800; }
   /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
   #sRepDias label { cursor: pointer; }
   #sRepDias label:has(.srd:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
@@ -104,7 +241,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* menu inferior fixo (estilo app do aluno) */
   #navPt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(13,12,16,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
   #navPt button { position: relative; background: none; border: 0; color: var(--tk-tx4); font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
-  .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
+  .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: var(--pt-roxo); color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
   #navPt button.ativa { color: var(--tk-roxoTx2); }
   #navPt button:active { background: rgba(255,255,255,.06); }
   .corpo { padding-bottom: 88px; }
@@ -157,7 +294,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   #calAgenda .cal-dia.sel { background: var(--roxo); color: #fff; border-color: var(--roxo); }
   #calAgenda .cal-dia .cal-n { position: absolute; right: 3px; top: 3px; background: var(--roxo); color: #fff; font-size: 9.5px; font-weight: 800; border-radius: 999px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 3px; }
   #calAgenda .cal-dia.sel .cal-n { background: rgba(255,255,255,.28); }
-  #calAgenda .cal-dia.pend .cal-n { background: #f59e0b; }
+  #calAgenda .cal-dia.pend .cal-n { background: var(--pt-atencao); }
   #calAgenda .cal-dia.bloq { opacity: .4; text-decoration: line-through; }
   .menu-fundo { position: fixed; inset: 0; background: rgba(18,16,22,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
@@ -185,7 +322,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
              color: var(--tk-tx3); cursor: pointer; transition: background .12s, color .12s, transform .2s; }
   .abas-pt .mcab-bt:hover { background: rgba(255,255,255,.14); color: #fff; }
   @media (min-width: 1100px) { .abas-pt .mcab-bt { display: inline-flex; } }
-  html[data-tema="claro"] .abas-pt .mcab-bt { background: rgba(19,17,24,.06); color: #6b6779; }
+  html[data-tema="claro"] .abas-pt .mcab-bt { background: rgba(19,17,24,.06); color: var(--pt-txt-4); }
   html[data-tema="claro"] .abas-pt .mcab-bt:hover { background: rgba(124,58,237,.10); color: var(--roxo); }
   @media (min-width: 1100px) {
     body.menu-fino { padding-left: 66px; }
@@ -210,7 +347,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     body.menu-fino .menu-tema .sw { margin-left: 0; }
   }
   html[data-tema="claro"] .abas-pt { background: #fff; border-right-color: #e3e0ec; }
-  html[data-tema="claro"] .abas-pt .menu-cab { color: #6b6779; border-bottom-color: #e3e0ec; }
+  html[data-tema="claro"] .abas-pt .menu-cab { color: var(--pt-txt-4); border-bottom-color: var(--pt-borda-gaveta); }
   html[data-tema="claro"] .abas-pt .menu-cab b { color: #191622; }
   html[data-tema="claro"] .abas-pt button { color: #4a4657; }
   html[data-tema="claro"] .abas-pt button.ativa { color: #191622; background: rgba(124,58,237,.12); }
@@ -340,7 +477,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* ---------- Início do desenho novo (canvas "Painel do professor") ----------
      Topo roxo com o dia, a próxima sessão e o Resolver hoje. As cores e os
      raios vêm do canvas: #7c3aed / var(--tk-sup) / var(--tk-bd), raio 16-20. */
-  .dtopo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 20px; padding: 22px 26px; margin-bottom: 14px; color: #fff; }
+  .dtopo { background: var(--pt-grad-faixa); border-radius: var(--pt-r-frame); padding: 22px 26px; margin-bottom: 14px; color: #fff; }
   .dtopo .dlin { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
   .dtopo .ddata { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.72); }
   .dtopo h2 { font-size: 27px; font-weight: 900; letter-spacing: -.03em; margin: 3px 0 4px; color: #fff; text-transform: none; }
@@ -373,6 +510,86 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dcard .dacs { display: flex; gap: 7px; margin-top: auto; }
   .dcard .dacs .btn { flex: 1; justify-content: center; height: 40px; border-radius: 11px; font-size: 12.5px; }
   .dcard .dacs .btn.ic { flex: none; width: 40px; padding: 0; }
+  /* ============================================================
+   * TELA 02 do handoff — o INÍCIO NO CELULAR (1a Início celular).
+   * Cada valor abaixo foi copiado do recorte
+   * telas-html/02-1a-inicio-celular.html, nao reconstruido de memoria.
+   *
+   * A troca que organiza a tela: no celular a faixa roxa ENCOSTA no topo e
+   * nas bordas (o cabecalho do app some — cada tela do celular tem o proprio
+   * cabecalho, como mostram as telas 02 e 17), o "+ Novo aluno" vira so o
+   * "+" de 40px no canto, e o Resolver hoje deixa de ser card em coluna pra
+   * virar linha: bolinha + texto + botao.
+   * ============================================================ */
+  @media (max-width: 900px) {
+    /* o cabecalho do app sai: no desenho a tela comeca no proprio conteudo */
+    .topo { display: none; }
+    /* a faixa roxa desencosta do padding do .corpo e vai de ponta a ponta */
+    #vDash .dtopo { margin: -18px -12px 14px; border-radius: 0;
+                    padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+    #vDash .dtopo .dlin { gap: 10px; flex-wrap: nowrap; align-items: center; }
+    #vDash .dtopo .ddata { font-size: 9.5px; letter-spacing: .18em; color: var(--pt-sobre-roxo-lbl); }
+    #vDash .dtopo h2 { font-size: 20px; letter-spacing: -.025em; margin: 2px 0 0; }
+    #vDash .dtopo .dsub { display: none; }        /* no celular a contagem vive no "SEU DIA" */
+    #vDash .dtopo .dacoes { margin-left: auto; flex: none; flex-wrap: nowrap; }
+    /* "+ Novo aluno" vira o quadradinho de 40px do desenho */
+    #dNovoAluno { width: 40px; height: 40px; padding: 0; border-radius: 13px;
+                  background: rgba(255,255,255,.16); border: 1px solid var(--pt-sobre-roxo-bd);
+                  color: #fff; font-size: 21px; font-weight: 700; justify-content: center; }
+    #dNovoAluno .drot { display: none; }
+    #dMarcaSes { display: none; }                 /* a Agenda esta a um toque na barra de baixo */
+    /* a caixa da proxima sessao */
+    #vDash .dagora { margin-top: 0; padding: 14px 15px; border-radius: 16px; gap: 11px;
+                     flex-wrap: wrap; background: var(--pt-sobre-roxo-cx); border: 1px solid var(--pt-sobre-roxo-bd); }
+    #vDash .dagora .dq { padding-right: 11px; }
+    #vDash .dagora .dk { font-size: 9px; }
+    #vDash .dagora .dh { font-size: 24px; }
+    #vDash .dagora .dav { display: none; }        /* o desenho troca o avatar pelo tracinho divisor */
+    /* nome e ficha ficam NA MESMA linha do relogio, como no desenho: sem o
+     * min-width:0 + reticencias, uma ficha de nome longo empurrava tudo pra
+     * uma segunda linha e a caixa dobrava de altura */
+    #vDash .dagora > div:nth-of-type(3) { flex: 1 1 0; min-width: 0; }
+    #vDash .dagora .dnome { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #vDash .dagora .dfic { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #vDash #dashDia .ddhora { display: none; }
+    #vDash #dVerSemana { display: none; }
+    #vDash .dagora > div:last-child { flex: 1 1 100%; margin-left: 0 !important; gap: 8px !important; }
+    #vDash .dagora .dbt { height: 44px !important; border-radius: 12px; font-size: 13.5px; }
+    #vDash .dagora .dbt:not(.sec) { flex: 1; background: #fff; color: var(--pt-roxo-fundo); }
+    #vDash .dagora .dbt.sec { flex: none; padding: 0 16px; background: rgba(255,255,255,.16);
+                              border: 1px solid var(--pt-sobre-roxo-bd2); }
+    /* Resolver hoje: card em COLUNA vira LINHA (bolinha, texto, botao) */
+    .dres .dtit { margin-bottom: 9px; }
+    .dres .dtit b { font-size: 10px; }
+    .dres .dgrid { grid-template-columns: 1fr; gap: 9px; }
+    .dcard { flex-direction: row; align-items: center; gap: 11px;
+             padding: 13px 14px; border-radius: var(--pt-r-card-p); }
+    /* o rotulo do selo sai, a bolinha fica: font-size 0 mantem o texto no
+     * leitor de tela, que e a mesma manha do menu fino da v621 */
+    .dcard .dsel { flex: none; font-size: 0; gap: 0; }
+    .dcard > div:not(.dsel):not(.dacs) { flex: 1; min-width: 0; }
+    .dcard .dqu { font-size: 13.5px; }
+    .dcard .dpq { font-size: 11px; margin-top: 1px; }
+    .dcard .dacs { margin-top: 0; flex: none; }
+    .dcard .dacs .btn { flex: none; height: 40px; padding: 0 13px; font-size: 12.5px; }
+    /* a linha do dia fica compacta: hora, nome e o ESTADO a direita */
+    #vDash .dlinha { flex-wrap: nowrap; gap: 11px; padding: 11px 14px;
+                     border-top: 0; border-bottom: 1px solid var(--pt-hairline); }
+    #vDash .dlinha:last-child { border-bottom: 0; }
+    #vDash .dlinha .dhh { width: 40px; font-size: 12px; }
+    #vDash .dlinha .dnm { font-size: 13px; font-weight: 700; }
+    #vDash .dlinha .dfi { display: none; }
+    #vDash .dlinha.prox { border-radius: 0; padding-left: 14px; border-left: 0;
+                          background: var(--pt-sel); }
+    #vDash .dlinha.prox .dhh { color: var(--pt-roxo-claro); font-weight: 900; }
+    #vDash .dlinha.prox .dnm { font-weight: 800; color: var(--pt-txt); }
+    #vDash .dlinha .dac { flex: none; margin-left: auto; }
+    #vDash #dashDia { padding: 0; border-radius: var(--pt-r-card-p); overflow: hidden; }
+    #vDash #dashDia > h2 { padding: 14px 14px 0; }
+    #vDash #dashDia > .linha-flex { padding: 0 14px 12px; }
+  }
+  .ddsub { font-size: 12px; font-weight: 700; color: var(--pt-txt-5); text-transform: none; letter-spacing: 0; }
+  .ddsub .ddhora { font-weight: 700; }
   /* duas colunas do Início: o dia à esquerda, o mês e o radar à direita */
   .dcols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; align-items: start; margin-bottom: 14px; }
   .dcols > .card, .dcol2 > .card { margin: 0; }
@@ -515,6 +732,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
   .alrow .alnm, .pgatrlin .alnm { font-size: 14.5px; font-weight: 800; color: var(--tk-tx); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
   .alrow .alsub, .pgatrlin .alsub { font-size: 12px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
+  /* nascem escondidos: sao a tela 17 (celular). No computador a linha
+   * continua sendo a tabela de 6 colunas da tela 03. */
+  .alrow .alqc { min-width: 0; }
+  .alrow .alnmrow { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+  .alrow .alhora, .alrow .almob { display: none; }
   .alrow .alp1 { font-size: 13px; font-weight: 700; color: var(--tk-tx2); }
   .alrow .alp2 { font-size: 12px; font-weight: 700; margin-top: 2px; }
   .alrow .albar { height: 5px; border-radius: 99px; background: var(--tk-trilha); margin-top: 5px; overflow: hidden; }
@@ -524,9 +746,75 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* display:contents = "nao desenhe esta caixa, use os filhos": no computador a
    * tabela continua com as mesmas 6 colunas de sempre */
   .aldet { display: contents; }
-  @media (max-width: 1000px) {
+  /* ============================================================
+   * TELA 17 do handoff — ALUNOS NO CELULAR (5a Alunos celular).
+   * Valores copiados do recorte telas-html/17-5a-alunos-celular.html.
+   * A lista deixa de ser tabela e vira lista de ponta a ponta: avatar,
+   * nome com o selo colado, a proxima sessao no canto e UMA linha de
+   * resumo embaixo. Os botoes so aparecem no aluno ABERTO — e a regra 7
+   * do README ("acoes da linha so no item em foco"), sem a qual 24 alunos
+   * viram 24 pares de botoes competindo pelo polegar.
+   * ============================================================ */
+  @media (max-width: 900px) {
+    /* cabecalho da tela: rotulo + contagem + o "+" de 44px */
+    #vAlunos .altopo { padding: 0; gap: 12px; margin-bottom: 12px; }
+    #vAlunos .altopo .alk { font-size: 9.5px; letter-spacing: .18em; }
+    #vAlunos .altopo .alh { font-size: 19px; letter-spacing: -.02em; }
+    /* o botao ja TEM o icone de "+" dentro: font-size 0 apaga so a palavra
+     * "Novo aluno" (e ela continua no leitor de tela e no title) */
+    #btnNovoAluno { width: 44px; height: 44px; padding: 0; border-radius: 13px;
+                    font-size: 0; gap: 0; justify-content: center; }
+    #btnNovoAluno .mi { width: 18px; height: 18px; margin: 0; stroke-width: 2.2; }
+    /* o cabecalho de colunas nao existe no celular — a linha nao e mais tabela */
+    #vAlunos .alcab { display: none; }
+    /* busca de 44px com a lupa */
+    #vAlunos .albusca input { height: 44px; border-radius: 12px; font-size: 13px; }
+    /* chips de filtro numa fita que rola de lado (o desenho corta "Encerrados") */
+    #alFiltro { display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap;
+                scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    #alFiltro::-webkit-scrollbar { display: none; }
+    #alFiltro button { height: 36px; padding: 0 13px; border-radius: 11px; flex: none;
+                       font-size: 12.5px; font-weight: 700; }
+    #alFiltro button.on { font-weight: 800; }
+    /* a lista encosta nas bordas: sem card, sem raio, so fio entre as linhas */
+    #vAlunos .altab { background: none; border: 0; border-radius: 0; margin: 0 -12px; }
+    .alrow { display: flex; align-items: flex-start; gap: 11px;
+             padding: 13px 18px; border: 0; border-bottom: 1px solid var(--pt-hairline); }
+    .alrow:last-child { border-bottom: 0; }
+    .alrow.devendo { background: none; }          /* o realce agora e do aluno ABERTO */
+    .alrow.sumindo { opacity: .72; }
+    .alrow .alq { flex: 1; min-width: 0; align-items: flex-start; gap: 11px; }
+    .alrow .alav { width: 40px; height: 40px; border-radius: 13px; font-size: 13px; font-weight: 900; }
+    .alrow.devendo .alav { background: var(--pt-erro-bg); color: var(--pt-erro); }
+    .alrow.sumindo .alav { background: var(--pt-atencao-bg); color: var(--pt-atencao); }
+    .alrow .alqc { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+    .alrow .alnm { font-size: 14.5px; font-weight: 800; }
+    .alrow .alsel { margin-left: 0; height: 19px; padding: 0 7px; border-radius: 6px;
+                    font-size: 9.5px; font-weight: 900; letter-spacing: .06em; vertical-align: 0;
+                    display: inline-flex; align-items: center; flex: none; }
+    .alrow .alhora { display: block; margin-left: auto; flex: none;
+                     font-size: 11.5px; font-weight: 700; color: var(--pt-txt-4); }
+    .alrow .alsub, .alrow .aldet { display: none; }
+    .alrow .almob { display: block; font-size: 11.5px; font-weight: 600; color: var(--pt-txt-4); }
+    /* regra 7: so o aluno ABERTO mostra botao */
+    .alrow .alac { display: none; }
+    .alrow.aberta { background: var(--pt-sel); flex-wrap: wrap; }
+    .alrow.aberta .alqc { gap: 6px; }
+    /* a fila de acoes ocupa a linha inteira, alinhada embaixo do NOME (avatar
+     * de 40 + gap de 11). Ao lado do texto ela espremia o nome em duas linhas
+     * e a hora batia no botao. */
+    .alrow.aberta .alac { display: flex; gap: 7px; margin-top: 8px;
+                          flex: 1 1 100%; margin-left: 51px; justify-content: flex-start; }
+    .alrow.aberta .alac .btn { height: 38px; padding: 0 14px; border-radius: 11px;
+                               font-size: 12.5px; font-weight: 800; }
+    .alrow.aberta .alac .al-mais { width: 38px; padding: 0; justify-content: center; }
+    .alrow .al-acoes { grid-column: auto; }
+  }
+  /* 901-1000px (tablet em pe): a tabela vira o cartao de duas fileiras. Abaixo
+   * de 900 quem manda e a tela 17 do handoff, no bloco acima. */
+  @media (min-width: 901px) and (max-width: 1000px) {
     .alcab { display: none; }
-    /* Celular: DUAS fileiras, nao seis.
+    /* Tablet: DUAS fileiras, nao seis.
      *   fileira 1 → foto + nome + a acao que resolve o estado dele
      *   fileira 2 → plano, treinos, ficha e proxima numa linha so
      * Antes .alac caia sozinha numa 6a fileira (a coluna "auto" nascia com 0px
@@ -554,7 +842,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
               border-bottom: 1px solid rgba(248,113,113,.22); }
   .pgatrcab i { width: 8px; height: 8px; flex: none; border-radius: 99px; background: var(--tk-erro); }
   .pgatrcab b { font-size: 13px; font-weight: 900; color: var(--tk-erro2); letter-spacing: .02em; }
-  .pgatrcab span { font-size: 12px; font-weight: 700; color: #f8717199; }
+  .pgatrcab span { font-size: 12px; font-weight: 700; color: rgba(248,113,113,.6); }
   .pgatrlin { display: flex; align-items: center; gap: 11px; padding: 12px 18px; border-top: 1px solid rgba(248,113,113,.16); }
   .pgatrlin:first-of-type { border-top: 0; }
   .pgatrlin .dac { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -893,7 +1181,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- oferta de assinatura no app da loja: aparece logo depois do login/cadastro -->
   <div id="telaAssinatura" hidden style="position: fixed; inset: 0; z-index: 59; background: #121016; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto;">
-    <div style="width: 100%; max-width: 420px; background: #1c1826; border: 1px solid #2c2739; border-radius: 18px; padding: 28px 24px; box-shadow: 0 24px 70px -24px rgba(0,0,0,.7);">
+    <div style="width: 100%; max-width: 420px; background: var(--pt-card); border: 1px solid var(--pt-borda); border-radius: 18px; padding: 28px 24px; box-shadow: 0 24px 70px -24px rgba(0,0,0,.7);">
       <span style="font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 700;">TORQUE ON</span>
       <h2 style="font-size: 24px; margin: 4px 0 10px; font-weight: 800; letter-spacing: -.01em; text-transform: none; color: var(--texto);">Assine o TORQUE PERSONAL</h2>
       <ul style="list-style: none; padding: 0; margin: 0 0 14px; font-size: 13.5px; line-height: 2;">
@@ -903,7 +1191,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <li>✓ IA de treino, avaliação física e automações de WhatsApp</li>
         <li>✓ Sua página na internet pra atrair alunos novos</li>
       </ul>
-      <p style="font-size: 28px; font-weight: 800; margin: 0;">R$ 59,90<span style="font-size: 14px; font-weight: 600; color: #9b96a8;">/mês</span></p>
+      <p style="font-size: 28px; font-weight: 800; margin: 0;">R$ 59,90<span style="font-size: 14px; font-weight: 600; color: var(--pt-txt-4);">/mês</span></p>
       <p class="muted" style="margin: 4px 0 16px; font-size: 12.5px;">A assinatura é cobrada pela loja do seu celular e renova sozinha. Cancela quando quiser, direto na loja — sem multa.</p>
       <button class="btn" id="taAssinar" style="width: 100%;">Assinar agora</button>
       <button class="btn sec" id="taDepois" style="width: 100%; margin-top: 8px;">Continuar no teste grátis</button>
@@ -1133,7 +1421,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div id="agPedFaixa" data-agsec="sessoes" hidden></div>
     <div class="agrol" data-agsec="sessoes" style="margin-bottom:14px;"><div class="agsem" id="agGrade"></div></div>
-    <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+    <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid var(--pt-atencao);">
       <h2>Pedidos de horário pelo app</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
       <div id="listaPedidosApp"></div>
@@ -1451,7 +1739,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <textarea id="brDesejo" rows="2" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea></label>
           <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">O que o aluno pede
             <textarea id="brQuer" rows="2" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea></label>
-          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: #f59e0b;">(a IA nunca desrespeita)</b>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: var(--pt-atencao);">(a IA nunca desrespeita)</b>
             <textarea id="brAdapta" rows="2" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea></label>
           <label style="display: block; font-size: 12.5px;">Sua leitura do momento dele
             <textarea id="brLeitura" rows="2" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea></label>
@@ -1631,7 +1919,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar" id="scanCard" hidden>
-      <h2>Medidas pela câmera <span class="tag" style="font-size: 10px; background: rgba(96,165,250,.18); color: #60a5fa;">beta</span></h2>
+      <h2>Medidas pela câmera <span class="tag" style="font-size: 10px; background: var(--pt-sel); color: var(--pt-roxo-claro);">beta</span></h2>
       <p class="muted" style="margin: 4px 0 10px;">Duas fotos (de frente e de lado) viram cintura, quadril, coxa e panturrilha em centímetros. A leitura acontece <b>dentro deste aparelho</b> — a foto não vai pra internet e é descartada na hora.</p>
 
       <div class="linha-flex" id="scanTopo" style="flex-wrap: wrap;">
@@ -1693,7 +1981,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div style="background: #14121a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));">
         <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--tk-roxoTx2); text-transform: uppercase;"></div>
         <div id="scanCamFala" style="font-size: 17px; font-weight: 700; margin-top: 4px; min-height: 46px; color: #fff;"></div>
-        <div id="scanCamTec" hidden style="font-size: 10.5px; color: #6f6a7d; margin-top: 2px; word-break: break-word;"></div>
+        <div id="scanCamTec" hidden style="font-size: 10.5px; color: var(--pt-txt-5); margin-top: 2px; word-break: break-word;"></div>
         <div class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;">
           <button class="btn sec" id="scanCamFechar">Fechar</button>
           <button class="btn sec" id="scanCamVirar">🔄 Virar câmera</button>
@@ -2079,7 +2367,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
         <button class="btn" id="autoSalva">Salvar automação</button>
         <button class="btn sec mini" id="autoCancela">Cancelar</button>
-        <button class="btn sec mini" id="autoApaga" hidden style="margin-left: auto; border-color: #7f2b2b; color: var(--tk-erro2);">Apagar</button>
+        <button class="btn sec mini" id="autoApaga" hidden style="margin-left: auto; border-color: var(--pt-erro-borda); color: var(--tk-erro2);">Apagar</button>
       </div>
     </div>
   </dialog>
@@ -2326,7 +2614,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-top: 14px; border-left: 4px solid #f87171;" data-cfgsec="conta">
       <h2>Excluir minha conta</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup em Conta → Backup dos dados.</p>
-      <button class="btn sec" id="cfgExcluir" style="border-color: #7f2b2b; color: #fca5a5;">Excluir minha conta e todos os dados</button>
+      <button class="btn sec" id="cfgExcluir" style="border-color: var(--pt-erro-borda); color: var(--tk-erro2);">Excluir minha conta e todos os dados</button>
       <div id="cfgExcluirStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
     </div>
 
@@ -2467,7 +2755,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     </div>
     <div id="pfAcoes" hidden style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <button class="btn mini" id="pfAcesso" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
-      <button class="btn sec mini" id="pfRevoga" title="o app dele para de abrir e o login por e-mail para de funcionar" style="width: 100%; border-color: #7f2b2b; color: #fca5a5;">Tirar o acesso</button>
+      <button class="btn sec mini" id="pfRevoga" title="o app dele para de abrir e o login por e-mail para de funcionar" style="width: 100%; border-color: var(--pt-erro-borda); color: var(--tk-erro2);">Tirar o acesso</button>
       <button class="btn sec mini" id="pfReliga" hidden title="devolve o acesso e publica o app de novo" style="width: 100%;">Devolver o acesso</button>
       <button class="btn sec mini" id="pfApp" title="publica o app na nuvem e manda o link pro aluno" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
       <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
@@ -2947,11 +3235,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var hoje = S.todayISO();
     var s2 = idxDe(st).sessDe(a.id).filter(function (x) { return x.data >= hoje && !x.feita && !x.faltou; })
       .sort(function (x, y) { return (x.data + (x.hora || "")) < (y.data + (y.hora || "")) ? -1 : 1; })[0];
-    if (!s2) return { txt: "Sem sessão marcada", cor: "var(--tk-aten)" };
+    if (!s2) return { txt: "Sem sessão marcada", curto: "sem sessão", cor: "var(--tk-aten)" };
     var dias = Math.round((new Date(s2.data + "T12:00") - new Date(hoje + "T12:00")) / 864e5);
     var DS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     var quando = dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : dias < 7 ? DS[new Date(s2.data + "T12:00").getDay()] : S.fmtData(s2.data);
-    return { txt: quando + (s2.hora ? " " + s2.hora : ""), cor: dias === 0 ? "var(--tk-roxoTx2)" : "" };
+    /* no celular a proxima sessao mora colada no NOME, num canto de ~70px: la
+     * cabe "18:00" (hoje) ou "amanhã"/"qui", nunca "Amanhã 06:00" inteiro. */
+    var curto = dias === 0 ? (s2.hora || "hoje")
+      : dias === 1 ? "amanhã"
+      : dias < 7 ? DS[new Date(s2.data + "T12:00").getDay()].slice(0, 3).toLowerCase()
+      : S.fmtData(s2.data).slice(0, 5);
+    return { txt: quando + (s2.hora ? " " + s2.hora : ""), curto: curto,
+             cor: dias === 0 ? "var(--tk-roxoTx2)" : "" };
   }
   // plano em duas linhas: o que é, e como está o pagamento
   function alPlano(st, a) {
@@ -3065,13 +3360,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "?text=" + encodeURIComponent("Oi " + String(a.nome).split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '">Chamar</a>'
           : '<button type="button" class="btn sec mini" data-perfil="' + a.id + '">Ver</button>')
         : (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" title="falar no WhatsApp" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "");
-      return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : "") + '">' +
+      /* A tela 17 do handoff (Alunos no celular) pede: avatar, nome com o selo
+       * de estado colado e a proxima sessao no canto; embaixo UMA linha com
+       * ficha, treinos do mes e situacao. O desktop continua com as 6 colunas
+       * da tabela — quem escolhe e o CSS, o HTML serve os dois. */
+      var selo = est === "devendo"
+        ? '<span class="alsel" style="background:var(--pt-erro-selo);color:var(--pt-erro);">DEVE' +
+          ((dividaDe(st, a) || {}).total ? " " + Math.round((dividaDe(st, a) || {}).total) : "") + "</span>"
+        : est === "sumindo"
+        ? '<span class="alsel" style="background:var(--pt-atencao-selo);color:var(--pt-atencao);">SUMINDO</span>' : "";
+      var subMovel = [fi.o !== "Sem ficha" ? fi.o : "sem ficha",
+        S.plural(nMes, "treino no mês", "treinos no mês"), pl.st].filter(Boolean).join(" · ");
+      return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : est === "sumindo" ? " sumindo" : "") + '">' +
         '<div class="alq"><div class="alav">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
-        '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
-        (est === "devendo" ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:var(--tk-erro);">DEVENDO</span>'
-          : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:var(--tk-aten);">SUMINDO</span>' : "") +
+        '<div class="alqc"><div class="alnmrow">' +
+        '<button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" + selo +
+        '<span class="alhora"' + (px.cor ? ' style="color:' + px.cor + ';"' : "") + ">" + esc(px.curto || "") + "</span></div>" +
         '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
-        (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div></div></div>" +
+        (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div>" +
+        '<div class="almob"' + (fi.velha ? ' style="color:var(--pt-atencao);"' : "") + ">" + subMovel + "</div></div></div>" +
         /* Os quatro valores do meio vao dentro de .aldet. No computador ela e
          * display:contents — some da arvore de layout e os quatro voltam a ser
          * colunas da tabela, igualzinho antes. No celular ela vira UMA linha
@@ -4383,6 +4690,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * (v615) so tinha dono no bloco de pacotes de servico, noutro pedaco do
      * painel — entao clicar no nome nao respondia, e o unico caminho pra ficha
      * era abrir o menu "···" e escolher Perfil. */
+    /* Regra 7 do handoff (tela 17): no celular a linha do aluno so mostra os
+     * botoes quando ELA esta aberta — 24 alunos com dois botoes cada viram um
+     * paredao de acoes disputando o polegar. Tocar na linha abre; tocar de
+     * novo, ou em outra, fecha. No computador nada disso vale. */
+    var linha = e.target.closest && e.target.closest(".alrow");
+    if (linha && !e.target.closest("button, a") && window.matchMedia("(max-width: 900px)").matches) {
+      var estava = linha.classList.contains("aberta");
+      document.querySelectorAll("#listaAlunos .alrow.aberta").forEach(function (x) { x.classList.remove("aberta"); });
+      if (!estava) linha.classList.add("aberta");
+      return;
+    }
     var pf = e.target.closest && e.target.closest("[data-perfil],[data-abreperfil]");
     if (pf) abrePerfil(pf.getAttribute("data-perfil") || pf.getAttribute("data-abreperfil"));
   });
@@ -9229,7 +9547,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("autoFotoDica").hidden = false;
     $("autoSalva").textContent = "Salvar automação";
     $("autoApaga").textContent = "Apagar";
-    $("autoApaga").style.borderColor = "#7f2b2b";
+    $("autoApaga").style.borderColor = "var(--pt-erro-borda)";
     $("autoApaga").style.color = "var(--tk-erro2)";
     $("autoTitulo").textContent = idExistente ? "Editar automação" : "Nova automação";
     $("autoNome").value = base.nome || "";
@@ -12584,8 +12902,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cab = $("dashDia") && $("dashDia").querySelector("h2");
     if (cab && sesHoje.length) {
       var hs = sesHoje.map(function (x) { return x.hora; }).filter(Boolean).sort();
-      cab.innerHTML = "Seu dia hoje " + (hs.length ? '<span style="font-size:12px;font-weight:700;color:var(--tk-tx5);text-transform:none;letter-spacing:0;">' +
-        hs[0] + " às " + hs[hs.length - 1] + "</span>" : "") +
+      /* o desenho (tela 02) troca a faixa de horario pela CONTA do dia —
+       * "4 de 6 feitas" diz o que falta, o intervalo so diz que existe. */
+      var feitasN = sesHoje.filter(function (x) { return x.feita; }).length;
+      cab.innerHTML = "Seu dia hoje " +
+        '<span class="ddsub">' + feitasN + " de " + sesHoje.length + " feitas" +
+        (hs.length ? '<b class="ddhora"> · ' + hs[0] + " às " + hs[hs.length - 1] + "</b>" : "") + "</span>" +
         '<button type="button" class="btn sec mini" id="dVerSemana" style="float:right;">Ver semana</button>';
     }
     $("bHojeP").innerHTML = sesHoje.length ? sesHoje.map(function (x) {
@@ -12922,10 +13244,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       d.innerHTML = '<div class="dsel" style="color:#60a5fa;"><i></i>SEM RESPOSTA</div>' +
         '<div><div class="dqu">' + S.plural(total, "mensagem no chat", "mensagens no chat") + "</div>" +
         '<div class="dpq">' + esc(nomes) + (toks.length > 3 ? " e mais " + (toks.length - 3) : "") + "</div></div>" +
-        '<div class="dacs"><button type="button" class="btn" id="dVaiChat">Abrir chat</button></div>';
+        '<div class="dacs"><button type="button" class="btn sec" id="dVaiChat">Abrir chat</button></div>';
       grade.appendChild(d);
       var t = el.querySelector(".dtit span");
-      if (t) t.textContent = S.plural(grade.children.length, "coisa", "coisas") + " · 2 min";
+      if (t) t.textContent = "· " + grade.children.length;
       var bc = document.querySelector('#abas [data-a="chat"]');
       if (bc) {
         var ec = bc.querySelector(".cnt");
@@ -12992,16 +13314,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var prox = sesHoje.filter(function (x) { return !x.feita && !x.faltou && x.hora; })
       .sort(function (a, b) { return a.hora < b.hora ? -1 : 1; })
       .filter(function (x) { return faltaPra(x.hora).min > -60; })[0] || null;
+    /* o desenho (tela 1a) saúda pelo primeiro nome. O onboarding pergunta
+     * "como você se chama?" e guarda em config.nome — o mesmo nome que o
+     * cabeçalho usa em "Studio Léo". Sem nome, a saudação vai sozinha. */
+    var proNome = "";
+    try { proNome = String((JSON.parse(localStorage.getItem("mtapp:perfil") || "{}") || {}).nome || "").trim().split(" ")[0]; } catch (e) {}
+    if (!proNome) proNome = String((st.config || {}).nome || "").trim().split(" ")[0];
     var aP = prox ? st.alunos.find(function (x) { return x.id === prox.alunoId; }) : null;
     var fp = prox ? faltaPra(prox.hora) : null;
     el.className = "dtopo";
     el.innerHTML = '<div class="dlin">' +
       '<div style="min-width:0;">' +
       '<div class="ddata">' + esc(dia) + "</div>" +
-      "<h2>Bom treino</h2>" +
+      "<h2>Bom treino" + (proNome ? ", " + esc(proNome) : "") + "</h2>" +
       '<div class="dsub">' + sub + "</div></div>" +
       '<div class="dacoes">' +
-      '<button type="button" class="dbt" id="dNovoAluno">+ Novo aluno</button>' +
+      '<button type="button" class="dbt" id="dNovoAluno" title="Novo aluno" aria-label="Novo aluno"><span class="dmais">+</span><span class="drot">Novo aluno</span></button>' +
       '<button type="button" class="dbt sec" id="dMarcaSes">Marcar sessão</button>' +
       "</div></div>" +
       (aP ? '<div class="dagora">' +
@@ -13087,8 +13415,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     el.className = "dres";
     el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>' +
-      S.plural(itens.length, "coisa", "coisas") + " · 2 min</span></div>" +
-      '<div class="dgrid">' + itens.map(function (it) {
+      "· " + itens.length + "</span></div>" +
+      '<div class="dgrid">' + itens.map(function (it, i) {
+        /* so o PRIMEIRO card leva o botao cheio de roxo — e a hierarquia do
+         * desenho (tela 02): o mais urgente puxa o olho, o resto e secundario */
+        if (i > 0) it.acao = it.acao.replace('class="btn"', 'class="btn sec"');
         return '<div class="dcard"><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
           '<div><div class="dqu">' + it.qu + '</div><div class="dpq">' + it.pq + "</div></div>" +
           '<div class="dacs">' + it.acao + "</div></div>";
@@ -14773,8 +15104,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     corTag: "var(--tk-roxoTx2)",
     grad: "linear-gradient(135deg, #7c3aed, #6d28d9)",
     fundo: "var(--tk-sup2)",
-    cardBg: "#1c1826",
-    borda: "#2c2739",
+    cardBg: "var(--pt-card)",
+    borda: "var(--pt-borda)",
     sub: "O sistema do personal trainer. Entre na SUA conta — seus alunos e treinos ficam na sua ilha, separados de todo mundo.",
     flag: "mtapp:ptSemConta",
     nomeCampo: "Nome do seu studio (ex.: Studio Léo)",

@@ -294,6 +294,45 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Handoff do painel: tokens e as telas de celular** (a partir da v624): chegou o
+pacote `design_handoff_painel_personal` (22 PNGs em 2×, o HTML de cada tela
+**recortado com os estilos inline**, `tokens-painel.css` e as 9 regras de
+colapso). O que ele traz de novo em relação ao canvas da v614–v622 são as **7
+telas de CELULAR** (02 Início, 17 Alunos, 18 Ficha, 19 Agenda, 20 Montar
+treino, 21 Financeiro, 22 Chat) — justamente o que faltava.
+
+**Tokens** — o `:root` passou a ser o bloco do handoff, com os nomes do desenho
+(`--pt-*`). Os nomes `--tk-*`, usados em centenas de lugares desde a v620,
+viraram **apelidos** (`--tk-sup: var(--pt-card)`): mesma cor, zero renomeação, e
+o modo claro passou a ter **um lugar só** — apelido de variável CSS se resolve
+na hora do USO, então redefinir `--pt-txt-3` no tema claro muda o `--tk-tx3`
+junto. Regra 1 do handoff (**nenhuma cor nova**) virou teste:
+`tests/test-tokens-painel.js` varre o `<style>` **e** os `style=` do HTML e
+reprova hex fora da paleta. Foram 11 cores inventadas eliminadas (um azul
+`#60a5fa` que não existia em paleta nenhuma, um `#f8717199` de 8 dígitos, dois
+vinhos de borda, os cinzas do menu claro). Destaque e estado são **tinta
+transparente sobre um token**, nunca hex novo.
+
+**Tela 02 (Início no celular)**: a faixa roxa **encosta no topo e nas bordas** —
+o cabeçalho do app (`.topo`) some no celular, porque cada tela do celular tem o
+próprio cabeçalho (é assim nas telas 02 e 17). "+ Novo aluno" vira o quadrado
+de 40px, "Marcar sessão" sai (a Agenda está na barra de baixo), o card do
+Resolver hoje deixa de ser coluna e vira **linha** (bolinha 8px + texto +
+botão), e **só o primeiro card leva o botão cheio de roxo**. A saudação passou
+a ser "Bom treino, <nome>" lendo `mtapp:perfil.nome` — ⚠️ `config.nome` NÃO
+serve: no cadastro pela nuvem o campo se chama "nome do seu studio" e sairia
+"Bom treino, TORQUE".
+
+**Tela 17 (Alunos no celular)**: a tabela vira **lista de ponta a ponta** —
+avatar 40px tingido pelo estado, nome com o selo colado (`DEVE 800`, `SUMINDO`),
+a próxima sessão num canto de ~70px (por isso `alProxima` ganhou o campo
+`curto`: "18:00" hoje, "amanhã", "qui") e **uma** linha de resumo embaixo
+(`.almob` = ficha · treinos do mês · situação). Linha de 232px → **67px**.
+Os botões só aparecem no aluno **aberto** (regra 7 do README): tocar na linha
+abre, tocar de novo fecha; no computador nada disso vale. ⚠️ o bloco de tablet
+virou `@media (min-width: 901px) and (max-width: 1000px)` — sem o piso, ele
+vinha depois no arquivo e reescrevia `.alrow` de volta pra grade.
+
 **O painel no CELULAR** (a partir da v623): o Raphael mandou a foto do celular
 dele e o cabeçalho da ficha do aluno estava destruído — o **nome do aluno com
 largura ZERO** (some, porque tem `nowrap` + `overflow:hidden`) e a linha do
