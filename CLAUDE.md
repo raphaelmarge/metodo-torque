@@ -294,6 +294,27 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Painel repaginado — Avaliação, Questionários e Chat** (v618): **3a** — a aba
+*Histórico e evolução* das Avaliações abre com as DUAS últimas medições
+comparadas: 4 tiles (peso, gordura, massa magra, IMC) com o delta, a composição
+em barras, *Gasto e metabolismo* (TMB + dia leve/dia de treino, que são o TMB
+vezes 1,375 e 1,55) e a *Pontuação*. Tudo sai do `laudoDe()`, que já existia —
+nenhuma conta nova. As fotos de progresso continuam na ficha do aluno, e a nota
+do rodapé leva até lá em vez de duplicá-las. **3b** — Questionários ganhou a aba
+**A semana** (agora a primeira): quem respondeu mal vem em cima
+(`qsAlerta` respeita o sentido da pergunta — dor ALTA e disposição BAIXA pedem
+atenção, porque a resposta carrega `menos`), depois *tudo bem* e *não
+responderam*, com "Cobrar os N". A resposta abre ao lado com um tile por
+pergunta e o texto por extenso. Junta `app_checkin` (a nota da semana) com
+`app_quest` (as perguntas do professor) — **sem SQL novo**. O *desdobramento* do
+canvas (pergunta extra que nasce da resposta) **não foi feito**: ele exige mexer
+no app do aluno e num campo novo no banco, então nada foi fingido na tela.
+**3c** — o Chat virou duas colunas: lista com busca, prévia da última mensagem,
+horário e contador de novas; conversa com avatar, chip de contexto (próxima
+sessão + treino do dia), *Abrir ficha*, separador de dia, "✓✓ lido" na última
+mensagem minha e três respostas rápidas. O "digitando…" do desenho **não entra**
+— não existe canal de presença, e fingir seria mentira na tela.
+
 **Painel repaginado — Financeiro, Agenda e Montar treino** (v616 e v617): o
 canvas do Claude Design (16 telas) virou código, seguindo a ordem do handoff.
 **Financeiro (2e)**: cabeçalho do mês numa linha, **bloco vermelho de Atrasados
