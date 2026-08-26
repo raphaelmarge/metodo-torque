@@ -294,6 +294,24 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Modo claro do painel** (v620, tela 3d): as telas novas (v614–v619) cravavam o
+hex escuro na mão, então o tema claro não alcançava nenhuma delas. Agora a
+paleta do painel é **um token por papel** — `--tk-sup`/`--tk-sup2`… (superfície),
+`--tk-bd`… (borda), `--tk-tx`…`--tk-tx6` (texto), `--tk-ok`/`--tk-erro`/
+`--tk-aten`, `--tk-roxoFraco`/`--tk-roxoTx` — definidos no `:root` e
+**redefinidos** em `html[data-tema="claro"]`. Trocar de tema é só trocar esses
+valores; o roxo da marca (#7c3aed) não muda, como manda o handoff.
+⚠️ Três lugares NÃO podem levar token e continuam com hex cravado:
+(1) **atributo de SVG** (`fill='…'`, `stroke='…'`) — atributo não entende
+`var()`, só a propriedade CSS entende; (2) **`montaSitePro`**, que gera a página
+de vendas publicada — documento autônomo, lá esses nomes não existem; (3)
+canvas, que também não entende `var()` (o painel não usa, mas o app do aluno
+usa). O `.sw2` precisou de `html[data-tema="claro"] input[type="checkbox"].sw2`
+porque o `apps.css` tem `html[data-tema="claro"] input[type="checkbox"]
+{background:none}`, mais forte que a classe — sem essa regra o interruptor
+sumia no claro. O teste mede a **cor calculada** de cada superfície nos dois
+temas (a lição da v612: contar o que o professor VÊ, não a classe).
+
 **Painel repaginado — as abas de fundo** (v619): **4a Configurações** ganhou a
 aba **Resumo** (a primeira): um card por grupo dizendo o próprio ESTADO
 (Receber dos alunos com o provedor, WhatsApp oficial, App dos alunos com quantos

@@ -9394,6 +9394,70 @@ async function abaPt(p, a) {
     await ctxP.close();
   }
   {
+    /* ---- Modo claro (tela 3d): as telas novas seguem o tema ---- */
+    console.log("Modo claro do painel:");
+    {
+      const ctxL = await b.newContext({ viewport: { width: 1360, height: 900 } });
+      await ctxL.addInitScript(() => {
+        localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+        localStorage.setItem("mtapp:ptSemConta", "1");
+      });
+      const pL = await ctxL.newPage();
+      await pL.goto(BASE + "/personal.html");
+      await pL.waitForTimeout(600);
+      // conta o que o professor VÊ (cor calculada), não a classe — lição da v612
+      const lum = (rgb) => {
+        const m = String(rgb).match(/\d+/g) || [0, 0, 0];
+        return (0.2126 * +m[0] + 0.7152 * +m[1] + 0.0722 * +m[2]) / 255;
+      };
+      const CLASSES = ["qslista", "chlado", "tdficha", "cfgcard", "cfgsw", "fdpost", "agrol", "pfbox"];
+      const mede = () => pL.evaluate((cls) => {
+        const d = document.createElement("div");
+        document.body.appendChild(d);
+        const out = {};
+        cls.forEach((c) => {
+          d.className = c;
+          out[c] = getComputedStyle(d).backgroundColor;
+        });
+        const sw = document.createElement("input");
+        sw.type = "checkbox"; sw.className = "sw2";
+        document.body.appendChild(sw);
+        out.__sw = getComputedStyle(sw).backgroundColor;
+        const h = document.createElement("div");
+        h.className = "alh"; d.className = "altopo"; d.appendChild(h);
+        out.__tx = getComputedStyle(h).color;
+        d.remove(); sw.remove();
+        return out;
+      }, cls);
+      const cls = CLASSES;
+      const escuro = await mede();
+      await pL.evaluate(() => document.getElementById("btnTemaPt").click());
+      await pL.waitForTimeout(300);
+      const claro = await mede();
+      const virou = CLASSES.filter((c) => lum(escuro[c]) < 0.35 && lum(claro[c]) > 0.85);
+      ok(virou.length === CLASSES.length,
+        "🎨 3d: as superfícies das telas novas clareiam de verdade no modo claro (" + virou.length + " de " + CLASSES.length + ")");
+      ok(lum(escuro.__tx) > 0.8 && lum(claro.__tx) < 0.3,
+        "🎨 3d: o texto do cabeçalho vira escuro no fundo claro (sem branco no branco)");
+      ok(lum(escuro.__sw) < 0.3 && lum(claro.__sw) > 0.7,
+        "🎨 3d: o trilho do interruptor também segue o tema");
+      // o roxo da marca NÃO muda entre os temas (regra do handoff)
+      const roxo = await pL.evaluate(() => {
+        const d = document.createElement("div");
+        d.style.background = "var(--roxo)";
+        document.body.appendChild(d);
+        const c = getComputedStyle(d).backgroundColor;
+        d.remove();
+        return c;
+      });
+      ok(/124,\s*58,\s*237/.test(roxo), "🎨 3d: o roxo da marca é o mesmo nos dois temas");
+      // a página de vendas é documento AUTÔNOMO: não pode levar token do painel
+      const pagina = await pL.evaluate(() => window.__sitePro.monta(window.MTStore.read("ptStudio", {})));
+      ok(!/var\(--tk-/.test(pagina),
+        "🎨 3d: a página de vendas publicada não leva token do painel (lá esses nomes não existem)");
+      await ctxL.close();
+    }
+
     // 🖥 menu do computador: fica sempre à vista (1 clique por aba); no celular vira gaveta
     console.log("Menu fixo no computador:");
     for (const alvo of [
