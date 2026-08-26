@@ -197,7 +197,8 @@ async function abaPt(p, a) {
   });
   let lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
-  ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");
+  // na tela 2a a pendência aparece na coluna PLANO ("Vence dia 5" / "Venceu 05/08")
+  ok(/Vence dia 5|Venceu/.test(lista), "etiqueta de pendência antes do pagamento");
   ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-acesso]')), "aluno sem acesso do app tem o botão 📧 Enviar acesso direto na lista");
 
   // agenda: sessão hoje + marcar feita (agora com sub-abas Sessões/Agendar)
@@ -536,7 +537,8 @@ async function abaPt(p, a) {
         "a aba Financeiro do perfil mostra a carteira com o saldo e o aviso de devendo");
       // a etiqueta da lista troca "sem pagamento no mês" pelo SALDO de quem paga por sessão
       await abaPt(p, "alunos");
-      ok(await p.evaluate(() => /class="tag alerta">SALDO/.test(document.getElementById("listaAlunos").innerHTML)),
+      // a carteira agora aparece na coluna PLANO, com o saldo em dinheiro
+      ok(await p.evaluate(() => /Saldo −?-?R\$/.test(document.getElementById("listaAlunos").textContent)),
         "na lista, quem paga por sessão mostra o SALDO em vez de 'sem pagamento no mês'");
       // devolve o estado pros testes seguintes (a carteira volta pro zero)
       await p.evaluate(() => {
@@ -3447,12 +3449,40 @@ async function abaPt(p, a) {
     const abas = await p.evaluate(() => {
       window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
       const vis = (id) => !document.getElementById(id).closest("[data-pfsec]").hidden;
-      const antes = { app: vis("pfAppDados"), cadastro: vis("pfNome"), fin: vis("pfFin") };
+      // na tela 2b o perfil abre no RESUMO (a primeira aba), não no App do aluno
+      const antes = { resumo: vis("pfResumo"), app: vis("pfAppDados"), cadastro: vis("pfNome"), fin: vis("pfFin") };
       document.querySelector('#pfAbas [data-pfa="cadastro"]').click();
       const depois = { app: vis("pfAppDados"), cadastro: vis("pfNome"), ativa: document.querySelector("#pfAbas .ativa").getAttribute("data-pfa") };
       return { antes, depois, nBotoes: document.querySelectorAll("#pfAbas button").length };
     });
-    ok(abas.nBotoes === 7 && abas.antes.app && !abas.antes.cadastro && !abas.antes.fin, "perfil abre na aba 📲 App do aluno com as outras seções escondidas");
+    ok(abas.nBotoes === 8 && abas.antes.resumo && !abas.antes.app && !abas.antes.cadastro && !abas.antes.fin,
+      "perfil abre no Resumo (tela 2b) com as outras seções escondidas");
+
+    /* ---- ficha do aluno repaginada (tela 2b) ---- */
+    const b2b = await p.evaluate(() => {
+      const topo = document.querySelector(".pftopo");
+      return {
+        roxo: !!topo,
+        volta: (document.getElementById("pfFechar") || {}).textContent || "",
+        sub: (document.getElementById("pfDesde") || {}).textContent || "",
+        chips: [...document.querySelectorAll("#pfChips span")].map((x) => x.textContent),
+        acoes: [...document.querySelectorAll(".pfacoes button")].map((x) => x.id),
+        prox: (document.getElementById("pfProxima") || {}).textContent || "",
+        kpis: [...document.querySelectorAll("#pfResumo .pfkpi .k")].map((x) => x.textContent),
+        semana: document.querySelectorAll("#pfResumo .pfsem .c").length,
+        ficha: /Ficha atual/.test((document.getElementById("pfResumo") || {}).textContent || ""),
+      };
+    });
+    ok(b2b.roxo && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
+      "🎨 2b: a ficha abre com o cabeçalho roxo, o voltar e os dois selos do aluno");
+    ok(/·/.test(b2b.sub), "🎨 2b: a linha de baixo do nome junta objetivo, tempo de casa, plano e situação");
+    ok(b2b.acoes.length === 4 && b2b.acoes[0] === "pfMontaTreino",
+      "🎨 2b: as quatro ações do dia ficam no cabeçalho (montar treino, chat, financeiro, agenda)");
+    ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o cabeçalho diz quando é a próxima sessão");
+    ok(b2b.kpis.length === 4 && /TREINOS NO MÊS/.test(b2b.kpis[0]) && /CHECK-IN/.test(b2b.kpis[3]),
+      "🎨 2b: o Resumo abre com os quatro números do aluno");
+    ok(b2b.semana === 7 && b2b.ficha,
+      "🎨 2b: o Resumo traz a Semana do aluno (7 dias) e a ficha atual");
     ok(abas.depois.cadastro && !abas.depois.app && abas.depois.ativa === "cadastro", "clicar em 👤 Cadastro troca a seção e marca a aba ativa");
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -7891,22 +7921,41 @@ async function abaPt(p, a) {
       window.MTStore.write("ptStudio", st);
       const nomes = () => document.getElementById("listaAlunos").textContent;
       const rot = () => Array.from(document.querySelectorAll("#alFiltro button")).map((b) => b.textContent.trim());
-      window.__alFiltro("todos");
-      const todos = { txt: nomes(), rot: rot() };
-      window.__alFiltro("pagos");
-      const pagos = nomes();
+      // filtros da tela 2a: Ativos / Sumindo / Devendo / Encerrados
+      window.__alFiltro("ativos");
+      const todos = { txt: nomes(), rot: rot(), resumo: document.getElementById("alResumo").textContent };
+      // a busca corre DENTRO do filtro atual — então testa em Ativos, não em Devendo
+      const busca = (() => { window.__alBusca("paula"); const t = nomes(); window.__alBusca(""); return t; })();
       window.__alFiltro("devendo");
       const devendo = nomes();
       // pelo clique, como o professor faz
-      document.querySelector('#alFiltro [data-alf="todos"]').click();
+      document.querySelector('#alFiltro [data-alf="ativos"]').click();
       const voltou = { txt: nomes(), ativa: document.querySelector("#alFiltro .ativa").getAttribute("data-alf") };
-      return { todos, pagos, devendo, voltou };
+      return { todos, devendo, busca, voltou };
     });
-    ok(/Paula Pagou/.test(filtro.todos.txt) && /Davi Devendo/.test(filtro.todos.txt), "🔎 filtro 'Todos' mostra a lista inteira");
-    ok(filtro.todos.rot.join(" ") === "Todos (2) Pagos no mês (1) Sem pagamento (1)", "cada filtro mostra quantos alunos tem, sem precisar clicar");
-    ok(/Paula Pagou/.test(filtro.pagos) && !/Davi Devendo/.test(filtro.pagos), "filtro 'Pagos no mês' esconde quem não pagou");
-    ok(/Davi Devendo/.test(filtro.devendo) && !/Paula Pagou/.test(filtro.devendo), "filtro 'Sem pagamento' deixa só quem falta pagar");
-    ok(/Paula Pagou/.test(filtro.voltou.txt) && filtro.voltou.ativa === "todos", "clicar em Todos volta a lista inteira e marca a aba ativa");
+    ok(/Paula Pagou/.test(filtro.todos.txt) && /Davi Devendo/.test(filtro.todos.txt), "🔎 filtro 'Ativos' mostra a lista inteira");
+    ok(filtro.todos.rot.join(" ") === "Ativos Sumindo Devendo 1 Encerrados",
+      "só o filtro com pendência mostra o número (" + filtro.todos.rot.join(" · ") + ")");
+    ok(/2 ativos/.test(filtro.todos.resumo), "o cabeçalho diz o tamanho da carteira");
+    ok(/Davi Devendo/.test(filtro.devendo) && !/Paula Pagou/.test(filtro.devendo), "filtro 'Devendo' deixa só quem falta pagar");
+    ok(/Paula Pagou/.test(filtro.busca) && !/Davi Devendo/.test(filtro.busca), "a busca por nome filtra a lista");
+    ok(/Paula Pagou/.test(filtro.voltou.txt) && filtro.voltou.ativa === "ativos", "clicar em Ativos volta a lista inteira e marca a aba ativa");
+    /* ---- lista de alunos repaginada (tela 2a) ---- */
+    const l2a = await p.evaluate(() => {
+      window.__alFiltro("ativos");
+      const r = document.querySelector("#listaAlunos .alrow");
+      return {
+        colunas: [...document.querySelectorAll(".alcab span")].map((x) => x.textContent),
+        temAvatar: !!r.querySelector(".alav"),
+        celulas: r.children.length,
+        acao: (r.querySelector(".alac .btn") || {}).textContent || "",
+        barra: !!r.querySelector(".albar i"),
+      };
+    });
+    ok(l2a.colunas.slice(0, 5).join(",") === "Aluno,Plano,Mês,Ficha,Próxima",
+      "🎨 2a: a lista virou tabela com plano, treinos do mês, ficha e próxima sessão");
+    ok(l2a.temAvatar && l2a.barra, "🎨 2a: cada linha tem as iniciais do aluno e a barra do mês");
+    ok(!!l2a.acao, "🎨 2a: toda linha carrega a ação que resolve o estado dela (" + l2a.acao.trim() + ")");
     // com todo mundo pago, o filtro 'Sem pagamento' comemora em vez de ficar vazio
     const zerado = await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -7917,7 +7966,7 @@ async function abaPt(p, a) {
     });
     ok(/em dia/.test(zerado), "sem ninguém devendo, o filtro comemora em vez de mostrar área vazia");
     // devolve o estado original pro resto da suíte
-    await p.evaluate(() => { window.__alFiltro("todos"); });
+    await p.evaluate(() => { window.__alFiltro("ativos"); });
   }
   await p.evaluate(() => {
     // volta o aluno original pra sequência seguinte do teste (encerrar aluno)
@@ -7925,7 +7974,7 @@ async function abaPt(p, a) {
     st.alunos = window.__alunosOrig || st.alunos;
     st.pagamentos = window.__pgtosOrig || [];
     window.MTStore.write("ptStudio", st);
-    window.__alFiltro("todos");
+    window.__alFiltro("ativos");
   });
   await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
   await p.click("#listaAlunos [data-rm]");
