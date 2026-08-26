@@ -1543,6 +1543,38 @@ async function abaPt(p, a) {
 
   // histórico recolhível por aluno: fechado por padrão, clicar no nome abre e fecha
   await p.evaluate(() => window.__avAba("historico"));
+
+  /* ---- Avaliação física repaginada (tela 3a) ---- */
+  {
+    const b3a = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const id = (st.avaliacoes[0] || {}).alunoId;
+      const sel = document.getElementById("avCmpAluno");
+      sel.value = id;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+      const box = document.getElementById("avCmp");
+      return {
+        kicker: (document.querySelector('[data-avsec="historico"] .alk') || {}).textContent || "",
+        nome: (document.getElementById("avCmpNome") || {}).textContent || "",
+        botoes: !!document.getElementById("avCmpLaudo") && !!document.getElementById("avCmpNova"),
+        tiles: [...box.querySelectorAll(".avt .k")].map((x) => x.textContent),
+        deltas: [...box.querySelectorAll(".avt .d")].map((x) => x.textContent.trim()).filter(Boolean),
+        barras: box.querySelectorAll(".avlin").length,
+        tmb: /Gasto e metabolismo/.test(box.textContent),
+        pontos: /Pontuação/.test(box.textContent),
+        fotos: !!box.querySelector("#avCmpFotos"),
+        periodo: (box.querySelector("h3") || {}).textContent || "",
+      };
+    });
+    ok(/Avaliação de/i.test(b3a.kicker) && /medição/.test(b3a.nome) && b3a.botoes,
+      "🎨 3a: o topo diz de quem é a avaliação, qual medição, e traz Mandar laudo + Nova medição");
+    ok(/De .* para /.test(b3a.periodo) && b3a.tiles.length === 4,
+      "🎨 3a: as duas datas comparadas e os quatro números do aluno (" + b3a.tiles.join(", ") + ")");
+    ok(b3a.deltas.some((d) => /↓|↑/.test(d)), "🎨 3a: cada número mostra o quanto mudou desde a medição anterior");
+    ok(b3a.barras >= 3, "🎨 3a: a composição vira barras (" + b3a.barras + " compartimentos)");
+    ok(b3a.tmb && b3a.pontos, "🎨 3a: gasto/metabolismo e pontuação ficam na coluna da direita");
+    ok(b3a.fotos, "🎨 3a: a nota do rodapé leva pras fotos de progresso, que moram na ficha do aluno");
+  }
   ok(await p.evaluate(() => {
     const d = document.querySelector('#listaAvaliacoes details[data-avdet]');
     return !!d && !d.open;
@@ -3655,7 +3687,72 @@ async function abaPt(p, a) {
   // ---------- questionários personalizados (estilo LiveClin) ----------
   console.log("Questionários personalizados:");
   await abaPt(p, "quest");
-  ok(await p.evaluate(() => document.querySelector('#qtAbas button.ativa').textContent.includes("Enviar")), "Questionários abre na sub-aba Enviar");
+  // na tela 3b a primeira aba passou a ser "A semana" (quem pede atenção vem antes)
+  ok(await p.evaluate(() => document.querySelector('#qtAbas button.ativa').textContent.includes("A semana")), "Questionários abre na sub-aba A semana");
+
+  /* ---- Questionários repaginados (tela 3b) ---- */
+  {
+    // sem nuvem, a tela 3b avisa em vez de mostrar caixa vazia
+    const semNuvem = await p.evaluate(() => ({
+      det: document.getElementById("qsDet").textContent,
+      lista: document.getElementById("qsLista").innerHTML,
+      cobrar: document.getElementById("qsCobrar").hidden,
+    }));
+    ok(/Sua ilha/.test(semNuvem.det) && !semNuvem.lista && semNuvem.cobrar,
+      "🎨 3b: sem conta na nuvem a tela diz o que falta, sem lista nem botão de cobrar");
+    // com nuvem simulada: quem respondeu mal vem primeiro
+    const b3b = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.alunos.slice(0, 4).forEach((a, i) => { a.appTokenP = "qtk" + i; a.ativo = true; });
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      const hoje = new Date().toISOString().slice(0, 10);
+      const CK = { qtk0: { nota: 2, texto: "ombro incomodando" }, qtk1: { nota: 5, texto: "" } };
+      const Q = { qtk0: [{ sigla: "DOR", pergunta: "Dor no ombro", resposta: 8, menos: true }] };
+      const todos = (t) => t === "app_checkin"
+        ? Object.keys(CK).map((k) => Object.assign({ token: k, dia: hoje }, CK[k]))
+        : t === "app_quest"
+          ? Object.keys(Q).map((k) => ({ token: k, questionario: "Semanal", criado: hoje + "T20:00:00", dados: { respostas: Q[k] } }))
+          : [];
+      function q(t) {
+        const o = { data: todos(t), error: null };
+        const h = { get: (_, k) => (k === "then" ? (f, g) => Promise.resolve(o).then(f, g) : () => new Proxy({}, h)) };
+        return new Proxy({}, h);
+      }
+      window.__cloudOrigQS = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => q(t) } });
+      window.__qsSemana.pinta();
+      await new Promise((r) => setTimeout(r, 250));
+      window.MTStore.cloud = window.__cloudOrigQS;
+      const grupos = [...document.querySelectorAll("#qsLista .qsgrupo")].map((g) => g.textContent);
+      const itens = [...document.querySelectorAll("#qsLista .qsit")].map((b) => b.textContent);
+      return {
+        resumo: document.getElementById("qsResumo").textContent,
+        grupos: grupos,
+        primeiro: itens[0] || "",
+        det: document.getElementById("qsDet").textContent,
+        tiles: [...document.querySelectorAll("#qsDet .avt .k")].map((x) => x.textContent),
+      };
+    });
+    ok(/^\d+ de \d+ responderam$/.test(b3b.resumo) && +b3b.resumo.split(" ")[0] >= 1,
+      "🎨 3b: o topo conta quantos responderam de quantos (" + b3b.resumo + ")");
+    ok(/Pede atenção/.test(b3b.grupos[0]) && /Tudo bem/.test(b3b.grupos[1]) && /Não responderam/.test(b3b.grupos[2]),
+      "🎨 3b: a lista sai em pede atenção / tudo bem / não responderam");
+    ok(/Check-in 2 de 5/.test(b3b.primeiro) || /Dor no ombro/.test(b3b.primeiro),
+      "🎨 3b: quem pede atenção já mostra o motivo na linha");
+    ok(b3b.tiles.length >= 2 && b3b.tiles.some((t) => /Dor/.test(t)),
+      "🎨 3b: a resposta abre ao lado com um tile por pergunta");
+    ok(/ombro incomodando/.test(b3b.det), "🎨 3b: o que o aluno escreveu aparece por extenso");
+    // a régua de alerta: nota alta numa pergunta em que MENOR é melhor pede atenção
+    const regua = await p.evaluate(() => ({
+      dorAlta: window.__qsSemana.alerta({ nota: null, respostas: [{ pergunta: "Dor", resposta: 9, menos: true }] }).length,
+      dorBaixa: window.__qsSemana.alerta({ nota: null, respostas: [{ pergunta: "Dor", resposta: 1, menos: true }] }).length,
+      dispBaixa: window.__qsSemana.alerta({ nota: null, respostas: [{ pergunta: "Disposição", resposta: 2 }] }).length,
+      dispAlta: window.__qsSemana.alerta({ nota: null, respostas: [{ pergunta: "Disposição", resposta: 9 }] }).length,
+      notaBaixa: window.__qsSemana.alerta({ nota: 2, respostas: [] }).length,
+    }));
+    ok(regua.dorAlta === 1 && regua.dorBaixa === 0 && regua.dispBaixa === 1 && regua.dispAlta === 0 && regua.notaBaixa === 1,
+      "🎨 3b: dor ALTA e disposição BAIXA pedem atenção — o sentido da pergunta é respeitado");
+  }
   await p.evaluate(() => window.__qtAba("montar"));
   await p.fill("#qpSigla", "motex");
   await p.fill("#qpTitulo", "Motivação");
@@ -7191,6 +7288,55 @@ async function abaPt(p, a) {
   await p.waitForTimeout(300);
   const chatMod = await p.evaluate(() => document.getElementById("chatMsgs").textContent);
   ok(/precisa da sua conta/.test(chatMod), "chat do módulo sem nuvem explica o que falta");
+
+  /* ---- Chat repaginado (tela 3c) ---- */
+  {
+    const b3c = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const a = st.alunos[0];
+      a.appTokenP = "chtk"; a.ativo = true;
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      const hoje = new Date().toISOString().slice(0, 10);
+      const MSG = [
+        { token: "chtk", de: "aluno", texto: "Consigo treinar hoje mesmo com o ombro assim?", criado: hoje + "T14:22:00", lida: true },
+        { token: "chtk", de: "personal", texto: "Consegue sim, já troquei o exercício.", criado: hoje + "T14:26:00", lida: true },
+      ];
+      function q() {
+        const o = { data: MSG, error: null };
+        const h = { get: (_, k) => (k === "then" ? (f, g) => Promise.resolve(o).then(f, g) : () => new Proxy({}, h)) };
+        return new Proxy({}, h);
+      }
+      window.__cloudOrigCH = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: () => q() } });
+      window.__chatPT.render();
+      await new Promise((r) => setTimeout(r, 200));
+      window.__chatPT.abre(a.id);
+      await new Promise((r) => setTimeout(r, 250));
+      window.MTStore.cloud = window.__cloudOrigCH;
+      return {
+        cab: (document.querySelector(".chcab") || {}).textContent || "",
+        busca: !!document.getElementById("chatBusca"),
+        linhas: document.querySelectorAll("#chatAlunos .qsit").length,
+        previa: (document.querySelector("#chatAlunos .qssub") || {}).textContent || "",
+        avatar: (document.getElementById("chatAv") || {}).textContent || "",
+        dias: document.querySelectorAll("#chatMsgs .chdia").length,
+        minhas: document.querySelectorAll("#chatMsgs .chbolha.minha").length,
+        delas: document.querySelectorAll("#chatMsgs .chbolha:not(.minha)").length,
+        lido: /lido/.test(document.getElementById("chatMsgs").textContent),
+        rapidas: [...document.querySelectorAll("#chatRapidas .chrb")].map((b) => b.textContent),
+        ficha: !document.getElementById("chatFicha").hidden,
+      };
+    });
+    ok(/Conversas/.test(b3c.cab) && b3c.busca && b3c.linhas >= 1,
+      "🎨 3c: a lista de conversas tem cabeçalho, busca e uma linha por aluno");
+    ok(/Consegue sim/.test(b3c.previa), "🎨 3c: cada linha mostra a prévia da última mensagem");
+    ok(b3c.avatar.length === 2 && b3c.ficha, "🎨 3c: o topo da conversa tem o avatar e o atalho Abrir ficha");
+    ok(b3c.dias === 1 && b3c.minhas === 1 && b3c.delas === 1,
+      "🎨 3c: as mensagens saem em bolhas separadas por dia, minhas de um lado e as do aluno do outro");
+    ok(b3c.lido, "🎨 3c: a última mensagem minha diz quando foi lida");
+    ok(b3c.rapidas.length === 3 && /Bora treinar/.test(b3c.rapidas[0]),
+      "🎨 3c: as respostas rápidas ficam acima do campo de escrever");
+  }
 
   // aba assessoria (sem nuvem → aviso educado)
   await abaPt(p, "assessoria");
