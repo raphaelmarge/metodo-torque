@@ -220,11 +220,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .msel-lista label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13.5px; }
   .msel-lista label:hover { background: rgba(255,255,255,.05); }
   #grQuemCab .fseta { display: inline-block; transition: transform .15s; margin-left: 6px; }
-  .colunas-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  @media (max-width: 800px) { .colunas-dash { grid-template-columns: 1fr; } }
+  /* minmax(0, 1fr) e nao 1fr: com 1fr a coluna cresce ate o min-content do
+   * conteudo e um texto que nao quebra empurra a pagina inteira pro lado */
+  .colunas-dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 800px) { .colunas-dash { grid-template-columns: minmax(0, 1fr); } }
   .kv-pt { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
   .kv-pt:last-child { border-bottom: none; }
   .kv-pt strong { font-variant-numeric: tabular-nums; text-align: right; }
+  /* "R$ 13.000" quebrava em duas linhas porque o rotulo e o valor disputavam a
+   * mesma linha estreita. Travar o valor com white-space:nowrap seria pior: um
+   * valor composto ("cartao auto R$ 2.920 · pix R$ 2.140 · dinheiro R$ 3.310")
+   * viraria 342px intocaveis e empurraria a PAGINA INTEIRA pra 406px. Entao a
+   * linha e que quebra: rotulo em cima, valor embaixo com a largura toda. */
+  @media (max-width: 560px) {
+    .kv-pt { flex-wrap: wrap; }
+    .kv-pt > * { min-width: 0; }
+    .kv-pt strong { margin-left: auto; }
+  }
   .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
   .kpi-pt .card { text-align: center; padding: 16px; }
   .kpi-pt .n { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -270,6 +282,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     /* nome do aluno menor no celular (uma linha, com reticências) */
     #pfTopo #pfTitulo { font-size: 16.5px; }
     #pfTopo #pfAcoesBtn { padding: 8px 11px; }
+    /* na grade de duas colunas do celular o rotulo quebrava ao meio */
+    #vPerfil .linha-flex #pfLaudoAbrir { grid-column: 1 / -1; }
     /* abas do perfil em grade uniforme 3×2 */
     #calAgenda .cal-dia { min-height: 38px; font-size: 12px; }
     /* Sub-abas no celular: FLEX que estica, não grade fixa.
@@ -375,7 +389,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dlinha .dhh { width: 52px; flex: none; font-size: 12.5px; font-weight: 800; color: var(--tk-tx4); font-variant-numeric: tabular-nums; }
   .dlinha .dnm { font-size: 14px; font-weight: 800; color: var(--tk-tx); }
   .dlinha .dfi { font-size: 12px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
-  .dlinha .dac { margin-left: auto; display: flex; gap: 7px; align-items: center; }
+  .dlinha .dac { margin-left: auto; display: flex; gap: 7px; align-items: center; flex: none; }
+  .dok { white-space: nowrap; }
+  /* No celular a linha do dia nao cabe numa fileira so: hora (52px) +
+   * Abrir ficha + Feita comem 250px e sobravam 93px pro nome, que
+   * quebrava em duas linhas. As acoes descem e alinham embaixo do nome. */
+  @media (max-width: 560px) {
+    .dlinha { flex-wrap: wrap; }
+    .dlinha .dac { flex: 1 1 100%; margin-left: 66px; justify-content: flex-start; }
+    .dlinha.prox .dac { margin-left: 58px; }
+  }
   .dlinha.feita { opacity: .5; }
   .dlinha.faltou .dhh { color: var(--tk-erro); }
   .dlinha.prox { background: rgba(124,58,237,.18); border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; padding-left: 12px; }
@@ -401,6 +424,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pftopo #pfTitulo { font-size: 26px; font-weight: 900; letter-spacing: -.03em; color: #fff; }
   .pftopo #pfDesde { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85) !important; }
   .pftopo #pfFotoBtn { width: 62px !important; height: 62px !important; border-radius: 18px !important; background: rgba(255,255,255,.2) !important; color: #fff; font-size: 19px; font-weight: 900; }
+  /* O cabecalho da ficha e UMA linha no computador: foto, nome, as 4 acoes do
+   * dia e o botao de Acoes. No celular isso nao cabe de jeito nenhum — as
+   * quatro acoes sozinhas passam de 230px — e o que acontecia era o pior
+   * desfecho possivel: a coluna do nome era espremida ate ZERO, entao o nome
+   * do aluno sumia (nowrap + overflow hidden) e a linha do objetivo virava
+   * uma palavra por linha, com os botoes vazando por cima. Por isso o layout
+   * mora aqui e nao num style inline: assim a media query consegue trocar a
+   * linha por uma grade sem precisar de !important. */
+  #pfTopo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  /* base de 200px + wrap sao a rede de seguranca: numa janela estreita as
+   * acoes descem sozinhas em vez de espremer o nome ate sumir */
+  #pfTopo .pfid { flex: 1 1 200px; min-width: 0; }
+  #pfTopo .pfacoes { flex: none; }
+  #pfTopo #pfAcoesBtn { flex: none; }
   .pfchips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
   .pfchips span { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
                   background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.2); }
@@ -408,6 +445,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfacoes .dbt { height: 42px; }
   .pfacoes .pfic { width: 42px; height: 42px; padding: 0; justify-content: center; }
   .pfprox { margin-top: 12px; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.85); }
+  /* Celular e tablet (ate 900px, a mesma regua do .pfcols): a linha vira GRADE
+   * de duas fileiras.
+   *   fileira 1 → foto | nome e selos (a coluna que estica) | botao Acoes
+   *   fileira 2 → as 4 acoes do dia, ocupando a largura inteira
+   * minmax(0, 1fr) na coluna do meio e o que deixa o nome ENCOLHER com
+   * reticencias em vez de empurrar a grade e sumir. */
+  @media (max-width: 900px) {
+    #pfTopo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 11px; align-items: center; }
+    #pfTopo #pfFotoBtn { grid-column: 1; grid-row: 1; }
+    #pfTopo .pfid { grid-column: 2; grid-row: 1; }
+    #pfTopo #pfAcoesBtn { grid-column: 3; grid-row: 1; }
+    #pfTopo .pfacoes { grid-column: 1 / -1; grid-row: 2; }
+    /* "Montar treino" estica e os tres icones ficam com o tamanho deles */
+    #pfTopo .pfacoes .dbt:not(.pfic) { flex: 1 1 auto; justify-content: center; }
+    .pftopo { padding: 16px 16px 14px; }
+  }
+  /* selo curto nunca quebra no meio: "4 treinos no mês" em quatro linhas foi
+   * um dos sintomas da coluna espremida */
+  .pfchips span { white-space: nowrap; }
   /* Resumo: 4 números + a semana + a ficha atual */
   .pfkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
   .pfkpi { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 16px; padding: 15px 17px; }
@@ -426,7 +482,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfsem .c.tem { background: var(--tk-roxoFraco); border-color: rgba(124,58,237,.5); color: var(--tk-roxoTx); }
   .pfsem .c.hoje { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   /* ---------- Alunos na tela 2a ---------- */
-  .altopo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  /* numero em cima da barra dos graficos: em 6 meses lado a lado num celular
+   * cada coluna fica com 44px e "R$ 6.120" quebrava em duas linhas */
+  .barval { font-size: 11px; font-weight: 700; color: var(--cinza); white-space: nowrap; }
+  @media (max-width: 560px) { .barval { font-size: 9.5px; letter-spacing: -.03em; } }
+  /* tabela que nao cabe: quem rola e a CAIXA. Sem o nowrap o navegador
+   * aperta as colunas e cada numero quebra em duas linhas dentro dela. */
+  .tabrola { overflow-x: auto; }
+  .tabrola th, .tabrola td { white-space: nowrap; }
+  .altopo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .altopo > * { min-width: 0; }
+  /* endereco publicado e uma URL sem espaco: sem isto ela nao quebra e
+   * vira a largura minima da tela inteira */
+  .altopo .alh { overflow-wrap: anywhere; }
   .altopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); }
   .altopo .alh { font-size: 24px; font-weight: 900; letter-spacing: -.03em; margin-top: 2px; }
   .altopo .dbt { margin-left: auto; }
@@ -453,10 +521,31 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .alrow .albar i { display: block; height: 100%; border-radius: 99px; }
   .alrow .alac { display: flex; gap: 6px; justify-content: flex-end; }
   .alsel { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 2px 7px; border-radius: 6px; margin-left: 7px; vertical-align: 2px; }
+  /* display:contents = "nao desenhe esta caixa, use os filhos": no computador a
+   * tabela continua com as mesmas 6 colunas de sempre */
+  .aldet { display: contents; }
   @media (max-width: 1000px) {
     .alcab { display: none; }
-    .alrow { grid-template-columns: 1fr auto; row-gap: 8px; }
-    .alrow > :nth-child(n+2):nth-child(-n+5) { grid-column: 1 / -1; }
+    /* Celular: DUAS fileiras, nao seis.
+     *   fileira 1 → foto + nome + a acao que resolve o estado dele
+     *   fileira 2 → plano, treinos, ficha e proxima numa linha so
+     * Antes .alac caia sozinha numa 6a fileira (a coluna "auto" nascia com 0px
+     * de largura), a linha do aluno tinha 232px e cabiam 2 alunos na tela. */
+    .alrow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; column-gap: 10px; padding: 12px 14px; }
+    .alrow .alq { grid-column: 1; grid-row: 1; }
+    .alrow .alac { grid-column: 2; grid-row: 1; align-self: center; }
+    .alrow .aldet { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap;
+                    align-items: baseline; gap: 3px 14px; min-width: 0; }
+    .alrow .aldet > div { min-width: 0; }
+    /* rotulo e valor lado a lado, uma linha por informacao */
+    .alrow .aldet .alp1, .alrow .aldet .alp2 { display: inline; font-size: 12px; margin: 0; }
+    /* lado a lado eles colavam: "Mensal 3x/sem R$ 400Pago dia 5" */
+    .alrow .aldet .alp2::before { content: " · "; color: var(--tk-tx5); font-weight: 700; }
+    .alrow .aldet .albar { display: inline-block; width: 46px; margin: 0 0 0 6px; vertical-align: middle; }
+    .alrow .al-acoes { grid-column: 1 / -1; }
+    /* o traco entre um aluno e outro sumia no escuro: cada aluno vira um cartao */
+    .alrow { border-top: 0; border-bottom: 1px solid var(--tk-bd3); }
+    .alrow:last-child { border-bottom: 0; }
   }
   /* ---------- Financeiro na tela 2e: bloco vermelho dos atrasados ---------- */
   .pgatr { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.32); border-radius: 18px;
@@ -476,7 +565,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* ---------- Comunidade na tela 4d ---------- */
   .fdpost { padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: var(--tk-sup2); border: 1px solid var(--tk-bd); }
   .fdpost.off { opacity: .55; }
-  .fdcab { display: flex; align-items: center; gap: 11px; }
+  .fdcab { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+  .fdcab > div { min-width: 0; flex: 1 1 auto; }
   .fdtxt { font-size: 14px; font-weight: 700; line-height: 1.5; margin-top: 10px; white-space: pre-wrap; color: var(--tk-tx); }
   /* ---------- Configurações na tela 4a ---------- */
   .cfgnuvem { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 12px;
@@ -674,6 +764,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agsem .agh .agdn { font-size: 17px; font-weight: 900; letter-spacing: -.02em; margin-top: 1px; }
   .agsem .aghr { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: var(--tk-tx5); display: flex;
                  align-items: center; justify-content: flex-end; padding-right: 8px; }
+  .agsem .agpil { display: grid; gap: 5px; align-content: start; min-width: 0; }
   .agc { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; cursor: pointer;
          background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: inherit; font-family: inherit; min-height: 46px; }
   .agc .agnm { font-size: 12.5px; font-weight: 800; color: var(--tk-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1667,7 +1758,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </select>
       </div>
       <input id="qpTexto" placeholder="A pergunta em si (ex.: Qual foi sua motivação pra treinar nos últimos 7 dias?)" style="width: 100%; margin-top: 8px;">
-      <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 8px 0 0;"><input type="checkbox" id="qpMenos" style="width: 16px; height: 16px;"> Nesta pergunta, <b>nota menor é melhor</b> (ex.: dor, cansaço, fome) — o painel inverte a leitura da tendência</label>
+      <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 8px 0 0;"><input type="checkbox" id="qpMenos" style="width: 16px; height: 16px;"> <span>Nesta pergunta, <b>nota menor é melhor</b> (ex.: dor, cansaço, fome) — o painel inverte a leitura da tendência</span></label>
       <div id="qpOpsBox" style="margin-top: 8px;">
         <p class="muted" style="font-size: 12px; margin-bottom: 4px;">Alternativas da escala (rótulo | pontos):</p>
         <div class="linha-flex" style="flex-wrap: wrap; gap: 6px;">
@@ -1740,7 +1831,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
         <button class="btn" id="dsSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar desafio</button>
-        <button class="btn sec" id="dsEncerrar">Encerrar desafio</button>
+        <button class="btn sec" id="dsEncerrar" style="white-space:nowrap;">Encerrar desafio</button>
         <span id="dsStatus" class="muted" style="font-size: 12.5px;"></span>
       </div>
       <p class="muted" style="font-size: 12px; margin-top: 8px;">Depois de salvar, <b>publique os apps de novo</b> — o card do desafio entra no app de todo mundo.</p>
@@ -2094,7 +2185,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="alk">Configurações</div>
         <div class="alh" id="cfgTitulo">—</div>
       </div>
-      <span class="cfgnuvem" id="cfgNuvem" style="margin-left:auto;">—</span>
+      <span class="cfgnuvem" id="cfgNuvem" style="margin-left:auto;white-space:nowrap;">—</span>
     </div>
     <div id="cfgResumo" data-cfgsec="resumo"></div>
     <div class="dnota" data-cfgsec="resumo" style="margin-bottom:14px;">Chave e token <b>nunca voltam pra tela</b>: o painel só sabe <b>se existe</b>. Isso é regra do sistema — quem guarda o segredo é a nuvem, com a chave de serviço que o site não tem.</div>
@@ -2355,13 +2446,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button type="button" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista">&lsaquo; Alunos</button>
       <button type="button" id="pfEditar">Editar cadastro</button>
     </div>
-    <div id="pfTopo" style="display: flex; align-items: center; gap: 14px;">
+    <div id="pfTopo">
       
       <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; width: 52px; height: 52px; border-radius: 50%; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
         <img id="pfFotoImg" alt="" hidden style="width: 100%; height: 100%; object-fit: cover;"><span id="pfIniciais">?</span>
       </button>
       <input type="file" id="pfFotoInput" accept="image/*" hidden>
-      <div style="flex: 1; min-width: 0;">
+      <div class="pfid">
         <h2 id="pfTitulo" style="font-size: 20px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; text-transform: none; color: var(--texto); font-weight: 800;">Perfil</h2>
         <span id="pfDesde" class="muted" style="font-size: 12px; display: block;"></span>
         <div class="pfchips" id="pfChips"></div>
@@ -2981,11 +3072,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:var(--tk-aten);">SUMINDO</span>' : "") +
         '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
         (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div></div></div>" +
+        /* Os quatro valores do meio vao dentro de .aldet. No computador ela e
+         * display:contents — some da arvore de layout e os quatro voltam a ser
+         * colunas da tabela, igualzinho antes. No celular ela vira UMA linha
+         * corrida: sem isso a linha do aluno virava um predio de 6 andares e
+         * so cabiam DOIS alunos na tela. */
+        '<div class="aldet">' +
         '<div><div class="alp1">' + pl.o + '</div><div class="alp2" style="color:' + pl.cor + ';">' + pl.st + "</div></div>" +
         '<div><div class="alp1">' + S.plural(nMes, "treino", "treinos") + '</div>' +
         '<div class="albar"><i style="width:' + Math.max(4, pctM) + "%;background:" + corM + ';"></i></div></div>' +
         '<div><div class="alp1">' + fi.o + '</div><div class="alp2" style="color:' + fi.cor + ';">' + fi.sub + "</div></div>" +
-        '<div class="alp1" style="color:' + (px.cor || "var(--tk-tx2)") + ';">' + px.txt + "</div>" +
+        '<div class="alp1" style="color:' + (px.cor || "var(--tk-tx2)") + ';">' + px.txt + "</div></div>" +
         '<div class="alac">' + acao +
         '<button type="button" class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações">···</button></div>' +
         '<div class="al-acoes" data-acoes="' + a.id + '" hidden style="grid-column:1/-1;">' +
@@ -3621,7 +3718,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var temB = avs.some(function (v) { return v.braco != null && v.braco !== ""; });
       var temQ = avs.some(function (v) { return v.quadril != null && v.quadril !== ""; });
       var temR = avs.some(function (v) { return v.rcq; });
-      var tabela = "<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:12.5px;'>" +
+      var tabela = "<div class='tabrola'><table style='width:100%;border-collapse:collapse;font-size:12.5px;'>" +
         "<tr style='color:var(--tk-roxoTx2);text-align:left;'><th style='padding:4px 8px 4px 0;'>Data</th><th style='padding:4px 8px;'>Peso</th>" +
         (temG ? "<th style='padding:4px 8px;'>% gordura</th>" : "") +
         (temC ? "<th style='padding:4px 8px;'>Cintura</th>" : "") +
@@ -6354,13 +6451,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '" title="marcar uma sessão nesse horário"><span class="agmais">+</span></button>';
           return;
         }
-        html += aqui.map(function (x) {
+        /* Duas sessoes no MESMO dia e hora sao normais (turminha, ou um encaixe
+         * que o professor precisa enxergar). Antes cada uma levava o mesmo
+         * grid-column/grid-row e elas ficavam UMA POR CIMA DA OUTRA — o
+         * professor via so a de cima e nem sabia da outra. Agora a celula da
+         * grade e uma pilha: quantas houver, empilhadas e todas visiveis. */
+        html += '<div class="agpil" style="' + pos + '">' + aqui.map(function (x) {
           var es = agEstado(st, x, hoje);
           var nome = ((st.alunos.find(function (y) { return y.id === x.alunoId; }) || {}).nome || "?").split(" ")[0];
           var agora = !x.feita && !x.faltou && !x.pedido && d.iso === hoje;
-          return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" style="' + pos + '" data-agcel="' + d.iso + '">' +
+          return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" data-agcel="' + d.iso + '">' +
             '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>";
-        }).join("");
+        }).join("") + "</div>";
       });
     });
     dias.forEach(function (d, di) {
@@ -12056,7 +12158,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       itens.map(function (x) {
         var h = Math.round(78 * x.v / max);
         return '<div style="flex:1;text-align:center;" title="' + x.rot + ": " + (fmt ? fmt(x.v) : x.v) + '">' +
-          '<div style="font-size:11px;font-weight:700;color:var(--cinza);">' + (x.v ? (fmt ? fmt(x.v) : x.v) : "") + "</div>" +
+          '<div class="barval">' + (x.v ? (fmt ? fmt(x.v) : x.v) : "") + "</div>" +
           '<div style="height:' + (78 - h) + 'px;"></div>' +
           '<div style="height:' + h + "px;background:" + cor + ';border-radius:6px 6px 0 0;min-height:2px;"></div>' +
           '<div style="font-size:10.5px;color:var(--cinza);margin-top:4px;">' + x.rot + "</div></div>";
