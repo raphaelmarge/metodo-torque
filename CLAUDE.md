@@ -299,6 +299,38 @@ velha demais pra obedecer a leitura, o painel **avisa dentro da gaveta**
 (`#brAviso`) em vez de deixar o treino sair errado sem explicação.
 Ganchos: `window.__catalogoIA`, `__exCitados`, `__brief.confere`.
 
+**O mapa da corrida não aparecia** (conserto na v641): o Raphael disse que na
+área de corrida o mapa não vinha, mas **a bolinha azul vinha**. Isso já entrega o
+diagnóstico: o GPS estava bom (a bolinha só é pintada quando há posição) e quem
+falhava eram os **tiles** — as imagens das ruas. Causa: `t.img.crossOrigin =
+'anonymous'` na criação de cada tile. O canvas do mapa (`#crMapa`/`#crMapaFull`)
+**nunca é lido de volta** — quem exporta imagem são OUTROS canvas (a arte da
+corrida, a foto de progresso, o card do treino) —, então não existe canvas sujo
+e CORS não comprava nada. Em compensação cobrava: com `crossOrigin`, o navegador
+EXIGE o cabeçalho `Access-Control-Allow-Origin` e, se ele não vier (proxy de
+operadora, DNS privado, bloqueador, CDN respondendo do cache sem o cabeçalho), a
+imagem nem carrega. Como a exigência valia pro CARTO **e** pro OSM de reserva, os
+dois morriam juntos — daí o retângulo liso com a bolinha em cima. Saiu.
+
+Junto veio o que fazia isso ser indiagnosticável: **o silêncio**. Tile que morre
+não dizia nada. Agora `desenhaCv` conta quantos tiles pintaram (`pintou9`) e,
+com zero pintados e a reserva também falhada (`crMapaErro`), o mapa escreve
+**"Não deu pra carregar as ruas"** e, embaixo, *"seu trajeto continua sendo
+gravado"* — que é verdade e é o que o aluno precisa saber no meio da corrida.
+
+⚠️ **A armadilha que quase passou**: ao acrescentar `crMapaErro=0;` no seletor de
+estilo eu comi o `+` do fim da linha anterior. `node --check` passou — porque o
+JavaScript aplica **ASI**: `"a"\n"b" +` não é erro de sintaxe, ele fecha a
+primeira expressão e trata o resto como uma expressão solta. Resultado: a string
+do app foi **truncada** de 416 KB pra 258 KB e o app perdeu 2 dos 3 `<script>`.
+Quem pegou foi `test-app-sintaxe.js`, que monta o app e faz parse de cada script
+— exatamente o que o cabeçalho dele diz que existe pra pegar. **Checar a sintaxe
+do builder não basta: o que vale é montar o app.**
+
+⚠️ Duas âncoras de teste tiveram de mudar junto, e a lição é a mesma da v583: um
+teste que ancora em `,256,256);}catch` quebra quando qualquer coisa entra dentro
+do `try`, sem que a regra tenha mudado. Foram reancorados no que importa.
+
 **Os gráficos do app do aluno sumiram** (conserto na v638): o Raphael mandou
 duas fotos — em **Evolução → Corpo** a curva do peso aparecia só com os
 pontinhos PRETOS e sem linha nenhuma; em **Evolução → Cargas** as barras
