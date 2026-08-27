@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste do mapa da corrida — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts/archivo.css">
+<style>
+  :root{ --bg:#0d0c10; --card:#17151d; --linha:#2a2635; --tx:#ece9f6; --tx2:#a9a4b5;
+         --roxo:#7c3aed; --ok:#4ade80; --erro:#f87171; --aten:#fbbf24; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+       font-family:Archivo,system-ui,sans-serif;line-height:1.5;padding:18px 16px 60px}
+  h1{font-size:21px;font-weight:900;margin:0 0 4px}
+  .sub{color:var(--tx2);font-size:14px;margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--linha);border-radius:14px;
+        padding:14px 15px;margin-bottom:12px}
+  .card h2{font-size:15px;font-weight:800;margin:0 0 10px;display:flex;
+           align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+        padding:3px 8px;border-radius:99px;border:1px solid var(--linha);color:var(--tx2)}
+  .l{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:7px 0;
+     border-top:1px solid var(--linha)}
+  .l:first-of-type{border-top:0}
+  .l b{font-weight:700}
+  .marca{flex:none;width:22px;text-align:center;font-size:15px}
+  .ok{color:var(--ok)} .erro{color:var(--erro)} .aten{color:var(--aten)}
+  .url{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--tx2);
+       word-break:break-all;margin:2px 0 0}
+  .tiles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .tiles figure{margin:0;text-align:center}
+  .tiles img{width:74px;height:74px;border-radius:8px;background:#222;display:block;
+             border:1px solid var(--linha)}
+  .tiles figcaption{font-size:10px;color:var(--tx2);margin-top:3px}
+  button{background:var(--roxo);color:#fff;border:0;border-radius:11px;padding:12px 18px;
+         font:inherit;font-weight:800;font-size:15px;min-height:46px;width:100%;margin-top:6px}
+  button.sec{background:transparent;border:1px solid var(--linha);color:var(--tx)}
+  .kv{font-size:13px;color:var(--tx2)}
+  .kv b{color:var(--tx)}
+  #veredito{font-size:14.5px}
+  #veredito p{margin:0 0 8px}
+</style>
+</head>
+<body>
+
+<h1>Teste do mapa da corrida</h1>
+<p class="sub">Abra esta página <b>no celular onde o mapa não aparece</b>, na mesma
+internet (5G ou Wi-Fi). Ela tenta baixar os ladrilhos do mapa do mesmo jeito que
+o app tenta, e diz qual parte falha.</p>
+
+<div class="card">
+  <h2>Seu aparelho</h2>
+  <div class="kv" id="amb">…</div>
+  <button class="sec" id="btnGps" style="margin-top:12px">Usar a minha localização (opcional)</button>
+</div>
+
+<div class="card">
+  <h2>Os 5 estilos de mapa</h2>
+  <div id="lista"></div>
+  <div class="tiles" id="tiles"></div>
+</div>
+
+<div class="card">
+  <h2>O que isso quer dizer</h2>
+  <div id="veredito" class="kv">Rodando o teste…</div>
+  <button id="btnCopia" style="margin-top:12px">Copiar o resultado pra mandar pro Claude</button>
+</div>
+
+<script>
+/* Mesma conta de ladrilho e mesma montagem de URL do app (aluno-builder.js),
+ * copiadas de propósito: se a página usasse outra receita, ela testaria outra
+ * coisa e o resultado não valeria nada. */
+var CRMAPS = {
+  escuro:   {n:'Escuro',      u:'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png',  s:'abcd', hd:1},
+  claro:    {n:'Claro',       u:'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', s:'abcd', hd:1},
+  colorido: {n:'Colorido',    u:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',   s:'abcd', hd:1},
+  satelite: {n:'Satélite',    u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'},
+  ruas:     {n:'Ruas (OSM)',  u:'https://tile.openstreetmap.org/{z}/{x}/{y}.png'}
+};
+function crDpr(){ return Math.min(2, Math.max(1, window.devicePixelRatio || 1)); }
+function crUrl(tpl, e, z, x, y){
+  return String(tpl).replace('{s}', (e && e.s) ? e.s[(x + y) % e.s.length] : 'a')
+    .replace('{z}', z).replace('{x}', x).replace('{y}', y)
+    .replace('{r}', (e && e.hd && crDpr() > 1.4) ? '@2x' : '');
+}
+function merc(lat, lng, z){
+  var n = Math.pow(2, z), x = (lng + 180) / 360 * n, la = lat * Math.PI / 180;
+  var y = (1 - Math.log(Math.tan(la) + 1 / Math.cos(la)) / Math.PI) / 2 * n;
+  return { x: Math.floor(x), y: Math.floor(y) };
+}
+
+// Belo Horizonte por padrão; o botão troca pela posição real do aluno
+var LAT = -19.9245, LNG = -43.9352, Z = 16;
+var resultados = [];
+
+function el(t, a){ var e = document.createElement(t); if(a) e.className = a; return e; }
+
+/* Carrega o mesmo ladrilho de dois jeitos:
+ *   COM crossOrigin='anonymous'  → é o que o app faz hoje
+ *   SEM crossOrigin              → só falha se o servidor estiver fora do ar
+ * Se um funciona e o outro não, o problema é o cabeçalho CORS do servidor,
+ * não a internet nem o endereço. */
+function tenta(url, comCors){
+  return new Promise(function(res){
+    var t0 = Date.now(), img = new Image(), pronto = false;
+    var fim = function(ok, motivo){
+      if (pronto) return; pronto = true;
+      res({ ok: ok, ms: Date.now() - t0, motivo: motivo || '', img: ok ? img : null });
+    };
+    if (comCors) img.crossOrigin = 'anonymous';
+    img.onload  = function(){ fim(img.naturalWidth > 0, img.naturalWidth ? '' : 'imagem vazia'); };
+    img.onerror = function(){ fim(false, 'não carregou'); };
+    setTimeout(function(){ fim(false, 'demorou mais de 12s'); }, 12000);
+    img.src = url;
+  });
+}
+
+async function roda(){
+  document.getElementById('lista').innerHTML = '';
+  document.getElementById('tiles').innerHTML = '';
+  resultados = [];
+  var t = merc(LAT, LNG, Z);
+
+  document.getElementById('amb').innerHTML =
+    'Internet: <b>' + (navigator.onLine ? 'ligada' : 'DESLIGADA') + '</b><br>' +
+    'Densidade da tela: <b>' + (window.devicePixelRatio || 1) + '</b> ' +
+    '(o app pede ladrilho <b>' + (crDpr() > 1.4 ? '@2x' : 'normal') + '</b>)<br>' +
+    'Posição usada: <b>' + LAT.toFixed(4) + ', ' + LNG.toFixed(4) + '</b> · ladrilho ' + Z + '/' + t.x + '/' + t.y;
+
+  for (var id in CRMAPS){
+    var e = CRMAPS[id];
+    var url = crUrl(e.u, e, Z, t.x, t.y);
+    var com = await tenta(url, true);
+    var sem = com.ok ? { ok: true, ms: 0 } : await tenta(url, false);
+    resultados.push({ id: id, nome: e.n, url: url, com: com, sem: sem });
+
+    var linha = el('div', 'l');
+    var marca = el('span', 'marca ' + (com.ok ? 'ok' : (sem.ok ? 'aten' : 'erro')));
+    marca.textContent = com.ok ? '✅' : (sem.ok ? '⚠️' : '❌');
+    var txt = el('div');
+    txt.innerHTML = '<b>' + e.n + '</b> — ' +
+      (com.ok ? 'funciona (' + com.ms + ' ms)'
+              : (sem.ok ? 'só funciona SEM o crossOrigin — é o cabeçalho CORS do servidor'
+                        : 'não carregou (' + com.motivo + ')')) +
+      '<div class="url">' + url + '</div>';
+    linha.appendChild(marca); linha.appendChild(txt);
+    document.getElementById('lista').appendChild(linha);
+
+    if (com.img || sem.img){
+      var f = el('figure');
+      f.appendChild(com.img || sem.img);
+      var c = el('figcaption'); c.textContent = e.n; f.appendChild(c);
+      document.getElementById('tiles').appendChild(f);
+    }
+  }
+  veredito();
+}
+
+function veredito(){
+  var okCom  = resultados.filter(function(r){ return r.com.ok; });
+  var soSem  = resultados.filter(function(r){ return !r.com.ok && r.sem.ok; });
+  var v = document.getElementById('veredito'), h = '';
+
+  if (okCom.length === resultados.length){
+    h = '<p class="ok"><b>Todos os mapas carregaram aqui.</b></p>' +
+        '<p>Então o problema não é o servidor de mapa nem a sua internet. ' +
+        'Provavelmente o app estava com sinal fraco naquele momento, ou está com uma ' +
+        'versão guardada antiga. Feche o app, abra de novo e tente outra corrida.</p>';
+  } else if (soSem.length){
+    h = '<p class="aten"><b>Achamos o problema: é o CORS.</b></p>' +
+        '<p>Os ladrilhos carregam normalmente, mas o app pede com uma trava a mais ' +
+        '(<code>crossOrigin</code>) que o servidor não está respondendo. É conserto no ' +
+        'código do app, e é simples: essa trava não é necessária, porque o mapa nunca ' +
+        'é copiado pra imagem de compartilhar.</p>';
+  } else if (!okCom.length){
+    h = '<p class="erro"><b>Nenhum mapa carregou.</b></p>' +
+        '<p>Ou a internet deste aparelho está bloqueando os servidores de mapa, ou eles ' +
+        'estão fora do ar. Tente de novo no Wi-Fi. Se no Wi-Fi funcionar, é a operadora.</p>';
+  } else {
+    h = '<p class="aten"><b>Alguns funcionam e outros não.</b></p>' +
+        '<p>Os que funcionam estão marcados com ✅ acima — dá pra trocar o estilo do mapa ' +
+        'em Corrida → engrenagem → Estilo do mapa e usar um deles enquanto conserto.</p>';
+  }
+  v.innerHTML = h;
+}
+
+document.getElementById('btnGps').addEventListener('click', function(){
+  var b = this; b.textContent = 'Pedindo a localização…'; b.disabled = true;
+  if (!navigator.geolocation){ b.textContent = 'Este navegador não tem GPS'; return; }
+  navigator.geolocation.getCurrentPosition(function(p){
+    LAT = p.coords.latitude; LNG = p.coords.longitude;
+    b.textContent = 'Localização pega — testando de novo'; b.disabled = false;
+    roda();
+  }, function(){
+    b.textContent = 'Não deu pra pegar a localização (segue com Belo Horizonte)';
+    b.disabled = false;
+  }, { timeout: 10000 });
+});
+
+document.getElementById('btnCopia').addEventListener('click', function(){
+  var t = merc(LAT, LNG, Z);
+  var txt = 'TESTE DO MAPA — TORQUE ON\n' +
+    'online: ' + navigator.onLine + ' | dpr: ' + (window.devicePixelRatio || 1) +
+    ' | pede @2x: ' + (crDpr() > 1.4) + '\n' +
+    'ladrilho: ' + Z + '/' + t.x + '/' + t.y + '\n' +
+    'navegador: ' + navigator.userAgent + '\n\n' +
+    resultados.map(function(r){
+      return (r.com.ok ? 'OK  ' : (r.sem.ok ? 'CORS' : 'FALHA')) + '  ' + r.nome +
+             '  (com=' + (r.com.ok ? r.com.ms + 'ms' : r.com.motivo) +
+             ', sem=' + (r.sem.ok ? 'ok' : (r.sem.motivo || '-')) + ')\n      ' + r.url;
+    }).join('\n');
+  var b = this;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+    .then(function(){ b.textContent = 'Copiado! Cole na conversa com o Claude'; })
+    .catch(function(){ prompt('Copie este texto:', txt); });
+});
+
+roda();
+</script>
+</body>
+</html>
