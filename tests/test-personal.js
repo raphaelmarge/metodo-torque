@@ -5189,6 +5189,75 @@ async function abaPt(p, a) {
   ok(!/api_key/.test(chaveMapa.osm),
     "o OpenStreetMap NÃO leva chave (não usa, e mandar seria vazar a chave pra outro servidor)");
 
+  /* ===== v645: o mapa TEM que seguir quem corre =====
+   * Antes, a cada posição nova o mapa reenquadrava o percurso INTEIRO: o centro
+   * escorregava e o zoom descia de degrau em degrau conforme a rota crescia.
+   * O Raphael descreveu o sintoma exatamente — "não fica centralizado no
+   * corredor" e "parece que avança quadro a quadro". Este teste lê os PIXELS
+   * do canvas: correndo, o marcador tem que estar no meio da tela. */
+  const segue = await pCr.evaluate(() => {
+    const M = window.__crMapa, cv = document.getElementById("crMapa");
+    if (!cv) return { semCanvas: true };
+    const medir = () => {
+      const g = cv.getContext("2d"), d = window.devicePixelRatio || 1;
+      const cx = Math.round(cv.width / 2), cy = Math.round(cv.height / 2);
+      /* Procura o AZUL do marcador (#2563eb), não o branco: a própria rota é
+       * desenhada com contorno branco, então "tem branco no centro" acusaria
+       * a linha do percurso passando ali e o teste passaria de graça. O miolo
+       * da rota é violeta (#7c3aed, r=124) e não confunde com o azul (r=37). */
+      /* ⚠️ getImageData ESTOURA se algum ladrilho de rua tiver entrado no canvas:
+       * eles são baixados sem crossOrigin (de propósito — v641), o que suja o
+       * canvas. Aqui no teste eles nunca carregam, então dá pra ler. Mas se um
+       * dia carregarem, o teste tem de DIZER que não conseguiu medir, e não
+       * passar calado achando que mediu. */
+      let p;
+      try { p = g.getImageData(cx - 14, cy - 14, 28, 28).data; }
+      catch (e) { return "nao-deu-pra-medir"; }
+      for (let i = 0; i < p.length; i += 4) {
+        if (p[i] < 90 && p[i+1] < 140 && p[i+2] > 180) return true;
+      }
+      return false;
+    };
+    // simula uma corrida que anda pra longe do ponto de partida
+    const base = { lat: -19.9245, lng: -43.9352 };
+    const rota = [];
+    for (let i = 0; i < 60; i++) rota.push({ lat: base.lat + i * 0.0004, lng: base.lng + i * 0.0002 });
+    const out = {};
+    // ---- correndo: o marcador tem que estar no CENTRO
+    window.__crMapa.set({ run: true, rota: rota.slice() });
+    M.desenha();
+    out.correndoNoCentro = medir();
+    // ---- parado: volta a enquadrar o percurso inteiro (marcador sai do centro)
+    window.__crMapa.set({ run: false, rota: rota.slice() });
+    M.desenha();
+    out.paradoNoCentro = medir();
+    window.__crMapa.set({ run: false, rota: [] });
+    M.desenha();
+    return out;
+  });
+  if (!segue.semCanvas) {
+    ok(segue.correndoNoCentro === true,
+      "correndo, o mapa SEGUE o aluno — ele fica no meio da tela, não escorregando pro canto" +
+      (segue.correndoNoCentro === "nao-deu-pra-medir" ? " (canvas sujo por ladrilho: não deu pra medir)" : ""));
+    ok(segue.paradoNoCentro === false,
+      "parado, o mapa volta a enquadrar o percurso inteiro (o aluno sai do centro, e é isso que se quer ver)" +
+      (segue.paradoNoCentro === "nao-deu-pra-medir" ? " (canvas sujo por ladrilho: não deu pra medir)" : ""));
+  }
+
+  const rumo = await pCr.evaluate(() => {
+    const M = window.__crMapa;
+    const norte = M.bear({ lat: -19.93, lng: -43.94 }, { lat: -19.92, lng: -43.94 });
+    const leste = M.bear({ lat: -19.93, lng: -43.94 }, { lat: -19.93, lng: -43.93 });
+    window.__crMapa.set({ run: true, rota: [{ lat: -19.93, lng: -43.94 }, { lat: -19.925, lng: -43.94 }], rumo: null });
+    const daRota = M.rumo();
+    window.__crMapa.set({ run: false, rota: [], rumo: null });
+    return { norte: Math.round(norte), leste: Math.round(leste), daRota: daRota == null ? null : Math.round(daRota) };
+  });
+  ok(rumo.norte === 0 && rumo.leste === 90,
+    "a conta do rumo está certa (subir = 0°, ir pra direita = 90°)");
+  ok(rumo.daRota === 0,
+    "sem rumo do aparelho, o app deduz pra que lado o aluno vai pelo próprio trajeto");
+
   /* ===== TRAJETO EM 3D (v643) =====
    * O motor do mapa 3D tem quase 1 MB. Duas coisas precisam ser verdade e são
    * fáceis de quebrar sem ninguém ver:

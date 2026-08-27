@@ -2743,6 +2743,30 @@
       "window.addEventListener('online',function(){var mudou=0;" +
       "for(var k9 in crTiles){var t9=crTiles[k9];if(t9&&t9.mau){t9.mau=0;t9.fb=0;t9.tent=1;t9.quando=0;mudou=1;}}" +
       "if(mudou){crMapaErro=0;try{desenhaRota();}catch(e){}}});" +
+      /* ===== PRA QUE LADO O ALUNO ESTA INDO =====
+       * O GPS do celular so entrega "heading" quando esta em movimento, e
+       * mesmo assim ele treme parado no semaforo. Entao: usa o do aparelho
+       * quando ele vem confiavel, e senao calcula pelo proprio trajeto —
+       * sempre entre pontos com pelo menos 8 m de distancia, porque o rumo
+       * entre dois pontos colados e so o erro do GPS girando. */
+      "function crBear(a,b){var r9=Math.PI/180;" +
+      "var y9=Math.sin((b.lng-a.lng)*r9)*Math.cos(b.lat*r9);" +
+      "var x9=Math.cos(a.lat*r9)*Math.sin(b.lat*r9)-Math.sin(a.lat*r9)*Math.cos(b.lat*r9)*Math.cos((b.lng-a.lng)*r9);" +
+      "return (Math.atan2(y9,x9)*180/Math.PI+360)%360;}" +
+      "function crRumo(){if(cr.rumo!=null&&isFinite(cr.rumo))return cr.rumo;" +
+      "var r9=cr.rota;if(!r9||r9.length<2)return null;" +
+      "for(var i=r9.length-1;i>0;i--){if(havKm(r9[i-1],r9[i])*1000>=8)return crBear(r9[i-1],r9[i]);}" +
+      "return null;}" +
+      /* A seta so aparece quando existe rumo DE VERDADE. Parado, volta a ser a
+       * bolinha: seta apontando pra um lado inventado e pior que ponto nenhum. */
+      "function crSeta(g,x,y,rumo){g.save();g.translate(x,y);" +
+      "if(rumo==null){g.fillStyle='#fff';g.beginPath();g.arc(0,0,10,0,7);g.fill();" +
+      "g.fillStyle='#2563eb';g.beginPath();g.arc(0,0,6.5,0,7);g.fill();g.restore();return;}" +
+      "g.rotate(rumo*Math.PI/180);" +
+      "g.fillStyle='#fff';g.beginPath();g.arc(0,0,11,0,7);g.fill();" +
+      "g.fillStyle='#2563eb';g.beginPath();" +
+      "g.moveTo(0,-9);g.lineTo(7.2,7.5);g.lineTo(0,4.2);g.lineTo(-7.2,7.5);g.closePath();g.fill();" +
+      "g.restore();}" +
       "function crFullAberto(){var f=crEl('crFull');return !!f&&f.style.display!=='none';}" +
       // o canvas guarda pixel de VERDADE (largura na tela x densidade), senão
       // no iPhone o mapa sai borrado; o desenho continua em pixel de CSS
@@ -2755,9 +2779,18 @@
       "var CLR=document.documentElement.classList.contains('claro');" +
       "var centro=cr.rota.length?cr.rota[cr.rota.length-1]:cr.lastPos;" +
       "if(navigator.onLine&&centro){" +
-      // zoom: 16 parado; com rota, afasta até o percurso caber
+      /* CORRENDO, O MAPA SEGUE O ALUNO — zoom fixo e ele no meio.
+       *
+       * Antes valia sempre a regra de baixo: a cada posicao nova o mapa
+       * reenquadrava o percurso INTEIRO. Conforme a rota crescia, o centro
+       * escorregava e o zoom descia de degrau em degrau — dava a impressao de
+       * "avanca quadro a quadro", e o aluno nunca ficava no meio da tela.
+       * Correndo, o que serve e o contrario: eu no centro, escala constante.
+       * Parado (fim da corrida, historico), a visao do percurso todo volta a
+       * ser a util. */
       "var z=16;var b=null;" +
-      "if(cr.rota.length>1){b={la1:1/0,la2:-1/0,lo1:1/0,lo2:-1/0};" +
+      "if(cr.run&&cr.rota.length){centro=cr.rota[cr.rota.length-1];}" +
+      "else if(cr.rota.length>1){b={la1:1/0,la2:-1/0,lo1:1/0,lo2:-1/0};" +
       "cr.rota.forEach(function(pp){if(pp.lat<b.la1)b.la1=pp.lat;if(pp.lat>b.la2)b.la2=pp.lat;if(pp.lng<b.lo1)b.lo1=pp.lng;if(pp.lng>b.lo2)b.lo2=pp.lng;});" +
       "centro={lat:(b.la1+b.la2)/2,lng:(b.lo1+b.lo2)/2};" +
       "for(z=17;z>12;z--){var q1=merc(b.la2,b.lo1,z),q2=merc(b.la1,b.lo2,z);" +
@@ -2780,10 +2813,9 @@
       "g.strokeStyle=CV('cor');g.lineWidth=5;g.beginPath();" +
       "cr.rota.forEach(function(pp,i){var q=pj(pp);if(i)g.lineTo(q.x,q.y);else g.moveTo(q.x,q.y);});g.stroke();" +
       "var i0=pj(cr.rota[0]);g.fillStyle='#4ade80';g.beginPath();g.arc(i0.x,i0.y,7,0,7);g.fill();}" +
-      // bolinha azul da posição atual, estilo mapa de celular
+      // onde o aluno está e pra que lado vai (seta quando há rumo, ponto quando não)
       "var posAt=cr.rota.length?cr.rota[cr.rota.length-1]:centro;" +
-      "var pAt=pj(posAt);g.fillStyle='#fff';g.beginPath();g.arc(pAt.x,pAt.y,10,0,7);g.fill();" +
-      "g.fillStyle='#2563eb';g.beginPath();g.arc(pAt.x,pAt.y,6.5,0,7);g.fill();" +
+      "var pAt=pj(posAt);crSeta(g,pAt.x,pAt.y,crRumo());" +
       // atribuição obrigatória do OpenStreetMap
       "var atb=EST.a||'\\u00a9 OpenStreetMap';g.font='11px system-ui,sans-serif';g.textAlign='right';" +
       "var atw=Math.round(g.measureText(atb).width)+16;" +
@@ -3248,7 +3280,7 @@
       "crEl('crInfo').textContent=extras.slice(msg?0:1).join(' \\u00b7 ');" +
       "var bSh=crEl('crShare');if(bSh)bSh.style.display='block';" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();pintaCrHist();" +
-      "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}" +
+      "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.rumo=null;cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}" +
       "try{crResumo(reg,extras);}catch(e){}}" +
       /* ---------- importar do relógio (GPX/TCX) ----------
        * Todo smartwatch/band exporta o treino nesses formatos. Lê o arquivo NO
@@ -3309,6 +3341,13 @@
       "b.innerHTML=ac9==null?'GPS ligado':ac9<=30?'GPS<br>bom':ac9<=70?'GPS<br>ok':'GPS<br>fraco';" +
       "var cq9=ac9!=null&&ac9>70?'#fbbf24':'#4ade80';b.style.borderColor=cq9;b.style.color=cq9;" +
       "if(pos.coords.accuracy>40)return;var pt={lat:pos.coords.latitude,lng:pos.coords.longitude};" +
+      /* rumo do proprio aparelho, quando ele da: so vale em movimento
+       * (speed acima de 0,7 m/s, ~2,5 km/h). Parado o heading do GPS gira
+       * sozinho e a seta ficaria rodopiando no semaforo. Sem isso, o
+       * crRumo() calcula pelo trajeto. */
+      "var hd9=pos.coords.heading,sp9=pos.coords.speed;" +
+      "if(hd9!=null&&isFinite(hd9)&&sp9!=null&&sp9>0.7)cr.rumo=hd9;" +
+      "else if(sp9!=null&&sp9<=0.3)cr.rumo=null;" +
       "var dK=cr.lastPos?havKm(cr.lastPos,pt):0;" +
       "if(cr.lastPos&&cr.run&&dK<0.15)cr.km+=dK;" +
       "if(dK>0.004){cr.lastMove=Date.now();" +
@@ -3573,7 +3612,11 @@
       "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
       "window.__crMapa={estilos:CRMAPS,url:crUrl,urlK:crUrlK,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}," +
       "rota:{cod:crEncPoly,dec:crDecPoly,simpl:crSimpl,salva:crRotaSalva}," +
-      "abre3D:cr3DAbre,fecha3D:cr3DFecha,estilo3D:cr3DEstilo,motor:function(){return crGL();}};" +
+      "abre3D:cr3DAbre,fecha3D:cr3DFecha,estilo3D:cr3DEstilo,motor:function(){return crGL();}," +
+      "desenha:desenhaRota,rumo:crRumo,bear:crBear," +
+      /* gancho de teste: encena um estado de corrida (correndo, rota, rumo)
+       * sem precisar de GPS de verdade. */
+      "set:function(o){for(var k9 in o)cr[k9]=o[k9];}};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
       "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
