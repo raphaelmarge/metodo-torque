@@ -2686,15 +2686,26 @@
       "function crEstilo(){return CRMAPS[crEstiloId()]||CRMAPS.ruas;}" +
       "function crUrl(tpl,e,z,x,y){return String(tpl).replace('{s}',(e&&e.s)?e.s[(x+y)%e.s.length]:'a')" +
       ".replace('{z}',z).replace('{x}',x).replace('{y}',y).replace('{r}',(e&&e.hd&&crDpr()>1.4)?'@2x':'');}" +
-      "var crTiles={};" +
+      "var crTiles={};var crMapaErro=0;" +
       "function merc(lat,lng,z){var n=Math.pow(2,z);var x=(lng+180)/360*n;var la=lat*Math.PI/180;" +
       "var y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n;return {x:x,y:y};}" +
       "function crTile(z,x,y){var n=Math.pow(2,z);if(y<0||y>=n)return null;x=((x%n)+n)%n;" +
       "var es=crEstiloId(),e9=CRMAPS[es];var k=es+'/'+z+'/'+x+'/'+y;var t=crTiles[k];if(t)return t;" +
       "if(Object.keys(crTiles).length>200)crTiles={};" +
-      "t={img:new Image(),ok:false,fb:0};crTiles[k]=t;t.img.crossOrigin='anonymous';" +
-      "t.img.onload=function(){t.ok=true;try{desenhaRota();}catch(e){}};" +
-      "t.img.onerror=function(){if(t.fb)return;t.fb=1;t.img.src=crUrl(CRMAPOSM,null,z,x,y);};" +
+      /* NADA de crossOrigin aqui. O canvas do mapa (#crMapa / #crMapaFull) nunca
+       * e lido de volta — quem exporta imagem sao OUTROS canvas (a arte da
+       * corrida, a foto, o card do treino). Sem leitura, nao existe canvas
+       * sujo, entao CORS nao comprava nada. Em compensacao ele COBRAVA:
+       * com crossOrigin='anonymous' o navegador exige o cabecalho
+       * Access-Control-Allow-Origin e, se ele nao vier (proxy da operadora,
+       * DNS privado, bloqueador, CDN respondendo do cache sem o cabecalho),
+       * a imagem nem carrega — e como a exigencia valia pro CARTO E pro OSM
+       * de reserva, os dois morriam juntos e o mapa ficava um retangulo liso
+       * com a bolinha azul em cima. Foi exatamente o que o Raphael viu. */
+      "t={img:new Image(),ok:false,fb:0};crTiles[k]=t;" +
+      "t.img.onload=function(){t.ok=true;crMapaErro=0;try{desenhaRota();}catch(e){}};" +
+      "t.img.onerror=function(){if(t.fb){t.mau=1;if(!crMapaErro){crMapaErro=1;try{desenhaRota();}catch(e){}}return;}" +
+      "t.fb=1;t.img.src=crUrl(CRMAPOSM,null,z,x,y);};" +
       "t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
       "function crFullAberto(){var f=crEl('crFull');return !!f&&f.style.display!=='none';}" +
       // o canvas guarda pixel de VERDADE (largura na tela x densidade), senão
@@ -2716,9 +2727,9 @@
       "for(z=17;z>12;z--){var q1=merc(b.la2,b.lo1,z),q2=merc(b.la1,b.lo2,z);" +
       "if((q2.x-q1.x)*256<W-60&&(q2.y-q1.y)*256<H-60)break;}}" +
       "var c0=merc(centro.lat,centro.lng,z);var px0=c0.x*256-W/2,py0=c0.y*256-H/2;" +
-      "var EST=crEstilo();g.fillStyle=EST.bg||'#eceae5';g.fillRect(0,0,W,H);" +
+      "var EST=crEstilo();g.fillStyle=EST.bg||'#eceae5';g.fillRect(0,0,W,H);var pintou9=0;" +
       "for(var tx=Math.floor(px0/256);tx<=Math.floor((px0+W)/256);tx++){for(var ty=Math.floor(py0/256);ty<=Math.floor((py0+H)/256);ty++){" +
-      "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0),256,256);}catch(e){}}}" +
+      "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0),256,256);pintou9++;}catch(e){}}}" +
       /* visual clean, estilo app de corrida: tira a cor berrante dos tiles
        * (composição 'saturation' — o filtro de canvas não roda em iPhone
        * antigo, composição roda em tudo) e passa um véu claro por cima.
@@ -2742,6 +2753,13 @@
       "var atw=Math.round(g.measureText(atb).width)+16;" +
       "g.fillStyle='rgba(255,255,255,.85)';g.fillRect(W-atw,H-22,atw,22);" +
       "g.fillStyle='#444';g.fillText(atb,W-8,H-7);" +
+      "if(!pintou9&&crMapaErro){var mm9='N\u00e3o deu pra carregar as ruas';" +
+      "g.font='700 12px system-ui,sans-serif';g.textAlign='center';" +
+      "var mw9=Math.round(g.measureText(mm9).width)+22;" +
+      "g.fillStyle='rgba(0,0,0,.6)';g.fillRect(Math.round(W/2-mw9/2),8,mw9,24);" +
+      "g.fillStyle='#fff';g.fillText(mm9,W/2,24);" +
+      "g.font='11px system-ui,sans-serif';g.fillStyle=CLR?'rgba(0,0,0,.45)':'rgba(255,255,255,.5)';" +
+      "g.fillText('seu trajeto continua sendo gravado',W/2,46);}" +
       "return;}" +
       // offline (ou ainda sem posição): grade + traçado do percurso
       "g.strokeStyle=CLR?'rgba(0,0,0,.07)':'rgba(255,255,255,.05)';g.lineWidth=1;" +
@@ -3154,6 +3172,7 @@
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'><span>Aquecimento e volta \\u00e0 calma<span style='display:block;font-size:11px;color:#6e6a78;'>5 min antes e 3 min depois, guiados por voz</span></span><input type='checkbox' id='crCfgBl' style='width:18px;height:18px;flex:none;'\"+(c.bl?' checked':'')+'>'+'</label>';" +
       "['crCfgMp','crCfgCd','crCfgFb','crCfgAp','crCfgBl'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
       "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value,bl:crEl('crCfgBl').checked?1:0});" +
+      "crMapaErro=0;" +
       "try{desenhaRota();}catch(e9){}});});}" +
       "crEl('crCfgBtn').addEventListener('click',function(){var bx=crEl('crCfgBox');" +
       "if(bx.style.display==='none'){pintaCrCfg();bx.style.display='block';crEl('crMetaBox').style.display='none';}else bx.style.display='none';});" +
@@ -3302,7 +3321,7 @@
       "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
-      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr};" +
+      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,erro:function(){return crMapaErro;}};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
       "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
