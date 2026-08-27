@@ -43,6 +43,25 @@ try { html = self.MT_APP_ALUNO.monta(D); } catch (e) { ok(false, "monta(D) não 
 ok(html.length > 50000, "app montado com tamanho de gente grande (" + html.length + " bytes)");
 
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+
+/* ⚠️ NOME DE FUNÇÃO REPETIDO NO BLOCO DA CORRIDA.
+ * Da v602 até a v642 o mapa ficou preto porque nasceu uma segunda crTile(v,r)
+ * (o tile do resumo, que devolve HTML) no mesmo escopo da crTile(z,x,y) do
+ * mapa. Declaração de função sobe pro topo e a última vence: desenhaCv passou
+ * a receber texto no lugar do ladrilho e nunca mais desenhou rua. Não deu erro
+ * de sintaxe, não deu erro no console — o mapa só ficou preto, por 40 versões.
+ *
+ * A varredura é limitada aos nomes começados em cr ou hr de propósito: são as
+ * ~60 funções do bloco de corrida e batimento, todas no MESMO escopo, que é
+ * onde a colisão dói. Nomes genéricos (pinta, envia, avanca) se repetem
+ * legitimamente dentro de IIFEs separadas e virariam falso positivo. */
+const nomesCr = {};
+for (const m of require("fs").readFileSync(__dirname + "/../app/aluno-builder.js", "utf8")
+  .matchAll(/function ((?:cr|hr)[A-Za-z_$][\w$]*)\s*\(/g)) nomesCr[m[1]] = (nomesCr[m[1]] || 0) + 1;
+const crRepetidos = Object.entries(nomesCr).filter(([, n]) => n > 1).map(([k, n]) => k + " x" + n);
+ok(crRepetidos.length === 0,
+  "nenhuma função cr… ou hr… declarada duas vezes (a segunda apaga a primeira e o mapa morre calado)" +
+  (crRepetidos.length ? " — " + crRepetidos.join(", ") : ""));
 ok(scripts.length >= 2, "achou os <script> embutidos (" + scripts.length + ")");
 scripts.forEach((s, i) => {
   let erro = "";
