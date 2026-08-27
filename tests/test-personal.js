@@ -5061,10 +5061,23 @@ async function abaPt(p, a) {
   ok(/globalCompositeOperation='saturation'/.test(cardioProf.appHtml),
     "o OSM cru continua saindo dessaturado com véu claro — a rota é quem brilha, não as ruas");
   // estilos de mapa (v592): CARTO escuro/claro/colorido, satélite da Esri e o OSM cru
-  ok(/setTransform\(dp,0,0,dp,0,0\)/.test(cardioProf.appHtml) && /,256,256\);\}catch/.test(cardioProf.appHtml),
+  // ⚠️ o \}catch colado no ,256,256) era âncora frágil: qualquer coisa acrescentada
+  // dentro do try (na v641, o contador de tiles pintados) derruba o teste sem que
+  // a regra tenha mudado. Agora as duas metades são checadas em separado.
+  ok(/setTransform\(dp,0,0,dp,0,0\)/.test(cardioProf.appHtml) && /drawImage\(tl\.img,[\s\S]{0,120}?,256,256\)/.test(cardioProf.appHtml),
     "mapa nítido no celular: o canvas usa a densidade da tela e o tile é desenhado em 256 de CSS");
-  ok(/t\.img\.onerror=function\(\)\{if\(t\.fb\)return;t\.fb=1/.test(cardioProf.appHtml),
+  ok(/t\.img\.onerror=function\(\)\{if\(t\.fb\)\{t\.mau=1/.test(cardioProf.appHtml) && /t\.fb=1;t\.img\.src=crUrl\(CRMAPOSM/.test(cardioProf.appHtml),
     "tile que não carrega cai no OpenStreetMap — o estilo escolhido nunca deixa o mapa em branco");
+  // ⚠️ regressão da v640: o canvas do mapa NUNCA é lido de volta (quem exporta
+  // imagem são OUTROS canvas), então exigir CORS não comprava nada — e derrubava
+  // o CARTO E o OSM de reserva juntos, deixando um retângulo liso com a bolinha
+  // azul em cima. Foi o que o Raphael viu no celular. A checagem mira a LINHA
+  // exata que cria o tile: varrer o app inteiro não serve, porque o app tem
+  // comentários /* */ de CSS e qualquer limpeza deles engole o trecho.
+  ok(!/crTiles\[k\]=t;t\.img\.crossOrigin/.test(cardioProf.appHtml),
+    "o tile do mapa NÃO exige CORS — o canvas do mapa nunca é exportado");
+  ok(/pintou9/.test(cardioProf.appHtml) && /N.o deu pra carregar as ruas/.test(cardioProf.appHtml),
+    "sem nenhuma rua carregada o mapa DIZ isso, em vez de ficar um retângulo liso calado");
   const mapaEst = await pCr.evaluate(async () => {
     const M = window.__crMapa, out = { ids: Object.keys(M.estilos), dpr: M.dpr() };
     const cfg = (mp) => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, mp }));
