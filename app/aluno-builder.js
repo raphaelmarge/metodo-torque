@@ -2684,8 +2684,23 @@
       "function crEstiloId(){var m=crCfg().mp;if(m&&CRMAPS[m])return m;" +
       "return document.documentElement.classList.contains('claro')?'claro':'escuro';}" +
       "function crEstilo(){return CRMAPS[crEstiloId()]||CRMAPS.ruas;}" +
+      /* A chave do CARTO entra por AQUI, num lugar so, porque o canvas e o 3D
+       * montam endereco por caminhos diferentes e esquecer um deixaria metade
+       * do app carimbada.
+       *
+       * Em 2026-08 o CARTO passou a exigir chave: sem ela o ladrilho ainda
+       * BAIXA, mas vem com "API KEY REQUIRED" escrito dentro da imagem. Por
+       * isso nenhum teste pegou — pra qualquer codigo, a imagem carregou.
+       *
+       * A chave e publica (vive dentro do app, como a anonKey do Supabase); o
+       * que protege a cota e a restricao por dominio no painel do CARTO.
+       * Sem chave, tudo segue funcionando, so carimbado. */
+      "function crChave(u){try{var k9=(self.MT_MAPA||{}).cartoKey||'';" +
+      "if(!k9||String(u).indexOf('cartocdn.com')<0)return u;" +
+      "return u+(u.indexOf('?')>-1?'&':'?')+'api_key='+encodeURIComponent(k9);}catch(e){return u;}}" +
       "function crUrl(tpl,e,z,x,y){return String(tpl).replace('{s}',(e&&e.s)?e.s[(x+y)%e.s.length]:'a')" +
       ".replace('{z}',z).replace('{x}',x).replace('{y}',y).replace('{r}',(e&&e.hd&&crDpr()>1.4)?'@2x':'');}" +
+      "function crUrlK(tpl,e,z,x,y){return crChave(crUrl(tpl,e,z,x,y));}" +
       "var crTiles={};var crMapaErro=0;" +
       "function merc(lat,lng,z){var n=Math.pow(2,z);var x=(lng+180)/360*n;var la=lat*Math.PI/180;" +
       "var y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n;return {x:x,y:y};}" +
@@ -2711,7 +2726,7 @@
        * os tratadores de onload/onerror continuam valendo. */
       "if(t){if(!t.mau)return t;" +
       "var esp=Math.min(6000*(t.tent||1),60000);if(Date.now()-t.quando<esp)return t;" +
-      "t.mau=0;t.fb=0;t.tent=(t.tent||1)+1;t.quando=Date.now();t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
+      "t.mau=0;t.fb=0;t.tent=(t.tent||1)+1;t.quando=Date.now();t.img.src=crUrlK(e9.u,e9,z,x,y);return t;}" +
       "if(Object.keys(crTiles).length>200)crTiles={};" +
       /* NADA de crossOrigin aqui: o canvas do mapa (#crMapa / #crMapaFull) nunca
        * e lido de volta — quem exporta imagem sao OUTROS canvas (a arte da
@@ -2722,7 +2737,7 @@
       "t.img.onerror=function(){if(t.fb){t.mau=1;t.quando=Date.now();" +
       "if(!crMapaErro){crMapaErro=1;try{desenhaRota();}catch(e){}}return;}" +
       "t.fb=1;t.img.src=crUrl(CRMAPOSM,null,z,x,y);};" +
-      "t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
+      "t.img.src=crUrlK(e9.u,e9,z,x,y);return t;}" +
       /* Sinal de volta = tenta tudo de novo NA HORA, sem esperar a escada.
        * Sem isso, sair do tunel e ficar 1 minuto olhando o mapa preto. */
       "window.addEventListener('online',function(){var mudou=0;" +
@@ -3081,7 +3096,7 @@
        * a fonte de altitude ainda nao entrou. */
       "function cr3DEstilo(){var e9=crEstilo(),dp9=crDpr()>1.4?'@2x':'';" +
       "var urls=[];var ss=(e9.s||'a').split('');" +
-      "for(var i=0;i<ss.length;i++)urls.push(String(e9.u).replace('{s}',ss[i]).replace('{r}',e9.hd?dp9:''));" +
+      "for(var i=0;i<ss.length;i++)urls.push(crChave(String(e9.u).replace('{s}',ss[i]).replace('{r}',e9.hd?dp9:'')));" +
       "return {version:8,sources:{" +
       "ruas:{type:'raster',tiles:urls,tileSize:256,attribution:''}," +
       "alto:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png']," +
@@ -3141,7 +3156,7 @@
       "try{var so9=new Image();so9.crossOrigin='anonymous';" +
       "so9.onload=function(){o.__ruasOk=1;};so9.onerror=function(){o.__ruasOk=0;};" +
       "var e8=crEstilo(),cm9=merc((la1+la2)/2,(ln1+ln2)/2,14);" +
-      "so9.src=crUrl(e8.u,e8,14,Math.floor(cm9.x),Math.floor(cm9.y));}catch(e){}" +
+      "so9.src=crUrlK(e8.u,e8,14,Math.floor(cm9.x),Math.floor(cm9.y));}catch(e){}" +
       /* Passou o tempo e a sonda disse que as ruas NAO vem: fala a verdade em
        * vez de deixar a tela escura calada. O trajeto ja esta desenhado a essa
        * altura (ele entra no style.load), entao o aluno nao fica sem nada. */
@@ -3556,7 +3571,7 @@
       "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
-      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}," +
+      "window.__crMapa={estilos:CRMAPS,url:crUrl,urlK:crUrlK,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}," +
       "rota:{cod:crEncPoly,dec:crDecPoly,simpl:crSimpl,salva:crRotaSalva}," +
       "abre3D:cr3DAbre,fecha3D:cr3DFecha,estilo3D:cr3DEstilo,motor:function(){return crGL();}};" +
       "}" +

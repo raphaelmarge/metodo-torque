@@ -5164,6 +5164,31 @@ async function abaPt(p, a) {
   ok(revive.aoVoltarOnline === 0,
     "sinal de volta ressuscita os ladrilhos mortos na hora, sem esperar a escada");
 
+  /* ⚠️ v644 — em 2026-08 o CARTO passou a exigir chave. Sem ela o ladrilho AINDA
+   * BAIXA, mas vem com "API KEY REQUIRED" escrito DENTRO da imagem. Foi por isso
+   * que nenhum teste pegou e a página de diagnóstico deu ✅ nos cinco estilos:
+   * pra qualquer código, a imagem carregou. Só o olho vê o carimbo.
+   * O que dá pra travar é o mecanismo: a chave, quando existe, tem de entrar no
+   * endereço — e tem de entrar nos DOIS caminhos (o canvas da corrida e o 3D),
+   * que montam URL separado. Esquecer um deixaria metade do app carimbada. */
+  const chaveMapa = await pCr.evaluate(() => {
+    const M = window.__crMapa, e = M.estilos.escuro;
+    const antes = { canvas: M.urlK(e.u, e, 14, 100, 200), tresD: M.estilo3D().sources.ruas.tiles[0] };
+    self.MT_MAPA = { cartoKey: "CHAVE-DE-TESTE" };
+    const depois = { canvas: M.urlK(e.u, e, 14, 100, 200), tresD: M.estilo3D().sources.ruas.tiles[0] };
+    const osm = M.urlK(M.estilos.ruas.u, M.estilos.ruas, 14, 100, 200);
+    delete self.MT_MAPA;
+    return { antes, depois, osm };
+  });
+  ok(!/api_key/.test(chaveMapa.antes.canvas) && !/api_key/.test(chaveMapa.antes.tresD),
+    "sem chave configurada, o endereço do ladrilho sai limpo (o app funciona, só carimbado)");
+  ok(/api_key=CHAVE-DE-TESTE/.test(chaveMapa.depois.canvas),
+    "com chave, o mapa da CORRIDA (canvas) pede o ladrilho com a chave");
+  ok(/api_key=CHAVE-DE-TESTE/.test(chaveMapa.depois.tresD),
+    "com chave, o mapa 3D também pede com a chave — os dois caminhos montam URL separado");
+  ok(!/api_key/.test(chaveMapa.osm),
+    "o OpenStreetMap NÃO leva chave (não usa, e mandar seria vazar a chave pra outro servidor)");
+
   /* ===== TRAJETO EM 3D (v643) =====
    * O motor do mapa 3D tem quase 1 MB. Duas coisas precisam ser verdade e são
    * fáceis de quebrar sem ninguém ver:

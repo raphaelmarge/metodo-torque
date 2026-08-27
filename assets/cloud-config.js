@@ -15,6 +15,28 @@ self.MT_CLOUD = {
   anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3Vma2FhbHhmaHdtZndvaXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzOTI2NzksImV4cCI6MjA5ODk2ODY3OX0.Y-hldMsLQot4dgR5ijssTxGX5ztEJURr81lPrZTzHds",
 };
 
+// Chave do mapa (CARTO) — os ladrilhos de rua do app do aluno.
+//
+// POR QUE EXISTE: em 2026-08 o CARTO passou a exigir chave. Sem ela, os
+// ladrilhos ainda baixam, mas vêm com "API KEY REQUIRED" carimbado NA IMAGEM.
+// Nenhum teste automático enxerga isso — a imagem carrega normal, o carimbo
+// está dentro dela. Só o olho pega.
+//
+// COMO PEGAR (grátis, ~3 minutos):
+//   1. Crie a conta em https://carto.com  (plano gratuito serve)
+//   2. No painel: Settings → Developers → Basemap API keys → Create
+//   3. Restrinja ao domínio www.torqueon.com.br (a chave é PÚBLICA: ela vai
+//      dentro do app, como a anonKey do Supabase — a restrição por domínio é
+//      o que impede outra pessoa de gastar a sua cota)
+//   4. Cole abaixo e publique
+//
+// Vazia = o app segue funcionando, só com o carimbo nos três estilos do CARTO
+// (Escuro, Claro e Colorido). "Ruas (OSM)" e "Satélite" não usam chave nenhuma
+// e nunca são carimbados.
+self.MT_MAPA = {
+  cartoKey: "",
+};
+
 // Apelido de função: quando uma Edge Function tem que atender por OUTRO nome.
 //
 // Serve pra um caso real: no projeto do dono, o portão do Supabase ("Verify

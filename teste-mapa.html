@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teste do mapa da corrida — TORQUE ON</title>
 <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<script src="assets/cloud-config.js"></script>
 <link rel="stylesheet" href="assets/fonts/archivo.css">
 <style>
   :root{ --bg:#0d0c10; --card:#17151d; --linha:#2a2635; --tx:#ece9f6; --tx2:#a9a4b5;
@@ -62,6 +63,17 @@ o app tenta, e diz qual parte falha.</p>
 </div>
 
 <div class="card">
+  <h2>⚠️ O que este teste NÃO enxerga</h2>
+  <div class="kv">Se o ladrilho vier com <b>"API KEY REQUIRED"</b> carimbado dentro
+  da imagem, ele ainda conta como ✅ aqui — pro código, a imagem carregou normal.
+  O carimbo está <i>dentro</i> do desenho. <b>Olhe as miniaturas acima:</b> se
+  tiver escrita atravessada nelas, falta a chave do CARTO
+  (<code>cartoKey</code> em <code>assets/cloud-config.js</code>).</div>
+  <div class="kv" style="margin-top:8px">Chave configurada agora:
+  <b id="temChave">…</b></div>
+</div>
+
+<div class="card">
   <h2>O que isso quer dizer</h2>
   <div id="veredito" class="kv">Rodando o teste…</div>
   <button id="btnCopia" style="margin-top:12px">Copiar o resultado pra mandar pro Claude</button>
@@ -80,9 +92,13 @@ var CRMAPS = {
 };
 function crDpr(){ return Math.min(2, Math.max(1, window.devicePixelRatio || 1)); }
 function crUrl(tpl, e, z, x, y){
-  return String(tpl).replace('{s}', (e && e.s) ? e.s[(x + y) % e.s.length] : 'a')
+  var u = String(tpl).replace('{s}', (e && e.s) ? e.s[(x + y) % e.s.length] : 'a')
     .replace('{z}', z).replace('{x}', x).replace('{y}', y)
     .replace('{r}', (e && e.hd && crDpr() > 1.4) ? '@2x' : '');
+  // a chave do CARTO, igual ao app — senão esta página testaria outra coisa
+  var k = ((self.MT_MAPA || {}).cartoKey) || '';
+  if (k && u.indexOf('cartocdn.com') > -1) u += (u.indexOf('?') > -1 ? '&' : '?') + 'api_key=' + encodeURIComponent(k);
+  return u;
 }
 function merc(lat, lng, z){
   var n = Math.pow(2, z), x = (lng + 180) / 360 * n, la = lat * Math.PI / 180;
@@ -184,6 +200,13 @@ function veredito(){
   }
   v.innerHTML = h;
 }
+
+(function(){
+  var k = ((self.MT_MAPA || {}).cartoKey) || '';
+  var e = document.getElementById('temChave');
+  if (e) { e.textContent = k ? ('sim (' + k.length + ' caracteres)') : 'NÃO — os 3 estilos do CARTO vêm carimbados';
+           e.className = k ? 'ok' : 'aten'; }
+})();
 
 document.getElementById('btnGps').addEventListener('click', function(){
   var b = this; b.textContent = 'Pedindo a localização…'; b.disabled = true;
