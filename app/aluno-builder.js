@@ -2690,23 +2690,44 @@
       "function merc(lat,lng,z){var n=Math.pow(2,z);var x=(lng+180)/360*n;var la=lat*Math.PI/180;" +
       "var y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n;return {x:x,y:y};}" +
       "function crTile(z,x,y){var n=Math.pow(2,z);if(y<0||y>=n)return null;x=((x%n)+n)%n;" +
-      "var es=crEstiloId(),e9=CRMAPS[es];var k=es+'/'+z+'/'+x+'/'+y;var t=crTiles[k];if(t)return t;" +
+      "var es=crEstiloId(),e9=CRMAPS[es];var k=es+'/'+z+'/'+x+'/'+y;var t=crTiles[k];" +
+      /* O LADRILHO QUE FALHOU PRECISA PODER TENTAR DE NOVO.
+       *
+       * Antes esta linha era "if(t)return t;" — o objeto ficava guardado pra
+       * sempre, inclusive quando a imagem tinha falhado. Comecar a corrida com
+       * sinal ruim (a tela do celular mostrando UMA barra) derrubava os
+       * ladrilhos que estavam a vista; eles viravam cadaver no cache; e o mapa
+       * ficava preto o RESTO DA CORRIDA inteira, mesmo depois de o sinal
+       * voltar. E o que o Raphael fotografou aos 0:02 de treino.
+       *
+       * Nao era o CORS: medido no iPhone dele em 27/08, os cinco estilos
+       * carregam COM crossOrigin em 43 a 741 ms. Tirar o crossOrigin (v641)
+       * foi correto — a exigencia era mesmo desnecessaria — mas nao era este
+       * o defeito.
+       *
+       * Agora quem falhou espera e tenta de novo, com a espera crescendo a
+       * cada tentativa (6s, 12s, 18s… ate 1 min) pra nao martelar o servidor
+       * durante uma queda longa. O mesmo objeto Image e reaproveitado, entao
+       * os tratadores de onload/onerror continuam valendo. */
+      "if(t){if(!t.mau)return t;" +
+      "var esp=Math.min(6000*(t.tent||1),60000);if(Date.now()-t.quando<esp)return t;" +
+      "t.mau=0;t.fb=0;t.tent=(t.tent||1)+1;t.quando=Date.now();t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
       "if(Object.keys(crTiles).length>200)crTiles={};" +
-      /* NADA de crossOrigin aqui. O canvas do mapa (#crMapa / #crMapaFull) nunca
+      /* NADA de crossOrigin aqui: o canvas do mapa (#crMapa / #crMapaFull) nunca
        * e lido de volta — quem exporta imagem sao OUTROS canvas (a arte da
-       * corrida, a foto, o card do treino). Sem leitura, nao existe canvas
-       * sujo, entao CORS nao comprava nada. Em compensacao ele COBRAVA:
-       * com crossOrigin='anonymous' o navegador exige o cabecalho
-       * Access-Control-Allow-Origin e, se ele nao vier (proxy da operadora,
-       * DNS privado, bloqueador, CDN respondendo do cache sem o cabecalho),
-       * a imagem nem carrega — e como a exigencia valia pro CARTO E pro OSM
-       * de reserva, os dois morriam juntos e o mapa ficava um retangulo liso
-       * com a bolinha azul em cima. Foi exatamente o que o Raphael viu. */
-      "t={img:new Image(),ok:false,fb:0};crTiles[k]=t;" +
-      "t.img.onload=function(){t.ok=true;crMapaErro=0;try{desenhaRota();}catch(e){}};" +
-      "t.img.onerror=function(){if(t.fb){t.mau=1;if(!crMapaErro){crMapaErro=1;try{desenhaRota();}catch(e){}}return;}" +
+       * corrida, a foto, o card do treino). Sem leitura nao existe canvas sujo,
+       * entao a exigencia nao comprava nada e so podia atrapalhar. */
+      "t={img:new Image(),ok:false,fb:0,tent:1,quando:0};crTiles[k]=t;" +
+      "t.img.onload=function(){t.ok=true;t.mau=0;t.tent=1;crMapaErro=0;try{desenhaRota();}catch(e){}};" +
+      "t.img.onerror=function(){if(t.fb){t.mau=1;t.quando=Date.now();" +
+      "if(!crMapaErro){crMapaErro=1;try{desenhaRota();}catch(e){}}return;}" +
       "t.fb=1;t.img.src=crUrl(CRMAPOSM,null,z,x,y);};" +
       "t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
+      /* Sinal de volta = tenta tudo de novo NA HORA, sem esperar a escada.
+       * Sem isso, sair do tunel e ficar 1 minuto olhando o mapa preto. */
+      "window.addEventListener('online',function(){var mudou=0;" +
+      "for(var k9 in crTiles){var t9=crTiles[k9];if(t9&&t9.mau){t9.mau=0;t9.fb=0;t9.tent=1;t9.quando=0;mudou=1;}}" +
+      "if(mudou){crMapaErro=0;try{desenhaRota();}catch(e){}}});" +
       "function crFullAberto(){var f=crEl('crFull');return !!f&&f.style.display!=='none';}" +
       // o canvas guarda pixel de VERDADE (largura na tela x densidade), senão
       // no iPhone o mapa sai borrado; o desenho continua em pixel de CSS
@@ -2945,18 +2966,26 @@
        * linhas de texto dentro do card viram tiles grandes na tela cheia,
        * com as medalhas/recordes e o botão de postar. */
       "function crEh(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
-      "function crTile(v,r){return \"<div style='background:var(--bg1);border-radius:18px;padding:14px 10px;text-align:center;'>\"+" +
+      /* crResTile, NAO crTile: existe uma crTile(z,x,y) la em cima que baixa o
+       * ladrilho do mapa. As duas moram no MESMO escopo, entao a segunda
+       * declaracao apagava a primeira (declaracao de funcao sobe pro topo e a
+       * ultima vence) — e desenhaCv passou a receber um TEXTO HTML no lugar do
+       * ladrilho, testar tl.ok (que nao existe num texto) e nunca desenhar rua
+       * nenhuma. O mapa ficou preto da v602 ate a v642, com a bolinha azul e o
+       * credito por cima, porque esses sao pintados depois do laco. Nenhum
+       * pedido de imagem chegou a sair. */
+      "function crResTile(v,r){return \"<div style='background:var(--bg1);border-radius:18px;padding:14px 10px;text-align:center;'>\"+" +
       "\"<b style='display:block;font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;'>\"+v+'</b>'+" +
       "\"<span style='display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-top:3px;'>\"+r+'</span></div>';}" +
       "function crResumo(reg,extras){var el=crEl('crResumoF');if(!el)return;" +
       "abreCrFull(0);cr.resumo=true;" +
       "var tiles=[];" +
-      "if(reg.k>0)tiles.push(crTile(String(reg.k).replace('.',','),'quil\u00f4metros'));" +
-      "tiles.push(crTile(wodFmt(reg.s),'tempo'));" +
-      "if(reg.p)tiles.push(crTile(reg.p,'pace m\u00e9dio'));" +
-      "tiles.push(crTile(String(crKcal(reg.k||0)),'calorias'));" +
-      "if(reg.fc)tiles.push(crTile(reg.fc+' bpm','batimento m\u00e9dio'));" +
-      "if(reg.fcx)tiles.push(crTile(reg.fcx+' bpm','pico'));" +
+      "if(reg.k>0)tiles.push(crResTile(String(reg.k).replace('.',','),'quil\u00f4metros'));" +
+      "tiles.push(crResTile(wodFmt(reg.s),'tempo'));" +
+      "if(reg.p)tiles.push(crResTile(reg.p,'pace m\u00e9dio'));" +
+      "tiles.push(crResTile(String(crKcal(reg.k||0)),'calorias'));" +
+      "if(reg.fc)tiles.push(crResTile(reg.fc+' bpm','batimento m\u00e9dio'));" +
+      "if(reg.fcx)tiles.push(crResTile(reg.fcx+' bpm','pico'));" +
       "el.innerHTML=\"<div style='max-width:440px;margin:0 auto;'>\"+" +
       "\"<div style='text-align:center;color:#4ade80;font-size:10.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;'>Treino registrado</div>\"+" +
       "\"<div style='text-align:center;font-size:clamp(26px,8vw,34px);font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:6px;'>\"+crEh(reg.n)+'</div>'+" +
@@ -3321,7 +3350,7 @@
       "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
-      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,erro:function(){return crMapaErro;}};" +
+      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
       "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +

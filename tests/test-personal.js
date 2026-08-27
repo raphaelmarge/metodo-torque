@@ -5107,6 +5107,62 @@ async function abaPt(p, a) {
     "endereço do tile sai montado certo (satélite é z/y/x, CARTO é z/x/y com @2x no retina)");
   ok(mapaEst.opcoes[0] === "auto" && mapaEst.opcoes.length === 6 && mapaEst.salvou === "colorido",
     "engrenagem da corrida tem o seletor Estilo do mapa e guarda a escolha no aparelho");
+
+  /* ⚠️ v642 — o defeito que deixava o mapa PRETO a corrida inteira.
+   * Um ladrilho que falhava ficava guardado como cadáver ("if(t)return t") e
+   * nunca mais era pedido. Começar a corrida com sinal fraco matava todos os
+   * ladrilhos à vista; quando o sinal voltava, o mapa continuava preto até o
+   * fim. Foi o que o Raphael fotografou aos 0:02 de treino.
+   * Este teste EXERCITA a lógica — mata um ladrilho e confere que ele
+   * ressuscita — em vez de procurar texto no código, que passaria de graça
+   * se a regra mudasse de forma. */
+  /* ⚠️⚠️ A REGRESSÃO QUE MATOU O MAPA DA v602 ATÉ A v642.
+   * Existiam DUAS funções chamadas crTile no mesmo escopo: a do mapa,
+   * crTile(z,x,y), que baixa o ladrilho; e uma crTile(v,r) criada na v602 pro
+   * resumo do fim da corrida, que devolve um pedaço de HTML. Declaração de
+   * função sobe pro topo do escopo e a ÚLTIMA vence — então desenhaCv passou a
+   * receber um TEXTO no lugar do ladrilho, testava tl.ok (que texto não tem) e
+   * nunca desenhava rua nenhuma. Nenhum pedido de imagem chegava a sair.
+   * O mapa ficava preto com a bolinha azul e o crédito por cima, porque esses
+   * dois são pintados DEPOIS do laço dos ladrilhos.
+   * Este teste checa a IDENTIDADE da função, que é o que quebrou. */
+  const quemEhTile = await pCr.evaluate(() => {
+    const f = window.__crMapa.tile, t = f(16, 24769, 36470);
+    return { args: f.length, tipo: typeof t, temImg: !!(t && t.img), src: (t && t.img && t.img.src) || "" };
+  });
+  ok(quemEhTile.args === 3 && quemEhTile.tipo === "object" && quemEhTile.temImg,
+    "crTile do mapa é a do MAPA (3 argumentos, devolve o ladrilho) — não a do resumo, que devolve HTML");
+  ok(/^https:\/\/[a-z0-9.]+\/[^\s]*16\/24769\/36470/.test(quemEhTile.src),
+    "pedir um ladrilho dispara mesmo o download da imagem daquele z/x/y");
+
+  const revive = await pCr.evaluate(() => {
+    const M = window.__crMapa;
+    for (const k of Object.keys(M.tiles)) delete M.tiles[k];
+    const t = M.tile(16, 24769, 36470);
+    // silencia a rede: quem controla o estado neste teste é o teste
+    t.img.onload = null; t.img.onerror = null;
+    const chave = Object.keys(M.tiles)[0];
+    const out = { criou: !!t, umaChave: Object.keys(M.tiles).length };
+
+    t.mau = 1; t.fb = 1; t.quando = Date.now();          // as duas fontes falharam
+    out.dentroDaEspera = M.tile(16, 24769, 36470).mau;   // ainda cedo: segue morto
+    t.quando = Date.now() - 90000;                       // a espera passou
+    const t2 = M.tile(16, 24769, 36470);
+    t2.img.onload = null; t2.img.onerror = null;
+    out.depoisDaEspera = t2.mau;
+    out.tentativa = t2.tent;
+
+    t2.mau = 1; t2.quando = Date.now();                  // morreu de novo, espera cheia
+    window.dispatchEvent(new Event("online"));           // saiu do túnel
+    out.aoVoltarOnline = M.tiles[chave] ? M.tiles[chave].mau : "sumiu";
+    return out;
+  });
+  ok(revive.criou && revive.umaChave === 1 && revive.dentroDaEspera === 1,
+    "ladrilho que falhou não é pedido de novo na hora (a espera evita martelar o servidor)");
+  ok(revive.depoisDaEspera === 0 && revive.tentativa >= 2,
+    "passada a espera, o ladrilho morto TENTA DE NOVO — e a espera cresce a cada tentativa");
+  ok(revive.aoVoltarOnline === 0,
+    "sinal de volta ressuscita os ladrilhos mortos na hora, sem esperar a escada");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
   {
