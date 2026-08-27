@@ -47,6 +47,10 @@
   .sec li { color: #cfcbdb; font-size: 14.5px; line-height: 1.6; padding: 5px 0 5px 28px; position: relative; }
   .sec li svg { position: absolute; left: 0; top: 8px; color: #a78bfa; }
   .cardArte { width: min(340px, 84vw); margin: 0 auto; border-radius: 18px; box-shadow: 0 30px 80px -30px rgba(124,58,237,.55); overflow: hidden; }
+  /* dois celulares lado a lado (conquistas + turma) */
+  .par { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
+  .fone.sm { width: min(228px, 42vw); border-radius: 27px; border-width: 5px; }
+  .par .fone.sm:last-child { margin-top: 30px; }
 
   /* grade do "tudo que vem junto" */
   .maisGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
@@ -100,6 +104,8 @@
   }
   @media (max-width: 520px) {
     .maisGrid { grid-template-columns: 1fr; }
+    .par .fone.sm { width: min(152px, 42vw); }
+    .par .fone.sm:last-child { margin-top: 18px; }
     .sec.inv .grid .txt { order: 0; }
     .hero { text-align: center; }
     .hero .sub { margin: 0 auto; }
@@ -124,7 +130,7 @@
           <a class="cta ghost" href="demo-aluno.html">Ver o app do aluno ao vivo</a>
         </div>
       </div>
-      <div class="fone"><img src="assets/vendas/app-inicio.png" alt="Tela inicial do app do aluno, com o nome do studio, nível e meta da semana" width="780" height="1688"></div>
+      <div class="fone"><img src="assets/vendas/app-inicio.webp" alt="Tela inicial do app do aluno, com o nome do studio, o treino do dia e a semana" width="780" height="1688"></div>
     </div>
   </div>
 </header>
@@ -152,7 +158,7 @@
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O resultado volta pro seu painel automaticamente</li>
         </ul>
       </div>
-      <div class="fone"><img src="assets/vendas/app-corrida.png" alt="Tela cheia da corrida com quilômetros gigantes, tempo, ritmo e calorias" loading="lazy" width="780" height="1688"></div>
+      <div class="fone"><img src="assets/vendas/app-corrida.webp" alt="Tela cheia da corrida com os quilômetros em número gigante, tempo, ritmo e calorias" loading="lazy" width="780" height="1688"></div>
     </div>
   </section>
 
@@ -163,7 +169,7 @@
         <h2>Cada corrida do aluno vira propaganda do seu studio</h2>
         <p>Ao terminar, um toque gera uma arte com o trajeto, os números e o <b style="color:#fff">nome do seu studio</b> — pronta pro Stories e pro WhatsApp. Seus alunos postam, os seguidores deles perguntam quem é o personal. É o marketing que trabalha enquanto você dorme.</p>
       </div>
-      <div class="cardArte"><img src="assets/vendas/card-corrida.png" alt="Arte compartilhável da corrida com o trajeto, 6,1 km, tempo, pace e o nome do studio" loading="lazy" width="720" height="900"></div>
+      <div class="cardArte"><img src="assets/vendas/card-corrida.webp" alt="Arte compartilhável da corrida com o trajeto desenhado, 5,11 km, tempo, pace e o nome do studio" loading="lazy" width="1080" height="1350"></div>
     </div>
   </section>
 
@@ -174,7 +180,10 @@
         <h2>Um jogo que segura aluno: níveis, medalhas e a Turma</h2>
         <p>XP por treino, níveis com títulos (de Iniciante a Hall da Fama), medalhas de treino e de corrida — e as que VOCÊ cria com seus próprios desafios. Na Turma, sua mini rede social, os alunos postam, curtem e disputam o ranking da semana. Aluno que joga não cancela.</p>
       </div>
-      <div class="fone"><img src="assets/vendas/app-conquistas.png" alt="Card de conquistas do app com nível 6, barra de progresso e medalhas" loading="lazy" width="780" height="1688"></div>
+      <div class="par">
+        <div class="fone sm"><img src="assets/vendas/app-conquistas.webp" alt="Conquistas do app: nível, XP, medalhas e a sequência de semanas" loading="lazy" width="780" height="1688"></div>
+        <div class="fone sm"><img src="assets/vendas/app-turma.webp" alt="A Turma: ranking da semana e o post de um aluno com curtidas e comentários" loading="lazy" width="780" height="1688"></div>
+      </div>
     </div>
   </section>
 
@@ -190,7 +199,7 @@
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Avaliação física com laudo completo — e medidas pela câmera, com a foto processada no próprio celular</li>
         </ul>
       </div>
-      <div class="fone"><img src="assets/vendas/painel-treinos.png" alt="Painel do personal na área de treino automático com IA" loading="lazy" width="780" height="1688"></div>
+      <div class="fone"><img src="assets/vendas/painel-treinos.webp" alt="Painel do personal na área de treino automático com IA" loading="lazy" width="780" height="1688"></div>
     </div>
   </section>
 
@@ -201,7 +210,7 @@
         <h2>Financeiro que se cobra sozinho</h2>
         <p>Contratos com vencimento, Pix copia e cola com QR na tela do aluno, assinatura no cartão, régua de cobrança educada pelo WhatsApp e baixa automática quando o pagamento cai. Quem está devendo aparece na primeira tela — sem planilha, sem constrangimento.</p>
       </div>
-      <div class="fone"><img src="assets/vendas/painel-inicio.png" alt="Painel do personal com alunos, agenda e números do mês" loading="lazy" width="780" height="1688"></div>
+      <div class="fone"><img src="assets/vendas/painel-financeiro.webp" alt="Financeiro do painel, com o recebido do mês e cada atrasado com o botão de cobrar na própria linha" loading="lazy" width="780" height="1688"></div>
     </div>
   </section>
 
