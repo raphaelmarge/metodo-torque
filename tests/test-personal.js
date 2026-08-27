@@ -5163,6 +5163,47 @@ async function abaPt(p, a) {
     "passada a espera, o ladrilho morto TENTA DE NOVO — e a espera cresce a cada tentativa");
   ok(revive.aoVoltarOnline === 0,
     "sinal de volta ressuscita os ladrilhos mortos na hora, sem esperar a escada");
+
+  /* ===== TRAJETO EM 3D (v643) =====
+   * O motor do mapa 3D tem quase 1 MB. Duas coisas precisam ser verdade e são
+   * fáceis de quebrar sem ninguém ver:
+   *   1. ele NÃO carrega sozinho — quem nunca abre o 3D não baixa nada, e a
+   *      demo pública continua sem pedir nada pra fora (test :9195);
+   *   2. quando ele NÃO carrega, o app segue inteiro e diz o porquê.
+   * O item 2 é o teste mais importante deste lote: o caminho de falha é o
+   * código menos exercitado, e é sempre ele que quebra em produção. */
+  const tresD = await pCr.evaluate(() => ({
+    scriptNoAr: !!document.querySelector("script[src*='maplibre']"),
+    temFuncao: typeof (window.__crMapa || {}).abre3D,
+    motorCarregado: typeof window.maplibregl,
+  }));
+  ok(!tresD.scriptNoAr && tresD.motorCarregado === "undefined",
+    "o motor do mapa 3D NÃO é carregado junto com o app — só quando o aluno pede");
+
+  // sabota: o arquivo do motor não existe. O 3D tem que falhar com recado.
+  await pCr.route("**/maplibre-gl.js", (r) => r.abort());
+  const erros3D = [];
+  const anota = (e) => erros3D.push(String(e));
+  pCr.on("pageerror", anota);
+  const sabotado = await pCr.evaluate(async () => {
+    // trajeto de 2 pontos codificado pelo próprio app
+    const cod = window.__crMapa.rota.cod([{ lat: -19.9245, lng: -43.9352 }, { lat: -19.925, lng: -43.936 }]);
+    window.__crMapa.abre3D(cod, "Corrida de teste");
+    await new Promise((r) => setTimeout(r, 1500));
+    const o = document.getElementById("cr3D");
+    const av = document.getElementById("cr3Dav");
+    return { abriu: !!o, recado: av ? av.textContent : "", temFechar: !!document.getElementById("cr3Dx") };
+  });
+  pCr.off("pageerror", anota);
+  await pCr.unroute("**/maplibre-gl.js");
+  await pCr.evaluate(() => { const o = document.getElementById("cr3D"); if (o) o.remove(); });
+
+  ok(sabotado.abriu && sabotado.temFechar,
+    "sem o motor, a tela do 3D ainda abre e tem como fechar (não prende o aluno)");
+  ok(/N.o deu pra (abrir|carregar)/.test(sabotado.recado),
+    "sem o motor, a tela DIZ que não deu — em vez de ficar preta calada: " + JSON.stringify(sabotado.recado));
+  ok(erros3D.length === 0,
+    "motor do mapa faltando não gera erro de JS na página" + (erros3D.length ? " — " + erros3D[0] : ""));
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
   {

@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v642";
+var VERSION = "mt-v643";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -22,6 +22,11 @@ var RUNTIME = "runtime-" + VERSION;
 // service worker inteiro não instala e o site perde o offline), e o RUNTIME é
 // apagado a cada versão nova — o professor baixaria os 17 MB de novo toda vez.
 var VISAO = "mt-visao-v1";
+/* Motor do mapa 3D (MapLibre, ~1 MB): mesma ideia da cache do leitor de
+ * imagem — cache PRÓPRIA, com versão independente da do site, pra o aluno não
+ * rebaixar 1 MB a cada mt-vNNN publicado. Fora do PRECACHE de propósito: o
+ * addAll é atômico e um caminho errado derrubaria o service worker inteiro. */
+var MAPA = "mt-mapa-v1";
 
 var CORE = [
   "./",
@@ -121,7 +126,7 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        if (k !== PRECACHE && k !== RUNTIME && k !== VISAO) return caches.delete(k);
+        if (k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -132,6 +137,20 @@ self.addEventListener("fetch", function (event) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
+
+  // motor do mapa 3D: cache própria, que atravessa as trocas de versão do site
+  if (url.pathname.indexOf("/assets/vendor/maplibre/") > -1) {
+    event.respondWith(caches.open(MAPA).then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
 
   // leitor de imagem: cache própria, que atravessa as trocas de versão do site
   if (url.pathname.indexOf("/assets/vendor/mediapipe/") > -1) {
