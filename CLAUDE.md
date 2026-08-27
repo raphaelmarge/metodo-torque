@@ -251,6 +251,52 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**O trajeto em 3D** (a partir da v643): o Raphael pediu o visual do Strava, com
+relevo. Antes de qualquer coisa faltava o dado: o app **não guardava a rota** —
+`ptcardio` tinha só `{d,n,m,s,k,p,fc,fcx}` e o traçado vivia em `cr.fimRota`,
+memória, até fechar o app. Não existia mapa de corrida passada. Agora o registro
+leva `r`, uma **polilinha codificada** (o formato clássico de mapa): Douglas-
+Peucker com pilha (tolerância 0,00005° ≈ 5,5 m, abaixo do erro do GPS) e teto de
+200 pontos. Medido: volta da Pampulha, 600 pontos → 59 pontos e **235 bytes**
+(eram 31,7 KB), pior desvio **5,1 m** contra a linha; quarteirão com cantos de
+90° → 5 pontos, desvio 0,37 m. Importa porque o `ptcardio` inteiro viaja pro
+professor no `devolveApp` — é a conta da v611.
+
+O 3D é o **MapLibre GL 5.9.0** (`assets/vendor/maplibre/`, BSD, sem chave e sem
+cobrança por carregamento — por isso não Mapbox; a v6 só vem em ESM e o app é
+uma string carregada por `<script>` comum). Ele fica na tela de **resumo** e no
+**histórico**, nunca durante a corrida: relevo só aparece com a câmera
+inclinada, mapa inclinado é pior de ler correndo, e é onde o Strava também
+mostra. O mapa da corrida continua sendo o canvas — **não houve troca de motor,
+existe uma tela nova**. Carregamento sob demanda com as três travas do
+`scanner-visao.js`; caminho **absoluto** `/assets/vendor/maplibre/…` (o mesmo
+HTML roda em `/app/`, na demo e nos testes); e conferir `window.maplibregl`
+depois do `onload` é obrigatório, porque o `app-sw.js` devolve o `index.html`
+com status 200 pra qualquer arquivo de mesma origem que falte — o `onerror`
+nunca dispara.
+
+⚠️ Cache **própria** `mt-mapa-v1` nos DOIS service workers, fora do precache: a
+cache do app é apagada a cada `mt-vNNN` e o aluno rebaixaria 1 MB por versão. A
+regra tem de existir no `app/app-sw.js` — o `sw.js` da raiz **não alcança**
+`/app/`, escopo mais específico ganha. E no `ignora` do `nativo/produtos.json`
+pra quem não usa.
+
+⚠️ **Como saber se as ruas vieram**: não dá pra perguntar ao MapLibre. Medido:
+o evento `data` com `.tile` **não dispara** pra fonte raster nem no sucesso nem
+na falha (os que apareciam eram da camada da rota, que é geojson), e
+`areTilesLoaded()` fica falso enquanto o relevo não vier. Quem responde é uma
+**sonda**: uma `Image` com `crossOrigin='anonymous'` (a mesma exigência que o
+WebGL faz) baixando o ladrilho do centro. Testada nos dois sentidos com
+ladrilho falso servido no teste. A rota entra no `style.load`, não no `load`,
+senão sem internet o aluno não veria nem o próprio trajeto.
+
+⚠️ O `fitBounds` é feito com a câmera **reta** e a inclinação entra depois
+(`easeTo`): com `pitch` dentro do `fitBounds` o trajeto cabe no tronco de visão
+inclinado, que é bem maior que a tela, e o desenho sai com um terço da largura.
+Cor do céu e do fundo saem de `CV()` — como o canvas, o estilo do MapLibre é um
+objeto JS e **não entende `var()`**. Ganchos: `window.__crMapa.{rota,abre3D,
+fecha3D,estilo3D,motor}`.
+
 **A IA não obedecia as diretrizes do professor** (conserto na v639): o Raphael
 disse que o treino saía fora do que ele tinha escrito. Eram QUATRO gargalos no
 caminho entre o que ele digita e o que a IA recebe — nenhum deles no prompt:

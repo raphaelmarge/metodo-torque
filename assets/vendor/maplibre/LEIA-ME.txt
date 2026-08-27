@@ -1,0 +1,52 @@
+MapLibre GL JS 5.9.0 — motor do mapa 3D do app do aluno
+=======================================================
+
+O QUE É
+  Biblioteca que desenha mapa com a placa de vídeo (WebGL). É o que permite
+  inclinar a câmera e mostrar o relevo do terreno — o visual "estilo Strava".
+
+ONDE É USADA
+  Só no app do aluno (app/aluno-builder.js), na tela "Ver o trajeto em 3D",
+  que aparece no resumo do fim da corrida e no histórico.
+
+  NÃO é usada durante a corrida. O mapa que o aluno olha correndo continua
+  sendo o canvas de sempre, por três motivos: relevo só aparece com a câmera
+  inclinada, e mapa inclinado é pior de ler correndo; é onde o Strava também
+  mostra; e aqui o aluno está parado, com sinal, com o GPS já desligado — se o
+  mapa falhar, ninguém perde treino.
+
+DE ONDE VEIO
+  npm: maplibre-gl@5.9.0 (dist/maplibre-gl.js e dist/maplibre-gl.css).
+  Licença BSD-3-Clause (LICENSE.txt ao lado). Sem chave de acesso e sem
+  cobrança por carregamento — foi o motivo de escolher MapLibre no lugar do
+  Mapbox, que cobra por "map load" e cresceria junto com a base de alunos.
+
+  ⚠️ Por que a 5 e não a 6: a 6 só vem em módulos ESM (maplibre-gl.mjs mais um
+  shared e um worker, com import relativo entre eles). O app do aluno é uma
+  string concatenada carregada por <script> comum, sem build — a v5 ainda traz
+  o arquivo único clássico, que é o que serve aqui.
+
+REGRA DE CACHE (importante)
+  Fica FORA do precache dos dois service workers e tem cache PRÓPRIA,
+  "mt-mapa-v1", poupada no activate — igual ao mediapipe ("mt-visao-v1").
+
+  Motivo: a cache do app é apagada a cada mt-vNNN publicado, e a gente publica
+  várias versões por dia. Se o motor morasse lá, o aluno rebaixaria quase 1 MB
+  toda vez, provavelmente no 4G, no minuto antes de correr.
+
+  A regra tem de existir nos DOIS arquivos: sw.js (site, demo, painel) e
+  app/app-sw.js (o app do aluno, em /app/). O sw.js da raiz NÃO alcança /app/ —
+  escopo mais específico ganha.
+
+  E nunca entrar na lista do addAll: ele é atômico, e um caminho errado ali
+  derruba o service worker inteiro, tirando o site do ar offline.
+
+PACOTES DE LOJA
+  Está no "ignora" de academia, personal e nutri (nativo/produtos.json). Só o
+  pacote do aluno leva o arquivo.
+
+COMO ATUALIZAR
+  npm pack maplibre-gl@<versao>  →  copiar dist/maplibre-gl.js, dist/maplibre-gl.css
+  e dist/LICENSE.txt pra cá. NÃO copiar os .map (2,5 MB cada, não servem em
+  produção) nem os arquivos -dev.
+  Depois: rodar bash tests/run.sh e conferir o 3D numa corrida de verdade.

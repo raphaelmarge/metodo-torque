@@ -2951,10 +2951,17 @@
       "var dc=hrEl('fcDica');if(dc)dc.textContent=(window.MTNativo&&window.MTNativo.fc)?'Cinta, pulseira ou rel\\u00f3gio pelo app.':'Funciona com cinta e pulseira de batimento (padr\\u00e3o Bluetooth). Ligue a cinta antes de tocar em conectar.';" +
       "hrPinta();})();" +
       "window.__fc=HR;window.__fcAmostra=hrAmostra;window.__fcConecta=hrConecta;window.__fcResumo=hrResumo;window.__fcZera=hrZera;" +
+      /* A corrida que tem trajeto guardado (campo r, a partir da v643) ganha um
+       * "3D" clicavel na propria linha. Corridas antigas nao tem o campo e
+       * seguem como texto — nada quebra, so nao tem o que mostrar. */
       "function pintaCrHist(){var el=crEl('crHist');if(!el)return;var lst=L('ptcardio',[]);" +
-      "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
+      "var vis=lst.slice(-5).reverse();" +
+      "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+vis.map(function(x,i9){" +
       "return String(x.d).slice(8,10)+'/'+String(x.d).slice(5,7)+' \\u2014 '+String(x.n).replace(/[<>&]/g,'')+': '+" +
-      "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'')+(x.fc?' \\u00b7 '+x.fc+' bpm':'');}).join('<br>'):'';}" +
+      "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'')+(x.fc?' \\u00b7 '+x.fc+' bpm':'')+" +
+      "(x.r?\" <button type='button' data-cr3d='\"+i9+\"' style='min-height:26px;padding:1px 9px;margin-left:6px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:var(--cor);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;vertical-align:1px;'>3D</button>\":'');}).join('<br>'):'';" +
+      "el.querySelectorAll('[data-cr3d]').forEach(function(b9){b9.addEventListener('click',function(){" +
+      "var x9=vis[+b9.getAttribute('data-cr3d')];if(x9&&x9.r)cr3DAbre(x9.r,x9.n);});});}" +
       // medalhas de corrida (mesmos critérios do card Conquistas): usado pra
       // avisar NA HORA quando a corrida recém-terminada conquista uma
       "var CRMEDN=['Primeira corrida','10 corridas','5 km numa corrida','10 km numa corrida','100 km somados','Pace abaixo de 6:00'];" +
@@ -2966,6 +2973,54 @@
        * linhas de texto dentro do card viram tiles grandes na tela cheia,
        * com as medalhas/recordes e o botão de postar. */
       "function crEh(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
+      /* ===== GUARDAR O TRAJETO DA CORRIDA =====
+       *
+       * Ate a v642 a rota vivia SO na memoria (cr.fimRota) e sumia quando o
+       * aluno fechava o app: nao existia mapa de corrida passada, so os
+       * numeros. Agora ela entra no proprio registro, no campo "r".
+       *
+       * Guardada comprimida (polilinha codificada, o formato classico de mapa)
+       * porque o ptcardio inteiro viaja pro professor no devolveApp — a mesma
+       * conta que na v611 mostrou 9 MB/mes por aluno so de foto. Medido: 600
+       * pontos crus em JSON dao ~13 KB; simplificados e codificados, ~700
+       * bytes. Trinta corridas guardadas passam de 400 KB pra ~20 KB.
+       *
+       * Precisao de 5 casas = ~1,1 m, mais do que o GPS de celular entrega. */
+      "function crEncNum(v){v=v<0?~(v<<1):(v<<1);var o='';" +
+      "while(v>=32){o+=String.fromCharCode((32|(v&31))+63);v>>=5;}" +
+      "return o+String.fromCharCode(v+63);}" +
+      "function crEncPoly(rt){var o='',pa=0,pn=0;" +
+      "for(var i=0;i<rt.length;i++){var la=Math.round(rt[i].lat*1e5),ln=Math.round(rt[i].lng*1e5);" +
+      "o+=crEncNum(la-pa)+crEncNum(ln-pn);pa=la;pn=ln;}return o;}" +
+      "function crDecPoly(s){var pts=[],i=0,la=0,ln=0,b,sh,re;if(!s)return pts;" +
+      "while(i<s.length){sh=0;re=0;do{b=s.charCodeAt(i++)-63;re|=(b&31)<<sh;sh+=5;}while(b>=32);" +
+      "la+=(re&1)?~(re>>1):(re>>1);sh=0;re=0;" +
+      "do{b=s.charCodeAt(i++)-63;re|=(b&31)<<sh;sh+=5;}while(b>=32);" +
+      "ln+=(re&1)?~(re>>1):(re>>1);pts.push({lat:la/1e5,lng:ln/1e5});}return pts;}" +
+      /* Douglas-Peucker com pilha em vez de recursao: 600 pontos numa aba de
+       * celular nao merecem risco de estourar a pilha de chamadas. Tolerancia
+       * de 0,00005 grau (~5,5 m) — abaixo do erro do GPS, entao o desenho nao
+       * perde curva nenhuma que o aluno tenha realmente feito. */
+      "function crSimpl(rt,tol){if(!rt||rt.length<3)return (rt||[]).slice();" +
+      "var fica=new Array(rt.length);fica[0]=fica[rt.length-1]=1;" +
+      "var pilha=[[0,rt.length-1]];" +
+      "while(pilha.length){var par=pilha.pop(),a=par[0],z=par[1];if(z-a<2)continue;" +
+      "var xa=rt[a].lng,ya=rt[a].lat,xz=rt[z].lng,yz=rt[z].lat;" +
+      "var dx=xz-xa,dy=yz-ya,den=dx*dx+dy*dy,pior=-1,idx=-1;" +
+      "for(var i=a+1;i<z;i++){var px=rt[i].lng-xa,py=rt[i].lat-ya;" +
+      "var t=den?(px*dx+py*dy)/den:0;t=t<0?0:(t>1?1:t);" +
+      "var ex=px-t*dx,ey=py-t*dy,d=ex*ex+ey*ey;" +
+      "if(d>pior){pior=d;idx=i;}}" +
+      "if(idx>0&&pior>tol*tol){fica[idx]=1;pilha.push([a,idx]);pilha.push([idx,z]);}}" +
+      "var saiu=[];for(var j=0;j<rt.length;j++)if(fica[j])saiu.push(rt[j]);return saiu;}" +
+      /* Teto de 200 pontos: mesmo depois de simplificar, uma corrida longa em
+       * rua sinuosa ainda passa disso. Sem o teto, uma unica corrida grande
+       * inchava o pacote que vai pro professor. */
+      "function crRotaSalva(rt){if(!rt||rt.length<2)return '';" +
+      "var s9=crSimpl(rt,0.00005);" +
+      "if(s9.length>200){var pl=[],pa9=(s9.length-1)/199;" +
+      "for(var i=0;i<200;i++)pl.push(s9[Math.round(i*pa9)]);s9=pl;}" +
+      "return crEncPoly(s9);}" +
       /* crResTile, NAO crTile: existe uma crTile(z,x,y) la em cima que baixa o
        * ladrilho do mapa. As duas moram no MESMO escopo, entao a segunda
        * declaracao apagava a primeira (declaracao de funcao sobe pro topo e a
@@ -2977,6 +3032,146 @@
       "function crResTile(v,r){return \"<div style='background:var(--bg1);border-radius:18px;padding:14px 10px;text-align:center;'>\"+" +
       "\"<b style='display:block;font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;'>\"+v+'</b>'+" +
       "\"<span style='display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-top:3px;'>\"+r+'</span></div>';}" +
+      /* ===== TRAJETO EM 3D (MapLibre) =====
+       *
+       * Fica na tela de RESUMO e no historico, nunca durante a corrida. Tres
+       * motivos, nessa ordem: (1) relevo so aparece com a camera inclinada, e
+       * mapa inclinado e pior de ler correndo; (2) e onde o Strava tambem
+       * mostra; (3) aqui o aluno esta parado, com sinal, e o GPS ja desligou —
+       * se o mapa falhar, ninguem perde treino.
+       *
+       * O motor NAO e carregado junto com o app: so quando o aluno toca no
+       * botao. Quem nunca abrir o 3D nao baixa 1 byte a mais, e a demo publica
+       * segue sem pedir nada pra fora.
+       *
+       * O mapa da CORRIDA continua sendo o canvas de sempre. Nao existe troca
+       * de motor: existe uma tela nova. */
+      "var crGLp=null;" +
+      /* Tres travas, iguais as do scanner-visao.js: o global ja existe, a
+       * promessa ja esta em voo, e zerar a promessa no erro (senao uma falha de
+       * rede tranca o recurso pra sempre naquela sessao).
+       * ⚠️ conferir window.maplibregl DEPOIS do onload e obrigatorio: o
+       * app-sw.js devolve o index.html com status 200 pra qualquer arquivo de
+       * mesma origem que falte, entao o <script> "carrega" com HTML dentro e o
+       * onerror nunca dispara.
+       * ⚠️ caminho ABSOLUTO: o mesmo HTML roda em /app/, em /demo-aluno.html e
+       * nos testes — caminho relativo acerta num e da 404 nos outros. */
+      "function crGL(){if(window.maplibregl)return Promise.resolve(window.maplibregl);" +
+      "if(crGLp)return crGLp;" +
+      "crGLp=new Promise(function(ok,nao){" +
+      "try{" +
+      "var css=document.createElement('link');css.rel='stylesheet';" +
+      "css.href='/assets/vendor/maplibre/maplibre-gl.css';document.head.appendChild(css);" +
+      "var sc=document.createElement('script');sc.src='/assets/vendor/maplibre/maplibre-gl.js';" +
+      "sc.onload=function(){if(window.maplibregl)ok(window.maplibregl);" +
+      "else nao(new Error('o arquivo do mapa carregou sem trazer o motor'));};" +
+      "sc.onerror=function(){nao(new Error('nao deu pra baixar o motor do mapa'));};" +
+      "document.head.appendChild(sc);" +
+      "}catch(e){nao(e);}" +
+      "});" +
+      "crGLp['catch'](function(){crGLp=null;});" +
+      "return crGLp;}" +
+      /* Estilo do 3D: a MESMA fonte de ladrilho que o aluno escolheu no mapa
+       * comum (CRMAPS), mais o relevo. tileSize 256 nas DUAS fontes porque o
+       * padrao do MapLibre e 512 e o CARTO/OSM e o relevo sao 256 — errar isso
+       * nao da erro, so deixa o mapa borrado no zoom errado.
+       * O relevo vem do conjunto aberto de altitude da AWS (terrarium), sem
+       * chave. "terrarium" tem de ser minusculo exato.
+       * terrain vai DENTRO do estilo de proposito: setTerrain solto estoura se
+       * a fonte de altitude ainda nao entrou. */
+      "function cr3DEstilo(){var e9=crEstilo(),dp9=crDpr()>1.4?'@2x':'';" +
+      "var urls=[];var ss=(e9.s||'a').split('');" +
+      "for(var i=0;i<ss.length;i++)urls.push(String(e9.u).replace('{s}',ss[i]).replace('{r}',e9.hd?dp9:''));" +
+      "return {version:8,sources:{" +
+      "ruas:{type:'raster',tiles:urls,tileSize:256,attribution:''}," +
+      "alto:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png']," +
+      "tileSize:256,maxzoom:14,encoding:'terrarium'}}," +
+      "layers:[{id:'fundo',type:'background',paint:{'background-color':e9.bg||CV('bg0')}}," +
+      "{id:'ruas',type:'raster',source:'ruas'}]," +
+      "terrain:{source:'alto',exaggeration:1.4}," +
+      /* ⚠️ o estilo do MapLibre e um objeto JS, e igual ao canvas ele NAO
+       * entende var(): a cor tem de ser resolvida com CV() na hora, senao o
+       * ceu sai da paleta do studio e o teste do fundo do app reprova. */
+      "sky:{'sky-color':CV('bg0'),'horizon-color':CV('cor2')||CV('cor'),'fog-color':CV('bg2'),'fog-ground-blend':0.5}};}" +
+      "function cr3DFecha(){var o=document.getElementById('cr3D');if(!o)return;" +
+      "try{if(o.__mapa)o.__mapa.remove();}catch(e){}o.__mapa=null;o.remove();}" +
+      /* Abre a tela do 3D pra uma rota ja codificada (o campo r do registro). */
+      "function cr3DAbre(cod,titulo){var rt=crDecPoly(cod||'');if(rt.length<2)return;" +
+      "cr3DFecha();" +
+      "var o=document.createElement('div');o.id='cr3D';" +
+      "o.style.cssText='position:fixed;inset:0;z-index:99;background:var(--bg0);';" +
+      "o.innerHTML=\"<div id='cr3Dm' style='position:absolute;inset:0;'></div>\"+" +
+      "\"<div id='cr3Dav' style='position:absolute;left:0;right:0;top:44%;text-align:center;color:#8a8695;font-size:13.5px;padding:0 24px;'>Abrindo o trajeto em 3D\\u2026</div>\"+" +
+      "\"<div style='position:absolute;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;align-items:center;gap:10px;'>\"+" +
+      "\"<button type='button' id='cr3Dx' style='flex:none;width:44px;height:44px;border-radius:99px;background:var(--bg2);border:1px solid var(--bg11);color:#fff;font-size:19px;font-family:inherit;'>\\u00d7</button>\"+" +
+      "\"<div style='flex:1;min-width:0;font-size:14px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>\"+crEh(titulo||'Seu trajeto')+'</div></div>'+" +
+      "\"<div id='cr3Dcr' style='position:absolute;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);font-size:9.5px;color:var(--tx2,#cfcbdb);background:var(--bg2);padding:3px 7px;border-radius:6px;'></div>\";" +
+      "document.body.appendChild(o);" +
+      "var bx=document.getElementById('cr3Dx');if(bx)bx.addEventListener('click',cr3DFecha);" +
+      "var av=function(t){var e=document.getElementById('cr3Dav');if(e)e.textContent=t;};" +
+      "crGL().then(function(gl){" +
+      "if(!document.getElementById('cr3D'))return;" +
+      /* 1 worker: no iPhone o padrao sobe ate 3, e isso disputa CPU com o resto
+       * do celular numa tela que e so pra olhar. */
+      "try{if(gl.setWorkerCount)gl.setWorkerCount(1);}catch(e){}" +
+      "var la1=1/0,la2=-1/0,ln1=1/0,ln2=-1/0;" +
+      "rt.forEach(function(q){if(q.lat<la1)la1=q.lat;if(q.lat>la2)la2=q.lat;if(q.lng<ln1)ln1=q.lng;if(q.lng>ln2)ln2=q.lng;});" +
+      "var mapa=new gl.Map({container:'cr3Dm',style:cr3DEstilo()," +
+      "center:[(ln1+ln2)/2,(la1+la2)/2],zoom:14,pitch:62,bearing:-18," +
+      "attributionControl:false,preserveDrawingBuffer:false});" +
+      "o.__mapa=mapa;" +
+      "var cr9=document.getElementById('cr3Dcr');if(cr9)cr9.textContent=crEstilo().a||'\\u00a9 OpenStreetMap';" +
+      /* COMO SABER SE AS RUAS VIERAM.
+       *
+       * Nao da pra perguntar isso ao MapLibre: medido aqui, o evento 'data' com
+       * .tile NAO dispara pra fonte raster nem quando o ladrilho carrega nem
+       * quando falha (os eventos que apareciam eram da camada da rota, que e
+       * geojson). E areTilesLoaded() fica falso enquanto o relevo nao vier,
+       * mesmo com as ruas inteiras na tela.
+       *
+       * Entao a pergunta e feita direto: uma SONDA baixa um ladrilho do centro
+       * do trajeto, com crossOrigin='anonymous' — exatamente a exigencia que o
+       * MapLibre faz, porque WebGL so aceita textura CORS-limpa. Se a sonda
+       * passa, as ruas vem; se falha, nao vem. Simples de entender e, o que
+       * mais importa, possivel de testar nos DOIS sentidos.
+       *
+       * Enquanto a sonda nao respondeu, __ruasOk fica indefinido e o cronometro
+       * nao acusa nada — sinal lento nao merece recado de erro. */
+      "o.__erros=0;mapa.on('error',function(){o.__erros++;});" +
+      "try{var so9=new Image();so9.crossOrigin='anonymous';" +
+      "so9.onload=function(){o.__ruasOk=1;};so9.onerror=function(){o.__ruasOk=0;};" +
+      "var e8=crEstilo(),cm9=merc((la1+la2)/2,(ln1+ln2)/2,14);" +
+      "so9.src=crUrl(e8.u,e8,14,Math.floor(cm9.x),Math.floor(cm9.y));}catch(e){}" +
+      /* Passou o tempo e a sonda disse que as ruas NAO vem: fala a verdade em
+       * vez de deixar a tela escura calada. O trajeto ja esta desenhado a essa
+       * altura (ele entra no style.load), entao o aluno nao fica sem nada. */
+      "setTimeout(function(){try{if(!document.getElementById('cr3D'))return;" +
+      "if(o.__ruasOk===0){var e9=document.getElementById('cr3Dav');if(e9){" +
+      "e9.style.cssText='position:absolute;left:0;right:0;bottom:64px;text-align:center;color:#cfcbdb;font-size:12.5px;padding:0 24px;';" +
+      "e9.innerHTML=\"N\\u00e3o deu pra carregar as ruas<br><span style='color:#8a8695;font-size:11.5px;'>seu trajeto est\\u00e1 a\\u00ed do mesmo jeito</span>\";}}}catch(e){}},9000);" +
+      /* style.load, NAO load: o 'load' so dispara quando o mapa inteiro esta
+       * pronto, ladrilhos inclusive — sem internet ele nunca vem, e o aluno
+       * ficaria sem ver nem o proprio trajeto. O 'style.load' vem assim que o
+       * estilo existe, entao a rota aparece mesmo que nenhuma rua carregue.
+       * A rota e o que importa: as ruas sao o pano de fundo. */
+      "mapa.on('style.load',function(){try{" +
+      "av('');" +
+      "mapa.addSource('trj',{type:'geojson',data:{type:'Feature',properties:{}," +
+      "geometry:{type:'LineString',coordinates:rt.map(function(q){return [q.lng,q.lat];})}}});" +
+      "mapa.addLayer({id:'trjB',type:'line',source:'trj',layout:{'line-join':'round','line-cap':'round'}," +
+      "paint:{'line-color':'#ffffff','line-width':9,'line-opacity':.85}});" +
+      "mapa.addLayer({id:'trjA',type:'line',source:'trj',layout:{'line-join':'round','line-cap':'round'}," +
+      "paint:{'line-color':CV('cor'),'line-width':5}});" +
+      /* O enquadramento e feito com a camera RETA e a inclinacao entra depois:
+       * o fitBounds com pitch cabe o trajeto dentro do tronco de visao
+       * inclinado, que e bem maior que a tela, e o desenho sai pequeno no
+       * meio. Medido: com pitch no fitBounds a volta da Pampulha ocupava um
+       * terco da largura. O respiro de cima e maior por causa do titulo, e o
+       * de baixo por causa do credito. */
+      "mapa.fitBounds([[ln1,la1],[ln2,la2]],{padding:{top:96,bottom:104,left:34,right:34},pitch:0,bearing:0,duration:0,maxZoom:16});" +
+      "mapa.easeTo({pitch:62,bearing:-18,duration:900});" +
+      "}catch(e){}});" +
+      "})['catch'](function(e){av('N\\u00e3o deu pra abrir o 3D: '+(e&&e.message?e.message:'tente de novo com internet'));});}" +
       "function crResumo(reg,extras){var el=crEl('crResumoF');if(!el)return;" +
       "abreCrFull(0);cr.resumo=true;" +
       "var tiles=[];" +
@@ -2993,6 +3188,10 @@
       "\"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;'>\"+tiles.join('')+'</div>'+" +
       "((extras&&extras.length)?\"<div style='margin-top:16px;'>\"+extras.map(function(x){" +
       "return \"<div style='background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);border-radius:14px;padding:10px 14px;font-size:13.5px;color:#4ade80;font-weight:700;margin-top:8px;'>\"+crEh(x)+'</div>';}).join('')+'</div>':'')+" +
+      /* So aparece quando existe trajeto guardado: corrida de esteira, bike sem
+       * GPS ou treino curto demais nao ganham botao que nao leva a lugar
+       * nenhum. */
+      "((reg.r)?\"<button type='button' id='crRs3D' style='display:block;width:100%;min-height:52px;margin-top:16px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#fff;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>Ver o trajeto em 3D</button>\":'')+" +
       "\"<div style='display:flex;gap:8px;margin-top:20px;'>\"+" +
       "\"<label class='btnx' id='crRsFoto' style='flex:1;text-align:center;cursor:pointer;min-height:54px;line-height:34px;'>Postar com foto<input id='crRsArq' type='file' accept='image/*' style='display:none;'></label>\"+" +
       "\"<button type='button' id='crRsSem' style='flex:1;min-height:54px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#cfcbdb;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>S\u00f3 os n\u00fameros</button></div>\"+" +
@@ -3000,6 +3199,8 @@
       "el.style.display='block';" +
       "var bf=document.getElementById('crRsFechar');if(bf)bf.addEventListener('click',crResumoFecha);" +
       "var bs=document.getElementById('crRsSem');if(bs)bs.addEventListener('click',function(){cardCorrida(null);});" +
+      "var b3=document.getElementById('crRs3D');" +
+      "if(b3)b3.addEventListener('click',function(){cr3DAbre(reg.r,reg.n);});" +
       "var ba=document.getElementById('crRsArq');if(ba)ba.addEventListener('change',function(){" +
       "var f=this.files&&this.files[0];this.value='';if(!f)return;" +
       "var im=new Image();var rd=new FileReader();rd.onload=function(){im.onload=function(){cardCorrida(im);};im.src=rd.result;};rd.readAsDataURL(f);});}" +
@@ -3023,6 +3224,11 @@
       "if(reg.k>=3&&med&&isFinite(pcAnt)&&med<pcAnt)extras.push('RECORDE: seu melhor pace ('+paceFmt(med)+')');}" +
       "if(fcR)extras.push('Batimentos \\u00b7 '+fcR.m+' bpm m\\u00e9dio \\u00b7 '+fcR.x+' m\\u00e1x');" +
       "cr.fimReg=reg;cr.fimRota=cr.rota.slice();" +
+      /* a rota entra no registro que JA foi salvo acima: por isso o Sv de
+       * novo. Guardar antes exigiria mexer no calculo de recorde, que le a
+       * lista sem a rota. */
+      "try{var rr9=crRotaSalva(cr.rota);if(rr9){reg.r=rr9;var lz=L('ptcardio',[]);" +
+      "if(lz.length&&lz[lz.length-1]&&lz[lz.length-1].d===reg.d){lz[lz.length-1].r=rr9;Sv('ptcardio',lz);}}}catch(e){}" +
       "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||(extras.length?extras[0]:'BOA! Treino registrado');crEl('crFase').style.color='#4ade80';" +
       "crEl('crInfo').textContent=extras.slice(msg?0:1).join(' \\u00b7 ');" +
       "var bSh=crEl('crShare');if(bSh)bSh.style.display='block';" +
@@ -3350,7 +3556,9 @@
       "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
-      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}};" +
+      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr,tiles:crTiles,tile:crTile,erro:function(){return crMapaErro;}," +
+      "rota:{cod:crEncPoly,dec:crDecPoly,simpl:crSimpl,salva:crRotaSalva}," +
+      "abre3D:cr3DAbre,fecha3D:cr3DFecha,estilo3D:cr3DEstilo,motor:function(){return crGL();}};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
       "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
