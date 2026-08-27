@@ -1291,13 +1291,19 @@ ninguém atropelar ninguém — valem pros dois:
   OFF** (a pagarme antiga continua lá) e os blocos zap_config, RECEBER POR
   PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY e push_subs do SQL foram rodados
   (tabelas, colunas, índices únicos parciais e RPCs conferidos). O SQL da
-  Comunidade ele já tinha rodado. A **chat-envia está na v12** (2026-08-25), com
-  as regras da v604 dentro dela — `MES_REGRA` (a IA monta o MÊS, 4 semanas de
-  progressão, a 4ª sempre mais leve) e `BRIEF_REGRA` (a leitura do professor
-  vence os números; adaptações e limitações são regra absoluta) — mais o
-  `.trim()` do `env()` e o `chaveIa` do ping. ⚠️ Antes de republicar qualquer
-  função, CONFIRA o que está no ar: a v11 tinha duas melhorias que ainda não
-  estavam no repo, e publicar por cima teria apagado as duas.
+  Comunidade ele já tinha rodado. A **chat-envia está na v13** (2026-08-27),
+  igual ao repo no mt-v639: `MES_REGRA` (a IA monta o MÊS, 4 semanas de
+  progressão, a 4ª sempre mais leve), `BRIEF_REGRA` **com o parágrafo da v639**
+  (a estrutura pedida pelo professor SUBSTITUI os padrões do prompt — quem pede
+  ABCD recebe ABCD; exercício citado é obrigatório; existe um LEMBRETE FINAL a
+  conferir antes de responder), o `.trim()` do `env()`, o `chaveIa` e o
+  `regras: ["mes","brief","briefManda"]` do ping — é por esse campo que o painel
+  descobre que a função publicada é velha e avisa dentro da gaveta (`#brAviso`)
+  em vez de deixar o treino sair errado. ⚠️ Antes de republicar qualquer função,
+  CONFIRA o que está no ar: a v11 tinha duas melhorias que ainda não estavam no
+  repo, e publicar por cima teria apagado as duas. Na v12→v13 essa conferência
+  foi feita item a item (39 marcas do código publicado, todas presentes no repo)
+  e o repo estava à frente em tudo, inclusive no tipo `misto` da corrida.
 - Secrets — conferido pelo diagnóstico em 2026-08-24 (o ping de cada função diz
   o que ela enxerga; `diagnostico.html` é o caminho curto):
   - ✅ `ANTHROPIC_API_KEY` — **testada de verdade em 2026-08-24**: a IA de treino
