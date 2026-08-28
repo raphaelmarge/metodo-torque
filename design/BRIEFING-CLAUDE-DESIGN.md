@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v647** |
-| Estado do repo em | 2026-08-27 (commit `b282825`) |
+| App em | **mt-v648** |
+| Estado do repo em | 2026-08-27 (commit `09492bc`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 109 |
+| Lançamentos no histórico | 110 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v647** — ou seja, **46 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v648** — ou seja, **47 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v648 | organograma enxuto — os departamentos viram carrossel de telas do painel |
 | mt-v647 | vitrine do app vira celular de arrastar, com treino guiado e circuito |
 | mt-v646 | página de vendas nova — o sistema que te oferece tempo, o personal como empresa |
 | mt-v645 | o mapa da corrida segue o aluno, e a bolinha vira seta |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v634 | escolher exercicio virou tela a parte (uma coisa por vez) ([#623](https://github.com/raphaelmarge/metodo-torque/pull/623)) |
 | mt-v633 | montar ficha — a gaveta cobria a ficha e havia 4 jeitos de editar ([#620](https://github.com/raphaelmarge/metodo-torque/pull/620)) |
 | mt-v632 | habitos viram media no perfil + montar ficha sem o velho e o novo juntos ([#619](https://github.com/raphaelmarge/metodo-torque/pull/619)) |
-| mt-v631 | corrida continua E intervalada no mesmo treino + o quadro do trajeto ([#618](https://github.com/raphaelmarge/metodo-torque/pull/618)) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
