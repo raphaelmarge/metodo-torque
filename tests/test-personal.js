@@ -6620,7 +6620,10 @@ async function abaPt(p, a) {
     for (let i = 0; i < 2; i++) f[iso(new Date(hj.getFullYear(), hj.getMonth(), Math.max(1, dia - i)))] = 1;
     for (let i = 0; i < 4; i++) f[iso(new Date(hj.getFullYear(), hj.getMonth() - 1, Math.max(1, dia - i)))] = 1;
     // e um treino no mês passado DEPOIS do dia de hoje, que não pode contar
-    f[iso(new Date(hj.getFullYear(), hj.getMonth() - 1, 28))] = 1;
+    // (no último dia do mês passado — e só quando esse dia ainda é futuro: no dia
+    // 28 o antigo "28" caía DENTRO da janela "até aqui" e a conta certa era 3)
+    const ult = new Date(hj.getFullYear(), hj.getMonth(), 0).getDate();
+    if (hj.getDate() < ult) f[iso(new Date(hj.getFullYear(), hj.getMonth() - 1, ult))] = 1;
     localStorage.setItem("ptfeitos", JSON.stringify(f));
   });
   await pApp.reload();

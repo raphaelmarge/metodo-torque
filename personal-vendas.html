@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TORQUE PERSONAL — o app do personal trainer com a sua marca</title>
-<meta name="description" content="App com a sua marca no celular de cada aluno: treinos, corrida com GPS, medalhas, avaliação física, IA e cobrança — alunos ilimitados por R$ 49/mês. 14 dias grátis, sem cartão.">
+<title>TORQUE PERSONAL — o sistema que te oferece o que você não pode comprar: tempo</title>
+<meta name="description" content="Você é uma empresa de uma pessoa só. O TORQUE PERSONAL assume os departamentos que comem a sua semana — treinos com IA, app do aluno com a sua marca, cobrança com baixa automática, agenda e retenção — por R$ 49/mês. 14 dias grátis, sem cartão.">
 <link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <style>
@@ -20,9 +20,9 @@
   .hero { background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.35), transparent 60%), #0d0c10; padding: 54px 0 0; overflow: hidden; }
   .hero .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 30px; align-items: center; }
   .kicker { font-size: 12px; letter-spacing: .24em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
-  .hero h1 { font-size: clamp(32px, 5.2vw, 52px); font-weight: 800; letter-spacing: -.02em; line-height: 1.08; margin: 14px 0 16px; }
+  .hero h1 { font-size: clamp(31px, 5vw, 50px); font-weight: 800; letter-spacing: -.02em; line-height: 1.08; margin: 14px 0 16px; }
   .hero h1 em { font-style: normal; color: #a78bfa; }
-  .hero .sub { color: #b9b3c6; font-size: 17px; line-height: 1.65; max-width: 480px; }
+  .hero .sub { color: #b9b3c6; font-size: 17px; line-height: 1.65; max-width: 500px; }
   .selo { display: inline-block; background: rgba(124,58,237,.16); border: 1px solid #7c3aed; color: #d6c9f5; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 999px; margin: 18px 0 4px; }
   .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
   .cta { display: inline-block; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; font-weight: 800; font-size: 16px; padding: 15px 26px; border-radius: 14px; transition: transform .15s ease, box-shadow .2s ease; }
@@ -37,7 +37,7 @@
   .nums b { font-size: 22px; display: block; letter-spacing: -.01em; }
   .nums span { color: #8a8695; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 
-  /* seções alternadas */
+  /* seções */
   .sec { padding: 64px 0 10px; }
   .sec .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
   .sec.inv .grid .txt { order: 2; }
@@ -47,19 +47,38 @@
   .sec li { color: #cfcbdb; font-size: 14.5px; line-height: 1.6; padding: 5px 0 5px 28px; position: relative; }
   .sec li svg { position: absolute; left: 0; top: 8px; color: #a78bfa; }
   .cardArte { width: min(340px, 84vw); margin: 0 auto; border-radius: 18px; box-shadow: 0 30px 80px -30px rgba(124,58,237,.55); overflow: hidden; }
-  /* dois celulares lado a lado (conquistas + turma) */
   .par { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
   .fone.sm { width: min(228px, 42vw); border-radius: 27px; border-width: 5px; }
   .par .fone.sm:last-child { margin-top: 30px; }
 
-  /* grade do "tudo que vem junto" */
-  .maisGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
-  .mais { background: #17141d; border: 1px solid #2c2739; border-radius: 16px; padding: 20px 18px; }
-  .mais svg { color: #a78bfa; }
-  .mais b { font-size: 15px; display: block; margin: 10px 0 6px; }
-  .mais p { font-size: 13px; color: #a9a4b5; line-height: 1.55; }
+  /* a empresa de uma pessoa só */
+  .empGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+  .emp { background: #17141d; border: 1px solid #2c2739; border-radius: 16px; padding: 22px 20px; }
+  .emp .num { font-size: 40px; font-weight: 800; letter-spacing: -.03em; color: #a78bfa; }
+  .emp .num.verde { color: #4ade80; }
+  .emp p { font-size: 13.5px; color: #a9a4b5; line-height: 1.6; margin-top: 8px; }
+  .emp p b { color: #f5f4f7; }
+  .conta { border: 1px dashed #4c3f6b; border-radius: 16px; padding: 22px; margin-top: 18px; }
+  .conta .rot { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #a78bfa; font-weight: 800; }
+  .conta p { font-size: 14.5px; color: #b9b3c6; line-height: 1.7; margin-top: 10px; }
+  .conta b { color: #f5f4f7; }
 
-  /* comparativo */
+  /* organograma: departamentos */
+  .depGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 30px; }
+  .dep { background: #17141d; border: 1px solid #2c2739; border-radius: 18px; padding: 24px 22px 20px; }
+  .dep .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #a78bfa; background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.34); padding: 5px 11px; border-radius: 999px; }
+  .dep h3 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; margin: 13px 0 6px; }
+  .dep .oq { font-size: 13.5px; color: #8a8695; line-height: 1.55; margin-bottom: 10px; }
+  .dep ul { list-style: none; padding: 0; margin: 0; }
+  .dep li { font-size: 14px; line-height: 1.55; color: #cfcbdb; padding: 6px 0 6px 22px; position: relative; border-top: 1px solid #221e2c; }
+  .dep li:first-child { border-top: 0; }
+  .dep li::before { content: "›"; position: absolute; left: 4px; color: #7c3aed; font-weight: 900; }
+  .dep li b { color: #f5f4f7; }
+  .dep .ganho { margin-top: 12px; padding: 11px 13px; border-radius: 12px; background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.24); font-size: 13px; line-height: 1.5; color: #cfcbdb; }
+  .dep .ganho b { color: #4ade80; }
+  .dep.dono { border-color: rgba(124,58,237,.55); background: linear-gradient(160deg, #241d33, #1c1826); }
+
+  /* a semana antes/depois */
   .versus { background: #121016; border-top: 1px solid #211d2b; border-bottom: 1px solid #211d2b; padding: 60px 0; margin-top: 64px; }
   .versus h2 { text-align: center; font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -.02em; margin: 10px 0 8px; }
   .versus .subt { text-align: center; color: #b9b3c6; font-size: 15.5px; max-width: 560px; margin: 0 auto 30px; line-height: 1.65; }
@@ -75,6 +94,12 @@
   .vcol.gratis li svg { color: #f87171; }
   .vcol.torque li svg { color: #4ade80; }
 
+  /* honestidade */
+  .maisGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
+  .mais { background: #17141d; border: 1px solid #2c2739; border-radius: 16px; padding: 20px 18px; }
+  .mais b { font-size: 15px; display: block; margin: 0 0 6px; }
+  .mais p { font-size: 13px; color: #a9a4b5; line-height: 1.55; }
+
   /* preço */
   .preco { padding: 64px 0 8px; text-align: center; }
   .preco-card { background: linear-gradient(160deg, #241d33, #1c1826); border: 1px solid #7c3aed; border-radius: 22px; padding: 34px 26px; max-width: 460px; margin: 22px auto 0; box-shadow: 0 20px 60px -30px #7c3aed; }
@@ -83,6 +108,7 @@
   .preco-card ul { list-style: none; padding: 0; margin: 16px 0 6px; color: #cfcbdb; font-size: 14.5px; line-height: 2.05; text-align: left; display: inline-block; }
   .preco-card li { padding-left: 28px; position: relative; }
   .preco-card li svg { position: absolute; left: 0; top: 8px; color: #4ade80; }
+  .preco .sob { color: #8a8695; font-size: 13px; margin-top: 14px; }
 
   /* faq */
   .faq { padding: 60px 0 20px; max-width: 680px; margin: 0 auto; }
@@ -99,8 +125,9 @@
   .rodape a { color: #a78bfa; }
 
   @media (max-width: 760px) {
-    .hero .grid, .sec .grid, .versus .cols { grid-template-columns: 1fr; }
+    .hero .grid, .sec .grid, .versus .cols, .depGrid { grid-template-columns: 1fr; }
     .maisGrid { grid-template-columns: 1fr 1fr; }
+    .empGrid { grid-template-columns: 1fr; }
   }
   @media (max-width: 520px) {
     .maisGrid { grid-template-columns: 1fr; }
@@ -112,6 +139,7 @@
     .ctaRow { justify-content: center; }
     .hero .fone { transform: translateY(20px); }
     .sec { padding-top: 48px; }
+    .dep { padding: 20px 18px 18px; }
   }
 </style>
 </head>
@@ -122,11 +150,11 @@
     <div class="grid">
       <div>
         <div class="kicker">TORQUE ON · TORQUE PERSONAL</div>
-        <h1>O app do personal que os alunos <em>amam usar</em></h1>
-        <p class="sub">Cada aluno recebe um app <b style="color:#fff">com a SUA marca</b>: treino guiado, corrida com GPS, medalhas, evolução e pagamento — funcionando até sem internet. E do seu lado, o sistema cuida da agenda, das fichas e da cobrança.</p>
+        <h1>O sistema que te oferece o que você não pode comprar: <em>tempo</em></h1>
+        <p class="sub">Você não é "só" um personal trainer. Você é uma <b style="color:#fff">empresa de uma pessoa só</b> — e hoje acumula todos os cargos dela. O TORQUE PERSONAL assume os departamentos que comem a sua noite: fichas, cobrança, agenda, retenção. E te devolve as horas.</p>
         <span class="selo">14 dias grátis, sem cartão · depois R$ 49/mês · sem fidelidade</span>
         <div class="ctaRow">
-          <a class="cta" id="ctaZap" href="personal.html">Quero o TORQUE PERSONAL</a>
+          <a class="cta" id="ctaZap" href="personal.html">Quero meu tempo de volta</a>
           <a class="cta ghost" href="demo-aluno.html">Ver o app do aluno ao vivo</a>
         </div>
       </div>
@@ -138,7 +166,7 @@
 <div class="nums">
   <div class="linha wrap">
     <div><b>Alunos ilimitados</b><span>pelo mesmo preço</span></div>
-    <div><b>1500+ exercícios</b><span>com dica de execução em português</span></div>
+    <div><b>1800+ exercícios</b><span>com dica de execução em português</span></div>
     <div><b>Funciona offline</b><span>academia sem sinal não trava</span></div>
     <div><b>R$ 49 fixo</b><span>sem cobrança por aluno</span></div>
   </div>
@@ -146,15 +174,182 @@
 
 <main>
 
+  <section class="sec" style="padding-bottom:0;">
+    <div class="wrap">
+      <div class="kicker">O diagnóstico</div>
+      <h2 style="max-width:640px;">Você tem uma empresa. Ela só não tem funcionários.</h2>
+      <p style="max-width:640px;">Toda academia grande tem gente pra cada coisa: quem monta o produto, quem cobra, quem atende, quem segura o cliente. Você faz tudo isso sozinho — e as horas que sobram pro que realmente paga a conta (dar aula e vender aula) são as que sobraram.</p>
+      <div class="empGrid">
+        <div class="emp"><div class="num">7</div><p><b>departamentos</b> que uma academia tem e você também: produto, entrega, financeiro, comercial, atendimento, qualidade e marketing.</p></div>
+        <div class="emp"><div class="num">1</div><p><b>funcionário</b>: você. Que ainda precisa estar na sala, do lado do aluno, olhando a execução.</p></div>
+        <div class="emp"><div class="num verde">R$ 49</div><p><b>por mês</b> pra terceirizar seis desses sete — e continuar sendo o único dono do negócio.</p></div>
+      </div>
+      <div class="conta">
+        <div class="rot">Faça a conta você mesmo</div>
+        <p>Não vamos te empurrar estatística inventada. Pega a sua última semana e soma o que você gastou em: montar e mandar ficha no WhatsApp · cobrar quem atrasou · lembrar quem sumiu · marcar e remarcar horário · digitar avaliação e montar laudo · responder "qual meu treino hoje?" · fechar o mês na planilha. <b>Esse número é o seu custo real.</b> É ele que esta página ataca.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-bottom:8px;">
+    <div class="wrap">
+      <div class="kicker">O organograma</div>
+      <h2 style="max-width:640px;">Sete departamentos. Um assinante.</h2>
+      <p style="max-width:640px;">Cada bloco abaixo é um cargo que hoje é seu. Veja o que passa a ser do sistema — e o que isso devolve pra sua semana.</p>
+
+      <div class="depGrid">
+
+        <div class="dep">
+          <span class="tag">01 · Produto</span>
+          <h3>Prescrição de treino</h3>
+          <p class="oq">O que você vende — montado em minutos, não em noites.</p>
+          <ul>
+            <li><b>1800+ exercícios</b> com dica de execução, busca por grupamento e favoritos.</li>
+            <li>Fichas <b>A, B, C…</b> com séries, repetições, descanso, observação e <b>técnicas de intensidade</b> (drop-set, rest-pause, bi-set, isometria).</li>
+            <li><b>Parte 2 do dia</b> (A2, B2): o cardio ou alongamento dentro da própria ficha.</li>
+            <li><b>Circuito (WOD)</b>: AMRAP, For Time, EMOM e Tabata com cronômetro de tela cheia.</li>
+            <li><b>Corrida</b> contínua, intervalada — ou as duas no mesmo treino, com pace, tiros e recuperação.</li>
+            <li><b>Semana do aluno</b>: cada dia amarrado a um treino; o padrão vale o mês até você mudar.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> a noite de domingo montando ficha pra semana inteira.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">02 · P&amp;D</span>
+          <h3>A IA que prescreve o mês — e obedece você</h3>
+          <p class="oq">Não é gerador genérico: é um assistente que lê o SEU aluno e a SUA ordem.</p>
+          <ul>
+            <li>Monta o <b>mês inteiro</b>: as mesmas fichas com 4 semanas de progressão escrita, a 4ª sempre mais leve.</li>
+            <li>Lê a <b>última avaliação</b>, as <b>cargas reais</b> registradas no app, a frequência dos últimos 28 dias, o esforço percebido, o batimento e o pace das corridas.</li>
+            <li><b>A sua leitura vence os números.</b> O que você escrever sobre lesões, adaptações e limites é regra absoluta pra IA.</li>
+            <li>Exercício que você citar é <b>obrigatório</b>. Pediu ABCD? Sai ABCD.</li>
+            <li>Vale pra <b>musculação, circuito e corrida</b> — cada um no seu formato.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> o rascunho pronto. Você revisa e assina em vez de começar do zero.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">03 · Entrega</span>
+          <h3>O app do aluno, com a sua marca</h3>
+          <p class="oq">Sua logística: o treino chega, funciona e volta com dados.</p>
+          <ul>
+            <li><b>Sem loja de aplicativo</b>: o aluno abre um link e o app entra na tela de início — com o seu nome e a sua cor.</li>
+            <li><b>Funciona sem internet</b> e sincroniza quando o sinal volta.</li>
+            <li><b>Treino guiado</b>: um exercício por vez, descanso contando sozinho, dica de execução e <b>peso sugerido</b> quando o aluno bate as repetições.</li>
+            <li><b>Corrida com GPS</b>: mapa ao vivo, pace, voz a cada km — e o <b>trajeto em 3D</b> no fim.</li>
+            <li><b>Batimento ao vivo</b> por cinta ou pulseira, com as zonas Z1–Z5.</li>
+            <li><b>XP, medalhas, sequência e a Turma</b> — o jogo que faz o aluno voltar sozinho.</li>
+            <li>Utilidades que criam hábito: <b>água com lembrete</b>, cronômetros, 1RM, anilhas e IMC.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> os PDFs no WhatsApp e o "manda de novo que eu apaguei".</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">04 · Financeiro</span>
+          <h3>Cobrança, baixa e fechamento</h3>
+          <p class="oq">O departamento que mais custa caro quando fica pra depois.</p>
+          <ul>
+            <li><b>O dinheiro cai direto na SUA conta.</b> Você liga o seu Mercado Pago, Asaas ou Pagar.me — a gente não fica no meio.</li>
+            <li><b>Link de cobrança</b> em cartão, Pix ou boleto, gerado do painel. E Pix com QR na tela do aluno.</li>
+            <li><b>Baixa automática</b>: o aluno pagou, some da lista de devedores sozinho.</li>
+            <li><b>Mensalidade automática</b> no cartão pra quem não quer cobrar todo mês.</li>
+            <li>Atrasados no topo, com o <b>botão de cobrar dentro da linha</b> — e "cobrar todos" de uma vez.</li>
+            <li>Histórico de 6 meses e <b>fechamento do mês</b> pronto pra mandar.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> a planilha do fim do mês e a conversa constrangedora da cobrança.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">05 · Comercial</span>
+          <h3>Retenção: quem está indo embora</h3>
+          <p class="oq">Aluno não cancela — ele para de aparecer. O sistema vê antes de você.</p>
+          <ul>
+            <li><b>Resolver hoje</b>: a primeira tela lista só o que muda decisão hoje — quem deve, quem está sem ficha nova, que conversa parou.</li>
+            <li>Lista de alunos com filtros <b>Ativos · Sumindo · Devendo · Encerrados</b> e a ação certa dentro de cada linha.</li>
+            <li><b>Radar e alertas</b>: queda de frequência, carga alta, aniversários.</li>
+            <li><b>Relatórios</b> de movimentação, sessões por semana, faltas e metas do mês.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> o aluno que você só percebeu que sumiu quando já era tarde.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">06 · Atendimento</span>
+          <h3>Fale com todos sem falar com cada um</h3>
+          <p class="oq">A pergunta que você responde 20 vezes por semana deixa de existir.</p>
+          <ul>
+            <li><b>Chat dentro do app</b>, com o contexto do aluno do lado: próxima sessão, treino do dia, ficha num toque.</li>
+            <li><b>Robô de primeiras respostas</b>: dúvida às 22h respondida pelo fluxo que você montar — e ele te chama quando é coisa séria.</li>
+            <li><b>WhatsApp oficial no seu número</b>: você conecta a sua conta da Meta e as mensagens saem do SEU número.</li>
+            <li><b>Notificações no celular do aluno</b>: treino do dia, check-in da semana, questionário liberado, cobrança, aniversário e marcos.</li>
+            <li><b>A Turma</b>, sua mini rede social: os alunos postam, curtem e disputam o ranking da semana.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> as 20 respostas de "qual é o meu treino hoje?".</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">07 · Qualidade</span>
+          <h3>Avaliação e prova de resultado</h3>
+          <p class="oq">O que transforma o seu trabalho em algo que o aluno enxerga.</p>
+          <ul>
+            <li><b>Avaliação física completa</b>: de peso, dobras ou fita sai um laudo estilo bioimpedância — água, massa magra, músculo, TMB, pontuação — <b>imprimível</b>.</li>
+            <li>Tem bioimpedância de verdade? Os valores medidos <b>vencem</b> a estimativa.</li>
+            <li><b>Medidas pela câmera</b> (beta): duas fotos viram circunferências — processadas no próprio celular, a imagem não sobe pra internet.</li>
+            <li><b>Fotos antes e depois</b> com slider de comparação e lembrete mensal.</li>
+            <li><b>Check-in da semana e questionários</b> viram gráficos: sono, dor, disposição e hábitos, com o selo de melhorando, estável ou piorando.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> as horas digitando medida em planilha e montando laudo à mão.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">08 · Operações</span>
+          <h3>Agenda</h3>
+          <p class="oq">Um calendário só — semana ou mês, você escolhe o zoom.</p>
+          <ul>
+            <li>O estado de cada sessão <b>dentro da célula</b>: feita, faltou, pedido, devendo — ou a ficha prescrita pra aquele dia.</li>
+            <li><b>Pedidos de horário</b> chegam do app e você confirma num toque.</li>
+            <li>Faltou? A linha já traz o botão de <b>cobrar a aula</b>.</li>
+            <li><b>Manda a agenda pro calendário do celular</b> — o seu e o do aluno.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> o vai-e-vem de remarcação no WhatsApp.</div>
+        </div>
+
+        <div class="dep">
+          <span class="tag">09 · Marketing</span>
+          <h3>Minha página + o marketing dos Stories</h3>
+          <p class="oq">Você tem uma empresa. Empresa tem endereço e propaganda.</p>
+          <ul>
+            <li>O sistema <b>publica a sua página</b> — seus planos, sua foto, seu texto — num endereço pra mandar pro cliente.</li>
+            <li>Quem quer aula cai direto no <b>seu WhatsApp</b>.</li>
+            <li>Cada corrida terminada gera uma <b>arte com o trajeto e o nome do seu studio</b>, pronta pro Stories — seus alunos viram sua propaganda.</li>
+          </ul>
+          <div class="ganho"><b>Devolve:</b> a página que você ia fazer "quando desse tempo".</div>
+        </div>
+
+        <div class="dep dono">
+          <span class="tag">00 · Diretoria</span>
+          <h3>O único departamento que continua seu</h3>
+          <p class="oq">Decidir, olhar a execução, corrigir o movimento, conhecer a pessoa.</p>
+          <ul>
+            <li>Nada chega no aluno <b>sem você publicar</b>.</li>
+            <li>A IA propõe; <b>quem assina é você</b> — e a sua palavra vence a conclusão dela.</li>
+            <li>Quando falta um dado, o sistema <b>diz que falta</b> — não inventa número na sua tela.</li>
+          </ul>
+          <div class="ganho"><b>Esse é o ponto:</b> o tempo que volta, volta pro que só você sabe fazer.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <section class="sec">
     <div class="wrap grid">
       <div class="txt">
-        <div class="kicker">Corrida com GPS</div>
+        <div class="kicker">A entrega, vista de perto</div>
         <h2>Uma tela de corrida de dar inveja em app de corrida</h2>
-        <p>Você prescreve a corrida (livre, por meta ou tiros) e o aluno corre com mapa ao vivo, pace, pausa automática, aviso de voz a cada km e bloqueio de tela. No fim, medalhas e recordes pessoais celebrados na hora.</p>
+        <p>Você prescreve (livre, por meta ou tiros) e o aluno corre com mapa ao vivo, pace, pausa automática, aviso de voz a cada km e bloqueio de tela. No fim, medalhas, recordes — e o trajeto em 3D pra ele mostrar pra todo mundo.</p>
         <ul>
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>GPS mede distância e pace sozinho</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Treinos intervalados com aviso de forte/leve</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Batimento ao vivo com cinta ou pulseira, tela colorida por zona</li>
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O resultado volta pro seu painel automaticamente</li>
         </ul>
       </div>
@@ -165,9 +360,9 @@
   <section class="sec inv">
     <div class="wrap grid">
       <div class="txt">
-        <div class="kicker">Marketing automático</div>
+        <div class="kicker">Marketing que trabalha enquanto você dorme</div>
         <h2>Cada corrida do aluno vira propaganda do seu studio</h2>
-        <p>Ao terminar, um toque gera uma arte com o trajeto, os números e o <b style="color:#fff">nome do seu studio</b> — pronta pro Stories e pro WhatsApp. Seus alunos postam, os seguidores deles perguntam quem é o personal. É o marketing que trabalha enquanto você dorme.</p>
+        <p>Ao terminar, um toque gera uma arte com o trajeto, os números e o <b style="color:#fff">nome do seu studio</b> — pronta pro Stories e pro WhatsApp. Seus alunos postam, os seguidores deles perguntam quem é o personal. É o departamento de marketing rodando sem você gastar um minuto.</p>
       </div>
       <div class="cardArte"><img src="assets/vendas/card-corrida.webp" alt="Arte compartilhável da corrida com o trajeto desenhado, 5,11 km, tempo, pace e o nome do studio" loading="lazy" width="1080" height="1350"></div>
     </div>
@@ -176,9 +371,9 @@
   <section class="sec">
     <div class="wrap grid">
       <div class="txt">
-        <div class="kicker">Retenção por diversão</div>
+        <div class="kicker">Retenção sem te custar uma hora</div>
         <h2>Um jogo que segura aluno: níveis, medalhas e a Turma</h2>
-        <p>XP por treino, níveis com títulos (de Iniciante a Hall da Fama), medalhas de treino e de corrida — e as que VOCÊ cria com seus próprios desafios. Na Turma, sua mini rede social, os alunos postam, curtem e disputam o ranking da semana. Aluno que joga não cancela.</p>
+        <p>XP por treino, níveis com títulos (de Iniciante a Hall da Fama), medalhas de treino e de corrida — e as que VOCÊ cria com seus próprios desafios. Na Turma, os alunos postam, curtem e disputam o ranking da semana. Aluno que joga não cancela — e você não gastou um minuto segurando ele.</p>
       </div>
       <div class="par">
         <div class="fone sm"><img src="assets/vendas/app-conquistas.webp" alt="Conquistas do app: nível, XP, medalhas e a sequência de semanas" loading="lazy" width="780" height="1688"></div>
@@ -190,52 +385,58 @@
   <section class="sec inv">
     <div class="wrap grid">
       <div class="txt">
-        <div class="kicker">Inteligência artificial</div>
-        <h2>A IA monta a ficha. Você revisa e manda.</h2>
-        <p>O sistema lê a anamnese do aluno (nível, dias na semana, lesões, o que ele não gosta) e monta as fichas sozinho. A IA vai além: analisa o histórico de saúde inteiro e prescreve um treino sob medida — e sugere a evolução da semana. A decisão final é sempre sua.</p>
-        <ul>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Fichas A/B/C em segundos, do catálogo TORQUE</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Sugestão de carga quando o aluno estaciona</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Avaliação física com laudo completo — e medidas pela câmera, com a foto processada no próprio celular</li>
-        </ul>
-      </div>
-      <div class="fone"><img src="assets/vendas/painel-treinos.webp" alt="Painel do personal na área de treino automático com IA" loading="lazy" width="780" height="1688"></div>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="wrap grid">
-      <div class="txt">
-        <div class="kicker">Seu dinheiro em dia</div>
-        <h2>Financeiro que se cobra sozinho</h2>
-        <p>Contratos com vencimento, Pix copia e cola com QR na tela do aluno, assinatura no cartão, régua de cobrança educada pelo WhatsApp e baixa automática quando o pagamento cai. Quem está devendo aparece na primeira tela — sem planilha, sem constrangimento.</p>
+        <div class="kicker">O painel do dono</div>
+        <h2>Você abre e vê só o que muda decisão hoje</h2>
+        <p>A primeira tela não é um mar de gráficos: é o <b style="color:#fff">Resolver hoje</b> — quem precisa ser cobrado, quem está sem ficha nova, quem pediu horário — cada um com o botão do lado. O financeiro se cobra sozinho e o fechamento do mês sai pronto. Planilha, nunca mais.</p>
       </div>
       <div class="fone"><img src="assets/vendas/painel-financeiro.webp" alt="Financeiro do painel, com o recebido do mês e cada atrasado com o botão de cobrar na própria linha" loading="lazy" width="780" height="1688"></div>
     </div>
   </section>
 
-  <section class="sec" style="padding-bottom: 8px;">
+  <section class="versus">
     <div class="wrap">
-      <div class="kicker" style="text-align:center;">E não para por aí</div>
-      <h2 style="text-align:center;">Tudo isso vem junto, sem pagar mais</h2>
-      <div class="maisGrid">
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.3 6 10.5a6 6 0 0 1-12 0C6 9.3 12 3 12 3z"/></svg><b>Utilidades do aluno</b><p>Água com lembrete e copinhos, cronômetro e timers, calculadora de 1RM, anilhas e IMC — tudo dentro do app.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 11h6M9 15h4"/></svg><b>Questionários de check-in</b><p>O aluno responde no app (sono, dor, energia, medidas) e a resposta cai no seu painel — com XP pra ele não esquecer.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><b>Financeiro na tela do aluno</b><p>Ele vê o plano, o vencimento e paga por Pix com QR ou assina no cartão — e o botão Já paguei te avisa na hora.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 5 12 7-12 7z"/></svg><b>Treino guiado</b><p>O aluno aperta o play e o app conduz série por série: descanso contando sozinho e o próximo exercício na tela.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><b>Modo circuito (WOD)</b><p>For Time, AMRAP, EMOM e Tabata com cronômetro de tela cheia e placar dos alunos no seu painel.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><b>Agenda integrada</b><p>O aluno pede horário pelo app, você confirma e a sessão entra no calendário do celular de vocês dois.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><b>Chat com robô</b><p>Dúvida às 22h? O robô responde na hora com o fluxo que você montar — e te chama quando é coisa séria.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M9 6l1.5-2h3L15 6"/></svg><b>Fotos antes e depois</b><p>Slider de comparação com lembrete mensal da foto — a evolução visível que renova contrato sozinha.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 7 9 13 13 9 21 17"/><polyline points="15 17 21 17 21 11"/></svg><b>Avaliação física completa</b><p>De peso, dobras ou fita sai um laudo estilo bioimpedância: água, massa magra, músculo, TMB e pontuação, imprimível.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg><b>Medidas pela câmera</b><p>Duas fotos viram circunferências estimadas — com a imagem processada no celular, sem subir pra internet.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10"/></svg><b>Catálogo de exercícios</b><p>Mais de 1500 exercícios com dica de execução escrita, organizados por padrão de movimento e grupamento — a ficha sai em 3 toques, e funciona até sem internet.</p></div>
-        <div class="mais"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><b>Notificações no celular</b><p>Treino novo, horário confirmado, recado seu e lembrete de água — o app chama o aluno de volta pro treino.</p></div>
+      <div class="kicker" style="text-align:center;">A mesma segunda-feira</div>
+      <h2>O que muda na prática</h2>
+      <p class="subt">A semana é a mesma. O que muda é quem faz o trabalho repetido dela.</p>
+      <div class="cols">
+        <div class="vcol gratis">
+          <h3>Hoje, tudo na sua mão</h3>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Abrir o WhatsApp e tentar lembrar quem não pagou</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Montar ficha do zero, virar PDF, mandar — e o aluno apagar</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Descobrir que o aluno sumiu quando ele já sumiu</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Fechar o mês na planilha, de noite</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Responder "qual meu treino hoje?" pela vigésima vez</li>
+          </ul>
+        </div>
+        <div class="vcol torque">
+          <h3>Com os departamentos contratados</h3>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O Resolver hoje lista os nomes, com o botão de cobrar do lado</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>A IA propõe o mês, você revisa e publica — chega no app do aluno na hora</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O filtro Sumindo avisa antes do cancelamento</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>A baixa entra sozinha; o fechamento já está pronto</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O treino do dia está no app dele, com lembrete no celular</li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="versus">
+  <section class="sec" style="padding-bottom:8px;">
+    <div class="wrap">
+      <div class="kicker" style="text-align:center;">Honestidade</div>
+      <h2 style="text-align:center;">O que o TORQUE PERSONAL não faz</h2>
+      <p style="text-align:center;max-width:560px;margin:0 auto;">Página que só promete não ajuda ninguém a decidir. Então, na cara:</p>
+      <div class="maisGrid">
+        <div class="mais"><b>Não dá aula por você</b><p>Correção de execução, olho no aluno e relação continuam sendo o seu trabalho — e é exatamente por isso que ele te paga.</p></div>
+        <div class="mais"><b>Não fica com o seu dinheiro</b><p>O pagamento do aluno vai direto pra sua conta, no gateway que você escolher. Não somos intermediários do seu caixa.</p></div>
+        <div class="mais"><b>Não inventa número</b><p>Quando falta um dado — batimento, foto, resposta — a tela diz que falta, em vez de mostrar um gráfico bonito e falso.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="versus" style="margin-top:56px;">
     <div class="wrap">
       <div class="kicker" style="text-align:center;">A pergunta que todo mundo faz</div>
       <h2>Por que não usar um app grátis?</h2>
@@ -256,7 +457,7 @@
           <ul>
             <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Zero anúncio — a experiência é 100% sua</li>
             <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Sua marca, sua cor e seu logo no app de cada aluno</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Nenhum concorrente dentro do seu app — nunca</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O pagamento do aluno cai direto na SUA conta</li>
             <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Seus dados são seus, com backup — e funciona offline</li>
             <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Medidas pela câmera processadas no aparelho — a foto não sai do celular</li>
           </ul>
@@ -268,7 +469,7 @@
   <section class="preco" id="preco">
     <div class="wrap">
       <div class="kicker">Preço simples</div>
-      <h2 style="font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.02em;margin-top:10px;">Um valor fixo. Tudo incluso.</h2>
+      <h2 style="font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.02em;margin-top:10px;">Sete departamentos. Um valor fixo.</h2>
       <div class="preco-card">
         <div class="kicker" style="font-size:11px;">Plano TORQUE PERSONAL</div>
         <div class="p">R$ 49<small>/mês</small></div>
@@ -276,11 +477,12 @@
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>14 dias grátis pra testar — sem cartão</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Alunos, fichas e apps ilimitados</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>App do aluno com a sua marca</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Corrida com GPS, medalhas e arte pro Stories</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>IA de treino, avaliação física e financeiro completo</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>IA de treino, avaliação física e agenda</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Financeiro com baixa automática — na SUA conta</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Sem fidelidade — cancele quando quiser</li>
         </ul>
       </div>
+      <p class="sob">Menos que o valor de UMA aula sua. Por mês. Pela empresa inteira.</p>
     </div>
   </section>
 
@@ -295,6 +497,14 @@
       <p>Sim. Treino, cronômetro, diário de cargas e corrida funcionam offline e sincronizam quando a conexão volta. Academia com sinal ruim não trava ninguém.</p>
     </details>
     <details>
+      <summary>O dinheiro dos meus alunos passa por vocês?</summary>
+      <p>Não. Você conecta a sua própria conta do Mercado Pago, Asaas ou Pagar.me e o pagamento cai direto lá. A gente não cobra comissão sobre o que você recebe — só valem as taxas do gateway que você escolher.</p>
+    </details>
+    <details>
+      <summary>Eu preciso confiar cegamente na IA?</summary>
+      <p>Não. Ela é opcional e nada chega no aluno sem você publicar. E o que você escrever sobre o aluno — lesões, adaptações, o que ele não pode fazer — é regra absoluta: a sua leitura vence qualquer conclusão que a IA tire dos números.</p>
+    </details>
+    <details>
       <summary>Quantos alunos posso ter?</summary>
       <p>Quantos você aguentar. O preço é fixo: com 5 ou com 100 alunos, você paga os mesmos R$ 49 por mês.</p>
     </details>
@@ -303,14 +513,14 @@
       <p>Não. Você testa 14 dias de graça sem cadastrar cartão, assina se gostar e cancela quando quiser.</p>
     </details>
     <details>
-      <summary>E se eu já uso outro app?</summary>
-      <p>Você cadastra seus alunos em minutos (o treino automático monta as fichas pela anamnese) e manda o link novo pra turma. A maioria migra a carteira inteira em uma tarde.</p>
+      <summary>E se eu já uso outro app ou planilha?</summary>
+      <p>Você cadastra seus alunos em minutos (o treino automático monta as fichas pela anamnese) e manda o link novo pra turma. A maioria migra a carteira inteira em uma tarde — e dá pra testar com dois ou três alunos antes.</p>
     </details>
   </section>
 
   <div class="fim">
-    <h2>Teste com os seus alunos ainda hoje</h2>
-    <p>14 dias grátis, sem cartão. Se não amar, é só fechar a aba.</p>
+    <h2>Dinheiro você faz de novo.<br>Terça-feira à noite, não.</h2>
+    <p>Contrate os seis departamentos por R$ 49 e fique só com o que ninguém faz por você.</p>
     <div class="ctaRow" style="justify-content:center;">
       <a class="cta" id="ctaZap2" href="personal.html">Começar meu teste grátis</a>
       <a class="cta ghost" href="personal.html">Testar grátis por 14 dias — começa agora</a>
