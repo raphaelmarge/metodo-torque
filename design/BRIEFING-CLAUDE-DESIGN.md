@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v645** |
-| Estado do repo em | 2026-08-27 (commit `57a2e15`) |
+| App em | **mt-v646** |
+| Estado do repo em | 2026-08-27 (commit `410502a`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 107 |
+| Lançamentos no histórico | 108 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v645** — ou seja, **44 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v646** — ou seja, **45 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v646 | página de vendas nova — o sistema que te oferece tempo, o personal como empresa |
 | mt-v645 | o mapa da corrida segue o aluno, e a bolinha vira seta |
 | mt-v644 | prepara a chave do CARTO (o mapa vinha carimbado "API KEY REQUIRED") |
 | mt-v643 | o trajeto da corrida em 3D (MapLibre) — e a rota passa a ser guardada |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v632 | habitos viram media no perfil + montar ficha sem o velho e o novo juntos ([#619](https://github.com/raphaelmarge/metodo-torque/pull/619)) |
 | mt-v631 | corrida continua E intervalada no mesmo treino + o quadro do trajeto ([#618](https://github.com/raphaelmarge/metodo-torque/pull/618)) |
 | mt-v630 | questionario respondido vira metrica no perfil do aluno ([#617](https://github.com/raphaelmarge/metodo-torque/pull/617)) |
-| mt-v629 | a camada de baixo do painel (o que fazia tudo continuar diferente) ([#616](https://github.com/raphaelmarge/metodo-torque/pull/616)) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
