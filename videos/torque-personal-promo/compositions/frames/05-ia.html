@@ -1,0 +1,326 @@
+<template>
+  <div data-composition-id="05-ia" data-width="1080" data-height="1920">
+    <style>
+      /* ---- fonts (shipped with the project) ---- */
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 600;
+        src: url("assets/fonts/archivo-latin-600-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 800;
+        src: url("assets/fonts/archivo-latin-800-normal.woff2") format("woff2");
+      }
+
+      /* ---- frame root ---- */
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* ---- full-bleed ground (dark register: ink-black, flat plane) ---- */
+      .ia05-bg {
+        position: absolute;
+        inset: 0;
+        background: #0d0c10;
+        container-type: size;
+      }
+
+      /* ---- stage ---- */
+      .ia05-stage {
+        position: absolute;
+        inset: 0;
+        container-type: size;
+        font-family: "Archivo", Arial, sans-serif;
+        color: #f5f4f7;
+      }
+
+      /* phone card — sharp rectangle, 1px hairline, flat (no shadow, no radius) */
+      .ia05-phone {
+        position: absolute;
+        left: 19cqw;
+        top: 9cqw;
+        width: 42cqw;
+        will-change: transform;
+      }
+      .ia05-phone img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #26222f;
+      }
+
+      /* highlight ring over the "Gerar com IA" button in the screenshot */
+      .ia05-hl {
+        position: absolute;
+        left: 6.9%;
+        top: 15.6%;
+        width: 43.5%;
+        height: 6.3%;
+        border: 2px solid #7c3aed;
+        overflow: hidden;
+        opacity: 0;
+      }
+      .ia05-sheen {
+        position: absolute;
+        top: -20%;
+        left: -18%;
+        width: 18%;
+        height: 140%;
+        will-change: transform;
+      }
+      .ia05-sheen-in {
+        position: absolute;
+        inset: 0;
+        transform: skewX(-18deg);
+        background: linear-gradient(
+          90deg,
+          rgba(245, 244, 247, 0) 0%,
+          rgba(245, 244, 247, 0.38) 50%,
+          rgba(245, 244, 247, 0) 100%
+        );
+      }
+
+      /* the system's only ornament — the violet rule stub */
+      .ia05-rule {
+        position: absolute;
+        right: 5.5cqw;
+        top: 27.4cqw;
+        width: 3.4cqw;
+        height: 2px;
+        background: #7c3aed;
+        transform-origin: 100% 50%;
+        will-change: transform;
+      }
+
+      /* display line — Archivo 800, lowercase, negative-tracked, right column */
+      .ia05-headline {
+        position: absolute;
+        right: 5.5cqw;
+        top: 30cqw;
+        text-align: right;
+        font-weight: 800;
+        font-size: 9.4cqw;
+        line-height: 0.98;
+        letter-spacing: -0.03em;
+        color: #f5f4f7;
+      }
+      .ia05-hline {
+        display: block;
+        white-space: nowrap;
+      }
+      .ia05-w {
+        display: inline-block;
+        will-change: transform;
+      }
+      .ia05-acc {
+        color: #7c3aed;
+      }
+
+      /* sub-line — full width under the card */
+      .ia05-sub {
+        position: absolute;
+        left: 5.5cqw;
+        right: 5.5cqw;
+        top: 100cqw;
+        font-weight: 600;
+        font-size: 4.8cqw;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        color: #b9b3c6;
+      }
+      .ia05-sw {
+        display: inline-block;
+        will-change: transform;
+      }
+      .ia05-voce {
+        color: #7c3aed;
+        font-weight: 800;
+      }
+      .ia05-voce-in {
+        display: inline-block;
+        transform-origin: 50% 60%;
+        will-change: transform;
+      }
+    </style>
+
+    <!-- ground -->
+    <div
+      class="clip ia05-bg"
+      data-start="0"
+      data-duration="5"
+      data-track-index="0"
+    ></div>
+
+    <!-- stage -->
+    <div
+      class="clip ia05-stage"
+      data-start="0"
+      data-duration="5"
+      data-track-index="1"
+    >
+      <div class="ia05-phone" id="ia05-phone">
+        <img
+          src="assets/painel-treinos.webp"
+          alt="Painel Montar treino — MONTANDO PRA Ana Beatriz, Gerar com IA, fichas A e B"
+          width="780"
+          height="1688"
+        />
+        <div class="ia05-hl" id="ia05-hl">
+          <div class="ia05-sheen" id="ia05-sheen">
+            <div class="ia05-sheen-in"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ia05-rule" id="ia05-rule"></div>
+
+      <div class="ia05-headline" id="ia05-headline">
+        <span class="ia05-hline"
+          ><span class="ia05-w">a</span> <span class="ia05-w">IA</span></span
+        >
+        <span class="ia05-hline"><span class="ia05-w">monta</span></span>
+        <span class="ia05-hline"
+          ><span class="ia05-w">o</span>
+          <span class="ia05-w ia05-acc">m&ecirc;s.</span></span
+        >
+      </div>
+
+      <div class="ia05-sub" id="ia05-sub">
+        <span class="ia05-sw">e</span> <span class="ia05-sw">obedece</span>
+        <span class="ia05-sw">o</span> <span class="ia05-sw">que</span>
+        <span class="ia05-sw ia05-voce"
+          ><span class="ia05-voce-in" id="ia05-voce-in">voc&ecirc;</span></span
+        >
+        <span class="ia05-sw">escrever</span> <span class="ia05-sw">sobre</span>
+        <span class="ia05-sw">o</span> <span class="ia05-sw">aluno.</span>
+      </div>
+    </div>
+
+    <script src="assets/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+        window.__timelines["05-ia"] = tl;
+
+        var DUR = 5;
+
+        /* ---- Scene 1 (0.0–1.8s): phone card arrives from the left ----
+           spring-pop-entrance (calm settle): fromTo scale-grow on power3.out,
+           no overshoot; combined with the slide-in from the left. */
+        tl.fromTo(
+          "#ia05-phone",
+          { x: -520, scale: 0.78, opacity: 0 },
+          { x: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" },
+          0.05
+        );
+
+        /* highlight sweep on the "Gerar com IA" button: ring pops, sheen
+           band crosses it once, then the ring dims as the frame yields */
+        tl.fromTo(
+          "#ia05-hl",
+          { opacity: 0, scale: 0.85 },
+          { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" },
+          0.85
+        );
+        tl.fromTo(
+          "#ia05-sheen",
+          { xPercent: 0 },
+          { xPercent: 680, duration: 0.65, ease: "power2.inOut" },
+          1.0
+        );
+        tl.to(
+          "#ia05-hl",
+          { opacity: 0.35, duration: 0.4, ease: "power2.out" },
+          1.85
+        );
+
+        /* ---- Scene 2 (1.8–3.4s): signature weight-transfer ----
+           the card slides ~15% left + scales down, HANDING its weight to the
+           display line that enters the vacated column (overlapping windows,
+           one event). */
+        tl.to(
+          "#ia05-phone",
+          { x: -162, scale: 0.9, duration: 0.75, ease: "power3.inOut" },
+          1.8
+        );
+        tl.fromTo(
+          "#ia05-rule",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.45, ease: "power3.out" },
+          2.0
+        );
+        gsap.utils.toArray(".ia05-w").forEach(function (el, i) {
+          tl.fromTo(
+            el,
+            { y: 70, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+            2.15 + i * 0.085
+          );
+        });
+
+        /* ---- Scene 3 (3.4–5.0s): sub-line staggered per word ---- */
+        gsap.utils.toArray(".ia05-sw").forEach(function (el, i) {
+          tl.fromTo(
+            el,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+            3.45 + i * 0.055
+          );
+        });
+
+        /* keyword glow on "você" — asr-keyword-glow mechanics: one linear
+           driver sweeps scene time; an attack/sustain/release envelope drives
+           text-shadow blur + scale, decaying to a rest level (never to zero).
+           Applied to an inner span so it never fights the entrance tween. */
+        var voceIn = document.getElementById("ia05-voce-in");
+        var V_START = 3.95;
+        var V_END = 4.45;
+        var ATTACK = 0.18;
+        var RELEASE = 0.4;
+        var REST = 0.3;
+        var MAX_BLUR = 34;
+        var MAX_SCALE = 0.12;
+        function envAt(time) {
+          if (time < V_START) return 0;
+          if (time < V_END) return Math.min((time - V_START) / ATTACK, 1);
+          var releaseEnd = V_END + RELEASE;
+          if (time < releaseEnd)
+            return 1 - ((time - V_END) / RELEASE) * (1 - REST);
+          return REST;
+        }
+        var driver = { t: 0 };
+        tl.to(
+          driver,
+          {
+            t: DUR,
+            duration: DUR,
+            ease: "none",
+            onUpdate: function () {
+              var e = envAt(driver.t);
+              voceIn.style.textShadow =
+                "0 0 " +
+                MAX_BLUR * e +
+                "px rgba(124,58,237," +
+                0.85 * e +
+                "), 0 0 " +
+                12 * e +
+                "px rgba(124,58,237," +
+                0.6 * e +
+                ")";
+              voceIn.style.transform = "scale(" + (1 + MAX_SCALE * e) + ")";
+            },
+          },
+          0
+        );
+        /* settle + micro-hold: nothing new after ~4.5s — no exit (non-final frame) */
+      })();
+    </script>
+  </div>
+</template>

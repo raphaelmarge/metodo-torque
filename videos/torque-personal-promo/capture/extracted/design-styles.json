@@ -1,0 +1,247 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "Archivo",
+      "fontSize": "50px",
+      "fontWeight": "800",
+      "lineHeight": "54px",
+      "letterSpacing": "-1px",
+      "color": "#F5F4F7",
+      "sampleText": "O sistema que te oferece o que você não pode comprar: tempo"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "Archivo",
+      "fontSize": "34px",
+      "fontWeight": "800",
+      "lineHeight": "39.1px",
+      "letterSpacing": "-0.68px",
+      "color": "#F5F4F7",
+      "sampleText": "Você tem uma empresa. Ela só não tem funcionários."
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Archivo",
+      "fontSize": "18px",
+      "fontWeight": "800",
+      "lineHeight": "normal",
+      "letterSpacing": "-0.18px",
+      "color": "#F5F4F7",
+      "sampleText": "Resolver hoje"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Archivo",
+      "fontSize": "17px",
+      "fontWeight": "700",
+      "lineHeight": "normal",
+      "letterSpacing": "normal",
+      "color": "#F5F4F7",
+      "sampleText": "Hoje, tudo na sua mão"
+    },
+    {
+      "role": "body",
+      "fontFamily": "Archivo",
+      "fontSize": "17px",
+      "fontWeight": "400",
+      "lineHeight": "28.05px",
+      "letterSpacing": "normal",
+      "color": "#B9B3C6",
+      "sampleText": "Você não é \"só\" um personal trainer. Você é uma empresa de u"
+    },
+    {
+      "role": "body-small",
+      "fontFamily": "Archivo",
+      "fontSize": "17px",
+      "fontWeight": "600",
+      "lineHeight": "normal",
+      "letterSpacing": "-1.08px",
+      "color": "#A9A4B5",
+      "sampleText": "/mês"
+    },
+    {
+      "role": "link",
+      "fontFamily": "Archivo",
+      "fontSize": "16px",
+      "fontWeight": "800",
+      "lineHeight": "normal",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "Quero meu tempo de volta"
+    },
+    {
+      "role": "label",
+      "fontFamily": "Archivo",
+      "fontSize": "11px",
+      "fontWeight": "800",
+      "lineHeight": "normal",
+      "letterSpacing": "1.76px",
+      "color": "#A78BFA",
+      "sampleText": "Seu dia"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      1,
+      5,
+      6,
+      7,
+      8,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      22
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "14px",
+    "999px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(124, 58, 237, 0.55) 0px 30px 80px -30px",
+      "count": 1
+    },
+    {
+      "value": "rgb(124, 58, 237) 0px 20px 60px -30px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Quero meu tempo de volta\n          Ver o",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F5F4F7",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px none rgb(245, 244, 247)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "49px"
+    },
+    {
+      "label": "Quero meu tempo de volta",
+      "background": "transparent",
+      "backgroundImage": "linear-gradient(135deg, rgb(124, 58, 237), rgb(109, 40, 217))",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "15px 26px",
+      "borderRadius": "14px",
+      "border": "0px none rgb(255, 255, 255)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "800",
+      "height": "49px"
+    },
+    {
+      "label": "Ver o app do aluno ao vivo",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "15px 26px",
+      "borderRadius": "14px",
+      "border": "1px solid rgb(76, 63, 107)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "700",
+      "height": "49px"
+    },
+    {
+      "label": "‹",
+      "background": "#17141D",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#CFCBDB",
+      "padding": "1px 6px",
+      "borderRadius": "999px",
+      "border": "1px solid rgb(44, 39, 57)",
+      "boxShadow": "none",
+      "fontSize": "17px",
+      "fontWeight": "800",
+      "height": "38px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F5F4F7",
+      "padding": "0px",
+      "borderRadius": "18px",
+      "border": "0px none rgb(245, 244, 247)",
+      "boxShadow": "rgba(124, 58, 237, 0.55) 0px 30px 80px -30px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "425px"
+    },
+    {
+      "label": "card",
+      "background": "transparent",
+      "backgroundImage": "linear-gradient(160deg, rgb(36, 29, 51), rgb(28, 24, 38))",
+      "backdropFilter": "",
+      "color": "#F5F4F7",
+      "padding": "34px 26px",
+      "borderRadius": "22px",
+      "border": "1px solid rgb(124, 58, 237)",
+      "boxShadow": "rgb(124, 58, 237) 0px 20px 60px -30px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "348.312px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#0D0C10",
+    "backgroundImage": "radial-gradient(120% 90% at 50% -30%, rgba(124, 58, 237, 0.35), rgba(0, 0, 0, 0) 60%), none",
+    "backdropFilter": "",
+    "color": "#F5F4F7",
+    "padding": "54px 0px 0px",
+    "borderRadius": "0px",
+    "border": "0px none rgb(245, 244, 247)",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "689.25px"
+  },
+  "chips": [
+    {
+      "label": "Seu dia",
+      "background": "#7C3AED",
+      "color": "#A78BFA",
+      "padding": "5px 11px",
+      "borderRadius": "999px",
+      "border": "1px solid rgba(124, 58, 237, 0.34)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "800",
+      "height": "24px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [
+    {
+      "value": "radial-gradient(120% 90% at 50% -30%, rgba(124, 58, 237, 0.35), rgba(0, 0, 0, 0) 60%), none",
+      "area": 1323360
+    },
+    {
+      "value": "linear-gradient(160deg, rgb(36, 29, 51), rgb(28, 24, 38))",
+      "area": 523525
+    }
+  ],
+  "glass": []
+}

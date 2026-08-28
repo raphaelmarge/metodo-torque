@@ -1,0 +1,228 @@
+<template>
+  <style>
+    /* ---- fonts (shipped with the project) ---- */
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 700;
+      src: url(assets/fonts/archivo-latin-700-normal.woff2) format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 800;
+      src: url(assets/fonts/archivo-latin-800-normal.woff2) format("woff2");
+    }
+
+    /* ---- frame root (styled via #root, never a class) ---- */
+    #root {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Archivo", Arial, sans-serif;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* full-bleed ground lives on a clip layer, not on #root */
+    .tempo01-bg {
+      background: #0d0c10;
+    }
+
+    .tempo01-stack {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+    }
+
+    /* ---- hero word: display ramp, lowercase 800, negative-tracked ---- */
+    .tempo01-hero {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 38cqh;
+      margin: 0;
+      text-align: center;
+      font-weight: 800;
+      font-size: 24cqw;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      color: #7c3aed;
+      will-change: transform, filter;
+    }
+
+    /* ---- lower phrase slot (p2 and p3 share it) ---- */
+    .tempo01-sub {
+      position: absolute;
+      left: 5.5cqw;
+      right: 5.5cqw;
+      top: 47cqh;
+      text-align: center;
+    }
+    .tempo01-line {
+      font-weight: 700;
+      font-size: 6.8cqw;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      color: #f5f4f7;
+    }
+    .tempo01-w {
+      display: inline-block;
+      will-change: transform, filter;
+    }
+    .tempo01-brand {
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .tempo01-snap {
+      display: inline-block;
+      will-change: transform;
+    }
+    .tempo01-devolve {
+      display: inline-block;
+      transform-origin: 50% 50%;
+      font-weight: 800;
+      color: #7c3aed;
+      will-change: transform;
+    }
+
+    /* accent bar — the system's rule stub, scaled for the frame */
+    .tempo01-bar {
+      display: block;
+      width: 11cqw;
+      height: 0.55cqw;
+      margin: 2.4cqw auto 0;
+      overflow: visible;
+    }
+    .tempo01-bar line {
+      stroke: #7c3aed;
+      stroke-width: 6;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+    }
+  </style>
+
+  <div id="root" data-composition-id="01-tempo" data-width="1080" data-height="1920">
+    <div class="clip tempo01-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <div class="clip" data-start="0" data-duration="5" data-track-index="1">
+      <div class="tempo01-stack">
+        <h1 class="tempo01-hero" id="tempo01-hero">tempo.</h1>
+
+        <!-- Scene 2 — per-word staggered reveal, cream, 3:1 under the hero -->
+        <div class="tempo01-sub" id="tempo01-p2" aria-hidden="true">
+          <div class="tempo01-line">
+            <span class="tempo01-w">a</span>
+            <span class="tempo01-w">única</span>
+            <span class="tempo01-w">coisa</span>
+            <span class="tempo01-w">que</span>
+            <span class="tempo01-w">você</span>
+          </div>
+          <div class="tempo01-line">
+            <span class="tempo01-w">não</span>
+            <span class="tempo01-w">pode</span>
+            <span class="tempo01-w">comprar.</span>
+          </div>
+        </div>
+
+        <!-- Scene 3 — hard-cut swap; "devolve." spring-pops in violet -->
+        <div class="tempo01-sub" id="tempo01-p3" aria-hidden="true">
+          <div class="tempo01-line">
+            <span class="tempo01-snap" id="tempo01-l1"
+              >o <b class="tempo01-brand">TORQUE PERSONAL</b></span
+            >
+          </div>
+          <div class="tempo01-line">
+            <span class="tempo01-snap" id="tempo01-te">te</span>
+            <span class="tempo01-devolve" id="tempo01-devolve">devolve.</span>
+          </div>
+          <svg
+            class="tempo01-bar"
+            viewBox="0 0 120 6"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line id="tempo01-barline" x1="0" y1="3" x2="120" y2="3" pathLength="100" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      /* ============ Scene 1 (0.0–1.4s) — kinetic beat-slam ============
+         "tempo." slams to center: scale + blur attack, power4.out, then a
+         short authoritative hold (hero visible well before t = 0.5s). */
+      tl.fromTo(
+        "#tempo01-hero",
+        { scale: 1.55, opacity: 0, filter: "blur(18px)" },
+        { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power4.out" },
+        0.1
+      );
+
+      /* ============ Scene 2 (1.4–3.2s) — per-word staggered reveal ======
+         Hero nudges up (making room — causal motion), the cream phrase
+         builds word by word below at ~1:3.5 scale against the hero. */
+      tl.to(
+        "#tempo01-hero",
+        { y: -210, duration: 0.55, ease: "power3.inOut" },
+        1.4
+      );
+      gsap.utils.toArray("#tempo01-p2 .tempo01-w").forEach(function (el, i) {
+        tl.fromTo(
+          el,
+          { y: 44, opacity: 0, filter: "blur(10px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" },
+          1.55 + i * 0.085
+        );
+      });
+
+      /* ============ Scene 3 (3.2–5.0s) — hard-cut word-swap ============
+         The lower phrase hard-cuts (instant, no roll/fade), the brand line
+         snaps in from the left (expo.out — third distinct ease family),
+         "devolve." spring-pops (power3.out settle, no overshoot), and the
+         accent bar self-draws beneath. Micro-hold to the end of the shot. */
+      tl.set("#tempo01-p2", { opacity: 0 }, 3.2);
+
+      tl.fromTo(
+        "#tempo01-l1",
+        { x: -54, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4, ease: "expo.out" },
+        3.2
+      );
+      tl.fromTo(
+        "#tempo01-te",
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: "expo.out" },
+        3.32
+      );
+      tl.fromTo(
+        "#tempo01-devolve",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
+        3.45
+      );
+
+      /* accent bar — SVG self-draw, left → right */
+      tl.fromTo(
+        "#tempo01-barline",
+        { strokeDashoffset: 100 },
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.inOut" },
+        3.95
+      );
+
+      window.__timelines["01-tempo"] = tl;
+    })();
+  </script>
+</template>

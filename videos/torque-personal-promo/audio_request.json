@@ -1,0 +1,46 @@
+{
+  "provider": "kokoro",
+  "speed": 1,
+  "lines": [
+    {
+      "id": "01",
+      "text": "Tempo. A única coisa que você não pode comprar. O TORQUE PERSONAL te devolve."
+    },
+    {
+      "id": "02",
+      "text": "Você não é só um personal. Você é uma empresa de uma pessoa só. E hoje, todos os cargos são seus."
+    },
+    {
+      "id": "03",
+      "text": "O TORQUE PERSONAL assume os departamentos."
+    },
+    {
+      "id": "04",
+      "text": "Seu aluno recebe um app com a sua marca. Treino guiado, circuito, corrida com GPS. E funciona até sem internet."
+    },
+    {
+      "id": "05",
+      "text": "A inteligência artificial monta o mês inteiro. E obedece o que você escrever sobre o aluno."
+    },
+    {
+      "id": "06",
+      "text": "A cobrança se cobra sozinha. Baixa automática, direto na sua conta."
+    },
+    {
+      "id": "07",
+      "text": "Aluno não cancela. Ele some. O painel te avisa antes."
+    },
+    {
+      "id": "08",
+      "text": "Quarenta e nove reais por mês. Alunos ilimitados. Quatorze dias grátis, sem cartão."
+    },
+    {
+      "id": "09",
+      "text": "Fique com o único cargo que ninguém faz por você: dar aula. TORQUE PERSONAL."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "pm_alex"
+}

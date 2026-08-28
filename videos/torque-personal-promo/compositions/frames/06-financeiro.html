@@ -1,0 +1,337 @@
+<template>
+  <style>
+    /* ---- fonts (shipped files, project-root relative) ---- */
+    @font-face {
+      font-family: "Archivo";
+      font-weight: 400;
+      font-style: normal;
+      src: url("assets/fonts/archivo-latin-400-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-weight: 500;
+      font-style: normal;
+      src: url("assets/fonts/archivo-latin-500-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-weight: 600;
+      font-style: normal;
+      src: url("assets/fonts/archivo-latin-600-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-weight: 700;
+      font-style: normal;
+      src: url("assets/fonts/archivo-latin-700-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-weight: 800;
+      font-style: normal;
+      src: url("assets/fonts/archivo-latin-800-normal.woff2") format("woff2");
+    }
+
+    #root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Archivo", sans-serif;
+    }
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ---- ground (dark register) ---- */
+    .f06-bg {
+      background: #0d0c10;
+    }
+
+    /* ---- slide chrome (top hairline bar) ---- */
+    .f06-chrome {
+      position: absolute;
+      left: 72px;
+      right: 72px;
+      top: 58px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #26222f;
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8a8695;
+      opacity: 0;
+    }
+    .f06-chrome b {
+      font-weight: 500;
+      color: #b9b3c6;
+    }
+
+    /* ---- phone (floating card, final landed geometry; GSAP owns transform) ---- */
+    .f06-phone {
+      position: absolute;
+      top: 230px;
+      left: 610px;
+      width: 500px;
+      will-change: transform;
+      opacity: 0;
+    }
+    .f06-phone-card {
+      position: relative;
+      border-radius: 34px;
+      border: 1px solid #26222f;
+      background: #17141d;
+      overflow: hidden;
+    }
+    .f06-phone-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* highlight ring over the RECEBIDO card region of the screenshot */
+    .f06-ring {
+      position: absolute;
+      left: 3.4%;
+      top: 15.1%;
+      width: 93.4%;
+      height: 13.9%;
+      border: 2.5px solid rgba(245, 244, 247, 0.92);
+      border-radius: 18px;
+      overflow: hidden;
+      opacity: 0;
+      will-change: transform;
+    }
+    .f06-sheen {
+      position: absolute;
+      top: -10%;
+      bottom: -10%;
+      left: 0;
+      width: 42%;
+      background: linear-gradient(
+        105deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.32) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      will-change: transform;
+      opacity: 0;
+    }
+
+    /* ---- text column (left 60% of the mirrored 40/60 split) ---- */
+    .f06-copy {
+      position: absolute;
+      left: 72px;
+      top: 590px;
+      width: 500px;
+    }
+    .f06-rule {
+      width: 60px;
+      height: 4px;
+      background: #7c3aed;
+      transform-origin: 0 50%;
+      opacity: 0;
+    }
+    .f06-kicker {
+      margin-top: 26px;
+      font-family: monospace;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #7c3aed;
+      opacity: 0;
+      will-change: transform;
+    }
+    .f06-h1 {
+      margin-top: 40px;
+      font-size: 80px;
+      font-weight: 800;
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+      color: #f5f4f7;
+      text-transform: lowercase;
+    }
+    .f06-h1 .f06-w {
+      display: inline-block;
+      opacity: 0;
+      will-change: transform;
+    }
+    .f06-sub {
+      margin-top: 36px;
+      max-width: 440px;
+      font-size: 31px;
+      font-weight: 500;
+      line-height: 1.45;
+      color: #b9b3c6;
+    }
+    .f06-sub .f06-sw {
+      display: inline-block;
+      opacity: 0;
+      will-change: transform;
+    }
+    .f06-sua {
+      color: #7c3aed;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="06-financeiro" data-width="1080" data-height="1920">
+    <!-- full-bleed ground -->
+    <div class="clip f06-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <!-- phone layer -->
+    <div class="clip" data-start="0" data-duration="5" data-track-index="1">
+      <div class="f06-phone" id="f06-phone">
+        <div class="f06-phone-card">
+          <img src="assets/painel-financeiro.webp" alt="" />
+          <div class="f06-ring" id="f06-ring">
+            <div class="f06-sheen" id="f06-sheen"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- text layer -->
+    <div class="clip" data-start="0" data-duration="5" data-track-index="2">
+      <div class="f06-chrome" id="f06-chrome">
+        <span>Torque&nbsp;Personal</span>
+        <b>06</b>
+      </div>
+      <div class="f06-copy">
+        <div class="f06-rule" id="f06-rule"></div>
+        <div class="f06-kicker" id="f06-kicker">Financeiro</div>
+        <div class="f06-h1" id="f06-h1">
+          <span class="f06-w" id="f06-w1">cobrança</span><br />
+          <span class="f06-w" id="f06-w2">que</span>
+          <span class="f06-w" id="f06-w3">se</span><br />
+          <span class="f06-w" id="f06-w4">cobra</span><br />
+          <span class="f06-w" id="f06-w5">sozinha.</span>
+        </div>
+        <div class="f06-sub" id="f06-sub">
+          <span class="f06-sw">baixa</span>
+          <span class="f06-sw">autom&aacute;tica,</span>
+          <span class="f06-sw">direto</span>
+          <span class="f06-sw">na</span>
+          <span class="f06-sw f06-sua" id="f06-sua">sua</span>
+          <span class="f06-sw">conta.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      window.__timelines["06-financeiro"] = tl;
+
+      var F = 1 / 60;
+
+      /* chrome bar settles in quietly */
+      tl.fromTo(
+        "#f06-chrome",
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.1
+      );
+
+      /* ---- Scene 1 (0.0-1.8s): phone enters from the RIGHT, spring-pop settle
+             (spring-pop-entrance, calm power3.out — no overshoot), lands near
+             center at 1.28x; highlight sweep on the RECEBIDO card ---- */
+      tl.fromTo(
+        "#f06-phone",
+        { x: 430, y: 26, scale: 1.14, opacity: 0 },
+        { x: -244, y: 0, scale: 1.28, opacity: 1, duration: 0.85, ease: "power3.out" },
+        0.05
+      );
+      /* one gentle breath inside the window — a finite drift, not a loop */
+      tl.to("#f06-phone", { y: -8, duration: 0.8, ease: "sine.inOut" }, 0.95);
+
+      /* highlight ring pops on the RECEBIDO R$ 8.370 card */
+      tl.fromTo(
+        "#f06-ring",
+        { opacity: 0, scale: 1.14 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
+        0.9
+      );
+      /* light band sweeps THROUGH the card region (ease reads as light) */
+      tl.fromTo(
+        "#f06-sheen",
+        { xPercent: -160, skewX: -16, opacity: 1 },
+        { xPercent: 420, skewX: -16, opacity: 1, duration: 0.75, ease: "power1.inOut" },
+        1.05
+      );
+      tl.set("#f06-sheen", { opacity: 0 }, 1.82);
+
+      /* ---- Scene 2 (1.8-3.4s): weight-transfer — the card slides right and
+             scales down to the 40/60 landed slot, ceding the center; the
+             display line whips in per-word (waterfall entry, binary opacity) ---- */
+      tl.to(
+        "#f06-phone",
+        { x: 0, y: 0, scale: 1, duration: 0.7, ease: "power3.out" },
+        1.8
+      );
+      tl.to("#f06-ring", { opacity: 0.55, duration: 0.5, ease: "power2.out" }, 1.95);
+
+      tl.fromTo(
+        "#f06-rule",
+        { scaleX: 0, opacity: 1 },
+        { scaleX: 1, opacity: 1, duration: 0.35, ease: "power3.out" },
+        1.85
+      );
+      tl.fromTo(
+        "#f06-kicker",
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" },
+        1.95
+      );
+
+      /* waterfall entry — set (binary reveal + offset) then whip to rest */
+      var t1 = 2.1; /* anchor: cobrança */
+      tl.set("#f06-w1", { opacity: 1, y: 80 }, t1);
+      tl.to("#f06-w1", { y: 0, duration: 0.18, ease: "power4.out" }, t1);
+      var t2 = t1 + 0.18 + 2 * F; /* que */
+      tl.set("#f06-w2", { opacity: 1, y: 45 }, t2);
+      tl.to("#f06-w2", { y: 0, duration: 0.15, ease: "power4.out" }, t2);
+      var t3 = t2 + 0.15 - F; /* se (light, overlaps) */
+      tl.set("#f06-w3", { opacity: 1, y: 40 }, t3);
+      tl.to("#f06-w3", { y: 0, duration: 0.13, ease: "power4.out" }, t3);
+      var t4 = t3 + 0.13 - F; /* cobra */
+      tl.set("#f06-w4", { opacity: 1, y: 50 }, t4);
+      tl.to("#f06-w4", { y: 0, duration: 0.16, ease: "power4.out" }, t4);
+      var t5 = t4 + 0.16 - 2 * F; /* sozinha. — climax, travels furthest */
+      tl.set("#f06-w5", { opacity: 1, y: 70 }, t5);
+      tl.to("#f06-w5", { y: 0, duration: 0.2, ease: "power4.out" }, t5);
+
+      /* ---- Scene 3 (3.4-5.0s): sub-line staggered per-word, SUA in violet;
+             settle + micro-hold ---- */
+      gsap.utils.toArray(".f06-sw").forEach(function (el, i) {
+        tl.fromTo(
+          el,
+          { y: 26, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.38, ease: "power3.out" },
+          3.45 + i * 0.09
+        );
+      });
+      /* micro-accent on SUA once the line has landed */
+      tl.to("#f06-sua", { scale: 1.09, duration: 0.16, ease: "power2.out" }, 4.32);
+      tl.to("#f06-sua", { scale: 1, duration: 0.26, ease: "power2.inOut" }, 4.48);
+
+      /* quiet life on the card through the hold — single finite drift */
+      tl.to("#f06-phone", { y: -6, duration: 1.4, ease: "sine.out" }, 3.5);
+
+      /* pad to the full 5s window (benign hold on an existing element) */
+      tl.set("#f06-chrome", { opacity: 1 }, 5);
+    })();
+  </script>
+</template>

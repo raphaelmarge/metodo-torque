@@ -1,0 +1,271 @@
+<template>
+  <div
+    id="root"
+    data-composition-id="09-cta"
+    data-width="1080"
+    data-height="1920"
+  >
+    <!-- full-bleed ground (lowest track) -->
+    <div class="clip f09cta-bg" data-start="0" data-duration="6" data-track-index="0"></div>
+
+    <!-- Scene 1 + 2 : phrase → beat-slam -->
+    <div class="clip f09cta-layer" id="f09cta-phrase-clip" data-start="0" data-duration="3.7" data-track-index="1">
+      <div id="f09cta-stage">
+        <div id="f09cta-phrase">
+          <div class="f09cta-line">
+            <span class="f09cta-w">Fique</span>
+            <span class="f09cta-w">com</span>
+            <span class="f09cta-w">o</span>
+            <span class="f09cta-w">único</span>
+            <span class="f09cta-w">cargo</span>
+          </div>
+          <div class="f09cta-line">
+            <span class="f09cta-w">que</span>
+            <span class="f09cta-w">ninguém</span>
+            <span class="f09cta-w">faz</span>
+            <span class="f09cta-w">por</span>
+            <span class="f09cta-w">você:</span>
+          </div>
+          <div id="f09cta-slam">dar aula.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 3 : lockup assembles + URL type-on -->
+    <div class="clip f09cta-layer" id="f09cta-lockup-clip" data-start="3.2" data-duration="2.8" data-track-index="2">
+      <div id="f09cta-lockup">
+        <div id="f09cta-bar"></div>
+        <div id="f09cta-mark"
+          ><span class="f09cta-L">T</span><span class="f09cta-L">O</span><span class="f09cta-L">R</span><span class="f09cta-L">Q</span><span class="f09cta-L">U</span><span class="f09cta-L">E</span></div>
+        <div id="f09cta-pers">PERSONAL</div>
+        <div id="f09cta-url"
+          ><span class="f09cta-c">w</span><span class="f09cta-c">w</span><span class="f09cta-c">w</span><span class="f09cta-c">.</span><span class="f09cta-c">t</span><span class="f09cta-c">o</span><span class="f09cta-c">r</span><span class="f09cta-c">q</span><span class="f09cta-c">u</span><span class="f09cta-c">e</span><span class="f09cta-c">o</span><span class="f09cta-c">n</span><span class="f09cta-c">.</span><span class="f09cta-c">c</span><span class="f09cta-c">o</span><span class="f09cta-c">m</span><span class="f09cta-c">.</span><span class="f09cta-c">b</span><span class="f09cta-c">r</span><span id="f09cta-caret"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 600;
+      src: url("assets/fonts/archivo-latin-600-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 700;
+      src: url("assets/fonts/archivo-latin-700-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 800;
+      src: url("assets/fonts/archivo-latin-800-normal.woff2") format("woff2");
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      container-type: size;
+    }
+
+    .f09cta-bg {
+      position: absolute;
+      inset: 0;
+      background: #0d0c10;
+    }
+
+    .f09cta-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    #f09cta-stage {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ------ Scene 1/2 : phrase column, centered around ~43% height ------ */
+    #f09cta-phrase {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5.5cqw 22cqh 5.5cqw;
+      text-align: center;
+    }
+    .f09cta-line {
+      font-family: "Archivo", sans-serif;
+      font-weight: 700;
+      font-size: 5.9cqw;
+      line-height: 1.22;
+      letter-spacing: -0.02em;
+      color: #f5f4f7;
+      white-space: nowrap;
+    }
+    .f09cta-w {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+    #f09cta-slam {
+      margin-top: 3.6cqh;
+      font-family: "Archivo", sans-serif;
+      font-weight: 800;
+      font-size: 14cqw;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      color: #7c3aed;
+      will-change: transform, opacity, filter;
+    }
+
+    /* ------ Scene 3 : lockup ------ */
+    #f09cta-lockup {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5.5cqw 20cqh 5.5cqw;
+      text-align: center;
+    }
+    #f09cta-bar {
+      width: 6cqw;
+      height: 5px;
+      background: #7c3aed;
+      margin-bottom: 3cqh;
+      will-change: transform;
+    }
+    #f09cta-mark {
+      font-family: "Archivo", sans-serif;
+      font-weight: 800;
+      font-size: 14.6cqw;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: #f5f4f7;
+      white-space: nowrap;
+    }
+    .f09cta-L {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+    #f09cta-pers {
+      margin-top: 1.6cqh;
+      font-family: "Archivo", sans-serif;
+      font-weight: 600;
+      font-size: 3.4cqw;
+      line-height: 1;
+      letter-spacing: 0.55em;
+      text-indent: 0.55em; /* balances trailing tracking so the word optically centers */
+      color: #7c3aed;
+    }
+    #f09cta-url {
+      margin-top: 5.4cqh;
+      width: 20.5ch;
+      font-family: monospace;
+      font-size: 2.5cqw;
+      line-height: 1.3;
+      letter-spacing: 0;
+      color: #b9b3c6;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .f09cta-c {
+      display: none;
+    }
+    #f09cta-caret {
+      display: inline-block;
+      width: 0.55ch;
+      height: 1.02em;
+      margin-left: 2px;
+      background: #7c3aed;
+      vertical-align: text-bottom;
+      opacity: 0;
+    }
+  </style>
+
+  <script src="assets/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      /* ---------- Scene 1 (0.0–1.8s) — calm per-word staggered fade-through-grey ---------- */
+      tl.fromTo(
+        ".f09cta-w",
+        { opacity: 0, y: 36, color: "#8A8695" },
+        {
+          opacity: 1,
+          y: 0,
+          color: "#F5F4F7",
+          duration: 0.8,
+          ease: "power3.out",
+          stagger: 0.11
+        },
+        0.05
+      );
+
+      /* ---------- Scene 2 (1.8–3.2s) — "dar aula." kinetic beat-slam ---------- */
+      tl.fromTo(
+        "#f09cta-slam",
+        { opacity: 0, scale: 2.6, filter: "blur(18px)" },
+        { opacity: 1, scale: 1.05, filter: "blur(0px)", duration: 0.38, ease: "power4.in" },
+        1.8
+      );
+      tl.to("#f09cta-slam", { scale: 1, duration: 0.22, ease: "power2.out" }, 2.18);
+      /* impact jolt on the whole phrase stage */
+      tl.to("#f09cta-stage", { y: 12, duration: 0.07, ease: "power1.in" }, 2.18);
+      tl.to("#f09cta-stage", { y: 0, duration: 0.3, ease: "power3.out" }, 2.25);
+      /* micro-hold 2.55–3.2 */
+
+      /* ---------- Scene 3 (3.2–6.0s) — scale-swap → lockup assembles → URL type-on → HOLD ---------- */
+      /* phrase cedes the center (in-scene clearing beat of the swap) */
+      tl.to(
+        "#f09cta-phrase",
+        { opacity: 0, scale: 0.86, filter: "blur(10px)", duration: 0.38, ease: "power2.in" },
+        3.2
+      );
+
+      /* violet accent bar sweeps on */
+      tl.fromTo(
+        "#f09cta-bar",
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: "power3.out" },
+        3.42
+      );
+
+      /* TORQUE — letter cascade with overshoot (the mark comes to exist) */
+      tl.fromTo(
+        ".f09cta-L",
+        { opacity: 0, y: 100 },
+        { opacity: 1, y: 0, duration: 0.55, ease: "back.out(1.5)", stagger: 0.06 },
+        3.5
+      );
+
+      /* PERSONAL — tracks in below the mark */
+      tl.fromTo(
+        "#f09cta-pers",
+        { opacity: 0, scale: 1.35, transformOrigin: "50% 50%" },
+        { opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        3.9
+      );
+
+      /* URL — mono type-on with caret */
+      tl.fromTo("#f09cta-caret", { opacity: 0 }, { opacity: 1, duration: 0.06 }, 3.96);
+      var chars = document.querySelectorAll(".f09cta-c");
+      for (var i = 0; i < chars.length; i++) {
+        tl.set(chars[i], { display: "inline" }, 4.0 + i * 0.024);
+      }
+      /* typing ends ~4.43; caret rests, then retires for the still hold */
+      tl.to("#f09cta-caret", { opacity: 0, duration: 0.1 }, 4.5);
+      /* fully still from 4.6 → 6.0 (≥1.4s hold, loop-friendly) */
+
+      window.__timelines["09-cta"] = tl;
+    })();
+  </script>
+</template>

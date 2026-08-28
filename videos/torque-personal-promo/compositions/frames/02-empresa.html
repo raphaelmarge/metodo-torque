@@ -1,0 +1,259 @@
+<template>
+  <div id="root" data-composition-id="02-empresa" data-width="1080" data-height="1920">
+    <style>
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 600;
+        src: url("assets/fonts/archivo-latin-600-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 700;
+        src: url("assets/fonts/archivo-latin-700-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 800;
+        src: url("assets/fonts/archivo-latin-800-normal.woff2") format("woff2");
+      }
+
+      #root {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: size;
+        font-family: "Archivo", Arial, sans-serif;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* full-bleed ground — dark register (ink-black) */
+      .f02-bg {
+        background: #0d0c10;
+      }
+
+      /* ------- center statement (the fixed line) ------- */
+      .f02-center {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 320px; /* content centered inside the top-83% region */
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+      }
+      .f02-phrase {
+        grid-area: 1 / 1;
+        text-align: center;
+        z-index: 5;
+        max-width: 76cqw;
+      }
+      #f02-p1 {
+        font-size: 7cqw;
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+        color: #f5f4f7;
+      }
+      #f02-p1 .f02-w {
+        display: inline-block;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #f02-p2 {
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #f02-p2 .f02-l {
+        font-size: 6.4cqw;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #f5f4f7;
+      }
+      #f02-emp {
+        display: block;
+        font-size: 11.4cqw;
+        font-weight: 800;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        color: #7c3aed;
+        will-change: transform, opacity;
+      }
+
+      /* ------- role chips (the pile that closes in) ------- */
+      .f02-chip {
+        position: absolute;
+        opacity: 0;
+        background: #17141d;
+        border: 1px solid #26222f;
+        white-space: nowrap;
+        will-change: transform, opacity, filter;
+      }
+      /* depth layer: far */
+      .f02-far {
+        z-index: 2;
+        font-size: 2.3cqw;
+        font-weight: 600;
+        color: #8a8695;
+        padding: 1.5cqw 2.2cqw;
+        filter: blur(1.4px);
+      }
+      /* depth layer: mid */
+      .f02-mid {
+        z-index: 4;
+        font-size: 2.7cqw;
+        font-weight: 600;
+        color: #b9b3c6;
+        padding: 1.7cqw 2.4cqw;
+      }
+      /* depth layer: near */
+      .f02-near {
+        z-index: 6;
+        font-size: 3.1cqw;
+        font-weight: 700;
+        color: #f5f4f7;
+        padding: 1.9cqw 2.6cqw;
+      }
+
+      #f02-c1 { left: 310px; top: 205px; }
+      #f02-c2 { left: 48px;  top: 360px; }
+      #f02-c3 { left: 590px; top: 500px; }
+      #f02-c4 { left: 30px;  top: 1050px; }
+      #f02-c5 { left: 560px; top: 1170px; }
+      #f02-c6 { left: 280px; top: 1340px; }
+    </style>
+
+    <div class="clip f02-bg" data-start="0" data-duration="6" data-track-index="0"></div>
+
+    <div class="clip" id="f02-stage" data-start="0" data-duration="6" data-track-index="1">
+      <div class="f02-center">
+        <div class="f02-phrase" id="f02-p1">
+          <span class="f02-w">você</span>
+          <span class="f02-w">não</span>
+          <span class="f02-w">é</span>
+          <span class="f02-w">só</span>
+          <span class="f02-w">um</span>
+          <span class="f02-w">personal.</span>
+        </div>
+        <div class="f02-phrase" id="f02-p2">
+          <div class="f02-l">você é uma</div>
+          <span id="f02-emp">empresa</span>
+          <div class="f02-l">de uma pessoa só.</div>
+        </div>
+      </div>
+
+      <div class="f02-chip f02-far"  id="f02-c1">qual meu treino hoje?</div>
+      <div class="f02-chip f02-mid"  id="f02-c2">montar ficha de madrugada</div>
+      <div class="f02-chip f02-mid"  id="f02-c3">cobrar aluno atrasado</div>
+      <div class="f02-chip f02-far"  id="f02-c4">remarcar no WhatsApp</div>
+      <div class="f02-chip f02-mid"  id="f02-c5">fechar o mês na planilha</div>
+      <div class="f02-chip f02-near" id="f02-c6">lembrar quem sumiu</div>
+    </div>
+
+    <script src="assets/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+        window.__timelines["02-empresa"] = tl;
+
+        /* ---- Scene 1 (0.0–1.6s): per-word staggered reveal of the calm line ---- */
+        tl.fromTo(
+          "#f02-p1 .f02-w",
+          { autoAlpha: 0, y: 38 },
+          { autoAlpha: 1, y: 0, duration: 0.55, ease: "power3.out", stagger: 0.09 },
+          0.05
+        );
+
+        /* ---- Scene 2 (1.6–2.8s): hard-cut line swap; "empresa" spring-pops in violet ---- */
+        tl.set("#f02-p1", { autoAlpha: 0 }, 1.6);
+        tl.set("#f02-p2", { autoAlpha: 1 }, 1.6);
+        tl.fromTo(
+          "#f02-emp",
+          { autoAlpha: 0, scale: 0.25 },
+          { autoAlpha: 1, scale: 1, duration: 0.55, ease: "back.out(2.2)" },
+          1.6
+        );
+
+        /* ---- Scene 3 (2.8–5.2s): chips pile in from the edges, one per beat ----
+           Entry = inward glide from outside the cluster; on landing, the
+           press-release-spring recipe fires: linear compression (press) then
+           back.out spring recovery at the adjacent position (state continuity:
+           RELEASE_START = PRESS_START + PRESS_DUR). After settling, each chip
+           keeps creeping inward — the pile squeezes the center. */
+        var chips = [
+          { sel: "#f02-c1", t: 2.8,  ox: 30,   oy: -270, rot: -2 },
+          { sel: "#f02-c2", t: 3.15, ox: -300, oy: -110, rot: -5 },
+          { sel: "#f02-c3", t: 3.5,  ox: 320,  oy: -90,  rot: 3 },
+          { sel: "#f02-c4", t: 3.85, ox: -340, oy: 90,   rot: 4 },
+          { sel: "#f02-c5", t: 4.2,  ox: 330,  oy: 160,  rot: -4 },
+          { sel: "#f02-c6", t: 4.55, ox: -60,  oy: 280,  rot: 2 }
+        ];
+        var PRESS_DUR = 0.1;
+        var RELEASE_DUR = 0.5;
+        for (var i = 0; i < chips.length; i++) {
+          var c = chips[i];
+          /* arrival: from outside, along its own radial, rotation constant */
+          tl.fromTo(
+            c.sel,
+            { autoAlpha: 0, x: c.ox, y: c.oy, rotation: c.rot, scale: 1 },
+            {
+              autoAlpha: 1,
+              x: 0,
+              y: 0,
+              rotation: c.rot,
+              scale: 1,
+              duration: 0.42,
+              ease: "power3.out"
+            },
+            c.t
+          );
+          /* press: linear compression (tactile dip, never springy) */
+          tl.to(
+            c.sel,
+            { scale: 0.93, duration: PRESS_DUR, ease: "power1.in" },
+            c.t + 0.42
+          );
+          /* release: spring back, start value threads from the press by adjacency */
+          tl.to(
+            c.sel,
+            { scale: 1, duration: RELEASE_DUR, ease: "back.out(2)" },
+            c.t + 0.42 + PRESS_DUR
+          );
+          /* close-in creep: keeps travelling inward, squeezing the center */
+          var creepStart = c.t + 0.42 + PRESS_DUR;
+          tl.to(
+            c.sel,
+            {
+              x: -c.ox * 0.09,
+              y: -c.oy * 0.09,
+              duration: Math.max(0.3, 5.6 - creepStart),
+              ease: "power1.inOut"
+            },
+            creepStart
+          );
+        }
+
+        /* the center line gets APERTADO — compressed by the growing pile */
+        tl.to("#f02-p2", { scale: 0.94, duration: 2.3, ease: "power1.inOut" }, 2.9);
+
+        /* depth-of-field: the oldest chips fall out of focus as newer ones land */
+        tl.to("#f02-c1", { filter: "blur(2.8px)", opacity: 0.78, duration: 0.6, ease: "power1.inOut" }, 4.25);
+        tl.to("#f02-c2", { filter: "blur(1.5px)", opacity: 0.85, duration: 0.6, ease: "power1.inOut" }, 4.25);
+        tl.to("#f02-c3", { filter: "blur(1px)",   opacity: 0.9,  duration: 0.5, ease: "power1.inOut" }, 4.8);
+
+        /* ---- Scene 4 (5.2–6.0s): hold the crowded state — the discomfort IS the beat ---- */
+        tl.to({ n: 0 }, { n: 1, duration: 0.8 }, 5.2);
+      })();
+    </script>
+  </div>
+</template>

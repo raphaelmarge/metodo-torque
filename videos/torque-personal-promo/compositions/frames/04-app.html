@@ -1,0 +1,412 @@
+<template>
+  <style>
+    /* ---- fonts (shipped with the project) ---- */
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 400;
+      src: url(assets/fonts/archivo-latin-400-normal.woff2) format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 600;
+      src: url(assets/fonts/archivo-latin-600-normal.woff2) format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 700;
+      src: url(assets/fonts/archivo-latin-700-normal.woff2) format("woff2");
+    }
+    @font-face {
+      font-family: "Archivo";
+      font-style: normal;
+      font-weight: 800;
+      src: url(assets/fonts/archivo-latin-800-normal.woff2) format("woff2");
+    }
+
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      font-family: "Archivo", Arial, sans-serif;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ---- ground (dark register) ---- */
+    .f04app-bg {
+      background: #0d0c10;
+    }
+
+    /* ---- scene ---- */
+    .f04app-scene {
+      overflow: hidden;
+    }
+
+    /* camera wraps the showcased surface (glow + phone); HUD text sits above it */
+    .f04app-cam {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+
+    .f04app-glow {
+      position: absolute;
+      left: 50%;
+      top: 120px;
+      width: 940px;
+      height: 1320px;
+      margin-left: -470px;
+      border-radius: 50%;
+      background: radial-gradient(
+        closest-side,
+        rgba(124, 58, 237, 0.34),
+        rgba(124, 58, 237, 0.12) 48%,
+        rgba(124, 58, 237, 0) 74%
+      );
+      transform-origin: 50% 50%;
+    }
+
+    /* ---- the phone (fixed frame; only the screens swap inside it) ---- */
+    .f04app-phone {
+      position: absolute;
+      left: 50%;
+      top: 196px;
+      width: 542px;
+      height: 1150px;
+      margin-left: -271px;
+      padding: 10px;
+      border-radius: 58px;
+      background: #17141d;
+      border: 1px solid #26222f;
+      box-shadow:
+        0 60px 140px rgba(0, 0, 0, 0.68),
+        0 26px 90px rgba(124, 58, 237, 0.26);
+    }
+    .f04app-screenwrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 48px;
+      overflow: hidden;
+      background: #0d0c10;
+    }
+    .f04app-scr {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      opacity: 0;
+    }
+    .f04app-scr img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #f04app-scr1 {
+      z-index: 1;
+      opacity: 1;
+    }
+    #f04app-scr2 {
+      z-index: 2;
+    }
+    #f04app-scr3 {
+      z-index: 3;
+    }
+
+    /* keyword-glow region over the "+0,5 kg" line of app-treino (rides inside scr2) */
+    .f04app-hl {
+      position: absolute;
+      left: 276px;
+      top: 444px;
+      width: 184px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(74, 222, 128, 0.45);
+      background: rgba(74, 222, 128, 0.09);
+      box-shadow: 0 0 22px rgba(74, 222, 128, 0.4);
+      overflow: hidden;
+      opacity: 0;
+    }
+    .f04app-sweep {
+      position: absolute;
+      top: -8px;
+      bottom: -8px;
+      left: 0;
+      width: 70px;
+      background: linear-gradient(
+        100deg,
+        rgba(245, 244, 247, 0),
+        rgba(245, 244, 247, 0.35),
+        rgba(245, 244, 247, 0)
+      );
+      transform-origin: 50% 50%;
+    }
+
+    /* ---- HUD chrome (outside the camera so the label never drifts into the keep-out) ---- */
+    .f04app-kicker {
+      position: absolute;
+      left: 64px;
+      top: 96px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #b9b3c6;
+    }
+    .f04app-kicker i {
+      display: block;
+      width: 44px;
+      height: 3px;
+      background: #7c3aed;
+    }
+    .f04app-num {
+      position: absolute;
+      right: 64px;
+      top: 92px;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      color: #8a8695;
+      opacity: 0.55;
+    }
+
+    /* ---- rotating label under the phone ---- */
+    .f04app-labels {
+      position: absolute;
+      left: 60px;
+      right: 60px;
+      top: 1402px;
+      height: 178px;
+    }
+    .f04app-lbl {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 47px;
+      font-weight: 700;
+      line-height: 1.24;
+      letter-spacing: -0.02em;
+      color: #f5f4f7;
+      opacity: 0;
+      visibility: hidden;
+    }
+    #f04app-lb1 {
+      opacity: 1;
+      visibility: visible;
+    }
+    .f04app-w {
+      display: inline-block;
+      transform-origin: 50% 50%;
+    }
+    .f04app-sua {
+      color: #7c3aed;
+      font-weight: 800;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="04-app"
+    data-start="0"
+    data-duration="7"
+    data-width="1080"
+    data-height="1920"
+  >
+    <!-- full-bleed ground on its own clip layer -->
+    <div class="clip f04app-bg" data-start="0" data-duration="7" data-track-index="0"></div>
+
+    <!-- scene -->
+    <div class="clip f04app-scene" data-start="0" data-duration="7" data-track-index="1">
+      <!-- camera: micro push-in (multi-phase) over glow + phone -->
+      <div class="f04app-cam" id="f04app-cam" data-layout-allow-overflow>
+        <div class="f04app-glow" id="f04app-glow"></div>
+
+        <div class="f04app-phone" id="f04app-phone">
+          <div class="f04app-screenwrap">
+            <div class="f04app-scr" id="f04app-scr1">
+              <img src="assets/app-inicio.webp" alt="" />
+            </div>
+            <div class="f04app-scr" id="f04app-scr2">
+              <img src="assets/app-treino.webp" alt="" />
+              <div class="f04app-hl" id="f04app-hl">
+                <div class="f04app-sweep" id="f04app-sweep"></div>
+              </div>
+            </div>
+            <div class="f04app-scr" id="f04app-scr3">
+              <img src="assets/app-wod.webp" alt="" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HUD chrome -->
+      <div class="f04app-kicker" id="f04app-kicker"><i></i>torque personal</div>
+      <div class="f04app-num" id="f04app-num">04</div>
+
+      <!-- rotating label -->
+      <div class="f04app-labels">
+        <div class="f04app-lbl" id="f04app-lb1">
+          <div>
+            <span class="f04app-w">O</span>
+            <span class="f04app-w">app</span>
+            <span class="f04app-w">do</span>
+            <span class="f04app-w">aluno,</span>
+          </div>
+          <div>
+            <span class="f04app-w">com</span>
+            <span class="f04app-w">a</span>
+            <span class="f04app-w f04app-sua">SUA</span>
+            <span class="f04app-w">marca.</span>
+          </div>
+        </div>
+        <div class="f04app-lbl" id="f04app-lb2">
+          <div>treino guiado —<br />um exercício por vez</div>
+        </div>
+        <div class="f04app-lbl" id="f04app-lb3">
+          <div>e funciona até<br />sem internet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      /* ============ multi-phase camera (steady push) ============ */
+      /* One writer: phase scale/offset + sine micro-drift composed in onUpdate. */
+      var camEl = document.getElementById("f04app-cam");
+      var cam = { s: 1, tx: 0, ty: 0 };
+      var drift = { p: 0 };
+
+      // Phase 2 — gentle push begins after the phone settles
+      tl.to(cam, { s: 1.035, duration: 1.9, ease: "power2.inOut" }, 0.25);
+      // Phase 3 — a touch closer for the treino screen
+      tl.to(cam, { s: 1.06, duration: 1.5, ease: "power2.inOut" }, 2.35);
+      // Phase 4 — Scene 3: push a bit nearer the 19:46 clock (upper screen ⇒ content eases down)
+      tl.to(cam, { s: 1.1, ty: 46, duration: 1.8, ease: "power2.inOut" }, 4.7);
+
+      // Drift driver — spans the whole composition; the ONE transform writer.
+      tl.to(
+        drift,
+        {
+          p: Math.PI * 2 * 1.4,
+          duration: 7,
+          ease: "none",
+          onUpdate: function () {
+            var dx = Math.sin(drift.p) * 3.2;
+            var dy = Math.sin(drift.p * 1.3) * 2.1;
+            camEl.style.transform =
+              "scale(" + cam.s + ") translate(" + (cam.tx + dx) + "px," + (cam.ty + dy) + "px)";
+          },
+        },
+        0
+      );
+
+      /* ============ Scene 1 (0–2.2s): establish ============ */
+      tl.fromTo(
+        "#f04app-phone",
+        { y: 84, opacity: 0, scale: 0.955 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.95, ease: "power3.out" },
+        0.05
+      );
+      tl.fromTo(
+        "#f04app-glow",
+        { opacity: 0, scale: 0.82 },
+        { opacity: 1, scale: 1, duration: 1.35, ease: "power2.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#f04app-kicker",
+        { opacity: 0, y: -14 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.4
+      );
+      tl.fromTo(
+        "#f04app-num",
+        { opacity: 0 },
+        { opacity: 0.55, duration: 0.5, ease: "power2.out" },
+        0.5
+      );
+
+      // per-word label reveal: "O app do aluno," + "com a SUA marca."
+      var lb1words = document.querySelectorAll("#f04app-lb1 .f04app-w");
+      tl.fromTo(
+        [lb1words[0], lb1words[1], lb1words[2], lb1words[3]],
+        { opacity: 0, y: 26 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.07 },
+        0.75
+      );
+      tl.fromTo(
+        [lb1words[4], lb1words[5], lb1words[6], lb1words[7]],
+        { opacity: 0, y: 26 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.08 },
+        1.35
+      );
+
+      /* ============ Scene 2 (2.2–4.5s): scale-swap → app-treino ============ */
+      // frame stays put — only the screen swaps (signature move)
+      tl.to(
+        "#f04app-scr1",
+        { scale: 0.78, opacity: 0, duration: 0.38, ease: "power2.in" },
+        2.2
+      );
+      tl.fromTo(
+        "#f04app-scr2",
+        { scale: 0.78, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.4)" },
+        2.43
+      );
+      // label hard-cut
+      tl.set("#f04app-lb1", { autoAlpha: 0 }, 2.5);
+      tl.set("#f04app-lb2", { autoAlpha: 1 }, 2.5);
+
+      // keyword glow on the "+0,5 kg" line — attack / sustain / release envelope
+      tl.to("#f04app-hl", { opacity: 0.95, duration: 0.22, ease: "none" }, 3.15);
+      tl.to("#f04app-hl", { opacity: 0.3, duration: 0.45, ease: "none" }, 4.0);
+      // discreet highlight sweep across the region
+      tl.fromTo(
+        "#f04app-sweep",
+        { xPercent: -150 },
+        { xPercent: 400, duration: 0.85, ease: "power2.inOut" },
+        3.2
+      );
+
+      /* ============ Scene 3 (4.5–7s): scale-swap → app-wod, settle ============ */
+      tl.to(
+        "#f04app-scr2",
+        { scale: 0.78, opacity: 0, duration: 0.38, ease: "power2.in" },
+        4.5
+      );
+      tl.fromTo(
+        "#f04app-scr3",
+        { scale: 0.78, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.4)" },
+        4.73
+      );
+      // label hard-cut
+      tl.set("#f04app-lb2", { autoAlpha: 0 }, 4.8);
+      tl.set("#f04app-lb3", { autoAlpha: 1 }, 4.8);
+      // camera phase 4 (registered above) carries the push toward the clock; then micro-hold.
+
+      window.__timelines["04-app"] = tl;
+    })();
+  </script>
+</template>

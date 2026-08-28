@@ -1,0 +1,337 @@
+<template>
+  <div
+    id="root"
+    data-composition-id="07-retencao"
+    data-width="1080"
+    data-height="1920"
+    data-duration="5"
+  >
+    <style>
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 700;
+        src: url("assets/fonts/archivo-latin-700-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 800;
+        src: url("assets/fonts/archivo-latin-800-normal.woff2") format("woff2");
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        font-family: "Archivo", Arial, sans-serif;
+      }
+
+      /* ---- full-bleed ground (dark register) ---- */
+      .p07r-bg {
+        position: absolute;
+        inset: 0;
+        background: #0d0c10;
+      }
+
+      /* ---- phone layer (background role, cutout central) ---- */
+      .p07r-stage {
+        position: absolute;
+        inset: 0;
+      }
+      .p07r-phone {
+        position: absolute;
+        left: 220px;
+        top: 120px;
+        width: 640px;
+        height: 1385px;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+      .p07r-blurbox {
+        --p07rdof: 9px;
+        position: absolute;
+        inset: 0;
+        filter: blur(var(--p07rdof));
+        will-change: filter;
+      }
+      .p07r-shot {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border: 1px solid #26222f;
+      }
+      .p07r-dim {
+        position: absolute;
+        inset: 0;
+        background: #0d0c10;
+        opacity: 0.55;
+      }
+      /* highlight rect over the "Sumindo" filter chip — sharp rectangle, violet */
+      .p07r-hl {
+        position: absolute;
+        left: 137px;
+        top: 226px;
+        width: 124px;
+        height: 58px;
+        border: 2px solid #7c3aed;
+        background: rgba(124, 58, 237, 0.14);
+        overflow: hidden;
+        opacity: 0;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .p07r-sheen {
+        position: absolute;
+        top: -6px;
+        bottom: -6px;
+        left: -84px;
+        width: 70px;
+        background: linear-gradient(
+          105deg,
+          rgba(124, 58, 237, 0) 0%,
+          rgba(124, 58, 237, 0.5) 50%,
+          rgba(124, 58, 237, 0) 100%
+        );
+        will-change: transform;
+      }
+
+      /* ---- copy stack — three lines share one anchor ---- */
+      .p07r-copy {
+        position: absolute;
+        left: 70px;
+        right: 70px;
+        top: 640px;
+        display: grid;
+        justify-items: center;
+      }
+      .p07r-l1,
+      .p07r-l2,
+      .p07r-l3 {
+        grid-area: 1 / 1;
+        align-self: center;
+        text-align: center;
+        color: #f5f4f7;
+        will-change: transform, filter, opacity;
+        transform-origin: 50% 50%;
+      }
+      .p07r-l1 {
+        --p07rtb1: 0px;
+        filter: blur(var(--p07rtb1));
+        font-weight: 800;
+        font-size: 118px;
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+        text-transform: lowercase;
+        max-width: 800px;
+      }
+      .p07r-w {
+        display: inline-block;
+        will-change: transform, opacity;
+      }
+      .p07r-l2 {
+        --p07rtb2: 0px;
+        filter: blur(var(--p07rtb2));
+        font-weight: 800;
+        font-size: 172px;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        text-transform: lowercase;
+        opacity: 0;
+        white-space: nowrap;
+      }
+      .p07r-l3 {
+        --p07rtb3: 0px;
+        filter: blur(var(--p07rtb3));
+        opacity: 0;
+      }
+      .p07r-l3a {
+        font-weight: 700;
+        font-size: 92px;
+        line-height: 1.06;
+        letter-spacing: -0.02em;
+        text-transform: lowercase;
+        white-space: nowrap;
+      }
+      .p07r-l3b {
+        display: block;
+        margin-top: 14px;
+        font-weight: 800;
+        font-size: 186px;
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+        color: #7c3aed;
+        opacity: 0;
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+        white-space: nowrap;
+      }
+      /* violet rule stub — the system's only ornament */
+      .p07r-rule {
+        grid-area: 1 / 1;
+        align-self: start;
+        justify-self: center;
+        width: 36px;
+        height: 2px;
+        margin-top: -64px;
+        background: #7c3aed;
+      }
+    </style>
+
+    <!-- ground -->
+    <div class="clip p07r-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <!-- phone (background role, blurred + dimmed, focus returns in scene 3) -->
+    <div class="clip p07r-stage" data-start="0" data-duration="5" data-track-index="1">
+      <div class="p07r-phone" id="p07r-phone">
+        <div class="p07r-blurbox" id="p07r-blurbox">
+          <img class="p07r-shot" src="assets/painel-alunos.webp" alt="" />
+          <div class="p07r-dim" id="p07r-dim"></div>
+        </div>
+        <div class="p07r-hl" id="p07r-hl">
+          <div class="p07r-sheen" id="p07r-sheen"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- copy — three statements pivoting through one anchor -->
+    <div class="clip p07r-copy" data-start="0" data-duration="5" data-track-index="2">
+      <div class="p07r-rule" id="p07r-rule"></div>
+      <div class="p07r-l1" id="p07r-l1">
+        <span class="p07r-w">Aluno</span>
+        <span class="p07r-w">não</span>
+        <span class="p07r-w">cancela.</span>
+      </div>
+      <div class="p07r-l2" id="p07r-l2">Ele some.</div>
+      <div class="p07r-l3" id="p07r-l3">
+        <span class="p07r-l3a">O painel avisa</span>
+        <span class="p07r-l3b" id="p07r-l3b">ANTES.</span>
+      </div>
+    </div>
+
+    <script src="assets/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+
+        /* ---------- macro layer: phone lands then drifts (camera-static, element-space) ---------- */
+        tl.fromTo(
+          "#p07r-phone",
+          { scale: 1.1, opacity: 0 },
+          { scale: 1.06, opacity: 1, duration: 0.45, ease: "power2.out" },
+          0,
+        );
+        tl.to("#p07r-phone", { scale: 1.02, duration: 4.55, ease: "none" }, 0.45);
+
+        /* small accent rule fades in with the first line */
+        tl.fromTo(
+          "#p07r-rule",
+          { opacity: 0, scaleX: 0 },
+          { opacity: 1, scaleX: 1, duration: 0.4, ease: "power3.out" },
+          0.2,
+        );
+
+        /* ---------- Scene 1 (0.0–1.6s): "aluno não cancela." per-word cascade ---------- */
+        gsap.utils.toArray(".p07r-w").forEach(function (el, i) {
+          tl.fromTo(
+            el,
+            { y: 46, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+            0.18 + i * 0.09,
+          );
+        });
+
+        /* ---------- Seam 1 (1.4–1.6s): forward zoom-through exit of line 1 ---------- */
+        tl.to(
+          "#p07r-l1",
+          { scale: 1.2, "--p07rtb1": "10px", duration: 0.2, ease: "power3.in" },
+          1.4,
+        );
+        tl.to("#p07r-l1", { opacity: 0.15, duration: 0.2, ease: "none" }, 1.4);
+        tl.set("#p07r-l1", { opacity: 0 }, 1.6);
+        /* tension: the room darkens a touch under the pause */
+        tl.to("#p07r-dim", { opacity: 0.62, duration: 0.5, ease: "power1.inOut" }, 1.6);
+
+        /* ---------- Scene 2 (1.6–3.2s): hard cut — "ele some." arrives dry, then stillness ---------- */
+        tl.fromTo(
+          "#p07r-l2",
+          { scale: 0.75, opacity: 0.15, "--p07rtb2": "10px" },
+          {
+            scale: 1,
+            opacity: 1,
+            "--p07rtb2": "0px",
+            duration: 0.5,
+            ease: "expo.out",
+            immediateRender: false,
+          },
+          1.6,
+        );
+        /* the beat is the pause: nothing else moves until 3.0 */
+
+        /* ---------- Seam 2 (3.0–3.2s): line 2 recedes (inverse zoom-through exit) ---------- */
+        tl.to(
+          "#p07r-l2",
+          { scale: 0.8, "--p07rtb2": "10px", duration: 0.2, ease: "power3.in" },
+          3.0,
+        );
+        tl.to("#p07r-l2", { opacity: 0.15, duration: 0.2, ease: "none" }, 3.0);
+        tl.set("#p07r-l2", { opacity: 0 }, 3.2);
+
+        /* ---------- Scene 3 (3.2–5.0s): slam — "o painel avisa ANTES." ---------- */
+        tl.fromTo(
+          "#p07r-l3",
+          { scale: 1.3, opacity: 0.15, "--p07rtb3": "10px" },
+          {
+            scale: 1,
+            opacity: 1,
+            "--p07rtb3": "0px",
+            duration: 0.5,
+            ease: "expo.out",
+            immediateRender: false,
+          },
+          3.2,
+        );
+        /* ANTES — violet spring-pop, smooth long-tail settle */
+        tl.fromTo(
+          "#p07r-l3b",
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.55,
+            ease: "power3.out",
+            immediateRender: false,
+          },
+          3.5,
+        );
+
+        /* focus returns: blur opens, dim lifts — the list becomes readable */
+        tl.to(
+          "#p07r-blurbox",
+          { "--p07rdof": "0px", duration: 0.8, ease: "power2.inOut" },
+          3.4,
+        );
+        tl.to("#p07r-dim", { opacity: 0.16, duration: 0.8, ease: "power2.inOut" }, 3.4);
+
+        /* "Sumindo" filter highlight: rect pops, sheen sweeps through it */
+        tl.fromTo(
+          "#p07r-hl",
+          { scale: 0.55, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out", immediateRender: false },
+          4.15,
+        );
+        tl.fromTo(
+          "#p07r-sheen",
+          { x: 0 },
+          { x: 300, duration: 0.55, ease: "none", immediateRender: false },
+          4.4,
+        );
+
+        window.__timelines["07-retencao"] = tl;
+      })();
+    </script>
+  </div>
+</template>

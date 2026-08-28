@@ -1,0 +1,311 @@
+<template>
+  <div
+    id="root"
+    data-composition-id="08-preco"
+    data-start="0"
+    data-duration="5.91"
+    data-width="1080"
+    data-height="1920"
+  >
+    <style>
+      /* Archivo — shipped project fonts (project-root relative) */
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 400;
+        src: url(assets/fonts/archivo-latin-400-normal.woff2) format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 600;
+        src: url(assets/fonts/archivo-latin-600-normal.woff2) format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 700;
+        src: url(assets/fonts/archivo-latin-700-normal.woff2) format("woff2");
+      }
+      @font-face {
+        font-family: "Archivo";
+        font-style: normal;
+        font-weight: 800;
+        src: url(assets/fonts/archivo-latin-800-normal.woff2) format("woff2");
+      }
+
+      /* container law: frame ground owns the cq* units (1cqw = 10.8px, 1cqh = 19.2px) */
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        container-type: size;
+      }
+
+      /* full-bleed ground lives on a clip, never on #root */
+      .f08-bg {
+        position: absolute;
+        inset: 0;
+        background: #0d0c10; /* ink-black, dark register, flat plane */
+      }
+
+      .f08-stage {
+        position: absolute;
+        inset: 0;
+      }
+
+      .f08-cam {
+        position: absolute;
+        inset: 0;
+        transform-origin: 50% 35%;
+      }
+
+      /* ---- Scene 1 · hero price ---- */
+      .f08-hero {
+        position: absolute;
+        top: 20cqh;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+      }
+      .f08-cwrap {
+        position: relative;
+        display: inline-block;
+      }
+      .f08-counter {
+        /* no mono webfont ships with the project — generic monospace only,
+           never a named family without a font file */
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 21cqw;
+        line-height: 1;
+        color: #f5f4f7;
+        display: inline-block;
+        width: 3.1em; /* fixed width — no reflow as digit count changes */
+        text-align: left; /* "R$ " anchors left, digits grow rightward */
+        font-variant-numeric: tabular-nums;
+        transform-origin: center center;
+        white-space: nowrap;
+      }
+      .f08-suffix {
+        font-family: monospace;
+        font-weight: 400;
+        font-size: 5.2cqw;
+        line-height: 1;
+        color: #b9b3c6; /* cream-muted */
+        margin-left: 1.2cqw;
+        display: inline-block;
+        opacity: 0;
+        white-space: nowrap;
+      }
+
+      /* Scene 3 · violet accent bar under the price (the system's only ornament) */
+      .f08-barSvg {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        display: block;
+        overflow: visible;
+      }
+      .f08-barSvg line {
+        fill: none;
+        stroke: #7c3aed;
+        stroke-width: 10;
+      }
+
+      /* ---- Scene 2 · three conditions, 1px hairline dividers ---- */
+      .f08-list {
+        position: absolute;
+        top: 47cqh;
+        left: 5.5cqw;
+        right: 5.5cqw;
+      }
+      .f08-row {
+        position: relative;
+        padding: 3.4cqw 0;
+      }
+      .f08-div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #26222f; /* border-dark hairline */
+        transform-origin: left center;
+      }
+      .f08-line {
+        font-family: "Archivo", sans-serif;
+        font-weight: 600;
+        font-size: 4.8cqw;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        color: #f5f4f7;
+        white-space: nowrap;
+      }
+      .f08-slash {
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 4.2cqw;
+        color: #7c3aed; /* the lone accent on dark */
+        margin-right: 2cqw;
+        display: inline-block;
+        opacity: 0;
+      }
+      .f08-w {
+        display: inline-block;
+        opacity: 0;
+      }
+      .f08-num {
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 0.95em;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+
+    <!-- ground: full-duration clip on the lowest track -->
+    <div class="clip f08-bg" data-start="0" data-duration="5.91" data-track-index="0"></div>
+
+    <!-- content: one full-duration clip; the timeline paces every reveal -->
+    <div class="clip f08-stage" data-start="0" data-duration="5.91" data-track-index="1">
+      <div class="f08-cam" id="f08-cam">
+        <!-- Scene 1: value-scaled count-up hero -->
+        <div class="f08-hero">
+          <span class="f08-cwrap">
+            <span class="f08-counter" id="f08-counter">R$ 0</span>
+            <svg class="f08-barSvg" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true">
+              <line id="f08-bar" x1="0" y1="5" x2="100" y2="5" />
+            </svg>
+          </span>
+          <span class="f08-suffix" id="f08-suffix">/mês</span>
+        </div>
+
+        <!-- Scene 2: three conditions cascade with hairline dividers -->
+        <div class="f08-list">
+          <div class="f08-row" id="f08-r1">
+            <div class="f08-div" id="f08-d1"></div>
+            <div class="f08-line">
+              <span class="f08-slash f08-w">/</span><span class="f08-w">alunos</span>
+              <span class="f08-w">ilimitados</span>
+            </div>
+          </div>
+          <div class="f08-row" id="f08-r2">
+            <div class="f08-div" id="f08-d2"></div>
+            <div class="f08-line">
+              <span class="f08-slash f08-w">/</span><span class="f08-w f08-num">14</span>
+              <span class="f08-w">dias</span> <span class="f08-w">grátis,</span>
+              <span class="f08-w">sem</span> <span class="f08-w">cartão</span>
+            </div>
+          </div>
+          <div class="f08-row" id="f08-r3">
+            <div class="f08-div" id="f08-d3"></div>
+            <div class="f08-line">
+              <span class="f08-slash f08-w">/</span><span class="f08-w">sem</span>
+              <span class="f08-w">fidelidade</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/gsap.min.js"></script>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+        window.__timelines["08-preco"] = tl;
+
+        var F = 1 / 60;
+
+        /* ---- Scene 1 (0.0–1.8s): count-up with dynamic scale ---- */
+        var counter = document.getElementById("f08-counter");
+        var state = { value: 0 };
+        var COUNT_DUR = 1.8;
+        var COUNT_EASE = "power3.out";
+        var START_SCALE = 0.5;
+
+        tl.to(
+          state,
+          {
+            value: 49,
+            duration: COUNT_DUR,
+            ease: COUNT_EASE,
+            onUpdate: function () {
+              counter.textContent = "R$ " + Math.round(state.value);
+            },
+          },
+          0
+        );
+        tl.fromTo(
+          counter,
+          { scale: START_SCALE },
+          { scale: 1, duration: COUNT_DUR, ease: COUNT_EASE },
+          0
+        );
+
+        /* suffix gets its own beat after the count lands */
+        tl.fromTo(
+          "#f08-suffix",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" },
+          COUNT_DUR
+        );
+
+        /* ---- Scene 2 (1.8–4.0s): waterfall cascade, one row per beat ---- */
+        function cascade(rowId, t0) {
+          var words = document.querySelectorAll("#" + rowId + " .f08-w");
+          var t = t0;
+          for (var i = 0; i < words.length; i++) {
+            var dur = i === 0 ? 0.16 : 0.13;
+            var off = i === 0 ? 52 : 40;
+            tl.set(words[i], { opacity: 1, y: off }, t);
+            tl.to(words[i], { y: 0, duration: dur, ease: "power4.out" }, t);
+            t += dur - F;
+          }
+        }
+        function divider(id, t0) {
+          tl.fromTo(
+            id,
+            { scaleX: 0 },
+            { scaleX: 1, duration: 0.45, ease: "power3.out" },
+            t0
+          );
+        }
+
+        divider("#f08-d1", 1.95);
+        cascade("f08-r1", 1.95);
+        divider("#f08-d2", 2.6);
+        cascade("f08-r2", 2.6);
+        divider("#f08-d3", 3.3);
+        cascade("f08-r3", 3.3);
+
+        /* ---- Scene 3 (4.0–5.0s): violet accent bar self-draws under R$ 49 ---- */
+        var bar = document.getElementById("f08-bar");
+        var len = 100;
+        try {
+          len = bar.getTotalLength();
+        } catch (e) {}
+        bar.style.strokeDasharray = String(len);
+        bar.style.strokeDashoffset = String(len);
+        tl.to(
+          bar,
+          { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+          4.05
+        );
+
+        /* slow continuous camera push-in across the whole shot (blueprint through-line) */
+        tl.fromTo(
+          "#f08-cam",
+          { scale: 1 },
+          { scale: 1.045, duration: 5, ease: "none" },
+          0
+        );
+      })();
+    </script>
+  </div>
+</template>

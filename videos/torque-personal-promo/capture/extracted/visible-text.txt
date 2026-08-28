@@ -1,0 +1,147 @@
+[div] TORQUE ON · TORQUE PERSONAL
+[h1] O sistema que te oferece o que você não pode comprar:
+[em] tempo
+[p] Você não é "só" um personal trainer. Você é uma
+[b] empresa de uma pessoa só
+[p] — e hoje acumula todos os cargos dela. O TORQUE PERSONAL assume os departamentos que comem a sua noite: fichas, cobrança, agenda, retenção. E te devolve as horas.
+[span] 14 dias grátis, sem cartão · depois R$ 49/mês · sem fidelidade
+[a] Quero meu tempo de volta
+[a] Ver o app do aluno ao vivo
+[b] Alunos ilimitados
+[span] pelo mesmo preço
+[b] 1800+ exercícios
+[span] com dica de execução em português
+[b] Funciona offline
+[span] academia sem sinal não trava
+[b] R$ 49 fixo
+[span] sem cobrança por aluno
+[div] O diagnóstico
+[h2] Você tem uma empresa. Ela só não tem funcionários.
+[p] Toda academia grande tem gente pra cada coisa: quem monta o produto, quem cobra, quem atende, quem segura o cliente. Você faz tudo isso sozinho — e as horas que sobram pro que realmente paga a conta (dar aula e vender aula) são as que sobraram.
+[b] departamentos
+[p] que uma academia tem e você também: produto, entrega, financeiro, comercial, atendimento, qualidade e marketing.
+[b] funcionário
+[p] : você. Que ainda precisa estar na sala, do lado do aluno, olhando a execução.
+[div] R$ 49
+[b] por mês
+[p] pra terceirizar seis desses sete — e continuar sendo o único dono do negócio.
+[div] Faça a conta você mesmo
+[p] Não vamos te empurrar estatística inventada. Pega a sua última semana e soma o que você gastou em: montar e mandar ficha no WhatsApp · cobrar quem atrasou · lembrar quem sumiu · marcar e remarcar horário · digitar avaliação e montar laudo · responder "qual meu treino hoje?" · fechar o mês na planilha.
+[b] Esse número é o seu custo real.
+[p] É ele que esta página ataca.
+[div] O organograma
+[h2] Sete departamentos. Um assinante.
+[p] Cada tela abaixo é um cargo que hoje é seu. Arraste o celular pro lado: um departamento por vez, com o que ele devolve pra sua semana.
+[p] Arraste pro lado — um departamento por tela
+[span] Seu dia
+[h3] Resolver hoje
+[p] Você abre e o painel já diz o que resolver: quem cobrar, quem chamar, a próxima sessão — cada um com o botão do lado.
+[b] Devolve:
+[div] a lista mental que você carrega o dia inteiro
+[span] 00 · Diretoria
+[h3] O único departamento que continua seu
+[p] Decidir, corrigir o movimento, conhecer a pessoa. Nada chega no aluno sem você publicar — e a sua palavra vence a da IA.
+[b] Esse é o ponto:
+[div] o tempo que volta, volta pro que só você sabe fazer.
+[div] A entrega, vista de perto
+[h2] Uma tela de corrida de dar inveja em app de corrida
+[p] Você prescreve (livre, por meta ou tiros) e o aluno corre com mapa ao vivo, pace, pausa automática, aviso de voz a cada km e bloqueio de tela. No fim, medalhas, recordes — e o trajeto em 3D pra ele mostrar pra todo mundo.
+[li] GPS mede distância e pace sozinho
+[li] Batimento ao vivo com cinta ou pulseira, tela colorida por zona
+[li] O resultado volta pro seu painel automaticamente
+[div] Marketing que trabalha enquanto você dorme
+[h2] Cada corrida do aluno vira propaganda do seu studio
+[p] Ao terminar, um toque gera uma arte com o trajeto, os números e o
+[b] nome do seu studio
+[p] — pronta pro Stories e pro WhatsApp. Seus alunos postam, os seguidores deles perguntam quem é o personal. É o departamento de marketing rodando sem você gastar um minuto.
+[div] O app por dentro
+[h2] Arrasta e vê: o treino do aluno, tela por tela
+[p] O celular aqui do lado é de verdade —
+[b] arraste a imagem pro lado
+[p] (ou use as setas) e passeie pelo app como o seu aluno passeia.
+[b] Treino guiado
+[li] : um exercício por vez, séries pra tocar, o descanso contando sozinho — e a sugestão de carga em verde quando o aluno bateu as repetições
+[b] Circuito rodando
+[li] : relógio gigante, voltas contadas e um movimento por vez com o botão "Feito"
+[b] E o jogo que segura aluno
+[li] : XP, níveis com títulos, medalhas — e a Turma, com o ranking da semana. Aluno que joga não cancela
+[p] As fichas do mês: o plano da semana, a parte 2 do dia (A2) e a carga prescrita em cada exercício
+[p] Arraste pro lado — igual no app
+[div] A mesma segunda-feira
+[h2] O que muda na prática
+[p] A semana é a mesma. O que muda é quem faz o trabalho repetido dela.
+[h3] Hoje, tudo na sua mão
+[li] Abrir o WhatsApp e tentar lembrar quem não pagou
+[li] Montar ficha do zero, virar PDF, mandar — e o aluno apagar
+[li] Descobrir que o aluno sumiu quando ele já sumiu
+[li] Fechar o mês na planilha, de noite
+[li] Responder "qual meu treino hoje?" pela vigésima vez
+[h3] Com os departamentos contratados
+[li] O Resolver hoje lista os nomes, com o botão de cobrar do lado
+[li] A IA propõe o mês, você revisa e publica — chega no app do aluno na hora
+[li] O filtro Sumindo avisa antes do cancelamento
+[li] A baixa entra sozinha; o fechamento já está pronto
+[li] O treino do dia está no app dele, com lembrete no celular
+[div] Honestidade
+[h2] O que o TORQUE PERSONAL não faz
+[p] Página que só promete não ajuda ninguém a decidir. Então, na cara:
+[b] Não dá aula por você
+[p] Correção de execução, olho no aluno e relação continuam sendo o seu trabalho — e é exatamente por isso que ele te paga.
+[b] Não fica com o seu dinheiro
+[p] O pagamento do aluno vai direto pra sua conta, no gateway que você escolher. Não somos intermediários do seu caixa.
+[b] Não inventa número
+[p] Quando falta um dado — batimento, foto, resposta — a tela diz que falta, em vez de mostrar um gráfico bonito e falso.
+[div] A pergunta que todo mundo faz
+[h2] Por que não usar um app grátis?
+[p] Porque no app grátis o personal não é o cliente — é o produto. A conta chega de outro jeito:
+[h3] App "grátis"
+[li] Seu aluno treina vendo anúncio de terceiros
+[li] A marca que ele vê todo dia é a da plataforma, não a sua
+[li] O marketplace mostra seus concorrentes (com preço) pro SEU aluno
+[li] Sua carteira vive presa na plataforma deles
+[li] Fotos do corpo do aluno sobem pra servidor de terceiros
+[h3] TORQUE PERSONAL
+[li] Zero anúncio — a experiência é 100% sua
+[li] Sua marca, sua cor e seu logo no app de cada aluno
+[li] O pagamento do aluno cai direto na SUA conta
+[li] Seus dados são seus, com backup — e funciona offline
+[li] Medidas pela câmera processadas no aparelho — a foto não sai do celular
+[div] Preço simples
+[h2] Sete departamentos. Um valor fixo.
+[div] Plano TORQUE PERSONAL
+[div] R$ 49
+[small] /mês
+[li] 14 dias grátis pra testar — sem cartão
+[li] Alunos, fichas e apps ilimitados
+[li] App do aluno com a sua marca
+[li] IA de treino, avaliação física e agenda
+[li] Financeiro com baixa automática — na SUA conta
+[li] Sem fidelidade — cancele quando quiser
+[p] Menos que o valor de UMA aula sua. Por mês. Pela empresa inteira.
+[h2] Perguntas frequentes
+[summary] Meu aluno precisa baixar alguma coisa?
+[p] Não. Você manda um link pelo WhatsApp, o aluno abre e toca em "Adicionar à tela inicial" — vira um app no celular dele, com o seu nome e a sua cor. Sem loja, sem cadastro chato.
+[summary] Funciona sem internet?
+[p] Sim. Treino, cronômetro, diário de cargas e corrida funcionam offline e sincronizam quando a conexão volta. Academia com sinal ruim não trava ninguém.
+[summary] O dinheiro dos meus alunos passa por vocês?
+[p] Não. Você conecta a sua própria conta do Mercado Pago, Asaas ou Pagar.me e o pagamento cai direto lá. A gente não cobra comissão sobre o que você recebe — só valem as taxas do gateway que você escolher.
+[summary] Eu preciso confiar cegamente na IA?
+[p] Não. Ela é opcional e nada chega no aluno sem você publicar. E o que você escrever sobre o aluno — lesões, adaptações, o que ele não pode fazer — é regra absoluta: a sua leitura vence qualquer conclusão que a IA tire dos números.
+[summary] Quantos alunos posso ter?
+[p] Quantos você aguentar. O preço é fixo: com 5 ou com 100 alunos, você paga os mesmos R$ 49 por mês.
+[summary] Tem fidelidade ou taxa de adesão?
+[p] Não. Você testa 14 dias de graça sem cadastrar cartão, assina se gostar e cancela quando quiser.
+[summary] E se eu já uso outro app ou planilha?
+[p] Você cadastra seus alunos em minutos (o treino automático monta as fichas pela anamnese) e manda o link novo pra turma. A maioria migra a carteira inteira em uma tarde — e dá pra testar com dois ou três alunos antes.
+[h2] Dinheiro você faz de novo.
+[h2] Terça-feira à noite, não.
+[p] Contrate os seis departamentos por R$ 49 e fique só com o que ninguém faz por você.
+[a] Começar meu teste grátis
+[a] Testar grátis por 14 dias — começa agora
+[a] Ver o painel do personal ao vivo
+[footer] TORQUE PERSONAL, o sistema do personal trainer, faz parte da família
+[b] TORQUE ON
+[footer] — o mesmo motor que roda a academia TORQUE FIT todos os dias.
+[a] Demo do app do aluno
+[a] Demo do painel
+[a] Conheça o TORQUE ON pra academias
