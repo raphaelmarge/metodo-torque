@@ -68,6 +68,12 @@
   .tourCap { text-align: center; color: #b9b3c6; font-size: 13.5px; line-height: 1.5; margin-top: 10px; min-height: 40px; }
   .tourDica { text-align: center; color: #8a8695; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
 
+  /* carrossel dos departamentos: legenda embaixo do celular */
+  .depCap { max-width: 460px; margin: 16px auto 0; min-height: 168px; }
+  .depCap .dep { padding: 20px 20px 18px; }
+  .depCap h3 { margin: 10px 0 6px; }
+  .depCap p.tx { font-size: 14px; color: #cfcbdb; line-height: 1.6; }
+
   /* a empresa de uma pessoa só */
   .empGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
   .emp { background: #17141d; border: 1px solid #2c2739; border-radius: 16px; padding: 22px 20px; }
@@ -81,7 +87,6 @@
   .conta b { color: #f5f4f7; }
 
   /* organograma: departamentos */
-  .depGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 30px; }
   .dep { background: #17141d; border: 1px solid #2c2739; border-radius: 18px; padding: 24px 22px 20px; }
   .dep .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #a78bfa; background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.34); padding: 5px 11px; border-radius: 999px; }
   .dep h3 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; margin: 13px 0 6px; }
@@ -142,7 +147,7 @@
   .rodape a { color: #a78bfa; }
 
   @media (max-width: 760px) {
-    .hero .grid, .sec .grid, .versus .cols, .depGrid { grid-template-columns: 1fr; }
+    .hero .grid, .sec .grid, .versus .cols { grid-template-columns: 1fr; }
     .maisGrid { grid-template-columns: 1fr 1fr; }
     .empGrid { grid-template-columns: 1fr; }
   }
@@ -212,148 +217,44 @@
     <div class="wrap">
       <div class="kicker">O organograma</div>
       <h2 style="max-width:640px;">Sete departamentos. Um assinante.</h2>
-      <p style="max-width:640px;">Cada bloco abaixo é um cargo que hoje é seu. Veja o que passa a ser do sistema — e o que isso devolve pra sua semana.</p>
+      <p style="max-width:640px;">Cada tela abaixo é um cargo que hoje é seu. Arraste o celular pro lado: um departamento por vez, com o que ele devolve pra sua semana.</p>
 
-      <div class="depGrid">
-
-        <div class="dep">
-          <span class="tag">01 · Produto</span>
-          <h3>Prescrição de treino</h3>
-          <p class="oq">O que você vende — montado em minutos, não em noites.</p>
-          <ul>
-            <li><b>1800+ exercícios</b> com dica de execução, busca por grupamento e favoritos.</li>
-            <li>Fichas <b>A, B, C…</b> com séries, repetições, descanso, observação e <b>técnicas de intensidade</b> (drop-set, rest-pause, bi-set, isometria).</li>
-            <li><b>Parte 2 do dia</b> (A2, B2): o cardio ou alongamento dentro da própria ficha.</li>
-            <li><b>Circuito (WOD)</b>: AMRAP, For Time, EMOM e Tabata com cronômetro de tela cheia.</li>
-            <li><b>Corrida</b> contínua, intervalada — ou as duas no mesmo treino, com pace, tiros e recuperação.</li>
-            <li><b>Semana do aluno</b>: cada dia amarrado a um treino; o padrão vale o mês até você mudar.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> a noite de domingo montando ficha pra semana inteira.</div>
+      <div class="tourWrap" style="margin-top:30px;">
+        <div class="fone tour">
+          <div class="tira" id="depTira" tabindex="0" aria-label="Telas do painel, um departamento por vez — arraste pro lado">
+            <img src="assets/vendas/painel-inicio.webp" data-tag="Seu dia" data-tit="Resolver hoje" data-txt="Você abre e o painel já diz o que resolver: quem cobrar, quem chamar, a próxima sessão — cada um com o botão do lado." data-dev="a lista mental que você carrega o dia inteiro" alt="Início do painel: Bom treino, a próxima sessão com o botão Abrir ficha e o bloco Resolver hoje" width="780" height="1688">
+            <img src="assets/vendas/painel-treinos.webp" data-tag="01 · Produto" data-tit="Treino em minutos, não em noites" data-txt="Fichas A, B, C do banco de 1800+ exercícios, circuito e corrida — e o Gerar com IA monta o mês inteiro obedecendo o que VOCÊ escrever sobre o aluno." data-dev="a noite de domingo montando ficha" loading="lazy" alt="Montar treino: Montando pra Ana Beatriz, botões Gerar com IA e Salvar e publicar, fichas A e B" width="780" height="1688">
+            <img src="assets/vendas/painel-financeiro.webp" data-tag="02 · Financeiro" data-tit="Cobrança que se cobra sozinha" data-txt="Atrasados no topo com Link, Pix e Recebi dentro da linha, 'cobrar todos' de uma vez — e baixa automática caindo direto na SUA conta." data-dev="a planilha e a conversa constrangedora" loading="lazy" alt="Financeiro: recebido do mês no card roxo e a lista de atrasados com os botões de cobrar" width="780" height="1688">
+            <img src="assets/vendas/painel-alunos.webp" data-tag="03 · Comercial" data-tit="Quem está indo embora" data-txt="Aluno não cancela: ele some. Os filtros Ativos · Sumindo · Devendo mostram quem precisa de você antes do cancelamento." data-dev="o aluno que você só viu que sumiu tarde demais" loading="lazy" alt="Lista de alunos com busca, filtros Ativos, Sumindo, Devendo e o selo DEVE 800 na Carla" width="780" height="1688">
+            <img src="assets/vendas/painel-chat.webp" data-tag="04 · Atendimento" data-tit="Fale com todos sem falar com cada um" data-txt="Chat dentro do app com respostas rápidas, robô de primeiras respostas e lembretes automáticos no celular do aluno." data-dev="as 20 respostas de 'qual meu treino hoje?'" loading="lazy" alt="Conversa no chat com a Carla, respostas rápidas Bora treinar, Mandar a ficha e Remarcar" width="780" height="1688">
+            <img src="assets/vendas/painel-avaliacao.webp" data-tag="05 · Qualidade" data-tit="Resultado que o aluno enxerga" data-txt="Avaliação física completa com a evolução comparada entre medições, composição corporal e laudo pronto pra mandar." data-dev="digitar medida em planilha e montar laudo à mão" loading="lazy" alt="Histórico e evolução: 6ª medição da Ana Beatriz, peso caindo 2,9 kg e a composição em barras" width="780" height="1688">
+            <img src="assets/vendas/painel-agenda.webp" data-tag="06 · Operações" data-tit="Agenda que se resolve na linha" data-txt="Pedido de horário confirmado num toque, falta com o botão de cobrar na própria linha — e a agenda vai pro calendário do celular." data-dev="o vai-e-vem de remarcação no WhatsApp" loading="lazy" alt="Agenda do dia com os pedidos de horário esperando e cada sessão com a ação dentro da linha" width="780" height="1688">
+            <img src="assets/vendas/painel-pagina.webp" data-tag="07 · Marketing" data-tit="Empresa tem endereço" data-txt="O sistema publica a sua página de vendas — sua foto, seus planos, seu texto — num link seu. Quem pede aula cai direto no seu WhatsApp." data-dev="a página que você ia fazer 'quando desse tempo'" loading="lazy" alt="Minha página: o endereço publicado com os botões Abrir página e Copiar link" width="780" height="1688">
+          </div>
         </div>
-
-        <div class="dep">
-          <span class="tag">02 · P&amp;D</span>
-          <h3>A IA que prescreve o mês — e obedece você</h3>
-          <p class="oq">Não é gerador genérico: é um assistente que lê o SEU aluno e a SUA ordem.</p>
-          <ul>
-            <li>Monta o <b>mês inteiro</b>: as mesmas fichas com 4 semanas de progressão escrita, a 4ª sempre mais leve.</li>
-            <li>Lê a <b>última avaliação</b>, as <b>cargas reais</b> registradas no app, a frequência dos últimos 28 dias, o esforço percebido, o batimento e o pace das corridas.</li>
-            <li><b>A sua leitura vence os números.</b> O que você escrever sobre lesões, adaptações e limites é regra absoluta pra IA.</li>
-            <li>Exercício que você citar é <b>obrigatório</b>. Pediu ABCD? Sai ABCD.</li>
-            <li>Vale pra <b>musculação, circuito e corrida</b> — cada um no seu formato.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> o rascunho pronto. Você revisa e assina em vez de começar do zero.</div>
+        <div class="tourNav">
+          <button type="button" id="depAnt" aria-label="Departamento anterior">‹</button>
+          <div class="pontos" id="depPts" aria-hidden="true"></div>
+          <button type="button" id="depProx" aria-label="Próximo departamento">›</button>
         </div>
-
+        <p class="tourDica" style="margin-top:10px;">Arraste pro lado — um departamento por tela</p>
+      </div>
+      <div class="depCap">
         <div class="dep">
-          <span class="tag">03 · Entrega</span>
-          <h3>O app do aluno, com a sua marca</h3>
-          <p class="oq">Sua logística: o treino chega, funciona e volta com dados.</p>
-          <ul>
-            <li><b>Sem loja de aplicativo</b>: o aluno abre um link e o app entra na tela de início — com o seu nome e a sua cor.</li>
-            <li><b>Funciona sem internet</b> e sincroniza quando o sinal volta.</li>
-            <li><b>Treino guiado</b>: um exercício por vez, descanso contando sozinho, dica de execução e <b>peso sugerido</b> quando o aluno bate as repetições.</li>
-            <li><b>Corrida com GPS</b>: mapa ao vivo, pace, voz a cada km — e o <b>trajeto em 3D</b> no fim.</li>
-            <li><b>Batimento ao vivo</b> por cinta ou pulseira, com as zonas Z1–Z5.</li>
-            <li><b>XP, medalhas, sequência e a Turma</b> — o jogo que faz o aluno voltar sozinho.</li>
-            <li>Utilidades que criam hábito: <b>água com lembrete</b>, cronômetros, 1RM, anilhas e IMC.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> os PDFs no WhatsApp e o "manda de novo que eu apaguei".</div>
+          <span class="tag" id="depTag"></span>
+          <h3 id="depTit"></h3>
+          <p class="tx" id="depTxt"></p>
+          <div class="ganho" id="depDev"></div>
         </div>
+      </div>
 
-        <div class="dep">
-          <span class="tag">04 · Financeiro</span>
-          <h3>Cobrança, baixa e fechamento</h3>
-          <p class="oq">O departamento que mais custa caro quando fica pra depois.</p>
-          <ul>
-            <li><b>O dinheiro cai direto na SUA conta.</b> Você liga o seu Mercado Pago, Asaas ou Pagar.me — a gente não fica no meio.</li>
-            <li><b>Link de cobrança</b> em cartão, Pix ou boleto, gerado do painel. E Pix com QR na tela do aluno.</li>
-            <li><b>Baixa automática</b>: o aluno pagou, some da lista de devedores sozinho.</li>
-            <li><b>Mensalidade automática</b> no cartão pra quem não quer cobrar todo mês.</li>
-            <li>Atrasados no topo, com o <b>botão de cobrar dentro da linha</b> — e "cobrar todos" de uma vez.</li>
-            <li>Histórico de 6 meses e <b>fechamento do mês</b> pronto pra mandar.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> a planilha do fim do mês e a conversa constrangedora da cobrança.</div>
-        </div>
-
-        <div class="dep">
-          <span class="tag">05 · Comercial</span>
-          <h3>Retenção: quem está indo embora</h3>
-          <p class="oq">Aluno não cancela — ele para de aparecer. O sistema vê antes de você.</p>
-          <ul>
-            <li><b>Resolver hoje</b>: a primeira tela lista só o que muda decisão hoje — quem deve, quem está sem ficha nova, que conversa parou.</li>
-            <li>Lista de alunos com filtros <b>Ativos · Sumindo · Devendo · Encerrados</b> e a ação certa dentro de cada linha.</li>
-            <li><b>Radar e alertas</b>: queda de frequência, carga alta, aniversários.</li>
-            <li><b>Relatórios</b> de movimentação, sessões por semana, faltas e metas do mês.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> o aluno que você só percebeu que sumiu quando já era tarde.</div>
-        </div>
-
-        <div class="dep">
-          <span class="tag">06 · Atendimento</span>
-          <h3>Fale com todos sem falar com cada um</h3>
-          <p class="oq">A pergunta que você responde 20 vezes por semana deixa de existir.</p>
-          <ul>
-            <li><b>Chat dentro do app</b>, com o contexto do aluno do lado: próxima sessão, treino do dia, ficha num toque.</li>
-            <li><b>Robô de primeiras respostas</b>: dúvida às 22h respondida pelo fluxo que você montar — e ele te chama quando é coisa séria.</li>
-            <li><b>WhatsApp oficial no seu número</b>: você conecta a sua conta da Meta e as mensagens saem do SEU número.</li>
-            <li><b>Notificações no celular do aluno</b>: treino do dia, check-in da semana, questionário liberado, cobrança, aniversário e marcos.</li>
-            <li><b>A Turma</b>, sua mini rede social: os alunos postam, curtem e disputam o ranking da semana.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> as 20 respostas de "qual é o meu treino hoje?".</div>
-        </div>
-
-        <div class="dep">
-          <span class="tag">07 · Qualidade</span>
-          <h3>Avaliação e prova de resultado</h3>
-          <p class="oq">O que transforma o seu trabalho em algo que o aluno enxerga.</p>
-          <ul>
-            <li><b>Avaliação física completa</b>: de peso, dobras ou fita sai um laudo estilo bioimpedância — água, massa magra, músculo, TMB, pontuação — <b>imprimível</b>.</li>
-            <li>Tem bioimpedância de verdade? Os valores medidos <b>vencem</b> a estimativa.</li>
-            <li><b>Medidas pela câmera</b> (beta): duas fotos viram circunferências — processadas no próprio celular, a imagem não sobe pra internet.</li>
-            <li><b>Fotos antes e depois</b> com slider de comparação e lembrete mensal.</li>
-            <li><b>Check-in da semana e questionários</b> viram gráficos: sono, dor, disposição e hábitos, com o selo de melhorando, estável ou piorando.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> as horas digitando medida em planilha e montando laudo à mão.</div>
-        </div>
-
-        <div class="dep">
-          <span class="tag">08 · Operações</span>
-          <h3>Agenda</h3>
-          <p class="oq">Um calendário só — semana ou mês, você escolhe o zoom.</p>
-          <ul>
-            <li>O estado de cada sessão <b>dentro da célula</b>: feita, faltou, pedido, devendo — ou a ficha prescrita pra aquele dia.</li>
-            <li><b>Pedidos de horário</b> chegam do app e você confirma num toque.</li>
-            <li>Faltou? A linha já traz o botão de <b>cobrar a aula</b>.</li>
-            <li><b>Manda a agenda pro calendário do celular</b> — o seu e o do aluno.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> o vai-e-vem de remarcação no WhatsApp.</div>
-        </div>
-
-        <div class="dep">
-          <span class="tag">09 · Marketing</span>
-          <h3>Minha página + o marketing dos Stories</h3>
-          <p class="oq">Você tem uma empresa. Empresa tem endereço e propaganda.</p>
-          <ul>
-            <li>O sistema <b>publica a sua página</b> — seus planos, sua foto, seu texto — num endereço pra mandar pro cliente.</li>
-            <li>Quem quer aula cai direto no <b>seu WhatsApp</b>.</li>
-            <li>Cada corrida terminada gera uma <b>arte com o trajeto e o nome do seu studio</b>, pronta pro Stories — seus alunos viram sua propaganda.</li>
-          </ul>
-          <div class="ganho"><b>Devolve:</b> a página que você ia fazer "quando desse tempo".</div>
-        </div>
-
+      <div class="depCap" style="min-height:0;margin-top:18px;">
         <div class="dep dono">
           <span class="tag">00 · Diretoria</span>
           <h3>O único departamento que continua seu</h3>
-          <p class="oq">Decidir, olhar a execução, corrigir o movimento, conhecer a pessoa.</p>
-          <ul>
-            <li>Nada chega no aluno <b>sem você publicar</b>.</li>
-            <li>A IA propõe; <b>quem assina é você</b> — e a sua palavra vence a conclusão dela.</li>
-            <li>Quando falta um dado, o sistema <b>diz que falta</b> — não inventa número na sua tela.</li>
-          </ul>
+          <p class="tx">Decidir, corrigir o movimento, conhecer a pessoa. Nada chega no aluno sem você publicar — e a sua palavra vence a da IA.</p>
           <div class="ganho"><b>Esse é o ponto:</b> o tempo que volta, volta pro que só você sabe fazer.</div>
         </div>
-
       </div>
     </div>
   </section>
@@ -419,16 +320,7 @@
     </div>
   </section>
 
-  <section class="sec inv">
-    <div class="wrap grid">
-      <div class="txt">
-        <div class="kicker">O painel do dono</div>
-        <h2>Você abre e vê só o que muda decisão hoje</h2>
-        <p>A primeira tela não é um mar de gráficos: é o <b style="color:#fff">Resolver hoje</b> — quem precisa ser cobrado, quem está sem ficha nova, quem pediu horário — cada um com o botão do lado. O financeiro se cobra sozinho e o fechamento do mês sai pronto. Planilha, nunca mais.</p>
-      </div>
-      <div class="fone"><img src="assets/vendas/painel-financeiro.webp" alt="Financeiro do painel, com o recebido do mês e cada atrasado com o botão de cobrar na própria linha" loading="lazy" width="780" height="1688"></div>
-    </div>
-  </section>
+  
 
   <section class="versus">
     <div class="wrap">
@@ -588,30 +480,41 @@
     }
   } catch (e) {}
 
-  // o celular que arrasta: pontos, setas, legenda e arrasto de mouse
-  try {
-    var tira = document.getElementById("tourTira");
-    var pts = document.getElementById("tourPts"), capT = document.getElementById("tourCap");
-    var n = tira.children.length;
-    for (var i = 0; i < n; i++) { var s = document.createElement("span"); if (!i) s.className = "on"; pts.appendChild(s); }
-    var atual = function () { return Math.max(0, Math.min(n - 1, Math.round(tira.scrollLeft / tira.clientWidth))); };
-    var pinta = function () {
-      var a = atual();
-      for (var j = 0; j < n; j++) pts.children[j].className = j === a ? "on" : "";
-      capT.textContent = tira.children[a].getAttribute("data-cap") || "";
-    };
-    tira.addEventListener("scroll", function () { requestAnimationFrame(pinta); });
-    document.getElementById("tourAnt").addEventListener("click", function () { tira.scrollBy({ left: -tira.clientWidth, behavior: "smooth" }); });
-    document.getElementById("tourProx").addEventListener("click", function () { tira.scrollBy({ left: tira.clientWidth, behavior: "smooth" }); });
-    var mx = null, sl = 0;
-    tira.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; mx = e.clientX; sl = tira.scrollLeft; tira.classList.add("pegando"); e.preventDefault(); });
-    window.addEventListener("pointermove", function (e) { if (mx === null) return; tira.scrollLeft = sl - (e.clientX - mx); });
-    window.addEventListener("pointerup", function () {
-      if (mx === null) return; mx = null; tira.classList.remove("pegando");
-      tira.scrollTo({ left: atual() * tira.clientWidth, behavior: "smooth" });
-    });
-    pinta();
-  } catch (e) {}
+  // os celulares que arrastam: pontos, setas, legenda e arrasto de mouse
+  function fazTour(idTira, idAnt, idProx, idPts, pintaCap) {
+    try {
+      var tira = document.getElementById(idTira);
+      var pts = document.getElementById(idPts);
+      var n = tira.children.length;
+      for (var i = 0; i < n; i++) { var s = document.createElement("span"); if (!i) s.className = "on"; pts.appendChild(s); }
+      var atual = function () { return Math.max(0, Math.min(n - 1, Math.round(tira.scrollLeft / tira.clientWidth))); };
+      var pinta = function () {
+        var a = atual();
+        for (var j = 0; j < n; j++) pts.children[j].className = j === a ? "on" : "";
+        pintaCap(tira.children[a]);
+      };
+      tira.addEventListener("scroll", function () { requestAnimationFrame(pinta); });
+      document.getElementById(idAnt).addEventListener("click", function () { tira.scrollBy({ left: -tira.clientWidth, behavior: "smooth" }); });
+      document.getElementById(idProx).addEventListener("click", function () { tira.scrollBy({ left: tira.clientWidth, behavior: "smooth" }); });
+      var mx = null, sl = 0;
+      tira.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; mx = e.clientX; sl = tira.scrollLeft; tira.classList.add("pegando"); e.preventDefault(); });
+      window.addEventListener("pointermove", function (e) { if (mx === null) return; tira.scrollLeft = sl - (e.clientX - mx); });
+      window.addEventListener("pointerup", function () {
+        if (mx === null) return; mx = null; tira.classList.remove("pegando");
+        tira.scrollTo({ left: atual() * tira.clientWidth, behavior: "smooth" });
+      });
+      pinta();
+    } catch (e) {}
+  }
+  fazTour("tourTira", "tourAnt", "tourProx", "tourPts", function (img) {
+    document.getElementById("tourCap").textContent = img.getAttribute("data-cap") || "";
+  });
+  fazTour("depTira", "depAnt", "depProx", "depPts", function (img) {
+    document.getElementById("depTag").textContent = img.getAttribute("data-tag") || "";
+    document.getElementById("depTit").textContent = img.getAttribute("data-tit") || "";
+    document.getElementById("depTxt").textContent = img.getAttribute("data-txt") || "";
+    document.getElementById("depDev").innerHTML = "<b>Devolve:</b> " + (img.getAttribute("data-dev") || "");
+  });
 })();
 </script>
 </body>
