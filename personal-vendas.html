@@ -51,6 +51,23 @@
   .fone.sm { width: min(228px, 42vw); border-radius: 27px; border-width: 5px; }
   .par .fone.sm:last-child { margin-top: 30px; }
 
+
+  /* o celular que arrasta (tour de telas) */
+  .tourWrap { max-width: 380px; margin: 0 auto; }
+  .fone.tour { position: relative; }
+  .tira { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; cursor: grab; }
+  .tira::-webkit-scrollbar { display: none; }
+  .tira.pegando { cursor: grabbing; scroll-snap-type: none; }
+  .tira img { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+  .tourNav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
+  .tourNav button { background: #17141d; border: 1px solid #2c2739; color: #cfcbdb; width: 38px; height: 38px; border-radius: 999px; font-size: 17px; font-weight: 800; cursor: pointer; }
+  .tourNav button:hover { border-color: #7c3aed; color: #fff; }
+  .pontos { display: flex; gap: 7px; }
+  .pontos span { width: 7px; height: 7px; border-radius: 999px; background: #2c2739; transition: background .2s; }
+  .pontos span.on { background: #7c3aed; }
+  .tourCap { text-align: center; color: #b9b3c6; font-size: 13.5px; line-height: 1.5; margin-top: 10px; min-height: 40px; }
+  .tourDica { text-align: center; color: #8a8695; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+
   /* a empresa de uma pessoa só */
   .empGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
   .emp { background: #17141d; border: 1px solid #2c2739; border-radius: 16px; padding: 22px 20px; }
@@ -371,13 +388,33 @@
   <section class="sec">
     <div class="wrap grid">
       <div class="txt">
-        <div class="kicker">Retenção sem te custar uma hora</div>
-        <h2>Um jogo que segura aluno: níveis, medalhas e a Turma</h2>
-        <p>XP por treino, níveis com títulos (de Iniciante a Hall da Fama), medalhas de treino e de corrida — e as que VOCÊ cria com seus próprios desafios. Na Turma, os alunos postam, curtem e disputam o ranking da semana. Aluno que joga não cancela — e você não gastou um minuto segurando ele.</p>
+        <div class="kicker">O app por dentro</div>
+        <h2>Arrasta e vê: o treino do aluno, tela por tela</h2>
+        <p>O celular aqui do lado é de verdade — <b style="color:#fff">arraste a imagem pro lado</b> (ou use as setas) e passeie pelo app como o seu aluno passeia.</p>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg><b style="color:#fff">Treino guiado</b>: um exercício por vez, séries pra tocar, o descanso contando sozinho — e a sugestão de carga em verde quando o aluno bateu as repetições</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg><b style="color:#fff">Circuito rodando</b>: relógio gigante, voltas contadas e um movimento por vez com o botão "Feito"</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg><b style="color:#fff">E o jogo que segura aluno</b>: XP, níveis com títulos, medalhas — e a Turma, com o ranking da semana. Aluno que joga não cancela</li>
+        </ul>
       </div>
-      <div class="par">
-        <div class="fone sm"><img src="assets/vendas/app-conquistas.webp" alt="Conquistas do app: nível, XP, medalhas e a sequência de semanas" loading="lazy" width="780" height="1688"></div>
-        <div class="fone sm"><img src="assets/vendas/app-turma.webp" alt="A Turma: ranking da semana e o post de um aluno com curtidas e comentários" loading="lazy" width="780" height="1688"></div>
+      <div class="tourWrap">
+        <div class="fone tour">
+          <div class="tira" id="tourTira" tabindex="0" aria-label="Telas do app do aluno — arraste pro lado pra ver a próxima">
+            <img src="assets/vendas/app-fichas.webp" data-cap="As fichas do mês: o plano da semana, a parte 2 do dia (A2) e a carga prescrita em cada exercício" alt="Área de treinos do app: 5 fichas, o aviso da semana 2 de 4 e as gavetas A, B e C" width="780" height="1688">
+            <img src="assets/vendas/app-treino.webp" data-cap="Treino guiado: um exercício por vez, com a carga que subiu em verde e o histórico da última vez" alt="Player do treino guiado no Supino inclinado: repetições, carga com +0,5 kg desde a última e o botão Série feita" loading="lazy" width="780" height="1688">
+            <img src="assets/vendas/app-wod.webp" data-cap="Circuito rodando: AMRAP de 20 minutos com o relógio gigante, as voltas e um movimento por vez" alt="Circuito em tela cheia: faltam 19:46, zero voltas completas e o movimento atual, 400 m de corrida" loading="lazy" width="780" height="1688">
+            <img src="assets/vendas/app-corrida.webp" data-cap="Corrida com GPS: mapa ao vivo, pace e voz a cada quilômetro" alt="Tela cheia da corrida com os quilômetros em número gigante, tempo, ritmo e calorias" loading="lazy" width="780" height="1688">
+            <img src="assets/vendas/app-conquistas.webp" data-cap="Conquistas: XP, níveis com títulos, medalhas e a sequência de semanas" alt="Conquistas do app: nível, XP, medalhas e a sequência de semanas" loading="lazy" width="780" height="1688">
+            <img src="assets/vendas/app-turma.webp" data-cap="A Turma: o feed da sua turma, com curtidas e o ranking da semana" alt="A Turma: ranking da semana e o post de um aluno com curtidas e comentários" loading="lazy" width="780" height="1688">
+          </div>
+        </div>
+        <div class="tourNav">
+          <button type="button" id="tourAnt" aria-label="Tela anterior">‹</button>
+          <div class="pontos" id="tourPts" aria-hidden="true"></div>
+          <button type="button" id="tourProx" aria-label="Próxima tela">›</button>
+        </div>
+        <p class="tourCap" id="tourCap"></p>
+        <p class="tourDica">Arraste pro lado — igual no app</p>
       </div>
     </div>
   </section>
@@ -549,6 +586,31 @@
         cta.rel = "noopener";
       });
     }
+  } catch (e) {}
+
+  // o celular que arrasta: pontos, setas, legenda e arrasto de mouse
+  try {
+    var tira = document.getElementById("tourTira");
+    var pts = document.getElementById("tourPts"), capT = document.getElementById("tourCap");
+    var n = tira.children.length;
+    for (var i = 0; i < n; i++) { var s = document.createElement("span"); if (!i) s.className = "on"; pts.appendChild(s); }
+    var atual = function () { return Math.max(0, Math.min(n - 1, Math.round(tira.scrollLeft / tira.clientWidth))); };
+    var pinta = function () {
+      var a = atual();
+      for (var j = 0; j < n; j++) pts.children[j].className = j === a ? "on" : "";
+      capT.textContent = tira.children[a].getAttribute("data-cap") || "";
+    };
+    tira.addEventListener("scroll", function () { requestAnimationFrame(pinta); });
+    document.getElementById("tourAnt").addEventListener("click", function () { tira.scrollBy({ left: -tira.clientWidth, behavior: "smooth" }); });
+    document.getElementById("tourProx").addEventListener("click", function () { tira.scrollBy({ left: tira.clientWidth, behavior: "smooth" }); });
+    var mx = null, sl = 0;
+    tira.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; mx = e.clientX; sl = tira.scrollLeft; tira.classList.add("pegando"); e.preventDefault(); });
+    window.addEventListener("pointermove", function (e) { if (mx === null) return; tira.scrollLeft = sl - (e.clientX - mx); });
+    window.addEventListener("pointerup", function () {
+      if (mx === null) return; mx = null; tira.classList.remove("pegando");
+      tira.scrollTo({ left: atual() * tira.clientWidth, behavior: "smooth" });
+    });
+    pinta();
   } catch (e) {}
 })();
 </script>
