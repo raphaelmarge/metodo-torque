@@ -966,6 +966,73 @@ async function abaNt(p, a) {
     ok(evo.temGrafico && /Variação/.test(evo.texto), "a evolução de peso do paciente desenha o gráfico das pesagens");
     ok(evo.campoEhInput === "INPUT" && evo.campoValor !== "", "o campo Peso do cadastro continua sendo o input (sem id repetido)");
 
+    // 9) Financeiro consolidado (espelho da tela 2e do Personal)
+    const fin = await pN.evaluate(() => {
+      document.getElementById("dlgPerfilN").close();
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.config.diaCobraN = 1; // ancora no dia 1: o mês "venceu" em qualquer dia do teste
+      st.config.pixValor = 180;
+      st.config.pixChave = "consultorio@pix.com";
+      st.pagamentosN.push({ id: "pgHoje", pacienteId: "q0", valor: 250, data: S2.todayISO() });
+      S2.write("ntStudio", st);
+      document.querySelector('#abasNt button[data-a="financeiro"]').click();
+      const at = window.__finN.atrasados(S2.read("ntStudio", {}), S2.todayISO());
+      return {
+        visivel: !document.getElementById("vFinanceiroN").hidden,
+        atrasados: at.length,
+        valor: at[0] && at[0].valor,
+        linhas: document.querySelectorAll("#fnAtrasados .fnatrlin").length,
+        cobrarTodos: !!document.getElementById("fnCobrarTodos"),
+        temPix: !!document.querySelector("#fnAtrasados [data-fnpix]"),
+        temLink: !!document.querySelector("#fnAtrasados [data-fnpgm]"),
+        barras: document.querySelectorAll("#fn6meses .fnbar").length,
+        hachura: /repeating-linear-gradient/.test(document.getElementById("fn6meses").innerHTML),
+        como: document.getElementById("fnComo").textContent.replace(/\s+/g, " "),
+        hoje: document.getElementById("fnHoje").textContent.replace(/\s+/g, " "),
+        recibos: document.querySelectorAll("#fnHistorico [data-recibo]").length,
+        clamp: window.__finN.diaCobra({ config: { diaCobraN: 99 } }),
+      };
+    });
+    ok(fin.visivel && fin.atrasados === 3 && fin.valor === 180 && fin.linhas === 3,
+      "💰 o Financeiro abre com os 3 atrasados (mesma régua do Resolver hoje) e a consulta padrão como valor");
+    ok(fin.cobrarTodos && fin.temPix && fin.temLink,
+      "cada atrasado tem Link/Pix/Recebi na linha, e o Cobrar todos aparece quando é mais de um");
+    ok(fin.barras === 6 && fin.hachura, "os últimos 6 meses viram barras, com o mês corrente hachurado (projeção)");
+    ok(/Pix/.test(fin.como) && /\+\s*R\$\s*250/.test(fin.hoje) && fin.recibos === 3 && fin.clamp === 10,
+      "'Como você recebe' lista o Pix, 'Entrou hoje' soma o dia e o histórico dá o recibo de cada pagamento");
+
+    // 10) Recebi na linha registra o pagamento e a linha some na hora
+    await pN.evaluate(() => { document.querySelector("#fnAtrasados [data-fnreceb]").click(); });
+    await pN.waitForTimeout(150);
+    const receb = await pN.evaluate(() => ({
+      pagos: (window.MTStore.read("ntStudio", {}).pagamentosN || []).length,
+      linhas: document.querySelectorAll("#fnAtrasados .fnatrlin").length,
+    }));
+    ok(receb.pagos === 4 && receb.linhas === 2, "o Recebi da linha grava o pagamento e o atrasado sai do bloco na hora");
+
+    // 11) Pix na mão: QR + copia-e-cola com a chave do consultório
+    const pix = await pN.evaluate(() => {
+      document.querySelector("#fnAtrasados [data-fnpix]").click();
+      const code = document.getElementById("pixNCode").value;
+      const aberto = document.getElementById("dlgPixN").open;
+      document.getElementById("pixNFechar").click();
+      return { aberto, payload: /br\.gov\.bcb\.pix/.test(code) && /180\.00/.test(code) && /consultorio@pix\.com/.test(code) };
+    });
+    ok(pix.aberto && pix.payload, "o botão Pix abre o copia-e-cola com a chave e o valor certos");
+
+    // 12) régua de cobrança: a chave desliga de verdade
+    const regua = await pN.evaluate(() => {
+      const S2 = window.MTStore;
+      document.getElementById("fnReguaOn").click(); // desliga
+      const off = S2.read("ntStudio", {}).config.reguaOffN;
+      document.getElementById("fnReguaOn").click(); // religa
+      const on = S2.read("ntStudio", {}).config.reguaOffN;
+      return { off, on, aviso: document.getElementById("fnReguaStatus").textContent };
+    });
+    ok(regua.off === true && !regua.on && regua.aviso.length > 5,
+      "a régua de cobrança liga e desliga pela chave, com o status dito em português");
+
     await pN.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pN.close();
   }

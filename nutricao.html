@@ -121,6 +121,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .fdpost .fdav { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(22,163,74,.14); color: var(--verde, #16a34a); font-weight: 800; font-size: 12.5px; }
   .fdpost .fdtxt { margin-top: 8px; font-size: 13.5px; line-height: 1.55; }
   .fdpost .fdselo { display: inline-block; margin-left: 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--cinza); border: 1px solid var(--linha); border-radius: 999px; padding: 2px 8px; }
+  /* Financeiro consolidado: o bloco vermelho dos atrasados (espelho do .pgatr do Personal) */
+  .fnatr { border: 1px solid rgba(248,113,113,.4); background: rgba(248,113,113,.07); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+  .fnatrcab { display: flex; align-items: center; gap: 8px; font-size: 13.5px; flex-wrap: wrap; }
+  .fnatrcab i { width: 9px; height: 9px; border-radius: 50%; background: #f87171; flex: none; }
+  .fnatrcab span { color: var(--cinza); font-size: 12.5px; }
+  .fnatrlin { display: flex; align-items: center; gap: 10px; padding: 10px 0 4px; margin-top: 8px; border-top: 1px solid rgba(248,113,113,.18); flex-wrap: wrap; }
+  .fnav { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12.5px; background: rgba(248,113,113,.16); color: #f87171; flex: none; }
+  .fnnm { background: none; border: none; padding: 0; color: inherit; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; text-align: left; }
+  .fnsub { font-size: 12px; color: var(--cinza); }
+  .fnacoes { display: inline-flex; gap: 7px; flex-wrap: wrap; }
+  html[data-tema="claro"] .fnatr { background: #fef2f2; border-color: rgba(239,68,68,.35); }
+  html[data-tema="claro"] .fnav { background: #fee2e2; color: #b91c1c; }
 
   /* perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
@@ -192,6 +204,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="alimentos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11h16a8 8 0 0 1-16 0z'/><path d='M8 11V8.5M12 11V7M16 11V8.5M7 21h10M9 19l.5-4.2M15 19l-.5-4.2'/></svg>Alimentos</button>
     <button data-a="receitas"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z'/><path d='M20 17v4H6.5A2.5 2.5 0 0 1 4 18.5'/></svg>Receitas</button>
     <button data-a="agenda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg>Agenda</button>
+    <button data-a="financeiro"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5v9M14.6 9.2c-.5-.9-1.5-1.4-2.6-1.4-1.5 0-2.7.9-2.7 2.1 0 2.9 5.4 1.5 5.4 4.3 0 1.2-1.2 2.1-2.7 2.1-1.1 0-2.1-.5-2.6-1.4'/></svg>Financeiro</button>
     <button data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Check-ins</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
     <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
@@ -392,6 +405,49 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as consultas entram lá.</span>
       </div>
     </div>
+  </div>
+
+  <!-- FINANCEIRO consolidado (espelho da tela 2e do Personal: atrasados com a ação
+       na linha, 6 meses com projeção, como você recebe, entrou hoje, régua) -->
+  <div id="vFinanceiroN" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <div class="linha-flex" style="align-items: center; gap: 10px; flex-wrap: wrap;">
+        <div><h2 style="margin: 0;">Financeiro — <span id="fnMesRot">—</span></h2>
+        <p class="muted" id="fnResumo" style="margin: 2px 0 0; font-size: 12.5px;">—</p></div>
+        <button class="btn sec mini" id="fnLancar" style="margin-left: auto;">+ Registrar pagamento</button>
+      </div>
+    </div>
+    <div id="fnAtrasados"></div>
+    <div class="colunas-dash">
+      <div class="card" id="fn6meses"></div>
+      <div>
+        <div class="card" id="fnComo" style="margin-bottom: 14px;"></div>
+        <div class="card" id="fnHoje"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" id="fnCardLancar">
+      <h2>Registrar pagamento</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Consulta paga no Pix, dinheiro ou maquininha — entra aqui e conta no mês na hora.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+        <select id="fnPac" style="min-width: 180px;"></select>
+        <input id="fnValor" type="number" min="1" step="0.01" placeholder="Valor (R$)" style="width: 120px;">
+        <button class="btn verde" id="fnAdd">Registrar</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Cobrança automática (régua)</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quem ainda não pagou o mês recebe um lembrete educado <b>no app</b> (2 dias antes, no dia e depois a cada 3 dias). Quem paga no cartão automático fica de fora.</p>
+      <div class="linha-flex" style="gap: 14px; flex-wrap: wrap; align-items: center;">
+        <label style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;">
+          <input type="checkbox" id="fnReguaOn" style="width: 17px; height: 17px;"> Régua ligada
+        </label>
+        <label style="margin: 0; font-size: 12.5px;">Dia de cobrança do mês
+          <input id="fnDiaCobra" type="number" min="1" max="28" style="width: 70px; margin-left: 6px;">
+        </label>
+      </div>
+      <p id="fnReguaStatus" class="muted" style="margin: 8px 0 0; font-size: 12px;"></p>
+    </div>
+    <div class="card"><h2>Histórico</h2><div id="fnHistorico" class="muted">Nenhum pagamento registrado ainda.</div></div>
   </div>
 
   <!-- CHECK-INS (questionários pro paciente, estilo LiveClin) -->
@@ -621,6 +677,18 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 </main>
 
 <!-- perfil completo do paciente (estilo cadastro da academia) -->
+<dialog id="dlgPixN" style="max-width: 380px; width: 92vw; border: 1px solid var(--linha); border-radius: 18px; background: var(--card); color: var(--texto);">
+  <h2 style="margin: 0 0 4px; font-size: 17px;" id="pixNTitulo">Pix</h2>
+  <p class="muted" style="margin: 0 0 10px; font-size: 12.5px;">Mostra o QR pro paciente ou manda o copia-e-cola no WhatsApp — cai direto na SUA chave.</p>
+  <div style="text-align: center;"><img id="pixNQr" alt="QR code do Pix" style="width: 200px; height: 200px; border-radius: 12px; background: #fff;"></div>
+  <textarea id="pixNCode" readonly aria-label="Código Pix copia e cola" style="width: 100%; margin-top: 10px; font-size: 11px; height: 64px;"></textarea>
+  <div class="linha-flex" style="margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+    <button class="btn sec mini" id="pixNCopiar">Copiar código</button>
+    <button class="btn whats mini" id="pixNZap">WhatsApp</button>
+    <button class="btn verde mini" id="pixNRecebi">Recebi ✓</button>
+    <button class="btn sec mini" id="pixNFechar" style="margin-left: auto;">Fechar</button>
+  </div>
+</dialog>
 <dialog id="dlgImportaN">
       <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 620px; max-width: 100%;">
         <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Importar pacientes — cole a sua lista</h2>
@@ -950,6 +1018,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
     $("vReceitas").hidden = b.dataset.a !== "receitas";
     $("vAgendaN").hidden = b.dataset.a !== "agenda";
+    $("vFinanceiroN").hidden = b.dataset.a !== "financeiro";
     $("vQuestN").hidden = b.dataset.a !== "quest";
     $("vChatN").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de pacientes
@@ -958,6 +1027,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
     if (b.dataset.a === "agenda") renderAgendaN();
+    if (b.dataset.a === "financeiro") renderFinanceiroN();
     if (b.dataset.a === "quest") { renderQuestN(); carregaRespostasQuestN(); }
     if (b.dataset.a === "chat") { renderBotN(); montaBuilderN(); renderChatNT(); }
   });
@@ -4446,13 +4516,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var ativos = d.ativos;
     // ---------- Resolver hoje: a lista de tarefas, não o relatório ----------
     // Regra 1 do handoff do Personal: todo aviso tem o botão que resolve.
-    // Duas filas honestas (sem inventar dia de vencimento, que o Nutri não
-    // tem): sem pagamento no mês e sem dieta entregue — 3 de cada, o resto
-    // continua nos filtros da lista de Pacientes.
+    // Duas filas honestas: atrasado de verdade (a MESMA régua do Financeiro —
+    // sem pagamento no mês E o mês já chegou no dia de cobrança) e sem dieta
+    // entregue — 3 de cada, o resto continua nos filtros da lista de Pacientes.
     (function () {
       var el = $("bResolverN");
       if (!el) return;
-      var devendo = ativos.filter(function (p) { return !pagouMesN(st, p.id, mes); }).slice(0, 3);
+      var devendo = atrasadosN(st, hoje).map(function (x) { return x.p; }).slice(0, 3);
       var semDieta = ativos.filter(function (p) { return !(st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); }).slice(0, 3);
       function linhaR(cor, txt, botoes) {
         return '<div class="linha-flex" style="align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--linha);">' +
@@ -4655,6 +4725,282 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   });
   window.__dashN = { render: renderDashN, resumo: resumoFechamentoN }; // testes
 
+  // ---------- FINANCEIRO consolidado (espelho da tela 2e do Personal) ----------
+  // O Nutri não tem contrato nem plano: o preço vem da assinatura do paciente ou
+  // da consulta padrão (config.pixValor), e o "vencimento" é UM dia de cobrança do
+  // consultório inteiro (config.diaCobraN, padrão 10). Atrasado = ativo, sem
+  // pagamento no mês E o mês já chegou no dia de cobrança — a MESMA régua vale
+  // pro bloco vermelho, pro Resolver hoje e pros lembretes automáticos do app.
+  function diaCobraN(st) {
+    var d = Math.round(+((st.config || {}).diaCobraN));
+    return d >= 1 && d <= 28 ? d : 10;
+  }
+  function valorConsultaN(st, p) {
+    return +(((p || {}).assinaturaRec || {}).valor) || +((st.config || {}).pixValor) || 0;
+  }
+  function atrasadosN(st, hoje) {
+    var mes = hoje.slice(0, 7);
+    if (+hoje.slice(8, 10) < diaCobraN(st)) return []; // o mês ainda não venceu pra ninguém
+    return (st.pacientes || []).filter(function (p) {
+      return p.ativo !== false && !pagouMesN(st, p.id, mes);
+    }).map(function (p) { return { p: p, valor: valorConsultaN(st, p) }; });
+  }
+  var MESES_N = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  function renderFinanceiroN() {
+    var st = load();
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var diaHoje = +hoje.slice(8, 10) || 1;
+    var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+    var d = dadosMesN(st, mes);
+    var atr = atrasadosN(st, hoje);
+    var totalAtr = atr.reduce(function (t, x) { return t + x.valor; }, 0);
+    $("fnMesRot").textContent = MESES_N[+mes.slice(5, 7) - 1];
+    $("fnResumo").innerHTML = fmtR(d.fat) + " recebidos" +
+      (totalAtr ? ' · <b style="color:#f87171;">' + fmtR(totalAtr) + " vencidos</b>" : "");
+    // ---- bloco vermelho dos atrasados: cada linha com o botão que resolve ----
+    $("fnAtrasados").innerHTML = !atr.length ? "" :
+      '<div class="fnatr"><div class="fnatrcab"><i></i><b>Atrasados</b>' +
+      "<span>" + S.plural(atr.length, "paciente", "pacientes") + (totalAtr ? " · " + fmtR(totalAtr) : "") + "</span>" +
+      (atr.length > 1 ? '<button type="button" class="btn mini" id="fnCobrarTodos" style="margin-left:auto;">Cobrar todos</button>' : "") +
+      "</div>" +
+      atr.map(function (x) {
+        var p = x.p;
+        return '<div class="fnatrlin"><div class="fnav">' + esc(String(p.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
+          '<div style="min-width:0;"><button class="fnnm" data-resperfil="' + p.id + '">' + esc(p.nome) + "</button>" +
+          (p.cartaoFalhouEm ? ' <span class="tagn alerta">cartão recusado</span>' : "") +
+          '<div class="fnsub">Acompanhamento de ' + MESES_N[+mes.slice(5, 7) - 1] + " · cobra dia " + diaCobraN(st) + "</div></div>" +
+          (x.valor ? '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + fmtR(x.valor) + "</b>" : '<span style="margin-left:auto;"></span>') +
+          '<div class="fnacoes">' +
+          '<button class="btn mini" data-fnpgm="' + p.id + '" data-v="' + x.valor + '">Link</button>' +
+          ((st.config || {}).pixChave ? '<button class="btn sec mini" data-fnpix="' + p.id + '" data-v="' + x.valor + '">Pix</button>' : "") +
+          '<button class="btn whats mini" data-fnreceb="' + p.id + '" data-v="' + x.valor + '">Recebi</button></div></div>';
+      }).join("") + "</div>";
+    // ---- últimos 6 meses, com o mês corrente hachurado (projeção) ----
+    (function () {
+      var meses = [], soma = 0;
+      for (var i = 5; i >= 0; i--) {
+        var dRef = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 1 - i, 1);
+        var k = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
+        var v = (st.pagamentosN || []).filter(function (x) { return (x.data || "").slice(0, 7) === k; })
+          .reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+        meses.push({ k: k, v: v, rot: MESES_N[dRef.getMonth()].slice(0, 3).toUpperCase(), atual: k === mes });
+        if (k !== mes) soma += v;
+      }
+      var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+      var proj = Math.round(d.fat / diaHoje * diasNoMes);
+      var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
+      var media = Math.round(soma / 5);
+      $("fn6meses").innerHTML = "<h2>Últimos 6 meses" +
+        (media ? '<span style="float:right;font-size:12px;font-weight:800;color:#4ade80;">média ' + fmtR(media) + "</span>" : "") + "</h2>" +
+        '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:10px;">' +
+        meses.map(function (m) {
+          var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
+          return '<div class="fnbar" style="flex:1;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "#4ade80" : "var(--cinza)") + ';">' +
+            (m.v >= 1000 ? (Math.round(m.v / 100) / 10).toFixed(1).replace(".", ",") : Math.round(m.v)) + "</div>" +
+            '<div style="height:' + (114 - alt) + 'px;"></div>' +
+            '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
+            (m.atual ? "repeating-linear-gradient(45deg,#16a34a,#16a34a 5px,#15803d 5px,#15803d 10px)" : m.v ? "var(--verde)" : "var(--linha)") + ';"></div>' +
+            '<div style="font-size:10px;font-weight:800;color:var(--cinza);margin-top:5px;">' + m.rot + "</div></div>";
+        }).join("") + "</div>" +
+        '<div class="muted" style="font-size:11.5px;margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
+        fmtR(proj) + ") · valores em milhares</div>";
+    })();
+    // ---- como você recebe: só o que ESTÁ ligado, sem prometer o que não está ----
+    (function () {
+      var cfg = st.config || {};
+      var pApi = pagEspelhoN(st);
+      var NOMES_PG = { mercadopago: "Mercado Pago", asaas: "Asaas", pagarme: "Pagar.me", outro: "link próprio" };
+      var vias = [];
+      if (cfg.pixChave) vias.push({ n: "Pix", d: "chave no seu nome" });
+      if (pApi.ligado && pApi.provedor) vias.push({ n: NOMES_PG[pApi.provedor] || pApi.provedor,
+        d: pApi.provedor === "outro" ? "seu link de cobrança" : "cartão, Pix e boleto — o dinheiro cai na SUA conta" });
+      $("fnComo").innerHTML = "<h2>Como você recebe</h2>" +
+        (vias.length ? vias.map(function (v) {
+          return '<div class="linha-nt"><span style="color:#4ade80;font-weight:800;">✓</span><b>' + esc(v.n) + '</b><span class="muted" style="font-size:12px;">' + esc(v.d) + "</span></div>";
+        }).join("") : '<p class="muted" style="font-size:12.5px;">Nada configurado ainda — sem chave Pix nem gateway, os botões Link e Pix não aparecem na cobrança.</p>') +
+        '<button type="button" class="btn sec mini" id="fnIrConfig" style="margin-top:10px;">Configurar em Sua ilha</button>';
+    })();
+    // ---- entrou hoje ----
+    (function () {
+      var nomes = {};
+      (st.pacientes || []).forEach(function (p) { nomes[p.id] = p.nome; });
+      var doDia = (st.pagamentosN || []).filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
+      var totH = doDia.reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+      $("fnHoje").innerHTML = "<h2>Entrou hoje" +
+        '<span style="float:right;font-size:13px;font-weight:800;color:' + (totH ? "#4ade80" : "var(--cinza)") + ';">' +
+        (totH ? "+" + fmtR(totH) : "nada ainda") + "</span></h2>" +
+        (doDia.length ? doDia.map(function (x) {
+          return '<div class="linha-nt"><span style="color:#4ade80;font-weight:800;">✓</span><b>' + esc(nomes[x.pacienteId] || "—") + "</b>" +
+            '<b style="margin-left:auto;">' + fmtR(+x.valor || 0) + "</b></div>";
+        }).join("") : '<p class="muted" style="font-size:12.5px;">Nenhum pagamento registrado hoje.</p>');
+    })();
+    // ---- registrar pagamento: o seletor sempre atualizado ----
+    (function () {
+      var sel = $("fnPac");
+      if (document.activeElement === sel) return;
+      var atual = sel.value;
+      sel.innerHTML = (st.pacientes || []).filter(function (p) { return p.ativo !== false; })
+        .map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("");
+      if (atual) sel.value = atual;
+      if ($("fnValor") !== document.activeElement && !$("fnValor").value && valorConsultaN(st, null)) $("fnValor").value = valorConsultaN(st, null);
+    })();
+    // ---- régua ----
+    $("fnReguaOn").checked = !(st.config || {}).reguaOffN;
+    if (document.activeElement !== $("fnDiaCobra")) $("fnDiaCobra").value = diaCobraN(st);
+    $("fnReguaStatus").textContent = (st.config || {}).reguaOffN
+      ? "Desligada — ninguém recebe lembrete de cobrança."
+      : ((st.config || {}).reguaRodouEmN ? "Última rodada: " + S.fmtData((st.config || {}).reguaRodouEmN) + ". Só avisa quem tem o app instalado." : "Roda sozinha quando o painel está aberto e você está na sua conta.");
+    // ---- histórico ----
+    var pgs = (st.pagamentosN || []).slice().sort(function (a2, b2) { return String(b2.data || "") < String(a2.data || "") ? -1 : 1; }).slice(0, 20);
+    var nomesH = {};
+    (st.pacientes || []).forEach(function (p) { nomesH[p.id] = p.nome; });
+    $("fnHistorico").innerHTML = pgs.length ? pgs.map(function (x) {
+      return '<div class="linha-nt"><b>' + esc(nomesH[x.pacienteId] || "—") + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:10px;align-items:center;"><b>' + fmtR(+x.valor || 0) + "</b>" +
+        '<a href="#" data-recibo="' + x.id + '" style="font-size:12px;color:#4ade80;">recibo</a></span></div>';
+    }).join("") : "Nenhum pagamento registrado ainda.";
+  }
+  // cobrança: um handler só pro bloco de atrasados, igual ao cliqueCobranca do Personal
+  function cliqueCobrancaN(e) {
+    if (e.target.closest && e.target.closest("#fnCobrarTodos")) {
+      var stT = load();
+      var alvos = atrasadosN(stT, S.todayISO()).filter(function (x) { return x.p.zap; });
+      if (!alvos.length) { alert("Ninguém atrasado com WhatsApp no cadastro."); return; }
+      if (!confirm("Abrir o WhatsApp de " + S.plural(alvos.length, "paciente", "pacientes") + " pra cobrar?")) return;
+      // o navegador costuma bloquear a 2ª aba em diante: a gente CONTA e avisa,
+      // em vez de fingir que mandou tudo
+      var bloqueadas = 0;
+      alvos.forEach(function (x) {
+        var msg = "Oi " + String(x.p.nome).split(" ")[0] + "! Passando pra lembrar do acompanhamento deste mês" +
+          (x.valor ? " (R$ " + Math.round(x.valor).toLocaleString("pt-BR") + ")" : "") + ". Te mando o Pix? 🥗";
+        var w = window.open("https://wa.me/55" + String(x.p.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank");
+        if (!w) bloqueadas++;
+      });
+      if (bloqueadas) alert("O navegador bloqueou " + bloqueadas + " aba(s). Libere pop-ups pra este site ou cobre um por um pelos botões de cada linha.");
+      return;
+    }
+    var rb = e.target.closest("[data-fnreceb]");
+    if (rb) {
+      var stR = load();
+      var pR = stR.pacientes.find(function (x) { return x.id === rb.getAttribute("data-fnreceb"); });
+      var vR = +rb.getAttribute("data-v") || 0;
+      if (!pR) return;
+      if (!vR) { var dig = parseFloat(String(prompt("Qual o valor recebido? (defina a consulta padrão em Sua ilha pra não digitar toda vez)") || "").replace(",", ".")); if (!dig || dig <= 0) return; vR = dig; }
+      if (!confirm("Registrar R$ " + Math.round(vR).toLocaleString("pt-BR") + " recebido de " + String(pR.nome).split(" ")[0] + " agora?")) return;
+      stR.pagamentosN = stR.pagamentosN || [];
+      stR.pagamentosN.push({ id: S.uid(), pacienteId: pR.id, valor: vR, data: S.todayISO() });
+      save(stR);
+      return;
+    }
+    var pg = e.target.closest("[data-fnpgm]");
+    if (pg) {
+      var vL = +pg.getAttribute("data-v") || 0;
+      if (!vL) { alert("Defina o valor da consulta padrão em Sua ilha → Receber por Pix (campo Valor da consulta)."); return; }
+      pg.disabled = true;
+      pg.textContent = "Gerando…";
+      geraLinkPagamentoN(pg.getAttribute("data-fnpgm"), vL, function (r) {
+        pg.disabled = false;
+        pg.textContent = "Link";
+        if (r.erro) { alert(r.erro); return; }
+        var st2 = load();
+        var p2 = st2.pacientes.find(function (x) { return x.id === pg.getAttribute("data-fnpgm"); });
+        var msg2 = "Oi " + (p2 ? String(p2.nome).split(" ")[0] : "") + "! Segue o link seguro pra pagar o acompanhamento (cartão, Pix ou boleto): " + r.link;
+        if (confirm("Link gerado! Mandar pro paciente no WhatsApp agora?")) {
+          window.open("https://wa.me/" + (p2 && p2.zap ? "55" + String(p2.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg2), "_blank");
+        } else {
+          prompt("Copie o link de pagamento:", r.link);
+        }
+      });
+      return;
+    }
+    var px = e.target.closest("[data-fnpix]");
+    if (!px) return;
+    var stP = load();
+    var pP = stP.pacientes.find(function (x) { return x.id === px.getAttribute("data-fnpix"); });
+    if (pP) abrePixN(pP, +px.getAttribute("data-v") || 0);
+  }
+  $("fnAtrasados").addEventListener("click", cliqueCobrancaN);
+  // Pix na mão: QR + copia-e-cola com a chave do consultório
+  var pixNCtx = null;
+  function abrePixN(p, valor) {
+    var st = load();
+    var cfg = st.config || {};
+    if (!cfg.pixChave) { alert("Cadastre sua chave Pix em Sua ilha → Receber por Pix."); return; }
+    var pay = pixPayload(cfg.pixChave, cfg.pixNome || cfg.nome || "", cfg.pixCidade || "", valor, "TQN" + Date.now().toString(36));
+    pixNCtx = { pid: p.id, valor: valor };
+    $("pixNTitulo").textContent = "Pix — " + String(p.nome).split(" ")[0] + (valor ? " · R$ " + Math.round(valor).toLocaleString("pt-BR") : "");
+    var qr = pixQRDataURL(pay);
+    $("pixNQr").src = qr || "";
+    $("pixNQr").hidden = !qr;
+    $("pixNCode").value = pay;
+    $("dlgPixN").showModal();
+  }
+  $("pixNFechar").addEventListener("click", function () { $("dlgPixN").close(); });
+  $("pixNCopiar").addEventListener("click", function () {
+    $("pixNCode").select();
+    try { navigator.clipboard.writeText($("pixNCode").value); } catch (e) { document.execCommand("copy"); }
+    $("pixNCopiar").textContent = "Copiado ✓";
+    setTimeout(function () { $("pixNCopiar").textContent = "Copiar código"; }, 1600);
+  });
+  $("pixNZap").addEventListener("click", function () {
+    if (!pixNCtx) return;
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pixNCtx.pid; });
+    var msg = "Oi" + (p ? " " + String(p.nome).split(" ")[0] : "") + "! Segue o Pix copia-e-cola do acompanhamento" +
+      (pixNCtx.valor ? " (R$ " + Math.round(pixNCtx.valor).toLocaleString("pt-BR") + ")" : "") + ":\n\n" + $("pixNCode").value;
+    window.open("https://wa.me/" + (p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+  });
+  $("pixNRecebi").addEventListener("click", function () {
+    if (!pixNCtx) return;
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pixNCtx.pid; });
+    var v = +pixNCtx.valor || 0;
+    if (!p || !v) { $("dlgPixN").close(); return; }
+    if (!confirm("Registrar R$ " + Math.round(v).toLocaleString("pt-BR") + " recebido de " + String(p.nome).split(" ")[0] + "?")) return;
+    st.pagamentosN = st.pagamentosN || [];
+    st.pagamentosN.push({ id: S.uid(), pacienteId: p.id, valor: v, data: S.todayISO() });
+    $("dlgPixN").close();
+    save(st);
+  });
+  // registrar pagamento manual (o mesmo formato do #pnPgAdd do perfil)
+  $("fnAdd").addEventListener("click", function () {
+    var v = parseFloat(($("fnValor").value || "").replace(",", "."));
+    var pid = $("fnPac").value;
+    if (!pid) { alert("Cadastre um paciente primeiro."); return; }
+    if (!v || v <= 0) { alert("Escreva o valor recebido."); return; }
+    var st = load();
+    st.pagamentosN = st.pagamentosN || [];
+    st.pagamentosN.push({ id: S.uid(), pacienteId: pid, valor: v, data: S.todayISO() });
+    save(st);
+  });
+  $("fnLancar").addEventListener("click", function () { $("fnCardLancar").scrollIntoView({ behavior: "smooth" }); $("fnValor").focus(); });
+  $("fnHistorico").addEventListener("click", function (e) {
+    var rc = e.target.getAttribute && e.target.getAttribute("data-recibo");
+    if (rc) { e.preventDefault(); abreReciboN(rc); }
+  });
+  document.getElementById("vFinanceiroN").addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#fnIrConfig")) {
+      var bConta = document.querySelector('#abasNt button[data-a="conta"]');
+      if (bConta) bConta.click();
+    }
+  });
+  $("fnReguaOn").addEventListener("change", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.reguaOffN = !this.checked;
+    save(st);
+  });
+  $("fnDiaCobra").addEventListener("change", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.diaCobraN = Math.min(28, Math.max(1, Math.round(+this.value) || 10));
+    save(st);
+  });
+  window.__finN = { render: renderFinanceiroN, atrasados: atrasadosN, diaCobra: diaCobraN, abrePix: abrePixN }; // testes
+
   // ---------- rotina diária: lembrete de consulta do dia (push pelo app do paciente) ----------
   function pushPacienteN(token, titulo, corpo) {
     // resolve true só quando a função push-envia respondeu ok — quem chama pode re-tentar depois
@@ -4700,6 +5046,38 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         S.write("ntStudio", st2);
       });
     });
+    // régua de cobrança: lembrete educado NO APP pra quem ainda não pagou o mês.
+    // 2 dias antes do dia de cobrança, no dia, e depois a cada 3 dias — quem paga
+    // no cartão automático (assinatura) fica de fora, e leitura local basta porque
+    // pagouMesN é a mesma conta do bloco Atrasados do Financeiro.
+    if (!(st.config || {}).reguaOffN) {
+      var mesR = hoje.slice(0, 7);
+      var diaR = +hoje.slice(8, 10);
+      var alvoR = diaCobraN(st);
+      st.pacientes.forEach(function (p) {
+        if (p.ativo === false || !p.appTokenN) return;
+        if (p.assinaturaRec || p.assinaturaAs) return;
+        if (pagouMesN(st, p.id, mesR)) return;
+        var vR = valorConsultaN(st, p);
+        var txtV = vR ? " (R$ " + Math.round(vR).toLocaleString("pt-BR") + ")" : "";
+        var kR = "", corpoR = "";
+        if (diaR === alvoR - 2) { kR = "cobra2|" + p.id + "|" + mesR; corpoR = "Seu acompanhamento do mês vence dia " + alvoR + txtV + ". Qualquer dúvida, me chama no chat!"; }
+        else if (diaR === alvoR) { kR = "cobra0|" + p.id + "|" + mesR; corpoR = "Hoje é o dia do acerto do acompanhamento" + txtV + ". Pode pagar no Pix ou me chamar no chat. 😊"; }
+        else if (diaR > alvoR && (diaR - alvoR) % 3 === 0) { kR = "cobraA|" + p.id + "|" + hoje; corpoR = "O acompanhamento deste mês ainda está em aberto" + txtV + ". Me chama no chat que te mando o Pix!"; }
+        if (!kR || st.pushLogN[kR] || pushEmVooN[kR]) return;
+        pushEmVooN[kR] = 1;
+        enviados++;
+        pushPacienteN(p.appTokenN, "Lembrete do seu acompanhamento", corpoR).then(function (deuCerto) {
+          delete pushEmVooN[kR];
+          if (!deuCerto) return;
+          var stC = load();
+          stC.pushLogN = stC.pushLogN || {};
+          stC.pushLogN[kR] = S.todayISO();
+          S.write("ntStudio", stC);
+        });
+      });
+      if ((st.config || {}).reguaRodouEmN !== hoje) { st.config = st.config || {}; st.config.reguaRodouEmN = hoje; mudou = true; }
+    }
     var chaves = Object.keys(st.pushLogN);
     if (chaves.length > 200) {
       chaves.sort(function (x, y) { return st.pushLogN[x] < st.pushLogN[y] ? -1 : 1; })
@@ -4719,6 +5097,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     renderPacientes(st);
     renderConta();
     if (!$("vDashN").hidden) renderDashN();
+    if (!$("vFinanceiroN").hidden) renderFinanceiroN();
   }
   S.onChange(function (k) { if (k === "ntStudio") render(); });
   // ---------- login próprio do TORQUE NUTRI ----------
