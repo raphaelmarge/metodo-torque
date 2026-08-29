@@ -540,6 +540,32 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></textarea></label>
     <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; margin-top: 12px;"><input type="checkbox" id="cfgFeedN" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os pacientes postam resultado e foto do prato, curtem e comentam entre si, com ranking de quem mais seguiu o plano na semana (vem desligado; precisa de conta na nuvem)</span></label>
     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
+      <b style="font-size: 13px;">Receber dos pacientes — sua conta, seu dinheiro</b>
+      <p class="muted" style="margin: 6px 0 8px; font-size: 12px;">Ligue a SUA conta de pagamento e o botão <b>Link de pagamento</b> do perfil passa a cobrar por ela — o dinheiro cai direto com você, sem repasse, e a <b>baixa entra sozinha</b> quando o paciente paga.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <label style="font-size: 12.5px; flex: 1; min-width: 200px;">Plataforma
+          <select id="cfgPagProvN" style="display:block; width: 100%; margin-top: 4px;">
+            <option value="">— escolher —</option>
+            <option value="mercadopago">Mercado Pago (conta grátis, só CPF)</option>
+            <option value="asaas">Asaas (feito pra mensalidades)</option>
+            <option value="pagarme">Pagar.me (precisa de CNPJ/MEI)</option>
+            <option value="outro">Outra plataforma (colar meu link)</option>
+          </select></label>
+        <label id="cfgPagLbChaveN" style="font-size: 12.5px; flex: 1; min-width: 220px;">Chave da plataforma
+          <input id="cfgPagChaveN" type="password" autocomplete="off" placeholder="cole aqui a chave (access token / API key)" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <label id="cfgPagLbLinkN" hidden style="font-size: 12.5px; flex: 1; min-width: 220px;">Seu link de cobrança
+          <input id="cfgPagLinkN" type="url" autocomplete="off" placeholder="https://… (o link de pagamento da sua plataforma)" style="display:block; width: 100%; margin-top: 4px;"></label>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Mercado Pago: <b>mercadopago.com.br/developers</b> → Suas integrações → Credenciais de produção → <b>Access Token</b>. Asaas: Conta → Integrações → <b>Chave de API</b>. Pagar.me: Configurações → Chaves → <b>Chave secreta</b>. A chave fica na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b>.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+        <button class="btn verde mini" id="cfgPagSalvaN">Ligar</button>
+        <button class="btn sec mini" id="cfgPagTestaN">Testar conexão</button>
+        <button class="btn sec mini" id="cfgPagDesligaN">Desligar</button>
+        <span class="muted" id="cfgPagStatusN" style="font-size: 12px;"></span>
+      </div>
+      <p class="muted" id="cfgPagHookN" style="margin: 8px 0 0; font-size: 12px;"></p>
+    </div>
+    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
       <b style="font-size: 13px;">Backup dos dados</b>
       <p class="muted" id="bkAvisoN" style="margin: 6px 0 8px; font-size: 12px;"></p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
@@ -1611,15 +1637,148 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (p) pintaAvalN(st, p);
   });
   // Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
+  // ---------- receber por profissional (pag_config) ----------
+  // mesmo desenho do Personal (v528/v532): a chave vai pro servidor pelas RPCs
+  // pag_config_salva/_ve/_apaga e NUNCA volta; o espelho local é só
+  // config.pagApi = {ligado, provedor} ("outro" guarda config.pagLink local).
+  function rpcN(nome, args) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) primeiro." });
+    return nuvem.client.rpc(nome, args || {}).then(function (r) {
+      if (r && r.error) return { erro: r.error.message };
+      return (r && r.data) || {};
+    }).catch(function () { return { erro: "Não consegui falar com a nuvem agora." }; });
+  }
+  function pagEspelhoN(st) { return (st.config || {}).pagApi || {}; }
+  function pintaPagStatusN(msg) { if ($("cfgPagStatusN")) $("cfgPagStatusN").textContent = msg || ""; }
+  function pintaPagHookN(esp) {
+    var el = $("cfgPagHookN");
+    if (!el) return;
+    el.textContent = "";
+    if (!esp.ligado || !esp.provedor || esp.provedor === "outro") return;
+    if (esp.provedor !== "pagarme") {
+      el.textContent = "Baixa automática: quando o paciente pagar pelo link, o pagamento entra sozinho (função pagamentos-webhook publicada).";
+      return;
+    }
+    el.textContent = "Carregando a URL da baixa automática…";
+    rpcN("pag_config_ve").then(function (d) {
+      var cfg = self.MT_CLOUD || {};
+      if (d && d.ok && d.webhook_token && d.academia_id && cfg.url) {
+        var urlHook = cfg.url + "/functions/v1/pagamentos-webhook?aid=" + encodeURIComponent(d.academia_id) + "&k=" + encodeURIComponent(d.webhook_token);
+        el.innerHTML = "Baixa automática: no painel do Pagar.me → Configurações → Webhooks, cadastre esta URL (eventos <b>order.paid</b> e <b>charge.payment_failed</b>): <code style=\"word-break:break-all; user-select:all;\">" + urlHook + "</code>";
+      } else {
+        el.textContent = "Baixa automática: rode o SQL novo (torqueon.com.br/sql.html) e toque em Ligar de novo pra ganhar a URL do webhook.";
+      }
+    }, function () { el.textContent = ""; });
+  }
+  function pintaPagCamposN() {
+    var st = load();
+    var esp = pagEspelhoN(st);
+    if ($("cfgPagProvN") && document.activeElement !== $("cfgPagProvN")) $("cfgPagProvN").value = esp.provedor || "";
+    var ehOutro = ($("cfgPagProvN") ? $("cfgPagProvN").value : "") === "outro";
+    if ($("cfgPagLbChaveN")) $("cfgPagLbChaveN").hidden = ehOutro;
+    if ($("cfgPagLbLinkN")) { $("cfgPagLbLinkN").hidden = !ehOutro; $("cfgPagLinkN").value = (st.config || {}).pagLink || ""; }
+    pintaPagHookN(esp);
+    if (esp.ligado) pintaPagStatusN("Ligado: " + (esp.provedor === "outro" ? "seu link" : "conta " + esp.provedor) + " ✓");
+  }
+  if ($("cfgPagProvN")) $("cfgPagProvN").addEventListener("change", function () {
+    var ehOutro = this.value === "outro";
+    $("cfgPagLbChaveN").hidden = ehOutro;
+    $("cfgPagLbLinkN").hidden = !ehOutro;
+  });
+  if ($("cfgPagSalvaN")) $("cfgPagSalvaN").addEventListener("click", function () {
+    var prov = $("cfgPagProvN").value;
+    if (!prov) { pintaPagStatusN("Escolha a plataforma primeiro."); return; }
+    if (prov === "outro") {
+      var lk = ($("cfgPagLinkN").value || "").trim();
+      if (!/^https?:\/\//.test(lk)) { pintaPagStatusN("Cole um link válido (começa com https://)."); return; }
+      var st = load();
+      st.config = st.config || {};
+      st.config.pagLink = lk;
+      st.config.pagApi = { ligado: true, provedor: "outro" };
+      save(st);
+      pintaPagCamposN();
+      pintaPagStatusN("Ligado: o botão Link de pagamento passa a abrir o SEU link.");
+      return;
+    }
+    var chave = ($("cfgPagChaveN").value || "").trim();
+    pintaPagStatusN("Guardando na nuvem…");
+    rpcN("pag_config_salva", { p_provedor: prov, p_chave: chave }).then(function (d) {
+      if (d && d.erro) { pintaPagStatusN("Não deu: " + d.erro); return; }
+      var st2 = load();
+      st2.config = st2.config || {};
+      st2.config.pagApi = { ligado: true, provedor: prov };
+      save(st2);
+      $("cfgPagChaveN").value = ""; // a chave nunca fica nesta tela
+      pintaPagCamposN();
+      pintaPagStatusN("Pronto! A chave ficou no servidor — os links saem da SUA conta " + prov + ".");
+    });
+  });
+  if ($("cfgPagTestaN")) $("cfgPagTestaN").addEventListener("click", function () {
+    if (pagEspelhoN(load()).provedor === "outro") { pintaPagStatusN("Outra plataforma é só o link — não tem conexão pra testar."); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { pintaPagStatusN("Entre na sua conta (card Sua ilha) primeiro."); return; }
+    pintaPagStatusN("Testando…");
+    self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "ping" }, "O gateway de pagamento").then(function (d) {
+      if (d && d.ok) pintaPagStatusN(d.temChave ? "Conectado: " + d.provedor + " com a chave guardada ✓" : "A função respondeu, mas ainda não tem chave — cole a chave e toque em Ligar.");
+      else pintaPagStatusN("Não deu: " + ((d && d.erro) || "publique a função pagamentos (torqueon.com.br/funcoes.html)."));
+    }, function () { pintaPagStatusN("Sem conexão com a função pagamentos agora."); });
+  });
+  if ($("cfgPagDesligaN")) $("cfgPagDesligaN").addEventListener("click", function () {
+    if (!confirm("Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal.")) return;
+    var eraOutro = pagEspelhoN(load()).provedor === "outro";
+    var fim = function () {
+      var st2 = load();
+      st2.config = st2.config || {};
+      delete st2.config.pagApi;
+      save(st2);
+      pintaPagCamposN();
+      pintaPagStatusN("Desligado. A chave foi apagada do servidor.");
+    };
+    if (eraOutro) { fim(); return; }
+    rpcN("pag_config_apaga").then(function (d) {
+      if (d && d.erro) { pintaPagStatusN("Não deu: " + d.erro); return; }
+      fim();
+    });
+  });
+  setTimeout(pintaPagCamposN, 800);
+  window.__pagCfgN = { pinta: pintaPagCamposN, espelho: pagEspelhoN }; // testes
+
   function geraLinkPagamentoN(pacienteId, valor, cb) {
     cb = cb || function () {};
     var st = load();
     var p = st.pacientes.find(function (x) { return x.id === pacienteId; });
     if (!p) { cb({ erro: "Paciente não encontrado." }); return; }
     if (!valor || valor < 1) { cb({ erro: "Escreva o valor da consulta primeiro." }); return; }
+    var pagApi = (st.config || {}).pagApi || {};
+    // "Outra plataforma": o link da nutricionista, direto — funciona até offline
+    if (pagApi.ligado && pagApi.provedor === "outro") {
+      if ((st.config || {}).pagLink) { cb({ ok: true, link: st.config.pagLink }); return; }
+      cb({ erro: "Cole o seu link de cobrança em Sua ilha → Receber dos pacientes." }); return;
+    }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra gerar o link de pagamento." }); return; }
+    // gateway da PRÓPRIA nutricionista: o dinheiro cai direto na conta dela
+    if (pagApi.ligado && pagApi.provedor) {
+      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", alunoId: p.id, origem: "consulta", valorCentavos: Math.round(valor * 100), descricao: "Consulta — " + ((st.config || {}).nome || "Nutricionista"), nome: p.nome, email: p.email || undefined }, "O link de pagamento")
+        .then(function (d) {
+          if (d && d.ok && d.link) {
+            if (d.linkId) {
+              var stO = load();
+              var pO = stO.pacientes.find(function (x) { return x.id === pacienteId; });
+              if (pO) {
+                pO.pedidosPg = (pO.pedidosPg || []).slice(-11);
+                pO.pedidosPg.push({ id: String(d.linkId), v: valor, em: S.todayISO(), prov: d.provedor || pagApi.provedor });
+                S.write("ntStudio", stO);
+              }
+            }
+            cb({ ok: true, link: d.link });
+          }
+          else cb({ erro: (d && d.erro) || "Publique a função pagamentos (torqueon.com.br/funcoes.html) e confira a chave em Sua ilha → Receber dos pacientes." });
+        }, function () { cb({ erro: "Sem conexão com a função pagamentos agora." }); });
+      return;
+    }
     self.MT_FUNCAO.chama(nuvem.client, "pagarme", { acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Consulta — " + ((st.config || {}).nome || "Nutricionista"), nome: p.nome, email: p.email || undefined }, "O link de pagamento")
       .then(function (d) {
       if (d && d.ok && d.linkPagamento) cb({ ok: true, link: d.linkPagamento });
@@ -1661,6 +1820,54 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   window.__pagAutoN = puxaPagamentosCartaoN; // testes
   setTimeout(puxaPagamentosCartaoN, 3000);
   setInterval(puxaPagamentosCartaoN, 120000);
+
+  // baixa automática do gateway PRÓPRIO (pag_eventos): paciente pagou o link,
+  // o pagamento entra sozinho. Mesmo desenho do Personal (v532): filtro pela
+  // academia deste painel, marca d'água com folga de 7 dias, dedupe por
+  // eventoId, casa por ref mt|<pacienteId>|… ou pelo link_id em p.pedidosPg.
+  function puxaPagamentosGatewayN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.aid) return;
+    var st0 = load();
+    if (!(((st0.config || {}).pagApi || {}).ligado)) return;
+    var desde = String((st0.config || {}).pagEvDesde || "");
+    var q = nuvem.client.from("pag_eventos").select("id,provedor,tipo,valor_centavos,ref,link_id,assinatura_id,criado")
+      .eq("academia_id", nuvem.aid).order("criado", { ascending: true }).limit(200);
+    if (desde) q = q.gt("criado", desde);
+    q.then(function (r) {
+      if (!r || r.error || !r.data || !r.data.length) return;
+      var st = load();
+      st.config = st.config || {};
+      st.pagamentosN = st.pagamentosN || [];
+      var vistos = {};
+      st.pagamentosN.forEach(function (p2) { if (p2.eventoId) vistos[p2.eventoId] = 1; });
+      var mudou = false;
+      r.data.forEach(function (ev) {
+        if (vistos[ev.id]) return;
+        if (ev.tipo !== "pago") return; // falhou/estorno ficam na nuvem, sem mexer no caixa
+        var ref = String(ev.ref || "").split("|");
+        var pid = ref[0] === "mt" ? ref[1] : "";
+        var p = pid ? st.pacientes.find(function (x) { return x.id === pid; }) : null;
+        if (!p && ev.link_id) p = st.pacientes.find(function (x) { return (x.pedidosPg || []).some(function (pp) { return pp.id === ev.link_id; }); });
+        if (!p) return;
+        st.pagamentosN.push({ id: S.uid(), pacienteId: p.id, valor: (ev.valor_centavos || 0) / 100, data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id });
+        vistos[ev.id] = 1;
+        p.cartaoFalhouEm = "";
+        if (ev.link_id) p.pedidosPg = (p.pedidosPg || []).filter(function (pp) { return pp.id !== ev.link_id; });
+        mudou = true;
+      });
+      var ult = r.data[r.data.length - 1];
+      var tUlt = ult && ult.criado ? new Date(String(ult.criado)).getTime() : 0;
+      if (tUlt) {
+        var marca = new Date(tUlt - 7 * 86400000).toISOString();
+        if (marca > String(st.config.pagEvDesde || "")) { st.config.pagEvDesde = marca; mudou = true; }
+      }
+      if (mudou) S.write("ntStudio", st);
+    });
+  }
+  window.__pagGatewayN = puxaPagamentosGatewayN; // testes
+  setTimeout(puxaPagamentosGatewayN, 5000);
+  setInterval(puxaPagamentosGatewayN, 120000);
   $("pnPgLink").addEventListener("click", function () {
     var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
     var btn = this;
