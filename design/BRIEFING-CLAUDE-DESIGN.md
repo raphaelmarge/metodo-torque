@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v662** |
-| Estado do repo em | 2026-08-29 (commit `5b4fae1`) |
+| App em | **mt-v663** |
+| Estado do repo em | 2026-08-29 (commit `6f5510e`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 124 |
+| Lançamentos no histórico | 125 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v662** — ou seja, **61 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v663** — ou seja, **62 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v663 | demo do paciente regenerada no motor novo — e ganha o gerador pra nunca mais congelar |
 | mt-v662 | redesenho do painel NUTRI — tokens --nt-* por papel, base em verde, modo claro num bloco só |
 | mt-v661 | app do paciente no motor novo — código servido pelo site, painel publica só os dados |
 | mt-v660 | Financeiro consolidado no NUTRI — atrasados com a ação na linha, 6 meses, régua de cobrança |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v651 | primeiro dia guiado no Início — 3 passos até ver o app com a própria marca |
 | mt-v650 | Baixar em Excel (CSV) ao lado do backup — alunos e pagamentos legíveis |
 | mt-v649 | o vídeo explicativo entra na página de vendas |
-| mt-v648 | organograma enxuto — os departamentos viram carrossel de telas do painel |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
