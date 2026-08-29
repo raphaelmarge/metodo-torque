@@ -203,6 +203,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <section id="vDashN">
     <div class="kpis-nt" id="kpisN"></div>
+    <div class="card" style="margin-bottom: 14px;" id="cardResolverN" hidden>
+      <h2>Resolver hoje</h2>
+      <p class="muted" style="margin: 2px 0 8px; font-size: 12.5px;">Só o que muda decisão hoje — cada linha com o botão que resolve.</p>
+      <div id="bResolverN" style="font-size: 13.5px;"></div>
+    </div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Seu dia hoje</h2>
       <div id="bHojeN" class="muted" style="font-size: 13.5px;">Carregando…</div>
@@ -1990,6 +1995,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     publicaApp(perfilNId);
   });
   window.__perfilNT = abrePerfilN; // testes
+  document.addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-resperfil");
+    if (id) abrePerfilN(id);
+  });
+  window.__resolverN = function () { return document.getElementById("bResolverN").textContent; }; // teste
 
   // ---------- busca de paciente no topo ----------
   function pintaBuscaPac() {
@@ -4284,6 +4294,35 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     }
     var d = dadosMesN(st, mes);
     var ativos = d.ativos;
+    // ---------- Resolver hoje: a lista de tarefas, não o relatório ----------
+    // Regra 1 do handoff do Personal: todo aviso tem o botão que resolve.
+    // Duas filas honestas (sem inventar dia de vencimento, que o Nutri não
+    // tem): sem pagamento no mês e sem dieta entregue — 3 de cada, o resto
+    // continua nos filtros da lista de Pacientes.
+    (function () {
+      var el = $("bResolverN");
+      if (!el) return;
+      var devendo = ativos.filter(function (p) { return !pagouMesN(st, p.id, mes); }).slice(0, 3);
+      var semDieta = ativos.filter(function (p) { return !(st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); }).slice(0, 3);
+      function linhaR(cor, txt, botoes) {
+        return '<div class="linha-flex" style="align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--linha);">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + cor + ';flex:none;"></span>' +
+          '<span style="flex:1;min-width:0;">' + txt + "</span>" + botoes + "</div>";
+      }
+      var h = "";
+      devendo.forEach(function (p) {
+        h += linhaR("#f87171", "<b>" + esc(p.nome) + "</b> — sem pagamento este mês",
+          (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent("Oi " + p.nome.split(" ")[0] + "! Podemos acertar o acompanhamento deste mês? 😊") + '">Cobrar</a>' : "") +
+          '<button class="btn sec mini" data-resperfil="' + p.id + '">Perfil</button>');
+      });
+      semDieta.forEach(function (p) {
+        h += linhaR("#fbbf24", "<b>" + esc(p.nome) + "</b> — ainda sem dieta entregue",
+          '<button class="btn verde mini" data-resperfil="' + p.id + '">Montar dieta</button>');
+      });
+      $("cardResolverN").hidden = !h;
+      el.innerHTML = h;
+    })();
     var projFat = d.fat / diaAtual * diasNoMes;
     var vPadrao = +((st.config || {}).pixValor) || 0;
     var comRec = ativos.filter(function (p) { return p.assinaturaRec; }).length;
