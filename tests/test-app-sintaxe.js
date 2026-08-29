@@ -90,6 +90,16 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// primeiro dia (v667): o card só nasce pro aluno SEM treino; e a videoteca
+// vira card endereçável + linha no menu ☰ — sem vídeo publicado, nada nasce
+ok(/id='primeiroDia'/.test(html2) && !/id='primeiroDia'/.test(html),
+  "🌱 o card do primeiro dia só existe no app do aluno sem treino");
+const D3 = Object.assign({}, D, { vidsApp: [{ t: "Mobilidade de quadril", c: "Geral", u: "" }] });
+let html3 = "";
+try { html3 = self.MT_APP_ALUNO.monta(D3); } catch (e) { ok(false, "monta(D com videoteca) não pode explodir — " + e.message); }
+ok(/id='vidCard'/.test(html3) && /Conteúdos e vídeos/.test(html3) && !/Conteúdos e vídeos/.test(html),
+  "🎬 com videoteca: card #vidCard + linha no ☰; sem videoteca, nem a linha nasce");
+
 // Cor em SVG: atributo NAO entende var(), so a propriedade CSS entende.
 // fill='var(--corc)' vira valor invalido e o navegador cai no inicial:
 // stroke none (a linha do grafico some) e fill preto (o ponto some no fundo

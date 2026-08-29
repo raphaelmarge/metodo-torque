@@ -795,9 +795,21 @@
           "<img id='avImg2' alt='' style='width:100%;height:100%;object-fit:cover;border-radius:50%;" + (FOTOAL ? "" : "display:none;") + "'" + (FOTOAL ? " src='" + FOTOAL + "'" : "") + ">" +
           "<span id='avIni2'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></button></div>";
         if (!hero && !fichaCard && !wodCard && !crCard) {
-          // aluno ainda sem treino prescrito: só a faixa com a saudação
+          /* aluno ainda sem treino prescrito: a faixa com a saudação + o card do
+           * PRIMEIRO DIA (v667) — antes era um retângulo mudo e o aluno novo não
+           * tinha nenhum caminho: nem "seu treino está sendo montado", nem chat,
+           * nem as 3 perguntinhas (que ficavam enterradas embaixo de dois cards
+           * vazios). O card fica DENTRO do #blocoHoje de propósito: filho de
+           * blocoHoje herda o data-sec dele e não passa pelo classificador. */
           return "<div id='blocoHoje' style='position:relative;'>" +
-            "<div style='height:170px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;'></div>" + heroTopo + "</div>";
+            "<div style='height:170px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;'></div>" + heroTopo +
+            "<div class='cardx' id='primeiroDia' style='border-color:var(--cor);'>" +
+            "<h2>Seu primeiro dia aqui</h2>" +
+            "<div class='vz' style='text-align:left;padding:2px 0 10px;'>" + esc(studio.split(" ")[0]) + " está montando o seu treino — assim que publicar, ele aparece aqui em cima. Enquanto isso:</div>" +
+            "<button class='btnx' id='pdOnb' data-ajgo='inicio' data-ajgoto='onbCard' style='width:100%;margin-bottom:9px;'>Responder 3 perguntinhas (30 s)</button>" +
+            "<button class='btnx' data-ajgo='chat' style='width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Falar com " + esc(studio.split(" ")[0]) + "</button>" +
+            (vidsApp.length ? "<button class='btnx' data-ajgo='inicio' data-ajgoto='vidCard' style='width:100%;margin-top:9px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Ver os conteúdos de " + esc(studio.split(" ")[0]) + "</button>" : "") +
+            "</div></div>";
         }
         return "<div id='blocoHoje' style='position:relative;'>" +
           "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + fichaCard + wodCard + crCard + "</div>" + heroTopo + "</div>";
@@ -1335,7 +1347,7 @@
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;cursor:pointer;'>+ Adicionar foto de frente" +
       "<input id='fotoInput' type='file' accept='image/*' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>Tirar na hora ou pegar da galeria — o celular pergunta. As fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
-      (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
+      (vidsApp.length ? "<div class='cardx' id='vidCard'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
         (function () {
           var porCat = {};
           vidsApp.forEach(function (v) { (porCat[v.c] = porCat[v.c] || []).push(v); });
@@ -1818,7 +1830,9 @@
       "})();" +
       "pintaSemana();mostraRpe();" +
       // onboarding de 30 segundos: 3 respostas que personalizam o acompanhamento
-      "(function(){var card=document.getElementById('onbCard');if(!card||L('ptonb',null))return;card.style.display='block';" +
+      // quem já respondeu perde o CTA do card do primeiro dia (antes do return cedo!)
+      "(function(){var pd9=document.getElementById('pdOnb');if(pd9&&L('ptonb',null))pd9.style.display='none';" +
+      "var card=document.getElementById('onbCard');if(!card||L('ptonb',null))return;card.style.display='block';" +
       "var sel={obj:'',dias:''};" +
       "function chip(box,val,rot){return \"<button data-onb='\"+box+\"' data-v='\"+val+\"' style='flex:1;min-width:0;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:9px 6px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;'>\"+rot+\"</button>\";}" +
       "document.getElementById('onbObj').innerHTML=[['emagrecer','Emagrecer'],['musculo','Ganhar músculo'],['saude','Saúde e disposição'],['performance','Performance']].map(function(o){return chip('obj',o[0],o[1]);}).join('');" +
@@ -5253,6 +5267,14 @@
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
       "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
       "(mgg.length?\"<div class='mgcard'>\"+mgg.map(function(s){return mgRow(s,s==='chat'?\"<span class='mgbadge' id='mgChatB' style='display:none;'></span><span class='mgchev'>\"+CHEV+'</span>':null);}).join('')+'</div>':'')+" +
+      /* a videoteca ganha entrada própria (v667): o card #vidCard mora no FIM do
+       * Início e quem não rolasse até lá nunca descobria que existe — o atalho
+       * leva direto (o handler da gaveta já sabe rolar via data-mgoto). O portão
+       * é do BUILDER: sem vídeo publicado, a linha nem nasce no HTML. */
+      (vidsApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='vidCard'>\"+" +
+        "\"<span style='line-height:0;'>\"+ic(\"<rect x='3.5' y='5' width='17' height='14' rx='2.5'/><path d='M10 9.4l4.6 2.6L10 14.6z'/>\")+\"</span>\"+" +
+        "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Conteúdos e vídeos</span><span class='mgsub'>" + vidsApp.length + (vidsApp.length > 1 ? " vídeos" : " vídeo") + " do seu personal</span></span>\"+" +
+        "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +
       "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +
       // iniciais e foto copiadas do avatar do topo, que já resolveu painel × aluno
