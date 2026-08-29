@@ -42,7 +42,12 @@ var __demoDados={};
   __demoDados.ptfotos=JSON.stringify(fotos);
   __demoDados.ptchat=JSON.stringify(chat);
   __demoDados.ptvisto=JSON.stringify(dt(1,21));
-  var rpe={};rpe[iso(1)]=2;rpe[iso(3)]=3;rpe[iso(5)]=2;rpe[iso(8)]=1;
+  /* RPE de ~10 semanas (segue os dias treinados) + batimento com cinta + idade:
+     alimentam o card "Esforço e batimento" da Evolução (v668) */
+  var rpe={};for(var ir=70;ir>=1;ir--){var dwr=new Date(Date.now()-ir*864e5).getDay();if(dwr===1||dwr===3||dwr===5)rpe[iso(ir)]=(ir%9===0)?3:((ir%3===0)?1:2);}
+  var fcx={};for(var ifc=24;ifc>=1;ifc--){var dwf=new Date(Date.now()-ifc*864e5).getDay();if(dwf===1||dwf===5)fcx[iso(ifc)]={m:136+((ifc*7)%18),x:164+((ifc*5)%16)};}
+  __demoDados.ptfc=JSON.stringify(fcx);
+  __demoDados.ptidade=JSON.stringify(31);
   __demoDados.ptrpe=JSON.stringify(rpe);
   __demoDados.ptonb=JSON.stringify({obj:"musculo",dias:"4",dor:"",em:iso(420)});
   __demoDados.ptmetapeso=JSON.stringify("77");
