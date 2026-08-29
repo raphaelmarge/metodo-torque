@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v650** |
-| Estado do repo em | 2026-08-29 (commit `4cc861c`) |
+| App em | **mt-v651** |
+| Estado do repo em | 2026-08-29 (commit `ced1837`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 112 |
+| Lançamentos no histórico | 113 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v650** — ou seja, **49 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v651** — ou seja, **50 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v651 | primeiro dia guiado no Início — 3 passos até ver o app com a própria marca |
 | mt-v650 | Baixar em Excel (CSV) ao lado do backup — alunos e pagamentos legíveis |
 | mt-v649 | o vídeo explicativo entra na página de vendas |
 | mt-v648 | organograma enxuto — os departamentos viram carrossel de telas do painel |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v639 | a IA passa a obedecer as diretrizes do professor ([#628](https://github.com/raphaelmarge/metodo-torque/pull/628)) |
 | mt-v638 | os graficos do app do aluno voltaram (paleta e cor de SVG) ([#627](https://github.com/raphaelmarge/metodo-torque/pull/627)) |
 | mt-v637 | um calendario so na Agenda + sub-menus em fita de sublinhado ([#626](https://github.com/raphaelmarge/metodo-torque/pull/626)) |
-| mt-v634 | escolher exercicio virou tela a parte (uma coisa por vez) ([#623](https://github.com/raphaelmarge/metodo-torque/pull/623)) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
