@@ -69,7 +69,10 @@
       ".agua-fill{height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee);transition:width .3s}" +
       ".refok{background:" + COR + ";border:none;color:#fff;border-radius:9px;padding:8px 14px;font-weight:800;cursor:pointer;font-family:inherit}" +
       ".refok.off{background:#29402f;color:#9fb8a6}" +
-      "</style></head><body>" +
+      // a camada VISUAL do redesenho mora em app/nutri-skin.js (MT_NUTRI_SKIN),
+      // embutida aqui com guarda — sem skin, nada muda (mesmo desenho do aluno)
+      "</style>" + (raiz.MT_NUTRI_SKIN && raiz.MT_NUTRI_SKIN.css ? "<style>" + raiz.MT_NUTRI_SKIN.css + "</style>" : "") + "</head><body>" +
+      (raiz.MT_NUTRI_SKIN && raiz.MT_NUTRI_SKIN.js ? "<script>" + raiz.MT_NUTRI_SKIN.js + "<\/script>" : "") +
       // topo no padrão do app do aluno: marca, nome grande, seção atual e o chip de XP
       "<div class='topo' style='display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 0 18px;'>" +
       "<div style='min-width:0;'>" +

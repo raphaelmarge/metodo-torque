@@ -101,6 +101,7 @@ ok(svgVar.length === 0, "nenhuma cor de SVG entra por atributo com var() — atr
  * app/nutri-builder.js, e vale a MESMA regra — checar a sintaxe do builder
  * não basta, o que vale é montar o app e fazer parse de cada <script>. */
 console.log("\nSintaxe do app do paciente (nutri-builder montado em node):");
+require("../app/nutri-skin.js");
 require("../app/nutri-builder.js");
 const DN = {
   tipo: "nutri",
@@ -130,6 +131,8 @@ scriptsN.forEach((s, i) => {
 });
 ok(htmlN.indexOf("__appNutri") > -1 && htmlN.indexOf("Marina") > -1 && htmlN.indexOf("fdListaN") > -1,
   "o app leva o gancho __appNutri, o nome do paciente e a Comunidade ligada");
+ok(htmlN.indexOf("font-variant-numeric:tabular-nums") > -1 && htmlN.indexOf(".nitemn span{font-size:9.5px") > -1,
+  "a skin do redesenho (nutri-skin) vai embutida no app publicado");
 
 // paciente novinho: sem dieta, sem nuvem, sem nada — também tem que montar
 const DN2 = { tipo: "nutri", p: { nome: "Novo" }, studio: "Nutri", refs: [], aldb: [], avs: [], mural: [] };

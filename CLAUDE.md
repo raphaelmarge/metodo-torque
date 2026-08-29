@@ -1432,7 +1432,11 @@ ninguém atropelar ninguém — valem pros dois:
   régua diaCobraN) e o app do paciente no motor novo (v661 —
   app/nutri-builder.js, pacote {html, dados, ver, stamp} com dados.tipo
   "nutri", autoPublicaAppsN republica só linhas que EXISTEM na nuvem e
-  estão velhas). O redesenho chegou no Nutri na v662: tokens --nt-* por
+  estão velhas). O VISUAL do app do paciente mora em app/nutri-skin.js
+  (MT_NUTRI_SKIN, v665 — embutido pelo builder com guarda, mesmo desenho
+  do aluno-skin: só tipo/raio/tamanho/espaço, nenhuma cor — a cor do
+  consultório chega baked pelo builder; aparência se mexe lá, nunca no
+  nutri-builder). O redesenho chegou no Nutri na v662: tokens --nt-* por
   papel (superfície/borda/texto/estados, valores que o Nutri já usava),
   apelidos --card/--linha/--cinza apontando pros tokens, modo claro num
   bloco só, e a base da v629 em verde (card com borda sem sombra, título

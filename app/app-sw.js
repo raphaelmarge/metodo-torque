@@ -26,6 +26,7 @@ var ESQUELETO = [
   "index.html",
   "aluno-builder.js",
   "nutri-builder.js",
+  "nutri-skin.js",
   "manifest.webmanifest",
   "../assets/cloud-config.js",
   "../assets/versao.js",
