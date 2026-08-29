@@ -1421,5 +1421,13 @@ ninguém atropelar ninguém — valem pros dois:
 - Escala: o painel aguenta milhares de alunos (índices + paginação). Os passos
   seguintes, se a base crescer muito: fotos no Supabase Storage, IndexedDB no
   lugar do localStorage e sync incremental (salvar só o que mudou).
-- Paridade NUTRI × PERSONAL: o app do paciente já ganhou XP, semana, medalhas
-  e Comunidade. Falta o painel (cadastro com anamnese, sub-abas, perfil).
+- Paridade NUTRI × PERSONAL: o app do paciente já tem XP, semana, medalhas e
+  Comunidade — e o PAINEL já tem cadastro, anamnese, perfil e sub-abas (a
+  pendência antiga estava desatualizada; auditoria em 2026-08-29). O que
+  falta de verdade, por ordem de valor: (1) gateway por profissional
+  (pag_config) + baixa automática — backend pronto, falta a tela; (2) aba
+  Financeiro com Atrasados + régua de cobrança; (3) Resolver hoje no Início
+  + filtros Sumindo/Encerrados; (4) Check-ins "A semana" com tendência;
+  (✓ moderação da Comunidade entrou no mt-v655). Dívidas grandes: o app do
+  paciente ainda é montaAppNutri inline (migrar pro aluno-builder) e o
+  redesign --pt-* não chegou no Nutri.

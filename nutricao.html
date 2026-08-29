@@ -114,6 +114,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kpi-nt { background: var(--card); border: none; padding: 14px; border-radius: 14px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
   .kpi-nt .val { font-size: 28px; font-weight: 800; margin-top: 2px; color: #4ade80; font-variant-numeric: tabular-nums; }
+  /* moderação da Comunidade: o post como card */
+  .fdpost { padding: 13px 15px; margin-bottom: 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--linha); }
+  .fdpost.off { opacity: .55; }
+  .fdpost .fdcab { display: flex; gap: 10px; align-items: center; }
+  .fdpost .fdav { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(22,163,74,.14); color: var(--verde, #16a34a); font-weight: 800; font-size: 12.5px; }
+  .fdpost .fdtxt { margin-top: 8px; font-size: 13.5px; line-height: 1.55; }
+  .fdpost .fdselo { display: inline-block; margin-left: 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--cinza); border: 1px solid var(--linha); border-radius: 999px; padding: 2px 8px; }
+
   /* perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
     /* mesma regra do Personal: flex que estica, pra barra de sub-abas nunca
@@ -383,7 +391,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="abas" id="qtAbasN" style="margin: 0 0 14px;">
       <button data-qta="enviar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro paciente</button>
       <button data-qta="montar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Perguntas e check-ins</button>
+      <button data-qta="feed"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='8' cy='9' r='2.4'/><circle cx='16' cy='9' r='2.4'/><path d='M3.5 19c.6-2.6 2.3-4 4.5-4s3.9 1.4 4.5 4M11.5 19c.6-2.6 2.3-4 4.5-4s3.9 1.4 4.5 4'/></svg> Comunidade</button>
       <button data-qta="resp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="feed" hidden>
+      <div class="linha-flex" style="gap: 10px; align-items: center; margin-bottom: 8px;">
+        <div><h2 style="margin: 0;">Comunidade dos pacientes</h2>
+        <p class="muted" id="fdmNResumo" style="margin: 2px 0 0; font-size: 12.5px;">—</p></div>
+        <label style="margin-left: auto; margin-bottom: 0; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700;">
+          <span id="fdmNLigRot">—</span>
+          <input type="checkbox" id="fdmNLiga" style="width: 17px; height: 17px;">
+        </label>
+      </div>
+      <div id="fdmNAviso" class="muted" style="font-size: 12.5px; margin-bottom: 10px;"></div>
+      <div class="linha-flex" style="margin-bottom: 10px; gap: 10px;">
+        <button class="btn sec mini" id="fdmNRecarrega">Atualizar</button>
+        <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 0;"><input type="checkbox" id="fdmNOcultos" style="width: 16px; height: 16px;"> mostrar os escondidos</label>
+      </div>
+      <div id="fdmNLista" class="muted">Carregando…</div>
+      <p class="muted" style="margin-top: 12px; font-size: 12px;">Você modera daqui: <b>esconder</b> um post (some do app de todo mundo na hora), <b>apagar</b> de vez, ou desligar a Comunidade inteira no interruptor aí em cima.</p>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Minhas perguntas</h2>
@@ -3831,6 +3857,88 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       alert("Não deu pra restaurar: " + ((e && e.message) || e));
     });
   });
+  // ---------- moderação da Comunidade (o feed que os pacientes publicam) ----------
+  // a nutricionista é membro da academia, então lê e edita app_feed direto pela RLS
+  function fdmNQuando(iso) {
+    var q = new Date(iso);
+    if (!isFinite(q)) return "";
+    var d = String(iso || "").slice(0, 10);
+    var hoje = S.todayISO();
+    var hm = String(q.getHours()).padStart(2, "0") + ":" + String(q.getMinutes()).padStart(2, "0");
+    return (d === hoje ? "hoje " : S.fmtData(d) + " ") + hm;
+  }
+  function pintaFeedModN(box, posts) {
+    box.innerHTML = posts.map(function (p) {
+      var nome = String(p.nome || "Paciente");
+      return '<div class="fdpost' + (p.oculto ? " off" : "") + '">' +
+        '<div class="fdcab"><span class="fdav">' + esc(nome.trim().slice(0, 2).toUpperCase()) + "</span>" +
+        '<div style="min-width:0;"><div style="font-size:14px;font-weight:800;">' + esc(nome) +
+        (p.oculto ? '<span class="fdselo">escondido</span>' : "") + "</div>" +
+        '<div style="font-size:11.5px;color:var(--cinza);margin-top:1px;">' + esc(fdmNQuando(p.criado)) +
+        (p.treino ? " · " + esc(p.treino) : "") + "</div></div>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:6px;flex:none;">' +
+        "<button class='btn sec mini' data-fdmoc='" + esc(p.id) + "'>" + (p.oculto ? "Mostrar" : "Esconder") + "</button>" +
+        "<button class='btn sec mini' data-fdmrm='" + esc(p.id) + "' title='apagar de vez' aria-label='apagar o post'>✕</button></span></div>" +
+        (p.texto ? '<div class="fdtxt">“' + esc(p.texto) + "”</div>" : "") +
+        (p.foto ? "<img src='" + esc(p.foto) + "' alt='foto do post' loading='lazy' style='max-width:220px;border-radius:12px;margin-top:10px;display:block;'>" : "") +
+        "</div>";
+    }).join("");
+  }
+  function carregaFeedModN() {
+    var box = $("fdmNLista");
+    if (!box) return;
+    var st = load();
+    var lig = !!(st.config || {}).feedOn;
+    $("fdmNAviso").textContent = lig ? "" : "A Comunidade está DESLIGADA — ligue no interruptor e publique os apps pros pacientes verem a aba Turma.";
+    $("fdmNLiga").checked = lig;
+    $("fdmNLigRot").textContent = lig ? "Ligada no app" : "Desligada";
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      $("fdmNResumo").textContent = "Precisa da sua conta";
+      box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou.";
+      return;
+    }
+    box.textContent = "Carregando…";
+    var q = nuvem.client.from("app_feed").select("id,nome,texto,foto,treino,oculto,criado")
+      .eq("academia_id", nuvem.aid).order("criado", { ascending: false }).limit(60);
+    if (!$("fdmNOcultos").checked) q = q.eq("oculto", false);
+    q.then(function (r) {
+      if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade."; return; }
+      var posts = (r && r.data) || [];
+      var corte = new Date(); corte.setDate(corte.getDate() - 7);
+      var isoC = S.todayISO(corte);
+      var naSem = posts.filter(function (x) { return String(x.criado || "").slice(0, 10) >= isoC; }).length;
+      $("fdmNResumo").textContent = naSem ? naSem + " post(s) esta semana" : posts.length ? "Nenhum post nos últimos 7 dias" : "Ninguém postou ainda";
+      if (!posts.length) { box.textContent = "Ninguém postou ainda."; return; }
+      pintaFeedModN(box, posts);
+    }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  $("fdmNRecarrega").addEventListener("click", carregaFeedModN);
+  $("fdmNOcultos").addEventListener("change", carregaFeedModN);
+  $("fdmNLiga").addEventListener("change", function () {
+    $("cfgFeedN").checked = this.checked;
+    $("cfgFeedN").dispatchEvent(new Event("change"));
+    carregaFeedModN();
+  });
+  $("fdmNLista").addEventListener("click", function (e) {
+    var oc = e.target.getAttribute && e.target.getAttribute("data-fdmoc");
+    var rm = e.target.getAttribute && e.target.getAttribute("data-fdmrm");
+    if (!oc && !rm) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    e.target.disabled = true;
+    if (rm) {
+      if (!confirm("Apagar este post de vez? Não dá pra voltar atrás.")) { e.target.disabled = false; return; }
+      nuvem.client.from("app_feed").delete().eq("id", rm).then(carregaFeedModN, carregaFeedModN);
+      return;
+    }
+    var escondendo = /Esconder/.test(e.target.textContent);
+    nuvem.client.from("app_feed").update({ oculto: escondendo }).eq("id", oc).then(carregaFeedModN, carregaFeedModN);
+  });
+  // carrega quando a sub-aba abre
+  document.querySelector('[data-qta="feed"]').addEventListener("click", carregaFeedModN);
+  window.__feedModN = { carrega: carregaFeedModN, pinta: pintaFeedModN }; // testes
+
   // Comunidade: muda o app de todo mundo, então avisa pra republicar
   $("cfgFeedN").addEventListener("change", function () {
     var st = load();
