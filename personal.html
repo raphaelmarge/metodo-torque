@@ -3395,6 +3395,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         <button class="btn sec mini" id="btnBackup">Baixar backup (.json)</button>
         <button class="btn sec mini" id="btnExcel">Baixar em Excel (CSV)</button>
         <button class="btn sec mini" id="btnBackupRestaura">Restaurar backup</button>
+      </div>
+      <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px;">
+        <input type="checkbox" id="cfgFchAuto" checked style="width: auto; margin: 0;">
+        Receber o fechamento do mês por e-mail (na primeira abertura do painel no mês novo)
+      </label>
+      <div class="linha-flex" hidden>
         <input type="file" id="bkArquivo" accept=".json,application/json" hidden>
       </div>
     </div>
@@ -15472,20 +15478,65 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function emailAcessoHtml(studio, primeiro, email, senha) {
     var url = "https://www.torqueon.com.br/aluno-login.html";
-    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:var(--tk-sup2);color:#fff;border-radius:16px;padding:28px;'>" +
+    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#efedf4;color:#fff;border-radius:16px;padding:28px;'>" +
       "<div style='font-size:11px;letter-spacing:.2em;color:var(--tk-roxoTx2);font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
       "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de treino está pronto, " + esc(primeiro) + "!</h1>" +
-      "<p style='color:var(--tk-tx3);font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
-      "<div style='background:var(--tk-bd2);border:1px solid var(--tk-bd4);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
-      "<div style='margin-bottom:6px;'><span style='color:var(--tk-tx3);'>Login:</span> <b>" + esc(email) + "</b></div>" +
-      "<div><span style='color:var(--tk-tx3);'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
+      "<p style='color:#6b6579;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
+      "<div style='background:#dcd9e4;border:1px solid var(--tk-bd4);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='margin-bottom:6px;'><span style='color:#6b6579;'>Login:</span> <b>" + esc(email) + "</b></div>" +
+      "<div><span style='color:#6b6579;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
       "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
-      "<p style='color:var(--tk-tx5);font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
+      "<p style='color:#8a8695;font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
   }
   function enviaEmailFn(nuvem, para, assunto, html) {
     return self.MT_FUNCAO.chama(nuvem.client, "envia-email",
       { acao: "enviar", para: para, assunto: assunto, html: html }, "O envio de e-mail");
   }
+
+  // ---------- fechamento do mês por e-mail, sozinho ----------
+  // Na primeira abertura do painel num mês novo, o fechamento do mês
+  // ANTERIOR vai pro e-mail do professor logado — o mesmo texto do botão
+  // "Mandar fechamento". Quem vê valor todo mês não cancela. Regras: só com
+  // conta logada (o e-mail vem do __syncInfoPT), nunca na demo, só se o mês
+  // anterior teve pagamento (fechamento de R$ 0 pra conta nova é ruído),
+  // uma vez por mês (config.fechamentoEnviado, gravado SÓ quando o servidor
+  // responde ok — falhou, tenta na próxima abertura) e desligável no card
+  // da ilha (config.fechamentoAutoOff).
+  function fechamentoAuto() {
+    try {
+      if (localStorage.getItem("mtapp:ptDemo")) return;
+      var st = load();
+      var cfg = st.config || {};
+      if (cfg.fechamentoAutoOff) return;
+      var d0 = new Date();
+      var ma = new Date(d0.getFullYear(), d0.getMonth() - 1, 1);
+      var mesAnt = ma.getFullYear() + "-" + String(ma.getMonth() + 1).padStart(2, "0");
+      if ((cfg.fechamentoEnviado || "") >= mesAnt) return;
+      if (!(st.pagamentos || []).some(function (p) { return String(p.data || "").slice(0, 7) === mesAnt; })) return;
+      var info = window.__syncInfoPT;
+      if (!info || !info.logado || !info.email) return;
+      var nuvem = S.cloud && S.cloud();
+      if (!nuvem || !nuvem.client || !self.MT_FUNCAO) return;
+      var texto = (window.__dashPT && window.__dashPT.resumo) ? window.__dashPT.resumo(mesAnt) : "";
+      if (!texto) return;
+      var rotulo = mesAnt.slice(5, 7) + "/" + mesAnt.slice(0, 4);
+      var html = "<div style='font-family:Arial,sans-serif;max-width:540px;margin:0 auto;padding:8px;'>" +
+        "<h2 style='color:#7c3aed;margin:0 0 12px;'>TORQUE PERSONAL</h2>" +
+        "<pre style='font:14px/1.7 Menlo,Consolas,monospace;background:#f4f3f7;color:#1a1723;padding:16px 18px;border-radius:12px;white-space:pre-wrap;margin:0;'>" + esc(texto) + "</pre>" +
+        "<p style='color:#8a8695;font-size:12px;margin-top:14px;'>Enviado sozinho na primeira abertura do painel no mês novo. Pra parar de receber, desmarque \u201cReceber o fechamento do mês por e-mail\u201d no card da sua ilha.</p></div>";
+      enviaEmailFn(nuvem, info.email, "Seu fechamento de " + rotulo + " — TORQUE PERSONAL", html).then(function (r) {
+        if (!(r && r.ok)) return;
+        var st2 = load();
+        st2.config = st2.config || {};
+        st2.config.fechamentoEnviado = mesAnt;
+        S.write("ptStudio", st2);
+      }, function () {});
+    } catch (e) {}
+  }
+  // duas tentativas: a nuvem leva uns segundos pra logar e preencher o __syncInfoPT
+  setTimeout(fechamentoAuto, 15000);
+  setTimeout(fechamentoAuto, 75000);
+  window.__fechamentoAuto = fechamentoAuto; // teste
   function criaAcessoAluno(alunoId, cb) {
     cb = cb || function () {};
     var st = load();
@@ -15967,6 +16018,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     baixaCsv("pagamentos", pgs);
   });
   $("btnBackupRestaura").addEventListener("click", function () { $("bkArquivo").click(); });
+  (function () {
+    var cb = $("cfgFchAuto");
+    if (!cb) return;
+    cb.checked = !((load().config || {}).fechamentoAutoOff);
+    cb.addEventListener("change", function () {
+      var st = load();
+      st.config = st.config || {};
+      st.config.fechamentoAutoOff = !cb.checked;
+      S.write("ptStudio", st);
+    });
+  })();
   $("bkArquivo").addEventListener("change", function () {
     var f = this.files && this.files[0];
     this.value = "";
