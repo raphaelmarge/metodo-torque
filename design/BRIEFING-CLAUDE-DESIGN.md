@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v660** |
-| Estado do repo em | 2026-08-29 (commit `67ce24c`) |
+| App em | **mt-v661** |
+| Estado do repo em | 2026-08-29 (commit `13fbec6`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 122 |
+| Lançamentos no histórico | 123 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v660** — ou seja, **59 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v661** — ou seja, **60 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v661 | app do paciente no motor novo — código servido pelo site, painel publica só os dados |
 | mt-v660 | Financeiro consolidado no NUTRI — atrasados com a ação na linha, 6 meses, régua de cobrança |
 | mt-v659 | Check-ins 'A semana' no NUTRI — quem pede atenção, com Cobrar quem falta |
 | mt-v658 | Resolver hoje no Início do NUTRI — a lista de tarefas, não o relatório |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v649 | o vídeo explicativo entra na página de vendas |
 | mt-v648 | organograma enxuto — os departamentos viram carrossel de telas do painel |
 | mt-v647 | vitrine do app vira celular de arrastar, com treino guiado e circuito |
-| mt-v646 | página de vendas nova — o sistema que te oferece tempo, o personal como empresa |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
