@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v648";
+var VERSION = "mt-v649";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -175,6 +175,10 @@ self.addEventListener("fetch", function (event) {
   // banco. E o aluno-builder.js é a FONTE ÚNICA do app do aluno: servir ele do
   // cache é o mesmo que desligar o conserto automático que ele existe pra dar.
   // Nos três casos o cache continua valendo como reserva, pro app abrir offline.
+  // vídeo (.mp4) não passa pelo SW: o player pede pedaços (range) e uma
+  // resposta inteira vinda do cache quebraria o play no iPhone
+  if (url.pathname.endsWith(".mp4")) return;
+
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
       url.pathname.indexOf("supabase-setup.sql") > -1 ||
       url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
