@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v654** |
-| Estado do repo em | 2026-08-29 (commit `87462f2`) |
+| App em | **mt-v655** |
+| Estado do repo em | 2026-08-29 (commit `ce2bda4`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 116 |
+| Lançamentos no histórico | 117 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v654** — ou seja, **53 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v655** — ou seja, **54 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v655 | moderação da Comunidade no NUTRI — fecha o risco do feed sem controle |
 | mt-v654 | régua do teste grátis — 4 e-mails automáticos (dia 1, 3, 7 e 12) |
 | mt-v653 | fechamento do mês por e-mail, sozinho — e o e-mail de acesso sem var() |
 | mt-v652 | Importar lista — a carteira inteira de alunos numa colada |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v643 | o trajeto da corrida em 3D (MapLibre) — e a rota passa a ser guardada |
 | mt-v642 | o mapa da corrida estava morto desde a v602 (nome de funcao repetido) |
 | mt-v641 | o mapa da corrida volta — o tile exigia CORS sem precisar |
-| mt-v640 | prints da landing do Personal saem do v601 e voltam pro sistema de hoje |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
