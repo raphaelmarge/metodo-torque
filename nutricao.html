@@ -397,10 +397,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <!-- CHECK-INS (questionários pro paciente, estilo LiveClin) -->
   <div id="vQuestN" hidden>
     <div class="abas" id="qtAbasN" style="margin: 0 0 14px;">
-      <button data-qta="enviar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro paciente</button>
+      <button data-qta="semana" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> A semana</button>
+      <button data-qta="enviar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro paciente</button>
       <button data-qta="montar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Perguntas e check-ins</button>
       <button data-qta="feed"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='8' cy='9' r='2.4'/><circle cx='16' cy='9' r='2.4'/><path d='M3.5 19c.6-2.6 2.3-4 4.5-4s3.9 1.4 4.5 4M11.5 19c.6-2.6 2.3-4 4.5-4s3.9 1.4 4.5 4'/></svg> Comunidade</button>
       <button data-qta="resp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="semana">
+      <div class="linha-flex" style="gap: 10px; align-items: center; margin-bottom: 8px;">
+        <div><h2 style="margin: 0;" id="qsSemRotN">Check-in da semana</h2>
+        <p class="muted" id="qsResumoN" style="margin: 2px 0 0; font-size: 12.5px;">—</p></div>
+        <button class="btn verde mini" id="qsCobrarN" hidden style="margin-left: auto;">Cobrar quem falta</button>
+      </div>
+      <div id="qsListaN"></div>
+      <div id="qsDetN" style="margin-top: 12px;"></div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-qtsec="feed" hidden>
       <div class="linha-flex" style="gap: 10px; align-items: center; margin-bottom: 8px;">
@@ -973,7 +983,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   }
   window.__alAbaN = fazSubAbas("vAlimentos", "alAbas", "data-ala", "data-alsec", "banco");
   window.__agAbaN = fazSubAbas("vAgendaN", "agAbasN", "data-aga", "data-agsec", "consultas");
-  window.__qtAbaN = fazSubAbas("vQuestN", "qtAbasN", "data-qta", "data-qtsec", "enviar");
+  window.__qtAbaN = fazSubAbas("vQuestN", "qtAbasN", "data-qta", "data-qtsec", "semana");
   window.__chAbaN = fazSubAbas("vChatN", "chAbasN", "data-cha", "data-chsec", "conversas");
 
   // ---------- onboarding ----------
@@ -4175,6 +4185,146 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       alert("Não deu pra restaurar: " + ((e && e.message) || e));
     });
   });
+  // ---------- Check-ins: A semana (quem respondeu, quem pede atenção) ----------
+  // porte do 3b do Personal: junta app_checkin (a nota) com app_quest (as
+  // perguntas), agrupa em Pede atenção / Tudo bem / Não responderam e cobra
+  // quem falta pelo WhatsApp. Os helpers de leitura são cópia fiel de lá.
+  function qsSemanaN() {
+    var hoje = S.todayISO();
+    var seg = new Date(hoje + "T12:00:00");
+    seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    var dom = new Date(seg.getTime()); dom.setDate(dom.getDate() + 6);
+    return { ini: S.todayISO(seg), fim: S.todayISO(dom) };
+  }
+  function qsValorN(r) {
+    var v = parseFloat(String(r.resposta == null ? "" : r.resposta).replace(",", "."));
+    if (isFinite(v)) return { v: v, max: v <= 10 ? 10 : Math.ceil(v) };
+    if (r.pontos != null && isFinite(+r.pontos)) return { v: +r.pontos, max: 10 };
+    return null;
+  }
+  function qsAlertaN(reg) {
+    var motivos = [];
+    if (reg.nota != null && reg.nota <= 2) motivos.push("Check-in " + reg.nota + " de 5");
+    (reg.respostas || []).forEach(function (r) {
+      var n = qsValorN(r);
+      if (!n) return;
+      var rot = String(r.pergunta || r.sigla || "").slice(0, 24);
+      if (r.menos && n.v >= n.max * 0.6) motivos.push(rot + ": " + n.v);
+      else if (!r.menos && n.v <= n.max * 0.35) motivos.push(rot + ": " + n.v);
+    });
+    return motivos;
+  }
+  var qsCacheN = null, qsSelN = "";
+  function pintaQuestDetN() {
+    var det = $("qsDetN");
+    if (!det || !qsCacheN) return;
+    var reg = qsCacheN.todos.find(function (r) { return r.p.id === qsSelN; });
+    if (!reg) { det.innerHTML = ""; return; }
+    var p = reg.p;
+    var tiles = [];
+    if (reg.nota != null) tiles.push({ k: "Check-in", v: reg.nota, max: 5, ruim: reg.nota <= 2 });
+    (reg.respostas || []).forEach(function (r) {
+      var n = qsValorN(r);
+      if (!n) return;
+      tiles.push({ k: String(r.pergunta || r.sigla || "").slice(0, 22), v: n.v, max: n.max, ruim: r.menos ? n.v >= n.max * 0.6 : n.v <= n.max * 0.35 });
+    });
+    var livres = (reg.respostas || []).filter(function (r) { return !qsValorN(r) && String(r.resposta || "").trim(); });
+    det.innerHTML = '<div style="border-top:1px solid var(--linha);padding-top:12px;">' +
+      '<div class="linha-flex" style="gap:10px;align-items:center;">' +
+      '<b style="font-size:15px;">' + esc(p.nome) + "</b>" +
+      '<span class="muted" style="font-size:12px;">' + (reg.respondeu ? "respondeu " + S.fmtData(reg.quando) : "ainda não respondeu esta semana") + "</span>" +
+      '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+      '<button class="btn sec mini" data-resperfil="' + p.id + '">Perfil</button></span></div>' +
+      (tiles.length ? '<div class="linha-flex" style="flex-wrap:wrap;gap:10px;margin-top:10px;">' + tiles.map(function (ti) {
+        return '<div style="flex:1;min-width:120px;border:1px solid var(--linha);border-radius:12px;padding:10px 12px;">' +
+          '<div class="muted" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + esc(ti.k) + "</div>" +
+          '<div style="font-size:22px;font-weight:800;' + (ti.ruim ? "color:#f87171;" : "") + '">' + String(ti.v).replace(".", ",") + "</div>" +
+          '<div style="height:5px;border-radius:99px;background:var(--linha);margin-top:6px;overflow:hidden;"><i style="display:block;height:100%;width:' +
+          Math.max(4, Math.min(100, ti.v / ti.max * 100)) + "%;background:" + (ti.ruim ? "#f87171" : "#16a34a") + ';"></i></div></div>';
+      }).join("") + "</div>" : "") +
+      (reg.motivos && reg.motivos.length ? '<p style="margin:10px 0 0;font-size:12.5px;color:#f87171;"><b>Pede atenção:</b> ' + esc(reg.motivos.join(" · ")) + "</p>" : "") +
+      ((reg.texto || livres.length) ? '<p class="muted" style="margin:10px 0 0;font-size:13px;">' + (reg.texto ? "“" + esc(reg.texto) + "”" : "") +
+        livres.map(function (r) { return "<br><span style='font-size:11.5px;'>" + esc(String(r.pergunta || r.sigla || "")) + ":</span> “" + esc(String(r.resposta)) + "”"; }).join("") + "</p>" : "") +
+      "</div>";
+  }
+  function pintaQuestSemanaN() {
+    var lista = $("qsListaN");
+    if (!lista) return;
+    var sem = qsSemanaN();
+    $("qsSemRotN").textContent = "Check-in da semana · " + sem.ini.slice(8, 10) + "/" + sem.ini.slice(5, 7) + " a " + sem.fim.slice(8, 10) + "/" + sem.fim.slice(5, 7);
+    var st = load();
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false && p.appTokenN; });
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { $("qsResumoN").textContent = "Precisa da sua conta"; lista.innerHTML = ""; $("qsDetN").innerHTML = ""; $("qsCobrarN").hidden = true; return; }
+    if (!ativos.length) { $("qsResumoN").textContent = "Nenhum paciente com app"; lista.innerHTML = ""; $("qsDetN").innerHTML = ""; $("qsCobrarN").hidden = true; return; }
+    var tokens = ativos.map(function (p) { return p.appTokenN; });
+    lista.textContent = "Carregando…";
+    Promise.all([
+      nuvem.client.from("app_checkin").select("token,dia,nota,texto,peso").gte("dia", sem.ini).in("token", tokens).limit(300),
+      nuvem.client.from("app_quest").select("token,questionario,dados,criado").gte("criado", sem.ini).in("token", tokens)
+        .order("criado", { ascending: false }).limit(300),
+    ]).then(function (rs) {
+      var cks = rs[0].error ? [] : (rs[0].data || []);
+      var qsr = rs[1].error ? [] : (rs[1].data || []);
+      var porTok = {};
+      ativos.forEach(function (p) { porTok[p.appTokenN] = { p: p, nota: null, texto: "", peso: null, quando: "", respostas: [] }; });
+      cks.forEach(function (c) {
+        var r = porTok[c.token]; if (!r) return;
+        if (!r.quando || c.dia > r.quando) { r.nota = c.nota; r.texto = c.texto || r.texto; r.peso = c.peso; r.quando = c.dia; }
+      });
+      qsr.forEach(function (q) {
+        var r = porTok[q.token]; if (!r || r.respostas.length) return;
+        var d = q.dados || {};
+        r.respostas = Array.isArray(d.respostas) ? d.respostas : [];
+        var dq = String(q.criado || "").slice(0, 10);
+        if (!r.quando || dq > r.quando) r.quando = dq;
+      });
+      var todos = Object.keys(porTok).map(function (k) { return porTok[k]; });
+      todos.forEach(function (r) {
+        r.respondeu = r.nota != null || r.respostas.length > 0;
+        r.motivos = r.respondeu ? qsAlertaN(r) : [];
+      });
+      var atencao = todos.filter(function (r) { return r.respondeu && r.motivos.length; });
+      var bem = todos.filter(function (r) { return r.respondeu && !r.motivos.length; });
+      var faltam = todos.filter(function (r) { return !r.respondeu; });
+      qsCacheN = { todos: todos };
+      $("qsResumoN").textContent = (atencao.length + bem.length) + " de " + todos.length + " responderam";
+      var bt = $("qsCobrarN");
+      bt.hidden = !faltam.length;
+      bt.textContent = "Cobrar " + (faltam.length === 1 ? "quem falta" : "os " + faltam.length);
+      bt.onclick = function () {
+        var bloq = 0, abriu = 0;
+        faltam.forEach(function (r) {
+          if (!r.p.zap) return;
+          var w = window.open("https://wa.me/55" + String(r.p.zap).replace(/\D/g, "") + "?text=" +
+            encodeURIComponent("Oi " + r.p.nome.split(" ")[0] + "! Seu check-in da semana está te esperando no app 😉"), "_blank");
+          if (w) abriu++; else bloq++;
+        });
+        alert(abriu + " conversa(s) aberta(s)." + (bloq ? " O navegador bloqueou " + bloq + " aba(s) — toque de novo pra abrir o resto." : ""));
+      };
+      function grupo(rot, arr, cor) {
+        if (!arr.length) return "";
+        return '<p class="muted" style="margin:10px 0 4px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;">' + rot + " (" + arr.length + ")</p>" +
+          arr.map(function (r) {
+            return '<button type="button" class="btn sec mini" data-qsitn="' + r.p.id + '" style="margin:0 6px 6px 0;' + (cor && r.motivos.length ? "border-color:#f87171;color:#f87171;" : "") + '">' +
+              esc(r.p.nome) + (r.motivos.length ? " ⚠" : r.respondeu && r.nota != null ? " · " + r.nota : "") + "</button>";
+          }).join("");
+      }
+      lista.innerHTML = grupo("Pede atenção", atencao, true) + grupo("Tudo bem", bem) + grupo("Não responderam", faltam) || "Ninguém com app ainda.";
+      if (!qsSelN || !todos.some(function (r) { return r.p.id === qsSelN; })) qsSelN = ((atencao[0] || bem[0] || {}).p || {}).id || "";
+      pintaQuestDetN();
+    }, function () { lista.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  $("qsListaN").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-qsitn]");
+    if (!b) return;
+    qsSelN = b.getAttribute("data-qsitn");
+    pintaQuestDetN();
+  });
+  document.querySelector('[data-qta="semana"]').addEventListener("click", pintaQuestSemanaN);
+  setTimeout(pintaQuestSemanaN, 1500);
+  window.__qsSemanaN = { pinta: pintaQuestSemanaN, det: pintaQuestDetN, alerta: qsAlertaN }; // testes
+
   // ---------- moderação da Comunidade (o feed que os pacientes publicam) ----------
   // a nutricionista é membro da academia, então lê e edita app_feed direto pela RLS
   function fdmNQuando(iso) {
