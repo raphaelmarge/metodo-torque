@@ -1269,10 +1269,13 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   ler só o miolo do JWT deixava passar token forjado quando o Verify JWT estava
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
-  200 com a MESMA credencial). Lista em `supabase/functions/` — as **10**, todas
+  200 com a MESMA credencial). Lista em `supabase/functions/` — as **11**, todas
   publicadas e ACTIVE: meta-webhook, chat-envia, whatsapp, envia-email (Resend),
-  pagarme, push-envia, pagamentos, pagamentos-webhook, **pagarme-webhook** e
-  **assinatura-loja** (as duas últimas entraram em 2026-08-25).
+  pagarme, push-envia, pagamentos, pagamentos-webhook, **pagarme-webhook**,
+  **assinatura-loja** (2026-08-25) e **regua-teste** (2026-08-29 — a régua do
+  teste grátis: pg_cron → pg_net → função, senha em `regua_config` selada,
+  idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
+  = trial).
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
 - **Redundância** (v513/v515): todo update/delete no `dados` guarda o valor
@@ -1365,7 +1368,7 @@ ninguém atropelar ninguém — valem pros dois:
 ## Estado atual e pendências do Raphael
 
 - Supabase (projeto `hdcufkaalxfhwmfwoiqp`, "metodo-torque") — FEITO pelo
-  conector: as **10 Edge Functions** do repo estão publicadas com **Verify JWT
+  conector: as **11 Edge Functions** do repo estão publicadas com **Verify JWT
   OFF** (a pagarme antiga continua lá) e os blocos zap_config, RECEBER POR
   PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY e push_subs do SQL foram rodados
   (tabelas, colunas, índices únicos parciais e RPCs conferidos). O SQL da
