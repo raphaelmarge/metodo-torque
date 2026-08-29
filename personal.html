@@ -3379,6 +3379,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <p class="muted" id="bkAviso" style="margin: 6px 0 8px; font-size: 12px;"></p>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
         <button class="btn sec mini" id="btnBackup">Baixar backup (.json)</button>
+        <button class="btn sec mini" id="btnExcel">Baixar em Excel (CSV)</button>
         <button class="btn sec mini" id="btnBackupRestaura">Restaurar backup</button>
         <input type="file" id="bkArquivo" accept=".json,application/json" hidden>
       </div>
@@ -15786,6 +15787,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.backupEm = S.todayISO();
     S.write("ptStudio", st);
+  });
+  // "seus dados são seus" de verdade: alunos e pagamentos em CSV que o Excel
+  // brasileiro abre direto (BOM + ponto-e-vírgula). O backup .json continua
+  // sendo a cópia completa; este é o formato legível pra levar embora.
+  $("btnExcel").addEventListener("click", function () {
+    var st = load();
+    function cel(v) {
+      v = v === undefined || v === null ? "" : String(v);
+      return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }
+    function baixaCsv(nome, linhas) {
+      var txt = "\ufeff" + linhas.map(function (l) { return l.map(cel).join(";"); }).join("\r\n");
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv;charset=utf-8" }));
+      a.download = nome + "-" + S.todayISO() + ".csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    }
+    var alunos = [["Nome", "Telefone", "E-mail", "Objetivo", "Plano", "Valor (R$)", "Cobrança", "Situação", "Cliente desde", "CPF"]];
+    (st.alunos || []).forEach(function (a) {
+      alunos.push([a.nome, a.zap, a.email, a.objetivo, a.plano, a.valor, a.modo === "mes" ? "mensal" : (a.modo || ""), a.ativo === false ? "encerrado" : "ativo", a.desde, a.cpf]);
+    });
+    baixaCsv("alunos", alunos);
+    var porId = {};
+    (st.alunos || []).forEach(function (a) { porId[a.id] = a.nome; });
+    var pgs = [["Data", "Aluno", "Valor (R$)", "Forma", "Descrição"]];
+    (st.pagamentos || []).forEach(function (p) {
+      pgs.push([p.data, porId[p.alunoId] || p.alunoId || "", p.valor, p.forma, p.desc]);
+    });
+    baixaCsv("pagamentos", pgs);
   });
   $("btnBackupRestaura").addEventListener("click", function () { $("bkArquivo").click(); });
   $("bkArquivo").addEventListener("change", function () {
