@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v656** |
-| Estado do repo em | 2026-08-29 (commit `e597290`) |
+| App em | **mt-v657** |
+| Estado do repo em | 2026-08-29 (commit `c311d69`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 118 |
+| Lançamentos no histórico | 119 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v656** — ou seja, **55 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v657** — ou seja, **56 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v657 | NUTRI recebe pela PRÓPRIA conta — pag_config, link e baixa automática |
 | mt-v656 | NUTRI — filtros Sumindo/Encerrados e o importador de pacientes |
 | mt-v655 | moderação da Comunidade no NUTRI — fecha o risco do feed sem controle |
 | mt-v654 | régua do teste grátis — 4 e-mails automáticos (dia 1, 3, 7 e 12) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v645 | o mapa da corrida segue o aluno, e a bolinha vira seta |
 | mt-v644 | prepara a chave do CARTO (o mapa vinha carimbado "API KEY REQUIRED") |
 | mt-v643 | o trajeto da corrida em 3D (MapLibre) — e a rota passa a ser guardada |
-| mt-v642 | o mapa da corrida estava morto desde a v602 (nome de funcao repetido) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
