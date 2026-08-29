@@ -52,6 +52,16 @@
     + "#htTitulo,#heroCarr .htit{font-size:clamp(30px,10vw,44px)!important;font-weight:900!important;letter-spacing:-.035em!important;line-height:.94!important;text-transform:uppercase}"
     + "#htSub,#heroCarr .hsub{font-size:13.5px!important}"
     + "#heroCarr .btnx{min-height:58px;width:100%;font-size:17px;font-weight:800}"
+    /* junção foto → página com CONTINUIDADE (pedido do Raphael, 2026-08-29):
+     * o véu do builder pulava de 8% pra 88% de escuridão em 40% da altura e a
+     * foto terminava numa quina visível em cima do botão. A rampa vira um
+     * degradê longo com passos pequenos (aproxima um ease-in), começando mais
+     * cedo e escorrendo até o var(--bg0) da página — a foto "derrete" no fundo
+     * e o card emenda no Minha semana sem borda. Mesmos pontos de partida e
+     * chegada do véu original; só a curva muda. O alvo é por [style*] porque o
+     * véu é inline no HTML montado (e só ele tem pointer-events:none + gradiente
+     * dentro dos cards do carrossel). */
+    + "#heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(13,12,16,.55) 0%,rgba(13,12,16,.06) 30%,rgba(13,12,16,.12) 42%,rgba(13,12,16,.24) 51%,rgba(13,12,16,.4) 59%,rgba(13,12,16,.58) 67%,rgba(13,12,16,.75) 74%,rgba(13,12,16,.88) 82%,rgba(13,12,16,.96) 90%,var(--bg0) 100%)!important}"
     + "#diasSem>div>div,#diasSem>div{border-radius:12px!important}"
 
     /* ---------- barra de abas ---------- */
