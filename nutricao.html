@@ -260,6 +260,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </select>
         <input id="pRestr" placeholder="Restrições/alergias (ex.: lactose, amendoim)" style="flex: 2; min-width: 180px;">
         <button class="btn verde" id="pAdd">+ Adicionar</button>
+        <button class="btn sec" id="pImporta">Importar lista</button>
       </div>
       <p id="pAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o paciente recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
     </div>
@@ -267,6 +268,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-pacf="todos" class="ativa">Todos</button>
       <button data-pacf="semdieta">Sem dieta</button>
       <button data-pacf="devendo">Sem pagamento</button>
+      <button data-pacf="sumindo">Sumindo</button>
+      <button data-pacf="encerrados">Encerrados</button>
     </div>
     <div id="listaPacientes" class="muted">Cadastre o primeiro paciente.</div>
   </div>
@@ -577,7 +580,19 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 </main>
 
 <!-- perfil completo do paciente (estilo cadastro da academia) -->
-<dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: var(--card); color: var(--texto); padding: 0;">
+<dialog id="dlgImportaN">
+      <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 620px; max-width: 100%;">
+        <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Importar pacientes — cole a sua lista</h2>
+        <p class="muted" style="margin: 0; font-size: 12.5px;">Um paciente por linha, do jeito que estiver na planilha ou no WhatsApp: <b>nome e telefone</b> (e e-mail, se tiver). Peso, altura e idade você completa depois, no perfil — a lista avisa quem está incompleto.</p>
+        <textarea id="impTextoN" rows="8" placeholder="Paula Souza, 31 98811-0001, paula@gmail.com&#10;Zé Ramos; 31988110002" style="width: 100%; font-size: 13px;"></textarea>
+        <div id="impPreviaN" class="muted" style="font-size: 12.5px; max-height: 180px; overflow: auto;"></div>
+        <div class="linha-flex" style="gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn sec" id="impCancelaN">Cancelar</button>
+          <button type="button" class="btn verde" id="impConfirmaN" disabled>Importar</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: var(--card); color: var(--texto); padding: 0;">
   <div style="padding: 18px 20px; max-height: 84vh; overflow-y: auto;">
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <h2 id="pnTitulo" style="font-size: 19px; margin: 0;">Perfil</h2>
@@ -952,6 +967,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return x.pacienteId === pid && String(x.data || "").slice(0, 7) === mes;
     });
   }
+  // quantos dias o paciente está sumido: -1 = tem consulta futura marcada
+  // (não está sumido). A MESMA régua vale pro filtro da lista e pro Radar.
+  function diasSumidoN(st, p, hoje) {
+    var temFutura = (st.consultas || []).some(function (c) { return c.pacienteId === p.id && c.data > hoje; });
+    if (temFutura) return -1;
+    var minhas = (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje; })
+      .map(function (c) { return c.data; }).sort();
+    var ult = minhas[minhas.length - 1] || "";
+    return ult ? Math.round((new Date(hoje + "T12:00") - new Date(ult + "T12:00")) / 864e5)
+      : (p.desde ? Math.round((new Date(hoje + "T12:00") - new Date(p.desde + "T12:00")) / 864e5) : 999);
+  }
   var pacFiltro = "todos";
   var paMostra = 60; // a lista cresce de 60 em 60 (com 200 pacientes o navegador engasga)
   function renderPacientes(st) {
@@ -960,16 +986,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var temDietaDe = function (p) { var d = st.dietas[p.id]; return !!(d && (d.refeicoes || []).length); };
     var nSemDieta = ativos.filter(function (p) { return !temDietaDe(p); }).length;
     var nDevendo = ativos.filter(function (p) { return !pagouMesN(st, p.id, mesAtual); }).length;
+    var hojeF = S.todayISO();
+    var nSumindo = ativos.filter(function (p) { return diasSumidoN(st, p, hojeF) >= 30; }).length;
+    var nEncerrados = st.pacientes.filter(function (p) { return p.ativo === false; }).length;
     // o contador fica no próprio botão — o nutri vê o tamanho do problema sem clicar
-    var rotulos = { todos: "Todos (" + ativos.length + ")", semdieta: "Sem dieta (" + nSemDieta + ")", devendo: "Sem pagamento (" + nDevendo + ")" };
+    var rotulos = { todos: "Todos (" + ativos.length + ")", semdieta: "Sem dieta (" + nSemDieta + ")", devendo: "Sem pagamento (" + nDevendo + ")", sumindo: "Sumindo (" + nSumindo + ")", encerrados: "Encerrados (" + nEncerrados + ")" };
     document.querySelectorAll("#pacFiltro button").forEach(function (b) {
       var f = b.getAttribute("data-pacf");
       b.textContent = rotulos[f] || b.textContent;
       b.classList.toggle("ativa", f === pacFiltro);
     });
-    var lista = ativos.filter(function (p) {
+    var base = pacFiltro === "encerrados" ? st.pacientes.filter(function (p) { return p.ativo === false; }) : ativos;
+    var lista = base.filter(function (p) {
       if (pacFiltro === "semdieta") return !temDietaDe(p);
       if (pacFiltro === "devendo") return !pagouMesN(st, p.id, mesAtual);
+      if (pacFiltro === "sumindo") return diasSumidoN(st, p, hojeF) >= 30;
       return true;
     });
     var corte = lista.slice(0, paMostra);
@@ -982,7 +1013,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return '<div class="pac" style="flex-wrap:wrap;"><b data-perfil="' + p.id + '" role="button" tabindex="0" style="font-size:15px;cursor:pointer;" title="abrir o perfil">' + esc(p.nome) + "</b>" +
         '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
         (p.objetivo === "emagrecer" ? "emagrecer" : p.objetivo === "ganhar" ? "ganhar" : "manter") + "</span>" +
-        '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
+        '<span class="muted" style="font-size:12.5px;">' + (p.peso && p.altura && p.idade ? p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal" : "complete o cadastro no perfil") + "</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
         (pagou ? '<span class="tagn" title="mensalidade deste mês recebida">pago no mês</span>'
           : '<span class="tagn ambar" title="ainda não recebeu deste mês">sem pagamento</span>') +
@@ -999,6 +1030,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       : "")
       : (pacFiltro === "todos" ? "Cadastre o primeiro paciente."
         : pacFiltro === "semdieta" ? "Todo mundo já tem dieta montada — bom trabalho!"
+        : pacFiltro === "sumindo" ? "Ninguém sumido — todo mundo com consulta em dia. 🎉"
+        : pacFiltro === "encerrados" ? "Nenhum paciente encerrado."
         : "Ninguém devendo este mês. 🎉");
   }
   $("pacFiltro").addEventListener("click", function (e) {
@@ -1009,6 +1042,74 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     renderPacientes(load());
   });
   window.__pacFiltro = function (f) { pacFiltro = f || "todos"; paMostra = 60; renderPacientes(load()); }; // testes
+
+  // ---------- importar pacientes (colar lista de planilha/WhatsApp) ----------
+  // mesma gramática do importador do Personal: e-mail por regex, telefone é a
+  // maior sequência de 10-13 dígitos, o resto vira o nome; dedupe por telefone
+  // e por nome sem acento. Importado entra SEM peso/altura/idade (completa no
+  // perfil) e nunca dispara e-mail de acesso sozinho.
+  function impParseN(texto, st) {
+    var semAcento = function (s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); };
+    var jaTel = {}, jaNome = {};
+    (st.pacientes || []).forEach(function (p) {
+      if (p.zap) jaTel[String(p.zap).replace(/\D/g, "")] = 1;
+      jaNome[semAcento(p.nome)] = 1;
+    });
+    var novos = [], pulados = [];
+    texto.split(/\r?\n/).forEach(function (linha) {
+      linha = linha.trim();
+      if (!linha) return;
+      var email = (linha.match(/[\w.+-]+@[\w-]+\.[\w.-]+/) || [""])[0];
+      var resto = linha.replace(email, "");
+      var tel = "";
+      var m = resto.match(/(?:\+?\(?\d[\d ().-]{8,})/g);
+      if (m) {
+        m.sort(function (a, b) { return b.replace(/\D/g, "").length - a.replace(/\D/g, "").length; });
+        var dig = m[0].replace(/\D/g, "");
+        if (dig.length >= 10 && dig.length <= 13) { tel = dig; resto = resto.replace(m[0], ""); }
+      }
+      var nome = resto.replace(/[;,\t()]+/g, " ").replace(/\s+/g, " ").trim();
+      if (!nome) { pulados.push({ linha: linha, motivo: "sem nome" }); return; }
+      if (tel && jaTel[tel]) { pulados.push({ linha: nome, motivo: "telefone já cadastrado" }); return; }
+      if (jaNome[semAcento(nome)]) { pulados.push({ linha: nome, motivo: "nome já cadastrado" }); return; }
+      jaNome[semAcento(nome)] = 1;
+      if (tel) jaTel[tel] = 1;
+      novos.push({ nome: nome, zap: tel, email: email.toLowerCase() });
+    });
+    return { novos: novos, pulados: pulados };
+  }
+  function impPintaN() {
+    var r = impParseN($("impTextoN").value, load());
+    var h = "";
+    if (r.novos.length) {
+      h += "<b>" + r.novos.length + " paciente(s) pra importar:</b><br>" +
+        r.novos.map(function (n) { return "• " + esc(n.nome) + (n.zap ? " · " + esc(n.zap) : " · <span style='color:#d97706;'>sem telefone</span>") + (n.email ? " · " + esc(n.email) : ""); }).join("<br>");
+    }
+    if (r.pulados.length) {
+      h += (h ? "<br><br>" : "") + "<b>Pulados (" + r.pulados.length + "):</b><br>" +
+        r.pulados.map(function (p) { return "• " + esc(p.linha) + " — " + p.motivo; }).join("<br>");
+    }
+    $("impPreviaN").innerHTML = h || "Cole a lista acima que eu mostro aqui o que entendi, antes de importar.";
+    $("impConfirmaN").disabled = !r.novos.length;
+    $("impConfirmaN").textContent = r.novos.length ? "Importar " + r.novos.length + " paciente(s)" : "Importar";
+  }
+  $("pImporta").addEventListener("click", function () { $("impTextoN").value = ""; impPintaN(); $("dlgImportaN").showModal(); });
+  $("impTextoN").addEventListener("input", impPintaN);
+  $("impCancelaN").addEventListener("click", function () { $("dlgImportaN").close(); });
+  $("impConfirmaN").addEventListener("click", function () {
+    var st = load();
+    var r = impParseN($("impTextoN").value, st);
+    if (!r.novos.length) return;
+    r.novos.forEach(function (n) {
+      st.pacientes.push({ id: S.uid(), nome: n.nome, zap: n.zap, email: n.email, sexo: "f",
+        idade: 0, peso: 0, altura: 0, atividade: "leve", objetivo: "manter", restricoes: "",
+        ativo: true, desde: S.todayISO(), appTokenN: S.uid() + S.uid() });
+    });
+    save(st);
+    $("dlgImportaN").close();
+    alert(r.novos.length + " paciente(s) importado(s)! Complete peso, altura e idade no perfil de cada um.");
+  });
+  window.__impPacientes = impParseN; // teste
   $("pAdd").addEventListener("click", function () {
     var nome = $("pNome").value.trim();
     if (!nome || !+$("pPeso").value || !+$("pAltura").value || !+$("pIdade").value) { alert("Preencha nome, idade, peso e altura."); return; }
@@ -4023,11 +4124,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         .map(function (c) { return c.data; }).sort();
       var ult = minhas[minhas.length - 1] || "";
       if (!ult || ult < S.todayISO(corte60)) semRetorno60++;
-      // quem já tem consulta marcada pra frente não está sumido
-      var temFutura = (st.consultas || []).some(function (c) { return c.pacienteId === p.id && c.data > hoje; });
-      if (temFutura) return;
-      var dias = ult ? Math.round((new Date(hoje + "T12:00") - new Date(ult + "T12:00")) / 864e5)
-        : (p.desde ? Math.round((new Date(hoje + "T12:00") - new Date(p.desde + "T12:00")) / 864e5) : 999);
+      // a régua é a MESMA do filtro Sumindo da lista (diasSumidoN)
+      var dias = diasSumidoN(st, p, hoje);
+      if (dias < 0) return;
       if (dias >= 30) sumidos.push({ id: p.id, nome: p.nome, zap: p.zap, dias: dias, nunca: !ult });
     });
     sumidos.sort(function (a, b) { return b.dias - a.dias; });
