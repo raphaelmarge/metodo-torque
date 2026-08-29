@@ -168,6 +168,26 @@
     + "html.claro .notabtn{background:#fff;border-color:#d9d5e3;color:#191622}"
     + "html.claro .notabtn.on{background:var(--cor);color:#fff}"
 
+    /* ---------- áreas esquecidas: Evolução, Chat, Questionários, Utilidades (v669) ----------
+     * Regras SÓ de geometria/tipo — nada de display (dezenas de nós alternam
+     * por style.display) e nada de cor de fundo (o modo claro repinta lendo o
+     * ATRIBUTO style por substring; vencer ele com id+!important deixaria card
+     * escuro no tema claro). !important só onde o alvo tem style inline. */
+    /* Evolução: os cards internos de Cargas/Marcas/Esforço sobem pro raio 22 do padrão */
+    + "#cgBox div[style*='border-radius:20px'],#mkBox div[style*='border-radius:20px'],#esfBox div[style*='border-radius:20px']{border-radius:22px!important}"
+    + "div:has(>#pzGraf){border-radius:22px!important}" // caixa do Meu peso (sem id; :has degrada limpo)
+    /* Chat: bolha discriminada pelo RAIO (sem [style*] pegaria o divisor de data e o wrapper) */
+    + "#chMsgs>div[style*='border-radius:18px 18px 6px 18px'],#chMsgs>div[style*='border-radius:18px 18px 18px 6px'],#chMsgs div[style*='border-radius:18px 18px 18px 6px']{padding:12px 15px!important;font-size:14.5px!important;line-height:1.5!important}"
+    + "#chMsgs{gap:9px!important}"        // gap é inline
+    + "#chTexto{min-height:52px}"          // min-height não é inline — sem !important
+    /* Questionários: classes puras — o skin carrega depois e vence no empate */
+    + ".qsbt{min-height:54px;border-radius:99px;font-weight:800}"
+    + ".qaop{border-radius:22px}"
+    /* Utilidades: tiles no raio padrão (inline 20px) */
+    + "[data-utgo]{border-radius:22px!important}"
+    /* Corrida (lista fechada de alvos seguros): o botão de começar cresce pro polegar */
+    + "[data-cbstart]{min-height:52px!important}"
+
     /* respiro extra antes da barra de abas */
     + "body{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}";
 
