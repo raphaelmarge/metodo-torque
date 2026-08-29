@@ -1432,6 +1432,14 @@ ninguém atropelar ninguém — valem pros dois:
   régua diaCobraN) e o app do paciente no motor novo (v661 —
   app/nutri-builder.js, pacote {html, dados, ver, stamp} com dados.tipo
   "nutri", autoPublicaAppsN republica só linhas que EXISTEM na nuvem e
-  estão velhas). Dívida grande restante: o redesign --pt-* não chegou no
-  Nutri. demo-paciente.html continua sendo um retrato congelado do app
-  antigo (regenerar quando fizer diferença).
+  estão velhas). O redesenho chegou no Nutri na v662: tokens --nt-* por
+  papel (superfície/borda/texto/estados, valores que o Nutri já usava),
+  apelidos --card/--linha/--cinza apontando pros tokens, modo claro num
+  bloco só, e a base da v629 em verde (card com borda sem sombra, título
+  15,5px caixa mista, botão 44px raio 11, sec com borda, whats com tinta).
+  ⚠️ documentos autônomos (recibo, plano PDF, laudo, e-mail) e cor passada
+  como CONFIG a módulo compartilhado (pagarme-cartao, BotBuilder) ficam
+  com hex — tests/test-tokens-nutri.js recorta essas regiões e reprova
+  hex novo no resto, além de medir a geometria nos dois temas.
+  demo-paciente.html continua sendo um retrato congelado do app antigo
+  (regenerar quando fizer diferença).
