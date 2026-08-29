@@ -90,6 +90,12 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// guiado (v670): aquecimento e alternativas entram no player — o GUIA ganha
+// as chaves al/aq (por ÚLTIMO, por causa da janela de 500 chars do teste de
+// escape) e o markup usa .gaq/.galt com o .altbtn delegado de sempre
+ok(/class='gaq'/.test(html) && /class='galt'/.test(html) && /"al":\["Supino com halteres"\]/.test(html),
+  "🏋️ o treino guiado leva o aquecimento (.gaq) e as alternativas (.galt) no GUIA");
+
 // esforço e batimento (v668): o card devolve ptrpe/ptfc pro aluno, com as
 // regras honestas — batimento só com dado, zona só com idade
 ok(html.indexOf("id='esfBox'") > -1 && html.indexOf("function pintaEsforco") > -1 &&
