@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v669** |
-| Estado do repo em | 2026-08-29 (commit `3562679`) |
+| App em | **mt-v670** |
+| Estado do repo em | 2026-08-29 (commit `fe3617b`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 131 |
+| Lançamentos no histórico | 132 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v669**.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v670** — ou seja, **1 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v668** (2026-08-29).
+O motor (`app/aluno-builder.js`) encostou em **mt-v670** (2026-08-29).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v670 | aquecimento e alternativas chegam no treino GUIADO |
 | mt-v669 | a skin do redesenho chega nas áreas esquecidas do app |
 | mt-v668 | RPE e batimento voltam pro aluno — card Esforço e batimento na Evolução |
 | mt-v667 | primeiro dia do aluno novo + a videoteca ganha atalho no menu |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v658 | Resolver hoje no Início do NUTRI — a lista de tarefas, não o relatório |
 | mt-v657 | NUTRI recebe pela PRÓPRIA conta — pag_config, link e baixa automática |
 | mt-v656 | NUTRI — filtros Sumindo/Encerrados e o importador de pacientes |
-| mt-v655 | moderação da Comunidade no NUTRI — fecha o risco do feed sem controle |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
