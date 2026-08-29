@@ -90,6 +90,14 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// avaliação e saúde nativa (v671): curvas de gordura/massa magra no evoBox e
+// o importador automático (modo silencioso + dedupe) com as regras honestas
+ok(html.indexOf("function avMg") > -1 && html.indexOf("window.__avGraf") > -1,
+  "📉 o card da avaliação ganha as curvas (avMg = a régua da tela 43) e o gancho __avGraf");
+ok(html.indexOf("function crImporta(txt,rotulo,auto)") > -1 && html.indexOf("function saudePuxa") > -1 &&
+  html.indexOf("window.__saudeSync") > -1 && html.indexOf("ptsaudeSync") > -1,
+  "⌚ o crImporta tem o modo silencioso e o saudePuxa importa do relógio com marca");
+
 // guiado (v670): aquecimento e alternativas entram no player — o GUIA ganha
 // as chaves al/aq (por ÚLTIMO, por causa da janela de 500 chars do teste de
 // escape) e o markup usa .gaq/.galt com o .altbtn delegado de sempre

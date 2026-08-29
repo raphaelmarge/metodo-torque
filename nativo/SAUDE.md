@@ -35,9 +35,28 @@ window.MTNativo = {
 
 Com `window.MTNativo.saude` presente, o app do aluno acende sozinho a linha
 **Ajustes → APP → "Conectar relógio e saúde"** (id `ajSaude`) e o toque chama
-`saude.abrir()`. Cada treino que a ponte entregar é só passar em
-`window.__crImporta(textoGpx)` — dedupe, medalhas e histórico já são tratados
-lá. A web NUNCA mostra essa linha sem a ponte: nada de botão que finge.
+`saude.abrir()`. A web NUNCA mostra essa linha sem a ponte: nada de botão que
+finge.
+
+**A partir do mt-v671 o app IMPORTA SOZINHO** quando `treinos`/`peso` existem:
+no boot (3 s depois de abrir) e a cada volta pro app (visibilitychange), com
+intervalo mínimo de 15 min entre rodadas e trava de ocupado com soltura em
+10 s (callback nativo que nunca responde não trava o app pra sempre).
+
+- `treinos(desdeISO, cb)`: `desdeISO` é timestamp ISO **completo em UTC**
+  (`toISOString()`), nunca data local. A marca do último import fica em
+  `ptsaudeSync` com **recuo de 48 h** (relógio que sincroniza horas depois);
+  primeira vez pega 30 dias. Teto de 20 treinos por rodada. Cada texto passa
+  por `window.__crImporta(txt, rotulo, auto=true)` — o modo silencioso não
+  abre confirm/alert nem solta confete, e o **dedupe existe de verdade**:
+  mesmo dia + duração ±5 s + km ±0,06 não entra duas vezes (vale também pra
+  reimportação manual do mesmo arquivo). Sem cardio no app, `__crImporta`
+  nem existe e só o peso importa.
+- `peso(cb)`: valida kg 20–400 e data `YYYY-MM-DD`, e **só preenche data
+  vazia** — o que o aluno digitou no app vence o relógio.
+
+Quando algo entra, a linha `ajSaude` mostra "N treino(s) importado(s) do
+relógio". Gancho de teste: `window.__saudeSync = {puxa(força), desde()}`.
 
 ## Passo a passo — Android (Health Connect)
 
