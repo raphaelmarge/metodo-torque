@@ -1872,6 +1872,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
          linha do tempo do dia à esquerda, o mês e o Radar de retenção à direita.
          Aniversários, movimentação, indicadores, fechamento e alertas saíram
          daqui pra Relatórios: não mudam decisão HOJE. -->
+    <div id="dia1Card" hidden></div>
     <div id="dashTopo"></div>
     <div id="dashResolver"></div>
     <div class="dcols">
@@ -14855,6 +14856,67 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
   });
   window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra }; // testes
+
+  // ---------- primeiro dia guiado ----------
+  // Conta nova não tem o momento "uau" garantido: o professor pode passar o
+  // teste inteiro sem VER o app com a marca dele. Este card guia os 3 passos
+  // e some sozinho: na demo, pra quem já tem 4+ alunos, quando os 3 passos
+  // fecham ou quando o professor dispensa (config.dia1Off).
+  function pintaDia1(st) {
+    var el = $("dia1Card");
+    if (!el) return;
+    var cfg = st.config || {};
+    var demo = false;
+    try { demo = !!localStorage.getItem("mtapp:ptDemo"); } catch (e) {}
+    var alunos = (st.alunos || []).filter(function (a) { return a.ativo !== false; });
+    var p1 = alunos.length > 0;
+    var p2 = alunos.some(function (a) { var tr = (st.treinosV2 || {})[a.id]; return tr && (tr.fichas || []).length; });
+    var p3 = !!cfg.dia1AppVisto;
+    if (demo || cfg.dia1Off || (p1 && p2 && p3) || alunos.length >= 4) { el.hidden = true; return; }
+    function passo(ok, n, txt, acao, rotulo) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--tk-bd2);">' +
+        '<span style="flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:800;' +
+        (ok ? "background:rgba(74,222,128,.15);color:var(--tk-ok);" : "background:var(--tk-roxoFraco);color:var(--tk-roxoTx);") + '">' + (ok ? "✓" : n) + "</span>" +
+        '<span style="flex:1;min-width:0;font-size:13.5px;' + (ok ? "color:var(--tk-tx4);text-decoration:line-through;" : "") + '">' + txt + "</span>" +
+        (ok ? "" : '<button class="btn mini" data-d1="' + acao + '">' + rotulo + "</button>") +
+        "</div>";
+    }
+    el.hidden = false;
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px;">' +
+      '<div style="flex:1;min-width:0;"><h2>Seu primeiro dia, em 3 passos</h2>' +
+      '<p class="muted" style="margin:3px 0 6px;font-size:12.5px;">No fim do terceiro você vê o app do aluno <b>com a sua marca</b> — é aí que a ficha cai.</p></div>' +
+      '<button class="btn sec mini" data-d1="fechar" aria-label="Dispensar o guia do primeiro dia" title="Dispensar">✕</button></div>' +
+      passo(p1, 1, "Cadastre seu primeiro aluno (leva 1 minuto)", "aluno", "+ Cadastrar") +
+      passo(p2, 2, "Monte a primeira ficha — ou deixe a IA montar", "ficha", "Montar") +
+      passo(p3, 3, "Abra o app do aluno e veja a sua marca nele", "app", "Abrir o app") +
+      "</div>";
+  }
+  $("dia1Card").addEventListener("click", function (ev) {
+    var bt = ev.target.closest("[data-d1]");
+    if (!bt) return;
+    var acao = bt.getAttribute("data-d1");
+    var st = load();
+    if (acao === "fechar") {
+      st.config = st.config || {}; st.config.dia1Off = true;
+      S.write("ptStudio", st); pintaDia1(st); return;
+    }
+    if (acao === "aluno") { $("btnNovoAluno").click(); return; }
+    if (acao === "ficha") { var b2 = document.querySelector('[data-a="treinos"]'); if (b2) b2.click(); return; }
+    if (acao === "app") {
+      var com = (st.alunos || []).find(function (a) { return a.ativo !== false && a.appTokenP; });
+      if (!com) { alert("Publique a ficha primeiro (em Treinos → Salvar e publicar) — aí o app do aluno nasce."); return; }
+      st.config = st.config || {}; st.config.dia1AppVisto = true;
+      S.write("ptStudio", st);
+      window.open("app/?t=" + com.appTokenP, "_blank");
+      pintaDia1(st);
+    }
+  });
+  (function () {
+    var rd = renderDashPT;
+    renderDashPT = function (st) { rd(st); try { pintaDia1(st); } catch (e) {} };
+  })();
+  window.__dia1 = pintaDia1; // teste
 
   $("relCSV").addEventListener("click", function () {
     var st = load();
