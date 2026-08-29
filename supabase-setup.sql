@@ -2698,3 +2698,78 @@ as $$
 $$;
 
 grant execute on function public.app_alunos_vistos(text[]) to authenticated;
+
+-- ==================== RÉGUA DO TESTE GRÁTIS (2026-08) ====================
+-- Quem cria conta e fica no teste (academias.assinatura_status = 'trial')
+-- recebe 4 e-mails: dia 1, 3, 7 e 12 desde a criação da academia. O relógio
+-- é o pg_cron (todo dia às 13:00 UTC = 10:00 em Brasília), que chama a Edge
+-- Function regua-teste via pg_net com a senha da tabela SELADA regua_config
+-- (RLS sem política nenhuma: só o banco e a service key alcançam — a senha
+-- nunca toca o navegador). O envio é registrado em regua_log por marco, então
+-- rodar duas vezes no mesmo dia não manda e-mail em dobro.
+-- Este bloco pode rodar mais de uma vez sem problema.
+
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+create table if not exists public.regua_config (
+  id int primary key default 1 check (id = 1),
+  token uuid not null default gen_random_uuid()
+);
+alter table public.regua_config enable row level security;
+insert into public.regua_config (id) values (1) on conflict (id) do nothing;
+
+create table if not exists public.regua_log (
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  marco text not null,
+  enviado timestamptz not null default now(),
+  primary key (academia_id, marco)
+);
+alter table public.regua_log enable row level security;
+
+-- A coorte do dia: academias em trial batendo um marco que ainda não receberam
+-- aquele e-mail. O e-mail do dono sai de membros.email e, vazio, do login dele
+-- (auth.users) — por isso security definer. Só a service key executa.
+create or replace function public.regua_pendentes()
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(jsonb_agg(x), '[]'::jsonb) from (
+    select a.id as academia_id, a.nome,
+      coalesce(nullif(m.email, ''), m.email_login) as email,
+      (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) as dia
+    from public.academias a
+    join lateral (
+      select mm.email, u.email as email_login
+      from public.membros mm
+      join auth.users u on u.id = mm.user_id
+      where mm.academia_id = a.id and mm.papel = 'dono'
+      order by mm.criado limit 1
+    ) m on true
+    where a.assinatura_status = 'trial'
+      and (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) in (1, 3, 7, 12)
+      and coalesce(nullif(m.email, ''), m.email_login) is not null
+      and not exists (
+        select 1 from public.regua_log l
+        where l.academia_id = a.id
+          and l.marco = 'd' || (floor(extract(epoch from now() - a.criada) / 86400)::int + 1)
+      )
+  ) x
+$$;
+revoke execute on function public.regua_pendentes() from public, anon, authenticated;
+
+-- o relógio: recria o job do zero pra este bloco poder rodar de novo
+do $do$
+begin
+  perform cron.unschedule(jobid) from cron.job where jobname = 'regua-teste-diaria';
+exception when others then null;
+end
+$do$;
+select cron.schedule('regua-teste-diaria', '0 13 * * *', $cron$
+  select net.http_post(
+    url := 'https://hdcufkaalxfhwmfwoiqp.supabase.co/functions/v1/regua-teste',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := jsonb_build_object('senha', (select token::text from public.regua_config where id = 1))
+  )
+$cron$);

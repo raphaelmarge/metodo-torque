@@ -132,7 +132,14 @@
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das dez publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>, <code>PAGARME_WEBHOOK_TOKEN</code>, <code>RC_WEBHOOK_TOKEN</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <h2>11 · regua-teste <span class="tag off">Verify JWT: DESLIGAR</span></h2>
+    <p>A <b style="color:#fff">régua do teste grátis</b>: manda 4 e-mails (dia 1, 3, 7 e 12) pra quem criou conta e ainda está no teste, pelo Resend. Quem dispara é o relógio do próprio banco (pg_cron), instalado pelo bloco <b style="color:#fff">RÉGUA DO TESTE GRÁTIS</b> do SQL — rode o supabase-setup.sql depois de publicar. A senha do disparo mora numa tabela selada; ninguém de fora consegue mandar e-mail por ela.</p>
+    <button class="btnx" data-copia="regua-teste">Copiar o código (regua-teste)</button>
+    <div class="status" data-st="regua-teste"></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois das onze publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>, <code>PAGARME_WEBHOOK_TOKEN</code>, <code>RC_WEBHOOK_TOKEN</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
     <p class="mini" style="color:#6e6a78;font-size:12.5px;">Do WhatsApp e do Instagram não entra Secret nenhum: cada profissional cola o número, o token e a chave secreta do app dele no painel (Configurações → WhatsApp), e a tela mostra a URL e a senha do aperto de mão pra ele colar na Meta. Os antigos <code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code> e <code>INSTAGRAM_IG_ID</code> continuam valendo <b style="color:#fff">só</b> pra instalação de dono único — a sua.</p>
   </div>
 
