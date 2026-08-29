@@ -3619,12 +3619,22 @@
       "set:function(o){for(var k9 in o)cr[k9]=o[k9];}};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
-      "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
-      "var tit=rot||'Descanso';" +
-      "bar.style.display='block';bar.textContent=tit+': '+tmrFmt(resta);" +
-      "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent=rot?('Feito! '+rot):'Bora! Próxima série!';" +
-      "if(navigator.vibrate)navigator.vibrate([200,100,200]);bip(1300,300);setTimeout(function(){bar.style.display='none';},2200);}" +
-      "else{bar.textContent=tit+': '+tmrFmt(resta);if(resta<=3)bip(600,100);}},1000);}" +
+      /* Os cronômetros de descanso contam pelo RELÓGIO (deadline), não por
+       * decremento: em segundo plano o navegador estrangula o setInterval e o
+       * contador travava. Com deadline, ao voltar pro app o mostrador recalcula
+       * na hora (listener de visibilitychange lá embaixo). E se o fim chegar com
+       * o app escondido, avisaFim manda a notificação local — mesmo padrão do
+       * lembrete de água, só com permissão JÁ dada, nunca pedindo de novo. */
+      "var tmrTick=null,gDescTick=null;" +
+      "function avisaFim(txt){try{if(!document.hidden)return;if('Notification'in window&&Notification.permission==='granted'&&navigator.serviceWorker)navigator.serviceWorker.ready.then(function(reg){reg.showNotification('TORQUE \\u2014 treino',{body:txt});}).catch(function(){});}catch(e){}}" +
+      "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);ligaTela();" +
+      "var tit=rot||'Descanso';var fim=Date.now()+sg*1000,ult=sg,meuId=null;" +
+      "bar.style.display='block';bar.textContent=tit+': '+tmrFmt(sg);" +
+      "tmrTick=function(){if(tmrI!==meuId)return;var resta=Math.max(0,Math.ceil((fim-Date.now())/1000));if(resta===ult)return;ult=resta;" +
+      "if(resta<=0){clearInterval(tmrI);tmrI=null;tmrTick=null;bar.textContent=rot?('Feito! '+rot):'Bora! Próxima série!';" +
+      "if(navigator.vibrate)navigator.vibrate([200,100,200]);bip(1300,300);avisaFim(rot?('Feito! '+rot):'Descanso acabou — bora!');setTimeout(function(){bar.style.display='none';},2200);}" +
+      "else{bar.textContent=tit+': '+tmrFmt(resta);if(resta<=3)bip(600,100);}};" +
+      "meuId=tmrI=setInterval(tmrTick,1000);}" +
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
@@ -3827,17 +3837,19 @@
       // ---------- descanso ----------
       // gancho de teste: força o fim do descanso sem esperar o relógio de verdade
       "window.__zeraDescanso=function(){if(gv.pend&&(gv.sujo||gv.mexe)){gSegura();return 'segurou';}gFimDesc();return 'avancou';};" +
-      "function gSegura(){clearInterval(gv.timer);gv.timer=null;" +
+      "function gSegura(){clearInterval(gv.timer);gv.timer=null;gDescTick=null;" +
       "var d2=gEl('gDesc');if(d2)d2.textContent='0';" +
       "var lb=gEl('gDescLab');if(lb)lb.textContent='descanso acabou — sem pressa';" +
       "var tr2=gEl('gTrilho');if(tr2)tr2.style.width='0%';" +
       "var pu2=gEl('gPular');if(pu2){pu2.textContent='Próximo exercício';pu2.classList.add('prin');pu2.classList.remove('sec');}" +
       "var m15=gEl('gMais15');if(m15)m15.style.display='none';}" +
-      "function gFimDesc(){clearInterval(gv.timer);gv.mexe=false;gSalvaSeSujo();" +
+      // gv.timer e gDescTick zerados aqui e no gSegura: sem isso, o tick forçado
+      // do visibilitychange re-dispararia o fim e pularia DOIS exercícios
+      "function gFimDesc(){clearInterval(gv.timer);gv.timer=null;gDescTick=null;gv.mexe=false;gSalvaSeSujo();" +
       "if(gv.pend){gv.feitas[gv.e]=gv.s;gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
       "if(gv.e>=GUIA[gv.f].it.length){gConclui();return;}}" +
       "pintaGuia();}" +
-      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;gv.mexe=false;var resta=sg,tot=sg||1;" +
+      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;gv.mexe=false;var fim=Date.now()+sg*1000,tot=sg||1,ult=sg,meuId=null;" +
       "var pu0=gEl('gPular');if(pu0){pu0.textContent='Pular descanso';pu0.classList.remove('prin');pu0.classList.add('sec');}" +
       "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
@@ -3858,7 +3870,7 @@
       // fica como está (a tela inteira do exercício continua visível)
       "gEl('guiaBox').classList.add('resta');" +
       "if(trocaEx)gEl('gMiolo').innerHTML=gBlocos(true);" +
-      "var d=gEl('gDesc');d.style.display='block';d.textContent=resta;" +
+      "var d=gEl('gDesc');d.style.display='block';d.textContent=sg;" +
       "gEl('gDescLab').style.display='block';gEl('gTrilhoCx').style.display='block';gEl('gTrilho').style.width='100%';" +
       "gEl('gCard').classList.toggle('compacto',!!trocaEx);" +
       "gEl('guiaBox').classList.toggle('reg',!!trocaEx);" +
@@ -3866,16 +3878,22 @@
       "if(trocaEx)ligaStepper(it,gv.f+':'+gv.e);" +
       "clearInterval(gv.timer);" +
       "gv.mais=0;" +
-      "gv.timer=setInterval(function(){resta--;" +
-      "if(gv.mais){resta+=gv.mais;tot+=gv.mais;gv.mais=0;}" +
+      "gDescTick=function(){if(gv.timer!==meuId)return;" +
+      "if(gv.mais){fim+=gv.mais*1000;tot+=gv.mais;gv.mais=0;}" +
+      "var resta=Math.max(0,Math.ceil((fim-Date.now())/1000));if(resta===ult)return;ult=resta;" +
       "var tr=gEl('gTrilho');if(tr)tr.style.width=Math.max(0,Math.round(100*resta/tot))+'%';" +
-      "if(resta<=0){beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);" +
+      "if(resta<=0){clearInterval(gv.timer);gv.timer=null;gDescTick=null;beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);" +
+      "avisaFim('Descanso acabou — bora pra próxima série!');" +
       /* Zerou enquanto o aluno anota a carga? Segura. Trocar de exercício com o
          dedo na régua fazia o formulário sumir no meio do arrasto — parecia que
          a tela fechava sozinha. Quem não encostou em nada segue no automático. */
       "if(gv.pend&&(gv.sujo||gv.mexe)){gSegura();return;}" +
       "gFimDesc();return;}" +
-      "d.textContent=resta;if(resta<=3)bip(600,100);},1000);}" +
+      "d.textContent=resta;if(resta<=3)bip(600,100);};" +
+      "meuId=gv.timer=setInterval(gDescTick,1000);}" +
+      // ao voltar do 2º plano os cronômetros recalculam NA HORA (deadline por
+      // relógio); o listener do wake lock (lá em cima) é OUTRO — não juntar
+      "document.addEventListener('visibilitychange',function(){if(document.hidden)return;try{if(tmrTick)tmrTick();}catch(e0){}try{if(gDescTick)gDescTick();}catch(e1){}});" +
       // ---------- registro da carga (steppers, sem teclado obrigatório) ----------
       // ---------- régua deslizante (carga e repetições) ----------
       // Um traço por passo; o do meio é o valor escolhido. Arrastar percorre
