@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v667** |
-| Estado do repo em | 2026-08-29 (commit `4f00762`) |
+| App em | **mt-v668** |
+| Estado do repo em | 2026-08-29 (commit `9b6d386`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 129 |
+| Lançamentos no histórico | 130 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v664** (2026-08-29), e o app está em **mt-v667** — ou seja, **3 versões** aconteceram depois disso.
+vez em **mt-v664** (2026-08-29), e o app está em **mt-v668** — ou seja, **4 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v667** (2026-08-29).
+O motor (`app/aluno-builder.js`) encostou em **mt-v668** (2026-08-29).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v668 | RPE e batimento voltam pro aluno — card Esforço e batimento na Evolução |
 | mt-v667 | primeiro dia do aluno novo + a videoteca ganha atalho no menu |
 | mt-v666 | cronômetro de descanso conta pelo RELÓGIO e avisa quando acaba |
 | mt-v665 | o app do paciente ganha a cara nova — skin do redesenho (nutri-skin) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v656 | NUTRI — filtros Sumindo/Encerrados e o importador de pacientes |
 | mt-v655 | moderação da Comunidade no NUTRI — fecha o risco do feed sem controle |
 | mt-v654 | régua do teste grátis — 4 e-mails automáticos (dia 1, 3, 7 e 12) |
-| mt-v653 | fechamento do mês por e-mail, sozinho — e o e-mail de acesso sem var() |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
