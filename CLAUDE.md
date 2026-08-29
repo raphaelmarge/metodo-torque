@@ -15,7 +15,7 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | TORQUE NUTRI | `nutricao.html` | Módulo do nutricionista: pacientes, dietas, app do paciente |
 | App do aluno | **código** em `app/aluno-builder.js` + **dados** de `dadosAppAluno` (personal.html); o do paciente NUTRI segue o mesmo desenho desde a v661: **código** em `app/nutri-builder.js` + **dados** de `dadosAppPaciente` (nutricao.html), pacote com `dados.tipo="nutri"` | `app/index.html` junta os dois na hora (despacha pelo `dados.tipo`); aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
-| Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por `node tools/demo-aluno/regen-demo.js` (com o servidor 8765 no ar — regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
+| Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html`, `demo-paciente.html` | Demonstrações com dados fake pra mandar pro cliente. Os apps são gerados por `node tools/demo-aluno/regen-demo.js` e `node tools/demo-paciente/regen-demo.js` (com o servidor 8765 no ar — regenerar quando o builder mudar) e simulam a nuvem interceptando o `fetch`; demo-personal e demo-nutri semeiam o localStorage e abrem o módulo |
 
 Bancos compartilhados em `assets/`: `exercicios-db.js` (1270), `alimentos-db.js`
 (989), `receitas-db.js` (63). Rotinas diárias adicionam itens — sempre com
@@ -1441,5 +1441,6 @@ ninguém atropelar ninguém — valem pros dois:
   como CONFIG a módulo compartilhado (pagarme-cartao, BotBuilder) ficam
   com hex — tests/test-tokens-nutri.js recorta essas regiões e reprova
   hex novo no resto, além de medir a geometria nos dois temas.
-  demo-paciente.html continua sendo um retrato congelado do app antigo
-  (regenerar quando fizer diferença).
+  demo-paciente.html é gerado por tools/demo-paciente/regen-demo.js
+  (v663 — app novo do nutri-builder com a Marina de 5 meses; regenerar
+  quando o builder mudar).

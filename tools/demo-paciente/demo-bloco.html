@@ -1,0 +1,79 @@
+<script>/* demonstração: 5 meses de acompanhamento, só em memória (não gravam no aparelho) */
+var __demoDados={};
+(function(){
+  function iso(n){var d=new Date(Date.now()-n*864e5);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+  function dt(n,h){var d=new Date(Date.now()-n*864e5);d.setHours(h,12,0,0);return d.toISOString();}
+  function svgf(rot,cor){return "data:image/svg+xml;base64,"+btoa("<svg xmlns='http://www.w3.org/2000/svg' width='300' height='400'><rect width='300' height='400' fill='"+cor+"'/><circle cx='150' cy='140' r='55' fill='rgba(255,255,255,.25)'/><rect x='95' y='210' width='110' height='150' rx='40' fill='rgba(255,255,255,.25)'/><text x='150' y='385' font-family='sans-serif' font-size='22' font-weight='bold' fill='rgba(255,255,255,.85)' text-anchor='middle'>"+rot+"</text></svg>");}
+  // peso caindo de 74,6 pra 68,4 em 5 meses
+  var peso=[];for(var i=150;i>=0;i-=7){peso.push({d:iso(i),kg:Math.round((74.6-6.2*(150-i)/150+Math.sin(i*0.6)*0.3)*10)/10});}
+  __demoDados["ntpeso"]=JSON.stringify(peso);
+  // dias em que seguiu o plano (5 por semana, com algum furo) — alimenta XP e a semana
+  var plano={};for(var i=150;i>=0;i--){var dw=new Date(Date.now()-i*864e5).getDay();if(dw!==0&&(dw!==6||i%3!==0))plano[iso(i)]=1;}
+  __demoDados["ntplano"]=JSON.stringify(plano);
+  // água dos últimos dias e refeições marcadas (ids batem com a dieta da Marina no regen-demo.js)
+  var ag={};for(var i=30;i>=0;i--)ag[iso(i)]=1800+((i*137)%700);
+  __demoDados["ntagua"]=JSON.stringify(ag);
+  __demoDados["ntag_"+iso(0)]=JSON.stringify(1600);
+  __demoDados["ntref_"+iso(0)]=JSON.stringify({"r0700":1,"r1000":1});
+  __demoDados["ntref_"+iso(1)]=JSON.stringify({"r0700":1,"r1000":1,"r1230":1,"r1600":1,"r1930":1});
+  __demoDados["ntdi_"+iso(0)]=JSON.stringify([
+    {n:"Ovo cozido",k:143,q:2},{n:"Pão de forma integral",k:130,q:2},{n:"Café sem açúcar",k:2,q:1}
+  ]);
+  __demoDados["ntfotos"]=JSON.stringify([{d:iso(150),img:svgf("ANTES","#4c6b52")},{d:iso(5),img:svgf("AGORA","#16a34a")}]);
+  __demoDados["ntchat"]=JSON.stringify([
+    {de:"paciente",texto:"Oi! Posso trocar a tilápia por frango no jantar?",criado:dt(2,19)},
+    {de:"nutri",texto:"Pode sim! Mesma quantidade. Se for peito, mantém 1,5 porção.",criado:dt(2,20)},
+    {de:"paciente",texto:"Perfeito, obrigada!",criado:dt(2,20)}
+  ]);
+})();
+/* Comunidade de mentirinha: dá pra postar, curtir e comentar dentro do demo */
+var __demoFeed=(function(){
+  function h(n){var d=new Date(Date.now()-n*36e5);return d.toISOString();}
+  var proximo=100;
+  var posts=[
+    {id:"p1",nome:"Camila",texto:"Bati a meta de proteína a semana toda! Nunca consegui antes.",foto:"",treino:"Seguiu o plano hoje",criado:h(3),meu:false,curtidas:6,curti:true,
+     comentarios:[{nome:"Ricardo",texto:"Boa demais!",criado:h(2)},{nome:"Marina",texto:"Me conta como você organiza as marmitas",criado:h(1)}]},
+    {id:"p2",nome:"Marina",texto:"Primeira semana sem pular o café da manhã. Diferença na disposição é absurda.",foto:"",treino:"",criado:h(20),meu:true,curtidas:5,curti:false,
+     comentarios:[{nome:"Patrícia",texto:"Tô tentando o mesmo!",criado:h(19)}]},
+    {id:"p3",nome:"Ricardo",texto:"-8 kg em 6 meses. Sem passar fome, só ajustando o que já comia.",foto:"",treino:"Seguiu o plano hoje",criado:h(46),meu:false,curtidas:11,curti:true,comentarios:[]},
+    {id:"p4",nome:"Patrícia",texto:"Achei uma marca de iogurte sem lactose que salvou meu lanche da tarde.",foto:"",treino:"",criado:h(70),meu:false,curtidas:4,curti:false,comentarios:[]}
+  ];
+  var ranking=[{nome:"Camila",dias:7},{nome:"Marina",dias:6},{nome:"Ricardo",dias:5},{nome:"Patrícia",dias:4},{nome:"Bruno",dias:2}];
+  return {
+    feed:function(){return {ok:true,posts:posts.slice()};},
+    ranking:function(){return {ok:true,ranking:ranking};},
+    posta:function(c){posts.unshift({id:"n"+(proximo++),nome:"Marina",texto:c.p_texto||"",foto:c.p_foto||"",treino:c.p_treino||"",
+      criado:new Date().toISOString(),meu:true,curtidas:0,curti:false,comentarios:[]});return {ok:true};},
+    reage:function(c){var id=String(c.p_post||"").replace("feed:","");
+      for(var i=0;i<posts.length;i++){if(posts[i].id!==id)continue;
+        if(c.p_tipo==="like"){posts[i].curti=!posts[i].curti;posts[i].curtidas+=posts[i].curti?1:-1;}
+        else{posts[i].comentarios.push({nome:"Marina",texto:c.p_texto,criado:new Date().toISOString()});}
+        break;}
+      return {ok:true};},
+    apaga:function(c){posts=posts.filter(function(x){return x.id!==String(c.p_id);});return {ok:true};}
+  };
+})();
+(function(){
+  var fetchReal=window.fetch;
+  window.fetch=function(url,op){
+    var u=String(url||"");
+    if(u.indexOf("/rest/v1/rpc/")<0)return fetchReal.apply(this,arguments);
+    var fn=u.split("/rest/v1/rpc/")[1];
+    var corpo={};try{corpo=JSON.parse((op&&op.body)||"{}");}catch(e){}
+    var r={ok:true};
+    if(fn==="app_aluno_feed")r=__demoFeed.feed();
+    else if(fn==="app_desafio_ranking")r=__demoFeed.ranking();
+    else if(fn==="app_aluno_posta")r=__demoFeed.posta(corpo);
+    else if(fn==="app_aluno_reage")r=__demoFeed.reage(corpo);
+    else if(fn==="app_aluno_feed_apaga")r=__demoFeed.apaga(corpo);
+    else if(fn==="app_aluno_busca")r=null; /* nada de auto-atualizar o demo */
+    else if(fn==="app_agenda_lista")r=[];
+    else if(fn==="app_chat_lista")r=JSON.parse(__demoDados["ntchat"]||"[]");
+    else if(fn==="app_chat_envia"){ /* o chat do demo responde de verdade */
+      var msgs=JSON.parse(__demoDados["ntchat"]||"[]");
+      msgs.push({de:"paciente",texto:String((corpo&&corpo.p_texto)||""),criado:new Date().toISOString()});
+      __demoDados["ntchat"]=JSON.stringify(msgs);r={ok:true};}
+    return Promise.resolve({ok:true,status:200,json:function(){return Promise.resolve(r);}});
+  };
+})();
+var __demoLS={getItem:function(k){return Object.prototype.hasOwnProperty.call(__demoDados,k)?__demoDados[k]:null;},setItem:function(k,v){__demoDados[k]=String(v);},removeItem:function(k){delete __demoDados[k];},key:function(i){return Object.keys(__demoDados)[i]||null;}};Object.defineProperty(__demoLS,'length',{get:function(){return Object.keys(__demoDados).length;}});</script>
