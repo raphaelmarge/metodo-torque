@@ -1423,11 +1423,12 @@ ninguém atropelar ninguém — valem pros dois:
   lugar do localStorage e sync incremental (salvar só o que mudou).
 - Paridade NUTRI × PERSONAL: o app do paciente já tem XP, semana, medalhas e
   Comunidade — e o PAINEL já tem cadastro, anamnese, perfil e sub-abas (a
-  pendência antiga estava desatualizada; auditoria em 2026-08-29). O que
-  falta de verdade, por ordem de valor: (1) gateway por profissional
-  (pag_config) + baixa automática — backend pronto, falta a tela; (2) aba
-  Financeiro com Atrasados + régua de cobrança; (3) Resolver hoje no Início
-  + filtros Sumindo/Encerrados; (4) Check-ins "A semana" com tendência;
-  (✓ moderação da Comunidade entrou no mt-v655). Dívidas grandes: o app do
+  pendência antiga estava desatualizada; auditoria em 2026-08-29). Do top-5 da
+  auditoria, entregues: moderação da Comunidade (v655), filtros
+  Sumindo/Encerrados + importador de pacientes (v656), gateway por
+  profissional pag_config + baixa automática (v657), Resolver hoje no
+  Início (v658) e Check-ins "A semana" com Cobrar quem falta (v659). O que
+  ainda falta: aba Financeiro consolidada (Atrasados + régua de cobrança +
+  histórico 6 meses) — LARGE. Dívidas grandes: o app do
   paciente ainda é montaAppNutri inline (migrar pro aluno-builder) e o
   redesign --pt-* não chegou no Nutri.
