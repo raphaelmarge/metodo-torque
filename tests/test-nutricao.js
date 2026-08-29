@@ -552,9 +552,41 @@ async function abaNt(p, a) {
       document.getElementById("qeGerarN").click();
       await new Promise((res) => setTimeout(res, 300));
       window.MTStore.cloud = window.__cloudOrig;
-      return { tb: upsertRow && upsertRow.tb, temHtml: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.html && upsertRow.row.dados.html.length > 10000), aviso: document.getElementById("qeAvisoN").textContent };
+      const dd = upsertRow && upsertRow.row.dados;
+      return { tb: upsertRow && upsertRow.tb, temHtml: !!(dd && dd.html && dd.html.length > 10000),
+        tipo: dd && dd.dados && dd.dados.tipo, ver: dd && dd.ver, aviso: document.getElementById("qeAvisoN").textContent };
     });
     ok(pubN.tb === "app_aluno" && pubN.temHtml && /Tudo pronto/.test(pubN.aviso), "gerar com a nuvem publica o app do paciente junto");
+    // fonte única (v661): o pacote leva {html, dados, ver} e dados.tipo = "nutri" —
+    // é por esse tipo que o /app/ manda pro nutri-builder em vez do builder do aluno
+    ok(pubN.tipo === "nutri" && !!pubN.ver, "o pacote publicado leva os DADOS (tipo nutri) e a versão do site — app deixa de congelar");
+  }
+  // o /app/ junta DADOS + código do site: um pacote nutri guardado no aparelho
+  // abre pelo nutri-builder (e nunca cai no builder do aluno)
+  {
+    const pacoteJ = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      return window.__pacoteAppN(st.pacientes[0], new Date().toISOString());
+    });
+    const pJ = await ctx.newPage();
+    const errosJ = [];
+    pJ.on("pageerror", (e) => errosJ.push(String(e)));
+    await pJ.route("**/rest/v1/rpc/**", (r) => r.abort()); // sem nuvem: o caminho é a cópia local
+    await pJ.goto(BASE + "/app/index.html");
+    await pJ.evaluate((pac) => {
+      localStorage.setItem("tq_app_token", pac.dados.p.appTokenN || "tok-join");
+      localStorage.setItem("tq_app_pacote", JSON.stringify({ dados: pac.dados, html: "" }));
+    }, pacoteJ);
+    await pJ.reload({ waitUntil: "domcontentloaded" });
+    await pJ.waitForFunction(() => window.__appNutri, null, { timeout: 8000 });
+    const joinN = await pJ.evaluate(() => ({
+      titulo: document.title,
+      hero: !!document.getElementById("heroN"),
+      xp: !!document.getElementById("xpNumN"),
+    }));
+    ok(joinN.hero && joinN.xp && errosJ.length === 0,
+      "o /app/ montou o app do paciente a partir dos DADOS + nutri-builder.js do site, sem erro");
+    await pJ.close();
   }
   // paciente abre o link: tema verde e texto falando do nutricionista
   {

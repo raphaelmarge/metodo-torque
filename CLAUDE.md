@@ -13,7 +13,7 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | Portal TORQUE ON | `index.html` + `apps/*.html` | Sistema da academia (estilo EVO): alunos, financeiro, check-in, grade, modo TV, chat com IA |
 | TORQUE PERSONAL | `personal.html` (R$ 49/mês) | Módulo do personal: alunos, fichas, avaliações, app do aluno |
 | TORQUE NUTRI | `nutricao.html` | Módulo do nutricionista: pacientes, dietas, app do paciente |
-| App do aluno | **código** em `app/aluno-builder.js` + **dados** de `dadosAppAluno` (personal.html); Nutri ainda usa `montaAppNutri` (nutricao.html) | `app/index.html` junta os dois na hora; aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
+| App do aluno | **código** em `app/aluno-builder.js` + **dados** de `dadosAppAluno` (personal.html); o do paciente NUTRI segue o mesmo desenho desde a v661: **código** em `app/nutri-builder.js` + **dados** de `dadosAppPaciente` (nutricao.html), pacote com `dados.tipo="nutri"` | `app/index.html` junta os dois na hora (despacha pelo `dados.tipo`); aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
 | Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por `node tools/demo-aluno/regen-demo.js` (com o servidor 8765 no ar — regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
 
@@ -1427,8 +1427,11 @@ ninguém atropelar ninguém — valem pros dois:
   auditoria, entregues: moderação da Comunidade (v655), filtros
   Sumindo/Encerrados + importador de pacientes (v656), gateway por
   profissional pag_config + baixa automática (v657), Resolver hoje no
-  Início (v658) e Check-ins "A semana" com Cobrar quem falta (v659). O que
-  ainda falta: aba Financeiro consolidada (Atrasados + régua de cobrança +
-  histórico 6 meses) — LARGE. Dívidas grandes: o app do
-  paciente ainda é montaAppNutri inline (migrar pro aluno-builder) e o
-  redesign --pt-* não chegou no Nutri.
+  Início (v658), Check-ins "A semana" com Cobrar quem falta (v659), aba
+  Financeiro consolidada (v660 — Atrasados com ação na linha, 6 meses,
+  régua diaCobraN) e o app do paciente no motor novo (v661 —
+  app/nutri-builder.js, pacote {html, dados, ver, stamp} com dados.tipo
+  "nutri", autoPublicaAppsN republica só linhas que EXISTEM na nuvem e
+  estão velhas). Dívida grande restante: o redesign --pt-* não chegou no
+  Nutri. demo-paciente.html continua sendo um retrato congelado do app
+  antigo (regenerar quando fizer diferença).
