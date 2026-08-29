@@ -69,6 +69,17 @@ scripts.forEach((s, i) => {
   ok(!erro, "script " + (i + 1) + " tem sintaxe válida" + (erro ? " — " + erro : ""));
 });
 
+// cronômetros de descanso contam pelo RELÓGIO (v666): decremento resta-- trava
+// quando o navegador estrangula a aba em segundo plano — o deadline não
+const tmrSrc = html.slice(html.indexOf("function iniciaTmr"), html.indexOf("function iniciaTmr") + 900);
+const gdSrc = html.slice(html.indexOf("function gDescanso"), html.indexOf("function gRegua"));
+ok(/fim=Date\.now\(\)\+sg\*1000/.test(tmrSrc) && !/resta--/.test(tmrSrc),
+  "⏱ o cronômetro avulso é ancorado em Date.now (deadline), sem resta--");
+ok(/fim=Date\.now\(\)\+sg\*1000/.test(gdSrc) && !/resta--/.test(gdSrc),
+  "⏱ o descanso do treino guiado idem — e recalcula ao voltar do 2º plano");
+ok(html.indexOf("function avisaFim") > -1 && /avisaFim\(/.test(gdSrc),
+  "🔔 fim de descanso com o app escondido dispara a notificação local (avisaFim)");
+
 // sem plano e sem wods/cardio o app também tem que montar (aluno novinho)
 const D2 = Object.assign({}, D, { fichasApp: null, wodsApp: [], cardiosApp: [], planoApp: null, qa: null, treino: "", plApp: null, sessApp: [], feedLigado: false });
 let html2 = "";
