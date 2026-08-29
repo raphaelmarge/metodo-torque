@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v665** |
-| Estado do repo em | 2026-08-29 (commit `6d32175`) |
+| App em | **mt-v666** |
+| Estado do repo em | 2026-08-29 (commit `1afc6df`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 127 |
+| Lançamentos no histórico | 128 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v664** (2026-08-29), e o app está em **mt-v665** — ou seja, **1 versões** aconteceram depois disso.
+vez em **mt-v664** (2026-08-29), e o app está em **mt-v666** — ou seja, **2 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v645** (2026-08-27).
+O motor (`app/aluno-builder.js`) encostou em **mt-v666** (2026-08-29).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v666 | cronômetro de descanso conta pelo RELÓGIO e avisa quando acaba |
 | mt-v665 | o app do paciente ganha a cara nova — skin do redesenho (nutri-skin) |
 | mt-v664 | a foto do card de hoje derrete no fundo — degradê de continuidade na junção |
 | mt-v663 | demo do paciente regenerada no motor novo — e ganha o gerador pra nunca mais congelar |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v654 | régua do teste grátis — 4 e-mails automáticos (dia 1, 3, 7 e 12) |
 | mt-v653 | fechamento do mês por e-mail, sozinho — e o e-mail de acesso sem var() |
 | mt-v652 | Importar lista — a carteira inteira de alunos numa colada |
-| mt-v651 | primeiro dia guiado no Início — 3 passos até ver o app com a própria marca |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
