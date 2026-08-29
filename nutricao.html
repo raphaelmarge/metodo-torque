@@ -29,7 +29,74 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 </script>
 <script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
-  :root { --verde: #16a34a; --verde-2: #15803d; }
+  /* ═══ tokens do redesenho NUTRI — o mesmo desenho de papéis do --pt-* do
+     Personal, com os valores que o Nutri JÁ usava (nenhuma cor nova).
+     Regra: destaque/estado é tinta transparente sobre um token, nunca hex novo.
+     ⚠️ documentos autônomos (recibo, plano em PDF, laudo, e-mail de acesso) e o
+     pacote do app (dadosAppPaciente) continuam com hex cravado — var() não
+     existe lá. tests/test-tokens-nutri.js vigia a paleta e a geometria. */
+  :root {
+    --verde: #16a34a; --verde-2: #15803d; /* contrato antigo: o tema do cliente sobrescreve estes dois */
+    /* superfícies */
+    --nt-fundo: #0f1a12; --nt-card: #16241a; --nt-caixa: #121a14; --nt-trilha: #202b1d;
+    /* bordas */
+    --nt-borda: #29402f; --nt-borda-2: #24312a; --nt-borda-forte: #3a4636;
+    /* escada de texto */
+    --nt-txt: #eef7f0; --nt-txt-2: #dbe7d8; --nt-txt-3: #9fb8a6; --nt-txt-4: #8a9585; --nt-txt-5: #54604f;
+    /* marca */
+    --nt-verde-claro: #4ade80; --nt-verde-chip: #86efac; --nt-verde-fundo: #14532d; --nt-verde-txt: #bbf7d0;
+    /* estados */
+    --nt-ok: #4ade80; --nt-erro: #f87171; --nt-aten: #fbbf24;
+    /* tintas transparentes */
+    --nt-ok-bg: rgba(34,197,94,.14); --nt-erro-bg: rgba(239,68,68,.14); --nt-aten-bg: rgba(245,158,11,.14); --nt-verde-bg: rgba(22,163,74,.14);
+    /* geometria */
+    --nt-r-card: 18px; --nt-r-caixa: 12px; --nt-r-bt: 11px; --nt-h-bt: 44px; --nt-h-bt-2: 36px;
+  }
+  /* modo claro: SÓ os tokens mudam — quem usa token acompanha sozinho */
+  html[data-tema="claro"] {
+    --nt-fundo: #f2f7f2; --nt-card: #ffffff; --nt-caixa: #f0fdf4; --nt-trilha: #dbe5db;
+    --nt-borda: #dbe7d8; --nt-borda-2: #dbe7d8; --nt-borda-forte: #a9b5a4;
+    --nt-txt: #16211a; --nt-txt-2: #2a3a2e; --nt-txt-3: #45564b; --nt-txt-4: #667a6d; --nt-txt-5: #8a948a;
+    --nt-verde-claro: #15803d; --nt-verde-chip: #15803d; --nt-verde-txt: #14532d;
+    --nt-ok: #15803d; --nt-erro: #b91c1c; --nt-aten: #b45309;
+    --nt-ok-bg: rgba(22,163,74,.12); --nt-erro-bg: rgba(220,38,38,.08); --nt-aten-bg: rgba(217,119,6,.12); --nt-verde-bg: rgba(22,163,74,.1);
+  }
+  /* os nomes do apps.css apontam pros tokens do Nutri — uma fonte por papel.
+     ⚠️ NÃO mexa no apps.css: ele veste o portal inteiro (96 páginas em apps/). */
+  :root, html[data-tema="claro"] {
+    --fundo: var(--nt-fundo); --card: var(--nt-card); --linha: var(--nt-borda);
+    --texto: var(--nt-txt); --cinza: var(--nt-txt-3); --cinza-2: var(--nt-txt-4);
+    --ok: var(--nt-ok); --erro: var(--nt-erro); --alerta: var(--nt-aten);
+  }
+  /* a base que o desenho refaz (a v629 do Personal, em verde): card com BORDA e
+     sem sombra, título de card em caixa mista de 15,5px, botão retângulo de
+     44px com raio 11, secundário com borda, WhatsApp vira secundário com tinta
+     verde, e o botão padrão da página é VERDE (roxo aqui era vazamento). */
+  .card { border: 1px solid var(--nt-borda); box-shadow: none; border-radius: var(--nt-r-card); padding: 17px 18px; }
+  .card h2, .card .titulo { font-size: 15.5px; font-weight: 800; letter-spacing: 0; text-transform: none; color: var(--nt-txt); }
+  .corpo { padding-left: 26px; padding-right: 26px; }
+  a { color: var(--nt-verde-claro); }
+  a:hover { color: var(--nt-verde-chip); }
+  ::selection { background: rgba(22,163,74,.35); }
+  .btn { min-height: var(--nt-h-bt); border-radius: var(--nt-r-bt); background: var(--verde); }
+  .btn:hover { transform: none; box-shadow: none; background: var(--verde-2); }
+  .btn.mini { min-height: var(--nt-h-bt-2); border-radius: 9px; }
+  .btn.sec { background: transparent; border: 1px solid var(--nt-borda-forte); color: var(--nt-txt-2); }
+  .btn.sec:hover { color: var(--nt-txt); background: var(--nt-verde-bg); box-shadow: none; }
+  .btn.whats { background: var(--nt-ok-bg); color: var(--nt-ok); border: 1px solid rgba(34,197,94,.4); }
+  .btn.whats:hover { background: rgba(34,197,94,.25); color: var(--nt-ok); box-shadow: none; }
+  html[data-tema="claro"] .btn.whats { color: var(--nt-ok); }
+  html[data-tema="claro"] a.btn, html[data-tema="claro"] a.btn:hover { color: #fff; }
+  html[data-tema="claro"] a.btn.sec, html[data-tema="claro"] a.btn.whats, html[data-tema="claro"] a.btn.whats:hover { color: var(--nt-ok); }
+  .muted { color: var(--nt-txt-4); }
+  input, select, textarea { background: var(--nt-caixa); border-color: var(--nt-borda); border-radius: var(--nt-r-caixa); }
+  input:focus, select:focus, textarea:focus { background: var(--nt-caixa); border-color: var(--verde); box-shadow: 0 0 0 3px rgba(22,163,74,.25); }
+  html[data-tema="claro"] input, html[data-tema="claro"] select, html[data-tema="claro"] textarea { background: #fff; border-color: var(--nt-borda); }
+  html[data-tema="claro"] input:focus, html[data-tema="claro"] select:focus, html[data-tema="claro"] textarea:focus { background: #fff; border-color: var(--verde); }
+  .barra { background: var(--nt-trilha); }
+  .barra > div { background: var(--verde); }
+  dialog { border: 1px solid var(--nt-borda); }
+  @media (max-width: 760px) { .corpo { padding-left: 12px; padding-right: 12px; } .card { padding: 15px 16px; } }
   /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
   .hamb-nt { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer; padding: 9px; border-radius: 10px; flex: none; transition: background .15s ease; }
   .topo-marca { flex-wrap: wrap; }
@@ -39,17 +106,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .mi { vertical-align: -2.5px; }
   .abas-nt button .mi { margin-right: 9px; vertical-align: -3px; }
   #navNt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(16,20,17,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
-  #navNt button { position: relative; background: none; border: 0; color: #8a9585; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  #navNt button { position: relative; background: none; border: 0; color: var(--nt-txt-4); font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
   .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
-  #navNt button.ativa { color: #4ade80; }
+  #navNt button.ativa { color: var(--nt-ok); }
   #navNt button:active { background: rgba(255,255,255,.06); }
   .corpo { padding-bottom: 88px; }
-  html[data-tema="claro"] #navNt { background: rgba(255,255,255,.96); border-top-color: #dbe7d8; }
+  html[data-tema="claro"] #navNt { background: rgba(255,255,255,.96); border-top-color: var(--nt-borda); }
   html[data-tema="claro"] #navNt button.ativa { color: var(--verde-2); }
-  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid #2a3526; color: #a9b5a4; font-size: 13.5px; font-weight: 700; }
+  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid var(--nt-borda-2); color: var(--nt-txt-3); font-size: 13.5px; font-weight: 700; }
   .menu-tema span { display: inline-flex; align-items: center; gap: 9px; }
-  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid #3a4636; background: #202b1d; position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
-  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #8a9585; transition: transform .2s, background .2s; }
+  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid var(--nt-borda-forte); background: var(--nt-trilha); position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
+  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--nt-txt-4); transition: transform .2s, background .2s; }
   .menu-tema .sw[aria-checked="true"] { background: var(--verde); border-color: var(--verde); }
   .menu-tema .sw[aria-checked="true"] .sw-bola { transform: translateX(20px); background: #fff; }
   .colunas-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -59,17 +126,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kv-nt strong { font-variant-numeric: tabular-nums; text-align: right; }
   .abas-nt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
-    background: #121a14; border-right: none; display: flex; flex-direction: column;
+    background: var(--nt-caixa); border-right: none; display: flex; flex-direction: column;
     padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
   }
   body.menu-aberto .abas-nt { transform: none; box-shadow: 0 0 40px rgba(16,22,18,.45); }
-  .abas-nt .menu-cab { padding: 6px 18px 14px; color: #9fb3a6; font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid #24312a; margin-bottom: 8px; }
+  .abas-nt .menu-cab { padding: 6px 18px 14px; color: var(--nt-txt-3); font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid var(--nt-borda-2); margin-bottom: 8px; }
   .abas-nt .menu-cab b { display: block; color: #fff; font-size: 15px; letter-spacing: .04em; margin-top: 3px; }
   .abas-nt button {
     display: flex; align-items: center; gap: 12px; text-align: left;
     background: none; border: none; border-left: 3px solid transparent;
     padding: 12px 18px; margin-right: 8px; border-radius: 0 8px 8px 0;
-    color: #9fb3a6; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    color: var(--nt-txt-3); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
     transition: background .12s ease, color .12s ease;
   }
   .abas-nt button:hover { background: rgba(255,255,255,.06); color: #fff; }
@@ -79,31 +146,31 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* No computador o menu fica sempre à vista: cada aba vira 1 clique só
      (no celular continua sendo a gaveta do ☰ com a barra de baixo). */
   @media (min-width: 1100px) {
-    .abas-nt { transform: none; transition: none; border-right: 1px solid #24312a; }
+    .abas-nt { transform: none; transition: none; border-right: 1px solid var(--nt-borda-2); }
     body.menu-aberto .abas-nt { box-shadow: none; }
     .menu-fundo { display: none !important; }
     #navNt { display: none; }
     body { padding-left: 258px; }
     .corpo { padding-bottom: 28px; }
   }
-  html[data-tema="claro"] .abas-nt { background: #fff; border-right-color: #dbe7d8; }
-  html[data-tema="claro"] .abas-nt .menu-cab { color: #667a6d; border-bottom-color: #dbe7d8; }
-  html[data-tema="claro"] .abas-nt .menu-cab b { color: #16211a; }
-  html[data-tema="claro"] .abas-nt button { color: #45564b; }
-  html[data-tema="claro"] .abas-nt button.ativa { color: #16211a; background: rgba(22,163,74,.14); }
+  html[data-tema="claro"] .abas-nt { background: #fff; border-right-color: var(--nt-borda); }
+  html[data-tema="claro"] .abas-nt .menu-cab { color: var(--nt-txt-4); border-bottom-color: var(--nt-borda); }
+  html[data-tema="claro"] .abas-nt .menu-cab b { color: var(--nt-txt); }
+  html[data-tema="claro"] .abas-nt button { color: var(--nt-txt-3); }
+  html[data-tema="claro"] .abas-nt button.ativa { color: var(--nt-txt); background: rgba(22,163,74,.14); }
   .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: none; flex-wrap: wrap; border-radius: 14px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   .linha-nt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
-  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 11px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: #4ade80; border: none; }
+  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 11px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: var(--nt-ok); border: none; }
   .tagn.roxa { background: rgba(124,58,237,.14); color: #a78bfa; }
-  .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; }
-  .tagn.alerta { background: rgba(239,68,68,.14); color: #f87171; }
+  .tagn.ambar { background: rgba(245,158,11,.14); color: var(--nt-aten); }
+  .tagn.alerta { background: rgba(239,68,68,.14); color: var(--nt-erro); }
   .btn.verde { background: var(--verde); }
   .btn.verde:hover { background: var(--verde-2); }
   .abas button.ativa { background: var(--verde); border-color: var(--verde); box-shadow: none; }
   /* calendário da agenda */
   #calAgendaN .cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  #calAgendaN .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, #a9a4b5); text-transform: uppercase; padding: 4px 0; text-align: center; }
-  #calAgendaN .cal-dia { position: relative; border: 1px solid var(--linha, #2a2536); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
+  #calAgendaN .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--nt-txt-3); text-transform: uppercase; padding: 4px 0; text-align: center; }
+  #calAgendaN .cal-dia { position: relative; border: 1px solid var(--nt-borda); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
   #calAgendaN .cal-dia:hover { border-color: var(--verde); }
   #calAgendaN .cal-dia.hoje { border-color: var(--verde); box-shadow: inset 0 0 0 1px var(--verde); }
   #calAgendaN .cal-dia.sel { background: var(--verde); color: #fff; border-color: var(--verde); }
@@ -113,26 +180,26 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kpis-nt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .kpi-nt { background: var(--card); border: none; padding: 14px; border-radius: 14px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
-  .kpi-nt .val { font-size: 28px; font-weight: 800; margin-top: 2px; color: #4ade80; font-variant-numeric: tabular-nums; }
+  .kpi-nt .val { font-size: 28px; font-weight: 800; margin-top: 2px; color: var(--nt-ok); font-variant-numeric: tabular-nums; }
   /* moderação da Comunidade: o post como card */
   .fdpost { padding: 13px 15px; margin-bottom: 10px; border-radius: 14px; background: var(--card); border: 1px solid var(--linha); }
   .fdpost.off { opacity: .55; }
   .fdpost .fdcab { display: flex; gap: 10px; align-items: center; }
-  .fdpost .fdav { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(22,163,74,.14); color: var(--verde, #16a34a); font-weight: 800; font-size: 12.5px; }
+  .fdpost .fdav { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(22,163,74,.14); color: var(--verde, var(--verde)); font-weight: 800; font-size: 12.5px; }
   .fdpost .fdtxt { margin-top: 8px; font-size: 13.5px; line-height: 1.55; }
   .fdpost .fdselo { display: inline-block; margin-left: 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--cinza); border: 1px solid var(--linha); border-radius: 999px; padding: 2px 8px; }
   /* Financeiro consolidado: o bloco vermelho dos atrasados (espelho do .pgatr do Personal) */
   .fnatr { border: 1px solid rgba(248,113,113,.4); background: rgba(248,113,113,.07); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
   .fnatrcab { display: flex; align-items: center; gap: 8px; font-size: 13.5px; flex-wrap: wrap; }
-  .fnatrcab i { width: 9px; height: 9px; border-radius: 50%; background: #f87171; flex: none; }
+  .fnatrcab i { width: 9px; height: 9px; border-radius: 50%; background: var(--nt-erro); flex: none; }
   .fnatrcab span { color: var(--cinza); font-size: 12.5px; }
   .fnatrlin { display: flex; align-items: center; gap: 10px; padding: 10px 0 4px; margin-top: 8px; border-top: 1px solid rgba(248,113,113,.18); flex-wrap: wrap; }
-  .fnav { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12.5px; background: rgba(248,113,113,.16); color: #f87171; flex: none; }
+  .fnav { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12.5px; background: rgba(248,113,113,.16); color: var(--nt-erro); flex: none; }
   .fnnm { background: none; border: none; padding: 0; color: inherit; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; text-align: left; }
   .fnsub { font-size: 12px; color: var(--cinza); }
   .fnacoes { display: inline-flex; gap: 7px; flex-wrap: wrap; }
-  html[data-tema="claro"] .fnatr { background: #fef2f2; border-color: rgba(239,68,68,.35); }
-  html[data-tema="claro"] .fnav { background: #fee2e2; color: #b91c1c; }
+  html[data-tema="claro"] .fnatr { background: var(--nt-erro-bg); border-color: rgba(239,68,68,.35); }
+  html[data-tema="claro"] .fnav { background: var(--nt-erro-bg); color: var(--nt-erro); }
 
   /* perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
@@ -153,10 +220,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #vQuestN .card .linha-flex select, #vQuestN .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
   }
   /* modo claro — chips do Nutri voltam pro pastel */
-  html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
+  html[data-tema="claro"] .tagn { background: var(--nt-ok-bg); color: var(--verde-2); border-color: rgba(22,163,74,.35); }
   html[data-tema="claro"] .tagn.roxa { background: #ede9fe; color: #6d28d9; border-color: rgba(124,58,237,.35); }
-  html[data-tema="claro"] .tagn.ambar { background: #fef3c7; color: #b45309; border-color: rgba(245,158,11,.35); }
-  html[data-tema="claro"] .tagn.alerta { background: #fee2e2; color: #b91c1c; border-color: rgba(239,68,68,.35); }
+  html[data-tema="claro"] .tagn.ambar { background: var(--nt-aten-bg); color: var(--nt-aten); border-color: rgba(245,158,11,.35); }
+  html[data-tema="claro"] .tagn.alerta { background: var(--nt-erro-bg); color: var(--nt-erro); border-color: rgba(239,68,68,.35); }
   html[data-tema="claro"] .kpi-nt .val { color: var(--verde-2); }
 </style>
 </head>
@@ -392,7 +459,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A consulta aparece na Agenda do app do paciente (com conta na nuvem).</p>
     </div>
-    <div class="card" id="cardPedidosN" hidden data-agsec="consultas" style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+    <div class="card" id="cardPedidosN" hidden data-agsec="consultas" style="margin-bottom: 14px; border-left: 4px solid var(--nt-aten);">
       <h2>Pedidos de horário pelo app</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O paciente pede pela Agenda do app dele — confirme aqui.</p>
       <div id="listaPedidosN"></div>
@@ -654,16 +721,16 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       </div>
     </div>
     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
-      <b style="font-size: 13px; color: #f87171;">Excluir minha conta</b>
+      <b style="font-size: 13px; color: var(--nt-erro);">Excluir minha conta</b>
       <p class="muted" style="margin: 6px 0 8px; font-size: 12px;">Apaga a conta e <b>todos os dados</b> dela: pacientes, dietas, consultas e pagamentos. <b>Não dá pra desfazer</b> — baixe o backup antes.</p>
-      <button class="btn sec mini" id="cfgExcluirN" style="border-color: #7f2b2b; color: #fca5a5;">Excluir minha conta e todos os dados</button>
+      <button class="btn sec mini" id="cfgExcluirN" style="border-color: var(--nt-erro); color: var(--nt-erro);">Excluir minha conta e todos os dados</button>
       <div id="cfgExcluirStatusN" class="muted" style="margin-top: 8px; font-size: 12px;"></div>
     </div>
     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
       <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 0 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg> A cara do seu consultório</h3>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do paciente)
-          <input type="color" id="cfgCorN" value="#16a34a" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #fff; cursor: pointer;"></label>
+          <input type="color" id="cfgCorN" value="var(--verde)" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #fff; cursor: pointer;"></label>
         <button class="btn sec mini" id="cfgCorResetN">Voltar ao verde padrão</button>
         <img id="cfgLogoPrevN" alt="Logo do consultório" hidden style="height: 40px; border-radius: 8px; border: 1px solid var(--linha); background: #fff; padding: 2px;">
         <button class="btn sec mini" id="cfgLogoBtnN">Enviar logo</button>
@@ -1195,7 +1262,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var h = "";
     if (r.novos.length) {
       h += "<b>" + r.novos.length + " paciente(s) pra importar:</b><br>" +
-        r.novos.map(function (n) { return "• " + esc(n.nome) + (n.zap ? " · " + esc(n.zap) : " · <span style='color:#d97706;'>sem telefone</span>") + (n.email ? " · " + esc(n.email) : ""); }).join("<br>");
+        r.novos.map(function (n) { return "• " + esc(n.nome) + (n.zap ? " · " + esc(n.zap) : " · <span style='color:var(--nt-aten);'>sem telefone</span>") + (n.email ? " · " + esc(n.email) : ""); }).join("<br>");
     }
     if (r.pulados.length) {
       h += (h ? "<br><br>" : "") + "<b>Pulados (" + r.pulados.length + "):</b><br>" +
@@ -1422,7 +1489,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           var ult = pz[pz.length - 1], pri = pz[0];
           var dif = Math.round((+ult.kg - +pri.kg) * 10) / 10;
           html += "<div><b>Peso na balança (registrado por ele):</b> " + String(n2(ult.kg)).replace(".", ",") + " kg em " + S.fmtData(dOk(ult.d)) +
-            (pz.length > 1 ? " (<b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> desde o início · " + pz.length + " registros)" : "") + "</div>";
+            (pz.length > 1 ? " (<b style='color:" + (dif < 0 ? "var(--verde)" : dif > 0 ? "var(--nt-erro)" : "var(--nt-txt-4)") + ";'>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> desde o início · " + pz.length + " registros)" : "") + "</div>";
         }
         // adesão do dia: refeições + água
         if (ret.dia) {
@@ -1445,8 +1512,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
         if (fA) {
           html += "<div style='margin-top:8px;'><b>Fotos de progresso</b></div><div style='display:flex;gap:10px;max-width:360px;'>" +
-            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
-            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") + "</div>";
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--nt-txt-4);letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--nt-txt-4);letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") + "</div>";
         }
         box.innerHTML = html || "O paciente ainda não registrou nada no app. Assim que registrar peso, refeição, diário ou foto, aparece aqui.";
       }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
@@ -1511,17 +1578,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var l = ult ? laudoDeN(st, p, ult) : null;
     if (!l) { el.innerHTML = ""; return; }
     var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
-    var corDe = function (cl) { return cl === "normal" ? "#4ade80" : cl === "acima" ? "#f87171" : "#60a5fa"; };
+    var corDe = function (cl) { return cl === "normal" ? "var(--nt-ok)" : cl === "acima" ? "var(--nt-erro)" : "var(--nt-aten)"; };
     var kpi = function (rot, val, sub, cor) {
       return "<div style='flex:1;min-width:112px;background:rgba(22,163,74,.10);border:1px solid var(--linha);border-radius:10px;padding:9px 11px;'>" +
-        "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a9585;text-transform:uppercase;'>" + rot + "</div>" +
+        "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--nt-txt-4);text-transform:uppercase;'>" + rot + "</div>" +
         "<div style='font-size:19px;font-weight:900;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</div>" +
-        (sub ? "<div style='font-size:10.5px;color:#9fb8a6;'>" + sub + "</div>" : "") + "</div>";
+        (sub ? "<div style='font-size:10.5px;color:var(--nt-txt-3);'>" + sub + "</div>" : "") + "</div>";
     };
     el.innerHTML = "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;'>" +
       (l.pontuacao ? kpi("Pontuação", l.pontuacao + "/100") : "") +
       kpi("Gordura", nm(l.gordura) + "%", "faixa " + l.faixaGordura[0] + "–" + l.faixaGordura[1] + "%", corDe(l.classeGordura)) +
-      kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "#f87171" : "#4ade80") +
+      kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "var(--nt-erro)" : "var(--nt-ok)") +
       kpi("Massa magra", nm(l.massaMagra) + " kg") +
       kpi("Água", nm(l.agua) + " L") +
       kpi("Basal", l.tmb + " kcal", "gasto/dia " + l.ingestao) +
@@ -1541,7 +1608,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var imc = imcDe(ult ? ult.peso : p.peso, p.altura);
     var rcq = ult ? rcqDe(ult.cintura, ult.quadril, p.sexo) : null;
     $("avnCalc").innerHTML = (imc != null ? "IMC <b>" + String(imc).replace(".", ",") + "</b> (" + classeImc(imc) + ")" : "") +
-      (rcq ? " · RCQ <b>" + String(rcq.r).replace(".", ",") + "</b> <span style='color:" + (/alto/.test(rcq.risco) ? "#f87171" : /moderado/.test(rcq.risco) ? "#fbbf24" : "#4ade80") + ";'>" + rcq.risco + "</span>" : "") +
+      (rcq ? " · RCQ <b>" + String(rcq.r).replace(".", ",") + "</b> <span style='color:" + (/alto/.test(rcq.risco) ? "var(--nt-erro)" : /moderado/.test(rcq.risco) ? "var(--nt-aten)" : "var(--nt-ok)") + ";'>" + rcq.risco + "</span>" : "") +
       (imc == null && !rcq ? "Registre a primeira avaliação pra ver IMC e relação cintura-quadril." : "");
     if (!l.length) { $("avnLista").textContent = "Nenhuma avaliação ainda."; return; }
     // variação entre a primeira e a última de cada medida
@@ -1551,7 +1618,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var d = Math.round((+com[com.length - 1][campo] - +com[0][campo]) * 10) / 10;
       if (!d) return "";
       var bom = menorEhMelhor ? d < 0 : d > 0;
-      return " <b style='color:" + (bom ? "#4ade80" : "#fbbf24") + ";'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
+      return " <b style='color:" + (bom ? "var(--nt-ok)" : "var(--nt-aten)") + ";'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
     }
     var resumo = l.length > 1
       ? "<div style='padding:6px 0;border-bottom:1px dashed var(--linha);'>Da 1ª à última: " +
@@ -1589,12 +1656,12 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
               "<div style='font-size:9.5px;font-weight:800;color:var(--verde);'>" + String(x.kg).replace(".", ",") + "</div>" +
               "<div style='height:" + (58 - h) + "px;'></div>" +
               "<div style='height:" + h + "px;background:var(--verde);border-radius:4px 4px 0 0;opacity:.8;'></div>" +
-              "<div style='font-size:8.5px;color:#6b7280;margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
+              "<div style='font-size:8.5px;color:var(--nt-txt-4);margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
           }).join("") + "</div>"
         : "";
       $("pnPesoGraf").innerHTML = graf +
         "<div style='margin-top:6px;'>Atual: <b>" + String(vals[vals.length - 1]).replace(".", ",") + " kg</b>" +
-        (ps.length > 1 ? " · Variação: <b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" +
+        (ps.length > 1 ? " · Variação: <b style='color:" + (dif < 0 ? "var(--verde)" : dif > 0 ? "var(--nt-erro)" : "var(--nt-txt-4)") + ";'>" +
           (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> no período (" + ps.length + " pesagens)" : " · registre a próxima na consulta") + "</div>";
     } else {
       $("pnPesoGraf").textContent = "Sem pesagens ainda — registre a primeira abaixo.";
@@ -2095,9 +2162,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var d = st.dietas[p.id];
       var temDieta = d && (d.refeicoes || []).length;
       return "<div data-busca-id='" + p.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
-        "<b>" + esc(p.nome) + "</b> <span style='font-size:11px;color:" + (temDieta ? "#16a34a" : "#b45309") + ";'>" +
+        "<b>" + esc(p.nome) + "</b> <span style='font-size:11px;color:" + (temDieta ? "var(--verde)" : "#b45309") + ";'>" +
         (temDieta ? "· dieta ok" : "· sem dieta") + "</span></div>";
-    }).join("") : "<div style='padding:12px 14px;color:#6b7280;font-size:13px;'>Nenhum paciente com esse nome.</div>";
+    }).join("") : "<div style='padding:12px 14px;color:var(--nt-txt-4);font-size:13px;'>Nenhum paciente com esse nome.</div>";
     box.hidden = false;
   }
   $("buscaPac").addEventListener("input", pintaBuscaPac);
@@ -2663,9 +2730,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         '<span style="font-size: 12.5px; font-weight: 700; color: var(--verde);">' + r.k + " kcal · " + r.pt + " g prot <small class=\"muted\">/porção</small></span>" +
         "</summary>" +
         '<div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;">' +
-        "<div><b style=\"font-size: 13px;\">Ingredientes</b><ul style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: #555;\">" +
+        "<div><b style=\"font-size: 13px;\">Ingredientes</b><ul style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: var(--nt-txt-4);\">" +
         r.ing.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul></div>" +
-        "<div><b style=\"font-size: 13px;\">Modo de preparo</b><ol style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: #555;\">" +
+        "<div><b style=\"font-size: 13px;\">Modo de preparo</b><ol style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: var(--nt-txt-4);\">" +
         r.modo.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ol></div>" +
         "</div>" +
         '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">' + esc(r.dica) + "</p>" +
@@ -3312,7 +3379,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var st = questStN(load());
     $("qpListaN").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
       var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--nt-borda-2);">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qprmn="' + p.id + '" aria-label="excluir a pergunta">✕</button></div>';
@@ -3323,7 +3390,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         }).join("")
       : "";
     $("qqListaN").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--nt-borda-2);">' +
         "<b>" + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qqrmn="' + q.id + '" aria-label="excluir o questionário">✕</button></div>';
@@ -3450,8 +3517,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           // pontuação vem do app (token do paciente): só número entra na tela,
           // senão texto forjado rodaria como HTML na sessão do nutricionista (XSS)
           var pts = (d.pontuacao == null || !isFinite(+d.pontuacao)) ? null : +d.pontuacao;
-          var corP = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
-          return '<div style="padding:10px 0;border-top:1px solid #e5e7eb22;">' +
+          var corP = pts == null ? "var(--nt-txt-3)" : pts > 0 ? "var(--nt-ok)" : pts < 0 ? "var(--nt-erro)" : "var(--nt-aten)";
+          return '<div style="padding:10px 0;border-top:1px solid var(--nt-borda-2);">' +
             "<b>" + esc(nomePorToken[row.token] || "Paciente") + "</b> · " + esc(row.questionario || "Check-in") +
             ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
@@ -3647,7 +3714,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (document.activeElement !== $("cfgMural")) $("cfgMural").value = (cfgN.mural || []).join("\n");
     $("cfgFeedN").checked = !!cfgN.feedOn; // Comunidade vem desligada
     pintaBkAvisoN(cfgN.backupEm);
-    if (document.activeElement !== $("cfgCorN")) $("cfgCorN").value = corOk(cfgN.cor) || "#16a34a";
+    if (document.activeElement !== $("cfgCorN")) $("cfgCorN").value = corOk(cfgN.cor) || "var(--verde)";
     var lgN = logoOkN(cfgN.logo);
     if (lgN) $("cfgLogoPrevN").src = lgN; else $("cfgLogoPrevN").removeAttribute("src");
     $("cfgLogoPrevN").hidden = !lgN;
@@ -3774,11 +3841,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       (tiles.length ? '<div class="linha-flex" style="flex-wrap:wrap;gap:10px;margin-top:10px;">' + tiles.map(function (ti) {
         return '<div style="flex:1;min-width:120px;border:1px solid var(--linha);border-radius:12px;padding:10px 12px;">' +
           '<div class="muted" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + esc(ti.k) + "</div>" +
-          '<div style="font-size:22px;font-weight:800;' + (ti.ruim ? "color:#f87171;" : "") + '">' + String(ti.v).replace(".", ",") + "</div>" +
+          '<div style="font-size:22px;font-weight:800;' + (ti.ruim ? "color:var(--nt-erro);" : "") + '">' + String(ti.v).replace(".", ",") + "</div>" +
           '<div style="height:5px;border-radius:99px;background:var(--linha);margin-top:6px;overflow:hidden;"><i style="display:block;height:100%;width:' +
-          Math.max(4, Math.min(100, ti.v / ti.max * 100)) + "%;background:" + (ti.ruim ? "#f87171" : "#16a34a") + ';"></i></div></div>';
+          Math.max(4, Math.min(100, ti.v / ti.max * 100)) + "%;background:" + (ti.ruim ? "var(--nt-erro)" : "var(--verde)") + ';"></i></div></div>';
       }).join("") + "</div>" : "") +
-      (reg.motivos && reg.motivos.length ? '<p style="margin:10px 0 0;font-size:12.5px;color:#f87171;"><b>Pede atenção:</b> ' + esc(reg.motivos.join(" · ")) + "</p>" : "") +
+      (reg.motivos && reg.motivos.length ? '<p style="margin:10px 0 0;font-size:12.5px;color:var(--nt-erro);"><b>Pede atenção:</b> ' + esc(reg.motivos.join(" · ")) + "</p>" : "") +
       ((reg.texto || livres.length) ? '<p class="muted" style="margin:10px 0 0;font-size:13px;">' + (reg.texto ? "“" + esc(reg.texto) + "”" : "") +
         livres.map(function (r) { return "<br><span style='font-size:11.5px;'>" + esc(String(r.pergunta || r.sigla || "")) + ":</span> “" + esc(String(r.resposta)) + "”"; }).join("") + "</p>" : "") +
       "</div>";
@@ -3842,7 +3909,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         if (!arr.length) return "";
         return '<p class="muted" style="margin:10px 0 4px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;">' + rot + " (" + arr.length + ")</p>" +
           arr.map(function (r) {
-            return '<button type="button" class="btn sec mini" data-qsitn="' + r.p.id + '" style="margin:0 6px 6px 0;' + (cor && r.motivos.length ? "border-color:#f87171;color:#f87171;" : "") + '">' +
+            return '<button type="button" class="btn sec mini" data-qsitn="' + r.p.id + '" style="margin:0 6px 6px 0;' + (cor && r.motivos.length ? "border-color:var(--nt-erro);color:var(--nt-erro);" : "") + '">' +
               esc(r.p.nome) + (r.motivos.length ? " ⚠" : r.respondeu && r.nota != null ? " · " + r.nota : "") + "</button>";
           }).join("");
       }
@@ -3997,13 +4064,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       }
       var h = "";
       devendo.forEach(function (p) {
-        h += linhaR("#f87171", "<b>" + esc(p.nome) + "</b> — sem pagamento este mês",
+        h += linhaR("var(--nt-erro)", "<b>" + esc(p.nome) + "</b> — sem pagamento este mês",
           (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") +
             "?text=" + encodeURIComponent("Oi " + p.nome.split(" ")[0] + "! Podemos acertar o acompanhamento deste mês? 😊") + '">Cobrar</a>' : "") +
           '<button class="btn sec mini" data-resperfil="' + p.id + '">Perfil</button>');
       });
       semDieta.forEach(function (p) {
-        h += linhaR("#fbbf24", "<b>" + esc(p.nome) + "</b> — ainda sem dieta entregue",
+        h += linhaR("var(--nt-aten)", "<b>" + esc(p.nome) + "</b> — ainda sem dieta entregue",
           '<button class="btn verde mini" data-resperfil="' + p.id + '">Montar dieta</button>');
       });
       $("cardResolverN").hidden = !h;
@@ -4018,15 +4085,15 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       kv("Projeção no ritmo atual", fmtR(projFat)) +
       (vPadrao ? kv("Consulta padrão", fmtR(vPadrao)) : "") +
       kv("Assinaturas no cartão", comRec + " paciente(s)") +
-      kv("Cartão recusado", recusados + " paciente(s)", recusados ? "#f87171" : "#4ade80");
+      kv("Cartão recusado", recusados + " paciente(s)", recusados ? "var(--nt-erro)" : "var(--nt-ok)");
     var comApp = ativos.filter(function (p) { return p.acessoEm; }).length;
     var comDieta = ativos.filter(function (p) { return (st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); }).length;
     $("bBaseN").innerHTML =
       kv("Pacientes ativos", ativos.length) +
-      kv("Pacientes novos no mês", d.novos, d.novos ? "#4ade80" : null) +
+      kv("Pacientes novos no mês", d.novos, d.novos ? "var(--nt-ok)" : null) +
       kv("Com dieta entregue", comDieta + " de " + ativos.length) +
-      kv("Sem dieta ainda", ativos.length - comDieta, ativos.length - comDieta ? "#fbbf24" : "#4ade80") +
-      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "#fbbf24" : "#4ade80");
+      kv("Sem dieta ainda", ativos.length - comDieta, ativos.length - comDieta ? "var(--nt-aten)" : "var(--nt-ok)") +
+      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "var(--nt-aten)" : "var(--nt-ok)");
     var fim7 = new Date(hoje + "T12:00"); fim7.setDate(fim7.getDate() + 7);
     var prox7 = (st.consultas || []).filter(function (c) { return c.data >= hoje && c.data <= S.todayISO(fim7); }).length;
     $("bAgN").innerHTML =
@@ -4080,10 +4147,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
             "?text=" + encodeURIComponent("Oi " + String(x.nome).split(" ")[0] + "! Bora marcar seu retorno? 🥗") + '">Chamar no zap</a>' : "") +
           '<button class="btn sec mini" data-pacperfil="' + x.id + '">Ver paciente</button></span></div>';
       }).join("") + (sumidos.length > 8 ? '<div class="muted" style="padding-top:8px;">e mais ' + (sumidos.length - 8) + " paciente(s) na mesma situação.</div>" : "")
-      : '<div style="color:#4ade80;">Ninguém sumido — todo mundo com consulta em dia ou marcada. 🎉</div>') + extras;
+      : '<div style="color:var(--nt-ok);">Ninguém sumido — todo mundo com consulta em dia ou marcada. 🎉</div>') + extras;
     $("bDietaN").innerHTML =
       kv("Check-ins montados", (st.questionarios || []).length) +
-      kv("Sem consulta há 60+ dias", semRetorno60 + " paciente(s)", semRetorno60 ? "#fbbf24" : "#4ade80") +
+      kv("Sem consulta há 60+ dias", semRetorno60 + " paciente(s)", semRetorno60 ? "var(--nt-aten)" : "var(--nt-ok)") +
       kv("Receitas no blog", (self.MT_RECEITAS || []).length) +
       kv("Meus alimentos cadastrados", st.alimentos.length);
     // metas com projeção run-rate
@@ -4093,7 +4160,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!$("mtConsN").value && metas.cons) $("mtConsN").value = metas.cons;
     function linhaMeta(rot, atual, proj, meta, fmt) {
       var okM = meta > 0 ? proj >= meta : null;
-      var cor = okM == null ? null : okM ? "#4ade80" : "#f87171";
+      var cor = okM == null ? null : okM ? "var(--nt-ok)" : "var(--nt-erro)";
       return kv(rot + (meta > 0 ? ' <small style="color:var(--cinza);">(meta ' + fmt(meta) + ")</small>" : ""),
         fmt(atual) + ' <small style="font-weight:600;">→ projeção ' + fmt(proj) + (okM == null ? "" : okM ? " ✓" : " abaixo") + "</small>", cor);
     }
@@ -4223,7 +4290,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var totalAtr = atr.reduce(function (t, x) { return t + x.valor; }, 0);
     $("fnMesRot").textContent = MESES_N[+mes.slice(5, 7) - 1];
     $("fnResumo").innerHTML = fmtR(d.fat) + " recebidos" +
-      (totalAtr ? ' · <b style="color:#f87171;">' + fmtR(totalAtr) + " vencidos</b>" : "");
+      (totalAtr ? ' · <b style="color:var(--nt-erro);">' + fmtR(totalAtr) + " vencidos</b>" : "");
     // ---- bloco vermelho dos atrasados: cada linha com o botão que resolve ----
     $("fnAtrasados").innerHTML = !atr.length ? "" :
       '<div class="fnatr"><div class="fnatrcab"><i></i><b>Atrasados</b>' +
@@ -4258,16 +4325,16 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
       var media = Math.round(soma / 5);
       $("fn6meses").innerHTML = "<h2>Últimos 6 meses" +
-        (media ? '<span style="float:right;font-size:12px;font-weight:800;color:#4ade80;">média ' + fmtR(media) + "</span>" : "") + "</h2>" +
+        (media ? '<span style="float:right;font-size:12px;font-weight:800;color:var(--nt-ok);">média ' + fmtR(media) + "</span>" : "") + "</h2>" +
         '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:10px;">' +
         meses.map(function (m) {
           var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
           return '<div class="fnbar" style="flex:1;text-align:center;">' +
-            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "#4ade80" : "var(--cinza)") + ';">' +
+            '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "var(--nt-ok)" : "var(--cinza)") + ';">' +
             (m.v >= 1000 ? (Math.round(m.v / 100) / 10).toFixed(1).replace(".", ",") : Math.round(m.v)) + "</div>" +
             '<div style="height:' + (114 - alt) + 'px;"></div>' +
             '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
-            (m.atual ? "repeating-linear-gradient(45deg,#16a34a,#16a34a 5px,#15803d 5px,#15803d 10px)" : m.v ? "var(--verde)" : "var(--linha)") + ';"></div>' +
+            (m.atual ? "repeating-linear-gradient(45deg,var(--verde),var(--verde) 5px,var(--verde-2) 5px,var(--verde-2) 10px)" : m.v ? "var(--verde)" : "var(--linha)") + ';"></div>' +
             '<div style="font-size:10px;font-weight:800;color:var(--cinza);margin-top:5px;">' + m.rot + "</div></div>";
         }).join("") + "</div>" +
         '<div class="muted" style="font-size:11.5px;margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
@@ -4284,7 +4351,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         d: pApi.provedor === "outro" ? "seu link de cobrança" : "cartão, Pix e boleto — o dinheiro cai na SUA conta" });
       $("fnComo").innerHTML = "<h2>Como você recebe</h2>" +
         (vias.length ? vias.map(function (v) {
-          return '<div class="linha-nt"><span style="color:#4ade80;font-weight:800;">✓</span><b>' + esc(v.n) + '</b><span class="muted" style="font-size:12px;">' + esc(v.d) + "</span></div>";
+          return '<div class="linha-nt"><span style="color:var(--nt-ok);font-weight:800;">✓</span><b>' + esc(v.n) + '</b><span class="muted" style="font-size:12px;">' + esc(v.d) + "</span></div>";
         }).join("") : '<p class="muted" style="font-size:12.5px;">Nada configurado ainda — sem chave Pix nem gateway, os botões Link e Pix não aparecem na cobrança.</p>') +
         '<button type="button" class="btn sec mini" id="fnIrConfig" style="margin-top:10px;">Configurar em Sua ilha</button>';
     })();
@@ -4295,10 +4362,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var doDia = (st.pagamentosN || []).filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
       var totH = doDia.reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
       $("fnHoje").innerHTML = "<h2>Entrou hoje" +
-        '<span style="float:right;font-size:13px;font-weight:800;color:' + (totH ? "#4ade80" : "var(--cinza)") + ';">' +
+        '<span style="float:right;font-size:13px;font-weight:800;color:' + (totH ? "var(--nt-ok)" : "var(--cinza)") + ';">' +
         (totH ? "+" + fmtR(totH) : "nada ainda") + "</span></h2>" +
         (doDia.length ? doDia.map(function (x) {
-          return '<div class="linha-nt"><span style="color:#4ade80;font-weight:800;">✓</span><b>' + esc(nomes[x.pacienteId] || "—") + "</b>" +
+          return '<div class="linha-nt"><span style="color:var(--nt-ok);font-weight:800;">✓</span><b>' + esc(nomes[x.pacienteId] || "—") + "</b>" +
             '<b style="margin-left:auto;">' + fmtR(+x.valor || 0) + "</b></div>";
         }).join("") : '<p class="muted" style="font-size:12.5px;">Nenhum pagamento registrado hoje.</p>');
     })();
@@ -4326,7 +4393,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return '<div class="linha-nt"><b>' + esc(nomesH[x.pacienteId] || "—") + "</b>" +
         '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:10px;align-items:center;"><b>' + fmtR(+x.valor || 0) + "</b>" +
-        '<a href="#" data-recibo="' + x.id + '" style="font-size:12px;color:#4ade80;">recibo</a></span></div>';
+        '<a href="#" data-recibo="' + x.id + '" style="font-size:12px;color:var(--nt-ok);">recibo</a></span></div>';
     }).join("") : "Nenhum pagamento registrado ainda.";
   }
   // cobrança: um handler só pro bloco de atrasados, igual ao cliqueCobranca do Personal
@@ -4614,11 +4681,11 @@ addEventListener('load',function(){document.querySelectorAll('.kpi-nt .val').for
     var faixa = document.createElement("div");
     faixa.id = "faixaSessao";
     faixa.setAttribute("role", "status");
-    faixa.style.cssText = "position:fixed;left:12px;right:12px;bottom:78px;z-index:9999;background:#2a1f10;" +
-      "border:1px solid #7c5a1a;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;" +
+    faixa.style.cssText = "position:fixed;left:12px;right:12px;bottom:78px;z-index:9999;background:var(--nt-aten-bg);" +
+      "border:1px solid var(--nt-aten);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;" +
       "justify-content:space-between;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.45);";
     var txt = document.createElement("div");
-    txt.style.cssText = "font-size:14px;line-height:1.5;flex:1 1 220px;color:#fbbf24;font-weight:700;";
+    txt.style.cssText = "font-size:14px;line-height:1.5;flex:1 1 220px;color:var(--nt-aten);font-weight:700;";
     txt.textContent = "Sua sessão da nuvem caiu. Entre de novo pra voltar a usar a IA, os pagamentos e a publicação dos apps.";
     var acoes = document.createElement("div");
     acoes.style.cssText = "display:flex;gap:8px;";
