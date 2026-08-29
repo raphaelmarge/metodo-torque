@@ -1924,6 +1924,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vAlunos" hidden>
     <p id="aAcessoStatus" class="muted" style="margin: 0 0 10px; font-size: 12.5px;"></p>
 
+    <dialog id="dlgImporta">
+      <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 620px; max-width: 100%;">
+        <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Importar alunos — cole a sua lista</h2>
+        <p class="muted" style="margin: 0; font-size: 12.5px;">Um aluno por linha, do jeito que estiver na sua planilha ou no WhatsApp: <b>nome e telefone</b> (e e-mail, se tiver). O painel entende vírgula, ponto-e-vírgula e a colagem direta do Excel.</p>
+        <textarea id="impTexto" rows="8" placeholder="Ana Beatriz Souza, 31 98811-0001, ana@gmail.com&#10;Bruno Ferraz; 31988110002&#10;Carla Menezes	31 98811-0003" style="width: 100%; font-size: 13px;"></textarea>
+        <div id="impPrevia" class="muted" style="font-size: 12.5px; max-height: 180px; overflow: auto;"></div>
+        <div class="linha-flex" style="gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn sec" id="impCancela">Cancelar</button>
+          <button type="button" class="btn" id="impConfirma" disabled>Importar</button>
+        </div>
+      </div>
+    </dialog>
     <dialog id="dlgNovoAluno">
       <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
         <div id="naPasso1">
@@ -1981,6 +1993,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="alk">Seus alunos</div>
         <div class="alh" id="alResumo">—</div>
       </div>
+      <button type="button" class="btn sec" id="btnImporta" style="margin-right:8px;">Importar lista</button>
       <button type="button" class="dbt" id="btnNovoAluno"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Novo aluno</button>
     </div>
     <!-- no desenho a busca e os filtros dividem UMA linha; no celular voltam
@@ -4102,6 +4115,79 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("dlgNovoAluno").showModal();
   });
   $("naCancela").addEventListener("click", function () { $("dlgNovoAluno").close(); });
+
+  // ---------- importar alunos (colar lista de planilha/WhatsApp) ----------
+  // A troca de app morre no recadastro um a um. Aqui o professor cola a
+  // carteira inteira: cada linha vira {nome, zap, email}; telefone é a maior
+  // sequência de 10-13 dígitos, e-mail sai por regex, o resto é o nome.
+  // Dedupe contra quem já existe (telefone igual, ou nome igual sem acento).
+  function impParse(texto, st) {
+    var semAcento = function (s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); };
+    var jaTel = {}, jaNome = {};
+    (st.alunos || []).forEach(function (a) {
+      if (a.zap) jaTel[String(a.zap).replace(/\D/g, "")] = 1;
+      jaNome[semAcento(a.nome)] = 1;
+    });
+    var novos = [], pulados = [];
+    texto.split(/\r?\n/).forEach(function (linha) {
+      linha = linha.trim();
+      if (!linha) return;
+      var email = (linha.match(/[\w.+-]+@[\w-]+\.[\w.-]+/) || [""])[0];
+      var resto = linha.replace(email, "");
+      var tel = "";
+      var m = resto.match(/(?:\+?\(?\d[\d ().-]{8,})/g);
+      if (m) {
+        m.sort(function (a, b) { return b.replace(/\D/g, "").length - a.replace(/\D/g, "").length; });
+        var dig = m[0].replace(/\D/g, "");
+        if (dig.length >= 10 && dig.length <= 13) { tel = dig; resto = resto.replace(m[0], ""); }
+      }
+      var nome = resto.replace(/[;,\t()]+/g, " ").replace(/\s+/g, " ").trim();
+      if (!nome) { pulados.push({ linha: linha, motivo: "sem nome" }); return; }
+      if (tel && jaTel[tel]) { pulados.push({ linha: nome, motivo: "telefone já cadastrado" }); return; }
+      if (jaNome[semAcento(nome)]) { pulados.push({ linha: nome, motivo: "nome já cadastrado" }); return; }
+      jaNome[semAcento(nome)] = 1;
+      if (tel) jaTel[tel] = 1;
+      novos.push({ nome: nome, zap: tel, email: email.toLowerCase() });
+    });
+    return { novos: novos, pulados: pulados };
+  }
+  function impPinta() {
+    var st = load();
+    var r = impParse($("impTexto").value, st);
+    var h = "";
+    if (r.novos.length) {
+      h += "<b>" + r.novos.length + " aluno(s) pra importar:</b><br>" +
+        r.novos.map(function (n) { return "• " + esc(n.nome) + (n.zap ? " · " + esc(n.zap) : " · <span style='color:var(--tk-aten);'>sem telefone</span>") + (n.email ? " · " + esc(n.email) : ""); }).join("<br>");
+    }
+    if (r.pulados.length) {
+      h += (h ? "<br><br>" : "") + "<b>Pulados (" + r.pulados.length + "):</b><br>" +
+        r.pulados.map(function (p) { return "• " + esc(p.linha) + " — " + p.motivo; }).join("<br>");
+    }
+    $("impPrevia").innerHTML = h || "Cole a lista acima que eu mostro aqui o que entendi, antes de importar.";
+    $("impConfirma").disabled = !r.novos.length;
+    $("impConfirma").textContent = r.novos.length ? "Importar " + r.novos.length + " aluno(s)" : "Importar";
+    return r;
+  }
+  $("btnImporta").addEventListener("click", function () {
+    $("impTexto").value = "";
+    impPinta();
+    $("dlgImporta").showModal();
+  });
+  $("impTexto").addEventListener("input", impPinta);
+  $("impCancela").addEventListener("click", function () { $("dlgImporta").close(); });
+  $("impConfirma").addEventListener("click", function () {
+    var st = load();
+    var r = impParse($("impTexto").value, st);
+    if (!r.novos.length) return;
+    r.novos.forEach(function (n) {
+      st.alunos.push({ id: S.uid(), nome: n.nome, zap: n.zap, email: n.email, valor: 0, modo: "mes", metaSemana: 3,
+        objetivo: "", cpf: "", cep: "", endereco: "", ativo: true, desde: S.todayISO() });
+    });
+    save(st);
+    $("dlgImporta").close();
+    alert(r.novos.length + " aluno(s) importado(s)! Agora é só ajustar plano e valor de cada um na ficha.");
+  });
+  window.__impAlunos = impParse; // teste
   $("aAdd").addEventListener("click", function () {
     var nome = $("aNome").value.trim();
     if (!nome) { alert("Escreva o nome do aluno."); return; }
