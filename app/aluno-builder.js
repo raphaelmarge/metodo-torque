@@ -3315,9 +3315,9 @@
        * aparelho (nada sobe pra rede), tira km/tempo/pace/data reais e grava
        * no mesmo ptcardio das corridas do GPS — medalhas e recordes contam.
        * A ponte do app nativo (nativo/SAUDE.md) usa esta MESMA função. */
-      "function crImporta(txt,rotulo){var doc=null;" +
+      "function crImporta(txt,rotulo,auto){var doc=null;" +
       "try{doc=new DOMParser().parseFromString(String(txt||''),'text/xml');}catch(e){}" +
-      "if(!doc||doc.getElementsByTagName('parsererror').length){alert('Não consegui ler esse arquivo — exporta do app do relógio como GPX ou TCX.');return null;}" +
+      "if(!doc||doc.getElementsByTagName('parsererror').length){if(!auto)alert('Não consegui ler esse arquivo — exporta do app do relógio como GPX ou TCX.');return null;}" +
       "var pts=[];var tk=doc.getElementsByTagName('trkpt');" +
       "if(tk.length){for(var i=0;i<tk.length;i++){var p9=tk[i];var t9=p9.getElementsByTagName('time')[0];" +
       "pts.push({lat:+p9.getAttribute('lat'),lng:+p9.getAttribute('lon'),t:t9?Date.parse(t9.textContent):null,dm:null});}}" +
@@ -3326,7 +3326,7 @@
       "var lo=q9.getElementsByTagName('LongitudeDegrees')[0];var dm=q9.getElementsByTagName('DistanceMeters')[0];" +
       "pts.push({lat:la?+la.textContent:null,lng:lo?+lo.textContent:null,t:tt?Date.parse(tt.textContent):null,dm:dm?+dm.textContent:null});}}" +
       "pts=pts.filter(function(x){return x.t;});" +
-      "if(pts.length<2){alert('Esse arquivo veio sem os pontos do treino — tenta exportar de novo como GPX.');return null;}" +
+      "if(pts.length<2){if(!auto)alert('Esse arquivo veio sem os pontos do treino — tenta exportar de novo como GPX.');return null;}" +
       // distância: o TCX costuma trazer o total pronto; senão soma pelo GPS
       "var km=0;var comDm=pts.filter(function(x){return x.dm!=null;});" +
       "if(comDm.length>1){km=(comDm[comDm.length-1].dm-comDm[0].dm)/1000;}" +
@@ -3334,11 +3334,13 @@
       "if(a9.lat!=null&&b9.lat!=null){var d9=havKm(a9,b9);if(d9<0.5)km+=d9;}}}" +
       "km=Math.round(km*100)/100;" +
       "var seg=Math.round((pts[pts.length-1].t-pts[0].t)/1000);" +
-      "if(!(seg>=60)||!(km>0.1)){alert('Treino muito curto ou sem distância — confere se exportou o arquivo certo.');return null;}" +
+      "if(!(seg>=60)||!(km>0.1)){if(!auto)alert('Treino muito curto ou sem distância — confere se exportou o arquivo certo.');return null;}" +
       "var med=(seg/60)/km;var quando=new Date(pts[0].t);" +
       "var nomeTrk='';var nEl=doc.getElementsByTagName('name')[0];if(nEl)nomeTrk=String(nEl.textContent||'').trim().slice(0,32);" +
       "var reg={d:isoLoc(quando),n:(nomeTrk||rotulo||'Importada do relógio'),m:cr.mod||'corrida',s:seg,k:km,p:paceFmt(med)};" +
-      "if(!confirm('Importar: '+String(km).replace('.',',')+' km em '+wodFmt(seg)+' (pace '+reg.p+') de '+reg.d.slice(8,10)+'/'+reg.d.slice(5,7)+' como '+(CRMODS[reg.m]||'Corrida')+'?'))return null;" +
+      "var lst0=L('ptcardio',[]);for(var dd0=0;dd0<lst0.length;dd0++){var x0=lst0[dd0];" +
+      "if(x0&&x0.d===reg.d&&Math.abs((+x0.s||0)-reg.s)<=5&&Math.abs((+x0.k||0)-reg.k)<=0.06)return null;}" +
+      "if(!auto&&!confirm('Importar: '+String(km).replace('.',',')+' km em '+wodFmt(seg)+' (pace '+reg.p+') de '+reg.d.slice(8,10)+'/'+reg.d.slice(5,7)+' como '+(CRMODS[reg.m]||'Corrida')+'?'))return null;" +
       "var lst=L('ptcardio',[]);var antes=crMedQ(lst);" +
       "var mxAnt=0,pcAnt=1/0;lst.forEach(function(x){if(x.m!=='corrida')return;var k9=+x.k||0;if(k9>mxAnt)mxAnt=k9;" +
       "if(k9>=3&&+x.s>0){var pq=(+x.s/60)/k9;if(pq<pcAnt)pcAnt=pq;}});" +
@@ -3347,9 +3349,9 @@
       "depois.forEach(function(t8,i8){if(t8&&!antes[i8])extras.push('Medalha nova: '+CRMEDN[i8]);});" +
       "if(mxAnt&&reg.k>mxAnt)extras.push('RECORDE: sua corrida mais longa');" +
       "if(reg.k>=3&&isFinite(pcAnt)&&med<pcAnt)extras.push('RECORDE: seu melhor pace');}" +
-      "crEl('crFase').textContent='RELÓGIO IMPORTADO — '+String(km).replace('.',',')+' km registrados';crEl('crFase').style.color='#4ade80';" +
+      "if(!auto){crEl('crFase').textContent='RELÓGIO IMPORTADO — '+String(km).replace('.',',')+' km registrados';crEl('crFase').style.color='#4ade80';" +
       "crEl('crInfo').textContent=extras.join(' · ');" +
-      "if(extras.length)confete();if(navigator.vibrate)navigator.vibrate([150,80,150]);" +
+      "if(extras.length)confete();if(navigator.vibrate)navigator.vibrate([150,80,150]);}" +
       "pintaCrHist();return reg;}" +
       "window.__crImporta=crImporta;" +
       "(function(){var inp=crEl('crImp');if(!inp)return;inp.addEventListener('change',function(){" +
@@ -4564,6 +4566,28 @@
       // tela 41: última avaliação com deltas coloridos + histórico dobrável
       "(function(){var el=document.getElementById('evoBox');if(!AVS.length){el.innerHTML=\"<div class='vz'>Suas avaliações físicas aparecem aqui quando o personal registrar.</div>\";return;}" +
       "var ult=AVS[AVS.length-1];" +
+      /* série histórica da avaliação (v671): curvas de % gordura e massa magra.
+       * avMg é a MESMA régua da tela 43 (bia vence a estimativa peso*gordura/10,
+       * mesmo arredondamento) — dois números diferentes pro mesmo aluno em dois
+       * lugares é defeito. Filtro !=='' de propósito: o !=null do linha() deixa
+       * string vazia passar e NaN quebraria o path sem erro nenhum. */
+      "function avMg(v){return v.bia&&v.bia.massaGordura!=null?+v.bia.massaGordura:(v.peso!=null&&v.peso!==''&&v.gordura!=null&&v.gordura!==''?Math.round(v.peso*v.gordura/10)/10:null);}" +
+      "function avSerie(lista,fn){var s=[];lista.forEach(function(v){var x=fn(v);if(x!=null&&x!==''&&isFinite(+x))s.push({d:v.data,v:+x});});return s.slice(-8);}" +
+      "function avMini(rot,s,unid,cor){if(s.length<2)return '';" +
+      "var W=320,H=92,PX=22,PT=22,PB=20;var min=1e9,max=-1e9;s.forEach(function(p){if(p.v<min)min=p.v;if(p.v>max)max=p.v;});var fx=(max-min)||1;" +
+      "var pts=s.map(function(p,i){return {x:PX+(W-2*PX)*(s.length>1?i/(s.length-1):0),y:PT+(H-PT-PB)*(1-(p.v-min)/fx),p:p};});" +
+      "var ln='';pts.forEach(function(p,i){ln+=(i?'L':'M')+Math.round(p.x)+' '+Math.round(p.y)+' ';});" +
+      "var sv=\"<div class='wpk' style='margin:10px 0 0;'>\"+rot+\"</div><svg viewBox='0 0 \"+W+' '+H+\"' style='width:100%;display:block;'>\";" +
+      "sv+=\"<path d='\"+ln+\"' fill='none' style='stroke:\"+cor+\"' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>\";" +
+      "pts.forEach(function(p,i){sv+=\"<circle cx='\"+Math.round(p.x)+\"' cy='\"+Math.round(p.y)+\"' r='3' style='fill:\"+cor+\"'/>\";" +
+      "if(i===0||i===pts.length-1){sv+=\"<text x='\"+Math.round(p.x)+\"' y='\"+Math.round(p.y-8)+\"' text-anchor='middle' font-size='11' font-weight='800' style='fill:\"+cor+\"'>\"+String(p.p.v).replace('.',',')+unid+'</text>';" +
+      "sv+=\"<text x='\"+Math.round(p.x)+\"' y='\"+(H-4)+\"' text-anchor='middle' font-size='9' fill='#6e6a78'>\"+p.p.d.slice(8,10)+'/'+p.p.d.slice(5,7)+'</text>';}});" +
+      "return sv+'</svg>';}" +
+      "function avGrafsDe(lista){var sG=avSerie(lista,function(v){return v.gordura;});" +
+      "var sM=avSerie(lista,function(v){var mg=avMg(v);return mg!=null&&v.peso!=null&&v.peso!==''?Math.round((+v.peso-mg)*10)/10:null;});" +
+      "return {g:sG,mm:sM,html:avMini('Gordura (%)',sG,'%','#fbbf24')+avMini('Massa magra (kg)',sM,' kg','var(--corc)')};}" +
+      "var gf9=avGrafsDe(AVS);" +
+      "window.__avGraf={g:gf9.g.map(function(p){return p.v;}),mm:gf9.mm.map(function(p){return p.v;}),de:function(l9){return avGrafsDe(l9||[]).html;}};" +
       "function linha(rot,campo,unid,inv){var com=AVS.filter(function(v){return v[campo]!=null;});if(com.length<1)return '';" +
       "var pri=com[0][campo],u=com[com.length-1][campo];var d=Math.round((u-pri)*10)/10;" +
       "var bom=inv?d>0:d<0;" +
@@ -4571,6 +4595,8 @@
       "\"<span style='display:flex;gap:12px;align-items:baseline;'><b style='font-size:16px;'>\"+String(u).replace('.',',')+unid+\"</b>\"+" +
       "\"<i style='font-style:normal;font-weight:800;font-size:13px;min-width:42px;text-align:right;color:\"+(d?(bom?'#4ade80':'#f87171'):'#8a8695')+\";'>\"+(d?(d>0?'+':'')+String(d).replace('.',','):'—')+\"</i></span></div>\";}" +
       "el.innerHTML=\"<div class='wpk' style='margin:0 0 4px;'>\"+pl(AVS.length,'avaliação','avaliações')+' · última em '+ult.data.slice(8,10)+'/'+ult.data.slice(5,7)+\"</div>\"+" +
+      // regra honesta: série com <2 pontos não vira gráfico; as duas vazias, nem o bloco entra
+      "(gf9.html?\"<div id='avGraf' style='margin:8px 0 4px;'>\"+gf9.html+'</div>':'')+" +
       "linha('Peso','peso',' kg')+linha('Gordura','gordura','%')+linha('Cintura','cintura',' cm')+linha('Braço','braco',' cm',true)+" +
       "\"<button type='button' id='evoLaudo' class='btnx' style='width:100%;margin-top:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;min-height:52px;'>Ver a avaliação completa ›</button>\";})();" +
       // ---------- laudo da avaliação (tela 43): tela cheia, criada só quando abre ----------
@@ -5495,7 +5521,35 @@
       // aqui só acendemos a linha e delegamos — a web nunca finge que conecta
       "(function(){var nv=window.MTNativo&&window.MTNativo.saude;var row=document.getElementById('ajSaude');" +
       "if(!nv||!row)return;row.style.display='';" +
-      "row.addEventListener('click',function(){try{nv.abrir();}catch(e9){alert('Não deu pra abrir a conexão de saúde agora.');}});})();" +
+      "row.addEventListener('click',function(){try{nv.abrir();}catch(e9){alert('Não deu pra abrir a conexão de saúde agora.');}});" +
+      /* importador automático (v671): quando o shell nativo oferecer
+       * saude.treinos()/saude.peso(), o app passa a puxar SOZINHO no boot e ao
+       * voltar pro app. Regras: busy-flag com soltura por timeout (o callback
+       * nativo pode nunca responder), intervalo mínimo de 15 min, marca
+       * ptsaudeSync em ISO UTC com recuo de 48 h (o relógio sincroniza horas
+       * depois — o dedupe do crImporta absorve a sobreposição), teto de 20
+       * treinos por rodada, e o peso só preenche data VAZIA (o que o aluno
+       * digitou vence). ptsaudeSync NÃO entra na lista do devolveApp (laço).
+       * Sem cardio no app, window.__crImporta nem existe — o peso importa
+       * mesmo assim. Tudo em try/catch: roda em timer, erro solto mataria o
+       * resto do boot dos Ajustes. */
+      "var sBusy=false,sUlt=0;" +
+      "function saudePuxa(forca){" +
+      "if(sBusy)return;if(!forca&&Date.now()-sUlt<9e5)return;sBusy=true;sUlt=Date.now();setTimeout(function(){sBusy=false;},10000);" +
+      "if(nv.treinos&&window.__crImporta){try{" +
+      "var mk=L('ptsaudeSync','');var desde=mk?new Date(Date.parse(mk)-48*3600*1000).toISOString():new Date(Date.now()-30*24*3600*1000).toISOString();" +
+      "nv.treinos(desde,function(lista){try{if(!Array.isArray(lista))return;var n=0;" +
+      "lista.slice(0,20).forEach(function(t9){var r9=window.__crImporta(String(t9||''),'Do relógio',true);if(r9)n++;});" +
+      "Sv('ptsaudeSync',new Date().toISOString());" +
+      "if(n>0){var sb=row.querySelector('.mgsub');if(sb)sb.textContent=n+(n>1?' treinos importados do relógio':' treino importado do relógio');}" +
+      "}catch(e1){}});}catch(e2){}}" +
+      "if(nv.peso){try{nv.peso(function(o){try{if(!o)return;var kg=+o.kg,d9=String(o.data||'');" +
+      "if(!(kg>=20&&kg<=400)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(d9))return;" +
+      "var pz=L('ptpeso',{});if(pz[d9]!=null)return;pz[d9]=kg;Sv('ptpeso',pz);" +
+      "try{pintaPeso();pintaMetaPeso();}catch(e3){}}catch(e4){}});}catch(e5){}}}" +
+      "setTimeout(function(){saudePuxa();},3000);" +
+      "document.addEventListener('visibilitychange',function(){if(!document.hidden)saudePuxa();});" +
+      "window.__saudeSync={puxa:saudePuxa,desde:function(){return L('ptsaudeSync','');}};})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
       "</" + "script>" +
