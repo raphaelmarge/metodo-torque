@@ -90,6 +90,14 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// esforço e batimento (v668): o card devolve ptrpe/ptfc pro aluno, com as
+// regras honestas — batimento só com dado, zona só com idade
+ok(html.indexOf("id='esfBox'") > -1 && html.indexOf("function pintaEsforco") > -1 &&
+  html.indexOf("window.__pintaEsforco=pintaEsforco") > -1,
+  "📈 a Evolução ganha o card Esforço e batimento (esfBox + gancho de teste)");
+ok(/COMO OS TREINOS PESARAM/.test(html) && /Diga sua idade no card da cinta/.test(html),
+  "as regras honestas viajam no app: RPE com convite e zona só com idade");
+
 // primeiro dia (v667): o card só nasce pro aluno SEM treino; e a videoteca
 // vira card endereçável + linha no menu ☰ — sem vídeo publicado, nada nasce
 ok(/id='primeiroDia'/.test(html2) && !/id='primeiroDia'/.test(html),

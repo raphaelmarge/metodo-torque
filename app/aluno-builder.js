@@ -945,7 +945,9 @@
       "<button type='button' data-evsub-bt='cargas' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Cargas</button>" +
       "<button type='button' data-evsub-bt='marcas' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Marcas</button></div></div>" +
       // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
-      "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div></div>" +
+      // o #esfBox mora DENTRO do cardx da pílula Cargas de propósito: herda o
+      // data-sec/data-evsub do pai e pintaCargas só reescreve o #cgBox, nunca o irmão
+      "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div><div id='esfBox'></div></div>" +
       "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
@@ -1714,6 +1716,7 @@
       "bx.style.display='block';bx.innerHTML=rpeHtml();}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-rpe]');if(!b)return;" +
       "var r=L('ptrpe',{});r[isoHj()]=+b.dataset.rpe;var ks=Object.keys(r).sort();if(ks.length>90)delete r[ks[0]];Sv('ptrpe',r);" +
+      "if(window.__pintaEsforco)window.__pintaEsforco();" +
       "var cx=b.closest('[data-rpebox]');if(!cx)return;" +
       "cx.innerHTML=\"<div class='rpeok'>Anotado! Seu personal vê isso e ajusta o próximo treino.</div>\";" +
       // respondeu no recibo → o card da área de Treino não pode perguntar de novo
@@ -4691,6 +4694,43 @@
       "cgBusca=e.target.value;var v9=e.target.value;var p9=e.target.selectionStart;pintaCargas();" +
       "var n9=document.querySelector('[data-cgbusca]');if(n9){n9.focus();n9.value=v9;try{n9.setSelectionRange(p9,p9);}catch(e2){}}});" +
       "pintaCargas();window.__pintaCargas=pintaCargas;" +
+      /* ---------- Esforço e batimento (v668): o dado que o aluno gera volta pra ele ----------
+       * RPE (ptrpe) vira barras por semana com os MESMOS cortes do painel (média
+       * >=2,5 pesado / >=1,6 na medida / senão leve — os dois lados contam a mesma
+       * história); batimento (ptfc) só aparece com dado REAL (sem cinta, nada — a
+       * regra honesta da v580) e zona só com idade (v581): sem ptidade a barra sai
+       * na cor da marca, sem rótulo Zn, com a dica de informar a idade. */
+      "function pintaEsforco(){var el=document.getElementById('esfBox');if(!el)return;var h='';" +
+      "function cx9(m9){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-top:10px;'>\"+m9+'</div>';}" +
+      "var r9=L('ptrpe',{}),rks=Object.keys(r9).filter(function(k){return /^\\d{4}-\\d{2}-\\d{2}$/.test(k)&&[1,2,3].indexOf(+r9[k])>-1;}).sort();" +
+      "if(!rks.length){h+=cx9(\"<div class='wpk'>COMO OS TREINOS PESARAM</div><div class='vz' style='text-align:left;padding:6px 0 0;'>Responda a pergunta do fim do treino (Leve, Na medida ou Pesado) que a leitura aparece aqui.</div>\");}" +
+      "else{var c28=new Date();c28.setDate(c28.getDate()-28);var iso28=isoLoc(c28);var n1=0,n2=0,n3=0;" +
+      "rks.forEach(function(k){if(k<iso28)return;var v9=+r9[k];if(v9===1)n1++;else if(v9===2)n2++;else n3++;});" +
+      "var dom=n3&&n3>=n2&&n3>=n1?'Pesado':(n2&&n2>=n1?'Na medida':(n1?'Leve':''));" +
+      "var sem9={};rks.forEach(function(k){var s9=semDe(k);(sem9[s9]=sem9[s9]||[]).push(+r9[k]);});" +
+      "var sks=Object.keys(sem9).sort().slice(-8);" +
+      "h+=cx9(\"<div class='wpk'>COMO OS TREINOS PESARAM</div>\"+" +
+      "(dom?\"<div style='font-size:17px;font-weight:800;margin-top:6px;'>\"+dom+\"<span style='font-size:11.5px;color:#8a8695;font-weight:700;'> · últimos 28 dias: \"+n1+' leve'+(n1===1?'':'s')+' · '+n2+' na medida · '+n3+' pesado'+(n3===1?'':'s')+'</span></div>':'')+" +
+      "\"<div style='display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px;'>\"+sks.map(function(s9){" +
+      "var l9=sem9[s9],med=l9.reduce(function(t,v9){return t+v9;},0)/l9.length;" +
+      "var hh=Math.round(18+44*(med-1)/2);var cor=med>=2.5?'#fb923c':(med>=1.6?'var(--corc)':'#4ade80');" +
+      "return \"<div style='flex:1;max-width:72px;text-align:center;'><div style='font-size:10px;color:#8a8695;font-weight:800;'>\"+String(Math.round(med*10)/10).replace('.',',')+\"</div>\"+" +
+      "\"<div style='height:\"+hh+\"px;background:\"+cor+\";border-radius:7px;margin-top:2px;'></div>\"+" +
+      "\"<div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+s9.slice(8,10)+'/'+s9.slice(5,7)+\"</div></div>\";}).join('')+'</div>'+" +
+      "\"<div style='font-size:11px;color:#6e6a78;margin-top:8px;'>média da semana: 1 leve · 2 na medida · 3 pesado</div>\");}" +
+      "var f9=L('ptfc',{}),fks=Object.keys(f9).filter(function(k){var v9=f9[k];return /^\\d{4}-\\d{2}-\\d{2}$/.test(k)&&v9&&+v9.m>=25&&+v9.m<=240&&+v9.x>=25&&+v9.x<=240;}).sort();" +
+      "if(fks.length){var l6f=fks.slice(-6);var minM=999,maxX=0;l6f.forEach(function(k){if(+f9[k].m<minM)minM=+f9[k].m;if(+f9[k].x>maxX)maxX=+f9[k].x;});" +
+      "var piso=Math.max(30,minM-6),teto=maxX+4,idd=hrIdade();" +
+      "h+=cx9(\"<div class='wpk'>BATIMENTO NOS TREINOS</div>\"+" +
+      "\"<div style='display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px;'>\"+l6f.map(function(k){" +
+      "var m9=+f9[k].m;var hh=Math.round(18+44*(m9-piso)/((teto-piso)||1));" +
+      "var cor=idd>0?HRZC[hrZ(m9)]:'linear-gradient(180deg,var(--corc),var(--cor))';" +
+      "return \"<div style='flex:1;max-width:72px;text-align:center;'><div style='font-size:10px;color:#8a8695;font-weight:800;'>\"+Math.round(m9)+\"</div>\"+" +
+      "\"<div style='height:\"+hh+\"px;background:\"+cor+\";border-radius:7px;margin-top:2px;'></div>\"+" +
+      "\"<div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+k.slice(8,10)+'/'+k.slice(5,7)+\"</div></div>\";}).join('')+'</div>'+" +
+      "\"<div style='font-size:11px;color:#6e6a78;margin-top:8px;'>\"+(idd>0?('máxima estimada '+hrMax()+' bpm · última média em '+HRZN[hrZ(+f9[l6f[l6f.length-1]].m)]):'Diga sua idade no card da cinta pra ver as zonas de batimento')+\" · escala a partir de \"+piso+\" bpm</div>\");}" +
+      "el.innerHTML=h;}" +
+      "pintaEsforco();window.__pintaEsforco=pintaEsforco;" +
       // ---------- Marcas (tela 32): corrida, força e circuitos ----------
       "function mkCorrida(){var corr=L('ptcardio',[]).filter(function(x){return x.m==='corrida'&&+x.k>0.05;});var out=[];" +
       "if(!corr.length)return out;var mesK=isoHj().slice(0,7);" +
@@ -5219,6 +5259,7 @@
       // o cabeçalho e as páginas repintam com os dados mais frescos do aparelho
       "if(window.__evTopoPinta)window.__evTopoPinta(atual);" +
       "if(atual==='cargas'&&window.__pintaCargas)window.__pintaCargas();" +
+      "if(atual==='cargas'&&window.__pintaEsforco)window.__pintaEsforco();" +
       "if(atual==='marcas'&&window.__pintaMarcas)window.__pintaMarcas();" +
       // a retrospectiva tem regra própria (só no comecinho do mês, some ao
       // fechar) — a sub-aba mostra, ela decide se fica
