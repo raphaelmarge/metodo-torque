@@ -20,6 +20,8 @@
 <!-- o código do app vem daqui, do site: uma fonte só pra todos os alunos -->
 <script src="aluno-skin.js"></script>
 <script src="aluno-builder.js"></script>
+<!-- e o do paciente do NUTRI também (o pacote diz qual é pelo dados.tipo) -->
+<script src="nutri-builder.js"></script>
 <script>
 (function () {
   // token: da URL ou, se instalado/aberto sem ?t=, o último usado neste aparelho
@@ -35,6 +37,14 @@
    * isso que o pacote ainda traz os dois. */
   function montaDoPacote(pac) {
     if (!pac || typeof pac !== "object") return "";
+    // o D diz de quem é o app: dados.tipo === "nutri" vai pro builder do paciente
+    // (nutri-builder.js); sem tipo é o app do aluno de sempre. NUNCA entregar um
+    // pacote de nutri pro MT_APP_ALUNO — os campos não batem e o app sairia vazio.
+    var d = pac.dados || (pac.a || pac.tipo ? pac : null);
+    if (d && d.tipo === "nutri") {
+      if (self.MT_APP_NUTRI) { try { return self.MT_APP_NUTRI.monta(d); } catch (e) {} }
+      return pac.html || "";
+    }
     if (self.MT_APP_ALUNO) {
       // formato normal: o registro é {html, dados, ver, stamp}
       if (pac.dados) { try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) {} }

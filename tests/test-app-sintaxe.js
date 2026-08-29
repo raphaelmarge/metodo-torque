@@ -97,5 +97,51 @@ const svgVar = [];
 ok(svgVar.length === 0, "nenhuma cor de SVG entra por atributo com var() — atributo nao le variavel CSS" +
   (svgVar.length ? " — achei " + svgVar.length + ": " + svgVar.slice(0, 3).join(" | ") : " (0)"));
 
+/* ---- app do PACIENTE (NUTRI): a partir da v661 o código mora em
+ * app/nutri-builder.js, e vale a MESMA regra — checar a sintaxe do builder
+ * não basta, o que vale é montar o app e fazer parse de cada <script>. */
+console.log("\nSintaxe do app do paciente (nutri-builder montado em node):");
+require("../app/nutri-builder.js");
+const DN = {
+  tipo: "nutri",
+  p: { id: "p1", nome: "Marina Souza", appTokenN: "tok-n", metaSemana: 5 },
+  stamp: new Date().toISOString(), ver: "mt-vteste",
+  studio: "Nutri Teste", zapN: "31999990000",
+  botApp: { oi: "Oi!", ops: [{ r: "Remarcar", t: "Pode escrever aqui" }] },
+  COR: "#16a34a", COR2: "#15803d", CORC: "#86efac", CORTHEME: "#14532d", CORL: "#4ade80",
+  CORG2: "#22c55e", CORB: "#bbf7d0", CORD: "#0e2417", CORA: "rgba(22,163,74,.22)", LOGO: "",
+  refs: [{ id: "r1", h: "08:00", t: "Café da manhã", k: 320, pt: 12, cb: 40, gd: 9,
+    itens: [{ n: "Pão integral", q: "2 × fatia", k: 140 }] }],
+  alvo: { alvo: 1800 }, macros: { prot: 120, carb: 180, gord: 50 }, aguaMl: 2500,
+  nuvem: { u: "https://x.supabase.co", k: "anon" }, feedLigado: true,
+  avs: [{ data: "2026-08-01", peso: 70, gordura: 28, cintura: 80, quadril: 100, braco: 30, coxa: 55 }],
+  aldb: [{ n: "Arroz", k: 130, p: "100 g", pt: 2, cb: 28, gd: 0 }],
+  pixApp: { code: "000201x", qr: "", v: 150 }, mural: ["Aviso do consultório"],
+};
+let htmlN = "";
+try { htmlN = self.MT_APP_NUTRI.monta(DN); } catch (e) { ok(false, "monta(D) do nutri não pode explodir — " + e.message); }
+ok(htmlN.length > 50000, "app do paciente montado com tamanho de gente grande (" + htmlN.length + " bytes)");
+const scriptsN = [...htmlN.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+ok(scriptsN.length >= 1, "achou os <script> embutidos (" + scriptsN.length + ")");
+scriptsN.forEach((s, i) => {
+  let erro = "";
+  try { new Function(s); } catch (e) { erro = e.message; }
+  ok(!erro, "nutri: script " + (i + 1) + " tem sintaxe válida" + (erro ? " — " + erro : ""));
+});
+ok(htmlN.indexOf("__appNutri") > -1 && htmlN.indexOf("Marina") > -1 && htmlN.indexOf("fdListaN") > -1,
+  "o app leva o gancho __appNutri, o nome do paciente e a Comunidade ligada");
+
+// paciente novinho: sem dieta, sem nuvem, sem nada — também tem que montar
+const DN2 = { tipo: "nutri", p: { nome: "Novo" }, studio: "Nutri", refs: [], aldb: [], avs: [], mural: [] };
+let htmlN2 = "";
+try { htmlN2 = self.MT_APP_NUTRI.monta(DN2); } catch (e) { ok(false, "monta(D vazio) do nutri não pode explodir — " + e.message); }
+[...htmlN2.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach((m, i) => {
+  let erro = "";
+  try { new Function(m[1]); } catch (e) { erro = e.message; }
+  ok(!erro, "paciente sem dieta: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
+});
+ok(htmlN2.indexOf("fdListaN") < 0 && htmlN2.indexOf("Meu login") < 0,
+  "sem nuvem o app sai sem Comunidade e sem o card Meu login — nada de fingir recurso");
+
 console.log(falhas ? "\n💥 " + falhas + " falha(s)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);
