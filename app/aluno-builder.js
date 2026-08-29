@@ -482,6 +482,17 @@
       ".gsecrow{display:flex;gap:10px;margin-top:12px}" +
       ".gsecrow button{flex:1;min-height:50px;border-radius:99px;border:none;background:var(--bg4);color:#d6d3de;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}" +
       ".gultvez{background:var(--bg2);border:1px solid var(--bg11);border-radius:18px;padding:13px 14px 15px;margin-top:14px}" +
+      // aquecimento e alternativas no player (v670) — laranja #fdba74 é o tom
+      // que o aquecimento e as técnicas já usam; o player é escuro nos 2 temas
+      ".gaq{background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:18px;padding:11px 14px;margin-bottom:12px}" +
+      ".gaq summary{cursor:pointer;list-style:none;font-size:13px;font-weight:800;color:#fdba74}" +
+      ".gaqrow{display:flex;justify-content:space-between;gap:10px;margin-top:9px;font-size:13.5px;color:#b9b4c6}" +
+      ".gaqrow b{color:#fdba74;white-space:nowrap;font-weight:700}" +
+      ".gaqp{margin-top:9px;font-size:11px;color:#8a8695}" +
+      ".galt{margin-top:12px}" +
+      ".galt .altbtn{background:none;border:none;color:#8a8695;font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0}" +
+      ".galt .altbox{margin-top:6px;font-size:13px;color:#b9b4c6;line-height:1.5}" +
+      ".galt .altbox b{color:#fff;font-weight:700}" +
       ".gultvez span{display:block;font-size:9px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#8a8695}" +
       ".guvrow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:14px;color:#b9b4c6}" +
       ".guvrow b{color:#fff;font-weight:700}" +
@@ -3661,7 +3672,7 @@
       "var GUIA=" + jsonApp((function () {
         var extra = (fichasApp || []).map(function (f) {
           return (f.itens || []).map(function (it) {
-            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "" };
+            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "", al: (it.alts || []).slice(0, 2) };
           });
         });
         // parte 2 do dia: entra no recibo do fim do treino ("ainda falta o A2")
@@ -3674,10 +3685,12 @@
             l: l2.map(function (ln) { return { t: ln.t, v: ln.v || "" }; }) };
         });
         return (guiaFichasP || []).map(function (f, fi) {
+          // al (alternativas) e aq (aquecimento) entram como chaves FINAIS de
+          // propósito: o teste de escape do GUIA olha os 500 primeiros chars
           return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
-            return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "" };
-          }) };
+            return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [] };
+          }), aq: (aqPorFicha[fi] && aqPorFicha[fi].length > 1) ? aqPorFicha[fi] : null };
         });
       })()) + ";" +
       "var TECS_G=" + jsonApp(TECS_APP) + ";" +
@@ -3806,6 +3819,13 @@
       "gv.tex=gv.tex||Date.now();gCabeca();" +
       "gEl('gEstado').style.display='none';" +
       "var m='';" +
+      /* aquecimento no 1º exercício (v670): lembrete em <details> nativo — zero
+       * listener, zero id, e some sozinho na primeira série marcada (pintaGuia
+       * repinta com gv.s=1). O estado aberto se perde na repintura: aceitável,
+       * é lembrete e não passo — gv.e continua indexando só exercícios. */
+      "if(gv.e===0&&gv.s===0&&f.aq){m+=\"<details class='gaq'><summary>Aquecimento do dia (~4 min) ›</summary>\";" +
+      "f.aq.forEach(function(aq9){m+=\"<div class='gaqrow'><span>\"+esc2(aq9[0])+'</span><b>'+esc2(aq9[1])+'</b></div>';});" +
+      "m+=\"<div class='gaqp'>Aquecer evita lesão e melhora o treino — não pula!</div></details>\";}" +
       "m+=gBlocos(true);" +
       "if(it.ob)m+=\"<div class='gobs'><em>Recado do professor</em><p>\"+esc2(it.ob)+'</p></div>';" +
       "if(it.dc)m+=\"<div class='gdica'>\"+esc2(it.dc)+'</div>';" +
@@ -3825,6 +3845,12 @@
       "if(uv){m+=\"<div class='gultvez'><span>Na última vez · \"+(+uv.d.slice(8,10))+' de '+MESES[+uv.d.slice(5,7)-1].toLowerCase()+'</span>';" +
       "uv.l.slice(0,4).forEach(function(x,i){m+=\"<div class='guvrow'>Série \"+(i+1)+'<b>'+(+x.r>0?x.r+' × ':'')+gnum(+x.kg)+' kg</b></div>';});" +
       "m+='</div>';}" +
+      /* alternativas NO GUIADO (v670): é aqui que o aparelho está ocupado na
+       * frente do aluno. Reusar a classe .altbtn entrega o toggle de graça (o
+       * handler delegado no document alterna o nextElementSibling em qualquer
+       * lugar, inclusive dentro do #guiaBox) — zero JS novo, zero id novo. */
+      "if(it.al&&it.al.length){m+=\"<div class='galt'><button type='button' class='altbtn'>Sem esse aparelho hoje?</button>\"+" +
+      "\"<div class='altbox' style='display:none;'>Troca por <b>\"+it.al.map(function(nA){return esc2(nA);}).join('</b> ou <b>')+'</b> — mesmo padrão de movimento.</div></div>';}" +
       "var nx=f.it[gv.e+1];" +
       "m+=nx?\"<div class='gprox'>Depois vem <b>\"+esc2(nx.e)+'</b> · '+nx.s+' × '+esc2(nx.r||'?')+'</div>':" +
       "\"<div class='gprox'>Último exercício do treino 💪</div>\";" +
