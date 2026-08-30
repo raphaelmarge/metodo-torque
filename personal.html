@@ -2853,6 +2853,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
     <div id="rel4c" data-relsec="geral" hidden></div>
+    <div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
+      <h2>🧠 Resumo da semana com IA</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">A IA lê a sua semana — quem sumiu, quem deve, sessões, treinos pelo app e recordes — e devolve os movimentos mais importantes. Precisa da conta na nuvem.</p>
+      <button class="btn sec" id="iaSemanaBt">Gerar o resumo da semana</button>
+      <div id="iaSemanaOut" style="margin-top: 10px; font-size: 13.5px; white-space: pre-wrap;"></div>
+    </div>
     <!-- o que saiu do Início (tela 4c do canvas): números do mês, metas,
          movimentação, fechamento, aniversários e alertas do studio -->
 <div class="kpi-pt" id="kpis" data-relsec="geral" hidden></div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
@@ -6002,6 +6008,74 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "</body></html>";
   }
   window.__relMensal = montaRelMensal; // testes
+  /* 🧠 Resumo da semana com IA — junta a semana do studio num texto e usa a
+   * MESMA ação "analisar" da chat-envia que o copiloto do portal já usa
+   * (nenhuma função nova pra publicar). Os estados vêm das MESMAS contas das
+   * telas donas (alEstado = Alunos/Radar/Financeiro); a última resposta fica
+   * guardada em config.iaSemana com a data. */
+  function montaDadosSemanaIA(st) {
+    var hoje = S.todayISO();
+    var c7 = new Date(hoje + "T12:00"); c7.setDate(c7.getDate() - 7);
+    var iso7 = c7.toISOString().slice(0, 10);
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    var sumindo = [], devendo = [];
+    ativos.forEach(function (a) {
+      var e = alEstado(st, a);
+      if (e === "sumindo") sumindo.push(a.nome);
+      if (e === "devendo") devendo.push(a.nome);
+    });
+    var ses7 = (st.sessoes || []).filter(function (x) { return x.data >= iso7 && x.data <= hoje; });
+    var linhas = ["RESUMO DA SEMANA DO PERSONAL — " + S.fmtData(hoje),
+      "Alunos ativos: " + ativos.length,
+      "Sumindo (5+ dias sem treinar, nada marcado): " + (sumindo.length ? sumindo.join(", ") : "ninguém"),
+      "Devendo o mês: " + (devendo.length ? devendo.join(", ") : "ninguém"),
+      "Sessões nos últimos 7 dias: " + ses7.filter(function (x) { return x.feita; }).length + " feitas, " +
+        ses7.filter(function (x) { return x.faltou; }).length + " faltas", ""];
+    var recs = [];
+    ativos.forEach(function (a) {
+      var ret = a.retorno || {};
+      var t7 = Object.keys(ret.feitos || {}).filter(function (k) { return k >= iso7 && k <= hoje; }).length;
+      linhas.push("- " + a.nome + ": " + t7 + " treino(s) pelo app na semana" + (a.objetivo ? " · objetivo: " + a.objetivo : ""));
+      Object.keys(ret.cargas || {}).forEach(function (ex) {
+        var maxSem = 0, maxAntes = 0;
+        (ret.cargas[ex] || []).forEach(function (e2) {
+          if (!e2 || e2.kg == null) return;
+          if (String(e2.d || "") >= iso7) { if (+e2.kg > maxSem) maxSem = +e2.kg; }
+          else if (+e2.kg > maxAntes) maxAntes = +e2.kg;
+        });
+        if (maxSem > maxAntes && maxAntes > 0) recs.push(a.nome + ": " + ex + " " + maxSem + " kg (antes " + maxAntes + ")");
+      });
+    });
+    if (recs.length) linhas.push("", "RECORDES DA SEMANA: " + recs.join("; "));
+    return linhas.join("\n").slice(0, 11000);
+  }
+  window.__iaSemana = { dados: montaDadosSemanaIA }; // testes
+  $("iaSemanaBt").addEventListener("click", function () {
+    var st = load();
+    var nuvem = S.cloud && S.cloud();
+    var out = $("iaSemanaOut");
+    if (!st.alunos.length) { out.textContent = "Cadastre alunos primeiro."; return; }
+    if (!nuvem) { out.textContent = "Entre na sua conta da nuvem pra usar a IA — a leitura roda no servidor."; return; }
+    var bt = $("iaSemanaBt");
+    bt.disabled = true; bt.textContent = "🧠 Lendo a semana…";
+    self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "analisar", dados: montaDadosSemanaIA(st) }, "O resumo da semana")
+      .then(function (d) {
+        bt.disabled = false; bt.textContent = "Gerar o resumo da semana";
+        if (d && d.ok && d.texto) {
+          out.textContent = d.texto;
+          var st2 = load(); st2.config.iaSemana = { em: S.todayISO(), texto: d.texto };
+          S.write("ptStudio", st2);
+        } else out.textContent = "⚠️ " + ((d && d.erro) || "A IA respondeu sem texto — tente de novo.");
+      })
+      .catch(function () {
+        bt.disabled = false; bt.textContent = "Gerar o resumo da semana";
+        out.textContent = "⚠️ Sem conexão com a função chat-envia — tente de novo em instantes.";
+      });
+  });
+  (function () {
+    var ult = (load().config || {}).iaSemana;
+    if (ult && ult.texto) $("iaSemanaOut").textContent = "Última análise (" + S.fmtData(ult.em) + "):\n" + ult.texto;
+  })();
   $("pfRelMes").addEventListener("click", function () {
     var html = montaRelMensal(perfilId);
     if (!html) { alert("Escolha o aluno primeiro."); return; }
