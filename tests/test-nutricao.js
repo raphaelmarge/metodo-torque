@@ -215,6 +215,26 @@ async function abaNt(p, a) {
   ok(/Almoço/.test(planoPdf) && /window\.print/.test(planoPdf) && /Nutricionista/.test(planoPdf), "plano lista as refeições, tem botão de imprimir e assinatura");
   ok(await p.evaluate(() => !!document.getElementById("dPdf") && !!document.getElementById("pnAppDados")), "botão 🖨 Plano em PDF e card 'O que o paciente registrou' existem");
 
+  // 🛒 lista de compras da semana (o plano vira a lista de mercado)
+  const compras = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+    const grupos = window.__listaCompras(st.pacientes[0].id);
+    document.getElementById("dAluno").value = st.pacientes[0].id;
+    document.getElementById("dCompras").click();
+    const itens = [];
+    Object.keys(grupos).forEach((c) => grupos[c].forEach((i) => itens.push(i)));
+    return {
+      cats: Object.keys(grupos), itens,
+      boxVisivel: !document.getElementById("dComprasBox").hidden,
+      texto: document.getElementById("dComprasTxt").value,
+    };
+  });
+  ok(compras.cats.length >= 2 && compras.itens.length >= 5, "🛒 a dieta vira lista de compras agrupada por categoria (" + compras.cats.length + " categorias)");
+  ok(compras.itens.some((i) => /(kg|\d+ g)$/.test(i.qtd)) && compras.itens.some((i) => / × /.test(i.qtd)),
+    "porção em gramas soma a semana toda (g/kg); as outras ficam honestas em 'N × porção'");
+  ok(compras.boxVisivel && /Lista de compras da semana/i.test(compras.texto) && /▢ /.test(compras.texto),
+    "o botão abre a caixa com o texto pronto pra copiar ou mandar no WhatsApp");
+
   // 💳 link de pagamento da consulta (Pagar.me — mesma função da nuvem dos outros módulos)
   {
     const pgmN = await p.evaluate(async () => {

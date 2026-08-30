@@ -368,6 +368,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="dIA" title="a IA lê o perfil, o objetivo e as restrições e monta o plano alimentar (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
         <button class="btn sec" id="dZap">Enviar resumo no WhatsApp</button>
         <button class="btn sec" id="dPdf" title="plano alimentar imprimível — imprima ou salve em PDF pra entregar ao paciente">Plano em PDF</button>
+        <button class="btn sec" id="dCompras" title="transforma o plano da semana na lista de mercado, agrupada por categoria">🛒 Lista de compras</button>
+      </div>
+      <div id="dComprasBox" hidden style="margin-top: 12px;">
+        <b style="font-size: 14px;">🛒 Lista de compras da semana</b>
+        <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">A dieta é por dia — a lista soma os 7 dias. Confira o que o paciente já tem em casa antes de mandar.</p>
+        <textarea id="dComprasTxt" readonly rows="12" style="width: 100%; font-size: 13px; font-family: inherit;"></textarea>
+        <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
+          <button class="btn sec" id="dComprasCopia">Copiar</button>
+          <button class="btn sec" id="dComprasZap">Enviar no WhatsApp</button>
+        </div>
       </div>
       <div id="dIAStatus" class="muted" style="margin-top: 8px; font-size: 13px;"></div>
       <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
@@ -2304,6 +2314,81 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     w.document.close();
   });
   window.__planoPdf = montaPlanoPDF; // testes
+
+  // ---------- 🛒 lista de compras: o plano da semana vira a lista de mercado ----------
+  /* A dieta é POR DIA; a lista soma a semana (qtd × 7). Porção que começa com
+   * gramas/ml vira o total somado ("700 g", "1,4 kg"); as outras ficam como
+   * "7 × porção" — "7 × 1 un (50 g)" se compra, "gramas de fatia" não. A
+   * categoria sai do banco de alimentos (MT_ALIMENTOS.c); alimento cadastrado
+   * pelo nutricionista entra em "Meus alimentos". */
+  function listaCompras(st, dieta) {
+    var por = {};
+    (dieta.refeicoes || []).forEach(function (r) {
+      (r.itens || []).forEach(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (!al) return;
+        if (!por[al.nome]) {
+          var cat = (self.MT_ALIMENTOS || []).find(function (c) { return c.n === al.nome; });
+          por[al.nome] = { qtd: 0, porcao: al.porcao || "", cat: (cat && cat.c) || "Meus alimentos" };
+        }
+        por[al.nome].qtd += (+it.qtd || 1);
+      });
+    });
+    var grupos = {};
+    Object.keys(por).forEach(function (nome) {
+      var x = por[nome];
+      var sem = Math.round(x.qtd * 7 * 10) / 10;
+      var m = /^([\d.,]+)\s*(g|ml)\b/.exec(x.porcao);
+      var qtdTxt;
+      if (m) {
+        var tot = Math.round(parseFloat(m[1].replace(",", ".")) * sem);
+        qtdTxt = tot >= 1000
+          ? String(Math.round(tot / 100) / 10).replace(".", ",") + " " + (m[2] === "g" ? "kg" : "L")
+          : tot + " " + m[2];
+      } else {
+        qtdTxt = String(sem).replace(".", ",") + " × " + x.porcao;
+      }
+      (grupos[x.cat] = grupos[x.cat] || []).push({ nome: nome, qtd: qtdTxt });
+    });
+    return grupos;
+  }
+  function comprasTexto(p, grupos) {
+    var linhas = ["🛒 Lista de compras da semana — " + p.nome,
+      "(do plano alimentar · desconte o que já tem em casa)", ""];
+    Object.keys(grupos).sort().forEach(function (cat) {
+      linhas.push("— " + cat.toUpperCase());
+      grupos[cat].sort(function (a, b) { return a.nome.localeCompare(b.nome); }).forEach(function (i) {
+        linhas.push("▢ " + i.nome + " — " + i.qtd);
+      });
+      linhas.push("");
+    });
+    return linhas.join("\n").trim();
+  }
+  $("dCompras").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    var st = load();
+    var dieta = dietaDe(st, p.id);
+    if (!(dieta.refeicoes || []).length) { alert("Este paciente ainda não tem dieta montada — monte (ou gere) a dieta primeiro."); return; }
+    $("dComprasTxt").value = comprasTexto(p, listaCompras(st, dieta));
+    $("dComprasBox").hidden = false;
+  });
+  $("dComprasCopia").addEventListener("click", function () {
+    var ta = $("dComprasTxt");
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) { /* sem permissão: o texto segue selecionado pra copiar na mão */ }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).catch(function () {});
+    this.textContent = "✓ Copiado";
+    var bt = this;
+    setTimeout(function () { bt.textContent = "Copiar"; }, 1600);
+  });
+  $("dComprasZap").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) return;
+    window.open("https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") +
+      "?text=" + encodeURIComponent($("dComprasTxt").value), "_blank");
+  });
+  window.__listaCompras = function (pid) { var st = load(); return listaCompras(st, dietaDe(st, pid)); }; // testes
 
   $("dAluno").addEventListener("change", renderDietas);
   $("dAgua").addEventListener("change", function () {
