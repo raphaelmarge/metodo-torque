@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v692** |
-| Estado do repo em | 2026-08-30 (commit `8b424dd`) |
+| App em | **mt-v693** |
+| Estado do repo em | 2026-08-30 (commit `3ebfe68`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 154 |
+| Lançamentos no histórico | 155 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v692** — ou seja, **23 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v693** — ou seja, **24 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v693 | reengajamento fecha a régua — resgate fixo na fila + Resolver hoje |
 | mt-v692 | turma pequena (semi-personal) na agenda |
 | mt-v691 | card de resultado pra postar no Instagram |
 | mt-v690 | esteira do aluno novo — os primeiros passos viram checklist |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v681 | renovar o mês com IA em 1 clique — a semana 4 oferece o mês novo sozinha |
 | mt-v680 | recibo automático no WhatsApp — marcou Recebi, o recibo sai pronto |
 | mt-v679 | contrato digital — o aluno aceita o termo de responsabilidade no app e o aceite volta pra ficha |
-| mt-v678 | resumo da semana com IA no painel do Personal |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
