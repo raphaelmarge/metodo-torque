@@ -9688,10 +9688,44 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<b style="min-width:92px;">Semana ' + w.n + (on ? " · agora" : "") + "</b>" +
             "<span><b>" + esc(w.foco) + "</b>" + (w.ajuste ? '<span class="muted" style="display:block;font-size:12.5px;">' + esc(w.ajuste) + "</span>" : "") +
             "</span></div>";
-        }).join("") + "</div>";
+        }).join("") +
+        /* 🔄 Renovar: só aparece na semana 4 (ou depois — semanaDoMes trava em
+         * 4). O clique reusa o MESMO caminho da aba Automático e IA, então a
+         * IA recebe as cargas, o RPE e a frequência REAIS dessas 4 semanas —
+         * os blocos evolucaoIA/perfilFisicoIA da v604 já fazem isso sozinhos. */
+        (atual >= 4
+          ? '<div style="margin-top:10px;"><button type="button" class="btn sec mini" data-renovames="' + k + '">🔄 Renovar o mês com IA</button>' +
+            '<span class="muted" style="font-size:12px;margin-left:8px;">a IA monta o mês novo usando as cargas, o esforço e a frequência reais dessas 4 semanas</span></div>'
+          : "") + "</div>";
     }).join("");
   }
   window.__pintaMes = pintaMesPlano; // testes
+  /* Renovar o mês = pular pra aba Automático e IA com tudo pré-preenchido
+   * (aluno, tipo e os MESMOS objetivo/equipamento da última geração, guardados
+   * em t.iaParams) e disparar o próprio botão da IA — um caminho só, nunca
+   * dois geradores divergindo. O confirm de "substituir" continua o de lá. */
+  $("mesBox").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-renovames]");
+    if (!b) return;
+    var alunoId = $("tAluno").value;
+    if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
+    var tipoR = b.getAttribute("data-renovames");
+    var par = (((load().treinosV2 || {})[alunoId]) || {}).iaParams || {};
+    window.__trAba("auto");
+    $("taAluno").value = alunoId;
+    if (window.__brief && window.__brief.carrega) window.__brief.carrega();
+    if ($("taTipo")) {
+      $("taTipo").value = tipoR;
+      $("taTipo").dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    if (par.objetivo != null) {
+      if (tipoR === "corrida" && $("taProva")) $("taProva").value = par.objetivo;
+      else if ($("taObjetivo")) $("taObjetivo").value = par.objetivo;
+    }
+    if (par.equip != null && $("taEquip")) $("taEquip").value = par.equip;
+    $("taIA").click();
+  });
+  window.__renovaMes = true; // marca de recurso pros testes
   // a frase roxa do rodape da ficha: pra quem vai e quando ele treina de novo.
   // Se nao houver sessao marcada, ela NAO inventa data — diz o que sabe.
   function notaPublica(st, alunoId) {
@@ -12791,6 +12825,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     geraTreinoIA(id, tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, $("taEquip").value, function (r) {
       $("taIA").disabled = false;
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
+      // guarda COM QUAIS parâmetros este treino foi gerado — é o que o botão
+      // "Renovar o mês" reusa na semana 4, sem o professor preencher de novo
+      (function () {
+        var stOk = load();
+        var tOk = treinoDe(stOk, id);
+        tOk.iaParams = { tipo: tipoIA, objetivo: tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, equip: $("taEquip").value, em: S.todayISO() };
+        S.write("ptStudio", stOk);
+      })();
       if (r.tipo === "wod") {
         // o circuito caiu na aba certa — leva o professor até ele já carregado
         var msgW = S.plural(r.wods, "circuito prescrito", "circuitos prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + " Revise, ajuste e envie!";
