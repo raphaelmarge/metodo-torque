@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v698** |
-| Estado do repo em | 2026-08-30 (commit `f3f45cb`) |
+| App em | **mt-v699** |
+| Estado do repo em | 2026-08-30 (commit `9e34ff7`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 160 |
+| Lançamentos no histórico | 161 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v698** — ou seja, **29 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v699** — ou seja, **30 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v698** (2026-08-30).
+O motor (`app/aluno-builder.js`) encostou em **mt-v699** (2026-08-30).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v699 | Clube e Loja saem da tela inicial do app e perdem os emojis |
 | mt-v698 | loja do personal dentro do app do aluno |
 | mt-v697 | clube de vantagens — parcerias do personal viram cupons no app |
 | mt-v696 | app salvo na tela inicial do iPhone abre de verdade |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v687 | o aluno nunca fica sabendo da IA — o treino é sempre do professor |
 | mt-v686 | resumo escrito no fim do treino — a voz do aluno vira relatório na ficha e a IA lê |
 | mt-v685 | histórico do exercício na tela do treino guiado — a olhada rápida antes de pegar a carga |
-| mt-v684 | aula experimental agendada pela Minha página — o lead escolhe o horário e o professor recebe push |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
