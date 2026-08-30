@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v681";
+var VERSION = "mt-v682";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -134,6 +134,26 @@ self.addEventListener("activate", function (event) {
       }));
     }).then(function () { return self.clients.claim(); })
   );
+});
+
+/* Push do PROFESSOR (a partir da v682): o painel se inscreve com o token
+ * 'prof:<user_id>' na push_subs e recebe aviso de mensagem de aluno, pedido de
+ * horário e pagamento confirmado. O payload é o mesmo {t, b} do app do aluno. */
+self.addEventListener("push", function (event) {
+  var d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (err) {}
+  event.waitUntil(self.registration.showNotification(d.t || "TORQUE ON", {
+    body: d.b || "",
+    icon: "assets/icons/icon-personal-192.png",
+    badge: "assets/icons/icon-personal-192.png",
+  }));
+});
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: "window" }).then(function (lista) {
+    if (lista.length) return lista[0].focus();
+    return clients.openWindow("personal.html");
+  }));
 });
 
 self.addEventListener("fetch", function (event) {

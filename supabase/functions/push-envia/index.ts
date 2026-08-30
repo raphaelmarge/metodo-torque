@@ -32,6 +32,7 @@
 //   { acao: "aulas_hoje" }                       → lembrete das aulas agendadas de hoje
 //   { acao: "aviso", titulo: "...", corpo: "..." } → aviso geral para todos os inscritos
 //   { acao: "para", token: "...", titulo, corpo }  → notificação para UM aluno (pelo token do app)
+//   { acao: "prof", academia_id, titulo, corpo, senha } → aviso pro PROFESSOR (gatilhos do banco)
 //   { acao: "ping" }                             → confere secrets
 
 import webpush from "npm:web-push@3.6.7";
@@ -115,11 +116,35 @@ Deno.serve(async (req: Request) => {
   try { corpo = await req.json(); } catch { /* vazio */ }
 
   if (corpo.acao === "ping") {
-    return json({ ok: true, vapid: !!(pub && priv) });
+    return json({ ok: true, vapid: !!(pub && priv), acoes: ["ping", "para", "aviso", "aulas_hoje", "prof"] });
   }
-  if (!(await chamadorConfiavel(req))) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
+  /* Aviso pro PROFESSOR vindo dos GATILHOS do banco (aluno mandou mensagem,
+   * pediu horário): o gatilho não tem crachá de usuário, então ele se
+   * autentica com a senha da push_config — tabela SELADA, mesma ideia da
+   * regua_config. Senha errada cai no portão normal e leva 401. */
+  let senhaProfOk = false;
+  if (corpo.acao === "prof" && corpo.senha) {
+    const rs = await sb("push_config?select=token&id=eq.1");
+    const cfgP = ((rs.ok ? await rs.json() : [])[0] || {});
+    senhaProfOk = !!cfgP.token && String(corpo.senha) === String(cfgP.token);
+  }
+  if (!senhaProfOk && !(await chamadorConfiavel(req))) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
   webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
+
+  if (corpo.acao === "prof") {
+    // só as inscrições do PROFESSOR daquela academia (token 'prof:…') — o
+    // texto é gerado pelos gatilhos/funções, nunca vem de aluno cru sem corte
+    const aid = String(corpo.academia_id || "").replace(/[^0-9a-f-]/gi, "");
+    const tituloP = String(corpo.titulo || "TORQUE PERSONAL").slice(0, 80);
+    const textoP = String(corpo.corpo || "").slice(0, 200);
+    if (!aid || !textoP) return json({ erro: "academia/corpo vazio" }, 400);
+    const rp = await sb(`push_subs?select=token,sub&academia_id=eq.${aid}&token=like.prof:*`);
+    const profs = rp.ok ? await rp.json() : [];
+    let envP = 0;
+    for (const s of profs) if (await envia(s, tituloP, textoP)) envP++;
+    return json({ ok: true, enviados: envP });
+  }
 
   /* Isolamento por academia: o cron (service key) alcança todos os inscritos; um
    * usuário logado só alcança os alunos da PRÓPRIA academia. Antes a função lia
@@ -138,7 +163,9 @@ Deno.serve(async (req: Request) => {
     filtroAcad = `&academia_id=in.(${aids.join(",")})`;
   }
 
-  let r = await sb(`push_subs?select=token,sub${filtroAcad}`);
+  // as inscrições do PROFESSOR (prof:…) ficam FORA dos avisos de aluno — o
+  // professor que dispara um "aviso" não deve receber a própria notificação
+  let r = await sb(`push_subs?select=token,sub&token=not.like.prof:*${filtroAcad}`);
   const subs = r.ok ? await r.json() : [];
   if (!subs.length) return json({ ok: true, enviados: 0, motivo: "nenhum aluno com push ativado ainda" });
 

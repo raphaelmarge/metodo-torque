@@ -3164,6 +3164,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; margin-top: 12px;"><input type="checkbox" id="cfgReciboZap" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Recibo automático no WhatsApp</b> — ao marcar "Recebi", o WhatsApp do aluno abre com o recibo pronto (você só confirma o envio)</span></label>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
+      <h2>🔔 Avisos no seu celular</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Ative NESTE aparelho e você recebe notificação quando um aluno <b>manda mensagem no chat</b>, <b>pede horário</b> ou quando um <b>pagamento cai</b> pelo link automático — sem precisar abrir o painel. Vale por aparelho: ative também no computador se quiser.</p>
+      <button class="btn sec" id="pushProfBt">Ativar neste aparelho</button>
+      <div id="pushProfStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
       <h2>Receber dos alunos (cartão e boleto)</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Pix com a sua chave já cai direto na sua conta. Aqui você liga também o <b>link de cobrança</b> (cartão parcelado, Pix e boleto) usando o gateway que VOCÊ escolher — o dinheiro do aluno cai <b>direto na sua conta</b> do gateway, sem intermediário. Escolha a plataforma, cole a chave dela e pronto.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
@@ -10726,6 +10732,61 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ? "Salvo! Agora publique os apps (Treinos → Em grupo → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
       : "Salvo!";
   });
+  /* 🔔 Push do PROFESSOR: a inscrição vai pra push_subs com o token
+   * 'prof:<user_id>' — a MESMA tabela do push dos alunos, gravada pela RLS de
+   * membro que já existe (nenhuma RPC nova). Quem dispara são os gatilhos do
+   * banco (chat/agenda, com a senha da push_config selada) e a
+   * pagamentos-webhook (pagamento pago). Regras honestas: sem nuvem, sem
+   * suporte do navegador ou permissão negada, o card DIZ o motivo. */
+  var PUSH_VAPID_PUB = "BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I";
+  function vapidArrP(str) {
+    var pad = new Array((4 - str.length % 4) % 4 + 1).join("=");
+    var b = (str + pad).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b);
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  var pushProf = {
+    // separada pra teste poder trocar: devolve a INSCRIÇÃO deste aparelho
+    pegaSub: function () {
+      return navigator.serviceWorker.ready.then(function (reg) {
+        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidArrP(PUSH_VAPID_PUB) });
+      });
+    },
+    ativa: function () {
+      var out = $("pushProfStatus");
+      var nuvem = S.cloud && S.cloud();
+      if (!nuvem) { out.textContent = "Entre na sua conta da nuvem primeiro (Configurações → Conta) — o aviso viaja pelo servidor."; return Promise.resolve(false); }
+      if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        out.textContent = "Este navegador não aceita notificação de site. No iPhone, adicione o painel à tela de início primeiro (Compartilhar → Adicionar à Tela de Início).";
+        return Promise.resolve(false);
+      }
+      out.textContent = "Pedindo permissão…";
+      return Notification.requestPermission().then(function (perm) {
+        if (perm !== "granted") { out.textContent = "Permissão negada — libere as notificações deste site nas configurações do navegador."; return false; }
+        return pushProf.pegaSub().then(function (sub) {
+          return nuvem.client.auth.getSession().then(function (s) {
+            var uid = s && s.data && s.data.session && s.data.session.user && s.data.session.user.id;
+            if (!uid) { out.textContent = "Sessão vencida — entre de novo e tente outra vez."; return false; }
+            return nuvem.client.from("push_subs")
+              .upsert({ token: "prof:" + uid, academia_id: nuvem.aid, sub: sub.toJSON ? sub.toJSON() : sub })
+              .then(function (res) {
+                if (res && res.error) { out.textContent = "Não deu pra guardar a inscrição (" + res.error.message + ") — rode o SQL novo em torqueon.com.br/sql.html."; return false; }
+                out.textContent = "✓ Ativado! Este aparelho recebe os avisos de chat, horário e pagamento.";
+                $("pushProfBt").textContent = "✓ Avisos ativados";
+                return true;
+              });
+          });
+        });
+      }).catch(function (e) {
+        out.textContent = "Não deu pra ativar (" + ((e && e.message) || "erro") + ") — tente de novo.";
+        return false;
+      });
+    },
+  };
+  window.__pushProf = pushProf; // testes
+  $("pushProfBt").addEventListener("click", function () { pushProf.ativa(); });
   /* Termo de responsabilidade: o texto vira {t, v} onde v é a DATA de salvar —
    * é a versão. O app compara o v aceito com o v publicado, então mudar o
    * texto pede o aceite de novo sozinho. Salvar igual não republica nada. */
