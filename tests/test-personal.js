@@ -1749,6 +1749,37 @@ async function abaPt(p, a) {
     "sobrevivência de 6 meses: encerrado que durou 11 meses CONTA como sobrevivente (2 de 3)");
   ok(/tempo médio de casa/.test(relRet.txt) && /passam de 6 meses/.test(relRet.txt) && /saíram este mês/.test(relRet.txt),
     "o card Retenção pinta as três caixas: tempo de casa, churn do mês e 6 meses");
+
+  // 📄 relatório do mês do aluno (documento imprimível pra mandar no WhatsApp)
+  const relMes = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    const mes = window.MTStore.todayISO().slice(0, 7);
+    const f = {}; f[mes + "-02"] = 1; f[mes + "-04"] = 1; f[mes + "-06"] = 1;
+    const pz = {}; pz[mes + "-01"] = 90; pz[mes + "-20"] = 88.5;
+    a.retorno = {
+      feitos: f, peso: pz,
+      cargas: { "Supino reto": [{ d: "2026-01-10", kg: 60, r: 10 }, { d: mes + "-15", kg: 70, r: 8 }] },
+      cardio: [{ d: mes + "-10", k: 5.2, s: 1800 }],
+    };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    return window.__relMensal(a.id);
+  });
+  ok(/RELATÓRIO DO MÊS/.test(relMes) && /João Cliente/.test(relMes) && />3</.test(relMes) && /treino\(s\) no mês/.test(relMes),
+    "📄 relatório do mês conta os 3 treinos que o app devolveu");
+  ok(/88,5 kg/.test(relMes) && /1,5 kg no mês/.test(relMes), "peso do mês com a diferença (90 → 88,5 = −1,5)");
+  ok(/Recordes de carga/.test(relMes) && /Supino reto/.test(relMes) && /60 kg/.test(relMes) && /70 kg/.test(relMes),
+    "recorde do mês compara com o máximo de ANTES do mês (60 → 70)");
+  ok(/5,2 km/.test(relMes) && /window\.print/.test(relMes), "corridas somadas e botão de imprimir/salvar PDF");
+  const relMesVazio = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    delete a.retorno;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    return window.__relMensal(a.id);
+  });
+  ok(/ainda não tem registros no app/.test(relMesVazio) || /sessões com o professor/.test(relMesVazio),
+    "sem registro do app o relatório diz isso em vez de inventar número");
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
