@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v675** |
-| Estado do repo em | 2026-08-30 (commit `769ad2a`) |
+| App em | **mt-v676** |
+| Estado do repo em | 2026-08-30 (commit `643e584`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 137 |
+| Lançamentos no histórico | 138 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v675** — ou seja, **6 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v676** — ou seja, **7 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v676 | card Retenção nos Relatórios — tempo de casa, churn do mês e sobrevivência de 6 meses |
 | mt-v675 | meta de carga no app do aluno — escolhe o exercício, define o alvo e a barra segue o recorde real |
 | mt-v674 | lista de compras da semana no NUTRI — o plano alimentar vira a lista de mercado em 1 clique |
 | mt-v673 | fichas-modelo do professor — salvar as fichas de um aluno como modelo e aplicar em qualquer outro |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v664 | a foto do card de hoje derrete no fundo — degradê de continuidade na junção |
 | mt-v663 | demo do paciente regenerada no motor novo — e ganha o gerador pra nunca mais congelar |
 | mt-v662 | redesenho do painel NUTRI — tokens --nt-* por papel, base em verde, modo claro num bloco só |
-| mt-v661 | app do paciente no motor novo — código servido pelo site, painel publica só os dados |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
