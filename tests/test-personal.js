@@ -2620,6 +2620,44 @@ async function abaPt(p, a) {
   ok(await p.evaluate(() => /João Cliente/.test(document.getElementById("bNiverP").textContent) && /faz \d+ anos/.test(document.getElementById("bNiverP").textContent)),
     "card de aniversários lista quem faz aniversário na semana");
 
+  // 🩹 v689: relato escrito com DOR vira card vermelho no Resolver hoje —
+  // primeiro da fila (saúde vence dinheiro), negação não alarma, velho expira
+  const dor = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    const m = st.alunos.find((a) => a.ativo !== false && a.nome !== "João Cliente");
+    const hoje = new Date().toISOString().slice(0, 10);
+    j.retorno = Object.assign({}, j.retorno, { notas: [{ d: hoje, tp: "musc", t: "Treino bom mas senti dor no ombro no supino" }] });
+    if (m) m.retorno = Object.assign({}, m.retorno, { notas: [{ d: hoje, tp: "musc", t: "Tudo ótimo, sem dor nenhuma hoje" }] });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const achados = window.__dashPT.dor(st);
+    window.__dashPT.resolver(st);
+    const el = document.getElementById("dashResolver");
+    const card = el.querySelector("[data-dorcard]");
+    const out = {
+      n: achados.length, quem: achados.map((x) => x.a.nome),
+      card: !!card, primeiro: card && el.querySelector(".dcard") === card,
+      txt: card ? card.textContent : "",
+      abre: card ? !!card.querySelector("[data-abreperfil]") : false,
+    };
+    // relato de mais de 7 dias não alarma mais
+    const st2 = S.read("ptStudio", {});
+    const j2 = st2.alunos.find((a) => a.nome === "João Cliente");
+    j2.retorno.notas = [{ d: "2020-01-01", tp: "musc", t: "dor forte no joelho" }];
+    out.antigos = window.__dashPT.dor(st2).length;
+    // limpa o que semeou e devolve a tela
+    delete j2.retorno.notas;
+    if (m) { const m2 = st2.alunos.find((a) => a.nome === m.nome); if (m2 && m2.retorno) delete m2.retorno.notas; }
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__dashPT.resolver(st2);
+    return out;
+  });
+  ok(dor.n === 1 && dor.quem[0] === "João Cliente", "🩹 relato com dor é achado — e 'sem dor nenhuma' NÃO alarma");
+  ok(dor.card && dor.primeiro && /RELATOU DOR/.test(dor.txt) && /ombro/.test(dor.txt),
+    "🩹 card de dor entra PRIMEIRO no Resolver hoje, com o trecho do relato");
+  ok(dor.abre, "🩹 a ação do card abre a ficha do aluno");
+  ok(dor.antigos === 0, "🩹 relato de mais de 7 dias não alarma mais");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
