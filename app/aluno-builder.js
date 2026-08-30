@@ -494,6 +494,13 @@
       ".galt .altbox{margin-top:6px;font-size:13px;color:#b9b4c6;line-height:1.5}" +
       ".galt .altbox b{color:#fff;font-weight:700}" +
       ".gultvez span{display:block;font-size:9px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#8a8695}" +
+      ".ghist{margin-top:10px}" +
+      ".ghist summary{list-style:none;cursor:pointer;font-size:12.5px;font-weight:800;color:var(--corc);padding:5px 2px}" +
+      ".ghist summary::-webkit-details-marker{display:none}" +
+      ".ghist .ghrow{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bg11);border-radius:12px;padding:9px 12px;margin-top:6px;font-size:13.5px}" +
+      ".ghist .ghrow span{color:#8a8695;font-weight:800;font-size:11.5px;min-width:44px}" +
+      ".ghist .ghrow b{font-size:14.5px}" +
+      ".ghist .ghrow i{margin-left:auto;font-style:normal;color:#8a8695;font-size:11.5px}" +
       ".guvrow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:14px;color:#b9b4c6}" +
       ".guvrow b{color:#fff;font-weight:700}" +
       ".gprox{margin-top:13px;font-size:13px;color:#8a8695}" +
@@ -3831,6 +3838,15 @@
       "function gUltDia(ex){var g=gDias(ex),hj=isoHj();" +
       "for(var i=g.ds.length-1;i>=0;i--){if(g.ds[i]<hj)return {d:g.ds[i],l:g.m[g.ds[i]]};}" +
       "return g.ds.length?{d:g.ds[g.ds.length-1],l:g.m[g.ds[g.ds.length-1]]}:null;}" +
+      /* histórico rápido (v685): os dias ANTERIORES à 'última vez', mais novo
+       * primeiro — melhor série de cada dia + quantas séries. É a olhada de 3
+       * segundos que o aluno dá antes de escolher a carga do supino; a leitura
+       * completa (barras, recorde, 1RM) continua morando em Evolução → Cargas. */
+      "function gHistDias(ex){var uv=gUltDia(ex);if(!uv)return [];var g=gDias(ex);" +
+      "return g.ds.filter(function(d9){return d9<uv.d;}).slice(-5).reverse().map(function(d9){" +
+      "var l9=g.m[d9],mx=null;l9.forEach(function(x){if(x&&x.kg!=null&&(!mx||+x.kg>+mx.kg))mx=x;});" +
+      "return {d:d9,kg:mx?+mx.kg:0,r:mx&&+mx.r>0?+mx.r:0,n:l9.length};});}" +
+      "window.__gHist=gHistDias;" +
       "function gCargaAtual(ex){if(gv.cargas[ex]!=null)return gv.cargas[ex];var u=gultimo(ex);return u?+u.kg:0;}" +
       // delta do tile: carga de agora × maior carga do último dia ANTERIOR ao dela
       "function gDeltaKg(ex,cv){if(!isFinite(+cv)||!(+cv>0))return 0;var g=gDias(ex);" +
@@ -3867,6 +3883,12 @@
       "if(uv){m+=\"<div class='gultvez'><span>Na última vez · \"+(+uv.d.slice(8,10))+' de '+MESES[+uv.d.slice(5,7)-1].toLowerCase()+'</span>';" +
       "uv.l.slice(0,4).forEach(function(x,i){m+=\"<div class='guvrow'>Série \"+(i+1)+'<b>'+(+x.r>0?x.r+' × ':'')+gnum(+x.kg)+' kg</b></div>';});" +
       "m+='</div>';}" +
+      // 📜 histórico do exercício (v685): as sessões ANTES da última, dobradas
+      // num <details> — só aparece com 2+ sessões passadas, nada de card vazio
+      "var gh9=gHistDias(it.e);" +
+      "if(gh9.length){m+=\"<details class='ghist'><summary>Histórico deste exercício ›</summary>\";" +
+      "gh9.forEach(function(h9){m+=\"<div class='ghrow'><span>\"+(+h9.d.slice(8,10))+'/'+h9.d.slice(5,7)+'</span><b>'+(h9.kg>0?gnum(h9.kg)+' kg'+(h9.r?' × '+h9.r:''):'sem carga')+'</b><i>'+h9.n+(h9.n===1?' série':' séries')+'</i></div>';});" +
+      "m+='</details>';}" +
       /* alternativas NO GUIADO (v670): é aqui que o aparelho está ocupado na
        * frente do aluno. Reusar a classe .altbtn entrega o toggle de graça (o
        * handler delegado no document alterna o nextElementSibling em qualquer
