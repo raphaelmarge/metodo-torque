@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v671** |
-| Estado do repo em | 2026-08-29 (commit `203d114`) |
+| App em | **mt-v672** |
+| Estado do repo em | 2026-08-30 (commit `7f9b9ac`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 133 |
+| Lançamentos no histórico | 134 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v671** — ou seja, **2 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v672** — ou seja, **3 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v672 | a ciência do treinamento entra na IA — ACSM/NSCA, periodização declarada, RIR e volume por grupo |
 | mt-v671 | curvas da avaliação física no app + o relógio importa sozinho (saúde nativa) |
 | mt-v670 | aquecimento e alternativas chegam no treino GUIADO |
 | mt-v669 | a skin do redesenho chega nas áreas esquecidas do app |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v660 | Financeiro consolidado no NUTRI — atrasados com a ação na linha, 6 meses, régua de cobrança |
 | mt-v659 | Check-ins 'A semana' no NUTRI — quem pede atenção, com Cobrar quem falta |
 | mt-v658 | Resolver hoje no Início do NUTRI — a lista de tarefas, não o relatório |
-| mt-v657 | NUTRI recebe pela PRÓPRIA conta — pag_config, link e baixa automática |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
