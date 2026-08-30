@@ -2904,6 +2904,48 @@ async function abaPt(p, a) {
     await ctxM.close();
   }
 
+  // 🎁 v697: clube de vantagens — parcerias do painel viram cupons no app
+  const clb = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const cfgSnap = JSON.stringify(st.config.clube || null);
+    // link torto de propósito: só http(s) chega no app
+    st.config.clube = [{ id: "c1", n: "Suplementos do Zé", b: "15% off em creatina", c: "TORQUE15", u: "javascript:alert(1)" }];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    document.getElementById("clubeNome").value = "Fisio Boa Postura";
+    document.getElementById("clubeBen").value = "Avaliação grátis";
+    document.getElementById("clubeCupom").value = "";
+    document.getElementById("clubeLink").value = "https://fisio.example";
+    document.getElementById("clubeAdd").click();
+    const st2 = S.read("ptStudio", {});
+    const lst = st2.config.clube || [];
+    const a = st2.alunos.find((x) => x.nome === "João Cliente");
+    const d = window.__dadosApp(a, new Date().toISOString());
+    const html = window.__montaAppAluno(a, new Date().toISOString());
+    const out = {
+      n: lst.length,
+      addOk: !!(lst[1] && lst[1].n === "Fisio Boa Postura"),
+      pacoteLimpo: d.clubeApp.length === 2 && d.clubeApp[0].u === "" && d.clubeApp[1].u === "https://fisio.example",
+      app: html.indexOf("clubeCard") > -1 && html.indexOf("TORQUE15") > -1 && html.indexOf("Clube de vantagens") > -1,
+    };
+    window.__clubePT(st2);
+    document.getElementById("clubeLista").querySelector('[data-clubex="0"]').click();
+    out.aposTirar = ((S.read("ptStudio", {}).config || {}).clube || []).length;
+    // sem parceria, o card nem nasce no app
+    const st3 = S.read("ptStudio", {});
+    st3.config.clube = [];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
+    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("clubeCard") === -1;
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    if (cfgSnap === "null") delete st9.config.clube; else st9.config.clube = JSON.parse(cfgSnap);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(clb.n === 2 && clb.addOk, "🎁 o painel cadastra a parceria pela Personalização");
+  ok(clb.pacoteLimpo, "🎁 o pacote leva as parcerias e derruba link que não é http(s)");
+  ok(clb.app, "🎁 o app do aluno mostra o Clube de vantagens com o cupom");
+  ok(clb.aposTirar === 1 && clb.semNada, "🎁 Tirar remove; sem parceria o card nem nasce no app");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
