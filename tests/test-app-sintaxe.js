@@ -106,6 +106,12 @@ ok(html.indexOf("function notaBox") > -1 && html.indexOf("data-notasalva") > -1 
 ok((html.match(/notaBox\('(musc|corrida|wod)'\)/g) || []).length === 3,
   "o campo aparece nos TRÊS fins de treino: musculação, corrida e circuito");
 
+// depoimento (v694): o card do Início só aparece quando o PROFESSOR pediu
+// (PDEPO no pacote) e o aluno ainda não escreveu; o texto volta no retorno
+ok(html.indexOf("id='depoCard'") > -1 && html.indexOf("if(!PDEPO||(jd&&jd.t))return") > -1 &&
+  html.indexOf("depo:L('ptdepo',null)") > -1 && html.indexOf("k==='ptdepo'") > -1,
+  "💬 o convite de depoimento existe, só aparece quando pedido, e volta no retorno");
+
 // histórico do exercício (v685): a tela do guiado dobra as sessões anteriores
 // num <details> — melhor série de cada dia, só com 2+ sessões passadas
 ok(html.indexOf("function gHistDias") > -1 && html.indexOf("window.__gHist") > -1 &&

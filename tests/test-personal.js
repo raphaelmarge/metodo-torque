@@ -2806,6 +2806,44 @@ async function abaPt(p, a) {
   ok(rzg.desligada === false, "📣 a fixa de resgate desliga em Configurações como as outras");
   ok(rzg.card && rzg.cardBt, "📣 o Resolver hoje mostra as mensagens esperando OK, com o Ver a fila");
 
+  // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
+  // espera aprovação na Minha página e só aprovado entra na seção pública
+  const depo = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    const spSnap = JSON.stringify((st.config || {}).sitePro || null);
+    j.retorno = Object.assign({}, j.retorno, { depo: { t: "Treinar aqui mudou minha vida, recomendo demais!", em: "2026-08-29" } });
+    j.pedeDepo = 1;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const html = window.__montaAppAluno(j, new Date().toISOString());
+    const flag = html.indexOf("var PDEPO=1") > -1;
+    window.__spDepos(S.read("ptStudio", {}));
+    const box = document.getElementById("spDepos");
+    const temPend = /João/.test(box.textContent) && !!box.querySelector("[data-depook]");
+    box.querySelector("[data-depook]").click();
+    const st2 = S.read("ptStudio", {});
+    const depos = ((st2.config || {}).sitePro || {}).depos || [];
+    const site = window.__sitePro.monta(st2);
+    const aprovado = depos.length === 1 && depos[0].n === "João" && /Quem treina comigo/.test(site) && /mudou minha vida/.test(site);
+    const pedeLimpo = st2.alunos.find((a) => a.nome === "João Cliente").pedeDepo === 0;
+    const bTira = document.getElementById("spDepos").querySelector("[data-depox]");
+    if (bTira) bTira.click();
+    const st3 = S.read("ptStudio", {});
+    const semDepo = ((((st3.config || {}).sitePro || {}).depos) || []).length === 0 &&
+      !/Quem treina comigo/.test(window.__sitePro.monta(st3));
+    // limpa o que semeou
+    const st9 = S.read("ptStudio", {});
+    const j9 = st9.alunos.find((a) => a.nome === "João Cliente");
+    delete j9.retorno.depo; delete j9.pedeDepo;
+    if (spSnap === "null") delete st9.config.sitePro; else st9.config.sitePro = JSON.parse(spSnap);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return { flag, temPend, aprovado, pedeLimpo, semDepo };
+  });
+  ok(depo.flag, "💬 o pacote do app leva o pedido (PDEPO=1) quando o professor pediu");
+  ok(depo.temPend, "💬 o que o aluno escreveu espera aprovação na Minha página");
+  ok(depo.aprovado && depo.pedeLimpo, "💬 aprovar publica em Quem treina comigo (primeiro nome) e encerra o pedido");
+  ok(depo.semDepo, "💬 Tirar remove o depoimento da página na hora");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
