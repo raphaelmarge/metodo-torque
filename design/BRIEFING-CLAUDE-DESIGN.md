@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v694** |
-| Estado do repo em | 2026-08-30 (commit `7d92da8`) |
+| App em | **mt-v695** |
+| Estado do repo em | 2026-08-30 (commit `7079618`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 156 |
+| Lançamentos no histórico | 157 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v694** — ou seja, **25 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v695** — ou seja, **26 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v695 | quanto vale sua hora — número novo nos Indicadores |
 | mt-v694 | depoimentos dos alunos na Minha página |
 | mt-v693 | reengajamento fecha a régua — resgate fixo na fila + Resolver hoje |
 | mt-v692 | turma pequena (semi-personal) na agenda |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v683 | anamnese preenchida pelo PRÓPRIO aluno por link — 20 minutos a menos por aluno novo |
 | mt-v682 | push pro PROFESSOR — aluno mandou mensagem, pediu horário ou pagou, o celular dele avisa |
 | mt-v681 | renovar o mês com IA em 1 clique — a semana 4 oferece o mês novo sozinha |
-| mt-v680 | recibo automático no WhatsApp — marcou Recebi, o recibo sai pronto |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
