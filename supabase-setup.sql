@@ -65,6 +65,8 @@ create policy "membros_ver_equipe" on public.membros
   for select using (academia_id in (select public.minhas_academias()));
 
 -- só o dono remove funcionários (e ninguém remove o dono)
+-- (select auth.uid()) em vez de auth.uid(): o Postgres calcula UMA vez por
+-- consulta em vez de uma vez POR LINHA — apontado pelo linter do Supabase
 drop policy if exists "membros_dono_remove" on public.membros;
 create policy "membros_dono_remove" on public.membros
   for delete using (
@@ -72,7 +74,7 @@ create policy "membros_dono_remove" on public.membros
     and exists (
       select 1 from public.membros m
       where m.academia_id = membros.academia_id
-        and m.user_id = auth.uid() and m.papel = 'dono'
+        and m.user_id = (select auth.uid()) and m.papel = 'dono'
     )
   );
 
@@ -2773,3 +2775,28 @@ select cron.schedule('regua-teste-diaria', '0 13 * * *', $cron$
     body := jsonb_build_object('senha', (select token::text from public.regua_config where id = 1))
   )
 $cron$);
+
+-- ============================================================
+-- HIGIENE DO LINTER (2026-08-30) — ganhos apontados pelo
+-- verificador do próprio Supabase (Advisors). Tudo idempotente.
+-- ============================================================
+
+-- FKs sem índice: as consultas por membro e por página do professor
+-- varriam a tabela inteira quando a base crescer
+create index if not exists membros_user_idx on public.membros (user_id);
+create index if not exists site_pro_academia_idx on public.site_pro (academia_id);
+
+-- funções de GATILHO não são RPC: elas só existem pra rodar dentro do
+-- trigger (o Postgres nem deixa chamar direto), então ninguém precisa do
+-- EXECUTE — e sem ele o endpoint /rest/v1/rpc/... delas some do mapa.
+-- O gatilho continua disparando normal: a permissão de EXECUTE só é
+-- conferida na CRIAÇÃO do trigger, não a cada disparo.
+revoke execute on function public.dados_guarda_hist() from anon, authenticated;
+revoke execute on function public.app_aluno_guarda_hist() from anon, authenticated;
+
+-- Sobre os OUTROS avisos do linter, pra ninguém "consertar" errado depois:
+-- as ~60 RPCs SECURITY DEFINER executáveis por anon são DE PROPÓSITO — o
+-- app do aluno não tem login do Supabase; cada RPC recebe o token do aluno
+-- e valida por dentro (app_aluno_ativo). Revogar o EXECUTE delas quebraria
+-- o app de todo mundo. E as tabelas com RLS sem política (zap_config,
+-- pag_config, *_hist…) são SELADAS de propósito: só a service key entra.
