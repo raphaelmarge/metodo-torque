@@ -1780,6 +1780,35 @@ async function abaPt(p, a) {
   });
   ok(/ainda não tem registros no app/.test(relMesVazio) || /sessões com o professor/.test(relMesVazio),
     "sem registro do app o relatório diz isso em vez de inventar número");
+
+  // 🧠 resumo da semana com IA (mesma ação 'analisar' do copiloto do portal)
+  const iaSem = await p.evaluate(async () => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    const hoje = window.MTStore.todayISO();
+    const f = {}; f[hoje] = 1;
+    a.retorno = { feitos: f, cargas: { "Supino reto": [{ d: "2026-01-10", kg: 60 }, { d: hoje, kg: 72 }] } };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const dados = window.__iaSemana.dados(JSON.parse(localStorage.getItem("mtapp:ptStudio")));
+    window.__cloudOrigIa = window.MTStore.cloud;
+    window.MTStore.cloud = () => ({ client: {} });
+    const chamaOrig = self.MT_FUNCAO.chama;
+    let corpo = null;
+    self.MT_FUNCAO.chama = (cli, fn, body) => { corpo = body; return Promise.resolve({ ok: true, texto: "Leitura da semana: foque no João." }); };
+    document.getElementById("iaSemanaBt").click();
+    await new Promise((r) => setTimeout(r, 250));
+    self.MT_FUNCAO.chama = chamaOrig;
+    window.MTStore.cloud = window.__cloudOrigIa;
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return { dados, corpo, out: document.getElementById("iaSemanaOut").textContent, salvo: st2.config.iaSemana };
+  });
+  ok(/Alunos ativos/.test(iaSem.dados) && /1 treino\(s\) pelo app na semana/.test(iaSem.dados),
+    "🧠 o resumo da semana junta ativos, sumindo, devendo e os treinos do app");
+  ok(/RECORDES DA SEMANA/.test(iaSem.dados) && /Supino reto 72 kg \(antes 60\)/.test(iaSem.dados),
+    "recorde da semana entra nos dados da IA (72 contra os 60 de antes)");
+  ok(iaSem.corpo && iaSem.corpo.acao === "analisar" && /foque no João/.test(iaSem.out) &&
+    iaSem.salvo && /foque no João/.test(iaSem.salvo.texto),
+    "o botão usa a ação 'analisar' da chat-envia (nenhuma função nova) e guarda a última análise");
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
