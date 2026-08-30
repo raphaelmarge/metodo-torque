@@ -1386,7 +1386,17 @@ ninguém atropelar ninguém — valem pros dois:
   `regras: ["mes","brief","briefManda","metodo"]` do ping — é por esse campo o
   painel descobre que a função publicada é velha e avisa dentro da gaveta
   (`#brAviso`) em vez de deixar o treino sair errado. O ping da v14 foi
-  conferido no ar em 2026-08-30 (status 200, as 4 regras presentes). ⚠️ Antes de republicar qualquer função,
+  conferido no ar em 2026-08-30 (status 200, as 4 regras presentes). Higiene do
+  linter (Advisors) rodada em 2026-08-30: índices `membros_user_idx` e
+  `site_pro_academia_idx`, política `membros_dono_remove` com
+  `(select auth.uid())` e EXECUTE das funções de GATILHO
+  (`dados_guarda_hist`/`app_aluno_guarda_hist`) revogado de anon/authenticated
+  — tudo aplicado no banco E espelhado no bloco "HIGIENE DO LINTER" do
+  supabase-setup.sql. ⚠️ Os ~60 avisos de RPC SECURITY DEFINER executável por
+  anon são DE PROPÓSITO (o app do aluno valida o token por dentro — revogar
+  quebraria o app); as tabelas com RLS sem política são as SELADAS. Pendente do
+  Raphael no painel do Supabase: ligar Auth → "Leaked password protection".
+  ⚠️ Antes de republicar qualquer função,
   CONFIRA o que está no ar: a v11 tinha duas melhorias que ainda não estavam no
   repo, e publicar por cima teria apagado as duas. Na v12→v13 essa conferência
   foi feita item a item (39 marcas do código publicado, todas presentes no repo)
