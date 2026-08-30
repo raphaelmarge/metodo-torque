@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v682** |
-| Estado do repo em | 2026-08-30 (commit `7e3857b`) |
+| App em | **mt-v683** |
+| Estado do repo em | 2026-08-30 (commit `e04a941`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 144 |
+| Lançamentos no histórico | 145 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v682** — ou seja, **13 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v683** — ou seja, **14 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v683 | anamnese preenchida pelo PRÓPRIO aluno por link — 20 minutos a menos por aluno novo |
 | mt-v682 | push pro PROFESSOR — aluno mandou mensagem, pediu horário ou pagou, o celular dele avisa |
 | mt-v681 | renovar o mês com IA em 1 clique — a semana 4 oferece o mês novo sozinha |
 | mt-v680 | recibo automático no WhatsApp — marcou Recebi, o recibo sai pronto |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v671 | curvas da avaliação física no app + o relógio importa sozinho (saúde nativa) |
 | mt-v670 | aquecimento e alternativas chegam no treino GUIADO |
 | mt-v669 | a skin do redesenho chega nas áreas esquecidas do app |
-| mt-v668 | RPE e batimento voltam pro aluno — card Esforço e batimento na Evolução |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
