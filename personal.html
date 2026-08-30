@@ -3485,6 +3485,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
       <button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp" style="width: 100%;">📄 Relatório do mês</button>
       <button class="btn sec mini" id="pfPedeAnamnese" title="manda o link da anamnese pro aluno preencher no celular dele — as respostas voltam pra cá" style="width: 100%;">📋 Pedir anamnese</button>
+      <button class="btn sec mini" id="pfCardIG" title="gera uma imagem pronta pra postar no Instagram com o resultado do mês do aluno (com a sua cor e o seu logo)" style="width: 100%;">🖼 Card pra postar</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
       <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
     </div>
@@ -6138,18 +6139,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * Os números saem do que o app do aluno devolveu (a.retorno: treinos feitos,
    * peso, cargas, corridas) mais as sessões marcadas no painel — e cada bloco
    * só aparece quando tem dado de verdade. */
-  function montaRelMensal(alunoId) {
-    var st = load();
-    var a = st.alunos.find(function (x) { return x.id === alunoId; });
-    if (!a) return "";
-    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+  /* Os números do mês de UM aluno — a mesma conta serve o relatório mensal e
+   * o card de resultado (v691): duas telas nunca contam histórias diferentes. */
+  function numerosMesAluno(st, a, mes) {
     var hoje = S.todayISO();
-    var mes = hoje.slice(0, 7);
-    var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    var mesNome = MESES9[+mes.slice(5, 7) - 1] + " de " + mes.slice(0, 4);
-    var ret = a.retorno || {};
+    var ret = a.retorno || a.demoRetorno || {};
     var feitos = Object.keys(ret.feitos || {}).filter(function (k) { return k.slice(0, 7) === mes; }).length;
-    var sesMes = (st.sessoes || []).filter(function (x) { return x.alunoId === alunoId && (x.data || "").slice(0, 7) === mes && x.data <= hoje; });
+    var sesMes = (st.sessoes || []).filter(function (x) { return x.alunoId === a.id && (x.data || "").slice(0, 7) === mes && x.data <= hoje; });
     var sesFeitas = sesMes.filter(function (x) { return x.feita; }).length;
     var pz = ret.peso || {};
     var ksMes = Object.keys(pz).filter(function (k) { return k.slice(0, 7) === mes; }).sort();
@@ -6171,6 +6167,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     recs.sort(function (x, y) { return (y.pra - y.de) - (x.pra - x.de); });
     var cds = (ret.cardio || []).filter(function (c) { return String(c.d || "").slice(0, 7) === mes; });
     var kmMes = Math.round(cds.reduce(function (t, c) { return t + (+c.k || 0); }, 0) * 10) / 10;
+    return { feitos: feitos, sesMes: sesMes, sesFeitas: sesFeitas, pesoIni: pesoIni, pesoFim: pesoFim,
+             pesoDif: pesoDif, recs: recs, cds: cds, kmMes: kmMes };
+  }
+  function montaRelMensal(alunoId) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) return "";
+    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var mesNome = MESES9[+mes.slice(5, 7) - 1] + " de " + mes.slice(0, 4);
+    var n9 = numerosMesAluno(st, a, mes);
+    var feitos = n9.feitos, sesMes = n9.sesMes, sesFeitas = n9.sesFeitas;
+    var pesoIni = n9.pesoIni, pesoFim = n9.pesoFim, pesoDif = n9.pesoDif;
+    var recs = n9.recs, cds = n9.cds, kmMes = n9.kmMes;
     var fmt9 = function (v) { return String(v).replace(".", ","); };
     var tile = function (num, rot) {
       return "<div style='background:#f5f3ff;border:1px solid #ddd6fe;border-radius:14px;padding:14px 16px;text-align:center;'>" +
@@ -6208,6 +6220,123 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "</body></html>";
   }
   window.__relMensal = montaRelMensal; // testes
+  /* ---------- card de resultado pra postar (v691) ----------
+   * A arte que o professor baixa e posta no Instagram: o resultado do mês do
+   * aluno com a COR e o LOGO do studio. Canvas puro (var() não existe aqui —
+   * as cores saem de corOk/escurece, como no app do aluno). A história é UMA,
+   * a melhor do mês: peso perdido > recorde de carga > km > frequência. Sem
+   * número de verdade, sem card — número inventado não entra. */
+  function historiaDoMes(n) {
+    var v = function (x) { return String(x).replace(".", ","); };
+    if (n.pesoDif < 0) return { big: v(Math.abs(n.pesoDif)) + " kg", rot: "a menos na balança este mês", tag: "peso" };
+    if (n.recs[0]) {
+      var r = n.recs[0];
+      return { big: (r.de ? v(r.de) + " → " : "") + v(r.pra) + " kg", rot: "novo recorde: " + r.ex, tag: "pr" };
+    }
+    if (n.kmMes >= 5) return { big: v(n.kmMes) + " km", rot: "percorridos no mês", tag: "km" };
+    var fq = Math.max(n.feitos, n.sesFeitas);
+    if (fq >= 4) return { big: String(fq), rot: "treinos no mês", tag: "freq" };
+    return null;
+  }
+  function cardResultadoIG(alunoId, cb) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) return cb(null, "sem-aluno");
+    var mes = S.todayISO().slice(0, 7);
+    var n = numerosMesAluno(st, a, mes);
+    var h = historiaDoMes(n);
+    if (!h) return cb(null, "sem-historia");
+    var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var mesNome = MESES9[+mes.slice(5, 7) - 1];
+    var COR = corOk((st.config || {}).cor) || "#7c3aed";
+    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+    var cv = document.createElement("canvas");
+    cv.width = 1080; cv.height = 1350;
+    var x = cv.getContext("2d");
+    // roundRect só existe do Safari 16 em diante — sem ele, canto reto e a arte sai igual
+    function rr(x0, y0, w0, h0, r0) { x.beginPath(); if (x.roundRect) x.roundRect(x0, y0, w0, h0, r0); else x.rect(x0, y0, w0, h0); }
+    function desenha() {
+      var g = x.createLinearGradient(0, 0, 300, 1350);
+      g.addColorStop(0, escurece(COR, .25)); g.addColorStop(.55, escurece(COR, .55)); g.addColorStop(1, escurece(COR, .78));
+      x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+      // dois círculos translúcidos dão profundidade sem roubar o número
+      x.fillStyle = "rgba(255,255,255,.05)";
+      x.beginPath(); x.arc(940, 180, 320, 0, 7); x.fill();
+      x.beginPath(); x.arc(80, 1250, 260, 0, 7); x.fill();
+      x.textBaseline = "alphabetic";
+      // topo: nome do studio (o logo, se tiver, entra por cima depois)
+      x.fillStyle = "rgba(255,255,255,.92)";
+      x.font = "900 44px Archivo, sans-serif";
+      x.fillText(studio.toUpperCase(), lg ? 210 : 84, 148);
+      // a história do mês
+      x.fillStyle = "rgba(255,255,255,.7)";
+      x.font = "800 34px Archivo, sans-serif";
+      x.fillText(("resultado de " + mesNome).toUpperCase(), 84, 520);
+      x.fillStyle = "#ffffff";
+      var fs = 170;
+      x.font = "900 " + fs + "px Archivo, sans-serif";
+      while (fs > 70 && x.measureText(h.big).width > 912) { fs -= 8; x.font = "900 " + fs + "px Archivo, sans-serif"; }
+      x.fillText(h.big, 84, 700);
+      x.fillStyle = "rgba(255,255,255,.9)";
+      var fr = 46;
+      x.font = "800 " + fr + "px Archivo, sans-serif";
+      while (fr > 24 && x.measureText(h.rot).width > 912) { fr -= 3; x.font = "800 " + fr + "px Archivo, sans-serif"; }
+      x.fillText(h.rot, 84, 780);
+      x.fillStyle = clareia(COR, .55);
+      x.font = "900 52px Archivo, sans-serif";
+      x.fillText("— " + String(a.nome || "").split(" ")[0], 84, 880);
+      // números de apoio (só os que existem)
+      var apoio = [];
+      if (n.feitos && h.tag !== "freq") apoio.push([String(n.feitos), "treinos"]);
+      if (n.kmMes && h.tag !== "km") apoio.push([String(n.kmMes).replace(".", ","), "km"]);
+      if (n.sesFeitas) apoio.push([String(n.sesFeitas), "sessões c/ prof."]);
+      var ax = 84;
+      apoio.slice(0, 3).forEach(function (t) {
+        x.fillStyle = "rgba(255,255,255,.10)";
+        rr(ax, 1010, 290, 150, 22); x.fill();
+        x.fillStyle = "#ffffff"; x.font = "900 56px Archivo, sans-serif";
+        x.fillText(t[0], ax + 32, 1084);
+        x.fillStyle = "rgba(255,255,255,.72)"; x.font = "700 26px Archivo, sans-serif";
+        x.fillText(t[1], ax + 32, 1128);
+        ax += 312;
+      });
+      x.fillStyle = "rgba(255,255,255,.55)";
+      x.font = "700 26px Archivo, sans-serif";
+      x.fillText("acompanhamento de verdade, todo treino no app", 84, 1288);
+    }
+    var lg = logoOk((st.config || {}).logo);
+    if (lg) {
+      var im = new Image();
+      im.onload = function () {
+        desenha();
+        x.save(); rr(84, 84, 96, 96, 20); x.clip();
+        x.fillStyle = "#ffffff"; x.fillRect(84, 84, 96, 96);
+        x.drawImage(im, 84, 84, 96, 96); x.restore();
+        cb(cv, "");
+      };
+      im.onerror = function () { lg = ""; desenha(); cb(cv, ""); };
+      im.src = lg;
+    } else { desenha(); cb(cv, ""); }
+  }
+  $("pfCardIG").addEventListener("click", function () {
+    var bt = this;
+    cardResultadoIG(perfilId, function (cv, motivo) {
+      if (!cv) {
+        bt.textContent = "Ainda sem número pra contar este mês";
+        setTimeout(function () { bt.textContent = "🖼 Card pra postar"; }, 3200);
+        return;
+      }
+      var st = load();
+      var a = st.alunos.find(function (x) { return x.id === perfilId; }) || {};
+      var lk = document.createElement("a");
+      lk.download = "resultado-" + String(a.nome || "aluno").split(" ")[0].toLowerCase() + "-" + S.todayISO().slice(0, 7) + ".png";
+      lk.href = cv.toDataURL("image/png");
+      document.body.appendChild(lk); lk.click(); lk.remove();
+      bt.textContent = "✓ Imagem baixada — é só postar";
+      setTimeout(function () { bt.textContent = "🖼 Card pra postar"; }, 3200);
+    });
+  });
+  window.__cardIG = { numeros: numerosMesAluno, historia: historiaDoMes, monta: cardResultadoIG }; // testes
   /* 🧠 Resumo da semana com IA — junta a semana do studio num texto e usa a
    * MESMA ação "analisar" da chat-envia que o copiloto do portal já usa
    * (nenhuma função nova pra publicar). Os estados vêm das MESMAS contas das

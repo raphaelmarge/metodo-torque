@@ -2695,6 +2695,39 @@ async function abaPt(p, a) {
     "🧭 cada passo pendente tem a ação DENTRO da linha (montar, mandar app, pedir anamnese)");
   ok(est.velhoSome, "🧭 aluno antigo com 8+ sessões não vê a esteira — ela é do começo");
 
+  // 🖼 v691: card de resultado pro Instagram — a MELHOR história do mês
+  const cig = await p.evaluate(async () => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    const mes = new Date().toISOString().slice(0, 7);
+    const retSnap = JSON.stringify(j.retorno || null);
+    const peso = {}; peso[mes + "-02"] = 82; peso[mes + "-20"] = 79.5;
+    const feitos = {}; for (let i = 1; i <= 9; i++) feitos[mes + "-0" + i] = true;
+    j.retorno = Object.assign({}, j.retorno, {
+      peso, feitos,
+      cargas: { "Supino reto": [{ d: "2020-01-05", kg: 50 }, { d: mes + "-10", kg: 60 }] },
+    });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const n = window.__cardIG.numeros(st, j, mes);
+    const h1 = window.__cardIG.historia(n);
+    const h2 = window.__cardIG.historia(Object.assign({}, n, { pesoDif: 0 }));
+    const h0 = window.__cardIG.historia({ pesoDif: 0, recs: [], kmMes: 0, feitos: 0, sesFeitas: 0 });
+    const png = await new Promise((res) => window.__cardIG.monta(j.id, (cv) =>
+      res(cv ? { w: cv.width, h: cv.height, data: cv.toDataURL("image/png").slice(0, 22) } : null)));
+    const st2 = S.read("ptStudio", {});
+    const j2 = st2.alunos.find((a) => a.nome === "João Cliente");
+    if (retSnap === "null") delete j2.retorno; else j2.retorno = JSON.parse(retSnap);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    return { h1, h2, h0, png };
+  });
+  ok(cig.h1 && cig.h1.tag === "peso" && /2,5 kg/.test(cig.h1.big),
+    "🖼 peso perdido é a primeira história do card (" + ((cig.h1 || {}).big || "—") + ")");
+  ok(cig.h2 && cig.h2.tag === "pr" && /50 → 60/.test(cig.h2.big) && /Supino/.test(cig.h2.rot),
+    "🖼 sem peso perdido, o recorde de carga conta a história");
+  ok(cig.h0 === null, "🖼 mês sem número de verdade = sem card (nada inventado)");
+  ok(cig.png && cig.png.w === 1080 && cig.png.h === 1350 && cig.png.data.startsWith("data:image/png"),
+    "🖼 a arte sai em 1080×1350 (4:5 do Instagram) pronta pra baixar");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
