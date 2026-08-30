@@ -2263,6 +2263,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
         <select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select>
         <button class="btn sec" id="tplAplicar">Aplicar</button>
+        <button class="btn sec" id="tplSalvar" title="guarda as fichas deste aluno como um modelo seu, pra aplicar em outros alunos com 1 clique">Salvar como modelo</button>
+        <button class="btn sec" id="tplApagar" hidden title="apaga o modelo escolhido (as fichas já aplicadas nos alunos continuam)">✕ modelo</button>
         <button class="btn sec" id="tZap">WhatsApp</button>
         <label class="muted tdvale">⏰ vale até
           <input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
@@ -11708,14 +11710,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ["Circuito — 3 voltas", [["Agachamento livre", 3, "15", 45], ["Prancha", 3, "45s", 45], ["Remada curvada", 3, "15", 45], ["Desenvolvimento", 3, "12", 45]]],
     ] },
   };
-  (function () {
+  /* O seletor mistura DUAS fontes: os modelos DO PROFESSOR (st.modelosPT,
+   * salvos pelo "Salvar como modelo") em cima, e as fichas prontas do sistema
+   * embaixo. Repopulado a cada salvar/apagar. */
+  function populaTplSel() {
     var sel = $("tplSel");
+    sel.innerHTML = "<option value=''>Ficha pronta (modelo)…</option>";
+    var meus = load().modelosPT || [];
+    if (meus.length) {
+      var g1 = document.createElement("optgroup");
+      g1.label = "Meus modelos";
+      meus.forEach(function (m) {
+        var o = document.createElement("option");
+        o.value = "meu:" + m.id; o.textContent = m.nome;
+        g1.appendChild(o);
+      });
+      sel.appendChild(g1);
+    }
+    var g2 = document.createElement("optgroup");
+    g2.label = "Prontas do sistema";
     Object.keys(TEMPLATES_FICHA).forEach(function (k) {
       var o = document.createElement("option");
       o.value = k; o.textContent = TEMPLATES_FICHA[k].nome;
-      sel.appendChild(o);
+      g2.appendChild(o);
     });
-  })();
+    sel.appendChild(g2);
+    $("tplApagar").hidden = $("tplSel").value.indexOf("meu:") !== 0;
+  }
+  populaTplSel();
+  $("tplSel").addEventListener("change", function () {
+    $("tplApagar").hidden = this.value.indexOf("meu:") !== 0;
+  });
   function exercicioPorNome(st, nome) {
     var ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); });
     var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
@@ -11742,24 +11767,99 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__videoDoEx = videoDoEx; // testes
   window.__exPorNome = exercicioPorNome; // testes
-  $("tplAplicar").addEventListener("click", function () {
-    var alunoId = $("tAluno").value, tpl = TEMPLATES_FICHA[$("tplSel").value];
-    if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
-    if (!tpl) { alert("Escolha uma ficha pronta na lista."); return; }
+  /* Aplica um modelo no aluno escolhido. O valor "meu:<id>" vem de
+   * st.modelosPT (modelo do professor); qualquer outro é ficha pronta do
+   * sistema. Nos dois caminhos o exercício viaja por NOME e o
+   * exercicioPorNome acha/cria na biblioteca — id de exercício é desta
+   * instalação e não pode ir dentro do modelo. */
+  function tplAplicaModelo(alunoId, val) {
     var st = load();
+    var meu = val.indexOf("meu:") === 0
+      ? (st.modelosPT || []).find(function (m) { return "meu:" + m.id === val; })
+      : null;
+    var tpl = meu ? null : TEMPLATES_FICHA[val];
+    if (!meu && !tpl) return { erro: "Escolha uma ficha pronta na lista." };
     var t = treinoDe(st, alunoId);
-    if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o modelo " + tpl.nome + " por cima?")) return;
-    tpl.fichas.forEach(function (f) {
-      t.fichas.push({ id: S.uid(), titulo: f[0], itens: f[1].map(function (it) {
-        return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], descanso: it[3] || 60, obs: "" };
-      }) });
-    });
+    var nomeTpl = meu ? meu.nome : tpl.nome;
+    if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o modelo " + nomeTpl + " por cima?")) return { cancelado: true };
+    var qtd = 0;
+    if (meu) {
+      meu.fichas.forEach(function (f) {
+        var nova = { id: S.uid(), titulo: f.titulo, itens: (f.itens || []).map(function (it) {
+          var item = { exId: exercicioPorNome(st, it.nome).id, series: it.series, reps: it.reps, descanso: it.descanso || 60, obs: it.obs || "" };
+          if (it.tec) item.tec = it.tec;
+          return item;
+        }) };
+        if (f.p2) nova.p2 = JSON.parse(JSON.stringify(f.p2));
+        t.fichas.push(nova); qtd++;
+      });
+    } else {
+      tpl.fichas.forEach(function (f) {
+        t.fichas.push({ id: S.uid(), titulo: f[0], itens: f[1].map(function (it) {
+          return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], descanso: it[3] || 60, obs: "" };
+        }) }); qtd++;
+      });
+    }
+    marcaAppPendente(st, alunoId);
     S.write("ptStudio", st);
+    return { ok: true, qtd: qtd };
+  }
+  $("tplAplicar").addEventListener("click", function () {
+    var alunoId = $("tAluno").value;
+    if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
+    var r = tplAplicaModelo(alunoId, $("tplSel").value);
+    if (r.erro) { alert(r.erro); return; }
+    if (r.cancelado) return;
     renderFichas();
     renderBiblioteca();
-    alert(S.plural(tpl.fichas.length, "ficha criada", "fichas criadas") + "! Ajuste séries/cargas e publique o app do aluno.");
+    alert(S.plural(r.qtd, "ficha criada", "fichas criadas") + "! Ajuste séries/cargas e publique o app do aluno.");
+  });
+  /* Salvar como modelo: as fichas do aluno viram uma receita com nome, que
+   * aparece em "Meus modelos" pra aplicar em qualquer outro aluno. */
+  function tplSalvaModelo(nome) {
+    var alunoId = $("tAluno").value;
+    if (!alunoId) return { erro: "Escolha o aluno primeiro." };
+    var st = load();
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t || !(t.fichas || []).length) return { erro: "Este aluno ainda não tem ficha montada — monte primeiro, salve o modelo depois." };
+    var fichas = t.fichas.map(function (f) {
+      var m = { titulo: f.titulo, itens: (f.itens || []).map(function (it) {
+        var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
+        var item = { nome: (ex && ex.nome) || "", series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "" };
+        if (it.tec) item.tec = it.tec;
+        return item;
+      }).filter(function (it) { return it.nome; }) };
+      if (f.p2) m.p2 = JSON.parse(JSON.stringify(f.p2));
+      return m;
+    });
+    st.modelosPT = st.modelosPT || [];
+    var mod = { id: S.uid(), nome: nome, fichas: fichas };
+    st.modelosPT.push(mod);
+    S.write("ptStudio", st);
+    populaTplSel();
+    return { ok: true, id: mod.id, fichas: fichas.length };
+  }
+  $("tplSalvar").addEventListener("click", function () {
+    if (!$("tAluno").value) { alert("Escolha o aluno primeiro."); return; }
+    var nome = prompt("Nome do modelo (ex.: Hipertrofia iniciante ABC):", "");
+    if (!nome || !nome.trim()) return;
+    var r = tplSalvaModelo(nome.trim());
+    if (r.erro) { alert(r.erro); return; }
+    alert('Modelo "' + nome.trim() + '" guardado com ' + S.plural(r.fichas, "ficha", "fichas") +
+      ". Ele fica em “Ficha pronta → Meus modelos” pra aplicar em qualquer aluno.");
+  });
+  $("tplApagar").addEventListener("click", function () {
+    var val = $("tplSel").value;
+    if (val.indexOf("meu:") !== 0) return;
+    var st = load();
+    var m = (st.modelosPT || []).find(function (x) { return "meu:" + x.id === val; });
+    if (!m || !confirm('Apagar o modelo "' + m.nome + '"? (as fichas já aplicadas nos alunos continuam)')) return;
+    st.modelosPT = st.modelosPT.filter(function (x) { return x.id !== m.id; });
+    S.write("ptStudio", st);
+    populaTplSel();
   });
   window.__templates = TEMPLATES_FICHA; // testes
+  window.__tplMeu = { salva: tplSalvaModelo, aplica: tplAplicaModelo, popula: populaTplSel }; // testes
 
   // ---------- treino automático (motor de regras sobre a anamnese) ----------
   var TA_SPLITS = {

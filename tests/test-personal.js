@@ -1420,6 +1420,52 @@ async function abaPt(p, a) {
     fichas: document.getElementById("fichasBox").textContent,
   }));
   ok(!!escolhido.valor && /João Cliente/.test(escolhido.rotulo) && /Supino reto/.test(escolhido.fichas), "tocar na sugestão escolhe o aluno e carrega as fichas dele");
+
+  // 🗂 meus modelos: salvar as fichas do João como modelo e aplicar na Bia
+  await p.evaluate(() => { window.prompt = () => "Meu ABC teste"; window.confirm = () => true; });
+  await p.click("#tplSalvar");
+  await p.waitForTimeout(200);
+  const modSalvo = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const m = (st.modelosPT || [])[0];
+    return {
+      qtd: (st.modelosPT || []).length,
+      nome: m && m.nome,
+      porNome: !!m && m.fichas.every((f) => (f.itens || []).every((it) => typeof it.nome === "string" && it.nome && !it.exId)),
+      grupos: Array.from(document.querySelectorAll("#tplSel optgroup")).map((g) => g.label),
+      opcao: Array.from(document.querySelectorAll("#tplSel option")).some((o) => /Meu ABC teste/.test(o.textContent)),
+    };
+  });
+  ok(modSalvo.qtd === 1 && modSalvo.nome === "Meu ABC teste", "🗂 salvar como modelo guarda as fichas do aluno com o nome dado");
+  ok(modSalvo.porNome, "o modelo guarda o exercício por NOME (id de exercício é desta instalação, não viaja)");
+  ok(modSalvo.grupos.indexOf("Meus modelos") === 0 && modSalvo.opcao, "o seletor de ficha pronta ganha o grupo Meus modelos, em cima das prontas do sistema");
+  const modAplica = await p.evaluate(() => {
+    const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const bia = st0.alunos.find((a) => /Bia/.test(a.nome));
+    const antes = ((st0.treinosV2 || {})[bia.id] || { fichas: [] }).fichas.length;
+    const r = window.__tplMeu.aplica(bia.id, "meu:" + st0.modelosPT[0].id);
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const novas = st.treinosV2[bia.id].fichas.slice(antes);
+    const nomes = [];
+    novas.forEach((f) => f.itens.forEach((it) => {
+      const ex = st.exercicios.find((e) => e.id === it.exId);
+      nomes.push(ex && ex.nome);
+    }));
+    return { ok: r.ok, ganhou: novas.length, nomes, temExId: novas.every((f) => f.itens.every((it) => !!it.exId)) };
+  });
+  ok(modAplica.ok && modAplica.ganhou >= 1 && modAplica.temExId, "aplicar o modelo em outra aluna cria as fichas com os exercícios ligados na biblioteca");
+  ok(modAplica.nomes.indexOf("Supino reto") >= 0, "o exercício do modelo virou o MESMO exercício da biblioteca (achado pelo nome)");
+  const modApaga = await p.evaluate(() => {
+    const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const sel = document.getElementById("tplSel");
+    sel.value = "meu:" + st0.modelosPT[0].id;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    const visivel = !document.getElementById("tplApagar").hidden;
+    document.getElementById("tplApagar").click();
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return { visivel, restam: (st.modelosPT || []).length, escondido: document.getElementById("tplApagar").hidden };
+  });
+  ok(modApaga.visivel && modApaga.restam === 0 && modApaga.escondido, "o ✕ só aparece pro modelo meu, apaga ele (fichas aplicadas ficam) e some de novo");
   await p.evaluate(() => {
     window.__gruposPT.render();
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
