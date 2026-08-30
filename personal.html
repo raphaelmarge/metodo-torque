@@ -858,6 +858,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   @media (max-width: 900px) { .pfcols { grid-template-columns: 1fr; } }
   .pfbox { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 16px 18px; }
   .pfbox h3 { font-size: 16px; font-weight: 900; letter-spacing: -.02em; margin: 0 0 10px; }
+  /* esteira do aluno novo (v690): uma linha por passo, ação dentro da linha */
+  #pfEsteira { margin-bottom: 14px; }
+  .estln { display: flex; align-items: center; gap: 10px; min-height: 40px;
+           border-top: 1px solid var(--tk-bd2); font-size: 13.5px; }
+  .estln:first-of-type { border-top: 0; }
+  .estln .ic { flex: none; width: 22px; height: 22px; border-radius: 50%; display: flex;
+               align-items: center; justify-content: center; font-size: 12px; font-weight: 900;
+               background: var(--pt-sel); color: var(--pt-roxo-claro); }
+  .estln.feito .ic { background: var(--pt-ok-bg); color: var(--pt-ok); }
+  .estln.feito .n { color: var(--tk-tx4); text-decoration: line-through; }
+  .estln .n { flex: 1; min-width: 0; font-weight: 700; }
+  .estln .btn.mini { height: 32px; min-height: 32px; padding: 0 12px; font-size: 12.5px; }
   .pfsem { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
   .pfsem .d { font-size: 10px; font-weight: 800; color: var(--tk-tx5); }
   .pfsem .c { height: 38px; border-radius: 11px; background: var(--tk-bd2); border: 1px solid var(--tk-bd); color: var(--tk-tx4);
@@ -4458,6 +4470,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b) mostraPfAba(b.getAttribute("data-pfa"));
   });
   window.__pfAba = mostraPfAba; // testes
+  window.__pfResumo = function (a) { pintaPfResumo(load(), a); }; // testes (esteira v690)
 
   /* ---------- Ficha do aluno na tela 2b ----------
    * O cabeçalho diz quem é, como está e o que fazer agora; o Resumo junta os
@@ -4570,9 +4583,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           : ac9 ? "⚠ Aceitou uma versão antiga do termo (" + S.fmtData(ac9.em) + ") — o app vai pedir de novo"
           : "⚠ Ainda não aceitou o termo de responsabilidade no app") + "</div>";
     }
-    el.innerHTML = kpis + col + termoLn;
+    /* ESTEIRA DO ALUNO NOVO (v690): o começo é quando o aluno decide se fica,
+     * e os passos existiam soltos (link da anamnese, avaliação, ficha, app,
+     * termo). Vira UM checklist no topo do Resumo, com o botão de cada passo
+     * dentro da linha. Some sozinho quando tudo está feito — ou quando o aluno
+     * claramente não é mais novo (mais de 45 dias E 8+ sessões feitas). */
+    var estHtml = "";
+    var sesFeitas = idxDe(st).sessFeitasDe(a.id).length;
+    var diasDesde = /^\d{4}-\d{2}-\d{2}/.test(String(a.desde || ""))
+      ? Math.floor((Date.parse(hoje + "T12:00") - Date.parse(String(a.desde).slice(0, 10) + "T12:00")) / 864e5) : 0;
+    var passos = [
+      { n: "Anamnese respondida", ok: !!(a.anamnese && Object.keys(a.anamnese).length), bt: "Pedir pelo link", d: "anam" },
+      { n: "Avaliação física feita", ok: (st.avaliacoes || []).some(function (v) { return v.alunoId === a.id; }), bt: "Registrar", d: "aval" },
+      { n: "Primeira ficha montada", ok: !!((t.fichas || []).length), bt: "Montar", d: "ficha" },
+      { n: "App no celular do aluno", ok: !!a.appPubEm, bt: "Mandar app", d: "app" },
+    ];
+    if (tm && tm.t) passos.push({ n: "Termo aceito no app", ok: !!(ret.aceite && ret.aceite.v === tm.v), bt: "", d: "" });
+    passos.push({ n: "Primeira sessão concluída", ok: sesFeitas > 0, bt: "Ver agenda", d: "ses" });
+    var faltam = passos.filter(function (x) { return !x.ok; }).length;
+    if (faltam && !(diasDesde > 45 && sesFeitas >= 8)) {
+      estHtml = '<div class="pfbox" id="pfEsteira"><h3>Primeiros passos · ' +
+        (passos.length - faltam) + " de " + passos.length + "</h3>" +
+        passos.map(function (x) {
+          return '<div class="estln' + (x.ok ? " feito" : "") + '"><span class="ic">' + (x.ok ? "✓" : "") + "</span>" +
+            '<span class="n">' + x.n + "</span>" +
+            (!x.ok && x.bt ? (x.d === "ficha" ? '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '">Montar</button>'
+              : x.d === "app" ? '<button type="button" class="btn sec mini" data-app="' + a.id + '">Mandar app</button>'
+              : '<button type="button" class="btn sec mini" data-est="' + x.d + '">' + x.bt + "</button>") : "") +
+            "</div>";
+        }).join("") + "</div>";
+    }
+    el.innerHTML = estHtml + kpis + col + termoLn;
     pfResumoNuvem(a);
   }
+  // ações da esteira que não têm botão próprio no painel: cada uma REUSA o
+  // caminho que já existe (nada de segundo fluxo pra mesma coisa)
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-est]"); if (!b) return;
+    var k = b.dataset.est;
+    if (k === "anam") { var pa = $("pfPedeAnamnese"); if (pa) pa.click(); }
+    else if (k === "aval") { var ba = document.querySelector('#pfAbas [data-pfa="aval"]'); if (ba) ba.click(); }
+    else if (k === "ses") { var ag = document.querySelector('#abas [data-a="agenda"]'); if (ag) ag.click(); }
+  });
   // troca o numero de UM tile ja pintado (sem repintar o resumo inteiro, que
   // chamaria a nuvem de novo e viraria laco)
   // corta no ULTIMO espaco: fatiar em 40 no seco partia palavra no meio
