@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anamnese — TORQUE PERSONAL</title>
+<link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  /* mesma casca do quest.html: página autônoma, cores cravadas de propósito */
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #fff; min-height: 100vh; padding: 26px 16px 60px; max-width: 520px; margin: 0 auto; }
+  .k { font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin: 8px 0 4px; }
+  .sub { color: #a9a4b5; font-size: 14px; line-height: 1.6; }
+  .qcard { background: #1d1a24; border: 1px solid #322e3d; border-radius: 16px; padding: 16px 18px; margin-top: 14px; }
+  .qcard h2 { font-size: 15.5px; font-weight: 800; margin-bottom: 10px; }
+  .qcard .dica { color: #8a8695; font-size: 12.5px; margin: -6px 0 10px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin-top: 12px; }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], select, textarea { width: 100%; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; color: #fff; padding: 12px; font-family: inherit; font-size: 14.5px; margin-top: 5px; }
+  textarea { min-height: 64px; }
+  .chk { display: flex; align-items: flex-start; gap: 11px; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; padding: 11px 14px; margin-top: 8px; cursor: pointer; font-size: 14px; font-weight: 600; line-height: 1.45; }
+  .chk input { width: 19px; height: 19px; flex: none; margin-top: 1px; accent-color: #7c3aed; }
+  .btnx { display: block; width: 100%; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; border-radius: 14px; padding: 17px; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; margin-top: 18px; box-shadow: 0 10px 30px -12px #7c3aed; }
+  .btnx:disabled { opacity: .55; }
+  #fim { text-align: center; padding: 60px 10px; display: none; }
+  #fim .e { font-size: 54px; }
+  #erro { color: #fbbf24; font-size: 13.5px; text-align: center; margin-top: 12px; min-height: 18px; }
+</style>
+</head>
+<body>
+<div id="form">
+  <span class="k" id="marca">ANAMNESE</span>
+  <h1 id="anTitulo">Complete seu cadastro</h1>
+  <p class="sub">Leva uns 3 minutos e vai direto pro seu treinador — é com isso que o treino sai do SEU tamanho. 💜</p>
+
+  <div class="qcard">
+    <h2>Saúde primeiro (PAR-Q)</h2>
+    <p class="dica">Marque só o que for verdade — sem resposta certa ou errada.</p>
+    <label class="chk"><input type="checkbox" id="parq1"> Algum médico já disse que você tem problema cardíaco?</label>
+    <label class="chk"><input type="checkbox" id="parq2"> Sente dor no peito quando faz atividade física?</label>
+    <label class="chk"><input type="checkbox" id="parq3"> No último mês, sentiu dor no peito mesmo em repouso?</label>
+    <label class="chk"><input type="checkbox" id="parq4"> Perde o equilíbrio por tontura ou já perdeu a consciência?</label>
+    <label class="chk"><input type="checkbox" id="parq5"> Tem problema ósseo ou articular que pode piorar com exercício?</label>
+    <label class="chk"><input type="checkbox" id="parq6"> Toma remédio pra pressão ou pro coração?</label>
+    <label class="chk"><input type="checkbox" id="parq7"> Conhece alguma outra razão pra não fazer atividade física?</label>
+  </div>
+
+  <div class="qcard">
+    <h2>Seu histórico</h2>
+    <label>Lesões e cirurgias anteriores<input type="text" id="fLesoes" placeholder="ex.: joelho em 2020, ombro direito"></label>
+    <label>Doenças ou condições de saúde<input type="text" id="fDoencas" placeholder="ex.: diabetes, asma — ou nenhuma"></label>
+    <label>Medicamentos de uso contínuo<input type="text" id="fMeds" placeholder="ex.: nenhum"></label>
+    <label>Histórico na família (coração, pressão, diabetes)<input type="text" id="fFamiliar" placeholder="ex.: pai hipertenso"></label>
+  </div>
+
+  <div class="qcard">
+    <h2>Sua rotina</h2>
+    <label>Como anda seu sono?<select id="fSono"><option value="">—</option><option>durmo bem (7h+)</option><option>durmo pouco (menos de 6h)</option><option>sono irregular</option></select></label>
+    <label>Nível de estresse no dia a dia<select id="fEstresse"><option value="">—</option><option>baixo</option><option>médio</option><option>alto</option></select></label>
+    <label>Fuma?<select id="fFuma"><option value="">—</option><option>não</option><option>sim</option><option>parei</option></select></label>
+    <label>Álcool?<select id="fAlcool"><option value="">—</option><option>não bebo</option><option>socialmente</option><option>com frequência</option></select></label>
+    <label>Como é sua alimentação hoje?<input type="text" id="fAlimentacao" placeholder="ex.: como de tudo, pouco doce"></label>
+  </div>
+
+  <div class="qcard">
+    <h2>Seu treino</h2>
+    <label>Experiência com treino<select id="fNivel"><option value="">—</option><option>iniciante</option><option>intermediário</option><option>avançado</option></select></label>
+    <label>Há quanto tempo treina (ou parou há quanto tempo)?<input type="text" id="fTempo" placeholder="ex.: 1 ano, parei há 6 meses"></label>
+    <label>Quantos dias por semana você consegue treinar?<select id="fDias"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+    <label>O que você GOSTA de treinar?<input type="text" id="fGosta" placeholder="ex.: musculação, correr"></label>
+    <label>O que você NÃO gosta?<input type="text" id="fNaoGosta" placeholder="ex.: burpee, esteira"></label>
+  </div>
+
+  <button class="btnx" id="btnEnviar">Enviar pro meu treinador ➤</button>
+  <div id="erro"></div>
+</div>
+<div id="fim"><div class="e">💪</div><h1>Anamnese enviada!</h1><p class="sub">Seu treinador já recebeu tudo — o próximo treino sai do seu tamanho. Pode fechar esta página.</p></div>
+
+<script src="assets/cloud-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var params = new URLSearchParams(location.search);
+  var TOKEN = params.get("t") || "";
+  var NOME = (params.get("n") || "").slice(0, 40);
+  if (!TOKEN) {
+    document.body.innerHTML = "<div style='text-align:center;padding:80px 20px;'><div style='font-size:44px;'>🤔</div>" +
+      "<h1 style='font-size:20px;margin-top:10px;'>Link incompleto</h1>" +
+      "<p style='color:#a9a4b5;margin-top:8px;'>Peça pro seu treinador mandar o link da anamnese de novo.</p></div>";
+    return;
+  }
+  if (NOME) $("#anTitulo").textContent = "Complete seu cadastro, " + NOME.split(" ")[0];
+
+  /* Os nomes dos campos são EXATAMENTE os da anamnese do painel (a.anamnese):
+   * parq1..7 + lesoes/doencas/meds/familiar/sono/estresse/fuma/alcool/
+   * alimentacao/nivel/tempo/dias/gosta/naogosta. O envio vai pelo MESMO
+   * app_aluno_devolve do app (o token é validado lá dentro) e cai no
+   * retorno.anamnese — o painel mostra o botão Importar. Sem SQL novo. */
+  function montaAnamnese() {
+    var an = {};
+    for (var q = 1; q <= 7; q++) an["parq" + q] = $("#parq" + q).checked;
+    [["fLesoes", "lesoes"], ["fDoencas", "doencas"], ["fMeds", "meds"], ["fFamiliar", "familiar"],
+     ["fSono", "sono"], ["fEstresse", "estresse"], ["fFuma", "fuma"], ["fAlcool", "alcool"],
+     ["fAlimentacao", "alimentacao"], ["fNivel", "nivel"], ["fTempo", "tempo"], ["fDias", "dias"],
+     ["fGosta", "gosta"], ["fNaoGosta", "naogosta"]].forEach(function (par) {
+      an[par[1]] = String($("#" + par[0]).value || "").trim().slice(0, 300);
+    });
+    return an;
+  }
+  window.__anamnese = { monta: montaAnamnese }; // testes
+
+  $("#btnEnviar").addEventListener("click", function () {
+    var an = montaAnamnese();
+    // o mínimo pro treino não sair no escuro: nível e dias por semana
+    if (!an.nivel || !an.dias) { $("#erro").textContent = "Falta dizer sua experiência e quantos dias por semana. 😉"; return; }
+    var cfg = self.MT_CLOUD || {};
+    if (!cfg.url) { $("#erro").textContent = "Configuração da nuvem ausente — avisa seu treinador."; return; }
+    var btn = $("#btnEnviar");
+    btn.disabled = true; btn.textContent = "Enviando…";
+    fetch(cfg.url + "/rest/v1/rpc/app_aluno_devolve", {
+      method: "POST",
+      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ t: TOKEN, p_dados: { anamnese: an, anamneseEm: new Date().toISOString() } }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) { $("#form").style.display = "none"; $("#fim").style.display = "block"; window.scrollTo(0, 0); }
+      else {
+        btn.disabled = false; btn.textContent = "Enviar pro meu treinador ➤";
+        var eMsg = (d && d.erro) ? d.erro : "Não deu — tenta de novo em instantes.";
+        if (/app não encontrado|token inválido|revogado/.test(eMsg)) eMsg = "Este link precisa ser gerado de novo pelo seu treinador — manda um alô! 🙏";
+        $("#erro").textContent = eMsg;
+      }
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "Enviar pro meu treinador ➤";
+      $("#erro").textContent = "Sem internet agora — tenta de novo em instantes.";
+    });
+  });
+})();
+</script>
+</body>
+</html>
