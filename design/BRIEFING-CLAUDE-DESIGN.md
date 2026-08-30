@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v687** |
-| Estado do repo em | 2026-08-30 (commit `6601021`) |
+| App em | **mt-v688** |
+| Estado do repo em | 2026-08-30 (commit `a8af1aa`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 149 |
+| Lançamentos no histórico | 150 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v687** — ou seja, **18 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v688** — ou seja, **19 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v688 | a cor da Personalização voltou a pintar o painel (e o NUTRI) |
 | mt-v687 | o aluno nunca fica sabendo da IA — o treino é sempre do professor |
 | mt-v686 | resumo escrito no fim do treino — a voz do aluno vira relatório na ficha e a IA lê |
 | mt-v685 | histórico do exercício na tela do treino guiado — a olhada rápida antes de pegar a carga |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v676 | card Retenção nos Relatórios — tempo de casa, churn do mês e sobrevivência de 6 meses |
 | mt-v675 | meta de carga no app do aluno — escolhe o exercício, define o alvo e a barra segue o recorde real |
 | mt-v674 | lista de compras da semana no NUTRI — o plano alimentar vira a lista de mercado em 1 clique |
-| mt-v673 | fichas-modelo do professor — salvar as fichas de um aluno como modelo e aplicar em qualquer outro |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
