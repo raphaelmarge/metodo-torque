@@ -2903,17 +2903,31 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   function logoOkN(u) { u = String(u || ""); return /^data:image\//.test(u) && !/['"<>\\]/.test(u) ? u : ""; }
   window.__temaN = { corOk: corOk, escurece: escurece, clareia: clareia }; // testes
 
+  // "#16a34a" -> "22,163,74" — deixa rgba(...) da tinta transparente funcionar
+  function rgbDeN(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }
+  // O redesenho (v662) trocou o painel pra família --nt-verde* cravada no :root —
+  // só setar --verde deixava tudo verde mesmo com cor escolhida na Personalização.
+  // Estilo inline no <html> ganha das duas folhas, então o modo claro entra na
+  // conta (verde de TEXTO escurece pra ter contraste, igual à folha).
+  var TOKENS_COR_N = ["--verde", "--verde-2", "--nt-verde-claro", "--nt-verde-chip",
+    "--nt-verde-fundo", "--nt-verde-txt", "--nt-verde-bg"];
   function aplicaTemaN(st) {
     var cor = corOk((st.config || {}).cor);
     var raiz = document.documentElement;
     var topo = document.querySelector("header.topo");
     if (cor) {
+      var claro = raiz.dataset.tema === "claro";
+      var esc = escurece(cor, .18);
       raiz.style.setProperty("--verde", cor);
-      raiz.style.setProperty("--verde-2", escurece(cor, .18));
+      raiz.style.setProperty("--verde-2", esc);
+      raiz.style.setProperty("--nt-verde-claro", claro ? esc : clareia(cor, .35));
+      raiz.style.setProperty("--nt-verde-chip", claro ? esc : clareia(cor, .55));
+      raiz.style.setProperty("--nt-verde-fundo", escurece(cor, .5));
+      raiz.style.setProperty("--nt-verde-txt", claro ? escurece(cor, .5) : clareia(cor, .7));
+      raiz.style.setProperty("--nt-verde-bg", "rgba(" + rgbDeN(cor) + "," + (claro ? ".1" : ".14") + ")");
       if (topo) topo.style.background = "linear-gradient(135deg, " + escurece(cor, .55) + ", " + escurece(cor, .35) + ")";
     } else {
-      raiz.style.removeProperty("--verde");
-      raiz.style.removeProperty("--verde-2");
+      TOKENS_COR_N.forEach(function (t) { raiz.style.removeProperty(t); });
       if (topo) topo.style.background = "linear-gradient(135deg, #14532d, #166534)";
     }
     var logo = logoOkN((st.config || {}).logo);
@@ -3435,6 +3449,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var claro = document.documentElement.dataset.tema === "claro";
     document.documentElement.dataset.tema = claro ? "" : "claro";
     try { localStorage.setItem("mtapp:tema", claro ? "escuro" : "claro"); } catch (e) {}
+    aplicaTemaN(load()); // a cor do consultório muda de tom entre os temas (texto escurece no claro)
     pintaBtnTemaNt();
   });
   pintaBtnTemaNt();
