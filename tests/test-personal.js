@@ -1849,6 +1849,31 @@ async function abaPt(p, a) {
   ok(/Ainda não aceitou/.test(termoFicha.sem), "a ficha avisa quando o aluno ainda não aceitou o termo");
   ok(/aceito em/.test(termoFicha.com), "e mostra a data do aceite quando o retorno traz ptaceite da versão atual");
   await abaPt(p, "relatorios"); // o teste abriu o perfil — os testes seguintes esperam Relatórios na tela
+
+  // 🧾 recibo automático no WhatsApp (ligado por padrão; respeita o toggle e o zap)
+  const recibo = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos[0].zap = "31999990000";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const pg = { valor: 400, data: window.MTStore.todayISO(), forma: "pix" };
+    const texto = window.__reciboZap.texto(st2, st2.alunos[0], pg);
+    const openOrig = window.open;
+    let url = null;
+    window.open = (u) => { url = u; return {}; };
+    const mandou = window.__reciboZap.manda(st2, st2.alunos[0], pg);
+    st2.config.reciboZap = false;
+    const mandouDeslig = window.__reciboZap.manda(st2, st2.alunos[0], pg);
+    const semZap = window.__reciboZap.manda(JSON.parse(localStorage.getItem("mtapp:ptStudio")), { nome: "X" }, pg);
+    window.open = openOrig;
+    return { texto, mandou, url, mandouDeslig, semZap, temToggle: !!document.getElementById("cfgReciboZap") };
+  });
+  ok(/Recibo/.test(recibo.texto) && /R\$\s?400/.test(recibo.texto) && /Recebi de João Cliente/.test(recibo.texto),
+    "🧾 o recibo leva a marca do studio, o nome do aluno e o valor");
+  ok(recibo.mandou && /wa\.me\/5531999990000/.test(recibo.url) && /Recibo/.test(decodeURIComponent(recibo.url)),
+    "marcar Recebi abre o WhatsApp do aluno com o recibo pronto pra enviar");
+  ok(!recibo.mandouDeslig && !recibo.semZap && recibo.temToggle,
+    "desligado nas Configurações (ou aluno sem zap no cadastro) = nada abre");
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
