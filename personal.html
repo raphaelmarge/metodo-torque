@@ -5616,6 +5616,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
         }
       }
+    /* 📝 Relatos de treino (v686): o que o aluno ESCREVEU ao fim de cada
+     * treino (retorno.notas — o campo opcional do recibo). É a voz dele, então
+     * entra entre aspas, com data e o tipo do treino; os 8 mais novos, o mais
+     * recente primeiro. A IA lê a mesma lista (evolucaoIA). */
+    var nts9 = (ret && Array.isArray(ret.notas) ? ret.notas : []).filter(function (n) {
+      return n && dataRe(String(n.d || "")) && String(n.t || "").trim();
+    });
+    if (nts9.length) {
+      var ROT9 = { musc: "Musculação", wod: "Circuito", corrida: "Corrida" };
+      html += titulo("📝 Relatos de treino — escritos pelo aluno") +
+        nts9.slice(-8).reverse().map(function (n) {
+          return "<div class='qscard'><div class='qstop'><span class='qsrot'>" + fmtD(String(n.d)) +
+            (ROT9[n.tp] ? " · " + ROT9[n.tp] : "") + "</span></div>" +
+            "<div style='font-size:14px;line-height:1.55;margin-top:6px;'>&ldquo;" + esc(String(n.t).slice(0, 400)) + "&rdquo;</div></div>";
+        }).join("");
+    }
     return html;
   }
   window.__checkinsPT = htmlCheckinsApp; // testes
@@ -12561,6 +12577,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var sf = 0; fks.forEach(function (k) { sf += +(fcH[k] || {}).m || 0; });
       out.push("BATIMENTO MÉDIO nos últimos " + fks.length + " treinos: " + Math.round(sf / fks.length) + " bpm");
     }
+    /* 📝 relatos ESCRITOS pelo aluno ao fim dos treinos (v686): a voz dele,
+     * com data e tipo. É o contexto que número nenhum dá — dor, sobra de gás,
+     * aparelho ocupado. Como evolucaoIA entra nos DOIS montadores (musculação
+     * e corrida), a IA lê isso em qualquer geração. Honesto quando não tem. */
+    var nts = Array.isArray(ret.notas) ? ret.notas : [];
+    var ROT_NT = { musc: "musculação", wod: "circuito", corrida: "corrida" };
+    out.push(nts.length
+      ? "RELATOS ESCRITOS PELO ALUNO ao fim dos treinos (leve a sério dor, desconforto e sobra/falta de gás): " +
+        nts.slice(-10).map(function (n) {
+          return String(n.d || "").slice(8, 10) + "/" + String(n.d || "").slice(5, 7) +
+            (ROT_NT[n.tp] ? " (" + ROT_NT[n.tp] + ")" : "") + ': "' + String(n.t || "").slice(0, 200) + '"';
+        }).join(" | ")
+      : "RELATOS DO ALUNO: nenhum resumo escrito ainda.");
     return out.join("\n");
   }
   window.__montaDadosIA = function (st, a, obj, eq) { return montaDadosIA(st, a, obj, eq); }; // testes

@@ -4759,6 +4759,55 @@ async function abaPt(p, a) {
       "sem sessões antes da última, o histórico nem aparece — nada de card vazio");
   }
   {
+    // 📝 resumo escrito do treino (v686): grava em ptnotas e vai no retorno
+    const nota = await pApp.evaluate(async () => {
+      const snap = localStorage.getItem("ptnotas");
+      localStorage.removeItem("ptnotas");
+      const box = document.createElement("div");
+      box.innerHTML = window.__trNota.box("corrida");
+      document.body.appendChild(box);
+      const cx = box.querySelector("[data-notabox]");
+      cx.querySelector(".ntTxt").value = "  Senti o joelho no final da corrida ";
+      cx.querySelector("[data-notasalva]").click();
+      const depois = JSON.parse(localStorage.getItem("ptnotas"));
+      const okMsg = cx.textContent;
+      const box2 = document.createElement("div");
+      box2.innerHTML = window.__trNota.box("musc");
+      document.body.appendChild(box2);
+      box2.querySelector("[data-notasalva]").click();
+      const aindaUm = JSON.parse(localStorage.getItem("ptnotas")).length;
+      box.remove(); box2.remove();
+      if (snap) localStorage.setItem("ptnotas", snap); else localStorage.removeItem("ptnotas");
+      return { depois, okMsg, aindaUm };
+    });
+    ok(nota.depois.length === 1 && nota.depois[0].tp === "corrida" && /joelho/.test(nota.depois[0].t) && !/^\s/.test(nota.depois[0].t),
+      "📝 guardar o resumo grava em ptnotas com data, tipo e o texto aparado");
+    ok(/Anotado/.test(nota.okMsg) && nota.aindaUm === 1,
+      "a caixa agradece, e resumo vazio não grava nada (o campo é opcional de verdade)");
+  }
+  {
+    // 📝 no painel: relato na ficha (Check-ins) e nos dados da IA
+    const relTre = await p.evaluate(() => {
+      const htmlN = window.__checkinsPT({ notas: [
+        { d: "2026-08-28", tp: "musc", t: "Ombro incomodou no desenvolvimento" },
+        { d: "2026-08-29", tp: "corrida", t: "Sobrou gás no final" },
+      ] });
+      const dados = window.__montaDadosIA(
+        { alunos: [], exercicios: [], exFav: [], avaliacoes: [] },
+        { id: "x", nome: "N", retorno: { notas: [{ d: "2026-08-28", tp: "musc", t: "Ombro incomodou" }] } },
+        "hipertrofia", "academia");
+      const semNotas = window.__montaDadosIA({ alunos: [], exercicios: [], exFav: [], avaliacoes: [] }, { id: "y", nome: "M" }, "o", "e");
+      return { htmlN,
+        temIA: /RELATOS ESCRITOS PELO ALUNO/.test(dados) && /Ombro incomodou/.test(dados) && /28\/08 \(musculação\)/.test(dados),
+        honesto: /nenhum resumo escrito ainda/.test(semNotas) };
+    });
+    ok(/Relatos de treino/.test(relTre.htmlN) && /Sobrou gás/.test(relTre.htmlN) && /29\/08/.test(relTre.htmlN) &&
+      relTre.htmlN.indexOf("Sobrou") < relTre.htmlN.indexOf("Ombro"),
+      "📝 a aba Check-ins da ficha mostra os relatos entre aspas, o mais novo primeiro");
+    ok(relTre.temIA, "a IA recebe os relatos com data e tipo — dor e contexto entram na prescrição");
+    ok(relTre.honesto, "sem relato nenhum, o texto da IA diz isso em vez de inventar");
+  }
+  {
     // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
     const mes = await p.evaluate(() => {
       // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
