@@ -3465,6 +3465,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec mini" id="pfApp" title="publica o app na nuvem e manda o link pro aluno" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
       <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
       <button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp" style="width: 100%;">📄 Relatório do mês</button>
+      <button class="btn sec mini" id="pfPedeAnamnese" title="manda o link da anamnese pro aluno preencher no celular dele — as respostas voltam pra cá" style="width: 100%;">📋 Pedir anamnese</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
       <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
     </div>
@@ -3515,6 +3516,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   <div class="card" data-pfsec="cadastro">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Anamnese completa</h2>
     <span id="pfParqBadge" style="font-size: 12.5px; font-weight: 800;"></span>
+    <div id="pfAnImport" hidden class="dnota" style="margin-top: 10px;"></div>
 
     <p style="font-weight: 700; font-size: 13px; margin: 12px 0 4px;">PAR-Q — Questionário de prontidão (marque o que for SIM)</p>
     <div style="display: grid; gap: 5px; font-size: 13px;">
@@ -4667,6 +4669,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     pintaParqBadge(an);
     $("pfAnSalvo").textContent = "";
+    /* 📋 anamnese preenchida PELO ALUNO (link anamnese.html?t=…): as respostas
+     * chegam em retorno.anamnese e o professor IMPORTA com 1 clique — nunca
+     * entram sozinhas: ele revisa e continua dono da ficha. A marca
+     * anamneseImportEm segura o banner de reaparecer depois de importado. */
+    var banAn = $("pfAnImport");
+    if (banAn) {
+      var retAn = (a.retorno || a.demoRetorno || {});
+      var mostra = retAn.anamnese && retAn.anamneseEm && retAn.anamneseEm !== a.anamneseImportEm;
+      banAn.hidden = !mostra;
+      if (mostra) {
+        banAn.innerHTML = "📋 <b>" + esc(a.nome.split(" ")[0]) + " preencheu a anamnese pelo link</b> em " +
+          S.fmtData(String(retAn.anamneseEm).slice(0, 10)) +
+          ' — <button type="button" class="btn mini" data-animporta="1" style="margin-left:6px;">Importar respostas</button>';
+      }
+    }
     // financeiro: contrato + pagamentos
     var ct = contratoDe(st, id);
     var pl = ct && planoDe(st, ct.planoId);
@@ -5726,6 +5743,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? '<span style="color:var(--tk-aten2);">PAR-Q com resposta SIM — peça liberação médica antes de treinos intensos</span>'
         : '<span style="color:var(--tk-ok);">✓ PAR-Q liberado — nenhuma resposta SIM</span>';
   }
+  /* 📋 Pedir anamnese: o link viaja pelo WhatsApp com o token do app do aluno
+   * (o MESMO app_aluno_devolve valida e recebe — sem SQL novo). Sem app
+   * publicado não existe token, então o recado manda publicar primeiro. */
+  $("pfPedeAnamnese").addEventListener("click", function () {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    if (!a.appTokenP) { alert("Publique o app do aluno primeiro (botão Publicar app) — é o link dele que valida a anamnese."); return; }
+    var link = "https://www.torqueon.com.br/anamnese.html?t=" + encodeURIComponent(a.appTokenP) +
+      "&n=" + encodeURIComponent(a.nome.split(" ")[0]);
+    var msg = "Oi " + a.nome.split(" ")[0] + "! Pra eu montar seu treino do SEU tamanho, preenche sua anamnese aqui (leva 3 minutos): " + link;
+    window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+  });
+  window.__anamneseLink = function (a) { return "https://www.torqueon.com.br/anamnese.html?t=" + encodeURIComponent(a.appTokenP || "") + "&n=" + encodeURIComponent((a.nome || "").split(" ")[0]); }; // testes
+  // Importar: só campos PREENCHIDOS entram por cima; o resto da anamnese que o
+  // professor já tinha fica como está. A marca segura o banner de voltar.
+  $("pfAnImport").addEventListener("click", function (e) {
+    if (!e.target.closest || !e.target.closest("[data-animporta]")) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    var ret = (a.retorno || a.demoRetorno || {});
+    if (!ret.anamnese) return;
+    a.anamnese = a.anamnese || {};
+    Object.keys(ret.anamnese).forEach(function (k) {
+      var v = ret.anamnese[k];
+      if (v === "" || v == null) return;
+      a.anamnese[k] = v;
+    });
+    a.anamneseImportEm = ret.anamneseEm || new Date().toISOString();
+    save(st);
+    abrePerfil(perfilId);
+    mostraPfAba("cadastro");
+    $("pfAnSalvo").textContent = "✓ respostas do aluno importadas — revise e ajuste o que quiser";
+  });
+  window.__anamneseImporta = true; // marca de recurso pros testes
   $("pfAnSalvar").addEventListener("click", function () {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });

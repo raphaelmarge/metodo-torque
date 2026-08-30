@@ -1907,6 +1907,78 @@ async function abaPt(p, a) {
   const pe = fs2.readFileSync(__dirname + "/../supabase/functions/push-envia/index.ts", "utf8");
   ok(/acao === "prof"/.test(pe) && /push_config\?select=token/.test(pe) && /token=like\.prof:\*/.test(pe),
     "a push-envia ganhou a ação 'prof': autentica pela senha da push_config e só alcança inscrições prof: da academia");
+
+  // 📋 anamnese preenchida pelo aluno por link (anamnese.html → devolve → importar)
+  const pAn = await ctx.newPage();
+  let anCorpo = null;
+  await pAn.route("**/rest/v1/rpc/app_aluno_devolve", (r) => {
+    anCorpo = JSON.parse(r.request().postData() || "{}");
+    r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+  await pAn.goto(BASE + "/anamnese.html?t=tokAn9&n=Maria%20Silva", { waitUntil: "domcontentloaded" });
+  const anPag = await pAn.evaluate(async () => {
+    const titulo = document.getElementById("anTitulo").textContent;
+    document.getElementById("parq5").checked = true;
+    document.getElementById("fLesoes").value = "joelho em 2020";
+    document.getElementById("fNivel").value = "iniciante";
+    document.getElementById("fDias").value = "3";
+    document.getElementById("btnEnviar").click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { titulo, fim: document.getElementById("fim").style.display };
+  });
+  ok(/Maria/.test(anPag.titulo), "📋 a página da anamnese cumprimenta o aluno pelo nome do link");
+  ok(anPag.fim === "block" && anCorpo && anCorpo.t === "tokAn9" &&
+    anCorpo.p_dados.anamnese.parq5 === true && anCorpo.p_dados.anamnese.lesoes === "joelho em 2020" &&
+    anCorpo.p_dados.anamnese.nivel === "iniciante" && anCorpo.p_dados.anamnese.dias === "3" && !!anCorpo.p_dados.anamneseEm,
+    "enviar manda a anamnese pelo MESMO app_aluno_devolve (token validado lá dentro) com os campos do painel");
+  const anTrava = await pAn.evaluate(async () => {
+    document.getElementById("fim").style.display = "none";
+    document.getElementById("form").style.display = "block";
+    document.getElementById("fNivel").value = "";
+    document.getElementById("btnEnviar").disabled = false;
+    document.getElementById("btnEnviar").click();
+    await new Promise((r) => setTimeout(r, 100));
+    return document.getElementById("erro").textContent;
+  });
+  ok(/experiência e quantos dias/.test(anTrava), "sem o mínimo (nível e dias) a página pede em vez de mandar vazio");
+  await pAn.close();
+  // no painel: link com o token + banner de importar + importação com marca
+  const anPainel = await p.evaluate(async () => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    a.appTokenP = a.appTokenP || "tokAn9";
+    a.retorno = a.retorno || {};
+    a.retorno.anamnese = { parq5: true, lesoes: "joelho em 2020", nivel: "iniciante", dias: "3", gosta: "" };
+    a.retorno.anamneseEm = "2026-08-30T10:00:00Z";
+    delete a.anamneseImportEm;
+    a.anamnese = { meds: "nenhum" };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const link = window.__anamneseLink(a);
+    document.querySelector('[data-abreperfil="' + a.id + '"]').click();
+    await new Promise((r) => setTimeout(r, 250));
+    const banner = { escondido: document.getElementById("pfAnImport").hidden, txt: document.getElementById("pfAnImport").textContent };
+    document.querySelector("[data-animporta]").click();
+    await new Promise((r) => setTimeout(r, 250));
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a2 = st2.alunos[0];
+    return { link, banner, an: a2.anamnese, marca: a2.anamneseImportEm,
+      sumiu: document.getElementById("pfAnImport").hidden };
+  });
+  ok(/anamnese\.html\?t=tokAn9/.test(anPainel.link) && !anPainel.banner.escondido && /preencheu a anamnese/.test(anPainel.banner.txt),
+    "o painel gera o link com o token e mostra o banner quando a resposta chega no retorno");
+  ok(anPainel.an.lesoes === "joelho em 2020" && anPainel.an.parq5 === true && anPainel.an.meds === "nenhum" &&
+    anPainel.an.gosta === undefined && anPainel.marca === "2026-08-30T10:00:00Z" && anPainel.sumiu,
+    "Importar mescla só o preenchido (o meds do professor fica; campo vazio não entra) e o banner some");
+  // limpa o cenário: os testes de PAR-Q lá na frente esperam João SEM anamnese
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    delete a.anamnese;
+    delete a.anamneseImportEm;
+    if (a.retorno) { delete a.retorno.anamnese; delete a.retorno.anamneseEm; }
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  await abaPt(p, "relatorios"); // o teste abriu o perfil — devolve a tela pros próximos
   const swPush = fs2.readFileSync(__dirname + "/../sw.js", "utf8");
   ok(/addEventListener\("push"/.test(swPush) && /icon-personal-192/.test(swPush) && /notificationclick/.test(swPush),
     "o sw.js da raiz mostra a notificação e o toque abre o painel");
