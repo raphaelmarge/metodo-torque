@@ -2926,6 +2926,9 @@ async function abaPt(p, a) {
       addOk: !!(lst[1] && lst[1].n === "Fisio Boa Postura"),
       pacoteLimpo: d.clubeApp.length === 2 && d.clubeApp[0].u === "" && d.clubeApp[1].u === "https://fisio.example",
       app: html.indexOf("clubeCard") > -1 && html.indexOf("TORQUE15") > -1 && html.indexOf("Clube de vantagens") > -1,
+      // v699: tela própria (fora do Início) e sem emoji na interface
+      secao: html.indexOf("data-msec='clube'") > -1 && html.indexOf("'clube');return;") > -1,
+      semEmoji: html.indexOf("\u{1F381} Clube") === -1 && html.indexOf("<h2>Clube de vantagens</h2>") > -1,
     };
     window.__clubePT(st2);
     document.getElementById("clubeLista").querySelector('[data-clubex="0"]').click();
@@ -2934,7 +2937,7 @@ async function abaPt(p, a) {
     const st3 = S.read("ptStudio", {});
     st3.config.clube = [];
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
-    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("clubeCard") === -1;
+    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("id='clubeCard'") === -1;
     // limpa
     const st9 = S.read("ptStudio", {});
     if (cfgSnap === "null") delete st9.config.clube; else st9.config.clube = JSON.parse(cfgSnap);
@@ -2945,6 +2948,7 @@ async function abaPt(p, a) {
   ok(clb.pacoteLimpo, "🎁 o pacote leva as parcerias e derruba link que não é http(s)");
   ok(clb.app, "🎁 o app do aluno mostra o Clube de vantagens com o cupom");
   ok(clb.aposTirar === 1 && clb.semNada, "🎁 Tirar remove; sem parceria o card nem nasce no app");
+  ok(clb.secao && clb.semEmoji, "🎁 v699: o Clube é tela própria (só pelo menu) e sem emoji na interface");
 
   // 🛍 v698: loja do app — produtos do painel + serviços do cadastro na vitrine
   const lja = await p.evaluate(() => {
@@ -2968,6 +2972,16 @@ async function abaPt(p, a) {
       itens: (st2.config.lojaItens || []).length,
       pacote: d.lojaApp.length === 2 && d.lojaApp.some((x) => x.n === "Camiseta do studio") && d.lojaApp.some((x) => x.n === "Massagem esportiva"),
       app: html.indexOf("lojaCard") > -1 && html.indexOf("Quero esse") > -1 && html.indexOf("R$ 79,90") > -1,
+      // v699: tela própria (fora do Início) e sem emoji na interface — inclusive
+      // ESCAPADO (\uD83D...) dentro do handler do Quero esse, que foi por onde
+      // o balão de chat escapou da primeira varredura
+      secao: html.indexOf("data-msec='loja'") > -1 && html.indexOf("'loja');return;") > -1,
+      semEmoji: (function () {
+        if (html.indexOf("\u{1F6CD}") > -1 || html.indexOf("<h2>Loja de") === -1) return false;
+        const i = html.indexOf(".lojabt");
+        const tr = i > -1 ? html.slice(i, html.indexOf("});", i) + 3) : "";
+        return tr.indexOf("\\ud83d") === -1 && tr.indexOf("\u{1F4AC}") === -1;
+      })(),
     };
     // desligar os serviços tira só eles da vitrine
     st2.config.lojaServOff = 1;
@@ -2978,7 +2992,7 @@ async function abaPt(p, a) {
     const st3 = S.read("ptStudio", {});
     st3.config.lojaItens = []; st3.servicosPT = [];
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
-    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("lojaCard") === -1;
+    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("id='lojaCard'") === -1;
     // limpa
     const st9 = S.read("ptStudio", {});
     if (snapI === "null") delete st9.config.lojaItens; else st9.config.lojaItens = JSON.parse(snapI);
@@ -2991,6 +3005,7 @@ async function abaPt(p, a) {
   ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Quero esse");
   ok(lja.soProdutos, "🛍 desligar os serviços tira só eles — os produtos ficam");
   ok(lja.semNada, "🛍 vitrine vazia = o card nem nasce no app");
+  ok(lja.secao && lja.semEmoji, "🛍 v699: a Loja é tela própria (só pelo menu) e sem emoji na interface");
 
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {

@@ -1395,7 +1395,7 @@
       /* 🎁 Clube de vantagens (v697): as parcerias do professor com cupom pro
        * aluno — só nasce no HTML quando existe parceria cadastrada. Tocar no
        * cupom copia o código (handler .cupbt, perto do bloco do depoimento). */
-      (clubeApp.length ? "<div class='cardx' id='clubeCard'><h2>🎁 Clube de vantagens</h2>" +
+      (clubeApp.length ? "<div class='cardx' id='clubeCard'><h2>Clube de vantagens</h2>" +
         "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(studio.split(" ")[0]) + " pra quem treina aqui:</div>" +
         clubeApp.map(function (p) {
           return "<div style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
@@ -1409,7 +1409,7 @@
        * dele com o nome do item (a venda fecha como sempre, o dinheiro cai
        * direto com o professor). Sem WhatsApp cadastrado, o botão orienta pro
        * chat em vez de fingir que compra. Só nasce com item na vitrine. */
-      (lojaApp.length ? "<div class='cardx' id='lojaCard'><h2>🛍 Loja de " + esc(studio.split(" ")[0]) + "</h2>" +
+      (lojaApp.length ? "<div class='cardx' id='lojaCard'><h2>Loja de " + esc(studio.split(" ")[0]) + "</h2>" +
         lojaApp.map(function (p) {
           var precoL = "R$ " + (Math.round((+p.v) * 100) / 100).toFixed(2).replace(".", ",");
           return "<div style='display:flex;align-items:center;gap:12px;border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
@@ -1713,7 +1713,7 @@
       "document.addEventListener('click',function(e){var lb=e.target.closest&&e.target.closest('.lojabt');if(!lb)return;" +
       "var it=lb.getAttribute('data-item'),pr=lb.getAttribute('data-preco');" +
       "if(ZAPP){window.open('https://wa.me/55'+ZAPP+'?text='+encodeURIComponent('Oi! Quero comprar: '+it+' ('+pr+'). Como faço?'),'_blank');}" +
-      "else{lb.textContent='Pe\\u00e7a pelo chat \\ud83d\\udcac';setTimeout(function(){lb.textContent='Quero esse';},2600);}});" +
+      "else{lb.textContent='Pe\\u00e7a pelo chat';setTimeout(function(){lb.textContent='Quero esse';},2600);}});" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
@@ -5469,6 +5469,10 @@
       "if(el.id==='trTopo'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'||el.id==='evCargas'||el.id==='evMarcas'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
+      // clube e loja (v699): telas próprias, abertas SÓ pelo menu — o Raphael não
+      // quis os cards ocupando a tela inicial do app
+      "if(el.id==='clubeCard'){el.setAttribute('data-sec','clube');return;}" +
+      "if(el.id==='lojaCard'){el.setAttribute('data-sec','loja');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
       "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
@@ -5545,12 +5549,12 @@
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       // 🎁 clube de vantagens (v697): mesmo desenho da videoteca — atalho no
       // menu que rola até o card; sem parceria cadastrada, a linha nem nasce
-      (clubeApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='clubeCard'>\"+" +
+      (clubeApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='clube'>\"+" +
         "\"<span style='line-height:0;'>\"+ic(\"<rect x='3.5' y='8.5' width='17' height='12' rx='2.5'/><path d='M3.5 12h17M12 8.5V20.5M8.2 8.5C6 8.5 5 6.8 5.8 5.6c.9-1.3 3.4-.8 4.6 1.4l.8 1.5m2.6 0c2.2 0 3.2-1.7 2.4-2.9-.9-1.3-3.4-.8-4.6 1.4l-.8 1.5'/>\")+\"</span>\"+" +
         "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Clube de vantagens</span><span class='mgsub'>" + clubeApp.length + (clubeApp.length > 1 ? " parcerias exclusivas" : " parceria exclusiva") + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       // 🛍 loja (v698): atalho no menu, gated pelo builder como os outros
-      (lojaApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='lojaCard'>\"+" +
+      (lojaApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='loja'>\"+" +
         "\"<span style='line-height:0;'>\"+ic(\"<path d='M5 8h14l-1.2 12a1.8 1.8 0 0 1-1.8 1.6H8a1.8 1.8 0 0 1-1.8-1.6z'/><path d='M8.6 10.5V6.8a3.4 3.4 0 0 1 6.8 0v3.7'/>\")+\"</span>\"+" +
         "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Loja</span><span class='mgsub'>" + lojaApp.length + (lojaApp.length > 1 ? " itens" : " item") + " de " + esc(studio.split(" ")[0]) + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
@@ -5612,7 +5616,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes'||s==='clube'||s==='loja');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
