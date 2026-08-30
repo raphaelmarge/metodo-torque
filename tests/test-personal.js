@@ -2658,6 +2658,43 @@ async function abaPt(p, a) {
   ok(dor.abre, "🩹 a ação do card abre a ficha do aluno");
   ok(dor.antigos === 0, "🩹 relato de mais de 7 dias não alarma mais");
 
+  // 🧭 v690: esteira do aluno novo — checklist no topo do Resumo da ficha
+  const est = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const hoje = new Date().toISOString().slice(0, 10);
+    const novo = { id: "al-esteira", nome: "Esteira Teste", ativo: true, desde: hoje };
+    const velho = { id: "al-velho9", nome: "Velho Teste", ativo: true, desde: "2020-01-01" };
+    st.alunos.push(novo, velho);
+    for (let i = 0; i < 8; i++) st.sessoes.push({ alunoId: "al-velho9", data: "2020-02-0" + (i + 1), hora: "08:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__pfResumo(novo);
+    const el = document.getElementById("pfEsteira");
+    const out = {
+      tem: !!el,
+      linhas: el ? el.querySelectorAll(".estln").length : 0,
+      feitos: el ? el.querySelectorAll(".estln.feito").length : 0,
+      temMontar: el ? !!el.querySelector("[data-montatreino]") : false,
+      temApp: el ? !!el.querySelector("[data-app]") : false,
+      temAnam: el ? !!el.querySelector('[data-est="anam"]') : false,
+      titulo: el ? el.querySelector("h3").textContent : "",
+    };
+    // aluno de 2020 com 8 sessões feitas NÃO é novo: a esteira some mesmo faltando passo
+    window.__pfResumo(velho);
+    out.velhoSome = !document.getElementById("pfEsteira");
+    // limpa o que semeou e devolve a tela pro João
+    const st2 = S.read("ptStudio", {});
+    st2.alunos = st2.alunos.filter((a) => a.id !== "al-esteira" && a.id !== "al-velho9");
+    st2.sessoes = st2.sessoes.filter((s) => s.alunoId !== "al-velho9");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__pfResumo(st2.alunos.find((a) => a.nome === "João Cliente"));
+    return out;
+  });
+  ok(est.tem && est.linhas >= 5 && est.feitos === 0 && /0 de \d/.test(est.titulo),
+    "🧭 aluno novo cru mostra a esteira completa, nada riscado (" + est.titulo + ")");
+  ok(est.temMontar && est.temApp && est.temAnam,
+    "🧭 cada passo pendente tem a ação DENTRO da linha (montar, mandar app, pedir anamnese)");
+  ok(est.velhoSome, "🧭 aluno antigo com 8+ sessões não vê a esteira — ela é do começo");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
