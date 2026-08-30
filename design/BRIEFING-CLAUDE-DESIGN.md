@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v679** |
-| Estado do repo em | 2026-08-30 (commit `825e719`) |
+| App em | **mt-v680** |
+| Estado do repo em | 2026-08-30 (commit `c9f3904`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 141 |
+| Lançamentos no histórico | 142 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v679** — ou seja, **10 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v680** — ou seja, **11 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v680 | recibo automático no WhatsApp — marcou Recebi, o recibo sai pronto |
 | mt-v679 | contrato digital — o aluno aceita o termo de responsabilidade no app e o aceite volta pra ficha |
 | mt-v678 | resumo da semana com IA no painel do Personal |
 | mt-v677 | relatório do mês do aluno — o progresso vira um documento com a marca do professor |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v668 | RPE e batimento voltam pro aluno — card Esforço e batimento na Evolução |
 | mt-v667 | primeiro dia do aluno novo + a videoteca ganha atalho no menu |
 | mt-v666 | cronômetro de descanso conta pelo RELÓGIO e avisa quando acaba |
-| mt-v665 | o app do paciente ganha a cara nova — skin do redesenho (nutri-skin) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
