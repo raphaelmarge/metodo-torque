@@ -7369,6 +7369,38 @@ async function abaPt(p, a) {
     "a cor conta quanto foi treinado no dia: dia sem treino é 0, dia treinado começa no degrau leve");
   ok(leva2.mapaCabe, "o mês cabe na largura da tela (sem estourar o card)");
 
+  // --- 🎯 meta de carga (v675): definir, progresso pelo recorde real, bater e comemorar 1 vez ---
+  const metaCg = await pApp.evaluate(async () => {
+    const dc = JSON.parse(localStorage.getItem("ptdc") || "{}");
+    dc["Supino reto"] = [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-20", kg: 70, r: 8 }];
+    localStorage.setItem("ptdc", JSON.stringify(dc));
+    window.__trocaSec("evolucao");
+    if (window.__evSub) window.__evSub("cargas");
+    await new Promise((r) => setTimeout(r, 250));
+    const semMeta = document.getElementById("mcBox").textContent;
+    document.getElementById("mcDef").click();
+    document.getElementById("mcEx").value = "Supino reto";
+    document.getElementById("mcKg").value = "80";
+    document.getElementById("mcSalva").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const comMeta = document.getElementById("mcBox").textContent;
+    const dc2 = JSON.parse(localStorage.getItem("ptdc"));
+    dc2["Supino reto"].push({ d: new Date().toISOString().slice(0, 10), kg: 82, r: 5 });
+    localStorage.setItem("ptdc", JSON.stringify(dc2));
+    window.__metaCarga.pinta();
+    await new Promise((r) => setTimeout(r, 150));
+    const bateu = document.getElementById("mcBox").textContent;
+    const marca1 = JSON.parse(localStorage.getItem("ptmetacargaok"));
+    window.__metaCarga.pinta();
+    const marca2 = JSON.parse(localStorage.getItem("ptmetacargaok"));
+    return { semMeta, comMeta, bateu, marca1, marca2 };
+  });
+  ok(/Definir uma meta/.test(metaCg.semMeta), "🎯 com carga anotada e sem meta, o card da meta de carga convida a definir");
+  ok(/Supino reto/.test(metaCg.comMeta) && /meta 80 kg/.test(metaCg.comMeta) && /faltam 10 kg/.test(metaCg.comMeta),
+    "meta definida vira barra: recorde 70 de 80 — faltam 10 kg");
+  ok(/META BATIDA/.test(metaCg.bateu) && metaCg.marca1 === "Supino reto|80" && metaCg.marca2 === metaCg.marca1,
+    "bater o recorde celebra e a marca (ex|alvo) segura o confete de repetir");
+
   // --- a FITA DO ANO voltou (pedido do Raphael): Mês | Ano no mesmo card ---
   const mapAno = await pApp.evaluate(async () => {
     const abre = async () => {

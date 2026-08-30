@@ -958,7 +958,7 @@
       // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
       // o #esfBox mora DENTRO do cardx da pílula Cargas de propósito: herda o
       // data-sec/data-evsub do pai e pintaCargas só reescreve o #cgBox, nunca o irmão
-      "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div><div id='esfBox'></div></div>" +
+      "<div class='cardx' id='evCargas'><div id='mcBox'></div><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div><div id='esfBox'></div></div>" +
       "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
@@ -4745,7 +4745,36 @@
       "document.addEventListener('input',function(e){if(!e.target.matches||!e.target.matches('[data-cgbusca]'))return;" +
       "cgBusca=e.target.value;var v9=e.target.value;var p9=e.target.selectionStart;pintaCargas();" +
       "var n9=document.querySelector('[data-cgbusca]');if(n9){n9.focus();n9.value=v9;try{n9.setSelectionRange(p9,p9);}catch(e2){}}});" +
-      "pintaCargas();window.__pintaCargas=pintaCargas;" +
+      // 🎯 meta de carga: o aluno escolhe UM exercício e um alvo em kg — a barra
+      // acompanha o recorde real (ptdc) e comemora UMA vez ao bater (a marca
+      // ptmetacargaok guarda 'ex|alvo': meta nova re-arma o confete sozinha).
+      // Sem carga anotada nenhuma, o card nem aparece — nada de botão que finge.
+      "function mcMeta(){try{return JSON.parse(L('ptmetacarga',''))||null;}catch(e){return null;}}" +
+      "function mcMax(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(x&&+x.kg>m)m=+x.kg;});return m;}" +
+      "function pintaMetaCarga(){var box=document.getElementById('mcBox');if(!box)return;var m=mcMeta();" +
+      "var exs=Object.keys(L('ptdc',{})).filter(function(n){return mcMax(n)>0;});" +
+      "if(!m){box.innerHTML=exs.length?\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;'><b style='font-size:14px;'>🎯 Meta de carga</b><button type='button' id='mcDef' style='background:none;border:none;color:var(--corc);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0;'>Definir uma meta</button></div>\":'';return;}" +
+      "var atual=mcMax(m.ex);var pct=m.alvo?Math.max(0,Math.min(100,Math.round(100*atual/m.alvo))):0;var bateu=atual>=m.alvo&&m.alvo>0;" +
+      "box.innerHTML=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:12px;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;'><b style='min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>🎯 \"+String(m.ex).replace(/</g,'&lt;')+\"</b><span style='flex-shrink:0;'>meta <b>\"+String(m.alvo).replace('.',',')+\" kg</b></span></div>\"+" +
+      "\"<div style='height:10px;background:var(--bg4);border-radius:99px;overflow:hidden;margin-top:8px;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,\"+(bateu?'#16a34a,#4ade80':'var(--cor),var(--corc)')+\");border-radius:99px;transition:width .5s;'></div></div>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;margin-top:8px;'><b style='min-width:0;color:\"+(bateu?'#4ade80':'inherit')+\";'>\"+(bateu?'META BATIDA! 💪':(atual?String(atual).replace('.',',')+' kg — faltam '+String(Math.round((m.alvo-atual)*10)/10).replace('.',',')+' kg':'anote a carga desse exercício pra ver o progresso'))+\"</b>\"+" +
+      "\"<button type='button' id='mcDef' style='background:none;border:none;color:var(--corc);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0;flex-shrink:0;'>Mudar</button></div></div>\";" +
+      "if(bateu&&L('ptmetacargaok','')!==m.ex+'|'+m.alvo){Sv('ptmetacargaok',m.ex+'|'+m.alvo);try{confete();}catch(e){}}}" +
+      "document.getElementById('mcBox').addEventListener('click',function(e){" +
+      "if(e.target.closest&&e.target.closest('#mcSalva')){var ex=(document.getElementById('mcEx')||{}).value;var v=parseFloat(String((document.getElementById('mcKg')||{}).value||'').replace(',','.'));" +
+      "if(!ex||!v||v<1||v>500){alert('Escolha o exercício e um alvo em kg.');return;}Sv('ptmetacarga',JSON.stringify({ex:ex,alvo:v}));pintaMetaCarga();return;}" +
+      "if(e.target.closest&&e.target.closest('#mcTira')){Sv('ptmetacarga','');pintaMetaCarga();return;}" +
+      "if(!e.target.closest||!e.target.closest('#mcDef'))return;" +
+      "var exs=Object.keys(L('ptdc',{})).filter(function(n){return mcMax(n)>0;}).sort();var m=mcMeta()||{};" +
+      "var ops=exs.map(function(n){return \"<option\"+(m.ex===n?' selected':'')+\">\"+n.replace(/</g,'&lt;')+\"</option>\";}).join('');" +
+      "document.getElementById('mcBox').innerHTML=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:12px;'>\"+" +
+      "\"<b style='font-size:14px;'>🎯 Meta de carga</b><div style='display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;'>\"+" +
+      "\"<select id='mcEx' style='flex:2;min-width:120px;'>\"+ops+\"</select>\"+" +
+      "\"<input id='mcKg' type='number' inputmode='decimal' placeholder='kg' value='\"+(m.alvo||'')+\"' style='flex:1;min-width:70px;'>\"+" +
+      "\"<button type='button' id='mcSalva' style='flex:1;min-width:90px;min-height:40px;background:var(--cor);color:#fff;border:none;border-radius:12px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;'>Salvar</button></div>\"+" +
+      "(m.ex?\"<button type='button' id='mcTira' style='background:none;border:none;color:#8a8695;font-family:inherit;font-size:12px;cursor:pointer;padding:8px 0 0;'>tirar a meta</button>\":'')+'</div>';});" +
+      "pintaCargas();pintaMetaCarga();window.__pintaCargas=pintaCargas;window.__metaCarga={pinta:pintaMetaCarga,de:mcMeta,max:mcMax};" +
       /* ---------- Esforço e batimento (v668): o dado que o aluno gera volta pra ele ----------
        * RPE (ptrpe) vira barras por semana com os MESMOS cortes do painel (média
        * >=2,5 pesado / >=1,6 na medida / senão leve — os dois lados contam a mesma
@@ -5311,6 +5340,7 @@
       // o cabeçalho e as páginas repintam com os dados mais frescos do aparelho
       "if(window.__evTopoPinta)window.__evTopoPinta(atual);" +
       "if(atual==='cargas'&&window.__pintaCargas)window.__pintaCargas();" +
+      "if(atual==='cargas'&&window.__metaCarga)window.__metaCarga.pinta();" +
       "if(atual==='cargas'&&window.__pintaEsforco)window.__pintaEsforco();" +
       "if(atual==='marcas'&&window.__pintaMarcas)window.__pintaMarcas();" +
       // a retrospectiva tem regra própria (só no comecinho do mês, some ao
