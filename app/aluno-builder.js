@@ -257,6 +257,10 @@
       ".rperow{display:flex;gap:6px}" +
       ".rpebtn{flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:11px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;min-height:44px}" +
       ".rpeok{color:#6e6a78;font-size:13px;text-align:center;padding:6px 0}" +
+      ".ntbox{margin-top:14px}" +
+      ".ntTxt{width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.08);border-radius:14px;color:#fff;font-family:inherit;font-size:14px;padding:11px 13px;resize:vertical;min-height:64px}" +
+      ".ntSalva{display:block;width:100%;min-height:44px;margin-top:8px;background:var(--bg4);border:1px solid var(--bg11);border-radius:14px;color:var(--corc);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer}" +
+      "html.claro .ntTxt{background:#fff;border-color:#d9d5e3;color:#191622}" +
       "html.claro .rpebtn{background:#fff;border-color:#d9d5e3;color:#191622}" +
       ".gcard .rpelab{color:#1d1729}" +
       ".gcard .rpebtn{background:rgba(var(--cor-rgb),.12);border:1px solid rgba(var(--cor-rgb),.4);color:var(--cor2)}" +
@@ -1581,7 +1585,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1607,6 +1611,7 @@
       "var marca9=[mrc9(pri),mrc9(ult),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
       "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "aceite:L('ptaceite',null)," +
+      "notas:L('ptnotas',[])," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
       "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;}" +
@@ -1760,6 +1765,22 @@
       // respondeu no recibo → o card da área de Treino não pode perguntar de novo
       "if(cx.id==='cardRpe'){setTimeout(function(){cx.style.display='none';},2600);return;}" +
       "var cr=document.getElementById('cardRpe');if(cr){cr.style.display='none';cr.innerHTML='';}});" +
+      /* 📝 resumo ESCRITO do treino (v686): o RPE dá a nota, aqui o aluno conta
+       * com as próprias palavras ("senti o ombro no supino", "sobrou gás").
+       * Um widget só pros TRÊS fins — musculação, corrida e circuito — no
+       * mesmo desenho do RPE: montador + clique delegado no document, então
+       * funciona em qualquer tela que o incluir. Guarda em ptnotas (teto 60),
+       * que viaja pro professor no retorno e entra nos dados da IA. Vazio não
+       * grava nada — o campo é opcional de verdade. */
+      "function notaBox(tp){return \"<div class='ntbox' data-notabox><div class='rpelab'>Quer contar como foi? (opcional)</div>\"+" +
+      "\"<textarea class='ntTxt' maxlength='400' rows='3' placeholder='ex.: senti o ombro no supino, sobrou g\\u00e1s no final\\u2026'></textarea>\"+" +
+      "\"<button type='button' class='ntSalva' data-notasalva='\"+tp+\"'>Guardar resumo</button></div>\";}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-notasalva]');if(!b)return;" +
+      "var cx=b.closest('[data-notabox]');var ta=cx&&cx.querySelector('.ntTxt');" +
+      "var tx=ta?ta.value.trim().slice(0,400):'';if(!tx)return;" +
+      "var lst=L('ptnotas',[]);lst.push({d:isoHj(),tp:b.dataset.notasalva,t:tx});if(lst.length>60)lst.shift();Sv('ptnotas',lst);" +
+      "cx.innerHTML=\"<div class='rpeok'>Anotado! Vai pro seu personal, e a IA l\\u00ea antes de montar o pr\\u00f3ximo treino.</div>\";});" +
+      "window.__trNota={lista:function(){return L('ptnotas',[]);},box:notaBox};" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
@@ -2577,6 +2598,7 @@
       "function wodMsgFim(msg,op){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
       "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
       "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'')+" +
+      "notaBox('wod')+" +
       "(op?arteBtns('wodShareArq','wodShareSem'):'');" +
       "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});" +
       "if(op)ligaArte('wodShareArq','wodShareSem',op);}" +
@@ -3294,6 +3316,7 @@
        * GPS ou treino curto demais nao ganham botao que nao leva a lugar
        * nenhum. */
       "((reg.r)?\"<button type='button' id='crRs3D' style='display:block;width:100%;min-height:52px;margin-top:16px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#fff;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>Ver o trajeto em 3D</button>\":'')+" +
+      "notaBox('corrida')+" +
       "\"<div style='display:flex;gap:8px;margin-top:20px;'>\"+" +
       "\"<label class='btnx' id='crRsFoto' style='flex:1;text-align:center;cursor:pointer;min-height:54px;line-height:34px;'>Postar com foto<input id='crRsArq' type='file' accept='image/*' style='display:none;'></label>\"+" +
       "\"<button type='button' id='crRsSem' style='flex:1;min-height:54px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#cfcbdb;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>S\u00f3 os n\u00fameros</button></div>\"+" +
@@ -4101,6 +4124,7 @@
       "f.p2.l.map(function(ln){return \"<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;'><span>\"+esc2(ln.t)+\"</span><b style='color:#bfdbfe;white-space:nowrap;'>\"+esc2(ln.v||'')+'</b></div>';}).join('')+'</div>';}" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:16px;'>\"+rpeHtml()+'</div>';" +
+      "m+=notaBox('musc');" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
       "faltam.map(function(x){return \"<button type='button' class='gfalta' data-gfalta='\"+x.i+\"'>\"+esc2(x.e)+' ›</button>';}).join('');" +
       // R4: compartilhar o treino com a foto — o gatilho mora no recibo

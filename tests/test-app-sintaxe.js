@@ -90,6 +90,14 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// resumo escrito do treino (v686): campo opcional no fim dos TRÊS tipos,
+// grava em ptnotas e o retorno leva pro professor (a IA lê no evolucaoIA)
+ok(html.indexOf("function notaBox") > -1 && html.indexOf("data-notasalva") > -1 &&
+  html.indexOf("notas:L('ptnotas',[])") > -1 && html.indexOf("k==='ptnotas'") > -1,
+  "📝 o resumo escrito existe, grava em ptnotas e volta pro professor no retorno");
+ok((html.match(/notaBox\('(musc|corrida|wod)'\)/g) || []).length === 3,
+  "o campo aparece nos TRÊS fins de treino: musculação, corrida e circuito");
+
 // histórico do exercício (v685): a tela do guiado dobra as sessões anteriores
 // num <details> — melhor série de cada dia, só com 2+ sessões passadas
 ok(html.indexOf("function gHistDias") > -1 && html.indexOf("window.__gHist") > -1 &&
