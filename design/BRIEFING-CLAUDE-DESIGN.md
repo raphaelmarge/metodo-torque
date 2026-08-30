@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v674** |
-| Estado do repo em | 2026-08-30 (commit `806702a`) |
+| App em | **mt-v675** |
+| Estado do repo em | 2026-08-30 (commit `769ad2a`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 136 |
+| Lançamentos no histórico | 137 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v674** — ou seja, **5 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v675** — ou seja, **6 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v671** (2026-08-29).
+O motor (`app/aluno-builder.js`) encostou em **mt-v675** (2026-08-30).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v675 | meta de carga no app do aluno — escolhe o exercício, define o alvo e a barra segue o recorde real |
 | mt-v674 | lista de compras da semana no NUTRI — o plano alimentar vira a lista de mercado em 1 clique |
 | mt-v673 | fichas-modelo do professor — salvar as fichas de um aluno como modelo e aplicar em qualquer outro |
 | mt-v672 | a ciência do treinamento entra na IA — ACSM/NSCA, periodização declarada, RIR e volume por grupo |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v663 | demo do paciente regenerada no motor novo — e ganha o gerador pra nunca mais congelar |
 | mt-v662 | redesenho do painel NUTRI — tokens --nt-* por papel, base em verde, modo claro num bloco só |
 | mt-v661 | app do paciente no motor novo — código servido pelo site, painel publica só os dados |
-| mt-v660 | Financeiro consolidado no NUTRI — atrasados com a ação na linha, 6 meses, régua de cobrança |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
