@@ -2960,6 +2960,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-top: 14px;">
+      <h2>🎁 Clube de vantagens</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Suas parcerias com comércios locais e sites viram <b>cupons no app dos seus alunos</b> — desconto na loja de suplemento, na fisioterapia, no açaí do bairro. Benefício exclusivo segura aluno. Cadastre aqui e toque em <b>Publicar</b> lá em cima pra chegar nos celulares.</p>
+      <div id="clubeLista" style="margin-bottom: 10px;"></div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px;">
+        <label style="margin:0;font-size:12px;font-weight:700;">Parceiro<input id="clubeNome" placeholder="Suplementos do Zé" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Benefício<input id="clubeBen" placeholder="15% off em creatina" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Cupom (opcional)<input id="clubeCupom" placeholder="TORQUE15" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Link (opcional)<input id="clubeLink" placeholder="https://…" style="margin-top:4px;"></label>
+      </div>
+      <button class="btn sec mini" id="clubeAdd" style="margin-top: 10px;">+ Adicionar parceria</button>
+      <span id="clubeStatus" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+    </div>
+
+    <div class="card" style="margin-top: 14px;">
       <h2>Foto do card “treino de hoje”</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> que não tenham foto mais específica. Quer uma foto diferente por treino? Use o card <b>Fotos por tipo de treino</b> aqui embaixo, ou escolha ficha por ficha em <b>Treinos → Fichas do aluno</b>.</p>
       <div class="fotoguia">
@@ -12157,7 +12171,44 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (window.__capaPers) window.__capaPers();
     if (window.__pintaCapasTipo) window.__pintaCapasTipo();
     pintaPersPrev();
+    pintaClube(st);
   }
+  /* 🎁 Clube de vantagens (v697): parcerias do professor com comércios locais
+   * viram cupons no app dos alunos — benefício exclusivo segura aluno. Mora em
+   * config.clube e viaja no pacote (clubeApp); mexeu, todos os apps entram na
+   * fila de publicar (mesma regra da cor e do logo). */
+  function pintaClube(st) {
+    var box = $("clubeLista"); if (!box) return;
+    var lst = (st.config || {}).clube || [];
+    box.innerHTML = lst.length ? lst.map(function (p, i) {
+      return '<div class="sessao-pt"><b>' + esc(p.n) + "</b>" +
+        '<span class="muted" style="font-size:12px;flex:1;min-width:0;">' + esc(p.b) + (p.c ? " · cupom " + esc(p.c) : "") + "</span>" +
+        '<button class="btn sec mini" data-clubex="' + i + '">Tirar</button></div>';
+    }).join("") : '<div class="muted" style="font-size:12.5px;">Nenhuma parceria ainda.</div>';
+  }
+  $("clubeAdd").addEventListener("click", function () {
+    var n = $("clubeNome").value.trim(), b9 = $("clubeBen").value.trim();
+    var c = $("clubeCupom").value.trim(), u = $("clubeLink").value.trim();
+    if (!n || !b9) { $("clubeStatus").textContent = "Preencha o parceiro e o benefício."; return; }
+    if (u && !/^https?:\/\//i.test(u)) { $("clubeStatus").textContent = "O link precisa começar com https://"; return; }
+    var st = load(); st.config = st.config || {};
+    var lst = st.config.clube = st.config.clube || [];
+    if (lst.length >= 20) { $("clubeStatus").textContent = "Máximo de 20 parcerias — tire uma antes."; return; }
+    lst.push({ id: S.uid(), n: n.slice(0, 60), b: b9.slice(0, 90), c: c.slice(0, 30), u: u.slice(0, 200) });
+    st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+    save(st);
+    ["clubeNome", "clubeBen", "clubeCupom", "clubeLink"].forEach(function (id) { $(id).value = ""; });
+    $("clubeStatus").textContent = "Adicionada! Toque em Publicar lá em cima pra chegar no app dos alunos.";
+  });
+  document.addEventListener("click", function (e) {
+    var x = e.target.closest("[data-clubex]"); if (!x) return;
+    var st = load();
+    ((st.config || {}).clube || []).splice(+x.getAttribute("data-clubex"), 1);
+    st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+    save(st);
+    $("clubeStatus").textContent = "Tirada — publique de novo pra sumir do app.";
+  });
+  window.__clubePT = pintaClube; // testes
   $("persPre").addEventListener("click", function (e) {
     var b = e.target.closest("[data-perscor]");
     if (!b) return;
@@ -16405,6 +16456,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       termoApp: (st.config || {}).termo || null,
       // v694: o professor pediu depoimento — o app mostra o convite no Início
       pedeDepo: a.pedeDepo ? 1 : 0,
+      // v697: clube de vantagens — parcerias viram cupons no app (link só http)
+      clubeApp: ((st.config || {}).clube || []).slice(0, 20).map(function (p) {
+        return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
+      }),
     };
   }
   window.__dadosApp = dadosAppAluno; // testes

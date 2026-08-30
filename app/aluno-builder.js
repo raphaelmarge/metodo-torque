@@ -87,6 +87,7 @@
     var PAL = D.PAL || [], LOGOAPP = D.LOGOAPP || "";
     var zapPersonal = D.zapPersonal || "", metaSemana = D.metaSemana || 3;
     var sessApp = D.sessApp || [], vidsApp = D.vidsApp || [], qa = D.qa || null;
+    var clubeApp = D.clubeApp || []; // v697: parcerias do professor com cupom
     var ctApp = D.ctApp || null, plApp = D.plApp || null, pixApp = D.pixApp || null, svApp = D.svApp || [];
     var treino = D.treino || "", t2 = D.t2 || null, fichaVenceApp = D.fichaVenceApp || "";
     var fichasApp = D.fichasApp || null, fexs = D.fexs || [], guiaFichasP = D.guiaFichasP || [];
@@ -1390,6 +1391,19 @@
               }).join("");
           }).join("");
         })() + "</div>" : "") +
+      /* 🎁 Clube de vantagens (v697): as parcerias do professor com cupom pro
+       * aluno — só nasce no HTML quando existe parceria cadastrada. Tocar no
+       * cupom copia o código (handler .cupbt, perto do bloco do depoimento). */
+      (clubeApp.length ? "<div class='cardx' id='clubeCard'><h2>🎁 Clube de vantagens</h2>" +
+        "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(studio.split(" ")[0]) + " pra quem treina aqui:</div>" +
+        clubeApp.map(function (p) {
+          return "<div style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+            "<b style='font-size:14.5px;'>" + esc(p.n) + "</b>" +
+            "<div style='font-size:13px;color:#cfcbdb;margin-top:2px;'>" + esc(p.b) + "</div>" +
+            (p.c ? "<button class='cupbt' data-cup='" + esc(p.c) + "' style='margin-top:9px;background:var(--bg2);border:1px dashed var(--cor);color:var(--corc);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;letter-spacing:.06em;'>" + esc(p.c) + " · copiar</button>" : "") +
+            (p.u ? "<a href='" + esc(p.u) + "' target='_blank' rel='noopener' style='display:inline-block;margin:9px 0 0 " + (p.c ? "10px" : "0") + ";font-size:13px;color:var(--corc);font-weight:700;'>Ver site ↗</a>" : "") +
+            "</div>";
+        }).join("") + "</div>" : "") +
       // ---------- Chat (tela 10): cabeçalho do personal no alto da área ----------
       "<div class='cardx' id='chTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:22px 20px;color:#fff;display:flex;align-items:center;gap:13px;'>" +
@@ -1672,6 +1686,13 @@
       "Sv('ptdepo',{t:t,em:isoHj()});" +
       "cx.innerHTML=\"<h2>Obrigado! \\ud83d\\udc9c</h2><div class='vz' style='text-align:left;'>Seu depoimento foi direto pro seu personal.</div>\";});})();" +
       "window.__depo={pede:!!PDEPO};" +
+      // 🎁 cupom do clube (v697): tocar copia o código — com reserva pro
+      // navegador sem clipboard (textarea + execCommand)
+      "document.addEventListener('click',function(e){var cb=e.target.closest&&e.target.closest('.cupbt');if(!cb)return;" +
+      "var cd=cb.getAttribute('data-cup');" +
+      "function feito(){cb.textContent='Copiado! \\u2713';setTimeout(function(){cb.textContent=cd+' \\u00b7 copiar';},2200);}" +
+      "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cd).then(feito,feito);}" +
+      "else{try{var ta=document.createElement('textarea');ta.value=cd;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();feito();}catch(e9){}}});" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
@@ -5500,6 +5521,12 @@
       (vidsApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='vidCard'>\"+" +
         "\"<span style='line-height:0;'>\"+ic(\"<rect x='3.5' y='5' width='17' height='14' rx='2.5'/><path d='M10 9.4l4.6 2.6L10 14.6z'/>\")+\"</span>\"+" +
         "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Conteúdos e vídeos</span><span class='mgsub'>" + vidsApp.length + (vidsApp.length > 1 ? " vídeos" : " vídeo") + " do seu personal</span></span>\"+" +
+        "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
+      // 🎁 clube de vantagens (v697): mesmo desenho da videoteca — atalho no
+      // menu que rola até o card; sem parceria cadastrada, a linha nem nasce
+      (clubeApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='clubeCard'>\"+" +
+        "\"<span style='line-height:0;'>\"+ic(\"<rect x='3.5' y='8.5' width='17' height='12' rx='2.5'/><path d='M3.5 12h17M12 8.5V20.5M8.2 8.5C6 8.5 5 6.8 5.8 5.6c.9-1.3 3.4-.8 4.6 1.4l.8 1.5m2.6 0c2.2 0 3.2-1.7 2.4-2.9-.9-1.3-3.4-.8-4.6 1.4l-.8 1.5'/>\")+\"</span>\"+" +
+        "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Clube de vantagens</span><span class='mgsub'>" + clubeApp.length + (clubeApp.length > 1 ? " parcerias exclusivas" : " parceria exclusiva") + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +
       "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +
