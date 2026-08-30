@@ -114,6 +114,24 @@
     return;
   }
   try { localStorage.setItem("tq_app_token", t); } catch (e) {}
+  /* Manifest com o token (v696): o start_url "./" fazia o app salvo na tela
+   * inicial abrir SEM o ?t= — e no iPhone o app instalado tem um cofre de
+   * dados separado do Safari, então a reserva do localStorage nem existia lá.
+   * Com o token na mão, o manifest vira um data: com o link completo (ícones
+   * absolutos: dentro de um data:, endereço relativo não resolve). */
+  try {
+    var manL = { name: "TORQUE FIT — Meu app", short_name: "TORQUE FIT", display: "standalone",
+      background_color: "#121016", theme_color: "#7c3aed",
+      start_url: location.origin + "/app/?t=" + encodeURIComponent(t),
+      scope: location.origin + "/app/",
+      icons: [
+        { src: location.origin + "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: location.origin + "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+        { src: location.origin + "/assets/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      ] };
+    var lnM = document.querySelector("link[rel='manifest']");
+    if (lnM) lnM.href = "data:application/manifest+json;charset=utf-8," + encodeURIComponent(JSON.stringify(manL));
+  } catch (e) {}
 
   function cabecalhos() {
     return { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" };

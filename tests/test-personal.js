@@ -2871,6 +2871,39 @@ async function abaPt(p, a) {
   ok(hv.vazio === 0, "⏱ mês sem sessão não inventa valor de hora");
   ok(/Sua hora rendeu/.test(hv.tela) && /80/.test(hv.tela), "⏱ o card Indicadores mostra quanto a hora rendeu no mês");
 
+  // 📲 v696: o app salvo na tela inicial do iPhone abria SEM o token (o
+  // start_url "./" do manifest fixo) e o cofre de dados separado do iOS não
+  // tinha nem a reserva do localStorage — o manifest agora leva o link completo
+  {
+    const ctxM = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pM = await ctxM.newPage();
+    const appM = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0], snap = a.appTokenP;
+      a.appTokenP = "tok-manifesto"; S.write("ptStudio", st);
+      const html = window.__montaAppAluno(a, new Date().toISOString());
+      const st2 = S.read("ptStudio", {});
+      if (snap) st2.alunos[0].appTokenP = snap; else delete st2.alunos[0].appTokenP;
+      S.write("ptStudio", st2);
+      return html;
+    });
+    await pM.route("**/rest/v1/rpc/**", (r) => r.abort());
+    await pM.route("**/app-teste-manifesto.html", (r) => r.fulfill({ contentType: "text/html", body: appM }));
+    await pM.goto(BASE + "/app-teste-manifesto.html", { waitUntil: "domcontentloaded" });
+    await pM.waitForTimeout(600);
+    const man = await pM.evaluate(() => {
+      const ln = document.querySelector("link[rel='manifest']");
+      if (!ln || ln.href.indexOf("data:") !== 0) return null;
+      const j = JSON.parse(decodeURIComponent(ln.href.split(",").slice(1).join(",")));
+      return { start: j.start_url, icone: (j.icons && j.icons[0] && j.icons[0].src) || "" };
+    });
+    ok(man && /\/app\/\?t=tok-manifesto$/.test(man.start),
+      "📲 o manifest do app leva o link COMPLETO do aluno no start_url");
+    ok(man && /^https?:\/\//.test(man.icone),
+      "📲 os ícones do manifest são absolutos (relativo não resolve dentro de data:)");
+    await ctxM.close();
+  }
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

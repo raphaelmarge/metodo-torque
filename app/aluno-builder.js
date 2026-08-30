@@ -1589,6 +1589,22 @@
       "function CV(n){try{return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()||'#fff';}catch(e){return '#fff';}}" +
       // barra do navegador na cor do studio — nasce da paleta, não do HTML
       "(function(){var tc=document.createElement('meta');tc.setAttribute('name','theme-color');tc.setAttribute('content',CV('cor'));document.head.appendChild(tc);})();" +
+      /* Manifest com o TOKEN (v696): o manifest fixo tinha start_url "./" e o
+       * app salvo na tela inicial abria /app/ SEM o ?t= — e no iPhone o app
+       * instalado ganha um cofre de dados SEPARADO do Safari, então nem a
+       * reserva do localStorage existia lá: tela de "link incompleto". O
+       * manifest agora é montado aqui com o link COMPLETO do aluno; os ícones
+       * vão com endereço absoluto porque, dentro de um data:, o relativo não
+       * resolve contra o site. Sem suporte a manifest em data:, o navegador
+       * cai no comportamento antigo — salvar a página atual, que TEM o ?t=. */
+      "(function(){try{if(location.protocol.indexOf('http'))return;" +
+      "var man={name:'TORQUE FIT \\u2014 Meu app',short_name:'TORQUE FIT',display:'standalone',background_color:CV('bg'),theme_color:CV('cor')," +
+      "start_url:TOKEN?location.origin+'/app/?t='+encodeURIComponent(TOKEN):location.href," +
+      "scope:location.origin+'/app/'," +
+      "icons:[{src:location.origin+'/assets/icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:location.origin+'/assets/icons/icon-512.png',sizes:'512x512',type:'image/png'},{src:location.origin+'/assets/icons/icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]};" +
+      "var ln=document.querySelector(\"link[rel='manifest']\")||document.createElement('link');ln.rel='manifest';" +
+      "ln.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(man));" +
+      "if(!ln.parentNode)document.head.appendChild(ln);window.__manApp=man;}catch(e){}})();" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
