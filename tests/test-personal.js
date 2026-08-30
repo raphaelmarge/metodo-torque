@@ -2844,6 +2844,33 @@ async function abaPt(p, a) {
   ok(depo.aprovado && depo.pedeLimpo, "💬 aprovar publica em Quem treina comigo (primeiro nome) e encerra o pedido");
   ok(depo.semDepo, "💬 Tirar remove o depoimento da página na hora");
 
+  // ⏱ v695: quanto vale a hora — faturamento ÷ sessões dadas, no card Indicadores
+  const hv = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    st.pagamentos.push({ id: "hv-p1", alunoId: j.id, data: "2026-05-05", valor: 800 });
+    for (let i = 1; i <= 10; i++) st.sessoes.push({ id: "hv-s" + i, alunoId: j.id, data: "2026-05-" + ("0" + i).slice(-2), hora: "07:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const r = window.__horaPT("2026-05");
+    const rVazio = window.__horaPT("2019-01");
+    // o card Indicadores pinta a linha quando o mês escolhido é o semeado
+    const sel = document.getElementById("fchMesP");
+    const old = sel.value;
+    sel.value = "2026-05";
+    sel.dispatchEvent(new Event("change"));
+    const tela = document.getElementById("rel4c").textContent;
+    // limpa e devolve o mês
+    const st2 = S.read("ptStudio", {});
+    st2.pagamentos = st2.pagamentos.filter((x) => x.id !== "hv-p1");
+    st2.sessoes = st2.sessoes.filter((x) => !/^hv-s/.test(String(x.id)));
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    sel.value = old; sel.dispatchEvent(new Event("change"));
+    return { hora: r.hora, horas: r.horas, vazio: rVazio.hora, tela };
+  });
+  ok(hv.horas === 10 && Math.round(hv.hora) === 80, "⏱ R$ 800 em 10 sessões dadas = hora de R$ 80");
+  ok(hv.vazio === 0, "⏱ mês sem sessão não inventa valor de hora");
+  ok(/Sua hora rendeu/.test(hv.tela) && /80/.test(hv.tela), "⏱ o card Indicadores mostra quanto a hora rendeu no mês");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

@@ -14922,6 +14922,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     var casa = nC ? somaC / nC : 0;
     var num1 = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
+    /* Quanto vale sua hora (v695): faturamento ÷ sessões dadas (cada sessão
+     * feita = 1 hora). Ajuda a decidir preço e quais horários valem a pena.
+     * Sem sessão no mês, "—" — número inventado não entra. A seta compara com
+     * o mês ANTERIOR pela mesma conta. */
+    var horaV = d.feitas ? d.fat / d.feitas : 0;
+    var mesAntH = (function () {
+      var dt = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 1, 1, 12);
+      dt.setMonth(dt.getMonth() - 1);
+      return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2);
+    })();
+    var dAntH = dadosDoMes(st, mesAntH);
+    var horaAnt = dAntH.feitas ? dAntH.fat / dAntH.feitas : 0;
+    var horaTxt = d.feitas ? S.fmtBRL(horaV) +
+      (horaAnt ? (horaV >= horaAnt ? " ↑" : " ↓") : "") : "—";
     // sessoes por semana das ultimas 4 semanas, com as faltas empilhadas em cima
     var hoje = S.todayISO();
     var seg = new Date(hoje + "T12:00:00");
@@ -14949,6 +14963,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       relKv("Saldo", saldo) + "</div>" +
       '<div class="pfbox"><div class="tdrot">Indicadores</div>' +
       relKv("Ticket médio", S.fmtBRL(ticket)) +
+      relKv("Sua hora rendeu", horaTxt, !d.feitas ? null : horaAnt && horaV < horaAnt ? "var(--tk-aten)" : "var(--tk-ok)") +
       relKv("Tempo de casa", num1(casa) + " meses") +
       relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "var(--tk-erro)" : "var(--tk-ok)") + "</div>" +
       '<div class="pfbox" id="rel4cNiver"><div class="tdrot">Aniversários · 7 dias</div></div>' +
@@ -16039,6 +16054,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
   });
   window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra, dor: relatosComDor }; // testes
+  // v695: quanto vale a hora, pra teste — a mesma conta do card Indicadores
+  window.__horaPT = function (mes9) {
+    var st = load();
+    var d = dadosDoMes(st, mes9 || S.todayISO().slice(0, 7));
+    return { fat: d.fat, horas: d.feitas, hora: d.feitas ? d.fat / d.feitas : 0 };
+  };
 
   // ---------- primeiro dia guiado ----------
   // Conta nova não tem o momento "uau" garantido: o professor pode passar o
