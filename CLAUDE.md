@@ -1396,6 +1396,15 @@ ninguém atropelar ninguém — valem pros dois:
   anon são DE PROPÓSITO (o app do aluno valida o token por dentro — revogar
   quebraria o app); as tabelas com RLS sem política são as SELADAS. Pendente do
   Raphael no painel do Supabase: ligar Auth → "Leaked password protection".
+  Em 2026-08-30 (mt-v682/684) também publicados e aplicados: **push-envia
+  v11** (ação `prof` — push pro PROFESSOR autenticado pela senha da
+  `push_config` selada; inscrições `prof:<uid>` na push_subs ficam fora dos
+  avisos de aluno) e **pagamentos-webhook v9** (avisa o professor no evento
+  'pago'); blocos SQL "PUSH PRO PROFESSOR" (push_config + push_avisa_prof +
+  gatilhos em app_chat/app_agenda) e "AULA EXPERIMENTAL" (coluna horario em
+  matriculas_online + RPC pública aula_exp_pede com freio de spam) rodados no
+  banco E espelhados no setup — os dois conferidos no ar antes de republicar
+  (v10 e v8 batiam com o repo).
   ⚠️ Antes de republicar qualquer função,
   CONFIRA o que está no ar: a v11 tinha duas melhorias que ainda não estavam no
   repo, e publicar por cima teria apagado as duas. Na v12→v13 essa conferência
