@@ -256,7 +256,7 @@ Deno.serve(async (req: Request) => {
        * que ele espera e avisa quando a função publicada é velha demais —
        * sem isso, uma chat-envia antiga ignorava a leitura do professor e
        * nada na tela dizia por quê: o treino só saía "errado". */
-      regras: ["mes", "brief", "briefManda"],
+      regras: ["mes", "brief", "briefManda", "metodo"],
     });
   }
 
@@ -391,6 +391,47 @@ Deno.serve(async (req: Request) => {
       "No fim dos dados vem um \"LEMBRETE FINAL\" repetindo o texto do professor: antes de devolver o " +
       "JSON, confira o seu plano linha a linha contra ele. Se descumprir alguma coisa de propósito, diga " +
       "qual e por quê no campo resumo. ";
+    /* A ciência do treinamento entra como REGRA de prompt (pedido do Raphael):
+     * princípios ACSM/NSCA, periodização e autorregulação por RIR/RPE. A IA
+     * passa a DECLARAR a metodologia no fim do resumo — o professor vê o
+     * PORQUÊ do plano, não só o quê. A leitura do professor continua vencendo
+     * tudo (a regra do brief, acima): se a estrutura pedida contrariar uma
+     * faixa daqui, a IA obedece o professor e registra a ressalva. */
+    const METODO_MUSC =
+      "BASE CIENTÍFICA (princípios ACSM/NSCA) — monte o plano sobre: SOBRECARGA PROGRESSIVA (as 4 semanas " +
+      "do mes precisam subir volume OU intensidade de forma mensurável); ESPECIFICIDADE (força = cargas " +
+      "altas, 3 a 6 reps, descanso de 120-180 s; hipertrofia = 6 a 12 reps, descanso de 60-90 s; " +
+      "resistência muscular = 12+ reps, descanso curto — escolha a faixa pelo objetivo da anamnese e diga " +
+      "qual usou); INDIVIDUALIDADE (dose pela idade, nível, cargas e frequência REAIS recebidas — na " +
+      "dúvida, subestime); VARIAÇÃO (variação vem da progressão semanal, não de trocar exercício à toa). " +
+      "PERIODIZAÇÃO — escolha e DECLARE o modelo: iniciante ou voltando de pausa = progressão LINEAR " +
+      "simples; intermediário ou avançado com 3+ dias/semana = ONDULATÓRIA semanal (distribua dias mais " +
+      "pesados e mais leves entre as fichas ou nas semanas do mes); objetivo com data marcada = linear " +
+      "com pico antes da data. A semana 4 mais leve (deload) já é obrigatória. " +
+      "VOLUME — mire 10 a 20 séries SEMANAIS por grupo muscular grande pra hipertrofia (iniciante perto " +
+      "de 10, avançado perto de 20), contando todas as fichas da semana juntas; se a estrutura pedida " +
+      "pelo professor estourar a faixa, obedeça o professor e registre a ressalva no resumo. " +
+      "AUTORREGULAÇÃO — prescreva o esforço em RIR (repetições na reserva) na obs dos exercícios " +
+      "principais (ex.: \"pare com 2 na reserva\"); se os dados trouxerem o esforço percebido (RPE) das " +
+      "últimas semanas, use: RPE alto constante = segure a progressão e priorize recuperação; RPE baixo " +
+      "constante = progrida mais rápido. " +
+      "No fim do campo resumo, acrescente uma linha \"Metodologia: <modelo de periodização> · <faixa de " +
+      "reps e objetivo> · ~N séries/grupo/semana\". ";
+    const METODO_WOD =
+      "BASE CIENTÍFICA — aplique sobrecarga progressiva pelas 4 semanas do mes mexendo em UMA variável " +
+      "por vez (mais rounds, menos descanso ou mais carga); alterne dias intensos e dias de ritmo " +
+      "sustentável (ondulação — nunca dois esforços máximos em dias seguidos); individualize pelo nível " +
+      "e pela frequência REAIS recebidas; prescreva o esforço-alvo na obs de cada circuito (ex.: \"ritmo " +
+      "que dá pra sustentar conversando\", \"só os 2 últimos minutos fortes\"). Se os dados trouxerem RPE " +
+      "das últimas semanas, use pra dosar a intensidade. " +
+      "No fim do campo resumo, acrescente uma linha \"Metodologia: <como o mês progride, em 1 frase>\". ";
+    const METODO_CORRIDA =
+      "BASE CIENTÍFICA — siga a distribuição polarizada: a MAIOR parte do volume semanal em ritmo leve " +
+      "(de conversa) e no máximo 1 a 2 sessões de qualidade (tiros/ritmo) por semana, nunca em dias " +
+      "seguidos; o volume semanal sobe no máximo ~10% de uma semana pra outra (a semana 4 mais leve já é " +
+      "obrigatória); individualize pelo pace e pela maior distância REAIS recebidos nos dados — nunca " +
+      "prescreva pace mais forte que o histórico sem explicar por quê no resumo. " +
+      "No fim do campo resumo, acrescente uma linha \"Metodologia: <modelo do mês, em 1 frase>\". ";
     const SISTEMAS: Record<string, string> = {
       musculacao: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
@@ -402,7 +443,7 @@ Deno.serve(async (req: Request) => {
         'preferências da anamnese; reps pode ser número ("10") ou tempo ("30s"); descanso em segundos; ' +
         "obs é opcional e curta (técnica ou cuidado com a lesão). Se o PAR-Q tiver resposta SIM, seja conservador " +
         "e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
-        MES_REGRA + " " + BRIEF_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA + " " + METODO_MUSC,
       wod: "Você é um coach sênior de treino em circuito (estilo cross/HIIT) que prescreve WODs individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
         "JSON válido, sem markdown e sem comentários, neste formato exato: " +
@@ -414,7 +455,7 @@ Deno.serve(async (req: Request) => {
         "(nome do movimento — prefira nomes do catálogo recebido); aq é um aquecimento de 1 linha; respeite lesões, " +
         "PAR-Q, nível e equipamento da anamnese, escalando os movimentos quando precisar. Se o PAR-Q tiver resposta " +
         "SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
-        MES_REGRA + " " + BRIEF_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA + " " + METODO_WOD,
       corrida: "Você é um treinador de corrida sênior que monta planilhas individualizadas. " +
         "Recebe a anamnese do aluno e o objetivo e responde APENAS com um JSON válido, sem markdown e sem " +
         "comentários, neste formato exato: " +
@@ -428,7 +469,7 @@ Deno.serve(async (req: Request) => {
         "iniciante começa com caminhada ou corrida+caminhada " +
         "e pace conservador; progressão prudente (nada de saltos de volume); respeite lesões e PAR-Q. Se o PAR-Q " +
         "tiver resposta SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica. " +
-        MES_REGRA + " " + BRIEF_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA + " " + METODO_CORRIDA,
     };
     const tipoIa = String(corpo.tipo || "musculacao");
     const r2 = await fetch("https://api.anthropic.com/v1/messages", {
