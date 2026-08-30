@@ -2800,3 +2800,66 @@ revoke execute on function public.app_aluno_guarda_hist() from anon, authenticat
 -- e valida por dentro (app_aluno_ativo). Revogar o EXECUTE delas quebraria
 -- o app de todo mundo. E as tabelas com RLS sem política (zap_config,
 -- pag_config, *_hist…) são SELADAS de propósito: só a service key entra.
+
+-- ============================================================
+-- PUSH PRO PROFESSOR (mt-v682) — aluno mandou mensagem no chat ou
+-- pediu horário → o professor recebe push no celular dele.
+-- Desenho: o painel grava a própria inscrição na push_subs com token
+-- 'prof:<user_id>' (pela RLS de membro que já existe — sem RPC nova);
+-- os GATILHOS abaixo avisam a função push-envia usando a senha da
+-- push_config (tabela SELADA — gatilho não tem crachá de usuário; é a
+-- mesma ideia da regua_config). Pagamento confirmado avisa pela própria
+-- pagamentos-webhook, que já roda com a service key. Tudo idempotente.
+-- ============================================================
+
+create table if not exists public.push_config (
+  id int primary key default 1 check (id = 1),
+  token uuid not null default gen_random_uuid()
+);
+alter table public.push_config enable row level security; -- selada: sem política
+insert into public.push_config (id) values (1) on conflict (id) do nothing;
+
+-- push que falha NUNCA derruba a operação do aluno (por isso o exception)
+create or replace function public.push_avisa_prof(p_academia uuid, p_titulo text, p_corpo text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_senha text;
+begin
+  select token::text into v_senha from public.push_config where id = 1;
+  if v_senha is null then return; end if;
+  perform net.http_post(
+    url := 'https://hdcufkaalxfhwmfwoiqp.supabase.co/functions/v1/push-envia',
+    headers := '{"Content-Type":"application/json"}'::jsonb,
+    body := jsonb_build_object('acao', 'prof', 'senha', v_senha,
+      'academia_id', p_academia::text, 'titulo', p_titulo, 'corpo', p_corpo));
+exception when others then null;
+end $$;
+revoke execute on function public.push_avisa_prof(uuid, text, text) from anon, authenticated;
+
+create or replace function public.push_prof_chat() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.de = 'aluno' then
+    perform public.push_avisa_prof(new.academia_id, '💬 Mensagem de aluno',
+      left(coalesce(new.texto, ''), 120));
+  end if;
+  return new;
+end $$;
+revoke execute on function public.push_prof_chat() from anon, authenticated;
+drop trigger if exists push_prof_chat_tg on public.app_chat;
+create trigger push_prof_chat_tg after insert on public.app_chat
+  for each row execute function public.push_prof_chat();
+
+create or replace function public.push_prof_agenda() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.origem = 'aluno' and new.status = 'pedido' then
+    perform public.push_avisa_prof(new.academia_id, '📅 Pedido de horário',
+      to_char(new.dia, 'DD/MM') || coalesce(' às ' || nullif(new.hora, ''), '') ||
+      coalesce(' — ' || nullif(left(new.obs, 80), ''), ''));
+  end if;
+  return new;
+end $$;
+revoke execute on function public.push_prof_agenda() from anon, authenticated;
+drop trigger if exists push_prof_agenda_tg on public.app_agenda;
+create trigger push_prof_agenda_tg after insert on public.app_agenda
+  for each row execute function public.push_prof_agenda();

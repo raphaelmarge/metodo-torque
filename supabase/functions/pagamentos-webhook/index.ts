@@ -231,5 +231,23 @@ Deno.serve(async (req: Request) => {
     console.error("pag_eventos insert", r.status, det.slice(0, 200));
     return json({ erro: "não deu pra guardar (rode o SQL novo?)" }, 500);
   }
+  // 🔔 push pro PROFESSOR: pagamento confirmado avisa o celular dele na hora.
+  // Esta função já roda com a service key, então chama a push-envia direto —
+  // sem inscrição 'prof:*' na push_subs, a push-envia só devolve enviados: 0.
+  // Push que falha nunca derruba a baixa (por isso o catch mudo).
+  if (linha.tipo === "pago") {
+    try {
+      const vlr = Number(linha.valor_centavos || 0) / 100;
+      await fetch(base + "/functions/v1/push-envia", {
+        method: "POST",
+        headers: { ...heads, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          acao: "prof", academia_id: aid, titulo: "💰 Pagamento confirmado",
+          corpo: (vlr ? "Caiu R$ " + vlr.toFixed(2).replace(".", ",") : "Caiu um pagamento") +
+            " (" + cfg.provedor + ") — a baixa já entrou sozinha.",
+        }),
+      });
+    } catch { /* sem push não é sem baixa */ }
+  }
   return json({ ok: true });
 });

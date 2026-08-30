@@ -1874,6 +1874,50 @@ async function abaPt(p, a) {
     "marcar Recebi abre o WhatsApp do aluno com o recibo pronto pra enviar");
   ok(!recibo.mandouDeslig && !recibo.semZap && recibo.temToggle,
     "desligado nas Configurações (ou aluno sem zap no cadastro) = nada abre");
+
+  // 🔔 push pro professor: inscrição 'prof:<uid>' na push_subs, com recados honestos
+  const pushProf = await p.evaluate(async () => {
+    const cloudOrig = window.MTStore.cloud;
+    window.MTStore.cloud = () => null;
+    await window.__pushProf.ativa();
+    const msgSemNuvem = document.getElementById("pushProfStatus").textContent;
+    let upsert = null;
+    window.MTStore.cloud = () => ({ aid: "acad-1", client: {
+      auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "user-9" } } } }) },
+      from: (t) => ({ upsert: (row) => { upsert = { t, row }; return Promise.resolve({}); } }),
+    } });
+    const notifOrig = window.Notification;
+    window.Notification = { requestPermission: () => Promise.resolve("granted") };
+    const pegaOrig = window.__pushProf.pegaSub;
+    window.__pushProf.pegaSub = async () => ({ toJSON: () => ({ endpoint: "https://push/x", keys: {} }) });
+    const deu = await window.__pushProf.ativa();
+    const status = document.getElementById("pushProfStatus").textContent;
+    window.MTStore.cloud = cloudOrig;
+    window.Notification = notifOrig;
+    window.__pushProf.pegaSub = pegaOrig;
+    return { msgSemNuvem, deu, upsert, status };
+  });
+  ok(/Entre na sua conta/.test(pushProf.msgSemNuvem), "🔔 sem nuvem o card dos avisos diz o motivo em vez de fingir");
+  ok(pushProf.deu && pushProf.upsert && pushProf.upsert.t === "push_subs" &&
+    pushProf.upsert.row.token === "prof:user-9" && pushProf.upsert.row.academia_id === "acad-1" &&
+    !!pushProf.upsert.row.sub && /Ativado/.test(pushProf.status),
+    "ativar grava a inscrição do PROFESSOR na push_subs (token prof:<uid>) pela RLS de membro");
+  // a infraestrutura do aviso: função, service worker, SQL e webhook
+  const fs2 = require("fs");
+  const pe = fs2.readFileSync(__dirname + "/../supabase/functions/push-envia/index.ts", "utf8");
+  ok(/acao === "prof"/.test(pe) && /push_config\?select=token/.test(pe) && /token=like\.prof:\*/.test(pe),
+    "a push-envia ganhou a ação 'prof': autentica pela senha da push_config e só alcança inscrições prof: da academia");
+  const swPush = fs2.readFileSync(__dirname + "/../sw.js", "utf8");
+  ok(/addEventListener\("push"/.test(swPush) && /icon-personal-192/.test(swPush) && /notificationclick/.test(swPush),
+    "o sw.js da raiz mostra a notificação e o toque abre o painel");
+  const sqlSrc = fs2.readFileSync(__dirname + "/../supabase-setup.sql", "utf8");
+  ok(/create table if not exists public\.push_config/.test(sqlSrc) && /push_avisa_prof/.test(sqlSrc) &&
+    /push_prof_chat_tg/.test(sqlSrc) && /push_prof_agenda_tg/.test(sqlSrc) &&
+    /exception when others then null/.test(sqlSrc),
+    "o SQL tem a senha selada, o avisador e os gatilhos de chat/agenda — e push que falha nunca derruba a operação");
+  const pw = fs2.readFileSync(__dirname + "/../supabase/functions/pagamentos-webhook/index.ts", "utf8");
+  ok(/push-envia/.test(pw) && /Pagamento confirmado/.test(pw) && /linha\.tipo === "pago"/.test(pw),
+    "a pagamentos-webhook avisa o professor quando o pagamento cai (e só no 'pago')");
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
