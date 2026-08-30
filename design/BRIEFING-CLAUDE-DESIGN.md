@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v677** |
-| Estado do repo em | 2026-08-30 (commit `6c7337f`) |
+| App em | **mt-v678** |
+| Estado do repo em | 2026-08-30 (commit `38da245`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 139 |
+| Lançamentos no histórico | 140 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v677** — ou seja, **8 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v678** — ou seja, **9 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v678 | resumo da semana com IA no painel do Personal |
 | mt-v677 | relatório do mês do aluno — o progresso vira um documento com a marca do professor |
 | mt-v676 | card Retenção nos Relatórios — tempo de casa, churn do mês e sobrevivência de 6 meses |
 | mt-v675 | meta de carga no app do aluno — escolhe o exercício, define o alvo e a barra segue o recorde real |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v666 | cronômetro de descanso conta pelo RELÓGIO e avisa quando acaba |
 | mt-v665 | o app do paciente ganha a cara nova — skin do redesenho (nutri-skin) |
 | mt-v664 | a foto do card de hoje derrete no fundo — degradê de continuidade na junção |
-| mt-v663 | demo do paciente regenerada no motor novo — e ganha o gerador pra nunca mais congelar |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
