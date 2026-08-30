@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v673** |
-| Estado do repo em | 2026-08-30 (commit `9d540ef`) |
+| App em | **mt-v674** |
+| Estado do repo em | 2026-08-30 (commit `806702a`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 135 |
+| Lançamentos no histórico | 136 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v673** — ou seja, **4 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v674** — ou seja, **5 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v674 | lista de compras da semana no NUTRI — o plano alimentar vira a lista de mercado em 1 clique |
 | mt-v673 | fichas-modelo do professor — salvar as fichas de um aluno como modelo e aplicar em qualquer outro |
 | mt-v672 | a ciência do treinamento entra na IA — ACSM/NSCA, periodização declarada, RIR e volume por grupo |
 | mt-v671 | curvas da avaliação física no app + o relógio importa sozinho (saúde nativa) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v662 | redesenho do painel NUTRI — tokens --nt-* por papel, base em verde, modo claro num bloco só |
 | mt-v661 | app do paciente no motor novo — código servido pelo site, painel publica só os dados |
 | mt-v660 | Financeiro consolidado no NUTRI — atrasados com a ação na linha, 6 meses, régua de cobrança |
-| mt-v659 | Check-ins 'A semana' no NUTRI — quem pede atenção, com Cobrar quem falta |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
