@@ -15276,6 +15276,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaResolver(st);
     pintaMesDash(st, d);
     resolverChat();
+    resolverDor();
     // fechamento: popula o seletor de meses (últimos 12) uma vez por render
     var sel = $("fchMesP");
     var atual = sel.value;
@@ -15382,6 +15383,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
     }, function () { /* sem rede agora: o card fica de fora, sem erro na tela */ });
   }
+  /* O card de DOR sai da cópia local do retorno, que só atualizava quando o
+   * professor abria a ficha. Esta função busca na nuvem SÓ o campo notas
+   * (retorno->notas — nunca o retorno inteiro, que carrega as fotos), grava a
+   * cópia com S.write e, se apareceu dor que a tela ainda não mostra, repinta
+   * o Resolver hoje (e o card do chat junto, porque a repintura o apagaria). */
+  function resolverDor() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    var st = load();
+    var toks = (st.alunos || []).filter(function (a) { return a.ativo !== false && a.appTokenP; })
+      .map(function (a) { return a.appTokenP; });
+    if (!toks.length) return;
+    var q;
+    try {
+      q = nuvem.client.from("app_aluno").select("token,notas:retorno->notas").in("token", toks);
+    } catch (e) { return; }
+    q.then(function (r) {
+      if (!r || r.error || !Array.isArray(r.data)) return;
+      var st2 = load(), mudou = false;
+      r.data.forEach(function (l) {
+        if (!l || !Array.isArray(l.notas)) return;
+        var a = (st2.alunos || []).find(function (x) { return x.appTokenP === l.token; });
+        if (!a) return;
+        a.retorno = a.retorno || {};
+        if (JSON.stringify(a.retorno.notas || []) !== JSON.stringify(l.notas)) {
+          a.retorno.notas = l.notas; mudou = true;
+        }
+      });
+      if (!mudou) return;
+      S.write("ptStudio", st2); // S.write: gravar sem redesenhar a tela inteira
+      var el = $("dashResolver");
+      var jaTem = el && el.querySelector("[data-dorcard]");
+      if (relatosComDor(st2).length && !jaTem) { pintaResolver(st2); resolverChat(); }
+    }, function () { /* sem rede: fica a cópia local, sem erro na tela */ });
+  }
   /* A tela 1b ("placar do mês primeiro") foi DESCARTADA no handoff — o Raphael
    * escolheu a 1a. Os números do mês não sumiram: viraram a coluna da direita,
    * do lado da linha do tempo do dia. */
@@ -15472,11 +15508,51 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * usa a MESMA regra da tela dona do assunto (atraso usa dividaDe/atrasoTol,
    * igual à lista "Quem ainda não pagou"), senão o Início contaria diferente. */
   var ZAPSVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z"></path></svg>';
+  /* DOR NO RELATO (v689): o aluno escreve o resumo do treino (v686) e isso
+   * ficava esperando o professor abrir a ficha. Varre a cópia local do retorno
+   * (últimos 7 dias) atrás de dor/desconforto. A negação ("sem dor", "não
+   * senti dor") é APAGADA do texto antes da busca — senão o relato bom viraria
+   * alarme falso. Saúde vence dinheiro: o card entra ANTES da cobrança. */
+  function relatosComDor(st) {
+    var corte = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+    var out = [];
+    (st.alunos || []).forEach(function (a) {
+      if (a.ativo === false) return;
+      var nts = ((a.retorno || {}).notas) || [];
+      if (!Array.isArray(nts)) return;
+      nts.forEach(function (n) {
+        if (!n || String(n.d || "") < corte) return;
+        var t = String(n.t || "");
+        var limpo = t.replace(/\b(sem|nenhuma?|nada de|n[aã]o\s+(senti|tive|deu|doeu|incomodou))\s*(dor(es)?|desconforto|inc[oô]modo)?/gi, " ");
+        if (/\b(dor(es)?\b|doeu|doendo|dolorid\w*|machuc\w*|les[aã]o|lesion\w*|incomod\w*|desconfort\w*|estal(o|ou|ando)|fisgada|torci|torceu|inflamad\w*|travou|travad\w*|pin[cç]ad\w*)/i.test(limpo))
+          out.push({ a: a, d: String(n.d), t: t });
+      });
+    });
+    out.sort(function (x, y) { return x.d < y.d ? 1 : -1; });
+    return out;
+  }
   function pintaResolver(st) {
     var el = $("dashResolver"); if (!el) return;
     var hoje = S.todayISO();
     var diaHoje = +hoje.slice(8, 10);
     var itens = [];
+    // 0) dor relatada pelo aluno — o mais recente primeiro, antes de tudo
+    var dores = relatosComDor(st);
+    if (dores[0]) {
+      var dr = dores[0];
+      var outros = {}; dores.forEach(function (x) { outros[x.a.id] = 1; });
+      var maisD = Object.keys(outros).length - 1;
+      itens.push({
+        cor: "#f87171", sel: "RELATOU DOR", dor: 1,
+        qu: esc(dr.a.nome) + " · " + S.fmtData(dr.d),
+        pq: "“" + esc(dr.t.length > 90 ? dr.t.slice(0, 90) + "…" : dr.t) + "”" +
+          (maisD > 0 ? " · e mais " + S.plural(maisD, "aluno", "alunos") : ""),
+        acao: '<button type="button" class="btn" data-abreperfil="' + dr.a.id + '">Abrir ficha</button>' +
+          (dr.a.zap ? '<a class="btn whats ic" target="_blank" rel="noopener" title="perguntar como está" href="https://wa.me/55' +
+            String(dr.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(dr.a.nome).split(" ")[0] +
+            "! Li seu relato do treino — como você está se sentindo? Me conta pra eu ajustar o que for preciso. 💪") + '">' + ZAPSVG + "</a>" : ""),
+      });
+    }
     // 1) cobrança vencida — o mais atrasado primeiro
     var atrasados = st.alunos.filter(function (a) { return a.ativo !== false && !a.assinaturaRec && !a.assinaturaAs; })
       .map(function (a) {
@@ -15546,7 +15622,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         /* so o PRIMEIRO card leva o botao cheio de roxo — e a hierarquia do
          * desenho (tela 02): o mais urgente puxa o olho, o resto e secundario */
         if (i > 0) it.acao = it.acao.replace('class="btn"', 'class="btn sec"');
-        return '<div class="dcard"><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
+        return '<div class="dcard"' + (it.dor ? " data-dorcard" : "") + '><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
           '<div><div class="dqu">' + it.qu + '</div><div class="dpq">' + it.pq + "</div></div>" +
           '<div class="dacs">' + it.acao + "</div></div>";
       }).join("") + "</div>";
@@ -15625,7 +15701,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
   });
-  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra }; // testes
+  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra, dor: relatosComDor }; // testes
 
   // ---------- primeiro dia guiado ----------
   // Conta nova não tem o momento "uau" garantido: o professor pode passar o
