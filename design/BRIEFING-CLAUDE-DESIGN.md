@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v684** |
-| Estado do repo em | 2026-08-30 (commit `951e18f`) |
+| App em | **mt-v685** |
+| Estado do repo em | 2026-08-30 (commit `41e0b33`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 146 |
+| Lançamentos no histórico | 147 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v684** — ou seja, **15 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v685** — ou seja, **16 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v679** (2026-08-30).
+O motor (`app/aluno-builder.js`) encostou em **mt-v685** (2026-08-30).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v685 | histórico do exercício na tela do treino guiado — a olhada rápida antes de pegar a carga |
 | mt-v684 | aula experimental agendada pela Minha página — o lead escolhe o horário e o professor recebe push |
 | mt-v683 | anamnese preenchida pelo PRÓPRIO aluno por link — 20 minutos a menos por aluno novo |
 | mt-v682 | push pro PROFESSOR — aluno mandou mensagem, pediu horário ou pagou, o celular dele avisa |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v673 | fichas-modelo do professor — salvar as fichas de um aluno como modelo e aplicar em qualquer outro |
 | mt-v672 | a ciência do treinamento entra na IA — ACSM/NSCA, periodização declarada, RIR e volume por grupo |
 | mt-v671 | curvas da avaliação física no app + o relógio importa sozinho (saúde nativa) |
-| mt-v670 | aquecimento e alternativas chegam no treino GUIADO |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
