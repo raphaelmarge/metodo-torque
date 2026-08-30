@@ -3147,6 +3147,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <label style="display: flex; gap: 8px; align-items: center; font-size: 13px;"><input type="checkbox" id="spMostraServ" checked style="width: 16px; height: 16px;"> Mostrar meus serviços com preço</label>
         </div>
         <div id="spAuto" class="muted" style="font-size: 12px;"></div>
+        <div class="muted" style="font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;">Depoimentos dos alunos</div>
+        <div id="spDepos" class="muted" style="font-size: 12.5px;"></div>
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 14px; flex-wrap: wrap;">
         <button class="btn" id="spSalvar">Salvar e atualizar a prévia</button>
@@ -3492,6 +3494,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp" style="width: 100%;">📄 Relatório do mês</button>
       <button class="btn sec mini" id="pfPedeAnamnese" title="manda o link da anamnese pro aluno preencher no celular dele — as respostas voltam pra cá" style="width: 100%;">📋 Pedir anamnese</button>
       <button class="btn sec mini" id="pfCardIG" title="gera uma imagem pronta pra postar no Instagram com o resultado do mês do aluno (com a sua cor e o seu logo)" style="width: 100%;">🖼 Card pra postar</button>
+      <button class="btn sec mini" id="pfPedeDepo" title="o app do aluno mostra o convite no Início; o que ele escrever aparece em Minha página → Depoimentos pra você aprovar" style="width: 100%;">💬 Pedir depoimento</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
       <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
     </div>
@@ -6343,6 +6346,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
   });
   window.__cardIG = { numeros: numerosMesAluno, historia: historiaDoMes, monta: cardResultadoIG }; // testes
+  // 💬 pedir depoimento (v694): liga a flag e o convite entra na próxima
+  // publicação do app (o autoPublicaApps cuida disso ao abrir o painel)
+  $("pfPedeDepo").addEventListener("click", function () {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    var bt = this;
+    if ((a.retorno || {}).depo && a.retorno.depo.t) {
+      bt.textContent = "✓ Ele já escreveu — veja em Minha página";
+    } else if (a.pedeDepo) {
+      bt.textContent = "✓ Já pedido — esperando o aluno escrever";
+    } else {
+      a.pedeDepo = 1;
+      marcaAppPendente(st, a.id);
+      save(st);
+      bt.textContent = "✓ Pedido! Entra no app na próxima publicação";
+    }
+    setTimeout(function () { bt.textContent = "💬 Pedir depoimento"; }, 3500);
+  });
   /* 🧠 Resumo da semana com IA — junta a semana do studio num texto e usa a
    * MESMA ação "analisar" da chat-envia que o copiloto do portal já usa
    * (nenhuma função nova pra publicar). Os estados vêm das MESMAS contas das
@@ -11631,7 +11653,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // O professor escreve os textos; WhatsApp, Instagram, logo, cores, planos e
   // serviços entram sozinhos. Publica na tabela site_pro (padrão do app_aluno)
   // e o visitante abre por pagina.html?s=<endereco>.
-  var SP_ORDEM_DEF = [["sobre", "Sobre mim"], ["servicos", "Serviços"], ["planos", "Planos"], ["agenda", "Aula experimental"], ["contato", "Fale comigo"]];
+  var SP_ORDEM_DEF = [["sobre", "Sobre mim"], ["servicos", "Serviços"], ["planos", "Planos"], ["depoimentos", "Depoimentos"], ["agenda", "Aula experimental"], ["contato", "Fale comigo"]];
   function spOrdemDe(sp) {
     var validas = SP_ORDEM_DEF.map(function (par) { return par[0]; });
     var ordem = (sp.ordem || []).filter(function (k) { return validas.indexOf(k) >= 0; });
@@ -11699,6 +11721,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (pl.treinosSem ? "<div style='color:" + txt3 + ";font-size:13px;'>" + (+pl.treinosSem) + "x por semana</div>" : "") +
           "<div class='preco'>" + S.fmtBRL(+pl.valor) + "/mês</div></div>";
       }).join("") + "</div></section>" : "",
+      // 💬 Depoimentos (v694): só o que o professor APROVOU entra — o texto
+      // vem do app do aluno e vai pro sp.depos com o primeiro nome
+      depoimentos: (sp.depos || []).length ? "<section class='sec'>" + secTit("Quem treina comigo") + "<div class='gr'>" +
+        (sp.depos || []).slice(0, 8).map(function (dp) {
+          return "<div class='it'><p style='color:" + txt2 + ";font-size:14.5px;line-height:1.55;margin:0 0 10px;'>&ldquo;" + esc(dp.t) + "&rdquo;</p>" +
+            "<b style='color:" + cor + ";font-size:13.5px;'>&mdash; " + esc(dp.n) + "</b></div>";
+        }).join("") + "</div></section>" : "",
       /* 🎯 Aula experimental: o interessado escolhe um dos HORÁRIOS QUE O
        * PROFESSOR OFERECE (sp.expHorarios — a página não lê a agenda local,
        * que mora só no navegador dele) e o pedido vai pra RPC aula_exp_pede
@@ -11807,8 +11836,55 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spAuto").innerHTML = "Entram sozinhos: WhatsApp " + (cfg.zap ? "<b>" + esc(cfg.zap) + "</b>" : "<b>nenhum — preencha no card Sua ilha</b>") +
       " · " + (st.planosPT || []).length + " plano(s) · " + (st.servicosPT || []).length + " serviço(s) · logo e cores da Personalização.";
     $("spPreview").srcdoc = montaSitePro(st);
+    pintaSpDepos(st);
     pintaSp4e(st);
   }
+  /* 💬 Depoimentos (v694): o que o aluno escreveu no app volta no retorno
+   * (depo) e fica aqui esperando o professor APROVAR — só aprovado entra na
+   * página, com o primeiro nome. Tirar remove da página na hora. */
+  function pintaSpDepos(st) {
+    var box = $("spDepos"); if (!box) return;
+    var sp = (st.config || {}).sitePro || {};
+    var depos = sp.depos || [];
+    var jaTem = {};
+    depos.forEach(function (d) { if (d.aid) jaTem[d.aid] = 1; });
+    var pend = (st.alunos || []).filter(function (a) {
+      var d = (a.retorno || {}).depo;
+      return a.ativo !== false && d && d.t && !jaTem[a.id];
+    });
+    var h = pend.map(function (a) {
+      return '<div class="sessao-pt"><b>' + esc(a.nome.split(" ")[0]) + "</b>" +
+        '<span class="muted" style="font-size:12px;flex:1;min-width:0;">&ldquo;' + esc(String(a.retorno.depo.t).slice(0, 120)) + "&rdquo;</span>" +
+        '<button class="btn mini" data-depook="' + a.id + '">Aprovar e usar</button></div>';
+    }).join("") + depos.map(function (d, i) {
+      return '<div class="sessao-pt"><b>' + esc(d.n) + "</b>" +
+        '<span class="muted" style="font-size:12px;flex:1;min-width:0;">&ldquo;' + esc(String(d.t).slice(0, 120)) + "&rdquo;</span>" +
+        '<span class="tag">na página</span><button class="btn sec mini" data-depox="' + i + '">Tirar</button></div>';
+    }).join("");
+    box.innerHTML = h || "Nenhum ainda. Peça na ficha do aluno (⚡ Ações → 💬 Pedir depoimento) — o que ele escrever aparece aqui pra você aprovar.";
+  }
+  document.addEventListener("click", function (e) {
+    var okB = e.target.closest("[data-depook]");
+    var xB = e.target.closest("[data-depox]");
+    if (!okB && !xB) return;
+    var st = load();
+    st.config = st.config || {}; st.config.sitePro = st.config.sitePro || {};
+    var sp = st.config.sitePro;
+    sp.depos = sp.depos || [];
+    if (okB) {
+      var a = st.alunos.find(function (x) { return x.id === okB.getAttribute("data-depook"); });
+      if (!a || !((a.retorno || {}).depo || {}).t) return;
+      if (sp.depos.length >= 8) { $("spStatus").textContent = "A página mostra até 8 depoimentos — tire um antes de aprovar outro."; return; }
+      sp.depos.push({ aid: a.id, n: a.nome.split(" ")[0], t: String(a.retorno.depo.t).slice(0, 300) });
+      a.pedeDepo = 0; // pedido atendido: o convite some do app na próxima publicação
+    } else {
+      sp.depos.splice(+xB.getAttribute("data-depox"), 1);
+    }
+    S.write("ptStudio", st);
+    renderSitePro();
+    $("spStatus").textContent = "Depoimentos atualizados — a prévia já mostra; clique Publicar pra ir pro ar.";
+  });
+  window.__spDepos = pintaSpDepos; // testes
   /* 🎯 Pedidos de aula experimental: chegam pela página pública (RPC
    * aula_exp_pede → matriculas_online, plano 'aula experimental') e o
    * professor lê aqui pela RLS de membro. Ler é assíncrono e a Agenda pinta
@@ -16306,6 +16382,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
       // termo de responsabilidade: {t: texto, v: data de salvar} — v é a versão
       termoApp: (st.config || {}).termo || null,
+      // v694: o professor pediu depoimento — o app mostra o convite no Início
+      pedeDepo: a.pedeDepo ? 1 : 0,
     };
   }
   window.__dadosApp = dadosAppAluno; // testes

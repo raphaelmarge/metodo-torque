@@ -853,6 +853,13 @@
       "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
+      // depoimento (v694): só aparece quando o PROFESSOR pediu (D.pedeDepo) e
+      // o aluno ainda não escreveu — a lógica de mostrar mora perto do TERMO
+      "<div class='cardx' id='depoCard' style='display:none;'>" +
+      "<h2>Seu personal pediu um depoimento 💜</h2>" +
+      "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Conta em poucas linhas como está sendo treinar — ele pode usar na página dele, com o seu primeiro nome.</div>" +
+      "<textarea id='depoTx' maxlength='300' rows='3' style='width:100%;'></textarea>" +
+      "<button class='btnx' id='depoBt' style='width:100%;margin-top:10px;'>Enviar pro professor</button></div>" +
       // hábitos do dia em grade, estilo "HOJE EU JÁ" — com a sequência de dias
       // de hábito logo abaixo (era #stkLine, que morava embaixo dos chips)
       "<div class='cardx' id='habWrap'><h2>Hoje eu já</h2><div id='habBox' class='habgrid' aria-label='Hábitos de hoje'></div>" +
@@ -1585,7 +1592,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1612,6 +1619,7 @@
       "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "aceite:L('ptaceite',null)," +
       "notas:L('ptnotas',[])," +
+      "depo:L('ptdepo',null)," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
       "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;}" +
@@ -1637,6 +1645,17 @@
       "dp.addEventListener('click',function(){ov.remove();});" +
       "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);})();" +
       "window.__termo={v:TERMO&&TERMO.v||null};" +
+      /* Depoimento (v694): o card do Início só aparece quando o PROFESSOR pediu
+       * (chega no pacote como PDEPO) e o aluno ainda não escreveu. O texto vai
+       * pro personal dentro do retorno (ptdepo) — sem SQL novo. */
+      "var PDEPO=" + (D.pedeDepo ? 1 : 0) + ";" +
+      "(function(){var cx=document.getElementById('depoCard');if(!cx)return;" +
+      "var jd=L('ptdepo',null);if(!PDEPO||(jd&&jd.t))return;cx.style.display='';" +
+      "document.getElementById('depoBt').addEventListener('click',function(){" +
+      "var t=String(document.getElementById('depoTx').value||'').trim().slice(0,300);if(!t)return;" +
+      "Sv('ptdepo',{t:t,em:isoHj()});" +
+      "cx.innerHTML=\"<h2>Obrigado! \\ud83d\\udc9c</h2><div class='vz' style='text-align:left;'>Seu depoimento foi direto pro seu personal.</div>\";});})();" +
+      "window.__depo={pede:!!PDEPO};" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
