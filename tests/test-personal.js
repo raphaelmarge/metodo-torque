@@ -2728,6 +2728,44 @@ async function abaPt(p, a) {
   ok(cig.png && cig.png.w === 1080 && cig.png.h === 1350 && cig.png.data.startsWith("data:image/png"),
     "🖼 a arte sai em 1080×1350 (4:5 do Instagram) pronta pra baixar");
 
+  // 👥 v692: turma pequena (semi-personal) — 2 alunos no MESMO horário, cada
+  // um com a própria sessão (presença e cobrança individuais)
+  await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    if (!st.alunos.find((a) => a.id === "tm2")) st.alunos.push({ id: "tm2", nome: "Turma Dois", ativo: true, desde: "2026-01-01" });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    document.querySelector('#abas [data-a="agenda"]').click();
+    window.__agDia(new Date().toISOString().slice(0, 10)); // repinta a agenda com o aluno semeado
+  });
+  await p.waitForTimeout(300);
+  const turma = await p.evaluate(() => {
+    window.alert = () => {}; window.confirm = () => true;
+    const j = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente");
+    document.getElementById("sTurmaBt").click();
+    const chips = document.querySelectorAll("#sTurmaChips .stc");
+    const c1 = [...chips].find((c) => c.value === j.id), c2 = [...chips].find((c) => c.value === "tm2");
+    if (c1) c1.checked = true; if (c2) c2.checked = true;
+    const d = new Date(); d.setDate(d.getDate() + 3);
+    const iso = d.toISOString().slice(0, 10);
+    document.getElementById("sData").value = iso;
+    document.getElementById("sHora").value = "07:30";
+    const antesN = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.length;
+    document.getElementById("sAdd").click();
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const novas = st2.sessoes.filter((s) => s.data === iso && s.hora === "07:30");
+    const out = { chips: chips.length >= 2, criadas: st2.sessoes.length - antesN,
+      ids: novas.map((s) => s.alunoId), selDesligado: document.getElementById("sAluno").disabled };
+    // limpa o que semeou e desliga o modo
+    st2.sessoes = st2.sessoes.filter((s) => !(s.data === iso && s.hora === "07:30"));
+    st2.alunos = st2.alunos.filter((a) => a.id !== "tm2");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    document.getElementById("sTurmaBt").click();
+    return out;
+  });
+  ok(turma.chips && turma.selDesligado, "👥 modo Turma liga: chips de aluno aparecem e o seletor único apaga");
+  ok(turma.criadas === 2 && turma.ids.indexOf("tm2") >= 0 && turma.ids.length === 2,
+    "👥 turma de 2 vira DUAS sessões no mesmo horário, uma por aluno");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

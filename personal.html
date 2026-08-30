@@ -276,6 +276,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
   #sRepDias label { cursor: pointer; }
   #sRepDias label:has(.srd:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
+  #sTurmaChips label:has(.stc:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
   /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
   .hamb-pt { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer; padding: 9px; border-radius: 10px; flex: none; transition: background .15s ease; }
   .topo-marca { flex-wrap: wrap; }
@@ -2040,9 +2041,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <h2>Agendar sessão</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="sAluno" style="min-width: 180px;"></select>
+        <button class="btn sec mini" type="button" id="sTurmaBt" aria-pressed="false" title="semi-personal: marque 2 ou 3 alunos no mesmo horário — cada um continua com presença e cobrança próprias">👥 Turma</button>
         <input id="sData" type="date" style="width: auto;">
         <input id="sHora" type="time" style="width: auto;">
         <button class="btn" id="sAdd">+ Agendar</button>
+      </div>
+      <div id="sTurmaBox" hidden style="margin-top: 8px;">
+        <div class="muted" style="font-size: 12.5px; margin-bottom: 6px;">Quem entra nessa turma? Toque nos nomes (cada aluno ganha a própria sessão — presença e cobrança seguem individuais):</div>
+        <div id="sTurmaChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
       </div>
       <div class="muted" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; flex-wrap: wrap;">
         <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0;"><input type="checkbox" id="sRep" style="width: auto; margin: 0;"> <svg class='mi' viewBox='0 0 24 24' width='13' height='13' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 12a8 8 0 0 1-13.6 5.7M4 12a8 8 0 0 1 13.6-5.7'/><path d='M17.6 2.9v3.4H21M6.4 21.1v-3.4H3'/></svg> repetir até</label>
@@ -8496,6 +8502,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (id === "tAluno" && opsGt ? '<optgroup label="Treinos de disparo (grupo)">' + opsGt + "</optgroup>" : "");
       if (atual) sel.value = atual;
     });
+    // turma pequena (v692): os chips de aluno do modo 👥 Turma — o marcado
+    // sobrevive à repintura (o render roda a cada save)
+    var chipsBox = $("sTurmaChips");
+    if (chipsBox) {
+      var marcados = {};
+      chipsBox.querySelectorAll(".stc:checked").forEach(function (c) { marcados[c.value] = 1; });
+      chipsBox.innerHTML = st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) {
+        return '<label style="margin:0;"><input type="checkbox" class="stc" value="' + a.id + '"' +
+          (marcados[a.id] ? " checked" : "") + ' style="display:none;"><span class="btn sec mini" style="padding:5px 11px;">' +
+          esc(a.nome.split(" ")[0]) + "</span></label>";
+      }).join("");
+    }
     var hoje = S.todayISO();
     var amanha = new Date(hoje + "T12:00:00"); amanha.setDate(amanha.getDate() + 1);
     var amanhaISO = amanha.toISOString().slice(0, 10);
@@ -8705,10 +8723,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!eventos.length) { alert("Nenhuma sessão futura pra enviar — agende primeiro."); return; }
     baixaICS("agenda-torque-personal.ics", eventos);
   });
+  // 👥 modo Turma (v692): semi-personal — 2-3 alunos no MESMO horário, cada um
+  // com a PRÓPRIA sessão (presença e cobrança seguem individuais; a grade da
+  // agenda já empilha o mesmo horário desde a v623, então nada muda lá)
+  $("sTurmaBt").addEventListener("click", function () {
+    var on = $("sTurmaBox").hidden;
+    $("sTurmaBox").hidden = !on;
+    this.setAttribute("aria-pressed", on ? "true" : "false");
+    this.classList.toggle("sec", !on);
+    $("sAluno").disabled = on;
+    $("sAluno").style.opacity = on ? ".45" : "";
+  });
   $("sAdd").addEventListener("click", function () {
-    if (!$("sAluno").value || !$("sData").value) { alert("Escolha o aluno e a data."); return; }
+    var turmaOn = !$("sTurmaBox").hidden;
+    var ids = turmaOn
+      ? Array.prototype.map.call(document.querySelectorAll("#sTurmaChips .stc:checked"), function (c) { return c.value; })
+      : ($("sAluno").value ? [$("sAluno").value] : []);
+    if (!ids.length || !$("sData").value) {
+      alert(turmaOn ? "Toque nos nomes de quem entra na turma e escolha a data." : "Escolha o aluno e a data.");
+      return;
+    }
     var st = load();
-    var alunoId = $("sAluno").value, hora = $("sHora").value || "";
+    var alunoId = ids[0], hora = $("sHora").value || "";
     var datas = [$("sData").value];
     // horário fixo: gera as sessões até a data limite (máx. 1 ano / 90 sessões)
     if ($("sRep").checked && $("sRepAte").value) {
@@ -8751,11 +8787,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
     }
     datas.forEach(function (dt) {
-      st.sessoes.push({ id: S.uid(), alunoId: alunoId, data: dt, hora: hora, feita: false });
+      ids.forEach(function (aid9) {
+        st.sessoes.push({ id: S.uid(), alunoId: aid9, data: dt, hora: hora, feita: false });
+      });
     });
-    marcaAppPendente(st, alunoId); // a agenda nova entra no app na próxima publicação
+    ids.forEach(function (aid9) { marcaAppPendente(st, aid9); }); // a agenda nova entra no app na próxima publicação
     save(st);
-    if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
+    if (ids.length > 1) alert("Turma de " + ids.length + " agendada" + (datas.length > 1 ? " — " + (datas.length * ids.length) + " sessões até " + S.fmtData(datas[datas.length - 1]) : "") + ". Cada aluno tem a própria sessão: presença e cobrança seguem individuais.");
+    else if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
   });
   // usado no detalhe do dia (Agenda) e no card Seu dia hoje (Início)
   function trataCliqueSessao(e) {
