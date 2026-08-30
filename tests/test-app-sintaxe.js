@@ -90,6 +90,14 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// 🤫 regra de negócio (v687): o ALUNO nunca fica sabendo que existe IA — aos
+// olhos dele, quem monta o treino é o PROFESSOR. Esta trava varre o app
+// MONTADO (não o builder) atrás de qualquer menção; pegou a mensagem do
+// resumo da v686 que dizia "a IA lê" e vale pra sempre.
+ok((html.match(/\ba IA\b|\bpela IA\b|\bda IA\b|intelig[eê]ncia artificial/gi) || []).length === 0 &&
+  (html2.match(/\ba IA\b|\bpela IA\b|\bda IA\b|intelig[eê]ncia artificial/gi) || []).length === 0,
+  "🤫 o app do aluno não menciona IA em lugar nenhum — o treino é do professor");
+
 // resumo escrito do treino (v686): campo opcional no fim dos TRÊS tipos,
 // grava em ptnotas e o retorno leva pro professor (a IA lê no evolucaoIA)
 ok(html.indexOf("function notaBox") > -1 && html.indexOf("data-notasalva") > -1 &&

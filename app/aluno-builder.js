@@ -1779,7 +1779,9 @@
       "var cx=b.closest('[data-notabox]');var ta=cx&&cx.querySelector('.ntTxt');" +
       "var tx=ta?ta.value.trim().slice(0,400):'';if(!tx)return;" +
       "var lst=L('ptnotas',[]);lst.push({d:isoHj(),tp:b.dataset.notasalva,t:tx});if(lst.length>60)lst.shift();Sv('ptnotas',lst);" +
-      "cx.innerHTML=\"<div class='rpeok'>Anotado! Vai pro seu personal, e a IA l\\u00ea antes de montar o pr\\u00f3ximo treino.</div>\";});" +
+      // ⚠️ nada de citar IA pro ALUNO: quem monta o treino, aos olhos dele, é
+      // o PROFESSOR — a IA é ferramenta do professor, não personagem do app
+      "cx.innerHTML=\"<div class='rpeok'>Anotado! Vai direto pro seu personal \\u2014 ele leva isso em conta no seu pr\\u00f3ximo treino.</div>\";});" +
       "window.__trNota={lista:function(){return L('ptnotas',[]);},box:notaBox};" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
