@@ -2019,6 +2019,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-aga="sessoes" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 21c-3.6-3.2-6-6.5-6-9.8a6 6 0 0 1 12 0c0 3.3-2.4 6.6-6 9.8z'/><circle cx='12' cy='11' r='2.2'/></svg> Sessões</button>
       <button data-aga="agendar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Agendar</button>
     </div>
+    <div class="card" style="margin-bottom: 14px;" id="aexpCard" hidden>
+      <h2>🎯 Pedidos de aula experimental</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quem pediu pela sua página. Confirme pelo WhatsApp e marque como atendido — o interessado vira aluno em + Novo aluno.</p>
+      <div id="aexpLista"></div>
+    </div>
     <div class="card" style="margin-bottom: 14px;" data-agsec="agendar" hidden>
       <h2>Agendar sessão</h2>
       <div class="linha-flex" style="margin-top: 8px;">
@@ -3080,6 +3085,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <input id="spSub" maxlength="140" placeholder="ex.: Treinos sob medida, avaliação física e acompanhamento pelo app" style="display: block; width: 100%; margin-top: 4px;"></label>
         <label style="font-size: 12.5px;">Sobre você
           <textarea id="spBio" rows="4" maxlength="800" placeholder="Conte sua história: formação, experiência, seu jeito de trabalhar…" style="display: block; width: 100%; margin-top: 4px;"></textarea></label>
+        <label style="font-size: 12.5px;">🎯 Horários de aula experimental (um por linha — vira agendamento na página; vazio = seção não aparece)
+          <textarea id="spExpHor" rows="3" maxlength="600" placeholder="Segunda 07:00&#10;Quarta 18:00&#10;Sábado 09:00" style="display: block; width: 100%; margin-top: 4px;"></textarea></label>
         <div class="muted" style="font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;">Redes sociais (preencha as que você usa — viram ícones na página)</div>
         <div class="linha-flex" style="flex-wrap: wrap;">
           <label style="font-size: 12.5px;">Instagram (sem @)
@@ -3831,6 +3838,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.dataset.a === "dash") renderRelatorios();
     $("vAlunos").hidden = b.dataset.a !== "alunos";
     $("vAgenda").hidden = b.dataset.a !== "agenda";
+    if (b.dataset.a === "agenda" && window.__aulaExp) window.__aulaExp.carrega();
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
     if (b.dataset.a === "treinos") renderGrupos();
@@ -11347,7 +11355,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // O professor escreve os textos; WhatsApp, Instagram, logo, cores, planos e
   // serviços entram sozinhos. Publica na tabela site_pro (padrão do app_aluno)
   // e o visitante abre por pagina.html?s=<endereco>.
-  var SP_ORDEM_DEF = [["sobre", "Sobre mim"], ["servicos", "Serviços"], ["planos", "Planos"], ["contato", "Fale comigo"]];
+  var SP_ORDEM_DEF = [["sobre", "Sobre mim"], ["servicos", "Serviços"], ["planos", "Planos"], ["agenda", "Aula experimental"], ["contato", "Fale comigo"]];
   function spOrdemDe(sp) {
     var validas = SP_ORDEM_DEF.map(function (par) { return par[0]; });
     var ordem = (sp.ordem || []).filter(function (k) { return validas.indexOf(k) >= 0; });
@@ -11415,6 +11423,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (pl.treinosSem ? "<div style='color:" + txt3 + ";font-size:13px;'>" + (+pl.treinosSem) + "x por semana</div>" : "") +
           "<div class='preco'>" + S.fmtBRL(+pl.valor) + "/mês</div></div>";
       }).join("") + "</div></section>" : "",
+      /* 🎯 Aula experimental: o interessado escolhe um dos HORÁRIOS QUE O
+       * PROFESSOR OFERECE (sp.expHorarios — a página não lê a agenda local,
+       * que mora só no navegador dele) e o pedido vai pra RPC aula_exp_pede
+       * (anon), que grava em matriculas_online e dispara o push da v682.
+       * A seção só entra com horários configurados E conta na nuvem — sem os
+       * dois, o pedido não teria pra onde ir, então nada de formulário-vitrine.
+       * ⚠️ a tag de script sai QUEBRADA em duas strings de propósito: este
+       * código vive dentro do script do painel, e um fecha-script escrito por
+       * extenso terminaria ELE aqui mesmo (nem comentário escapa disso). */
+      agenda: (function () {
+        var hs = String(sp.expHorarios || "").split(/\n|;/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 20);
+        var nuvemPub = (S.cloud && S.cloud()) || null;
+        var cfgPub = self.MT_CLOUD || {};
+        if (!hs.length || !nuvemPub || !nuvemPub.aid || !cfgPub.url) return "";
+        var campo = "width:100%;margin-top:5px;padding:12px;border-radius:10px;border:1px solid " + borda + ";background:transparent;color:inherit;font-family:inherit;font-size:15px;";
+        return "<section class='sec' id='aexp'>" + secTit("Aula experimental gratuita") +
+          "<p style='color:" + txt2 + ";margin-bottom:14px;'>Escolha um horário e deixe seu WhatsApp — a confirmação chega pra você direto.</p>" +
+          "<div class='it' style='max-width:430px;'>" +
+          "<label style='display:block;font-size:13px;font-weight:700;'>Seu nome<input id='axNome' style='" + campo + "'></label>" +
+          "<label style='display:block;font-size:13px;font-weight:700;margin-top:10px;'>Seu WhatsApp<input id='axZap' inputmode='tel' placeholder='(31) 9…' style='" + campo + "'></label>" +
+          "<label style='display:block;font-size:13px;font-weight:700;margin-top:10px;'>Horário<select id='axHor' style='" + campo + "'>" +
+          hs.map(function (h) { return "<option>" + esc(h) + "</option>"; }).join("") + "</select></label>" +
+          "<button id='axBt' class='cta' style='border:none;cursor:pointer;font-family:inherit;width:100%;margin-top:14px;'>Quero minha aula grátis</button>" +
+          "<div id='axMsg' style='font-size:13px;margin-top:10px;min-height:18px;color:" + txt2 + ";'></div></div>" +
+          "<scr" + "ipt>(function(){var b=document.getElementById('axBt');b.addEventListener('click',function(){" +
+          "var n=document.getElementById('axNome').value.trim(),z=document.getElementById('axZap').value.trim(),h=document.getElementById('axHor').value;" +
+          "var m=document.getElementById('axMsg');if(!n||z.replace(/\\D/g,'').length<10){m.textContent='Preencha seu nome e um WhatsApp válido. 😉';return;}" +
+          "b.disabled=true;b.textContent='Enviando…';" +
+          "fetch('" + cfgPub.url + "/rest/v1/rpc/aula_exp_pede',{method:'POST',headers:{apikey:'" + cfgPub.anonKey + "',Authorization:'Bearer " + cfgPub.anonKey + "','Content-Type':'application/json'}," +
+          "body:JSON.stringify({p_academia:'" + nuvemPub.aid + "',p_nome:n,p_zap:z,p_horario:h})})" +
+          ".then(function(r){return r.json();}).then(function(d){if(d&&d.ok){m.textContent='✅ Pedido enviado! A confirmação chega no seu WhatsApp.';b.style.display='none';}" +
+          "else{b.disabled=false;b.textContent='Quero minha aula grátis';m.textContent=(d&&d.erro)||'Não deu agora — tente de novo.';}})" +
+          ".catch(function(){b.disabled=false;b.textContent='Quero minha aula grátis';m.textContent='Sem internet agora — tente de novo.';});});})();</scr" + "ipt></section>";
+      })(),
       contato: "<section class='sec' style='text-align:center;'>" + secTit("Fale comigo") +
         (zapUrl ? "<p style='margin-bottom:14px;'><a class='cta' href='" + zapUrl + "' target='_blank' rel='noopener'>Chamar no WhatsApp</a></p>" : "") +
         (redesHtml ? "<div style='margin:16px 0 8px;'>" + redesHtml + "</div>" : "") +
@@ -11456,6 +11498,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spHeadline").value = sp.headline || "";
     $("spSub").value = sp.sub || "";
     $("spBio").value = sp.bio || "";
+    $("spExpHor").value = sp.expHorarios || "";
     $("spInsta").value = sp.insta || "";
     $("spThreads").value = sp.threads || "";
     $("spYoutube").value = sp.youtube || "";
@@ -11490,6 +11533,54 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spPreview").srcdoc = montaSitePro(st);
     pintaSp4e(st);
   }
+  /* 🎯 Pedidos de aula experimental: chegam pela página pública (RPC
+   * aula_exp_pede → matriculas_online, plano 'aula experimental') e o
+   * professor lê aqui pela RLS de membro. Ler é assíncrono e a Agenda pinta
+   * síncrona — por isso o card carrega à parte quando a aba abre. 'Atendido'
+   * marca status='importado' e a linha some; sem nuvem ou sem pedido, o card
+   * inteiro fica escondido (nada de caixa vazia). */
+  function pintaAulaExp(rows) {
+    var card = $("aexpCard");
+    if (!card) return;
+    if (!rows || !rows.length) { card.hidden = true; return; }
+    card.hidden = false;
+    $("aexpLista").innerHTML = rows.map(function (r) {
+      var dig = String(r.zap || "").replace(/\D/g, "");
+      return '<div class="sessao-pt" style="flex-wrap:wrap;gap:8px;">' +
+        "<b>" + esc(r.nome) + "</b>" +
+        (r.horario ? '<span class="muted">' + esc(r.horario) + "</span>" : "") +
+        '<span class="muted" style="font-size:12px;">' + S.fmtData(String(r.criado || "").slice(0, 10)) + "</span>" +
+        '<span style="margin-left:auto;display:flex;gap:6px;">' +
+        (dig ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + dig +
+          "?text=" + encodeURIComponent("Oi " + String(r.nome).split(" ")[0] + "! Vi seu pedido de aula experimental" + (r.horario ? " (" + r.horario + ")" : "") + " — bora confirmar? 💪") + '">Confirmar no WhatsApp</a>' : "") +
+        '<button class="btn sec mini" data-aexpok="' + r.id + '">✓ Atendido</button></span></div>';
+    }).join("");
+  }
+  var aulaExp = {
+    carrega: function () {
+      var nuvem = S.cloud && S.cloud();
+      if (!nuvem) { $("aexpCard").hidden = true; return Promise.resolve([]); }
+      return nuvem.client.from("matriculas_online").select("id,nome,zap,horario,criado")
+        .eq("academia_id", nuvem.aid).eq("plano", "aula experimental").eq("status", "novo")
+        .order("criado", { ascending: false }).limit(15)
+        .then(function (res) {
+          var rows = (res && res.data) || [];
+          pintaAulaExp(rows);
+          return rows;
+        }).catch(function () { $("aexpCard").hidden = true; return []; });
+    },
+    pinta: pintaAulaExp,
+  };
+  window.__aulaExp = aulaExp; // testes
+  $("aexpLista").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-aexpok]");
+    if (!b) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    b.disabled = true;
+    nuvem.client.from("matriculas_online").update({ status: "importado" })
+      .eq("id", b.getAttribute("data-aexpok")).then(function () { aulaExp.carrega(); });
+  });
   function spSalva() {
     var st = load();
     st.config = st.config || {};
@@ -11498,6 +11589,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sp.headline = $("spHeadline").value.trim().slice(0, 80);
     sp.sub = $("spSub").value.trim().slice(0, 140);
     sp.bio = $("spBio").value.trim().slice(0, 800);
+    sp.expHorarios = $("spExpHor").value.trim().slice(0, 600);
     sp.insta = $("spInsta").value.trim().replace(/^@/, "").slice(0, 60);
     sp.threads = $("spThreads").value.trim().replace(/^@/, "").slice(0, 60);
     sp.youtube = $("spYoutube").value.trim().replace(/^@/, "").slice(0, 80);

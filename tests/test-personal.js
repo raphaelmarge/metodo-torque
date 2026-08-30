@@ -6394,6 +6394,36 @@ async function abaPt(p, a) {
   ok(sitePers.corPropria && sitePers.contraste, "cor e fundo próprios da página valem (e fundo claro troca pro texto escuro)");
   ok(sitePers.logoPropria, "logo própria da página vence a da Personalização");
   ok(sitePers.ordem.indexOf("servicos,sobre") === 0 && sitePers.servAntes, "as setas mudam a ordem das seções na página");
+
+  // 🎯 aula experimental agendada pela página (v684)
+  const aexp = await p.evaluate(async () => {
+    document.getElementById("spExpHor").value = "Segunda 07:00\nQuarta 18:00";
+    document.getElementById("spSalvar").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const semNuvem = window.__sitePro.monta(st);
+    const cloudOrig = window.MTStore.cloud;
+    window.MTStore.cloud = () => ({ aid: "acad-77", client: {} });
+    const comNuvem = window.__sitePro.monta(st);
+    window.MTStore.cloud = cloudOrig;
+    window.__aulaExp.pinta([{ id: "m1", nome: "Lia Souza", zap: "31988887777", horario: "Quarta 18:00", criado: "2026-08-30T12:00:00Z" }]);
+    const card = { escondido: document.getElementById("aexpCard").hidden, txt: document.getElementById("aexpLista").innerHTML };
+    window.__aulaExp.pinta([]);
+    const vazio = document.getElementById("aexpCard").hidden;
+    return { salvo: st.config.sitePro.expHorarios, semNuvemTem: /aula_exp_pede/.test(semNuvem), comNuvem, card, vazio };
+  });
+  ok(/Segunda 07:00/.test(aexp.salvo), "🎯 os horários de aula experimental salvam na Minha página");
+  ok(!aexp.semNuvemTem, "sem conta na nuvem a seção NÃO entra na página — formulário sem destino não sobe");
+  ok(/Aula experimental gratuita/.test(aexp.comNuvem) && /aula_exp_pede/.test(aexp.comNuvem) &&
+    /acad-77/.test(aexp.comNuvem) && /Quarta 18:00/.test(aexp.comNuvem) && /<script>\(function\(\)\{var b=document/.test(aexp.comNuvem),
+    "publicada com conta, a página ganha o agendamento com os horários do professor e a academia certa");
+  ok(!aexp.card.escondido && /Lia Souza/.test(aexp.card.txt) && /wa\.me\/5531988887777/.test(aexp.card.txt) &&
+    /data-aexpok="m1"/.test(aexp.card.txt) && aexp.vazio,
+    "o card da Agenda lista o pedido com Confirmar no WhatsApp e ✓ Atendido — e some quando não tem pedido");
+  const sqlAexp = require("fs").readFileSync(__dirname + "/../supabase-setup.sql", "utf8");
+  ok(/aula_exp_pede/.test(sqlAexp) && /add column if not exists horario/.test(sqlAexp) &&
+    /interval '1 hour'/.test(sqlAexp) && /push_avisa_prof\(p_academia, '🎯 Aula experimental'/.test(sqlAexp),
+    "o SQL tem a RPC pública com freio de spam e o push da v682 avisando o pedido novo");
   ok(/&lt;b&gt;Teste&lt;\/b&gt; &amp; cia/.test(site.html), "texto do professor vai escapado (sem HTML solto na página)");
   ok(site.preview, "a prévia é desenhada no iframe");
   await p.click("#spPublicar");
