@@ -2946,6 +2946,52 @@ async function abaPt(p, a) {
   ok(clb.app, "🎁 o app do aluno mostra o Clube de vantagens com o cupom");
   ok(clb.aposTirar === 1 && clb.semNada, "🎁 Tirar remove; sem parceria o card nem nasce no app");
 
+  // 🛍 v698: loja do app — produtos do painel + serviços do cadastro na vitrine
+  const lja = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const snapI = JSON.stringify(st.config.lojaItens || null);
+    const snapS = JSON.stringify(st.servicosPT || null);
+    const snapOff = st.config.lojaServOff || null;
+    st.servicosPT = [{ id: "sv-l1", nome: "Massagem esportiva", valor: 150 }];
+    delete st.config.lojaServOff;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    // adiciona um produto pela UI
+    document.getElementById("lojaNome").value = "Camiseta do studio";
+    document.getElementById("lojaDesc").value = "algodão, P ao GG";
+    document.getElementById("lojaValor").value = "79.90";
+    document.getElementById("lojaAdd").click();
+    const st2 = S.read("ptStudio", {});
+    const a = st2.alunos.find((x) => x.nome === "João Cliente");
+    const d = window.__dadosApp(a, new Date().toISOString());
+    const html = window.__montaAppAluno(a, new Date().toISOString());
+    const out = {
+      itens: (st2.config.lojaItens || []).length,
+      pacote: d.lojaApp.length === 2 && d.lojaApp.some((x) => x.n === "Camiseta do studio") && d.lojaApp.some((x) => x.n === "Massagem esportiva"),
+      app: html.indexOf("lojaCard") > -1 && html.indexOf("Quero esse") > -1 && html.indexOf("R$ 79,90") > -1,
+    };
+    // desligar os serviços tira só eles da vitrine
+    st2.config.lojaServOff = 1;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    const d2 = window.__dadosApp(st2.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString());
+    out.soProdutos = d2.lojaApp.length === 1 && d2.lojaApp[0].n === "Camiseta do studio";
+    // vitrine vazia = card nem nasce
+    const st3 = S.read("ptStudio", {});
+    st3.config.lojaItens = []; st3.servicosPT = [];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
+    out.semNada = window.__montaAppAluno(st3.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString()).indexOf("lojaCard") === -1;
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    if (snapI === "null") delete st9.config.lojaItens; else st9.config.lojaItens = JSON.parse(snapI);
+    if (snapS === "null") delete st9.servicosPT; else st9.servicosPT = JSON.parse(snapS);
+    if (snapOff) st9.config.lojaServOff = snapOff; else delete st9.config.lojaServOff;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(lja.itens === 1 && lja.pacote, "🛍 produto do painel + serviço do cadastro entram juntos na vitrine");
+  ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Quero esse");
+  ok(lja.soProdutos, "🛍 desligar os serviços tira só eles — os produtos ficam");
+  ok(lja.semNada, "🛍 vitrine vazia = o card nem nasce no app");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

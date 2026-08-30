@@ -88,6 +88,7 @@
     var zapPersonal = D.zapPersonal || "", metaSemana = D.metaSemana || 3;
     var sessApp = D.sessApp || [], vidsApp = D.vidsApp || [], qa = D.qa || null;
     var clubeApp = D.clubeApp || []; // v697: parcerias do professor com cupom
+    var lojaApp = D.lojaApp || [];   // v698: vitrine do professor (produtos + serviços)
     var ctApp = D.ctApp || null, plApp = D.plApp || null, pixApp = D.pixApp || null, svApp = D.svApp || [];
     var treino = D.treino || "", t2 = D.t2 || null, fichaVenceApp = D.fichaVenceApp || "";
     var fichasApp = D.fichasApp || null, fexs = D.fexs || [], guiaFichasP = D.guiaFichasP || [];
@@ -1404,6 +1405,20 @@
             (p.u ? "<a href='" + esc(p.u) + "' target='_blank' rel='noopener' style='display:inline-block;margin:9px 0 0 " + (p.c ? "10px" : "0") + ";font-size:13px;color:var(--corc);font-weight:700;'>Ver site ↗</a>" : "") +
             "</div>";
         }).join("") + "</div>" : "") +
+      /* 🛍 Loja (v698): vitrine do professor — o Quero esse cai no WhatsApp
+       * dele com o nome do item (a venda fecha como sempre, o dinheiro cai
+       * direto com o professor). Sem WhatsApp cadastrado, o botão orienta pro
+       * chat em vez de fingir que compra. Só nasce com item na vitrine. */
+      (lojaApp.length ? "<div class='cardx' id='lojaCard'><h2>🛍 Loja de " + esc(studio.split(" ")[0]) + "</h2>" +
+        lojaApp.map(function (p) {
+          var precoL = "R$ " + (Math.round((+p.v) * 100) / 100).toFixed(2).replace(".", ",");
+          return "<div style='display:flex;align-items:center;gap:12px;border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+            "<span style='flex:1;min-width:0;'><b style='font-size:14.5px;display:block;'>" + esc(p.n) + "</b>" +
+            (p.d ? "<span style='font-size:12.5px;color:#a9a4b5;'>" + esc(p.d) + "</span>" : "") +
+            "<span style='display:block;font-size:14px;font-weight:900;color:var(--corc);margin-top:3px;'>" + precoL + "</span></span>" +
+            "<button class='lojabt' data-item='" + esc(p.n) + "' data-preco='" + precoL + "' style='flex:none;background:var(--cor);border:none;color:#fff;border-radius:11px;padding:11px 15px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;'>Quero esse</button>" +
+            "</div>";
+        }).join("") + "</div>" : "") +
       // ---------- Chat (tela 10): cabeçalho do personal no alto da área ----------
       "<div class='cardx' id='chTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:22px 20px;color:#fff;display:flex;align-items:center;gap:13px;'>" +
@@ -1693,6 +1708,12 @@
       "function feito(){cb.textContent='Copiado! \\u2713';setTimeout(function(){cb.textContent=cd+' \\u00b7 copiar';},2200);}" +
       "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cd).then(feito,feito);}" +
       "else{try{var ta=document.createElement('textarea');ta.value=cd;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();feito();}catch(e9){}}});" +
+      // 🛍 Quero esse (v698): abre o WhatsApp do professor com o pedido pronto;
+      // sem WhatsApp cadastrado, orienta pro chat — nada de fingir compra
+      "document.addEventListener('click',function(e){var lb=e.target.closest&&e.target.closest('.lojabt');if(!lb)return;" +
+      "var it=lb.getAttribute('data-item'),pr=lb.getAttribute('data-preco');" +
+      "if(ZAPP){window.open('https://wa.me/55'+ZAPP+'?text='+encodeURIComponent('Oi! Quero comprar: '+it+' ('+pr+'). Como faço?'),'_blank');}" +
+      "else{lb.textContent='Pe\\u00e7a pelo chat \\ud83d\\udcac';setTimeout(function(){lb.textContent='Quero esse';},2600);}});" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
@@ -5527,6 +5548,11 @@
       (clubeApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='clubeCard'>\"+" +
         "\"<span style='line-height:0;'>\"+ic(\"<rect x='3.5' y='8.5' width='17' height='12' rx='2.5'/><path d='M3.5 12h17M12 8.5V20.5M8.2 8.5C6 8.5 5 6.8 5.8 5.6c.9-1.3 3.4-.8 4.6 1.4l.8 1.5m2.6 0c2.2 0 3.2-1.7 2.4-2.9-.9-1.3-3.4-.8-4.6 1.4l-.8 1.5'/>\")+\"</span>\"+" +
         "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Clube de vantagens</span><span class='mgsub'>" + clubeApp.length + (clubeApp.length > 1 ? " parcerias exclusivas" : " parceria exclusiva") + " pra você</span></span>\"+" +
+        "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
+      // 🛍 loja (v698): atalho no menu, gated pelo builder como os outros
+      (lojaApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='inicio' data-mgoto='lojaCard'>\"+" +
+        "\"<span style='line-height:0;'>\"+ic(\"<path d='M5 8h14l-1.2 12a1.8 1.8 0 0 1-1.8 1.6H8a1.8 1.8 0 0 1-1.8-1.6z'/><path d='M8.6 10.5V6.8a3.4 3.4 0 0 1 6.8 0v3.7'/>\")+\"</span>\"+" +
+        "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Loja</span><span class='mgsub'>" + lojaApp.length + (lojaApp.length > 1 ? " itens" : " item") + " de " + esc(studio.split(" ")[0]) + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +
       "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +

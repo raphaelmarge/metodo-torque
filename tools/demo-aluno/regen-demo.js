@@ -33,6 +33,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.config.feedOn = true;
     st.config.conquistas = [{ e: "rato", n: "Rato de academia", meta: 30 }, { e: "medalha", n: "Lenda do Studio", meta: 100 }];
     st.config.mural = ["Sábado o studio abre 8h em vez de 7h. Quem treina cedo, me chama que a gente remarca."];
+    // loja do app (v698): a demo mostra a vitrine com dois produtos
+    st.config.lojaItens = [
+      { id: "dlj1", n: "Camiseta do studio", d: "algodão, P ao GG", v: 79.9 },
+      { id: "dlj2", n: "Avaliação física avulsa", d: "com laudo completo", v: 120 },
+    ];
     // clube de vantagens (v697): a demo mostra o card com duas parcerias
     st.config.clube = [
       { id: "dcl1", n: "Suplementos do Zé", b: "15% off em creatina e whey", c: "TORQUE15", u: "" },
