@@ -90,6 +90,15 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// contrato digital (v679): o termo viaja como {t, v} e o aceite volta pro
+// professor — a tela só existe com termo configurado e some pra quem já
+// aceitou ESTA versão; o "Deixar pra depois" nunca tranca o treino
+ok(html.indexOf("if(!TERMO||!TERMO.t)return") > -1 && html.indexOf("ac.v===TERMO.v)return") > -1,
+  "📜 sem termo configurado nada aparece, e quem já aceitou a versão não vê de novo");
+ok(html.indexOf("termoOv") > -1 && html.indexOf("Li e aceito") > -1 && html.indexOf("Deixar pra depois") > -1 &&
+  html.indexOf("aceite:L('ptaceite',null)") > -1 && html.indexOf("k==='ptaceite'") > -1,
+  "a tela do termo tem aceitar e adiar, e o ptaceite volta pro professor no retorno");
+
 // meta de carga (v675): o card 🎯 na aba Cargas — só aparece com carga anotada
 // (mcMax filtra), a comemoração é única por meta (ptmetacargaok = 'ex|alvo')
 // e a barra vem do recorde real do ptdc

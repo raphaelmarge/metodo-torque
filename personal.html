@@ -3256,6 +3256,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-top: 14px;" data-cfgsec="app">
+      <h2>Termo de responsabilidade (contrato digital)</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escreva o seu termo — o aluno lê no app e toca em <b>Li e aceito</b>; o aceite volta pra ficha dele com a data. Mudou o texto? O app pede o aceite de novo pra todo mundo. Deixe vazio pra não usar.</p>
+      <textarea id="cfgTermo" rows="7" style="width: 100%; font-size: 13px; font-family: inherit;" placeholder="Ex.: Declaro estar apto à prática de atividade física, comunicarei qualquer dor ou desconforto ao professor…"></textarea>
+      <div class="linha-flex" style="gap: 8px; margin-top: 8px; align-items: center;">
+        <button class="btn sec" id="cfgTermoSalva">Salvar termo</button>
+        <span id="cfgTermoStatus" class="muted" style="font-size: 12.5px;"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 14px;" data-cfgsec="app">
       <h2>Quem ainda não abriu o app pelo link</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O app deixou de ser um arquivo baixado — agora é só o link. Quem ficou com o arquivo velho no celular <b>não recebe treino novo, não recebe notificação e continua entrando mesmo depois de encerrado</b>, e não dá pra apagar de longe. Esta lista mostra quem nunca abriu pelo link: é exatamente quem pode estar no formato antigo. Mande o link de novo e peça pra apagar o arquivo.</p>
       <button class="btn sec" id="cfgQuemNaoAbriu">Conferir quem falta</button>
@@ -4509,7 +4519,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div style="display:flex;gap:8px;margin-top:12px;">' +
       '<button type="button" class="btn mini" data-montatreino="' + a.id + '" style="flex:1;">' + (f0 ? "Abrir" : "Montar") + "</button>" +
       '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div></div>';
-    el.innerHTML = kpis + col;
+    // termo de responsabilidade: só aparece se o professor configurou um
+    var termoLn = "";
+    var tm = (st.config || {}).termo;
+    if (tm && tm.t) {
+      var ac9 = ret.aceite;
+      var okT = ac9 && ac9.v === tm.v;
+      termoLn = '<div id="pfTermo" style="font-size:12.5px;margin-top:12px;font-weight:700;color:' +
+        (okT ? "var(--tk-ok)" : "var(--tk-aten)") + ';">' +
+        (okT ? "✓ Termo de responsabilidade aceito em " + S.fmtData(ac9.em)
+          : ac9 ? "⚠ Aceitou uma versão antiga do termo (" + S.fmtData(ac9.em) + ") — o app vai pedir de novo"
+          : "⚠ Ainda não aceitou o termo de responsabilidade no app") + "</div>";
+    }
+    el.innerHTML = kpis + col + termoLn;
     pfResumoNuvem(a);
   }
   // troca o numero de UM tile ja pintado (sem repintar o resumo inteiro, que
@@ -10618,6 +10640,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
+    $("cfgTermo").value = ((st.config || {}).termo || {}).t || "";
     renderConta(); // o cartão Minha conta vive aqui também (entrar/senha/sair)
     renderAutos();
     pintaCfgResumo();
@@ -10643,6 +10666,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgStatus").textContent = mudouApp
       ? "Salvo! Agora publique os apps (Treinos → Em grupo → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
       : "Salvo!";
+  });
+  /* Termo de responsabilidade: o texto vira {t, v} onde v é a DATA de salvar —
+   * é a versão. O app compara o v aceito com o v publicado, então mudar o
+   * texto pede o aceite de novo sozinho. Salvar igual não republica nada. */
+  $("cfgTermoSalva").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    var t = $("cfgTermo").value.trim().slice(0, 8000);
+    var antes = (st.config.termo || {}).t || "";
+    if (t === antes) { $("cfgTermoStatus").textContent = "Nada mudou."; return; }
+    st.config.termo = t ? { t: t, v: S.todayISO() } : null;
+    st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+    save(st);
+    $("cfgTermoStatus").textContent = t
+      ? "Salvo! Publique os apps — cada aluno lê e aceita na próxima vez que abrir."
+      : "Termo removido — o app para de pedir o aceite.";
   });
   // versão à vista: sem isso não dá pra saber se o celular está rodando o que
   // foi publicado ou uma cópia velha guardada pelo navegador
@@ -15601,6 +15640,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       guiaFichasP: guiaFichasP, aqPorFicha: aqPorFicha, raioX: raioX,
       wodsApp: wodsApp, cardiosApp: cardiosApp, planoApp: planoApp, ve: cfgVe, menuOculta: menuOculta,
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
+      // termo de responsabilidade: {t: texto, v: data de salvar} — v é a versão
+      termoApp: (st.config || {}).termo || null,
     };
   }
   window.__dadosApp = dadosAppAluno; // testes

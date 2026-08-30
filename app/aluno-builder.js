@@ -1574,7 +1574,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1599,12 +1599,32 @@
       "function mrc9(x){if(!x||!x.img)return '-';var im=String(x.img);return x.d+':'+im.length+':'+im.slice(-24);}" +
       "var marca9=[mrc9(pri),mrc9(ult),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
       "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
+      "aceite:L('ptaceite',null)," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
       "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;}" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:dd9}).then(function(r9){if(r9&&r9.ok)Sv('ptdevfoto',marca9);});},1800);}" +
       "window.__devolveApp=devolveApp;" +
       "setTimeout(devolveApp,2500);" +
+      /* 📜 Termo de responsabilidade (contrato digital): o professor escreve o
+       * texto em Configurações e ele viaja como {t, v} — v é a DATA de salvar,
+       * a versão. Aluno que ainda não aceitou ESTA versão vê a tela cheia ao
+       * abrir: o texto rolável, "Li e aceito" (grava ptaceite = {v, em}, que o
+       * devolveApp manda pro professor) e "Deixar pra depois" (fecha; volta na
+       * próxima abertura — nada trava o treino de quem está sem tempo).
+       * Sem termo configurado, NADA aparece. */
+      "var TERMO=" + jsonApp(D.termoApp || null) + ";" +
+      "(function(){if(!TERMO||!TERMO.t)return;var ac=L('ptaceite',null);if(ac&&ac.v===TERMO.v)return;" +
+      "var ov=document.createElement('div');ov.id='termoOv';" +
+      "ov.style.cssText='position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));';" +
+      "var h=document.createElement('div');h.innerHTML=\"<b style='font-size:19px;font-weight:900;'>Termo de responsabilidade</b><div style='font-size:12.5px;color:#8a8695;margin-top:2px;'>do seu personal — leia antes de continuar</div>\";" +
+      "var tx=document.createElement('div');tx.style.cssText='flex:1;overflow-y:auto;margin:14px 0;background:var(--bg2);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:16px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;';tx.textContent=TERMO.t;" +
+      "var bt=document.createElement('button');bt.type='button';bt.textContent='Li e aceito';bt.style.cssText='min-height:52px;background:var(--cor);color:#fff;border:none;border-radius:14px;font-family:inherit;font-weight:900;font-size:15px;cursor:pointer;';" +
+      "var dp=document.createElement('button');dp.type='button';dp.textContent='Deixar pra depois';dp.style.cssText='min-height:44px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:13px;cursor:pointer;margin-top:6px;';" +
+      "bt.addEventListener('click',function(){Sv('ptaceite',{v:TERMO.v,em:isoHj()});ov.remove();});" +
+      "dp.addEventListener('click',function(){ov.remove();});" +
+      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);})();" +
+      "window.__termo={v:TERMO&&TERMO.v||null};" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto

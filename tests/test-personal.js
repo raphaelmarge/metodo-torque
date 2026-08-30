@@ -1809,6 +1809,46 @@ async function abaPt(p, a) {
   ok(iaSem.corpo && iaSem.corpo.acao === "analisar" && /foque no João/.test(iaSem.out) &&
     iaSem.salvo && /foque no João/.test(iaSem.salvo.texto),
     "o botão usa a ação 'analisar' da chat-envia (nenhuma função nova) e guarda a última análise");
+
+  // 📜 contrato digital: salvar o termo, versão = data, pacote leva, ficha cobra o aceite
+  const termoP = await p.evaluate(() => {
+    document.getElementById("cfgTermo").value = "Declaro estar apto à prática de atividade física.";
+    document.getElementById("cfgTermoSalva").click();
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    const pacote = window.__dadosApp(a, new Date().toISOString());
+    return {
+      termo: st.config.termo,
+      status: document.getElementById("cfgTermoStatus").textContent,
+      pendente: !!a.appPendente || !!(st.appsPendentes || []).length || true,
+      pacoteTermo: pacote.termoApp,
+    };
+  });
+  ok(termoP.termo && /apto à prática/.test(termoP.termo.t) && termoP.termo.v === (await p.evaluate(() => window.MTStore.todayISO())),
+    "📜 salvar o termo guarda {texto, versão = data de hoje}");
+  ok(/Publique os apps/.test(termoP.status) && termoP.pacoteTermo && termoP.pacoteTermo.v === termoP.termo.v,
+    "o recado manda publicar e o pacote do aluno leva o termo com a versão");
+  const termoFicha = await p.evaluate(async () => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    delete (a.retorno || {}).aceite;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    document.querySelector('[data-abreperfil="' + a.id + '"]').click();
+    await new Promise((r) => setTimeout(r, 250));
+    const sem = (document.getElementById("pfTermo") || {}).textContent || "";
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a2 = st2.alunos[0];
+    a2.retorno = a2.retorno || {};
+    a2.retorno.aceite = { v: st2.config.termo.v, em: window.MTStore.todayISO() };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    document.querySelector('[data-abreperfil="' + a.id + '"]').click();
+    await new Promise((r) => setTimeout(r, 250));
+    const com = (document.getElementById("pfTermo") || {}).textContent || "";
+    return { sem, com };
+  });
+  ok(/Ainda não aceitou/.test(termoFicha.sem), "a ficha avisa quando o aluno ainda não aceitou o termo");
+  ok(/aceito em/.test(termoFicha.com), "e mostra a data do aceite quando o retorno traz ptaceite da versão atual");
+  await abaPt(p, "relatorios"); // o teste abriu o perfil — os testes seguintes esperam Relatórios na tela
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
@@ -4383,6 +4423,24 @@ async function abaPt(p, a) {
   // serve via http (setContent teria origem opaca, sem localStorage)
   await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml2 }));
   await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
+  // 📜 contrato digital: o config.termo foi salvo no painel ANTES de gerar este
+  // app, então a tela de aceite abre por cima de tudo — o fluxo real do aluno
+  const termoApp = await pApp.evaluate(() => {
+    const ov = document.getElementById("termoOv");
+    if (!ov) return { ov: false };
+    const texto = ov.textContent;
+    Array.from(ov.querySelectorAll("button")).find((b) => /Li e aceito/.test(b.textContent)).click();
+    return {
+      ov: true, texto,
+      sumiu: !document.getElementById("termoOv"),
+      aceite: JSON.parse(localStorage.getItem("ptaceite")),
+      v: window.__termo && window.__termo.v,
+    };
+  });
+  ok(termoApp.ov && /apto à prática/.test(termoApp.texto) && /Deixar pra depois/.test(termoApp.texto),
+    "📜 o app abre com o termo do professor por cima, com aceitar e adiar");
+  ok(termoApp.sumiu && termoApp.aceite && termoApp.aceite.v === termoApp.v && termoApp.aceite.em,
+    "Li e aceito grava ptaceite {versão, data} e a tela some — o retorno leva pro professor");
   // barra de abas embaixo: itens montados, Início ativo, e clicar troca a seção
   const navAbas = await pApp.evaluate(() => {
     const itens = Array.from(document.querySelectorAll("#navApp .nitem")).map((b) => b.getAttribute("data-msec"));
@@ -7476,6 +7534,9 @@ async function abaPt(p, a) {
     "meta definida vira barra: recorde 70 de 80 — faltam 10 kg");
   ok(/META BATIDA/.test(metaCg.bateu) && metaCg.marca1 === "Supino reto|80" && metaCg.marca2 === metaCg.marca1,
     "bater o recorde celebra e a marca (ex|alvo) segura o confete de repetir");
+  // 📜 depois de aceito, a tela do termo não volta em uso normal do app
+  const posTermo = await pApp.evaluate(() => ({ ov: !!document.getElementById("termoOv"), v: window.__termo && window.__termo.v }));
+  ok(!posTermo.ov && !!posTermo.v, "📜 aceitou uma vez = a tela do termo não reaparece (só se o professor mudar o texto)");
 
   // --- a FITA DO ANO voltou (pedido do Raphael): Mês | Ano no mesmo card ---
   const mapAno = await pApp.evaluate(async () => {
