@@ -90,6 +90,15 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// meta de carga (v675): o card 🎯 na aba Cargas — só aparece com carga anotada
+// (mcMax filtra), a comemoração é única por meta (ptmetacargaok = 'ex|alvo')
+// e a barra vem do recorde real do ptdc
+ok(html.indexOf("id='mcBox'") > -1 && html.indexOf("function pintaMetaCarga") > -1 &&
+  html.indexOf("window.__metaCarga") > -1 && html.indexOf("ptmetacargaok") > -1,
+  "🎯 a aba Cargas ganha a meta de carga (mcBox + pintaMetaCarga + marca de comemoração única)");
+ok(html.indexOf("META BATIDA! 💪") > -1 && html.indexOf("'ptmetacarga'") > -1,
+  "a meta guarda ex+alvo em ptmetacarga e celebra ao bater o recorde");
+
 // avaliação e saúde nativa (v671): curvas de gordura/massa magra no evoBox e
 // o importador automático (modo silencioso + dedupe) com as regras honestas
 ok(html.indexOf("function avMg") > -1 && html.indexOf("window.__avGraf") > -1,
