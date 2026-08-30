@@ -3161,6 +3161,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
       <label style="font-size: 12.5px;">Tolerância de atraso (dias)
         <input id="cfgAtraso" inputmode="numeric" style="display:block; width: 120px; margin-top: 4px;"></label>
+      <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; margin-top: 12px;"><input type="checkbox" id="cfgReciboZap" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Recibo automático no WhatsApp</b> — ao marcar "Recebi", o WhatsApp do aluno abre com o recibo pronto (você só confirma o envio)</span></label>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
       <h2>Receber dos alunos (cartão e boleto)</h2>
@@ -5801,6 +5802,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfSalvo").textContent = "✓ salvo!";
     setTimeout(function () { $("pfSalvo").textContent = ""; }, 2000);
   });
+  /* 🧾 Recibo automático no WhatsApp: registrou o recebimento → o zap do aluno
+   * abre com o recibo pronto (o professor só confirma o envio). Vem ligado;
+   * desliga em Configurações → Cobrança. Sem zap no cadastro, nada abre — e o
+   * recibo imprimível do histórico continua existindo pros dois casos. */
+  function reciboZapTexto(st, a, pg) {
+    var studio = (st.config || {}).nome || "Personal";
+    return "🧾 *Recibo — " + studio + "*\n" +
+      "Recebi de " + a.nome + " o valor de " + S.fmtBRL(+pg.valor) +
+      " em " + S.fmtData(pg.data) + (pg.desc ? ", referente a " + pg.desc : "") +
+      (pg.forma && pg.forma !== "recebido" ? " (" + pg.forma + ")" : "") + ".\n" +
+      "Obrigado! 💪";
+  }
+  function mandaReciboZap(st, a, pg) {
+    if ((st.config || {}).reciboZap === false) return false;
+    if (!a || !a.zap) return false;
+    window.open("https://wa.me/55" + String(a.zap).replace(/\D/g, "") +
+      "?text=" + encodeURIComponent(reciboZapTexto(st, a, pg)), "_blank");
+    return true;
+  }
+  window.__reciboZap = { texto: reciboZapTexto, manda: mandaReciboZap }; // testes
   function abreRecibo(pgId) {
     var st = load();
     var p = st.pagamentos.find(function (x) { return x.id === pgId; });
@@ -9469,8 +9490,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var vR = +rb.getAttribute("data-v") || 0;
       if (!alR || !vR) return;
       if (!confirm("Registrar " + S.fmtBRL(vR) + " recebido de " + alR.nome.split(" ")[0] + " agora?")) return;
-      stR.pagamentos.push({ id: S.uid(), alunoId: alR.id, valor: vR, forma: "recebido", data: S.todayISO() });
+      var pgR = { id: S.uid(), alunoId: alR.id, valor: vR, forma: "recebido", data: S.todayISO() };
+      stR.pagamentos.push(pgR);
       save(stR);
+      mandaReciboZap(stR, alR, pgR);
       return;
     }
     // Recebi da RENOVAÇÃO do pacote: entra COM desc (pacote não quita mensalidade
@@ -10641,6 +10664,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
     $("cfgTermo").value = ((st.config || {}).termo || {}).t || "";
+    $("cfgReciboZap").checked = (st.config || {}).reciboZap !== false; // vem ligado
     renderConta(); // o cartão Minha conta vive aqui também (entrar/senha/sair)
     renderAutos();
     pintaCfgResumo();
@@ -10650,6 +10674,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
     st.config.zapFilaOff = $("cfgZapFila").checked ? 0 : 1;
+    st.config.reciboZap = $("cfgReciboZap").checked; // false = desligado de propósito
     // a integração do WhatsApp tem botão próprio (Ligar meu número): ela vai pra
     // nuvem, não pro estudio local
     // os textos das mensagens fixas são salvos pelo editor da lista (não têm mais campo aqui)
@@ -13268,9 +13293,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!(vRec > 0)) { alert("Valor inválido — nada foi registrado."); return; }
     }
     var stX = load();
-    stX.pagamentos.push({ id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix", data: S.todayISO() });
+    var pgX = { id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix", data: S.todayISO() };
+    stX.pagamentos.push(pgX);
     save(stX);
     $("dlgPix").close();
+    mandaReciboZap(stX, stX.alunos.find(function (x) { return x.id === ctx.alunoId; }), pgX);
   });
   $("pixCopiar").addEventListener("click", function () {
     $("pixCode").select();
