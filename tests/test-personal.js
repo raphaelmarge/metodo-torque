@@ -4667,6 +4667,52 @@ async function abaPt(p, a) {
       "o plano do mês só vale com as 4 semanas completas (resposta antiga ou torta é descartada)");
     ok(mes.s1 === 1 && mes.s2 === 2 && mes.s4 === 4 && mes.futuro === 1,
       "a semana atual sai da data em que a IA montou (passou do mês, fica na 4; data no futuro, fica na 1)");
+
+    // 🔄 renovar o mês em 1 clique: botão só na semana 4, reusa a MESMA IA
+    const renova = await p.evaluate(async () => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const id = st.alunos[0].id;
+      st.treinosV2 = st.treinosV2 || {};
+      st.treinosV2[id] = st.treinosV2[id] || { fichas: [] };
+      const velho = new Date(Date.now() - 23 * 864e5).toISOString().slice(0, 10);
+      const semanas = [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n }));
+      st.treinosV2[id].mes = { musculacao: { geradoEm: velho, semanas } };
+      st.treinosV2[id].iaParams = { tipo: "musculacao", objetivo: "forca", equip: "casa", em: velho };
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      window.__trAba("fichas");
+      document.getElementById("tAluno").value = id;
+      window.__pintaMes(st.treinosV2[id]);
+      const card = document.getElementById("mesBox").innerHTML;
+      window.__pintaMes({ mes: { musculacao: { geradoEm: new Date().toISOString().slice(0, 10), semanas } } });
+      const cardNovo = document.getElementById("mesBox").innerHTML;
+      window.__pintaMes(st.treinosV2[id]);
+      window.confirm = () => true;
+      const chamaOrig = self.MT_FUNCAO.chama;
+      let corpo = null;
+      self.MT_FUNCAO.chama = (cli, fn2, body) => { corpo = body; return new Promise(() => {}); };
+      const cloudOrig = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ client: {} });
+      if (!self.MT_CLOUD) self.MT_CLOUD = {};
+      const urlOrig = self.MT_CLOUD.url;
+      self.MT_CLOUD.url = self.MT_CLOUD.url || "https://x.supabase.co";
+      document.querySelector("[data-renovames]").click();
+      await new Promise((r) => setTimeout(r, 300));
+      self.MT_FUNCAO.chama = chamaOrig;
+      window.MTStore.cloud = cloudOrig;
+      self.MT_CLOUD.url = urlOrig;
+      return {
+        temBotao: /Renovar o mês com IA/.test(card),
+        semBotaoNovo: !/Renovar o mês/.test(cardNovo),
+        corpo: corpo && { acao: corpo.acao, tipo: corpo.tipo },
+        campos: { tipo: document.getElementById("taTipo").value, obj: document.getElementById("taObjetivo").value, eq: document.getElementById("taEquip").value },
+      };
+    });
+    ok(renova.temBotao && renova.semBotaoNovo,
+      "🔄 o card do plano ganha 'Renovar o mês' NA SEMANA 4 — plano recente não mostra o botão");
+    ok(renova.corpo && renova.corpo.acao === "ia_treino" && renova.corpo.tipo === "musculacao",
+      "o clique dispara a MESMA IA de treino (ia_treino) — nenhum gerador paralelo");
+    ok(renova.campos.tipo === "musculacao" && renova.campos.obj === "forca" && renova.campos.eq === "casa",
+      "os parâmetros da última geração (iaParams) voltam preenchidos sozinhos");
     // a chat-envia manda os TRÊS formatos devolverem o plano do mês
     const fn = require("fs").readFileSync(__dirname + "/../supabase/functions/chat-envia/index.ts", "utf8");
     ok((fn.match(/MES_REGRA/g) || []).length === 4 && (fn.match(/"mes":\[/g) || []).length === 3,
