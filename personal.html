@@ -2974,6 +2974,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-top: 14px;">
+      <h2>🛍 Loja do app</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Uma vitrine <b>dentro do app do aluno</b> com o que você vende — camiseta do studio, suplemento, avaliação avulsa, pacote de massagem. O aluno toca em <b>Quero esse</b> e o pedido cai no seu WhatsApp com o nome do item; você fecha a venda e registra como sempre. Os seus <b>serviços cadastrados</b> (Financeiro → Serviços) entram sozinhos.</p>
+      <label style="display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 0 0 10px;"><input type="checkbox" id="lojaServ" checked style="width: 16px; height: 16px;"> Mostrar meus serviços com preço na loja</label>
+      <div id="lojaLista" style="margin-bottom: 10px;"></div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px;">
+        <label style="margin:0;font-size:12px;font-weight:700;">Produto<input id="lojaNome" placeholder="Camiseta do studio" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Descrição (opcional)<input id="lojaDesc" placeholder="algodão, P ao GG" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Preço (R$)<input id="lojaValor" type="number" min="0" step="0.01" placeholder="79,90" style="margin-top:4px;"></label>
+      </div>
+      <button class="btn sec mini" id="lojaAdd" style="margin-top: 10px;">+ Adicionar produto</button>
+      <span id="lojaStatus" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+    </div>
+
+    <div class="card" style="margin-top: 14px;">
       <h2>Foto do card “treino de hoje”</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> que não tenham foto mais específica. Quer uma foto diferente por treino? Use o card <b>Fotos por tipo de treino</b> aqui embaixo, ou escolha ficha por ficha em <b>Treinos → Fichas do aluno</b>.</p>
       <div class="fotoguia">
@@ -12172,6 +12186,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (window.__pintaCapasTipo) window.__pintaCapasTipo();
     pintaPersPrev();
     pintaClube(st);
+    pintaLoja(st);
   }
   /* 🎁 Clube de vantagens (v697): parcerias do professor com comércios locais
    * viram cupons no app dos alunos — benefício exclusivo segura aluno. Mora em
@@ -12209,6 +12224,53 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("clubeStatus").textContent = "Tirada — publique de novo pra sumir do app.";
   });
   window.__clubePT = pintaClube; // testes
+  /* 🛍 Loja do app (v698): vitrine dentro do app do aluno. Produtos manuais em
+   * config.lojaItens; os serviços do cadastro (servicosPT) entram sozinhos,
+   * desligáveis por config.lojaServOff. A compra fecha no WhatsApp do
+   * professor — o dinheiro segue caindo direto com ele, como sempre. */
+  function pintaLoja(st) {
+    var box = $("lojaLista"); if (!box) return;
+    var cfg = st.config || {};
+    if (document.activeElement !== $("lojaServ")) $("lojaServ").checked = !cfg.lojaServOff;
+    var lst = cfg.lojaItens || [];
+    box.innerHTML = lst.length ? lst.map(function (p, i) {
+      return '<div class="sessao-pt"><b>' + esc(p.n) + "</b>" +
+        '<span class="muted" style="font-size:12px;flex:1;min-width:0;">' + (p.d ? esc(p.d) + " · " : "") + S.fmtBRL(+p.v) + "</span>" +
+        '<button class="btn sec mini" data-lojax="' + i + '">Tirar</button></div>';
+    }).join("") : '<div class="muted" style="font-size:12.5px;">Nenhum produto próprio ainda' +
+      ((st.servicosPT || []).length && !cfg.lojaServOff ? " — os " + (st.servicosPT || []).length + " serviços do cadastro já entram sozinhos." : ".") + "</div>";
+  }
+  function lojaMarcaTodos(st) {
+    st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+  }
+  $("lojaAdd").addEventListener("click", function () {
+    var n = $("lojaNome").value.trim(), d9 = $("lojaDesc").value.trim(), v = +String($("lojaValor").value).replace(",", ".");
+    if (!n || !(v > 0)) { $("lojaStatus").textContent = "Preencha o produto e um preço maior que zero."; return; }
+    var st = load(); st.config = st.config || {};
+    var lst = st.config.lojaItens = st.config.lojaItens || [];
+    if (lst.length >= 30) { $("lojaStatus").textContent = "Máximo de 30 produtos — tire um antes."; return; }
+    lst.push({ id: S.uid(), n: n.slice(0, 60), d: d9.slice(0, 90), v: Math.round(v * 100) / 100 });
+    lojaMarcaTodos(st);
+    save(st);
+    ["lojaNome", "lojaDesc", "lojaValor"].forEach(function (id) { $(id).value = ""; });
+    $("lojaStatus").textContent = "Adicionado! Toque em Publicar lá em cima pra chegar no app dos alunos.";
+  });
+  $("lojaServ").addEventListener("change", function () {
+    var st = load(); st.config = st.config || {};
+    if (this.checked) delete st.config.lojaServOff; else st.config.lojaServOff = 1;
+    lojaMarcaTodos(st);
+    save(st);
+    $("lojaStatus").textContent = "Salvo — publique pra valer no app.";
+  });
+  document.addEventListener("click", function (e) {
+    var x = e.target.closest("[data-lojax]"); if (!x) return;
+    var st = load();
+    ((st.config || {}).lojaItens || []).splice(+x.getAttribute("data-lojax"), 1);
+    lojaMarcaTodos(st);
+    save(st);
+    $("lojaStatus").textContent = "Tirado — publique de novo pra sumir do app.";
+  });
+  window.__lojaPT = pintaLoja; // testes
   $("persPre").addEventListener("click", function (e) {
     var b = e.target.closest("[data-perscor]");
     if (!b) return;
@@ -16460,6 +16522,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       clubeApp: ((st.config || {}).clube || []).slice(0, 20).map(function (p) {
         return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
       }),
+      // v698: loja do app — produtos manuais + serviços do cadastro (desligáveis)
+      lojaApp: ((st.config || {}).lojaItens || []).map(function (p) {
+        return { n: p.n, d: p.d || "", v: +p.v || 0 };
+      }).concat((st.config || {}).lojaServOff ? [] : (st.servicosPT || []).map(function (s) {
+        return { n: s.nome, d: "", v: +s.valor || 0 };
+      })).filter(function (x) { return x.n && x.v > 0; }).slice(0, 30),
     };
   }
   window.__dadosApp = dadosAppAluno; // testes
