@@ -2833,6 +2833,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Retenção</h2><div id="relRetencao" class="muted">Cadastre alunos para ver a retenção.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
@@ -14195,6 +14196,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rec.some(function (x) { return x.v; })) barras($("relReceita"), rec, "var(--roxo)", function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); });
     else $("relReceita").textContent = "Sem pagamentos ainda.";
 
+    /* Retenção — as três contas que dizem se a carteira segura:
+     * tempo médio de casa (só dos ATIVOS, hoje − desde), churn do mês
+     * (encerrados no mês ÷ quem COMEÇOU o mês na carteira — quem entrou e
+     * saiu no próprio mês não infla a base) e sobrevivência de 6 meses
+     * (dos que entraram há 6+ meses, quantos chegaram a 6 meses de casa —
+     * encerrado que durou 7 meses CONTA como sobrevivente). */
+    function retencaoPT(st9, hoje9) {
+      var mesesDe = function (ini, fim) {
+        return Math.max(0, (new Date(String(fim).slice(0, 10) + "T12:00") - new Date(String(ini).slice(0, 10) + "T12:00")) / 2629800000);
+      };
+      var ativos9 = st9.alunos.filter(function (a) { return a.ativo !== false && a.desde; });
+      var soma9 = 0;
+      ativos9.forEach(function (a) { soma9 += mesesDe(a.desde, hoje9); });
+      var mes9 = hoje9.slice(0, 7), iniMes9 = mes9 + "-01";
+      var noInicio = st9.alunos.filter(function (a) {
+        if (!a.desde || a.desde >= iniMes9) return false;
+        if (a.ativo === false && a.fim && a.fim < iniMes9) return false;
+        return true;
+      }).length;
+      var sairamMes = st9.alunos.filter(function (a) { return a.ativo === false && (a.fim || "").slice(0, 7) === mes9; }).length;
+      var corte9 = new Date(hoje9 + "T12:00"); corte9.setMonth(corte9.getMonth() - 6);
+      var corteISO9 = corte9.toISOString().slice(0, 10);
+      var coorte = st9.alunos.filter(function (a) { return a.desde && a.desde <= corteISO9; });
+      var passaram6 = coorte.filter(function (a) {
+        return mesesDe(a.desde, a.ativo === false ? (a.fim || a.desde) : hoje9) >= 6;
+      }).length;
+      return {
+        tempoMedio: ativos9.length ? Math.round(10 * soma9 / ativos9.length) / 10 : 0,
+        ativos: ativos9.length,
+        churn: noInicio ? Math.round(1000 * sairamMes / noInicio) / 10 : 0,
+        sairamMes: sairamMes, noInicio: noInicio,
+        coorte: coorte.length, passaram6: passaram6,
+      };
+    }
+    window.__retencaoPT = retencaoPT; // testes
+
     // ---- carteira: novos × encerrados por mês ----
     var linhasCart = meses.map(function (m) {
       var novos = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === m.chave; }).length;
@@ -14210,6 +14247,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<span style="margin-left:auto;font-weight:800;color:' + (saldo >= 0 ? "var(--pt-ok)" : "var(--pt-erro)") + ';">saldo ' + (saldo >= 0 ? "+" : "") + saldo + "</span></div>";
       }).join("");
     } else $("relCarteira").textContent = "Sem dados ainda.";
+
+    // ---- retenção: tempo de casa, churn do mês e sobrevivência de 6 meses ----
+    var ret = retencaoPT(st, hoje);
+    if (ret.ativos || ret.coorte) {
+      var caixaRt = function (num, rot, sub) {
+        return '<div style="background:var(--pt-caixa);border-radius:12px;padding:12px 14px;">' +
+          '<div style="font-size:22px;font-weight:900;">' + num + "</div>" +
+          '<div style="font-size:12.5px;font-weight:700;">' + rot + "</div>" +
+          (sub ? '<div style="font-size:11.5px;color:var(--cinza);">' + sub + "</div>" : "") + "</div>";
+      };
+      $("relRetencao").innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">' +
+        caixaRt(String(ret.tempoMedio).replace(".", ",") + " meses", "tempo médio de casa", "dos " + S.plural(ret.ativos, "ativo", "ativos")) +
+        caixaRt(String(ret.churn).replace(".", ",") + "%", "saíram este mês", ret.noInicio ? ret.sairamMes + " de " + ret.noInicio + " que começaram o mês" : "ninguém tinha começado o mês") +
+        caixaRt(ret.coorte ? Math.round(100 * ret.passaram6 / ret.coorte) + "%" : "—", "passam de 6 meses",
+          ret.coorte ? ret.passaram6 + " de " + ret.coorte + " que entraram há 6+ meses" : "ninguém entrou há 6+ meses ainda") +
+        "</div>";
+    } else $("relRetencao").textContent = "Cadastre alunos para ver a retenção.";
 
     // ---- sessões por mês ----
     var ses = meses.map(function (m) {

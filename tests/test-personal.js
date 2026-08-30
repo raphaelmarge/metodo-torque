@@ -1733,6 +1733,22 @@ async function abaPt(p, a) {
   ok(/Todo mundo pagou/.test(relPrev), "quem pagou some da lista de falta");
   const relCart = await p.evaluate(() => document.getElementById("relCarteira").textContent);
   ok(/\+1 novo/.test(relCart) && /saldo \+1/.test(relCart), "carteira: João conta como novo no mês");
+  // 📉 retenção: tempo de casa, churn honesto e sobrevivência de 6 meses
+  const relRet = await p.evaluate(() => ({
+    txt: document.getElementById("relRetencao").textContent,
+    conta: window.__retencaoPT({ alunos: [
+      { desde: "2025-08-01", ativo: true },                     // 1 ano de casa, ativo
+      { desde: "2026-01-15", ativo: false, fim: "2026-03-01" }, // durou ~1,5 mês
+      { desde: "2025-09-01", ativo: false, fim: "2026-08-10" }, // saiu ESTE mês com 11 meses de casa
+      { desde: "2026-08-05", ativo: true },                     // entrou este mês
+    ] }, "2026-08-30"),
+  }));
+  ok(relRet.conta.churn === 50 && relRet.conta.sairamMes === 1 && relRet.conta.noInicio === 2,
+    "retenção: churn conta o encerrado do mês sobre quem COMEÇOU o mês na carteira (1 de 2 = 50%)");
+  ok(relRet.conta.coorte === 3 && relRet.conta.passaram6 === 2,
+    "sobrevivência de 6 meses: encerrado que durou 11 meses CONTA como sobrevivente (2 de 3)");
+  ok(/tempo médio de casa/.test(relRet.txt) && /passam de 6 meses/.test(relRet.txt) && /saíram este mês/.test(relRet.txt),
+    "o card Retenção pinta as três caixas: tempo de casa, churn do mês e 6 meses");
   const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
   ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
   ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
