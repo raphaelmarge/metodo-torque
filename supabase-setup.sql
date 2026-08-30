@@ -2863,3 +2863,38 @@ revoke execute on function public.push_prof_agenda() from anon, authenticated;
 drop trigger if exists push_prof_agenda_tg on public.app_agenda;
 create trigger push_prof_agenda_tg after insert on public.app_agenda
   for each row execute function public.push_prof_agenda();
+
+-- ============================================================
+-- AULA EXPERIMENTAL PELA MINHA PÁGINA (mt-v684) — o interessado
+-- escolhe um dos horários que o PROFESSOR oferece e deixa nome +
+-- WhatsApp; o pedido cai em matriculas_online (plano 'aula
+-- experimental') e o professor recebe push na hora (v682). O
+-- professor confirma pelo WhatsApp — a página nunca promete vaga.
+-- ============================================================
+alter table public.matriculas_online add column if not exists horario text not null default '';
+
+create or replace function public.aula_exp_pede(p_academia uuid, p_nome text, p_zap text, p_horario text)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  if p_academia is null or length(trim(coalesce(p_nome, ''))) < 2
+     or length(regexp_replace(coalesce(p_zap, ''), '\D', '', 'g')) < 10 then
+    return json_build_object('erro', 'Preencha seu nome e um WhatsApp válido.');
+  end if;
+  if not exists (select 1 from public.academias where id = p_academia) then
+    return json_build_object('erro', 'Página não encontrada — avise o professor.');
+  end if;
+  -- freio de spam: a página é pública; mais de 10 pedidos NOVOS na última
+  -- hora pra mesma academia é robô, não gente
+  if (select count(*) from public.matriculas_online
+      where academia_id = p_academia and plano = 'aula experimental'
+        and criado > now() - interval '1 hour') >= 10 then
+    return json_build_object('erro', 'Muitos pedidos agora — tente de novo mais tarde.');
+  end if;
+  insert into public.matriculas_online (academia_id, nome, zap, email, plano, horario)
+  values (p_academia, left(trim(p_nome), 80), left(trim(p_zap), 20), '', 'aula experimental',
+          left(coalesce(p_horario, ''), 60));
+  perform public.push_avisa_prof(p_academia, '🎯 Aula experimental',
+    left(trim(p_nome), 40) || coalesce(' — ' || nullif(left(p_horario, 40), ''), '') || '. Confirme no WhatsApp!');
+  return json_build_object('ok', true);
+end $$;
+grant execute on function public.aula_exp_pede(uuid, text, text, text) to anon, authenticated;
