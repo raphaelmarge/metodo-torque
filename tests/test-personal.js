@@ -2766,6 +2766,46 @@ async function abaPt(p, a) {
   ok(turma.criadas === 2 && turma.ids.indexOf("tm2") >= 0 && turma.ids.length === 2,
     "👥 turma de 2 vira DUAS sessões no mesmo horário, uma por aluno");
 
+  // 📣 v693: resgate de quem sumiu vira mensagem FIXA da fila de WhatsApp
+  // (sem automação configurada) e a fila aparece no Resolver hoje
+  const rzg = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const agora = Date.now();
+    const d10 = new Date(agora - 10 * 864e5).toISOString().slice(0, 10);
+    st.alunos.push({ id: "al-sumido", nome: "Sumido Silva", ativo: true, zap: "31999990000", desde: "2026-01-01" });
+    st.sessoes.push({ id: "ss-rzg1", alunoId: "al-sumido", data: d10, hora: "08:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st1 = S.read("ptStudio", {});
+    const acha = (fila) => fila.find((z) => z.chave === "zresgate|al-sumido");
+    const r = acha(window.__zapFila(st1));
+    // com sessão futura marcada, o aluno não está "sumido": sai da fila
+    st1.sessoes.push({ id: "ss-rzg2", alunoId: "al-sumido", data: new Date(agora + 2 * 864e5).toISOString().slice(0, 10), hora: "08:00", feita: false });
+    const r2 = acha(window.__zapFila(st1));
+    st1.sessoes = st1.sessoes.filter((s) => s.id !== "ss-rzg2");
+    // desligável como as outras fixas
+    st1.config = st1.config || {}; st1.config.zapFixasOff = { resgate: 1 };
+    const r3 = acha(window.__zapFila(st1));
+    delete st1.config.zapFixasOff;
+    // o Resolver hoje mostra a contagem da fila com o botão Ver a fila
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st1));
+    window.__dashPT.resolver(st1);
+    const card = [...document.querySelectorAll("#dashResolver .dcard")].find((c) => /MENSAGENS PRONTAS/.test(c.textContent));
+    const out = { tem: !!r, texto: r ? r.texto : "", rotulo: r ? r.rotulo : "",
+      futura: !!r2, desligada: !!r3, card: !!card, cardBt: card ? !!card.querySelector("[data-vaifila]") : false };
+    // limpa o que semeou
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "al-sumido");
+    st9.sessoes = st9.sessoes.filter((s) => s.alunoId !== "al-sumido");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__dashPT.resolver(st9);
+    return out;
+  });
+  ok(rzg.tem && /10 dias/.test(rzg.texto) && /sem treinar há 10 dias/.test(rzg.rotulo),
+    "📣 10 dias sumido entra na fila com a mensagem de resgate pronta");
+  ok(!rzg.futura, "📣 sessão futura marcada = não está sumido, sai da fila");
+  ok(rzg.desligada === false, "📣 a fixa de resgate desliga em Configurações como as outras");
+  ok(rzg.card && rzg.cardBt, "📣 o Resolver hoje mostra as mensagens esperando OK, com o Ver a fila");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
