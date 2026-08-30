@@ -3441,6 +3441,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec mini" id="pfReliga" hidden title="devolve o acesso e publica o app de novo" style="width: 100%;">Devolver o acesso</button>
       <button class="btn sec mini" id="pfApp" title="publica o app na nuvem e manda o link pro aluno" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
       <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
+      <button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp" style="width: 100%;">📄 Relatório do mês</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
       <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
     </div>
@@ -5925,6 +5926,89 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("pfApp").addEventListener("click", function () {
     var b = document.querySelector('[data-app="' + perfilId + '"]');
     if (b) b.click();
+  });
+  /* 📄 Relatório do mês do aluno — documento AUTÔNOMO (imprime/vira PDF pra
+   * mandar no WhatsApp), por isso hex cravado: var(--pt-*) não existe lá.
+   * Os números saem do que o app do aluno devolveu (a.retorno: treinos feitos,
+   * peso, cargas, corridas) mais as sessões marcadas no painel — e cada bloco
+   * só aparece quando tem dado de verdade. */
+  function montaRelMensal(alunoId) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) return "";
+    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var mesNome = MESES9[+mes.slice(5, 7) - 1] + " de " + mes.slice(0, 4);
+    var ret = a.retorno || {};
+    var feitos = Object.keys(ret.feitos || {}).filter(function (k) { return k.slice(0, 7) === mes; }).length;
+    var sesMes = (st.sessoes || []).filter(function (x) { return x.alunoId === alunoId && (x.data || "").slice(0, 7) === mes && x.data <= hoje; });
+    var sesFeitas = sesMes.filter(function (x) { return x.feita; }).length;
+    var pz = ret.peso || {};
+    var ksMes = Object.keys(pz).filter(function (k) { return k.slice(0, 7) === mes; }).sort();
+    var ksTodos = Object.keys(pz).sort();
+    var pesoIni = ksMes.length ? +pz[ksMes[0]] : 0;
+    var pesoFim = ksMes.length ? +pz[ksMes[ksMes.length - 1]] : (ksTodos.length ? +pz[ksTodos[ksTodos.length - 1]] : 0);
+    var pesoDif = ksMes.length > 1 ? Math.round((pesoFim - pesoIni) * 10) / 10 : 0;
+    // recorde de carga = máximo do mês MAIOR que o máximo de antes do mês
+    var recs = [];
+    Object.keys(ret.cargas || {}).forEach(function (ex) {
+      var maxMes = 0, maxAntes = 0;
+      (ret.cargas[ex] || []).forEach(function (e) {
+        if (!e || e.kg == null) return;
+        if (String(e.d || "").slice(0, 7) === mes) { if (+e.kg > maxMes) maxMes = +e.kg; }
+        else if (String(e.d || "") < mes + "-01") { if (+e.kg > maxAntes) maxAntes = +e.kg; }
+      });
+      if (maxMes > maxAntes && maxMes > 0) recs.push({ ex: ex, de: maxAntes, pra: maxMes });
+    });
+    recs.sort(function (x, y) { return (y.pra - y.de) - (x.pra - x.de); });
+    var cds = (ret.cardio || []).filter(function (c) { return String(c.d || "").slice(0, 7) === mes; });
+    var kmMes = Math.round(cds.reduce(function (t, c) { return t + (+c.k || 0); }, 0) * 10) / 10;
+    var fmt9 = function (v) { return String(v).replace(".", ","); };
+    var tile = function (num, rot) {
+      return "<div style='background:#f5f3ff;border:1px solid #ddd6fe;border-radius:14px;padding:14px 16px;text-align:center;'>" +
+        "<div style='font-size:26px;font-weight:900;color:#5b21b6;'>" + num + "</div>" +
+        "<div style='font-size:12px;color:#4b5563;font-weight:700;'>" + rot + "</div></div>";
+    };
+    var corpo9 = "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0;'>" +
+      tile(feitos, "treino(s) no mês") +
+      (sesMes.length ? tile(sesFeitas + " de " + sesMes.length, "sessões com o professor") : "") +
+      (pesoFim ? tile(fmt9(pesoFim) + " kg", pesoDif ? "peso (" + (pesoDif > 0 ? "+" : "") + fmt9(pesoDif) + " kg no mês)" : "peso atual") : "") +
+      (kmMes ? tile(fmt9(kmMes) + " km", S.plural(cds.length, "corrida/pedal", "corridas/pedais")) : "") +
+      "</div>";
+    var recsHtml = recs.length
+      ? "<h3 style='font-size:15px;margin:18px 0 6px;'>🏆 Recordes de carga do mês</h3><table style='width:100%;border-collapse:collapse;font-size:13px;'>" +
+        "<tr><th style='text-align:left;border-bottom:1px solid #e5e7eb;padding:6px 8px;'>Exercício</th><th style='text-align:right;border-bottom:1px solid #e5e7eb;padding:6px 8px;'>Antes</th><th style='text-align:right;border-bottom:1px solid #e5e7eb;padding:6px 8px;'>Agora</th></tr>" +
+        recs.slice(0, 8).map(function (r) {
+          return "<tr><td style='border-bottom:1px solid #f3f4f6;padding:6px 8px;'>" + esc(r.ex) + "</td>" +
+            "<td style='text-align:right;border-bottom:1px solid #f3f4f6;padding:6px 8px;'>" + (r.de ? fmt9(r.de) + " kg" : "—") + "</td>" +
+            "<td style='text-align:right;border-bottom:1px solid #f3f4f6;padding:6px 8px;font-weight:800;color:#5b21b6;'>" + fmt9(r.pra) + " kg</td></tr>";
+        }).join("") + "</table>"
+      : "";
+    var semDados = !feitos && !pesoFim && !recs.length && !kmMes && !sesMes.length;
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Relatório do mês — " + esc(a.nome) + "</title><style>" +
+      "body{font-family:system-ui,sans-serif;color:#111827;max-width:680px;margin:0 auto;padding:34px 22px;}" +
+      "@media print{.no-print{display:none;}}" +
+      "</style></head><body>" +
+      "<button class='no-print' onclick='window.print()' style='background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:18px;'>Imprimir / salvar em PDF</button>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:#7c3aed;font-weight:800;text-transform:uppercase;'>" + esc(studio.toUpperCase()) + " · RELATÓRIO DO MÊS</div>" +
+      "<h1 style='font-size:26px;margin:6px 0 2px;'>" + esc(a.nome) + "</h1>" +
+      "<div style='color:#4b5563;font-size:13px;margin-bottom:8px;'>" + mesNome + (a.objetivo ? " · objetivo: " + esc(a.objetivo) : "") + "</div>" +
+      (semDados
+        ? "<p style='font-size:14px;'>Este mês ainda não tem registros no app — o relatório enche conforme o aluno treina e anota.</p>"
+        : corpo9 + recsHtml) +
+      "<div style='margin-top:26px;color:#6b7280;font-size:11.5px;border-top:1px solid #e5e7eb;padding-top:10px;'>Gerado pelo TORQUE PERSONAL · " + esc(studio) + " · " + S.fmtData(hoje) + "</div>" +
+      "</body></html>";
+  }
+  window.__relMensal = montaRelMensal; // testes
+  $("pfRelMes").addEventListener("click", function () {
+    var html = montaRelMensal(perfilId);
+    if (!html) { alert("Escolha o aluno primeiro."); return; }
+    var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
+    w.document.write(html);
+    w.document.close();
   });
   $("pfRevoga").addEventListener("click", function () {
     var st = load();
