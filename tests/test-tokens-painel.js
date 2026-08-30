@@ -204,6 +204,43 @@ const ESPERADO = {
   t(base.zap.bg === base.sec.bg, "o botao de WhatsApp e secundario com tinta verde, nao verde chapado");
   t(Math.round(parseFloat(base.corpo)) === 26, "a area de conteudo respira 26px dos lados (" + base.corpo + ")");
 
+  /* A COR DO STUDIO pinta o redesenho (conserto da v688): o redesenho cravou
+   * o roxo na familia --pt-roxo* e a Personalizacao so setava --roxo (apps.css)
+   * — o professor trocava a cor e TUDO continuava roxo. Agora aplicaTema pinta
+   * a familia inteira, com tom de texto mais escuro no modo claro. */
+  console.log("\nA cor da Personalizacao pinta o redesenho:");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}");
+    st.config = st.config || {}; st.config.cor = "#e11d48";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  await p.reload(); await p.waitForTimeout(700);
+  const leCor = () => p.evaluate(() => {
+    const cs = getComputedStyle(document.documentElement);
+    const v = (n) => cs.getPropertyValue(n).trim();
+    return { roxo: v("--pt-roxo"), claro: v("--pt-roxo-claro"), sel: v("--pt-sel"),
+             grad: v("--pt-grad-card"), antigo: v("--roxo") };
+  });
+  const cor1 = await leCor();
+  t(cor1.roxo === "#e11d48" && cor1.antigo === "#e11d48",
+    "cor escolhida vira --pt-roxo E --roxo (" + cor1.roxo + ")");
+  t(cor1.claro !== "#a78bfa" && cor1.sel.indexOf("225,29,72") >= 0 && cor1.grad.indexOf("#e11d48") >= 0,
+    "a familia derivada acompanha (claro, tinta de selecao, gradiente)");
+  await p.evaluate(() => document.getElementById("btnTemaPt").click());
+  await p.waitForTimeout(300);
+  const cor2 = await leCor();
+  t(cor2.claro !== cor1.claro && cor2.sel.indexOf(".12") >= 0,
+    "no modo claro o texto colorido escurece pra ter contraste (" + cor1.claro + " → " + cor2.claro + ")");
+  await p.evaluate(() => { // limpa: sem cor, tudo volta pro roxo padrao
+    document.getElementById("btnTemaPt").click();
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}");
+    st.config.cor = ""; localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  await p.reload(); await p.waitForTimeout(700);
+  const cor3 = await leCor();
+  t(/7c3aed/i.test(cor3.roxo) && /a78bfa/i.test(cor3.claro),
+    "sem cor escolhida, volta o roxo padrao da marca (" + cor3.roxo + ")");
+
   /* A FRONTEIRA: o pacote do app do aluno NAO e CSS do painel.
    *
    * `dadosAppAluno` monta a paleta que vira o `:root` de OUTRO documento (o

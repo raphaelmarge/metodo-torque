@@ -3662,14 +3662,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function rgbDe(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }
   // mesmo padrão anti-XSS do fotoOk: só dataURL de imagem, sem aspas/sinais
   function logoOk(u) { u = String(u || ""); return /^data:image\//.test(u) && !/['"<>\\]/.test(u) ? u : ""; }
+  // Os tokens que a cor do studio pinta. O redesenho (v614+) trocou o painel
+  // inteiro pra família --pt-roxo* cravada no :root — só setar --roxo (apps.css)
+  // deixava TUDO roxo mesmo com cor escolhida na Personalização. Estilo inline
+  // no <html> ganha das duas folhas (escura e clara), então o modo claro entra
+  // na conta aqui (roxo de TEXTO escurece pra ter contraste, igual à folha).
+  var TOKENS_COR = ["--roxo", "--roxo-2", "--pt-roxo", "--pt-roxo-esc", "--pt-roxo-claro",
+    "--pt-roxo-clar2", "--pt-roxo-avatar", "--pt-roxo-fundo", "--pt-roxo-prof",
+    "--pt-sel", "--pt-sel-borda", "--pt-grad-faixa", "--pt-grad-card", "--pt-grad-barra"];
   function aplicaTema(st) {
     var cor = corOk((st.config || {}).cor);
+    var R = document.documentElement.style;
     if (cor) {
-      document.documentElement.style.setProperty("--roxo", cor);
-      document.documentElement.style.setProperty("--roxo-2", escurece(cor, .18));
+      var claro = document.documentElement.dataset.tema === "claro";
+      var esc = escurece(cor, .18), prof = escurece(cor, .65), rgb = rgbDe(cor);
+      R.setProperty("--roxo", cor);
+      R.setProperty("--roxo-2", esc);
+      R.setProperty("--pt-roxo", cor);
+      R.setProperty("--pt-roxo-esc", esc);
+      R.setProperty("--pt-roxo-claro", claro ? esc : clareia(cor, .4));
+      R.setProperty("--pt-roxo-clar2", claro ? esc : clareia(cor, .6));
+      R.setProperty("--pt-roxo-avatar", claro ? "rgba(" + rgb + ",.12)" : escurece(cor, .75));
+      R.setProperty("--pt-roxo-fundo", escurece(cor, .38));
+      R.setProperty("--pt-roxo-prof", prof);
+      R.setProperty("--pt-sel", "rgba(" + rgb + "," + (claro ? ".12" : ".18") + ")");
+      R.setProperty("--pt-sel-borda", "rgba(" + rgb + "," + (claro ? ".28" : ".38") + ")");
+      R.setProperty("--pt-grad-faixa", "linear-gradient(160deg," + cor + "," + esc + ")");
+      R.setProperty("--pt-grad-card", "linear-gradient(170deg," + cor + " 0%," + esc + " 52%," + prof + " 100%)");
+      R.setProperty("--pt-grad-barra", "linear-gradient(90deg," + cor + "," + clareia(cor, .4) + ")");
     } else {
-      document.documentElement.style.removeProperty("--roxo");
-      document.documentElement.style.removeProperty("--roxo-2");
+      TOKENS_COR.forEach(function (t) { R.removeProperty(t); });
     }
     var lg = logoOk((st.config || {}).logo);
     var img = $("logoStudio");
@@ -12496,6 +12518,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var claro = document.documentElement.dataset.tema === "claro";
     document.documentElement.dataset.tema = claro ? "" : "claro";
     try { localStorage.setItem("mtapp:tema", claro ? "escuro" : "claro"); } catch (e) {}
+    aplicaTema(load()); // a cor do studio muda de tom entre os temas (texto roxo escurece no claro)
     pintaBtnTemaPt();
   });
   pintaBtnTemaPt();
