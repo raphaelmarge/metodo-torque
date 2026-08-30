@@ -90,6 +90,12 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// histórico do exercício (v685): a tela do guiado dobra as sessões anteriores
+// num <details> — melhor série de cada dia, só com 2+ sessões passadas
+ok(html.indexOf("function gHistDias") > -1 && html.indexOf("window.__gHist") > -1 &&
+  html.indexOf("Histórico deste exercício") > -1 && html.indexOf("class='ghist'") > -1,
+  "📜 a tela do exercício ganha o histórico rápido (gHistDias + <details class='ghist'>)");
+
 // contrato digital (v679): o termo viaja como {t, v} e o aceite volta pro
 // professor — a tela só existe com termo configurado e some pra quem já
 // aceitou ESTA versão; o "Deixar pra depois" nunca tranca o treino

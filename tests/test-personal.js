@@ -4736,6 +4736,29 @@ async function abaPt(p, a) {
       "sem histórico ou sem repetições prescritas, nenhuma sugestão é inventada");
   }
   {
+    // 📜 histórico do exercício na tela do guiado (v685): a olhada rápida
+    const hist = await pApp.evaluate(() => {
+      const snap = localStorage.getItem("ptdc");
+      localStorage.setItem("ptdc", JSON.stringify({ Sup: [
+        { d: "2026-08-01", kg: 50, r: 10 }, { d: "2026-08-01", kg: 55, r: 8 },
+        { d: "2026-08-10", kg: 57.5, r: 10 },
+        { d: "2026-08-20", kg: 60, r: 10 }, { d: "2026-08-20", kg: 60, r: 8 }, { d: "2026-08-20", kg: 60, r: 6 },
+      ] }));
+      const rows = window.__gHist("Sup");
+      const semNada = window.__gHist("Nunca feito");
+      localStorage.setItem("ptdc", JSON.stringify({ X: [{ d: "2026-08-20", kg: 40, r: 10 }] }));
+      const umDia = window.__gHist("X");
+      if (snap) localStorage.setItem("ptdc", snap); else localStorage.removeItem("ptdc");
+      return { rows, semNada, umDia };
+    });
+    ok(hist.rows.length === 2 && hist.rows[0].d === "2026-08-10" && hist.rows[0].kg === 57.5,
+      "📜 o histórico traz os dias ANTERIORES à última vez, o mais novo primeiro");
+    ok(hist.rows[1].kg === 55 && hist.rows[1].r === 8 && hist.rows[1].n === 2,
+      "cada dia mostra a MELHOR série (55 × 8, não 50 × 10) e quantas séries foram");
+    ok(hist.semNada.length === 0 && hist.umDia.length === 0,
+      "sem sessões antes da última, o histórico nem aparece — nada de card vazio");
+  }
+  {
     // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
     const mes = await p.evaluate(() => {
       // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
