@@ -1681,6 +1681,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                    background: var(--tk-sup2); color: var(--tk-tx2); font-family: inherit; font-size: 16px;
                    font-weight: 800; cursor: pointer; flex: none; }
   .pfhnav > span { width: 34px; flex: none; }
+  .pfhper { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 0 0 10px; }
+  .pfhper label { margin: 0; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--tk-tx5); flex: none; }
+  .pfhper input[type=date] { display: block; margin-top: 3px; width: 140px; }
   .pfdia { border: 1px solid var(--tk-bd2); border-radius: 12px; padding: 10px 13px; margin-bottom: 7px; background: var(--tk-sup2); }
   .pfdia summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .pfdia summary::-webkit-details-marker { display: none; }
@@ -5818,16 +5821,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var hjH = new Date();
           var alvoH = new Date(hjH.getFullYear(), hjH.getMonth() - pfHistOff, 1);
           var mesH = alvoH.getFullYear() + "-" + String(alvoH.getMonth() + 1).padStart(2, "0");
-          var doMes = todosDias.filter(function (k9) { return k9.slice(0, 7) === mesH; }).reverse();
+          /* v711: período livre (de/até) — quando o professor escolhe as duas
+           * datas, o histórico ignora o mês e lista o intervalo inteiro */
+          var temPer = /^\d{4}-\d{2}-\d{2}$/.test(pfHistDe) && /^\d{4}-\d{2}-\d{2}$/.test(pfHistAte);
+          var doMes = temPer
+            ? todosDias.filter(function (k9) { return k9 >= pfHistDe && k9 <= pfHistAte; }).reverse()
+            : todosDias.filter(function (k9) { return k9.slice(0, 7) === mesH; }).reverse();
           var treinosH = doMes.filter(function (k9) { return porDia[k9].fez || porDia[k9].cg.length || porDia[k9].cr.length || porDia[k9].wod.length; }).length;
           var temAntes = todosDias[0] < mesH + "-01";
+          var brData = function (k9) { return k9.slice(8, 10) + "/" + k9.slice(5, 7) + "/" + k9.slice(2, 4); };
           html += "<div class='pfappk'>Histórico de treino</div>" +
             "<div class='pfhnav'>" +
-            (temAntes ? "<button type='button' data-hnav='1' title='mês anterior' aria-label='mês anterior'>‹</button>" : "<span></span>") +
-            "<b>" + MESH[alvoH.getMonth()] + " de " + alvoH.getFullYear() + "</b><span class='pfhsub'>" + S.plural(treinosH, "dia de treino", "dias de treino") + "</span>" +
-            (pfHistOff > 0 ? "<button type='button' data-hnav='-1' title='mês seguinte' aria-label='mês seguinte'>›</button>" : "<span></span>") + "</div>";
+            (!temPer && temAntes ? "<button type='button' data-hnav='1' title='mês anterior' aria-label='mês anterior'>‹</button>" : "<span></span>") +
+            "<b>" + (temPer ? brData(pfHistDe) + " a " + brData(pfHistAte) : MESH[alvoH.getMonth()] + " de " + alvoH.getFullYear()) + "</b>" +
+            "<span class='pfhsub'>" + S.plural(treinosH, "dia de treino", "dias de treino") + "</span>" +
+            (!temPer && pfHistOff > 0 ? "<button type='button' data-hnav='-1' title='mês seguinte' aria-label='mês seguinte'>›</button>" : "<span></span>") + "</div>" +
+            // escolher o período: de tal data até tal data (os valores voltam do estado
+            // porque o innerHTML é refeito a cada Aplicar)
+            "<div class='pfhper'><label>De<input type='date' id='pfPerDe' value='" + (pfHistDe || "") + "'></label>" +
+            "<label>Até<input type='date' id='pfPerAte' value='" + (pfHistAte || "") + "'></label>" +
+            "<button type='button' class='btn sec mini' data-hper='ok'>Aplicar</button>" +
+            (temPer ? "<button type='button' class='btn sec mini' data-hper='off'>Limpar</button>" : "") + "</div>";
           if (!doMes.length) {
-            html += "<div class='muted' style='font-size:12.5px;margin:2px 0 6px;'>Nenhum registro neste mês.</div>";
+            html += "<div class='muted' style='font-size:12.5px;margin:2px 0 6px;'>" + (temPer ? "Nenhum registro neste período." : "Nenhum registro neste mês.") + "</div>";
           }
           html += doMes.map(function (k9) {
             var d9 = porDia[k9];
@@ -5875,12 +5891,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             if (x && typeof x === "object" && dataRe(String(x.d || ""))) todasW.push(x);
           });
         });
+        /* v711: as listas completas não podem virar bagunça com 200 relatos —
+         * cada uma mostra as 6/8 mais recentes e guarda o resto atrás do botão
+         * "Mostrar as N anteriores" (o dado inteiro continua ali, um toque) */
+        var listaMais = function (linhas, corte, rot) {
+          if (linhas.length <= corte) return linhas.join("");
+          return linhas.slice(0, corte).join("") +
+            "<div hidden data-maisl>" + linhas.slice(corte).join("") + "</div>" +
+            "<button type='button' class='btn sec mini' data-vermaisl style='margin-top:8px;'>Mostrar " +
+            (linhas.length - corte) + " " + rot + "</button>";
+        };
         if (todasW.length) {
           todasW.sort(function (x, y) { return x.d < y.d ? -1 : 1; });
-          html += titulo("Circuitos (WOD) — placares do app") + todasW.slice(-6).reverse().map(function (x) {
+          html += titulo("Circuitos (WOD) — placares do app · " + todasW.length + " no total") + listaMais(todasW.slice().reverse().map(function (x) {
             return "<div class='pfappl'><b>" + esc(String(x.n || "Circuito").slice(0, 40)) + "</b> — " +
               esc(String(x.r || "").slice(0, 90)) + " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
-          }).join("");
+          }), 6, "placares anteriores");
         }
         // corrida e bike: registros do cronômetro de cardio (tempo, distância e pace)
         var crds = (Array.isArray(ret.cardio) ? ret.cardio : []).filter(function (x) {
@@ -5889,14 +5915,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (crds.length) {
           var crModsP = { corrida: "Corrida", caminhada: "Caminhada", bike: "Bike" };
           var fmtSegP = function (s) { s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); };
-          html += titulo("Corrida e bike — registros do app") + crds.slice(-6).reverse().map(function (x) {
+          crds.sort(function (x, y) { return x.d < y.d ? -1 : 1; });
+          html += titulo("Corrida e bike — registros do app · " + crds.length + " no total") + listaMais(crds.slice().reverse().map(function (x) {
             return "<div class='pfappl'><b>" + esc(String(x.n || "Cardio").slice(0, 40)) + "</b>" +
               " <span class='muted'>(" + esc(crModsP[x.m] || x.m || "") + ")</span> — " +
               (+x.k ? String((+x.k).toFixed(2)).replace(".", ",") + " km · " : "") + fmtSegP(x.s) +
               (x.p ? " · pace " + esc(String(x.p).slice(0, 8)) + " /km" : "") +
               (bpmOk(x.fc) ? " · <b>" + Math.round(+x.fc) + " bpm</b>" + (bpmOk(x.fcx) ? " (máx " + Math.round(+x.fcx) + ")" : "") : "") +
               " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
-          }).join("");
+          }), 6, "registros anteriores");
         }
         // ---- batimentos: barra por treino (média) com o pico marcado em cima ----
         if (fcDias.length) {
@@ -5989,8 +6016,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).filter(function (x) { return x.lst.length; });
         if (exs.length) {
           exs.sort(function (x, y) { return +y.lst[y.lst.length - 1].kg - +x.lst[x.lst.length - 1].kg; });
-          html += titulo("Evolução de carga (diário do aluno)") +
-            exs.slice(0, 8).map(function (par) {
+          html += titulo("Evolução de carga (diário do aluno) · " + exs.length + " exercícios") + listaMais(exs.map(function (par) {
               var ex = par.ex, lst = par.lst;
               var pri = +lst[0].kg, ult = +lst[lst.length - 1].kg;
               var d2 = Math.round((ult - pri) * 10) / 10;
@@ -6005,7 +6031,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 "<span style='flex:1;min-width:0;'>" + esc(ex) + "</span>" + spark +
                 "<span style='flex:none;'><b>" + num(ult) + " kg</b> " +
                 "<span style='color:" + (d2 > 0 ? "var(--tk-ok)" : "var(--tk-tx4)") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + num(d2) + ")</span></span></div>";
-            }).join("");
+            }), 8, "exercícios a mais");
         }
         // ---- treinos por mês ----
         if (diasTreino.length) {
@@ -6031,13 +6057,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // o retorno vem de RPC pública — só aceita foto data:image/https e data com dígitos (anti-XSS)
         var fotoOk = function (u) { u = String(u || ""); return (/^data:image\//.test(u) || /^https:\/\//.test(u)) && !/['"<>\\]/.test(u) ? u : ""; };
         var dataOk = function (d) { return String(d || "").replace(/[^0-9-]/g, ""); };
-        var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
-        if (fA) {
-          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:var(--tk-tx2);'><b>Fotos de progresso</b></div>" +
-            "<div style='display:flex;gap:10px;max-width:400px;'>" +
-            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
-            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
-            "</div>";
+        /* v711: o app manda o antes/depois de CADA ângulo (frente, lado e
+         * costas) — antes o professor só via as de frente. Retorno antigo só
+         * tem a frente e continua funcionando igual. */
+        var fgrupos = [["Frente", ret.fotoAntes, ret.fotoAntesD, ret.fotoDepois, ret.fotoDepoisD],
+          ["Lado", ret.fotoAntesL, ret.fotoAntesLD, ret.fotoDepoisL, ret.fotoDepoisLD],
+          ["Costas", ret.fotoAntesC, ret.fotoAntesCD, ret.fotoDepoisC, ret.fotoDepoisCD]];
+        var temFoto = fgrupos.some(function (g9) { return fotoOk(g9[1]); });
+        if (temFoto) {
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:var(--tk-tx2);'><b>Fotos de progresso</b></div>";
+          fgrupos.forEach(function (g9) {
+            var fA = fotoOk(g9[1]), fD = fotoOk(g9[3]), fAd = dataOk(g9[2]), fDd = dataOk(g9[4]);
+            if (!fA) return;
+            html += "<div style='font-size:10.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--tk-tx5);margin:8px 0 4px;'>" + g9[0] + "</div>" +
+              "<div style='display:flex;gap:10px;max-width:400px;'>" +
+              "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+              (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
+              "</div>";
+          });
         }
         /* v710: tudo depois do histórico (listas completas, gráficos, fotos)
          * entra na porta retrátil — regra 9 do colapso: o topo fica simples,
@@ -6051,14 +6088,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   /* estado do mês do histórico (0 = mês atual; ‹ soma, › subtrai) — zera a
    * cada aluno aberto. O re-render usa o retorno guardado em pfAppUlt. */
-  var pfHistOff = 0, pfAppUlt = null;
+  var pfHistOff = 0, pfAppUlt = null, pfHistDe = "", pfHistAte = "";
   $("pfAppDados").addEventListener("click", function (e) {
+    // "Mostrar os N anteriores" das listas completas
+    var vm9 = e.target.closest && e.target.closest("[data-vermaisl]");
+    if (vm9) {
+      var esc9 = vm9.previousElementSibling;
+      if (esc9 && esc9.hasAttribute("data-maisl")) esc9.hidden = false;
+      vm9.remove();
+      return;
+    }
+    var rerender = function () {
+      try { $("pfAppDados").innerHTML = htmlRetornoApp(pfAppUlt.ret, pfAppUlt.al) || ""; } catch (e9) {}
+    };
+    // período de/até (v711)
+    var hp9 = e.target.closest && e.target.closest("[data-hper]");
+    if (hp9 && pfAppUlt) {
+      if (hp9.getAttribute("data-hper") === "off") { pfHistDe = ""; pfHistAte = ""; rerender(); return; }
+      var de9 = ($("pfPerDe") || {}).value || "", ate9 = ($("pfPerAte") || {}).value || "";
+      if (!de9 || !ate9) return;
+      if (de9 > ate9) { var t9 = de9; de9 = ate9; ate9 = t9; } // trocou as pontas? a gente arruma
+      pfHistDe = de9; pfHistAte = ate9;
+      rerender();
+      return;
+    }
     var b9 = e.target.closest && e.target.closest("[data-hnav]");
     if (!b9 || !pfAppUlt) return;
     pfHistOff = Math.max(0, pfHistOff + (+b9.getAttribute("data-hnav")));
-    try { $("pfAppDados").innerHTML = htmlRetornoApp(pfAppUlt.ret, pfAppUlt.al) || ""; } catch (e9) {}
+    rerender();
   });
-  window.__histApp = { off: function (n) { pfHistOff = Math.max(0, +n || 0); }, atual: function () { return pfHistOff; } }; // testes
+  window.__histApp = { off: function (n) { pfHistOff = Math.max(0, +n || 0); },
+    periodo: function (de, ate) { pfHistDe = de || ""; pfHistAte = ate || ""; },
+    atual: function () { return pfHistOff; } }; // testes
   // ---------- aba Check-ins do perfil: cada pergunta respondida vira uma métrica ----------
   /* ============================================================
    * AS RESPOSTAS DO QUESTIONARIO VIRAM METRICA DO ALUNO (v630)
@@ -6432,7 +6493,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function pintaAppDados(a) {
     var box = $("pfAppDados");
-    pfHistOff = 0; pfAppUlt = null; // outro aluno = histórico volta pro mês atual
+    pfHistOff = 0; pfAppUlt = null; pfHistDe = ""; pfHistAte = ""; // outro aluno = histórico volta pro mês atual
     // modo demonstração: retorno fake gravado direto no aluno (sem nuvem)
     if (a.demoRetorno) {
       pfAppUlt = { ret: a.demoRetorno, al: a };

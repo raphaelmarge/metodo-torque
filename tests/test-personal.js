@@ -3493,6 +3493,39 @@ async function abaPt(p, a) {
   ok(hist10.tit && hist10.dia && hist10.chips && hist10.nota, "🗓 o histórico lista o dia com cargas, corrida, esforço e o resumo escrito");
   ok(hist10.mesCerto && hist10.setaVolta && hist10.mesPassado, "🗓 as setas ‹ › navegam por mês — cada mês mostra só o que é dele");
   ok(hist10.porta, "🗓 listas e gráficos completos moram atrás da porta 'Gráficos e evolução completa'");
+
+  // 📆 v711: período livre (de/até), fotos dos 3 ângulos e "mostrar todos"
+  const hist11 = await p.evaluate(() => {
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const px = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+    const out = {};
+    // período cruzando dois meses: os DOIS registros aparecem juntos
+    const ret = { feitos: {}, cargas: { "Supino": [{ d: iso(40), kg: 50, r: "10" }, { d: iso(2), kg: 55, r: "10" }] } };
+    window.__histApp.off(0); window.__histApp.periodo(iso(45), iso(0));
+    const topoP = window.__painelApp(ret, {}).split("pfgraf")[0];
+    out.periodo = /50 kg/.test(topoP) && /55 kg/.test(topoP) && /dias? de treino/.test(topoP) && /data-hper='off'/.test(topoP);
+    out.semSetasNoPeriodo = !/data-hnav/.test(topoP);
+    window.__histApp.periodo("", "");
+    const topoM = window.__painelApp(ret, {}).split("pfgraf")[0];
+    out.limpou = !/50 kg/.test(topoM) && /55 kg/.test(topoM) && /type='date'/.test(topoM);
+    // fotos dos três ângulos (e a maliciosa de lado é descartada)
+    const h3 = window.__painelApp({ feitos: {}, fotoAntes: px, fotoAntesD: "2026-05-01",
+      fotoAntesL: px, fotoAntesLD: "2026-05-01", fotoDepoisL: px, fotoDepoisLD: "2026-08-01",
+      fotoAntesC: px, fotoAntesCD: "2026-05-02" });
+    out.angulos = /Frente/.test(h3) && /Lado/.test(h3) && /Costas/.test(h3) && /ANTES/.test(h3) && /AGORA/.test(h3);
+    const hMal = window.__painelApp({ feitos: {}, fotoAntesL: "x' onerror='window.__xss11=1" });
+    out.antiXss = !/onerror/.test(hMal) && !window.__xss11;
+    // 200 relatos não viram bagunça: 6 na tela, o resto atrás do botão
+    const wr = {}; wr.w1 = [];
+    for (let i = 0; i < 30; i++) wr.w1.push({ d: iso(i + 1), n: "WOD " + i, r: i + " voltas", v: i });
+    const hW = window.__painelApp({ feitos: {}, wodres: wr });
+    out.corte = /Mostrar 24 placares anteriores/.test(hW) && /data-maisl/.test(hW) && /30 no total/.test(hW);
+    return out;
+  });
+  ok(hist11.periodo && hist11.semSetasNoPeriodo, "📆 o período de/até junta meses diferentes numa lista só (e some com as setas de mês)");
+  ok(hist11.limpou, "📆 Limpar volta pro mês, com os campos de data prontos pra outra busca");
+  ok(hist11.angulos && hist11.antiXss, "📸 as fotos de progresso mostram frente, LADO e COSTAS — com o mesmo anti-XSS");
+  ok(hist11.corte, "📚 lista com 30 placares mostra 6 e guarda 24 atrás do 'Mostrar anteriores' — 200 relatos não viram bagunça");
   ok(!/Batimento médio/.test(painelFc.sujo) && !/Batimentos —/.test(painelFc.sujo),
     "retorno adulterado (bpm impossível ou chave que não é data) não vira gráfico nenhum");
   // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
