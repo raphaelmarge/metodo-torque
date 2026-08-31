@@ -10300,6 +10300,17 @@ async function abaPt(p, a) {
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
 
+    // 🛍 v705: a demo mostra a loja com FOTO de produto e o cupom com LINK do
+    // parceiro — sem isso quem assiste não via as duas caras do recurso
+    const lojaDemo = await pA.evaluate(() => ({
+      foto: !!document.querySelector("#lojaCard img[src^='data:image/']"),
+      semFoto: [].slice.call(document.querySelectorAll("#lojaCard .lojabt")).length >= 2,
+      link: !!document.querySelector("#clubeCard a[href^='https://']"),
+      linkTxt: (document.querySelector("#clubeCard a[href^='https://']") || {}).textContent || "",
+    }));
+    ok(lojaDemo.foto && lojaDemo.semFoto, "🛍 a loja da demo tem produto COM foto e produto sem (as duas caras da lista)");
+    ok(lojaDemo.link && /Ir pro site do parceiro/.test(lojaDemo.linkTxt), "🎁 o cupom da demo tem o botão Ir pro site do parceiro");
+
     /* ⏱ TODOS os timers do app rodam sem estourar.
      *
      * O feed recarregava com "if(SEC==='feed')", mas SEC é private do IIFE do

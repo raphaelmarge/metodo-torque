@@ -33,14 +33,26 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.config.feedOn = true;
     st.config.conquistas = [{ e: "rato", n: "Rato de academia", meta: 30 }, { e: "medalha", n: "Lenda do Studio", meta: 100 }];
     st.config.mural = ["Sábado o studio abre 8h em vez de 7h. Quem treina cedo, me chama que a gente remarca."];
-    // loja do app (v698): a demo mostra a vitrine com dois produtos
+    /* foto de produto da demo (v705): SVG quadrado em base64 — passa no
+     * logoOk (data:image/, sem aspas) e vira o thumb de 56px no app. O MESMO
+     * desenho existe no demo-personal.html (arquivos separados de propósito,
+     * como TECS_PT × TECS_APP) — mexeu num, mexe no outro. */
+    const fotoCamiseta = "data:image/svg+xml;base64," + btoa(
+      "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
+      "<rect width='320' height='320' fill='#7c3aed'/>" +
+      "<path d='M96 74 L138 54 C148 80 172 80 182 54 L224 74 L264 128 L220 152 L220 272 L100 272 L100 152 L56 128 Z' fill='rgba(255,255,255,.92)'/>" +
+      "<text x='160' y='196' font-family='sans-serif' font-size='25' font-weight='bold' fill='#7c3aed' text-anchor='middle'>TORQUE</text></svg>");
+    // loja do app (v698): a demo mostra a vitrine com dois produtos —
+    // um COM foto e um sem (v705), pra dar pra ver as duas caras da lista
     st.config.lojaItens = [
-      { id: "dlj1", n: "Camiseta do studio", d: "algodão, P ao GG", v: 79.9 },
+      { id: "dlj1", n: "Camiseta do studio", d: "algodão, P ao GG", v: 79.9, f: fotoCamiseta },
       { id: "dlj2", n: "Avaliação física avulsa", d: "com laudo completo", v: 120 },
     ];
-    // clube de vantagens (v697): a demo mostra o card com duas parcerias
+    // clube de vantagens (v697): a demo mostra o card com duas parcerias —
+    // a do Zé com link (v705), pra aparecer o botão "Ir pro site do parceiro"
+    // (endereço de exemplo de propósito: demo não aponta pra loja de verdade)
     st.config.clube = [
-      { id: "dcl1", n: "Suplementos do Zé", b: "15% off em creatina e whey", c: "TORQUE15", u: "" },
+      { id: "dcl1", n: "Suplementos do Zé", b: "15% off em creatina e whey", c: "TORQUE15", u: "https://example.com/suplementos-do-ze" },
       { id: "dcl2", n: "Fisio Boa Postura", b: "Avaliação postural grátis pra alunos", c: "", u: "" },
     ];
     st.config.capaTreino = CAPAS.treino; // leg press: capa de qualquer ficha sem foto própria
