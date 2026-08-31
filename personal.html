@@ -1039,12 +1039,22 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #vAgenda #agAbas { display: none; }       /* "Agendar" mora no botao + do cabecalho */
     #vAgenda .altopo[data-agsec="sessoes"] { display: none; }
     #agDia { display: block; margin: 0 -12px 14px; }
-    .agdcab { display: flex; align-items: center; gap: 10px; padding: 0 18px 13px; }
+    .agdcab { display: flex; align-items: center; gap: 8px; padding: 0 18px 13px; }
     .agdcab .alk { font-size: 9.5px; letter-spacing: .18em; }
-    .agdcab .agdd { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--pt-txt); }
+    /* v703: com as setas de semana na linha, o TEXTO é quem encolhe (a lição
+       da v623: flex sem min-width:0 espreme o vizinho até sumir) */
+    .agdcab .agdt { flex: 1; min-width: 0; }
+    .agdcab .agdd { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--pt-txt);
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .agdmais { margin-left: auto; width: 44px; height: 44px; flex: none; border: 0; border-radius: 13px;
                background: var(--pt-roxo); color: #fff; font-size: 22px; font-weight: 700;
                font-family: inherit; cursor: pointer; }
+    /* v703: as setas de semana do celular — no computador quem faz isso é o
+       cabeçalho .altopo, que no telefone é display:none */
+    .agdnav { width: 38px; height: 38px; flex: none; border: 1px solid var(--pt-borda-forte); border-radius: 11px;
+              background: var(--pt-caixa); color: var(--pt-txt-2); font-size: 17px; font-weight: 800;
+              font-family: inherit; cursor: pointer; }
+    .agdnav.hj { width: auto; padding: 0 12px; font-size: 12.5px; color: var(--pt-roxo-claro); }
     /* os 7 chips: 390 - 36 de padding - 6 gaps de 5 = 46,3px cada */
     .agchips { display: flex; gap: 5px; padding: 0 18px 13px; border-bottom: 1px solid var(--pt-hairline); }
     .agchip { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -8388,6 +8398,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       /* no celular o cabecalho da semana (.altopo) nao existe — sem este
        * botao aqui, a visao de Mes ficava fora de alcance no telefone */
       '<span class="agvis">' + agVisBt() + "</span>" +
+      /* v703: avançar/voltar a semana também não tinha como no telefone — as
+       * setas do .altopo não existem lá; o Hoje só aparece fora da semana atual */
+      '<button type="button" class="agdnav" data-agsem="-1" title="semana anterior" aria-label="semana anterior">‹</button>' +
+      (agSemOff ? '<button type="button" class="agdnav hj" data-agsem="0">Hoje</button>' : "") +
+      '<button type="button" class="agdnav" data-agsem="1" title="próxima semana" aria-label="próxima semana">›</button>' +
       '<button type="button" class="agdmais" id="agDiaNovo" title="Marcar sessão" aria-label="Marcar sessão" data-agnovo="' + d0.iso + '|">+</button>' +
       '</div><div class="agchips">' + chips + "</div>" +
       '<div class="agdlista">' + (linhas || '<div class="agl vazio"><span class="aglm"><b>Nenhuma sessão neste dia</b><i>Dia de descanso</i></span></div>') + vaga + "</div>";
@@ -8547,6 +8562,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var chip = e.target.closest && e.target.closest("[data-agdia]");
     if (chip) { agDiaSel = chip.getAttribute("data-agdia"); pintaSemana(load()); return; }
+    // v703: as setas de semana do cabeçalho do dia (celular) — 0 = voltar pra hoje
+    var sem9 = e.target.closest && e.target.closest("[data-agsem]");
+    if (sem9) {
+      var v9 = +sem9.getAttribute("data-agsem");
+      agSemOff = v9 === 0 ? 0 : agSemOff + v9;
+      pintaSemana(load());
+      return;
+    }
     var cel = e.target.closest && e.target.closest("[data-agcel]");
     if (cel) window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
   });

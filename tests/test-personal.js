@@ -3131,6 +3131,28 @@ async function abaPt(p, a) {
   ok(ag2.voltouSemana && ag2.diaAberto, "📅 tocar num dia do Mês leva pra SEMANA daquele dia");
   ok(ag2.chipFunciona, "📅 os chips de dia da semana respondem ao toque");
 
+  // ⏭ v703: avançar a semana pelo cabeçalho do dia — no celular as setas do
+  // .altopo não existem, então elas moram aqui
+  const ag3 = await p.evaluate(() => {
+    const out = {};
+    const iso = (d) => d.toISOString().slice(0, 10);
+    const hoje = iso(new Date());
+    const prox = iso(new Date(Date.now() + 7 * 864e5));
+    window.__agVis.troca("semana");
+    document.getElementById("agSemHoje").click();
+    out.temSetas = !!document.querySelector('#agDia [data-agsem="1"]') && !!document.querySelector('#agDia [data-agsem="-1"]');
+    out.semHoje = !document.querySelector('#agDia [data-agsem="0"]');
+    document.querySelector('#agDia [data-agsem="1"]').click();
+    out.avancou = !!document.querySelector('.agchip[data-agdia="' + prox + '"]');
+    out.hojeAparece = !!document.querySelector('#agDia [data-agsem="0"]');
+    if (out.hojeAparece) document.querySelector('#agDia [data-agsem="0"]').click();
+    out.voltou = !!document.querySelector('.agchip[data-agdia="' + hoje + '"]') && !document.querySelector('#agDia [data-agsem="0"]');
+    return out;
+  });
+  ok(ag3.temSetas && ag3.semHoje, "⏭ o cabeçalho do dia tem as setas ‹ › — e o Hoje só nasce fora da semana atual");
+  ok(ag3.avancou && ag3.hojeAparece, "⏭ a seta avança pra próxima semana e o Hoje aparece");
+  ok(ag3.voltou, "⏭ o Hoje devolve pra semana atual e some de novo");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
