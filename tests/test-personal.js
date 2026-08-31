@@ -4659,7 +4659,10 @@ async function abaPt(p, a) {
     ok(/<svg/.test(appDados) && /polyline/.test(appDados) && /mín 83,1/.test(appDados) && /máx 86/.test(appDados), "⚖️ peso vira gráfico de linha com mín/máx");
     ok(/Peso atual/.test(appDados) && /-2,9 kg/.test(appDados), "KPI de peso atual com a diferença desde o início (-2,9 kg)");
     ok(/Evolução de carga/.test(appDados) && /72,5 kg/.test(appDados) && /\+12,5/.test(appDados), "cargas do diário do aluno com delta (+12,5)");
-    ok(/stroke=["']#4ade80["']/.test(appDados), "cada exercício ganha um mini gráfico (sparkline) da carga");
+    // v709: a cor entrou por style com token (atributo de SVG não lê var()) —
+    // o teste ancora na classe do sparkline, que é o que importa
+    ok(/class=["']pfspark["']/.test(appDados) && /stroke:var\(--tk-ok\)/.test(appDados),
+      "cada exercício ganha um mini gráfico (sparkline) da carga, na cor do token");
     ok(/Treinos marcados no app/.test(appDados) && /4 no total/.test(appDados), "treinos feitos no app contados");
     ok(/Maior sequência/.test(appDados) && /3 dias/.test(appDados), "KPI de maior sequência de treinos (3 dias seguidos)");
     ok(/Hábitos diários/.test(appDados) && /Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
