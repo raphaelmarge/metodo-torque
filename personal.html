@@ -2107,6 +2107,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
          entre a grade de horarios e o mes inteiro. Antes os dois ficavam na
          tela ao mesmo tempo, um embaixo do outro. -->
     <div class="card" id="agCardMes" data-agsec="sessoes" hidden>
+      <!-- v702: no celular o cabeçalho da semana (.altopo) não existe e o do dia
+           some no modo Mês — sem este botão AQUI, quem entrava no Mês pelo
+           telefone ficava preso nele, sem caminho de volta pra Semana -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;"><span class="agvis" id="agVisMes"></span></div>
       <div id="calAgenda" style="margin: 2px 0 12px;"></div>
       <div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
     </div>
@@ -8428,6 +8432,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ["agSemAnt", "agSemProx"].forEach(function (id) { var b = $(id); if (b) b.hidden = mes; });
     var topo = $("agVisTopo");
     if (topo) topo.innerHTML = agVisBt();
+    // v702: o terceiro molde do botão, dentro do card do Mês — é o único que
+    // sobra visível no celular quando a visão Mês entra
+    var noMes = $("agVisMes");
+    if (noMes) noMes.innerHTML = agVisBt();
     document.querySelectorAll("#vAgenda [data-agvis]").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-agvis") === agVis);
     });
@@ -8520,12 +8528,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("agSemAnt").addEventListener("click", function () { agSemOff--; pintaSemana(load()); });
   $("agSemProx").addEventListener("click", function () { agSemOff++; pintaSemana(load()); });
   $("agSemHoje").addEventListener("click", function () { agSemOff = 0; pintaSemana(load()); });
+  /* ⚠️ v702: este listener era do #agGrade (a grade da semana do COMPUTADOR) —
+   * mas os chips de dia (data-agdia) e o "+" do cabeçalho vivem no #agDia, o
+   * "um dia por vez" do celular, que é IRMÃO da grade: no telefone, tocar num
+   * dia da semana não fazia NADA. Subiu pro #vAgenda, que cobre as duas. */
   $("vAgenda").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-agvis]");
-    if (b) trocaAgVis(b.getAttribute("data-agvis"));
-  });
-  $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
-  $("agGrade").addEventListener("click", function (e) {
+    if (b) { trocaAgVis(b.getAttribute("data-agvis")); return; }
     var nv = e.target.closest && e.target.closest("[data-agnovo]");
     if (nv) {
       // buraco na agenda: leva pro formulario ja com o dia e a hora preenchidos
@@ -8541,6 +8550,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cel = e.target.closest && e.target.closest("[data-agcel]");
     if (cel) window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
   });
+  $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
 
   function renderAgenda(st) {
     pintaAgVis();
@@ -8648,7 +8658,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = e.target.closest && e.target.closest("button");
     if (!b) return;
     if (b.hasAttribute("data-caldia")) {
-      window.__calDiaPT = b.getAttribute("data-caldia");
+      /* v702: o Mês existe "pra achar uma data longe" — então tocar num dia
+       * LEVA até ele: seleciona o dia, aponta a semana pra ele (a conta do
+       * agSemOff funciona pra frente e pra trás) e volta pra visão Semana.
+       * Antes só listava embaixo, e parecia que o toque não fazia nada. */
+      var isoC = b.getAttribute("data-caldia");
+      window.__calDiaPT = isoC;
+      agDiaSel = isoC;
+      agSemOff = Math.floor((Date.parse(isoC + "T12:00") - Date.parse(S.todayISO() + "T12:00")) / 6048e5);
+      trocaAgVis("semana");
     } else if (b.hasAttribute("data-calnav")) {
       var ref = window.__calMesPT || S.todayISO().slice(0, 7);
       var dtn = new Date(+ref.slice(0, 4), +ref.slice(5, 7) - 1 + (+b.getAttribute("data-calnav")), 1);
