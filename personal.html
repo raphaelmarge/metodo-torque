@@ -2967,7 +2967,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="margin:0;font-size:12px;font-weight:700;">Parceiro<input id="clubeNome" placeholder="Suplementos do Zé" style="margin-top:4px;"></label>
         <label style="margin:0;font-size:12px;font-weight:700;">Benefício<input id="clubeBen" placeholder="15% off em creatina" style="margin-top:4px;"></label>
         <label style="margin:0;font-size:12px;font-weight:700;">Cupom (opcional)<input id="clubeCupom" placeholder="TORQUE15" style="margin-top:4px;"></label>
-        <label style="margin:0;font-size:12px;font-weight:700;">Link (opcional)<input id="clubeLink" placeholder="https://…" style="margin-top:4px;"></label>
+        <label style="margin:0;font-size:12px;font-weight:700;">Link do comércio (opcional)<input id="clubeLink" placeholder="https://…" title="o aluno ganha um botão Ir pro site do parceiro" style="margin-top:4px;"></label>
       </div>
       <button class="btn sec mini" id="clubeAdd" style="margin-top: 10px;">+ Adicionar parceria</button>
       <span id="clubeStatus" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
@@ -2985,6 +2985,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <button class="btn sec mini" id="lojaAdd" style="margin-top: 10px;">+ Adicionar produto</button>
       <span id="lojaStatus" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+      <input type="file" id="lojaFotoFile" accept="image/*" hidden>
     </div>
 
     <div class="card" style="margin-top: 14px;">
@@ -7706,6 +7707,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             pgto.desc = "Pacote de " + (+((a.pacote || {}).total) || 0) + " aulas (renovação)";
             if (a.pacote) a.pacote.cobrar = 0;
           }
+          // compra na loja do app (v701): entra COM desc — venda avulsa nunca
+          // quita a mensalidade do mês (mesma regra dos pacotes de serviço)
+          if (origem === "loja") pgto.desc = "Compra na loja do app";
           st.pagamentos.push(pgto);
           vistos[ev.id] = 1;
           a.cartaoFalhouEm = ""; // pagou → limpa o alerta
@@ -12234,8 +12238,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (document.activeElement !== $("lojaServ")) $("lojaServ").checked = !cfg.lojaServOff;
     var lst = cfg.lojaItens || [];
     box.innerHTML = lst.length ? lst.map(function (p, i) {
-      return '<div class="sessao-pt"><b>' + esc(p.n) + "</b>" +
+      return '<div class="sessao-pt">' +
+        (logoOk(p.f) ? '<img src="' + p.f + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex:none;">' : "") +
+        "<b>" + esc(p.n) + "</b>" +
         '<span class="muted" style="font-size:12px;flex:1;min-width:0;">' + (p.d ? esc(p.d) + " · " : "") + S.fmtBRL(+p.v) + "</span>" +
+        '<button class="btn sec mini" data-lojafoto="' + i + '">' + (p.f ? "Trocar foto" : "Foto") + "</button>" +
         '<button class="btn sec mini" data-lojax="' + i + '">Tirar</button></div>';
     }).join("") : '<div class="muted" style="font-size:12.5px;">Nenhum produto próprio ainda' +
       ((st.servicosPT || []).length && !cfg.lojaServOff ? " — os " + (st.servicosPT || []).length + " serviços do cadastro já entram sozinhos." : ".") + "</div>";
@@ -12269,6 +12276,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     lojaMarcaTodos(st);
     save(st);
     $("lojaStatus").textContent = "Tirado — publique de novo pra sumir do app.";
+  });
+  /* Foto do produto (v700): cortada em quadrado no centro e reduzida pra
+   * 320 px aqui mesmo (a original nunca sai do computador) — mesmo desenho da
+   * foto do aluno. Ela viaja no pacote do app, então leve importa. */
+  var lojaFotoIdx = null;
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-lojafoto]"); if (!b) return;
+    lojaFotoIdx = +b.getAttribute("data-lojafoto");
+    $("lojaFotoFile").click();
+  });
+  $("lojaFotoFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f || lojaFotoIdx == null) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var lado = Math.min(im.width, im.height), cv = document.createElement("canvas");
+        cv.width = cv.height = Math.min(320, lado);
+        cv.getContext("2d").drawImage(im, (im.width - lado) / 2, (im.height - lado) / 2, lado, lado, 0, 0, cv.width, cv.height);
+        var dado = cv.toDataURL("image/jpeg", .8);
+        var st = load();
+        var it = ((st.config || {}).lojaItens || [])[lojaFotoIdx];
+        lojaFotoIdx = null;
+        if (!it) return;
+        it.f = dado;
+        lojaMarcaTodos(st);
+        save(st);
+        $("lojaStatus").textContent = "Foto guardada! Publique pra chegar no app.";
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
   });
   window.__lojaPT = pintaLoja; // testes
   $("persPre").addEventListener("click", function (e) {
@@ -16523,11 +16564,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
       }),
       // v698: loja do app — produtos manuais + serviços do cadastro (desligáveis)
+      // v700: a foto do produto viaja junto (só data:image validada, até 120 KB)
       lojaApp: ((st.config || {}).lojaItens || []).map(function (p) {
-        return { n: p.n, d: p.d || "", v: +p.v || 0 };
+        var f9 = logoOk(p.f);
+        return { n: p.n, d: p.d || "", v: +p.v || 0, f: f9 && f9.length <= 120000 ? f9 : "" };
       }).concat((st.config || {}).lojaServOff ? [] : (st.servicosPT || []).map(function (s) {
-        return { n: s.nome, d: "", v: +s.valor || 0 };
+        return { n: s.nome, d: "", v: +s.valor || 0, f: "" };
       })).filter(function (x) { return x.n && x.v > 0; }).slice(0, 30),
+      // v701: com gateway próprio ligado, o botão da loja vira Comprar (link de
+      // pagamento gerado pela função pagamentos com o preço DO SERVIDOR)
+      lojaPg: ((st.config || {}).pagApi || {}).ligado ? 1 : 0,
     };
   }
   window.__dadosApp = dadosAppAluno; // testes

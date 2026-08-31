@@ -1402,7 +1402,7 @@
             "<b style='font-size:14.5px;'>" + esc(p.n) + "</b>" +
             "<div style='font-size:13px;color:#cfcbdb;margin-top:2px;'>" + esc(p.b) + "</div>" +
             (p.c ? "<button class='cupbt' data-cup='" + esc(p.c) + "' style='margin-top:9px;background:var(--bg2);border:1px dashed var(--cor);color:var(--corc);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;letter-spacing:.06em;'>" + esc(p.c) + " · copiar</button>" : "") +
-            (p.u ? "<a href='" + esc(p.u) + "' target='_blank' rel='noopener' style='display:inline-block;margin:9px 0 0 " + (p.c ? "10px" : "0") + ";font-size:13px;color:var(--corc);font-weight:700;'>Ver site ↗</a>" : "") +
+            (p.u ? "<a href='" + esc(p.u) + "' target='_blank' rel='noopener' style='display:block;margin-top:9px;text-align:center;background:var(--bg2);border:1px solid var(--bg11);color:var(--corc);border-radius:11px;padding:11px 14px;font-size:13.5px;font-weight:800;text-decoration:none;'>Ir pro site do parceiro</a>" : "") +
             "</div>";
         }).join("") + "</div>" : "") +
       /* 🛍 Loja (v698): vitrine do professor — o Quero esse cai no WhatsApp
@@ -1413,10 +1413,12 @@
         lojaApp.map(function (p) {
           var precoL = "R$ " + (Math.round((+p.v) * 100) / 100).toFixed(2).replace(".", ",");
           return "<div style='display:flex;align-items:center;gap:12px;border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+            // v700: foto do produto (o painel só manda data:image validada)
+            (p.f && /^data:image\//.test(p.f) ? "<img src='" + p.f + "' alt='' style='width:56px;height:56px;object-fit:cover;border-radius:12px;flex:none;'>" : "") +
             "<span style='flex:1;min-width:0;'><b style='font-size:14.5px;display:block;'>" + esc(p.n) + "</b>" +
             (p.d ? "<span style='font-size:12.5px;color:#a9a4b5;'>" + esc(p.d) + "</span>" : "") +
             "<span style='display:block;font-size:14px;font-weight:900;color:var(--corc);margin-top:3px;'>" + precoL + "</span></span>" +
-            "<button class='lojabt' data-item='" + esc(p.n) + "' data-preco='" + precoL + "' style='flex:none;background:var(--cor);border:none;color:#fff;border-radius:11px;padding:11px 15px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;'>Quero esse</button>" +
+            "<button class='lojabt' data-item='" + esc(p.n) + "' data-preco='" + precoL + "' style='flex:none;background:var(--cor);border:none;color:#fff;border-radius:11px;padding:11px 15px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;'>" + (D.lojaPg ? "Comprar" : "Quero esse") + "</button>" +
             "</div>";
         }).join("") + "</div>" : "") +
       // ---------- Chat (tela 10): cabeçalho do personal no alto da área ----------
@@ -1708,12 +1710,23 @@
       "function feito(){cb.textContent='Copiado! \\u2713';setTimeout(function(){cb.textContent=cd+' \\u00b7 copiar';},2200);}" +
       "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cd).then(feito,feito);}" +
       "else{try{var ta=document.createElement('textarea');ta.value=cd;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();feito();}catch(e9){}}});" +
-      // 🛍 Quero esse (v698): abre o WhatsApp do professor com o pedido pronto;
-      // sem WhatsApp cadastrado, orienta pro chat — nada de fingir compra
-      "document.addEventListener('click',function(e){var lb=e.target.closest&&e.target.closest('.lojabt');if(!lb)return;" +
+      /* Comprar na loja (v698/v701): com o gateway do professor ligado
+       * (LOJAPG), o toque pede o link de pagamento pra função pagamentos —
+       * ação 'loja', autenticada pelo TOKEN do aluno, e o PREÇO sai do
+       * servidor (o app manda só o nome do item). Deu qualquer erro, cai no
+       * caminho de sempre: WhatsApp com o pedido pronto, ou o chat. */
+      "var LOJAPG=" + (D.lojaPg ? 1 : 0) + ";" +
+      "document.addEventListener('click',function(e){var lb=e.target.closest&&e.target.closest('.lojabt');if(!lb||lb.disabled)return;" +
       "var it=lb.getAttribute('data-item'),pr=lb.getAttribute('data-preco');" +
-      "if(ZAPP){window.open('https://wa.me/55'+ZAPP+'?text='+encodeURIComponent('Oi! Quero comprar: '+it+' ('+pr+'). Como faço?'),'_blank');}" +
-      "else{lb.textContent='Pe\\u00e7a pelo chat';setTimeout(function(){lb.textContent='Quero esse';},2600);}});" +
+      "var rot0=LOJAPG?'Comprar':'Quero esse';" +
+      "function porZap(){if(ZAPP){window.open('https://wa.me/55'+ZAPP+'?text='+encodeURIComponent('Oi! Quero comprar: '+it+' ('+pr+'). Como fa\\u00e7o?'),'_blank');}" +
+      "else{lb.textContent='Pe\\u00e7a pelo chat';setTimeout(function(){lb.textContent=rot0;},2600);}}" +
+      "if(LOJAPG&&NUVEM&&TOKEN){lb.disabled=true;lb.textContent='Gerando\\u2026';" +
+      "fetch(NUVEM.u+'/functions/v1/pagamentos',{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify({acao:'loja',t:TOKEN,item:it})})" +
+      ".then(function(r){return r.json();}).then(function(d){lb.disabled=false;lb.textContent=rot0;" +
+      "if(d&&d.ok&&d.link){window.open(d.link,'_blank');}else{porZap();}})" +
+      ".catch(function(){lb.disabled=false;lb.textContent=rot0;porZap();});}" +
+      "else{porZap();}});" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto

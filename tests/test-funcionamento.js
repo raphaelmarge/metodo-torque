@@ -46,6 +46,14 @@ function ok(cond, nome) {
     function acha(dow) {
       const d = new Date();
       for (let i = 0; i < 7; i++) { d.setDate(d.getDate() + 1); if (d.getDay() === dow) break; }
+      // a data achada pode ser um feriado NACIONAL (rodando em 31/08, a próxima
+      // segunda é 7 de setembro — e o teste quebrava uma vez por ano): pula de
+      // 7 em 7 até cair num dia comum, que é o que este teste quer medir
+      for (let j = 0; j < 8; j++) {
+        const iso = d.toISOString().slice(0, 10);
+        if (!S.horarioDoDia(iso).feriado) return iso;
+        d.setDate(d.getDate() + 7);
+      }
       return d.toISOString().slice(0, 10);
     }
     const natal = (new Date().getFullYear() + 1) + "-12-25";

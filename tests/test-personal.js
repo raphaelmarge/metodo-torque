@@ -3007,6 +3007,93 @@ async function abaPt(p, a) {
   ok(lja.semNada, "🛍 vitrine vazia = o card nem nasce no app");
   ok(lja.secao && lja.semEmoji, "🛍 v699: a Loja é tela própria (só pelo menu) e sem emoji na interface");
 
+  // 🖼→ v700: foto do produto na loja + link do parceiro em destaque no clube
+  const v700 = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const snapI = JSON.stringify(st.config.lojaItens || null);
+    const snapC = JSON.stringify(st.config.clube || null);
+    const px = "data:image/jpeg;base64," + "A".repeat(2000);
+    st.config.lojaItens = [
+      { id: "f1", n: "Camiseta", d: "", v: 50, f: px },
+      { id: "f2", n: "Gigante", d: "", v: 60, f: "data:image/jpeg;base64," + "B".repeat(200001) },
+    ];
+    st.config.clube = [{ id: "c9", n: "Zé", b: "10% off", c: "ZE10", u: "https://ze.example" }];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const a = st.alunos.find((x) => x.nome === "João Cliente");
+    const d = window.__dadosApp(a, new Date().toISOString());
+    const html = window.__montaAppAluno(a, new Date().toISOString());
+    window.__lojaPT(S.read("ptStudio", {}));
+    const lista = document.getElementById("lojaLista").innerHTML;
+    const out = {
+      fotoNoPacote: d.lojaApp.find((x) => x.n === "Camiseta").f === px,
+      grandeCai: d.lojaApp.find((x) => x.n === "Gigante").f === "",
+      fotoNoApp: html.indexOf("<img src='" + px + "'") > -1,
+      trocar: lista.indexOf("Trocar foto") > -1 && lista.indexOf("data-lojafoto") > -1,
+      linkForte: html.indexOf("Ir pro site do parceiro") > -1,
+    };
+    const st9 = S.read("ptStudio", {});
+    if (snapI === "null") delete st9.config.lojaItens; else st9.config.lojaItens = JSON.parse(snapI);
+    if (snapC === "null") delete st9.config.clube; else st9.config.clube = JSON.parse(snapC);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(v700.fotoNoPacote && v700.fotoNoApp, "v700: a foto do produto viaja no pacote e aparece na Loja do app");
+  ok(v700.grandeCai, "v700: foto acima de 120 KB fica de fora do pacote (peso importa)");
+  ok(v700.trocar, "v700: o painel tem o botão de foto em cada produto");
+  ok(v700.linkForte, "v700: o cupom com link ganha o botão Ir pro site do parceiro");
+
+  // 💳 v701: venda interna — com gateway próprio o botão vira Comprar e chama
+  // a função pagamentos (ação loja, preço do SERVIDOR); a baixa entra COM desc
+  const v701 = await p.evaluate((hoje) => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const snapPag = JSON.stringify(st.config.pagApi || null);
+    const snapItens = JSON.stringify(st.config.lojaItens || null);
+    st.config.pagApi = { ligado: true, provedor: "mercadopago" };
+    st.config.lojaItens = [{ id: "vi1", n: "Camiseta", d: "", v: 79.9 }];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const a = st.alunos.find((x) => x.nome === "João Cliente");
+    const d = window.__dadosApp(a, new Date().toISOString());
+    const html = window.__montaAppAluno(a, new Date().toISOString());
+    const st2 = S.read("ptStudio", {});
+    st2.config.pagApi = { ligado: false };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    const html2 = window.__montaAppAluno(st2.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString());
+    const out = {
+      flag: d.lojaPg === 1,
+      comprar: html.indexOf(">Comprar</button>") > -1 && html.indexOf("var LOJAPG=1") > -1,
+      chamaFn: html.indexOf("/functions/v1/pagamentos") > -1 && html.indexOf("acao:'loja'") > -1 &&
+        html.indexOf("t:TOKEN,item:it") > -1,
+      semGw: html2.indexOf(">Quero esse</button>") > -1 && html2.indexOf("var LOJAPG=0") > -1,
+    };
+    // baixa: evento origem loja vira pagamento COM desc (não quita mensalidade)
+    // — religa o gateway antes: o passo de cima desligou pra testar o fallback
+    const stG = S.read("ptStudio", {});
+    stG.config.pagApi = { ligado: true, provedor: "mercadopago" };
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(stG));
+    window.__cloudOrig9 = S.cloud;
+    const evs = [{ id: "mp:loja1:pago", provedor: "mercadopago", tipo: "pago", valor_centavos: 7990,
+      ref: "mt|" + a.id + "|loja", link_id: "", assinatura_id: "", criado: hoje + "T10:00:00" }];
+    S.cloud = () => ({ aid: "acadT", client: { from: () => {
+      const q = { eq: () => q, gt: () => q, order: () => q, limit: () => q, then: (cb) => cb({ data: evs }) };
+      return { select: () => q };
+    } } });
+    window.__pagGateway();
+    S.cloud = window.__cloudOrig9;
+    const st3 = S.read("ptStudio", {});
+    const pg = st3.pagamentos.find((x) => x.eventoId === "mp:loja1:pago");
+    out.baixa = !!pg && pg.desc === "Compra na loja do app" && +pg.valor === 79.9;
+    // limpa o que semeou
+    st3.pagamentos = st3.pagamentos.filter((x) => x.eventoId !== "mp:loja1:pago");
+    if (snapPag === "null") delete st3.config.pagApi; else st3.config.pagApi = JSON.parse(snapPag);
+    if (snapItens === "null") delete st3.config.lojaItens; else st3.config.lojaItens = JSON.parse(snapItens);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
+    return out;
+  }, new Date().toISOString().slice(0, 10));
+  ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Comprar no app (lojaPg no pacote)");
+  ok(v701.chamaFn, "v701: o Comprar chama a função pagamentos com ação loja — só nome do item, preço é do servidor");
+  ok(v701.semGw, "v701: sem gateway o botão segue Quero esse (WhatsApp)");
+  ok(v701.baixa, "v701: a baixa da compra entra COM desc — venda da loja nunca quita a mensalidade");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

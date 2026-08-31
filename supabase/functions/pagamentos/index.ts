@@ -29,6 +29,7 @@
 //
 // Ações (POST JSON, sempre com o login do profissional no Authorization):
 //   { acao: "ping" }                                → { ok, provedor, temChave }
+//   { acao: "loja", t, item }                       → { ok, link } (chamada do ALUNO, preço do servidor)
 //   { acao: "link", valorCentavos, descricao, nome, email?, alunoId?, origem? }
 //     → { ok, link, linkId } — página de pagamento do gateway do profissional
 //   { acao: "assinar", alunoId, valorCentavos, descricao, nome, cpf, email?, venc? }
@@ -69,17 +70,14 @@ async function usuarioValidado(req: Request): Promise<{ id: string; email: strin
 
 type Cfg = { aid: string; provedor: string; chave: string; webhookToken: string; asaasWebhookId: string; comissaoPct: number };
 
-// a configuração de pagamento da academia de quem chamou (lida com a service key)
-async function configDe(userId: string): Promise<Cfg | null> {
+// a configuração de pagamento de UMA academia (lida com a service key) —
+// serve o caminho do professor (configDe) e a loja do app (v701)
+async function configDaAcademia(aid: string): Promise<Cfg | null> {
   const url = Deno.env.get("SUPABASE_URL") || "";
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (!url || !key || !userId) return null;
+  if (!url || !key || !aid) return null;
   const heads = { apikey: key, Authorization: "Bearer " + key };
   try {
-    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
-    const membros = rm.ok ? await rm.json() : [];
-    const aid = membros?.[0]?.academia_id;
-    if (!aid) return null;
     // projeto que ainda não rodou o SQL novo: as colunas do webhook podem não
     // existir — tenta com elas e, se der erro, busca só o básico (o link sai
     // igual, a baixa automática é que fica esperando o SQL)
@@ -99,6 +97,21 @@ async function configDe(userId: string): Promise<Cfg | null> {
       asaasWebhookId: String(c.asaas_webhook_id || ""),
       comissaoPct: Number(c.comissao_pct || 0) || 0,
     };
+  } catch { return null; }
+}
+
+// a configuração de pagamento da academia de quem chamou (professor autenticado)
+async function configDe(userId: string): Promise<Cfg | null> {
+  const url = Deno.env.get("SUPABASE_URL") || "";
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!url || !key || !userId) return null;
+  const heads = { apikey: key, Authorization: "Bearer " + key };
+  try {
+    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
+    const membros = rm.ok ? await rm.json() : [];
+    const aid = membros?.[0]?.academia_id;
+    if (!aid) return null;
+    return await configDaAcademia(String(aid));
   } catch { return null; }
 }
 
@@ -314,17 +327,77 @@ async function cancelaAssinaturaAsaas(cfg: Cfg, id: string) {
   if (!r.ok || !d.deleted) throw new Error("Asaas não cancelou: " + erroAsaas(d, r));
 }
 
+/* ---------- LOJA DO APP (v701): o ALUNO compra dentro do app ----------
+ * Quem chama é o app do aluno, autenticado pelo TOKEN dele (mesma regra das
+ * RPCs do app: token válido e não revogado). O PREÇO NUNCA vem do corpo —
+ * sai do catálogo do professor sincronizado na tabela dados (chave
+ * mtapp:ptStudio), senão o aluno pagaria R$ 0,01 num produto de R$ 100.
+ * O link sai do gateway do PRÓPRIO professor, com ref mt|<alunoId>|loja —
+ * a baixa entra pelo pagamentos-webhook como as outras, e o painel registra
+ * COM desc (compra da loja não quita mensalidade). */
+async function compraLoja(body: any): Promise<Response> {
+  const t = String(body.t || "").trim();
+  const item = String(body.item || "").trim().slice(0, 60);
+  if (!t || !item) return json({ erro: "faltou o token ou o item." }, 400);
+  const url = Deno.env.get("SUPABASE_URL") || "";
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!url || !key) return json({ erro: "função sem credenciais." }, 500);
+  const heads = { apikey: key, Authorization: "Bearer " + key };
+  // 1) token de aluno VÁLIDO e não revogado
+  const ra = await fetch(url + "/rest/v1/app_aluno?select=academia_id&token=eq." + encodeURIComponent(t) + "&revogado_em=is.null&limit=1", { headers: heads });
+  const linha = ra.ok ? (await ra.json())?.[0] : null;
+  if (!linha || !linha.academia_id) return json({ erro: "acesso do app inválido." }, 401);
+  const aid = String(linha.academia_id);
+  // 2) o catálogo e o preço saem do SERVIDOR
+  const rd = await fetch(url + "/rest/v1/dados?select=valor&academia_id=eq." + aid + "&chave=eq." + encodeURIComponent("mtapp:ptStudio"), { headers: heads });
+  const st = rd.ok ? (await rd.json())?.[0]?.valor : null;
+  if (!st || typeof st !== "object") return json({ erro: "a loja ainda não sincronizou com a nuvem — peça pelo WhatsApp do seu personal." }, 409);
+  const cfgSt: any = (st as any).config || {};
+  const baixo = (s: unknown) => String(s || "").trim().toLowerCase();
+  let achado: any = (cfgSt.lojaItens || []).find((p: any) => baixo(p.n) === baixo(item));
+  if (!achado && !cfgSt.lojaServOff) {
+    const sv = ((st as any).servicosPT || []).find((s2: any) => baixo(s2.nome) === baixo(item));
+    if (sv) achado = { n: sv.nome, v: sv.valor };
+  }
+  const valorCentavos = achado ? Math.round(Number(achado.v) * 100) : 0;
+  if (!valorCentavos || valorCentavos < 100) return json({ erro: "este item não está mais na loja — fale com o seu personal." }, 404);
+  // 3) o aluno dono do token (pra referência da baixa) e o gateway da academia
+  const aluno: any = ((st as any).alunos || []).find((x: any) => x.appTokenP === t) || null;
+  const cfg = await configDaAcademia(aid);
+  if (!cfg) return json({ erro: "sem-gateway" }, 400);
+  const ref = aluno && aluno.id ? "mt|" + String(aluno.id).slice(0, 40) + "|loja" : "";
+  const descricao = ("Loja do app — " + String(achado.n)).slice(0, 120);
+  const nome = aluno && aluno.nome ? String(aluno.nome).slice(0, 60) : "Aluno";
+  const email = aluno && aluno.email ? String(aluno.email).trim().slice(0, 120) : "";
+  try {
+    let r: { link: string; linkId: string };
+    if (cfg.provedor === "mercadopago") r = await linkMercadoPago(cfg, valorCentavos / 100, descricao, nome, email, ref);
+    else if (cfg.provedor === "asaas") {
+      await garanteWebhookAsaas(cfg, email);
+      r = await linkAsaas(cfg, valorCentavos / 100, descricao, nome, ref);
+    } else if (cfg.provedor === "pagarme") r = await linkPagarme(cfg, valorCentavos, descricao, nome, email, ref);
+    else return json({ erro: "provedor desconhecido: " + cfg.provedor }, 400);
+    return json({ ok: true, link: r.link, provedor: cfg.provedor, valorCentavos });
+  } catch (e) {
+    return json({ erro: String((e as Error).message || e) }, 502);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
+
+  let body: any;
+  try { body = await req.json(); } catch { return json({ erro: "JSON inválido" }, 400); }
+
+  // a loja do app é chamada pelo ALUNO (token do app, sem conta) — as outras
+  // ações continuam exigindo o professor logado, como sempre
+  if (body.acao === "loja") return await compraLoja(body);
 
   const usuario = await usuarioValidado(req);
   if (!usuario) {
     return json({ erro: "Entre na sua conta do TORQUE ON para usar esta função (a chave pública não basta)." }, 401);
   }
-
-  let body: any;
-  try { body = await req.json(); } catch { return json({ erro: "JSON inválido" }, 400); }
 
   const cfg = await configDe(usuario.id);
 
@@ -398,5 +471,5 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return json({ erro: "acao desconhecida (use ping, link, assinar, assinatura_status ou assinatura_cancela)." }, 400);
+  return json({ erro: "acao desconhecida (use ping, link, loja, assinar, assinatura_status ou assinatura_cancela)." }, 400);
 });
