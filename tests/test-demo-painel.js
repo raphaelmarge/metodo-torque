@@ -207,10 +207,10 @@ function t(cond, nome) {
     t(fora.length === 0, "nenhuma chamada foi pro Supabase de verdade (" + fora.length + ")");
   }
 
-  console.log("As 16 abas do painel abrem sem erro:");
+  console.log("As 17 abas do painel abrem sem erro:");
   {
     const abas = ["dash", "alunos", "agenda", "pagamentos", "treinos", "chat", "avaliacoes", "quest",
-      "desafio", "relatorios", "assessoria", "sitepro", "config", "pers", "imagens", "conta"];
+      "desafio", "relatorios", "assessoria", "sitepro", "config", "pers", "imagens", "conta", "ajuda"];
     for (const a of abas) await vaiPra(p, a);
     const reais = erros.filter((e) => !/favicon|manifest|net::ERR_FAILED/.test(e));
     if (reais.length) console.log("     " + reais.slice(0, 5).join("\n     "));

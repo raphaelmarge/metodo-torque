@@ -1661,6 +1661,33 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agsem .agpil .ses-acoes { display: flex; flex-direction: column; gap: 5px; min-width: 0;
     padding: 7px; border: 1px solid var(--tk-trilha); border-radius: 12px; background: var(--tk-sup4); }
   .agsem .agpil .ses-acoes .btn { width: 100%; min-width: 0; }
+  /* ============ CENTRAL DE AJUDA (v706) ============ */
+  .ajgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .ajcard { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 15px; cursor: pointer;
+            background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 14px;
+            font-family: inherit; color: inherit; min-width: 0; }
+  .ajcard:hover { border-color: var(--pt-roxo); }
+  .ajcard b { display: block; font-size: 14px; font-weight: 800; color: var(--tk-tx); }
+  .ajcard i { display: block; font-style: normal; font-size: 11.5px; color: var(--tk-tx4); margin-top: 2px; }
+  .ajcard .ajic { flex: none; width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center;
+                  justify-content: center; background: var(--tk-roxoFraco); color: var(--pt-roxo-claro); }
+  .ajsec { margin-bottom: 10px; }
+  .ajsec summary { cursor: pointer; font-size: 14.5px; font-weight: 800; color: var(--tk-tx); list-style: none; position: relative; padding-right: 26px; }
+  .ajsec summary::-webkit-details-marker { display: none; }
+  .ajsec summary::after { content: "‹"; position: absolute; right: 4px; top: 0; transform: rotate(-90deg); color: var(--tk-tx5); font-size: 17px; }
+  .ajsec[open] summary::after { transform: rotate(90deg); }
+  .ajpassos { margin: 10px 0 0; padding: 0 0 0 4px; counter-reset: ajp; list-style: none; }
+  .ajpassos li { counter-increment: ajp; position: relative; padding: 0 0 12px 34px; font-size: 13.5px; line-height: 1.55; color: var(--tk-tx2); }
+  .ajpassos li::before { content: counter(ajp); position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--pt-roxo); color: #fff; font-size: 11.5px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; }
+  .ajpassos li:not(:last-child)::after { content: ""; position: absolute; left: 10.5px; top: 24px; bottom: 2px; width: 1px; background: var(--tk-trilha); }
+  .ajfig { margin-top: 4px; border: 1px dashed var(--tk-bd4); border-radius: 12px; padding: 10px 12px 12px; background: var(--tk-sup2); }
+  .ajfig-cab { display: block; font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--tk-tx5); margin-bottom: 9px; }
+  .ajfig-mio { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ajfoco { position: relative; display: inline-flex; border-radius: 12px; outline: 2px solid var(--pt-roxo); outline-offset: 3px; margin: 6px 6px 18px 4px; }
+  .ajfoco-rot { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 7px); white-space: nowrap;
+                font-size: 10px; font-weight: 800; font-style: normal; color: var(--pt-roxo-claro); }
   .agc { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; cursor: pointer;
          background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: inherit; font-family: inherit; min-height: 46px; }
   .agc .agnm { font-size: 12.5px; font-weight: 800; color: var(--tk-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1899,6 +1926,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button class="pouco" data-a="pers"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg>Personalização</button>
     <button class="pouco" data-a="imagens"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='14' rx='2.5'/><circle cx='8.5' cy='10' r='1.6'/><path d='m4 17 4.5-4.5 3.5 3.5 3-3 5 5'/></svg>Imagens</button>
     <button class="pouco" data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
+    <button class="pouco" data-a="ajuda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M9.6 9.3a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.5'/><circle cx='12' cy='16.8' r='.5'/></svg>Ajuda</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
       <button id="btnTemaPt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
@@ -2947,6 +2975,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </section>
 
   <!-- ASSESSORIA -->
+  <!-- AJUDA (v706): o conteúdo inteiro nasce por JS (renderAjuda) na primeira
+       abertura — índice de tópicos, páginas com passo a passo e figuras -->
+  <section id="vAjuda" hidden></section>
   <!-- PERSONALIZAÇÃO: cores e logo do app -->
   <section id="vPers" hidden>
     <!-- tela 4b do canvas: a cara do app com o botao de mandar pros alunos -->
@@ -3966,12 +3997,327 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de alunos
     $("cardConta").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "conta") renderConta();
+    $("vAjuda").hidden = b.dataset.a !== "ajuda";
+    if (b.dataset.a === "ajuda") renderAjuda();
     $("kpis").hidden = false; // os kpis vivem dentro do Dashboard
     $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
     if (b.dataset.a === "chat") { renderBotP(); montaBuilderP(); renderChatPT(); }
   });
+
+  /* ============================================================
+   * CENTRAL DE AJUDA (v706)
+   *
+   * Índice de tópicos → página do tópico com sub-blocos, passo a passo
+   * numerado e FIGURAS. As figuras não são screenshot: são mockups montados
+   * com os próprios elementos da interface (botão, chip, linha) — pesam
+   * quase nada, funcionam offline e mudam de cor junto com o tema. O
+   * elemento que o passo manda tocar ganha o anel .ajfoco.
+   * ============================================================ */
+  function ajBt(txt, tipo) {
+    var cls = tipo === "pri" ? "background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;"
+      : "background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);";
+    return "<span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;" + cls + "'>" + txt + "</span>";
+  }
+  function ajFoco(html, rot) {
+    return "<span class='ajfoco'>" + html + "<i class='ajfoco-rot'>" + (rot || "toque aqui") + "</i></span>";
+  }
+  function ajFig(html) {
+    return "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'>" + html + "</div></div>";
+  }
+  function ajLinha(nome, sub, acao) {
+    return "<span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'>" +
+      "<span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>" + nome + "</b>" +
+      (sub ? "<span style='font-size:11px;color:var(--tk-tx4);'>" + sub + "</span>" : "") + "</span>" + (acao || "") + "</span>";
+  }
+  function ajMenuFig(rotulo) {
+    return "<span style='display:inline-flex;flex-direction:column;gap:6px;align-items:stretch;min-width:170px;'>" +
+      "<span style='font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--tk-tx5);text-transform:uppercase;'>menu</span>" +
+      ajBt("Início") + ajFoco(ajBt(rotulo), "é esta aba") + "</span>";
+  }
+  var AJUDA_PT = [
+    { id: "comeco", t: "Primeiros passos", d: "Da conta nova ao primeiro aluno com app no celular",
+      ic: "<path d='M5 12h14M13 6l6 6-6 6'/>",
+      subs: [
+        { t: "O caminho inteiro em 4 passos", p: [
+          "Cadastre seu primeiro aluno em <b>Alunos → + Novo aluno</b> (nome e WhatsApp bastam pra começar).",
+          "Monte a primeira ficha em <b>Treinos</b> — escolha o aluno e toque em <b>+ Adicionar exercício</b>.",
+          "Toque em <b>Salvar e publicar</b>: o app do aluno nasce nesse momento.",
+          "O aluno recebe o link e a senha <b>por e-mail</b> — ele entra por aluno-login.html com o e-mail dele.",
+        ], fig: ajFig(ajFoco(ajBt("+ Novo aluno", "pri"), "passo 1") + " " + ajBt("Montar treino") + " " + ajFoco(ajBt("Salvar e publicar", "pri"), "passo 3")) },
+        { t: "Entrar na nuvem (sincronizar entre aparelhos)", p: [
+          "Tudo funciona offline neste aparelho — a nuvem entra pra sincronizar e ligar chat, questionários e comunidade.",
+          "Toque no aviso <b>Entre na sua conta</b> (ou Configurações → Conta) e use seu e-mail.",
+          "Depois de entrar, o que você fizer aqui aparece no seu outro computador/celular sozinho.",
+        ] },
+        { t: "Instalar o painel no celular", p: [
+          "Abra o painel no navegador do celular.",
+          "No iPhone: botão <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b>.",
+          "No Android: menu <b>⋮</b> do Chrome → <b>Instalar app</b>.",
+        ] },
+      ] },
+    { id: "inicio", t: "Início", d: "Resolver hoje, seu dia e o mês em um olhar",
+      ic: "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>",
+      subs: [
+        { t: "Resolver hoje", p: [
+          "O bloco <b>Resolver hoje</b> junta o que pede ação agora: aluno que relatou dor, cobrança vencida, ficha velha e conversa parada.",
+          "Cada card tem o botão que resolve — <b>Abrir ficha</b>, <b>Cobrar</b>, <b>Responder</b>. Resolvido, ele some sozinho.",
+        ], fig: ajFig(ajLinha("Ana Souza · RELATOU DOR", "“senti o ombro no supino…”", ajFoco(ajBt("Abrir ficha", "pri"), "resolve aqui"))) },
+        { t: "Seu dia hoje", p: [
+          "A linha do tempo mostra as sessões do dia em ordem: a próxima ganha destaque roxo.",
+          "Dá pra marcar <b>Feita</b> ali mesmo, sem abrir a Agenda.",
+        ] },
+        { t: "A fila de WhatsApp", p: [
+          "As automações (aniversário, aluno sumido, pacote acabando) caem numa fila — nada sai sozinho.",
+          "Toque em <b>Enviar</b> pra abrir o WhatsApp já com a mensagem pronta, ou <b>Pular</b> pra descartar.",
+        ] },
+      ] },
+    { id: "alunos", t: "Alunos e ficha do aluno", d: "Cadastro, estados da lista e o perfil completo",
+      ic: "<circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/>",
+      subs: [
+        { t: "Cadastrar um aluno", p: [
+          "Em <b>Alunos</b>, toque em <b>+ Novo aluno</b>.",
+          "Preencha nome, WhatsApp e e-mail (o e-mail é o login do app dele).",
+          "Escolha o plano (mensal, pacote de aulas ou por sessão) — é ele que alimenta a cobrança.",
+          "Salvou? A ficha abre pronta pra montar o primeiro treino.",
+        ] },
+        { t: "Entender a lista", p: [
+          "Os filtros <b>Ativos / Sumindo / Devendo / Encerrados</b> contam a situação de cada um.",
+          "<b>Sumindo</b> = parou de treinar há dias; <b>Devendo</b> = não pagou o mês e passou do vencimento.",
+          "Cada linha traz a AÇÃO que resolve o estado dela (Cobrar, Montar ficha, Chamar).",
+        ], fig: ajFig(ajLinha("Carlos Lima", "Mensal 3x · treinos 4/12", "<span style='display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:var(--pt-erro-bg);color:var(--pt-erro);font-size:10px;font-weight:900;'>DEVE 240</span>" + ajFoco(ajBt("Cobrar", "pri"), "ação da linha"))) },
+        { t: "A ficha (perfil) do aluno", p: [
+          "Toque no NOME do aluno pra abrir a ficha.",
+          "A aba <b>Resumo</b> traz treinos do mês, peso, batimento e check-in; as outras abas guardam cadastro, treino, financeiro, avaliações, frequência e app.",
+          "As <b>4 ações do dia</b> ficam no topo: montar treino, chat, financeiro e agenda.",
+        ] },
+        { t: "Encerrar ou excluir", p: [
+          "Na ficha, menu <b>···</b> → <b>Encerrar aluno</b>: ele sai das listas e o app dele pode ser revogado na hora.",
+          "Encerrado não é apagado — o histórico fica guardado e dá pra reativar.",
+        ] },
+      ] },
+    { id: "agenda", t: "Agenda", d: "Marcar, confirmar pedidos e fechar o dia",
+      ic: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
+      subs: [
+        { t: "Marcar uma sessão", p: [
+          "Toque em <b>Marcar sessão</b> (ou num horário vazio da grade — ele já preenche dia e hora).",
+          "Escolha o aluno, o dia e a hora; <b>repetir toda semana</b> cria as próximas de uma vez.",
+          "Turminha? O modo <b>Turma</b> marca vários alunos no mesmo horário.",
+        ] },
+        { t: "Semana × Mês", p: [
+          "O botão <b>Semana | Mês</b> troca o zoom do MESMO calendário.",
+          "Semana é a grade de horários (no celular, um dia por vez); Mês serve pra achar uma data longe — tocar num dia leva pra semana dele.",
+          "As setas <b>‹ ›</b> andam as semanas; <b>Hoje</b> volta.",
+        ], fig: ajFig("<span style='display:inline-flex;gap:4px;'>" + ajFoco(ajBt("Semana", "pri"), "o zoom") + ajBt("Mês") + "</span>") },
+        { t: "Feita, Faltou ou Cancelou", p: [
+          "Toque na sessão (na grade ou na lista do dia) pra abrir as ações dela.",
+          "<b>Feita</b> desconta do pacote e oferece registrar o pagamento por sessão; <b>Faltou</b> conta na assiduidade; <b>Cancelou</b> desmarca.",
+          "Marcou errado? Na sessão feita aparece <b>Desfazer Feita</b>, que devolve aula e pagamento.",
+        ], fig: ajFig(ajLinha("07:00 · João", "Treino A", ajFoco(ajBt("⋮"), "as ações")) + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("Feita", "pri") + ajBt("Faltou") + ajBt("Cancelou") + "</span>") },
+        { t: "Pedidos de horário do app", p: [
+          "Quando o aluno pede horário pelo app, aparece a faixa roxa no topo da Agenda.",
+          "<b>Confirmar</b> cria a sessão e avisa o aluno por notificação; <b>Recusar</b> também avisa, com carinho.",
+        ] },
+      ] },
+    { id: "treinos", t: "Montar treinos", d: "Fichas, circuito, corrida e a semana do aluno",
+      ic: "<path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/>",
+      subs: [
+        { t: "Montar uma ficha", p: [
+          "Em <b>Treinos</b>, escolha o aluno no topo.",
+          "Abra a ficha (A, B, C…) e toque em <b>+ Adicionar exercício</b>: busque, escolha séries/repetições/descanso e confirme.",
+          "Tocar num exercício já montado abre o editor dele (série, repetição, descanso, tipo de série e observação).",
+          "No fim, <b>Salvar e publicar</b> manda pro app do aluno.",
+        ], fig: ajFig(ajFoco(ajBt("+ Adicionar exercício", "pri"), "abre a busca") + " " + ajBt("Supino reto · 4 × 12")) },
+        { t: "Gerar com IA", p: [
+          "O botão <b>Gerar com IA</b> monta o mês inteiro (4 semanas com progressão) a partir da anamnese, das cargas reais e da SUA leitura.",
+          "Escreva sua diretriz na gaveta <b>Sua leitura</b> — o que você escreve ali vence qualquer padrão.",
+          "Escolha o tipo: musculação, circuito ou corrida. O resultado entra na aba certa pra você revisar antes de publicar.",
+        ] },
+        { t: "Semana do aluno", p: [
+          "A aba <b>Semana do aluno</b> amarra cada dia a UM treino (ficha, circuito ou corrida).",
+          "O card HOJE do app segue esse plano; dia sem treino vira DESCANSO.",
+        ] },
+        { t: "Parte 2 do dia (A2)", p: [
+          "Dentro da ficha, o bloco <b>Parte 2</b> adiciona cardio/alongamento ao MESMO dia (vira A2, B2…).",
+          "No app ela aparece dentro da gaveta da ficha, com linhas marcáveis e cronômetro.",
+        ] },
+        { t: "Fichas-modelo e grupos", p: [
+          "Salve uma ficha como <b>modelo</b> pra reaproveitar em outros alunos.",
+          "Os <b>treinos de grupo</b> disparam a mesma ficha pra vários alunos de uma vez.",
+        ] },
+      ] },
+    { id: "financeiro", t: "Financeiro", d: "Cobrança, recebimento e baixa automática",
+      ic: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/>",
+      subs: [
+        { t: "Cobrar quem está devendo", p: [
+          "O bloco vermelho <b>Atrasados</b> fica no topo, com a ação dentro da linha.",
+          "<b>Recebi</b> registra na mão; <b>Pix</b> mostra o QR da sua chave; <b>Link</b> gera o link de cartão/boleto.",
+          "<b>Cobrar todos</b> abre o WhatsApp de cada um com a mensagem pronta.",
+        ], fig: ajFig(ajLinha("Marina · venceu dia 5", "R$ 240,00", ajBt("Recebi") + ajBt("Pix") + ajFoco(ajBt("Link", "pri"), "link de pagamento"))) },
+        { t: "Receber na SUA conta (gateway próprio)", p: [
+          "Em <b>Configurações → Receber dos alunos</b>, escolha Mercado Pago, Asaas ou Pagar.me e cole a SUA chave.",
+          "O dinheiro do aluno cai direto na sua conta, sem repasse.",
+          "Com o gateway ligado, quando o aluno paga o link a <b>baixa entra sozinha</b> no financeiro.",
+          "Pelo Asaas dá pra ligar a <b>assinatura</b> (cobrança automática todo mês).",
+        ] },
+        { t: "Planos, pacotes e despesas", p: [
+          "Cadastre seus planos (mensal, pacote de aulas, por sessão) — a régua de cobrança segue o plano de cada aluno.",
+          "Pacote desconta aula a aula quando você marca <b>Feita</b> na Agenda, e avisa quando zera.",
+          "As <b>Despesas</b> fecham a conta do mês: o Relatório mostra quanto sobrou de verdade.",
+        ] },
+      ] },
+    { id: "chat", t: "Chat", d: "Conversa com cada aluno, dentro do painel",
+      ic: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/>",
+      subs: [
+        { t: "Como funciona", p: [
+          "A lista mostra as conversas com a última mensagem e o contador de novas; toque num aluno pra abrir.",
+          "O chip do topo traz o contexto (próxima sessão, treino do dia) e o atalho <b>Abrir ficha</b>.",
+          "As <b>respostas rápidas</b> agilizam o dia a dia; o chat precisa da conta na nuvem.",
+        ] },
+        { t: "Robô de boas-vindas", p: [
+          "O <b>assistente</b> responde perguntas comuns do aluno (horário, endereço, plano) quando você não está.",
+          "Você configura as respostas dele na própria aba do Chat.",
+        ] },
+      ] },
+    { id: "avaliacoes", t: "Avaliações físicas", d: "Medidas, laudo e evolução comparada",
+      ic: "<path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/>",
+      subs: [
+        { t: "Registrar uma avaliação", p: [
+          "Em <b>Avaliações</b>, escolha o aluno e preencha peso, dobras ou bioimpedância — o que você tiver.",
+          "O laudo completo (gordura, massa magra, TMB, pontuação) sai sozinho e pode ser impresso.",
+          "Quem tem bioimpedância digita os valores medidos e eles vencem as estimativas.",
+        ] },
+        { t: "Medidas pela câmera (beta)", p: [
+          "Ligue em Configurações; duas fotos guiadas viram circunferências estimadas.",
+          "A imagem é lida no aparelho e descartada — nunca sai do celular.",
+        ] },
+        { t: "Histórico e evolução", p: [
+          "A aba <b>Histórico e evolução</b> compara as duas últimas medições com os deltas.",
+          "As fotos de progresso do aluno ficam na ficha dele (aba Avaliações).",
+        ] },
+      ] },
+    { id: "quest", t: "Questionários e check-ins", d: "Perguntas suas + o check-in da semana",
+      ic: "<rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/>",
+      subs: [
+        { t: "Criar um questionário", p: [
+          "Em <b>Questionários</b>, monte as perguntas (nota, carinhas ou texto) e escolha pra quem vai.",
+          "Com <b>repetir</b>, ele reabre toda semana sozinho.",
+          "O aluno responde no app, uma pergunta por tela.",
+        ] },
+        { t: "Ler as respostas", p: [
+          "A aba <b>A semana</b> ordena: quem respondeu MAL vem primeiro, depois tudo bem, depois quem não respondeu.",
+          "<b>Cobrar os N</b> chama quem falta responder.",
+          "Na ficha do aluno, cada pergunta com nota vira gráfico de evolução (aba Check-ins).",
+        ] },
+      ] },
+    { id: "comunidade", t: "Comunidade e Desafio", d: "O feed da turma e o placar do mês",
+      ic: "<path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/>",
+      subs: [
+        { t: "Ligar a Comunidade", p: [
+          "Vem DESLIGADA. Ligue em <b>Configurações → Comunidade</b> e publique os apps.",
+          "Os alunos postam treino, curtem e comentam; a turma puxa a turma.",
+        ] },
+        { t: "Moderar", p: [
+          "Em <b>Desafio → Comunidade</b> você vê cada post e pode apagar o que não couber.",
+        ] },
+        { t: "Desafio do mês", p: [
+          "Crie um desafio com meta e prêmio; o placar conta os treinos e o app mostra o ranking.",
+        ] },
+      ] },
+    { id: "appaluno", t: "O app dos seus alunos", d: "Publicar, personalizar, clube e loja",
+      ic: "<rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/>",
+      subs: [
+        { t: "Publicar e atualizar", p: [
+          "O app nasce no <b>Salvar e publicar</b> do treino, e o botão <b>Publicar</b> da Personalização atualiza todos de uma vez.",
+          "Correções do sistema chegam pra TODOS os alunos sozinhas — ninguém precisa reinstalar.",
+        ] },
+        { t: "A cara do seu app", p: [
+          "Em <b>Personalização</b>, escolha a cor da sua marca e o logo — a paleta inteira do app muda junto.",
+          "Suba uma <b>foto por tipo de treino</b> (perna, peito, corrida…) — cada ficha ganha a capa certa sozinha.",
+        ] },
+        { t: "Clube de vantagens", p: [
+          "Em <b>Configurações → Clube de vantagens</b>, cadastre parcerias com comércios locais: nome, benefício, cupom e link.",
+          "No app do aluno vira um cartão com o cupom de copiar e o botão pro site do parceiro.",
+        ], fig: ajFig(ajLinha("Suplementos do Zé", "15% off em creatina", "") + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("TORQUE15 · copiar") + ajFoco(ajBt("Ir pro site do parceiro"), "o link que você colou") + "</span>") },
+        { t: "Loja no app", p: [
+          "Em <b>Configurações → Loja</b>, cadastre produtos e serviços com preço e foto.",
+          "Sem gateway, o <b>Quero esse</b> cai no seu WhatsApp; com gateway próprio ligado, vira <b>Comprar</b> com pagamento dentro do app e baixa automática.",
+        ] },
+        { t: "Cortar o acesso", p: [
+          "Ao encerrar um aluno, o painel oferece <b>revogar o app</b> dele — o acesso morre na hora, em todos os aparelhos.",
+        ] },
+      ] },
+    { id: "zap", t: "WhatsApp e automações", d: "A fila, as automações e o robô oficial",
+      ic: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/><path d='M9 10c.5 2 2.5 4 4.5 4.5'/>",
+      subs: [
+        { t: "Automações que caem na fila", p: [
+          "Em <b>Configurações → Suas automações</b>: boas-vindas, aniversário, aluno sumido, pacote acabando e mais.",
+          "Nada sai sozinho: tudo cai na <b>fila do Início</b> e você toca Enviar em cada um.",
+        ] },
+        { t: "WhatsApp oficial (opcional)", p: [
+          "Quem tem conta na API oficial da Meta cola o próprio Phone ID e token em <b>Configurações → WhatsApp</b>.",
+          "Aí as mensagens saem sozinhas do SEU número — cada professor paga o seu na Meta.",
+        ] },
+      ] },
+    { id: "sitepro", t: "Minha página", d: "Seu site de vendas com agendamento",
+      ic: "<circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/>",
+      subs: [
+        { t: "Publicar sua página", p: [
+          "Em <b>Minha página</b>, preencha headline, bio, planos e depoimentos — a prévia mostra na hora.",
+          "Publique e compartilhe o endereço no Instagram e no WhatsApp.",
+          "O interessado agenda a <b>aula experimental</b> ali mesmo, e o pedido cai na sua Agenda.",
+        ] },
+        { t: "Depoimentos", p: [
+          "Peça o depoimento pelo botão da ficha do aluno — ele escreve no próprio app e você aprova antes de ir pro ar.",
+        ] },
+      ] },
+    { id: "conta", t: "Conta, dados e aparência", d: "Modo claro, exportar dados e assinatura",
+      ic: "<circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/>",
+      subs: [
+        { t: "Modo claro", p: [
+          "O interruptor <b>Modo claro</b> fica no pé do menu lateral.",
+        ] },
+        { t: "Seus dados são seus", p: [
+          "<b>Exportar meus dados</b> (em Sua ilha) baixa tudo num arquivo.",
+          "Chaves de gateway e tokens NUNCA voltam pra tela — o painel só mostra se existem.",
+        ] },
+        { t: "Assinatura", p: [
+          "O teste grátis dura 14 dias; a assinatura é gerida em <b>Sua ilha</b>.",
+        ] },
+      ] },
+  ];
+  var ajAberto = null; // id do tópico aberto (null = índice)
+  function renderAjuda() {
+    var el = $("vAjuda");
+    var mio = "";
+    if (!ajAberto) {
+      mio = "<div class='altopo'><div><div class='alk'>Central de ajuda</div><div class='alh'>Como usar cada área</div></div></div>" +
+        "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Toque num tópico pra ver o passo a passo — com figuras mostrando onde tocar. Ficou com dúvida que não está aqui? Me chame no WhatsApp do TORQUE ON.</p>" +
+        "<div class='ajgrid'>" + AJUDA_PT.map(function (tp) {
+          return "<button type='button' class='ajcard' data-ajtopico='" + tp.id + "'>" +
+            "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + tp.ic + "</svg></span>" +
+            "<span style='flex:1;min-width:0;'><b>" + tp.t + "</b><i>" + tp.d + "</i></span></button>";
+        }).join("") + "</div>";
+    } else {
+      var tp2 = AJUDA_PT.filter(function (x) { return x.id === ajAberto; })[0];
+      if (!tp2) { ajAberto = null; return renderAjuda(); }
+      mio = "<button type='button' class='btn sec mini' data-ajvolta style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
+        "<div class='altopo'><div><div class='alk'>Ajuda</div><div class='alh'>" + tp2.t + "</div></div></div>" +
+        tp2.subs.map(function (s, i) {
+          return "<details class='card ajsec'" + (i === 0 ? " open" : "") + "><summary>" + s.t + "</summary>" +
+            "<ol class='ajpassos'>" + s.p.map(function (px) { return "<li>" + px + "</li>"; }).join("") + "</ol>" +
+            (s.fig || "") + "</details>";
+        }).join("");
+    }
+    el.innerHTML = mio;
+  }
+  $("vAjuda").addEventListener("click", function (e) {
+    var c = e.target.closest && e.target.closest("[data-ajtopico]");
+    if (c) { ajAberto = c.getAttribute("data-ajtopico"); renderAjuda(); window.scrollTo(0, 0); return; }
+    if (e.target.closest && e.target.closest("[data-ajvolta]")) { ajAberto = null; renderAjuda(); }
+  });
+  window.__ajudaPT = { dados: AJUDA_PT, abre: function (id) { ajAberto = id || null; renderAjuda(); } }; // testes
 
   // ---------- índices: o painel precisa aguentar milhares de alunos ----------
   // Sem isto, cada aluno varria a lista inteira de pagamentos e sessões — com 1000

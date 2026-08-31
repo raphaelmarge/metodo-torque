@@ -182,6 +182,7 @@ const ABAS = [
   ["pers", "Personalização"],
   ["imagens", "Imagens"],
   ["conta", "Sua ilha"],
+  ["ajuda", "Ajuda", "ajtopico", ["agenda"]], // v706: a Central de ajuda também tem que ser legível no celular
 ];
 const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino"];
 

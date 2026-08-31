@@ -113,6 +113,94 @@
       });
       return out;
     };
+    /* ===== AJUDA DO APP (v706) =====
+     * Tela própria (data-sec 'ajuda'), aberta só pelo menu. O conteúdo mora
+     * AQUI no builder — é código, igual pra todos, e uma correção no texto
+     * chega em todo mundo sem republicar. As figuras são mockups montados com
+     * os próprios elementos do app (pesam quase nada e funcionam offline);
+     * o elemento que o passo manda tocar ganha o anel roxo com rótulo. */
+    var ajudaCardHtml = (function () {
+      var bA = function (txt, pri) {
+        return "<span style='display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:10px;font-size:12px;font-weight:800;" +
+          (pri ? "background:var(--cor);color:#fff;" : "background:var(--bg2);border:1px solid var(--bg11);color:var(--corc);") + "'>" + txt + "</span>";
+      };
+      var focoA = function (html, rot) {
+        return "<span style='position:relative;display:inline-flex;border-radius:12px;outline:2px solid var(--cor);outline-offset:3px;margin:6px 6px 20px 4px;'>" + html +
+          "<i style='position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 7px);white-space:nowrap;font-size:10px;font-weight:800;font-style:normal;color:var(--corc);'>" + (rot || "toque aqui") + "</i></span>";
+      };
+      var figA = function (html) {
+        return "<div style='margin-top:6px;border:1px dashed var(--bg11);border-radius:12px;padding:10px 12px 12px;background:var(--bg2);'>" +
+          "<span style='display:block;font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#8a8695;margin-bottom:8px;'>como aparece no app</span>" +
+          "<div style='display:flex;flex-wrap:wrap;gap:8px;align-items:center;'>" + html + "</div></div>";
+      };
+      var passos = function (lst) {
+        // o número é escrito no build (content de CSS não entra por style inline)
+        return "<ol style='margin:10px 0 0;padding:0;list-style:none;'>" + lst.map(function (px, i9) {
+          return "<li style='position:relative;padding:0 0 11px 32px;font-size:13px;line-height:1.55;color:#cfcbdb;'>" +
+            "<span style='position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;background:var(--cor);color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;' aria-hidden='true'>" + (i9 + 1) + "</span>" + px + "</li>";
+        }).join("") + "</ol>";
+      };
+      var det = function (t, mio, aberto) {
+        return "<details class='ajdt'" + (aberto ? " open" : "") + " style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+          "<summary style='cursor:pointer;font-size:14px;font-weight:800;list-style:none;'>" + t + "</summary>" + mio + "</details>";
+      };
+      var TOPICOS = [
+        det("Começando: o app é seu", passos([
+          "Este app foi montado pelo seu personal, só pra você — o treino, as metas e as cores são do studio dele.",
+          "Guarde o link: entrar de novo é só abrir o mesmo endereço, ou entrar com seu <b>e-mail</b> na página de login.",
+          "Ele funciona <b>sem internet</b>: o treino abre na academia mesmo sem sinal, e o que você marcar sobe quando a internet voltar.",
+        ]) + figA(bA("Adicionar à Tela de Início") + "<span style='font-size:12px;color:#a9a4b5;'>no iPhone: Compartilhar → Adicionar à Tela de Início · no Android: menu do navegador → Instalar</span>"), true),
+        det("Início — sua semana", passos([
+          "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana.",
+          "Terminou o treino? Toque em <b>Treinei hoje!</b> — é ele que conta sua sequência e suas medalhas.",
+          "Os quatro botões de hábito (água, comida, sono, cardio) são um toque por dia — seu personal vê a média deles.",
+          "O card do dia mostra o treino de HOJE, seguindo o plano da semana que seu personal montou.",
+        ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida"))),
+        det("Treinos — ficha, circuito e corrida", passos([
+          "Em <b>Treinos</b>, cada ficha é uma gaveta (A, B, C…) — a do dia já abre aberta.",
+          "O botão <b>Começar treino</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
+          "Toque em <b>Mudar a carga</b> pra anotar o peso — é isso que desenha sua evolução.",
+          "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
+          "Na <b>corrida</b>, o app desenha o trajeto pelo GPS, fala os quilômetros e guarda pace e batimento.",
+        ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga"))),
+        det("Evolução — seu progresso", passos([
+          "<b>Conquistas</b>: medalhas, sequência, o mapa do mês e a retrospectiva.",
+          "<b>Corpo</b>: a curva do peso e as fotos de progresso (antes × depois).",
+          "<b>Cargas</b>: quanto você levantou em cada exercício, treino a treino.",
+          "<b>Marcas</b>: seus recordes — maior carga, maior corrida, melhor pace.",
+        ])),
+        det("Chat e agenda", passos([
+          "No <b>Chat</b> você fala direto com seu personal — ele responde quando puder.",
+          "Quando a sessão do dia aparecer no Início, toque em <b>Confirmo presença</b> (ou avise que não vai).",
+          "No <b>Calendário</b> dá pra <b>pedir horário</b>: escolha dia e hora e espere a confirmação dele.",
+        ]) + figA(focoA(bA("Confirmo presença", 1), "avisa seu personal") + bA("Não vou conseguir"))),
+        det("Check-in e questionários", passos([
+          "Uma vez por semana o app pede um <b>check-in</b>: 30 segundos, uma pergunta por tela.",
+          "Seu personal também pode mandar <b>questionários</b> — o sininho do menu avisa quando tem um esperando.",
+          "Responder de verdade ajuda: é assim que ele ajusta seu treino sem você precisar pedir.",
+        ])),
+        (feedLigado ? det("Comunidade — sua turma", passos([
+          "Na <b>Minha turma</b> você vê os treinos do pessoal do studio, curte e comenta.",
+          "Terminou um treino? O app oferece postar — só vai pro feed se você quiser.",
+        ])) : ""),
+        (clubeApp.length || lojaApp.length ? det("Clube de vantagens e Loja", passos(
+          (clubeApp.length ? [
+            "No <b>Clube de vantagens</b> (menu) estão as parcerias do seu personal: toque no cupom pra <b>copiar o código</b> e use no parceiro.",
+            "Alguns cupons têm o botão <b>Ir pro site do parceiro</b>.",
+          ] : []).concat(lojaApp.length ? [
+            "Na <b>Loja</b> (menu) você vê os produtos e serviços do seu personal — o botão fecha a compra com ele.",
+          ] : []))) : ""),
+        det("Ajustes e privacidade", passos([
+          "Em <b>Ajustes</b> você troca o modo claro/escuro, liga os lembretes e configura a corrida.",
+          "Toque na sua <b>foto no topo</b> pra trocar a foto de perfil — ela é reduzida no seu próprio celular.",
+          "Tem cinta de batimento? O app conecta por Bluetooth e mostra sua zona durante o treino.",
+          "<b>Baixar meus dados</b> entrega tudo que é seu num arquivo; <b>Excluir minha conta</b> apaga de verdade.",
+        ])),
+      ].join("");
+      return "<div class='cardx' id='ajudaCard'><h2>Ajuda</h2>" +
+        "<div class='vz' style='text-align:left;padding:2px 0 10px;'>Como usar cada parte do app, passo a passo. Dúvida que não está aqui? Chama seu personal no Chat.</div>" +
+        TOPICOS + "</div>";
+    })();
     /* Resumo do treino de cardio numa linha. O tipo 'misto' e o pedido do
      * professor: a MESMA folha tem parte CONTINUA e TIROS, e o resumo mostra
      * os dois na ordem em que o aluno vai fazer. Gemeo do crAlvoTxt() la
@@ -537,6 +625,11 @@
       ".gwrap.festa .gfalta{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}" +
       ".gwrap.festa .btnx{background:#fff!important;color:var(--cor-esc,#3b2b63)!important;box-shadow:none!important}" +
       ".gwrap.festa .vz{color:rgba(255,255,255,.7)}" +
+      // ajuda (v706): a setinha do details é nossa (o marker nativo destoa)
+      ".ajdt summary{list-style:none;position:relative;padding-right:24px}" +
+      ".ajdt summary::-webkit-details-marker{display:none}" +
+      ".ajdt summary:after{content:'\\2039';position:absolute;right:4px;top:-2px;transform:rotate(-90deg);color:#8a8695;font-size:17px}" +
+      ".ajdt[open] summary:after{transform:rotate(90deg)}" +
       ".gwrap.festa .gpe .prin{background:rgba(255,255,255,.16);color:#fff;box-shadow:none;border:1px solid rgba(255,255,255,.3)}" +
       /* ---------- Início do redesenho (telas final-44/45/46) ----------
        * No Início a faixa colorida do topo some: o cabeçalho (saudação + avatar)
@@ -1420,6 +1513,8 @@
             "<button class='lojabt' data-item='" + esc(p.n) + "' data-preco='" + precoL + "' style='flex:none;background:var(--cor);border:none;color:#fff;border-radius:11px;padding:11px 15px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;'>" + (D.lojaPg ? "Comprar" : "Quero esse") + "</button>" +
             "</div>";
         }).join("") + "</div>" : "") +
+      // ❓ Ajuda (v706): tela própria aberta pelo menu, montada lá em cima
+      ajudaCardHtml +
       // ---------- Chat (tela 10): cabeçalho do personal no alto da área ----------
       "<div class='cardx' id='chTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:22px 20px;color:#fff;display:flex;align-items:center;gap:13px;'>" +
@@ -5485,6 +5580,7 @@
       // quis os cards ocupando a tela inicial do app
       "if(el.id==='clubeCard'){el.setAttribute('data-sec','clube');return;}" +
       "if(el.id==='lojaCard'){el.setAttribute('data-sec','loja');return;}" +
+      "if(el.id==='ajudaCard'){el.setAttribute('data-sec','ajuda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
       "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
@@ -5570,6 +5666,11 @@
         "\"<span style='line-height:0;'>\"+ic(\"<path d='M5 8h14l-1.2 12a1.8 1.8 0 0 1-1.8 1.6H8a1.8 1.8 0 0 1-1.8-1.6z'/><path d='M8.6 10.5V6.8a3.4 3.4 0 0 1 6.8 0v3.7'/>\")+\"</span>\"+" +
         "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Loja</span><span class='mgsub'>" + lojaApp.length + (lojaApp.length > 1 ? " itens" : " item") + " de " + esc(studio.split(" ")[0]) + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
+      // ❓ Ajuda (v706): sempre presente — todo app tem a tela de ajuda
+      "\"<div class='mgcard'><button class='nitem mgrow' data-msec='ajuda'>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(\"<circle cx='12' cy='12' r='8.5'/><path d='M9.6 9.3a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.5'/><circle cx='12' cy='16.8' r='.5'/>\")+\"</span>\"+" +
+      "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Ajuda</span><span class='mgsub'>como usar cada parte do app</span></span>\"+" +
+      "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" +
       "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +
       "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +
       // iniciais e foto copiadas do avatar do topo, que já resolveu painel × aluno
@@ -5628,7 +5729,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes'||s==='clube'||s==='loja');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes'||s==='clube'||s==='loja'||s==='ajuda');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
