@@ -3227,6 +3227,10 @@ async function abaPt(p, a) {
     document.querySelector('#abas [data-a="ajuda"]').click();
     out.aberta = !document.getElementById("vAjuda").hidden;
     out.topicos = document.querySelectorAll("#vAjuda [data-ajtopico]").length;
+    // v707: toda ABA do menu tem tópico — Relatórios, Assessoria e o banco
+    // de imagens (sub do app) entraram na auditoria de cobertura
+    out.cobre = !!document.querySelector('#vAjuda [data-ajtopico="relatorios"]') &&
+      !!document.querySelector('#vAjuda [data-ajtopico="assessoria"]');
     const alvo = document.querySelector('#vAjuda [data-ajtopico="agenda"]');
     if (alvo) alvo.click();
     out.passos = document.querySelectorAll("#vAjuda .ajpassos li").length;
@@ -3238,7 +3242,7 @@ async function abaPt(p, a) {
     document.querySelector('#abas [data-a="agenda"]').click();
     return out;
   });
-  ok(aj6.aberta && aj6.topicos >= 12, "❓ a aba Ajuda abre com o índice de tópicos (" + aj6.topicos + ")");
+  ok(aj6.aberta && aj6.topicos >= 16 && aj6.cobre, "❓ a aba Ajuda abre com o índice cobrindo TODAS as áreas (" + aj6.topicos + " tópicos)");
   ok(aj6.passos >= 8 && aj6.figura && aj6.foco, "❓ o tópico traz passo a passo numerado e figura com o anel de onde tocar");
   ok(aj6.voltou, "❓ o ‹ Todos os tópicos volta pro índice");
 
@@ -3262,8 +3266,9 @@ async function abaPt(p, a) {
   // ❓ v706: a tela de Ajuda do app — o card, a entrada no menu e o passo a passo
   ok(/id='ajudaCard'/.test(appHtml) && /data-msec='ajuda'/.test(appHtml) && /como usar cada parte do app/.test(appHtml),
     "❓ o app tem a tela de Ajuda com entrada própria no menu");
-  ok((appHtml.match(/class='ajdt'/g) || []).length >= 7 && /Começando: o app é seu/.test(appHtml) && /Ajustes e privacidade/.test(appHtml),
-    "❓ a Ajuda cobre as áreas do app em gavetas (do Começando aos Ajustes)");
+  ok((appHtml.match(/class='ajdt'/g) || []).length >= 8 && /Começando: o app é seu/.test(appHtml) && /Ajustes e privacidade/.test(appHtml) &&
+    /Utilidades — ferramentas do treino/.test(appHtml),
+    "❓ a Ajuda cobre as áreas do app em gavetas (Começando, Utilidades e Ajustes inclusos)");
 
   // 📷 a foto só sobe quando MUDA: antes ela ia junto em todo envio do retorno
   // (peso, carga, treino marcado…), reenviando a mesma imagem dezenas de vezes

@@ -4092,6 +4092,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "A aba <b>Resumo</b> traz treinos do mês, peso, batimento e check-in; as outras abas guardam cadastro, treino, financeiro, avaliações, frequência e app.",
           "As <b>4 ações do dia</b> ficam no topo: montar treino, chat, financeiro e agenda.",
         ] },
+        { t: "Anamnese preenchida pelo próprio aluno", p: [
+          "No cadastro, gere o <b>link da anamnese</b> e mande pro aluno no WhatsApp.",
+          "Ele responde no celular dele e as respostas caem direto na ficha — sem digitação dupla.",
+        ] },
+        { t: "Contrato digital", p: [
+          "Escreva seu termo de responsabilidade em <b>Configurações</b> (uma vez só).",
+          "O aluno lê e aceita dentro do próprio app; o aceite fica registrado com data.",
+        ] },
+        { t: "Trazer alunos de outro sistema", p: [
+          "Em <b>Alunos</b>, o <b>importador</b> aceita a planilha exportada de outro sistema (ou um CSV simples).",
+          "Confira a prévia, ajuste as colunas e confirme — os alunos entram de uma vez.",
+        ] },
         { t: "Encerrar ou excluir", p: [
           "Na ficha, menu <b>···</b> → <b>Encerrar aluno</b>: ele sai das listas e o app dele pode ser revogado na hora.",
           "Encerrado não é apagado — o histórico fica guardado e dá pra reativar.",
@@ -4225,6 +4237,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Crie um desafio com meta e prêmio; o placar conta os treinos e o app mostra o ranking.",
         ] },
       ] },
+    { id: "relatorios", t: "Relatórios", d: "O mês fechado, a retenção e quanto vale sua hora",
+      ic: "<path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/>",
+      subs: [
+        { t: "Do dia a dia", p: [
+          "A primeira sub-aba junta KPIs do mês, movimentação, indicadores, aniversários e os alertas do studio.",
+          "<b>Mandar fechamento</b> envia o resumo do mês pro seu e-mail — e dá pra deixar automático.",
+        ] },
+        { t: "Retenção (Radar)", p: [
+          "O Radar mostra quem está esfriando ANTES de virar cancelamento: frequência caindo, check-in piorando, conversa parada.",
+          "Cada linha traz a ação que puxa o aluno de volta.",
+        ] },
+        { t: "Quanto vale sua hora", p: [
+          "Nos Indicadores, <b>Sua hora rendeu</b> divide o que entrou pelo tempo de sessão dado — o número que decide reajuste e agenda cheia.",
+        ] },
+        { t: "O mês de UM aluno", p: [
+          "O <b>relatório mensal</b> de um aluno específico (e o <b>card pra postar</b> no Instagram, com sua cor e logo) saem da FICHA dele, aba Avaliações.",
+        ] },
+      ] },
+    { id: "assessoria", t: "Assessoria a distância", d: "Acompanhar quem treina longe de você",
+      ic: "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/>",
+      subs: [
+        { t: "Como funciona", p: [
+          "Aluno de consultoria online treina sozinho, mas registra tudo pelo app: treinos feitos, sequência e o check-in da semana.",
+          "A aba <b>Assessoria</b> junta esses alunos numa tela só — quem sumir fica vermelho.",
+          "A mensagem pronta a um clique mantém o aluno perto mesmo longe.",
+        ] },
+      ] },
     { id: "appaluno", t: "O app dos seus alunos", d: "Publicar, personalizar, clube e loja",
       ic: "<rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/>",
       subs: [
@@ -4244,6 +4283,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Em <b>Configurações → Loja</b>, cadastre produtos e serviços com preço e foto.",
           "Sem gateway, o <b>Quero esse</b> cai no seu WhatsApp; com gateway próprio ligado, vira <b>Comprar</b> com pagamento dentro do app e baixa automática.",
         ] },
+        { t: "Banco de imagens", p: [
+          "A aba <b>Imagens</b> guarda as fotos que você usa no app (capas de treino, fotos do studio).",
+          "Mande 1080 × 1350 com o assunto no meio — o corte 4:5 e a compressão são automáticos.",
+          "Depois é só escolher da galeria na Personalização ou em cada ficha, sem reenviar do celular.",
+        ] },
         { t: "Cortar o acesso", p: [
           "Ao encerrar um aluno, o painel oferece <b>revogar o app</b> dele — o acesso morre na hora, em todos os aparelhos.",
         ] },
@@ -4254,6 +4298,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         { t: "Automações que caem na fila", p: [
           "Em <b>Configurações → Suas automações</b>: boas-vindas, aniversário, aluno sumido, pacote acabando e mais.",
           "Nada sai sozinho: tudo cai na <b>fila do Início</b> e você toca Enviar em cada um.",
+          "Registrou um pagamento? O <b>recibo pronto</b> entra na fila também — um toque e o aluno recebe o comprovante.",
         ] },
         { t: "WhatsApp oficial (opcional)", p: [
           "Quem tem conta na API oficial da Meta cola o próprio Phone ID e token em <b>Configurações → WhatsApp</b>.",
@@ -4281,6 +4326,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         { t: "Seus dados são seus", p: [
           "<b>Exportar meus dados</b> (em Sua ilha) baixa tudo num arquivo.",
           "Chaves de gateway e tokens NUNCA voltam pra tela — o painel só mostra se existem.",
+        ] },
+        { t: "Avisos no seu celular", p: [
+          "Ative as <b>notificações</b> e o painel te avisa no celular quando chega mensagem no chat, pedido de horário ou pagamento.",
+          "É o mesmo tipo de aviso que o aluno recebe do app — só que no seu aparelho.",
         ] },
         { t: "Assinatura", p: [
           "O teste grátis dura 14 dias; a assinatura é gerida em <b>Sua ilha</b>.",
