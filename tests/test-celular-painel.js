@@ -175,7 +175,7 @@ const ABAS = [
   ["avaliacoes", "Avaliações", "ava", ["historico", "avaliar"]],
   ["quest", "Questionários", "qta", ["semana", "enviar", "montar", "resp"]],
   ["desafio", "Desafio", "dsa", ["config", "placar", "feed"]],
-  ["relatorios", "Relatórios", "rela", ["geral", "alunos", "fin", "agenda"]],
+  ["relatorios", "Relatórios", "rela", ["geral", "alunos", "fin", "agenda", "vendas"]],
   ["assessoria", "Assessoria"],
   ["sitepro", "Minha página"],
   ["config", "Configurações", "cfga", ["resumo", "zap", "app", "conta"]],
