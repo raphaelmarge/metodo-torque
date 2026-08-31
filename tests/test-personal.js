@@ -2230,9 +2230,10 @@ async function abaPt(p, a) {
       return { total: bs.length, grupo: grupo ? grupo.textContent : "", antes, depois,
         contadores: [...document.querySelectorAll("#abas .cnt")].map((c) => c.parentElement.dataset.a) };
     });
-    ok(menu1a.total === 16 && /Menos usado/i.test(menu1a.grupo),
-      "🎨 menu: as 16 abas continuam todas lá, agora cortadas em dois grupos");
-    ok(menu1a.antes.join(",") === "dash,alunos,agenda,pagamentos,treinos,chat" && menu1a.depois.length === 10,
+    // v706: a aba Ajuda entrou no grupo de baixo — 16 viraram 17 (10 → 11)
+    ok(menu1a.total === 17 && /Menos usado/i.test(menu1a.grupo),
+      "🎨 menu: as 17 abas continuam todas lá, cortadas em dois grupos");
+    ok(menu1a.antes.join(",") === "dash,alunos,agenda,pagamentos,treinos,chat" && menu1a.depois.length === 11,
       "🎨 menu: as 6 do dia a dia em cima (" + menu1a.antes.join(", ") + ")");
     ok(menu1a.contadores.indexOf("alunos") > -1,
       "🎨 menu: as abas do dia a dia mostram o contador do que está esperando");
@@ -3219,6 +3220,28 @@ async function abaPt(p, a) {
     window.confirm = window.__confirmOrig4; window.alert = window.__alertOrig4;
     return out;
   });
+  // ❓ v706: Central de ajuda no painel — índice de tópicos, página com passo
+  // a passo numerado e figura, e o caminho de volta
+  const aj6 = await p.evaluate(() => {
+    const out = {};
+    document.querySelector('#abas [data-a="ajuda"]').click();
+    out.aberta = !document.getElementById("vAjuda").hidden;
+    out.topicos = document.querySelectorAll("#vAjuda [data-ajtopico]").length;
+    const alvo = document.querySelector('#vAjuda [data-ajtopico="agenda"]');
+    if (alvo) alvo.click();
+    out.passos = document.querySelectorAll("#vAjuda .ajpassos li").length;
+    out.figura = !!document.querySelector("#vAjuda .ajfig");
+    out.foco = !!document.querySelector("#vAjuda .ajfoco");
+    const v = document.querySelector("#vAjuda [data-ajvolta]");
+    if (v) v.click();
+    out.voltou = document.querySelectorAll("#vAjuda [data-ajtopico]").length >= 10;
+    document.querySelector('#abas [data-a="agenda"]').click();
+    return out;
+  });
+  ok(aj6.aberta && aj6.topicos >= 12, "❓ a aba Ajuda abre com o índice de tópicos (" + aj6.topicos + ")");
+  ok(aj6.passos >= 8 && aj6.figura && aj6.foco, "❓ o tópico traz passo a passo numerado e figura com o anel de onde tocar");
+  ok(aj6.voltou, "❓ o ‹ Todos os tópicos volta pro índice");
+
   ok(ag4.celExiste && ag4.painelAbriu && ag4.feitaPelaGrade, "🖱 grade da semana: clicar na sessão abre as ações e o Feita marca");
   ok(ag4.celFeita && ag4.temDesfazer && ag4.desfez, "🖱 grade da semana: sessão FEITA oferece o Desfazer, que reverte");
   ok(ag4.diaTemMenu && ag4.diaPainel && ag4.faltouPeloDia, "🖱 dia do celular: o ⋮ da linha abre as ações e o Faltou marca");
@@ -3236,6 +3259,11 @@ async function abaPt(p, a) {
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
   ok(/id='avBtn'/.test(appHtml) && /ptfotoperfil/.test(appHtml) && /dd9\.fotoPerfil=/.test(appHtml),
     "o aluno troca a própria foto pelo topo do app, e ela volta pro personal");
+  // ❓ v706: a tela de Ajuda do app — o card, a entrada no menu e o passo a passo
+  ok(/id='ajudaCard'/.test(appHtml) && /data-msec='ajuda'/.test(appHtml) && /como usar cada parte do app/.test(appHtml),
+    "❓ o app tem a tela de Ajuda com entrada própria no menu");
+  ok((appHtml.match(/class='ajdt'/g) || []).length >= 7 && /Começando: o app é seu/.test(appHtml) && /Ajustes e privacidade/.test(appHtml),
+    "❓ a Ajuda cobre as áreas do app em gavetas (do Começando aos Ajustes)");
 
   // 📷 a foto só sobe quando MUDA: antes ela ia junto em todo envio do retorno
   // (peso, carga, treino marcado…), reenviando a mesma imagem dezenas de vezes
