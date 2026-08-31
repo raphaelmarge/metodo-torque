@@ -133,6 +133,15 @@
           "<span style='display:block;font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#8a8695;margin-bottom:8px;'>como aparece no app</span>" +
           "<div style='display:flex;flex-wrap:wrap;gap:8px;align-items:center;'>" + html + "</div></div>";
       };
+      /* v708: foto REAL da tela com a seta apontando onde tocar (geradas por
+       * tools/ajuda/gera-shots.js). Caminho ABSOLUTO porque o mesmo HTML roda
+       * em /app/, na demo e nos testes (lição do MapLibre); sem internet o
+       * onerror esconde o quadro — o texto do passo continua valendo. */
+      var imgA = function (arq, alt) {
+        return "<div style='margin-top:6px;'><img src='/assets/ajuda/" + arq + "' alt='" + alt + "' loading='lazy' " +
+          "style='display:block;max-width:100%;border-radius:12px;border:1px solid var(--bg11);' " +
+          "onerror=\"this.parentElement.style.display='none'\"></div>";
+      };
       var passos = function (lst) {
         // o número é escrito no build (content de CSS não entra por style inline)
         return "<ol style='margin:10px 0 0;padding:0;list-style:none;'>" + lst.map(function (px, i9) {
@@ -149,13 +158,13 @@
           "Este app foi montado pelo seu personal, só pra você — o treino, as metas e as cores são do studio dele.",
           "Guarde o link: entrar de novo é só abrir o mesmo endereço, ou entrar com seu <b>e-mail</b> na página de login.",
           "Ele funciona <b>sem internet</b>: o treino abre na academia mesmo sem sinal, e o que você marcar sobe quando a internet voltar.",
-        ]) + figA(bA("Adicionar à Tela de Início") + "<span style='font-size:12px;color:#a9a4b5;'>no iPhone: Compartilhar → Adicionar à Tela de Início · no Android: menu do navegador → Instalar</span>"), true),
+        ]) + figA(bA("Adicionar à Tela de Início") + "<span style='font-size:12px;color:#a9a4b5;'>no iPhone: Compartilhar → Adicionar à Tela de Início · no Android: menu do navegador → Instalar</span>") + imgA("a-menu.jpg", "O botão Menu na barra de baixo do app, marcado com a seta"), true),
         det("Início — sua semana", passos([
           "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana.",
           "Terminou o treino? Toque em <b>Treinei hoje!</b> — é ele que conta sua sequência e suas medalhas.",
           "Os quatro botões de hábito (água, comida, sono, cardio) são um toque por dia — seu personal vê a média deles.",
           "O card do dia mostra o treino de HOJE, seguindo o plano da semana que seu personal montou.",
-        ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida"))),
+        ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida")) + imgA("a-treinei.jpg", "O botão Treinei hoje no card da semana")),
         det("Treinos — ficha, circuito e corrida", passos([
           "Em <b>Treinos</b>, cada ficha é uma gaveta (A, B, C…) — a do dia já abre aberta.",
           "O botão <b>Começar treino</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
@@ -163,7 +172,7 @@
           "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
           "Na <b>corrida</b>, o app desenha o trajeto pelo GPS, fala os quilômetros e guarda pace e batimento.",
           "No fim do treino vem o <b>resumo</b>: dá pra escrever como foi (seu personal lê) e compartilhar o card do treino.",
-        ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga"))),
+        ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga")) + imgA("a-ficha.jpg", "A gaveta da ficha do dia na área Treinos")),
         det("Evolução — seu progresso", passos([
           "<b>Conquistas</b>: medalhas, sequência, o mapa do mês e a retrospectiva.",
           "<b>Corpo</b>: a curva do peso e as fotos de progresso (antes × depois).",
@@ -179,7 +188,7 @@
           "Uma vez por semana o app pede um <b>check-in</b>: 30 segundos, uma pergunta por tela.",
           "Seu personal também pode mandar <b>questionários</b> — o sininho do menu avisa quando tem um esperando.",
           "Responder de verdade ajuda: é assim que ele ajusta seu treino sem você precisar pedir.",
-        ])),
+        ]) + imgA("a-quest.jpg", "A entrada Questionários no menu, com o aviso de quantos esperam") + imgA("a-checkin.jpg", "O convite do check-in da semana")),
         det("Utilidades — ferramentas do treino", passos([
           "No menu, <b>Utilidades</b> junta as ferramentas avulsas: cronômetro, contador de água e as calculadoras.",
           "A calculadora de <b>1RM</b> estima sua carga máxima a partir do que você levantou.",

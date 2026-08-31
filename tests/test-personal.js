@@ -3236,6 +3236,8 @@ async function abaPt(p, a) {
     out.passos = document.querySelectorAll("#vAjuda .ajpassos li").length;
     out.figura = !!document.querySelector("#vAjuda .ajfig");
     out.foco = !!document.querySelector("#vAjuda .ajfoco");
+    // v708: foto REAL da tela com a seta, gerada pelo tools/ajuda/gera-shots.js
+    out.imgReal = !!document.querySelector('#vAjuda .ajimg[src^="assets/ajuda/"]');
     const v = document.querySelector("#vAjuda [data-ajvolta]");
     if (v) v.click();
     out.voltou = document.querySelectorAll("#vAjuda [data-ajtopico]").length >= 10;
@@ -3244,7 +3246,54 @@ async function abaPt(p, a) {
   });
   ok(aj6.aberta && aj6.topicos >= 16 && aj6.cobre, "❓ a aba Ajuda abre com o índice cobrindo TODAS as áreas (" + aj6.topicos + " tópicos)");
   ok(aj6.passos >= 8 && aj6.figura && aj6.foco, "❓ o tópico traz passo a passo numerado e figura com o anel de onde tocar");
+  ok(aj6.imgReal, "📸 o tópico traz foto REAL da tela com a seta apontando onde tocar");
   ok(aj6.voltou, "❓ o ‹ Todos os tópicos volta pro índice");
+
+  // 📮 v708: chamado de suporte com protocolo rastreável (função `suporte`)
+  await p.evaluate(() => {
+    document.querySelector('#abas [data-a="ajuda"]').click();
+    window.__ajudaPT.abre(null);
+  });
+  const aj8 = await p.evaluate(() => {
+    const out = {};
+    out.cardSup = !!document.querySelector('#vAjuda [data-ajtopico="_chamado"]');
+    // sem conta na nuvem, o recado é honesto (nada de fingir formulário)
+    document.querySelector('#vAjuda [data-ajtopico="_chamado"]').click();
+    out.semConta = /Entre na sua conta/.test(document.getElementById("vAjuda").textContent);
+    // nuvem de mentira + função de mentira: o fluxo inteiro até o protocolo
+    window.__cloudOrigSup = window.MTStore.cloud;
+    window.MTStore.cloud = () => ({ aid: "a1", client: {
+      from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [] }) }) }) }) }),
+      auth: { getSession: () => Promise.resolve({ data: { session: { user: { email: "prof@x.com" } } } }) },
+    } });
+    window.__fnOrigSup = window.MT_FUNCAO.chama;
+    window.MT_FUNCAO.chama = (cl, nome, corpo) => {
+      window.__supCorpo = { nome, corpo };
+      return Promise.resolve({ ok: true, protocolo: "TQ-20260831-TEST" });
+    };
+    window.__ajudaPT.abre("_chamado");
+    document.getElementById("supMsg").value = "O botão X não abre no meu celular";
+    document.getElementById("supEnvia").click();
+    return out;
+  });
+  await p.waitForTimeout(350);
+  const aj8b = await p.evaluate(() => {
+    const out = {
+      proto: (document.getElementById("supProto") || {}).textContent || "",
+      okVisivel: !!document.getElementById("supOk") && !document.getElementById("supOk").hidden,
+      corpo: window.__supCorpo || null,
+    };
+    window.MTStore.cloud = window.__cloudOrigSup;
+    window.MT_FUNCAO.chama = window.__fnOrigSup;
+    window.__ajudaPT.abre(null);
+    document.querySelector('#abas [data-a="dash"]').click();
+    return out;
+  });
+  ok(aj8.cardSup && aj8.semConta, "📮 o índice tem o Falar com o suporte — e sem conta o recado é honesto");
+  ok(aj8b.okVisivel && aj8b.proto === "TQ-20260831-TEST", "📮 abrir chamado mostra o protocolo gerado no servidor");
+  ok(aj8b.corpo && aj8b.corpo.nome === "suporte" && aj8b.corpo.corpo.acao === "abrir" &&
+    aj8b.corpo.corpo.aid === "a1" && /não abre/.test(aj8b.corpo.corpo.msg),
+    "📮 o chamado vai pra função suporte com academia, tipo e mensagem");
 
   ok(ag4.celExiste && ag4.painelAbriu && ag4.feitaPelaGrade, "🖱 grade da semana: clicar na sessão abre as ações e o Feita marca");
   ok(ag4.celFeita && ag4.temDesfazer && ag4.desfez, "🖱 grade da semana: sessão FEITA oferece o Desfazer, que reverte");
@@ -3269,6 +3318,8 @@ async function abaPt(p, a) {
   ok((appHtml.match(/class='ajdt'/g) || []).length >= 8 && /Começando: o app é seu/.test(appHtml) && /Ajustes e privacidade/.test(appHtml) &&
     /Utilidades — ferramentas do treino/.test(appHtml),
     "❓ a Ajuda cobre as áreas do app em gavetas (Começando, Utilidades e Ajustes inclusos)");
+  ok(/\/assets\/ajuda\/a-treinei\.jpg/.test(appHtml) && /\/assets\/ajuda\/a-menu\.jpg/.test(appHtml),
+    "📸 a Ajuda do app traz fotos reais da tela (caminho absoluto, some offline sem quebrar)");
 
   // 📷 a foto só sobe quando MUDA: antes ela ia junto em todo envio do retorno
   // (peso, carga, treino marcado…), reenviando a mesma imagem dezenas de vezes
