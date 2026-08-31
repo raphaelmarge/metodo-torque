@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v710** |
-| Estado do repo em | 2026-08-31 (commit `8a82f8c`) |
+| App em | **mt-v711** |
+| Estado do repo em | 2026-08-31 (commit `0753775`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 172 |
+| Lançamentos no histórico | 173 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v710** — ou seja, **41 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v711** — ou seja, **42 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v708** (2026-08-31).
+O motor (`app/aluno-builder.js`) encostou em **mt-v711** (2026-08-31).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v711 | período de/até no histórico, fotos dos 3 ângulos e listas sem bagunça |
 | mt-v710 | histórico de treino do aluno, navegável por mês, na ficha |
 | mt-v709 | aba "Direto do app" da ficha entra no redesenho |
 | mt-v708 | Ajuda com fotos reais + chamado de suporte com protocolo |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v699 | Clube e Loja saem da tela inicial do app e perdem os emojis |
 | mt-v698 | loja do personal dentro do app do aluno |
 | mt-v697 | clube de vantagens — parcerias do personal viram cupons no app |
-| mt-v696 | app salvo na tela inicial do iPhone abre de verdade |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
