@@ -3458,6 +3458,41 @@ async function abaPt(p, a) {
     "sem idade o painel mostra os números crus e pede a data de nascimento — não inventa zona");
   ok(/máxima estimada: 180 bpm/.test(painelFc.peloApp),
     "sem data de nascimento na ficha, a idade que o aluno digitou no app calcula a zona");
+
+  // 🗓 v710: histórico de treino por MÊS — o professor navega o passado do
+  // aluno dia a dia (‹ ›), e as listas/gráficos completos ficam atrás da porta
+  const hist10 = await p.evaluate(() => {
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const hoje = iso(0);
+    const dAntes = new Date(); dAntes.setDate(1); dAntes.setMonth(dAntes.getMonth() - 1); dAntes.setDate(15);
+    const mesPassado = dAntes.getFullYear() + "-" + String(dAntes.getMonth() + 1).padStart(2, "0") + "-15";
+    const ret = {
+      feitos: { [hoje]: 1 },
+      cargas: { "Supino reto": [{ d: mesPassado, kg: 60, r: "12" }, { d: hoje, kg: 62.5, r: "12" }] },
+      cardio: [{ d: hoje, n: "Rodagem", m: "corrida", k: 5.2, s: 1860, p: "5:58", fc: 158 }],
+      rpe: { [hoje]: 2 },
+      notas: [{ d: hoje, t: "treino bom, ombro de boa" }],
+    };
+    const out = {};
+    window.__histApp.off(0);
+    const h = window.__painelApp(ret, {});
+    const topo = h.split("pfgraf")[0]; // só o que está ANTES da porta de gráficos
+    out.tit = /Histórico de treino/.test(topo) && /dia de treino/.test(topo);
+    out.dia = /class='pfdia'/.test(topo) && /Supino reto — <b>62,5 kg<\/b> × 12/.test(topo);
+    out.chips = /5,2 km/.test(topo) && /na medida/.test(topo);
+    out.nota = /ombro de boa/.test(topo);
+    out.mesCerto = !/60 kg/.test(topo); // o registro do mês passado NÃO aparece no mês atual
+    out.setaVolta = /data-hnav='1'/.test(topo); // existe registro antes → a seta ‹ nasce
+    window.__histApp.off(1);
+    const topo2 = window.__painelApp(ret, {}).split("pfgraf")[0];
+    out.mesPassado = /60 kg/.test(topo2) && !/62,5 kg/.test(topo2);
+    window.__histApp.off(0);
+    out.porta = /Gráficos e evolução completa/.test(h) && /Peso na balança|Evolução de carga/.test(h.split("pfgraf")[1] || "");
+    return out;
+  });
+  ok(hist10.tit && hist10.dia && hist10.chips && hist10.nota, "🗓 o histórico lista o dia com cargas, corrida, esforço e o resumo escrito");
+  ok(hist10.mesCerto && hist10.setaVolta && hist10.mesPassado, "🗓 as setas ‹ › navegam por mês — cada mês mostra só o que é dele");
+  ok(hist10.porta, "🗓 listas e gráficos completos moram atrás da porta 'Gráficos e evolução completa'");
   ok(!/Batimento médio/.test(painelFc.sujo) && !/Batimentos —/.test(painelFc.sujo),
     "retorno adulterado (bpm impossível ou chave que não é data) não vira gráfico nenhum");
   // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
