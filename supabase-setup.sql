@@ -2898,3 +2898,34 @@ begin
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.aula_exp_pede(uuid, text, text, text) to anon, authenticated;
+
+-- ==================== SUPORTE — CHAMADOS (v708) ====================
+-- O professor abre chamado pelo painel (Ajuda → Falar com o suporte) e a
+-- Edge Function `suporte` grava aqui com protocolo único gerado no servidor
+-- (TQ-AAAAMMDD-XXXX) — o registro é o rastreio, mesmo que o e-mail falhe.
+-- RLS: membro só LÊ os chamados da própria academia; escrita SÓ pela função
+-- (service key) — sem política de insert/update de propósito, igual às
+-- tabelas seladas (zap_config, pag_config).
+
+create table if not exists public.suporte_chamados (
+  id uuid primary key default gen_random_uuid(),
+  protocolo text not null unique,
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  user_id uuid not null,
+  email text not null default '',
+  tipo text not null default 'bug',
+  mensagem text not null,
+  status text not null default 'aberto',
+  resposta text not null default '',
+  criado_em timestamptz not null default now()
+);
+alter table public.suporte_chamados enable row level security;
+drop policy if exists "suporte_chamados_le" on public.suporte_chamados;
+create policy "suporte_chamados_le" on public.suporte_chamados for select
+  using (academia_id in (select public.minhas_academias()));
+create index if not exists suporte_chamados_acad_idx
+  on public.suporte_chamados (academia_id, criado_em desc);
+-- responder um chamado (feito pelo suporte, direto no SQL):
+--   update public.suporte_chamados
+--     set status = 'respondido', resposta = 'texto da resposta'
+--     where protocolo = 'TQ-20260831-ABCD';

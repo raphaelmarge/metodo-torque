@@ -1685,6 +1685,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .ajfig { margin-top: 4px; border: 1px dashed var(--tk-bd4); border-radius: 12px; padding: 10px 12px 12px; background: var(--tk-sup2); }
   .ajfig-cab { display: block; font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--tk-tx5); margin-bottom: 9px; }
   .ajfig-mio { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ajimg { display: block; max-width: 100%; width: 430px; border-radius: 12px; border: 1px solid var(--tk-bd2); }
   .ajfoco { position: relative; display: inline-flex; border-radius: 12px; outline: 2px solid var(--pt-roxo); outline-offset: 3px; margin: 6px 6px 18px 4px; }
   .ajfoco-rot { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 7px); white-space: nowrap;
                 font-size: 10px; font-weight: 800; font-style: normal; color: var(--pt-roxo-claro); }
@@ -4026,6 +4027,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function ajFig(html) {
     return "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'>" + html + "</div></div>";
   }
+  /* v708: imagem REAL da tela, com o anel + seta desenhados por cima (geradas
+   * por tools/ajuda/gera-shots.js a partir das demos). Carrega do site com
+   * lazy; sem internet o onerror esconde o quadro e o texto continua valendo. */
+  function ajImg(arq, alt) {
+    return "<div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span>" +
+      "<img class='ajimg' src='assets/ajuda/" + arq + "' alt='" + alt + "' loading='lazy' " +
+      "onerror=\"this.closest('.ajreal').style.display='none'\"></div>";
+  }
   function ajLinha(nome, sub, acao) {
     return "<span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'>" +
       "<span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>" + nome + "</b>" +
@@ -4045,7 +4054,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Monte a primeira ficha em <b>Treinos</b> — escolha o aluno e toque em <b>+ Adicionar exercício</b>.",
           "Toque em <b>Salvar e publicar</b>: o app do aluno nasce nesse momento.",
           "O aluno recebe o link e a senha <b>por e-mail</b> — ele entra por aluno-login.html com o e-mail dele.",
-        ], fig: ajFig(ajFoco(ajBt("+ Novo aluno", "pri"), "passo 1") + " " + ajBt("Montar treino") + " " + ajFoco(ajBt("Salvar e publicar", "pri"), "passo 3")) },
+        ], fig: ajFig(ajFoco(ajBt("+ Novo aluno", "pri"), "passo 1") + " " + ajBt("Montar treino") + " " + ajFoco(ajBt("Salvar e publicar", "pri"), "passo 3")) + ajImg("p-novo-aluno.jpg", "O botão + Novo aluno no topo do Início, marcado com a seta") },
         { t: "Entrar na nuvem (sincronizar entre aparelhos)", p: [
           "Tudo funciona offline neste aparelho — a nuvem entra pra sincronizar e ligar chat, questionários e comunidade.",
           "Toque no aviso <b>Entre na sua conta</b> (ou Configurações → Conta) e use seu e-mail.",
@@ -4063,7 +4072,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         { t: "Resolver hoje", p: [
           "O bloco <b>Resolver hoje</b> junta o que pede ação agora: aluno que relatou dor, cobrança vencida, ficha velha e conversa parada.",
           "Cada card tem o botão que resolve — <b>Abrir ficha</b>, <b>Cobrar</b>, <b>Responder</b>. Resolvido, ele some sozinho.",
-        ], fig: ajFig(ajLinha("Ana Souza · RELATOU DOR", "“senti o ombro no supino…”", ajFoco(ajBt("Abrir ficha", "pri"), "resolve aqui"))) },
+        ], fig: ajFig(ajLinha("Ana Souza · RELATOU DOR", "“senti o ombro no supino…”", ajFoco(ajBt("Abrir ficha", "pri"), "resolve aqui"))) + ajImg("p-resolver.jpg", "Um card do Resolver hoje com o botão de ação marcado") },
         { t: "Seu dia hoje", p: [
           "A linha do tempo mostra as sessões do dia em ordem: a próxima ganha destaque roxo.",
           "Dá pra marcar <b>Feita</b> ali mesmo, sem abrir a Agenda.",
@@ -4091,7 +4100,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Toque no NOME do aluno pra abrir a ficha.",
           "A aba <b>Resumo</b> traz treinos do mês, peso, batimento e check-in; as outras abas guardam cadastro, treino, financeiro, avaliações, frequência e app.",
           "As <b>4 ações do dia</b> ficam no topo: montar treino, chat, financeiro e agenda.",
-        ] },
+        ], fig: ajImg("p-abrir-ficha.jpg", "A linha do aluno na lista — o nome abre a ficha") },
         { t: "Anamnese preenchida pelo próprio aluno", p: [
           "No cadastro, gere o <b>link da anamnese</b> e mande pro aluno no WhatsApp.",
           "Ele responde no celular dele e as respostas caem direto na ficha — sem digitação dupla.",
@@ -4116,17 +4125,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Toque em <b>Marcar sessão</b> (ou num horário vazio da grade — ele já preenche dia e hora).",
           "Escolha o aluno, o dia e a hora; <b>repetir toda semana</b> cria as próximas de uma vez.",
           "Turminha? O modo <b>Turma</b> marca vários alunos no mesmo horário.",
-        ] },
+        ], fig: ajImg("p-marcar.jpg", "O botão Marcar sessão no cabeçalho da Agenda") },
         { t: "Semana × Mês", p: [
           "O botão <b>Semana | Mês</b> troca o zoom do MESMO calendário.",
           "Semana é a grade de horários (no celular, um dia por vez); Mês serve pra achar uma data longe — tocar num dia leva pra semana dele.",
           "As setas <b>‹ ›</b> andam as semanas; <b>Hoje</b> volta.",
-        ], fig: ajFig("<span style='display:inline-flex;gap:4px;'>" + ajFoco(ajBt("Semana", "pri"), "o zoom") + ajBt("Mês") + "</span>") },
+        ], fig: ajFig("<span style='display:inline-flex;gap:4px;'>" + ajFoco(ajBt("Semana", "pri"), "o zoom") + ajBt("Mês") + "</span>") + ajImg("p-semana-mes.jpg", "O botão Semana | Mês no cabeçalho da Agenda") },
         { t: "Feita, Faltou ou Cancelou", p: [
           "Toque na sessão (na grade ou na lista do dia) pra abrir as ações dela.",
           "<b>Feita</b> desconta do pacote e oferece registrar o pagamento por sessão; <b>Faltou</b> conta na assiduidade; <b>Cancelou</b> desmarca.",
           "Marcou errado? Na sessão feita aparece <b>Desfazer Feita</b>, que devolve aula e pagamento.",
-        ], fig: ajFig(ajLinha("07:00 · João", "Treino A", ajFoco(ajBt("⋮"), "as ações")) + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("Feita", "pri") + ajBt("Faltou") + ajBt("Cancelou") + "</span>") },
+        ], fig: ajFig(ajLinha("07:00 · João", "Treino A", ajFoco(ajBt("⋮"), "as ações")) + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("Feita", "pri") + ajBt("Faltou") + ajBt("Cancelou") + "</span>") + ajImg("p-sessao-acoes.jpg", "As ações da sessão abertas dentro da grade da semana") },
         { t: "Pedidos de horário do app", p: [
           "Quando o aluno pede horário pelo app, aparece a faixa roxa no topo da Agenda.",
           "<b>Confirmar</b> cria a sessão e avisa o aluno por notificação; <b>Recusar</b> também avisa, com carinho.",
@@ -4336,13 +4345,107 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ] },
       ] },
   ];
-  var ajAberto = null; // id do tópico aberto (null = índice)
+  var ajAberto = null; // id do tópico aberto (null = índice; "_chamado" = suporte)
+  /* ==== CHAMADO DE SUPORTE (v708) ====
+   * Abre um chamado com PROTOCOLO gerado no servidor (função `suporte`): o
+   * registro fica na tabela suporte_chamados (rastreável — o professor lê os
+   * dele pela RLS) e o suporte é avisado por e-mail com reply-to nele. */
+  function renderAjudaChamado() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      return "<div class='card'><h2>Falar com o suporte</h2>" +
+        "<p class='muted' style='margin:6px 0 0;'>O chamado precisa da sua conta na nuvem — é ela que gera o protocolo e guarda o histórico. <b>Entre na sua conta</b> (Configurações → Conta) e volte aqui.</p></div>";
+    }
+    return "<div class='card' style='margin-bottom:12px;'><h2>Abrir um chamado</h2>" +
+      "<p class='muted' style='margin:4px 0 12px;font-size:12.5px;'>Bug, pedido de alteração, crítica ou sugestão — cai direto com a gente, e você recebe um <b>número de protocolo</b> pra acompanhar.</p>" +
+      "<div class='linha-flex' style='gap:10px;flex-wrap:wrap;'>" +
+      "<label style='margin:0;font-size:12.5px;flex:1;min-width:170px;'>Tipo do chamado" +
+      "<select id='supTipo' style='margin-top:4px;'><option value='bug'>Problema (bug)</option><option value='alteracao'>Pedido de alteração</option><option value='critica'>Crítica</option><option value='sugestao'>Sugestão</option></select></label>" +
+      "<label style='margin:0;font-size:12.5px;flex:1;min-width:170px;'>Seu e-mail (pra gente responder)" +
+      "<input id='supEmail' type='email' autocomplete='email' style='margin-top:4px;'></label></div>" +
+      "<label style='margin:10px 0 0;font-size:12.5px;display:block;'>Conte pra gente" +
+      "<textarea id='supMsg' rows='5' placeholder='O que aconteceu (ou o que você gostaria)? Quanto mais detalhe, mais rápido a gente resolve.' style='margin-top:4px;width:100%;'></textarea></label>" +
+      "<div class='linha-flex' style='gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
+      "<button type='button' class='btn' id='supEnvia'>Abrir chamado</button>" +
+      "<span id='supStatus' class='muted' style='font-size:12.5px;'></span></div>" +
+      "<div id='supOk' hidden style='margin-top:12px;border:1px solid var(--tk-bd2);border-radius:12px;padding:14px;background:var(--tk-sup2);'>" +
+      "<b style='display:block;font-size:13px;'>Chamado aberto! Guarde o protocolo:</b>" +
+      "<div id='supProto' style='font-size:24px;font-weight:900;letter-spacing:.04em;color:var(--pt-roxo-claro);margin-top:4px;font-variant-numeric:tabular-nums;'></div>" +
+      "<span class='muted' style='font-size:12px;'>Ele também fica guardado na lista abaixo — a resposta chega no seu e-mail.</span></div></div>" +
+      "<div class='card'><h2>Meus chamados</h2><div id='supLista' class='muted' style='margin-top:8px;font-size:13px;'>Carregando…</div></div>";
+  }
+  var SUP_TIPOS = { bug: "Problema", alteracao: "Alteração", critica: "Crítica", sugestao: "Sugestão" };
+  function carregaChamados() {
+    var nuvem = S.cloud && S.cloud();
+    var el = $("supLista");
+    if (!nuvem || !el) return;
+    // .eq(academia_id): a RLS devolve TODAS as academias do usuário (lição v532)
+    nuvem.client.from("suporte_chamados").select("protocolo,tipo,status,resposta,criado_em")
+      .eq("academia_id", nuvem.aid).order("criado_em", { ascending: false }).limit(20)
+      .then(function (r) {
+        var lst = (r && r.data) || [];
+        if (!lst.length) { el.textContent = "Nenhum chamado aberto ainda."; return; }
+        el.innerHTML = lst.map(function (c) {
+          var resolvido = c.status !== "aberto";
+          return "<div style='border:1px solid var(--tk-bd2);border-radius:12px;padding:11px 13px;margin-bottom:8px;'>" +
+            "<div style='display:flex;gap:10px;align-items:center;flex-wrap:wrap;'>" +
+            "<b style='font-variant-numeric:tabular-nums;'>" + esc(c.protocolo) + "</b>" +
+            "<span class='muted' style='font-size:12px;'>" + (SUP_TIPOS[c.tipo] || esc(c.tipo)) + " · " + S.fmtData(String(c.criado_em).slice(0, 10)) + "</span>" +
+            "<span class='tag " + (resolvido ? "ok" : "alerta") + "' style='margin-left:auto;'>" + (resolvido ? "RESPONDIDO" : "ABERTO") + "</span></div>" +
+            (c.resposta ? "<div style='font-size:12.5px;color:var(--tk-tx2);margin-top:6px;border-left:3px solid var(--pt-roxo);padding-left:10px;white-space:pre-wrap;'>" + esc(c.resposta) + "</div>" : "") +
+            "</div>";
+        }).join("");
+      }, function () { el.textContent = "Não deu pra carregar agora — tente de novo."; });
+  }
+  function enviaChamado() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var msg = ($("supMsg").value || "").trim();
+    var st9 = $("supStatus");
+    if (msg.length < 10) { st9.textContent = "Escreva um pouco mais (pelo menos 10 letras) pra gente entender."; return; }
+    var bt = $("supEnvia");
+    bt.disabled = true; st9.textContent = "Abrindo o chamado…";
+    MT_FUNCAO.chama(nuvem.client, "suporte", {
+      acao: "abrir", aid: nuvem.aid, tipo: $("supTipo").value,
+      msg: msg, email: ($("supEmail").value || "").trim(),
+    }, "Abrir chamado").then(function (r) {
+      bt.disabled = false;
+      if (!r || !r.ok || !r.protocolo) { st9.textContent = (r && r.erro) || "Não deu pra abrir agora — tente de novo."; return; }
+      st9.textContent = "";
+      $("supMsg").value = "";
+      $("supProto").textContent = r.protocolo;
+      $("supOk").hidden = false;
+      carregaChamados();
+    });
+  }
+  window.__ajudaSup = { envia: enviaChamado, lista: carregaChamados }; // testes
   function renderAjuda() {
     var el = $("vAjuda");
     var mio = "";
+    if (ajAberto === "_chamado") {
+      mio = "<button type='button' class='btn sec mini' data-ajvolta style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
+        "<div class='altopo'><div><div class='alk'>Suporte</div><div class='alh'>Falar com a gente</div></div></div>" +
+        renderAjudaChamado();
+      el.innerHTML = mio;
+      carregaChamados();
+      // preenche o e-mail com o do login, sem travar o render
+      var nv9 = S.cloud && S.cloud();
+      if (nv9 && nv9.client.auth && nv9.client.auth.getSession) {
+        nv9.client.auth.getSession().then(function (s) {
+          var em9 = s && s.data && s.data.session && s.data.session.user && s.data.session.user.email;
+          var inp = $("supEmail");
+          if (em9 && inp && !inp.value) inp.value = em9;
+        });
+      }
+      return;
+    }
     if (!ajAberto) {
       mio = "<div class='altopo'><div><div class='alk'>Central de ajuda</div><div class='alh'>Como usar cada área</div></div></div>" +
-        "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Toque num tópico pra ver o passo a passo — com figuras mostrando onde tocar. Ficou com dúvida que não está aqui? Me chame no WhatsApp do TORQUE ON.</p>" +
+        "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Toque num tópico pra ver o passo a passo — com figuras mostrando onde tocar.</p>" +
+        // o chamado é a porta mais importante da Ajuda: fica em cima, destacado
+        "<button type='button' class='ajcard ajsup' data-ajtopico='_chamado' style='width:100%;margin-bottom:12px;border-color:var(--pt-roxo);'>" +
+        "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 6.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z'/><path d='m4.5 7 7.5 6 7.5-6'/></svg></span>" +
+        "<span style='flex:1;min-width:0;'><b>Falar com o suporte</b><i>Abra um chamado — bug, alteração, crítica ou sugestão — e receba um protocolo pra acompanhar</i></span></button>" +
         "<div class='ajgrid'>" + AJUDA_PT.map(function (tp) {
           return "<button type='button' class='ajcard' data-ajtopico='" + tp.id + "'>" +
             "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + tp.ic + "</svg></span>" +
@@ -4362,6 +4465,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.innerHTML = mio;
   }
   $("vAjuda").addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#supEnvia")) { enviaChamado(); return; }
     var c = e.target.closest && e.target.closest("[data-ajtopico]");
     if (c) { ajAberto = c.getAttribute("data-ajtopico"); renderAjuda(); window.scrollTo(0, 0); return; }
     if (e.target.closest && e.target.closest("[data-ajvolta]")) { ajAberto = null; renderAjuda(); }

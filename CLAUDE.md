@@ -1269,10 +1269,12 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   ler só o miolo do JWT deixava passar token forjado quando o Verify JWT estava
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
-  200 com a MESMA credencial). Lista em `supabase/functions/` — as **11**, todas
+  200 com a MESMA credencial). Lista em `supabase/functions/` — as **12**, todas
   publicadas e ACTIVE: meta-webhook, chat-envia, whatsapp, envia-email (Resend),
   pagarme, push-envia, pagamentos, pagamentos-webhook, **pagarme-webhook**,
-  **assinatura-loja** (2026-08-25) e **regua-teste** (2026-08-29 — a régua do
+  **assinatura-loja** (2026-08-25), **suporte** (v708 — chamado com protocolo
+  TQ-AAAAMMDD-XXXX gravado em suporte_chamados, e-mail via Resend pro Secret
+  EMAIL_SUPORTE, padrão suporte@torqueon.com.br) e **regua-teste** (2026-08-29 — a régua do
   teste grátis: pg_cron → pg_net → função, senha em `regua_config` selada,
   idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
   = trial).
