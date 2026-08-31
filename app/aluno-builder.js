@@ -162,6 +162,7 @@
           "Toque em <b>Mudar a carga</b> pra anotar o peso — é isso que desenha sua evolução.",
           "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
           "Na <b>corrida</b>, o app desenha o trajeto pelo GPS, fala os quilômetros e guarda pace e batimento.",
+          "No fim do treino vem o <b>resumo</b>: dá pra escrever como foi (seu personal lê) e compartilhar o card do treino.",
         ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga"))),
         det("Evolução — seu progresso", passos([
           "<b>Conquistas</b>: medalhas, sequência, o mapa do mês e a retrospectiva.",
@@ -179,6 +180,20 @@
           "Seu personal também pode mandar <b>questionários</b> — o sininho do menu avisa quando tem um esperando.",
           "Responder de verdade ajuda: é assim que ele ajusta seu treino sem você precisar pedir.",
         ])),
+        det("Utilidades — ferramentas do treino", passos([
+          "No menu, <b>Utilidades</b> junta as ferramentas avulsas: cronômetro, contador de água e as calculadoras.",
+          "A calculadora de <b>1RM</b> estima sua carga máxima a partir do que você levantou.",
+          "A de <b>anilhas</b> diz o que pôr de cada lado da barra pra chegar no peso.",
+        ])),
+        (plApp && ve("pag") ? det("Meu plano e pagamentos", passos([
+          "Em <b>Meu plano</b> (menu) você vê seu plano, o valor e o dia do vencimento.",
+          "Na hora de pagar aparecem os caminhos que seu personal usa — Pix, link de cartão ou combinar direto.",
+          "Pagou? O comprovante e o histórico ficam ali também.",
+        ])) : ""),
+        (vidsApp.length ? det("Conteúdos e vídeos", passos([
+          "Em <b>Conteúdos e vídeos</b> (menu) ficam os vídeos que seu personal publicou pra você: técnica, mobilidade, alongamento.",
+          "Eles tocam dentro do próprio app.",
+        ])) : ""),
         (feedLigado ? det("Comunidade — sua turma", passos([
           "Na <b>Minha turma</b> você vê os treinos do pessoal do studio, curte e comenta.",
           "Terminou um treino? O app oferece postar — só vai pro feed se você quiser.",
