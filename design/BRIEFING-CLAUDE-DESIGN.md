@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v703** |
-| Estado do repo em | 2026-08-31 (commit `60542fb`) |
+| App em | **mt-v704** |
+| Estado do repo em | 2026-08-31 (commit `04f1310`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 165 |
+| Lançamentos no histórico | 166 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v703** — ou seja, **34 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v704** — ou seja, **35 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v704 | marcar Feita/Faltou/Cancelou também na visão Semana da Agenda |
 | mt-v703 | Agenda no celular — setas de avançar/voltar a semana |
 | mt-v702 | Agenda — o Mês devolve pra Semana e os dias voltam a responder |
 | mt-v701 | iPhone na tela inicial — conserto DE VERDADE, sem depender do Safari |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v692 | turma pequena (semi-personal) na agenda |
 | mt-v691 | card de resultado pra postar no Instagram |
 | mt-v690 | esteira do aluno novo — os primeiros passos viram checklist |
-| mt-v689 | aluno relatou dor → card vermelho no Resolver hoje |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
