@@ -3094,6 +3094,43 @@ async function abaPt(p, a) {
   ok(v701.semGw, "v701: sem gateway o botão segue Quero esse (WhatsApp)");
   ok(v701.baixa, "v701: a baixa da compra entra COM desc — venda da loja nunca quita a mensalidade");
 
+  // 📅 v702: Agenda — o Mês tem volta pra Semana (no celular era beco sem
+  // saída) e os dias respondem ao toque (o listener era do #agGrade, mas os
+  // chips moram no #agDia, irmão da grade)
+  await p.evaluate(() => {
+    document.querySelector('#abas [data-a="agenda"]').click();
+    window.__agDia(new Date().toISOString().slice(0, 10));
+  });
+  await p.waitForTimeout(250);
+  const ag2 = await p.evaluate(() => {
+    const out = {};
+    const iso = (d) => d.toISOString().slice(0, 10);
+    window.__agVis.troca("mes");
+    const card = document.getElementById("agCardMes");
+    out.mesVisivel = card.style.display !== "none";
+    out.temVolta = !!card.querySelector('#agVisMes [data-agvis="semana"]');
+    // toca num dia 10 dias à frente (navega o mês se a data cair no seguinte)
+    const isoAlvo = iso(new Date(Date.now() + 10 * 864e5));
+    if (!document.querySelector('[data-caldia="' + isoAlvo + '"]')) {
+      document.querySelector('[data-calnav="1"]').click();
+    }
+    document.querySelector('[data-caldia="' + isoAlvo + '"]').click();
+    out.voltouSemana = window.__agVis.atual() === "semana";
+    out.diaAberto = !!document.querySelector('.agchip.on[data-agdia="' + isoAlvo + '"]');
+    // e o chip de OUTRO dia da mesma semana responde ao toque
+    const outro = document.querySelector(".agchip:not(.on)[data-agdia]");
+    const isoOutro = outro && outro.getAttribute("data-agdia");
+    if (outro) outro.click();
+    out.chipFunciona = !!isoOutro && !!document.querySelector('.agchip.on[data-agdia="' + isoOutro + '"]');
+    // devolve a tela: semana de hoje
+    document.getElementById("agSemHoje").click();
+    window.__agDia(iso(new Date()));
+    return out;
+  });
+  ok(ag2.mesVisivel && ag2.temVolta, "📅 a visão Mês tem o botão Semana DENTRO do card — sem beco sem saída no celular");
+  ok(ag2.voltouSemana && ag2.diaAberto, "📅 tocar num dia do Mês leva pra SEMANA daquele dia");
+  ok(ag2.chipFunciona, "📅 os chips de dia da semana respondem ao toque");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
