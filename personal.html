@@ -1074,9 +1074,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     .agchip.off .agcn { color: var(--pt-txt-5); }
     /* a lista do dia: de ponta a ponta, so o fio entre as linhas */
     .agdlista { display: flex; flex-direction: column; }
-    .agl { display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+    /* v704: flex-wrap por causa do painel de acoes (.ses-acoes), que tem
+     * width:100% e cai numa linha propria — os outros filhos cabem na primeira */
+    .agl { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 18px;
            border-bottom: 1px solid var(--pt-hairline); }
     .agl:last-child { border-bottom: 0; }
+    .agl .aglb.agmenu { width: 38px; padding: 0; font-size: 16px; line-height: 1; }
+    .agl .ses-acoes { width: 100%; display: flex; gap: 7px; padding-top: 10px;
+                      border-top: 1px dashed var(--pt-hairline); }
+    .agl .ses-acoes .btn { flex: 1; min-width: 0; }
+    .agl.prox .ses-acoes { padding-left: 53px; }
     .agl .aglh { width: 44px; flex: none; font-size: 13px; font-weight: 800; color: var(--pt-txt-4);
                  font-variant-numeric: tabular-nums; }
     .agl .aglm { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
@@ -1089,7 +1096,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                  font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; text-decoration: none; }
     .agl .aglb.pri { background: var(--pt-roxo); border-color: var(--pt-roxo); color: #fff; }
     .agl .aglb.roxo { color: var(--pt-roxo-claro); }
-    .agl.feita { opacity: .5; }
+    /* v704: o esmaecido era opacity na LINHA inteira — mas opacity de pai nao
+     * tem como ser desfeita no filho, e o "Desfazer Feita" do painel de acoes
+     * novo sairia meio apagado; agora esmaecem so os pedacos informativos */
+    .agl.feita .aglh, .agl.feita .aglm, .agl.feita > svg { opacity: .5; }
     .agl.feita .aglm b { font-weight: 700; color: var(--pt-txt-2); }
     .agl.faltou .aglh { color: var(--pt-erro); }
     /* a proxima sessao: faixa lateral e as duas acoes embaixo do nome */
@@ -1644,6 +1654,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agsem .aghr { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: var(--tk-tx5); display: flex;
                  align-items: center; justify-content: flex-end; padding-right: 8px; }
   .agsem .agpil { display: grid; gap: 5px; align-content: start; min-width: 0; }
+  /* v704: o painel de acoes da sessao (Feita/Faltou/Cancelou) abre DENTRO da
+   * pilha da celula, empurrando o resto — a linha do grid cresce sozinha.
+   * Botoes empilhados porque a coluna tem minimo de 104px (licao da v623:
+   * min-width 0 pra nada empurrar a grade). */
+  .agsem .agpil .ses-acoes { display: flex; flex-direction: column; gap: 5px; min-width: 0;
+    padding: 7px; border: 1px solid var(--tk-trilha); border-radius: 12px; background: var(--tk-sup4); }
+  .agsem .agpil .ses-acoes .btn { width: 100%; min-width: 0; }
   .agc { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; cursor: pointer;
          background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: inherit; font-family: inherit; min-height: 46px; }
   .agc .agnm { font-size: 12.5px; font-weight: 800; color: var(--tk-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8308,6 +8325,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (tr) return { cls: "", txt: tr };
     return { cls: "", txt: x.data < hoje ? "SEM MARCAR" : "AGENDADA" };
   }
+  /* v704: as ações de UMA sessão (Feita/Faltou/Cancelou, ou Desfazer quando já
+   * está feita) só existiam na lista da visão Mês — na Semana (grade do
+   * computador e dia-por-vez do celular) não tinha como marcar nada. O miolo
+   * dos botões virou UM lugar só, usado pelas três visões: mexeu na regra,
+   * as três mudam juntas. Quem trata o clique é o MESMO trataCliqueSessao. */
+  function sesAcoesHtml(x) {
+    return x.feita
+      ? '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
+      : (x.faltou ? "" :
+          '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
+          '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
+        '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>';
+  }
+  window.__sesAcoes = sesAcoesHtml; // testes
   /* ============================================================
    * TELA 19 do handoff — A AGENDA NO CELULAR.
    * Regra 5 do colapso: "semana de 7 colunas vira UM DIA POR VEZ, com os 7
@@ -8352,29 +8383,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * quando nao houver treino prescrito pro dia, a sublinha some */
       var sub = x.pedido ? "Pediu pelo app" : (trTxt || (x.feita ? "" : es.txt));
       var hora = x.hora || "—";
+      /* v704: o ⋮ com Feita/Faltou/Cancelou (o mesmo desenho da lista do Mês)
+       * entra em TODA linha de sessão de verdade — antes só a "próxima" tinha
+       * um Feita, e ele nem funcionava (nenhum listener cobria o #agDia).
+       * Pedido fica de fora: ainda não é sessão, o caminho dele é
+       * Confirmar/Recusar. */
+      var menu = x.pedido ? "" :
+        '<button type="button" class="aglb agmenu" data-smais="' + x.id + '" aria-label="ações da sessão" title="ações da sessão">⋮</button>';
+      var painel = x.pedido ? "" :
+        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div>";
       if (x.feita) {
         return '<div class="agl feita"><span class="aglh">' + esc(hora) + "</span>" +
           '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
-          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--pt-ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--pt-ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
+          menu + painel + "</div>";
       }
       if (x.faltou) {
         return '<div class="agl faltou"><span class="aglh">' + esc(hora) + "</span>" +
           '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>Faltou</i></span>" +
           (aP.zap ? '<a class="aglb" target="_blank" rel="noopener" href="https://wa.me/55' + String(aP.zap).replace(/\D/g, "") +
-            "?text=" + encodeURIComponent("Oi " + String(aP.nome).split(" ")[0] + "! Senti sua falta no treino — bora remarcar?") + '">Cobrar</a>' : "") + "</div>";
+            "?text=" + encodeURIComponent("Oi " + String(aP.nome).split(" ")[0] + "! Senti sua falta no treino — bora remarcar?") + '">Cobrar</a>' : "") +
+          menu + painel + "</div>";
       }
       if (x.id === proxId) {
         var falta = d0.iso === hoje && x.hora ? faltaPra(x.hora).txt : "";
         return '<div class="agl prox"><div class="agltopo"><span class="aglh">' + esc(hora) + "</span>" +
-          '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(falta ? "Próxima · " + falta.toLowerCase() : sub) + "</i></span></div>" +
+          '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(falta ? "Próxima · " + falta.toLowerCase() : sub) + "</i></span>" + menu + "</div>" +
           '<div class="aglac"><button type="button" class="aglb pri" data-abreperfil="' + x.alunoId + '">Abrir ficha</button>' +
-          '<button type="button" class="aglb" data-feita="' + x.id + '">Feita</button></div></div>';
+          '<button type="button" class="aglb" data-feita="' + x.id + '">Feita</button></div>' + painel + "</div>";
       }
       var deve = !x.pedido && (dividaDe(st, aP) || {}).total > 0;
       return '<div class="agl"><span class="aglh">' + esc(hora) + "</span>" +
         '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
         (x.pedido ? '<button type="button" class="aglb pri" data-agok="' + String(x.id).slice(4) + '">Confirmar</button>'
-          : deve ? '<span class="agsel">DEVE</span>' : "") + "</div>";
+          : deve ? '<span class="agsel">DEVE</span>' : "") + menu + painel + "</div>";
     }).join("");
 
     // a vaga livre: o proximo horario redondo depois da ultima sessao do dia
@@ -8526,8 +8568,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var es = agEstado(st, x, hoje);
           var nome = ((st.alunos.find(function (y) { return y.id === x.alunoId; }) || {}).nome || "?").split(" ")[0];
           var agora = !x.feita && !x.faltou && !x.pedido && d.iso === hoje;
-          return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" data-agcel="' + d.iso + '">' +
-            '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>";
+          /* v704: clicar na sessão abre as ações dela ALI (Feita/Faltou/
+           * Cancelou/Desfazer) — antes o clique chamava __agDia, que pintava a
+           * lista de detalhe DENTRO do card do Mês, escondido na visão Semana:
+           * na tela, nada acontecia. Pedido segue no caminho antigo (o dele é
+           * Confirmar/Recusar, na faixa de pedidos). */
+          if (x.pedido) {
+            return '<button type="button" class="agc ' + es.cls + '" data-agcel="' + d.iso + '">' +
+              '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>";
+          }
+          return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" data-smais="' + x.id + '" title="ações da sessão">' +
+            '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>" +
+            '<div class="ses-acoes agcac" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div>";
         }).join("") + "</div>";
       });
     });
@@ -8568,6 +8620,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var v9 = +sem9.getAttribute("data-agsem");
       agSemOff = v9 === 0 ? 0 : agSemOff + v9;
       pintaSemana(load());
+      return;
+    }
+    /* v704: o Confirmar do pedido no dia-por-vez estava MORTO — o listener que
+     * sabe confirmar (com token, dia e hora) e o do #listaPedidosApp, que nao
+     * e ancestral do #agDia. Clicamos no botao GEMEO de la: uma rota so pra
+     * nuvem, o mesmo truque do "Aceitar todos" da faixa. */
+    var ok9 = e.target.closest && e.target.closest("#agDia [data-agok]");
+    if (ok9) {
+      var gemeo9 = $("listaPedidosApp").querySelector('[data-agok="' + ok9.getAttribute("data-agok") + '"]');
+      if (gemeo9) { ok9.disabled = true; gemeo9.click(); }
       return;
     }
     var cel = e.target.closest && e.target.closest("[data-agcel]");
@@ -8648,16 +8710,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span class="ses-dir">' +
         (x.feita ? '<span class="tag ok">FEITA ✓</span>' : x.faltou ? '<span class="tag erro">FALTOU</span>' : "") +
         '<button class="btn sec mini ses-mais" data-smais="' + x.id + '" aria-label="ações da sessão" title="ações da sessão" style="padding:6px 12px;font-size:16px;line-height:1;">⋮</button></span>' +
-        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' +
-        (x.feita
-          // sessão já feita: em vez de apagar (que deixava o pacote/pagamento sem estorno),
-          // um "Desfazer" que reverte a marcação E devolve a aula/pagamento
-          ? '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
-          : (x.faltou ? "" :
-              '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-              '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
-            '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>') +
-        "</div></div>";
+        // sessão já feita: em vez de apagar (que deixava o pacote/pagamento sem
+        // estorno), o miolo traz o "Desfazer", que reverte E devolve (v704: o
+        // miolo virou sesAcoesHtml, compartilhado com a visão Semana)
+        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div></div>";
     }
     function cabDia(txt) {
       return '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' + txt + "</div>";
@@ -8898,7 +8954,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // menu retrátil ⋮ da sessão: abre as ações dela e fecha as das outras
     var sm = e.target.closest && e.target.closest("[data-smais]");
     if (sm) {
-      var lista = sm.closest("[data-sec], .card, body") || document;
+      /* v704: #agDia e #agGrade entram na frente do escopo — os dois vivem
+       * fora de .card, e cair no body acharia primeiro o data-sacoes GÊMEO da
+       * lista do Mês (mesma sessão, card escondido), deixando o da tela fechado */
+      var lista = sm.closest("#agDia, #agGrade, [data-sec], .card, body") || document;
       var alvoS = lista.querySelector('[data-sacoes="' + sm.getAttribute("data-smais") + '"]');
       var abertaS = alvoS && !alvoS.hidden;
       lista.querySelectorAll("[data-sacoes]").forEach(function (d) { d.hidden = true; });
@@ -8988,6 +9047,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
   $("bHojeP").addEventListener("click", trataCliqueSessao);
+  /* v704: a visão SEMANA também marca sessão agora — e o Feita da linha
+   * "próxima" do celular, que existia desde a v625, não tinha NENHUM listener
+   * cobrindo o #agDia (o do #vAgenda só trata navegação). Os listeners ficam
+   * nos elementos fixos, que sobrevivem ao innerHTML das pinturas. */
+  $("agDia").addEventListener("click", trataCliqueSessao);
+  $("agGrade").addEventListener("click", trataCliqueSessao);
   // fila WhatsApp de hoje: Enviar (abre o zap e marca), Pular (só marca) ou
   // Foto (compartilha a imagem da automação; a mensagem só sai da fila no Enviar)
   var zapFilaCache = [];

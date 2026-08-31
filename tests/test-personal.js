@@ -307,7 +307,9 @@ async function abaPt(p, a) {
   await p.evaluate(() => window.__agAba("sessoes"));
   await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
   await p.evaluate(() => document.querySelector("#listaSessoes [data-smais]").click());
-  await p.click("[data-faltou]");
+  // v704: o seletor solto achava primeiro o [data-faltou] GÊMEO da visão
+  // semana (#agDia/#agGrade, escondidos) — escopado na lista do Mês
+  await p.click("#listaSessoes [data-faltou]");
   const faltouSt = await p.evaluate(() => ({
     faltas: JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.faltou).length,
     tela: document.getElementById("listaSessoes").textContent,
@@ -3152,6 +3154,75 @@ async function abaPt(p, a) {
   ok(ag3.temSetas && ag3.semHoje, "⏭ o cabeçalho do dia tem as setas ‹ › — e o Hoje só nasce fora da semana atual");
   ok(ag3.avancou && ag3.hojeAparece, "⏭ a seta avança pra próxima semana e o Hoje aparece");
   ok(ag3.voltou, "⏭ o Hoje devolve pra semana atual e some de novo");
+
+  // 🖱 v704: marcar a sessão NA VISÃO SEMANA — antes Feita/Faltou/Cancelou só
+  // existiam na lista do Mês; a grade do computador e o dia do celular ganham
+  // o MESMO menu de ações (sesAcoesHtml), tratado pelo MESMO trataCliqueSessao
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const iso = new Date().toISOString().slice(0, 10);
+    st.sessoes = st.sessoes || [];
+    st.sessoes.push({ id: "sesV704", alunoId: st.alunos[0].id, data: iso, hora: "05:15", feita: false });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    document.querySelector('#abas [data-a="agenda"]').click();
+    window.__agDia(iso); // repinta a agenda (lição v692: setItem cru não re-renderiza)
+  });
+  await p.waitForTimeout(200);
+  const ag4 = await p.evaluate(() => {
+    const out = {};
+    const ses = () => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes || []).find((x) => x.id === "sesV704");
+    window.__confirmOrig4 = window.confirm; window.__alertOrig4 = window.alert;
+    window.confirm = () => true; window.alert = () => {};
+    window.__agVis.troca("semana");
+    document.getElementById("agSemHoje").click();
+    // 1) GRADE do computador: clicar na sessão abre as ações ALI, e Feita marca
+    const cel = document.querySelector('#agGrade [data-smais="sesV704"]');
+    out.celExiste = !!cel;
+    if (cel) {
+      cel.click();
+      const pn = document.querySelector('#agGrade [data-sacoes="sesV704"]');
+      out.painelAbriu = !!pn && !pn.hidden;
+      const bt = pn && pn.querySelector('[data-feita="sesV704"]');
+      if (bt) bt.click();
+    }
+    out.feitaPelaGrade = !!(ses() || {}).feita;
+    // repintada, a célula diz FEITA e o menu oferece o Desfazer com estorno
+    const cel2 = document.querySelector('#agGrade [data-smais="sesV704"]');
+    out.celFeita = !!cel2 && / feita|^feita| feita /.test(" " + cel2.className + " ");
+    if (cel2) {
+      cel2.click();
+      const bt2 = document.querySelector('#agGrade [data-sacoes="sesV704"] [data-desfeita="sesV704"]');
+      out.temDesfazer = !!bt2;
+      if (bt2) bt2.click();
+    }
+    out.desfez = !(ses() || {}).feita;
+    // 2) DIA do celular: a linha tem o ⋮ com as mesmas ações — Faltou
+    const tres = document.querySelector('#agDia [data-smais="sesV704"]');
+    out.diaTemMenu = !!tres;
+    if (tres) {
+      tres.click();
+      const pd = document.querySelector('#agDia [data-sacoes="sesV704"]');
+      out.diaPainel = !!pd && !pd.hidden;
+      const bf = pd && pd.querySelector('[data-faltou="sesV704"]');
+      if (bf) bf.click();
+    }
+    out.faltouPeloDia = !!(ses() || {}).faltou;
+    // 3) na faltou o menu oferece Cancelou, que tira a sessão da agenda
+    const q = document.querySelector('#agDia [data-smais="sesV704"]');
+    if (q) {
+      q.click();
+      const bc = document.querySelector('#agDia [data-sacoes="sesV704"] [data-cx="sesV704"]');
+      out.temCancelou = !!bc;
+      if (bc) bc.click();
+    }
+    out.cancelou = !ses();
+    window.confirm = window.__confirmOrig4; window.alert = window.__alertOrig4;
+    return out;
+  });
+  ok(ag4.celExiste && ag4.painelAbriu && ag4.feitaPelaGrade, "🖱 grade da semana: clicar na sessão abre as ações e o Feita marca");
+  ok(ag4.celFeita && ag4.temDesfazer && ag4.desfez, "🖱 grade da semana: sessão FEITA oferece o Desfazer, que reverte");
+  ok(ag4.diaTemMenu && ag4.diaPainel && ag4.faltouPeloDia, "🖱 dia do celular: o ⋮ da linha abre as ações e o Faltou marca");
+  ok(ag4.temCancelou && ag4.cancelou, "🖱 dia do celular: o Cancelou desmarca a sessão da agenda");
 
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
