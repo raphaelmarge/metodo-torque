@@ -186,6 +186,19 @@ function t(cond, nome) {
     t(/\d/.test(pf.ck), "o tile CHECK-IN é preenchido pela nuvem (" + pf.ck + ")");
   }
 
+  console.log("Clube e loja já preenchidos (v705):");
+  {
+    const cl = await p.evaluate(() => {
+      const cfg = (JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}").config || {});
+      return {
+        cupomComLink: (cfg.clube || []).some((x) => /^https:\/\//.test(x.u || "")),
+        produtoComFoto: (cfg.lojaItens || []).some((x) => /^data:image\//.test(x.f || "")),
+      };
+    });
+    t(cl.cupomComLink, "a seed do demo tem cupom COM link do parceiro");
+    t(cl.produtoComFoto, "a seed do demo tem produto COM foto");
+  }
+
   console.log("Nada sai deste navegador:");
   {
     const fn = await p.evaluate(() => window.MT_FUNCAO.chama(null, "whatsapp", {}, "Mandar o zap")

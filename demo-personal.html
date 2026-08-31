@@ -372,6 +372,24 @@
         insta: "torquefit", youtube: "torquefit", email: "demo@torqueon.com.br",
         mostraPlanos: true, mostraServ: true,
       },
+      /* clube de vantagens + loja do app (v705): mesmos itens da demo do
+       * aluno (tools/demo-aluno/regen-demo.js — arquivos separados, mexeu num,
+       * mexe no outro): a camiseta COM foto e o Zé COM link, pra quem abre o
+       * painel demo ver as Configurações já preenchidas do jeito completo.
+       * O link é endereço de exemplo de propósito — demo não aponta pra loja
+       * de verdade. */
+      clube: [
+        { id: "dcl1", n: "Suplementos do Zé", b: "15% off em creatina e whey", c: "TORQUE15", u: "https://example.com/suplementos-do-ze" },
+        { id: "dcl2", n: "Fisio Boa Postura", b: "Avaliação postural grátis pra alunos", c: "", u: "" },
+      ],
+      lojaItens: [
+        { id: "dlj1", n: "Camiseta do studio", d: "algodão, P ao GG", v: 79.9,
+          f: "data:image/svg+xml;base64," + btoa("<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
+            "<rect width='320' height='320' fill='#7c3aed'/>" +
+            "<path d='M96 74 L138 54 C148 80 172 80 182 54 L224 74 L264 128 L220 152 L220 272 L100 272 L100 152 L56 128 Z' fill='rgba(255,255,255,.92)'/>" +
+            "<text x='160' y='196' font-family='sans-serif' font-size='25' font-weight='bold' fill='#7c3aed' text-anchor='middle'>TORQUE</text></svg>") },
+        { id: "dlj2", n: "Avaliação física avulsa", d: "com laudo completo", v: 120 },
+      ],
     },
     alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,
     avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT,
