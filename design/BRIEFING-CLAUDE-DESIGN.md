@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v700** |
-| Estado do repo em | 2026-08-30 (commit `8f9976c`) |
+| App em | **mt-v701** |
+| Estado do repo em | 2026-08-30 (commit `8cc6957`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 162 |
+| Lançamentos no histórico | 163 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v700** — ou seja, **31 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v701** — ou seja, **32 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v700** (2026-08-31).
+O motor (`app/aluno-builder.js`) encostou em **mt-v701** (2026-08-31).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v701 | iPhone na tela inicial — conserto DE VERDADE, sem depender do Safari |
 | mt-v700 | loja com venda interna + foto do produto; link do parceiro forte |
 | mt-v699 | Clube e Loja saem da tela inicial do app e perdem os emojis |
 | mt-v698 | loja do personal dentro do app do aluno |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v689 | aluno relatou dor → card vermelho no Resolver hoje |
 | mt-v688 | a cor da Personalização voltou a pintar o painel (e o NUTRI) |
 | mt-v687 | o aluno nunca fica sabendo da IA — o treino é sempre do professor |
-| mt-v686 | resumo escrito no fim do treino — a voz do aluno vira relatório na ficha e a IA lê |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
