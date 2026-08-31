@@ -1673,6 +1673,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfappk { margin: 18px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em;
             text-transform: uppercase; color: var(--tk-tx5); }
   .pfappl { font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--tk-trilha); color: var(--tk-tx2); }
+  /* cabeçalho de período dos Relatórios (v712) */
+  .relper { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; flex-wrap: wrap; }
+  .relper > b { font-size: 15px; }
   /* histórico de treino por mês (v710) */
   .pfhnav { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
   .pfhnav > b { font-size: 14px; }
@@ -2945,14 +2948,38 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
 
   <section id="vRelatorios" hidden>
+    <!-- v712: o período vale pra ABA INTEIRA — o professor retroage os
+         relatórios pra qualquer mês com as setas (antes tudo era "o mês
+         atual" cravado e não tinha como olhar pra trás) -->
+    <div class="relper" id="relPerBar">
+      <button type="button" class="btn sec mini" id="relMesAnt" title="mês anterior" aria-label="mês anterior">‹</button>
+      <b id="relMesRot">—</b>
+      <button type="button" class="btn sec mini" id="relMesProx" title="mês seguinte" aria-label="mês seguinte" hidden>›</button>
+      <button type="button" class="btn sec mini" id="relMesHoje" hidden>Mês atual</button>
+      <span class="muted" id="relPerNota" style="font-size: 11.5px; margin-left: auto;"></span>
+    </div>
     <div class="abas" id="relAbas" style="margin: 0 0 14px;">
       <button data-rela="fin" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
       <button data-rela="agenda"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Agenda e presença</button>
+      <button data-rela="vendas"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 8h14l-1.2 12a1.8 1.8 0 0 1-1.8 1.6H8a1.8 1.8 0 0 1-1.8-1.6z'/><path d='M8.6 10.5V6.8a3.4 3.4 0 0 1 6.8 0v3.7'/></svg> Vendas</button>
       <button data-rela="geral"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4' y='4' width='7' height='7' rx='1.6'/><rect x='13' y='4' width='7' height='7' rx='1.6'/><rect x='4' y='13' width='7' height='7' rx='1.6'/><rect x='13' y='13' width='7' height='7' rx='1.6'/></svg> Do dia a dia</button><button data-rela="alunos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Alunos</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Entrou × saiu × sobrou</h2><div id="relEntradas" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita dos 6 meses até aqui</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Como o dinheiro entrou no mês</h2><div id="relFormas" class="muted">Sem pagamentos ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
-    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <!-- v712: VENDAS — serviços, pacotes e produtos, com período livre -->
+    <div class="card" style="margin-bottom: 14px;" data-relsec="vendas" hidden><h2>O que você vendeu</h2>
+      <div class="pfhper" style="margin-top: 8px;">
+        <label>De<input type="date" id="rvDe"></label>
+        <label>Até<input type="date" id="rvAte"></label>
+        <button type="button" class="btn sec mini" id="rvAplica">Aplicar</button>
+        <span class="muted" id="rvRot" style="font-size: 11.5px;"></span>
+      </div>
+      <div id="relVendasKpis" style="margin-top: 10px;"></div>
+      <div id="relVendasLista" class="muted" style="margin-top: 6px;">Sem vendas no período.</div>
+    </div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Retenção</h2><div id="relRetencao" class="muted">Cadastre alunos para ver a retenção.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
@@ -15960,17 +15987,105 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (al) $("rel4cAlertas").appendChild(al);
   }
   window.__rel4c = pinta4c; // testes
+  /* v712: o professor retroage os relatórios — relMesOff é quantos meses
+   * atrás (0 = atual), escolhido nas setas do cabeçalho da aba. TODO cálculo
+   * "do mês" e a régua de 6 meses derivam dele. */
+  var relMesOff = 0;
+  /* v712: relatório de VENDAS — o que foi vendido (serviços, pacotes, aulas
+   * avulsas e loja do app) num período livre. Mensalidade NÃO entra no
+   * ranking (não é venda avulsa), mas aparece somada embaixo pra fechar a
+   * conta. mesDefault re-preenche o De/Até quando o mês global muda; o
+   * Aplicar chama com manterInputs pra respeitar o que o professor digitou. */
+  function pintaVendas(st, mesDefault, manterInputs) {
+    var deEl = $("rvDe"), ateEl = $("rvAte");
+    if (!deEl) return;
+    if (!manterInputs) {
+      var dFim = new Date(+mesDefault.slice(0, 4), +mesDefault.slice(5, 7), 0);
+      deEl.value = mesDefault + "-01";
+      ateEl.value = mesDefault + "-" + String(dFim.getDate()).padStart(2, "0");
+    }
+    var de9 = deEl.value, ate9 = ateEl.value;
+    if (de9 > ate9) { var t9 = de9; de9 = ate9; ate9 = t9; deEl.value = de9; ateEl.value = ate9; }
+    $("rvRot").textContent = "de " + S.fmtData(de9) + " até " + S.fmtData(ate9);
+    var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+    var noPer = (st.pagamentos || []).filter(function (p9) {
+      var d9 = (p9.data || "").slice(0, 10);
+      return d9 >= de9 && d9 <= ate9 && +p9.valor > 0;
+    });
+    // classifica: desc = o item vendido; sessão sem desc = aula avulsa;
+    // o resto sem desc = mensalidade (fica fora do ranking)
+    var itens = {}, mensal = { n: 0, v: 0 };
+    noPer.forEach(function (p9) {
+      var d9 = String(p9.desc || "").trim();
+      var f9 = String(p9.forma || "").toLowerCase();
+      var chave = d9 ? d9 : (f9 === "sessão" ? "Aula avulsa (sessão)" : "");
+      if (!chave) { mensal.n++; mensal.v += +p9.valor; return; }
+      if (chave === "Compra na loja do app") chave = "Loja do app";
+      var it9 = itens[chave] = itens[chave] || { n: 0, v: 0 };
+      it9.n++; it9.v += +p9.valor;
+    });
+    var ks9 = Object.keys(itens).sort(function (a, b) { return itens[b].v - itens[a].v; });
+    var totV = ks9.reduce(function (t, k) { return t + itens[k].v; }, 0);
+    var totN = ks9.reduce(function (t, k) { return t + itens[k].n; }, 0);
+    kpiRow($("relVendasKpis"), [
+      // rótulo curto de propósito: em caixa de 133px no celular, "no período"
+      // quebrava em duas linhas (o período já está escrito logo acima)
+      { t: "Vendido", v: fmtR(totV), cor: "var(--pt-ok)", sub: "fora as mensalidades" },
+      { t: "Vendas", v: totN },
+      { t: "Ticket médio", v: totN ? fmtR(totV / totN) : "—" },
+      { t: "Mensalidades", v: fmtR(mensal.v), sub: S.plural(mensal.n, "pagamento no período", "pagamentos no período") },
+    ]);
+    var vl = $("relVendasLista");
+    if (!ks9.length) {
+      vl.textContent = "Nenhuma venda avulsa no período — venda de serviço, pacote e loja aparecem aqui (mensalidade fica no card de cima).";
+      return;
+    }
+    var vMax = itens[ks9[0]].v || 1;
+    vl.innerHTML = "<div class='pfappk' style='margin-top:4px;'>Ranking do período</div>" + ks9.map(function (k) {
+      var it9 = itens[k];
+      return "<div style='display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px;'>" +
+        "<span style='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + esc(k) +
+        " <span class='muted' style='font-size:11.5px;'>× " + it9.n + "</span></span>" +
+        "<div style='flex:none;width:34%;height:10px;background:var(--tk-trilha);border-radius:99px;overflow:hidden;'>" +
+        "<div style='width:" + Math.round(100 * it9.v / vMax) + "%;height:100%;background:var(--tk-ok);border-radius:99px;'></div></div>" +
+        "<b style='flex:none;width:96px;text-align:right;'>" + fmtR(it9.v) + "</b></div>";
+    }).join("");
+  }
+  window.__vendasPT = pintaVendas; // testes
+  // as setas do período valem pra ABA INTEIRA de Relatórios
+  ["relMesAnt", "relMesProx", "relMesHoje"].forEach(function (id9) {
+    var b9 = $(id9);
+    if (b9) b9.addEventListener("click", function () {
+      relMesOff = id9 === "relMesAnt" ? relMesOff + 1 : id9 === "relMesProx" ? Math.max(0, relMesOff - 1) : 0;
+      renderRelatorios();
+    });
+  });
+  var rvBt = $("rvAplica");
+  if (rvBt) rvBt.addEventListener("click", function () {
+    var dSel9 = new Date(); dSel9.setDate(1); dSel9.setMonth(dSel9.getMonth() - relMesOff);
+    pintaVendas(load(), S.monthKey(dSel9), true);
+  });
+  window.__relMes = { off: function (n) { relMesOff = Math.max(0, +n || 0); }, atual: function () { return relMesOff; } }; // testes
   function renderRelatorios() {
     var st = load();
     var hoje = S.todayISO();
-    var mesAtual = hoje.slice(0, 7);
+    var dSel = new Date(); dSel.setDate(1); dSel.setMonth(dSel.getMonth() - relMesOff);
+    var mesAtual = S.monthKey(dSel);
+    var MESES_R = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var rotEl = $("relMesRot");
+    if (rotEl) {
+      rotEl.textContent = MESES_R[dSel.getMonth()] + " de " + dSel.getFullYear();
+      $("relMesProx").hidden = relMesOff === 0;
+      $("relMesHoje").hidden = relMesOff === 0;
+      $("relPerNota").textContent = relMesOff === 0 ? "os números abaixo são deste mês" : "você está olhando um mês passado";
+    }
     var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     var meses = [];
     for (var i = 5; i >= 0; i--) {
-      var d = new Date(); d.setMonth(d.getMonth() - i, 1);
+      var d = new Date(dSel); d.setMonth(d.getMonth() - i, 1);
       meses.push({ chave: S.monthKey(d), rot: S.monthKey(d).slice(5) + "/" + S.monthKey(d).slice(2, 4) });
     }
 
@@ -16016,6 +16131,63 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     if (rec.some(function (x) { return x.v; })) barras($("relReceita"), rec, "var(--roxo)", function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); });
     else $("relReceita").textContent = "Sem pagamentos ainda.";
+
+    /* ---- v712: entrou × saiu × sobrou (6 meses até o mês escolhido) ----
+     * As despesas usam a MESMA régua do Financeiro (despesasDoMes: fixa conta
+     * todo mês, avulsa só no dela) — duas telas nunca contam diferente. */
+    var esBox = $("relEntradas");
+    if (esBox) {
+      var esL = meses.map(function (m) {
+        var ent = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === m.chave; }).reduce(function (t, p) { return t + +p.valor; }, 0);
+        var sai = despesasDoMes(st, m.chave).reduce(function (t, dp) { return t + (+dp.valor || 0); }, 0);
+        return { rot: m.rot, ent: ent, sai: sai };
+      });
+      if (esL.some(function (l) { return l.ent || l.sai; })) {
+        var esMax = Math.max.apply(null, esL.map(function (l) { return Math.max(l.ent, l.sai); })) || 1;
+        esBox.innerHTML = "<div style='display:flex;gap:10px;align-items:flex-end;height:120px;'>" + esL.map(function (l) {
+          var hE = Math.round(6 + 80 * l.ent / esMax), hS = Math.round(l.sai ? 6 + 80 * l.sai / esMax : 2);
+          return "<div style='flex:1;text-align:center;min-width:0;'>" +
+            "<div style='font-size:10.5px;font-weight:800;color:" + (l.ent - l.sai >= 0 ? "var(--tk-ok)" : "var(--tk-erro)") + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' title='sobrou " + fmtR(l.ent - l.sai) + "'>" + fmtR(l.ent - l.sai) + "</div>" +
+            "<div style='display:flex;gap:3px;align-items:flex-end;justify-content:center;height:88px;'>" +
+            "<div style='width:16px;height:" + hE + "px;border-radius:5px 5px 0 0;background:var(--tk-ok);' title='entrou " + fmtR(l.ent) + "'></div>" +
+            "<div style='width:16px;height:" + hS + "px;border-radius:5px 5px 0 0;background:var(--tk-erro);opacity:.8;' title='saiu " + fmtR(l.sai) + "'></div></div>" +
+            "<div style='font-size:11px;color:var(--tk-tx4);margin-top:4px;'>" + l.rot + "</div></div>";
+        }).join("") + "</div>" +
+          "<div style='display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--tk-tx4);'>" +
+          "<span><b style='display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--tk-ok);'></b> entrou</span>" +
+          "<span><b style='display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--tk-erro);'></b> saiu (despesas)</span>" +
+          "<span>o número em cima de cada mês é o que SOBROU</span></div>";
+      } else esBox.textContent = "Sem pagamentos nem despesas ainda.";
+    }
+
+    // ---- v712: como o dinheiro entrou no mês (por forma de pagamento) ----
+    var fmBox = $("relFormas");
+    if (fmBox) {
+      var porForma = {};
+      pagsMes.forEach(function (p) {
+        var f9 = String(p.forma || "outro").toLowerCase();
+        // as variações de pacote/crédito viram uma família só, senão a lista pulveriza
+        if (f9.indexOf("pacote") === 0) f9 = "pacote";
+        if (f9.indexOf("crédito") === 0) f9 = "crédito de aulas";
+        porForma[f9] = (porForma[f9] || 0) + (+p.valor || 0);
+      });
+      var fkeys = Object.keys(porForma).sort(function (a, b) { return porForma[b] - porForma[a]; });
+      if (fkeys.length) {
+        var fMax = porForma[fkeys[0]] || 1;
+        fmBox.innerHTML = fkeys.map(function (k) {
+          var pcf = Math.round(100 * porForma[k] / Math.max(1, recebidoMes));
+          return "<div style='display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;'>" +
+            "<span style='flex:none;width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + esc(k) + "</span>" +
+            "<div style='flex:1;height:10px;background:var(--tk-trilha);border-radius:99px;overflow:hidden;'>" +
+            "<div style='width:" + Math.round(100 * porForma[k] / fMax) + "%;height:100%;background:var(--pt-roxo);border-radius:99px;'></div></div>" +
+            "<b style='flex:none;width:96px;text-align:right;'>" + fmtR(porForma[k]) + "</b>" +
+            "<span class='muted' style='flex:none;width:38px;text-align:right;font-size:11.5px;'>" + pcf + "%</span></div>";
+        }).join("");
+      } else fmBox.textContent = "Nenhum pagamento neste mês.";
+    }
+
+    // ---- v712: VENDAS (serviços, pacotes e produtos) com período livre ----
+    pintaVendas(st, mesAtual);
 
     /* Retenção — as três contas que dizem se a carteira segura:
      * tempo médio de casa (só dos ATIVOS, hoje − desde), churn do mês

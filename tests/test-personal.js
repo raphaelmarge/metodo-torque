@@ -1724,6 +1724,56 @@ async function abaPt(p, a) {
   ok(/João Cliente/.test(relA) && /1 sessão/.test(relA), "assiduidade conta a sessão feita");
   ok(/presença 100%/.test(relA), "taxa de presença 100% (1 feita, 0 faltas)");
 
+  // 📊 v712: relatórios com PERÍODO retroativo + relatório de VENDAS
+  const rel12 = await p.evaluate(() => {
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const dM = new Date(); dM.setDate(1); dM.setMonth(dM.getMonth() - 1); dM.setDate(15);
+    const mesPassado = dM.getFullYear() + "-" + String(dM.getMonth() + 1).padStart(2, "0") + "-15";
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const alvo = st.alunos[0].id;
+    const seeded = [
+      { id: "rv1", alunoId: alvo, valor: 777, forma: "pix", data: mesPassado },
+      { id: "rv2", alunoId: alvo, valor: 120, forma: "pix", desc: "Massagem", data: iso(1) },
+      { id: "rv3", alunoId: alvo, valor: 79.9, forma: "link cartão", desc: "Compra na loja do app", data: iso(2) },
+      { id: "rv4", alunoId: alvo, valor: 80, forma: "sessão", data: iso(1) },
+    ];
+    st.pagamentos = st.pagamentos.concat(seeded);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const out = {};
+    // 1) mês retroativo: o resumo do mês PASSADO mostra os R$ 777
+    window.__relMes.off(1); window.__relPT();
+    out.retro = /777/.test(document.getElementById("relResumo").textContent) &&
+      !document.getElementById("relMesProx").hidden;
+    window.__relMes.off(0); window.__relPT();
+    out.voltou = !/777/.test(document.getElementById("relResumo").textContent) &&
+      document.getElementById("relMesProx").hidden;
+    // 2) entrou × saiu e formas de pagamento existem e falam a língua certa
+    out.entrouSaiu = /entrou/.test(document.getElementById("relEntradas").textContent) &&
+      /saiu/.test(document.getElementById("relEntradas").textContent);
+    out.formas = /pix/.test(document.getElementById("relFormas").textContent);
+    // 3) VENDAS: serviço + loja + aula avulsa no ranking; mensalidade fora
+    const vHtml = () => document.getElementById("relVendasLista").innerHTML +
+      "|" + document.getElementById("relVendasKpis").textContent;
+    out.vendas = /Massagem/.test(vHtml()) && /Loja do app/.test(vHtml()) && /Aula avulsa/.test(vHtml());
+    out.mensalForaDoRanking = !/pix/.test(document.getElementById("relVendasLista").textContent) &&
+      /Mensalidades/.test(vHtml());
+    // 4) o De/Até das vendas obedece: período só de ontem pra hoje perde a loja de anteontem? não — 2 dias atrás fica fora
+    document.getElementById("rvDe").value = iso(1);
+    document.getElementById("rvAte").value = iso(0);
+    document.getElementById("rvAplica").click();
+    out.periodoVendas = /Massagem/.test(vHtml()) && !/Loja do app/.test(vHtml());
+    // limpa o que semeou
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st2.pagamentos = st2.pagamentos.filter((x) => !/^rv[0-9]$/.test(String(x.id)));
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__relPT();
+    return out;
+  });
+  ok(rel12.retro && rel12.voltou, "📊 as setas do cabeçalho retroagem os relatórios pra qualquer mês (e o Hoje volta)");
+  ok(rel12.entrouSaiu && rel12.formas, "📊 entrou × saiu × sobrou e as formas de pagamento ganharam gráfico");
+  ok(rel12.vendas && rel12.mensalForaDoRanking, "🛒 Vendas rankeia serviço, loja e aula avulsa — mensalidade fica fora do ranking, somada à parte");
+  ok(rel12.periodoVendas, "🛒 o De/Até das Vendas recorta o período de verdade");
+
   // pacote novo de relatórios
   const resumo = await p.evaluate(() => document.getElementById("relResumo").textContent);
   ok(/Alunos ativos/.test(resumo) && /Recebido no mês/.test(resumo) && /400/.test(resumo), "resumo do mês: recebido R$ 400");
