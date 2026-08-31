@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v706** |
-| Estado do repo em | 2026-08-31 (commit `f8c12ad`) |
+| App em | **mt-v707** |
+| Estado do repo em | 2026-08-31 (commit `a0581b1`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 168 |
+| Lançamentos no histórico | 169 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v706** — ou seja, **37 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v707** — ou seja, **38 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v706** (2026-08-31).
+O motor (`app/aluno-builder.js`) encostou em **mt-v707** (2026-08-31).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v707 | a Ajuda cobre TODAS as áreas dos dois produtos |
 | mt-v706 | Central de ajuda no painel e no app do aluno |
 | mt-v705 | demo da loja com foto de produto e cupom com link do parceiro |
 | mt-v704 | marcar Feita/Faltou/Cancelou também na visão Semana da Agenda |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v695 | quanto vale sua hora — número novo nos Indicadores |
 | mt-v694 | depoimentos dos alunos na Minha página |
 | mt-v693 | reengajamento fecha a régua — resgate fixo na fila + Resolver hoje |
-| mt-v692 | turma pequena (semi-personal) na agenda |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
