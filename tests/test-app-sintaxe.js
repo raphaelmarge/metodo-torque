@@ -90,6 +90,20 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// 📲 tela inicial do iPhone (v696/v701): o manifest FIXO não pode ter
+// start_url (sem ele, o navegador salva a URL da página — que TEM o ?t=) e o
+// app montado não pode apontar pro manifest fixo (o único dele é o dinâmico,
+// em data:, com o link completo; navegador sem suporte fica sem manifest e
+// salva a URL atual — com o token dos dois jeitos). Foi o start_url "./" que
+// fazia o atalho abrir sem token no cofre de dados separado do iOS.
+{
+  const man = require("fs").readFileSync(__dirname + "/../app/manifest.webmanifest", "utf8");
+  ok(man.indexOf("start_url") === -1, "📲 o manifest fixo NÃO tem start_url — o atalho salva a URL com o token");
+  ok(html.indexOf("/app/manifest.webmanifest") === -1 &&
+    html.indexOf("data:application/manifest+json") > -1,
+    "📲 o app montado só conhece o manifest dinâmico com o link completo do aluno");
+}
+
 // 🤫 regra de negócio (v687): o ALUNO nunca fica sabendo que existe IA — aos
 // olhos dele, quem monta o treino é o PROFESSOR. Esta trava varre o app
 // MONTADO (não o builder) atrás de qualquer menção; pegou a mensagem do
