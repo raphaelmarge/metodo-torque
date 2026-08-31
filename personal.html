@@ -1250,6 +1250,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* ---------- Relatórios na tela 4c ---------- */
   .rel3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
   @media (max-width: 900px) { .rel3 { grid-template-columns: 1fr; } }
+  /* v713: a porta dos indicadores completos (regra 9 do colapso) */
+  .relporta { margin-bottom: 14px; }
+  .relporta > summary { cursor: pointer; border: 1.5px dashed var(--tk-bd); border-radius: 11px; padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--tk-tx3); list-style: none; }
+  .relporta > summary::-webkit-details-marker { display: none; }
+  .relporta > summary::before { content: "▸  "; color: var(--tk-tx5); }
+  .relporta[open] > summary { margin-bottom: 12px; }
+  .relporta[open] > summary::before { content: "▾  "; }
   .rel3 .avkv:first-of-type { border-top: 0; }
   #rel4cNiver .sessao-pt, #rel4cAlertas .sessao-pt { padding-left: 0; padding-right: 0; }
   /* ---------- Chat na tela 3c ---------- */
@@ -2988,28 +2995,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
       <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">Baixar CSV (receita por aluno)</button></div></div>
-    <!-- tela 4c do canvas: o resumo do mes em tres caixas, as sessoes por
-         semana com as faltas empilhadas, e os alertas do studio ao lado -->
+    <!-- tela 4c do canvas, arrumada na v713: os avisos que pedem ação HOJE
+         em cima, o mês em números embaixo (seguindo as setas de período da
+         v712 — o fchMesP duplicado saiu), e o detalhe completo atrás de uma
+         porta. O fechamento virou os dois botões do cabeçalho. -->
     <div class="altopo" data-relsec="geral" hidden>
       <div>
         <div class="alk">Relatórios</div>
-        <div class="alh" id="relMesRot">—</div>
+        <div class="alh">Do dia a dia</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <select id="fchMesP" style="width: auto;"></select>
+        <span class="muted" id="fchStatusP" style="font-size: 12px;"></span>
+        <button type="button" class="btn sec mini" id="fchCopiaP">Copiar resumo</button>
         <button type="button" class="dbt" id="fchZapP">Mandar fechamento</button>
       </div>
     </div>
     <div id="rel4c" data-relsec="geral" hidden></div>
     <div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
-      <h2>🧠 Resumo da semana com IA</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">A IA lê a sua semana — quem sumiu, quem deve, sessões, treinos pelo app e recordes — e devolve os movimentos mais importantes. Precisa da conta na nuvem.</p>
-      <button class="btn sec" id="iaSemanaBt">Gerar o resumo da semana</button>
-      <div id="iaSemanaOut" style="margin-top: 10px; font-size: 13.5px; white-space: pre-wrap;"></div>
-    </div>
-    <!-- o que saiu do Início (tela 4c do canvas): números do mês, metas,
-         movimentação, fechamento, aniversários e alertas do studio -->
-<div class="kpi-pt" id="kpis" data-relsec="geral" hidden></div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
       <h2>Metas do mês e projeção</h2>
       <div class="metas-pt" style="margin: 8px 0 10px;">
         <label>Meta de faturamento (R$) <input id="mtFatP" type="number" min="0"></label>
@@ -3018,21 +3020,21 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec mini" id="mtSalvarP">Salvar metas</button>
       </div>
       <div id="mtPainelP" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
-    </div><div class="colunas-dash" data-relsec="geral" hidden>
+    </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
+      <h2>🧠 Resumo da semana com IA</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">A IA lê a sua semana — quem sumiu, quem deve, sessões, treinos pelo app e recordes — e devolve os movimentos mais importantes. Precisa da conta na nuvem.</p>
+      <button class="btn sec" id="iaSemanaBt">Gerar o resumo da semana</button>
+      <div id="iaSemanaOut" style="margin-top: 10px; font-size: 13.5px; white-space: pre-wrap;"></div>
+    </div><details class="relporta" data-relsec="geral" hidden>
+      <summary>Todos os números do mês — recebimentos, base, movimentação, indicadores, agenda e app</summary>
+      <div class="colunas-dash">
       <div class="card"><h2>Recebimentos</h2><div id="bRecebP" class="muted"></div></div>
       <div class="card"><h2>Status da base</h2><div id="bBaseP" class="muted"></div></div>
       <div class="card"><h2>Movimentação do mês</h2><div id="bMovP" class="muted"></div></div>
       <div class="card"><h2>Indicadores do negócio</h2><div id="bIndP" class="muted"></div></div>
       <div class="card"><h2>Agenda e presença</h2><div id="bAgP" class="muted"></div></div>
       <div class="card"><h2>App e treinos dos alunos</h2><div id="bAppP" class="muted"></div></div>
-    </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
-      <h2>Fechamento do mês</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador. O mês e o botão de mandar ficam no <b>cabeçalho</b> aqui de cima.</p>
-      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
-        <button class="btn sec" id="fchCopiaP">Copiar resumo</button>
-      </div>
-      <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div><!-- os dois blocos moram aqui e sao MOVIDOS pras caixas da 4c a cada pintura;
+    </div></details><!-- os dois blocos moram aqui e sao MOVIDOS pras caixas da 4c a cada pintura;
          este guarda-volumes existe pra eles nunca serem apagados pelo innerHTML -->
     <div id="relGuarda" hidden>
       <div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div>
@@ -4065,7 +4067,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.dataset.a === "conta") renderConta();
     $("vAjuda").hidden = b.dataset.a !== "ajuda";
     if (b.dataset.a === "ajuda") renderAjuda();
-    $("kpis").hidden = false; // os kpis vivem dentro do Dashboard
     $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
@@ -4571,21 +4572,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__idxPT = idxDe; // testes
 
-  // ---------- kpis ----------
-  function renderKpis(st) {
-    var receitaMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesAtual; })
-      .reduce(function (t, p) { return t + +p.valor; }, 0);
-    var hoje = S.todayISO();
-    var fim = new Date(hoje + "T12:00"); fim.setDate(fim.getDate() + 7);
-    var fimISO = S.todayISO(fim);
-    var semana = st.sessoes.filter(function (x) { return !x.feita && x.data >= hoje && x.data <= fimISO; }).length;
-    var feitasMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesAtual; }).length;
-    $("kpis").innerHTML =
-      '<div class="card"><div class="n">' + st.alunos.filter(function (a) { return a.ativo !== false; }).length + '</div><div class="muted">aluno(s) ativo(s)</div></div>' +
-      '<div class="card"><div class="n">' + S.fmtBRL(receitaMes) + '</div><div class="muted">recebido no mês</div></div>' +
-      '<div class="card"><div class="n">' + semana + '</div><div class="muted">sessões nos próximos 7 dias</div></div>' +
-      '<div class="card"><div class="n">' + feitasMes + '</div><div class="muted">sessões dadas no mês</div></div>';
-  }
+  // (a fileira #kpis morreu na v713: os 4 números já moram no Início, no
+  //  Resumo do Financeiro e nos cards do Do dia a dia — era a mesma coisa 3x)
 
   // ---------- alunos ----------
   var alFiltro = "ativos"; // tela 2a: Ativos / Sumindo / Devendo / Encerrados
@@ -15889,12 +15877,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pinta4c(st) {
     var box = $("rel4c");
     if (!box) return;
-    var mes = ($("fchMesP") && $("fchMesP").value) || S.todayISO().slice(0, 7);
-    var rot = $("relMesRot");
-    if (rot) {
-      var nm = MES_LONGO[+mes.slice(5, 7) - 1];
-      rot.textContent = nm.charAt(0).toUpperCase() + nm.slice(1) + " de " + mes.slice(0, 4);
-    }
+    // v713: o mês é o das setas do cabeçalho (v712) — um seletor só pra aba
+    // inteira. O rótulo do mês também mora lá; aqui ninguém escreve nele.
+    var mes = relMesSel();
     var d = dadosDoMes(st, mes);
     var saldo = d.ativos.length;
     var perda = d.ativos.length + d.encerrados ? d.encerrados / (d.ativos.length + d.encerrados) * 100 : 0;
@@ -15950,7 +15935,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var gd = $("relGuarda"), nvA = $("bNiverP"), alA = $("relAlertas");
     if (gd && nvA) gd.appendChild(nvA);
     if (gd && alA) gd.appendChild(alA);
+    // v713: o que pede AÇÃO hoje vem primeiro (alertas + aniversários);
+    // os números do mês ficam na fileira de baixo
     box.innerHTML =
+      '<div class="dcols" style="margin-bottom:14px;">' +
+      '<div class="pfbox" id="rel4cAlertas"><div class="tdrot">Alertas do studio</div></div>' +
+      '<div class="pfbox" id="rel4cNiver"><div class="tdrot">Aniversários · 7 dias</div></div>' +
+      "</div>" +
       '<div class="rel3" style="margin-bottom:14px;">' +
       '<div class="pfbox"><div class="tdrot">Movimentação</div>' +
       relKv("Entraram", (d.novos ? "+" : "") + d.novos, d.novos ? "var(--tk-ok)" : null) +
@@ -15961,24 +15952,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       relKv("Sua hora rendeu", horaTxt, !d.feitas ? null : horaAnt && horaV < horaAnt ? "var(--tk-aten)" : "var(--tk-ok)") +
       relKv("Tempo de casa", num1(casa) + " meses") +
       relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "var(--tk-erro)" : "var(--tk-ok)") + "</div>" +
-      '<div class="pfbox" id="rel4cNiver"><div class="tdrot">Aniversários · 7 dias</div></div>' +
-      "</div>" +
-      '<div class="dcols" style="margin-bottom:14px;">' +
-      '<div class="pfbox"><h3>Sessões por semana<small style="font-weight:600;color:var(--tk-tx5);font-size:12px;margin-left:8px;">e quanto disso virou falta</small>' +
-      '<span style="float:right;font-size:11px;font-weight:700;color:var(--tk-tx4);">' +
+      '<div class="pfbox"><div class="tdrot">Sessões por semana</div>' +
+      '<div style="font-size:11px;font-weight:700;color:var(--tk-tx4);margin-top:2px;">' +
       '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#7c3aed;margin-right:4px;"></i>feitas ' +
-      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--pt-erro-selo);margin:0 4px 0 8px;"></i>faltas</span></h3>' +
-      '<div style="display:flex;gap:12px;align-items:flex-end;height:150px;margin-top:10px;">' +
+      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--pt-erro-selo);margin:0 4px 0 8px;"></i>faltas</div>' +
+      '<div style="display:flex;gap:10px;align-items:flex-end;height:140px;margin-top:8px;">' +
       sems.map(function (w) {
-        var hF = Math.round(110 * w.feitas / topo), hX = Math.round(110 * w.faltas / topo);
+        var hF = Math.round(100 * w.feitas / topo), hX = Math.round(100 * w.faltas / topo);
         return '<div style="flex:1;text-align:center;">' +
-          '<div style="height:' + Math.max(0, 114 - hF - hX) + 'px;"></div>' +
+          '<div style="height:' + Math.max(0, 104 - hF - hX) + 'px;"></div>' +
           (hX ? '<div style="height:' + Math.max(4, hX) + 'px;border-radius:8px 8px 0 0;background:var(--pt-erro-selo);" title="' + w.faltas + ' falta(s)"></div>' : "") +
           '<div style="height:' + Math.max(4, hF) + "px;border-radius:" + (hX ? "0 0 3px 3px" : "8px 8px 3px 3px") +
           ";background:" + (w.agora ? "var(--tk-roxoTx2)" : "#7c3aed") + ';" title="' + w.feitas + ' feita(s)"></div>' +
           '<div style="font-size:10px;font-weight:800;color:' + (w.agora ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:6px;">' + w.rot + "</div></div>";
       }).join("") + "</div></div>" +
-      '<div class="pfbox" id="rel4cAlertas"><div class="tdrot">Alertas do studio</div></div>' +
       "</div>";
     // os dois blocos ja existem e ja sao preenchidos por quem sempre preencheu:
     // aqui eles so MUDAM DE LUGAR, pra caber no desenho da 4c
@@ -15991,6 +15978,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * atrás (0 = atual), escolhido nas setas do cabeçalho da aba. TODO cálculo
    * "do mês" e a régua de 6 meses derivam dele. */
   var relMesOff = 0;
+  // v713: o mês escolhido nas setas, em "AAAA-MM" — passou a valer também pros
+  // cards do Do dia a dia (o seletor fchMesP duplicado morreu)
+  function relMesSel() {
+    var d9 = new Date(); d9.setDate(1); d9.setMonth(d9.getMonth() - relMesOff);
+    return S.monthKey(d9);
+  }
   /* v712: relatório de VENDAS — o que foi vendido (serviços, pacotes, aulas
    * avulsas e loja do app) num período livre. Mensalidade NÃO entra no
    * ranking (não é venda avulsa), mas aparece somada embaixo pra fechar a
@@ -16074,7 +16067,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var MESES_R = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var rotEl = $("relMesRot");
     if (rotEl) {
-      rotEl.textContent = MESES_R[dSel.getMonth()] + " de " + dSel.getFullYear();
+      var nomeM = MESES_R[dSel.getMonth()];
+      rotEl.textContent = nomeM.charAt(0).toUpperCase() + nomeM.slice(1) + " de " + dSel.getFullYear();
       $("relMesProx").hidden = relMesOff === 0;
       $("relMesHoje").hidden = relMesOff === 0;
       $("relPerNota").textContent = relMesOff === 0 ? "os números abaixo são deste mês" : "você está olhando um mês passado";
@@ -16597,6 +16591,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("bRadarP").innerHTML = radar.length ? radar.join("")
       : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
     // carteira: MRR, ticket, contratos
+    /* ---- Relatórios -> Do dia a dia (v713): os cards do MÊS seguem as
+     * setas de período da v712 (relMesSel), não o mês corrente — retroagir
+     * lá em cima retroage estes cards junto. Mês já fechado não tem
+     * "projeção": o dia de referência vira o último do mês. ---- */
+    var mesR = relMesSel();
+    var dR = mesR === mes ? d : dadosDoMes(st, mesR);
+    var diasNoMesR = new Date(+mesR.slice(0, 4), +mesR.slice(5, 7), 0).getDate();
+    var diaAtualR = mesR === mes ? diaAtual : diasNoMesR;
     var ctAtivos = (st.contratosPT || []).filter(function (c) { return c.status === "ativo"; });
     var mrr = 0, comContrato = 0, pagantes = 0;
     ativos.forEach(function (a) {
@@ -16610,20 +16612,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       } else if (+a.valor && a.modo !== "sessao") { mrr += +a.valor; pagantes++; }
     });
     var ticket = pagantes ? mrr / pagantes : 0;
-    var projFat = d.fat / diaAtual * diasNoMes;
+    var projFat = dR.fat / diaAtualR * diasNoMesR;
     // recebimentos
     var formas = {};
-    d.pgs.forEach(function (p) { var f = (p.forma || "outros").toLowerCase(); formas[f] = (formas[f] || 0) + +p.valor; });
+    dR.pgs.forEach(function (p) { var f = (p.forma || "outros").toLowerCase(); formas[f] = (formas[f] || 0) + +p.valor; });
     var atrasados = 0;
     ativos.forEach(function (a) {
       var ct = ctAtivos.find(function (c) { return c.alunoId === a.id; });
-      if (ct && diaAtual > +ct.diaVenc && !d.pgs.some(function (p) { return p.alunoId === a.id; })) atrasados++;
+      if (ct && diaAtualR > +ct.diaVenc && !dR.pgs.some(function (p) { return p.alunoId === a.id; })) atrasados++;
     });
     $("bRecebP").innerHTML =
-      kv("Recebido no mês", fmtR(d.fat)) +
+      kv("Recebido no mês", fmtR(dR.fat)) +
       kv("Projeção no ritmo atual", fmtR(projFat)) +
       kv("Previsto da carteira (mês cheio)", fmtR(mrr)) +
-      kv("Ainda sem pagar", d.semPagar + " aluno(s)", d.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
+      kv("Ainda sem pagar", dR.semPagar + " aluno(s)", dR.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "var(--tk-erro)" : "var(--tk-ok)") +
       (function () {
         var acum = 0;
@@ -16646,12 +16648,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Com acesso do app", comApp + " de " + ativos.length) +
       kv("Mensalidade no cartão", comRec + " aluno(s)");
     // movimentação
-    var iniBase = ativos.length - d.novos + d.encerrados;
-    var churn = iniBase > 0 ? 100 * d.encerrados / iniBase : 0;
-    var saldo = d.novos - d.encerrados;
+    var iniBase = ativos.length - dR.novos + dR.encerrados;
+    var churn = iniBase > 0 ? 100 * dR.encerrados / iniBase : 0;
+    var saldo = dR.novos - dR.encerrados;
     $("bMovP").innerHTML =
-      kv("Novos alunos no mês", d.novos, d.novos ? "var(--tk-ok)" : null) +
-      kv("Alunos que saíram no mês", d.encerrados, d.encerrados ? "var(--tk-erro)" : null) +
+      kv("Novos alunos no mês", dR.novos, dR.novos ? "var(--tk-ok)" : null) +
+      kv("Alunos que saíram no mês", dR.encerrados, dR.encerrados ? "var(--tk-erro)" : null) +
       kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "var(--tk-ok)" : saldo < 0 ? "var(--tk-erro)" : null) +
       kv("Churn do mês (% da carteira que saiu)", fmt1(churn) + "%", churn > 5 ? "var(--tk-erro)" : null);
     // indicadores
@@ -16668,19 +16670,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Ticket médio previsto (mensalidade média)", fmtR(ticket)) +
       kv("Vida média de contrato", fmt1(vidaMedia) + " meses" + (nVida < 3 ? " (estimada)" : "")) +
       kv("Valor do aluno no ciclo (LTV)", fmtR(ticket * vidaMedia)) +
-      kv("Receita por sessão dada", d.feitas ? fmtR(d.fat / d.feitas) : "—");
+      kv("Receita por sessão dada", dR.feitas ? fmtR(dR.fat / dR.feitas) : "—");
     // agenda e presença
     var fim7 = new Date(hoje + "T12:00"); fim7.setDate(fim7.getDate() + 7);
     var futuras7 = st.sessoes.filter(function (x) { return !x.feita && !x.faltou && x.data >= hoje && x.data <= S.todayISO(fim7); }).length;
-    var presenca = d.feitas + d.faltas ? Math.round(100 * d.feitas / (d.feitas + d.faltas)) : 100;
+    var presenca = dR.feitas + dR.faltas ? Math.round(100 * dR.feitas / (dR.feitas + dR.faltas)) : 100;
     var corte30 = new Date(hoje + "T12:00"); corte30.setDate(corte30.getDate() - 30);
     var horas = {};
     st.sessoes.forEach(function (x) { if (x.feita && x.data >= S.todayISO(corte30) && x.hora) horas[x.hora] = (horas[x.hora] || 0) + 1; });
     var horaTop = Object.keys(horas).sort(function (a, b) { return horas[b] - horas[a]; })[0];
     $("bAgP").innerHTML =
-      kv("Sessões dadas no mês", d.feitas) +
-      kv("Projeção no ritmo atual", Math.round(d.feitas / diaAtual * diasNoMes)) +
-      kv("Faltas no mês", d.faltas, d.faltas ? "var(--tk-aten2)" : null) +
+      kv("Sessões dadas no mês", dR.feitas) +
+      kv("Projeção no ritmo atual", Math.round(dR.feitas / diaAtualR * diasNoMesR)) +
+      kv("Faltas no mês", dR.faltas, dR.faltas ? "var(--tk-aten2)" : null) +
       kv("Taxa de presença", presenca + "%", presenca < 80 ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Sessões nos próximos 7 dias", futuras7) +
       kv("Horário mais cheio (30 dias)", horaTop ? horaTop + " (" + horas[horaTop] + "x)" : "—");
@@ -16716,9 +16718,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         fmt(atual) + ' <small style="font-weight:600;">→ projeção ' + fmt(proj) + (ok == null ? "" : ok ? " ✓" : " abaixo") + "</small>", cor);
     }
     $("mtPainelP").innerHTML =
-      linhaMeta("Faturamento", d.fat, projFat, +metas.fat || 0, fmtR) +
-      linhaMeta("Novos alunos", d.novos, Math.round(d.novos / diaAtual * diasNoMes), +metas.novos || 0, String) +
-      linhaMeta("Sessões dadas", d.feitas, Math.round(d.feitas / diaAtual * diasNoMes), +metas.ses || 0, String) +
+      linhaMeta("Faturamento", dR.fat, projFat, +metas.fat || 0, fmtR) +
+      linhaMeta("Novos alunos", dR.novos, Math.round(dR.novos / diaAtualR * diasNoMesR), +metas.novos || 0, String) +
+      linhaMeta("Sessões dadas", dR.feitas, Math.round(dR.feitas / diaAtualR * diasNoMesR), +metas.ses || 0, String) +
       (metas.fat || metas.novos || metas.ses ? "" : '<p class="muted" style="margin:6px 0 0;font-size:12.5px;">Salve suas metas ali em cima pra acompanhar se o mês vai bater.</p>');
     // aniversários dos próximos 7 dias
     var nive = [];
@@ -16746,17 +16748,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaMesDash(st, d);
     resolverChat();
     resolverDor();
-    // fechamento: popula o seletor de meses (últimos 12) uma vez por render
-    var sel = $("fchMesP");
-    var atual = sel.value;
-    var ops = [];
-    for (var i = 0; i < 12; i++) {
-      var dRef = new Date(); dRef.setDate(1); dRef.setMonth(dRef.getMonth() - i);
-      var k = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
-      ops.push('<option value="' + k + '">' + k.slice(5, 7) + "/" + k.slice(0, 4) + "</option>");
-    }
-    sel.innerHTML = ops.join("");
-    if (atual) sel.value = atual;
     // a 4c depende do bNiverP e do relAlertas ja preenchidos aqui em cima
     pinta4c(st);
   }
@@ -16782,17 +16773,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.write("ptStudio", st);
     renderDashPT(st);
   });
-  $("fchMesP").addEventListener("change", function () { pinta4c(load()); });
   $("fchCopiaP").addEventListener("click", function () {
     var ta = document.createElement("textarea");
-    ta.value = resumoFechamentoPT($("fchMesP").value);
+    ta.value = resumoFechamentoPT(relMesSel());
     document.body.appendChild(ta); ta.select();
     try { document.execCommand("copy"); } catch (e) {}
     ta.remove();
     $("fchStatusP").textContent = "✓ Resumo copiado — cola onde quiser.";
   });
   $("fchZapP").addEventListener("click", function () {
-    window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoPT($("fchMesP").value)), "_blank");
+    window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoPT(relMesSel())), "_blank");
   });
   /* ---------- Início do desenho novo (canvas "Painel do professor", 1a e 1b) ----------
    *
@@ -16805,13 +16795,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = document.querySelector('#abas [data-a="' + a + '"]');
     if (b) b.click();
   }
-  // "Ver a fila" do Resolver hoje (v693): a fila de WhatsApp mora em
-  // Relatórios → Do dia a dia — o card leva o professor até ela
+  // "Ver a fila" do Resolver hoje: a fila de WhatsApp mora no INÍCIO (card
+  // "WhatsApp de hoje") — o atalho apontava pra Relatórios e rolava pra um
+  // elemento escondido, ou seja, não fazia nada (consertado na v713)
   document.addEventListener("click", function (e) {
     if (!e.target.closest("[data-vaifila]")) return;
-    vaiAba("relatorios");
-    var bg = document.querySelector('[data-rela="geral"]');
-    if (bg) bg.click();
+    vaiAba("dash");
     var elF = $("bZapP");
     if (elF && elF.scrollIntoView) elF.scrollIntoView({ behavior: "smooth", block: "start" });
   });
@@ -18506,7 +18495,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function render() {
     var st = load();
     pintaContasNav(st);
-    renderKpis(st);
     renderAlunos(st);
     renderAgenda(st);
     renderPagamentos(st);

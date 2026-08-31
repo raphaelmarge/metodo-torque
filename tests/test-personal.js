@@ -471,9 +471,10 @@ async function abaPt(p, a) {
   const hist = await p.evaluate(() => document.getElementById("listaPagamentos").textContent);
   ok(/João Cliente/.test(hist) && /400/.test(hist) && /Pix/.test(hist), "histórico registra o pagamento");
 
-  // kpis refletem
-  const kpis = await p.evaluate(() => document.getElementById("kpis").textContent);
-  ok(/1/.test(kpis) && /400/.test(kpis), "KPIs: 1 aluno ativo e R$ 400 no mês");
+  // os números do mês refletem (a fileira #kpis morreu na v713 — quem conta a
+  // história agora são os cards do Do dia a dia, repintados a cada render)
+  const kpis = await p.evaluate(() => document.getElementById("bRecebP").textContent + document.getElementById("bBaseP").textContent);
+  ok(/400/.test(kpis) && /Alunos ativos1/.test(kpis), "números do mês: R$ 400 recebidos e 1 aluno ativo");
 
   // ---------- financeiro turbinado: dívida acumulada, sessões a cobrar, Recebi, baixa do link ----------
   console.log("Financeiro turbinado:");
@@ -2080,7 +2081,8 @@ async function abaPt(p, a) {
   // ---------- dashboard gerencial (estilo Resumo Gerencial da academia) ----------
   console.log("Dashboard gerencial:");
   await abaPt(p, "dash");
-  ok(await p.evaluate(() => !document.getElementById("vDash").hidden && !document.getElementById("kpis").hidden), "voltar pro Dashboard mantém os KPIs visíveis");
+  ok(await p.evaluate(() => !document.getElementById("vDash").hidden && !document.getElementById("kpis")),
+    "voltar pro Dashboard funciona — e a fileira #kpis duplicada não existe mais (v713)");
   const dash = await p.evaluate(() => ({
     receb: document.getElementById("bRecebP").textContent,
     base: document.getElementById("bBaseP").textContent,
@@ -2126,29 +2128,45 @@ async function abaPt(p, a) {
   await p.click("#fchCopiaP");
   ok(await p.evaluate(() => /copiado/.test(document.getElementById("fchStatusP").textContent)), "copiar resumo confirma");
 
-  /* ---- Relatórios repaginados (tela 4c) ---- */
+  /* ---- Relatórios repaginados (tela 4c, arrumada na v713) ---- */
   {
     const b4c = await p.evaluate(() => {
       window.__rel4c(window.MTStore.read("ptStudio", {}));
       const box = document.getElementById("rel4c");
       return {
         rot: (document.getElementById("relMesRot") || {}).textContent || "",
+        rots: (document.getElementById("relMesRot") ? document.querySelectorAll("#relMesRot").length : 0),
+        acao: [...box.querySelectorAll(".dcols .tdrot")].map((x) => x.textContent),
         caixas: [...box.querySelectorAll(".rel3 .tdrot")].map((x) => x.textContent),
         linhas: [...box.querySelectorAll(".rel3 .avkv span")].map((x) => x.textContent),
-        semanas: box.querySelectorAll(".dcols .pfbox div[title]").length,
+        acaoPrimeiro: box.innerHTML.indexOf("Alertas do studio") < box.innerHTML.indexOf("Movimenta"),
+        semanas: box.querySelectorAll(".rel3 .pfbox div[title]").length,
         niver: !!box.querySelector("#bNiverP"),
         alertas: !!box.querySelector("#relAlertas"),
         botao: (document.getElementById("fchZapP") || {}).textContent || "",
+        copia: (document.getElementById("fchCopiaP") || {}).textContent || "",
+        selVelho: !!document.getElementById("fchMesP"),
+        kpisVelho: !!document.getElementById("kpis"),
+        porta: (document.querySelector('#vRelatorios .relporta > summary') || {}).textContent || "",
+        portaCards: document.querySelectorAll("#vRelatorios .relporta .colunas-dash .card").length,
       };
     });
-    ok(/^[A-Z]\S* de \d{4}$/.test(b4c.rot), "🎨 4c: o topo diz o mês por extenso (" + b4c.rot + ")");
-    ok(b4c.caixas.length === 3 && /Movimenta/.test(b4c.caixas[0]) && /Indicadores/.test(b4c.caixas[1]) && /Aniversários/.test(b4c.caixas[2]),
-      "🎨 4c: movimentação, indicadores e aniversários em três caixas");
+    ok(/^[A-Z]\S* de \d{4}$/.test(b4c.rot), "🎨 4c: o cabeçalho da aba diz o mês por extenso (" + b4c.rot + ")");
+    ok(b4c.rots === 1 && !b4c.selVelho,
+      "🧹 v713: um rótulo de mês só e sem o seletor fchMesP duplicado (as setas da v712 mandam)");
+    ok(b4c.acao.length === 2 && /Alertas do studio/.test(b4c.acao[0]) && /Aniversários/.test(b4c.acao[1]) && b4c.acaoPrimeiro,
+      "🧹 v713: o que pede ação hoje (alertas + aniversários) vem ANTES dos números");
+    ok(b4c.caixas.length === 3 && /Movimenta/.test(b4c.caixas[0]) && /Indicadores/.test(b4c.caixas[1]) && /Sessões por semana/.test(b4c.caixas[2]),
+      "🎨 4c: movimentação, indicadores e sessões por semana nas três caixas do mês");
     ok(b4c.linhas.includes("Entraram") && b4c.linhas.includes("Ticket médio") && b4c.linhas.includes("Tempo de casa"),
       "🎨 4c: cada caixa traz as linhas do desenho");
     ok(b4c.semanas >= 4, "🎨 4c: sessões por semana viram barras (" + b4c.semanas + " pedaços)");
     ok(b4c.niver && b4c.alertas, "🎨 4c: aniversários e alertas do studio moram dentro das caixas novas");
-    ok(/Mandar fechamento/.test(b4c.botao), "🎨 4c: o fechamento do mês virou botão do cabeçalho");
+    ok(/Mandar fechamento/.test(b4c.botao) && /Copiar resumo/.test(b4c.copia),
+      "🎨 4c: o fechamento do mês virou os dois botões do cabeçalho");
+    ok(!b4c.kpisVelho, "🧹 v713: a fileira #kpis (4 números repetidos) saiu da aba");
+    ok(/Todos os números do mês/.test(b4c.porta) && b4c.portaCards === 6,
+      "🧹 v713: os 6 cards de detalhe moram atrás da porta 'Todos os números do mês'");
     // repintar não pode perder os dois blocos que são preenchidos por outro trecho
     const duasVezes = await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -2256,8 +2274,8 @@ async function abaPt(p, a) {
       const noDash = (id) => !!document.querySelector("#vDash #" + id);
       const noRel = (id) => !!document.querySelector("#vRelatorios #" + id);
       return {
-        saiuDoDash: !noDash("kpis") && !noDash("bNiverP") && !noDash("mtFatP") && !noDash("relAlertas"),
-        chegouNoRel: noRel("kpis") && noRel("bNiverP") && noRel("mtFatP") && noRel("relAlertas"),
+        saiuDoDash: !noDash("bNiverP") && !noDash("mtFatP") && !noDash("relAlertas"),
+        chegouNoRel: noRel("bNiverP") && noRel("mtFatP") && noRel("relAlertas"),
         temSubAba: !!document.querySelector('#relAbas [data-rela="geral"]'),
         nota: (document.querySelector("#vDash .dnota") || {}).textContent || "",
       };
@@ -2906,18 +2924,20 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     const r = window.__horaPT("2026-05");
     const rVazio = window.__horaPT("2019-01");
-    // o card Indicadores pinta a linha quando o mês escolhido é o semeado
-    const sel = document.getElementById("fchMesP");
-    const old = sel.value;
-    sel.value = "2026-05";
-    sel.dispatchEvent(new Event("change"));
+    // o card Indicadores pinta a linha quando o mês das setas (v712/v713) é o
+    // semeado — retroage até 2026-05 pelo gancho e repinta a 4c
+    const agora = new Date();
+    const off = (agora.getFullYear() - 2026) * 12 + (agora.getMonth() + 1 - 5);
+    window.__relMes.off(off);
+    window.__rel4c(S.read("ptStudio", {}));
     const tela = document.getElementById("rel4c").textContent;
     // limpa e devolve o mês
     const st2 = S.read("ptStudio", {});
     st2.pagamentos = st2.pagamentos.filter((x) => x.id !== "hv-p1");
     st2.sessoes = st2.sessoes.filter((x) => !/^hv-s/.test(String(x.id)));
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
-    sel.value = old; sel.dispatchEvent(new Event("change"));
+    window.__relMes.off(0);
+    window.__rel4c(S.read("ptStudio", {}));
     return { hora: r.hora, horas: r.horas, vazio: rVazio.hora, tela };
   });
   ok(hv.horas === 10 && Math.round(hv.hora) === 80, "⏱ R$ 800 em 10 sessões dadas = hora de R$ 80");
