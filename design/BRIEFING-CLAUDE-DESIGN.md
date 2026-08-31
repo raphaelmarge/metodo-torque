@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v708** |
-| Estado do repo em | 2026-08-31 (commit `539ad9c`) |
+| App em | **mt-v709** |
+| Estado do repo em | 2026-08-31 (commit `050ee52`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 170 |
+| Lançamentos no histórico | 171 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v708** — ou seja, **39 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v709** — ou seja, **40 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v709 | aba "Direto do app" da ficha entra no redesenho |
 | mt-v708 | Ajuda com fotos reais + chamado de suporte com protocolo |
 | mt-v707 | a Ajuda cobre TODAS as áreas dos dois produtos |
 | mt-v706 | Central de ajuda no painel e no app do aluno |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v697 | clube de vantagens — parcerias do personal viram cupons no app |
 | mt-v696 | app salvo na tela inicial do iPhone abre de verdade |
 | mt-v695 | quanto vale sua hora — número novo nos Indicadores |
-| mt-v694 | depoimentos dos alunos na Minha página |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
