@@ -1673,6 +1673,29 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfappk { margin: 18px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em;
             text-transform: uppercase; color: var(--tk-tx5); }
   .pfappl { font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--tk-trilha); color: var(--tk-tx2); }
+  /* histórico de treino por mês (v710) */
+  .pfhnav { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+  .pfhnav > b { font-size: 14px; }
+  .pfhnav .pfhsub { font-size: 11.5px; color: var(--tk-tx4); flex: 1; min-width: 0; }
+  .pfhnav button { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--tk-bd2);
+                   background: var(--tk-sup2); color: var(--tk-tx2); font-family: inherit; font-size: 16px;
+                   font-weight: 800; cursor: pointer; flex: none; }
+  .pfhnav > span { width: 34px; flex: none; }
+  .pfdia { border: 1px solid var(--tk-bd2); border-radius: 12px; padding: 10px 13px; margin-bottom: 7px; background: var(--tk-sup2); }
+  .pfdia summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .pfdia summary::-webkit-details-marker { display: none; }
+  .pfdia summary > b { font-size: 13px; flex: none; }
+  .pfdchips { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+  .pfdchips i { font-style: normal; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 7px;
+                background: var(--tk-roxoFraco); color: var(--pt-roxo-claro); white-space: nowrap; }
+  .pfdrot { margin: 9px 0 2px; font-size: 10px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; color: var(--tk-tx5); }
+  .pfdl { font-size: 12.5px; color: var(--tk-tx2); padding: 2px 0; }
+  .pfdnota { margin-top: 7px; font-size: 12.5px; color: var(--tk-tx2); border-left: 3px solid var(--pt-roxo); padding-left: 10px; white-space: pre-wrap; }
+  .pfgraf { margin-top: 16px; border-top: 1px solid var(--tk-trilha); padding-top: 10px; }
+  .pfgraf > summary { cursor: pointer; list-style: none; font-size: 13px; font-weight: 800; color: var(--pt-roxo-claro); }
+  .pfgraf > summary::-webkit-details-marker { display: none; }
+  .pfgraf > summary::after { content: " ›"; display: inline-block; transform: rotate(90deg); margin-left: 4px; }
+  .pfgraf[open] > summary::after { transform: rotate(-90deg); }
   /* ============ CENTRAL DE AJUDA (v706) ============ */
   .ajgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
   .ajcard { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 15px; cursor: pointer;
@@ -5755,6 +5778,95 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (zMed >= 0 ? "<b style='color:" + FCZC[zMed] + ";'>" + FCZN[zMed] + "</b> · " : "") + "máximo " + mxFc + " bpm"));
         }
         if (kpis.length) html += "<div class='pfkpis'>" + kpis.join("") + "</div>";
+        /* ==== HISTÓRICO DE TREINO POR MÊS (v710) ====
+         * O professor não tinha como ver o passado do aluno organizado: era um
+         * empilhado de listas. Agora tudo que o app devolve vira um DIÁRIO —
+         * um dia por linha, navegável por mês (‹ ›), com o detalhe do dia numa
+         * gaveta: cargas anotadas, corrida, circuito, esforço, batimento, peso
+         * e o resumo escrito. As listas e gráficos completos foram pra porta
+         * "Gráficos e evolução completa" logo abaixo — o topo fica simples. */
+        var porDia = {};
+        var diaH = function (k) { return porDia[k] = porDia[k] || { cg: [], cr: [], wod: [] }; };
+        diasTreino.forEach(function (k) { diaH(k).fez = 1; });
+        // leitura própria: o `var dc` do bloco de cargas mora mais abaixo (içado = undefined aqui)
+        var dcH = (ret.cargas && typeof ret.cargas === "object" && !Array.isArray(ret.cargas)) ? ret.cargas : {};
+        Object.keys(dcH).forEach(function (ex9) {
+          (Array.isArray(dcH[ex9]) ? dcH[ex9] : []).forEach(function (r9) {
+            if (r9 && typeof r9 === "object" && dataRe(String(r9.d || "")) && isFinite(+r9.kg) && +r9.kg >= 0 && +r9.kg < 2000)
+              diaH(r9.d).cg.push({ ex: ex9, kg: +r9.kg, r: r9.r });
+          });
+        });
+        (Array.isArray(ret.cardio) ? ret.cardio : []).forEach(function (x9) {
+          if (x9 && typeof x9 === "object" && dataRe(String(x9.d || ""))) diaH(x9.d).cr.push(x9);
+        });
+        Object.keys((ret.wodres && typeof ret.wodres === "object" && !Array.isArray(ret.wodres)) ? ret.wodres : {}).forEach(function (k9) {
+          (Array.isArray(ret.wodres[k9]) ? ret.wodres[k9] : []).forEach(function (x9) {
+            if (x9 && typeof x9 === "object" && dataRe(String(x9.d || ""))) diaH(x9.d).wod.push(x9);
+          });
+        });
+        Object.keys(rpe).forEach(function (k9) { if (dataRe(k9) && [1, 2, 3].indexOf(+rpe[k9]) !== -1) diaH(k9).rpe = +rpe[k9]; });
+        Object.keys(fcH).forEach(function (k9) { if (dataRe(k9) && fcH[k9] && bpmOk(fcH[k9].m)) diaH(k9).fc = fcH[k9]; });
+        ks.forEach(function (k9) { diaH(k9).peso = +pz[k9]; });
+        (Array.isArray(ret.notas) ? ret.notas : []).forEach(function (n9) {
+          if (n9 && typeof n9 === "object" && dataRe(String(n9.d || "")) && n9.t) diaH(n9.d).nota = String(n9.t).slice(0, 400);
+        });
+        var todosDias = Object.keys(porDia).sort();
+        if (todosDias.length) {
+          var MESH = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+          var DSEM = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+          var RPETX = { 1: "leve", 2: "na medida", 3: "pesado" };
+          var hjH = new Date();
+          var alvoH = new Date(hjH.getFullYear(), hjH.getMonth() - pfHistOff, 1);
+          var mesH = alvoH.getFullYear() + "-" + String(alvoH.getMonth() + 1).padStart(2, "0");
+          var doMes = todosDias.filter(function (k9) { return k9.slice(0, 7) === mesH; }).reverse();
+          var treinosH = doMes.filter(function (k9) { return porDia[k9].fez || porDia[k9].cg.length || porDia[k9].cr.length || porDia[k9].wod.length; }).length;
+          var temAntes = todosDias[0] < mesH + "-01";
+          html += "<div class='pfappk'>Histórico de treino</div>" +
+            "<div class='pfhnav'>" +
+            (temAntes ? "<button type='button' data-hnav='1' title='mês anterior' aria-label='mês anterior'>‹</button>" : "<span></span>") +
+            "<b>" + MESH[alvoH.getMonth()] + " de " + alvoH.getFullYear() + "</b><span class='pfhsub'>" + S.plural(treinosH, "dia de treino", "dias de treino") + "</span>" +
+            (pfHistOff > 0 ? "<button type='button' data-hnav='-1' title='mês seguinte' aria-label='mês seguinte'>›</button>" : "<span></span>") + "</div>";
+          if (!doMes.length) {
+            html += "<div class='muted' style='font-size:12.5px;margin:2px 0 6px;'>Nenhum registro neste mês.</div>";
+          }
+          html += doMes.map(function (k9) {
+            var d9 = porDia[k9];
+            var dt9 = new Date(k9 + "T12:00:00");
+            var chips = [];
+            if (d9.fez || d9.cg.length) chips.push("Treinou");
+            d9.cr.forEach(function (c9) { chips.push((+c9.k ? String((+c9.k).toFixed(1)).replace(".", ",") + " km" : "cardio")); });
+            if (d9.wod.length) chips.push("circuito");
+            if (d9.rpe) chips.push(RPETX[d9.rpe]);
+            if (d9.fc) chips.push(Math.round(+d9.fc.m) + " bpm");
+            if (d9.peso && !chips.length) chips.push(num(d9.peso) + " kg");
+            var mio9 = "";
+            if (d9.cg.length) {
+              mio9 += "<div class='pfdrot'>Cargas anotadas</div>" + d9.cg.map(function (c9) {
+                return "<div class='pfdl'>" + esc(String(c9.ex).slice(0, 48)) + " — <b>" + num(c9.kg) + " kg</b>" +
+                  (c9.r ? " × " + esc(String(c9.r).slice(0, 6)) : "") + "</div>";
+              }).join("");
+            }
+            d9.cr.forEach(function (c9) {
+              var mm9 = Math.max(0, Math.round(+c9.s || 0));
+              mio9 += "<div class='pfdrot'>" + esc(String(c9.n || "Cardio").slice(0, 40)) + "</div><div class='pfdl'>" +
+                (+c9.k ? String((+c9.k).toFixed(2)).replace(".", ",") + " km · " : "") + Math.floor(mm9 / 60) + ":" + ("0" + (mm9 % 60)).slice(-2) +
+                (c9.p ? " · pace " + esc(String(c9.p).slice(0, 8)) : "") + (bpmOk(c9.fc) ? " · " + Math.round(+c9.fc) + " bpm" : "") + "</div>";
+            });
+            d9.wod.forEach(function (w9) {
+              mio9 += "<div class='pfdrot'>" + esc(String(w9.n || "Circuito").slice(0, 40)) + "</div><div class='pfdl'>" + esc(String(w9.r || "").slice(0, 90)) + "</div>";
+            });
+            var pontos9 = [];
+            if (d9.rpe) pontos9.push("esforço: <b>" + RPETX[d9.rpe] + "</b>");
+            if (d9.fc) pontos9.push("batimento <b>" + Math.round(+d9.fc.m) + " bpm</b>" + (bpmOk(d9.fc.x) ? " (pico " + Math.round(+d9.fc.x) + ")" : ""));
+            if (d9.peso) pontos9.push("balança: <b>" + num(d9.peso) + " kg</b>");
+            if (pontos9.length) mio9 += "<div class='pfdl' style='margin-top:4px;'>" + pontos9.join(" · ") + "</div>";
+            if (d9.nota) mio9 += "<div class='pfdnota'>“" + esc(d9.nota) + "”</div>";
+            if (!mio9) mio9 = "<div class='pfdl muted'>Só o Treinei hoje! — sem anotações neste dia.</div>";
+            return "<details class='pfdia'><summary><b>" + DSEM[dt9.getDay()] + " " + k9.slice(8, 10) + "/" + k9.slice(5, 7) + "</b>" +
+              "<span class='pfdchips'>" + chips.map(function (c9) { return "<i>" + c9 + "</i>"; }).join("") + "</span></summary>" + mio9 + "</details>";
+          }).join("");
+        }
+        var marcaGraf = html.length;
         // placares dos circuitos (WOD) prescritos
         var wres = (ret.wodres && typeof ret.wodres === "object" && !Array.isArray(ret.wodres)) ? ret.wodres : {};
         var todasW = [];
@@ -5927,8 +6039,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:var(--tk-tx4);letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
             "</div>";
         }
+        /* v710: tudo depois do histórico (listas completas, gráficos, fotos)
+         * entra na porta retrátil — regra 9 do colapso: o topo fica simples,
+         * quem quiser a análise funda abre. */
+        var restoGraf = html.slice(marcaGraf);
+        if (restoGraf) {
+          html = html.slice(0, marcaGraf) +
+            "<details class='pfgraf'><summary>Gráficos e evolução completa</summary>" + restoGraf + "</details>";
+        }
         return html;
   }
+  /* estado do mês do histórico (0 = mês atual; ‹ soma, › subtrai) — zera a
+   * cada aluno aberto. O re-render usa o retorno guardado em pfAppUlt. */
+  var pfHistOff = 0, pfAppUlt = null;
+  $("pfAppDados").addEventListener("click", function (e) {
+    var b9 = e.target.closest && e.target.closest("[data-hnav]");
+    if (!b9 || !pfAppUlt) return;
+    pfHistOff = Math.max(0, pfHistOff + (+b9.getAttribute("data-hnav")));
+    try { $("pfAppDados").innerHTML = htmlRetornoApp(pfAppUlt.ret, pfAppUlt.al) || ""; } catch (e9) {}
+  });
+  window.__histApp = { off: function (n) { pfHistOff = Math.max(0, +n || 0); }, atual: function () { return pfHistOff; } }; // testes
   // ---------- aba Check-ins do perfil: cada pergunta respondida vira uma métrica ----------
   /* ============================================================
    * AS RESPOSTAS DO QUESTIONARIO VIRAM METRICA DO ALUNO (v630)
@@ -6302,8 +6432,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function pintaAppDados(a) {
     var box = $("pfAppDados");
+    pfHistOff = 0; pfAppUlt = null; // outro aluno = histórico volta pro mês atual
     // modo demonstração: retorno fake gravado direto no aluno (sem nuvem)
     if (a.demoRetorno) {
+      pfAppUlt = { ret: a.demoRetorno, al: a };
       try { box.innerHTML = htmlRetornoApp(a.demoRetorno, a) || "Sem registros no demo."; }
       catch (e) { box.textContent = "Dados do demo num formato inesperado."; }
       pintaCheckins(a.demoRetorno);
@@ -6376,9 +6508,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         var html = "";
         try {
+        pfAppUlt = { ret: ret, al: a }; // v710: as setas ‹ › do histórico re-renderizam daqui
         html = htmlRetornoApp(ret, a);
         } catch (eApp) {
           // retorno adulterado/malformado não pode travar o painel em "Carregando…"
+          pfAppUlt = null;
           box.textContent = "Os dados do app deste aluno vieram num formato inesperado — peça pra ele abrir o app com internet que o sistema regrava tudo.";
           return;
         }
