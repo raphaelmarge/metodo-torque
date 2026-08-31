@@ -1761,9 +1761,16 @@
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
-      // o antes/depois que vai pro painel prioriza as fotos de FRENTE (tela 41)
-      "var fs=L('ptfotos',[]);var fr=fs.filter(function(x){return (x.tipo||'frente')==='frente';});if(!fr.length)fr=fs;" +
-      "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
+      /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
+       * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
+       * de CADA tipo; a marca v611 cobre os seis, então continua subindo só
+       * quando alguma muda. Sem foto de frente, o par principal cai em
+       * qualquer foto (compat com quem nunca marcou o tipo). */
+      "var fs=L('ptfotos',[]);" +
+      "function fpar9(tp){var l9=fs.filter(function(x){return (x.tipo||'frente')===tp;});return [l9[0]||null,l9.length>1?l9[l9.length-1]:null];}" +
+      "var parF=fpar9('frente');if(!parF[0]&&fs.length){parF=[fs[0]||null,fs.length>1?fs[fs.length-1]:null];}" +
+      "var parL=fpar9('lado'),parC=fpar9('costas');" +
+      "var pri=parF[0],ult=parF[1];" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
       /* FOTO SÓ QUANDO MUDA (v611). Este devolve dispara a cada peso, carga,
@@ -1780,14 +1787,19 @@
        * foto de novo na próxima. */
       "var perf9=L('ptfotoperfil','')||null;" +
       "function mrc9(x){if(!x||!x.img)return '-';var im=String(x.img);return x.d+':'+im.length+':'+im.slice(-24);}" +
-      "var marca9=[mrc9(pri),mrc9(ult),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
+      "var marca9=[mrc9(pri),mrc9(ult),mrc9(parL[0]),mrc9(parL[1]),mrc9(parC[0]),mrc9(parC[1]),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
       "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "aceite:L('ptaceite',null)," +
       "notas:L('ptnotas',[])," +
       "depo:L('ptdepo',null)," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
-      "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;}" +
+      "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;" +
+      // v711: os pares de lado e costas (chaves novas; painel antigo só ignora)
+      "dd9.fotoAntesL=parL[0]?parL[0].img:null;dd9.fotoAntesLD=parL[0]?parL[0].d:null;" +
+      "dd9.fotoDepoisL=parL[1]?parL[1].img:null;dd9.fotoDepoisLD=parL[1]?parL[1].d:null;" +
+      "dd9.fotoAntesC=parC[0]?parC[0].img:null;dd9.fotoAntesCD=parC[0]?parC[0].d:null;" +
+      "dd9.fotoDepoisC=parC[1]?parC[1].img:null;dd9.fotoDepoisCD=parC[1]?parC[1].d:null;}" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:dd9}).then(function(r9){if(r9&&r9.ok)Sv('ptdevfoto',marca9);});},1800);}" +
       "window.__devolveApp=devolveApp;" +
       "setTimeout(devolveApp,2500);" +

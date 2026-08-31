@@ -219,6 +219,11 @@
         checks: serieChecks(Math.min(Math.floor(cfg.desde / 7), 26), cfg.capricho),
         fotoAntes: svgFoto("ANTES", "#4c4560"), fotoAntesD: iso(Math.min(cfg.desde, 120)),
         fotoDepois: svgFoto("AGORA", "#7c3aed"), fotoDepoisD: iso(2),
+        // v711: o app devolve os três ângulos — a demo mostra lado e costas também
+        fotoAntesL: svgFoto("LADO ANTES", "#4c4560"), fotoAntesLD: iso(Math.min(cfg.desde, 120)),
+        fotoDepoisL: svgFoto("LADO AGORA", "#6d28d9"), fotoDepoisLD: iso(2),
+        fotoAntesC: svgFoto("COSTAS ANTES", "#4c4560"), fotoAntesCD: iso(Math.min(cfg.desde, 120)),
+        fotoDepoisC: svgFoto("COSTAS AGORA", "#5b21b6"), fotoDepoisCD: iso(2),
         rpe: (function () { var r = {}; r[iso(1)] = idx % 3 === 0 ? 3 : 2; r[iso(3)] = 2; r[iso(5)] = idx % 2 ? 1 : 2; return r; })(),
         onb: { obj: cfg.objetivo === "Hipertrofia" ? "musculo" : "saude", dias: String(cfg.meta), dor: idx === 3 ? "joelho esquerdo (condromalácia)" : "", em: iso(cfg.desde) },
       },
