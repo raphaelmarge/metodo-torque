@@ -1661,6 +1661,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agsem .agpil .ses-acoes { display: flex; flex-direction: column; gap: 5px; min-width: 0;
     padding: 7px; border: 1px solid var(--tk-trilha); border-radius: 12px; background: var(--tk-sup4); }
   .agsem .agpil .ses-acoes .btn { width: 100%; min-width: 0; }
+  /* ============ ABA "DIRETO DO APP" DA FICHA (v709) ============
+   * A aba tinha ficado no visual de antes do redesenho. Estes moldes seguem
+   * a base v629: tile com borda e raio 14, kicker de seção, linha com fio. */
+  .pfkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; margin: 8px 0 4px; }
+  .pfkpi { background: var(--tk-sup2); border: 1px solid var(--tk-bd2); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+  .pfkpi > i { display: block; font-style: normal; font-size: 9.5px; font-weight: 800; letter-spacing: .1em;
+               text-transform: uppercase; color: var(--tk-tx5); }
+  .pfkpi > b { display: block; font-size: 22px; font-weight: 900; letter-spacing: -.02em; margin-top: 3px; color: var(--tk-tx); }
+  .pfkpi > span { display: block; font-size: 11px; color: var(--tk-tx4); margin-top: 2px; }
+  .pfappk { margin: 18px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--tk-tx5); }
+  .pfappl { font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--tk-trilha); color: var(--tk-tx2); }
   /* ============ CENTRAL DE AJUDA (v706) ============ */
   .ajgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
   .ajcard { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px 15px; cursor: pointer;
@@ -3681,19 +3693,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   </div>
 
   <div class="card" data-pfsec="app">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Direto do app do aluno</h2>
+    <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Direto do app do aluno</h2>
     <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">O que o aluno registra no app dele (peso na balança, cargas, treinos e fotos) aparece aqui sozinho quando os dois estão com internet.</p>
     <div id="pfAppDados" class="muted" style="font-size: 13px;">Carregando…</div>
   </div>
 
   <div class="card" data-pfsec="quest">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas dos questionários</h2>
+    <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas dos questionários</h2>
     <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">Cada pergunta que o aluno responde no app vira uma métrica aqui — com o valor de hoje, a tendência e o histórico. Mande questionários pela aba <b>Questionários</b> do menu.</p>
     <div id="pfQuestBox" class="muted" style="font-size: 13px;">Carregando…</div>
   </div>
 
   <div class="card" data-pfsec="fin">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Financeiro</h2>
+    <h2>Financeiro</h2>
     <div id="pfFin" style="font-size: 13.5px; line-height: 1.7; margin-top: 6px;"></div>
   </div>
 
@@ -5651,13 +5663,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dataRe = function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); };
         var isoLocal = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
         var num = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
+        /* v709: a aba tinha ficado no visual de ANTES do redesenho (tiles
+         * roxos de raio 8, títulos-parágrafo, listas de tracinho, cores fora
+         * da paleta). kpi/titulo agora são os moldes do padrão v629+ — as
+         * CONTAS não mudaram nada. */
         var kpi = function (rot, val, sub) {
-          return "<div style='background:rgba(124,58,237,.08);border:1px solid var(--linha);border-radius:8px;padding:9px 11px;'>" +
-            "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--tk-tx4);text-transform:uppercase;'>" + rot + "</div>" +
-            "<div style='font-size:19px;font-weight:900;'>" + val + "</div>" +
-            (sub ? "<div style='font-size:10.5px;color:var(--tk-tx3);'>" + sub + "</div>" : "") + "</div>";
+          return "<div class='pfkpi'><i>" + rot + "</i><b>" + val + "</b>" +
+            (sub ? "<span>" + sub + "</span>" : "") + "</div>";
         };
-        var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:var(--tk-tx2);'><b>" + t + "</b></div>"; };
+        var titulo = function (t) { return "<div class='pfappk'>" + t + "</div>"; };
         // séries validadas (tudo vem do aparelho do aluno — só números e datas passam)
         var pz = ret.peso || {};
         var ks = Object.keys(pz).filter(function (k) { return dataRe(k) && isFinite(+pz[k]) && +pz[k] > 20 && +pz[k] < 400; }).sort();
@@ -5740,7 +5754,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           kpis.push(kpi("Batimento médio", medFc + " bpm",
             (zMed >= 0 ? "<b style='color:" + FCZC[zMed] + ";'>" + FCZN[zMed] + "</b> · " : "") + "máximo " + mxFc + " bpm"));
         }
-        if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
+        if (kpis.length) html += "<div class='pfkpis'>" + kpis.join("") + "</div>";
         // placares dos circuitos (WOD) prescritos
         var wres = (ret.wodres && typeof ret.wodres === "object" && !Array.isArray(ret.wodres)) ? ret.wodres : {};
         var todasW = [];
@@ -5752,7 +5766,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (todasW.length) {
           todasW.sort(function (x, y) { return x.d < y.d ? -1 : 1; });
           html += titulo("Circuitos (WOD) — placares do app") + todasW.slice(-6).reverse().map(function (x) {
-            return "<div style='font-size:13px;padding:4px 0;border-bottom:1px dashed var(--linha);'><b>" + esc(String(x.n || "Circuito").slice(0, 40)) + "</b> — " +
+            return "<div class='pfappl'><b>" + esc(String(x.n || "Circuito").slice(0, 40)) + "</b> — " +
               esc(String(x.r || "").slice(0, 90)) + " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
           }).join("");
         }
@@ -5764,7 +5778,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var crModsP = { corrida: "Corrida", caminhada: "Caminhada", bike: "Bike" };
           var fmtSegP = function (s) { s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); };
           html += titulo("Corrida e bike — registros do app") + crds.slice(-6).reverse().map(function (x) {
-            return "<div style='font-size:13px;padding:4px 0;border-bottom:1px dashed var(--linha);'><b>" + esc(String(x.n || "Cardio").slice(0, 40)) + "</b>" +
+            return "<div class='pfappl'><b>" + esc(String(x.n || "Cardio").slice(0, 40)) + "</b>" +
               " <span class='muted'>(" + esc(crModsP[x.m] || x.m || "") + ")</span> — " +
               (+x.k ? String((+x.k).toFixed(2)).replace(".", ",") + " km · " : "") + fmtSegP(x.s) +
               (x.p ? " · pace " + esc(String(x.p).slice(0, 8)) + " /km" : "") +
@@ -5788,24 +5802,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var barras = lFc.map(function (k, i) {
             var m9 = +fcH[k].m, x9 = +fcH[k].x, z9 = fcZona(m9);
             var cx = PF + passo * (i + 0.5), x0 = Math.round(cx - larg / 2);
-            return "<rect x='" + x0 + "' y='" + yFc(m9) + "' width='" + Math.round(larg) + "' height='" + Math.max(1, HF - yFc(m9)) + "' rx='3' fill='" + (z9 >= 0 ? FCZC[z9] : "#a78bfa") + "' opacity='.85'><title>" +
+            return "<rect x='" + x0 + "' y='" + yFc(m9) + "' width='" + Math.round(larg) + "' height='" + Math.max(1, HF - yFc(m9)) + "' rx='3' style='fill:" + (z9 >= 0 ? FCZC[z9] : "var(--pt-roxo-claro)") + ";' opacity='.85'><title>" +
               k.slice(8, 10) + "/" + k.slice(5, 7) + ": " + m9 + " bpm médio, " + x9 + " máx</title></rect>" +
-              "<line x1='" + x0 + "' y1='" + yFc(x9) + "' x2='" + (x0 + Math.round(larg)) + "' y2='" + yFc(x9) + "' stroke='#e9d5ff' stroke-width='2' stroke-linecap='round'/>";
+              "<line x1='" + x0 + "' y1='" + yFc(x9) + "' x2='" + (x0 + Math.round(larg)) + "' y2='" + yFc(x9) + "' style='stroke:var(--pt-roxo-clar2);' stroke-width='2' stroke-linecap='round'/>";
           }).join("");
           /* as duas réguas (80% e 90% da máxima) são só linha: rótulo dentro do
            * gráfico esbarrava nos traços de pico e virava sopa de letra. A
            * explicação mora na legenda, logo abaixo. */
           var reguas = fcMaxAl ? [0.8, 0.9].map(function (r) {
             var yy = yFc(fcMaxAl * r);
-            return "<line x1='" + PF + "' y1='" + yy + "' x2='" + (WF - PF) + "' y2='" + yy + "' stroke='#8a8695' stroke-width='1' stroke-dasharray='3 4' opacity='.55'/>";
+            return "<line x1='" + PF + "' y1='" + yy + "' x2='" + (WF - PF) + "' y2='" + yy + "' style='stroke:var(--tk-tx5);' stroke-width='1' stroke-dasharray='3 4' opacity='.55'/>";
           }).join("") : "";
           html += titulo("Batimentos — esforço nos treinos (cinta do app)") +
             "<svg viewBox='0 0 " + WF + " " + (HF + 20) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Gráfico de batimentos por treino'>" +
             reguas + barras +
-            "<text x='" + PF + "' y='" + (HF + 15) + "' font-size='10' fill='#8a8695'>" + lFc[0].slice(8, 10) + "/" + lFc[0].slice(5, 7) + " · barra = média, traço = pico (escala a partir de " + pisoFc + " bpm)</text>" +
-            "<text x='" + (WF - PF) + "' y='" + (HF + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + lFc[lFc.length - 1].slice(8, 10) + "/" + lFc[lFc.length - 1].slice(5, 7) + "</text></svg>";
+            "<text x='" + PF + "' y='" + (HF + 15) + "' font-size='10' style='fill:var(--tk-tx5);'>" + lFc[0].slice(8, 10) + "/" + lFc[0].slice(5, 7) + " · barra = média, traço = pico (escala a partir de " + pisoFc + " bpm)</text>" +
+            "<text x='" + (WF - PF) + "' y='" + (HF + 15) + "' font-size='10' style='fill:var(--tk-tx5);' text-anchor='end'>" + lFc[lFc.length - 1].slice(8, 10) + "/" + lFc[lFc.length - 1].slice(5, 7) + "</text></svg>";
           if (fcMaxAl) {
-            html += "<div style='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10.5px;color:#a9a4b5;'>" +
+            html += "<div style='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10.5px;color:var(--tk-tx4);'>" +
               FCZN.map(function (z9, i9) { return "<span><b style='display:inline-block;width:9px;height:9px;border-radius:2px;background:" + FCZC[i9] + ";'></b> " + z9 + "</span>"; }).join("") +
               "<span class='muted'>máxima estimada: " + fcMaxAl + " bpm (" + idadeAl + " anos) · tracejado = 80% e 90% dela</span></div>";
             /* sinal de carga: muito treino seguido na zona forte pede recuperação */
@@ -5813,7 +5827,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             var ult30Fc = fcDias.filter(function (k) { return k >= corteFc; });
             var pesados = ult30Fc.filter(function (k) { return fcZona(+fcH[k].m) >= 3; }).length;
             if (pesados >= 3 && pesados >= ult30Fc.length * 0.6) {
-              html += "<div style='color:#fbbf24;font-size:12.5px;margin-top:6px;'>" + pesados + " dos " + ult30Fc.length +
+              html += "<div style='color:var(--tk-aten);font-size:12.5px;margin-top:6px;'>" + pesados + " dos " + ult30Fc.length +
                 " treinos dos últimos 30 dias ficaram em zona forte ou máxima — vale olhar a recuperação dele.</div>";
             }
           } else {
@@ -5827,7 +5841,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<div style='font-size:13px;'>" +
             (onb.obj ? "Objetivo: <b>" + esc(String(onb.obj).slice(0, 40)) + "</b>" : "") +
             (onb.dias ? " · <b>" + esc(String(onb.dias).slice(0, 6)) + " dias/semana</b>" : "") +
-            (onb.dor ? "<div style='color:#fbbf24;margin-top:4px;'>Atenção: relatou “" + esc(String(onb.dor).slice(0, 120)) + "” — adapte o treino.</div>" : "") +
+            (onb.dor ? "<div style='color:var(--tk-aten);margin-top:4px;'>Atenção: relatou “" + esc(String(onb.dor).slice(0, 120)) + "” — adapte o treino.</div>" : "") +
             "</div>";
         }
         // ---- peso: gráfico de linha ----
@@ -5843,11 +5857,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               return (PAD + Math.round((W - 2 * PAD) * i / (l30.length - 1))) + "," + (PAD + Math.round((H - 2 * PAD) * (1 - (v - min) / faixa)));
             });
             html += "<svg viewBox='0 0 " + W + " " + (H + 20) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Gráfico de peso'>" +
-              "<polygon points='" + PAD + "," + H + " " + pts.join(" ") + " " + (W - PAD) + "," + H + "' fill='rgba(167,139,250,.14)'/>" +
-              "<polyline points='" + pts.join(" ") + "' fill='none' stroke='#a78bfa' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>" +
-              pts.map(function (p2) { return "<circle cx='" + p2.split(",")[0] + "' cy='" + p2.split(",")[1] + "' r='2.4' fill='#a78bfa'/>"; }).join("") +
-              "<text x='" + PAD + "' y='" + (H + 15) + "' font-size='10' fill='#8a8695'>" + l30[0].slice(8, 10) + "/" + l30[0].slice(5, 7) + " · mín " + num(min) + " · máx " + num(max) + "</text>" +
-              "<text x='" + (W - PAD) + "' y='" + (H + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + l30[l30.length - 1].slice(8, 10) + "/" + l30[l30.length - 1].slice(5, 7) + "</text></svg>";
+              "<polygon points='" + PAD + "," + H + " " + pts.join(" ") + " " + (W - PAD) + "," + H + "' style='fill:var(--tk-roxoFraco);'/>" +
+              "<polyline points='" + pts.join(" ") + "' fill='none' style='stroke:var(--pt-roxo-claro);' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>" +
+              pts.map(function (p2) { return "<circle cx='" + p2.split(",")[0] + "' cy='" + p2.split(",")[1] + "' r='2.4' style='fill:var(--pt-roxo-claro);'/>"; }).join("") +
+              "<text x='" + PAD + "' y='" + (H + 15) + "' font-size='10' style='fill:var(--tk-tx5);'>" + l30[0].slice(8, 10) + "/" + l30[0].slice(5, 7) + " · mín " + num(min) + " · máx " + num(max) + "</text>" +
+              "<text x='" + (W - PAD) + "' y='" + (H + 15) + "' font-size='10' style='fill:var(--tk-tx5);' text-anchor='end'>" + l30[l30.length - 1].slice(8, 10) + "/" + l30[l30.length - 1].slice(5, 7) + "</text></svg>";
           } else {
             html += "<div class='muted' style='font-size:12.5px;'>Só 1 registro ainda (" + num(vals[0]) + " kg) — o gráfico aparece a partir do 2º.</div>";
           }
@@ -5873,19 +5887,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 var sv = lst.slice(-12).map(function (r2) { return +r2.kg; });
                 var smin = Math.min.apply(null, sv), sfx = (Math.max.apply(null, sv) - smin) || 1;
                 var sp = sv.map(function (v, i) { return (2 + Math.round(76 * i / (sv.length - 1))) + "," + (3 + Math.round(18 * (1 - (v - smin) / sfx))); });
-                spark = "<svg viewBox='0 0 80 24' style='width:80px;height:24px;flex:none;'><polyline points='" + sp.join(" ") + "' fill='none' stroke='#4ade80' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>";
+                spark = "<svg class='pfspark' viewBox='0 0 80 24' style='width:80px;height:24px;flex:none;'><polyline points='" + sp.join(" ") + "' fill='none' style='stroke:var(--tk-ok);' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>";
               }
-              return "<div style='display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
+              return "<div class='pfappl' style='display:flex;align-items:center;gap:10px;'>" +
                 "<span style='flex:1;min-width:0;'>" + esc(ex) + "</span>" + spark +
                 "<span style='flex:none;'><b>" + num(ult) + " kg</b> " +
-                "<span style='color:" + (d2 > 0 ? "#4ade80" : "#a9a4b5") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + num(d2) + ")</span></span></div>";
+                "<span style='color:" + (d2 > 0 ? "var(--tk-ok)" : "var(--tk-tx4)") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + num(d2) + ")</span></span></div>";
             }).join("");
         }
         // ---- treinos por mês ----
         if (diasTreino.length) {
           var porMes2 = {};
           diasTreino.forEach(function (k) { porMes2[k.slice(0, 7)] = (porMes2[k.slice(0, 7)] || 0) + 1; });
-          html += titulo("Treinos marcados no app — " + diasTreino.length + " no total") + barrasMes(porMes2, "#4ade80");
+          html += titulo("Treinos marcados no app — " + diasTreino.length + " no total") + barrasMes(porMes2, "var(--tk-ok)");
         }
         // ---- hábitos diários ----
         if (ult30.length) {
@@ -5894,8 +5908,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               var pct = Math.round(100 * contHab[i] / ult30.length);
               return "<div style='display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;'>" +
                 "<span style='flex:none;width:120px;'>" + h2[0] + " " + h2[1] + "</span>" +
-                "<div style='flex:1;height:9px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;'>" +
-                "<div style='width:" + pct + "%;height:100%;background:" + (pct >= 60 ? "#4ade80" : pct >= 30 ? "#fbbf24" : "#f87171") + ";border-radius:99px;'></div></div>" +
+                "<div style='flex:1;height:9px;background:var(--tk-trilha);border-radius:99px;overflow:hidden;'>" +
+                "<div style='width:" + pct + "%;height:100%;background:" + (pct >= 60 ? "var(--tk-ok)" : pct >= 30 ? "var(--tk-aten)" : "var(--tk-erro)") + ";border-radius:99px;'></div></div>" +
                 "<b style='flex:none;width:42px;text-align:right;'>" + pct + "%</b></div>";
             }).join("") +
             "<div class='muted' style='font-size:12px;margin-top:4px;'>" + dias3 + " de " + ult30.length + " dia(s) com 3+ hábitos batidos.</div>";
