@@ -191,7 +191,6 @@
     };
     var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
-      "<link rel='manifest' href='/app/manifest.webmanifest'>" +
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
       // a Archivo é a cara do redesenho: o CSS pedia a fonte mas ninguém a

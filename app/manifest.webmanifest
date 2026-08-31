@@ -1,7 +1,6 @@
 {
   "name": "TORQUE FIT — Meu app",
   "short_name": "TORQUE FIT",
-  "start_url": "./",
   "display": "standalone",
   "background_color": "#121016",
   "theme_color": "#7c3aed",

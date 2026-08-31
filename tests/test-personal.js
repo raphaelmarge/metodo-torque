@@ -3793,7 +3793,10 @@ async function abaPt(p, a) {
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
-  ok(/manifest\.webmanifest/.test(appHtml) && /theme-color/.test(appHtml) && /apple-touch-icon/.test(appHtml), "app instala como PWA de verdade (manifest + theme-color + ícone iOS)");
+  // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
+  // fixo saiu do app montado de propósito, era ele que fazia o atalho do
+  // iPhone abrir sem o token
+  ok(/data:application\/manifest\+json/.test(appHtml) && /theme-color/.test(appHtml) && /apple-touch-icon/.test(appHtml), "app instala como PWA de verdade (manifest dinâmico + theme-color + ícone iOS)");
   ok(await p.evaluate(async () => {
     const t = await (await fetch("app/index.html")).text();
     return /tq_app_html/.test(t) && /localStorage\.getItem\("tq_app_token"\)/.test(t) && /copiaLocal/.test(t);

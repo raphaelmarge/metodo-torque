@@ -110,7 +110,14 @@
   if (!t || !cfg.url) {
     var cop0 = copiaLocal();
     if (cop0) { abre(cop0); return; }
-    recado("Link incompleto — peça o seu link do app na recepção.");
+    // quem chega aqui geralmente salvou o atalho ANTIGO na tela inicial (sem o
+    // token). O caminho de volta existe: entrar com o e-mail refaz o link.
+    document.querySelector(".box").innerHTML =
+      '<div class="marca">TORQUE</div>' +
+      "<p>Este atalho ficou desatualizado.</p>" +
+      '<p style="font-size:13px;">Entre com o seu e-mail que a gente te leva pro seu app — depois é só salvar na tela de início de novo.</p>' +
+      '<p><a href="../aluno-login.html" style="display:inline-block;background:#7c3aed;color:#fff;border-radius:99px;padding:13px 26px;font-weight:800;font-size:15px;text-decoration:none;">Entrar com meu e-mail</a></p>' +
+      '<p style="font-size:12.5px;color:#8a8695;">Ou peça o seu link do app pro seu personal.</p>';
     return;
   }
   try { localStorage.setItem("tq_app_token", t); } catch (e) {}
