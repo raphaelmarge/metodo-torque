@@ -17702,6 +17702,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         acao: '<button type="button" class="btn" data-montatreino="' + w.a.id + '">Montar nova</button>',
       });
     }
+    // 2b) v729: reavaliação em atraso — a última avaliação física do aluno
+    //     passou de 90 dias. Só pra quem JÁ tem avaliação: aluno sem nenhuma
+    //     é caso da esteira do aluno novo, que já cobra "Avaliação física
+    //     feita" na ficha.
+    var reav = st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) {
+      var ult = (st.avaliacoes || []).filter(function (v9) { return v9.alunoId === a.id; })
+        .map(function (v9) { return String(v9.data || "").slice(0, 10); }).sort().pop();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ult || "")) return null;
+      var dias = Math.floor((Date.parse(hoje + "T12:00") - Date.parse(ult + "T12:00")) / 864e5);
+      if (dias < 90) return null;
+      return { a: a, dias: dias };
+    }).filter(Boolean).sort(function (x, y) { return y.dias - x.dias; });
+    if (reav[0]) {
+      var rv = reav[0];
+      itens.push({
+        cor: "var(--tk-aten)", sel: "REAVALIAÇÃO EM ATRASO",
+        qu: esc(rv.a.nome),
+        pq: "Última avaliação física há " + S.plural(Math.floor(rv.dias / 30), "mês", "meses") +
+          (reav.length > 1 ? " · e mais " + (reav.length - 1) : ""),
+        acao: '<button type="button" class="btn" data-reaval="' + rv.a.id + '">Nova avaliação</button>',
+      });
+    }
     // 3) fila de WhatsApp esperando aprovação (v693): resgate de sumido,
     //    atraso, aniversário… cada uma sai com um toque — mas a fila morava em
     //    Relatórios e o professor não via. Aqui entra só a CONTAGEM.
@@ -17808,6 +17830,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       vaiAba("treinos");
       var sel = $("taAluno");
       if (sel) { sel.value = mt.getAttribute("data-montatreino"); sel.dispatchEvent(new Event("change")); }
+      return;
+    }
+    // v729: "Nova avaliação" do Resolver hoje — Avaliações com o aluno escolhido
+    var rv9 = e.target.closest && e.target.closest("[data-reaval]");
+    if (rv9) {
+      vaiAba("avaliacoes");
+      var selA = $("avAluno"), idRv = rv9.getAttribute("data-reaval");
+      if (selA) {
+        // o seletor pode estar atrás do estado (aluno que acabou de entrar):
+        // sem a opção, setar .value viraria "" em silêncio
+        if (!selA.querySelector('option[value="' + idRv + '"]')) {
+          var aRv = (load().alunos || []).find(function (a9) { return a9.id === idRv; });
+          if (aRv) { var oRv = document.createElement("option"); oRv.value = aRv.id; oRv.textContent = aRv.nome; selA.appendChild(oRv); }
+        }
+        selA.value = idRv;
+        selA.dispatchEvent(new Event("change", { bubbles: true }));
+      }
       return;
     }
   });

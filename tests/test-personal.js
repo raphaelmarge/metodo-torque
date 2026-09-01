@@ -3321,6 +3321,45 @@ async function abaPt(p, a) {
       "🙋 o Início do app ganha o card de confirmação (hoje/amanhã) com o mesmo motor da Agenda");
   }
 
+  // 🩺 v729: reavaliação em atraso — a última avaliação física passou de 90
+  // dias e o Resolver hoje avisa, com botão que abre Avaliações no aluno certo
+  const rav = await p.evaluate(() => {
+    const S = window.MTStore;
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const st = S.read("ptStudio", {});
+    st.avaliacoes = st.avaliacoes || [];
+    st.alunos.push({ id: "rv-a", nome: "Reava Costa", ativo: true });
+    // 400 dias: o MAIS atrasado do studio, então é ele que aparece no card
+    st.avaliacoes.push({ id: "rv-1", alunoId: "rv-a", data: iso(400), peso: 80 });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__dashPT.resolver(S.read("ptStudio", {}));
+    const el = document.getElementById("dashResolver");
+    const out = { avisa: /REAVALIAÇÃO EM ATRASO/.test(el.textContent) && /Reava Costa/.test(el.textContent) && /13 meses/.test(el.textContent) };
+    const bt = el.querySelector("[data-reaval]");
+    out.bt = !!bt;
+    if (bt) {
+      bt.click();
+      out.aba = !document.getElementById("vAvaliacoes").hidden;
+      out.sel = document.getElementById("avAluno").value === "rv-a";
+    }
+    // avaliação recente não acusa (o nome some do card)
+    const st2 = S.read("ptStudio", {});
+    st2.avaliacoes.find((v) => v.id === "rv-1").data = iso(30);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__dashPT.resolver(S.read("ptStudio", {}));
+    out.recenteNao = !/Reava Costa/.test(document.getElementById("dashResolver").textContent);
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "rv-a");
+    st9.avaliacoes = st9.avaliacoes.filter((v) => v.id !== "rv-1");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__dashPT.resolver(S.read("ptStudio", {}));
+    return out;
+  });
+  ok(rav.avisa, "🩺 avaliação de 400 dias vira REAVALIAÇÃO EM ATRASO no Resolver hoje (há 13 meses)");
+  ok(rav.bt && rav.aba && rav.sel, "🩺 Nova avaliação abre a aba Avaliações com o aluno já escolhido");
+  ok(rav.recenteNao, "🩺 avaliação recente não acusa nada");
+
   // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
   // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
   const fx = await p.evaluate(() => {
