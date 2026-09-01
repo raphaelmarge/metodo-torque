@@ -1068,8 +1068,10 @@
       "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select></div>" +
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'>" +
       "<button class='btnx' id='agPede' style='width:100%;min-height:58px;font-size:16px;margin-top:10px;'>+ Pedir um horário</button></div>" +
-      // atalho da tela 14: o botão fica visível SEMPRE — tocar seleciona o dia
-      // de hoje e abre o formulário de pedido logo acima
+      /* atalho da tela 14: tocar seleciona o dia de hoje e abre o formulário
+       * de pedido logo acima. v738: ele some quando o formulário JÁ está na
+       * tela — com um dia escolhido, os dois "+ Pedir um horário" saíam
+       * empilhados (foto do Raphael). Quem liga/desliga é o pintaDia. */
       "<button class='btnx' id='agPedeJa' style='width:100%;min-height:58px;font-size:16px;margin-top:12px;'>+ Pedir um horário</button>" +
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
       "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
@@ -2210,7 +2212,7 @@
       "function pintaDia(){var box=document.getElementById('agDia');var form=document.getElementById('agForm');" +
       "var pend9=document.getElementById('agPend');if(pend9){var np9=agDados().filter(function(x){return x.status==='pedido'&&x.dia>=isoHj();}).length;" +
       "pend9.textContent=np9?'você tem '+pl(np9,'pedido esperando','pedidos esperando')+' resposta':'';}" +
-      "if(!AGSEL){box.innerHTML='';form.style.display='none';return;}" +
+      "if(!AGSEL){box.innerHTML='';form.style.display='none';var apj8=document.getElementById('agPedeJa');if(apj8)apj8.style.display='';return;}" +
       "var l=agDados().filter(function(x){return x.dia===AGSEL;});var pd=AGSEL.split('-');" +
       "var dt9=new Date(AGSEL+'T12:00:00');" +
       "box.innerHTML=\"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;'>\"+" +
@@ -2219,7 +2221,8 @@
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
       "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
-      "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
+      "form.style.display=AGSEL>=isoHj()?'block':'none';" +
+      "var apj9=document.getElementById('agPedeJa');if(apj9)apj9.style.display=form.style.display==='none'?'':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
       // salvar horário confirmado no calendário do celular (.ics)

@@ -3505,6 +3505,23 @@ async function abaPt(p, a) {
     });
     ok(fnt.visivel && fnt.normal, "🔠 a linha Tamanho do texto aparece nos Ajustes e nasce em normal");
     ok(fnt.g && fnt.gg && fnt.volta, "🔠 cada toque anda um degrau (grande 1.12 → maior 1.25 → normal) e guarda a escolha");
+
+    // 📅 v738: um "+ Pedir um horário" por vez — com o dia escolhido o
+    // formulário abre e o ATALHO some (antes saíam os dois empilhados)
+    const agBt = await pR.evaluate(() => {
+      const apj = document.getElementById("agPedeJa");
+      const form = document.getElementById("agForm");
+      if (!apj || !form) return { pulou: true };
+      const hj = new Date().toISOString().slice(0, 10);
+      // sem dia escolhido: só o atalho (conta o que o aluno VÊ — lição v612)
+      const out = { antes: getComputedStyle(apj).display !== "none" && getComputedStyle(form).display === "none" };
+      const cel = document.querySelector("[data-agdia='" + hj + "']");
+      if (cel) cel.click();
+      out.depois = getComputedStyle(form).display !== "none" && getComputedStyle(apj).display === "none";
+      return out;
+    });
+    ok(agBt.pulou || (agBt.antes && agBt.depois),
+      "📅 um Pedir um horário por vez: o atalho some quando o formulário do dia abre");
     await ctxR.close();
   }
 
