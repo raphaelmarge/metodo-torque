@@ -3420,6 +3420,30 @@ async function abaPt(p, a) {
     ok(rec.ordem && rec.kg, "🏆 o mural lista do maior pro menor com a carga máxima de cada exercício");
     ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde dos últimos 7 dias");
     ok(rec.umSo, "🏆 com um exercício só o mural não aparece (o destaque do grupo já conta)");
+
+    // 📊 v732: o volume do treino ganha memória (ptvol) e o recibo compara —
+    // recorde de volume, +X% vs último treino, e primeira vez sem comparação
+    const vol = await pR.evaluate(() => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const out = {};
+      localStorage.removeItem("ptvol");
+      out.primeira = window.__vol(3000, hoje) === "" &&
+        JSON.parse(localStorage.getItem("ptvol"))[hoje] === 3000;
+      // com histórico menor: recorde
+      localStorage.setItem("ptvol", JSON.stringify({ "2026-08-20": 2000, "2026-08-27": 2500 }));
+      out.recorde = /maior volume/.test(window.__vol(3100, hoje));
+      // abaixo do recorde mas acima do último: +24%
+      localStorage.setItem("ptvol", JSON.stringify({ "2026-08-20": 4000, "2026-08-27": 2500 }));
+      out.pct = /\+24% de volume/.test(window.__vol(3100, hoje));
+      // dia sem carga anotada: nada gravado, nada comparado
+      localStorage.setItem("ptvol", JSON.stringify({ "2026-08-27": 2500 }));
+      out.semCarga = window.__vol(0, hoje) === "" && !JSON.parse(localStorage.getItem("ptvol"))[hoje];
+      return out;
+    });
+    ok(vol.primeira, "📊 primeira vez: guarda o volume do dia e não inventa comparação");
+    ok(vol.recorde, "📊 volume acima de tudo que veio antes vira 'Seu maior volume até hoje!'");
+    ok(vol.pct, "📊 acima do último treino (sem ser recorde) vira '+24% de volume'");
+    ok(vol.semCarga, "📊 treino sem carga anotada não grava nem compara nada");
     await ctxR.close();
   }
 
