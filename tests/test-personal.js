@@ -3410,6 +3410,46 @@ async function abaPt(p, a) {
   ok(stg.removeuNuvem && stg.saiu, "📦 apagar remove da lista e pede a remoção do arquivo na nuvem");
   ok(stg.capaData, "📦 'Usar no card' baixa a foto da nuvem e embute como data: — o app do aluno segue 100% offline");
 
+  // 🤖 v726: comandos na busca — interpretados na hora, com confirmação
+  const cmd = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const out = {};
+    const c1 = window.__cmdPT.interpreta("marca joão amanhã às 18", st);
+    out.marcar = !!c1 && c1.tipo === "marcar" && c1.data === amanha && c1.hora === "18:00" && /João/.test(c1.aluno.nome);
+    const c2 = window.__cmdPT.interpreta("recebi 150,50 do joão", st);
+    out.recebi = !!c2 && c2.tipo === "recebi" && c2.valor === 150.5;
+    const c3 = window.__cmdPT.interpreta("cobrar joão", st);
+    out.cobrar = !!c3 && c3.tipo === "cobrar";
+    out.nada = window.__cmdPT.interpreta("qualquer coisa solta", st) === null;
+    document.getElementById("buscaAluno").value = "marca joão amanhã às 18";
+    window.__buscaPT();
+    out.linha = /Marcar sessão: João/.test(document.getElementById("buscaAlunoLista").textContent);
+    const confirmOrig = window.confirm; window.confirm = () => true;
+    const openOrig = window.open; let abriu = "";
+    window.open = (u) => { abriu = u; return { focus: () => {} }; };
+    window.__cmdPT.executa(c1);
+    out.marcou = S.read("ptStudio", {}).sessoes.some((x) => x.alunoId === c1.aluno.id && x.data === amanha && x.hora === "18:00");
+    window.__cmdPT.executa(c2);
+    out.pagou = S.read("ptStudio", {}).pagamentos.some((x) => x.alunoId === c2.aluno.id && x.valor === 150.5 && x.forma === "recebido");
+    abriu = "";
+    window.__cmdPT.executa(c3);
+    out.zap = /wa\.me\/55/.test(abriu) && /text=/.test(abriu);
+    window.open = openOrig; window.confirm = confirmOrig;
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.sessoes = st9.sessoes.filter((x) => !(x.data === amanha && x.hora === "18:00" && x.alunoId === c1.aluno.id));
+    st9.pagamentos = st9.pagamentos.filter((x) => !(x.valor === 150.5 && x.forma === "recebido"));
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    document.getElementById("buscaAluno").value = ""; window.__buscaPT();
+    return out;
+  });
+  ok(cmd.marcar, "🤖 'marca joão amanhã às 18' vira sessão interpretada (dia e hora certos)");
+  ok(cmd.recebi && cmd.cobrar && cmd.nada, "🤖 'recebi 150,50 do joão' e 'cobrar joão' interpretam — frase solta não vira comando");
+  ok(cmd.linha, "🤖 a busca mostra o comando interpretado em cima, com o rótulo em português");
+  ok(cmd.marcou && cmd.pagou, "🤖 executar cria a sessão e registra o pagamento (com confirmação)");
+  ok(cmd.zap, "🤖 cobrar abre o WhatsApp com o modelo de atraso preenchido");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
