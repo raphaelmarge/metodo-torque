@@ -3273,6 +3273,54 @@ async function abaPt(p, a) {
   ok(sino.novoVolta, "🔔 evento novo reaparece — os já vistos não voltam");
   ok(sino.fresco, "🔔 a busca em lote traz o retorno fresco da nuvem e repinta o card");
 
+  // 🙋 v728: confirmação de presença pelo app — retorno.conf (chave "data|hora")
+  // pinta a Agenda (✓ confirmou / QUER REMARCAR), o sino avisa remarcação e o
+  // sinoNuvem puxa a chave em lote junto com feitos/indicas
+  const cf = await p.evaluate(async () => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const st = S.read("ptStudio", {});
+    st.alunos.push({ id: "cf-a", nome: "Confirma Silva", ativo: true, appTokenP: "cf-tok",
+      retorno: { conf: { [amanha + "|18:00"]: 1, [hoje + "|07:00"]: -1 } } });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st1 = S.read("ptStudio", {});
+    const esC = window.__agSemana.estado(st1, { alunoId: "cf-a", data: amanha, hora: "18:00" }, hoje);
+    const esR = window.__agSemana.estado(st1, { alunoId: "cf-a", data: hoje, hora: "07:00" }, hoje);
+    const evs = window.__sino.eventos(st1);
+    const out = {
+      conf: esC.cls === "confok" && /✓/.test(esC.txt),
+      rem: esR.cls === "remarca" && /REMARCAR/.test(esR.txt),
+      sino: evs.some((e) => e.k === "cf:cf-a:" + hoje + "|07:00" && /remarcar/.test(e.t)),
+    };
+    const cloudOrig = S.cloud;
+    // outros trechos do painel (pedidos da agenda) também chamam a nuvem mockada:
+    // o sel ACUMULA, senão o select deles sobrescreve o nosso com false
+    const enc = { select: (q) => { if (/conf:retorno->conf/.test(String(q))) out.sel = true; return enc; },
+      in: () => Promise.resolve({ data: [{ token: "cf-tok", conf: { [amanha + "|09:00"]: -1 } }] }) };
+    S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
+    window.__sino.nuvem(true);
+    await new Promise((r) => setTimeout(r, 80));
+    S.cloud = cloudOrig;
+    out.mesclou = (((S.read("ptStudio", {}).alunos.find((a) => a.id === "cf-a") || {}).retorno || {}).conf || {})[amanha + "|09:00"] === -1;
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "cf-a");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(cf.conf, "🙋 sessão confirmada pelo aluno vira ✓ verde na célula da Agenda");
+  ok(cf.rem, "🙋 pedido de remarcação vira QUER REMARCAR (laranja) — e vence o DEVENDO");
+  ok(cf.sino, "🙋 o sino avisa quem pediu remarcação (chave cf: estável)");
+  ok(cf.sel && cf.mesclou, "🙋 o sinoNuvem puxa conf:retorno->conf em lote e mescla na cópia local");
+  {
+    const fsCf = require("fs"), pathCf = require("path");
+    const bld = fsCf.readFileSync(pathCf.join(__dirname, "..", "app", "aluno-builder.js"), "utf8");
+    ok(/k==='ptconf'/.test(bld) && /conf:L\('ptconf',\{\}\)/.test(bld),
+      "🙋 o app devolve ptconf no retorno (Sv em ptconf dispara o devolveApp)");
+    ok(/sconfIni/.test(bld) && /data-sconf/.test(bld),
+      "🙋 o Início do app ganha o card de confirmação (hoje/amanhã) com o mesmo motor da Agenda");
+  }
+
   // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
   // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
   const fx = await p.evaluate(() => {

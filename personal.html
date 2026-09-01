@@ -1751,6 +1751,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agc.pedido { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
   .agc.pedido .ages { color: var(--tk-aten2); }
   .agc.dev .ages { color: var(--tk-erro); }
+  /* v728: resposta do aluno pelo app — quer remarcar (laranja) / confirmou (verde) */
+  .agc.remarca { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
+  .agc.remarca .ages { color: var(--tk-aten2); }
+  .agc.confok .ages { color: var(--tk-ok); }
   .agc.vazio { background: transparent; border-style: dashed; border-color: var(--tk-trilha); }
   .agc.vazio .agmais { display: block; text-align: center; font-size: 15px; font-weight: 800; color: var(--tk-bd4); line-height: 28px; }
   .agc.vazio:hover .agmais { color: var(--roxo, #7c3aed); }
@@ -9244,8 +9248,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (x.faltou) return { cls: "faltou", txt: "FALTOU" };
     if (x.feita) return { cls: "feita", txt: "FEITA" };
     var a = st.alunos.find(function (y) { return y.id === x.alunoId; });
+    // v728: a resposta do aluno pelo app (retorno.conf, chave "data|hora"):
+    // -1 = pediu remarcação (pede ação, vence o DEVENDO); 1 = confirmou
+    var vcf = ((a && a.retorno && a.retorno.conf) || {})[x.data + "|" + (x.hora || "")] || 0;
+    if (vcf === -1 && x.data >= hoje) return { cls: "remarca", txt: "QUER REMARCAR" };
     if (a && alEstado(st, a) === "devendo") return { cls: "dev", txt: "DEVENDO" };
     var tr = agTreinoTxt(st, x.alunoId, x.data);
+    if (vcf === 1 && x.data >= hoje) return { cls: "confok", txt: "\u2713 " + (tr || "CONFIRMOU") };
     if (tr) return { cls: "", txt: tr };
     return { cls: "", txt: x.data < hoje ? "SEM MARCAR" : "AGENDADA" };
   }
@@ -9359,7 +9368,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // v715: na linha FEITA a sublinha vira a NOTA do diário daquele dia (se
       // o professor anotou) — é o lembrete do que aconteceu, melhor que a ficha
       var notaD = x.feita ? (((st.diarioPT || {})[x.alunoId] || []).filter(function (r) { return r.d === x.data; }).pop() || {}).t : "";
-      var sub = x.pedido ? "Pediu pelo app" : (x.feita ? (notaD || trTxt || "") : (trTxt || es.txt));
+      var sub = x.pedido ? "Pediu pelo app" : (x.feita ? (notaD || trTxt || "") : (es.cls === "remarca" ? "Pediu pra remarcar pelo app" : es.cls === "confok" ? es.txt : (trTxt || es.txt)));
       var hora = x.hora || "—";
       /* v704: o ⋮ com Feita/Faltou/Cancelou (o mesmo desenho da lista do Mês)
        * entra em TODA linha de sessão de verdade — antes só a "próxima" tinha
@@ -17421,6 +17430,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (em9 >= corte) ev.push({ k: "ind:" + a.id + ":" + em9 + ":" + String((iv && iv.n) || ""), d: em9,
           t: "🎁 " + primeiro + " indicou " + (iv && iv.n ? esc(String(iv.n)) : "um amigo") });
       });
+      // v728: pedido de remarcação pelo app (conf = -1 numa sessão de hoje/futuro)
+      var cfz = (a.retorno && a.retorno.conf && typeof a.retorno.conf === "object") ? a.retorno.conf : {};
+      Object.keys(cfz).forEach(function (kc) {
+        if (cfz[kc] !== -1) return;
+        var dia9 = kc.slice(0, 10);
+        if (dia9 >= S.todayISO()) ev.push({ k: "cf:" + a.id + ":" + kc, d: dia9,
+          t: "\ud83d\udcc5 " + primeiro + " pediu pra remarcar " + S.fmtData(dia9) + (kc.slice(11) ? " \u00e0s " + esc(kc.slice(11)) : "") });
+      });
       if (a.desde && String(a.desde).slice(0, 10) >= corte) {
         ev.push({ k: "novo:" + a.id, d: String(a.desde).slice(0, 10), t: "✨ " + esc(String(a.nome || "?")) + " entrou pro studio" });
       }
@@ -17472,7 +17489,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sinoNuvemEm = Date.now();
     var q;
     try {
-      q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,indicas:retorno->indicas").in("token", toks);
+      q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,indicas:retorno->indicas,conf:retorno->conf").in("token", toks);
     } catch (e) { return; }
     q.then(function (r) {
       if (!r || r.error || !Array.isArray(r.data)) return;
@@ -17487,6 +17504,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         if (Array.isArray(l.indicas) && JSON.stringify(a.retorno.indicas || []) !== JSON.stringify(l.indicas)) {
           a.retorno.indicas = l.indicas; mudou = true;
+        }
+        if (l.conf && typeof l.conf === "object" && JSON.stringify(a.retorno.conf || {}) !== JSON.stringify(l.conf)) {
+          a.retorno.conf = l.conf; mudou = true;
         }
       });
       if (!mudou) return;
