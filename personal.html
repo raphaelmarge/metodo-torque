@@ -267,6 +267,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
    * um botao secundario com a TINTA verde, igual aos outros da linha */
   .btn.whats { background: var(--pt-elev); border: 1px solid var(--pt-borda-forte); color: var(--pt-ok); }
   .btn.whats:hover { background: var(--pt-elev); color: var(--pt-ok); box-shadow: none; }
+  /* v739: o apps.css pinta o texto do .btn.whats de BRANCO no modo claro (lá o
+   * botão é verde chapado, faz sentido). Aqui o fundo virou claro com tinta
+   * verde (v629) e o branco sumia — "Mensagem pronta" invisível na foto do
+   * Raphael. Mesma especificidade, declarado depois: vence. */
+  html[data-tema="claro"] .btn.whats, html[data-tema="claro"] .btn.whats:hover { color: var(--pt-ok); }
   .muted { color: var(--pt-txt-4); }
   @media (max-width: 760px) {
     .corpo { --corpo-px: 12px; --corpo-py: 18px; }

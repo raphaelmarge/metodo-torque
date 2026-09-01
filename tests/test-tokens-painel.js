@@ -231,6 +231,15 @@ const ESPERADO = {
   const cor2 = await leCor();
   t(cor2.claro !== cor1.claro && cor2.sel.indexOf(".12") >= 0,
     "no modo claro o texto colorido escurece pra ter contraste (" + cor1.claro + " → " + cor2.claro + ")");
+  // v739: o botão do WhatsApp (.btn.whats) NÃO pode ficar branco no claro —
+  // o apps.css manda color:#fff nesse tema e o texto sumia no fundo claro
+  const zapCor = await p.evaluate(() => {
+    const d = document.createElement("a"); d.className = "btn whats"; d.textContent = "Mensagem pronta";
+    document.body.appendChild(d); const c = getComputedStyle(d);
+    const out = { cor: c.color, fundo: c.backgroundColor }; d.remove(); return out;
+  });
+  t(zapCor.cor !== "rgb(255, 255, 255)" && zapCor.cor !== zapCor.fundo,
+    "no modo claro o botão do WhatsApp continua legível (" + zapCor.cor + " sobre " + zapCor.fundo + ")");
   await p.evaluate(() => { // limpa: sem cor, tudo volta pro roxo padrao
     document.getElementById("btnTemaPt").click();
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}");
