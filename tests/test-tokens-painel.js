@@ -240,6 +240,16 @@ const ESPERADO = {
   });
   t(zapCor.cor !== "rgb(255, 255, 255)" && zapCor.cor !== zapCor.fundo,
     "no modo claro o botão do WhatsApp continua legível (" + zapCor.cor + " sobre " + zapCor.fundo + ")");
+  // v740: a aba ATIVA da fita (.abas button.ativa) também não pode ficar branca
+  // no claro — o apps.css manda #fff (lá é pílula roxa), aqui é fita sem fundo
+  const abaCor = await p.evaluate(() => {
+    const w = document.createElement("div"); w.className = "abas";
+    const b = document.createElement("button"); b.className = "ativa"; b.textContent = "Ativos";
+    w.appendChild(b); document.body.appendChild(w); const c = getComputedStyle(b);
+    const out = { cor: c.color, fundo: c.backgroundColor }; w.remove(); return out;
+  });
+  t(abaCor.cor !== "rgb(255, 255, 255)" && abaCor.cor !== abaCor.fundo,
+    "no modo claro a aba ativa da fita continua legível (" + abaCor.cor + " sobre " + abaCor.fundo + ")");
   await p.evaluate(() => { // limpa: sem cor, tudo volta pro roxo padrao
     document.getElementById("btnTemaPt").click();
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}");

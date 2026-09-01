@@ -1553,7 +1553,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                        font-weight: 800; border-bottom-color: var(--pt-roxo); }
   html[data-tema="claro"] .abas button { background: none; }
   html[data-tema="claro"] .abas button:hover { border-bottom-color: var(--pt-borda-forte); }
-  html[data-tema="claro"] .abas button.ativa { background: none; border-bottom-color: var(--pt-roxo); }
+  /* v740: o apps.css manda color:#fff na aba ativa do tema claro (lá ela é
+   * pílula roxa). Aqui é fita sem fundo — a aba escolhida sumia (fotos do
+   * Raphael: "Automático e IA" e o filtro "Ativos"). A cor tem que vir junto. */
+  html[data-tema="claro"] .abas button.ativa, html[data-tema="claro"] .abas button.ativa:hover { background: none; color: var(--pt-txt); border-bottom-color: var(--pt-roxo); }
   /* ⚠️ este bloco vem LOGO DEPOIS da regra base de proposito: no arquivo, com a
    * mesma especificidade, quem vem por ultimo ganha — la em cima (no bloco de
    * 640px) a altura de 44px nao valia, porque a base de 46px vinha depois.
