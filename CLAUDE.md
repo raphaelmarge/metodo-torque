@@ -1269,16 +1269,26 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   ler só o miolo do JWT deixava passar token forjado quando o Verify JWT estava
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
-  200 com a MESMA credencial). Lista em `supabase/functions/` — as **12**, todas
+  200 com a MESMA credencial). Lista em `supabase/functions/` — as **13**, todas
   publicadas e ACTIVE: meta-webhook, chat-envia, whatsapp, envia-email (Resend),
   pagarme, push-envia, pagamentos, pagamentos-webhook, **pagarme-webhook**,
   **assinatura-loja** (2026-08-25), **suporte** (v708 — chamado com protocolo
   TQ-AAAAMMDD-XXXX gravado em suporte_chamados, e-mail via Resend pro Secret
-  EMAIL_SUPORTE, padrão suporte@torqueon.com.br) e **regua-teste** (2026-08-29 — a régua do
+  EMAIL_SUPORTE, padrão suporte@torqueon.com.br), **regua-teste** (2026-08-29 — a régua do
   teste grátis: pg_cron → pg_net → função, senha em `regua_config` selada,
   idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
-  = trial).
-  Ele publica copiando de www.torqueon.com.br/funcoes.html.
+  = trial) e **regua-diaria** (v721, 2026-09-01 — a régua de PUSH no servidor:
+  pg_cron 10:00 UTC chama a função com a MESMA senha da regua_config; ela lê o
+  `mtapp:ptStudio` da tabela `dados` de cada academia com aluno inscrito na
+  push_subs e manda treino do dia, véspera e aniversário no fuso do Brasil,
+  com as MESMAS chaves da régua do painel. Dedupe nos DOIS sentidos: o
+  servidor pula o que o `pushLog` do blob já marcou, e o painel importa
+  `push_log_srv` (RLS: membro só lê) pro pushLog antes da régua local rodar —
+  `importaPushSrv`/`window.__pushSrv`. A cobrança fica no painel de propósito:
+  duplicar contrato/dívida em dois lugares é como os números divergem).
+  Ele publica copiando de www.torqueon.com.br/funcoes.html — ⚠️ desde a v721
+  o `NOMES` da página cobre as 13 (regua-teste e suporte estavam FORA e o
+  botão de copiar deles nunca carregava).
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
 - **Redundância** (v513/v515): todo update/delete no `dados` guarda o valor
   ANTERIOR em `dados_hist` (10 versões por chave). O `retorno` do app do aluno

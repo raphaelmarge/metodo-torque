@@ -3173,6 +3173,51 @@ async function abaPt(p, a) {
   ok(aux.mesSome && aux.nota, "👥 o card do mês (dinheiro) some do Início e o menu diz que é modo colaborador");
   ok(aux.volta, "👥 papel dono devolve tudo");
 
+  // ☁️ v721: a régua diária também roda no SERVIDOR — a função existe com as
+  // regras certas, e o painel importa o log do servidor pro pushLog local
+  {
+    const fsR = require("fs"), pathR = require("path");
+    const fnSrc = fsR.readFileSync(pathR.join(__dirname, "..", "supabase", "functions", "regua-diaria", "index.ts"), "utf8");
+    ok(/treino\|/.test(fnSrc) && /vespera\|/.test(fnSrc) && /niver\|/.test(fnSrc),
+      "☁️ a regua-diaria manda treino do dia, véspera e aniversário com as MESMAS chaves do painel");
+    ok(/regua_config/.test(fnSrc) && /push_log_srv/.test(fnSrc) && /America\/Sao_Paulo/.test(fnSrc),
+      "☁️ portão pela senha selada, memória em push_log_srv e o dia calculado no fuso do Brasil");
+    ok(/logCli\[x\.chave\]/.test(fnSrc), "☁️ o servidor pula o que o pushLog do painel já mandou (dedupe cliente→servidor)");
+    const sqlR = fsR.readFileSync(pathR.join(__dirname, "..", "supabase-setup.sql"), "utf8");
+    ok(/push_log_srv/.test(sqlR) && /regua-diaria-push/.test(sqlR),
+      "☁️ o SQL cria a push_log_srv e agenda o cron regua-diaria-push");
+    const funR = fsR.readFileSync(pathR.join(__dirname, "..", "funcoes.html"), "utf8");
+    ok(/"regua-diaria"/.test(funR) && /"regua-teste"/.test(funR) && /"suporte"/.test(funR) &&
+      /data-copia="regua-diaria"/.test(funR) && /data-copia="suporte"/.test(funR),
+      "☁️ funcoes.html tem o card da regua-diaria — e regua-teste/suporte entraram no NOMES (o botão deles nunca carregava)");
+  }
+  const psrv = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const st0 = S.read("ptStudio", {});
+    const logAntes = JSON.stringify(st0.pushLog || null);
+    // nuvem falsa: o servidor "já mandou" duas chaves hoje
+    const cloudOrig = S.cloud;
+    const enc = { select: () => enc, eq: () => enc,
+      gte: () => Promise.resolve({ data: [{ chave: "treino|psrv1|2026-09-01" }, { chave: "vespera|psrv1|2026-09-02" }] }) };
+    S.cloud = () => ({ aid: "acad-1", client: { from: () => enc } });
+    await new Promise((res) => window.__pushSrv(res));
+    const log = S.read("ptStudio", {}).pushLog || {};
+    const out = { importou: !!log["treino|psrv1|2026-09-01"] && !!log["vespera|psrv1|2026-09-02"] };
+    // sem nuvem, o callback ainda dispara (a régua local não pode travar)
+    S.cloud = () => null;
+    let rodou = false;
+    await new Promise((res) => window.__pushSrv(() => { rodou = true; res(); }));
+    out.semNuvem = rodou;
+    // limpa
+    S.cloud = cloudOrig;
+    const st9 = S.read("ptStudio", {});
+    st9.pushLog = logAntes === "null" ? {} : JSON.parse(logAntes);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(psrv.importou, "☁️ o painel importa as chaves do push_log_srv pro pushLog local (dedupe servidor→cliente)");
+  ok(psrv.semNuvem, "☁️ sem nuvem o callback dispara igual — a régua local nunca trava");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {

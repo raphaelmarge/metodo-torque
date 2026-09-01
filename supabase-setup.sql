@@ -2929,3 +2929,41 @@ create index if not exists suporte_chamados_acad_idx
 --   update public.suporte_chamados
 --     set status = 'respondido', resposta = 'texto da resposta'
 --     where protocolo = 'TQ-20260831-ABCD';
+
+-- ============================================================
+-- RÉGUA DIÁRIA NO SERVIDOR (v721) — os pushes de "hoje tem
+-- treino", "amanhã tem treino" e "feliz aniversário" saem do
+-- relógio do banco (pg_cron → função regua-diaria), sem o
+-- painel precisar estar aberto. A tabela guarda o que o
+-- SERVIDOR já mandou; o painel importa essas chaves pro
+-- pushLog local, então nenhum aluno recebe aviso em dobro.
+-- ============================================================
+
+create table if not exists public.push_log_srv (
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  chave text not null,
+  em timestamptz not null default now(),
+  primary key (academia_id, chave)
+);
+alter table public.push_log_srv enable row level security;
+-- membro só LÊ (pra importar as marcas); quem escreve é a função, com a
+-- service key — aluno e anônimo não alcançam nada aqui
+drop policy if exists "push_log_srv_membro_le" on public.push_log_srv;
+create policy "push_log_srv_membro_le" on public.push_log_srv
+  for select using (academia_id in (select public.minhas_academias()));
+
+-- o relógio: 10:00 UTC = 07:00 no Brasil; recria o job do zero pra este
+-- bloco poder rodar de novo (mesma senha selada da regua_config)
+do $do$
+begin
+  perform cron.unschedule(jobid) from cron.job where jobname = 'regua-diaria-push';
+exception when others then null;
+end
+$do$;
+select cron.schedule('regua-diaria-push', '0 10 * * *', $cron$
+  select net.http_post(
+    url := 'https://hdcufkaalxfhwmfwoiqp.supabase.co/functions/v1/regua-diaria',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := jsonb_build_object('senha', (select token::text from public.regua_config where id = 1))
+  )
+$cron$);

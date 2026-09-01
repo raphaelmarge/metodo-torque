@@ -8705,8 +8705,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__pendPT = pushPendencias; // testes
   window.__reguaPT = rotinaDiariaPush; // testes
-  setTimeout(function () { rotinaDiariaPush(); pushPendencias(); }, 5000);
-  setInterval(function () { rotinaDiariaPush(); pushPendencias(); }, 6 * 3600 * 1000);
+  /* v721: a régua diária também roda no SERVIDOR (função regua-diaria, via
+   * pg_cron toda manhã). Antes de rodar a régua local, importa as chaves que
+   * o servidor já mandou (push_log_srv) pro pushLog — senão o aluno recebia
+   * o MESMO aviso duas vezes no dia (uma do cron, outra quando o painel
+   * abrisse). Leitura que falha não trava nada: a régua local roda igual, e
+   * o dedupe no outro sentido continua (o servidor pula o que o pushLog do
+   * blob já marcou). */
+  function importaPushSrv(cb) {
+    var fim = function () { if (cb) { var c9 = cb; cb = null; c9(); } };
+    try {
+      var nuvem = S.cloud && S.cloud();
+      if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return fim();
+      var corte = new Date(Date.now() - 3 * 864e5).toISOString();
+      nuvem.client.from("push_log_srv").select("chave").eq("academia_id", nuvem.aid).gte("em", corte)
+        .then(function (r) {
+          var linhas = (r && r.data) || [];
+          if (linhas.length) {
+            var st9 = load();
+            st9.pushLog = st9.pushLog || {};
+            var novo = false;
+            linhas.forEach(function (l) {
+              if (l && l.chave && !st9.pushLog[l.chave]) { st9.pushLog[l.chave] = S.todayISO(); novo = true; }
+            });
+            if (novo) S.write("ptStudio", st9);
+          }
+          fim();
+        }, fim);
+    } catch (e) { fim(); }
+  }
+  window.__pushSrv = importaPushSrv; // testes
+  setTimeout(function () { importaPushSrv(rotinaDiariaPush); pushPendencias(); }, 5000);
+  setInterval(function () { importaPushSrv(rotinaDiariaPush); pushPendencias(); }, 6 * 3600 * 1000);
   $("reguaOn").addEventListener("change", function () {
     var st = load();
     st.config = st.config || {};
