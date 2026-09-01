@@ -1851,7 +1851,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <h1 id="tituloStudio">Meu Studio</h1>
     </div>
     <div class="busca-topo">
-      <input id="buscaAluno" class="buscaTopoIn" placeholder="Buscar aluno…" autocomplete="off">
+      <input id="buscaAluno" class="buscaTopoIn" placeholder="Buscar aluno ou tela…" autocomplete="off">
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
@@ -7492,24 +7492,84 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var achou = st.alunos.filter(function (a) {
       return a.ativo !== false && (a.nome || "").toLowerCase().indexOf(termo) >= 0;
-    }).slice(0, 8);
-    box.innerHTML = achou.length ? achou.map(function (a) {
+    }).slice(0, 6);
+    /* v724: a busca também acha TELAS E AÇÕES — digita "pix" e vai pro
+     * Financeiro, "renovar" e cai nos alertas, "whatsapp" e abre os modelos.
+     * A comparação ignora acento nos dois lados. */
+    var termoSA = semAcentoB(termo);
+    var telas = termoSA.length >= 2 ? BUSCA_TELAS.map(function (t, i) { return { t: t, i: i }; })
+      .filter(function (x) { return semAcentoB(x.t.t.toLowerCase()).indexOf(termoSA) >= 0 || x.t.k.indexOf(termoSA) >= 0; })
+      .slice(0, 4) : [];
+    var htmlB = achou.map(function (a) {
       var pagoMes = idxDe(st).pagouMes(a.id, mesAtual);
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
         (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
-    }).join("") : "<div style='padding:12px 14px;color:var(--tk-tx4);font-size:13px;'>Nenhum aluno com esse nome.</div>";
+    }).join("");
+    if (telas.length) {
+      htmlB += "<div style='padding:7px 14px 3px;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--tk-tx4);'>TELAS E AÇÕES</div>" +
+        telas.map(function (x) {
+          return "<div data-busca-tela='" + x.i + "' style='padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13px;'>" +
+            x.t.ico + " " + esc(x.t.t) + "</div>";
+        }).join("");
+    }
+    box.innerHTML = htmlB || "<div style='padding:12px 14px;color:var(--tk-tx4);font-size:13px;'>Nada com esse nome — nem aluno, nem tela.</div>";
     box.hidden = false;
   }
+  function semAcentoB(x) {
+    return String(x).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  /* o índice das telas: rótulo, palavras-chave (sem acento) e o destino.
+   * rel/aga são sub-abas clicadas depois da aba principal. */
+  var BUSCA_TELAS = [
+    { ico: "🏠", t: "Início", k: "inicio dashboard resolver hoje", a: "dash" },
+    { ico: "👥", t: "Alunos", k: "alunos lista carteira sumindo devendo", a: "alunos" },
+    { ico: "📅", t: "Agenda — marcar sessão", k: "agenda marcar sessao horario turma fixa repetir", a: "agenda", aga: "agendar" },
+    { ico: "📅", t: "Agenda — sessões da semana", k: "agenda semana sessoes feita faltou encaixe vaga", a: "agenda", aga: "sessoes" },
+    { ico: "💰", t: "Financeiro — cobrança e Pix", k: "financeiro pagamentos cobranca pix mensalidade atrasados link recebi divida", a: "pagamentos" },
+    { ico: "🏋️", t: "Treinos — montar ficha", k: "treinos montar ficha ia gerar exercicios semana do aluno circuito corrida", a: "treinos" },
+    { ico: "💬", t: "Chat com os alunos", k: "chat mensagem conversa recado", a: "chat" },
+    { ico: "📏", t: "Avaliações físicas", k: "avaliacoes avaliacao fisica dobras bioimpedancia medidas laudo peso gordura", a: "avaliacoes" },
+    { ico: "📝", t: "Questionários e check-ins", k: "questionarios checkin check-in perguntas respostas semana", a: "quest" },
+    { ico: "🏆", t: "Desafio e Comunidade", k: "desafio comunidade feed ranking moderacao", a: "desafio" },
+    { ico: "📊", t: "Relatórios — Do dia a dia", k: "relatorios dia a dia alertas aniversarios renovar contrato fechamento metas indicacoes", a: "relatorios", rel: "geral" },
+    { ico: "🛒", t: "Relatórios — Vendas", k: "relatorios vendas servicos produtos loja ranking", a: "relatorios", rel: "vendas" },
+    { ico: "📈", t: "Relatórios — Financeiro", k: "relatorios receita entrou saiu formas previsto ltv retroativo", a: "relatorios", rel: "fin" },
+    { ico: "⚙️", t: "Configurações — WhatsApp e mensagens", k: "configuracoes whatsapp mensagens modelos automacao fila vespera lembrete", a: "config" },
+    { ico: "⚙️", t: "Configurações — Receber dos alunos", k: "configuracoes receber gateway mercado pago asaas pagarme chave assinatura", a: "config" },
+    { ico: "🎨", t: "Personalização — a cara do app", k: "personalizacao cor logo fotos tipo treino publicar apps premio indicacao", a: "pers" },
+    { ico: "🌐", t: "Minha página", k: "minha pagina site vendas depoimentos aula experimental link", a: "sitepro" },
+    { ico: "🔐", t: "Sua ilha — conta e backup", k: "conta ilha backup exportar sair senha colaborador login assinatura", a: "conta" },
+    { ico: "🖼️", t: "Banco de imagens", k: "imagens fotos banco galeria", a: "imagens" },
+    { ico: "🆘", t: "Ajuda e suporte", k: "ajuda suporte chamado protocolo duvida como faz", a: "ajuda" },
+  ];
+  function vaiBuscaTela(ix) {
+    var it = BUSCA_TELAS[ix];
+    if (!it) return;
+    vaiAba(it.a);
+    if (it.rel && window.__relAba) window.__relAba(it.rel);
+    if (it.aga && window.__agAba) window.__agAba(it.aga);
+  }
+  window.__buscaTelas = { lista: BUSCA_TELAS, vai: vaiBuscaTela }; // testes
   $("buscaAluno").addEventListener("input", pintaBuscaAluno);
   $("buscaAluno").addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
       var pri = $("buscaAlunoLista").querySelector("[data-busca-id]");
-      if (pri) { abrePerfil(pri.getAttribute("data-busca-id")); this.value = ""; $("buscaAlunoLista").hidden = true; }
+      if (pri) { abrePerfil(pri.getAttribute("data-busca-id")); this.value = ""; $("buscaAlunoLista").hidden = true; return; }
+      // sem aluno no resultado, o Enter vai pra primeira TELA achada (v724)
+      var priT = $("buscaAlunoLista").querySelector("[data-busca-tela]");
+      if (priT) { vaiBuscaTela(+priT.getAttribute("data-busca-tela")); this.value = ""; $("buscaAlunoLista").hidden = true; }
     }
     if (e.key === "Escape") { $("buscaAlunoLista").hidden = true; }
   });
   $("buscaAlunoLista").addEventListener("mousedown", function (e) {
+    var elT = e.target.closest("[data-busca-tela]");
+    if (elT) {
+      vaiBuscaTela(+elT.getAttribute("data-busca-tela"));
+      $("buscaAluno").value = "";
+      $("buscaAlunoLista").hidden = true;
+      return;
+    }
     var el = e.target.closest("[data-busca-id]");
     if (!el) return;
     abrePerfil(el.getAttribute("data-busca-id"));
