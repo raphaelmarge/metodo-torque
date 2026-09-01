@@ -9063,7 +9063,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * as três mudam juntas. Quem trata o clique é o MESMO trataCliqueSessao. */
   function sesAcoesHtml(x) {
     return x.feita
-      ? '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
+      ? '<button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê na hora de montar o próximo treino">Anotar</button>' +
+        '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
       : (x.faltou ? "" :
           '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
           '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
@@ -9112,7 +9113,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var trTxt = agTreinoTxt(st, x.alunoId, d0.iso);
       /* na linha FEITA o "FEITA" seria redundante com o check verde ao lado:
        * quando nao houver treino prescrito pro dia, a sublinha some */
-      var sub = x.pedido ? "Pediu pelo app" : (trTxt || (x.feita ? "" : es.txt));
+      // v715: na linha FEITA a sublinha vira a NOTA do diário daquele dia (se
+      // o professor anotou) — é o lembrete do que aconteceu, melhor que a ficha
+      var notaD = x.feita ? (((st.diarioPT || {})[x.alunoId] || []).filter(function (r) { return r.d === x.data; }).pop() || {}).t : "";
+      var sub = x.pedido ? "Pediu pelo app" : (x.feita ? (notaD || trTxt || "") : (trTxt || es.txt));
       var hora = x.hora || "—";
       /* v704: o ⋮ com Feita/Faltou/Cancelou (o mesmo desenho da lista do Mês)
        * entra em TODA linha de sessão de verdade — antes só a "próxima" tinha
@@ -9693,6 +9697,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var abertaS = alvoS && !alvoS.hidden;
       lista.querySelectorAll("[data-sacoes]").forEach(function (d) { d.hidden = true; });
       if (alvoS && !abertaS) alvoS.hidden = false;
+      return;
+    }
+    /* v715: Anotar a sessão — a nota entra no MESMO diário da ficha
+     * (st.diarioPT, o card "Diário de sessões" da aba Frequência), com a DATA
+     * DA SESSÃO. Uma nota por aluno+dia: anotar de novo edita, apagar o texto
+     * remove. A IA lê essas notas ao montar o próximo mês (diarioIA). */
+    var sn = e.target.getAttribute && e.target.getAttribute("data-snota");
+    if (sn) {
+      var stN = load();
+      var xn = stN.sessoes.find(function (x) { return x.id === sn; });
+      if (!xn) return;
+      var alN = stN.alunos.find(function (x) { return x.id === xn.alunoId; }) || {};
+      stN.diarioPT = stN.diarioPT || {};
+      var listaN = stN.diarioPT[xn.alunoId] = stN.diarioPT[xn.alunoId] || [];
+      var jaN = listaN.filter(function (r) { return r.d === xn.data; }).pop();
+      var novoN = prompt("Como foi a sessão de " + String(alN.nome || "").split(" ")[0] +
+        "? (vai pro diário da ficha — e a IA lê na hora de montar o próximo treino)", jaN ? jaN.t : "");
+      if (novoN === null) return;
+      novoN = novoN.trim().slice(0, 400);
+      if (jaN) {
+        if (novoN) jaN.t = novoN; else listaN.splice(listaN.indexOf(jaN), 1);
+      } else if (novoN) {
+        listaN.push({ d: xn.data, t: novoN });
+        if (listaN.length > 200) listaN.shift();
+      }
+      save(stN);
       return;
     }
     var f = e.target.getAttribute && e.target.getAttribute("data-feita");
@@ -14055,6 +14085,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     return { texto: txt, cap: cap, total: cands.length };
   }
+  /* v715: o diário de sessões do professor entra no prompt da IA — é a
+   * memória qualitativa ("joelho incomodou", "PR no supino") que os números
+   * não carregam. Sem anotação, diz honestamente que não há. */
+  function diarioIA(st, a) {
+    var lin = ((st.diarioPT || {})[a.id] || []).slice(-8);
+    if (!lin.length) return "DIÁRIO DO PROFESSOR: sem anotações de sessão registradas.";
+    return "DIÁRIO DO PROFESSOR (anotações das últimas sessões — leve a sério, é o que ele viu de perto):\n" +
+      lin.map(function (r) { return "- " + String(r.d || "") + ": " + String(r.t || "") ; }).join("\n");
+  }
   function montaDadosIA(st, a, objetivo, equip) {
     var an = a.anamnese || {};
     var parqSim = [];
@@ -14102,6 +14141,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "",
       perfilFisicoIA(st, a),
       evolucaoIA(a),
+      diarioIA(st, a),
       "",
       // o que o professor citou pelo nome não é sugestão: é encomenda
       (citados.length
@@ -14152,6 +14192,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       perfilFisicoIA(st, a),
       evolucaoIA(a),
       corridasIA(a),
+      diarioIA(st, a),
       (recadoC.trim()
         ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
           "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recadoC +
@@ -16530,7 +16571,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         esc(nomeHj[x.alunoId] || "?") + "</button>" +
         '<div class="dfi">' + (x.faltou ? "Faltou" : treinoDoDiaTxt(st, x.alunoId, true)) + "</div></div>" +
         '<div class="dac">' +
-        (x.feita ? '<span class="dok">✓ Feita</span>'
+        (x.feita ? '<span class="dok">✓ Feita</span><button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê">Anotar</button>'
           : x.faltou ? (aP.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' +
               String(aP.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(aP.nome || "").split(" ")[0] +
               "! Senti sua falta hoje. Bora remarcar?") + '">Cobrar aula</a>' : '<span class="tag erro">FALTOU</span>')
