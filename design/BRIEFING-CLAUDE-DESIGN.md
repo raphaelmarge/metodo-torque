@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v732** |
-| Estado do repo em | 2026-09-01 (commit `f832287`) |
+| App em | **mt-v733** |
+| Estado do repo em | 2026-09-01 (commit `d9a8536`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 193 |
+| Lançamentos no histórico | 194 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v732** — ou seja, **63 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v733** — ou seja, **64 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v732** (2026-09-01).
+O motor (`app/aluno-builder.js`) encostou em **mt-v733** (2026-09-01).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v733 | voz no treino guiado de musculação |
 | mt-v732 | o volume do treino ganha memória e comparação |
 | mt-v731 | mural Seus recordes na Evolução do aluno |
 | mt-v730 | o vídeo do professor no exercício da ficha |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v721 | régua de push rodando SOZINHA no servidor (pg_cron) |
 | mt-v719 | indicação premiada + modo colaborador no painel |
 | mt-v718 | mensagens dos botões do WhatsApp com as SUAS palavras |
-| mt-v717 | renovar contrato em 1 clique direto do alerta + proposta no zap |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
