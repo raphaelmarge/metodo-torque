@@ -964,6 +964,11 @@
        * não é status de hoje) e a de DIAS DE HÁBITO foi pro card dos hábitos,
        * que é do que ela fala — embaixo dos chips de treino ela era lida como
        * "dias treinados", que é outra coisa. */
+      (sessApp.length ? "<div class='cardx' id='sconfIni' data-sconf='1' data-d='" + sessApp[0].d + "' data-h='" + esc(sessApp[0].h) + "' style='display:none;'>" +
+        "<h2 id='sconfIniT'>Sess\u00e3o marcada</h2>" +
+        "<div class='sconfbts' style='display:flex;gap:8px;'>" +
+        "<button data-pconf='1' style='flex:1;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;border-radius:99px;padding:9px 0;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Confirmo presen\u00e7a \u2713</button>" +
+        "<button data-pconf='0' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>N\u00e3o vou conseguir</button></div></div>" : "") +
       "<div class='cardx' id='semBlock'><h2>Minha semana</h2>" +
       "<div style='background:var(--bg2);border-radius:22px;padding:18px;'>" +
       "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
@@ -1046,7 +1051,7 @@
         sessApp.map(function (x, si) {
           var pd = x.d.split("-");
           return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero!</span></div>" +
-            (si === 0 ? "<div id='sconfBox' data-d='" + x.d + "' data-h='" + esc(x.h) + "' style='display:flex;gap:8px;margin:8px 0 4px;'>" +
+            (si === 0 ? "<div id='sconfBox' data-sconf='1' data-d='" + x.d + "' data-h='" + esc(x.h) + "' style='display:flex;gap:8px;margin:8px 0 4px;'>" +
               "<button data-pconf='1' style='flex:1;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;border-radius:99px;padding:9px 0;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Confirmo presença ✓</button>" +
               "<button data-pconf='0' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>Não vou conseguir</button></div>" : "");
         }).join("") + "</div>" : "") +
@@ -1765,7 +1770,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1800,6 +1805,8 @@
       "aceite:L('ptaceite',null)," +
       "notas:L('ptnotas',[])," +
       "indicas:L('ptindicas',[])," +
+      // v728: a resposta de presença (1 = vou, -1 = preciso remarcar) por dia|hora
+      "conf:L('ptconf',{})," +
       "depo:L('ptdepo',null)," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
@@ -2633,15 +2640,27 @@
       "ck.style.background=on?'#60a5fa':'transparent';ck.style.color=on?'#0b1020':'#93c5fd';}" +
       "r.style.opacity=on?'.55':'1';});}" +
       "p2Pinta();window.__p2={marca:p2Marca,feitos:p2Feitos,pinta:p2Pinta};" +
-      // confirmação de presença da próxima sessão (avisa o personal pelo chat do app)
-      "(function(){var bx=document.getElementById('sconfBox');if(!bx)return;var kcf=bx.dataset.d+'|'+bx.dataset.h;" +
-      "function pintaCf(){var v=L('ptconf',{})[kcf];if(!v)return;bx.innerHTML=v===1?\"<span style='color:#4ade80;font-size:13px;font-weight:700;'>✓ Avisei que vou</span>\":\"<span style='color:#fbbf24;font-size:13px;font-weight:700;'>Avisei que não consigo — combina outro horário no chat</span>\";}" +
-      "pintaCf();bx.addEventListener('click',function(e){var c=e.target.getAttribute&&e.target.getAttribute('data-pconf');if(c==null)return;var vou=c==='1';" +
-      "var pd=bx.dataset.d.split('-');var hh=bx.dataset.h;" +
-      "var msg=vou?('Confirmo presença na sessão de '+pd[2]+'/'+pd[1]+(hh?' às '+hh:'')+' ✓'):('Não vou conseguir ir na sessão de '+pd[2]+'/'+pd[1]+(hh?' às '+hh:'')+' — podemos remarcar?');" +
+      /* confirmação de presença (v728): além do recado no chat, a resposta vira
+       * ESTADO — ptconf entra no devolveApp e o painel pinta a Agenda com
+       * "confirmou" / "quer remarcar". Duas caixas usam o mesmo motor: a da
+       * Agenda (sconfBox, sempre visível) e a do Início (sconfIni, que só
+       * aparece quando a sessão é HOJE ou AMANHÃ — decisão de runtime, porque
+       * o pacote é publicado dias antes). */
+      "(function(){var bxs=[].slice.call(document.querySelectorAll('[data-sconf]'));if(!bxs.length)return;" +
+      "function amanhaIso(){var d9=new Date(Date.now()+864e5);return d9.getFullYear()+'-'+('0'+(d9.getMonth()+1)).slice(-2)+'-'+('0'+d9.getDate()).slice(-2);}" +
+      "function pintaCf(){bxs.forEach(function(bx){var kcf=bx.dataset.d+'|'+bx.dataset.h;var v=L('ptconf',{})[kcf];" +
+      "if(bx.id==='sconfIni'){var perto=bx.dataset.d===isoHj()||bx.dataset.d===amanhaIso();bx.style.display=perto?'block':'none';" +
+      "var t9=document.getElementById('sconfIniT');if(t9)t9.textContent=(bx.dataset.d===isoHj()?'Hoje':'Amanh\u00e3')+' tem treino'+(bx.dataset.h?' \u00e0s '+bx.dataset.h:'')+'!';}" +
+      "if(!v)return;var alvo=bx.querySelector('.sconfbts')||bx;" +
+      "alvo.innerHTML=v===1?\"<span style='color:#4ade80;font-size:13px;font-weight:700;'>\u2713 Avisei que vou</span>\":\"<span style='color:#fbbf24;font-size:13px;font-weight:700;'>Avisei que n\u00e3o consigo \u2014 combina outro hor\u00e1rio no chat</span>\";});}" +
+      "pintaCf();window.__sconf=pintaCf;" +
+      "document.addEventListener('click',function(e){var b9=e.target.closest&&e.target.closest('[data-pconf]');if(!b9)return;var bx=b9.closest('[data-sconf]');if(!bx)return;var vou=b9.getAttribute('data-pconf')==='1';" +
+      "var kcf=bx.dataset.d+'|'+bx.dataset.h;var pd=bx.dataset.d.split('-');var hh=bx.dataset.h;" +
+      "var msg=vou?('Confirmo presen\u00e7a na sess\u00e3o de '+pd[2]+'/'+pd[1]+(hh?' \u00e0s '+hh:'')+' \u2713'):('N\u00e3o vou conseguir ir na sess\u00e3o de '+pd[2]+'/'+pd[1]+(hh?' \u00e0s '+hh:'')+' \u2014 podemos remarcar?');" +
+      // Sv dispara o devolveApp (ptconf está na lista de chaves): a resposta chega no professor
       "function marcaCf(){var f=L('ptconf',{});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
       "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(){marcaCf();}).catch(function(){marcaCf();});}" +
-      "else{marcaCf();alert('Sem internet agora — avisa também pelo WhatsApp, combinado?');}});})();" +
+      "else{marcaCf();alert('Sem internet agora \u2014 avisa tamb\u00e9m pelo WhatsApp, combinado?');}});})();" +
       // ---- modo circuito (WOD): For Time, AMRAP, EMOM e Tabata ----
       "function bip(fq,dur){try{var ac=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());" +
       "if(ac.state==='suspended')ac.resume();var o=ac.createOscillator(),ga=ac.createGain();o.type='square';o.connect(ga);ga.connect(ac.destination);" +
