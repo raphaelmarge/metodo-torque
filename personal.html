@@ -2151,13 +2151,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="sHora" type="time" style="width: auto;">
         <button class="btn" id="sAdd">+ Agendar</button>
       </div>
+      <div id="agFixasLista" style="margin-top: 10px;"></div>
       <div id="sTurmaBox" hidden style="margin-top: 8px;">
         <div class="muted" style="font-size: 12.5px; margin-bottom: 6px;">Quem entra nessa turma? Toque nos nomes (cada aluno ganha a própria sessão — presença e cobrança seguem individuais):</div>
         <div id="sTurmaChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
       </div>
       <div class="muted" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; flex-wrap: wrap;">
         <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0;"><input type="checkbox" id="sRep" style="width: auto; margin: 0;"> <svg class='mi' viewBox='0 0 24 24' width='13' height='13' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 12a8 8 0 0 1-13.6 5.7M4 12a8 8 0 0 1 13.6-5.7'/><path d='M17.6 2.9v3.4H21M6.4 21.1v-3.4H3'/></svg> repetir até</label>
-        <input id="sRepAte" type="date" style="width: auto;">
+        <input id="sRepAte" type="date" style="width: auto;" title="deixe vazio pra repetir SEM FIM — vira sessão fixa e a agenda rola sozinha">
         <span>nos dias:</span>
         <span id="sRepDias" style="display: inline-flex; gap: 4px;">
           <label style="margin:0;"><input type="checkbox" class="srd" value="1" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
@@ -9449,6 +9450,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderAgenda(st) {
     pintaAgVis();
     pintaEncaixe(st);
+    var elFx = $("agFixasLista");
+    if (elFx) {
+      var fxs = (st.agFixas || []).filter(function (f) { return f && !f.fim; });
+      var DSEMF = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+      elFx.innerHTML = fxs.length ? '<div class="tdrot">Sessões fixas (rolam sozinhas)</div>' + fxs.map(function (f) {
+        var nomesF = (f.ids || []).map(function (idF) {
+          var aF = st.alunos.find(function (x) { return x.id === idF; });
+          return aF ? aF.nome.split(" ")[0] : "?";
+        }).join(", ");
+        return '<div class="sessao-pt"><b>' + esc(nomesF) + '</b><span class="muted" style="font-size:12px;">toda ' +
+          f.diaSem.map(function (n9) { return DSEMF[n9] || "?"; }).join("/") + (f.hora ? " às " + esc(f.hora) : "") + "</span>" +
+          '<span style="margin-left:auto;"></span><button class="btn sec mini" data-fixafim="' + esc(f.id) + '">Encerrar</button></div>';
+      }).join("") : "";
+    }
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
     var opsGt = (st.treinosGrupo || []).map(function (g) {
@@ -9707,6 +9722,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var alunoId = ids[0], hora = $("sHora").value || "";
     var datas = [$("sData").value];
+    /* v723: repetir marcado SEM data de fim = sessão FIXA. Vira uma REGRA
+     * (st.agFixas) e o extensor cria as próximas 4 semanas — e segue criando
+     * sozinho, semana após semana, até o professor Encerrar. Cancelar UMA
+     * sessão não a ressuscita: o extensor só cria além do geradoAte. */
+    if ($("sRep").checked && !$("sRepAte").value) {
+      var diasSelF = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
+      if (!diasSelF.length) diasSelF = [new Date($("sData").value + "T12:00:00").getDay()];
+      st.agFixas = st.agFixas || [];
+      st.agFixas.push({ id: S.uid(), ids: ids.slice(), diaSem: diasSelF, hora: hora, desde: $("sData").value, geradoAte: "" });
+      estendeAgFixas(st);
+      ids.forEach(function (aidF) { marcaAppPendente(st, aidF); });
+      save(st);
+      alert("Sessão fixa criada! A agenda cria as próximas 4 semanas sozinha e vai estendendo toda semana. Pra parar, use Encerrar na lista de fixas (aba Agendar).");
+      return;
+    }
     // horário fixo: gera as sessões até a data limite (máx. 1 ano / 90 sessões)
     if ($("sRep").checked && $("sRepAte").value) {
       var diasSel = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
@@ -9756,6 +9786,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     save(st);
     if (ids.length > 1) alert("Turma de " + ids.length + " agendada" + (datas.length > 1 ? " — " + (datas.length * ids.length) + " sessões até " + S.fmtData(datas[datas.length - 1]) : "") + ". Cada aluno tem a própria sessão: presença e cobrança seguem individuais.");
     else if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
+  });
+  /* ---------- v723: sessões FIXAS que rolam sozinhas ----------
+   * A regra mora em st.agFixas: {id, ids, diaSem[], hora, desde, geradoAte,
+   * fim?}. O extensor garante sessões até hoje+28 e avança o geradoAte —
+   * cancelou uma sessão específica, ela NÃO volta (só se cria além da marca).
+   * Dia bloqueado (férias/feriado) é pulado. */
+  function estendeAgFixas(st) {
+    var hoje = S.todayISO();
+    var fimJ = (function () { var d9 = new Date(hoje + "T12:00"); d9.setDate(d9.getDate() + 28); return S.todayISO(d9); })();
+    var mudou = false;
+    (st.agFixas || []).forEach(function (fx) {
+      if (!fx || fx.fim || !Array.isArray(fx.diaSem) || !fx.diaSem.length) return;
+      var ini = fx.desde || hoje;
+      if (fx.geradoAte) {
+        var dG = new Date(fx.geradoAte + "T12:00"); dG.setDate(dG.getDate() + 1);
+        ini = S.todayISO(dG);
+      }
+      if (ini < hoje) ini = hoje; // fixa nunca cria sessão no passado
+      for (var d = new Date(ini + "T12:00"); ; d.setDate(d.getDate() + 1)) {
+        var iso9 = S.todayISO(d);
+        if (iso9 > fimJ) break;
+        if (fx.diaSem.indexOf(d.getDay()) === -1) continue;
+        if (bloqueioDe(st, iso9)) continue;
+        (fx.ids || []).forEach(function (aidX) {
+          var ja = st.sessoes.some(function (x) { return x.alunoId === aidX && x.data === iso9 && (x.hora || "") === (fx.hora || ""); });
+          if (ja) return;
+          st.sessoes.push({ id: S.uid(), alunoId: aidX, data: iso9, hora: fx.hora || "", feita: false, fixaId: fx.id });
+          mudou = true;
+        });
+      }
+      if (fx.geradoAte !== fimJ) { fx.geradoAte = fimJ; mudou = true; }
+    });
+    return mudou;
+  }
+  function estendeFixasTick() {
+    var st = load();
+    if (!(st.agFixas || []).some(function (f) { return f && !f.fim; })) return;
+    if (estendeAgFixas(st)) save(st);
+  }
+  setTimeout(estendeFixasTick, 3000);
+  setInterval(estendeFixasTick, 6 * 3600 * 1000);
+  window.__agFixas = { estende: estendeAgFixas, tick: estendeFixasTick }; // testes
+  $("agFixasLista").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-fixafim]");
+    if (!b) return;
+    var st = load();
+    var fx = (st.agFixas || []).find(function (f) { return f.id === b.getAttribute("data-fixafim"); });
+    if (!fx) return;
+    var hoje = S.todayISO();
+    var futuras = st.sessoes.filter(function (x) { return x.fixaId === fx.id && x.data > hoje && !x.feita && !x.faltou; });
+    if (!confirm("Encerrar esta sessão fixa?" + (futuras.length ? " As " + S.plural(futuras.length, "sessão futura já criada será desmarcada", "sessões futuras já criadas serão desmarcadas") + "." : ""))) return;
+    fx.fim = hoje; // a regra fica no histórico; as feitas/faltas não são tocadas
+    st.sessoes = st.sessoes.filter(function (x) { return !(x.fixaId === fx.id && x.data > hoje && !x.feita && !x.faltou); });
+    save(st);
   });
   // usado no detalhe do dia (Agenda) e no card Seu dia hoje (Início)
   function trataCliqueSessao(e) {
