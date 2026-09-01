@@ -1707,6 +1707,7 @@
       "<button id='gVoltaEx' class='gvolta' aria-label='Exercício anterior'>‹</button>" +
       "<button id='gPularEx'>Pular exercício</button>" +
       "<button type='button' id='gFc' aria-label='Batimentos'></button>" +
+      "<button type='button' id='gVoz' aria-label='Ler os exercícios em voz alta' style='display:none;background:none;border:1px solid rgba(255,255,255,.25);color:#8a8695;border-radius:99px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.06em;cursor:pointer;'>voz</button>" +
       "<button id='gFechar' class='gx' aria-label='Fechar o treino guiado'>✕</button></div>" +
       "<div class='gbarra' id='gBarra' aria-hidden='true'></div>" +
       "<div class='gcont'><div id='gProg'></div><span id='gReloTot'></span></div>" +
@@ -4085,7 +4086,7 @@
       // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
       "hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
-      "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
       "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
       "gEl('guiaBox').style.display='none';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='';soltaTela();}" +
@@ -4137,8 +4138,24 @@
       "var ref=(gv.cargas[ex]!=null)?isoHj():(g.ds.length?g.ds[g.ds.length-1]:null);if(!ref)return 0;" +
       "for(var i=g.ds.length-1;i>=0;i--){if(g.ds[i]<ref){var m9=0;g.m[g.ds[i]].forEach(function(x){if(+x.kg>m9)m9=+x.kg;});" +
       "return m9>0?(+cv)-m9:0;}}return 0;}" +
+            /* 🔊 v733: voz no treino guiado — o app fala o exercício e a prescrição
+       * ("Supino reto. 3 séries de 12.") ao trocar de exercício, igual à
+       * corrida. Vem DESLIGADA (falar sozinho assusta); liga no botão VOZ do
+       * topo do player, e o toque de ligar já fala o exercício da tela — que
+       * também é o gesto que o iPhone exige pra liberar a fala. Sem
+       * speechSynthesis no navegador, o botão nem aparece (regra honesta). */
+      "function gVozOn(){return L('ptgvoz',0)==1&&!!window.speechSynthesis;}" +
+      "function gVozTxt(it){return it.e+'. '+it.s+(+it.s===1?' s\u00e9rie':' s\u00e9ries')+' de '+String(it.r||'').replace(/^(\\d+)\\s*s$/,'$1 segundos')+'.';}" +
+      "function gVozPinta(){var b=gEl('gVoz');if(!b)return;if(!window.speechSynthesis){b.style.display='none';return;}b.style.display='';" +
+      "var on=L('ptgvoz',0)==1;b.textContent=on?'voz \u2713':'voz';b.style.color=on?'var(--corc)':'#8a8695';b.style.borderColor=on?'var(--corc)':'rgba(255,255,255,.25)';}" +
+      "function gVozTgl(){var v=L('ptgvoz',0)==1?0:1;Sv('ptgvoz',v);gVozPinta();" +
+      "try{speechSynthesis.cancel();}catch(e9){}" +
+      "if(v==1){var f=GUIA[gv.f];var it=f&&f.it&&f.it[gv.e];if(it){crFala(gVozTxt(it));gv.falouEx=gv.e;}else{crFala('Voz ligada.');}}}" +
+      "(function(){var b=gEl('gVoz');if(b){gVozPinta();b.addEventListener('click',gVozTgl);}})();" +
+      "window.__gVoz={liga:gVozTgl,on:gVozOn,txt:gVozTxt,pinta:gVozPinta};" +
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];if(!it)return;" +
       "gv.tex=gv.tex||Date.now();gCabeca();" +
+      "if(gVozOn()&&gv.falouEx!==gv.e){gv.falouEx=gv.e;try{speechSynthesis.cancel();}catch(e7){}crFala(gVozTxt(it));}" +
       "gEl('gEstado').style.display='none';" +
       "var m='';" +
       /* aquecimento no 1º exercício (v670): lembrete em <details> nativo — zero
