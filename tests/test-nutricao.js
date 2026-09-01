@@ -909,7 +909,9 @@ async function abaNt(p, a) {
         st.pacientes.push({ id, nome: "Paciente Q" + i, sexo: "F", idade: 30, peso: 70, altura: 165,
           atividade: "mod", objetivo: "manter", ativo: true, zap: "31999990000", desde: iso(120) });
         if (i < 3) st.dietas[id] = { refeicoes: [{ id: "r", hora: "08:00", titulo: "Café", itens: [] }] };
-        if (i < 2) st.pagamentosN.push({ id: "pgq" + i, pacienteId: id, valor: 200, data: iso(1) });
+        // pagamento de HOJE (não "ontem"): no dia 1º do mês, ontem cai no mês
+        // anterior e a etiqueta "pago no mês" some — flake de virada de mês
+        if (i < 2) st.pagamentosN.push({ id: "pgq" + i, pacienteId: id, valor: 200, data: iso(0) });
       }
       // q0 tem consulta hoje; q4 sumiu há 90 dias
       st.consultas.push({ id: "cq0", pacienteId: "q0", data: iso(0), hora: "09:00" });
@@ -1051,7 +1053,9 @@ async function abaNt(p, a) {
     ok(fin.cobrarTodos && fin.temPix && fin.temLink,
       "cada atrasado tem Link/Pix/Recebi na linha, e o Cobrar todos aparece quando é mais de um");
     ok(fin.barras === 6 && fin.hachura, "os últimos 6 meses viram barras, com o mês corrente hachurado (projeção)");
-    ok(/Pix/.test(fin.como) && /\+\s*R\$\s*250/.test(fin.hoje) && fin.recibos === 3 && fin.clamp === 10,
+    // os 3 pagamentos do teste caem HOJE (200 + 200 + 250 = 650) — semear "ontem"
+    // quebrava na virada do mês
+    ok(/Pix/.test(fin.como) && /\+\s*R\$\s*650/.test(fin.hoje) && fin.recibos === 3 && fin.clamp === 10,
       "'Como você recebe' lista o Pix, 'Entrou hoje' soma o dia e o histórico dá o recibo de cada pagamento");
 
     // 10) Recebi na linha registra o pagamento e a linha some na hora
