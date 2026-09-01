@@ -3273,6 +3273,55 @@ async function abaPt(p, a) {
   ok(sino.novoVolta, "🔔 evento novo reaparece — os já vistos não voltam");
   ok(sino.fresco, "🔔 a busca em lote traz o retorno fresco da nuvem e repinta o card");
 
+  // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
+  // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
+  const fx = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    const dow = new Date(hoje + "T12:00").getDay();
+    st.agFixas = [{ id: "fx1", ids: [j.id], diaSem: [dow], hora: "05:45", desde: hoje, geradoAte: "" }];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__agFixas.tick();
+    const st1 = S.read("ptStudio", {});
+    const criadas = st1.sessoes.filter((x) => x.fixaId === "fx1");
+    const out = { n: criadas.length,
+      semanal: criadas.every((x) => new Date(x.data + "T12:00").getDay() === dow && x.hora === "05:45"),
+      marcou: (st1.agFixas[0].geradoAte || "") > hoje };
+    // rodar de novo não duplica
+    window.__agFixas.tick();
+    out.semDup = S.read("ptStudio", {}).sessoes.filter((x) => x.fixaId === "fx1").length === out.n;
+    // cancelar UMA sessão específica: ela NÃO volta no próximo tique
+    const st2 = S.read("ptStudio", {});
+    const alvo = st2.sessoes.filter((x) => x.fixaId === "fx1")[1];
+    st2.sessoes = st2.sessoes.filter((x) => x.id !== alvo.id);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__agFixas.tick();
+    const st2b = S.read("ptStudio", {});
+    out.canceladaNaoVolta = !st2b.sessoes.some((x) => x.id === alvo.id) &&
+      st2b.sessoes.filter((x) => x.fixaId === "fx1").length === out.n - 1;
+    // a lista das fixas aparece no card Agendar, com o Encerrar
+    const lista = document.getElementById("agFixasLista").textContent;
+    out.lista = /Sessões fixas/.test(lista) && /João/.test(lista) && /05:45/.test(lista);
+    const confirmOrig = window.confirm; window.confirm = () => true;
+    document.querySelector('[data-fixafim="fx1"]').click();
+    window.confirm = confirmOrig;
+    const st3 = S.read("ptStudio", {});
+    out.encerrou = !!st3.agFixas[0].fim &&
+      !st3.sessoes.some((x) => x.fixaId === "fx1" && x.data > hoje);
+    out.listaVazia = !/Sessões fixas/.test(document.getElementById("agFixasLista").textContent);
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.agFixas = [];
+    st9.sessoes = st9.sessoes.filter((x) => x.fixaId !== "fx1");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(fx.n >= 4 && fx.semanal && fx.marcou, "📅 a fixa cria as ~4 próximas semanas no dia/hora certos e avança o geradoAte");
+  ok(fx.semDup, "📅 rodar o extensor de novo não duplica sessão");
+  ok(fx.canceladaNaoVolta, "📅 sessão cancelada pelo professor NÃO ressuscita no próximo tique");
+  ok(fx.lista && fx.encerrou && fx.listaVazia, "📅 a lista mostra a fixa e o Encerrar desmarca só as futuras");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
