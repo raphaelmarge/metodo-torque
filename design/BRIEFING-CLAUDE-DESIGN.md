@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v730** |
-| Estado do repo em | 2026-09-01 (commit `cf0245f`) |
+| App em | **mt-v731** |
+| Estado do repo em | 2026-09-01 (commit `7ffdce8`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 191 |
+| Lançamentos no histórico | 192 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v730** — ou seja, **61 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v731** — ou seja, **62 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v728** (2026-09-01).
+O motor (`app/aluno-builder.js`) encostou em **mt-v731** (2026-09-01).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v731 | mural Seus recordes na Evolução do aluno |
 | mt-v730 | o vídeo do professor no exercício da ficha |
 | mt-v729 | reavaliação em atraso entra no Resolver hoje |
 | mt-v728 | aluno confirma presença e a Agenda mostra |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v718 | mensagens dos botões do WhatsApp com as SUAS palavras |
 | mt-v717 | renovar contrato em 1 clique direto do alerta + proposta no zap |
 | mt-v716 | encaixe — sessão cancelada vira vaga oferecida |
-| mt-v715 | diário da sessão na hora do Feita + a IA lê o diário |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
