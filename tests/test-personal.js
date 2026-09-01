@@ -3071,6 +3071,50 @@ async function abaPt(p, a) {
   ok(ren.renovou, "🔁 Renovar agora zera o início do contrato pra hoje (mesma regra do perfil)");
   ok(ren.alertaSumiu, "🔁 renovado, o alerta some na repintura");
 
+  // ✍️ v718: as mensagens de BOTÃO (falta, chamar, parabéns, encaixe) também
+  // são modelos editáveis — o texto custom aparece no link do WhatsApp
+  const bmsg = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const st = S.read("ptStudio", {});
+    st.config = st.config || {};
+    const zmAntes = JSON.stringify(st.config.zapModelos || null);
+    st.config.zapModelos = Object.assign({}, st.config.zapModelos,
+      { falta: "FALTACUSTOM {nome} volta!", encaixe: "VAGACUSTOM {nome} {dia} {hora}" });
+    st.alunos.push({ id: "bm-a", nome: "Botao Msg", ativo: true, zap: "31966660001", desde: "2026-01-01" });
+    st.sessoes.push({ id: "bm-s1", alunoId: "bm-a", data: hoje, hora: "06:00", faltou: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__relPT(); // repinta o Início (Seu dia hoje) com o modelo custom
+    const hojeHtml = document.getElementById("bHojeP").innerHTML;
+    window.__encaixe.abre(hoje, "19:00", "Teste");
+    const encHtml = document.getElementById("agEncaixe").innerHTML;
+    window.__encaixe.fecha();
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.config.zapModelos = zmAntes === "null" ? undefined : JSON.parse(zmAntes);
+    if (st9.config.zapModelos === undefined) delete st9.config.zapModelos;
+    st9.alunos = st9.alunos.filter((a) => a.id !== "bm-a");
+    st9.sessoes = st9.sessoes.filter((x) => x.id !== "bm-s1");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__relPT();
+    return {
+      falta: /FALTACUSTOM%20Botao/.test(hojeHtml),
+      encaixe: /VAGACUSTOM/.test(encHtml) && /19%3A00|19:00/.test(encHtml),
+    };
+  });
+  ok(bmsg.falta, "✍️ o Cobrar aula da falta usa o modelo editável (texto custom no link)");
+  ok(bmsg.encaixe, "✍️ o Oferecer a vaga usa o modelo editável, com {dia} e {hora}");
+  // a lista de Configurações mostra as mensagens de botão (com Editar, sem liga/desliga)
+  await abaPt(p, "config");
+  await p.waitForTimeout(300);
+  const bmLista = await p.evaluate(() => ({
+    editaveis: ["falta", "chamar", "parabens", "encaixe"].every((k) => !!document.querySelector('#autoLista [data-fixaed="' + k + '"]')),
+    semToggle: !document.querySelector('#autoLista [data-fixatg="falta"]'),
+    vespera: !!document.querySelector('#autoLista [data-fixaed="vespera"]') && !!document.querySelector('#autoLista [data-fixatg="vespera"]'),
+  }));
+  ok(bmLista.editaveis && bmLista.semToggle,
+    "✍️ Configurações lista as 4 mensagens de botão com Editar (e sem liga/desliga, porque só saem no toque)");
+  ok(bmLista.vespera, "⏰ a fixa de véspera (v714) aparece na lista com Editar E liga/desliga");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
