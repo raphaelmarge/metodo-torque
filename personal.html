@@ -11533,6 +11533,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<label>Descanso (s)<input type="number" min="0" inputmode="numeric" data-tfld="' + chave + ':descanso" value="' + (+it.descanso || 60) + '"></label>' +
             '<label>Tipo de série<select data-tfld="' + chave + ':tec">' + opcoesTec(it.tec) + "</select></label>" +
             '<label class="tdeobs">Observação pro aluno<input data-tfld="' + chave + ':obs" value="' + esc(String(it.obs || "")) + '" placeholder="ex.: pegada fechada, desce devagar"></label>' +
+            /* v730: o vídeo do PROFESSOR neste exercício — vence o da biblioteca
+             * no app do aluno. YouTube/Vimeo viram player embutido; .mp4/GIF
+             * também funcionam (é o mesmo vidHtml do app). */
+            '<label class="tdeobs">Seu vídeo neste exercício (opcional)<input data-tfld="' + chave + ':video" value="' + esc(String(it.video || "")) + '" placeholder="link do YouTube/Vimeo ou .mp4 — vence o vídeo padrão"></label>' +
             "</div></div>";
         }).join("") : "") +
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
@@ -11663,6 +11667,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       else if (campo === "obs") { if (String(vF).trim()) itF.obs = String(vF).trim().slice(0, 120); else delete itF.obs; }
       else if (campo === "tec") {
         if (!vF || !TECS_PT.some(function (x) { return x[0] === vF; })) delete itF.tec; else itF.tec = vF;
+      } else if (campo === "video") {
+        // v730: só http(s) — colar texto solto não vira <video src> quebrado no app
+        var uV = String(vF).trim().slice(0, 300);
+        if (/^https?:\/\//i.test(uV)) itF.video = uV; else delete itF.video;
       } else return;
       marcaAppPendente(stF, $("tAluno").value);
       S.write("ptStudio", stF);
@@ -18028,7 +18036,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : null;
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
+        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;

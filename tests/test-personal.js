@@ -1105,8 +1105,8 @@ async function abaPt(p, a) {
     "✏️ séries, repetições, descanso e observação viram campos e salvam na hora (5 × 8 · 100 s · pegada fechada)");
   ok(/5 × 8 · 100 s/.test(aposEd.tela) && /pegada fechada/.test(aposEd.tela),
     "✏️ o resumo da linha fechada mostra tudo numa frase só");
-  ok(aposEd.aberto && aposEd.campos === 5,
-    "✏️ o editor NÃO fecha a cada campo mexido (os 5 campos continuam à mão)");
+  ok(aposEd.aberto && aposEd.campos === 6,
+    "✏️ o editor NÃO fecha a cada campo mexido (os 6 campos continuam à mão)");
   const aposObs = aposEd;
   // 🏋️ tipo de série NO MESMO exercício (drop-set, up set…): escolhido na
   // cascata de montar e trocável direto na linha, sem prompt
@@ -1148,6 +1148,31 @@ async function abaPt(p, a) {
     return !st.treinosV2[st.alunos[0].id].fichas[0].itens[0].tec;
   });
   ok(limpaTec, "voltar pra Série normal tira a marcação do exercício");
+  // 🎬 v730: vídeo do PROFESSOR no exercício da ficha — campo do editor,
+  // guardado no item e vencendo o vídeo da biblioteca no pacote do app
+  await mexe("video", "https://youtu.be/meuvideo123"); await p.waitForTimeout(200);
+  const vid730 = await p.evaluate(() => {
+    const S = window.MTStore;
+    const st = S.read("ptStudio", {});
+    const a = st.alunos[0];
+    const it = st.treinosV2[a.id].fichas[0].itens[0];
+    const d = window.__dadosApp(a, new Date().toISOString());
+    return { salvo: it.video, pacote: (((d.fichasApp || [])[0] || {}).itens || [{}])[0].video };
+  });
+  ok(vid730.salvo === "https://youtu.be/meuvideo123" && vid730.pacote === "https://youtu.be/meuvideo123",
+    "🎬 o link colado no editor vai pro item e VENCE o vídeo da biblioteca no pacote do aluno");
+  // texto solto (sem http) não vira <video src> quebrado; apagar volta pro padrão
+  await mexe("video", "meu video legal"); await p.waitForTimeout(200);
+  const vid730b = await p.evaluate(() => {
+    const S = window.MTStore;
+    const st = S.read("ptStudio", {});
+    const a = st.alunos[0];
+    const it = st.treinosV2[a.id].fichas[0].itens[0];
+    const d = window.__dadosApp(a, new Date().toISOString());
+    return { limpou: !it.video, pacote: (((d.fichasApp || [])[0] || {}).itens || [{}])[0].video || "" };
+  });
+  ok(vid730b.limpou && vid730b.pacote !== "meu video legal",
+    "🎬 texto sem http não é guardado — o pacote volta pro vídeo padrão da biblioteca");
   // volta pro 4×10 sem obs — o resto da suíte depende desse estado
   await p.evaluate(async () => {
     const poe = (c, v) => { const el = document.querySelector('[data-tfld$=":' + c + '"]');
