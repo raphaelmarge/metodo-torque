@@ -4730,7 +4730,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '">Montar ficha</button>'
         : est === "sumindo"
         ? (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
-            "?text=" + encodeURIComponent("Oi " + String(a.nome).split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '">Chamar</a>'
+            "?text=" + encodeURIComponent(zapTexto(zapModelos(st).chamar, { nome: String(a.nome).split(" ")[0] })) + '">Chamar</a>'
           : '<button type="button" class="btn sec mini" data-perfil="' + a.id + '">Ver</button>')
         : (a.zap ? '<a class="btn sec mini al-ic" target="_blank" rel="noopener" title="falar no WhatsApp"' +
             ' aria-label="falar no WhatsApp com ' + esc(a.nome) + '" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">' +
@@ -9100,7 +9100,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<button type="button" class="btn sec mini" data-encfecha="1">Fechar</button></div>' +
       (cands.length ? cands.map(function (c) {
         var nomeC = c.a.nome.split(" ")[0];
-        var txtC = "Oi " + nomeC + "! Abriu um horário " + quando + " às " + v.hora + " — quer aproveitar pra treinar? Me responde aqui que eu já te encaixo. 💪";
+        var txtC = zapTexto(zapModelos(st).encaixe, { nome: nomeC, dia: quando, hora: v.hora });
         return '<div class="sessao-pt"><b>' + esc(c.a.nome) + "</b>" +
           '<span class="muted" style="font-size:12px;">' +
           (c.dias >= 9999 ? "ainda não treinou" : c.dias === 0 ? "treinou hoje" : "sem treinar há " + S.plural(c.dias, "dia", "dias")) + "</span>" +
@@ -9179,7 +9179,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return '<div class="agl faltou"><span class="aglh">' + esc(hora) + "</span>" +
           '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>Faltou</i></span>" +
           (aP.zap ? '<a class="aglb" target="_blank" rel="noopener" href="https://wa.me/55' + String(aP.zap).replace(/\D/g, "") +
-            "?text=" + encodeURIComponent("Oi " + String(aP.nome).split(" ")[0] + "! Senti sua falta no treino — bora remarcar?") + '">Cobrar</a>' : "") +
+            "?text=" + encodeURIComponent(zapTexto(zapModelos(st).falta, { nome: String(aP.nome).split(" ")[0] })) + '">Cobrar</a>' : "") +
           menu + painel + "</div>";
       }
       if (x.id === proxId) {
@@ -10298,6 +10298,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     atraso: "Oi {nome}, tudo bem? Sua mensalidade venceu há {dias}. Quer que eu te mande o Pix? Qualquer coisa me chama.",
     renova: "Oi {nome}! Seu plano completa o ciclo em {dias}. Bora renovar pra não perder o ritmo? Me chama que a gente resolve.",
     resgate: "Oi {nome}, senti sua falta! Já faz {dias} desde seu último treino. Bora marcar o próximo? Me fala o melhor dia pra você. 💪",
+    // v718: mensagens de BOTÃO — saem na hora quando o professor toca (falta do
+    // dia, chamar quem está sumindo, parabéns, oferta de vaga), não entram na fila
+    falta: "Oi {nome}! Senti sua falta no treino hoje. Bora remarcar?",
+    chamar: "Oi {nome}! Senti sua falta por aqui — bora marcar o próximo treino? 💪",
+    parabens: "Parabéns, {nome}!! 🎉 Muita saúde e muito treino nesse novo ciclo — conta comigo sempre! 💪",
+    encaixe: "Oi {nome}! Abriu um horário {dia} às {hora} — quer aproveitar pra treinar? Me responde aqui que eu já te encaixo. 💪",
   };
   function zapModelos(st) {
     var m = (st.config || {}).zapModelos || {};
@@ -10308,10 +10314,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       atraso: m.atraso || ZAP_MODELOS_PADRAO.atraso,
       renova: m.renova || ZAP_MODELOS_PADRAO.renova,
       resgate: m.resgate || ZAP_MODELOS_PADRAO.resgate,
+      falta: m.falta || ZAP_MODELOS_PADRAO.falta,
+      chamar: m.chamar || ZAP_MODELOS_PADRAO.chamar,
+      parabens: m.parabens || ZAP_MODELOS_PADRAO.parabens,
+      encaixe: m.encaixe || ZAP_MODELOS_PADRAO.encaixe,
     };
   }
   function zapTexto(modelo, vars) {
-    return String(modelo).replace(/\{(nome|hora|dias|valor|servico|resta)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
+    return String(modelo).replace(/\{(nome|hora|dia|dias|valor|servico|resta)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
   }
   function filaZapDe(st) {
     if ((st.config || {}).zapFilaOff) return [];
@@ -12449,6 +12459,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     atraso: { nome: "Pagamento atrasado", desc: "depois do vencimento — repete a cada 3 dias", dica: "Dá pra usar {nome}, {dias} (já vem com a palavra, ex.: '3 dias') e {valor}." },
     renova: { nome: "Renovação de plano", desc: "nos 30 dias antes do fim do ciclo — repete a cada 7 dias", dica: "Dá pra usar {nome}, {dias} e {valor}." },
     resgate: { nome: "Resgate de quem sumiu", desc: "7+ dias sem treinar e nada marcado — repete a cada 7 dias", dica: "Dá pra usar {nome} e {dias} (já vem com a palavra, ex.: '9 dias')." },
+    falta: { nome: "Cobrar a falta do dia", desc: "botão Cobrar aula de quem faltou", dica: "Dá pra usar {nome}." },
+    chamar: { nome: "Chamar quem está sumindo", desc: "botão Chamar da lista de alunos e do Radar", dica: "Dá pra usar {nome}." },
+    parabens: { nome: "Parabéns de aniversário", desc: "botão Dar parabéns do card de aniversários", dica: "Dá pra usar {nome}." },
+    encaixe: { nome: "Oferecer a vaga (encaixe)", desc: "botão do quadro Vaga aberta da Agenda", dica: "Dá pra usar {nome}, {dia} (ex.: 'hoje') e {hora}." },
   };
   function autoDescGat(au) {
     var n = Math.max(0, +au.dias || 0);
@@ -12474,8 +12488,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-fixatg="' + k + '">' + (fixOff[k] ? "Ligar" : "Desligar") + "</button>" +
         '<button class="btn mini" data-fixaed="' + k + '">Editar</button></span></div>';
     }).join("");
+    // v718: as mensagens de BOTÃO (falta, chamar, parabéns, encaixe) também são
+    // editáveis — mas não têm liga/desliga, porque só saem quando o professor toca
+    var botsHtml = '<div class="muted" style="margin:10px 0 4px;font-size:12px;font-weight:700;">MENSAGENS DOS BOTÕES (saem na hora, quando você toca)</div>' +
+      ["falta", "chamar", "parabens", "encaixe"].map(function (k) {
+        return '<div class="sessao-pt"><b>' + FIXAS_ROT[k].nome + "</b>" +
+          '<span class="muted" style="font-size:12px;">' + FIXAS_ROT[k].desc + "</span>" +
+          '<span style="margin-left:auto;">' +
+          '<button class="btn mini" data-fixaed="' + k + '">Editar</button></span></div>';
+      }).join("");
     var lista = st.zapAutos || [];
-    $("autoLista").innerHTML = fixasHtml + (lista.length ? lista.map(function (au) {
+    $("autoLista").innerHTML = fixasHtml + botsHtml + (lista.length ? lista.map(function (au) {
       return '<div class="sessao-pt"><b>' + esc(au.nome) + "</b>" +
         '<span class="muted" style="font-size:12px;">' + esc(autoDescGat(au)) + (au.imgId ? " · com foto" : "") + "</span>" +
         (au.off ? ' <span class="tag">desligada</span>' : "") +
@@ -16501,7 +16524,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
       var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
       if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", g: "Sumido há 14+ dias", curto: "<b>" + esc(a.nome) + "</b> — último treino em " + S.fmtData(ultimaFeita), txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
-        ac: zapAl(a, "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
+        ac: zapAl(a, zapTexto(zapModelos(st).chamar, { nome: a.nome.split(" ")[0] })) + '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
       var ultimaAv = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; }).map(function (v) { return v.data; }).sort().pop();
       var corte60 = new Date(); corte60.setDate(corte60.getDate() - 60);
       if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", g: "Sem avaliação há 60+ dias", curto: "<b>" + esc(a.nome) + "</b> — última em " + S.fmtData(ultimaAv), txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução.",
@@ -16657,8 +16680,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="dac">' +
         (x.feita ? '<span class="dok">✓ Feita</span><button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê">Anotar</button>'
           : x.faltou ? (aP.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-              String(aP.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(aP.nome || "").split(" ")[0] +
-              "! Senti sua falta hoje. Bora remarcar?") + '">Cobrar aula</a>' : '<span class="tag erro">FALTOU</span>')
+              String(aP.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(zapTexto(zapModelos(st).falta, { nome: String(aP.nome || "").split(" ")[0] })) + '">Cobrar aula</a>' : '<span class="tag erro">FALTOU</span>')
           : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
             '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</div></div>";
     }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
@@ -16714,7 +16736,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (diasP < 5) return;
       var temFutura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
       if (temFutura) return;
-      var msgR = "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪";
+      var msgR = zapTexto(zapModelos(st).chamar, { nome: a.nome.split(" ")[0] });
       // linha do Radar no desenho da 1a: iniciais, nome, o motivo e o atalho
       radar.push('<div class="drad"><div class="dav2">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
         '<div style="min-width:0;"><button class="dnm" data-vernome="' + a.id + '" style="background:none;border:0;padding:0;font-family:inherit;cursor:pointer;text-align:left;">' +
@@ -16884,7 +16906,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     $("bNiverP").innerHTML = nive.length ? nive.sort(function (x, y) { return x.di - y.di; }).map(function (n) {
       var rot = n.di === 0 ? "HOJE" : n.di === 1 ? "amanhã" : S.fmtData(n.dia);
-      var msgN = "Parabéns, " + n.a.nome.split(" ")[0] + "!! 🎉 Muita saúde e muito treino nesse novo ciclo — conta comigo sempre! 💪";
+      var msgN = zapTexto(zapModelos(st).parabens, { nome: n.a.nome.split(" ")[0] });
       return '<div class="sessao-pt"><b>' + esc(n.a.nome) + "</b><span>" + rot + " · faz " + n.idade + " anos</span>" +
         '<span style="margin-left:auto;"></span>' +
         (n.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(n.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgN) + '">Dar parabéns</a>' : "") + "</div>";
