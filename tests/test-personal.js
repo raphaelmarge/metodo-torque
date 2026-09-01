@@ -3347,6 +3347,69 @@ async function abaPt(p, a) {
   ok(bt.achou && bt.navegou, "🔍 clicar no resultado navega até a sub-aba certa (Relatórios → Vendas)");
   ok(bt.alunoNaFrente, "🔍 aluno continua vindo na frente das telas");
 
+  // 📦 v725: foto NOVA da galeria sobe pro Storage; a lista guarda só a URL
+  const stg = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const px = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+    const out = {};
+    // nuvem mockada: upload ok e URL pública devolvida
+    const cloudOrig = S.cloud;
+    let subiu = null, removeu = null;
+    S.cloud = () => ({ aid: "acad-uuid-1", client: { storage: { from: () => ({
+      upload: (path) => { subiu = path; return Promise.resolve({ data: { path } }); },
+      getPublicUrl: (path) => ({ data: { publicUrl: "https://x.supabase.co/storage/v1/object/public/galeria/" + path } }),
+      remove: (l) => { removeu = l; return Promise.resolve({}); },
+    }) } } });
+    const url = await new Promise((res) => window.__galeriaNuvem(px, res));
+    out.subiu = /^acad-uuid-1\//.test(subiu || "") && /\.jpg$/.test(subiu || "");
+    out.url = /\/galeria\/acad-uuid-1\//.test(url);
+    // sem nuvem, cai no caminho antigo (devolve vazio, sem travar)
+    S.cloud = () => null;
+    out.semNuvem = (await new Promise((res) => window.__galeriaNuvem(px, res))) === "";
+    S.cloud = cloudOrig;
+    // item da nuvem na lista: renderiza, não pesa no teto, e o X remove lá também
+    const antes = S.read("ptImagens", []);
+    const lista = antes.slice();
+    lista.unshift({ id: "stg1", n: "Foto Nuvem", d: url, em: S.todayISO() });
+    S.write("ptImagens", lista);
+    out.pesoZero = window.__imagensPT.peso([{ d: url }]) === 0;
+    window.__imagensPT.render();
+    out.render = document.querySelector('#imgGaleria img[src*="/galeria/"]') !== null &&
+      /na nuvem do studio/.test(document.getElementById("imgEspaco").textContent);
+    S.cloud = () => ({ aid: "acad-uuid-1", client: { storage: { from: () => ({
+      remove: (l) => { removeu = l; return Promise.resolve({}); } }) } } });
+    const confirmOrig = window.confirm; window.confirm = () => true;
+    document.querySelector('[data-imgrm="stg1"]').click();
+    window.confirm = confirmOrig;
+    await new Promise((r) => setTimeout(r, 30));
+    out.removeuNuvem = Array.isArray(removeu) && /^acad-uuid-1\//.test(removeu[0] || "");
+    out.saiu = !S.read("ptImagens", []).some((x) => x.id === "stg1");
+    // "Usar no card" com foto da nuvem: baixa e vira data: (o app é offline)
+    const lista2 = S.read("ptImagens", []);
+    lista2.unshift({ id: "stg2", n: "Capa Nuvem", d: url, em: S.todayISO() });
+    S.write("ptImagens", lista2);
+    window.__imagensPT.render();
+    const fetchOrig = window.fetch;
+    window.fetch = () => Promise.resolve({ blob: () => Promise.resolve(new Blob([Uint8Array.from([255, 216, 255])], { type: "image/jpeg" })) });
+    document.querySelector('[data-imgcapa="stg2"]').click();
+    await new Promise((r) => setTimeout(r, 120));
+    window.fetch = fetchOrig;
+    out.capaData = /^data:/.test((S.read("ptStudio", {}).config || {}).capaTreino || "");
+    // limpa
+    S.cloud = cloudOrig;
+    S.write("ptImagens", antes);
+    const st9 = S.read("ptStudio", {});
+    delete st9.config.capaTreino;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__imagensPT.render();
+    return out;
+  });
+  ok(stg.subiu && stg.url, "📦 a foto nova sobe pro balde galeria no prefixo da academia e vira URL");
+  ok(stg.semNuvem, "📦 sem conta/nuvem, cai no caminho antigo (base64) sem drama");
+  ok(stg.pesoZero && stg.render, "📦 foto da nuvem não pesa no teto e a galeria mostra a contagem");
+  ok(stg.removeuNuvem && stg.saiu, "📦 apagar remove da lista e pede a remoção do arquivo na nuvem");
+  ok(stg.capaData, "📦 'Usar no card' baixa a foto da nuvem e embute como data: — o app do aluno segue 100% offline");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
