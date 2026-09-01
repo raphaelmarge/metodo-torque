@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v738** |
-| Estado do repo em | 2026-09-01 (commit `f39992c`) |
+| App em | **mt-v739** |
+| Estado do repo em | 2026-09-01 (commit `bcfd373`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 199 |
+| Lançamentos no histórico | 200 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v738** — ou seja, **69 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v739** — ou seja, **70 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v739 | botão do WhatsApp legível no modo claro do painel |
 | mt-v738 | um 'Pedir um horário' por vez na Agenda do aluno |
 | mt-v737 | Central de ajuda no NUTRI |
 | mt-v736 | o push do dia diz QUAL treino |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v727 | o sexo do aluno ganhou campo onde ele faz falta |
 | mt-v726 | comandos que EXECUTAM na busca do topo |
 | mt-v725 | fotos novas da galeria no Supabase Storage |
-| mt-v724 | a busca do topo acha telas e ações, não só aluno |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
