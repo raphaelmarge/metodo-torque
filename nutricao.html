@@ -77,6 +77,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .corpo { padding-left: 26px; padding-right: 26px; }
   a { color: var(--nt-verde-claro); }
   a:hover { color: var(--nt-verde-chip); }
+  /* v737: Central de ajuda — o mesmo desenho da v706 do Personal, em verde */
+  .ajgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .ajcard { display: flex; gap: 11px; align-items: flex-start; text-align: left; background: var(--nt-card); border: 1px solid var(--nt-borda); border-radius: 13px; padding: 13px 14px; cursor: pointer; font-family: inherit; color: var(--nt-txt); }
+  .ajcard b { display: block; font-size: 14px; }
+  .ajcard i { display: block; font-style: normal; font-size: 12px; color: var(--nt-txt-3); margin-top: 2px; }
+  .ajic { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--nt-verde-bg); color: var(--nt-verde-claro); display: inline-flex; align-items: center; justify-content: center; }
+  .ajsec summary { cursor: pointer; font-weight: 800; font-size: 14px; }
+  .ajpassos { margin: 10px 0 4px; padding-left: 20px; font-size: 13.5px; }
+  .ajpassos li { margin-bottom: 7px; }
   ::selection { background: rgba(22,163,74,.35); }
   .btn { min-height: var(--nt-h-bt); border-radius: var(--nt-r-bt); background: var(--verde); }
   .btn:hover { transform: none; box-shadow: none; background: var(--verde-2); }
@@ -274,6 +283,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="financeiro"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5v9M14.6 9.2c-.5-.9-1.5-1.4-2.6-1.4-1.5 0-2.7.9-2.7 2.1 0 2.9 5.4 1.5 5.4 4.3 0 1.2-1.2 2.1-2.7 2.1-1.1 0-2.1-.5-2.6-1.4'/></svg>Financeiro</button>
     <button data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Check-ins</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <button data-a="ajuda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M9.6 9.3a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.5'/><circle cx='12' cy='16.8' r='.5'/></svg>Ajuda</button>
     <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
@@ -486,6 +496,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- FINANCEIRO consolidado (espelho da tela 2e do Personal: atrasados com a ação
        na linha, 6 meses com projeção, como você recebe, entrou hoje, régua) -->
+  <div id="vAjudaN" hidden></div>
+
   <div id="vFinanceiroN" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <div class="linha-flex" style="align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -1100,6 +1112,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     $("vFinanceiroN").hidden = b.dataset.a !== "financeiro";
     $("vQuestN").hidden = b.dataset.a !== "quest";
     $("vChatN").hidden = b.dataset.a !== "chat";
+    $("vAjudaN").hidden = b.dataset.a !== "ajuda";
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de pacientes
     $("cardContaN").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "dietas") renderDietas();
@@ -1109,7 +1122,188 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (b.dataset.a === "financeiro") renderFinanceiroN();
     if (b.dataset.a === "quest") { renderQuestN(); carregaRespostasQuestN(); }
     if (b.dataset.a === "chat") { renderBotN(); montaBuilderN(); renderChatNT(); }
+    if (b.dataset.a === "ajuda") renderAjudaN();
   });
+
+  /* ---------- v737: Central de ajuda (paridade com a v706 do Personal) ----------
+   * Passo a passo por área + o chamado de suporte com protocolo (a MESMA
+   * função `suporte` do Personal — o aid é o do consultório). Sem fotos de
+   * propósito: as figuras da Ajuda do Personal são prints do painel roxo e
+   * fingir que valem aqui seria mentira na tela. */
+  var AJUDA_NT = [
+    { id: "comeco", t: "Começando: seu consultório", d: "Cadastrar paciente e entrar na conta",
+      ic: "<path d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zM4.5 20a7.5 7.5 0 0 1 15 0'/>",
+      subs: [
+        { t: "Cadastrar um paciente", p: [
+          "Vá em <b>Pacientes → + Novo paciente</b>.",
+          "Preencha nome e WhatsApp — o resto pode vir depois.",
+          "Toque no paciente pra abrir a ficha e complete a anamnese com calma."] },
+        { t: "Entrar na sua conta (nuvem)", p: [
+          "Abra <b>Sua ilha</b> no menu.",
+          "Crie a conta ou entre com seu e-mail.",
+          "Com a conta, o chat, os check-ins e o app do paciente ligam sozinhos."] }] },
+    { id: "dietas", t: "Dietas e cardápios", d: "Montar, gerar com IA e a lista de compras",
+      ic: "<path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/>",
+      subs: [
+        { t: "Montar uma dieta", p: [
+          "Em <b>Dietas</b>, escolha o paciente e toque em <b>+ Nova dieta</b>.",
+          "Adicione as refeições e busque os alimentos — a tabela já tem os principais do Brasil.",
+          "As calorias e os macros somam sozinhos enquanto você monta."] },
+        { t: "Gerar com IA", p: [
+          "Na dieta, toque em <b>Gerar com IA</b> — ela monta a partir da anamnese.",
+          "Confira item por item antes de publicar. A palavra final é sempre sua."] },
+        { t: "Lista de compras", p: [
+          "Com a dieta pronta, toque em <b>Lista de compras</b>.",
+          "Ela agrupa os ingredientes da semana — dá pra mandar direto no WhatsApp do paciente."] }] },
+    { id: "app", t: "App do paciente", d: "Publicar e o que ele vê no celular",
+      ic: "<rect x='6' y='2.5' width='12' height='19' rx='2.5'/><path d='M10.5 18.5h3'/>",
+      subs: [
+        { t: "Publicar o app", p: [
+          "Na ficha do paciente, toque em <b>Publicar app</b>.",
+          "Mande o link pelo WhatsApp — abre no navegador e dá pra instalar na tela de início.",
+          "Republicar leva as mudanças de dieta pra ele na hora."] },
+        { t: "O que o paciente vê", p: [
+          "A dieta do dia, os check-ins, o chat com você e a evolução do peso.",
+          "O que você desligar nas configurações some do app dele."] }] },
+    { id: "agenda", t: "Agenda e consultas", d: "Marcar, dar por feita e pedidos pelo app",
+      ic: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
+      subs: [
+        { t: "Passo a passo", p: [
+          "Na <b>Agenda</b>, toque num horário livre pra marcar a consulta.",
+          "Consulta que aconteceu: toque nela e marque <b>Feita</b>.",
+          "Paciente pode pedir horário pelo app — o pedido chega com destaque pra você confirmar."] }] },
+    { id: "fin", t: "Financeiro", d: "Receber, cobrar e o resumo do mês",
+      ic: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7.5v9M14.6 9.2c-.5-.9-1.5-1.4-2.6-1.4-1.5 0-2.7.9-2.7 2.1 0 2.9 5.4 1.5 5.4 4.3 0 1.2-1.2 2.1-2.7 2.1-1.1 0-2.1-.5-2.6-1.4'/>",
+      subs: [
+        { t: "Passo a passo", p: [
+          "O <b>Financeiro</b> mostra o mês: recebido, a receber e os atrasados.",
+          "Cada atrasado tem o botão de cobrar no WhatsApp, na própria linha.",
+          "Registre um recebimento na consulta ou pelo + do Financeiro."] }] },
+    { id: "conta", t: "Conta e ajustes", d: "Sua ilha, tema e os seus dados",
+      ic: "<circle cx='12' cy='12' r='3.2'/><path d='M19 12a7 7 0 0 1-.1 1.2l2 1.6-2 3.4-2.4-1a7 7 0 0 1-2 1.2L14 21h-4l-.5-2.6a7 7 0 0 1-2-1.2l-2.4 1-2-3.4 2-1.6A7 7 0 0 1 5 12a7 7 0 0 1 .1-1.2l-2-1.6 2-3.4 2.4 1a7 7 0 0 1 2-1.2L10 3h4l.5 2.6a7 7 0 0 1 2 1.2l2.4-1 2 3.4-2 1.6A7 7 0 0 1 19 12z'/>",
+      subs: [
+        { t: "Passo a passo", p: [
+          "<b>Sua ilha</b> guarda a conta, o modo claro/escuro e o WhatsApp do consultório.",
+          "Seus dados são seus: dá pra baixar tudo quando quiser.",
+          "Mudou algo que aparece no app do paciente? Republique pra valer no celular dele."] }] },
+  ];
+  var ajAbertoN = null;
+  function renderAjudaChamadoN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      return "<div class='card'><h2>Falar com o suporte</h2>" +
+        "<p class='cinza' style='margin:6px 0 0;color:var(--nt-txt-3);'>O chamado precisa da sua conta na nuvem — é ela que gera o protocolo e guarda o histórico. <b>Entre na sua conta</b> (Sua ilha) e volte aqui.</p></div>";
+    }
+    return "<div class='card' style='margin-bottom:12px;'><h2>Abrir um chamado</h2>" +
+      "<p style='margin:4px 0 12px;font-size:12.5px;color:var(--nt-txt-3);'>Bug, pedido de alteração, crítica ou sugestão — cai direto com a gente, e você recebe um <b>número de protocolo</b> pra acompanhar.</p>" +
+      "<div style='display:flex;gap:10px;flex-wrap:wrap;'>" +
+      "<label style='margin:0;font-size:12.5px;flex:1;min-width:170px;'>Tipo do chamado" +
+      "<select id='supTipoN' style='margin-top:4px;width:100%;'><option value='bug'>Problema (bug)</option><option value='alteracao'>Pedido de alteração</option><option value='critica'>Crítica</option><option value='sugestao'>Sugestão</option></select></label>" +
+      "<label style='margin:0;font-size:12.5px;flex:1;min-width:170px;'>Seu e-mail (pra gente responder)" +
+      "<input id='supEmailN' type='email' autocomplete='email' style='margin-top:4px;width:100%;'></label></div>" +
+      "<label style='margin:10px 0 0;font-size:12.5px;display:block;'>Conte pra gente" +
+      "<textarea id='supMsgN' rows='5' placeholder='O que aconteceu (ou o que você gostaria)? Quanto mais detalhe, mais rápido a gente resolve.' style='margin-top:4px;width:100%;'></textarea></label>" +
+      "<div style='display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
+      "<button type='button' class='btn' id='supEnviaN'>Abrir chamado</button>" +
+      "<span id='supStatusN' style='font-size:12.5px;color:var(--nt-txt-3);'></span></div>" +
+      "<div id='supOkN' hidden style='margin-top:12px;border:1px solid var(--nt-borda);border-radius:12px;padding:14px;background:var(--nt-caixa);'>" +
+      "<b style='display:block;font-size:13px;'>Chamado aberto! Guarde o protocolo:</b>" +
+      "<div id='supProtoN' style='font-size:24px;font-weight:900;letter-spacing:.04em;color:var(--nt-verde-claro);margin-top:4px;font-variant-numeric:tabular-nums;'></div>" +
+      "<span style='font-size:12px;color:var(--nt-txt-3);'>Ele também fica na lista abaixo — a resposta chega no seu e-mail.</span></div></div>" +
+      "<div class='card'><h2>Meus chamados</h2><div id='supListaN' style='margin-top:8px;font-size:13px;color:var(--nt-txt-3);'>Carregando…</div></div>";
+  }
+  var SUP_TIPOS_N = { bug: "Problema", alteracao: "Alteração", critica: "Crítica", sugestao: "Sugestão" };
+  function carregaChamadosN() {
+    var nuvem = S.cloud && S.cloud();
+    var el = $("supListaN");
+    if (!nuvem || !el) return;
+    // .eq(academia_id): a RLS devolve TODAS as academias do usuário (lição v532)
+    nuvem.client.from("suporte_chamados").select("protocolo,tipo,status,resposta,criado_em")
+      .eq("academia_id", nuvem.aid).order("criado_em", { ascending: false }).limit(20)
+      .then(function (r) {
+        var lst = (r && r.data) || [];
+        if (!lst.length) { el.textContent = "Nenhum chamado aberto ainda."; return; }
+        el.innerHTML = lst.map(function (c) {
+          var resolvido = c.status !== "aberto";
+          return "<div style='border:1px solid var(--nt-borda);border-radius:12px;padding:11px 13px;margin-bottom:8px;'>" +
+            "<div style='display:flex;gap:10px;align-items:center;flex-wrap:wrap;'>" +
+            "<b style='font-variant-numeric:tabular-nums;'>" + esc(c.protocolo) + "</b>" +
+            "<span style='font-size:12px;color:var(--nt-txt-3);'>" + (SUP_TIPOS_N[c.tipo] || esc(c.tipo)) + " · " + String(c.criado_em).slice(8, 10) + "/" + String(c.criado_em).slice(5, 7) + "</span>" +
+            "<span style='margin-left:auto;font-size:11px;font-weight:800;color:" + (resolvido ? "var(--nt-ok)" : "var(--nt-aten)") + ";'>" + (resolvido ? "RESPONDIDO" : "ABERTO") + "</span></div>" +
+            (c.resposta ? "<div style='font-size:12.5px;margin-top:6px;border-left:3px solid var(--nt-verde-claro);padding-left:10px;white-space:pre-wrap;'>" + esc(c.resposta) + "</div>" : "") +
+            "</div>";
+        }).join("");
+      }, function () { el.textContent = "Não deu pra carregar agora — tente de novo."; });
+  }
+  function enviaChamadoN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var msg = ($("supMsgN").value || "").trim();
+    var st9 = $("supStatusN");
+    if (msg.length < 10) { st9.textContent = "Escreva um pouco mais (pelo menos 10 letras) pra gente entender."; return; }
+    var bt = $("supEnviaN");
+    bt.disabled = true; st9.textContent = "Abrindo o chamado…";
+    self.MT_FUNCAO.chama(nuvem.client, "suporte", {
+      acao: "abrir", aid: nuvem.aid, tipo: $("supTipoN").value,
+      msg: msg, email: ($("supEmailN").value || "").trim(),
+    }, "Abrir chamado").then(function (r) {
+      bt.disabled = false;
+      if (!r || !r.ok || !r.protocolo) { st9.textContent = (r && r.erro) || "Não deu pra abrir agora — tente de novo."; return; }
+      st9.textContent = "";
+      $("supMsgN").value = "";
+      $("supProtoN").textContent = r.protocolo;
+      $("supOkN").hidden = false;
+      carregaChamadosN();
+    });
+  }
+  function renderAjudaN() {
+    var el = $("vAjudaN");
+    var mio = "";
+    if (ajAbertoN === "_chamado") {
+      mio = "<button type='button' class='btn sec' data-ajvoltan style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
+        renderAjudaChamadoN();
+      el.innerHTML = mio;
+      carregaChamadosN();
+      var nv9 = S.cloud && S.cloud();
+      if (nv9 && nv9.client.auth && nv9.client.auth.getSession) {
+        nv9.client.auth.getSession().then(function (sx) {
+          var em9 = sx && sx.data && sx.data.session && sx.data.session.user && sx.data.session.user.email;
+          var inp = $("supEmailN");
+          if (em9 && inp && !inp.value) inp.value = em9;
+        });
+      }
+      return;
+    }
+    if (!ajAbertoN) {
+      mio = "<div class='card' style='margin-bottom:12px;'><h2>Central de ajuda</h2>" +
+        "<p style='margin:4px 0 14px;font-size:13px;color:var(--nt-txt-3);'>Toque num tópico pra ver o passo a passo de cada área.</p>" +
+        "<button type='button' class='ajcard' data-ajtopicon='_chamado' style='width:100%;margin-bottom:12px;border-color:var(--nt-verde-claro);'>" +
+        "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 6.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z'/><path d='m4.5 7 7.5 6 7.5-6'/></svg></span>" +
+        "<span style='flex:1;min-width:0;'><b>Falar com o suporte</b><i>Abra um chamado — bug, alteração, crítica ou sugestão — e receba um protocolo pra acompanhar</i></span></button>" +
+        "<div class='ajgrid'>" + AJUDA_NT.map(function (tp) {
+          return "<button type='button' class='ajcard' data-ajtopicon='" + tp.id + "'>" +
+            "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + tp.ic + "</svg></span>" +
+            "<span style='flex:1;min-width:0;'><b>" + tp.t + "</b><i>" + tp.d + "</i></span></button>";
+        }).join("") + "</div></div>";
+    } else {
+      var tp2 = AJUDA_NT.filter(function (x) { return x.id === ajAbertoN; })[0];
+      if (!tp2) { ajAbertoN = null; return renderAjudaN(); }
+      mio = "<button type='button' class='btn sec' data-ajvoltan style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
+        "<h2 style='margin:0 0 10px;font-size:18px;'>" + tp2.t + "</h2>" +
+        tp2.subs.map(function (sb, i) {
+          return "<details class='card ajsec'" + (i === 0 ? " open" : "") + "><summary>" + sb.t + "</summary>" +
+            "<ol class='ajpassos'>" + sb.p.map(function (px) { return "<li>" + px + "</li>"; }).join("") + "</ol></details>";
+        }).join("");
+    }
+    el.innerHTML = mio;
+  }
+  $("vAjudaN").addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#supEnviaN")) { enviaChamadoN(); return; }
+    var c = e.target.closest && e.target.closest("[data-ajtopicon]");
+    if (c) { ajAbertoN = c.getAttribute("data-ajtopicon"); renderAjudaN(); window.scrollTo(0, 0); return; }
+    if (e.target.closest && e.target.closest("[data-ajvoltan]")) { ajAbertoN = null; renderAjudaN(); }
+  });
+  window.__ajudaNT = { dados: AJUDA_NT, abre: function (id) { ajAbertoN = id || null; renderAjudaN(); } }; // testes
 
   // ---------- sub-abas dentro das seções (Alimentos, Agenda, Check-ins, Chat) ----------
   function fazSubAbas(secId, abasId, dataAba, dataSec, inicial) {
