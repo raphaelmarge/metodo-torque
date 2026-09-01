@@ -3027,6 +3027,50 @@ async function abaPt(p, a) {
   ok(enc.fechou, "🪑 Fechar limpa o quadro");
   ok(enc.semHoraNaoAbre, "🪑 sessão sem horário cancelada não abre vaga");
 
+  // 🔁 v717: renovação de contrato em 1 clique DIRETO do alerta, com a
+  // proposta pro WhatsApp usando o modelo editável da fila
+  const ren = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const st = S.read("ptStudio", {});
+    st.alunos.push({ id: "ren-a", nome: "Renova Silva", ativo: true, zap: "31977770001", desde: iso(80) });
+    st.planosPT = st.planosPT || [];
+    st.planosPT.push({ id: "ren-pl", nome: "Trimestral Renova", valor: 300, ciclo: 3, cobranca: "mes" });
+    st.contratosPT = st.contratosPT || [];
+    st.contratosPT.push({ id: "ren-ct", alunoId: "ren-a", planoId: "ren-pl", diaVenc: 5, inicio: iso(80), status: "ativo" });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__relPT();
+    const html = document.getElementById("relAlertas").innerHTML;
+    const out = {
+      alerta: /Renova Silva/.test(html) && /Trimestral Renova/.test(html),
+      renovaAgora: /data-ctrenova="ren-ct"/.test(html) && /Renovar agora/.test(html),
+      propoe: /Propor no zap/.test(html) && /wa.me\/5531977770001/.test(html) && /Bora%20renovar/.test(html),
+    };
+    // clica o Renovar agora (confirm stubado: o aluno tem meses em aberto)
+    const confirmOrig = window.confirm;
+    window.confirm = () => true;
+    document.querySelector('#relAlertas [data-ctrenova="ren-ct"]').click();
+    window.confirm = confirmOrig;
+    const ct2 = S.read("ptStudio", {}).contratosPT.find((c) => c.id === "ren-ct");
+    out.renovou = ct2.inicio === hoje;
+    window.__relPT();
+    // o aluno pode seguir em OUTROS alertas (sem ficha, p.ex.) — o que tem de
+    // sumir é o alerta de RENOVAÇÃO dele
+    out.alertaSumiu = !/data-ctrenova="ren-ct"/.test(document.getElementById("relAlertas").innerHTML);
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "ren-a");
+    st9.planosPT = st9.planosPT.filter((x) => x.id !== "ren-pl");
+    st9.contratosPT = st9.contratosPT.filter((x) => x.id !== "ren-ct");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__relPT();
+    return out;
+  });
+  ok(ren.alerta && ren.renovaAgora, "🔁 o alerta 'Contrato pra renovar' ganhou o Renovar agora (1 clique, sem trocar de tela)");
+  ok(ren.propoe, "🔁 e a proposta pro WhatsApp com o modelo editável da renovação");
+  ok(ren.renovou, "🔁 Renovar agora zera o início do contrato pra hoje (mesma regra do perfil)");
+  ok(ren.alertaSumiu, "🔁 renovado, o alerta some na repintura");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
