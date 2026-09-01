@@ -1654,7 +1654,15 @@
       "<span style='flex:none;color:var(--corc);line-height:0;'>" + appIco(APPIC.presente, 22) + "</span>" +
       "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>Chamar um amigo</b>" +
       "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>treinar em dupla rende mais — manda o convite no WhatsApp</span></span>" +
-      "<span style='flex:none;color:#57525f;line-height:0;'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></a></div>" : "") +
+      "<span style='flex:none;color:#57525f;line-height:0;'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></a>" +
+      /* v719: indicação premiada — o prêmio (se o professor definiu) aparece
+       * embaixo do convite, e o aluno registra que chamou alguém: a indicação
+       * viaja no retorno (ptindicas) e vira aviso no painel do professor. */
+      "<div id='indicaPr' class='vz' style='display:none;text-align:left;padding:8px 0 0;'></div>" +
+      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<input id='indicaNm' placeholder='nome do amigo (opcional)' style='flex:1;min-width:0;'>" +
+      "<button class='btnx' id='indicaOk' style='flex:none;white-space:nowrap;'>Avisar meu professor</button></div>" +
+      "<div id='indicaFb' class='vz' style='display:none;text-align:left;'></div></div>" : "") +
       /* ---------- Questionários: área PRÓPRIA (a partir da v585) ----------
        * O check-in da semana e o questionário do personal moravam embaixo da
        * conversa, na área do Chat. Quem abria o chat pra mandar um recado caía
@@ -1757,7 +1765,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1791,6 +1799,7 @@
       "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "aceite:L('ptaceite',null)," +
       "notas:L('ptnotas',[])," +
+      "indicas:L('ptindicas',[])," +
       "depo:L('ptdepo',null)," +
       "atualizado:new Date().toISOString()};" +
       "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
@@ -1833,6 +1842,16 @@
       "Sv('ptdepo',{t:t,em:isoHj()});" +
       "cx.innerHTML=\"<h2>Obrigado! \\ud83d\\udc9c</h2><div class='vz' style='text-align:left;'>Seu depoimento foi direto pro seu personal.</div>\";});})();" +
       "window.__depo={pede:!!PDEPO};" +
+      /* v719: prêmio da indicação (D.indicaPremio) + o botão que registra a
+       * indicação em ptindicas — o devolveApp manda pro professor. */
+      "var INDPR=" + jsonApp(String(D.indicaPremio || "")) + ";" +
+      "(function(){var pr=document.getElementById('indicaPr');if(pr&&INDPR){pr.style.display='';pr.textContent='\ud83c\udf81 '+INDPR;}" +
+      "var bt=document.getElementById('indicaOk');if(!bt)return;bt.addEventListener('click',function(){" +
+      "var nm=String((document.getElementById('indicaNm')||{}).value||'').trim().slice(0,80);" +
+      "var l=L('ptindicas',[]);l.push({n:nm,em:isoHj()});if(l.length>30)l.shift();Sv('ptindicas',l);" +
+      "var fb=document.getElementById('indicaFb');if(fb){fb.style.display='';fb.textContent='Avisado! Seu professor j\u00e1 sabe que a indica\u00e7\u00e3o \u00e9 sua. \ud83d\udc9c';}" +
+      "var ni=document.getElementById('indicaNm');if(ni)ni.value='';});})();" +
+      "window.__indica={premio:INDPR};" +
       // 🎁 cupom do clube (v697): tocar copia o código — com reserva pro
       // navegador sem clipboard (textarea + execCommand)
       "document.addEventListener('click',function(e){var cb=e.target.closest&&e.target.closest('.cupbt');if(!cb)return;" +

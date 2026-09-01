@@ -3444,6 +3444,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeChat" style="width: 17px; height: 17px;"> Chat com você</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeIndica" style="width: 17px; height: 17px;"> Indique um amigo — convite pronto pro aluno chamar alguém pra treinar</label>
+        <div style="margin: 0 0 2px 26px;"><input id="cfgIndicaPremio" maxlength="160" placeholder="prêmio da indicação (opcional) — ex.: amigo fechou plano, você ganha 1 sessão extra" style="width: 100%; font-size: 13px;"></div>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgScan" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Medidas pela câmera</b> — estima cintura, quadril e coxa a partir de duas fotos, lidas dentro do próprio aparelho (vem desligado; é estimativa, não substitui fita nem bioimpedância)</span></label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
@@ -3596,7 +3597,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
-      <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
+      <button class="btn sec" id="btnContaEquipe" hidden title="cria um login pro seu professor auxiliar — ele entra no painel sem ver Financeiro, Relatórios e Configurações">+ Login de colaborador</button>
       <button class="btn sec" id="btnContaSenha" hidden>Trocar minha senha</button>
       <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
     </div>
@@ -12056,6 +12057,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (window.__pagCfg) window.__pagCfg.pinta(); // gateway de pagamento (a chave nunca vem junto)
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
+    $("cfgIndicaPremio").value = (st.config || {}).indicaPremio || "";
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
     $("cfgTermo").value = ((st.config || {}).termo || {}).t || "";
@@ -12076,8 +12078,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
     var feed = $("cfgFeed").checked;
-    var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {})) || feed !== !!st.config.feedOn;
+    // v719: o prêmio da indicação viaja no pacote do app — mudou, republica
+    var indPr = $("cfgIndicaPremio").value.replace(/</g, "").trim().slice(0, 160);
+    var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {})) || feed !== !!st.config.feedOn ||
+      indPr !== ((st.config || {}).indicaPremio || "");
     st.config.appMostra = am;
+    st.config.indicaPremio = indPr;
     st.config.feedOn = feed;
     st.config.scanOn = $("cfgScan").checked;
     // o app dos alunos muda de cara — todos entram na fila de publicar
@@ -16543,6 +16549,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPc) + '">Avisar no zap</a>' : "") });
         }
       }
+      /* v719: indicação premiada — o aluno tocou "Avisar meu professor" no app
+       * (ptindicas -> retorno.indicas). Mostra as dos últimos 30 dias com o
+       * agradecimento pronto; virou aluno de verdade, o professor cadastra. */
+      var inds9 = (a.retorno && Array.isArray(a.retorno.indicas)) ? a.retorno.indicas : [];
+      inds9.forEach(function (iv) {
+        var em9 = String(iv.em || "").slice(0, 10);
+        var c30 = new Date(hoje + "T12:00"); c30.setDate(c30.getDate() - 30);
+        if (!em9 || em9 < S.todayISO(c30)) return;
+        alertas.push({ tipo: "info", g: "Indicações de alunos",
+          curto: "<b>" + esc(a.nome) + "</b> indicou " + (iv.n ? "<b>" + esc(String(iv.n)) + "</b>" : "um amigo") + " em " + S.fmtData(em9),
+          txt: "<b>" + esc(a.nome) + "</b> indicou " + (iv.n ? esc(String(iv.n)) : "um amigo") + " pelo app em " + S.fmtData(em9) + " — agradece e fica de olho no contato novo.",
+          ac: zapAl(a, "Valeu demais pela indicação" + (iv.n ? " do " + String(iv.n).split(" ")[0] : "") + ", " + a.nome.split(" ")[0] + "! Pode deixar que vou cuidar super bem. 💜") +
+            '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
+      });
       var tv = temFicha && st.treinosV2[a.id].validade;
       if (tv && tv < hoje) alertas.push({ tipo: "aviso", g: "Treino vencido", curto: "<b>" + esc(a.nome) + "</b> — venceu em " + S.fmtData(tv), txt: "O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (Treino automático ou Evoluir semana).",
         ac: '<button class="btn sec mini" data-altreino="' + a.id + '">Gerar nova fase</button>' });
@@ -17703,6 +17723,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       termoApp: (st.config || {}).termo || null,
       // v694: o professor pediu depoimento — o app mostra o convite no Início
       pedeDepo: a.pedeDepo ? 1 : 0,
+      // v719: prêmio da indicação (aparece no card Chamar um amigo do app)
+      indicaPremio: String((st.config || {}).indicaPremio || "").replace(/</g, "").slice(0, 160),
       // v697: clube de vantagens — parcerias viram cupons no app (link só http)
       clubeApp: ((st.config || {}).clube || []).slice(0, 20).map(function (p) {
         return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
@@ -18661,8 +18683,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       e.textContent = n[k] > 99 ? "99+" : n[k];
     });
   }
+  /* ---------- v720: modo COLABORADOR (professor auxiliar) ----------
+   * O login de colaborador já existia (Sua ilha -> + Login de colaborador,
+   * RPC equipe_cria_login, papel 'funcionario' na tabela membros). O que
+   * faltava era o painel REAGIR ao papel: o auxiliar entra com o próprio
+   * login e não vê as telas de dinheiro e administração.
+   * HONESTIDADE: isso ORGANIZA a tela, não tranca o dado — os dados do
+   * studio sincronizam no aparelho de todo membro. Quem não pode nem ter
+   * acesso aos dados não deve virar membro; o card do colaborador diz isso. */
+  var PAPEL_ESCONDE = ["pagamentos", "relatorios", "config", "pers", "sitepro", "conta", "assessoria"];
+  function aplicaPapel(forca) {
+    var papel = forca || (S.usuario ? (S.usuario().papel || "") : "");
+    var aux = papel === "funcionario";
+    PAPEL_ESCONDE.forEach(function (aba9) {
+      var b9 = document.querySelector('#abas [data-a="' + aba9 + '"]');
+      if (b9) b9.style.display = aux ? "none" : "";
+    });
+    var dm9 = $("dashMes");
+    if (dm9) dm9.style.display = aux ? "none" : "";
+    var nota9 = $("papelNota");
+    if (!nota9) {
+      nota9 = document.createElement("div");
+      nota9.id = "papelNota";
+      nota9.className = "muted";
+      nota9.style.cssText = "font-size:11px;padding:6px 14px 0;";
+      var nav9 = $("abas");
+      if (nav9) nav9.appendChild(nota9);
+    }
+    nota9.textContent = aux ? "modo colaborador — financeiro e configurações ficam com o dono do studio" : "";
+    nota9.style.display = aux ? "" : "none";
+    return aux;
+  }
+  window.__papelPT = { aplica: aplicaPapel }; // testes
   function render() {
     var st = load();
+    aplicaPapel();
     pintaContasNav(st);
     renderAlunos(st);
     renderAgenda(st);
