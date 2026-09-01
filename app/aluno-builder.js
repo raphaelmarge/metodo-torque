@@ -1805,6 +1805,7 @@
       "aceite:L('ptaceite',null)," +
       "notas:L('ptnotas',[])," +
       "indicas:L('ptindicas',[])," +
+      "vol:L('ptvol',{})," +
       // v728: a resposta de presença (1 = vou, -1 = preciso remarcar) por dia|hora
       "conf:L('ptconf',{})," +
       "depo:L('ptdepo',null)," +
@@ -4326,6 +4327,19 @@
       "setTimeout(function(){if(gEl('gCgLab')===lab){lab.textContent='Carga de hoje';lab.style.color='';}},1600);};" +
       "gEl('gSemCarga').onclick=function(){gv.sujo=false;gv.cargas[it.e]='corpo';" +
       "var lab=gEl('gCgLab');if(lab){lab.textContent='Sem carga ✓';lab.style.color='#16a34a';}};}" +
+      /* 📊 v732: o tile "kg no total" já existia — agora o volume ganha
+       * MEMÓRIA (ptvol, um número por dia, teto 120 dias) e o recibo compara:
+       * "Seu maior volume até hoje!" quando bate o recorde, ou "+X% vs seu
+       * último treino". Primeira vez (sem histórico) não compara nada. */
+      "function volCompara(vol9,hjR){var volH=L('ptvol',{});var volMax=0,volAnt=0,ultK='';" +
+      "Object.keys(volH).forEach(function(k){if(k===hjR)return;if(+volH[k]>volMax)volMax=+volH[k];if(k>ultK){ultK=k;volAnt=+volH[k];}});" +
+      "if(vol9>0){volH[hjR]=Math.round(vol9);var kv9=Object.keys(volH).sort();if(kv9.length>120)delete volH[kv9[0]];Sv('ptvol',volH);}" +
+      "if(!(vol9>0))return '';" +
+      "if(volMax>0&&vol9>volMax)return \"<div style='text-align:center;font-size:13px;font-weight:800;margin-top:8px;color:#fde047;'>Seu maior volume at\u00e9 hoje!</div>\";" +
+      "if(volAnt>0){var pc9=Math.round(100*(vol9-volAnt)/volAnt);" +
+      "return \"<div style='text-align:center;font-size:12.5px;font-weight:800;margin-top:8px;color:\"+(pc9>=0?'#4ade80':'rgba(255,255,255,.75)')+\";'>\"+(pc9>=0?'+':'')+pc9+'% de volume vs seu \u00faltimo treino</div>';}" +
+      "return '';}" +
+      "window.__vol=volCompara;" +
       // ---------- fim do treino: recibo, repescagem e RPE ----------
       "function gConclui(){clearInterval(gv.timer);clearInterval(gv.relo);gSalvaSeSujo();gv.fim=true;gv.reg='';gv.regi='';soltaTela();" +
       "var f=GUIA[gv.f];gv.feitas[gv.e]=Math.max(gv.feitas[gv.e]||0,gv.s);" +
@@ -4369,7 +4383,7 @@
       "\"<div style='display:flex;gap:8px;margin-top:16px;'>\"+" +
       "\"<div class='wtile2' style='flex:1;'><b>\"+gmmss((Date.now()-gv.t0)/1000)+'</b><i>no treino</i></div>'+" +
       "(vol9>0?\"<div class='wtile2' style='flex:1;'><b>\"+Math.round(vol9).toLocaleString('pt-BR')+'</b><i>kg no total</i></div>':'')+" +
-      "\"<div class='wtile2' style='flex:1;'><b>\"+marc+'</b><i>séries</i></div></div>'+" +
+      "\"<div class='wtile2' style='flex:1;'><b>\"+marc+'</b><i>séries</i></div></div>'+volCompara(vol9,hjR)+" +
       "\"<div style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 16px;margin-top:10px;color:#fff;'>\"+" +
       "\"<div style='display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:800;'><span>\"+xp9+' XP</span>'+" +
       "\"<span style='color:rgba(255,255,255,.8);font-weight:700;'>faltam \"+falta9+' pro Nv '+(nv9+1)+'</span></div>'+" +
