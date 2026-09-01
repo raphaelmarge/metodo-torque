@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v716** |
-| Estado do repo em | 2026-08-31 (commit `217c7e7`) |
+| App em | **mt-v717** |
+| Estado do repo em | 2026-08-31 (commit `0d4961b`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 178 |
+| Lançamentos no histórico | 179 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v716** — ou seja, **47 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v717** — ou seja, **48 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v717 | renovar contrato em 1 clique direto do alerta + proposta no zap |
 | mt-v716 | encaixe — sessão cancelada vira vaga oferecida |
 | mt-v715 | diário da sessão na hora do Feita + a IA lê o diário |
 | mt-v714 | lembrete de véspera da sessão (push + WhatsApp) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v705 | demo da loja com foto de produto e cupom com link do parceiro |
 | mt-v704 | marcar Feita/Faltou/Cancelou também na visão Semana da Agenda |
 | mt-v703 | Agenda no celular — setas de avançar/voltar a semana |
-| mt-v702 | Agenda — o Mês devolve pra Semana e os dias voltam a responder |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
