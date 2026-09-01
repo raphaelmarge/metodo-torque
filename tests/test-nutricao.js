@@ -1233,6 +1233,29 @@ async function abaNt(p, a) {
     ok(v.botao && v.atualiza, "e o botão de baixar a versão nova está ligado");
     await pV.close();
   }
+  // ❓ v737: Central de ajuda do NUTRI (paridade com a v706 do Personal)
+  await abaNt(p, "ajuda");
+  const ajn = await p.evaluate(() => {
+    const el = document.getElementById("vAjudaN");
+    const out = {
+      abriu: !el.hidden && /Central de ajuda/.test(el.textContent),
+      topicos: el.querySelectorAll("[data-ajtopicon]").length,
+      temSup: /Falar com o suporte/.test(el.textContent),
+    };
+    window.__ajudaNT.abre("dietas");
+    out.passos = /Gerar com IA/.test(el.textContent) && el.querySelectorAll(".ajpassos li").length >= 5;
+    window.__ajudaNT.abre("_chamado");
+    // sem conta na nuvem, o chamado diz a verdade em vez de fingir formulário
+    out.chamadoHonesto = /Entre na sua conta/.test(el.textContent) || !!document.getElementById("supEnviaN");
+    window.__ajudaNT.abre(null);
+    out.voltou = el.querySelectorAll("[data-ajtopicon]").length === out.topicos;
+    return out;
+  });
+  ok(ajn.abriu && ajn.topicos === 7 && ajn.temSup, "❓ a aba Ajuda do Nutri abre com os 6 tópicos + Falar com o suporte");
+  ok(ajn.passos, "❓ o tópico Dietas abre em gavetas com o passo a passo (IA incluída)");
+  ok(ajn.chamadoHonesto, "❓ sem conta na nuvem o chamado pede pra entrar — nada de formulário que não envia");
+  ok(ajn.voltou, "❓ Todos os tópicos volta pra grade");
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
