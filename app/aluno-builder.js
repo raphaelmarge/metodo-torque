@@ -1099,7 +1099,7 @@
       // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
       // o #esfBox mora DENTRO do cardx da pílula Cargas de propósito: herda o
       // data-sec/data-evsub do pai e pintaCargas só reescreve o #cgBox, nunca o irmão
-      "<div class='cardx' id='evCargas'><div id='mcBox'></div><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div><div id='esfBox'></div></div>" +
+      "<div class='cardx' id='evCargas'><div id='mcBox'></div><div id='recBox'></div><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div><div id='esfBox'></div></div>" +
       "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
@@ -5035,7 +5035,27 @@
       "return \"<div style='flex:1;max-width:72px;text-align:center;'><div style='font-size:10px;color:\"+(ult9?'var(--corc)':'#8a8695')+\";font-weight:800;'>\"+String(e.kg).replace('.',',')+\"</div>\"+" +
       "\"<div style='height:\"+hh+\"px;background:\"+(ult9?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:7px;margin-top:2px;'></div>\"+" +
       "\"<div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+String(e.d||'').slice(8,10)+'/'+String(e.d||'').slice(5,7)+\"</div></div>\";}).join('');})()+'</div></div>';}" +
-      "function pintaCargas(){var el=document.getElementById('cgBox');if(!el)return;var gs=cgDados();" +
+            /* 🏆 v731: o mural "Seus recordes" — a maior carga de cada exercício num
+       * lugar só, do maior pro menor, com o selo NOVO pra recorde dos últimos
+       * 7 dias. A festinha do recorde (gFesteja) já existia; faltava a leitura
+       * permanente. Com menos de 2 exercícios o destaque do grupo já conta a
+       * história, então o mural nem aparece. */
+      "function recDados(){var dc=L('ptdc',{});var recs=[];Object.keys(dc).forEach(function(n){var m=null;(dc[n]||[]).forEach(function(e){if(e&&e.kg!=null&&+e.kg>0&&(!m||+e.kg>+m.kg))m=e;});if(m)recs.push({n:n,kg:+m.kg,d:String(m.d||'')});});recs.sort(function(a9,b9){return b9.kg-a9.kg;});return recs;}" +
+      "function pintaRecordes(){var box=document.getElementById('recBox');if(!box)return;var recs=recDados();" +
+      "if(recs.length<2){box.innerHTML='';return;}" +
+      "var d7=new Date(Date.now()-7*864e5);var c7=d7.getFullYear()+'-'+('0'+(d7.getMonth()+1)).slice(-2)+'-'+('0'+d7.getDate()).slice(-2);" +
+      "var est=\"<svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor' stroke='none' aria-hidden='true'><path d='M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z'/></svg>\";" +
+      "box.innerHTML=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:12px 16px 8px;margin-bottom:12px;'>\"+" +
+      "\"<div class='wpk' style='margin:2px 0 4px;'>Seus recordes</div>\"+recs.slice(0,8).map(function(r,i){" +
+      "var novo=r.d>=c7;" +
+      "return \"<div style='display:flex;align-items:center;gap:10px;\"+(i?'border-top:1px solid var(--bg5);':'')+\"padding:9px 0;font-size:14px;'>\"+" +
+      "\"<span style='color:var(--corc);display:inline-flex;'>\"+est+\"</span>\"+" +
+      "\"<span style='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>\"+r.n.replace(/</g,'&lt;')+\"</span>\"+" +
+      "(novo?\"<span style='background:rgba(74,222,128,.14);color:#4ade80;border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:800;'>NOVO</span>\":'')+" +
+      "\"<b>\"+String(r.kg).replace('.',',')+\" kg</b><span style='font-size:11px;color:#6e6a78;min-width:38px;text-align:right;'>\"+r.d.slice(8,10)+'/'+r.d.slice(5,7)+\"</span></div>\";}).join('')+" +
+      "(recs.length>8?\"<div style='font-size:11.5px;color:#6e6a78;padding:6px 0 4px;'>e mais \"+(recs.length-8)+\" exerc\u00edcios com recorde</div>\":'')+'</div>';}" +
+      "window.__recordes=pintaRecordes;" +
+      "function pintaCargas(){var el=document.getElementById('cgBox');if(!el)return;try{pintaRecordes();}catch(e9){}var gs=cgDados();" +
       "var ordem=[['Superiores',['Peito','Costas','Braço','Ombro']],['Inferiores',['Pernas','Abdômen']],['',['Outros']]];" +
       "var tem=Object.keys(gs).length;if(!tem){el.className='vz';el.innerHTML='Anote as cargas nos treinos e elas aparecem aqui.';return;}" +
       "el.className='';var h='';var mesK=isoHj().slice(0,7);" +

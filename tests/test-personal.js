@@ -3385,6 +3385,44 @@ async function abaPt(p, a) {
   ok(rav.bt && rav.aba && rav.sel, "🩺 Nova avaliação abre a aba Avaliações com o aluno já escolhido");
   ok(rav.recenteNao, "🩺 avaliação recente não acusa nada");
 
+  // 🏆 v731: mural "Seus recordes" na Evolução → Cargas do app — a maior
+  // carga de cada exercício, do maior pro menor, com selo NOVO em 7 dias
+  {
+    const appRec = await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    });
+    ok(/id='recBox'/.test(appRec) && /Seus recordes/.test(appRec) && /__recordes/.test(appRec),
+      "🏆 o app publicado leva o mural de recordes (recBox + gancho __recordes)");
+    const ctxR = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pR = await ctxR.newPage();
+    await pR.route("**/rest/v1/rpc/**", (r) => r.abort());
+    await pR.route("**/app-teste-rec.html", (r) => r.fulfill({ contentType: "text/html", body: appRec }));
+    await pR.goto(BASE + "/app-teste-rec.html", { waitUntil: "domcontentloaded" });
+    const rec = await pR.evaluate(() => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      localStorage.setItem("ptdc", JSON.stringify({
+        "Supino reto": [{ d: "2026-05-10", kg: 40 }, { d: hoje, kg: 62.5 }],
+        "Agachamento": [{ d: "2026-06-01", kg: 80 }],
+        "Rosca direta": [{ d: "2026-04-02", kg: 14 }],
+      }));
+      window.__recordes();
+      const box = document.getElementById("recBox");
+      const t = box.textContent;
+      return {
+        ordem: t.indexOf("Agachamento") < t.indexOf("Supino reto") && t.indexOf("Supino reto") < t.indexOf("Rosca direta"),
+        kg: /80 kg/.test(t) && /62,5 kg/.test(t) && /14 kg/.test(t),
+        novoSoNoDeHoje: (t.match(/NOVO/g) || []).length === 1 && /Supino reto[^]*?NOVO|NOVO[^]*?62,5/.test(box.innerHTML),
+        umSo: (() => { localStorage.setItem("ptdc", JSON.stringify({ "Supino reto": [{ d: hoje, kg: 60 }] }));
+          window.__recordes(); return box.innerHTML === ""; })(),
+      };
+    });
+    ok(rec.ordem && rec.kg, "🏆 o mural lista do maior pro menor com a carga máxima de cada exercício");
+    ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde dos últimos 7 dias");
+    ok(rec.umSo, "🏆 com um exercício só o mural não aparece (o destaque do grupo já conta)");
+    await ctxR.close();
+  }
+
   // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
   // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
   const fx = await p.evaluate(() => {
