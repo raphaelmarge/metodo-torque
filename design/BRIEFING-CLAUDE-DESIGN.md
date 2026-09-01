@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v714** |
-| Estado do repo em | 2026-08-31 (commit `2555d5d`) |
+| App em | **mt-v715** |
+| Estado do repo em | 2026-08-31 (commit `c23e841`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 176 |
+| Lançamentos no histórico | 177 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v714** — ou seja, **45 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v715** — ou seja, **46 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v715 | diário da sessão na hora do Feita + a IA lê o diário |
 | mt-v714 | lembrete de véspera da sessão (push + WhatsApp) |
 | mt-v713 | aba Do dia a dia dos Relatórios arrumada |
 | mt-v712 | Relatórios com período retroativo, aba Vendas e mais gráficos |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v703 | Agenda no celular — setas de avançar/voltar a semana |
 | mt-v702 | Agenda — o Mês devolve pra Semana e os dias voltam a responder |
 | mt-v701 | iPhone na tela inicial — conserto DE VERDADE, sem depender do Safari |
-| mt-v700 | loja com venda interna + foto do produto; link do parceiro forte |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
