@@ -2063,6 +2063,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <div class="campo"><label>WhatsApp</label><input id="aZap" placeholder="DDD + número" inputmode="numeric"></div>
             <div class="campo"><label>E-mail (cria o acesso do app)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
             <div class="campo"><label>Objetivo</label><input id="aObjetivo" placeholder="Ex.: hipertrofia, emagrecimento"></div>
+            <div class="campo"><label>Sexo <span style="font-weight:400;color:var(--tk-tx5);">(pras avaliações físicas)</span></label><select id="aSexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
             <div class="campo"><label>CPF</label><input id="aCpf" inputmode="numeric" placeholder="000.000.000-00"></div>
             <div class="campo"><label>CEP</label><input id="aCep" inputmode="numeric" placeholder="00000-000"></div>
             <div class="campo" style="grid-column: 1 / -1;"><label>Endereço</label><input id="aEnd" placeholder="Rua, nº, bairro — cidade/UF (o CEP preenche sozinho)"></div>
@@ -2663,12 +2664,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Nova avaliação física</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). Sexo e idade vêm do cadastro do aluno; a altura preenche sozinha com a do cadastro — medir de novo aqui atualiza lá.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). O sexo dá pra escolher aqui mesmo (salva no cadastro); a idade vem da data de nascimento; a altura preenche sozinha com a do cadastro — medir de novo aqui atualiza lá.</p>
       <div class="linha-flex" style="flex-wrap: wrap;">
         <select id="avAluno" style="min-width: 180px;"></select>
         <input id="avData" type="date" style="width: auto;">
         <input id="avPeso" type="number" step="0.1" min="0" placeholder="Peso kg" style="width: 100px;">
         <input id="avAltura" type="number" step="0.5" min="0" placeholder="Altura cm" style="width: 110px;">
+        <select id="avSexo" style="width: auto;" title="o sexo define o protocolo das dobras e a fórmula da fita — salva no cadastro do aluno"><option value="">Sexo…</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
       </div>
       <div id="avAlunoAviso" class="muted" style="margin-top: 6px; font-size: 12.5px;"></div>
 
@@ -4811,7 +4813,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
   var naAlunoId = null;
   $("btnNovoAluno").addEventListener("click", function () {
-    ["aNome", "aZap", "aEmail", "aObjetivo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
+    ["aNome", "aZap", "aEmail", "aObjetivo", "aSexo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
     $("naPasso1").hidden = false;
     $("naPasso2").hidden = true;
     naAlunoId = null;
@@ -4897,7 +4899,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var email = $("aEmail").value.trim().toLowerCase();
     var st = load();
     var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: 0, modo: "mes", metaSemana: 3,
-      objetivo: $("aObjetivo").value.trim(), cpf: $("aCpf").value.trim(), cep: $("aCep").value.trim(), endereco: $("aEnd").value.trim(),
+      objetivo: $("aObjetivo").value.trim(), sexo: $("aSexo").value, cpf: $("aCpf").value.trim(), cep: $("aCep").value.trim(), endereco: $("aEnd").value.trim(),
       ativo: true, desde: S.todayISO() };
     st.alunos.push(novo);
     save(st);
@@ -15483,9 +15485,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaAvisoAv() {
     var a = alunoAv();
     if (!a) { $("avAlunoAviso").textContent = ""; return; }
-    // altura tem campo aqui no formulário — o aviso cobra só o que não tem
+    // altura e sexo têm campo aqui no formulário — o aviso cobra só o que não tem
     var falta = [];
-    if (!a.sexo) falta.push("sexo");
     if (!a.nasc) falta.push("nascimento");
     $("avAlunoAviso").innerHTML = falta.length
       ? (falta.length > 1 ? "Faltam" : "Falta") + " no cadastro de " + esc(a.nome.split(" ")[0]) + ": <b>" + falta.join(", ") + "</b> — preencha lá pro % de gordura e o laudo saírem completos."
@@ -15524,11 +15525,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("dbMetodo").addEventListener("change", renderDobrasCampos);
   $("avAluno").addEventListener("change", function () {
+    var aAlt = alunoAv();
+    $("avSexo").value = (aAlt && aAlt.sexo) || "";
     renderDobrasCampos();
     pintaAvisoAv();
     $("avResultado").textContent = "";
-    var aAlt = alunoAv();
     $("avAltura").value = aAlt && +aAlt.altura ? aAlt.altura : "";
+  });
+  /* v727: o Raphael reparou que "não tem onde colocar o sexo" — o campo só
+   * existia escondido no Editar cadastro da ficha, e a Avaliação cobrava sem
+   * dar o caminho. Agora o seletor mora AQUI: mudou, salva no cadastro na
+   * hora (S.write, sem redesenhar o formulário no meio da medição) e as
+   * dobras trocam pro protocolo do sexo certo. */
+  $("avSexo").addEventListener("change", function () {
+    var aS = alunoAv();
+    if (!aS) { alert("Escolha o aluno primeiro."); this.value = ""; return; }
+    var st = load();
+    var a2 = st.alunos.find(function (x) { return x.id === aS.id; });
+    if (!a2) return;
+    a2.sexo = this.value;
+    S.write("ptStudio", st);
+    renderDobrasCampos();
+    pintaAvisoAv();
   });
   // editar na mão um campo que veio da câmera transforma a estimativa em medida do professor
   ["avCintura", "avQuadril", "avBraco"].forEach(function (id) {

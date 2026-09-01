@@ -3450,6 +3450,36 @@ async function abaPt(p, a) {
   ok(cmd.marcou && cmd.pagou, "🤖 executar cria a sessão e registra o pagamento (com confirmação)");
   ok(cmd.zap, "🤖 cobrar abre o WhatsApp com o modelo de atraso preenchido");
 
+  // ⚧ v727: o SEXO do aluno agora tem campo na Avaliação (salva no cadastro)
+  // e no passo 1 do Novo aluno — antes só existia escondido no Editar cadastro
+  await abaPt(p, "avaliacoes");
+  const sx = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    const sexoAntes = j.sexo;
+    const out = { campo: !!document.getElementById("avSexo") };
+    document.getElementById("avAluno").value = j.id;
+    document.getElementById("avAluno").dispatchEvent(new Event("change", { bubbles: true }));
+    document.getElementById("avSexo").value = "F";
+    document.getElementById("avSexo").dispatchEvent(new Event("change", { bubbles: true }));
+    const st2 = S.read("ptStudio", {});
+    out.salvou = st2.alunos.find((a) => a.id === j.id).sexo === "F";
+    // as dobras trocam pro protocolo feminino na hora (Pollock 3 F = tríceps)
+    out.dobrasF = /Tríceps/.test(document.getElementById("dbCampos").textContent);
+    // o aviso não cobra mais "sexo" (tem campo aqui) — só nascimento, se faltar
+    out.avisoSemSexo = !/sexo/.test(document.getElementById("avAlunoAviso").textContent);
+    // volta o sexo original
+    document.getElementById("avSexo").value = sexoAntes || "";
+    document.getElementById("avSexo").dispatchEvent(new Event("change", { bubbles: true }));
+    // o passo 1 do Novo aluno tem o campo e o reset da abertura o limpa
+    out.novoAluno = !!document.getElementById("aSexo");
+    return out;
+  });
+  ok(sx.campo && sx.salvou, "⚧ o seletor de sexo na Avaliação salva direto no cadastro do aluno");
+  ok(sx.dobrasF, "⚧ mudar o sexo troca as dobras pro protocolo certo na hora");
+  ok(sx.avisoSemSexo, "⚧ o aviso do cadastro parou de cobrar o sexo — agora tem campo ali mesmo");
+  ok(sx.novoAluno, "⚧ o passo 1 do Novo aluno também pergunta o sexo");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
