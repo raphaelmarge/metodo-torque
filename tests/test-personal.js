@@ -198,7 +198,7 @@ async function abaPt(p, a) {
   let lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
   // na tela 2a a pendência aparece na coluna PLANO ("Vence dia 5" / "Venceu 05/08")
-  ok(/Vence dia 5|Venceu/.test(lista), "etiqueta de pendência antes do pagamento");
+  ok(/Vence(?:u)? \d{2}\/\d{2}/.test(lista), "etiqueta de pendência antes do pagamento (Vence/Venceu dd/mm)");
   ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-acesso]')), "aluno sem acesso do app tem o botão 📧 Enviar acesso direto na lista");
 
   // agenda: sessão hoje + marcar feita (agora com sub-abas Sessões/Agendar)
@@ -1727,22 +1727,25 @@ async function abaPt(p, a) {
 
   // 📊 v712: relatórios com PERÍODO retroativo + relatório de VENDAS
   const rel12 = await p.evaluate(() => {
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
-    const dM = new Date(); dM.setDate(1); dM.setMonth(dM.getMonth() - 1); dM.setDate(15);
-    const mesPassado = dM.getFullYear() + "-" + String(dM.getMonth() + 1).padStart(2, "0") + "-15";
+    // datas ancoradas no DIA de meses passados (nunca "N dias atrás"): no dia 1º
+    // do mês, "ontem" cai no mês anterior e o teste virava flake de virada de mês
+    const diaDe = (mesesAtras, dia) => {
+      const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - mesesAtras); d.setDate(dia);
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(dia).padStart(2, "0");
+    };
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const alvo = st.alunos[0].id;
     const seeded = [
-      { id: "rv1", alunoId: alvo, valor: 777, forma: "pix", data: mesPassado },
-      { id: "rv2", alunoId: alvo, valor: 120, forma: "pix", desc: "Massagem", data: iso(1) },
-      { id: "rv3", alunoId: alvo, valor: 79.9, forma: "link cartão", desc: "Compra na loja do app", data: iso(2) },
-      { id: "rv4", alunoId: alvo, valor: 80, forma: "sessão", data: iso(1) },
+      { id: "rv1", alunoId: alvo, valor: 777, forma: "pix", data: diaDe(2, 15) },
+      { id: "rv2", alunoId: alvo, valor: 120, forma: "pix", desc: "Massagem", data: diaDe(1, 15) },
+      { id: "rv3", alunoId: alvo, valor: 79.9, forma: "link cartão", desc: "Compra na loja do app", data: diaDe(1, 13) },
+      { id: "rv4", alunoId: alvo, valor: 80, forma: "sessão", data: diaDe(1, 15) },
     ];
     st.pagamentos = st.pagamentos.concat(seeded);
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     const out = {};
-    // 1) mês retroativo: o resumo do mês PASSADO mostra os R$ 777
-    window.__relMes.off(1); window.__relPT();
+    // 1) mês retroativo: o resumo de DOIS meses atrás mostra os R$ 777 (só o rv1 mora lá)
+    window.__relMes.off(2); window.__relPT();
     out.retro = /777/.test(document.getElementById("relResumo").textContent) &&
       !document.getElementById("relMesProx").hidden;
     window.__relMes.off(0); window.__relPT();
@@ -1752,17 +1755,20 @@ async function abaPt(p, a) {
     out.entrouSaiu = /entrou/.test(document.getElementById("relEntradas").textContent) &&
       /saiu/.test(document.getElementById("relEntradas").textContent);
     out.formas = /pix/.test(document.getElementById("relFormas").textContent);
-    // 3) VENDAS: serviço + loja + aula avulsa no ranking; mensalidade fora
+    // 3) VENDAS (olhando o mês passado, onde as vendas foram semeadas):
+    //    serviço + loja + aula avulsa no ranking; mensalidade fora
+    window.__relMes.off(1); window.__relPT();
     const vHtml = () => document.getElementById("relVendasLista").innerHTML +
       "|" + document.getElementById("relVendasKpis").textContent;
     out.vendas = /Massagem/.test(vHtml()) && /Loja do app/.test(vHtml()) && /Aula avulsa/.test(vHtml());
     out.mensalForaDoRanking = !/pix/.test(document.getElementById("relVendasLista").textContent) &&
       /Mensalidades/.test(vHtml());
-    // 4) o De/Até das vendas obedece: período só de ontem pra hoje perde a loja de anteontem? não — 2 dias atrás fica fora
-    document.getElementById("rvDe").value = iso(1);
-    document.getElementById("rvAte").value = iso(0);
+    // 4) o De/Até das vendas obedece: janela 14–16 pega a Massagem (dia 15) e deixa a loja (dia 13) fora
+    document.getElementById("rvDe").value = diaDe(1, 14);
+    document.getElementById("rvAte").value = diaDe(1, 16);
     document.getElementById("rvAplica").click();
     out.periodoVendas = /Massagem/.test(vHtml()) && !/Loja do app/.test(vHtml());
+    window.__relMes.off(0);
     // limpa o que semeou
     const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     st2.pagamentos = st2.pagamentos.filter((x) => !/^rv[0-9]$/.test(String(x.id)));
@@ -2877,6 +2883,42 @@ async function abaPt(p, a) {
   ok(rzg.desligada === false, "📣 a fixa de resgate desliga em Configurações como as outras");
   ok(rzg.card && rzg.cardBt, "📣 o Resolver hoje mostra as mensagens esperando OK, com o Ver a fila");
 
+  // ⏰ v714: lembrete de VÉSPERA — sessão marcada pra amanhã entra na fila do
+  // WhatsApp e na régua de push, desligável como as outras fixas
+  const vsp = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    st.alunos.push({ id: "al-vsp", nome: "Vespera Souza", ativo: true, zap: "31999991111", desde: "2026-01-01" });
+    st.sessoes.push({ id: "ss-vsp1", alunoId: "al-vsp", data: amanha, hora: "18:00", feita: false });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st1 = S.read("ptStudio", {});
+    const acha = (fila) => fila.find((z) => z.chave === "zvespera|al-vsp|" + amanha);
+    const r = acha(window.__zapFila(st1));
+    // sessão já marcada como feita/faltou não gera lembrete
+    st1.sessoes.find((s) => s.id === "ss-vsp1").faltou = true;
+    const r2 = acha(window.__zapFila(st1));
+    delete st1.sessoes.find((s) => s.id === "ss-vsp1").faltou;
+    // desligável
+    st1.config = st1.config || {}; st1.config.zapFixasOff = { vespera: 1 };
+    const r3 = acha(window.__zapFila(st1));
+    delete st1.config.zapFixasOff;
+    // sem horário marcado o texto não fica com "às" pendurado
+    st1.sessoes.find((s) => s.id === "ss-vsp1").hora = "";
+    const r4 = acha(window.__zapFila(st1));
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "al-vsp");
+    st9.sessoes = st9.sessoes.filter((s) => s.alunoId !== "al-vsp");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return { tem: !!r, texto: r ? r.texto : "", rotulo: r ? r.rotulo : "",
+      jaResolvida: !!r2, desligada: !!r3, semHora: r4 ? r4.texto : "" };
+  });
+  ok(vsp.tem && /amanhã/.test(vsp.texto) && /18:00/.test(vsp.texto) && /amanhã às 18:00/.test(vsp.rotulo),
+    "⏰ sessão de amanhã entra na fila com a mensagem de véspera pronta");
+  ok(!vsp.jaResolvida, "⏰ sessão já marcada (faltou/feita) não gera lembrete de véspera");
+  ok(vsp.desligada === false, "⏰ a fixa de véspera desliga em Configurações como as outras");
+  ok(vsp.semHora && !/às/.test(vsp.semHora), "⏰ sessão sem horário: o texto sai sem o 'às' pendurado");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
@@ -3570,7 +3612,7 @@ async function abaPt(p, a) {
     const px = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
     const out = {};
     // período cruzando dois meses: os DOIS registros aparecem juntos
-    const ret = { feitos: {}, cargas: { "Supino": [{ d: iso(40), kg: 50, r: "10" }, { d: iso(2), kg: 55, r: "10" }] } };
+    const ret = { feitos: {}, cargas: { "Supino": [{ d: iso(40), kg: 50, r: "10" }, { d: iso(0), kg: 55, r: "10" }] } };
     window.__histApp.off(0); window.__histApp.periodo(iso(45), iso(0));
     const topoP = window.__painelApp(ret, {}).split("pfgraf")[0];
     out.periodo = /50 kg/.test(topoP) && /55 kg/.test(topoP) && /dias? de treino/.test(topoP) && /data-hper='off'/.test(topoP);
@@ -7943,8 +7985,17 @@ async function abaPt(p, a) {
   }, feitosAntes);
   await pApp.reload();
   await pApp.waitForTimeout(900);
-  ok(/2 a menos que em \w{3} até aqui/.test(pgComp),
-    "a conta compara o mesmo pedaço do mês (2 contra 4), ignorando os dias que ainda não chegaram — " + pgComp.replace(/\s+/g, " ").trim());
+  {
+    // a mesma conta da semente: perto do dia 1º os dias "dia-i" colapsam no 1º
+    // e a diferença esperada muda — o teste calcula em vez de cravar 2×4
+    const hjT = new Date(), diaT = Math.min(hjT.getDate(), 20);
+    const nEsteT = new Set([Math.max(1, diaT), Math.max(1, diaT - 1)]).size;
+    const nPassT = new Set([0, 1, 2, 3].map((i) => Math.max(1, diaT - i))).size;
+    const difT = nPassT - nEsteT;
+    const esperadoT = difT > 0 ? new RegExp(difT + " a menos que em \\w{3} até aqui") : /igual a \w{3} até aqui/;
+    ok(esperadoT.test(pgComp),
+      "a conta compara o mesmo pedaço do mês (" + nEsteT + " contra " + nPassT + "), ignorando os dias que ainda não chegaram — " + pgComp.replace(/\s+/g, " ").trim());
+  }
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
   ok(await pApp.evaluate(() => {

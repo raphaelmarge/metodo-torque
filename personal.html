@@ -8514,6 +8514,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     if ((st.config || {}).reguaOff && !st.sessoes.length) return { motivo: "desligada", enviados: 0 };
     var hoje = S.todayISO();
+    var amanhaP = (function () { var d9 = new Date(hoje + "T12:00"); d9.setDate(d9.getDate() + 1); return S.todayISO(d9); })();
     var mes = hoje.slice(0, 7);
     var diaHoje = +hoje.slice(8, 10);
     st.pushLog = st.pushLog || {};
@@ -8540,6 +8541,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         manda("treino|" + a.id + "|" + hoje, a.appTokenP,
           "Hoje tem treino" + (ses.hora ? " às " + ses.hora : "") + "!",
           "Te espero lá — se não puder vir, me avisa pelo chat do app.");
+      }
+      // véspera (v714): sessão marcada pra AMANHÃ — o lembrete que evita falta
+      var sesAm = st.sessoes.find(function (x) { return x.alunoId === a.id && x.data === amanhaP && !x.feita && !x.faltou; });
+      if (sesAm) {
+        manda("vespera|" + a.id + "|" + amanhaP, a.appTokenP,
+          "Amanhã tem treino" + (sesAm.hora ? " às " + sesAm.hora : "") + "!",
+          "Já deixa separado — se precisar remarcar, me avisa pelo chat do app.");
       }
       // aniversário do aluno (1x por ano)
       if (a.nasc && String(a.nasc).slice(5) === hoje.slice(5)) {
@@ -10180,6 +10188,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // WhatsApp oficial da Meta estiver ativo, esta mesma fila vira envio automático.
   var ZAP_MODELOS_PADRAO = {
     treino: "Oi {nome}! Lembrete do seu treino de hoje às {hora}. Te espero — se não puder vir, me avisa por aqui.",
+    vespera: "Oi {nome}! Lembrete: amanhã tem treino às {hora}. Qualquer imprevisto me avisa por aqui que a gente remarca. 💪",
     niver: "{nome}, feliz aniversário! Muita saúde e muito treino no seu novo ano. Grande abraço!",
     atraso: "Oi {nome}, tudo bem? Sua mensalidade venceu há {dias}. Quer que eu te mande o Pix? Qualquer coisa me chama.",
     renova: "Oi {nome}! Seu plano completa o ciclo em {dias}. Bora renovar pra não perder o ritmo? Me chama que a gente resolve.",
@@ -10189,6 +10198,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var m = (st.config || {}).zapModelos || {};
     return {
       treino: m.treino || ZAP_MODELOS_PADRAO.treino,
+      vespera: m.vespera || ZAP_MODELOS_PADRAO.vespera,
       niver: m.niver || ZAP_MODELOS_PADRAO.niver,
       atraso: m.atraso || ZAP_MODELOS_PADRAO.atraso,
       renova: m.renova || ZAP_MODELOS_PADRAO.renova,
@@ -10201,6 +10211,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function filaZapDe(st) {
     if ((st.config || {}).zapFilaOff) return [];
     var hoje = S.todayISO();
+    var amanhaZ = (function () { var d9 = new Date(hoje + "T12:00"); d9.setDate(d9.getDate() + 1); return S.todayISO(d9); })();
     var diaHoje = +hoje.slice(8, 10);
     var mes = hoje.slice(0, 7);
     var log = st.zapLog || {};
@@ -10239,6 +10250,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // sessão sem horário: tira o "às" que sobrou e conserta a pontuação
         if (!ses.hora) txT = txT.replace(/\s+às\s+([.!,?])/g, "$1").replace(/\s+às\s*$/, "").replace(/\s+([.!,?])/g, "$1");
         poe("ztreino|" + a.id + "|" + hoje, a, "treino", ses.hora ? "treino às " + ses.hora : "treino hoje", txT);
+      }
+      // treino de AMANHÃ (v714): a véspera é o melhor remédio contra falta —
+      // o aviso só do dia às vezes chega tarde demais pra remarcar
+      if (!fixOff.vespera) {
+        var sesV = idxDe(st).sessDe(a.id).find(function (x) { return x.data === amanhaZ && !x.feita && !x.faltou; });
+        if (sesV) {
+          var txV = zapTexto(mods.vespera, { nome: nome, hora: sesV.hora || "" });
+          if (!sesV.hora) txV = txV.replace(/\s+às\s+([.!,?])/g, "$1").replace(/\s+às\s*$/, "").replace(/\s+([.!,?])/g, "$1");
+          poe("zvespera|" + a.id + "|" + amanhaZ, a, "vespera", sesV.hora ? "amanhã às " + sesV.hora : "treino amanhã", txV);
+        }
       }
       // resgate de quem sumiu (v693): 7+ dias sem treinar e nada marcado — a
       // fila nasce SABENDO chamar de volta, sem o professor criar automação.
@@ -12315,9 +12336,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     semanal: "Manda toda semana no dia escolhido, pra todo aluno ativo com WhatsApp. Dá pra usar {nome}.",
     pacote: "O X = usos restantes que disparam o aviso. Dá pra usar {nome}, {servico} (nome do serviço) e {resta} — o {resta} já vem com o verbo (ex.: 'restam 3').",
   };
-  // as 4 mensagens fixas do sistema, exibidas na MESMA lista das automações
+  // as mensagens fixas do sistema (6 desde a v714), exibidas na MESMA lista das automações
   var FIXAS_ROT = {
     treino: { nome: "Lembrete de treino", desc: "no dia da sessão marcada", dica: "Dá pra usar {nome} e {hora} — sem horário marcado, o sistema tira o \"às\" sozinho." },
+    vespera: { nome: "Lembrete de véspera", desc: "um dia antes da sessão marcada", dica: "Dá pra usar {nome} e {hora} — sem horário marcado, o sistema tira o \"às\" sozinho." },
     niver: { nome: "Aniversário", desc: "no dia do aniversário", dica: "Dá pra usar {nome}." },
     atraso: { nome: "Pagamento atrasado", desc: "depois do vencimento — repete a cada 3 dias", dica: "Dá pra usar {nome}, {dias} (já vem com a palavra, ex.: '3 dias') e {valor}." },
     renova: { nome: "Renovação de plano", desc: "nos 30 dias antes do fim do ciclo — repete a cada 7 dias", dica: "Dá pra usar {nome}, {dias} e {valor}." },
@@ -12339,7 +12361,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<button class="btn sec mini" data-autopronta="' + i + '">' + esc(pr.nome) + "</button>";
     }).join("");
     var fixOff = (st.config || {}).zapFixasOff || {};
-    var fixasHtml = ["treino", "niver", "atraso", "renova", "resgate"].map(function (k) {
+    var fixasHtml = ["vespera", "treino", "niver", "atraso", "renova", "resgate"].map(function (k) {
       return '<div class="sessao-pt"><b>' + FIXAS_ROT[k].nome + "</b>" +
         '<span class="muted" style="font-size:12px;">' + FIXAS_ROT[k].desc + "</span>" +
         (fixOff[k] ? ' <span class="tag">desligada</span>' : "") +
@@ -12355,10 +12377,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         '<button class="btn sec mini" data-autotg="' + esc(au.id) + '">' + (au.off ? "Ligar" : "Desligar") + "</button>" +
         '<button class="btn mini" data-autoed="' + esc(au.id) + '">Editar</button></span></div>';
-    }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Essas cinco são do sistema. As suas você cria logo abaixo — numa pronta ou do zero.</div>');
+    }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Essas seis são do sistema. As suas você cria logo abaixo — numa pronta ou do zero.</div>');
   }
   var autoEditId = null; // id da automação aberta no editor (null = criando)
-  var autoFixa = null;   // chave da mensagem fixa em edição (treino|niver|atraso|renova|resgate)
+  var autoFixa = null;   // chave da mensagem fixa em edição (vespera|treino|niver|atraso|renova|resgate)
   var autoImgSel = "";   // imgId escolhido no editor (a galeria grava aqui)
   function autoPintaImg() {
     var im = autoImgSel ? imgsLe().find(function (x) { return x.id === autoImgSel; }) : null;
