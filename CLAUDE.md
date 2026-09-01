@@ -1277,7 +1277,9 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   EMAIL_SUPORTE, padrão suporte@torqueon.com.br), **regua-teste** (2026-08-29 — a régua do
   teste grátis: pg_cron → pg_net → função, senha em `regua_config` selada,
   idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
-  = trial) e **regua-diaria** (v721, 2026-09-01 — a régua de PUSH no servidor:
+  = trial) e **regua-diaria** (v721, 2026-09-01 — a régua de PUSH no servidor; v2
+  publicada no mt-v736 com o NOME do treino no título, regra nome-treino no
+  ping, conferida no ar:
   pg_cron 10:00 UTC chama a função com a MESMA senha da regua_config; ela lê o
   `mtapp:ptStudio` da tabela `dados` de cada academia com aluno inscrito na
   push_subs e manda treino do dia, véspera e aniversário no fuso do Brasil,

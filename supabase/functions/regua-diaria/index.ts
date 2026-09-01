@@ -61,6 +61,23 @@ function diaBR(mais = 0): string {
 
 type Aviso = { academia_id: string; token: string; chave: string; titulo: string; corpo: string };
 
+// v736: o nome do treino do plano da semana — a MESMA regra do
+// pushTreinoTxt do painel ("A — Peito" → "Peito"; wod/cardio viram
+// circuito/corrida; sem plano, vazio e o texto antigo vale)
+function treinoDe(st: any, alunoId: string, iso: string): string {
+  const t = (st.treinosV2 || {})[alunoId];
+  if (!t) return "";
+  const dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+  const pl = ((t.plano || {}).dias || {})[dia];
+  if (!pl) return "";
+  if (pl.tp === "wod") return "circuito";
+  if (pl.tp === "cardio") return "corrida";
+  const f = (t.fichas || []).find((x: any) => x && x.id === pl.id);
+  if (!f) return "";
+  const tt = String(f.titulo || "").split("—");
+  return (tt[1] || tt[0] || "").trim().slice(0, 40);
+}
+
 // os lembretes de UMA academia, a partir do blob do estúdio (mtapp:ptStudio).
 // As regras são as mesmas da rotinaDiariaPush do painel — de propósito.
 function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
@@ -72,13 +89,13 @@ function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
     const ses = sessoes.find((x) => x && x.alunoId === a.id && x.data === hoje && !x.feita && !x.faltou);
     if (ses) {
       out.push({ academia_id: aid, token: String(a.appTokenP), chave: "treino|" + a.id + "|" + hoje,
-        titulo: "Hoje tem treino" + (ses.hora ? " às " + ses.hora : "") + "!",
+        titulo: ((tHj9) => (tHj9 ? "Hoje é " + tHj9 : "Hoje tem treino"))(treinoDe(st, a.id, hoje)) + (ses.hora ? " às " + ses.hora : "") + "!",
         corpo: "Te espero lá — se não puder vir, me avisa pelo chat do app." });
     }
     const sesAm = sessoes.find((x) => x && x.alunoId === a.id && x.data === amanha && !x.feita && !x.faltou);
     if (sesAm) {
       out.push({ academia_id: aid, token: String(a.appTokenP), chave: "vespera|" + a.id + "|" + amanha,
-        titulo: "Amanhã tem treino" + (sesAm.hora ? " às " + sesAm.hora : "") + "!",
+        titulo: ((tAm9) => (tAm9 ? "Amanhã é " + tAm9 : "Amanhã tem treino"))(treinoDe(st, a.id, amanha)) + (sesAm.hora ? " às " + sesAm.hora : "") + "!",
         corpo: "Já deixa separado — se precisar remarcar, me avisa pelo chat do app." });
     }
     if (a.nasc && String(a.nasc).slice(5, 10) === hoje.slice(5)) {
@@ -99,7 +116,7 @@ Deno.serve(async (req: Request) => {
     return json({
       ok: true,
       vapid: !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY")),
-      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br"],
+      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino"],
     });
   }
 

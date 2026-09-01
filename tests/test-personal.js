@@ -2593,7 +2593,29 @@ async function abaPt(p, a) {
     await new Promise((res) => setTimeout(res, 120));
     return { enviados: r.enviados, pushes: window.__pushes.length, titulo: (window.__pushes[0] || {}).titulo || "" };
   });
-  ok(regua1.enviados >= 1 && /Hoje tem treino/.test(regua1.titulo), "lembrete de treino do dia sai pelo push do app");
+  ok(regua1.enviados >= 1 && /^Hoje (é .+|tem treino)/.test(regua1.titulo),
+    "lembrete de treino do dia sai pelo push do app (v736: com o nome do treino quando há plano)");
+  // 📣 v736: o push diz QUAL treino — o nome sai do plano da semana
+  const ptx = await p.evaluate(() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const dow = String((new Date(hoje + "T12:00:00").getDay() + 6) % 7);
+    const st = { treinosV2: {
+      "px-a": { plano: { dias: { [dow]: { tp: "ficha", id: "f1" } } }, fichas: [{ id: "f1", titulo: "A — Peito e tríceps" }] },
+      "px-b": { plano: { dias: { [dow]: { tp: "wod" } } }, fichas: [] } } };
+    return {
+      nome: window.__pushTreinoTxt(st, "px-a", hoje),
+      wod: window.__pushTreinoTxt(st, "px-b", hoje),
+      sem: window.__pushTreinoTxt(st, "px-zz", hoje),
+    };
+  });
+  ok(ptx.nome === "Peito e tríceps" && ptx.wod === "circuito" && ptx.sem === "",
+    "📣 pushTreinoTxt tira o NOME da ficha (não a letra), fala circuito e cala sem plano");
+  {
+    const fsPx = require("fs"), pathPx = require("path");
+    const fnPx = fsPx.readFileSync(pathPx.join(__dirname, "..", "supabase", "functions", "regua-diaria", "index.ts"), "utf8");
+    ok(/nome-treino/.test(fnPx) && /function treinoDe\(/.test(fnPx) && /Hoje é /.test(fnPx),
+      "📣 a regua-diaria do servidor usa a MESMA regra (treinoDe + nome-treino no ping)");
+  }
   const regua2 = await p.evaluate(async () => {
     const r = window.__reguaPT();
     await new Promise((res) => setTimeout(res, 60));
@@ -3222,7 +3244,7 @@ async function abaPt(p, a) {
     const logAntes = JSON.stringify(st0.pushLog || null);
     // nuvem falsa: o servidor "já mandou" duas chaves hoje
     const cloudOrig = S.cloud;
-    const enc = { select: () => enc, eq: () => enc,
+    const enc = { select: () => enc, eq: () => enc, upsert: () => Promise.resolve({ error: null }),
       gte: () => Promise.resolve({ data: [{ chave: "treino|psrv1|2026-09-01" }, { chave: "vespera|psrv1|2026-09-02" }] }) };
     S.cloud = () => ({ aid: "acad-1", client: { from: () => enc } });
     await new Promise((res) => window.__pushSrv(res));
@@ -3277,7 +3299,8 @@ async function abaPt(p, a) {
     out.novoVolta = !el2.hidden && /90/.test(el2.textContent) && !/150/.test(el2.textContent);
     // busca fresca: a nuvem tem um treino que a cópia local não tinha
     const cloudOrig = S.cloud;
-    const enc = { select: () => enc, in: () => Promise.resolve({ data: [{ token: "sn-tok", feitos: { [hoje]: 1, [iso(1)]: 1 }, indicas: [] }] }) };
+    const enc = { select: () => enc, upsert: () => Promise.resolve({ error: null }),
+      in: () => Promise.resolve({ data: [{ token: "sn-tok", feitos: { [hoje]: 1, [iso(1)]: 1 }, indicas: [] }] }) };
     S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
     window.__sino.nuvem(true);
     await new Promise((r) => setTimeout(r, 80));
@@ -3321,6 +3344,7 @@ async function abaPt(p, a) {
     // outros trechos do painel (pedidos da agenda) também chamam a nuvem mockada:
     // o sel ACUMULA, senão o select deles sobrescreve o nosso com false
     const enc = { select: (q) => { if (/conf:retorno->conf/.test(String(q))) out.sel = true; return enc; },
+      upsert: () => Promise.resolve({ error: null }),
       in: () => Promise.resolve({ data: [{ token: "cf-tok", conf: { [amanha + "|09:00"]: -1 } }] }) };
     S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
     window.__sino.nuvem(true);

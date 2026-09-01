@@ -8677,6 +8677,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     el.textContent = txt;
   }
+  /* v736: o push diz QUAL treino. agTreinoTxt devolve a LETRA ("A — Peito" →
+   * "A"), bom pra célula da agenda e ruim pra notificação — aqui sai o NOME
+   * ("Peito"). Sem plano naquele dia, devolve vazio e o texto antigo vale. */
+  function pushTreinoTxt(st, alunoId, iso) {
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t) return "";
+    var dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+    var pl = ((t.plano || {}).dias || {})[dia];
+    if (!pl) return "";
+    if (pl.tp === "wod") return "circuito";
+    if (pl.tp === "cardio") return "corrida";
+    var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
+    if (!f) return "";
+    var tt = String(f.titulo || "").split("—");
+    return (tt[1] || tt[0] || "").trim().slice(0, 40);
+  }
+  window.__pushTreinoTxt = pushTreinoTxt; // testes
   function rotinaDiariaPush() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return { motivo: "sem-nuvem", enviados: 0 };
@@ -8707,15 +8724,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // lembrete de treino do dia (sempre que houver sessão marcada)
       var ses = st.sessoes.find(function (x) { return x.alunoId === a.id && x.data === hoje && !x.feita && !x.faltou; });
       if (ses) {
+        var trHj = pushTreinoTxt(st, a.id, hoje);
         manda("treino|" + a.id + "|" + hoje, a.appTokenP,
-          "Hoje tem treino" + (ses.hora ? " às " + ses.hora : "") + "!",
+          (trHj ? "Hoje é " + trHj : "Hoje tem treino") + (ses.hora ? " às " + ses.hora : "") + "!",
           "Te espero lá — se não puder vir, me avisa pelo chat do app.");
       }
       // véspera (v714): sessão marcada pra AMANHÃ — o lembrete que evita falta
       var sesAm = st.sessoes.find(function (x) { return x.alunoId === a.id && x.data === amanhaP && !x.feita && !x.faltou; });
       if (sesAm) {
+        var trAm = pushTreinoTxt(st, a.id, amanhaP);
         manda("vespera|" + a.id + "|" + amanhaP, a.appTokenP,
-          "Amanhã tem treino" + (sesAm.hora ? " às " + sesAm.hora : "") + "!",
+          (trAm ? "Amanhã é " + trAm : "Amanhã tem treino") + (sesAm.hora ? " às " + sesAm.hora : "") + "!",
           "Já deixa separado — se precisar remarcar, me avisa pelo chat do app.");
       }
       // aniversário do aluno (1x por ano)
