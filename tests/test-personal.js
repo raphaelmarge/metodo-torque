@@ -3484,6 +3484,51 @@ async function abaPt(p, a) {
     await ctxR.close();
   }
 
+  // 🎵 v735: playlist do treino — o link colado nas Configurações viaja no
+  // pacote e vira botão na faixa Meu treino + pílula "música" no player
+  const play = await p.evaluate(() => {
+    const S = window.MTStore;
+    const st = S.read("ptStudio", {});
+    st.config = st.config || {};
+    const antes = st.config.playlistUrl || "";
+    st.config.playlistUrl = "https://open.spotify.com/playlist/abc123";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const a = S.read("ptStudio", {}).alunos[0];
+    const d = window.__dadosApp(a, new Date().toISOString());
+    const html = window.__montaAppAluno(a, new Date().toISOString());
+    const st2 = S.read("ptStudio", {});
+    st2.config.playlistUrl = "";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    const html2 = window.__montaAppAluno(S.read("ptStudio", {}).alunos[0], new Date().toISOString());
+    const st9 = S.read("ptStudio", {});
+    if (antes) st9.config.playlistUrl = antes; else delete st9.config.playlistUrl;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return {
+      pacote: d.playlistApp === "https://open.spotify.com/playlist/abc123",
+      botoes: /id='trPlay'/.test(html) && /id='gPlay'/.test(html) && /Playlist do treino/.test(html),
+      semLink: html2.indexOf("id='trPlay'") === -1 && html2.indexOf("id='gPlay'") === -1,
+    };
+  });
+  ok(play.pacote, "🎵 o link da playlist viaja no pacote do aluno (playlistApp)");
+  ok(play.botoes, "🎵 o app ganha o botão na faixa Meu treino e a pílula música no player guiado");
+  ok(play.semLink, "🎵 sem link configurado, nenhum botão aparece");
+  const playCfg = await p.evaluate(async () => {
+    document.getElementById("cfgPlaylist").value = "minha playlist sem link";
+    document.getElementById("cfgSalva").click();
+    await new Promise((r) => setTimeout(r, 300));
+    const v1 = (window.MTStore.read("ptStudio", {}).config || {}).playlistUrl;
+    document.getElementById("cfgPlaylist").value = "https://music.youtube.com/x";
+    document.getElementById("cfgSalva").click();
+    await new Promise((r) => setTimeout(r, 300));
+    const v2 = (window.MTStore.read("ptStudio", {}).config || {}).playlistUrl;
+    document.getElementById("cfgPlaylist").value = "";
+    document.getElementById("cfgSalva").click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { v1, v2 };
+  });
+  ok(playCfg.v1 === "" && playCfg.v2 === "https://music.youtube.com/x",
+    "🎵 texto sem http não é guardado — só link de verdade vira botão");
+
   // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
   // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
   const fx = await p.evaluate(() => {

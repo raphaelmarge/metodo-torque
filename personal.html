@@ -3453,6 +3453,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeIndica" style="width: 17px; height: 17px;"> Indique um amigo — convite pronto pro aluno chamar alguém pra treinar</label>
         <div style="margin: 0 0 2px 26px;"><input id="cfgIndicaPremio" maxlength="160" placeholder="prêmio da indicação (opcional) — ex.: amigo fechou plano, você ganha 1 sessão extra" style="width: 100%; font-size: 13px;"></div>
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; cursor: default;"><span style="width: 17px;"></span> <span><b>Playlist do treino</b> — cole o link da sua playlist (Spotify, YouTube, Deezer) e o app dos alunos ganha o botão de tocar</span></label>
+        <div style="margin: 0 0 2px 26px;"><input id="cfgPlaylist" maxlength="300" placeholder="https://open.spotify.com/playlist/… (vazio = sem botão)" style="width: 100%; font-size: 13px;"></div>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgScan" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Medidas pela câmera</b> — estima cintura, quadril e coxa a partir de duas fotos, lidas dentro do próprio aparelho (vem desligado; é estimativa, não substitui fita nem bioimpedância)</span></label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
@@ -12370,6 +12372,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgIndicaPremio").value = (st.config || {}).indicaPremio || "";
+    $("cfgPlaylist").value = (st.config || {}).playlistUrl || "";
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
     $("cfgTermo").value = ((st.config || {}).termo || {}).t || "";
@@ -12392,10 +12395,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var feed = $("cfgFeed").checked;
     // v719: o prêmio da indicação viaja no pacote do app — mudou, republica
     var indPr = $("cfgIndicaPremio").value.replace(/</g, "").trim().slice(0, 160);
+    // v735: a playlist viaja no pacote do app — só link http(s) de verdade
+    var plUrl = $("cfgPlaylist").value.trim().slice(0, 300);
+    if (!/^https?:\/\//i.test(plUrl)) plUrl = "";
     var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {})) || feed !== !!st.config.feedOn ||
-      indPr !== ((st.config || {}).indicaPremio || "");
+      indPr !== ((st.config || {}).indicaPremio || "") || plUrl !== ((st.config || {}).playlistUrl || "");
     st.config.appMostra = am;
     st.config.indicaPremio = indPr;
+    st.config.playlistUrl = plUrl;
     st.config.feedOn = feed;
     st.config.scanOn = $("cfgScan").checked;
     // o app dos alunos muda de cara — todos entram na fila de publicar
@@ -18212,6 +18219,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       pedeDepo: a.pedeDepo ? 1 : 0,
       // v719: prêmio da indicação (aparece no card Chamar um amigo do app)
       indicaPremio: String((st.config || {}).indicaPremio || "").replace(/</g, "").slice(0, 160),
+      // v735: playlist do treino — botão no app (só link http(s))
+      playlistApp: /^https?:\/\//i.test(String((st.config || {}).playlistUrl || "")) ? String(st.config.playlistUrl).slice(0, 300) : "",
       // v697: clube de vantagens — parcerias viram cupons no app (link só http)
       clubeApp: ((st.config || {}).clube || []).slice(0, 20).map(function (p) {
         return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
