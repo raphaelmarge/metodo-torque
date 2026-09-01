@@ -3444,6 +3444,25 @@ async function abaPt(p, a) {
     ok(vol.recorde, "📊 volume acima de tudo que veio antes vira 'Seu maior volume até hoje!'");
     ok(vol.pct, "📊 acima do último treino (sem ser recorde) vira '+24% de volume'");
     ok(vol.semCarga, "📊 treino sem carga anotada não grava nem compara nada");
+
+    // 🔊 v733: voz no treino guiado — botão VOZ no topo, desligada por padrão,
+    // frase certa (reps e segundos) e a escolha guardada no aparelho
+    const voz = await pR.evaluate(() => {
+      const out = { temBt: !!document.getElementById("gVoz") };
+      out.frase = window.__gVoz.txt({ e: "Supino reto", s: 3, r: "12" });
+      out.fraseSeg = window.__gVoz.txt({ e: "Prancha", s: 1, r: "30s" });
+      out.desligada = !window.__gVoz.on();
+      window.__gVoz.liga();
+      out.ligou = window.__gVoz.on() && JSON.parse(localStorage.getItem("ptgvoz")) == 1 &&
+        document.getElementById("gVoz").textContent.indexOf("voz") === 0;
+      window.__gVoz.liga();
+      out.desligou = !window.__gVoz.on();
+      return out;
+    });
+    ok(voz.temBt && voz.desligada, "🔊 o botão VOZ existe no player e a voz nasce DESLIGADA");
+    ok(voz.frase === "Supino reto. 3 séries de 12." && voz.fraseSeg === "Prancha. 1 série de 30 segundos.",
+      "🔊 a frase falada tem a prescrição certa (séries, reps e '30s' vira segundos)");
+    ok(voz.ligou && voz.desligou, "🔊 ligar guarda a escolha no aparelho e desligar corta a fala");
     await ctxR.close();
   }
 
