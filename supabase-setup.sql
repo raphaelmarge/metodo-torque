@@ -2967,3 +2967,28 @@ select cron.schedule('regua-diaria-push', '0 10 * * *', $cron$
     body := jsonb_build_object('senha', (select token::text from public.regua_config where id = 1))
   )
 $cron$);
+
+-- ============================================================
+-- GALERIA NO STORAGE (v725) — fotos NOVAS do banco de imagens
+-- do professor sobem pro balde 'galeria' e a lista local guarda
+-- só a URL: a foto deixa de pesar no aparelho e no sync. Leitura
+-- é pública (o caminho leva o uuid da academia — sem o link exato
+-- ninguém acha nada, mesmo modelo dos tokens do app); escrever e
+-- apagar é só membro da academia dona do prefixo. Foto antiga em
+-- base64 continua valendo — nada é migrado à força.
+-- ============================================================
+
+insert into storage.buckets (id, name, public) values ('galeria', 'galeria', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "galeria_membro_escreve" on storage.objects;
+create policy "galeria_membro_escreve" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'galeria'
+    and ((storage.foldername(name))[1])::uuid in (select public.minhas_academias()));
+
+drop policy if exists "galeria_membro_apaga" on storage.objects;
+create policy "galeria_membro_apaga" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'galeria'
+    and ((storage.foldername(name))[1])::uuid in (select public.minhas_academias()));

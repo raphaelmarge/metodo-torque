@@ -10067,6 +10067,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var zi = zapFilaCache.find(function (x) { return x.chave === ft.getAttribute("data-zapfoto"); });
       var imF = zi && imgsLe().find(function (x) { return x.id === zi.img; });
       if (!imF) { alert("A foto dessa automação não está mais no banco de imagens."); return; }
+      if (imgEhNuvem(imF)) {
+        // v725: foto guardada na nuvem — baixa e segue no MESMO fluxo de compartilhar
+        fetch(imF.d).then(function (r) { return r.blob(); }).then(function (b) {
+          var flN = new File([b], "foto.jpg", { type: b.type || "image/jpeg" });
+          if (navigator.canShare && navigator.canShare({ files: [flN] })) {
+            navigator.share({ files: [flN], text: zi.texto }).catch(function () {});
+          } else {
+            window.open(imF.d, "_blank"); // abre a foto pra salvar/anexar
+          }
+        }).catch(function () { window.open(imF.d, "_blank"); });
+        return;
+      }
       var flF = dataUrlPraArquivo(imF.d, "foto.jpg");
       if (navigator.canShare && navigator.canShare({ files: [flF] })) {
         navigator.share({ files: [flF], text: zi.texto }).catch(function () {});
@@ -19123,9 +19135,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var l = S.read("ptImagens", []);
     return Array.isArray(l) ? l : [];
   }
+  /* v725: foto NOVA da galeria sobe pro Supabase Storage (balde 'galeria',
+   * caminho <academia>/<id>.jpg — público mas inalcançável sem o link, o
+   * mesmo modelo dos tokens do app). No banco local fica só a URL: a foto
+   * deixa de pesar no aparelho e no sync. QUALQUER erro (sem conta, sem
+   * rede, política) cai no caminho antigo (base64) sem drama — e as fotos
+   * antigas continuam exatamente como estão. */
+  function subaGaleria(dataUrl, cb) {
+    try {
+      var nuvem = S.cloud && S.cloud();
+      if (!nuvem || !nuvem.aid || !nuvem.client || !nuvem.client.storage) return cb("");
+      var m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(String(dataUrl));
+      if (!m) return cb("");
+      var bin = atob(m[2]);
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var caminho = nuvem.aid + "/" + S.uid() + "." + (m[1] === "jpeg" ? "jpg" : m[1]);
+      var balde = nuvem.client.storage.from("galeria");
+      balde.upload(caminho, arr.buffer ? new Blob([arr], { type: "image/" + m[1] }) : arr, { contentType: "image/" + m[1] })
+        .then(function (r) {
+          if (r && r.error) return cb("");
+          var pu = balde.getPublicUrl(caminho);
+          cb((pu && pu.data && pu.data.publicUrl) || "");
+        }, function () { cb(""); });
+    } catch (e) { cb(""); }
+  }
+  window.__galeriaNuvem = subaGaleria; // testes
+  // http = já buscamos da nuvem; qualquer consumidor que precise do ARQUIVO
+  // (compartilhar, virar capa) baixa antes e segue no fluxo de sempre
+  function imgEhNuvem(im) { return /^https?:\/\//.test((im && im.d) || ""); }
   function imgsPeso(lista) {
     var t = 0;
-    (lista || imgsLe()).forEach(function (i) { t += (i.d || "").length; });
+    // URL da nuvem não pesa no aparelho — só base64 conta pro teto
+    (lista || imgsLe()).forEach(function (i) { if (!imgEhNuvem(i)) t += (i.d || "").length; });
     return t;
   }
   function imgFmt(b) {
@@ -19134,7 +19176,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderImagens() {
     var lista = imgsLe(), usado = imgsPeso(lista);
     var pct = Math.min(100, Math.round(100 * usado / IMG_TETO));
+    var naNuvem = lista.filter(imgEhNuvem).length;
     $("imgEspaco").textContent = lista.length + " imagem(ns) · " + imgFmt(usado) + " de " + imgFmt(IMG_TETO) + " usados" +
+      (naNuvem ? " · " + naNuvem + " na nuvem do studio (não pesam aqui)" : "") +
       (pct >= 80 ? " — quase cheio, apague o que não usa mais" : "");
     $("imgBarra").firstElementChild.style.width = pct + "%";
     $("imgBarra").classList.toggle("cheia", pct >= 90);
@@ -19163,15 +19207,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var arq = fila.shift();
       if (!arq) { renderImagens(); return; }
       leCapa(arq, function (d) {
-        var lista = imgsLe();
-        if (imgsPeso(lista) + d.length > IMG_TETO) {
-          alert("O banco de imagens está cheio (" + imgFmt(IMG_TETO) + ").\n\nApague alguma foto antiga antes de enviar esta.");
-          renderImagens();
-          return;
-        }
-        lista.unshift({ id: S.uid(), n: String(arq.name || "foto").replace(/\.[a-z0-9]+$/i, "").slice(0, 40), d: d, em: S.todayISO() });
-        S.write("ptImagens", lista);
-        proxima();
+        subaGaleria(d, function (urlNuvem) {
+          var lista = imgsLe();
+          if (!urlNuvem && imgsPeso(lista) + d.length > IMG_TETO) {
+            alert("O banco de imagens está cheio (" + imgFmt(IMG_TETO) + ").\n\nApague alguma foto antiga antes de enviar esta — ou entre na sua conta: com a nuvem ligada, as fotos novas nem pesam no aparelho.");
+            renderImagens();
+            return;
+          }
+          lista.unshift({ id: S.uid(), n: String(arq.name || "foto").replace(/\.[a-z0-9]+$/i, "").slice(0, 40),
+            d: urlNuvem || d, em: S.todayISO() });
+          S.write("ptImagens", lista);
+          proxima();
+        });
       });
     })();
   });
@@ -19184,6 +19231,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rm) {
       var alvo = lista.find(function (x) { return x.id === rm; });
       if (!confirm("Apagar a imagem “" + ((alvo && alvo.n) || "") + "”? Onde ela já foi usada (card, ficha) a foto continua.")) return;
+      if (alvo && imgEhNuvem(alvo)) {
+        // melhor esforço: some da lista já; o arquivo na nuvem cai junto quando dá
+        try {
+          var nuvemRm = S.cloud && S.cloud();
+          var camRm = String(alvo.d).split("/galeria/")[1];
+          if (nuvemRm && nuvemRm.client && nuvemRm.client.storage && camRm) {
+            nuvemRm.client.storage.from("galeria").remove([decodeURIComponent(camRm)]).then(function () {}, function () {});
+          }
+        } catch (e) { /* segue */ }
+      }
       S.write("ptImagens", lista.filter(function (x) { return x.id !== rm; }));
     }
     if (nm) {
@@ -19197,12 +19254,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (cp) {
       var imc = lista.find(function (x) { return x.id === cp; });
       if (!imc) return;
-      var st = load();
-      st.config = st.config || {};
-      st.config.capaTreino = imc.d;
-      st.config.appEditGeralEm = new Date().toISOString();
-      S.write("ptStudio", st);
-      alert("Pronto! “" + imc.n + "” virou a foto do card de treino do dia.\n\nToque em Publicar apps atualizados pros alunos verem.");
+      var poeCapa = function (dado) {
+        var st = load();
+        st.config = st.config || {};
+        st.config.capaTreino = dado;
+        st.config.appEditGeralEm = new Date().toISOString();
+        S.write("ptStudio", st);
+        alert("Pronto! “" + imc.n + "” virou a foto do card de treino do dia.\n\nToque em Publicar apps atualizados pros alunos verem.");
+      };
+      if (!imgEhNuvem(imc)) { poeCapa(imc.d); return; }
+      // v725: o app do aluno funciona SEM internet — a capa tem de viajar
+      // embutida (data:), então a foto da nuvem é baixada antes de virar capa
+      fetch(imc.d).then(function (r) { return r.blob(); }).then(function (b) {
+        var fr = new FileReader();
+        fr.onload = function () { poeCapa(String(fr.result)); };
+        fr.onerror = function () { alert("Não consegui baixar essa foto da nuvem agora — tenta de novo com internet."); };
+        fr.readAsDataURL(b);
+      }).catch(function () { alert("Não consegui baixar essa foto da nuvem agora — tenta de novo com internet."); });
     }
     renderImagens();
   });
