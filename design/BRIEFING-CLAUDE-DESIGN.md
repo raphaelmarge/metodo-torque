@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v719** |
-| Estado do repo em | 2026-08-31 (commit `13e816c`) |
+| App em | **mt-v721** |
+| Estado do repo em | 2026-09-01 (commit `bc47766`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 181 |
+| Lançamentos no histórico | 182 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v719** — ou seja, **50 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v721** — ou seja, **52 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v721 | régua de push rodando SOZINHA no servidor (pg_cron) |
 | mt-v719 | indicação premiada + modo colaborador no painel |
 | mt-v718 | mensagens dos botões do WhatsApp com as SUAS palavras |
 | mt-v717 | renovar contrato em 1 clique direto do alerta + proposta no zap |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v708 | Ajuda com fotos reais + chamado de suporte com protocolo |
 | mt-v707 | a Ajuda cobre TODAS as áreas dos dois produtos |
 | mt-v706 | Central de ajuda no painel e no app do aluno |
-| mt-v705 | demo da loja com foto de produto e cupom com link do parceiro |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
