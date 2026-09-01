@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v727** |
-| Estado do repo em | 2026-09-01 (commit `003a7d2`) |
+| App em | **mt-v728** |
+| Estado do repo em | 2026-09-01 (commit `971b05a`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 188 |
+| Lançamentos no histórico | 189 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v727** — ou seja, **58 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v728** — ou seja, **59 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v719** (2026-09-01).
+O motor (`app/aluno-builder.js`) encostou em **mt-v728** (2026-09-01).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v728 | aluno confirma presença e a Agenda mostra |
 | mt-v727 | o sexo do aluno ganhou campo onde ele faz falta |
 | mt-v726 | comandos que EXECUTAM na busca do topo |
 | mt-v725 | fotos novas da galeria no Supabase Storage |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v715 | diário da sessão na hora do Feita + a IA lê o diário |
 | mt-v714 | lembrete de véspera da sessão (push + WhatsApp) |
 | mt-v713 | aba Do dia a dia dos Relatórios arrumada |
-| mt-v712 | Relatórios com período retroativo, aba Vendas e mais gráficos |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
