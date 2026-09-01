@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v734** |
-| Estado do repo em | 2026-09-01 (commit `7c455a2`) |
+| App em | **mt-v735** |
+| Estado do repo em | 2026-09-01 (commit `505376a`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 195 |
+| Lançamentos no histórico | 196 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v734** — ou seja, **65 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v735** — ou seja, **66 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v734** (2026-09-01).
+O motor (`app/aluno-builder.js`) encostou em **mt-v735** (2026-09-01).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v735 | playlist do treino no app do aluno |
 | mt-v734 | tamanho do texto no app do aluno |
 | mt-v733 | voz no treino guiado de musculação |
 | mt-v732 | o volume do treino ganha memória e comparação |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v723 | sessão fixa que rola sozinha (agenda sem fim) |
 | mt-v722 | 🔔 Enquanto você esteve fora (o sininho do Início) |
 | mt-v721 | régua de push rodando SOZINHA no servidor (pg_cron) |
-| mt-v719 | indicação premiada + modo colaborador no painel |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
