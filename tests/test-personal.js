@@ -3115,6 +3115,64 @@ async function abaPt(p, a) {
     "✍️ Configurações lista as 4 mensagens de botão com Editar (e sem liga/desliga, porque só saem no toque)");
   ok(bmLista.vespera, "⏰ a fixa de véspera (v714) aparece na lista com Editar E liga/desliga");
 
+  // 🎁 v719: indicação premiada — o prêmio viaja no pacote do app e a
+  // indicação registrada pelo aluno vira aviso nos Alertas do studio
+  const indi = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const st = S.read("ptStudio", {});
+    st.config = st.config || {};
+    const prAntes = st.config.indicaPremio;
+    st.config.indicaPremio = "amigo fechou plano, 1 sessão extra <b>pra você";
+    st.alunos.push({ id: "ind-a", nome: "Indica Souza", ativo: true, zap: "31955550001", desde: "2026-01-01",
+      retorno: { indicas: [{ n: "Pedro Amigo", em: hoje }, { n: "Velho Demais", em: "2020-01-01" }] } });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st1 = S.read("ptStudio", {});
+    const aluno = st1.alunos.find((a) => a.id === "ind-a");
+    const html = window.__montaAppAluno(aluno, new Date().toISOString());
+    const out = {
+      // o pacote leva o prêmio SEM '<' (dado vira texto, nunca HTML)
+      premioNoApp: /var INDPR="amigo fechou plano, 1 sessão extra b>pra você"/.test(html),
+      registroNoApp: /indicaOk/.test(html) && /ptindicas/.test(html) && /indicas:L\('ptindicas'/.test(html),
+    };
+    window.__relPT();
+    const al = document.getElementById("relAlertas").innerHTML;
+    out.alerta = /Indicações de alunos/i.test(al) && /Indica Souza/.test(al) && /Pedro Amigo/.test(al);
+    out.velhaFora = !/Velho Demais/.test(al);
+    out.agradece = /Valeu%20demais%20pela%20indica/.test(al);
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    if (prAntes === undefined) delete st9.config.indicaPremio; else st9.config.indicaPremio = prAntes;
+    st9.alunos = st9.alunos.filter((a) => a.id !== "ind-a");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__relPT();
+    return out;
+  });
+  ok(indi.premioNoApp, "🎁 o prêmio da indicação viaja no pacote do app, com o '<' varrido");
+  ok(indi.registroNoApp, "🎁 o app tem o Avisar meu professor e o retorno leva as indicações (ptindicas)");
+  ok(indi.alerta && indi.agradece, "🎁 a indicação vira aviso nos Alertas do studio com o agradecimento pronto");
+  ok(indi.velhaFora, "🎁 indicação com mais de 30 dias sai do aviso");
+
+  // 👥 v720: modo colaborador — papel 'funcionario' esconde as telas de
+  // dinheiro e administração (o login já existia; o painel agora reage)
+  const aux = await p.evaluate(() => {
+    const out = {};
+    window.__papelPT.aplica("funcionario");
+    const esc9 = ["pagamentos", "relatorios", "config", "pers", "sitepro", "conta", "assessoria"];
+    out.escondidas = esc9.every((a) => document.querySelector('#abas [data-a="' + a + '"]').style.display === "none");
+    out.ficam = ["dash", "alunos", "agenda", "treinos", "chat", "avaliacoes"].every(
+      (a) => document.querySelector('#abas [data-a="' + a + '"]').style.display !== "none");
+    out.mesSome = document.getElementById("dashMes").style.display === "none";
+    out.nota = /modo colaborador/.test((document.getElementById("papelNota") || {}).textContent || "");
+    window.__papelPT.aplica("dono");
+    out.volta = document.querySelector('#abas [data-a="pagamentos"]').style.display !== "none" &&
+      document.getElementById("papelNota").style.display === "none" &&
+      document.getElementById("dashMes").style.display !== "none";
+    return out;
+  });
+  ok(aux.escondidas && aux.ficam, "👥 colaborador: Financeiro/Relatórios/Config/adm somem, o dia a dia fica");
+  ok(aux.mesSome && aux.nota, "👥 o card do mês (dinheiro) some do Início e o menu diz que é modo colaborador");
+  ok(aux.volta, "👥 papel dono devolve tudo");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
