@@ -3322,6 +3322,31 @@ async function abaPt(p, a) {
   ok(fx.canceladaNaoVolta, "📅 sessão cancelada pelo professor NÃO ressuscita no próximo tique");
   ok(fx.lista && fx.encerrou && fx.listaVazia, "📅 a lista mostra a fixa e o Encerrar desmarca só as futuras");
 
+  // 🔍 v724: a busca do topo acha TELAS E AÇÕES além de aluno
+  const bt = await p.evaluate(() => {
+    const box = document.getElementById("buscaAlunoLista");
+    const busca = (t) => { document.getElementById("buscaAluno").value = t; window.__buscaPT(); };
+    const out = {};
+    busca("pix");
+    out.telas = /TELAS E AÇÕES/.test(box.textContent) && /Financeiro/.test(box.textContent);
+    busca("relatorio"); // sem acento acha "Relatórios"
+    out.semAcento = /Relatórios/.test(box.textContent);
+    busca("vendas");
+    const alvo = [...box.querySelectorAll("[data-busca-tela]")].find((d) => /Vendas/.test(d.textContent));
+    out.achou = !!alvo;
+    if (alvo) alvo.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    out.navegou = !document.getElementById("vRelatorios").hidden &&
+      !document.querySelector('[data-relsec="vendas"]').hidden;
+    busca("joão");
+    out.alunoNaFrente = !!box.querySelector("[data-busca-id]");
+    busca("");
+    return out;
+  });
+  ok(bt.telas, "🔍 'pix' acha o Financeiro na seção TELAS E AÇÕES");
+  ok(bt.semAcento, "🔍 busca sem acento acha tela com acento");
+  ok(bt.achou && bt.navegou, "🔍 clicar no resultado navega até a sub-aba certa (Relatórios → Vendas)");
+  ok(bt.alunoNaFrente, "🔍 aluno continua vindo na frente das telas");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
@@ -5677,7 +5702,7 @@ async function abaPt(p, a) {
   await p.evaluate(() => document.getElementById("pfFechar").click());
   await p.fill("#buscaAluno", "zzz");
   await p.waitForTimeout(150);
-  ok(/Nenhum aluno/.test(await p.evaluate(() => document.getElementById("buscaAlunoLista").textContent)), "busca sem resultado avisa educadamente");
+  ok(/nem aluno, nem tela/.test(await p.evaluate(() => document.getElementById("buscaAlunoLista").textContent)), "busca sem resultado avisa educadamente");
   await p.fill("#buscaAluno", "");
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
