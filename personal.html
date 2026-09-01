@@ -1851,7 +1851,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <h1 id="tituloStudio">Meu Studio</h1>
     </div>
     <div class="busca-topo">
-      <input id="buscaAluno" class="buscaTopoIn" placeholder="Buscar aluno ou tela…" autocomplete="off">
+      <input id="buscaAluno" class="buscaTopoIn" placeholder="Buscar aluno, tela… ou mande: marcar João 18h" autocomplete="off">
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
@@ -7500,7 +7500,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var telas = termoSA.length >= 2 ? BUSCA_TELAS.map(function (t, i) { return { t: t, i: i }; })
       .filter(function (x) { return semAcentoB(x.t.t.toLowerCase()).indexOf(termoSA) >= 0 || x.t.k.indexOf(termoSA) >= 0; })
       .slice(0, 4) : [];
-    var htmlB = achou.map(function (a) {
+    buscaCmdAtual = interpretaComando(termo, st);
+    var htmlB = (buscaCmdAtual
+      ? "<div data-busca-cmd='1' style='padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;font-weight:700;color:var(--tk-roxoTx2);'>" +
+        buscaCmdAtual.rot + " <span class='muted' style='font-weight:600;font-size:11px;'>· Enter executa</span></div>"
+      : "") + achou.map(function (a) {
       var pagoMes = idxDe(st).pagouMes(a.id, mesAtual);
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
@@ -7551,9 +7555,102 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (it.aga && window.__agAba) window.__agAba(it.aga);
   }
   window.__buscaTelas = { lista: BUSCA_TELAS, vai: vaiBuscaTela }; // testes
+  /* ---------- v726: COMANDOS na busca — digita a ação e ela executa ----------
+   * Sem IA de propósito: são 3 comandos interpretados na hora, de graça e
+   * offline, sempre com confirmação antes de mexer em qualquer coisa:
+   *   marcar <aluno> [hoje|amanhã|segunda…] [18h|às 18|18:30]
+   *   recebi <valor> [de] <aluno>
+   *   cobrar <aluno>                                                       */
+  function cmdDiaPara(pal) {
+    var hoje = S.todayISO();
+    if (!pal || pal === "hoje") return hoje;
+    var d = new Date(hoje + "T12:00");
+    if (pal === "amanha" || pal === "amanhã") { d.setDate(d.getDate() + 1); return S.todayISO(d); }
+    var DS = { domingo: 0, segunda: 1, terca: 2, "terça": 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, "sábado": 6 };
+    if (DS[pal] == null) return "";
+    d.setDate(d.getDate() + (DS[pal] - d.getDay() + 7) % 7); // 0 = hoje mesmo
+    return S.todayISO(d);
+  }
+  function cmdAchaAluno(st, trecho) {
+    var t = semAcentoB(String(trecho).trim().toLowerCase());
+    if (t.length < 2) return null;
+    return st.alunos.find(function (a) {
+      return a.ativo !== false && semAcentoB((a.nome || "").toLowerCase()).indexOf(t) >= 0;
+    }) || null;
+  }
+  function interpretaComando(termo, st) {
+    var t = termo.trim();
+    var m = /^(?:marca(?:r)?|agenda(?:r)?)\s+(.+)$/i.exec(t);
+    if (m) {
+      var resto = m[1], hora = "";
+      var mh = /\s+(?:às\s+|as\s+)?(\d{1,2})(?::(\d{2})|h(\d{2})?)?\s*$/i.exec(resto);
+      if (mh) { hora = ("0" + mh[1]).slice(-2) + ":" + (mh[2] || mh[3] || "00"); resto = resto.slice(0, mh.index); }
+      var dia = "";
+      var md = /\s+(hoje|amanh[ãa]|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo)\s*$/i.exec(resto);
+      if (md) { dia = md[1].toLowerCase(); resto = resto.slice(0, md.index); }
+      var a1 = cmdAchaAluno(st, resto);
+      var data1 = cmdDiaPara(dia || "hoje");
+      if (a1 && data1) return { tipo: "marcar", aluno: a1, data: data1, hora: hora,
+        rot: "📌 Marcar sessão: " + esc(a1.nome.split(" ")[0]) + " — " +
+          (data1 === S.todayISO() ? "hoje" : S.fmtData(data1)) + (hora ? " às " + hora : "") };
+    }
+    m = /^(?:recebi|pagamento|pagou)\s+(?:r\$\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:de\s+|do\s+|da\s+)?(.+)$/i.exec(t);
+    if (m) {
+      var a2 = cmdAchaAluno(st, m[2]);
+      var v2 = +String(m[1]).replace(",", ".");
+      if (a2 && v2 > 0) return { tipo: "recebi", aluno: a2, valor: v2,
+        rot: "💰 Registrar " + S.fmtBRL(v2) + " de " + esc(a2.nome.split(" ")[0]) + " (hoje)" };
+    }
+    m = /^cobra(?:r)?\s+(.+)$/i.exec(t);
+    if (m) {
+      var a3 = cmdAchaAluno(st, m[1]);
+      if (a3 && a3.zap) return { tipo: "cobrar", aluno: a3,
+        rot: "💬 Cobrar " + esc(a3.nome.split(" ")[0]) + " no WhatsApp" };
+    }
+    return null;
+  }
+  var buscaCmdAtual = null;
+  function executaComando(cmd) {
+    if (!cmd) return;
+    if (cmd.tipo === "marcar") {
+      if (!confirm("Marcar sessão de " + cmd.aluno.nome.split(" ")[0] + " " +
+        (cmd.data === S.todayISO() ? "hoje" : "em " + S.fmtData(cmd.data)) +
+        (cmd.hora ? " às " + cmd.hora : ", sem horário") + "?")) return;
+      var st1 = load();
+      st1.sessoes.push({ id: S.uid(), alunoId: cmd.aluno.id, data: cmd.data, hora: cmd.hora, feita: false });
+      marcaAppPendente(st1, cmd.aluno.id);
+      save(st1);
+      vaiAba("agenda");
+      return;
+    }
+    if (cmd.tipo === "recebi") {
+      if (!confirm("Registrar " + S.fmtBRL(cmd.valor) + " recebido de " + cmd.aluno.nome.split(" ")[0] + " hoje?")) return;
+      var st2 = load();
+      var pg2 = { id: S.uid(), alunoId: cmd.aluno.id, valor: cmd.valor, forma: "recebido", data: S.todayISO() };
+      st2.pagamentos.push(pg2);
+      save(st2);
+      mandaReciboZap(st2, cmd.aluno, pg2);
+      return;
+    }
+    if (cmd.tipo === "cobrar") {
+      var st3 = load();
+      var dv3 = dividaDe(st3, cmd.aluno);
+      var tx3 = zapTexto(zapModelos(st3).atraso, { nome: cmd.aluno.nome.split(" ")[0],
+        dias: "uns dias", valor: S.fmtBRL(dv3 && dv3.total ? dv3.total : (+cmd.aluno.valor || 0)) });
+      window.open("https://wa.me/55" + String(cmd.aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(tx3), "_blank");
+      return;
+    }
+  }
+  window.__cmdPT = { interpreta: interpretaComando, executa: executaComando }; // testes
   $("buscaAluno").addEventListener("input", pintaBuscaAluno);
   $("buscaAluno").addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
+      if (buscaCmdAtual) {
+        var cmdE = buscaCmdAtual;
+        this.value = ""; $("buscaAlunoLista").hidden = true; buscaCmdAtual = null;
+        executaComando(cmdE);
+        return;
+      }
       var pri = $("buscaAlunoLista").querySelector("[data-busca-id]");
       if (pri) { abrePerfil(pri.getAttribute("data-busca-id")); this.value = ""; $("buscaAlunoLista").hidden = true; return; }
       // sem aluno no resultado, o Enter vai pra primeira TELA achada (v724)
@@ -7563,6 +7660,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (e.key === "Escape") { $("buscaAlunoLista").hidden = true; }
   });
   $("buscaAlunoLista").addEventListener("mousedown", function (e) {
+    var elC = e.target.closest("[data-busca-cmd]");
+    if (elC) {
+      var cmd9 = buscaCmdAtual;
+      $("buscaAluno").value = "";
+      $("buscaAlunoLista").hidden = true;
+      buscaCmdAtual = null;
+      executaComando(cmd9);
+      return;
+    }
     var elT = e.target.closest("[data-busca-tela]");
     if (elT) {
       vaiBuscaTela(+elT.getAttribute("data-busca-tela"));
