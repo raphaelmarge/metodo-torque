@@ -87,6 +87,8 @@
     var PAL = D.PAL || [], LOGOAPP = D.LOGOAPP || "";
     var zapPersonal = D.zapPersonal || "", metaSemana = D.metaSemana || 3;
     var sessApp = D.sessApp || [], vidsApp = D.vidsApp || [], qa = D.qa || null;
+    // v735: playlist do treino (link colado pelo professor; vazio = sem botão)
+    var playApp = /^https?:\/\//i.test(String(D.playlistApp || "")) ? String(D.playlistApp).slice(0, 300) : "";
     var clubeApp = D.clubeApp || []; // v697: parcerias do professor com cupom
     var lojaApp = D.lojaApp || [];   // v698: vitrine do professor (produtos + serviços)
     var ctApp = D.ctApp || null, plApp = D.plApp || null, pixApp = D.pixApp || null, svApp = D.svApp || [];
@@ -1135,6 +1137,8 @@
       "<span id='trTopN' style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'></span>" +
       "<span id='trTopS' style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'></span></div>" +
       "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div>" +
+      (playApp ? "<a id='trPlay' href='" + esc(playApp) + "' target='_blank' rel='noopener' style='display:inline-flex;align-items:center;gap:7px;margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:99px;padding:8px 15px;font-size:12.5px;font-weight:800;text-decoration:none;'>" +
+        "<svg width='13' height='13' viewBox='0 0 24 24' fill='currentColor' stroke='none' aria-hidden='true'><path d='M7 4.5v15l13-7.5z'/></svg>Playlist do treino</a>" : "") +
       "<div id='trMes' style='display:none;margin-top:12px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 13px;'></div></div>" +
       ((ve("wod") || ve("cardio")) ? "<div id='trTabs' style='display:flex;gap:8px;padding:14px 20px 16px;'>" +
       "<button data-trsub='ficha' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
@@ -1714,6 +1718,7 @@
       "<button id='gPularEx'>Pular exercício</button>" +
       "<button type='button' id='gFc' aria-label='Batimentos'></button>" +
       "<button type='button' id='gVoz' aria-label='Ler os exercícios em voz alta' style='display:none;background:none;border:1px solid rgba(255,255,255,.25);color:#8a8695;border-radius:99px;padding:4px 12px;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.06em;cursor:pointer;'>voz</button>" +
+      (playApp ? "<a id='gPlay' href='" + esc(playApp) + "' target='_blank' rel='noopener' aria-label='Abrir a playlist do treino' style='background:none;border:1px solid rgba(255,255,255,.25);color:#8a8695;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:800;letter-spacing:.06em;text-decoration:none;'>m\u00fasica</a>" : "") +
       "<button id='gFechar' class='gx' aria-label='Fechar o treino guiado'>✕</button></div>" +
       "<div class='gbarra' id='gBarra' aria-hidden='true'></div>" +
       "<div class='gcont'><div id='gProg'></div><span id='gReloTot'></span></div>" +
