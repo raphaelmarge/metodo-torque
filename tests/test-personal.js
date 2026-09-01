@@ -2919,6 +2919,55 @@ async function abaPt(p, a) {
   ok(vsp.desligada === false, "⏰ a fixa de véspera desliga em Configurações como as outras");
   ok(vsp.semHora && !/às/.test(vsp.semHora), "⏰ sessão sem horário: o texto sai sem o 'às' pendurado");
 
+  // 📓 v715: Anotar a sessão feita — a nota cai no diário da ficha (st.diarioPT,
+  // com a data da SESSÃO), edita em vez de duplicar, e a IA lê o diário
+  const diar = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const st = S.read("ptStudio", {});
+    st.alunos.push({ id: "al-diar", nome: "Diario Dias", ativo: true, desde: "2026-01-01" });
+    st.sessoes.push({ id: "ses-diar", alunoId: "al-diar", data: hoje, hora: "07:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const promptOrig = window.prompt;
+    const clica = (resposta) => {
+      window.prompt = () => resposta;
+      const b = document.createElement("button");
+      b.setAttribute("data-snota", "ses-diar");
+      document.getElementById("listaSessoes").appendChild(b);
+      b.click(); b.remove();
+    };
+    const notas = () => (S.read("ptStudio", {}).diarioPT || {})["al-diar"] || [];
+    clica("evoluiu no supino, dor leve no ombro D");
+    const n1 = JSON.parse(JSON.stringify(notas()));
+    clica("ajustar pegada no supino");           // anota de novo = EDITA a do dia
+    const n2 = JSON.parse(JSON.stringify(notas()));
+    clica("");                                    // texto vazio = remove
+    const n3 = notas().length;
+    clica("PR no supino: 60 kg");
+    const aluno = S.read("ptStudio", {}).alunos.find((a) => a.id === "al-diar");
+    const ia = window.__montaDadosIA(S.read("ptStudio", {}), aluno, "hipertrofia", "completa");
+    const joao = S.read("ptStudio", {}).alunos.find((a) => a.nome === "João Cliente");
+    const iaSem = window.__montaDadosIA(S.read("ptStudio", {}), joao, "hipertrofia", "completa");
+    const botao = window.__sesAcoes({ id: "x1", feita: true });
+    // limpa
+    window.prompt = promptOrig;
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "al-diar");
+    st9.sessoes = st9.sessoes.filter((x) => x.id !== "ses-diar");
+    delete (st9.diarioPT || {})["al-diar"];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return { n1, n2, n3, hoje,
+      iaTem: /DIÁRIO DO PROFESSOR/.test(ia) && /PR no supino: 60 kg/.test(ia),
+      iaSemNota: /sem anotações de sessão/.test(iaSem),
+      botao: /data-snota/.test(botao) && /data-desfeita/.test(botao) };
+  });
+  ok(diar.n1.length === 1 && diar.n1[0].d === diar.hoje && /ombro D/.test(diar.n1[0].t),
+    "📓 Anotar grava a nota no diário da ficha com a data da sessão");
+  ok(diar.n2.length === 1 && /ajustar pegada/.test(diar.n2[0].t), "📓 anotar de novo no mesmo dia EDITA — não duplica");
+  ok(diar.n3 === 0, "📓 apagar o texto remove a anotação");
+  ok(diar.iaTem, "📓 a IA recebe o DIÁRIO DO PROFESSOR com as anotações");
+  ok(diar.iaSemNota, "📓 aluno sem anotação: o bloco diz honestamente que não há");
+  ok(diar.botao, "📓 a sessão feita tem Anotar junto do Desfazer Feita");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
