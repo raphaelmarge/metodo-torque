@@ -3463,6 +3463,24 @@ async function abaPt(p, a) {
     ok(voz.frase === "Supino reto. 3 séries de 12." && voz.fraseSeg === "Prancha. 1 série de 30 segundos.",
       "🔊 a frase falada tem a prescrição certa (séries, reps e '30s' vira segundos)");
     ok(voz.ligou && voz.desligou, "🔊 ligar guarda a escolha no aparelho e desligar corta a fala");
+
+    // 🔠 v734: tamanho do texto nos Ajustes — cada toque anda um degrau
+    // (normal → grande → maior ainda → normal) e a escolha fica no aparelho
+    const fnt = await pR.evaluate(() => {
+      const bt = document.getElementById("ajFonte");
+      const sub = () => document.getElementById("ajFonteSub").textContent;
+      const zoom = () => document.documentElement.style.zoom || "";
+      const out = { visivel: bt && bt.style.display !== "none", normal: sub() === "normal" && zoom() === "" };
+      bt.click();
+      out.g = sub() === "grande" && zoom() === "1.12" && JSON.parse(localStorage.getItem("ptfonte")) === "g";
+      bt.click();
+      out.gg = sub() === "maior ainda" && zoom() === "1.25";
+      bt.click();
+      out.volta = sub() === "normal" && zoom() === "";
+      return out;
+    });
+    ok(fnt.visivel && fnt.normal, "🔠 a linha Tamanho do texto aparece nos Ajustes e nasce em normal");
+    ok(fnt.g && fnt.gg && fnt.volta, "🔠 cada toque anda um degrau (grande 1.12 → maior 1.25 → normal) e guarda a escolha");
     await ctxR.close();
   }
 
@@ -4665,7 +4683,11 @@ async function abaPt(p, a) {
       return { copias, kb: Math.round(html.length / 1024), fotoKb: Math.round(foto.length / 1024) };
     });
     ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
-    ok(peso.kb < peso.fotoKb * 2 + 250, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // a folga é o orçamento do CÓDIGO do app (o que este assert vigia é a
+    // imagem repetida, que o `copias === 1` acima já pega): 250 → 285 KB em
+    // v734, depois do lote v728–v734 (confirmação, recordes, volume, voz,
+    // texto maior) — crescimento de código de verdade, não foto duplicada
+    ok(peso.kb < peso.fotoKb * 2 + 285, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
     // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
     // foto era jogada fora duas vezes (no corte e de novo na tela)
     const corte = await p.evaluate(async () => {

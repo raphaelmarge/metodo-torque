@@ -1596,6 +1596,12 @@
       "<button class='mgrow' data-ajgo='util'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z'/></svg></span>" +
       "<span style='flex:1;min-width:0;'><span class='mgtit'>Lembrete de água</span><span class='mgsub' id='ajAguaSub'>desligado</span></span>" +
       "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
+      /* v734: tamanho do texto — cada toque anda um degrau (normal → grande →
+       * maior ainda → normal). Some quando o navegador não tem zoom (o runtime
+       * decide) — botão que não faz nada não entra. */
+      "<button class='mgrow' id='ajFonte' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 19 10 5l6 14M6.2 14.5h7.6'/><path d='M16.5 19l2.7-6.5L21.9 19'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Tamanho do texto</span><span class='mgsub' id='ajFonteSub'>normal</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
       "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z'/></svg></span>" +
       "<span style='flex:1;min-width:0;'><span class='mgtit'>Idioma</span><span class='mgsub'>Português (Brasil)</span></span></div></div>" +
       "<div class='mgcard' id='ajDados'>" +
@@ -5928,6 +5934,16 @@
       "function pintaAguaSub(){var el=document.getElementById('ajAguaSub');if(!el)return;var v=+L('ptaguaLem',0)||0;" +
       "el.textContent=v===60?'a cada 1 hora':v===90?'a cada 1h30':v===120?'a cada 2 horas':'desligado — liga aqui';}" +
       "pintaAguaSub();window.__aguaSub=pintaAguaSub;" +
+      /* v734: o app inteiro é medido em px (inline), então rem não escala nada —
+       * quem escala é o zoom, que Chrome, Safari e Firefox novos entendem.
+       * Navegador sem zoom: a linha nem aparece. ptfonte: '' | 'g' | 'gg'. */
+      "function fzAplica(){var v=L('ptfonte','');var z=v==='g'?'1.12':v==='gg'?'1.25':'';" +
+      "try{document.documentElement.style.zoom=z;}catch(eF){}" +
+      "var sb=document.getElementById('ajFonteSub');if(sb)sb.textContent=v==='g'?'grande':v==='gg'?'maior ainda':'normal';}" +
+      "(function(){var b=document.getElementById('ajFonte');if(!b)return;" +
+      "if(!('zoom' in document.documentElement.style))return;b.style.display='';" +
+      "b.addEventListener('click',function(){var v=L('ptfonte','');var nx=v===''?'g':v==='g'?'gg':'';Sv('ptfonte',nx);fzAplica();if(navigator.vibrate)navigator.vibrate(8);});})();" +
+      "fzAplica();window.__fonteApp=fzAplica;" +
       // ---- Ajustes: baixar meus dados (LGPD na prática — arquivo local) ----
       "(function(){var b=document.getElementById('ajBaixa');if(!b)return;b.addEventListener('click',function(){" +
       "var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO," +
