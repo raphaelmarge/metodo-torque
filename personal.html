@@ -2205,6 +2205,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <!-- tela 19 do handoff: no celular a semana de 7 colunas vira UM DIA POR
          VEZ (regra 5 do colapso). Os dois convivem: o CSS mostra um ou o outro. -->
+    <div id="agEncaixe" data-agsec="sessoes" hidden style="margin-bottom: 14px;"></div>
     <div id="agDia" data-agsec="sessoes" hidden></div>
     <div class="agrol" data-agsec="sessoes" style="margin-bottom:14px;"><div class="agsem" id="agGrade"></div></div>
     <!-- o MESMO calendario, outro zoom: o botao Semana | Mes la em cima troca
@@ -9071,6 +9072,56 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>';
   }
   window.__sesAcoes = sesAcoesHtml; // testes
+  /* ---------- v716: encaixe — sessão CANCELADA vira vaga oferecida ----------
+   * Cancelou uma sessão de hoje/futuro com horário? O quadro #agEncaixe abre
+   * com até 5 candidatos: alunos ativos com WhatsApp e SEM sessão naquele dia,
+   * os mais sumidos primeiro (quem mais precisa voltar). A vaga é efêmera de
+   * propósito — memória da página, some ao recarregar ou no Fechar; vaga de
+   * data passada expira sozinha. */
+  var vagaEncaixe = null; // {data, hora, nome}
+  function encaixeCandidatos(st, data) {
+    var hoje = S.todayISO();
+    return st.alunos.filter(function (a) {
+      if (a.ativo === false || !a.zap) return false;
+      var ocupado = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data === data && !x.faltou; });
+      return !ocupado;
+    }).map(function (a) {
+      var ult = idxDe(st).sessFeitasDe(a.id).map(function (x) { return x.data; }).sort().pop() || "";
+      var dias = ult ? Math.floor((new Date(hoje + "T12:00") - new Date(ult + "T12:00")) / 864e5) : 9999;
+      return { a: a, dias: dias };
+    }).sort(function (x, y) { return y.dias - x.dias; }).slice(0, 5);
+  }
+  function pintaEncaixe(st) {
+    var el = $("agEncaixe");
+    if (!el) return;
+    if (vagaEncaixe && vagaEncaixe.data < S.todayISO()) vagaEncaixe = null; // vaga velha expira
+    if (!vagaEncaixe) { el.hidden = true; el.innerHTML = ""; return; }
+    var v = vagaEncaixe;
+    var hoje = S.todayISO();
+    var quando = v.data === hoje ? "hoje" : S.fmtData(v.data);
+    var cands = encaixeCandidatos(st, v.data);
+    el.innerHTML =
+      '<div style="border:1.5px solid var(--tk-roxoFraco);border-radius:13px;padding:14px 16px;background:var(--tk-sup);">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:180px;"><div class="tdrot">Vaga aberta · encaixe</div>' +
+      '<b style="font-size:15px;">' + esc(quando) + " às " + esc(v.hora) + "</b>" +
+      '<span class="muted" style="font-size:12.5px;"> — ' + esc(v.nome) + ' cancelou. Quem você chama pra aproveitar?</span></div>' +
+      '<button type="button" class="btn sec mini" data-encfecha="1">Fechar</button></div>' +
+      (cands.length ? cands.map(function (c) {
+        var nomeC = c.a.nome.split(" ")[0];
+        var txtC = "Oi " + nomeC + "! Abriu um horário " + quando + " às " + v.hora + " — quer aproveitar pra treinar? Me responde aqui que eu já te encaixo. 💪";
+        return '<div class="sessao-pt"><b>' + esc(c.a.nome) + "</b>" +
+          '<span class="muted" style="font-size:12px;">' +
+          (c.dias >= 9999 ? "ainda não treinou" : c.dias === 0 ? "treinou hoje" : "sem treinar há " + S.plural(c.dias, "dia", "dias")) + "</span>" +
+          '<span style="margin-left:auto;"></span>' +
+          '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.a.zap).replace(/\D/g, "") +
+          "?text=" + encodeURIComponent(txtC) + '">Oferecer a vaga</a></div>';
+      }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Todo mundo com WhatsApp já tem sessão nesse dia.</div>') +
+      "</div>";
+    el.hidden = false;
+  }
+  window.__encaixe = { abre: function (data, hora, nome) { vagaEncaixe = { data: data, hora: hora, nome: nome }; pintaEncaixe(load()); },
+    candidatos: encaixeCandidatos, fecha: function () { vagaEncaixe = null; } }; // testes
   /* ============================================================
    * TELA 19 do handoff — A AGENDA NO CELULAR.
    * Regra 5 do colapso: "semana de 7 colunas vira UM DIA POR VEZ, com os 7
@@ -9374,6 +9425,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   function renderAgenda(st) {
     pintaAgVis();
+    pintaEncaixe(st);
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
     var opsGt = (st.treinosGrupo || []).map(function (g) {
@@ -9802,6 +9854,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     if (c) {
       if (!confirm("Desmarcar esta sessão da agenda?")) return;
+      // v716: cancelamento de sessão de hoje/futuro com horário abre a vaga
+      // no quadro de encaixe da Agenda (pintado pelo renderAgenda no save)
+      var xc = st.sessoes.find(function (x) { return x.id === c; });
+      if (xc && xc.hora && xc.data >= S.todayISO()) {
+        var alC = st.alunos.find(function (x) { return x.id === xc.alunoId; }) || {};
+        vagaEncaixe = { data: xc.data, hora: xc.hora, nome: String(alC.nome || "o aluno").split(" ")[0] };
+      }
       st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
     }
     save(st);
@@ -9813,6 +9872,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * cobrindo o #agDia (o do #vAgenda só trata navegação). Os listeners ficam
    * nos elementos fixos, que sobrevivem ao innerHTML das pinturas. */
   $("agDia").addEventListener("click", trataCliqueSessao);
+  $("agEncaixe").addEventListener("click", function (e) {
+    if (!e.target.closest("[data-encfecha]")) return;
+    vagaEncaixe = null;
+    pintaEncaixe(load());
+  });
   $("agGrade").addEventListener("click", trataCliqueSessao);
   // fila WhatsApp de hoje: Enviar (abre o zap e marca), Pular (só marca) ou
   // Foto (compartilha a imagem da automação; a mensagem só sai da fila no Enviar)

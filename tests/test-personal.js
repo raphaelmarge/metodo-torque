@@ -2968,6 +2968,65 @@ async function abaPt(p, a) {
   ok(diar.iaSemNota, "📓 aluno sem anotação: o bloco diz honestamente que não há");
   ok(diar.botao, "📓 a sessão feita tem Anotar junto do Desfazer Feita");
 
+  // 🪑 v716: encaixe — cancelar sessão de hoje/futuro com horário abre a vaga
+  // na Agenda, com os candidatos mais sumidos primeiro e o WhatsApp pronto
+  const enc = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const st = S.read("ptStudio", {});
+    st.alunos.push(
+      { id: "enc-sumido", nome: "Sumido Encaixe", ativo: true, zap: "31988880001", desde: "2026-01-01" },
+      { id: "enc-ativo", nome: "Ativo Encaixe", ativo: true, zap: "31988880002", desde: "2026-01-01" },
+      { id: "enc-semzap", nome: "SemZap Encaixe", ativo: true, desde: "2026-01-01" });
+    st.sessoes.push(
+      { id: "enc-v1", alunoId: st.alunos[0].id, data: hoje, hora: "18:00", feita: false },
+      { id: "enc-s1", alunoId: "enc-sumido", data: iso(20), hora: "07:00", feita: true },
+      { id: "enc-s2", alunoId: "enc-ativo", data: iso(1), hora: "07:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    // cancela a sessão das 18h pelo MESMO handler da tela (confirm stubado —
+    // confirm nativo dentro de evaluate trava o teste, lição da v704)
+    const confirmOrig = window.confirm;
+    window.confirm = () => true;
+    const b = document.createElement("button");
+    b.setAttribute("data-cx", "enc-v1");
+    document.getElementById("listaSessoes").appendChild(b);
+    b.click(); b.remove();
+    const el = document.getElementById("agEncaixe");
+    const html = el.innerHTML;
+    const nomes = [...el.querySelectorAll(".sessao-pt b")].map((x) => x.textContent);
+    const out = {
+      abriu: !el.hidden && /Vaga aberta/.test(html) && /18:00/.test(html),
+      ordem: nomes.indexOf("Sumido Encaixe") > -1 && nomes.indexOf("Sumido Encaixe") < nomes.indexOf("Ativo Encaixe"),
+      semZapFora: nomes.indexOf("SemZap Encaixe") === -1,
+      zapPronto: /Abriu%20um%20hor/.test(html) && /wa.me\/5531988880001/.test(html),
+    };
+    // Fechar limpa o quadro
+    el.querySelector("[data-encfecha]").click();
+    out.fechou = document.getElementById("agEncaixe").hidden;
+    // sessão SEM horário cancelada não abre vaga
+    const st2 = S.read("ptStudio", {});
+    st2.sessoes.push({ id: "enc-v2", alunoId: st2.alunos[0].id, data: hoje, hora: "", feita: false });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    const b2 = document.createElement("button");
+    b2.setAttribute("data-cx", "enc-v2");
+    document.getElementById("listaSessoes").appendChild(b2);
+    b2.click(); b2.remove();
+    out.semHoraNaoAbre = document.getElementById("agEncaixe").hidden;
+    // limpa
+    window.confirm = confirmOrig;
+    window.__encaixe.fecha();
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => !/^enc-/.test(String(a.id)));
+    st9.sessoes = st9.sessoes.filter((x) => !/^enc-/.test(String(x.id)));
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return out;
+  });
+  ok(enc.abriu, "🪑 cancelar sessão com horário abre o quadro 'Vaga aberta' na Agenda");
+  ok(enc.ordem && enc.semZapFora, "🪑 candidatos: o mais sumido vem primeiro e quem não tem WhatsApp fica fora");
+  ok(enc.zapPronto, "🪑 cada candidato tem o WhatsApp pronto oferecendo a vaga");
+  ok(enc.fechou, "🪑 Fechar limpa o quadro");
+  ok(enc.semHoraNaoAbre, "🪑 sessão sem horário cancelada não abre vaga");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {
