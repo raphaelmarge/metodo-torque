@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v722** |
-| Estado do repo em | 2026-09-01 (commit `073d60f`) |
+| App em | **mt-v723** |
+| Estado do repo em | 2026-09-01 (commit `0aaa4e8`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 183 |
+| Lançamentos no histórico | 184 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v722** — ou seja, **53 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v723** — ou seja, **54 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v723 | sessão fixa que rola sozinha (agenda sem fim) |
 | mt-v722 | 🔔 Enquanto você esteve fora (o sininho do Início) |
 | mt-v721 | régua de push rodando SOZINHA no servidor (pg_cron) |
 | mt-v719 | indicação premiada + modo colaborador no painel |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v710 | histórico de treino do aluno, navegável por mês, na ficha |
 | mt-v709 | aba "Direto do app" da ficha entra no redesenho |
 | mt-v708 | Ajuda com fotos reais + chamado de suporte com protocolo |
-| mt-v707 | a Ajuda cobre TODAS as áreas dos dois produtos |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
