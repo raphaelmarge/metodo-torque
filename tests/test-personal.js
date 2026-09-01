@@ -3218,6 +3218,61 @@ async function abaPt(p, a) {
   ok(psrv.importou, "☁️ o painel importa as chaves do push_log_srv pro pushLog local (dedupe servidor→cliente)");
   ok(psrv.semNuvem, "☁️ sem nuvem o callback dispara igual — a régua local nunca trava");
 
+  // 🔔 v722: "Enquanto você esteve fora" — o card do Início junta o que
+  // aconteceu (pagamentos, treinos pelo app, indicações, alunos novos),
+  // o Visto limpa por chave, e a busca fresca traz o retorno em lote
+  const sino = await p.evaluate(async () => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const st = S.read("ptStudio", {});
+    const vistoAntes = JSON.stringify((st.config || {}).sinoVisto || null);
+    st.alunos.push({ id: "sn-a", nome: "Sino <img src=x onerror=window.__xsss=1> Silva", ativo: true,
+      desde: hoje, appTokenP: "sn-tok",
+      retorno: { feitos: { [hoje]: 1 }, indicas: [{ n: "Amiga Nova", em: hoje }] } });
+    st.pagamentos.push({ id: "sn-p1", alunoId: "sn-a", valor: 150, forma: "pix", data: hoje });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__relPT();
+    const el = document.getElementById("dashSino");
+    const out = {
+      abriu: !el.hidden && /Enquanto você esteve fora/.test(el.textContent),
+      tem: /150/.test(el.textContent) && /treinou pelo app/.test(el.textContent) &&
+        /indicou/.test(el.textContent) && /entrou pro studio/.test(el.textContent),
+      // o esc() deixa o texto "&lt;img …" visível — o que não pode existir é a TAG viva
+      antiXss: !/<img[^>]*onerror/.test(el.innerHTML) && !window.__xsss,
+    };
+    el.querySelector("[data-sinook]").click();
+    out.limpou = document.getElementById("dashSino").hidden;
+    out.guardou = Object.keys((S.read("ptStudio", {}).config || {}).sinoVisto || {}).length >= 4;
+    // evento NOVO reaparece depois do visto — os antigos não voltam
+    const st2 = S.read("ptStudio", {});
+    st2.pagamentos.push({ id: "sn-p2", alunoId: "sn-a", valor: 90, forma: "pix", data: hoje });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+    window.__sino.pinta(S.read("ptStudio", {}));
+    const el2 = document.getElementById("dashSino");
+    out.novoVolta = !el2.hidden && /90/.test(el2.textContent) && !/150/.test(el2.textContent);
+    // busca fresca: a nuvem tem um treino que a cópia local não tinha
+    const cloudOrig = S.cloud;
+    const enc = { select: () => enc, in: () => Promise.resolve({ data: [{ token: "sn-tok", feitos: { [hoje]: 1, [iso(1)]: 1 }, indicas: [] }] }) };
+    S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
+    window.__sino.nuvem(true);
+    await new Promise((r) => setTimeout(r, 80));
+    out.fresco = /treinou pelo app/.test(document.getElementById("dashSino").textContent);
+    S.cloud = cloudOrig;
+    // limpa
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((a) => a.id !== "sn-a");
+    st9.pagamentos = st9.pagamentos.filter((x) => !/^sn-p/.test(String(x.id)));
+    if (vistoAntes === "null") delete st9.config.sinoVisto; else st9.config.sinoVisto = JSON.parse(vistoAntes);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    window.__relPT();
+    return out;
+  });
+  ok(sino.abriu && sino.tem, "🔔 o card junta pagamento, treino pelo app, indicação e aluno novo");
+  ok(sino.antiXss, "🔔 nome malicioso não vira HTML no card");
+  ok(sino.limpou && sino.guardou, "🔔 Visto limpa o card e guarda as chaves em config.sinoVisto");
+  ok(sino.novoVolta, "🔔 evento novo reaparece — os já vistos não voltam");
+  ok(sino.fresco, "🔔 a busca em lote traz o retorno fresco da nuvem e repinta o card");
+
   // 💬 v694: depoimentos — o professor pede, o aluno escreve no app, o texto
   // espera aprovação na Minha página e só aprovado entra na seção pública
   const depo = await p.evaluate(() => {

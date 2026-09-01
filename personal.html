@@ -1992,6 +1992,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div id="dia1Card" hidden></div>
     <div id="dashTopo"></div>
     <div id="dashResolver"></div>
+    <div id="dashSino" hidden></div>
     <div class="dcols">
       <div class="card" id="dashDia"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
       <div class="dcol2">
@@ -16964,9 +16965,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- Início do desenho novo: topo roxo, Resolver hoje e Placar do mês ----
     pintaDashTopo(st, d);
     pintaResolver(st);
+    pintaSino(st);
     pintaMesDash(st, d);
     resolverChat();
     resolverDor();
+    sinoNuvem();
     // a 4c depende do bNiverP e do relAlertas ja preenchidos aqui em cima
     pinta4c(st);
   }
@@ -17105,6 +17108,113 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (relatosComDor(st2).length && !jaTem) { pintaResolver(st2); resolverChat(); }
     }, function () { /* sem rede: fica a cópia local, sem erro na tela */ });
   }
+  /* ---------- v722: "Enquanto você esteve fora" (o sininho do Início) ----------
+   * O que aconteceu desde a última olhada, num card só: pagamentos
+   * registrados, treinos pelo app, indicações e alunos novos — antes essas
+   * informações existiam, mas espalhadas em 4 telas. Cada evento tem uma
+   * CHAVE estável; "Visto" guarda as chaves em config.sinoVisto (podadas em
+   * 14 dias, a mesma janela dos eventos), então marcar como visto zera o
+   * card sem apagar dado nenhum. */
+  function sinoCorte() {
+    var d = new Date(); d.setDate(d.getDate() - 14); return S.todayISO(d);
+  }
+  function sinoEventos(st) {
+    var corte = sinoCorte();
+    var visto = (st.config || {}).sinoVisto || {};
+    var ev = [];
+    (st.pagamentos || []).forEach(function (p) {
+      if (!p || !p.data || p.data < corte) return;
+      var a = (st.alunos || []).find(function (x) { return x.id === p.alunoId; }) || {};
+      ev.push({ k: "pg:" + p.id, d: p.data,
+        t: "💰 " + S.fmtBRL(+p.valor || 0) + " de " + esc(String(a.nome || "?").split(" ")[0]) + (p.forma ? " · " + esc(String(p.forma)) : "") });
+    });
+    (st.alunos || []).forEach(function (a) {
+      if (!a || a.ativo === false) return;
+      var primeiro = esc(String(a.nome || "?").split(" ")[0]);
+      var fz = (a.retorno && a.retorno.feitos && typeof a.retorno.feitos === "object") ? a.retorno.feitos : {};
+      Object.keys(fz).forEach(function (dia) {
+        if (dia >= corte) ev.push({ k: "tr:" + a.id + ":" + dia, d: dia, t: "🏋️ " + primeiro + " treinou pelo app" });
+      });
+      var inds = (a.retorno && Array.isArray(a.retorno.indicas)) ? a.retorno.indicas : [];
+      inds.forEach(function (iv) {
+        var em9 = String((iv && iv.em) || "").slice(0, 10);
+        if (em9 >= corte) ev.push({ k: "ind:" + a.id + ":" + em9 + ":" + String((iv && iv.n) || ""), d: em9,
+          t: "🎁 " + primeiro + " indicou " + (iv && iv.n ? esc(String(iv.n)) : "um amigo") });
+      });
+      if (a.desde && String(a.desde).slice(0, 10) >= corte) {
+        ev.push({ k: "novo:" + a.id, d: String(a.desde).slice(0, 10), t: "✨ " + esc(String(a.nome || "?")) + " entrou pro studio" });
+      }
+    });
+    return ev.filter(function (e) { return !visto[e.k]; })
+      .sort(function (x, y) { return x.d < y.d ? 1 : -1; });
+  }
+  function pintaSino(st) {
+    var el = $("dashSino"); if (!el) return;
+    var ev = sinoEventos(st);
+    if (!ev.length) { el.innerHTML = ""; el.hidden = true; return; }
+    var vis = ev.slice(0, 10);
+    el.hidden = false;
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;">' +
+      '<h2>🔔 Enquanto você esteve fora <span class="muted" style="font-weight:600;font-size:12px;">' +
+      S.plural(ev.length, "novidade", "novidades") + "</span></h2>" +
+      vis.map(function (e) {
+        return '<div class="sessao-pt"><span>' + e.t + "</span>" +
+          '<span class="muted" style="margin-left:auto;font-size:12px;white-space:nowrap;">' + S.fmtData(e.d) + "</span></div>";
+      }).join("") +
+      (ev.length > 10 ? '<div class="muted" style="font-size:12px;margin-top:4px;">e mais ' + (ev.length - 10) + " mais antigas</div>" : "") +
+      '<div style="margin-top:10px;"><button type="button" class="btn sec mini" data-sinook="1">✓ Visto — limpar</button></div></div>';
+  }
+  $("dashSino").addEventListener("click", function (e) {
+    if (!e.target.closest("[data-sinook]")) return;
+    var st = load();
+    st.config = st.config || {};
+    var visto = st.config.sinoVisto || {};
+    sinoEventos(st).forEach(function (e9) { visto[e9.k] = S.todayISO(); });
+    var corte9 = sinoCorte();
+    Object.keys(visto).forEach(function (k) { if (visto[k] < corte9) delete visto[k]; });
+    st.config.sinoVisto = visto;
+    S.write("ptStudio", st); // sem redesenhar tudo — só o card
+    pintaSino(st);
+  });
+  /* "treinou pelo app" e "indicou" vivem no retorno, que só atualizava quando
+   * o professor abria a ficha do aluno — o sino busca FRESCO, em lote e leve
+   * (só feitos e indicas, nunca o retorno inteiro com as fotos), no mesmo
+   * desenho do resolverDor. No máximo 1 busca a cada 10 min. */
+  var sinoNuvemEm = 0;
+  function sinoNuvem(forca) {
+    if (!forca && Date.now() - sinoNuvemEm < 10 * 60 * 1000) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    var st = load();
+    var toks = (st.alunos || []).filter(function (a) { return a.ativo !== false && a.appTokenP; })
+      .map(function (a) { return a.appTokenP; });
+    if (!toks.length) return;
+    sinoNuvemEm = Date.now();
+    var q;
+    try {
+      q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,indicas:retorno->indicas").in("token", toks);
+    } catch (e) { return; }
+    q.then(function (r) {
+      if (!r || r.error || !Array.isArray(r.data)) return;
+      var st2 = load(), mudou = false;
+      r.data.forEach(function (l) {
+        if (!l) return;
+        var a = (st2.alunos || []).find(function (x) { return x.appTokenP === l.token; });
+        if (!a) return;
+        a.retorno = a.retorno || {};
+        if (l.feitos && typeof l.feitos === "object" && JSON.stringify(a.retorno.feitos || {}) !== JSON.stringify(l.feitos)) {
+          a.retorno.feitos = l.feitos; mudou = true;
+        }
+        if (Array.isArray(l.indicas) && JSON.stringify(a.retorno.indicas || []) !== JSON.stringify(l.indicas)) {
+          a.retorno.indicas = l.indicas; mudou = true;
+        }
+      });
+      if (!mudou) return;
+      S.write("ptStudio", st2);
+      pintaSino(st2);
+    }, function () { /* sem rede: fica a cópia local, sem erro na tela */ });
+  }
+  window.__sino = { eventos: sinoEventos, pinta: pintaSino, nuvem: sinoNuvem }; // testes
   /* A tela 1b ("placar do mês primeiro") foi DESCARTADA no handoff — o Raphael
    * escolheu a 1a. Os números do mês não sumiram: viraram a coluna da direita,
    * do lado da linha do tempo do dia. */
