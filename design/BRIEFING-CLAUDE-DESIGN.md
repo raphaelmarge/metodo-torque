@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v749** |
-| Estado do repo em | 2026-09-02 (commit `7181193`) |
+| App em | **mt-v750** |
+| Estado do repo em | 2026-09-02 (commit `af1b6a8`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 210 |
+| Lançamentos no histórico | 211 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v749**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v750**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v750 | revisão por área — ficha do aluno e Agenda (pt-perfil, pt-agenda, 33 itens) |
 | mt-v749 | revisão por área — app do aluno (app-html, app-core, 29 itens) |
 | mt-v748 | revisão por área — infra, funções e SQL (43 itens) |
 | mt-v747 | revisão por área — NUTRI (36 itens) e Início/Alunos do Personal (22 itens) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v738 | um 'Pedir um horário' por vez na Agenda do aluno |
 | mt-v737 | Central de ajuda no NUTRI |
 | mt-v736 | o push do dia diz QUAL treino |
-| mt-v735 | playlist do treino no app do aluno |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
