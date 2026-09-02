@@ -6605,8 +6605,11 @@ async function abaPt(p, a) {
         S.cloud = window.__cloudOrigQ2;
         return r;
       });
-      ok(/Rode o SQL novo/.test(semSql.erro || ""),
-        "sem o SQL novo, o painel pede pra rodar o SQL em vez de listar todo mundo como pendente");
+      /* v759: o professor não tem Supabase — mandar ele "rodar o SQL" é pedir
+       * uma coisa impossível E fazer parecer culpa dele. O painel diz a verdade
+       * em português e o detalhe técnico vai pro console.error. */
+      ok(/fora do ar/i.test(semSql.erro || "") && !/SQL|Supabase/i.test(semSql.erro || ""),
+        "sem o SQL novo, o painel diz que está fora do ar (e NÃO manda o professor rodar SQL) — " + (semSql.erro || ""));
 
       /* Sub-abas no celular: com grade de colunas fixas, uma barra de 7 abas
        * virava 3+3+1 com a última boiando no canto, e a do Desafio (3 abas
@@ -6725,8 +6728,8 @@ async function abaPt(p, a) {
       S.cloud = window.__cloudOrig2;
       return r.erro || "";
     });
-    ok(/546/.test(iaNaoJson) && /publique de novo/.test(iaNaoJson) && !/Sem conexão/.test(iaNaoJson),
-      "resposta que não é JSON mostra o status real e manda republicar a função (não mente 'sem conexão')");
+    ok(/fora do ar/i.test(iaNaoJson) && !/publique|Supabase|Logs/i.test(iaNaoJson) && !/Sem conexão/.test(iaNaoJson),
+      "resposta que não é JSON vira recado honesto, sem mandar o professor publicar função nem mentir 'sem conexão' — " + iaNaoJson);
   }
   {
     const comMural = await p.evaluate(() => {
@@ -9752,17 +9755,29 @@ async function abaPt(p, a) {
         temFone: !!document.getElementById("cfgZapFone"),
         tokenEhSenha: (document.getElementById("cfgZapToken") || {}).type,
       };
+      // v759: os campos moram numa gaveta "avançado" — quem chega sem app na
+      // Meta vê primeiro o preço real; quem já tem abre a gaveta e configura
+      const gaveta = document.getElementById("cfgZapAv");
+      const gavetaFechadaAntes = !!gaveta && !gaveta.open;
+      if (gaveta) gaveta.open = true;
       document.getElementById("cfgZapFone").value = "1112223334445";
       document.getElementById("cfgZapToken").value = "TOKEN-SECRETO-DA-META";
       document.getElementById("cfgZapTpl").value = "cobranca_mensalidade";
+      document.getElementById("cfgZapTplVars").value = "{nome} | {texto}";
       document.getElementById("cfgZapSalva").click();
       await new Promise((r) => setTimeout(r, 500));
       const salvo = chamadas.find((c) => c.fn === "zap_config_salva2") || { args: {} };
       const espelho = (S.read("ptStudio", {}).config || {}).zapApi || {};
       const depois = {
         campoToken: document.getElementById("cfgZapToken").value,
-        webhook: !document.getElementById("cfgZapWebhook").hidden,
-        verify: (document.getElementById("cfgZapVerify") || {}).textContent || "",
+        gavetaFechadaAntes: gavetaFechadaAntes,
+        gavetaAbertaDepois: !!(gaveta && gaveta.open),
+        // v759: receber as respostas dentro do painel saiu do PERSONAL
+        semAppSecret: !document.getElementById("cfgZapSeg"),
+        semInstagram: !document.getElementById("cfgZapIg") && !document.getElementById("cfgZapIgTok"),
+        semWebhook: !document.getElementById("cfgZapWebhook"),
+        status: (document.getElementById("cfgZapStatus") || {}).textContent || "",
+        tplVars: (S.read("ptStudio", {}).config || {}).zapTplVars || "",
         ligado: window.__zapApiOn(),
         temDesligar: !document.getElementById("cfgZapDesliga").hidden,
         estudioCru: JSON.stringify(S.read("ptStudio", {})),
@@ -9775,8 +9790,14 @@ async function abaPt(p, a) {
       "o personal liga o número dele com ID + token — nenhuma URL de servidor pra colar");
     ok(liga.salvo.p_phone_id === "1112223334445" && liga.salvo.p_token === "TOKEN-SECRETO-DA-META" && liga.salvo.p_template === "cobranca_mensalidade",
       "as credenciais vão pra nuvem pela RPC zap_config_salva2 (uma por academia)");
-    ok(liga.depois.webhook && /torque-/.test(liga.depois.verify),
-      "depois de ligar, a tela mostra a URL e a senha do aperto de mão pra colar na Meta");
+    ok(liga.depois.semAppSecret && liga.depois.semInstagram && liga.depois.semWebhook,
+      "v759: receber as respostas dentro do painel saiu do PERSONAL — sem App Secret, sem Instagram e sem a caixa do webhook (a conversa cai numa tela que só o portal tem)");
+    ok(liga.salvo.p_app_secret === "" && liga.salvo.p_ig_id === "" && liga.salvo.p_ig_token === "",
+      "v759: e o painel manda vazio nesses três — a RPC PRESERVA o que já estava lá, então quem configurou pelo portal não perde nada");
+    ok(liga.depois.gavetaFechadaAntes && liga.depois.gavetaAbertaDepois,
+      "v759: os campos ficam numa gaveta fechada (avançado) e ela continua aberta pra quem já ligou");
+    ok(liga.depois.tplVars === "{nome} | {texto}",
+      "v759: o que entra em cada espaço do template fica guardado no aparelho (config.zapTplVars)");
     ok(liga.depois.campoToken === "" && liga.depois.estudioCru.indexOf("TOKEN-SECRETO-DA-META") < 0,
       "o token some da tela e NÃO fica guardado no aparelho");
     ok(liga.espelho.ligado === true && liga.espelho.phoneId === "1112223334445" && !liga.espelho.token,
@@ -12729,8 +12750,10 @@ async function abaPt(p, a) {
       "os circuitos caem em t.wods com a MESMA peneira do formulário (tipo inválido vira For Time)");
     ok(iaTipo.tipoCorridaViajou && iaTipo.rCr.ok && iaTipo.cardios.length === 2 && iaTipo.cardios[0].pace === "6:30" && iaTipo.cardios[1].tipo === "intervalado",
       "tipo Corrida viaja com o objetivo da prova e os treinos caem em t.cardio");
-    ok(/versão antiga/.test(iaTipo.rVelha.erro || "") && iaTipo.wodsDepoisVelha === 2,
-      "chat-envia antiga (só musculação) não deixa treino cair na aba errada — erro honesto e nada muda");
+    // v759: o recado deixou de mandar o professor publicar função no Supabase —
+    // ele não tem esse acesso. O detalhe técnico vai pro console.error.
+    ok(/fora do ar/i.test(iaTipo.rVelha.erro || "") && !/Supabase|publique|funcoes\.html/i.test(iaTipo.rVelha.erro || "") && iaTipo.wodsDepoisVelha === 2,
+      "chat-envia antiga (só musculação) não deixa treino cair na aba errada — recado honesto, sem mandar publicar nada, e nada muda");
     ok(iaTipo.campos && iaTipo.camposVolta, "escolher Corrida troca os campos (prova no lugar de equipamento) e volta certinho");
   }
 
@@ -12894,8 +12917,8 @@ async function abaPt(p, a) {
       "✨ quando nem renovando resolve, o recado é sessão caída");
     ok(!/ANTHROPIC_API_KEY/.test(honesto.portao) && !/publique a chat-envia/i.test(honesto.portao),
       "e o 401 não manda mais republicar a chat-envia (foi o que fez o Raphael republicar 3 vezes à toa)");
-    ok(/não está publicada/.test(honesto.ausente) && /funcoes\.html/.test(honesto.ausente),
-      "✨ 404 continua mandando publicar a função — esse caso é real");
+    ok(/fora do ar/i.test(honesto.ausente) && !/funcoes\.html|Supabase/i.test(honesto.ausente),
+      "✨ 404 (recurso ausente) também vira recado honesto — quem publica função é o dono do sistema, não o professor");
 
     // sessão caída aparece na frente do professor, com botão de resolver
     const faixa = await p.evaluate(() => {

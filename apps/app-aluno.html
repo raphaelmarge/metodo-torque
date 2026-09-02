@@ -1117,8 +1117,9 @@
       });
       return fila.then(function () {
         if (falha) {
+          if (falha.indexOf("app_aluno") >= 0 || falha.indexOf("relation") >= 0) console.error("[TORQUE ON] publicar app:", falha);
           statusPub(falha.indexOf("app_aluno") >= 0 || falha.indexOf("relation") >= 0 ?
-            "❌ Falta criar a tabela na nuvem: rode o bloco 'APP DO ALUNO' do supabase-setup.sql no SQL Editor do Supabase (1 min)." :
+            "❌ A publicação está fora do ar agora — não é coisa sua, a gente já foi avisado. Tente de novo daqui a pouco." :
             "❌ Não consegui publicar (" + feitos + " de " + linhas.length + " foram): " + falha, "var(--erro)");
           return false;
         }

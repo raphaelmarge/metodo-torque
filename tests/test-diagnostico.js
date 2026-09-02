@@ -101,19 +101,31 @@ async function testaAjudantes() {
 
   const gateway = T("chat-envia", 401, '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}',
     { message: "Invalid credentials", code: "INVALID_CREDENTIALS" });
-  ok(/credencial/i.test(gateway) && /sess/i.test(gateway), "401 do portão fala de credencial e sessão");
-  ok(!/ANTHROPIC_API_KEY/.test(gateway) && !/publique|republique/i.test(gateway.replace(/NÃO resolve/, "")),
-    "401 do portão NÃO manda publicar a função nem procurar a chave da IA");
-  ok(/nem chegou a rodar/.test(gateway), "e explica que a função nem chegou a rodar");
+  /* v759: o 401 passou a falar SÓ do que o cliente pode fazer. O motivo técnico
+   * ("o portão recusou a credencial, a função nem rodou") continua existindo,
+   * mas foi pro console.error — quem precisa dele somos nós, não o professor. */
+  ok(/sess/i.test(gateway) && /entre de novo/i.test(gateway),
+    "401 do portão oferece a ÚNICA coisa ao alcance do cliente: entrar de novo");
+  ok(!/ANTHROPIC_API_KEY/.test(gateway) && !/publique|republique/i.test(gateway) &&
+     !/diagnostico\.html|funcoes\.html|Supabase/i.test(gateway),
+    "401 do portão NÃO manda publicar função, procurar chave da IA nem abrir a página do dono");
+  ok(/não é coisa sua/i.test(gateway),
+    "e diz que não é culpa dele quando entrar de novo não resolver");
 
+  /* v757: função ausente é problema do DONO do sistema — o cliente não publica
+   * nada, não tem acesso ao servidor e não pode fazer nada com essa informação.
+   * A tela dele diz a verdade curta; o detalhe fica no console.error. */
   const semFuncao = T("chat-envia", 404, "", { code: 404, message: "Requested function was not found" });
-  ok(/não está publicada/.test(semFuncao) && /funcoes\.html/.test(semFuncao), "404 manda publicar a função");
+  ok(/fora do ar/.test(semFuncao) && /não é coisa sua/.test(semFuncao) &&
+     !/publica|funcoes\.html|Supabase/i.test(semFuncao),
+    "404 diz 'está fora do ar, não é coisa sua' — sem mandar o cliente publicar nada");
 
   const daFuncao = T("chat-envia", 502, "", { erro: "Secret ANTHROPIC_API_KEY não configurado." });
   ok(daFuncao === "Secret ANTHROPIC_API_KEY não configurado.", "quando a própria função explica, o recado dela é mantido");
 
   const boot = T("chat-envia", 546, "", { code: "BOOT_ERROR" });
-  ok(/BOOT_ERROR/.test(boot) && /Logs/.test(boot), "erro de boot manda olhar os Logs");
+  ok(/fora do ar/.test(boot) && !/BOOT_ERROR|Logs|Supabase/i.test(boot),
+    "erro de boot também vira recado honesto (BOOT_ERROR e Logs vão pro console)");
 
   const semSessao = T.semSessao("A IA de treino");
   ok(/sess/i.test(semSessao) && /entre de novo/i.test(semSessao) && /IA de treino/.test(semSessao),
@@ -175,10 +187,10 @@ async function testaAjudantes() {
   respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
   const cPortao = clienteFake(jwt(3600), "cracha-novinho");
   const barrado = await F.chama(cPortao, "chat-envia", { acao: "ping" }, "A IA de treino");
-  ok(/portão|portao/i.test(barrado.erro) && /não é a sua sessão/i.test(barrado.erro),
-    "401 com crachá renovado é acusado como portão do Supabase, não como sessão caída");
-  ok(/diagnostico\.html/.test(barrado.erro) && !/ANTHROPIC_API_KEY/.test(barrado.erro),
-    "e manda pro diagnóstico em vez de mandar republicar ou entrar de novo");
+  ok(/fora do ar/.test(barrado.erro) && /não é coisa sua nem do seu login/i.test(barrado.erro),
+    "401 com crachá renovado NÃO vira 'sua sessão caiu' — o login dele está bom e a tela diz isso");
+  ok(!/diagnostico\.html|Supabase|ANTHROPIC_API_KEY/i.test(barrado.erro),
+    "e não manda o cliente abrir a página de diagnóstico (ela é do dono do sistema)");
 
   // sem conseguir renovar, aí sim é sessão caída
   respostas.length = 0;
@@ -210,7 +222,8 @@ async function testaAjudantes() {
   respostas.length = 0;
   respostas.push({ status: 404, body: '{"code":404,"message":"Requested function was not found"}' });
   const semFn = await F.chama(clienteFake(jwt(3600), "x"), "chat-envia", { acao: "ping" }, "A IA de treino");
-  ok(/não está publicada/.test(semFn.erro), "404 continua sendo função ausente, e não sessão");
+  ok(/fora do ar/.test(semFn.erro) && !/sess/i.test(semFn.erro),
+    "404 continua sendo 'recurso fora do ar', e não sessão caída");
 
   global.fetch = fetchOrig;
 }

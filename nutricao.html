@@ -1803,7 +1803,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     box.textContent = "Carregando registros do app…";
     nuvem.client.from("app_aluno").select("retorno").eq("token", p.appTokenN).limit(1)
       .then(function (r) {
-        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
+        // v757: o técnico vai pro console; a tela do cliente diz a verdade sem
+        // mandar ele mexer em servidor (isso é trabalho do dono do sistema)
+        if (r && r.error) { console.error("[TORQUE NUTRI] app_aluno.retorno:", r.error.message || r.error); box.textContent = "Os registros do app estão fora do ar agora — não é coisa sua, a gente já foi avisado."; return; }
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
         if (!ret) { box.textContent = "O paciente ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
         var html = "";
@@ -2160,7 +2162,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     el.textContent = "";
     if (!esp.ligado || !esp.provedor || esp.provedor === "outro") return;
     if (esp.provedor !== "pagarme") {
-      el.textContent = "Baixa automática: quando o paciente pagar pelo link, o pagamento entra sozinho (função pagamentos-webhook publicada).";
+      el.textContent = "Baixa automática: quando o paciente pagar pelo link, o pagamento entra sozinho.";
       return;
     }
     el.textContent = "Carregando a URL da baixa automática…";
@@ -2170,7 +2172,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         var urlHook = cfg.url + "/functions/v1/pagamentos-webhook?aid=" + encodeURIComponent(d.academia_id) + "&k=" + encodeURIComponent(d.webhook_token);
         el.innerHTML = "Baixa automática: no painel do Pagar.me → Configurações → Webhooks, cadastre esta URL (eventos <b>order.paid</b> e <b>charge.payment_failed</b>): <code style=\"word-break:break-all; user-select:all;\">" + urlHook + "</code>";
       } else {
-        el.textContent = "Baixa automática: rode o SQL novo (torqueon.com.br/sql.html) e toque em Ligar de novo pra ganhar a URL do webhook.";
+        console.error("[TORQUE NUTRI] pag_config_ve sem webhook_token");
+        el.textContent = "Baixa automática: ainda não deu pra gerar a URL do webhook — toque em Ligar de novo daqui a pouco. Se continuar assim, me avise.";
       }
     }, function () { el.textContent = ""; });
   }
@@ -2224,7 +2227,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     pintaPagStatusN("Testando…");
     self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "ping" }, "O gateway de pagamento").then(function (d) {
       if (d && d.ok) pintaPagStatusN(d.temChave ? "Conectado: " + d.provedor + " com a chave guardada ✓" : "A função respondeu, mas ainda não tem chave — cole a chave e toque em Ligar.");
-      else pintaPagStatusN("Não deu: " + ((d && d.erro) || "publique a função pagamentos (torqueon.com.br/funcoes.html)."));
+      else pintaPagStatusN("Não deu: " + ((d && d.erro) || "o serviço de pagamento está fora do ar agora — não é coisa sua, a gente já foi avisado."));
     }, function () { pintaPagStatusN("Sem conexão com a função pagamentos agora."); });
   });
   if ($("cfgPagDesligaN")) $("cfgPagDesligaN").addEventListener("click", function () {
@@ -2278,14 +2281,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
             }
             cb({ ok: true, link: d.link });
           }
-          else cb({ erro: (d && d.erro) || "Publique a função pagamentos (torqueon.com.br/funcoes.html) e confira a chave em Sua ilha → Receber dos pacientes." });
+          else cb({ erro: (d && d.erro) || "Não deu pra gerar o link agora. Confira se a chave está ligada em Sua ilha → Receber dos pacientes; se estiver, é do nosso lado — a gente já foi avisado." });
         }, function () { cb({ erro: "Sem conexão com a função pagamentos agora." }); });
       return;
     }
     self.MT_FUNCAO.chama(nuvem.client, "pagarme", { acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Consulta — " + ((st.config || {}).nome || "Nutricionista"), nome: p.nome, email: p.email || undefined }, "O link de pagamento")
       .then(function (d) {
       if (d && d.ok && d.linkPagamento) cb({ ok: true, link: d.linkPagamento });
-      else cb({ erro: (d && d.erro) || "Publique a função pagarme (torqueon.com.br/funcoes.html) e configure a PAGARME_SECRET_KEY." });
+      else cb({ erro: (d && d.erro) || "O link de pagamento está fora do ar agora — não é coisa sua, a gente já foi avisado." });
     }, function () { cb({ erro: "Sem conexão com a função pagarme agora." }); });
   }
   window.__pagarmeNT = geraLinkPagamentoN; // testes
@@ -2889,19 +2892,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra usar a IA de dieta — sem nuvem, use o Gerar dieta automática." }); return; }
     var dados = montaDadosDietaIA(st, p);
     /* MT_FUNCAO renova o crachá do login antes de chamar e tenta de novo se o
-     * Supabase recusar — o token vence em ~1 hora e o painel fica aberto. */
+     * servidor recusar — o token vence em ~1 hora e o painel fica aberto. */
     self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ia_dieta", dados: dados }, "A IA de dieta")
       .then(function (d) {
       // versão antiga da chat-envia não conhece ia_dieta e responde isto:
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
-        cb({ erro: "Sua chat-envia publicada é de uma versão antiga, sem a IA de dieta — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
+        console.error("[TORQUE NUTRI] chat-envia publicada é antiga: não conhece ia_dieta");
+        cb({ erro: "A IA de dieta está fora do ar agora — não é coisa sua, a gente já foi avisado." }); return;
       }
       // "IA indisponível agora." seco (sem o motivo entre parênteses) também é
       // assinatura de versão antiga: ela esconde o erro real da Anthropic
       if (d && /^IA indisponível agora\.?$/.test(String(d.erro || "").trim())) {
-        cb({ erro: "A IA falhou e sua chat-envia publicada é de uma versão antiga que esconde o motivo. Abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase — na próxima tentativa o erro real aparece (ex.: chave recusada). Aproveite e confira o secret ANTHROPIC_API_KEY." }); return;
+        console.error("[TORQUE NUTRI] chat-envia publicada é antiga: devolve 'IA indisponível agora.' sem o motivo real");
+        cb({ erro: "A IA está fora do ar agora — não é coisa sua, a gente já foi avisado." }); return;
       }
-      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
+      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "A IA está fora do ar agora — não é coisa sua, a gente já foi avisado." }); return; }
       var plano = parsePlanoIA(d.texto);
       if (!plano || !(plano.refeicoes || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
       var st2 = load();
@@ -3553,7 +3558,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           enviaEmailFn(nuvem, email, "Seu acesso ao app de acompanhamento — " + consultorio, emailAcessoHtmlN(consultorio, p.nome.split(" ")[0], email, senha))
             .then(function (r3) {
               if (r3 && r3.ok) cb({ ok: true, email: email });
-              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "publique a função envia-email (torqueon.com.br/funcoes.html)" });
+              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "o envio de e-mail está fora do ar agora" });
             }, function () {
               cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
             });
@@ -4055,7 +4060,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     box.textContent = "Carregando…";
     nuvem.client.from("app_quest").select("token,questionario,dados,criado").in("token", tokensR).order("criado", { ascending: false }).limit(60)
       .then(function (r) {
-        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os check-ins."; return; }
+        if (r && r.error) { console.error("[TORQUE NUTRI] app_quest:", r.error.message || r.error); box.textContent = "Os check-ins estão fora do ar agora — não é coisa sua, a gente já foi avisado."; return; }
         var rows = (r && r.data) || [];
         if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima."; return; }
         var st = load();
@@ -4172,7 +4177,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         btn.disabled = false;
         $("botZapOkN").textContent = r2.error
           ? "Não deu pra publicar: " + r2.error.message
-          : "✓ A automação 📶 foi publicada. Pra guardar TODAS na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html.";
+          : "✓ A automação 📶 foi publicada. Guardar TODAS de uma vez na nuvem ainda não está funcionando aqui — a gente já foi avisado.";
       });
     });
   });
@@ -4191,7 +4196,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!nuvem) {
       el.innerHTML = "";
       $("chatTituloN").textContent = "Chat interno";
-      $("chatMsgsN").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card Sua ilha, no menu) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os pacientes pelo WhatsApp da aba Pacientes.</div>';
+      $("chatMsgsN").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card Sua ilha, no menu). Se você já entrou e continua assim, não é coisa sua — a gente já foi avisado. Enquanto isso, fale com os pacientes pelo WhatsApp da aba Pacientes.</div>';
       $("chatEnvioN").hidden = true;
       return;
     }
@@ -4566,7 +4571,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       .eq("academia_id", nuvem.aid).order("criado", { ascending: false }).limit(60);
     if (!$("fdmNOcultos").checked) q = q.eq("oculto", false);
     q.then(function (r) {
-      if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade."; return; }
+      if (r && r.error) { console.error("[TORQUE NUTRI] app_feed:", r.error.message || r.error); box.textContent = "A Comunidade está fora do ar agora — não é coisa sua, a gente já foi avisado."; return; }
       var posts = (r && r.data) || [];
       var corte = new Date(); corte.setDate(corte.getDate() - 7);
       var isoC = S.todayISO(corte);

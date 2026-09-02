@@ -76,7 +76,7 @@
   </div>
   <div class="card" style="margin-top: 16px;">
     <h2>Satisfação das aulas (avaliação pelo app do aluno)</h2>
-    <p class="muted" style="font-size: 13px;">Depois da aula agendada, o app pede nota de 1 a 5. Média por aula = onde investir e onde agir. Requer o bloco AVALIAÇÃO DAS AULAS do supabase-setup.sql e conta conectada.</p>
+    <p class="muted" style="font-size: 13px;">Depois da aula agendada, o app pede nota de 1 a 5. Média por aula = onde investir e onde agir. Requer a nuvem ligada (a parte de servidor já vem pronta).</p>
     <div id="satisfacao" class="muted" style="margin-top: 8px;">Carregando…</div>
   </div>
 
@@ -310,7 +310,8 @@
     if (!nuvem) { el.innerHTML = "Conecte sua conta (nuvem) para receber as avaliações dos alunos."; return; }
     nuvem.client.from("app_aval_aula").select("aula, nota, texto, aluno, criado").order("criado", { ascending: false }).limit(400)
       .then(function (r) {
-        if (r.error) { el.innerHTML = "Rode o bloco AVALIAÇÃO DAS AULAS do supabase-setup.sql para ligar este relatório."; return; }
+        // v757: o técnico vai pro console; a tela não manda o cliente mexer em servidor
+        if (r.error) { console.error("[TORQUE ON] app_aval_aula:", r.error.message || r.error); el.innerHTML = "Esse relatório está fora do ar agora — não é coisa sua, a gente já foi avisado."; return; }
         var l = r.data || [];
         if (!l.length) { el.innerHTML = "Nenhuma avaliação ainda — elas chegam sozinhas depois das aulas agendadas pelo app."; return; }
         var por = {};

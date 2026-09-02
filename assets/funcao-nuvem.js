@@ -1,7 +1,7 @@
 /* TORQUE ON — chamador de Edge Function com token sempre fresco.
  *
  * Motivo de existir: "funciona por um tempo e depois dá erro". O crachá de
- * login (access_token) do Supabase vale cerca de 1 hora. Com o painel aberto o
+ * login (access_token) do servidor vale cerca de 1 hora. Com o painel aberto o
  * dia todo, ou com o sistema aberto em dois lugares ao mesmo tempo (o refresh
  * de um invalida o do outro), a hora passa e a próxima chamada leva 401 — e
  * antes isso aparecia como "publique a chat-envia", que não tem nada a ver.
@@ -10,7 +10,7 @@
  *   1. renova o crachá ANTES de chamar, quando ele está perto de vencer;
  *   2. se mesmo assim vier 401/403, renova e tenta MAIS UMA vez;
  *   3. se o crachá NOVO também levar 401, o problema não é a sessão — é o
- *      portão do Supabase recusando aquela função, e o recado diz isso;
+ *      portão do servidor recusando aquela função, e o recado diz isso;
  *   4. e, havendo apelido configurado (MT_FN_APELIDO), repete a chamada na
  *      função de reserva antes de desistir.
  * Assim o professor não vê erro nenhum no caso comum — o sistema se recupera
@@ -71,13 +71,19 @@
     return "Sua sessão da nuvem caiu — saia da conta e entre de novo.";
   }
 
-  /* 401 com crachá NOVO em folha não é sessão caída: é o portão do Supabase
+  /* 401 com crachá NOVO em folha não é sessão caída: é o portão do servidor
    * barrando aquela função. Dizer "entre de novo" aqui manda a pessoa fazer um
-   * login que não resolve nada — e some com o problema de vista. */
+   * login que não resolve nada — e some com o problema de vista.
+   * v757: e também não adianta mandar o cliente abrir a página de diagnóstico:
+   * ela é do dono do sistema. A tela diz o que é verdade (não é ele, e a gente
+   * já sabe) e o detalhe técnico fica no console pra quem for consertar. */
   function portaoRecusou(nome, status) {
-    return "O Supabase barrou a chamada da função " + nome + " no portão (HTTP " + status +
-      "), mesmo com o seu login válido e recém-renovado — não é a sua sessão nem a chave do site. " +
-      "Abra www.torqueon.com.br/diagnostico.html: ele testa a função com e sem credencial e diz o que destrava.";
+    try {
+      console.error("[TORQUE ON] portão barrou a chamada — " + nome + " (HTTP " + status +
+        ") com crachá renovado: não é a sessão do usuário nem a chave do site.");
+    } catch (e) {}
+    return "Esse recurso está fora do ar agora — não é coisa sua nem do seu login, " +
+      "a gente já foi avisado. Tente de novo daqui a pouco.";
   }
 
   function apelidoDe(nome) {

@@ -191,8 +191,9 @@
     nuvem.client.from("matricula_config").upsert({
       academia_id: nuvem.aid, dados: dados, atualizado: new Date().toISOString(),
     }).then(function (r) {
+      if (r.error) console.error("[TORQUE ON] matricula_config:", r.error.message || r.error);
       $("moStatus").textContent = r.error
-        ? "⚠️ " + (r.error.message.indexOf("does not exist") !== -1 ? "Rode o bloco MATRÍCULA ONLINE do supabase-setup.sql primeiro." : r.error.message)
+        ? "⚠️ " + (r.error.message.indexOf("does not exist") !== -1 ? "A matrícula online está fora do ar agora — não é coisa sua, a gente já foi avisado." : r.error.message)
         : "✅ Publicado! " + planos.length + " plano(s) no ar — divulgue o link acima.";
     });
   });

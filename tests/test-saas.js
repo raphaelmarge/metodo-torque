@@ -117,6 +117,102 @@ function crcNode(s) {
   ok(/Não precisa criar Secret nenhum/.test(guiaFn) && /WHATSAPP_COMPARTILHADO/.test(guiaFn),
     "a página das funções explica que a whatsapp não precisa de Secret (e onde fica o interruptor do número emprestado)");
 
+  /* ======================================================================
+   * A TRAVA: tela de cliente não fala de servidor (v757)
+   *
+   * Um personal pagante desistiu de ligar o WhatsApp porque o guia mandava ele
+   * criar conta na nuvem, criar chave de servidor e publicar função. Isso é
+   * trabalho do DONO do sistema: o backend é UM projeto só, multi-tenant, com o
+   * endereço cravado no assets/cloud-config.js — o cliente não tem acesso e
+   * nunca vai ter. Sem uma trava, daqui a 40 versões alguém escreve de novo:
+   * foi exatamente assim que a página do dono vazou pra tela do cliente.
+   *
+   * Só vale pro que o CLIENTE lê: HTML visível + texto dentro de aspas no JS
+   * (que vira recado na tela). Comentário do código e console.error ficam de
+   * fora de propósito — o detalhe técnico TEM que continuar existindo, só que
+   * no console, pra gente diagnosticar quando ele manda o print.
+   *
+   * Varre também os ARQUIVOS .js que essas telas carregam: o recado de erro
+   * mora lá dentro, não no HTML, e uma trava que só olha página deixaria a
+   * porta aberta justamente onde o cliente mais topa com erro.
+   * ====================================================================== */
+  const TELAS_DO_CLIENTE = ["meta.html", "nutricao.html"]  // <- personal.html entra aqui
+    .concat(fs.readdirSync(__dirname + "/../apps").filter(function (f) {
+      // páginas do DONO ficam de fora: elas existem justamente pra ele mexer no
+      // servidor. sql.html/funcoes.html/diagnostico.html moram na raiz (nem
+      // entram nesta lista); apps/hq.html é o painel SaaS, trancado por hq_sou_admin
+      return /\.html$/.test(f) && f !== "hq.html";
+    }).map(function (f) { return "apps/" + f; }));
+  /* Os .js que o cliente carrega junto com as telas. É onde mora o recado de
+   * erro — o lugar em que ele MAIS lê texto nosso quando algo dá errado. */
+  const ASSETS_DO_CLIENTE = ["assets/erro-funcao.js", "assets/funcao-nuvem.js", "assets/access.js"];
+  // "App Secret" é campo da META, o professor precisa achar esse nome na tela dela
+  const PALAVRAS_DE_DONO = /supabase-setup\.sql|sql\.html|funcoes\.html|diagnostico\.html|Supabase|\bSecrets?\b/i;
+  /* O que sobra de um pedaço de JS depois de tirar o que o cliente NUNCA lê:
+   * comentário (de bloco e de linha) e console.* — ali o texto técnico pode
+   * (e deve) continuar dizendo "publique a função" e o nome do erro. */
+  function frasesDoJS(js) {
+    const limpo = String(js).replace(/\/\*[\s\S]*?\*\//g, " ")       // comentário de bloco
+      .replace(/(^|[^:"'\\])\/\/[^\n]*/g, "$1 ")                      // comentário de linha (o : poupa https://)
+      .replace(/console\.\w+\([\s\S]*?\);/g, " ");                   // recado técnico pro console
+    const aspas = /"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|`([^`\\]*)`/g;
+    let frases = "";
+    let m;
+    while ((m = aspas.exec(limpo))) frases += " " + (m[1] || m[2] || m[3] || "");
+    return frases;
+  }
+  function textoQueOClienteVE(html) {
+    const scripts = [];
+    const semScript = String(html).replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, function (_, js) { scripts.push(js); return " "; });
+    const visivel = semScript.replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ").replace(/<[^>]*>/g, " ");
+    return (visivel + " " + scripts.map(frasesDoJS).join(" ")).replace(/App Secret/g, "(campo da Meta)");
+  }
+  function varre(lista, comoLer) {
+    const achados = [];
+    lista.forEach(function (rel) {
+      const t = comoLer(fs.readFileSync(__dirname + "/../" + rel, "utf8"));
+      const achou = t.match(PALAVRAS_DE_DONO);
+      if (achou) achados.push(rel + " (\"" + achou[0] + "\")");
+    });
+    return achados;
+  }
+  const vazados = varre(TELAS_DO_CLIENTE, textoQueOClienteVE);
+  ok(vazados.length === 0,
+    "nenhuma tela do cliente manda ele mexer em servidor (" + TELAS_DO_CLIENTE.length + " telas varridas)" +
+    (vazados.length ? " — vazou em: " + vazados.slice(0, 6).join(", ") : ""));
+  /* v757: a trava não alcançava arquivo .js, e era justamente lá que o erro
+   * falava com o cliente — 401 mandava ele abrir o diagnostico.html e 405
+   * mandava publicar a versão nova. Nenhum dos dois está ao alcance dele. */
+  const vazadosJs = varre(ASSETS_DO_CLIENTE, frasesDoJS);
+  ok(vazadosJs.length === 0,
+    "nem os recados de erro dos .js do cliente (" + ASSETS_DO_CLIENTE.length + " arquivos varridos)" +
+    (vazadosJs.length ? " — vazou em: " + vazadosJs.join(", ") : ""));
+
+  // as telas do portal também pararam de pedir trabalho de servidor
+  const chatPortal = fs.readFileSync(__dirname + "/../apps/chat.html", "utf8");
+  ok((chatPortal.match(/<span class="num">/g) || []).length === 3 &&
+     /Ligue o seu número/.test(chatPortal) && !/Publique as funções/.test(chatPortal),
+    "a aba Instalação do Chat e IA virou 3 passos do CLIENTE (ligar o número, o webhook e testar)");
+  ok(!/id="btnCodigo"/.test(integ) && !/Copiar código da função/.test(integ),
+    "Integrações não oferece mais copiar o código de uma função (ferramenta de dono numa tela de cliente)");
+
+  // o guia da Meta: sem passo impossível, e as duas trilhas separadas
+  const guiaMeta = fs.readFileSync(__dirname + "/../meta.html", "utf8");
+  ok(!/META_VERIFY_TOKEN|WHATSAPP_PHONE_ID|Verify JWT/.test(guiaMeta) && /Pule o "Token de acesso"/.test(guiaMeta),
+    "o meta.html não cria mais chave de servidor e manda pular o token que vence em 24h");
+  ok(/Parte 2 de 2/.test(guiaMeta) && /só no portal da academia/i.test(guiaMeta) &&
+     /NÃO vale pro TORQUE PERSONAL/i.test(guiaMeta),
+    "o meta.html separa mandar (todo mundo) de receber (só o portal, onde a tela de Conversas existe)");
+  /* A tela de Conversas só existe no portal — é isso que justifica a parte 2 do
+   * guia existir separada. Procura pelo USO da tabela (consulta), não pela
+   * palavra solta: o personal.html cita as duas num comentário explicando
+   * justamente por que não lê nenhuma delas. */
+  const usaConversas = /chat_(conversas|mensagens)\?|from\(\s*["']chat_(conversas|mensagens)["']/;
+  ok(usaConversas.test(fs.readFileSync(__dirname + "/../apps/chat.html", "utf8")) &&
+     !usaConversas.test(fs.readFileSync(__dirname + "/../personal.html", "utf8")),
+    "quem lê as conversas do WhatsApp é o portal (apps/chat.html); o TORQUE PERSONAL não consulta essas tabelas");
+
   // RECEBER por profissional: colunas, índices únicos e a RPC nova
   ok(/add column if not exists app_secret/.test(sql) && /add column if not exists verify_token/.test(sql) &&
      /add column if not exists ig_id/.test(sql) && /add column if not exists ig_token/.test(sql),
@@ -133,9 +229,14 @@ function crcNode(s) {
     "nem a RPC nova devolve o token cru");
 
   // as telas do receber
+  /* v757: "Receber as respostas aqui dentro" SAIU do TORQUE PERSONAL. A mensagem
+   * do aluno cai em chat_conversas/chat_mensagens e só o portal da academia lê
+   * essas tabelas — no Personal ela não apareceria em tela nenhuma, e o
+   * professor ficaria achando que está atendendo. O painel continua usando a
+   * zap_config_salva2 (é a RPC de guardar o número), só que sem esses campos. */
   const painelPT = fs.readFileSync(__dirname + "/../personal.html", "utf8");
-  ok(/id="cfgZapSeg"/.test(painelPT) && /zap_config_salva2/.test(painelPT) && /cfgZapVerify/.test(painelPT),
-    "o painel do personal tem os campos do receber e mostra a senha do aperto de mão pra colar na Meta");
+  ok(/zap_config_salva2/.test(painelPT) && !/id="cfgZapSeg"/.test(painelPT) && !/id="cfgZapVerify"/.test(painelPT),
+    "o TORQUE PERSONAL guarda o número pela RPC, mas não oferece mais o 'receber as respostas'");
   ok(/id="waSeg"/.test(integ) && /zap_config_salva2/.test(integ) && /waWhVerify/.test(integ),
     "a tela da academia idem");
   /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o

@@ -1719,6 +1719,62 @@ decisão de produto do Raphael, não de código) e tirar o acoplamento de ordem
 das 87 leituras de `st.alunos[0]` no test-personal (lote próprio — converter
 tudo às cegas vira "ajustar o teste" em vez de investigar).
 
+**O WhatsApp pedia Supabase ao professor** (conserto na v759): um cliente
+pagante mandou áudio dizendo que "pra fazer integração com o WhatsApp o rolê
+não é nada simples… cheguei na parte cinco e ele começa a falar de Supabase,
+pra base você precisa ter conta". Ele tinha razão, e o diagnóstico é pior do
+que parecia: o `meta.html` mandava o CLIENTE criar `WHATSAPP_TOKEN`,
+`WHATSAPP_PHONE_ID` e `META_VERIFY_TOKEN` nos Secrets e republicar as funções —
+trabalho do DONO, num projeto que o cliente não tem (a URL é cravada no
+`cloud-config.js`, igual pra todo mundo) — e **obsoleto desde a v471**, porque
+o painel já gera o verify_token e mostra a URL do webhook sozinho. Pior ainda:
+a página **sorteava** a senha no navegador, e o servidor guarda OUTRA — quem
+seguisse o guia colaria uma senha que nunca ia bater. Medido no banco: das 3
+academias, 1 tinha token (justamente a dele) e **zero** tinham app_secret.
+Ele venceu a parte difícil sem saber e desistiu na que o sistema já resolve.
+
+Um estudo de 18 análises (com três céticos conferindo no código) achou o que
+nenhum tutorial conserta, e virou o texto da página nova:
+1. **O número precisa ser exclusivo** — se o professor usar o número do
+   negócio, ele SAI do app verde. É o "não" definitivo, maior que o CNPJ, e
+   estava enterrado no meio da página. Agora é a primeira linha, com
+   "alguma dessas quatro não serve? **Pare por aqui**".
+2. **Não existe piloto automático.** Com o oficial ligado o painel mostra
+   "Enviar todas agora" — um toque no lugar de seis, não zero; não há
+   agendador de WhatsApp no servidor. O rodapé que dizia "sai sozinha, sem
+   toque nenhum" era mentira E rebaixava o caminho que funciona.
+3. **O campo "Template aprovado" não estava ligado em nada.** `zapApiEnvia`
+   chamava `chamaZapApi` sem `template` nas 4 ocorrências, enquanto a função
+   `whatsapp` já suportava. Como toda a fila é conversa INICIADA pelo
+   professor, ela bate no `precisaTemplate: 131047` fora das 24h — ou seja,
+   quem venceu os 8 passos da Meta ganhava uma fila que falha. Agora o
+   template sai de verdade, com `#cfgZapTplVars` dizendo o que entra em cada
+   espaço ({{1}}, {{2}}…).
+
+Decisões do Raphael neste lote: o oficial **continua autoatendimento, só que
+honesto** (a página diz os quatro preços antes do primeiro passo); e
+**"receber as respostas" SAI do Personal** — confirmado no código que
+`chat_conversas`/`chat_mensagens` só são lidas em `apps/chat.html`, o portal da
+academia. Saíram do cartão do Personal o App Secret, o webhook e os dois campos
+do Instagram; os que restam foram pra gaveta `#cfgZapAv`, que **abre sozinha**
+pra quem já tem número ligado. O `meta.html` virou duas trilhas declaradas
+(7 passos de enviar + 3 de receber marcados "só no portal"), porque a página é
+linkada de três lugares e no portal o receber funciona de verdade.
+
+⚠️ **A trava que faltava**: `tests/test-saas.js` varre 100 telas do cliente e
+reprova "Supabase", "Secret", "sql.html", "funcoes.html" e "supabase-setup.sql"
+em texto visível (HTML e strings do JS, ignorando comentário e `console.*` — o
+detalhe técnico tem de continuar existindo lá). Provada contra o código velho:
+**12 arquivos vazavam**. `apps/hq.html` fica de fora de propósito (é o painel
+do dono). O `personal.html` entra na lista depois.
+⚠️ O `assets/erro-funcao.js` era o arquivo mais HONESTO do lote — só o 404
+mandava publicar; foi o cético que corrigiu essa leitura. Mexemos pouco: 404,
+5xx, 401/403 e 405 pararam de mandar o cliente publicar função, ver Logs ou
+abrir o `diagnostico.html`; o motivo técnico vai pro `console.error` pelo
+helper `tecnico()`. Os asserts do `test-diagnostico.js` foram reancorados no
+que a tela diz AGORA (o 401 oferece "entre de novo", a única coisa ao alcance
+dele), não no texto velho.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

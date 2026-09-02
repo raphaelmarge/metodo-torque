@@ -631,7 +631,12 @@ async function abaNt(p, a) {
   await abaNt(p, "chat");
   ok(await p.evaluate(() => !document.getElementById("vChatN").hidden), "aba Chat abre a tela de conversas");
   const chatTxt = await p.evaluate(() => document.getElementById("chatMsgsN").textContent);
-  ok(/conta/.test(chatTxt) && /supabase-setup/.test(chatTxt), "sem conta, o chat orienta a ativar a nuvem");
+  /* v757: antes a tela mandava o nutricionista "rodar o bloco CHAT DO PERSONAL
+   * do supabase-setup.sql" — banco é trabalho do dono do sistema, e ele não tem
+   * acesso a isso. O recado agora diz o que ele PODE fazer (entrar na conta) e
+   * que o resto não é culpa dele. */
+  ok(/conta/.test(chatTxt) && !/supabase|sql/i.test(chatTxt) && /não é coisa sua/.test(chatTxt),
+    "sem conta, o chat orienta a entrar na conta — sem mandar mexer em servidor");
   ok(await p.evaluate(() => !!window.__chatNT && typeof window.__chatNT.render === "function"), "chat do nutricionista exposto pra nuvem (render/abre)");
   await abaNt(p, "dietas");
 
