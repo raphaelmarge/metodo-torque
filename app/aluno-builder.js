@@ -1173,7 +1173,10 @@
       (fichasApp ? fichasApp.map(function (f, gi) {
         // "A — Peito e tríceps" → letra no quadradinho + nome limpo
         var parT = String(f.titulo || "").split("—");
-        var letra = parT.length > 1 ? parT[0].trim().slice(0, 2) : String.fromCharCode(65 + gi);
+        // v755: a MESMA regra do painel (letraFicha) — só A, B, A2 viram a
+        // letra do quadradinho; "Treino de peito — segunda" virava "Tr"
+        var letra = (parT.length > 1 && /^[A-Za-z]\d?$/.test(parT[0].trim()))
+          ? parT[0].trim().toUpperCase() : String.fromCharCode(65 + gi);
         var nomeF = parT.length > 1 ? parT.slice(1).join("—").trim() : (f.titulo || "Ficha");
         var serF = 0; f.itens.forEach(function (it) { serF += (+it.series || 3); });
         // parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de tempo
@@ -4159,7 +4162,8 @@
           var l2 = (f.p2 && f.p2.l) || [];
           if (!l2.length) return null;
           var parP = String(f.titulo || "").split("—");
-          var letP = parP.length > 1 ? parP[0].trim().slice(0, 2) : String.fromCharCode(65 + fi);
+          var letP = (parP.length > 1 && /^[A-Za-z]\d?$/.test(parP[0].trim()))
+            ? parP[0].trim().toUpperCase() : String.fromCharCode(65 + fi); // v755: regra do painel
           return { k: letP + "2 · " + ((f.p2 && f.p2.n) || "Cardio e alongamento"),
             l: l2.map(function (ln) { return { t: ln.t, v: ln.v || "" }; }) };
         });

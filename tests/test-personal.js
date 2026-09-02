@@ -14421,6 +14421,72 @@ async function abaPt(p, a) {
     }
   }
 
+  /* ---- v755: as sobras entre territórios (cardio misto, hora do chat, chave
+     Pix, link de assinatura, volume na IA e a letra da ficha no app) ---- */
+  {
+    const pg = await ctx.newPage();
+    await pg.goto(BASE + "/personal.html");
+    await pg.waitForFunction(() => !!window.__pixChave && !!window.__linkRecOk && !!window.__chHora);
+
+    const pix = await pg.evaluate(() => ({
+      aleatoria: window.__pixChave.tipo("e1f2a3b4-1111-2222-3333-abcdefabcdef"),
+      email: window.__pixChave.tipo("raphael@torqueon.com.br"),
+      cpf: window.__pixChave.tipo("123.456.789-09"),
+      cnpj: window.__pixChave.tipo("12.345.678/0001-95"),
+      fone: window.__pixChave.tipo("+55 31 99999-0000"),
+      lixo: window.__pixChave.tipo("minha chave do pix"),
+      normalCpf: window.__pixChave.normal("123.456.789-09"),
+      normalEmail: window.__pixChave.normal(" raphael@torqueon.com.br "),
+    }));
+    ok(pix.aleatoria === "aleatoria" && pix.email === "email" && pix.cpf === "cpf" && pix.cnpj === "cnpj" &&
+      pix.fone === "telefone" && pix.lixo === "" && pix.normalCpf === "12345678909" && pix.normalEmail === "raphael@torqueon.com.br",
+      "🔑 v755: a chave Pix é reconhecida nas cinco formas, normalizada, e texto solto avisa o professor");
+
+    const lnk = await pg.evaluate(() => {
+      const av = []; const alertaOrig = window.alert; window.alert = (m) => av.push(String(m));
+      const bom = window.__linkRecOk(" https://pagar.me/assinatura/abc ");
+      const torto = window.__linkRecOk("pagar.me/assinatura/abc");
+      const vazio = window.__linkRecOk("");
+      window.alert = alertaOrig;
+      return { bom, torto, vazio, avisos: av.length };
+    });
+    ok(lnk.bom === "https://pagar.me/assinatura/abc" && lnk.torto === "" && lnk.vazio === "" && lnk.avisos === 1,
+      "🔗 v755: link de assinatura sem https:// é recusado com recado, e o vazio segue valendo");
+
+    const hr = await pg.evaluate(() => {
+      const d = new Date(2026, 0, 15, 7, 58, 0);
+      const iso = d.toISOString();                     // o banco carimba em UTC
+      return { local: window.__chHora(iso), esperado: "07:58" };
+    });
+    ok(hr.local === hr.esperado, "🕗 v755: a hora do chat sai do relógio local (o banco carimba em UTC)");
+
+    const mis = await pg.evaluate(() => {
+      const semAlvo = window.__peneiraCardios({ cardio: [{ nome: "Misto", tipo: "misto", dist: 0, tempo: 0 }] })[0];
+      const comAlvo = window.__peneiraCardios({ cardio: [{ nome: "Misto", tipo: "misto", dist: 6, tempo: 0 }] })[0];
+      return { semAlvo: semAlvo.tipo, comAlvo: comAlvo.tipo };
+    });
+    ok(mis.semAlvo === "intervalado" && mis.comAlvo === "misto",
+      "🏃 v755: misto sem distância nem tempo vira intervalado — sem alvo os tiros nunca começariam");
+
+    const vol = await pg.evaluate(() => {
+      const ret = { vol: {}, cargas: {}, feitos: {} };
+      for (let i = 1; i <= 12; i++) {
+        const d = new Date(2026, 0, i);
+        ret.vol[d.toISOString().slice(0, 10)] = i <= 6 ? 8000 : 12000;
+      }
+      const txt = window.__montaDadosIA({ alunos: [], config: {} }, { id: "x", nome: "Teste", retorno: ret }, "hipertrofia", "", "musculacao");
+      return { tem: /VOLUME POR TREINO/.test(txt), sobe: /subindo 50%/.test(txt) };
+    });
+    ok(vol.tem && vol.sobe, "🏋️ v755: o volume que o app manda entra no pedido da IA (média e tendência)");
+
+    const bldL = await pg.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    ok((bldL.match(/\/\^\[A-Za-z\]\\d\?\$\/\.test\(parT\[0\]\.trim\(\)\)/g) || []).length === 1 &&
+      /\/\^\[A-Za-z\]\\d\?\$\/\.test\(parP\[0\]\.trim\(\)\)/.test(bldL) && !/parT\[0\]\.trim\(\)\.slice\(0, 2\)/.test(bldL),
+      "🔤 v755: no app a letra da ficha segue a MESMA regra do painel — 'Treino de peito' não vira 'Tr'");
+
+    await pg.close();
+  }
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
