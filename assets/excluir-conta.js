@@ -19,13 +19,23 @@
    * nada de limpar o localStorage inteiro, que pode ter coisa de outro site
    * hospedado no mesmo domínio. */
   E.limpaAparelho = function () {
+    /* v756: aqui a limpeza é DE PROPÓSITO (o professor confirmou apagar a
+     * conta), então avisa a trava do apagão do store.js — senão qualquer
+     * gravação que aconteça entre isto e a saída da página seria recusada com
+     * um alerta assustador, e a memória de contagem ficaria com o "antes". */
+    try { raiz.__MT_LIMPANDO = true; } catch (eL) {}
     try {
       var fora = [];
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
         if (k && k.indexOf("mtapp:") === 0) fora.push(k);
       }
-      fora.forEach(function (k) { localStorage.removeItem(k); });
+      fora.forEach(function (k) {
+        localStorage.removeItem(k);
+        try {
+          if (raiz.MTStore && raiz.MTStore.esqueceChave) raiz.MTStore.esqueceChave(k.slice(6));
+        } catch (eE) {}
+      });
     } catch (e) {}
     try {
       if (raiz.caches && caches.keys) {

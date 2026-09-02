@@ -54,6 +54,24 @@ self.MT_moduloConta = function (cfg) {
   $("mgAbaEntrar").addEventListener("click", function () { aba = "entrar"; aplica(); });
   $("mgAbaCriar").addEventListener("click", function () { aba = "criar"; aplica(); });
 
+  /* v756: o estúdio guardado aqui é MESMO o do demo? O demo-personal.html
+   * semeia 24 alunos com token dtk1…dtk24 — se TODO aluno tem esse token, é
+   * ele. Sem aluno nenhum, não há o que perder. Qualquer outra coisa (um aluno
+   * de verdade que seja) é do professor e NÃO se apaga. Na dúvida (JSON
+   * quebrado), também não se apaga. */
+  function estudioEhDoDemo() {
+    try {
+      var cru = localStorage.getItem("mtapp:ptStudio");
+      if (!cru) return true;
+      var st = JSON.parse(cru);
+      if (!st || typeof st !== "object") return false;
+      var al = Array.isArray(st.alunos) ? st.alunos : [];
+      if (!al.length) return true;
+      return al.every(function (a) { return a && /^dtk\d+$/.test(String(a.appTokenP || "")); });
+    } catch (e) { return false; }
+  }
+  window.__estudioEhDoDemo = estudioEhDoDemo; // testes
+
   function fecha() { div.hidden = true; }
   function depois() {
     fecha();
@@ -62,10 +80,29 @@ self.MT_moduloConta = function (cfg) {
      * saída e o estúdio de mentira (24 alunos, Carla no chat) subia pra nuvem
      * na primeira puxada — o painel de verdade virava demo em todo aparelho.
      * Limpa ANTES de ligar a sincronização. */
+    /* v756 — ISTO APAGOU O ESTÚDIO DE UM PROFESSOR DE VERDADE. A marca do demo
+     * (mtapp:ptDemo) tinha sido sincronizada pra conta dele semanas antes e
+     * ficou no aparelho; ao entrar na conta, a limpeza abaixo apagava o
+     * ptStudio REAL — 11 alunos, 77 sessões, 15 pagamentos — e o painel vazio
+     * subia pra nuvem. A marca sozinha NÃO basta: o estúdio só sai quando ele
+     * é MESMO o do demo (todo aluno com token dtkN, que é como o
+     * demo-personal.html semeia), e mesmo assim fica uma cópia guardada. */
     try {
       if (localStorage.getItem("mtapp:ptDemo") === "1") {
-        ["mtapp:ptDemo", "mtapp:ptDemoNuvem", "mtapp:ptStudio", "mtapp:ptImagens", "mtapp:ptSemConta"].forEach(function (k) { localStorage.removeItem(k); });
-        window.__demoLimpo = true;
+        var doDemo = estudioEhDoDemo();
+        var fora = ["mtapp:ptDemo", "mtapp:ptDemoNuvem", "mtapp:ptSemConta"];
+        if (doDemo) {
+          try {
+            var cru = localStorage.getItem("mtapp:ptStudio");
+            if (cru) localStorage.setItem("mtsync:bak:mtapp:ptStudio", cru);
+          } catch (e2) {}
+          fora = fora.concat(["mtapp:ptStudio", "mtapp:ptImagens"]);
+        }
+        fora.forEach(function (k) { try { localStorage.removeItem(k); } catch (e3) {} });
+        // apagou de propósito: a trava do apagão do store não pode ver o "antes"
+        if (doDemo && S && S.esqueceChave) { S.esqueceChave("ptStudio"); S.esqueceChave("ptImagens"); }
+        window.__demoLimpo = doDemo;      // apagou o estúdio de mentira?
+        window.__demoMarcas = true;       // as marcas saíram de qualquer jeito
       }
     } catch (e) {}
     if (S && S.iniciaSync) S.iniciaSync();

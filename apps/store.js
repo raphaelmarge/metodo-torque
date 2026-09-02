@@ -154,8 +154,54 @@
 
   /* v747: devolve true quando gravou e false quando a cota estourou — assim
    * quem chama pode reagir (o alert de 10 em 10 min continua). */
+  /* v756 — A TRAVA DO APAGÃO. Apagar é o único erro que não dá pra desfazer, e
+   * nenhuma gravação legítima leva uma lista de GENTE ou de DINHEIRO de 3+
+   * registros direto pra ZERO numa tacada só: o professor apaga um por um, e
+   * "encerrar aluno" nem apaga (marca ativo:false). Quando isso acontece é
+   * bug — foi assim que a limpeza do demo levou o estúdio de um professor.
+   * A gravação é RECUSADA, o que ela tentava gravar fica guardado em
+   * mtsync:bak: e o professor é avisado em português. Quem limpa DE PROPÓSITO
+   * (excluir minha conta, demo confirmado) marca window.__MT_LIMPANDO. */
+  /* SÓ as listas que DEFINEM o estúdio: se os alunos (ou pacientes) continuam
+   * lá, o estúdio não foi apagado. Sessões, pagamentos e despesas ficam DE
+   * FORA de propósito — trocar o objeto inteiro por um recorte (restaurar um
+   * backup, uma tela que remonta o estúdio) zeraria uma delas sem que nada de
+   * ruim tivesse acontecido, e um alerta falso é o começo do próximo problema. */
+  var GENTE = { alunos: 1, pacientes: 1 };
+  function gentesDe(v) {
+    var o = {};
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      Object.keys(GENTE).forEach(function (k) { if (Array.isArray(v[k])) o[k] = v[k].length; });
+    }
+    return o;
+  }
+  var gentes = {};
+  function gentesAntes(chaveFull) {
+    if (Object.prototype.hasOwnProperty.call(gentes, chaveFull)) return gentes[chaveFull];
+    var v = null;
+    try { var raw = localStorage.getItem(chaveFull); v = raw ? JSON.parse(raw) : null; } catch (e) { v = null; }
+    return gentesDe(v);
+  }
+  function zerouTudo(antes, depois) {
+    var qual = "";
+    Object.keys(antes).forEach(function (k) {
+      if (!qual && antes[k] >= 3 && (depois[k] || 0) === 0) qual = k;
+    });
+    return qual;
+  }
+  window.__zerouTudo = zerouTudo; // testes
+
   function write(key, value) {
     var na = contagemDe(PREFIX + key);
+    var gAntes = gentesAntes(PREFIX + key);
+    var gDepois = gentesDe(value);
+    var perdeu = (window.__MT_LIMPANDO || window.__MT_IMPORTANDO) ? "" : zerouTudo(gAntes, gDepois);
+    if (perdeu) {
+      try { localStorage.setItem("mtsync:bak:" + PREFIX + key, JSON.stringify(value)); } catch (e0) {}
+      try { console.warn("MTStore: gravação RECUSADA — " + perdeu + " ia de " + gAntes[perdeu] + " pra 0", key); } catch (e1) {}
+      alert("⚠️ Isto apagaria os seus " + gAntes[perdeu] + " " + perdeu + " de uma vez só, e não parece proposital — então eu NÃO salvei.\n\nSeus dados continuam como estavam. Se você quis mesmo tirar todo mundo, apague um por um.");
+      return false;
+    }
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(value));
     } catch (e) {
@@ -174,12 +220,21 @@
     }
     var nd = contaRegistros(value);
     contagem[PREFIX + key] = nd;
+    gentes[PREFIX + key] = gDepois;
     registraLog(key, na, nd);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
     ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
     auditoria(key);
     return true;
+  }
+
+  /* v756: quem apaga uma chave DE PROPÓSITO (a limpeza do demo, por exemplo)
+   * avisa aqui — senão a trava do apagão vê o "antes" que ficou na memória e
+   * recusa a primeira gravação legítima depois da limpeza. */
+  function esqueceChave(key) {
+    delete contagem[PREFIX + key];
+    delete gentes[PREFIX + key];
   }
 
   function uid() {
@@ -521,7 +576,15 @@
          * e sobe no próximo ciclo. */
         if (sync.sujas[row.chave]) return;
         var local = m[row.chave];
-        if (!local || row.atualizado > local) {
+        /* v756: chave que NÃO está no aparelho sempre recebe a da nuvem — não
+         * há nada local pra proteger. Sem isto, uma chave apagada do
+         * localStorage com o carimbo IGUAL ao da nuvem (o estado normal logo
+         * depois de um envio) não caía em nenhum dos dois braços: a nuvem
+         * nunca era reaplicada, o painel abria vazio e o vazio subia por cima.
+         * Foi assim que a limpeza do demo levou o estúdio de um professor. */
+        var faltaAqui = false;
+        try { faltaAqui = localStorage.getItem(row.chave) == null; } catch (e) {}
+        if (faltaAqui || !local || row.atualizado > local) {
           sync.aplicando = true;
           try {
             var novoRaw = JSON.stringify(row.valor);
@@ -532,7 +595,7 @@
             marcaTs(row.chave, row.atualizado);
             if (!igual) {
               localStorage.setItem(row.chave, novoRaw);
-              delete contagem[row.chave];
+              delete contagem[row.chave]; delete gentes[row.chave];
               mudou.push(row.chave); // conteúdo igual não acorda ninguém
             }
           } catch (e) {}
@@ -564,7 +627,7 @@
               try { localStorage.setItem("mtsync:bak:" + row.chave, JSON.stringify({ em: new Date().toISOString(), valor: JSON.parse(localStorage.getItem(row.chave)) })); } catch (eB) {}
               marcaTs(row.chave, row.atualizado);
               localStorage.setItem(row.chave, JSON.stringify(row.valor));
-              delete contagem[row.chave];
+              delete contagem[row.chave]; delete gentes[row.chave];
               mudou.push(row.chave);
             } catch (e) {}
             sync.aplicando = false;
@@ -657,7 +720,7 @@
       // aplica alterações vindas de iframes/outras abas deste aparelho
       window.addEventListener("storage", function (e) {
         if (!e.key || !sincronizavel(e.key)) return;
-        delete contagem[e.key];
+        delete contagem[e.key]; delete gentes[e.key];
         if (sync.aplicando) return;
         /* v747: a outra aba acabou de APLICAR uma linha da nuvem (o carimbo dela
          * já está no mtsync:ts, gravado antes do setItem). Antes esta aba via o
@@ -809,7 +872,7 @@
     baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
     horarioDoDia: horarioDoDia, abertoAgora: abertoAgora,
-    read: read, write: write, uid: uid,
+    read: read, write: write, uid: uid, esqueceChave: esqueceChave,
     contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData, plural: plural,
     savePhoto: savePhoto, savePhotoData: savePhotoData, getPhoto: getPhoto, deletePhoto: deletePhoto,

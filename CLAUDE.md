@@ -1637,6 +1637,41 @@ no app** segue a MESMA regra do painel (`^[A-Za-z]\d?$`): "Treino de peito —
 segunda" virava a letra "Tr" no quadradinho da gaveta. Ganchos:
 `__pixChave`, `__linkRecOk`, `__chHora`, `__peneiraCardios`.
 
+**O apagão do estúdio de um professor** (conserto na v756): um cliente pagante
+mandou "atualização derrubou meus dados" com a foto do painel ZERADO — 0 alunos,
+R$ 0 e o passo a passo de boas-vindas na tela. Os dados dele foram **restaurados
+na nuvem** a partir do `dados_hist` (11 alunos, 77 sessões, 15 pagamentos), e o
+caminho que levou a isso tinha TRÊS buracos, todos tapados:
+
+1. **A limpeza do demo apagava estúdio de verdade.** O `modulo-conta.js` (v745)
+   apagava `mtapp:ptStudio` e `mtapp:ptImagens` sempre que existisse a marca
+   `mtapp:ptDemo` — e ele tinha essa marca **sincronizada** desde 2026-08-24
+   (ela viajava pela nuvem porque só entrou no `SYNC_IGNORA` na v745, DEPOIS de
+   já estar gravada na conta dele). Agora `estudioEhDoDemo()` olha o CONTEÚDO:
+   só é do demo o estúdio vazio ou aquele em que **todos** os alunos têm token
+   `dtk<N>` (os que o `demo-personal.html` semeia). Estúdio de verdade só perde
+   as MARCAS; e mesmo o do demo vai pro `mtsync:bak:mtapp:ptStudio` antes.
+2. **A nuvem não devolvia o que sumiu do aparelho.** O `puxa()` do `store.js` só
+   cobria a chave local quando o carimbo da nuvem era MAIOR. Chave **apagada**
+   com carimbo igual não caía em branch nenhum — a nuvem tinha o estúdio inteiro
+   e ele nunca voltava. Agora, se a chave **não existe** no aparelho, a versão da
+   nuvem entra, empate ou não (`faltaAqui`).
+3. **O painel escrevia o vazio por cima.** Sem estúdio local, o painel criou um
+   novo (vazio) e o `enviaSujas` mandou pra nuvem 20 s depois, cobrindo o bom.
+   Agora o `write()` **recusa** a gravação que zera de uma vez uma lista de gente
+   com 3+ registros (`GENTE`: alunos, sessões, pagamentos, planos, pacientes,
+   consultas, despesas, serviços) — guarda o que ia gravar em `mtsync:bak:` e
+   avisa na tela. Escapes: apagar um por um (2 → 0 passa), `__MT_LIMPANDO`
+   (a saída do demo) e `__MT_IMPORTANDO` (o importador).
+
+⚠️ A lição das TRÊS camadas: a primeira evita o apagão, a segunda desfaz, e a
+terceira impede que o vazio vire a verdade da nuvem. Uma só não bastava — foi
+justamente por elas se somarem que 1 MB de dados sumiu sem ninguém perceber.
+⚠️ `S.esqueceChave(chave)` existe pro `modulo-conta.js` limpar a memória de
+contagem do `store.js` junto com o `localStorage` — sem isso a trava da camada 3
+compararia com um número velho. Ganchos: `window.__estudioEhDoDemo`,
+`window.__zerouTudo`, `window.__demoMarcas`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
