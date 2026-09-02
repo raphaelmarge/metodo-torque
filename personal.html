@@ -3809,9 +3809,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   <div class="card" data-pfsec="freq">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Diário de sessões</h2>
-    <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
-      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1; min-width: 200px;">
-      <input id="pfDiarioData" type="date" style="width: auto;" title="de que sessão é a anotação (vem a última sessão feita)">
+    <!-- v750: flex-wrap + largura do campo de data limitada — sem isso, num
+         celular de 390px a linha (texto 200px + data + botão) empurrava a
+         página pra 401px e ela rolava de lado -->
+    <div class="linha-flex" style="gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1 1 200px; min-width: 0;">
+      <input id="pfDiarioData" type="date" style="width: auto; max-width: 100%; min-width: 0; flex: 0 1 auto;" title="de que sessão é a anotação (vem a última sessão feita)">
       <button class="btn mini" id="pfDiarioAdd">+ Anotar</button>
     </div>
     <div id="pfDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;">Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.</div>

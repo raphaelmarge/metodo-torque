@@ -1457,6 +1457,39 @@ chave Pix e validar `linkRec` ao salvar. Testes: 27 asserts em
 `dinheiro`/`urlOk`); cinco antigos reancorados (`habStreak`→`stkLine`,
 `topoExtra`, `.tphab`, "Fale com", "treino +10 XP").
 
+**Revisão — ficha do aluno e Agenda, pt-perfil e pt-agenda (mt-v750, 33
+itens)**: **Ficha** — `treinosMesDe(st, a)` é a conta ÚNICA de "treinos no
+mês" (Resumo, chip e `poeKpi` liam contas diferentes; a meta é medida pelo
+app e as sessões com o professor viram o 2º número); `sentidoPeso(a, ret)` +
+`corPeso()` nos 3 lugares (peso subindo era sempre vermelho, mesmo pra quem
+quer ganhar massa; o PDF fica neutro sem objetivo); `recordesDe(ret, desde,
+ate)` e `resumoFc(ret)` são as regras únicas de recorde e batimento
+(relatório, card, IA da semana e os dois tiles); `buscaRetornoApp()`
+compartilha a Promise entre `pfResumoNuvem` e `pintaAppDados` (o retorno era
+baixado duas vezes por abertura); o diário ganhou `#pfDiarioData` (padrão =
+última sessão feita) e uma nota por dia; trocar plano-pacote SOMA o saldo
+anterior; relatório/card do aluno aceitam o mês (`mesRelPadrao()`: até o dia
+5 sem registro vale o mês anterior); hábitos dividem por dias com registro
+(`base30`); a aba "Check-in" virou "Questionários e hábitos" e o KPI diz
+"40+" quando a consulta cortou; `diaLocalDe()` nas datas dos questionários
+(era UTC); `erroDeSql()` separa "rode o SQL" (42P01/42883/PGRST2xx) de rede
+e RLS. **Agenda** — sessão passada sem marcar aparece como `SEM MARCAR · A`
+(`agEstado` `pend`); pedido de remarcação ganhou o botão **Remarcar**
+(`data-sremarca`, o Agendar EDITA a sessão, mesmo id/fixaId, e atualiza o
+pedido) e o faltou ganhou **Desfazer Faltou** (`data-desfalta`); encaixe
+nunca oferece pro próprio aluno (`encaixeCandidatos(st, data, excluiId)`);
+fixa futura não cria antes do `desde`; cancelar/mudar hora avisa o app
+(`avisaSessaoMudou()` — marcaAppPendente + push + `app_agenda` quando há
+`pedidoId`); `pintaBadges`/`resolverChat` leem `de=aluno, lida=false` no
+servidor; `confirmaAgendar(st, datas, hora, ignoraId)` é o aviso único (a
+fixa simula 4 semanas); `normalizaHora()` recusa hora fora de HH:MM; `.ics`
+com `DTSTAMP` e dia inteiro sem hora; `save()` fora da Agenda reaproveita a
+leitura de pedidos de < 60 s (`agPedEm`). Bloco `v748` na suíte (29
+asserts); três asserts antigos mudaram de propósito (rótulo da aba, do KPI,
+"Emagrecer" com maiúscula, relatos viram atalho). ⚠️ Ao integrar, o
+cherry-pick conflitou com o lote v747 em três pontos triviais (o KPI de
+treinos e a consulta do chat) — o lado do agente venceu.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
