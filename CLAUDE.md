@@ -1551,6 +1551,25 @@ elemento escondido — o teste do Tab precisa de `__vaiMontarTreino(id)`.
 Ficaram de fora: teto de uso da IA por academia (precisa de tabela `ia_uso`
 e trava na chat-envia) e a frase "monte a SEMANA" do prompt de corrida.
 
+**Teto de uso da IA por academia (mt-v753)**: a chave da Anthropic é do
+dono do sistema e QUALQUER conta logada — inclusive um teste grátis de 14
+dias — podia chamar a IA em laço; a fatura era do Raphael. Agora cada
+chamada de IA da `chat-envia` (testar, ajuda, analisar, ia_treino, ia_dieta,
+sugerir) conta uma unidade no dia pela RPC `ia_uso_conta` (tabela `ia_uso`
+SELADA, RLS sem política, EXECUTE revogado de anon/authenticated) e, passando
+do teto, a função recusa com 429 e recado honesto em vez de seguir gastando.
+Teto padrão **80 por dia por academia** — dá pra renovar o mês de 24 alunos e
+ainda sobrar; o Secret `IA_TETO_DIA` muda o número sem republicar. Banco sem
+o SQL novo (ou fora do ar) **não trava ninguém**: na dúvida deixa passar. A
+regra `teto-ia` entrou no ping. Junto saiu a contradição do prompt de
+corrida: ele mandava "monte a SEMANA" e o `MES_REGRA` logo abaixo dizia que
+o plano é do mês — agora diz "monte os treinos que se repetem nas 4 semanas
+do mes". Migração `v753_teto_ia_por_academia` aplicada no banco (conferida
+subindo o contador e vendo a 4ª chamada ser recusada com teto 3) e espelhada
+no setup; `chat-envia` v17 publicada e conferida pelo ping. Pra soltar uma
+academia num dia: `delete from ia_uso where academia_id = '…' and dia =
+current_date;`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
