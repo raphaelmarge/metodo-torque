@@ -58,6 +58,16 @@ self.MT_moduloConta = function (cfg) {
   function depois() {
     fecha();
     try { localStorage.removeItem(cfg.flag); } catch (e) {}
+    /* v745: entrou/criou a conta vindo do DEMO? As marcas do demo não tinham
+     * saída e o estúdio de mentira (24 alunos, Carla no chat) subia pra nuvem
+     * na primeira puxada — o painel de verdade virava demo em todo aparelho.
+     * Limpa ANTES de ligar a sincronização. */
+    try {
+      if (localStorage.getItem("mtapp:ptDemo") === "1") {
+        ["mtapp:ptDemo", "mtapp:ptDemoNuvem", "mtapp:ptStudio", "mtapp:ptImagens", "mtapp:ptSemConta"].forEach(function (k) { localStorage.removeItem(k); });
+        window.__demoLimpo = true;
+      }
+    } catch (e) {}
     if (S && S.iniciaSync) S.iniciaSync();
     if (cfg.depois) cfg.depois();
   }

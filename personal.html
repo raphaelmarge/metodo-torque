@@ -4589,7 +4589,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (pagsPorAluno[p.alunoId] = pagsPorAluno[p.alunoId] || []).push(p);
       // venda de serviço (tem desc) não quita a mensalidade: uma massagem paga não
       // pode sumir com a cobrança do plano do mês (pendências, régua e dívida)
-      if (!p.desc) pagouMes[p.alunoId + "|" + String(p.data || "").slice(0, 7)] = true;
+      // v745: p.mes é a COMPETÊNCIA (qual mês o pagamento quita); sem ela, o mês da data
+      if (!p.desc) pagouMes[p.alunoId + "|" + (p.mes || String(p.data || "").slice(0, 7))] = true;
     });
     (st.sessoes || []).forEach(function (x) {
       (sessPorAluno[x.alunoId] = sessPorAluno[x.alunoId] || []).push(x);
@@ -10530,17 +10531,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var abs = y * 12 + (m - 1) + (totalMeses - 36);
       y = Math.floor(abs / 12); m = (abs % 12) + 1;
     }
-    var meses = 0, guarda = 0;
+    var meses = 0, guarda = 0, chaves = [];
     for (;;) {
       var chave = y + "-" + ("0" + m).slice(-2);
       if (chave > mesHoje || guarda++ > 45) break;
       var pagou = idxDe(st).pagouMes(a.id, chave);
       var vencido = chave < mesHoje || (ct ? +hoje.slice(8, 10) > +ct.diaVenc : false);
-      if (!pagou && vencido) meses++;
+      if (!pagou && vencido) { meses++; chaves.push(chave); }
       m++; if (m > 12) { m = 1; y++; }
     }
-    return { meses: meses, total: meses * valor, valor: valor };
+    return { meses: meses, total: meses * valor, valor: valor, chaves: chaves };
   }
+  /* v745: registrar um recebimento COM competência. Quitar "deve 2 meses" num
+   * Recebi gravava UM pagamento datado de hoje, que só limpava o mês corrente
+   * — o mês velho ficava em aberto pra sempre e voltava em toda cobrança. Agora:
+   * pagou o total acumulado → um pagamento por mês devido (o total é o mesmo);
+   * pagou menos → o pagamento quita o mês MAIS ANTIGO em aberto. Sem dívida,
+   * vale o mês da data, como sempre. Devolve o resumo pro recibo. */
+  function registraRecebido(st, a, valor, forma) {
+    var dv = dividaDe(st, a) || {}, chaves = dv.chaves || [];
+    var hoje = S.todayISO(), pgs = [];
+    if (chaves.length > 1 && Math.abs(valor - dv.total) < 0.01) {
+      var cada = Math.round(valor / chaves.length * 100) / 100, soma = 0;
+      chaves.forEach(function (ch, i) {
+        var v = i === chaves.length - 1 ? Math.round((valor - soma) * 100) / 100 : cada;
+        soma += v;
+        pgs.push({ id: S.uid(), alunoId: a.id, valor: v, forma: forma, data: hoje, mes: ch });
+      });
+    } else {
+      var pg = { id: S.uid(), alunoId: a.id, valor: valor, forma: forma, data: hoje };
+      if (chaves.length) pg.mes = chaves[0];
+      pgs.push(pg);
+    }
+    pgs.forEach(function (x) { st.pagamentos.push(x); });
+    return { id: pgs[0].id, alunoId: a.id, valor: valor, forma: forma, data: hoje, meses: pgs.map(function (x) { return x.mes || ""; }) };
+  }
+  window.__registraRecebido = registraRecebido; // testes
   // sessões feitas ainda não acertadas (quem paga por sessão) ou além do pacote
   function sessoesACobrar(st, a) {
     if (a.pacote && +a.pacote.total > 0) {
@@ -10966,7 +10992,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var pl = ct ? planoDe(st, ct.planoId) : null;
       var dv = dividaDe(st, a);
       return { a: a, ct: ct, valor: dv && dv.meses > 1 ? dv.total : (pl ? +pl.valor : +a.valor || 0),
-        meses: (dv || {}).meses || 1, dias: ct ? Math.max(0, diaHoje - ct.diaVenc) : 0 };
+        meses: (dv || {}).meses || 1, dias: ct ? Math.max(0, diaHoje - ct.diaVenc) : 0,
+        auto: !!(a.assinaturaRec || a.assinaturaAs) }; // v745: o gateway dá a baixa sozinho
     }).sort(function (x, y) { return y.dias - x.dias; });
     var totalAtr = atr.reduce(function (t, x) { return t + x.valor; }, 0);
     // a receber: tudo em aberto entre os ativos com cobrança
@@ -11022,9 +11049,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (x.ct ? " · venceu dia " + x.ct.diaVenc + (x.dias ? " · " + S.plural(x.dias, "dia", "dias") : "") : " · sem contrato") + "</div></div>" +
             '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + S.fmtBRL(x.valor) + "</b>" +
             '<div class="dac">' +
+            /* v745: com cobrança automática (assinatura no gateway) os três botões
+             * somem — a lista "Quem ainda não pagou" já escondia, e um Recebi a
+             * mais virava pagamento em dobro no caixa quando o webhook dava a baixa */
+            (x.auto ? '<span class="muted" style="font-size:12px;">cobrança automática — a baixa entra sozinha</span>' :
             '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + x.valor + '" data-origem="mensal">Link</button>' +
             ((st.config || {}).pixChave ? '<button class="btn sec mini" data-pix="' + a.id + '" data-v="' + x.valor + '">Pix</button>' : "") +
-            '<button class="btn whats mini" data-receb="' + a.id + '" data-v="' + x.valor + '">Recebi</button></div></div>';
+            '<button class="btn whats mini" data-receb="' + a.id + '" data-v="' + x.valor + '">Recebi</button>') + "</div></div>";
         }).join("") + "</div>";
     }
     // ---- últimos 6 meses, com o mês corrente hachurado (projeção) ----
@@ -11131,7 +11162,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
             '<button class="btn mini" data-pacrec="' + a.id + '" title="registra o recebimento do pacote renovado">Recebi</button>' +
             '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + vPac + '" data-origem="pacote" title="gera o link de cobrança no SEU gateway — quando o aluno pagar, a baixa entra sozinha">Link de pagamento</button>' +
-            ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '">Pix</button>' : "") +
+            ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '" data-origem="pacote">Pix</button>' : "") +
             (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgP) + '">Cobrar</a>' : "") + "</span></div>";
         }
         // quem paga por sessão: só aparece com carteira negativa ou pacote estourado
@@ -11248,6 +11279,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var diaT = +S.todayISO().slice(8, 10);
       var alvos = stT.alunos.filter(function (a) {
         if (a.ativo === false || !a.zap) return false;
+        if (a.assinaturaRec || a.assinaturaAs) return false; // v745: o gateway cobra sozinho
         var ctT = contratoDe(stT, a.id);
         var plT = ctT ? planoDe(stT, ctT.planoId) : null;
         if ((plT && plT.cobranca === "sessao") || (!plT && a.modo === "sessao")) return false;
@@ -11277,8 +11309,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var vR = +rb.getAttribute("data-v") || 0;
       if (!alR || !vR) return;
       if (!confirm("Registrar " + S.fmtBRL(vR) + " recebido de " + alR.nome.split(" ")[0] + " agora?")) return;
-      var pgR = { id: S.uid(), alunoId: alR.id, valor: vR, forma: "recebido", data: S.todayISO() };
-      stR.pagamentos.push(pgR);
+      var pgR = registraRecebido(stR, alR, vR, "recebido"); // v745: com competência
       save(stR);
       mandaReciboZap(stR, alR, pgR);
       return;
@@ -11329,7 +11360,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!b) return;
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === b.getAttribute("data-pix"); });
-    if (a) abrePix(a, +b.getAttribute("data-v"));
+    if (a) abrePix(a, +b.getAttribute("data-v"), b.getAttribute("data-origem") || "mensal");
   }
   $("pendentes").addEventListener("click", cliqueCobranca);
   $("pgAtrasados").addEventListener("click", cliqueCobranca);
@@ -15558,7 +15589,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return q.createDataURL(4, 8);
     } catch (e) { return ""; }
   }
-  function abrePix(aluno, valor) {
+  function abrePix(aluno, valor, origem) {
     var st = load();
     var cfg = st.config || {};
     if (!cfg.pixChave) { alert("Configure sua chave Pix no card Sua ilha (lá embaixo)."); return; }
@@ -15570,7 +15601,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pixQr").innerHTML = uri ? "<img src='" + uri + "' style='width:200px;height:200px;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px;'>" : "";
     var msg = "Oi " + aluno.nome.split(" ")[0] + "! Segue o Pix de " + S.fmtBRL(valor) + " do seu plano 😉\n\nPix copia e cola:\n" + payload;
     $("pixZap").href = "https://wa.me/" + (aluno.zap ? "55" + String(aluno.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
-    window.__pixCtx = { alunoId: aluno.id, valor: valor };
+    window.__pixCtx = { alunoId: aluno.id, valor: valor, origem: origem || "mensal" };
     $("dlgPix").showModal();
   }
   $("pixRecebi").addEventListener("click", function () {
@@ -15586,8 +15617,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!(vRec > 0)) { alert("Valor inválido — nada foi registrado."); return; }
     }
     var stX = load();
-    var pgX = { id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix", data: S.todayISO() };
-    stX.pagamentos.push(pgX);
+    var alX = stX.alunos.find(function (x) { return x.id === ctx.alunoId; });
+    var pgX;
+    if (ctx.origem === "pacote" && alX && alX.pacote) {
+      /* v745: o Pix da renovação do pacote fazia o mesmo que o Pix da
+       * mensalidade — gravava sem desc (quitava a mensalidade, que o pacote
+       * não quita) e deixava a.pacote.cobrar de pé (a pendência não sumia e
+       * o professor registrava de novo). Agora é igual ao Recebi do pacote. */
+      pgX = { id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix",
+        desc: "Pacote de " + (+alX.pacote.total || 0) + " aulas (renovação)", data: S.todayISO() };
+      stX.pagamentos.push(pgX);
+      alX.pacote.cobrar = 0;
+    } else {
+      pgX = alX ? registraRecebido(stX, alX, vRec, "pix") : { id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix", data: S.todayISO() };
+      if (!alX) stX.pagamentos.push(pgX);
+    }
     save(stX);
     $("dlgPix").close();
     mandaReciboZap(stX, stX.alunos.find(function (x) { return x.id === ctx.alunoId; }), pgX);

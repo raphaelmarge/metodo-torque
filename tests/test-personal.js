@@ -539,11 +539,12 @@ async function abaPt(p, a) {
     ok(await p.evaluate((exp) => window.__pixCtx && window.__pixCtx.alunoId === "axDev" && +window.__pixCtx.valor === exp, expMeses * 100), "abrir o Pix guarda aluno e valor pro botão de baixa");
     await p.click("#pixRecebi");
     await p.waitForTimeout(250);
-    const pix2 = await p.evaluate(() => ({
-      aberto: document.getElementById("dlgPix").open,
-      pg: window.MTStore.read("ptStudio", {}).pagamentos.find((x) => x.alunoId === "axDev"),
-    }));
-    ok(!pix2.aberto && pix2.pg && pix2.pg.forma === "pix" && +pix2.pg.valor === expMeses * 100, "'Já recebi' no dialog do Pix registra o total e fecha");
+    // v745: o total acumulado vira UM pagamento por mês devido (competência) — a soma é a mesma
+    const pix2 = await p.evaluate(() => {
+      const pgs = window.MTStore.read("ptStudio", {}).pagamentos.filter((x) => x.alunoId === "axDev" && x.forma === "pix");
+      return { aberto: document.getElementById("dlgPix").open, n: pgs.length, soma: pgs.reduce((t, x) => t + +x.valor, 0), meses: pgs.map((x) => x.mes || "").filter(Boolean).length };
+    });
+    ok(!pix2.aberto && pix2.n >= 1 && Math.abs(pix2.soma - expMeses * 100) < 0.01 && pix2.meses === pix2.n, "'Já recebi' no dialog do Pix registra o total e fecha (um pagamento por mês, com competência)");
 
     // Renovar pacote leva direto pro financeiro do perfil
     await p.evaluate(() => document.querySelector('#pendentes [data-abreperfil="axPac"]').click());
@@ -756,10 +757,11 @@ async function abaPt(p, a) {
       });
     }
 
-    // dashboard soma o que há pra receber (meses passados continuam devidos mesmo com o mês atual pago)
+    // v745: o Pix do total quitou TODOS os meses (competência) — antes o pagamento só
+    // limpava o mês atual e os 3 antigos ficavam "a receber" pra sempre
     await abaPt(p, "dash");
-    ok(await p.evaluate(() => /A receber acumulado/.test(document.getElementById("bRecebP").textContent) && /R\$\s?300/.test(document.getElementById("bRecebP").textContent)),
-      "dashboard mostra 'A receber acumulado' com os 3 meses antigos do devedor (R$ 300)");
+    ok(await p.evaluate(() => !/R\$\s?300/.test(document.getElementById("bRecebP").textContent)),
+      "dashboard NÃO mantém os 3 meses antigos do devedor em 'A receber' depois de ele quitar o total");
 
     // baixa automática do link Pagar.me: casa o pedido guardado com o evento pago do webhook
     const link = await p.evaluate((hoje) => {
@@ -2425,6 +2427,37 @@ async function abaPt(p, a) {
       "🔐 v744: a faxina só alcança o módulo/academia que chamou e a exclusão limpa o histórico");
     ok(/tUrl !== tAnt/.test(srv744.shell) && /__limpouOutroAluno/.test(srv744.shell), "🔐 v744: outro aluno no mesmo aparelho limpa os registros do anterior");
     ok(/A primeira e a última foto vão pra ficha do seu nutricionista/.test(srv744.nutri), "🔐 v744: o app do paciente diz a verdade sobre as fotos");
+
+    /* ---- v745: Financeiro com competência + sincronização ---- */
+    const v745 = await p.evaluate(() => {
+      const out = {};
+      const hoje = window.MTStore.todayISO();
+      const dAnt = new Date(hoje + "T12:00"); dAnt.setMonth(dAnt.getMonth() - 1);
+      const mesAnt = dAnt.toISOString().slice(0, 7);
+      // sem contrato, o mês corrente só "vence" com contrato: a dívida são os meses PASSADOS
+      const dAnt2 = new Date(hoje + "T12:00"); dAnt2.setMonth(dAnt2.getMonth() - 2);
+      const mesAnt2 = dAnt2.toISOString().slice(0, 7);
+      const mk = () => ({ alunos: [{ id: "cp1", nome: "Comp Teste", valor: 100, desde: mesAnt2 + "-01", ativo: true }], sessoes: [], pagamentos: [], treinos: {}, contratosPT: [], planosPT: [] });
+      const stC = mk();
+      const r = window.__registraRecebido(stC, stC.alunos[0], 200, "recebido");
+      const idx = window.__idxPT(stC);
+      out.competencia = stC.pagamentos.length === 2 && idx.pagouMes("cp1", mesAnt2) && idx.pagouMes("cp1", mesAnt) &&
+        Math.abs(stC.pagamentos.reduce((t, x) => t + x.valor, 0) - 200) < 0.01 && r.valor === 200;
+      const stD = mk();
+      window.__registraRecebido(stD, stD.alunos[0], 100, "pix");
+      const idxD = window.__idxPT(stD);
+      out.maisAntigo = idxD.pagouMes("cp1", mesAnt2) && !idxD.pagouMes("cp1", mesAnt);
+      out.ignora = !window.__sincronizavel("mtapp:ptDemo") && !window.__sincronizavel("mtapp:academia") && window.__sincronizavel("mtapp:ptStudio");
+      out.nuvemMais = window.__nuvemTemMais({ alunos: [] }, { alunos: [1, 2, 3] }) === true &&
+        window.__nuvemTemMais({ alunos: [1, 2, 3, 4], treinosV2: {} }, { alunos: [1, 2, 3, 4, 5], treinosV2: {} }) === false;
+      return out;
+    });
+    ok(v745.competencia && v745.maisAntigo, "💰 v745: Recebi quita por competência — dívida de 2 meses vira 2 pagamentos; um só quita o mês mais antigo");
+    ok(v745.ignora && v745.nuvemMais, "☁️ v745: identidade e marcas do demo não sincronizam; a nuvem só vence um local mais novo quando ele está vazio");
+    const htmlFin = await p.evaluate(async () => await (await fetch("personal.html")).text());
+    ok(/x\.auto \? '<span class="muted"/.test(htmlFin) && /if \(a\.assinaturaRec \|\| a\.assinaturaAs\) return false; \/\/ v745/.test(htmlFin) &&
+      /data-v="' \+ vPac \+ '" data-origem="pacote">Pix/.test(htmlFin),
+      "💰 v745: Atrasados e Cobrar todos poupam quem tem cobrança automática; o Pix do pacote leva a origem");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
