@@ -1372,6 +1372,18 @@ ignorados aparecem pelo nome; `config.appMudouEmN` + `autoPublicaAppsN` pelo
 `stamp`; app do paciente: lembrete de água via `showNotification`, adesão em
 data local, `feitos` devolvido (ranking), código de barras grava macros.
 `tests/test-tokens-nutri.js` reprova `var(--` dentro de documento autônomo.
+Personal — Início e Alunos (pt-inicio, pt-alunos — 22 itens, mt-v747):
+`cobrancaVencida(st, a)` é a função-fonte de "vencido" (Resolver hoje, card
+do mês, Atrasados, DEVENDO da lista — conta os meses em aberto);
+`compMesAnterior()` compara até o MESMO dia do mês anterior (era mês parcial ×
+mês cheio, e `setMonth` transbordava no dia 31); `metaMesDe(a)` nos dois
+lugares (era 12 fixo × metaSemana×4); `prescricaoEm(t, a)` lê `t.fichasEm`
+carimbado por `marcaTreinoMudou` em toda prescrição — a "idade da ficha" não
+zera mais com a republicação automática; `resolverChat`/`pintaBadges` leem só
+`de=aluno, lida=false` com cópia de 10 min (`chatPend`) e o contador do Chat
+some quando zera; sino sem ruído (só pagamento com `eventoId`, treinos numa
+linha por aluno); importador tira o +55 e o CPF; `letraFicha` nos chips e no
+`alFicha`; `vaiMontarTreino()` único pra ficha/lista/Resolver.
 
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
