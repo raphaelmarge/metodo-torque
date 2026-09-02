@@ -116,10 +116,13 @@
   $("#btnEnviar").addEventListener("click", function () {
     var faltam = Q.ps.filter(function (p, i) { return !respostas[i] || respostas[i].r === ""; });
     if (faltam.length) { $("#erro").textContent = "Responde tudo primeiro — falta(m) " + faltam.length + " pergunta(s). 😉"; return; }
+    // v742: igual ao app — grava "menor é melhor" (p.mm) em cada resposta e
+    // inverte o sinal na soma; antes dor 9 somava como ponto bom e o painel
+    // lia o alerta ao contrário
     var total = 0, temPontos = false;
     var lista = Q.ps.map(function (p, i) {
-      if (respostas[i].pontos != null) { total += respostas[i].pontos; temPontos = true; }
-      return { sigla: p.s || "", pergunta: p.texto, resposta: respostas[i].r, pontos: respostas[i].pontos };
+      if (respostas[i].pontos != null) { total += (p.mm ? -respostas[i].pontos : respostas[i].pontos); temPontos = true; }
+      return { sigla: p.s || "", pergunta: p.texto, resposta: respostas[i].r, pontos: respostas[i].pontos, menos: !!p.mm };
     });
     var cfg = self.MT_CLOUD || {};
     if (!cfg.url) { $("#erro").textContent = "Configuração da nuvem ausente — avisa seu treinador."; return; }

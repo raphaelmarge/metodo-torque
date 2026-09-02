@@ -129,10 +129,16 @@
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(value));
     } catch (e) {
-      // cota do navegador estourou — avisa uma vez e não derruba a página
-      if (!write._avisou) {
-        write._avisou = true;
-        alert("⚠️ A memória do navegador encheu e este dado NÃO foi salvo.\n\nApague fotos/avaliações antigas ou entre na sua conta da nuvem pra liberar espaço.");
+      /* cota do navegador estourou — avisa e não derruba a página. v742: o
+       * aviso volta a cada 10 minutos (era UMA vez por sessão: depois do
+       * primeiro estouro toda gravação seguinte falhava calada, e o professor
+       * marcava Feita, registrava pagamento, montava ficha… sem nada ficar).
+       * O console registra toda falha, com a chave. */
+      try { console.warn("MTStore: cota cheia, NÃO gravou", key, e && e.name); } catch (e2) {}
+      var agoraQ = Date.now();
+      if (!write._avisouEm || agoraQ - write._avisouEm > 600000) {
+        write._avisouEm = agoraQ;
+        alert("⚠️ A memória do navegador encheu e este dado NÃO foi salvo (" + key + ").\n\nApague fotos/avaliações antigas ou entre na sua conta da nuvem pra liberar espaço — até lá, nada do que você fizer fica guardado.");
       }
       return;
     }

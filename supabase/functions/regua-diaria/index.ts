@@ -67,7 +67,8 @@ type Aviso = { academia_id: string; token: string; chave: string; titulo: string
 function treinoDe(st: any, alunoId: string, iso: string): string {
   const t = (st.treinosV2 || {})[alunoId];
   if (!t) return "";
-  const dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+  // v742: a chave do plano é a do getDay() (0 = domingo), a MESMA que o app lê
+  const dia = String(new Date(iso + "T12:00:00").getDay());
   const pl = ((t.plano || {}).dias || {})[dia];
   if (!pl) return "";
   if (pl.tp === "wod") return "circuito";
@@ -116,7 +117,7 @@ Deno.serve(async (req: Request) => {
     return json({
       ok: true,
       vapid: !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY")),
-      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino"],
+      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino", "dia-getday"],
     });
   }
 

@@ -1236,6 +1236,46 @@ variável local em duas funções); ganchos: `window.__fc`, `__fcAmostra`,
 `__fcConecta`, `__fcResumo`, `__fcZera`. Contrato do shell nativo em
 `nativo/SAUDE.md`.
 
+**Revisão geral do sistema — frentes 1 e 2+ (mt-v741 e mt-v742)**: em
+2026-09-01 uma revisão por área (25 revisores + 2º revisor cético) achou 388
+itens; o Raphael mandou atacar as 14 frentes na ordem do relatório. v741 —
+**botões mortos**: os redesenhos v614–v627 espalharam `data-abreperfil` /
+`data-feita` / `data-pgm` / `data-pix` / `data-app` por telas novas com o
+listener preso aos containers antigos. Agora existe um dono de ÚLTIMA
+instância no `document` (`DONOS_CLIQUE`), **na fase de captura**: o dono antigo
+chama save() → render() e reconstrói a lista, então na fase de bolha o botão
+já estava fora do DOM e `closest()` não achava mais o container — a ação
+rodava DUAS vezes (medido: dois "Registrar R$ 80?" num Feita). Publicar app é
+`publicaAppDoAluno(id)`; `valorCobranca(st, a)` é a conta do Cobrar (dívida
+acumulada ou valor do plano/cadastro — `dividaDe().total` é 0 pra quem não tem
+contrato no mês); `pfMontaTreino` grava em `#tAluno` (não em `#taAluno`, o da
+aba IA) e força a aba Fichas; `pfIrChat` abre a conversa do aluno. O teste
+CLICA (o da v614 só conferia que o botão existia).
+v742 — (1) **dia da semana**: o plano da semana usa a chave do `getDay()`
+(0 = domingo, como `PLN_DIAS` grava e o app lê); quatro leitores do painel e a
+regua-diaria calculavam `(getDay()+6)%7` e mostravam o treino de UM dia antes
+— agora todos passam por `diaDoPlano(iso)`; o teste da v736 estava escrito
+com a conta errada; regua-diaria **v3** publicada (regra `dia-getday` no
+ping). (2) **chat**: `order asc + limit` devolvia as mensagens mais VELHAS —
+conversa e lista buscam desc e viram a ordem; marca como lida só o que
+apareceu; Nutri igual. (3) **e-mail de acesso** com hex cravado (era texto
+branco + `var()` — login e senha invisíveis). (4) `pfResumoNuvem` grava o
+retorno **sem as chaves `foto*`** no ptStudio (`tiraFotosDoRetorno` limpa uma
+vez na carga quem já tinha); a aba App busca as fotos por conta própria.
+`store.js` volta a avisar a cada 10 min quando a cota estoura (era uma vez por
+sessão e depois falhava calado). (5) **IA**: `exCitados` lê a FRASE inteira
+(pontuação vira `;` antes do `chaveEx`, que apagaria a vírgula) e uma lista
+NEGA maior (cuidado, atenção, nunca, jamais, dor, lesão, hérnia,
+contraindicado…) — "cuidado com levantamento terra, tem hérnia" virava terra
+OBRIGATÓRIO; frase só de equipamento (`GENERICA`: "com barra e halteres") não
+casa nada; o RPE vai como escala 1-3 (era "1-5" e a IA lia pesado como
+médio). (6) **carinhas**: `qsValor` usa a escala da PERGUNTA (min/max das
+alternativas, padrão -2..2) e `qsRuim` normaliza — comparar pontos -2..2 com
+0–10 punha todo mundo em "Pede atenção"; `quest.html` grava `menos` e inverte
+a soma como o app; Nutri (`qsValorN`/`qsRuimN`) igual. Ganchos:
+`window.__donosClique`, `__valorCobranca`, `__diaDoPlano`, `__emailAcessoHtml`,
+`__tiraFotosDoRetorno`, `__qsValor`, `__qsRuim`, `__qsValorN`, `__qsRuimN`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

@@ -3964,9 +3964,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!p || !nuvem) return;
     $("chatTituloN").textContent = p.nome;
     $("chatEnvioN").hidden = false;
+    // v742: as 80 mais NOVAS (asc + limit devolvia as mais velhas e a conversa congelava)
     nuvem.client.from("app_chat").select("de,texto,criado").eq("token", p.appTokenN)
-      .order("criado", { ascending: true }).limit(80).then(function (r) {
-        var msgs = r.data || [];
+      .order("criado", { ascending: false }).limit(80).then(function (r) {
+        var msgs = (r.data || []).slice().reverse();
         $("chatMsgsN").innerHTML = msgs.length ? msgs.map(function (m) {
           var minha = m.de === "personal";
           return '<div style="align-self:' + (minha ? "flex-end" : "flex-start") + ";background:" + (minha ? "var(--verde)" : "var(--fundo)") +
@@ -4094,12 +4095,41 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var dom = new Date(seg.getTime()); dom.setDate(dom.getDate() + 6);
     return { ini: S.todayISO(seg), fim: S.todayISO(dom) };
   }
+  /* v742: a escala vem da PERGUNTA (min/max das carinhas, 0–10 no linear).
+   * Comparar os pontos -2..2 das carinhas com 0–10 punha todo paciente em
+   * "Pede atenção", inclusive quem respondeu Ótimo. Mesma regra do Personal. */
+  var qsCfgPergN = null;
+  function qsPergDeN(r) {
+    if (!qsCfgPergN) {
+      qsCfgPergN = {};
+      ((load().questPerguntas) || []).forEach(function (q) {
+        if (q && q.sigla) qsCfgPergN[String(q.sigla).toLowerCase()] = q;
+        if (q && q.texto) qsCfgPergN[String(q.texto).toLowerCase()] = q;
+      });
+    }
+    return qsCfgPergN[String(r.sigla || "").toLowerCase()] || qsCfgPergN[String(r.pergunta || "").toLowerCase()] || null;
+  }
   function qsValorN(r) {
+    var q = qsPergDeN(r);
     var v = parseFloat(String(r.resposta == null ? "" : r.resposta).replace(",", "."));
-    if (isFinite(v)) return { v: v, max: v <= 10 ? 10 : Math.ceil(v) };
-    if (r.pontos != null && isFinite(+r.pontos)) return { v: +r.pontos, max: 10 };
+    if (isFinite(v)) return { v: v, min: 0, max: (q && q.tipo === "linear") ? 10 : (v <= 10 ? 10 : Math.ceil(v)) };
+    if (r.pontos != null && isFinite(+r.pontos)) {
+      var ps = (q && Array.isArray(q.ops) ? q.ops : []).map(function (o) { return +o.p; }).filter(function (x) { return isFinite(x); });
+      if (ps.length) return { v: +r.pontos, min: Math.min.apply(null, ps), max: Math.max.apply(null, ps) };
+      return { v: +r.pontos, min: -2, max: 2 };
+    }
     return null;
   }
+  function qsMenosN(r) {
+    if (r.menos != null) return !!r.menos;
+    var q = qsPergDeN(r);
+    return !!(q && q.menosMelhor);
+  }
+  function qsRuimN(r, n) {
+    var frac = (n.v - (n.min || 0)) / ((n.max - (n.min || 0)) || 1);
+    return qsMenosN(r) ? frac >= 0.6 : frac <= 0.35;
+  }
+  window.__qsValorN = qsValorN; window.__qsRuimN = qsRuimN; // testes
   function qsAlertaN(reg) {
     var motivos = [];
     if (reg.nota != null && reg.nota <= 2) motivos.push("Check-in " + reg.nota + " de 5");
@@ -4107,8 +4137,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var n = qsValorN(r);
       if (!n) return;
       var rot = String(r.pergunta || r.sigla || "").slice(0, 24);
-      if (r.menos && n.v >= n.max * 0.6) motivos.push(rot + ": " + n.v);
-      else if (!r.menos && n.v <= n.max * 0.35) motivos.push(rot + ": " + n.v);
+      if (qsRuimN(r, n)) motivos.push(rot + ": " + (String(r.resposta || "").trim() && !isFinite(parseFloat(r.resposta)) ? String(r.resposta).slice(0, 14) : n.v));
     });
     return motivos;
   }
@@ -4124,7 +4153,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     (reg.respostas || []).forEach(function (r) {
       var n = qsValorN(r);
       if (!n) return;
-      tiles.push({ k: String(r.pergunta || r.sigla || "").slice(0, 22), v: n.v, max: n.max, ruim: r.menos ? n.v >= n.max * 0.6 : n.v <= n.max * 0.35 });
+      tiles.push({ k: String(r.pergunta || r.sigla || "").slice(0, 22), v: n.v, max: n.max, ruim: qsRuimN(r, n) });
     });
     var livres = (reg.respostas || []).filter(function (r) { return !qsValorN(r) && String(r.resposta || "").trim(); });
     det.innerHTML = '<div style="border-top:1px solid var(--linha);padding-top:12px;">' +
