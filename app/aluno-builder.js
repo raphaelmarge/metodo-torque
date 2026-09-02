@@ -1798,8 +1798,14 @@
       "var parF=fpar9('frente');if(!parF[0]&&fs.length){parF=[fs[0]||null,fs.length>1?fs[fs.length-1]:null];}" +
       "var parL=fpar9('lado'),parC=fpar9('costas');" +
       "var pri=parF[0],ult=parF[1];" +
-      // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
-      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
+      /* celular novo/limpo: sem NENHUM registro local não devolve nada (senão
+       * apagaria o histórico que já está na nuvem). v743: a lista é a MESMA
+       * do Sv — antes só as chaves antigas destravavam, e o Termo aceito, a
+       * presença confirmada, o depoimento, a indicação e a corrida de quem
+       * ainda não tinha pesado nem marcado treino nunca chegavam ao painel. */
+      "var DEV_KS=['ptpeso','ptdc','ptfeitos','pthab','ptrpe','ptonb','ptwodres','ptcardio','ptfc','ptidade','ptfotoperfil','ptaceite','ptnotas','ptdepo','ptindicas','ptconf'];" +
+      "var temAlgo=fs.length>0||DEV_KS.some(function(k9){var v9=L(k9,null);if(v9===null||v9===undefined||v9==='')return false;if(typeof v9==='object')return Object.keys(v9).length>0;return true;});" +
+      "if(!temAlgo)return;" +
       /* FOTO SÓ QUANDO MUDA (v611). Este devolve dispara a cada peso, carga,
        * treino marcado, hábito, corrida ou batimento — e num treino de verdade
        * as anotações estão minutos umas das outras, então a folga de 1,8 s não
@@ -3708,7 +3714,15 @@
       "if(cr.lastPos&&cr.run&&dK<0.15)cr.km+=dK;" +
       "if(dK>0.004){cr.lastMove=Date.now();" +
       "if(cr.autoP){cr.autoP=false;cr.run=true;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';bip(880,110);}}" +
-      "cr.lastPos=pt;if(cr.run){cr.rota.push({lat:pt.lat,lng:pt.lng});if(cr.rota.length>600)cr.rota.shift();" +
+      /* v743: o teto de 600 pontos descartava o COMEÇO — a ~1 fix/s, toda
+       * corrida acima de 10 min chegava ao fim só com o último terço no mapa,
+       * na arte e no 3D. Agora só entra ponto que andou ≥ 5 m do último
+       * guardado (o GPS parado gera dezenas de pontos no mesmo lugar) e, se
+       * mesmo assim passar de 12.000, a lista é afinada pela metade — o
+       * trajeto inteiro fica, com menos resolução. */
+      "cr.lastPos=pt;if(cr.run){var ur9=cr.rota.length?cr.rota[cr.rota.length-1]:null;" +
+      "if(!ur9||havKm(ur9,pt)>=0.005){cr.rota.push({lat:pt.lat,lng:pt.lng});" +
+      "if(cr.rota.length>12000)cr.rota=cr.rota.filter(function(_,i9){return i9%2===0;});}" +
       "cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();}" +
       "try{desenhaRota();}catch(e){}pintaCr();" +
       "},function(err){if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').textContent='Ligar GPS';}" +
@@ -3945,7 +3959,11 @@
       "crEl('crFullFecha').addEventListener('click',fechaCrFull);" +
       "crEl('crMapa').addEventListener('click',function(){abreCrFull(1);});" +
       "crEl('crGoF').addEventListener('click',function(){crEl('crGo').click();espelhaCr();});" +
-      "crEl('crFimF').addEventListener('click',function(){crEl('crFim').click();fechaCrFull();});" +
+      /* v743: o clique em crFim abre a tela de RESUMO dentro do #crFull
+       * (crResumo → cr.resumo=true); fechar o #crFull em seguida escondia o
+       * resumo e deixava cr.resumo preso em true — o espelho da tela cheia
+       * parava pro resto da sessão. Só fecha quando NÃO abriu resumo. */
+      "crEl('crFimF').addEventListener('click',function(){crEl('crFim').click();if(!cr.resumo)fechaCrFull();});" +
       "crEl('crGpsF').addEventListener('click',function(){crEl('crGps').click();espelhaCr();});" +
       "crEl('crCfgBtnF').addEventListener('click',function(){fechaCrFull();crEl('crCfgBtn').click();crEl('crCfgBox').scrollIntoView({block:'center'});});" +
       "crEl('crMetaBtnF').addEventListener('click',function(){fechaCrFull();crEl('crMetaBtn').click();crEl('crMetaBox').scrollIntoView({block:'center'});});" +
@@ -4056,7 +4074,7 @@
       // acabou de subir no treino passado: deixa consolidar antes de subir de novo
       "if(l.length>=2&&+l[l.length-2].kg<kg)return 0;" +
       "return Math.round((kg+gPasso(kg))*100)/100;}" +
-      "window.__gSugere=gSugereKg;" +
+      "window.__gw=GW;window.__gSugere=gSugereKg;" +
       "function grecorde(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(+x.kg>m)m=+x.kg;});return m;}" +
       // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
@@ -4300,9 +4318,14 @@
       // ---------- régua deslizante (carga e repetições) ----------
       // Um traço por passo; o do meio é o valor escolhido. Arrastar percorre
       // dezenas de quilos de uma vez, que é o que os botões + e − não davam.
-      "var GW={kg:{min:0,max:300,p:1,px:18},rep:{min:0,max:60,p:1,px:18}};" +
+      /* v743: passo de 0,5 kg — a régua de 1 em 1 reescrevia 22,5 como 23
+       * (inclusive a carga que o PRÓPRIO app sugere, que anda de 2,5). E o
+       * scroll programático (abrir o formulário, aceitar a sugestão) também
+       * disparava 'scroll', sobrescrevendo o campo e marcando gv.mexe —
+       * por isso o avanço automático depois de anotar nunca acontecia. */
+      "var GW={kg:{min:0,max:300,p:.5,px:18,lab:10},rep:{min:0,max:60,p:1,px:18}};" +
       "function gRegua(id,cfg,val){var h='',n=Math.round((cfg.max-cfg.min)/cfg.p);" +
-      "for(var i=0;i<=n;i++){var v=Math.round((cfg.min+i*cfg.p)*100)/100;var f=(i%5===0);" +
+      "for(var i=0;i<=n;i++){var v=Math.round((cfg.min+i*cfg.p)*100)/100;var f=(i%(cfg.lab||5)===0);" +
       "h+=\"<i style='width:\"+cfg.px+\"px' data-v='\"+v+\"'\"+(f?\" class='f'\":'')+'>'+(f?'<b>'+gnum(v)+'</b>':'')+'</i>';}" +
       "return \"<div class='gwrail'><div class='gwheel' id='\"+id+\"' aria-hidden='true'>\"+h+\"</div><span class='gwmk'></span></div>\";}" +
       "function gIdx(cfg,v){return Math.max(0,Math.min(Math.round((cfg.max-cfg.min)/cfg.p),Math.round(((+v||0)-cfg.min)/cfg.p)));}" +
@@ -4314,8 +4337,9 @@
       "rd.addEventListener('pointerdown',function(){gv.mexe=true;});" +
       "campo.addEventListener('focus',function(){gv.mexe=true;});" +
       "function poe(v,semRolar){var s=formata(v);if(campo.value!==s){campo.value=s;gv.sujo=true;}" +
-      "if(!semRolar)rd.scrollLeft=gIdx(cfg,v)*cfg.px;}" +
-      "rd.addEventListener('scroll',function(){if(t)clearTimeout(t);" +
+      "if(!semRolar){rd._progPx=gIdx(cfg,v)*cfg.px;rd.scrollLeft=rd._progPx;}}" +
+      // scroll que parou exatamente onde o CÓDIGO mandou é programático: não é o aluno
+      "rd.addEventListener('scroll',function(){if(rd._progPx!=null&&Math.abs(rd.scrollLeft-rd._progPx)<1)return;if(t)clearTimeout(t);" +
       "gv.mexe=true;t=setTimeout(function(){var i=Math.round(rd.scrollLeft/cfg.px);" +
       "var v=Math.round((cfg.min+i*cfg.p)*100)/100;if(v===ultimo)return;ultimo=v;" +
       "poe(v,true);if(navigator.vibrate)navigator.vibrate(6);},60);});" +
@@ -4342,10 +4366,10 @@
       // a régua nasce no valor de hoje (última carga daquele exercício): no caso
       // comum o aluno repete a carga e não precisa arrastar nada
       "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
-      "if(a)a.scrollLeft=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;" +
-      "if(b)b.scrollLeft=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;});" +
+      "if(a){a._progPx=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;a.scrollLeft=a._progPx;}" +
+      "if(b){b._progPx=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;b.scrollLeft=b._progPx;}});" +
       "var bs9=gEl('gSug');if(bs9)bs9.onclick=function(){kg.value=gnum(+bs9.dataset.kg);gv.sujo=true;" +
-      "var a9=gEl('gWKg');if(a9)a9.scrollLeft=gIdx(GW.kg,+bs9.dataset.kg)*GW.kg.px;" +
+      "var a9=gEl('gWKg');if(a9){a9._progPx=gIdx(GW.kg,+bs9.dataset.kg)*GW.kg.px;a9.scrollLeft=a9._progPx;}" +
       "bs9.textContent='Vamos nessa! \u2713';bs9.classList.add('on');if(navigator.vibrate)navigator.vibrate(40);};" +
       "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
       "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
@@ -4386,6 +4410,11 @@
       "marc+=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
       "var temC=gv.cargas[it.e]||(dcR[it.e]||[]).some(function(x){return x.d===hjR;});" +
       "if(temC)anot++;else faltam.push({i:i,e:it.e});});" +
+      /* v743: quem termina a ficha pelo player TREINOU — marca o dia. O
+       * 'Treinei hoje!' automático das séries exige TODAS as fichas (FEXS é a
+       * união de A+B+C), então com divisão o dia nunca era marcado: sem chip,
+       * sem XP, sem sequência, e o professor via menos treinos do que houve. */
+      "var fF9=L('ptfeitos',{});if(!fF9[hjR]&&f.it.length){fF9[hjR]=1;Sv('ptfeitos',fF9);try{pintaSemana();pintaConquistas();pintaCqTiles();}catch(e9){}}" +
       "var gec=gEl('gEstado');gec.style.display='none';" +
       "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
@@ -4848,7 +4877,13 @@
       "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
       "c.width=Math.round(img.width*esc2);c.height=Math.round(img.height*esc2);" +
       "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
-      "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68),tipo:ftTipo});if(fs.length>12)fs.shift();" +
+      /* v743: o teto era 12 no total, apagando a mais antiga sem olhar o
+       * ângulo — no 5º mês sumia justamente a foto de ANTES de frente. Agora o
+       * teto é 12 por ângulo e a PRIMEIRA de cada ângulo fica pra sempre:
+       * sai a segunda mais antiga. */
+      "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68),tipo:ftTipo});" +
+      "var mesmo9=[];fs.forEach(function(x9,i9){if((x9.tipo||'frente')===(ftTipo||'frente'))mesmo9.push(i9);});" +
+      "if(mesmo9.length>12)fs.splice(mesmo9[1],1);" +
       "try{Sv('ptfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
       "img.onerror=function(){alert('N\u00e3o consegui abrir esse arquivo — escolha uma foto.');};" +
       "img.src=rd.result;};rd.readAsDataURL(f);}" +

@@ -1766,12 +1766,46 @@ alter table public.chat_mensagens add column if not exists autor text not null d
 
 alter table public.app_aluno add column if not exists retorno jsonb;
 
+-- v743: união de LISTAS do retorno do app. Antes a mescla só unia objetos um
+-- nível abaixo da raiz e trocava qualquer array inteiro: um celular novo (ou
+-- um segundo aparelho) mandava cargas: {Supino: [1 registro]} e apagava os
+-- meses anteriores daquele exercício na nuvem; cardio, notas e indicas (arrays
+-- na raiz) iam do mesmo jeito. Regra: o app é dono dos DIAS que ele conhece
+-- (edição e mais de um registro no mesmo dia continuam valendo); os dias que
+-- só a nuvem tem ficam. Item sem data entra por igualdade, sem repetir.
+create or replace function public.app_lista_mescla(velho jsonb, novo jsonb)
+returns jsonb language plpgsql immutable set search_path = public as $$
+declare el jsonb; saida jsonb := '[]'::jsonb; dias_novos jsonb := '{}'::jsonb; dk text;
+begin
+  if velho is null or jsonb_typeof(velho) <> 'array' then return novo; end if;
+  if novo  is null or jsonb_typeof(novo)  <> 'array' then return velho; end if;
+  for el in select * from jsonb_array_elements(novo) loop
+    if jsonb_typeof(el) = 'object' and (el->>'d') is not null then
+      dias_novos := dias_novos || jsonb_build_object(el->>'d', true);
+    end if;
+  end loop;
+  for el in select * from jsonb_array_elements(velho) loop
+    dk := case when jsonb_typeof(el) = 'object' then el->>'d' else null end;
+    if dk is null then
+      if not (novo @> jsonb_build_array(el)) then saida := saida || jsonb_build_array(el); end if;
+    elsif not (dias_novos ? dk) then
+      saida := saida || jsonb_build_array(el);
+    end if;
+  end loop;
+  saida := saida || novo;
+  -- em ordem de data (o que não tem data vai pro fim), como o app guarda
+  select coalesce(jsonb_agg(e order by (e->>'d') nulls last), '[]'::jsonb) into saida
+    from jsonb_array_elements(saida) e;
+  return saida;
+end $$;
+
 -- Mescla o retorno do app pra NUNCA apagar histórico. O app manda o estado LOCAL
 -- inteiro; num celular recém-instalado esse estado vem quase vazio, e o antigo
 -- "retorno = p_dados" (substituição) zerava meses de treinos, pesos e fotos na
--- nuvem com um único toque. Regra por chave: objeto vira UNIÃO (o histórico por
--- data só cresce, nunca some), e valor vazio (null/{}/[]/"") não sobrescreve o
--- que já existe. Chave nova ou com valor de verdade entra normalmente.
+-- nuvem com um único toque. Regra por chave: objeto vira UNIÃO em qualquer
+-- profundidade (v743 — antes só um nível), lista vira app_lista_mescla, e valor
+-- vazio (null/{}/[]/"") não sobrescreve o que já existe. Chave nova ou com valor
+-- de verdade entra normalmente.
 create or replace function public.app_retorno_mescla(velho jsonb, novo jsonb)
 returns jsonb language plpgsql immutable set search_path = public as $$
 declare k text; vv jsonb; nv jsonb; saida jsonb;
@@ -1788,9 +1822,11 @@ begin
        or (jsonb_typeof(nv) = 'string' and nv = '""'::jsonb) then
       continue; -- mantém saida->k (= velho->k)
     end if;
-    -- dois objetos: união (as datas de treino/peso só entram, nunca saem)
     if jsonb_typeof(nv) = 'object' and vv is not null and jsonb_typeof(vv) = 'object' then
-      saida := jsonb_set(saida, array[k], vv || nv);
+      -- dois objetos: união recursiva (cargas → exercício → lista de registros)
+      saida := jsonb_set(saida, array[k], public.app_retorno_mescla(vv, nv));
+    elsif jsonb_typeof(nv) = 'array' and vv is not null and jsonb_typeof(vv) = 'array' then
+      saida := jsonb_set(saida, array[k], public.app_lista_mescla(vv, nv));
     else
       saida := jsonb_set(saida, array[k], nv);
     end if;
