@@ -2385,6 +2385,19 @@ async function abaPt(p, a) {
     ok(/app_chat"\)\.select\("de,texto,criado,lida"\)[^;]*ascending: false[^;]*limit\(80\)/.test(htmlChat) &&
       /app_chat"\)\.select\("token,de,lida,texto,criado"\)[^;]*ascending: false/.test(htmlChat),
       "💬 v742: o chat busca as mensagens mais NOVAS (order desc) na conversa e na lista");
+
+    /* ---- v743: app do aluno — retorno do aluno novo, corrida e treino guiado (lido no builder servido) ---- */
+    const bld = await p.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    ok(/DEV_KS=\['ptpeso'[^\]]*'ptconf'\]/.test(bld) && /if\(!temAlgo\)return;/.test(bld),
+      "📤 v743: a trava do 'celular limpo' olha TODAS as chaves do retorno (termo, presença, depoimento, corrida…)");
+    ok(/crFim'\)\.click\(\);if\(!cr\.resumo\)fechaCrFull\(\);/.test(bld), "🏃 v743: Terminei! da tela cheia não esconde o resumo da corrida");
+    ok(/havKm\(ur9,pt\)>=0\.005/.test(bld) && /cr\.rota\.length>12000/.test(bld) && !/cr\.rota\.length>600\)cr\.rota\.shift/.test(bld),
+      "🗺️ v743: o trajeto guarda a corrida INTEIRA (afinado por distância), não os últimos 600 pontos");
+    ok(/var fF9=L\('ptfeitos',\{\}\);if\(!fF9\[hjR\]&&f\.it\.length\)\{fF9\[hjR\]=1;Sv\('ptfeitos',fF9\)/.test(bld),
+      "✅ v743: terminar a ficha pelo player marca o dia (com ABC o automático nunca disparava)");
+    ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)return;/.test(bld),
+      "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
+    ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
@@ -4748,7 +4761,7 @@ async function abaPt(p, a) {
   ok(!/animbtn|animbox|ANIMD|Ver como faz/.test(appHtml), "o app sai sem nenhum resto da demonstração de bonequinho");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(!/dcExs/.test(appHtml), "o diário manual de cargas saiu da aba Treino (a leitura mora na Evolução)");
-  ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
+  ok(/var DEV_KS=\[/.test(appHtml) && /if\(!temAlgo\)return;/.test(appHtml),
     "app num celular novo (sem registro local) NÃO devolve dados vazios pra nuvem");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
   ok(/>Descanso 100s</.test(appHtml) && /data-s='100'/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
@@ -9178,7 +9191,11 @@ async function abaPt(p, a) {
       window.__roda = async (id, valor) => {
         const rd = document.getElementById(id);
         const px = rd.querySelector("i").offsetWidth;
-        rd.scrollLeft = valor * px;
+        // v743: a régua de kg anda de 0,5 — acha o traço pelo valor gravado nele
+        const ticks = Array.from(rd.querySelectorAll("i"));
+        let idx = ticks.findIndex((t) => +t.dataset.v === valor);
+        if (idx < 0) idx = valor;
+        rd.scrollLeft = idx * px;
         rd.dispatchEvent(new Event("scroll"));
         await new Promise((r) => setTimeout(r, 150));
       };

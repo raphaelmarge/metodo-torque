@@ -1276,6 +1276,28 @@ a soma como o app; Nutri (`qsValorN`/`qsRuimN`) igual. Ganchos:
 `window.__donosClique`, `__valorCobranca`, `__diaDoPlano`, `__emailAcessoHtml`,
 `__tiraFotosDoRetorno`, `__qsValor`, `__qsRuim`, `__qsValorN`, `__qsRuimN`.
 
+**Revisão — frentes 5 e 14 (mt-v743, app do aluno)**: (1) a trava do
+"celular limpo" do `devolveApp` passou a olhar a MESMA lista de chaves do `Sv`
+(`DEV_KS`): antes só as chaves antigas destravavam e Termo aceito, presença
+confirmada, depoimento, indicação e corrida de quem ainda não tinha pesado
+nunca chegavam ao painel. (2) **`app_retorno_mescla` recursiva** + nova
+`app_lista_mescla` no SQL (aplicadas no banco em 2026-09-02 e espelhadas no
+setup): objeto une em qualquer profundidade; LISTA une por DIA — o app é dono
+dos dias que ele conhece (edição e mais de um registro no dia valem), os dias
+que só a nuvem tem ficam, item sem `d` entra por igualdade. Antes um celular
+novo mandava `cargas: {Supino: [1 registro]}` e apagava meses do exercício na
+nuvem. (3) corrida: `crFimF` só fecha a tela cheia quando NÃO abriu o resumo
+(`cr.resumo` ficava preso em true e o espelho parava); o trajeto guarda a
+corrida inteira — ponto só entra a ≥ 5 m do anterior (`havKm`) e acima de
+12.000 a lista é afinada pela metade (era `shift` a partir de 600 = só os
+últimos 10 min). (4) guiado: `gConclui` marca `ptfeitos` do dia (o automático
+das séries exige TODAS as fichas em `FEXS`, então com ABC nunca disparava);
+régua de carga em **0,5 kg** (`GW.kg.p`, rótulo a cada 10 traços) e o scroll
+PROGRAMÁTICO (`rd._prog`, 500 ms) não reescreve o campo nem marca `gv.mexe`
+— era isso que arredondava 22,5 → 23 e matava o avanço automático. (5) fotos
+de progresso: teto de 12 **por ângulo**, e a primeira de cada ângulo (o
+"antes") nunca sai — sai a segunda mais antiga. Ganchos: `window.__gw`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
