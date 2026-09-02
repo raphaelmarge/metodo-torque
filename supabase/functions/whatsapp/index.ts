@@ -86,7 +86,7 @@ async function credencialDe(userId: string): Promise<{ token: string; phoneId: s
   if (!url || !key || !userId) return null;
   const heads = { apikey: key, Authorization: "Bearer " + key };
   try {
-    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + userId, { headers: heads });
+    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&order=criado.asc&limit=1&user_id=eq." + userId, { headers: heads });
     const membros = rm.ok ? await rm.json() : [];
     const aid = membros?.[0]?.academia_id;
     if (!aid) return null;

@@ -96,12 +96,24 @@
     });
   }
   window.__nuvemTemMais = nuvemTemMais; window.__sincronizavel = sincronizavel; // testes
-  function registraLog(key, antes, depois) {
+  /* v747: quantos registros cada chave tinha na ÚLTIMA gravação/aplicação —
+   * o logGeral precisa do "antes" pra dizer "incluído (3 → 4)", e até aqui o
+   * write() fazia JSON.parse do valor ANTERIOR inteiro (o ptStudio tem MBs)
+   * só pra contar. A memória vale enquanto a chave não muda por fora: a
+   * puxada da nuvem e o evento storage de outra aba apagam a entrada, e aí
+   * a próxima gravação volta a contar do localStorage uma vez. */
+  var contagem = {};
+  function contagemDe(chaveFull) {
+    if (Object.prototype.hasOwnProperty.call(contagem, chaveFull)) return contagem[chaveFull];
+    var v = null;
+    try { var raw = localStorage.getItem(chaveFull); v = raw ? JSON.parse(raw) : null; } catch (e) { v = null; }
+    return contaRegistros(v);
+  }
+  function registraLog(key, na, nd) {
     if (SEM_LOG[key] || window.__MT_IMPORTANDO) return;
     try {
       var por = "";
       try { por = (JSON.parse(localStorage.getItem(PREFIX + "perfil")) || {}).nome || ""; } catch (e) {}
-      var na = contaRegistros(antes), nd = contaRegistros(depois);
       var resumo = na == null || nd == null ? "atualizado" :
         na === nd ? na + " registro(s) — editado" :
         nd > na ? "incluído (" + na + " → " + nd + ")" : "excluído (" + na + " → " + nd + ")";
@@ -113,10 +125,17 @@
     } catch (e) {}
   }
 
-  var AUD_IGNORA = { auditoria: 1, config: 0 };
-  function auditoria(chave) {
+  /* v747: a trilha "quem mexeu em quê" agora VIAJA. Antes ela era gravada
+   * com o prefixo (mtapp:auditoria) mas marcada e agendada SEM ele — e
+   * sincronizavel("auditoria") é falso, então nada subia e o mtsync:ts ganhava
+   * uma entrada lixo. Cada aparelho tinha a própria trilha, justamente na tela
+   * que existe pra responder "quem apagou isso". Durante a restauração de um
+   * backup ela fica calada: ~60 chaves no mesmo minuto virariam ~60 registros
+   * iguais; o importBackup grava UM registro "backup restaurado" no fim. */
+  function auditoria(chave, forca) {
     try {
       if (chave === "auditoria") return;
+      if (window.__MT_IMPORTANDO && !forca) return;
       var quem = (sync.email || (JSON.parse(localStorage.getItem("mtapp:perfil") || "{}").nome) || "aparelho local");
       var log = read("auditoria", { registros: [] });
       var ult = log.registros[log.registros.length - 1];
@@ -127,14 +146,16 @@
       log.registros.push({ q: quando, k: chave, quem: quem });
       if (log.registros.length > 800) log.registros = log.registros.slice(-800);
       try { localStorage.setItem(PREFIX + "auditoria", JSON.stringify(log)); } catch (e) {}
-      marcaTs("auditoria");
-      agendaEnvio("auditoria");
+      contagem[PREFIX + "auditoria"] = log.registros.length;
+      marcaTs(PREFIX + "auditoria");
+      agendaEnvio(PREFIX + "auditoria");
     } catch (e) {}
   }
 
+  /* v747: devolve true quando gravou e false quando a cota estourou — assim
+   * quem chama pode reagir (o alert de 10 em 10 min continua). */
   function write(key, value) {
-    var antes;
-    try { var raw = localStorage.getItem(PREFIX + key); antes = raw ? JSON.parse(raw) : null; } catch (e) { antes = null; }
+    var na = contagemDe(PREFIX + key);
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(value));
     } catch (e) {
@@ -149,12 +170,16 @@
         write._avisouEm = agoraQ;
         alert("⚠️ A memória do navegador encheu e este dado NÃO foi salvo (" + key + ").\n\nApague fotos/avaliações antigas ou entre na sua conta da nuvem pra liberar espaço — até lá, nada do que você fizer fica guardado.");
       }
-      return;
+      return false;
     }
-    registraLog(key, antes, value);
+    var nd = contaRegistros(value);
+    contagem[PREFIX + key] = nd;
+    registraLog(key, na, nd);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
-    ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });    auditoria(key);
+    ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
+    auditoria(key);
+    return true;
   }
 
   function uid() {
@@ -293,11 +318,29 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno", "auditoria", "feriados", "videoteca", "metasNegocio", "treinoDestaques", "riscoHist", "ptStudio", "ptImagens", "hqLeads", "hqConfig", "desafios", "ntStudio", "tvAvisos"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno", "auditoria", "feriados", "videoteca", "metasNegocio", "treinoDestaques", "riscoHist", "ptStudio", "ptImagens", "hqLeads", "hqConfig", "desafios", "ntStudio", "tvAvisos",
+    // v747: gravadas com S.write mas esquecidas da lista — restaurar num aparelho
+    // novo voltava a matrícula online sem Pix e o copiloto sem histórico
+    "matriculaOnline", "copiloto"];
+  var DOC_PREFIX = "mtpf:"; // respostas dos documentos preenchíveis (docs/preenchivel.js)
 
   function exportBackup() {
-    var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
+    var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString(),
+      // dito no próprio arquivo, pra ninguém descobrir só na hora de restaurar
+      aviso: "As fotos guardadas no IndexedDB (avaliações/progresso) NÃO vão neste arquivo." };
     BACKUP_KEYS.forEach(function (k) { data[k] = read(k, null); });
+    // v747: os documentos preenchidos (mtpf:<slug>) vão juntos, num mapa só
+    var docs = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var kd = localStorage.key(i);
+        if (kd && kd.indexOf(DOC_PREFIX) === 0) {
+          try { docs[kd.slice(DOC_PREFIX.length)] = JSON.parse(localStorage.getItem(kd)); }
+          catch (e) { docs[kd.slice(DOC_PREFIX.length)] = localStorage.getItem(kd); }
+        }
+      }
+    } catch (e) {}
+    data._preenchiveis = docs;
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -311,8 +354,21 @@
       var data = JSON.parse(txt);
       if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do TORQUE ON");
       window.__MT_IMPORTANDO = true;
-      try { BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); }); }
+      try {
+        BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); });
+        var docs = data._preenchiveis;
+        if (docs && typeof docs === "object") {
+          Object.keys(docs).forEach(function (slug) {
+            try {
+              localStorage.setItem(DOC_PREFIX + slug, JSON.stringify(docs[slug]));
+              marcaTs(DOC_PREFIX + slug); agendaEnvio(DOC_PREFIX + slug);
+            } catch (e) {}
+          });
+        }
+      }
       finally { window.__MT_IMPORTANDO = false; }
+      // um registro só na trilha, em vez de sessenta iguais no mesmo minuto
+      auditoria("backup restaurado (" + (data.exportado || "").slice(0, 10) + ")", true);
     });
   }
 
@@ -358,12 +414,21 @@
    * aparelho da conta, sem saída; preferências de tela idem. */
   var SYNC_IGNORA = { "mtapp:perfil": 1, "mtapp:academia": 1, "mtapp:ptDemo": 1, "mtapp:ptDemoNuvem": 1,
     "mtapp:seeded": 1, "mtapp:ptSemConta": 1, "mtapp:ntSemConta": 1, "mtapp:tema": 1,
-    "mtapp:ptMenuFino": 1, "mtapp:ptAgVis": 1 };
+    "mtapp:ptMenuFino": 1, "mtapp:ptAgVis": 1,
+    /* v747: mais coisa que é DESTE aparelho e o varredor da 1ª puxada subia
+     * mesmo assim (qualquer mtapp: que a nuvem não tivesse): a marca de
+     * intenção do login (access.js), quem está no caixa (checklist), o
+     * fechamento já visto, o espelho da assinatura e o logGeral — que é
+     * histórico local por desenho (SEM_LOG) e ninguém marca com ts. */
+    "mtapp:intento": 1, "mtapp:quem": 1, "mtapp:fechVisto": 1, "mtapp:logGeral": 1,
+    "mtapp:ptAssinatura": 1, "mtapp:ptAssinaturaVista": 1 };
   var TSKEY = "mtsync:ts";
 
   function tsMap() {
     try { return JSON.parse(localStorage.getItem(TSKEY)) || {}; } catch (e) { return {}; }
   }
+  // carimbo vindo do Postgres termina em fuso (+00:00); o local, em "Z"
+  function carimboDaNuvem(ts) { return /[+-]\d\d:?\d\d$/.test(String(ts || "")); }
   function marcaTs(chaveFull, quando) {
     var m = tsMap();
     m[chaveFull] = quando || new Date().toISOString();
@@ -408,11 +473,24 @@
       try { valor = raw == null ? null : JSON.parse(raw); } catch (e) { valor = raw; }
       return { academia_id: sync.aid, chave: k, valor: valor, atualizado: m[k] || new Date().toISOString() };
     });
-    sync.client.from("dados").upsert(linhas).then(function (r) {
+    /* v747: pede de volta o carimbo que o SERVIDOR pôs (o gatilho dados_carimba
+     * ignora o do cliente e carimba a chegada). Sem isso o eco do próprio
+     * envio voltava "mais novo" na puxada seguinte, era reaplicado (conteúdo
+     * igual) e disparava os ouvintes — o painel inteiro repintava 30 s depois
+     * de qualquer salvamento, ou ao voltar do WhatsApp. Com o carimbo do
+     * servidor guardado, o eco compara igual e nem entra no branch. O .select
+     * só é encadeado quando existe: os mocks de teste devolvem só a promessa. */
+    var q = sync.client.from("dados").upsert(linhas);
+    if (q && typeof q.select === "function") { try { q = q.select("chave,atualizado"); } catch (e) {} }
+    q.then(function (r) {
       if (r.error) {
         // devolve à fila para tentar de novo no próximo ciclo
         chaves.forEach(function (k) { sync.sujas[k] = true; });
       } else {
+        (Array.isArray(r.data) ? r.data : []).forEach(function (row) {
+          // só se a chave não foi escrita DE NOVO enquanto o envio viajava
+          if (row && row.chave && row.atualizado && !sync.sujas[row.chave]) marcaTs(row.chave, row.atualizado);
+        });
         avisaStatus();
       }
     }, function () {
@@ -446,9 +524,17 @@
         if (!local || row.atualizado > local) {
           sync.aplicando = true;
           try {
-            localStorage.setItem(row.chave, JSON.stringify(row.valor));
+            var novoRaw = JSON.stringify(row.valor);
+            var igual = localStorage.getItem(row.chave) === novoRaw;
+            /* v747: o carimbo da nuvem entra ANTES do setItem — é ele que a
+             * OUTRA aba lê no evento storage pra saber que isso veio da nuvem
+             * e não deve subir de volta (sync.aplicando é por janela). */
             marcaTs(row.chave, row.atualizado);
-            mudou.push(row.chave);
+            if (!igual) {
+              localStorage.setItem(row.chave, novoRaw);
+              delete contagem[row.chave];
+              mudou.push(row.chave); // conteúdo igual não acorda ninguém
+            }
           } catch (e) {}
           sync.aplicando = false;
         } else if (row.atualizado < local) {
@@ -476,8 +562,9 @@
               // v745: antes de a nuvem vencer uma escrita local MAIS NOVA, guarda a
               // cópia local — trabalho offline nunca some sem rastro
               try { localStorage.setItem("mtsync:bak:" + row.chave, JSON.stringify({ em: new Date().toISOString(), valor: JSON.parse(localStorage.getItem(row.chave)) })); } catch (eB) {}
-              localStorage.setItem(row.chave, JSON.stringify(row.valor));
               marcaTs(row.chave, row.atualizado);
+              localStorage.setItem(row.chave, JSON.stringify(row.valor));
+              delete contagem[row.chave];
               mudou.push(row.chave);
             } catch (e) {}
             sync.aplicando = false;
@@ -569,10 +656,18 @@
       puxa();
       // aplica alterações vindas de iframes/outras abas deste aparelho
       window.addEventListener("storage", function (e) {
-        if (e.key && sincronizavel(e.key) && !sync.aplicando) {
-          marcaTs(e.key);
-          agendaEnvio(e.key);
-        }
+        if (!e.key || !sincronizavel(e.key)) return;
+        delete contagem[e.key];
+        if (sync.aplicando) return;
+        /* v747: a outra aba acabou de APLICAR uma linha da nuvem (o carimbo dela
+         * já está no mtsync:ts, gravado antes do setItem). Antes esta aba via o
+         * evento, marcava "agora" e subia de volta um conteúdo que ninguém
+         * daqui escreveu — upload inteiro da chave a cada mudança remota e,
+         * se o outro aparelho escreveu de novo nesse meio tempo, o eco atrasado
+         * ganhava do valor mais novo. */
+        if (carimboDaNuvem(tsMap()[e.key])) return;
+        marcaTs(e.key);
+        agendaEnvio(e.key);
       });
       // só a janela principal fica puxando da nuvem (evita tráfego repetido)
       if (window === window.top) {
@@ -708,7 +803,8 @@
   // gancho de teste: a regra que decide quem vence quando aparelho e nuvem
   // discordam é a que evita perder a base de alunos — precisa ser testável
   window.__MTSync = { listasDe: listasDe, nuvemTemMais: nuvemTemMais,
-    enviaSujas: enviaSujas, _estado: sync }; // _estado/enviaSujas: só pros testes
+    enviaSujas: enviaSujas, puxa: puxa, _estado: sync, // _estado/enviaSujas/puxa: só pros testes
+    carimboDaNuvem: carimboDaNuvem, contagemDe: contagemDe, auditoria: auditoria };
   window.MTStore = {
     baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
@@ -783,20 +879,10 @@
   else document.addEventListener("DOMContentLoaded", aplicaLogo);
   onChange(function (key) { if (key === "logo") aplicaLogo(); });
 
-  // ---------- atualização automática do app ----------
-  // Quando uma versão nova é publicada, o service worker novo assume e a
-  // página recarrega UMA vez sozinha — sem precisar "recarregar 2 vezes".
-  try {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then(function (reg) { if (reg.update) reg.update(); }).catch(function () {});
-      if (navigator.serviceWorker.controller) {
-        var jaRecarregou = false;
-        navigator.serviceWorker.addEventListener("controllerchange", function () {
-          if (jaRecarregou) return;
-          jaRecarregou = true;
-          location.reload();
-        });
-      }
-    }
-  } catch (e) {}
+  /* v747: a atualização automática do service worker SAIU daqui. Ela vive no
+   * assets/pwa-update.js (páginas de produto) e no assets/app.js (portal) —
+   * este arquivo era o terceiro lugar com o mesmo bloco, e o painel carregava
+   * dois deles: dois listeners de controllerchange, dois reload(). Os programas
+   * em iframe (apps/*.html) não precisam: quando a página de cima recarrega,
+   * eles vêm junto. */
 })();

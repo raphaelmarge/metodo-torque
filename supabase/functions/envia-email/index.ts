@@ -64,7 +64,8 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
 
-  if (!(await usuarioValidado(req))) {
+  const uid = await usuarioValidado(req);
+  if (!uid) {
     return json({ erro: "Entre na sua conta do TORQUE ON para usar esta função (a chave pública não basta)." }, 401);
   }
 
@@ -79,13 +80,31 @@ Deno.serve(async (req: Request) => {
   const de = Deno.env.get("EMAIL_DE") || "TORQUE ON <onboarding@resend.dev>";
 
   if (body.acao === "ping") {
-    return json({ ok: true, chaveConfigurada: !!chave, remetente: de });
+    return json({ ok: true, chaveConfigurada: !!chave, remetente: de, regras: ["membro"] });
   }
   if (!chave) {
     return json({ erro: "Configure RESEND_API_KEY nos Secrets da função (resend.com → API Keys)." }, 500);
   }
 
   if (body.acao === "enviar") {
+    /* v747: só quem é MEMBRO de alguma academia envia. Criar conta é grátis e
+     * sem cartão, e esta função aceitava assunto e HTML livres pra qualquer
+     * destinatário saindo de nao-responda@torqueon.com.br — um relay aberto em
+     * nome da marca, que queimaria a reputação do remetente no Resend (e o
+     * e-mail de senha do aluno, o uso real, cairia em spam pra todo mundo).
+     * O teto por dia e o molde no servidor ficam pra uma próxima volta. */
+    try {
+      const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+      const rm = await fetch((Deno.env.get("SUPABASE_URL") || "") + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + encodeURIComponent(uid), {
+        headers: { apikey: svc, Authorization: "Bearer " + svc },
+      });
+      const membros = rm.ok ? await rm.json() : [];
+      if (!Array.isArray(membros) || !membros.length) {
+        return json({ erro: "Sua conta ainda não faz parte de uma academia/studio — termine o cadastro antes de enviar e-mails." }, 403);
+      }
+    } catch {
+      return json({ erro: "Não deu pra confirmar sua academia agora — tente de novo." }, 502);
+    }
     const para = String(body.para || "").trim().toLowerCase();
     const assunto = String(body.assunto || "").trim();
     const html = String(body.html || "").trim();

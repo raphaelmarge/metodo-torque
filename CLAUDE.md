@@ -1385,6 +1385,48 @@ some quando zera; sino sem ruído (só pagamento com `eventoId`, treinos numa
 linha por aluno); importador tira o +55 e o CPF; `letraFicha` nos chips e no
 `alFicha`; `vaiMontarTreino()` único pra ficha/lista/Resolver.
 
+**Revisão — infra, funções e SQL (mt-v748, 43 itens)**: (1) `apps/store.js` —
+a trilha de auditoria era marcada SEM o prefixo `mtapp:` e nunca subia; o
+eco do próprio salvamento voltava "mais novo" e repintava o painel (agora o
+`upsert().select()` devolve o carimbo do servidor e conteúdo igual não acorda
+ninguém); a outra aba subia de volta o que veio da nuvem (o carimbo entra
+ANTES do `setItem` e o listener de `storage` reconhece `+00:00`); `write()`
+devolve `false` na cota estourada; `SYNC_IGNORA` ganhou intento/quem/
+fechVisto/logGeral/ptAssinatura; o bloco de atualização do SW saiu do store e
+vive em `pwa-update.js`/`app.js`, que só recarregam com a página ociosa.
+(2) `sw.js` faz o precache com `no-cache` (304 pelo ETag) e **preserva as
+caches `mt-app-*`** do app do aluno; `app/app-sw.js` tem `var VERSION`
+cravada — **a versão agora mora em TRÊS arquivos** (`assets/versao.js`,
+`sw.js`, `app/app-sw.js`) e `test-versao` confere os três. (3) Edge
+Functions, as 11 republicadas em 2026-09-02 (envia-email v10, assinatura-loja
+v2, suporte v2, whatsapp v9, pagamentos-webhook v10, pagarme v8, pagamentos
+v11, regua-diaria v4, push-envia v13, meta-webhook v10, chat-envia v16):
+régua obedece `config.reguaOff` (regra `regua-off`); envia-email exige
+MEMBRO (era relay aberto em nome da marca; regra `membro`); `respostaIA`
+repassa o erro REAL da Anthropic (429 não vira "confira o secret"; regra
+`erro-ia`); o prompt leva o nome da academia (nunca mais "TORQUE FIT" pra
+todo mundo; `nome-academia`); `membros?limit=1` sempre `order=criado.asc`
+(`membro-ordenado`); meta-webhook no fuso BR, mensagem gravada ANTES da
+conversa (dedupe por `mid`), criação sem corrida (`on_conflict` +
+merge-duplicates), número próprio sem App Secret só grava e esgotar as
+voltas de ferramenta passa a conversa pra equipe de verdade (GET
+`?acao=ping` devolve as regras); pagamentos reusa o cliente Asaas por CPF,
+religa o webhook interrompido e recusa loja sem aluno no blob; pagarme
+normaliza as ações com hífen; assinatura-loja com guarda de ordem
+(`academias.assinatura_evento_em`); suporte com tipo validado, protocolo na
+data do Brasil e e-mail conferido. (4) SQL aplicado no banco como migração
+`v748_infra_revisao` e espelhado no setup: `hoje_br()`; `app_aluno_agenda`
+lê `mtapp:grade` (com `grade` nunca achava e todo aluno travava em 3);
+check-in/avaliação/pedido de horário no fuso BR; `app_quest_responde` pela
+porta única (`app_aluno_ativo`); RPCs de config com `order by criado limit 1`;
+revogar e faxina apagam `push_subs`; `hq_cliente_set` grava
+`academias.assinatura_status` (uma verdade só pra "está pagando");
+`app_aluno_pedido` recalcula o total pelo catálogo; matrícula sem `?a=` só
+com UMA config no banco; reações amarradas à academia do post; helpers
+internos sem EXECUTE público. Suíte nova: `tests/test-infra.js` (46
+asserts). ⚠️ Antes de republicar uma função, CONFIRA o que está no ar
+(`get_edge_function`) contra o repo — desta vez as 11 batiam.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

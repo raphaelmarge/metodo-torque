@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
   try { corpo = await req.json(); } catch { /* vazio */ }
 
   if (corpo.acao === "ping") {
-    return json({ ok: true, vapid: !!(pub && priv), acoes: ["ping", "para", "aviso", "aulas_hoje", "prof"], regras: ["prof-membro"] });
+    return json({ ok: true, vapid: !!(pub && priv), acoes: ["ping", "para", "aviso", "aulas_hoje", "prof"], regras: ["prof-membro", "fuso-br", "marca"] });
   }
   /* Aviso pro PROFESSOR vindo dos GATILHOS do banco (aluno mandou mensagem,
    * pediu horário): o gatilho não tem crachá de usuário, então ele se
@@ -130,7 +130,7 @@ Deno.serve(async (req: Request) => {
   }
   if (!senhaProfOk && !(await chamadorConfiavel(req))) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
-  webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
+  webpush.setVapidDetails("mailto:suporte@torqueon.com.br", pub, priv);
 
   if (corpo.acao === "prof") {
     // só as inscrições do PROFESSOR daquela academia (token 'prof:…') — o
@@ -197,7 +197,9 @@ Deno.serve(async (req: Request) => {
   }
 
   if (corpo.acao === "aviso") {
-    const titulo = String(corpo.titulo || "TORQUE FIT").slice(0, 80);
+    // v747: sem título vale a marca do produto — "TORQUE FIT" é a academia do
+    // dono, e este aviso vai pra aluno de qualquer academia
+    const titulo = String(corpo.titulo || "TORQUE ON").slice(0, 80);
     const texto = String(corpo.corpo || "").slice(0, 200);
     if (!texto) return json({ erro: "corpo vazio" }, 400);
     for (const s of subs) if (await envia(s, titulo, texto)) enviados++;
@@ -205,7 +207,8 @@ Deno.serve(async (req: Request) => {
   }
 
   if (corpo.acao === "aulas_hoje") {
-    const hoje = new Date().toISOString().slice(0, 10);
+    // v747: "hoje" no fuso do Brasil (em UTC o dia vira às 21h de Brasília)
+    const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
     r = await sb(`app_agendamentos?select=token,aluno,aula_nome&data=eq.${hoje}&status=in.(pendente,confirmado)`);
     const ags = r.ok ? await r.json() : [];
     const porToken: Record<string, any[]> = {};

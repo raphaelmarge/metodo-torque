@@ -200,7 +200,10 @@ Deno.serve(async (req: Request) => {
   try {
     pg = await buscaNoGateway(cfg.provedor, cfg.chave, aviso.id);
   } catch {
-    // gateway fora do ar agora: devolve erro pro gateway RE-TENTAR depois
+    // gateway fora do ar agora: devolve erro pro gateway RE-TENTAR depois.
+    // ⚠️ No Asaas, respostas não-2xx repetidas INTERROMPEM a fila de webhooks
+    // da conta (interrupted=true) e ela só volta religando — por isso a função
+    // pagamentos confere e religa o webhook a cada link (v747).
     return json({ erro: "gateway indisponível, tente de novo" }, 500);
   }
   if (!pg || pg.__sumiu) return json({ ok: true, ignorado: true }); // id que não existe na conta

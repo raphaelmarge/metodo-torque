@@ -20,12 +20,29 @@
 
   // versão nova assumiu o controle? recarrega uma vez, pra página e scripts
   // ficarem do mesmo lote
+  /* v747: mas só quando a página está OCIOSA — sem campo de texto focado e
+   * sem envio pendente pra nuvem. Antes o reload vinha no meio de uma
+   * anamnese, e com pendência de sync o beforeunload do painel abria um
+   * "sair da página?" do nada. Fica tentando a cada 5 s até poder. */
+  function ocioso() {
+    try {
+      var a = document.activeElement;
+      if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox" && a.type !== "radio" && a.type !== "button") return false;
+      var st = window.__MTSync && window.__MTSync._estado;
+      if (st && st.sujas && Object.keys(st.sujas).length) return false;
+    } catch (e) {}
+    return true;
+  }
+  window.MT_PWA_OCIOSO = ocioso; // teste
   if (navigator.serviceWorker.controller) {
     var recarregou = false;
     navigator.serviceWorker.addEventListener("controllerchange", function () {
       if (recarregou) return;
       recarregou = true;
-      location.reload();
+      (function tenta() {
+        if (ocioso()) { location.reload(); return; }
+        setTimeout(tenta, 5000);
+      })();
     });
   }
 
