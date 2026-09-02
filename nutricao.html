@@ -23,7 +23,10 @@ window.MICO = {
   calendario: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
   maca: "<path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/>",
   pessoas: "<circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/>",
-  casa: "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>"
+  casa: "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>",
+  // o mesmo desenho do botão "Enviar acesso do app" do perfil — o JS repinta o
+  // botão com mi("envelope") e, sem esta entrada, o ícone sumia depois do 1º uso
+  envelope: "<rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/>"
 };
 window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width='" + (s || 15) + "' height='" + (s || 15) + "' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + (MICO[n] || "") + "</svg>"; };
 </script>
@@ -292,7 +295,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </div>
 
   <section id="vDashN">
-    <div class="kpis-nt" id="kpisN"></div>
     <div class="card" style="margin-bottom: 14px;" id="cardResolverN" hidden>
       <h2>Resolver hoje</h2>
       <p class="muted" style="margin: 2px 0 8px; font-size: 12.5px;">Só o que muda decisão hoje — cada linha com o botão que resolve.</p>
@@ -752,7 +754,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 0 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg> A cara do seu consultório</h3>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do paciente)
-          <input type="color" id="cfgCorN" value="var(--verde)" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #fff; cursor: pointer;"></label>
+          <input type="color" id="cfgCorN" value="#16a34a" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #fff; cursor: pointer;"></label>
         <button class="btn sec mini" id="cfgCorResetN">Voltar ao verde padrão</button>
         <img id="cfgLogoPrevN" alt="Logo do consultório" hidden style="height: 40px; border-radius: 8px; border: 1px solid var(--linha); background: #fff; padding: 2px;">
         <button class="btn sec mini" id="cfgLogoBtnN">Enviar logo</button>
@@ -802,7 +804,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     <div id="pnAcoes" hidden style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
       <button class="btn verde mini" id="pnAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
       <button class="btn sec mini" id="pnApp" title="publica o app na nuvem e manda o link pro paciente"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
-      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">Link de pagamento</button>
+      <button class="btn sec mini" id="pnPgLink" title="gera o link de cobrança da SUA plataforma (cartão, Pix ou boleto) pra mandar no WhatsApp — configure em Sua ilha → Receber dos pacientes">Link de pagamento</button>
       <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">Assinatura mensal</button>
       <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none; grid-column: 1 / -1;">WhatsApp</a>
       <p id="pnAcessoInfo" class="muted" style="font-size: 12px; margin: 0; grid-column: 1 / -1;"></p>
@@ -1000,12 +1002,18 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     return st.dietas[pid];
   }
 
+  // sexo do paciente num lugar só: o importador gravava "f" minúsculo e TODO o
+  // resto comparava com "F" — a paciente importada caía na fórmula masculina
+  // (+166 kcal de TMB) sem aviso. Vazio vale M em toda parte (era M na TMB e F
+  // no laudo, dois padrões pro mesmo campo em branco).
+  var FATOR_ATIV = { sed: 1.2, leve: 1.375, mod: 1.55, alto: 1.725 };
+  function sexoN(p) { return String((p || {}).sexo || "").toUpperCase() === "F" ? "F" : "M"; }
   // ---------- ciência: kcal alvo (Mifflin-St Jeor) ----------
   function kcalAlvo(p) {
-    var tmb = p.sexo === "F"
+    var tmb = sexoN(p) === "F"
       ? 10 * p.peso + 6.25 * p.altura - 5 * p.idade - 161
       : 10 * p.peso + 6.25 * p.altura - 5 * p.idade + 5;
-    var fator = { sed: 1.2, leve: 1.375, mod: 1.55, alto: 1.725 }[p.atividade] || 1.2;
+    var fator = FATOR_ATIV[p.atividade] || 1.2;
     var kcal = tmb * fator;
     if (p.objetivo === "emagrecer") kcal *= 0.8;
     if (p.objetivo === "ganhar") kcal *= 1.15;
@@ -1021,16 +1029,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     return { prot: prot, carb: carb, gord: gord };
   }
   function macrosDaDieta(st, dieta) {
-    var t = { prot: 0, carb: 0, gord: 0 };
+    var t = { prot: 0, carb: 0, gord: 0, incompletos: 0 };
     (dieta.refeicoes || []).forEach(function (r) {
       (r.itens || []).forEach(function (it) {
         var al = alimPorId(st, it.alimId);
         if (!al) return;
         var q = +it.qtd || 1;
+        if (al.semMacros) t.incompletos++; // receita sem carbo/gordura no banco
         t.prot += (al.prot || 0) * q; t.carb += (al.carb || 0) * q; t.gord += (al.gord || 0) * q;
       });
     });
-    return { prot: Math.round(t.prot), carb: Math.round(t.carb), gord: Math.round(t.gord) };
+    return { prot: Math.round(t.prot), carb: Math.round(t.carb), gord: Math.round(t.gord), incompletos: t.incompletos };
   }
 
   // ---------- dieta automática (motor de regras + banco de alimentos) ----------
@@ -1135,9 +1144,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       ic: "<path d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zM4.5 20a7.5 7.5 0 0 1 15 0'/>",
       subs: [
         { t: "Cadastrar um paciente", p: [
-          "Vá em <b>Pacientes → + Novo paciente</b>.",
-          "Preencha nome e WhatsApp — o resto pode vir depois.",
-          "Toque no paciente pra abrir a ficha e complete a anamnese com calma."] },
+          "Vá em <b>Pacientes</b> e preencha o card <b>Novo paciente</b>.",
+          "Nome, idade, peso e altura são obrigatórios — é o que calcula o alvo calórico. Tem uma lista pronta? Use <b>Importar lista</b> e complete depois.",
+          "Toque em <b>+ Adicionar</b> e depois no nome dele pra abrir a ficha e completar a anamnese com calma."] },
         { t: "Entrar na sua conta (nuvem)", p: [
           "Abra <b>Sua ilha</b> no menu.",
           "Crie a conta ou entre com seu e-mail.",
@@ -1146,8 +1155,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       ic: "<path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/>",
       subs: [
         { t: "Montar uma dieta", p: [
-          "Em <b>Dietas</b>, escolha o paciente e toque em <b>+ Nova dieta</b>.",
-          "Adicione as refeições e busque os alimentos — a tabela já tem os principais do Brasil.",
+          "Em <b>Dietas</b>, escolha o paciente e toque em <b>Gerar dieta automática</b> — ou monte na mão com <b>+ Refeição</b>.",
+          "Dentro de cada refeição, busque os alimentos — a tabela já tem os principais do Brasil.",
           "As calorias e os macros somam sozinhos enquanto você monta."] },
         { t: "Gerar com IA", p: [
           "Na dieta, toque em <b>Gerar com IA</b> — ela monta a partir da anamnese.",
@@ -1169,7 +1178,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       ic: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
       subs: [
         { t: "Passo a passo", p: [
-          "Na <b>Agenda</b>, toque num horário livre pra marcar a consulta.",
+          "Na <b>Agenda</b>, abra a sub-aba <b>Marcar</b>: paciente, data e hora → <b>+ Marcar</b>. O calendário de Consultas mostra o dia que você tocar.",
           "Consulta que aconteceu: toque nela e marque <b>Feita</b>.",
           "Paciente pode pedir horário pelo app — o pedido chega com destaque pra você confirmar."] }] },
     { id: "fin", t: "Financeiro", d: "Receber, cobrar e o resumo do mês",
@@ -1183,7 +1192,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       ic: "<circle cx='12' cy='12' r='3.2'/><path d='M19 12a7 7 0 0 1-.1 1.2l2 1.6-2 3.4-2.4-1a7 7 0 0 1-2 1.2L14 21h-4l-.5-2.6a7 7 0 0 1-2-1.2l-2.4 1-2-3.4 2-1.6A7 7 0 0 1 5 12a7 7 0 0 1 .1-1.2l-2-1.6 2-3.4 2.4 1a7 7 0 0 1 2-1.2L10 3h4l.5 2.6a7 7 0 0 1 2 1.2l2.4-1 2 3.4-2 1.6A7 7 0 0 1 19 12z'/>",
       subs: [
         { t: "Passo a passo", p: [
-          "<b>Sua ilha</b> guarda a conta, o modo claro/escuro e o WhatsApp do consultório.",
+          "<b>Sua ilha</b> guarda a conta, a cara do app (cor e logo), o Pix e o WhatsApp do consultório. O <b>Modo claro</b> fica no pé do menu.",
           "Seus dados são seus: dá pra baixar tudo quando quiser.",
           "Mudou algo que aparece no app do paciente? Republique pra valer no celular dele."] }] },
   ];
@@ -1351,7 +1360,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
    * paciente que fechou pacote (ou faz retorno a cada 2-3 meses) recebia
    * cobrança automática todo mês e aparecia em vermelho. */
   function cobraMensalN(p) {
-    return !!p && p.ativo !== false && p.pagto !== "plano" && !p.assinaturaRec && !p.assinaturaAs;
+    if (!p || p.ativo === false || p.pagto === "plano") return false;
+    // quem paga no cartão automático (assinatura) sai da régua — a cobrança mora
+    // no gateway. Cartão RECUSADO volta pra conta: aí o mês está em aberto de verdade.
+    return !((p.assinaturaRec || p.assinaturaAs) && !p.cartaoFalhouEm);
   }
   window.__cobraMensalN = cobraMensalN; // testes
   function pagouMesN(st, pid, mes) {
@@ -1359,14 +1371,31 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return x.pacienteId === pid && String(x.data || "").slice(0, 7) === mes;
     });
   }
+  // última consulta que ACONTECEU: quem faltou não conta como atendido (a mesma
+  // regra do card do dia e do renderDashN). Serve a régua Sumindo E o Radar —
+  // antes o Radar repetia o filtro sem olhar c.faltou, e o paciente que faltou
+  // nas últimas 3 consultas nunca aparecia como sumido.
+  function ultimaConsultaN(st, p, hoje) {
+    return (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje && !c.faltou; })
+      .map(function (c) { return c.data; }).sort().pop() || "";
+  }
+  // atrasado = ativo, cobra mensal, sem pagamento no mês E o mês já chegou no dia
+  // de cobrança. É UMA régua pra lista de Pacientes, o bloco vermelho do
+  // Financeiro, o Resolver hoje e os lembretes do app — antes a lista marcava
+  // "sem pagamento" em âmbar pra todo mundo desde o dia 1 (a mesma divergência
+  // que o Personal consertou na v615: "22 de 24 DEVENDO ao lado de Pago dia 5").
+  function pacAtrasadoN(st, p, hoje) {
+    hoje = hoje || S.todayISO();
+    if (p.ativo === false || !cobraMensalN(p)) return false;
+    if (+hoje.slice(8, 10) < diaCobraN(st)) return false;
+    return !pagouMesN(st, p.id, hoje.slice(0, 7));
+  }
   // quantos dias o paciente está sumido: -1 = tem consulta futura marcada
   // (não está sumido). A MESMA régua vale pro filtro da lista e pro Radar.
   function diasSumidoN(st, p, hoje) {
     var temFutura = (st.consultas || []).some(function (c) { return c.pacienteId === p.id && c.data > hoje; });
     if (temFutura) return -1;
-    var minhas = (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje; })
-      .map(function (c) { return c.data; }).sort();
-    var ult = minhas[minhas.length - 1] || "";
+    var ult = ultimaConsultaN(st, p, hoje);
     return ult ? Math.round((new Date(hoje + "T12:00") - new Date(ult + "T12:00")) / 864e5)
       : (p.desde ? Math.round((new Date(hoje + "T12:00") - new Date(p.desde + "T12:00")) / 864e5) : 999);
   }
@@ -1377,8 +1406,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var mesAtual = S.todayISO().slice(0, 7);
     var temDietaDe = function (p) { var d = st.dietas[p.id]; return !!(d && (d.refeicoes || []).length); };
     var nSemDieta = ativos.filter(function (p) { return !temDietaDe(p); }).length;
-    var nDevendo = ativos.filter(function (p) { return cobraMensalN(p) && !pagouMesN(st, p.id, mesAtual); }).length;
     var hojeF = S.todayISO();
+    var nDevendo = ativos.filter(function (p) { return pacAtrasadoN(st, p, hojeF); }).length;
     var nSumindo = ativos.filter(function (p) { return diasSumidoN(st, p, hojeF) >= 30; }).length;
     var nEncerrados = st.pacientes.filter(function (p) { return p.ativo === false; }).length;
     // o contador fica no próprio botão — o nutri vê o tamanho do problema sem clicar
@@ -1391,7 +1420,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var base = pacFiltro === "encerrados" ? st.pacientes.filter(function (p) { return p.ativo === false; }) : ativos;
     var lista = base.filter(function (p) {
       if (pacFiltro === "semdieta") return !temDietaDe(p);
-      if (pacFiltro === "devendo") return cobraMensalN(p) && !pagouMesN(st, p.id, mesAtual);
+      if (pacFiltro === "devendo") return pacAtrasadoN(st, p, hojeF);
       if (pacFiltro === "sumindo") return diasSumidoN(st, p, hojeF) >= 30;
       return true;
     });
@@ -1401,22 +1430,34 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var temDieta = d && (d.refeicoes || []).length;
       var pagou = pagouMesN(st, p.id, mesAtual);
       var alvo = kcalAlvo(p);
+      var enc = p.ativo === false;
+      // o chip do dinheiro conta a MESMA história do Financeiro: âmbar só depois
+      // do dia de cobrança; antes disso é "vence dia N", sem alarme; assinatura
+      // no cartão é "cartão automático"; encerrado diz quando saiu
+      var chipPg = enc ? '<span class="tagn" title="paciente encerrado">encerrado' + (p.fim ? " em " + S.fmtData(p.fim) : "") + "</span>"
+        : pagou ? '<span class="tagn" title="mensalidade deste mês recebida">pago no mês</span>'
+        : !cobraMensalN(p) ? '<span class="tagn" title="assinatura no cartão — a cobrança é automática">cartão automático</span>'
+        : pacAtrasadoN(st, p, hojeF) ? '<span class="tagn ambar" title="passou do dia ' + diaCobraN(st) + ' e ainda não recebeu deste mês">sem pagamento</span>'
+        : '<span class="tagn" title="ainda não recebeu deste mês — cobra dia ' + diaCobraN(st) + '">vence dia ' + diaCobraN(st) + "</span>";
       // linha limpa: nome (toque abre o perfil) + situação + menu retrátil com as ações
       return '<div class="pac" style="flex-wrap:wrap;"><b data-perfil="' + p.id + '" role="button" tabindex="0" style="font-size:15px;cursor:pointer;" title="abrir o perfil">' + esc(p.nome) + "</b>" +
         '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
         (p.objetivo === "emagrecer" ? "emagrecer" : p.objetivo === "ganhar" ? "ganhar" : "manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + (p.peso && p.altura && p.idade ? p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal" : "complete o cadastro no perfil") + "</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
-        (pagou ? '<span class="tagn" title="mensalidade deste mês recebida">pago no mês</span>'
-          : '<span class="tagn ambar" title="ainda não recebeu deste mês">sem pagamento</span>') +
-        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>' : "") +
+        chipPg +
+        // "app ✓" vale pros DOIS caminhos: login por e-mail (acessoEm) e link pelo WhatsApp (appPubEmN)
+        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>'
+          : p.appPubEmN ? '<span class="tagn" title="app publicado pelo link (sem login por e-mail)">app ✓</span>' : "") +
         '<button class="btn sec mini" data-mais="' + p.id + '" aria-label="mais ações de ' + esc(p.nome) + '" title="mais ações" style="margin-left:auto;padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
         '<div data-acoes="' + p.id + '" hidden style="width:100%;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:8px;border-top:1px dashed var(--linha,#2a3a2e);">' +
         '<button class="btn verde mini" data-perfil="' + p.id + '">Perfil</button>' +
-        '<button class="btn verde mini" data-app="' + p.id + '">Publicar app</button>' +
-        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
-        (p.acessoEm ? "" : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
-        '<button class="btn sec mini" data-rm="' + p.id + '" style="margin-left:auto;">Encerrar</button></div></div>';
+        // encerrado: só Perfil e Reativar — "Encerrar" de novo e "Publicar app" não fazem sentido aqui
+        (enc ? '<button class="btn verde mini" data-reativa="' + p.id + '" title="volta pra lista de ativos">Reativar</button>'
+          : '<button class="btn verde mini" data-app="' + p.id + '">Publicar app</button>' +
+          (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
+          (p.acessoEm ? "" : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
+          '<button class="btn sec mini" data-rm="' + p.id + '" style="margin-left:auto;">Encerrar</button>') + "</div></div>";
     }).join("") + (lista.length > corte.length
       ? '<button class="btn sec mini" id="pacMais" style="margin-top:10px;">Ver mais 60 (mostrando ' + corte.length + " de " + lista.length + ")</button>"
       : "")
@@ -1493,7 +1534,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var r = impParseN($("impTextoN").value, st);
     if (!r.novos.length) return;
     r.novos.forEach(function (n) {
-      st.pacientes.push({ id: S.uid(), nome: n.nome, zap: n.zap, email: n.email, sexo: "f",
+      st.pacientes.push({ id: S.uid(), nome: n.nome, zap: n.zap, email: n.email, sexo: "F",
         idade: 0, peso: 0, altura: 0, atividade: "leve", objetivo: "manter", restricoes: "",
         ativo: true, desde: S.todayISO(), appTokenN: S.uid() + S.uid() });
     });
@@ -1519,6 +1560,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       criaAcessoPaciente(novo.id, function (r) { $("pAcessoStatus").innerHTML = msgAcessoN(r, novo); });
     }
   });
+  // o nome tem role="button" e tabindex: Enter/Espaço têm de abrir o perfil como o clique
+  $("listaPacientes").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var el = e.target && e.target.closest && e.target.closest("[data-perfil][role='button']");
+    if (!el) return;
+    e.preventDefault();
+    abrePerfilN(el.getAttribute("data-perfil"));
+  });
   $("listaPacientes").addEventListener("click", function (e) {
     if (e.target && e.target.id === "pacMais") { paMostra += 60; renderPacientes(load()); return; }
     // menu retrátil ⋮: abre as ações do paciente (e fecha o dos outros)
@@ -1531,6 +1580,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return;
     }
     var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
+    var rv = e.target.getAttribute && e.target.getAttribute("data-reativa");
+    if (rv) { reativaPacienteN(rv); return; }
     var ap = e.target.getAttribute && e.target.getAttribute("data-app");
     var pf = e.target.getAttribute && e.target.getAttribute("data-perfil");
     var ac = e.target.getAttribute && e.target.getAttribute("data-acesso");
@@ -1551,22 +1602,73 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       });
       return;
     }
-    if (rm && confirm("Encerrar este paciente? O histórico fica guardado.")) {
+    if (rm && confirm("Encerrar este paciente? O histórico fica guardado e dá pra reativar.")) {
       var st = load();
       var p = st.pacientes.find(function (x) { return x.id === rm; });
       if (p) { p.ativo = false; p.fim = S.todayISO(); }
       save(st);
+      // encerrar só marcava aqui — o app e o chat do paciente continuavam vivos
+      // na nuvem. Mesmo desenho do Personal (v475): decide na hora, que é quando
+      // a nutricionista lembra do assunto. Sem nuvem nem pergunta (não daria pra cortar).
+      if (p && p.appTokenN && S.cloud && S.cloud() &&
+          confirm("Tirar também o acesso ao app dele?\n\nO app para de abrir e o chat some do celular. O histórico continua aqui com você.")) {
+        revogaAcessoPacienteN(p.id, function (r) { if (r.erro) alert("Não deu pra cortar o acesso: " + r.erro); });
+      }
+      // encerrar NÃO cancela a assinatura no cartão (ela mora no gateway)
+      if (p && p.assinaturaRec) alert("Atenção: este paciente tem assinatura no cartão, e encerrar aqui NÃO cancela a cobrança.\n\nAbra o perfil dele → ✕ cancelar, senão o cartão continua sendo cobrado todo mês.");
     }
     if (ap) publicaApp(ap);
     if (pf) abrePerfilN(pf);
   });
+
+  // corta o acesso do app na nuvem (RPC aluno_revoga_acesso, a mesma do Personal):
+  // todas as RPCs do app passam a recusar o token. Não apaga a linha — dá pra religar.
+  function revogaAcessoPacienteN(pid, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (!p || !p.appTokenN) { cb({ erro: "Esse paciente ainda não tem app publicado." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) — sem a nuvem eu não consigo cortar o acesso." }); return; }
+    nuvem.client.rpc("aluno_revoga_acesso", { p_token: p.appTokenN, p_apagar: false }).then(function (r) {
+      var d = (r && r.data) || {};
+      if ((r && r.error) || d.erro) { cb({ erro: (r && r.error && r.error.message) || d.erro }); return; }
+      var st2 = load();
+      var p2 = st2.pacientes.find(function (x) { return x.id === pid; });
+      if (p2) { p2.appRevogadoEm = S.todayISO(); delete p2.appPubEmN; delete p2.appVerN; }
+      S.write("ntStudio", st2);
+      cb({ ok: true });
+    }, function () { cb({ erro: "Não consegui falar com a nuvem agora." }); });
+  }
+  // Reativar: o caminho de volta que não existia (encerrou por engano = recadastrar).
+  // Se o acesso foi cortado no encerramento, religa na nuvem e republica o pacote
+  // (a revogação zera ele) — senão o paciente reativado ficava sem app.
+  function reativaPacienteN(pid) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (!p) return;
+    p.ativo = true; delete p.fim;
+    save(st);
+    var nuvem = S.cloud && S.cloud();
+    if (p.appRevogadoEm && p.appTokenN && nuvem) {
+      nuvem.client.rpc("aluno_religa_acesso", { p_token: p.appTokenN }).then(function (r) {
+        var d = (r && r.data) || {};
+        if ((r && r.error) || d.erro) { alert("Reativei o paciente, mas não consegui religar o app: " + ((r && r.error && r.error.message) || d.erro)); return; }
+        var st2 = load();
+        var p2 = st2.pacientes.find(function (x) { return x.id === pid; });
+        if (p2) { delete p2.appRevogadoEm; S.write("ntStudio", st2); }
+        publicaApp(pid);
+      }, function () { alert("Reativei o paciente, mas a nuvem não respondeu — publique o app dele de novo quando tiver internet."); });
+    }
+  }
+  window.__encerraN = { revoga: revogaAcessoPacienteN, reativa: reativaPacienteN, sumido: diasSumidoN, atrasado: pacAtrasadoN, cobraMensal: cobraMensalN }; // testes
 
   // ---------- perfil completo do paciente ----------
   var perfilNId = null;
   // alvo do dia com os macros na frente (macrosAlvo já existia e não aparecia no perfil)
   function pintaAlvoN(p) {
     var alvo = kcalAlvo(p), m = macrosAlvo(p);
-    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal (" +
+    $("pnAlvo").textContent = "TMB (Mifflin, pelo cadastro) " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal (" +
       (p.objetivo === "emagrecer" ? "déficit" : p.objetivo === "ganhar" ? "superávit" : "manutenção") + ")" +
       " · P " + m.prot + " g · C " + m.carb + " g · G " + m.gord + " g";
   }
@@ -1603,41 +1705,25 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       }).join("")
       : "Nenhuma anotação ainda — escreva a conduta da consulta de hoje.";
   }
-  function abrePerfilN(id) {
-    var st = load();
-    var p = st.pacientes.find(function (x) { return x.id === id; });
-    if (!p) return;
-    perfilNId = id;
-    $("pnTitulo").textContent = p.nome;
-    $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
-    $("pnAcoes").hidden = true; // a gaveta ⚡ nasce fechada a cada perfil aberto
-    $("pnAcoesBtn").setAttribute("aria-expanded", "false");
-    $("pnNome").value = p.nome; $("pnZap").value = p.zap || ""; $("pnEmail").value = p.email || "";
-    $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
-    $("pnSexo").value = p.sexo === "F" ? "F" : "M";
-    $("pnPeso").value = p.peso || "";
-    $("pnAtiv").value = p.atividade || "sed";
-    $("pnObjetivo").value = p.objetivo || "manter"; $("pnPagto").value = p.pagto || "";
-    $("pnRestr").value = p.restricoes || "";
-    $("pnObs").value = p.obs || "";
-    $("pnSalvo").textContent = "";
-    pintaAlvoN(p);
-    pintaAnamneseN(p);
-    pintaDiarioN(id);
-    $("avnData").value = S.todayISO();
-    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa"].forEach(function (x) { $(x).value = ""; });
-    pintaAvalN(st, p);
-    // financeiro
+  var PAGTO_N = { pix: "Pix", dinheiro: "dinheiro", cartao: "cartão", plano: "plano/pacote" };
+  // só o bloco do dinheiro do perfil (recebido no ano, últimos pagamentos e a
+  // assinatura). Registrar pagamento/assinatura repinta ISTO — antes chamava
+  // abrePerfilN inteiro, que reescreve todos os inputs a partir do salvo e
+  // apagava a fita métrica e o cadastro que estavam sendo digitados.
+  function pintaFinPerfilN(st, p) {
+    var id = p.id;
     var pgs = (st.pagamentosN || []).filter(function (x) { return x.pacienteId === id; })
       .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
     var ano = S.todayISO().slice(0, 4);
     var totalAno = pgs.filter(function (x) { return (x.data || "").slice(0, 4) === ano; })
       .reduce(function (s, x) { return s + (+x.valor || 0); }, 0);
     var vPadrao = +((st.config || {}).pixValor) || 0;
-    $("pnPgValor").value = vPadrao || "";
+    if (document.activeElement !== $("pnPgValor")) $("pnPgValor").value = vPadrao || "";
     $("pnFin").innerHTML = (p.cartaoFalhouEm ? "<span style='color:#dc2626;font-weight:700;'>Cartão recusado em " + S.fmtData(p.cartaoFalhouEm) + " — fala com o paciente.</span><br>" : "") +
       "Recebido em " + ano + ": <b>R$ " + totalAno.toFixed(2).replace(".", ",") + "</b>" +
       (vPadrao ? " · consulta padrão R$ " + vPadrao.toFixed(2).replace(".", ",") : "") +
+      // o "Pagamento preferido" do cadastro era gravado e nunca lido — agora aparece onde se cobra
+      (PAGTO_N[p.pagto] ? " · prefere <b>" + PAGTO_N[p.pagto] + "</b>" : "") +
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Últimos: " + pgs.slice(0, 5).map(function (x) {
         return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") +
           ') <a href="#" data-recibo="' + x.id + '" style="color:var(--verde);">recibo</a>';
@@ -1654,6 +1740,36 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       $("pnAssinar").style.display = "";
       $("pnAssinaturaBox").innerHTML = "";
     }
+  }
+  function abrePerfilN(id) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === id; });
+    if (!p) return;
+    perfilNId = id;
+    $("pnTitulo").textContent = p.nome;
+    $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
+    $("pnAcoes").hidden = true; // a gaveta ⚡ nasce fechada a cada perfil aberto
+    $("pnAcoesBtn").setAttribute("aria-expanded", "false");
+    $("pnNome").value = p.nome; $("pnZap").value = p.zap || ""; $("pnEmail").value = p.email || "";
+    $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
+    $("pnSexo").value = sexoN(p);
+    $("pnPeso").value = p.peso || "";
+    $("pnAtiv").value = p.atividade || "sed";
+    $("pnObjetivo").value = p.objetivo || "manter"; $("pnPagto").value = p.pagto || "";
+    $("pnRestr").value = p.restricoes || "";
+    $("pnObs").value = p.obs || "";
+    $("pnSalvo").textContent = "";
+    // já tem login? o botão diz o que vai acontecer: senha NOVA (a de hoje para de valer)
+    $("pnAcesso").innerHTML = mi("envelope") + (p.acessoEm ? " Reenviar acesso (gera senha nova)" : " Enviar acesso do app");
+    pintaAlvoN(p);
+    pintaAnamneseN(p);
+    pintaDiarioN(id);
+    $("avnData").value = S.todayISO();
+    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa"].forEach(function (x) { $(x).value = ""; });
+    pintaAvalN(st, p);
+    // financeiro (função própria: registrar pagamento repinta só ela)
+    $("pnPgValor").value = "";
+    pintaFinPerfilN(st, p);
     // consultas
     var hoje = S.todayISO();
     var cs = (st.consultas || []).filter(function (c) { return c.pacienteId === id; })
@@ -1711,6 +1827,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
             (ret.refsTotal ? n2(ret.refsFeitas) + " de " + n2(ret.refsTotal) + " refeições da dieta" : "sem dieta no app") +
             " · água " + n2(ret.agua) + " de " + n2(ret.aguaMeta) + " ml</div>";
         }
+        // dias em que marcou "Segui o plano hoje" (o app devolve em feitos desde o conserto do ranking)
+        var fe = ret.feitos && typeof ret.feitos === "object" ? Object.keys(ret.feitos).length : 0;
+        if (fe) html += "<div><b>Dias no plano (\"Segui o plano hoje\"):</b> " + fe + "</div>";
         // recordatório: o que ele registrou fora da dieta
         var di = ret.diario || [];
         if (di.length) {
@@ -1763,8 +1882,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var circ = {};
     ["cintura", "quadril", "braco", "coxa"].forEach(function (k) { if (av[k]) circ[k] = av[k]; });
     var r = self.MT_CORPO.calcula({
-      sexo: p.sexo || "F", idade: +p.idade || null, altura: +p.altura || null,
+      sexo: sexoN(p), idade: +p.idade || null, altura: +p.altura || null,
       peso: av.peso || p.peso, gordura: av.gordura, circ: circ, bia: av.bia,
+      // o MESMO fator de atividade do cadastro (kcalAlvo): sem ele o motor caía
+      // no 1,55 fixo e o perfil mostrava dois "gasto do dia" diferentes
+      atividade: FATOR_ATIV[p.atividade] || 1.2,
     });
     return r && r.ok ? r : null;
   }
@@ -1804,7 +1926,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "var(--nt-erro)" : "var(--nt-ok)") +
       kpi("Massa magra", nm(l.massaMagra) + " kg") +
       kpi("Água", nm(l.agua) + " L") +
-      kpi("Basal", l.tmb + " kcal", "gasto/dia " + l.ingestao) +
+      kpi("Basal (pela composição)", l.tmb + " kcal", "gasto/dia " + l.ingestao + " · fator " + String(l.fatorAtividade).replace(".", ",")) +
       "</div>" +
       "<div class='linha-flex' style='margin-top:10px;'><button class='btn verde mini' id='avnLaudoAbrir'>📄 Laudo completo</button>" +
       "<span class='muted' style='font-size:12px;'>" + (l.estimado ? "valores estimados pelo % de gordura" : "valores medidos na bioimpedância") + " — abre pronto pra imprimir</span></div>";
@@ -1818,8 +1940,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var l = avalsDe(st, p.id);
     // o cabeçalho mostra o que a última avaliação diz do paciente hoje
     var ult = l[l.length - 1];
-    var imc = imcDe(ult ? ult.peso : p.peso, p.altura);
-    var rcq = ult ? rcqDe(ult.cintura, ult.quadril, p.sexo) : null;
+    var imc = imcDe((ult && ult.peso) || p.peso, p.altura); // avaliação só de fita não apaga o IMC
+    var rcq = ult ? rcqDe(ult.cintura, ult.quadril, sexoN(p)) : null;
     $("avnCalc").innerHTML = (imc != null ? "IMC <b>" + String(imc).replace(".", ",") + "</b> (" + classeImc(imc) + ")" : "") +
       (rcq ? " · RCQ <b>" + String(rcq.r).replace(".", ",") + "</b> <span style='color:" + (/alto/.test(rcq.risco) ? "var(--nt-erro)" : /moderado/.test(rcq.risco) ? "var(--nt-aten)" : "var(--nt-ok)") + ";'>" + rcq.risco + "</span>" : "") +
       (imc == null && !rcq ? "Registre a primeira avaliação pra ver IMC e relação cintura-quadril." : "");
@@ -1893,7 +2015,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     // sexo, peso e atividade entram na conta do alvo calórico — sem editar aqui,
     // um erro de digitação no cadastro ficava errado pra sempre
     p.sexo = $("pnSexo").value === "F" ? "F" : "M";
-    p.peso = +String($("pnPeso").value).replace(",", ".") || p.peso;
+    var pesoNovo = +String($("pnPeso").value).replace(",", ".") || 0;
+    if (pesoNovo && pesoNovo !== +p.peso) {
+      // peso mudado no cadastro vira pesagem de hoje: st.pesagens é a fonte única
+      // do gráfico — antes o "Atual" do gráfico e o da lista mostravam números diferentes
+      st.pesagens = st.pesagens || {};
+      var lp = (st.pesagens[p.id] || []).filter(function (x) { return x.d !== S.todayISO(); });
+      lp.push({ d: S.todayISO(), kg: pesoNovo });
+      if (lp.length > 60) lp.shift();
+      st.pesagens[p.id] = lp;
+      p.peso = pesoNovo;
+    }
     p.atividade = $("pnAtiv").value;
     p.objetivo = $("pnObjetivo").value;
     p.pagto = $("pnPagto").value;
@@ -1902,6 +2034,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     save(st);
     $("pnTitulo").textContent = p.nome;
     pintaAlvoN(p);
+    pintaPesoPerfilN(st, p);
     $("pnSalvo").textContent = "✓ salvo!";
     setTimeout(function () { $("pnSalvo").textContent = ""; }, 2000);
   });
@@ -1979,10 +2112,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (reg.peso) {
       st.pesagens = st.pesagens || {};
       var l = st.pesagens[perfilNId] || [];
+      // avaliação lançada com data ANTIGA entra no lugar certo da linha do tempo
+      // e só vira o peso do cadastro (o alvo calórico usa ele) se for a mais nova
+      var maisNova = l.reduce(function (m, x) { return x.d > m ? x.d : m; }, "");
       l.push({ d: reg.data, kg: reg.peso });
+      l.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
       if (l.length > 60) l.shift();
       st.pesagens[perfilNId] = l;
-      p.peso = reg.peso;
+      if (!maisNova || reg.data >= maisNova) p.peso = reg.peso;
     }
     S.write("ntStudio", st);
     ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa",
@@ -2172,13 +2309,24 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         r.data.forEach(function (ev) {
           var p = st.pacientes.find(function (x) { return x.assinaturaRec && x.assinaturaRec.id === ev.assinatura_id; });
           if (!p) return;
-          if (ev.tipo === "charge.paid" && !vistos[ev.id]) {
-            st.pagamentosN.push({ id: S.uid(), pacienteId: p.id, valor: (ev.valor_centavos || 0) / 100, data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id });
-            vistos[ev.id] = 1;
-            p.cartaoFalhouEm = "";
+          // marcador monotônico (o mesmo desenho do Personal, v532): guarda data+id
+          // do evento MAIS NOVO já aplicado. A leitura roda a cada 2 min sobre os
+          // mesmos 200 eventos; sem isso o "failed" antigo re-acendia a recusa de
+          // quem já tinha pago, porque o "paid" (já visto) não passava mais aqui.
+          var marca = String(ev.criado || "") + "|" + ev.id;
+          if (ev.tipo === "charge.paid") {
+            if (!vistos[ev.id]) {
+              st.pagamentosN.push({ id: S.uid(), pacienteId: p.id, valor: (ev.valor_centavos || 0) / 100, data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id });
+              vistos[ev.id] = 1;
+              mudou = true;
+            }
+            if (String(p.cartaoFalhouEvt || "") < marca) { p.cartaoFalhouEvt = marca; p.cartaoFalhouEm = ""; mudou = true; }
+          }
+          if (ev.tipo === "charge.payment_failed" && String(p.cartaoFalhouEvt || "") < marca) {
+            p.cartaoFalhouEvt = marca;
+            p.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO();
             mudou = true;
           }
-          if (ev.tipo === "charge.payment_failed") { p.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO(); mudou = true; }
         });
         if (mudou) S.write("ntStudio", st);
       });
@@ -2244,9 +2392,12 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var st = load();
       var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
       var msg = "Oi " + (p ? p.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a consulta (cartão, Pix ou boleto): " + r.link;
-      if (confirm("Link gerado! Mandar pro paciente no WhatsApp agora?")) {
-        window.open("https://wa.me/" + (p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
-      } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado!"); }
+      var zapL = p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "";
+      // sem WhatsApp no cadastro não tem pra quem abrir a conversa: vai direto pra copiar
+      if (zapL && confirm("Link gerado! Mandar pro paciente no WhatsApp agora?")) {
+        window.open("https://wa.me/" + zapL + "?text=" + encodeURIComponent(msg), "_blank");
+      } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado!" + (zapL ? "" : " O paciente não tem WhatsApp no cadastro — cole onde quiser.")); }
+      else prompt("Copie o link:", r.link);
     });
   });
 
@@ -2271,7 +2422,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         if (!p2) return;
         p2.assinaturaRec = { id: d.assinaturaId, desde: S.todayISO(), valor: v };
         S.write("ntStudio", st2);
-        abrePerfilN(perfilNId);
+        pintaFinPerfilN(st2, p2);
       },
     });
   });
@@ -2297,8 +2448,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         if (d && d.erro) { alert(d.erro); return; }
         var st2 = load();
         var p2 = st2.pacientes.find(function (x) { return x.id === perfilNId; });
-        if (p2) { delete p2.assinaturaRec; S.write("ntStudio", st2); }
-        abrePerfilN(perfilNId);
+        if (p2) { delete p2.assinaturaRec; S.write("ntStudio", st2); pintaFinPerfilN(st2, p2); }
       });
     }
   });
@@ -2311,6 +2461,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var cfg = st.config || {};
     var quem = cfg.nome || "Nutricionista";
     var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; } // a mesma guarda do laudo
     w.document.write("<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Recibo</title>" +
       "<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7;}" +
       "h2{border-bottom:2px solid #111;padding-bottom:8px;}button{padding:10px 16px;margin-top:24px;cursor:pointer;}" +
@@ -2323,6 +2474,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<button class='no-print' onclick='window.print()'>Imprimir / salvar em PDF</button></body></html>");
     w.document.close();
   }
+  window.__reciboN = abreReciboN; // testes
   $("pnFin").addEventListener("click", function (e) {
     var rc = e.target.getAttribute && e.target.getAttribute("data-recibo");
     if (rc) { e.preventDefault(); abreReciboN(rc); }
@@ -2334,7 +2486,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     st.pagamentosN = st.pagamentosN || [];
     st.pagamentosN.push({ id: S.uid(), pacienteId: perfilNId, valor: v, data: S.todayISO() });
     S.write("ntStudio", st);
-    abrePerfilN(perfilNId);
+    var pP = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (pP) pintaFinPerfilN(st, pP); // só o bloco do dinheiro — nada de reabrir o perfil por cima do que está sendo digitado
   });
   $("pnKgAdd").addEventListener("click", function () {
     var v = parseFloat(($("pnKg").value || "").replace(",", "."));
@@ -2349,7 +2502,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (p) p.peso = v; // o cadastro acompanha a pesagem mais recente
     S.write("ntStudio", st);
     $("pnKg").value = "";
-    abrePerfilN(perfilNId);
+    // repinta só o que o peso muda (gráfico, alvo, IMC e o campo do cadastro):
+    // reabrir o perfil apagava a fita métrica que estava sendo digitada ao lado
+    if (p) { $("pnPeso").value = v; pintaPesoPerfilN(st, p); pintaAlvoN(p); pintaAvalN(st, p); }
   });
   $("pnApp").addEventListener("click", function () {
     $("dlgPerfilN").close();
@@ -2457,7 +2612,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       (pct >= 90 && pct <= 110 ? " ✓" : " — ajuste as porções") +
       "<div style='font-weight:600;font-size:13px;margin-top:4px;'>Macros: 🥩 Proteína <b>" + mT.prot + " g</b> de " + mA.prot + " g (" + pctM(mT.prot, mA.prot) + "%) · " +
       "🍚 Carbo <b>" + mT.carb + " g</b> de " + mA.carb + " g (" + pctM(mT.carb, mA.carb) + "%) · " +
-      "🥑 Gordura <b>" + mT.gord + " g</b> de " + mA.gord + " g (" + pctM(mT.gord, mA.gord) + "%)</div>";
+      "🥑 Gordura <b>" + mT.gord + " g</b> de " + mA.gord + " g (" + pctM(mT.gord, mA.gord) + "%)</div>" +
+      (mT.incompletos ? "<div class='muted' style='font-size:12px;margin-top:3px;'>⚠️ " + mT.incompletos + " item(ns) de receita sem carbo e gordura no banco — o % de carbo e gordura acima está subestimado.</div>" : "");
   }
   // plano alimentar imprimível (o nutricionista imprime ou salva em PDF pra entregar)
   function montaPlanoPDF(pid) {
@@ -2611,6 +2767,45 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     alert("Dieta gerada com " + st.dietas[p.id].refeicoes.length + " refeições para " + kcalAlvo(p).alvo + " kcal.\n\n⚠️ Revise e ajuste — a decisão final é sempre do profissional.");
   });
   // ---------- 🥦 IA de dieta (a IA lê o perfil inteiro e monta o plano; o nutri revisa) ----------
+  // nome de alimento "solto": sem acento, sem pontuação, minúsculo — a IA devolve
+  // "ARROZ BRANCO COZIDO" ou "Agachamento búlgaro." e o painel descartava calado
+  function chaveAlimN(n) {
+    return String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function alimPorNomeSoltoN(st, nome) {
+    var k = chaveAlimN(nome);
+    if (!k) return null;
+    var achou = (st.alimentos || []).find(function (a) { return chaveAlimN(a.nome) === k; });
+    if (achou) return alimPorNome(st, achou.nome);
+    var c = CATALOGO.find(function (a) { return chaveAlimN(a.n) === k; });
+    return c ? alimPorNome(st, c.n) : null; // alimPorNome respeita a curadoria (catalogoOff)
+  }
+  window.__alimPorNomeSolto = function (n) { return alimPorNomeSoltoN(load(), n); }; // testes
+  // catálogo pra IA com o MESMO desenho do catalogoIA do Personal (v639): o teto
+  // por categoria cresce até encostar no orçamento de caracteres (a chat-envia
+  // aceita 60000 em dados) e, dentro de cada categoria, quem o nutricionista
+  // favoritou ou já usa na dieta DESTE paciente vai na frente. Antes eram os 40
+  // primeiros de cada categoria na ordem do arquivo — 639 de 1548 alimentos (41%),
+  // com a instrução "use somente estes nomes": pedir um item fora desses 40 era
+  // pedir uma coisa que a IA não sabia que existia. O banco inteiro (~73 KB) não
+  // cabe no teto — por isso a ordem dentro da categoria importa tanto quanto o teto.
+  function catalogoDietaIA(porCat, primeiro, orcamento) {
+    var peso = {};
+    primeiro.forEach(function (n, i) { var k = chaveAlimN(n); if (!peso[k]) peso[k] = i + 1; });
+    Object.keys(porCat).forEach(function (c) {
+      porCat[c].sort(function (x, y) { return (peso[chaveAlimN(x.n)] || 9999) - (peso[chaveAlimN(y.n)] || 9999); });
+    });
+    var monta = function (cap) {
+      return Object.keys(porCat).map(function (c) {
+        return c + ": " + porCat[c].slice(0, cap).map(function (x) { return x.t; }).join(" | ");
+      }).join("\n");
+    };
+    var cap = 40, txt = monta(cap);
+    [60, 80, 100, 130, 180, 250].forEach(function (c) { var t = monta(c); if (t.length <= orcamento) { cap = c; txt = t; } });
+    return { texto: txt, cap: cap };
+  }
+  window.__catalogoDietaIA = catalogoDietaIA; // testes
   function montaDadosDietaIA(st, p) {
     var alvo = kcalAlvo(p), mA = macrosAlvo(p);
     // catálogo agrupado por categoria (com porção e kcal) — a IA só pode usar estes nomes
@@ -2619,16 +2814,26 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     // cortado por tamanho, o corte come o fim do catálogo geral, nunca o que
     // ele cadastrou à mão
     (st.alimentos || []).forEach(function (a) {
-      (porCat["Meus alimentos"] = porCat["Meus alimentos"] || []).push(a.nome + " (" + a.porcao + ", " + a.kcal + " kcal)");
+      (porCat["Meus alimentos"] = porCat["Meus alimentos"] || []).push({ n: a.nome, t: a.nome + " (" + a.porcao + ", " + a.kcal + " kcal)" });
     });
     // só o que está ATIVO na curadoria — o que o nutricionista desmarcou não pode voltar pela IA
     CATALOGO.filter(function (a) { return !(st.catalogoOff || {})[a.n]; })
-      .forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
-    var catalogo = Object.keys(porCat).map(function (c) { return c + ": " + porCat[c].slice(0, 40).join(" | "); }).join("\n");
+      .forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push({ n: a.n, t: a.n + " (" + a.p + ", " + a.k + " kcal)" }); });
+    // quem vai na frente de cada categoria: favoritos e o que a dieta atual já usa
+    var jaUsa = [];
+    ((((st.dietas || {})[p.id]) || {}).refeicoes || []).forEach(function (r) {
+      (r.itens || []).forEach(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (al && al.nome && jaUsa.indexOf(al.nome) < 0) jaUsa.push(al.nome);
+      });
+    });
+    // o banco inteiro tem ~73 KB e a chat-envia aceita 60000 em dados: o teto
+    // sobe até caber (80 por categoria = 1153 alimentos, 74%), e quem importa vai na frente
+    var catalogo = catalogoDietaIA(porCat, (st.alFav || []).concat(jaUsa), 57000).texto;
     var OBJ = { emagrecer: "emagrecimento", ganhar: "ganho de massa", manter: "manutenção" };
     var ATIV = { sed: "sedentário", leve: "leve", mod: "moderado", alto: "alto" };
     return [
-      "PACIENTE: " + (p.nome || "?") + ", " + (p.idade || "?") + " anos, sexo " + (p.sexo === "F" ? "feminino" : "masculino"),
+      "PACIENTE: " + (p.nome || "?") + ", " + (p.idade || "?") + " anos, sexo " + (sexoN(p) === "F" ? "feminino" : "masculino"),
       "MEDIDAS: " + (p.peso || "?") + " kg, " + (p.altura || "?") + " cm | ATIVIDADE: " + (ATIV[p.atividade] || "?"),
       "OBJETIVO: " + (OBJ[p.objetivo] || p.objetivo || "?"),
       "ALVO DIÁRIO: " + alvo.alvo + " kcal (TMB " + alvo.tmb + ") | PROTEÍNA " + mA.prot + " g | CARBOIDRATO " + mA.carb + " g | GORDURA " + mA.gord + " g",
@@ -2700,13 +2905,16 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var plano = parsePlanoIA(d.texto);
       if (!plano || !(plano.refeicoes || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
       var st2 = load();
-      var refeicoes = [], total = 0, ignorados = 0;
+      var refeicoes = [], total = 0, ignorados = 0, naoAchados = [];
       plano.refeicoes.slice(0, 8).forEach(function (r) {
         var itens = [];
         (r.itens || []).slice(0, 12).forEach(function (it) {
-          // a IA só pode usar alimento que existe no banco — nada inventado
-          var al = alimPorNome(st2, String(it.nome || "").trim());
-          if (!al) { ignorados++; return; }
+          // a IA só pode usar alimento que existe no banco — nada inventado.
+          // Antes de descartar, tenta recuperar o nome sem acento/pontuação; o
+          // que sobrar vai PELO NOME pro aviso (mesmo conserto da v639 no Personal)
+          var nomeIA = String(it.nome || "").trim();
+          var al = alimPorNome(st2, nomeIA) || alimPorNomeSoltoN(st2, nomeIA);
+          if (!al) { ignorados++; if (nomeIA && naoAchados.indexOf(nomeIA) < 0) naoAchados.push(nomeIA); return; }
           itens.push({ alimId: al.id, qtd: Math.min(10, Math.max(0.25, Math.round((+it.qtd || 1) * 4) / 4)) });
           total++;
         });
@@ -2726,7 +2934,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         refeicoes: refeicoes, geradaAuto: true, geradaIA: true, geradaEm: S.todayISO(),
       };
       S.write("ntStudio", st2);
-      cb({ ok: true, refeicoes: refeicoes.length, itens: total, ignorados: ignorados,
+      cb({ ok: true, refeicoes: refeicoes.length, itens: total, ignorados: ignorados, ignoradosNomes: naoAchados,
         kcal: kcalDaDieta(st2, st2.dietas[pacId]), resumo: String(plano.resumo || "").slice(0, 400) });
     }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
   }
@@ -2743,7 +2951,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       $("dIA").disabled = false;
       if (r.erro) { $("dIAStatus").textContent = r.erro; return; }
       $("dIAStatus").textContent = r.refeicoes + " refeição(ões) com " + r.itens + " alimentos — " + r.kcal + " kcal no total." +
-        (r.resumo ? " " + r.resumo : "") + " ⚠️ Revise e ajuste: a decisão final é sempre sua.";
+        (r.resumo ? " " + r.resumo : "") +
+        (r.ignorados ? " ⚠️ " + r.ignorados + " item(ns) que a IA sugeriu não existem no banco e ficaram de fora: " +
+          (r.ignoradosNomes || []).slice(0, 6).join(", ") + "." : "") +
+        " Revise e ajuste: a decisão final é sempre sua.";
       renderDietas();
     });
   });
@@ -3040,7 +3251,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var r = RECEITAS.find(function (x) { return x.id === usa; });
       if (!r) return;
       var st = load();
-      st.alimentos.push({ id: S.uid(), nome: "Receita: " + r.n, porcao: "1 porção", kcal: r.k, prot: r.pt });
+      // o banco de receitas só tem kcal e proteína: o alimento nasce marcado como
+      // incompleto e o total da dieta AVISA, em vez de somar 0 g de carbo/gordura calado
+      st.alimentos.push({ id: S.uid(), nome: "Receita: " + r.n, porcao: "1 porção", kcal: r.k, prot: r.pt, semMacros: true });
       S.write("ntStudio", st);
       renderReceitas();
       alert('"' + r.n + '" entrou no seu banco de alimentos — já dá pra usar nas refeições da dieta.');
@@ -3150,11 +3363,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   $("cfgCorN").addEventListener("change", function () {
     var st = load();
     st.config.cor = corOk(this.value) || "";
+    marcaAppMudouN(st);
     save(st);
   });
   $("cfgCorResetN").addEventListener("click", function () {
     var st = load();
     st.config.cor = "";
+    marcaAppMudouN(st);
     save(st);
   });
   $("cfgLogoBtnN").addEventListener("click", function () { $("cfgLogoFileN").click(); });
@@ -3176,6 +3391,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         if (!logoOkN(u)) { alert("Não deu pra ler essa imagem — tenta outro arquivo."); return; }
         var st = load();
         st.config.logo = u;
+        marcaAppMudouN(st);
         save(st);
       };
       img.onerror = function () { alert("Não deu pra ler essa imagem — tenta outro arquivo."); };
@@ -3186,6 +3402,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   $("cfgLogoDelN").addEventListener("click", function () {
     var st = load();
     delete st.config.logo;
+    marcaAppMudouN(st);
     save(st);
   });
 
@@ -3299,7 +3516,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div style='font-size:11px;letter-spacing:.2em;color:#16a34a;font-weight:700;'>" + esc(consultorio.toUpperCase()) + "</div>" +
       "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de acompanhamento está pronto, " + esc(primeiro) + "!</h1>" +
       "<p style='color:#54604f;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b>Meu login</b>.</p>" +
-      "<div style='background:var(--card);border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='background:#ffffff;border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" + // hex de propósito: e-mail não tem :root
       "<div style='margin-bottom:6px;'><span style='color:#54604f;'>Login:</span> <b>" + esc(email) + "</b></div>" +
       "<div><span style='color:#54604f;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
       "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
@@ -3357,17 +3574,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var st = load();
     var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
     if (!p) return;
+    // a RPC aluno_define_login TROCA a senha: a que o paciente usa hoje (inclusive
+    // a que ele mesmo trocou no app) para de valer — um toque acidental derrubava o login
+    if (p.acessoEm && !confirm("Este paciente já tem login. Reenviar gera uma SENHA NOVA e a senha atual dele para de valer na hora.\n\nReenviar mesmo assim?")) return;
     var digitado = $("pnEmail").value.trim().toLowerCase();
     if (digitado && digitado !== (p.email || "")) { p.email = digitado; S.write("ntStudio", st); }
     var b = this;
     b.disabled = true; b.textContent = "⏳ Enviando…";
     criaAcessoPaciente(perfilNId, function (r) {
-      b.disabled = false; b.innerHTML = mi("envelope") + " Enviar acesso do app";
+      var pA = load().pacientes.find(function (x) { return x.id === perfilNId; });
+      b.disabled = false; b.innerHTML = mi("envelope") + (pA && pA.acessoEm ? " Reenviar acesso (gera senha nova)" : " Enviar acesso do app");
       $("pnAcessoInfo").innerHTML = msgAcessoN(r, p);
       if (r.erro) alert(r.erro);
     });
   });
-  window.__acessoNutri = { cria: criaAcessoPaciente, senha: senhaAleatoria, msg: msgAcessoN }; // testes
+  window.__acessoNutri = { cria: criaAcessoPaciente, senha: senhaAleatoria, msg: msgAcessoN, email: emailAcessoHtmlN }; // testes
 
   function publicaApp(pid) {
     var st = load();
@@ -3413,6 +3634,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   // só {html}, congelado. A gente pergunta à nuvem QUAIS linhas existem e estão
   // velhas (dados->>ver ≠ versão do site) e republica só essas, 5 por vez — sem
   // criar linha pra paciente que nunca recebeu o app.
+  // Robô, mural, Comunidade, cor/logo e Pix viajam DENTRO do pacote do app. Cada
+  // um desses "salvar" carimba config.appMudouEmN, e a republicação automática
+  // passa a olhar também o stamp do pacote na nuvem: pacote mais velho que a
+  // última mudança é republicado sozinho. Antes só a versão do site contava, e
+  // "republique os apps" com 30 pacientes eram 30 cliques e 30 caixas de diálogo.
+  function marcaAppMudouN(st) {
+    st.config = st.config || {};
+    st.config.appMudouEmN = new Date().toISOString();
+    setTimeout(autoPublicaAppsN, 800);
+  }
+  window.__marcaAppMudouN = marcaAppMudouN; // testes
   function autoPublicaAppsN() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return;
@@ -3420,10 +3652,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var tokens = st.pacientes.filter(function (p) { return p.ativo !== false && p.appTokenN; })
       .map(function (p) { return p.appTokenN; });
     if (!tokens.length) return;
-    nuvem.client.from("app_aluno").select("token,ver:dados->>ver").in("token", tokens).then(function (r) {
+    var mudouEm = String((st.config || {}).appMudouEmN || "");
+    nuvem.client.from("app_aluno").select("token,ver:dados->>ver,stamp:dados->>stamp").in("token", tokens).then(function (r) {
       if (!r || r.error || !Array.isArray(r.data)) return;
       var velhos = {};
-      r.data.forEach(function (l) { if (l.ver !== self.MT_VERSAO) velhos[l.token] = 1; });
+      r.data.forEach(function (l) {
+        if (l.ver !== self.MT_VERSAO || (mudouEm && String(l.stamp || "") < mudouEm)) velhos[l.token] = 1;
+      });
       var st2 = load();
       var lote = st2.pacientes.filter(function (p) { return velhos[p.appTokenN]; }).slice(0, 5);
       if (!lote.length) return;
@@ -3446,17 +3681,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   window.__autoPublicaN = autoPublicaAppsN; // testes
   setTimeout(autoPublicaAppsN, 2500);
 
-  // ---------- kpis + conta ----------
-  function renderKpis(st) {
-    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
-    var comDieta = ativos.filter(function (p) { return (st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); });
-    $("kpisN").innerHTML = [
-      { rot: "Pacientes ativos", val: ativos.length },
-      { rot: "Com dieta entregue", val: comDieta.length },
-      { rot: "Sem dieta ainda", val: ativos.length - comDieta.length },
-      { rot: "Meus alimentos", val: st.alimentos.length },
-    ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
-  }
+  // ---------- conta ----------
+  // (a fileira #kpisN saiu: eram os MESMOS quatro números dos cards "Status da
+  // base" e "Dietas e app" logo abaixo — a mesma duplicata que o Raphael apontou
+  // na Agenda do Personal. Quem conta é renderDashN, num lugar só.)
   // ---------- agenda de consultas ----------
   // quem faltou não pode contar como atendido — a consulta passada pede a marcação
   function botoesConsultaN(c) {
@@ -3497,14 +3725,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     st.consultas.forEach(function (c) { if (c.data) (porDia[c.data] = porDia[c.data] || []).push(c); });
     var anoC = +mesRef.slice(0, 4), mesC = +mesRef.slice(5, 7);
     var nDias = new Date(anoC, mesC, 0).getDate();
-    var iniCol = new Date(anoC, mesC - 1, 1).getDay();
+    var iniCol = (new Date(anoC, mesC - 1, 1).getDay() + 6) % 7; // segunda primeiro — a mesma regra do app do paciente
     var MESES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     var cal = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
       '<button class="btn sec mini" data-calnav="-1" title="mês anterior">‹</button>' +
       '<b style="flex:1;text-align:center;">' + MESES_PT[mesC - 1] + " " + anoC + "</b>" +
       '<button class="btn sec mini" data-calnav="1" title="próximo mês">›</button></div>' +
       '<div class="cal-grade">' +
-      ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"].map(function (d) { return '<span class="cal-sem">' + d + "</span>"; }).join("");
+      ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"].map(function (d) { return '<span class="cal-sem">' + d + "</span>"; }).join("");
     for (var vz = 0; vz < iniCol; vz++) cal += "<span></span>";
     for (var dd = 1; dd <= nDias; dd++) {
       var iso = mesRef + "-" + ("0" + dd).slice(-2);
@@ -3764,15 +3992,28 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       }).filter(Boolean),
     };
   }
+  // o link do check-in (quest.html?t=…&q=…): o app do paciente NÃO tem
+  // questionário dentro — o check-in só chega por este link
+  function linkQuestN(st, p, q) {
+    var payload = montaPayloadQuestN(st, q);
+    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return location.origin + location.pathname.replace(/nutricao\.html$/, "") + "quest.html?t=" + p.appTokenN + "&q=" + b64;
+  }
+  // quem já recebeu o link nesta semana (a aba "A semana" só cobra quem recebeu)
+  function marcaQuestEnviadoN(pid) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (p) { p.questEnviadoEm = S.todayISO(); S.write("ntStudio", st); }
+  }
+  window.__linkQuestN = linkQuestN; // testes
   $("qeGerarN").addEventListener("click", function () {
     var st = questStN(load());
     var p = st.pacientes.find(function (x) { return x.id === $("qePacienteN").value; });
     var q = st.questionarios.find(function (x) { return x.id === $("qeQuestN").value; });
     if (!p || !q) { alert("Escolha o paciente e o check-in."); return; }
     if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
-    var payload = montaPayloadQuestN(st, q);
-    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    var link = location.origin + location.pathname.replace(/nutricao\.html$/, "") + "quest.html?t=" + p.appTokenN + "&q=" + b64;
+    var link = linkQuestN(st, p, q);
+    marcaQuestEnviadoN(p.id);
     $("qeSaidaN").hidden = false;
     $("qeLinkN").value = link;
     var msg = "Oi " + p.nome.split(" ")[0] + "! Responde seu check-in rapidinho? 💚 " + link;
@@ -3806,8 +4047,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var box = $("qRespostasN");
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra receber as respostas dos pacientes."; return; }
+    // só os tokens DESTE consultório: a RLS devolve todas as ilhas de que o usuário
+    // é membro (a mesma armadilha do puxaPagamentosGateway) — sem o filtro, quem
+    // tem duas ilhas via resposta alheia como "Paciente"
+    var tokensR = load().pacientes.filter(function (p) { return p.appTokenN; }).map(function (p) { return p.appTokenN; });
+    if (!tokensR.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima."; return; }
     box.textContent = "Carregando…";
-    nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
+    nuvem.client.from("app_quest").select("token,questionario,dados,criado").in("token", tokensR).order("criado", { ascending: false }).limit(60)
       .then(function (r) {
         if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os check-ins."; return; }
         var rows = (r && r.data) || [];
@@ -3867,8 +4113,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!ops.length) { alert("Escreva pelo menos uma opção no formato Rótulo | Resposta."); return; }
     st.config = st.config || {};
     st.config.bot = { ativo: $("botAtivoN").checked, oi: $("botOiN").value.trim() || botPadraoN(st).oi, ops: ops };
+    marcaAppMudouN(st);
     S.write("ntStudio", st);
-    $("botOkN").textContent = "Robô salvo! Republique os apps dos pacientes pra valer por lá.";
+    $("botOkN").textContent = "Robô salvo! Os apps dos pacientes são republicados sozinhos em instantes (com a conta na nuvem).";
     setTimeout(function () { $("botOkN").textContent = ""; }, 5000);
   });
   // fluxograma com linhas (mesmo desenho de blocos do chatbot da academia)
@@ -3953,7 +4200,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       el.innerHTML = '<div class="card muted">Gere o App do paciente primeiro (aba Pacientes) — o chat vive dentro dele.</div>';
       return;
     }
-    nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).then(function (r) {
+    // o filtro que o JS fazia (de = aluno, não lida) vai pro servidor: a tabela só cresce
+    nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).eq("de", "aluno").eq("lida", false).then(function (r) {
       var novas = {};
       (r.data || []).forEach(function (m) { if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1; });
       el.innerHTML = ativos.map(function (p) {
@@ -4018,7 +4266,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (document.activeElement !== $("cfgMural")) $("cfgMural").value = (cfgN.mural || []).join("\n");
     $("cfgFeedN").checked = !!cfgN.feedOn; // Comunidade vem desligada
     pintaBkAvisoN(cfgN.backupEm);
-    if (document.activeElement !== $("cfgCorN")) $("cfgCorN").value = corOk(cfgN.cor) || "var(--verde)";
+    if (document.activeElement !== $("cfgCorN")) $("cfgCorN").value = corOk(cfgN.cor) || "#16a34a"; // input color não entende var(): valor inválido vira preto
     var lgN = logoOkN(cfgN.logo);
     if (lgN) $("cfgLogoPrevN").src = lgN; else $("cfgLogoPrevN").removeAttribute("src");
     $("cfgLogoPrevN").hidden = !lgN;
@@ -4045,12 +4293,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       st.config.pixNome = $("cfgPixNome").value.trim();
       st.config.pixCidade = $("cfgPixCidade").value.trim();
       st.config.pixValor = parseFloat(($("cfgPixValor").value || "").replace(",", ".")) || 0;
+      marcaAppMudouN(st); // o card Pix mora dentro do app
       S.write("ntStudio", st);
     });
   });
   $("cfgMural").addEventListener("change", function () {
     var st = load();
     st.config.mural = this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
+    marcaAppMudouN(st);
     S.write("ntStudio", st);
   });
   // ---------- backup: o arquivo com TUDO, pra quem usa sem conta na nuvem ----------
@@ -4221,21 +4471,31 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       });
       var atencao = todos.filter(function (r) { return r.respondeu && r.motivos.length; });
       var bem = todos.filter(function (r) { return r.respondeu && !r.motivos.length; });
-      var faltam = todos.filter(function (r) { return !r.respondeu; });
+      // "não respondeu" só vale pra quem RECEBEU o link nesta semana; quem nunca
+      // recebeu fica num grupo próprio — antes todo paciente com token virava
+      // "não respondeu" a um check-in que ninguém tinha mandado
+      var naoResp = todos.filter(function (r) { return !r.respondeu; });
+      var faltam = naoResp.filter(function (r) { return String(r.p.questEnviadoEm || "") >= sem.ini; });
+      var semLink = naoResp.filter(function (r) { return String(r.p.questEnviadoEm || "") < sem.ini; });
       qsCacheN = { todos: todos };
       $("qsResumoN").textContent = (atencao.length + bem.length) + " de " + todos.length + " responderam";
       var bt = $("qsCobrarN");
-      bt.hidden = !faltam.length;
-      bt.textContent = "Cobrar " + (faltam.length === 1 ? "quem falta" : "os " + faltam.length);
+      bt.hidden = !naoResp.length;
+      bt.textContent = "Cobrar " + (naoResp.length === 1 ? "quem falta" : "os " + naoResp.length);
       bt.onclick = function () {
+        // a mensagem LEVA o link do check-in (o app não tem questionário dentro):
+        // vai o primeiro check-in cadastrado, e o envio fica marcado no paciente
+        var stQ = questStN(load());
+        var q0 = stQ.questionarios[0];
         var bloq = 0, abriu = 0;
-        faltam.forEach(function (r) {
+        naoResp.forEach(function (r) {
           if (!r.p.zap) return;
-          var w = window.open("https://wa.me/55" + String(r.p.zap).replace(/\D/g, "") + "?text=" +
-            encodeURIComponent("Oi " + r.p.nome.split(" ")[0] + "! Seu check-in da semana está te esperando no app 😉"), "_blank");
-          if (w) abriu++; else bloq++;
+          var lk = q0 && r.p.appTokenN ? linkQuestN(stQ, r.p, q0) : "";
+          var txt = "Oi " + r.p.nome.split(" ")[0] + "! " + (lk ? "Responde seu check-in da semana rapidinho? 💚 " + lk : "Seu check-in da semana está me esperando — me chama no chat 😉");
+          var w = window.open("https://wa.me/55" + String(r.p.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(txt), "_blank");
+          if (w) { abriu++; if (lk) marcaQuestEnviadoN(r.p.id); } else bloq++;
         });
-        alert(abriu + " conversa(s) aberta(s)." + (bloq ? " O navegador bloqueou " + bloq + " aba(s) — toque de novo pra abrir o resto." : ""));
+        alert(abriu + " conversa(s) aberta(s), com o link do check-in." + (bloq ? " O navegador bloqueou " + bloq + " aba(s) — toque de novo pra abrir o resto." : ""));
       };
       function grupo(rot, arr, cor) {
         if (!arr.length) return "";
@@ -4245,7 +4505,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
               esc(r.p.nome) + (r.motivos.length ? " ⚠" : r.respondeu && r.nota != null ? " · " + r.nota : "") + "</button>";
           }).join("");
       }
-      lista.innerHTML = grupo("Pede atenção", atencao, true) + grupo("Tudo bem", bem) + grupo("Não responderam", faltam) || "Ninguém com app ainda.";
+      lista.innerHTML = grupo("Pede atenção", atencao, true) + grupo("Tudo bem", bem) + grupo("Não responderam", faltam) + grupo("Sem link esta semana", semLink) || "Ninguém com app ainda.";
       if (!qsSelN || !todos.some(function (r) { return r.p.id === qsSelN; })) qsSelN = ((atencao[0] || bem[0] || {}).p || {}).id || "";
       pintaQuestDetN();
     }, function () { lista.textContent = "Sem conexão com a nuvem agora."; });
@@ -4346,10 +4606,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   $("cfgFeedN").addEventListener("change", function () {
     var st = load();
     st.config.feedOn = this.checked;
+    marcaAppMudouN(st);
     S.write("ntStudio", st);
     alert(this.checked
-      ? "Comunidade ligada! Gere/publique os apps dos pacientes de novo pra aba Turma aparecer no celular deles."
-      : "Comunidade desligada. Publique os apps de novo pra tirar a aba Turma do celular dos pacientes.");
+      ? "Comunidade ligada! Os apps dos pacientes são republicados sozinhos em instantes e a aba Turma aparece no celular deles."
+      : "Comunidade desligada. Os apps são republicados sozinhos e a aba Turma sai do celular dos pacientes.");
   });
 
   // ---------- Início: dashboard gerencial do consultório (estilo Personal) ----------
@@ -4368,7 +4629,6 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   }
   function renderDashN() {
     var st = load();
-    renderKpis(st);
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
     var diaAtual = +hoje.slice(8, 10) || 1;
@@ -4418,7 +4678,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       (vPadrao ? kv("Consulta padrão", fmtR(vPadrao)) : "") +
       kv("Assinaturas no cartão", comRec + " paciente(s)") +
       kv("Cartão recusado", recusados + " paciente(s)", recusados ? "var(--nt-erro)" : "var(--nt-ok)");
-    var comApp = ativos.filter(function (p) { return p.acessoEm; }).length;
+    var comApp = ativos.filter(function (p) { return p.acessoEm || p.appPubEmN; }).length; // e-mail OU link
     var comDieta = ativos.filter(function (p) { return (st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); }).length;
     $("bBaseN").innerHTML =
       kv("Pacientes ativos", ativos.length) +
@@ -4451,9 +4711,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - 60);
     var sumidos = [];
     ativos.forEach(function (p) {
-      var minhas = (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje; })
-        .map(function (c) { return c.data; }).sort();
-      var ult = minhas[minhas.length - 1] || "";
+      var ult = ultimaConsultaN(st, p, hoje); // a MESMA conta do filtro Sumindo (falta não é retorno)
       if (!ult || ult < S.todayISO(corte60)) semRetorno60++;
       // a régua é a MESMA do filtro Sumindo da lista (diasSumidoN)
       var dias = diasSumidoN(st, p, hoje);
@@ -4560,7 +4818,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!Object.keys(tokens).length) return;
     try {
       Promise.all([
-        nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid),
+        nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).eq("de", "aluno").eq("lida", false),
         nuvem.client.from("app_agenda").select("id,token").eq("academia_id", nuvem.aid).eq("status", "pedido").gte("dia", S.todayISO()),
       ]).then(function (rs) {
         var chat = 0;
@@ -4604,11 +4862,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     return +(((p || {}).assinaturaRec || {}).valor) || +((st.config || {}).pixValor) || 0;
   }
   function atrasadosN(st, hoje) {
-    var mes = hoje.slice(0, 7);
-    if (+hoje.slice(8, 10) < diaCobraN(st)) return []; // o mês ainda não venceu pra ninguém
-    return (st.pacientes || []).filter(function (p) {
-      return cobraMensalN(p) && !pagouMesN(st, p.id, mes);
-    }).map(function (p) { return { p: p, valor: valorConsultaN(st, p) }; });
+    return (st.pacientes || []).filter(function (p) { return pacAtrasadoN(st, p, hoje); })
+      .map(function (p) { return { p: p, valor: valorConsultaN(st, p) }; });
   }
   var MESES_N = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
   function renderFinanceiroN() {
@@ -4634,10 +4889,12 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         return '<div class="fnatrlin"><div class="fnav">' + esc(String(p.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
           '<div style="min-width:0;"><button class="fnnm" data-resperfil="' + p.id + '">' + esc(p.nome) + "</button>" +
           (p.cartaoFalhouEm ? ' <span class="tagn alerta">cartão recusado</span>' : "") +
-          '<div class="fnsub">Acompanhamento de ' + MESES_N[+mes.slice(5, 7) - 1] + " · cobra dia " + diaCobraN(st) + "</div></div>" +
+          '<div class="fnsub">Acompanhamento de ' + MESES_N[+mes.slice(5, 7) - 1] + " · cobra dia " + diaCobraN(st) +
+          (PAGTO_N[p.pagto] ? " · prefere " + PAGTO_N[p.pagto] : "") + "</div></div>" +
           (x.valor ? '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + fmtR(x.valor) + "</b>" : '<span style="margin-left:auto;"></span>') +
           '<div class="fnacoes">' +
-          '<button class="btn mini" data-fnpgm="' + p.id + '" data-v="' + x.valor + '">Link</button>' +
+          '<button class="btn mini" data-fnpgm="' + p.id + '" data-v="' + x.valor + '"' +
+          (pagEspelhoN(st).ligado ? "" : ' title="sem gateway próprio, o link sai pela plataforma TORQUE ON — configure em Sua ilha"') + ">Link</button>" +
           ((st.config || {}).pixChave ? '<button class="btn sec mini" data-fnpix="' + p.id + '" data-v="' + x.valor + '">Pix</button>' : "") +
           '<button class="btn whats mini" data-fnreceb="' + p.id + '" data-v="' + x.valor + '">Recebi</button></div></div>';
       }).join("") + "</div>";
@@ -4684,7 +4941,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       $("fnComo").innerHTML = "<h2>Como você recebe</h2>" +
         (vias.length ? vias.map(function (v) {
           return '<div class="linha-nt"><span style="color:var(--nt-ok);font-weight:800;">✓</span><b>' + esc(v.n) + '</b><span class="muted" style="font-size:12px;">' + esc(v.d) + "</span></div>";
-        }).join("") : '<p class="muted" style="font-size:12.5px;">Nada configurado ainda — sem chave Pix nem gateway, os botões Link e Pix não aparecem na cobrança.</p>') +
+        }).join("") : '<p class="muted" style="font-size:12.5px;">Nada configurado ainda — sem chave Pix o botão Pix não aparece, e o <b>Link</b> sai pela plataforma TORQUE ON (conta do dono do sistema) até você ligar o seu gateway.</p>') +
         '<button type="button" class="btn sec mini" id="fnIrConfig" style="margin-top:10px;">Configurar em Sua ilha</button>';
     })();
     // ---- entrou hoje ----
@@ -4921,7 +5178,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var alvoR = diaCobraN(st);
       st.pacientes.forEach(function (p) {
         if (p.ativo === false || !p.appTokenN) return;
-        if (!cobraMensalN(p)) return; // v746: pacote e assinatura ficam fora
+        if (!cobraMensalN(p)) return;
         if (pagouMesN(st, p.id, mesR)) return;
         var vR = valorConsultaN(st, p);
         var txtV = vR ? " (R$ " + Math.round(vR).toLocaleString("pt-BR") + ")" : "";
@@ -4958,7 +5215,6 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 
   function render() {
     var st = load();
-    renderKpis(st);
     renderPacientes(st);
     renderConta();
     if (!$("vDashN").hidden) renderDashN();
