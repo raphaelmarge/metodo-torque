@@ -83,10 +83,19 @@
   }
   // a nuvem tem lista MAIOR que a do aparelho? então mandar o aparelho por cima
   // apagaria registro de gente — e apagar é o único erro que não dá pra desfazer
+  /* v745: a nuvem só vence uma escrita local MAIS NOVA quando o aparelho está
+   * (quase) VAZIO naquela lista — lista local zerada, ou a da nuvem bem maior
+   * (1,5× + 3). Antes bastava a nuvem ter UM item a mais: o professor apagava
+   * uma ficha velha numa sessão offline e, na abertura seguinte, o dia inteiro
+   * de trabalho era descartado e a ficha apagada voltava. */
   function nuvemTemMais(local, nuvem) {
     var lNuv = listasDe(nuvem), lLoc = listasDe(local);
-    return Object.keys(lNuv).some(function (k) { return lNuv[k] > (lLoc[k] || 0); });
+    return Object.keys(lNuv).some(function (k) {
+      var n = lNuv[k], l = lLoc[k] || 0;
+      return n > 0 && (l === 0 || n > l * 1.5 + 3);
+    });
   }
+  window.__nuvemTemMais = nuvemTemMais; window.__sincronizavel = sincronizavel; // testes
   function registraLog(key, antes, depois) {
     if (SEM_LOG[key] || window.__MT_IMPORTANDO) return;
     try {
@@ -343,7 +352,13 @@
    * na tabela `dados`. Última escrita vence, por chave. Fotos (IndexedDB)
    * ficam locais nesta versão. */
   var SYNC_PREFIXES = ["mtapp:", "mtpf:"];
-  var SYNC_IGNORA = { "mtapp:perfil": 1 };
+  /* v745: o que é DESTE aparelho não viaja. mtapp:academia é a identidade do
+   * login daqui (papel + código da equipe) e subia pros outros membros; as
+   * marcas do demo (ptDemo/ptDemoNuvem) subiam e viravam demo em todo
+   * aparelho da conta, sem saída; preferências de tela idem. */
+  var SYNC_IGNORA = { "mtapp:perfil": 1, "mtapp:academia": 1, "mtapp:ptDemo": 1, "mtapp:ptDemoNuvem": 1,
+    "mtapp:seeded": 1, "mtapp:ptSemConta": 1, "mtapp:ntSemConta": 1, "mtapp:tema": 1,
+    "mtapp:ptMenuFino": 1, "mtapp:ptAgVis": 1 };
   var TSKEY = "mtsync:ts";
 
   function tsMap() {
@@ -421,6 +436,12 @@
       r.data.forEach(function (row) {
         if (row.atualizado > maxTs) maxTs = row.atualizado;
         if (!sincronizavel(row.chave)) return;
+        /* v745: escrita local ainda NA FILA (ainda não subiu) nunca é coberta
+         * pela nuvem. O servidor carimba o upsert na CHEGADA, então o eco do
+         * envio anterior volta "mais novo" que uma escrita feita logo depois —
+         * e a puxada devolvia a lista ao estado de antes. A chave fica na fila
+         * e sobe no próximo ciclo. */
+        if (sync.sujas[row.chave]) return;
         var local = m[row.chave];
         if (!local || row.atualizado > local) {
           sync.aplicando = true;
@@ -452,6 +473,9 @@
           if (nuvemMaior) {
             sync.aplicando = true;
             try {
+              // v745: antes de a nuvem vencer uma escrita local MAIS NOVA, guarda a
+              // cópia local — trabalho offline nunca some sem rastro
+              try { localStorage.setItem("mtsync:bak:" + row.chave, JSON.stringify({ em: new Date().toISOString(), valor: JSON.parse(localStorage.getItem(row.chave)) })); } catch (eB) {}
               localStorage.setItem(row.chave, JSON.stringify(row.valor));
               marcaTs(row.chave, row.atualizado);
               mudou.push(row.chave);

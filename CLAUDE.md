@@ -1318,6 +1318,33 @@ abrir (`window.__limpouOutroAluno`) — dois alunos no mesmo celular misturavam
 peso, fotos e chat. (4) o app do paciente diz a verdade: a primeira e a última
 foto vão pra ficha do nutricionista.
 
+**Revisão — frente 3 (mt-v745, Financeiro)**: (1) **competência**: o pagamento
+pode carregar `mes` (qual mês quita); `idxDe.pagouMes` lê `p.mes ||
+data.slice(0,7)`. `dividaDe` devolve `chaves` (os meses em aberto) e
+`registraRecebido(st, a, valor, forma)` é o caminho único do Recebi/Pix:
+pagou o total acumulado → um pagamento por mês devido; pagou menos → quita o
+mês MAIS ANTIGO. Antes "deve 2 meses" quitado num Recebi limpava só o mês
+corrente e o velho voltava em toda cobrança. (2) bloco **Atrasados** e
+"Cobrar todos" escondem Recebi/Pix/Link de quem tem `assinaturaRec`/
+`assinaturaAs` (o webhook dá a baixa; um Recebi a mais era pagamento em
+dobro). (3) o **Pix da renovação do pacote** leva `data-origem="pacote"` →
+`abrePix(aluno, valor, origem)` → `pixRecebi` grava COM desc e zera
+`pacote.cobrar`, igual ao Recebi do pacote. Ganchos: `__registraRecebido`.
+
+**Revisão — frente 11 (mt-v745, sincronização)**: (1) `SYNC_IGNORA` ganhou o
+que é DESTE aparelho: `mtapp:academia` (identidade do login — subia pros
+outros membros), marcas do demo, `seeded`, `*SemConta`, `tema`, `ptMenuFino`,
+`ptAgVis`. (2) `puxa()` **nunca cobre chave na fila** (`sync.sujas`): o
+servidor carimba o upsert na chegada, então o eco do envio anterior voltava
+"mais novo" que uma escrita feita logo depois e a lista voltava ao estado de
+antes. (3) `nuvemTemMais` só deixa a nuvem vencer um local MAIS NOVO quando a
+lista local está vazia ou a da nuvem é bem maior (1,5× + 3) — bastava UM item a
+mais (uma ficha apagada offline) pra descartar a sessão inteira; e antes de
+cobrir, guarda a cópia local em `mtsync:bak:<chave>`. (4) `modulo-conta.js`:
+entrar/criar conta vindo do demo apaga as marcas, o estúdio falso e as imagens
+do demo ANTES de ligar a sync (`window.__demoLimpo`). Ganchos:
+`__nuvemTemMais`, `__sincronizavel`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
