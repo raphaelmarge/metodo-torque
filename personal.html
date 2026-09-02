@@ -13052,6 +13052,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     c.tiro = +$("cbTiro").value || 60;
     c.desc = +$("cbDesc").value || 90;
     c.obs = $("cbObs").value.trim();
+    /* v755: no MISTO o app troca a parte contínua pelos tiros quando bate o
+     * tempo alvo (ou a distância). Sem nenhum dos dois, o aluno corre pra
+     * sempre na parte contínua e os tiros nunca começam. */
+    if (c.tipo === "misto" && !c.dist && !c.tempo) {
+      alert("No treino misto, preencha a distância OU o tempo da parte contínua — é ela que diz quando os tiros começam.");
+      return; // nada foi gravado: o st só vira disco no save() lá embaixo
+    }
     marcaTreinoMudou(st, alunoId); // o treino entra no app na próxima publicação
     save(st);
     cbEditando = null;
@@ -15495,6 +15502,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var sf = 0; fks.forEach(function (k) { sf += +(fcH[k] || {}).m || 0; });
       out.push("BATIMENTO MÉDIO nos últimos " + fks.length + " treinos: " + Math.round(sf / fks.length) + " bpm");
     }
+    /* v755: o VOLUME (kg × reps × séries de cada treino) já subia do app em
+     * ret.vol e ninguém lia — é o número que diz se o aluno está aguentando
+     * mais trabalho, justamente o que a progressão do mês precisa saber. */
+    var volH = (ret.vol && typeof ret.vol === "object" && !Array.isArray(ret.vol)) ? ret.vol : {};
+    var vks = Object.keys(volH).sort();
+    if (vks.length >= 2) {
+      var ult6 = vks.slice(-6), som = 0, nv = 0;
+      ult6.forEach(function (k) { var v = +volH[k] || 0; if (v > 0) { som += v; nv++; } });
+      var ant = vks.slice(-12, -6), sa = 0, na = 0;
+      ant.forEach(function (k) { var v = +volH[k] || 0; if (v > 0) { sa += v; na++; } });
+      if (nv) {
+        var md = Math.round(som / nv);
+        var tend = (na && sa / na > 0) ? Math.round(100 * ((som / nv) / (sa / na) - 1)) : null;
+        out.push("VOLUME POR TREINO (peso × repetições × séries, média dos últimos " + nv + "): " +
+          md.toLocaleString("pt-BR") + " kg" +
+          (tend === null ? "" : tend >= 0 ? " — subindo " + tend + "% em relação aos " + na + " treinos anteriores"
+            : " — caindo " + Math.abs(tend) + "% em relação aos " + na + " treinos anteriores"));
+      }
+    }
     /* 📝 relatos ESCRITOS pelo aluno ao fim dos treinos (v686): a voz dele,
      * com data e tipo. É o contexto que número nenhum dá — dor, sobra de gás,
      * aparelho ocupado. Como evolucaoIA entra nos DOIS montadores (musculação
@@ -15894,6 +15920,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         desc: Math.min(600, Math.max(10, parseInt(c.desc, 10) || 90)),
         obs: String(c.obs || "").slice(0, 200),
       });
+      /* v755: misto sem distância nem tempo vira intervalado — no app é a parte
+       * contínua que diz quando os tiros começam, e sem alvo ela nunca acaba
+       * (a mesma trava do formulário, do lado da IA). */
+      var ult = lista[lista.length - 1];
+      if (ult && ult.tipo === "misto" && !ult.dist && !ult.tempo) ult.tipo = "intervalado";
     });
     return lista;
   }
@@ -15916,6 +15947,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return { geradoEm: S.todayISO(), semanas: sem };
   }
   window.__peneiraMes = peneiraMesIA; // testes
+  window.__peneiraCardios = peneiraCardiosIA; // testes (v755: misto sem alvo vira intervalado)
   /* Em que semana do plano o aluno está (1 a 4), contando do dia em que foi
    * gerado. Passou do mês, fica na 4 — melhor repetir o deload do que sumir. */
   function semanaDoMes(mes, hojeIso) {
@@ -16671,6 +16703,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function rotuloValorPlano(pl) {
     return +pl.pacoteQtd > 0 ? " / " + pl.pacoteQtd + " aulas" : pl.cobranca === "sessao" ? "/sessão" : "/mês";
   }
+  /* v755: o link de assinatura vira botão pro aluno — sem http(s) ele não abre
+   * nada e o professor só descobre quando o aluno reclama. Link torto é
+   * recusado na hora de salvar, com recado; vazio continua valendo. */
+  function linkRecOk(v) {
+    var t = String(v || "").trim();
+    if (!t) return "";
+    if (!/^https?:\/\//i.test(t)) {
+      alert("O link de assinatura precisa começar com https:// — cole o endereço inteiro que o gateway te deu.");
+      return "";
+    }
+    return t;
+  }
+  window.__linkRecOk = linkRecOk; // testes
   function renderPlanosPT() {
     var st = load();
     var el = $("plLista");
@@ -16730,7 +16775,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       pacoteQtd: ehSesPl ? (Math.floor(+$("plPacQtd").value) || 0) : 0,
       pacoteRenova: ehSesPl && +$("plPacQtd").value > 0 && $("plPacRenova").checked,
       treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value,
-      linkRec: ehSesPl ? "" : $("plLink").value.trim() });
+      linkRec: ehSesPl ? "" : linkRecOk($("plLink").value) });
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
     $("plPacQtd").value = ""; $("plPacRenova").checked = false;
     S.write("ptStudio", st);
@@ -20318,9 +20363,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var chatTimer = null;
   // ---------- tela 3c: a lista de conversas e a conversa aberta ----------
   var CH_RAPIDAS = ["Bora treinar 💪", "Mandar a ficha", "Remarcar"];
-  function chHora(iso) { return String(iso || "").slice(11, 16); }
+  /* v755: a hora do chat sai do relógio LOCAL. O banco carimba em UTC e a
+   * fatia de string mostrava 3 horas a menos — o app do aluno já foi corrigido,
+   * e enquanto os dois lados não falarem a mesma hora a conversa parece de
+   * outro dia. Instante sem fuso (sem Z e sem offset) é tratado como local,
+   * que é como o demo semeia. */
+  function chData(iso) {
+    var t = String(iso || "");
+    if (!t) return null;
+    var d = new Date(/[Zz]|[+-]\d{2}:?\d{2}$/.test(t) ? t : t.replace(" ", "T") + "Z");
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function chHora(iso) {
+    var d = chData(iso);
+    if (!d) return String(iso || "").slice(11, 16);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  window.__chHora = chHora; // testes
   function chQuando(iso) {
-    var d = String(iso || "").slice(0, 10);
+    var dObj = chData(iso);
+    var d = dObj ? S.todayISO(dObj) : String(iso || "").slice(0, 10); // v755: dia local
     if (!d) return "";
     var hoje = S.todayISO();
     if (d === hoje) return chHora(iso);
@@ -20851,11 +20913,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.zap = this.value.replace(/\D/g, "");
     S.write("ptStudio", st);
   });
+  /* v755: a chave Pix ia crua pro QR — com espaço no meio ou meia chave, o
+   * banco do aluno recusa o código e o professor só descobre pela reclamação.
+   * Aqui ela é NORMALIZADA (sem espaço; só dígitos quando é CPF/CNPJ/telefone)
+   * e, se não parecer nenhuma das cinco formas do Pix, o professor é avisado —
+   * sem bloquear, porque a chave é dele e a lista pode mudar. */
+  function pixChaveTipo(v) {
+    var t = String(v || "").trim();
+    if (!t) return "";
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) return "aleatoria";
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t)) return "email";
+    var d = t.replace(/\D/g, "");
+    if (d.length === 11 && t.replace(/[\d\s.\-]/g, "") === "") return "cpf";
+    if (d.length === 14) return "cnpj";
+    if (/^\+?55/.test(t.replace(/\s/g, "")) && d.length >= 12 && d.length <= 13) return "telefone";
+    if (d.length === 10 || d.length === 11) return "telefone";
+    return "";
+  }
+  function pixChaveNormal(v) {
+    var t = String(v || "").trim();
+    var tipo = pixChaveTipo(t);
+    if (tipo === "cpf" || tipo === "cnpj" || tipo === "telefone") return t.replace(/\D/g, "");
+    return t.replace(/\s+/g, "");
+  }
+  window.__pixChave = { tipo: pixChaveTipo, normal: pixChaveNormal }; // testes
   [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
     $(par[0]).addEventListener("change", function () {
       var st = load();
       st.config = st.config || {};
-      st.config[par[1]] = this.value.trim();
+      var v = this.value.trim();
+      if (par[1] === "pixChave" && v) {
+        v = pixChaveNormal(v);
+        this.value = v;
+        if (!pixChaveTipo(v)) {
+          alert("Isso não parece uma chave Pix. Vale CPF, CNPJ, e-mail, telefone com DDD ou a chave aleatória do banco. Guardei assim mesmo — confira no seu aplicativo do banco.");
+        }
+      }
+      st.config[par[1]] = v;
       S.write("ptStudio", st);
     });
   });

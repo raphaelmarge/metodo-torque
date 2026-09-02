@@ -1615,6 +1615,28 @@ DOM, seja pelo GUIA. Ficaram pro painel, registrados: exigir distância OU
 tempo no cardio misto, pintar o `ret.vol` em Evolução → Cargas e a hora do
 chat em UTC no `personal.html`.
 
+**Revisão — as sobras entre territórios (mt-v755, 6 itens)**: cada lote da
+revisão parou na fronteira do seu arquivo e deixou seis consertos "do outro
+lado". Todos entraram aqui: (1) **cardio misto sem alvo** — no app é a parte
+contínua que diz quando os tiros começam, então salvar um misto sem
+distância NEM tempo deixava o aluno correndo pra sempre no primeiro trecho; o
+formulário agora recusa com recado e a `peneiraCardiosIA` rebaixa pra
+`intervalado` (gancho `__peneiraCardios`). (2) **hora do chat no painel** —
+`chHora`/`chQuando` fatiavam a string do banco, que é UTC, e mostravam 3
+horas a menos; agora leem o relógio local (`chData`, instante sem fuso é
+tratado como local, que é como o demo semeia). O app já tinha sido corrigido
+na v751 — os dois lados só voltaram a bater agora. (3) **chave Pix**
+normalizada e conferida nas cinco formas (aleatória, e-mail, CPF, CNPJ,
+telefone): texto solto avisa o professor, **sem bloquear** — a chave é dele.
+(4) **link de assinatura** sem `https://` é recusado ao salvar: ele vira
+botão pro aluno e link torto não abre nada. (5) **volume por treino** —
+`ret.vol` subia do app desde a v754 e ninguém lia; agora entra no pedido da
+IA com média dos últimos 6 e a tendência contra os 6 anteriores, que é o
+número que diz se o aluno está aguentando mais trabalho. (6) **letra da ficha
+no app** segue a MESMA regra do painel (`^[A-Za-z]\d?$`): "Treino de peito —
+segunda" virava a letra "Tr" no quadradinho da gaveta. Ganchos:
+`__pixChave`, `__linkRecOk`, `__chHora`, `__peneiraCardios`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
