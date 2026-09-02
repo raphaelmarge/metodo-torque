@@ -2745,6 +2745,206 @@ async function abaPt(p, a) {
     ok(v747.freio, "☁️ v747: resolverChat usa a cópia de 10 min, só lê com forca e pede só de=aluno/lida=false");
     ok(v747.sino && v747.vistoFuturo, "🔔 v747: o sino só lista baixa automática e aluno de outro caminho, agrupa treinos e guarda o visto pela data do evento futuro");
     ok(v747.monta, "🖱️ v747: vaiMontarTreino leva o aluno pros dois selects (Fichas e IA)");
+
+    /* ---- v748: revisão pt-perfil (ficha do aluno) e pt-agenda ---- */
+    const htmlV748 = await p.evaluate(async () => await (await fetch("personal.html")).text());
+    const v748 = await p.evaluate(async () => {
+      const out = {};
+      const S9 = window.MTStore;
+      const hoje = S9.todayISO(), mes = hoje.slice(0, 7);
+      const iso = (n) => { const d = new Date(hoje + "T12:00"); d.setDate(d.getDate() + n); return S9.todayISO(d); };
+      const le = () => JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const grava = (st) => localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      const consulta = (resp) => { const o = { then: (fn, fr) => Promise.resolve(resp).then(fn, fr) }; ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = () => o; }); return o; };
+      const orig = window.MTStore.cloud;
+      const cOrig = window.confirm, aOrig = window.alert;
+      window.alert = () => {};
+      // aluno de teste com app: 4 treinos no app este mês, 1 sessão feita com o professor, meta 1/semana
+      const st = le();
+      const f = {}; f[mes + "-01"] = 1; f[mes + "-02"] = 1; f[mes + "-03"] = 1; f[mes + "-04"] = 1;
+      st.alunos.push({ id: "v748a", nome: "Treinos Teste", ativo: true, metaSemana: 1, zap: "31999990000", appTokenP: "tok-v748", retorno: { feitos: f },
+        pacote: { total: 10, usadas: 4 } });
+      st.sessoes.push({ id: "v748s1", alunoId: "v748a", data: mes + "-01", hora: "08:00", feita: true });
+      st.avaliacoes = st.avaliacoes || [];
+      st.avaliacoes.push({ id: "v748av1", alunoId: "v748a", data: "2026-01-01", peso: 70, braco: 30 }, { id: "v748av2", alunoId: "v748a", data: "2026-02-01", peso: 73, braco: 32 });
+      st.planosPT = st.planosPT || [];
+      st.planosPT.push({ id: "v748pl", nome: "Pacote 20", valor: 900, cobranca: "mes", pacoteQtd: 20 });
+      grava(st);
+      // 1. treinos no mês: UMA conta — o app manda na meta, as sessões com o professor viram o 2º número
+      const tm = window.__treinosMes(le(), le().alunos.find((a) => a.id === "v748a"));
+      out.treinos = tm.n === 4 && tm.ses === 1 && tm.meta === 4 && /bateu a meta/.test(tm.sub) && /1 sessão com você/.test(tm.sub);
+      // 2. sentido do peso + rótulo do objetivo do app
+      out.peso = window.__sentidoPeso({ objetivo: "hipertrofia" }, {}) === "sobe" && window.__sentidoPeso({}, { onb: { obj: "emagrecer" } }) === "desce" && window.__sentidoPeso({}, {}) === "";
+      const hp = window.__painelApp({ feitos: {}, peso: { "2026-01-01": 70, "2026-02-01": 73 }, onb: { obj: "musculo" } }, {});
+      out.pesoCor = /color:var\(--tk-ok\);'>\+3 kg/.test(hp) && /Ganhar músculo/.test(hp) && !/>musculo</.test(hp);
+      // 3. hábitos: divide pela janela (21 dias desde o 1º registro), não pelos 2 dias com registro
+      const hb = {}; hb[iso(-20)] = { 0: true, 1: true, 2: true, 3: true }; hb[iso(-19)] = { 0: true, 1: true, 2: true, 3: true };
+      const hh = window.__painelApp({ feitos: {}, habitos: hb }, {});
+      out.habitos = /Hábitos em dia<\/i><b>10%/.test(hh) && /dos últimos 21/.test(hh);
+      // 4. questionários: "40+" quando a consulta cortou; data do questionário no dia LOCAL; erro de rede não vira "rode o SQL"
+      const cks40 = []; for (let i = 1; i <= 40; i++) cks40.push({ d: "2026-0" + (1 + (i % 8)) + "-" + String(1 + (i % 27)).padStart(2, "0"), nome: "Q", pts: 1, respostas: [] });
+      out.kpi40 = /Questionários<\/i><b>40\+/.test(window.__painelApp({ feitos: {}, checks: cks40 }, {}));
+      const dLoc = new Date("2026-08-09T23:30:00Z");
+      const esperado = dLoc.getFullYear() + "-" + String(dLoc.getMonth() + 1).padStart(2, "0") + "-" + String(dLoc.getDate()).padStart(2, "0");
+      out.diaLocal = window.__diaLocalDe("2026-08-09T23:30:00Z") === esperado && window.__diaLocalDe("2026-08-09") === "2026-08-09";
+      out.erroSql = window.__erroDeSql({ code: "42P01" }) && window.__erroDeSql({ code: "PGRST205", message: "Could not find the table" }) && !window.__erroDeSql({ message: "Failed to fetch" });
+      // 5. abrir a ficha baixa o retorno UMA vez (Resumo e aba App consomem a mesma consulta)
+      let chamadas = 0;
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: (cols) => { if (t === "app_aluno" && cols === "retorno") chamadas++;
+        return consulta({ data: t === "app_aluno" ? [{ retorno: { feitos: f, peso: { "2026-08-01": 80 }, fc: { "2026-08-01": { m: 140, x: 170 } } } }] : [] }); } }) } });
+      window.__perfilPT("v748a");
+      await new Promise((r) => setTimeout(r, 450));
+      window.MTStore.cloud = orig;
+      out.umaBusca = chamadas === 1;
+      out.tileTreinos = /^4/.test((document.querySelector("#pfKpiTr .v") || {}).textContent || "") && /sessão com você/.test((document.querySelector("#pfKpiTr .s") || {}).textContent || "");
+      out.aba = /Questionários e hábitos/.test((document.querySelector('#pfAbas [data-pfa="quest"]') || {}).textContent || "");
+      // 6. diário: data da sessão (padrão = última feita) e UMA nota por dia (anotar de novo edita)
+      window.__pfAba("freq");
+      out.diarioPadrao = document.getElementById("pfDiarioData").value === mes + "-01";
+      document.getElementById("pfDiarioData").value = iso(-1); document.getElementById("pfDiarioTxt").value = "nota A"; document.getElementById("pfDiarioAdd").click();
+      document.getElementById("pfDiarioData").value = iso(-1); document.getElementById("pfDiarioTxt").value = "nota B"; document.getElementById("pfDiarioAdd").click();
+      const dn = ((le().diarioPT || {})["v748a"] || []).filter((r) => r.d === iso(-1));
+      out.diario = dn.length === 1 && dn[0].t === "nota B";
+      // 7. PDF: "Braço" com cedilha e o peso sem juízo de valor quando o objetivo é desconhecido
+      const pdf = window.__relPdf("v748a");
+      out.pdf = /Braço/.test(pdf) && !/Braco/.test(pdf) && /class='delta'><b>\+3 kg/.test(pdf) && /class='delta bom'><b>\+2 cm/.test(pdf);
+      // 8. trocar de plano-pacote soma o saldo (6 aulas pagas) ao pacote novo
+      window.__pfAba("fin");
+      const selP = document.getElementById("pfCtPlano");
+      if (selP) { selP.value = "v748pl"; document.getElementById("pfCtAdd").click(); }
+      const pc = (le().alunos.find((a) => a.id === "v748a") || {}).pacote || {};
+      out.pacote = +pc.total === 26 && +pc.usadas === 0;
+      // 9. recorde só existe contra histórico anterior; a semana da IA usa a MESMA função
+      const rc = window.__recordesDe({ cargas: { A: [{ d: "2026-08-10", kg: 60 }], B: [{ d: "2026-07-01", kg: 50 }, { d: "2026-08-12", kg: 60 }] } }, "2026-08-01", "2026-08-31");
+      out.recordes = rc.length === 1 && rc[0].ex === "B" && rc[0].de === 50 && rc[0].pra === 60;
+      // 10. mês do relatório/card: parâmetro; até o dia 5 sem registro no mês corrente → mês anterior
+      const ant = (() => { const d = new Date(hoje + "T12:00"); d.setDate(1); d.setMonth(d.getMonth() - 1); return S9.todayISO(d).slice(0, 7); })();
+      const mp = window.__mesRelPadrao(le(), { id: "zz", nome: "Z", retorno: {} });
+      out.mesRel = mp === (+hoje.slice(8, 10) <= 5 ? ant : mes) && window.__mesRelPadrao(le(), le().alunos.find((a) => a.id === "v748a")) === mes &&
+        /março de 2025/.test(window.__relMensal("v748a", "2025-03"));
+      // 11. relatos: só o atalho pro histórico (a frase não aparece duas vezes)
+      const hc = window.__checkinsPT({ notas: [{ d: "2026-08-01", t: "Sentiu o ombro", tp: "musc" }] });
+      out.relatos = /Ver no histórico/.test(hc) && /data-pfvai=['"]app/.test(hc) && (hc.match(/Sentiu o ombro/g) || []).length === 1;
+      // 12. batimento: uma conta só (últimos 10 dias + corridas; pico inclui o fcx)
+      const fcR = window.__resumoFc({ fc: { "2026-08-01": { m: 140, x: 170 } }, cardio: [{ d: "2026-08-02", fc: 150, fcx: 188 }] });
+      out.fc = fcR.med === 145 && fcR.max === 188;
+      // 13. IA da semana puxa cargas/feitos em lote antes de montar os dados
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta({ data: t === "app_aluno"
+        ? [{ token: "tok-v748", feitos: f, cargas: { Supino: [{ d: iso(-40), kg: 50 }, { d: iso(-1), kg: 60 }] } }] : [] }) }) } });
+      const stI = await window.__iaSemana.puxa(le());
+      window.MTStore.cloud = orig;
+      out.iaLote = /Treinos Teste: Supino 60 kg \(antes 50\)/.test(window.__iaSemana.dados(stI));
+      document.getElementById("pfFechar").click();
+      // ---- agenda ----
+      // A1. sessão passada sem marcar é PENDÊNCIA, mesmo com treino no plano; futura segue AGENDADA
+      const esP = window.__agEstado(le(), { id: "x", alunoId: "v748a", data: iso(-1), hora: "07:00" }, hoje);
+      const esF = window.__agEstado(le(), { id: "x", alunoId: "v748a", data: iso(3), hora: "07:00" }, hoje);
+      out.pend = esP.cls === "pend" && /SEM MARCAR/.test(esP.txt) && esF.cls !== "pend";
+      // A2/A3. Faltou tem volta (Desfazer Faltou + Feita); sessão futura tem Remarcar
+      const bF = window.__sesAcoes({ id: "x1", faltou: true, data: hoje });
+      const bR = window.__sesAcoes({ id: "x2", data: iso(2) });
+      const bP = window.__sesAcoes({ id: "x3", data: iso(-2) });
+      out.botoes = /data-desfalta="x1"/.test(bF) && /data-feita="x1"/.test(bF) && !/data-faltou="x1"/.test(bF) && /data-sremarca="x2"/.test(bR) && !/data-sremarca="x3"/.test(bP);
+      // A4. encaixe não oferece a vaga pro próprio aluno que cancelou
+      const cands = window.__encaixe.candidatos(le(), iso(3), "v748a");
+      out.encaixe = !cands.some((c) => c.a.id === "v748a") && window.__encaixe.candidatos(le(), iso(3)).some((c) => c.a.id === "v748a");
+      // A6. fixa que começa no futuro não cria sessão antes do `desde` nem avança o geradoAte
+      const stF = le(); stF.agFixas = [{ id: "fx748", ids: ["v748a"], diaSem: [0, 1, 2, 3, 4, 5, 6], hora: "06:00", desde: iso(40), geradoAte: iso(28) }];
+      window.__agFixas.estende(stF);
+      out.fixa = !stF.sessoes.some((x) => x.fixaId === "fx748") && stF.agFixas[0].geradoAte === iso(28);
+      // A7. Cancelou marca o app pendente, avisa o aluno e fecha o pedido; o encaixe não lista quem cancelou
+      window.__sessaoAvisos = [];
+      const stC = le(); stC.sessoes.push({ id: "v748c", alunoId: "v748a", data: iso(2), hora: "09:00", feita: false, pedidoId: "ped-x" });
+      stC.alunos.find((a) => a.id === "v748a").appEditEm = ""; grava(stC);
+      window.confirm = () => true;
+      const bC = document.createElement("button"); bC.setAttribute("data-cx", "v748c"); document.getElementById("agDia").appendChild(bC); bC.click();
+      window.confirm = cOrig;
+      const stC2 = le();
+      out.cancel = !stC2.sessoes.some((x) => x.id === "v748c") && !!stC2.alunos.find((a) => a.id === "v748a").appEditEm &&
+        window.__sessaoAvisos.some((v) => v.tipo === "cancelou" && v.id === "v748c" && v.token === "tok-v748") &&
+        !/Treinos Teste/.test(document.getElementById("agEncaixe").innerHTML) && !document.getElementById("agEncaixe").hidden;
+      // A9. a vaga preenchida fecha o quadro de encaixe sozinha
+      const stV = le(); stV.sessoes.push({ id: "v748v", alunoId: "v748a", data: iso(2), hora: "09:00", feita: false }); grava(stV);
+      window.__agDia(hoje);
+      out.encaixeFecha = document.getElementById("agEncaixe").hidden;
+      window.__encaixe.fecha();
+      // A8. badge de chat pede ao servidor só o que conta (de=aluno, lida=false)
+      const eqs = [];
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => { const o = { then: (fn, fr) => Promise.resolve({ data: [] }).then(fn, fr) };
+        ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = (...a) => { if (t === "app_chat" && k === "eq") eqs.push(a.join("=")); return o; }; }); return o; } }) } });
+      window.__badgesRun();
+      await new Promise((r) => setTimeout(r, 120));
+      window.MTStore.cloud = orig;
+      out.badgeFiltro = eqs.indexOf("de=aluno") >= 0 && eqs.indexOf("lida=false") >= 0;
+      // A15. hora digitada vira HH:MM ou é recusada
+      out.hora = window.__normalizaHora("7:30") === "07:30" && window.__normalizaHora("7h05") === "07:05" && window.__normalizaHora("25:00") === "" && window.__normalizaHora("abc") === "";
+      // A13. .ics com DTSTAMP; sessão sem hora vira dia inteiro (nada de 08:00 inventado)
+      const aClick = HTMLAnchorElement.prototype.click, cu = URL.createObjectURL, ru = URL.revokeObjectURL; let blobCap = null;
+      HTMLAnchorElement.prototype.click = function () {}; URL.createObjectURL = (b) => { blobCap = b; return "blob:v748"; }; URL.revokeObjectURL = () => {};
+      window.__baixaICS("t.ics", [{ id: "e1", data: "2026-09-10", hora: "07:30", titulo: "A" }, { id: "e2", data: "2026-09-11", hora: "", titulo: "B" }]);
+      const ics = blobCap ? await blobCap.text() : "";
+      HTMLAnchorElement.prototype.click = aClick; URL.createObjectURL = cu; URL.revokeObjectURL = ru;
+      out.ics = /DTSTAMP:\d{8}T\d{6}Z/.test(ics) && /DTSTART:20260910T073000/.test(ics) && /DTSTART;VALUE=DATE:20260911/.test(ics) && !/T080000/.test(ics);
+      // A14. o aviso de choque é UM só (agendar, fixa e Remarcar) — e a sessão remarcada não choca consigo mesma
+      const stX = le(); stX.sessoes.push({ id: "v748x", alunoId: "v748a", data: iso(5), hora: "10:00", feita: false }); grava(stX);
+      let perguntou = 0; window.confirm = () => { perguntou++; return false; };
+      const okC = window.__confirmaAgendar(le(), [iso(5)], "10:00");
+      const okS = window.__confirmaAgendar(le(), [iso(5)], "10:00", "v748x");
+      window.confirm = cOrig;
+      out.choque = okC === false && perguntou === 1 && okS === true;
+      // A16. o badge da Agenda acompanha a faixa de pedidos na hora; hora fora de HH:MM vira "a combinar"
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta({ data: t === "app_agenda"
+        ? [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }] : [] }) }) } });
+      window.__pedidosApp(le());
+      await new Promise((r) => setTimeout(r, 150));
+      out.badgeAg = (document.querySelector('#navPt [data-nav="agenda"] .nav-bad') || {}).textContent === "2" &&
+        /data-agok="p2"[^>]*data-hora=""/.test(document.getElementById("listaPedidosApp").innerHTML);
+      window.MTStore.cloud = orig;
+      window.__agDia(hoje);
+      // limpa
+      const stZ = le();
+      stZ.alunos = stZ.alunos.filter((a) => a.id !== "v748a");
+      stZ.sessoes = stZ.sessoes.filter((x) => x.alunoId !== "v748a");
+      stZ.avaliacoes = (stZ.avaliacoes || []).filter((x) => x.alunoId !== "v748a");
+      stZ.planosPT = (stZ.planosPT || []).filter((x) => x.id !== "v748pl");
+      stZ.contratosPT = (stZ.contratosPT || []).filter((x) => x.alunoId !== "v748a");
+      stZ.agFixas = (stZ.agFixas || []).filter((x) => x.id !== "fx748");
+      delete (stZ.diarioPT || {})["v748a"];
+      grava(stZ);
+      window.alert = aOrig;
+      return out;
+    });
+    ok(v748.treinos && v748.tileTreinos, "📊 v748: 'Treinos no mês' é UMA conta — o app mede a meta e as sessões com o professor viram o 2º número");
+    ok(v748.diarioPadrao && v748.diario, "📝 v748: o diário anota com a data da sessão (padrão = última feita) e uma nota por dia, editando em vez de empilhar");
+    ok(v748.peso && v748.pesoCor, "⚖️ v748: peso subindo é verde pra quem quer ganhar músculo e neutro sem objetivo; o objetivo do app sai com rótulo");
+    ok(v748.habitos, "💧 v748: hábitos em dia dividem pela janela de dias, não só pelos dias com registro");
+    ok(v748.aba && v748.kpi40, "🗂 v748: a aba virou 'Questionários e hábitos' e o KPI diz 40+ quando a consulta cortou");
+    ok(v748.umaBusca, "☁️ v748: abrir a ficha baixa o retorno do app UMA vez (Resumo e aba App dividem a consulta)");
+    ok(/var w = window\.open\("", "_blank"\);\s*\/\/ v748: pop-up bloqueado[^\n]*\n\s*if \(!w\) \{ alert\("O navegador bloqueou a janela[^\n]*\n\s*w\.document\.write\("<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Recibo<\/title>/.test(htmlV748),
+      "🧾 v748: o recibo confere o bloqueio de pop-up antes de escrever na janela");
+    ok(v748.pacote, "🎟 v748: trocar pra um plano-pacote soma o saldo de aulas pagas (6 + 20 = 26) em vez de zerar");
+    ok(v748.recordes && v748.iaLote, "🏆 v748: recorde exige histórico anterior (uma função pro relatório, card e IA) e a IA da semana puxa as cargas em lote");
+    ok(v748.mesRel, "📅 v748: relatório e card aceitam o mês; no começo do mês sem registro, saem com o mês fechado");
+    ok(v748.pdf, "📄 v748: o PDF imprime 'Braço' e não pinta o peso de alerta sem saber o objetivo");
+    ok(v748.relatos, "🗣 v748: os relatos ficam só no histórico por dia — a aba de questionários mostra o atalho");
+    ok(v748.fc, "💓 v748: batimento médio é a mesma conta no Resumo e na aba App (resumoFc)");
+    ok(v748.diaLocal && v748.erroSql, "🕘 v748: a data do questionário é o dia LOCAL e só erro de tabela inexistente manda rodar o SQL");
+    ok(v748.pend, "📆 v748: sessão passada sem marcar aparece como pendência na Semana, mesmo com treino no plano");
+    ok(v748.botoes, "🔁 v748: Faltou tem Desfazer Faltou + Feita, e a sessão futura tem Remarcar");
+    ok(v748.encaixe && v748.encaixeFecha, "🪑 v748: o encaixe não oferece a vaga pra quem cancelou e fecha sozinho quando a vaga é preenchida");
+    ok(/var deve = !x\.pedido && es\.cls === "dev";/.test(htmlV748), "💸 v748: o DEVE do dia-por-vez usa a MESMA conta da grade (agEstado), não o dividaDe");
+    ok(v748.fixa, "🔂 v748: fixa marcada pra começar no futuro não cria sessão antes do 'desde'");
+    ok(v748.cancel, "📵 v748: Cancelou marca o app pendente, avisa o aluno e fecha o pedido do app");
+    ok(v748.badgeFiltro, "🔔 v748: o badge do chat só baixa as mensagens não lidas do aluno (filtro no servidor)");
+    ok(/data-agnovo="' \+ d0\.iso \+ "\|" \+ hv \+ '">Marcar aqui<\/button>/.test(htmlV748), "🔤 v748: o botão da vaga livre diz 'Marcar aqui' — 'Oferecer' é só o do encaixe");
+    ok(/\(h === "--:--" \? "sem hora" : esc\(h\)\)/.test(htmlV748) && /esc\(x\.hora \|\| "\+ hora"\)/.test(htmlV748) && v748.badgeAg,
+      "🛡 v748: a hora passa por esc() na grade e na lista, e pedido com hora fora de HH:MM vira 'a combinar'");
+    ok(/fxP\.scrollIntoView/.test(htmlV748) && /#agDia \[data-agno\]/.test(htmlV748), "👆 v748: pedido na grade leva à faixa de pedidos, e o dia-por-vez tem Recusar");
+    ok(/if \(!forca && !agNaTela && agPedCache && Date\.now\(\) - agPedEm < 60000\) return;/.test(htmlV748), "🐢 v748: fora da Agenda, o save() reaproveita os pedidos lidos há menos de 60 s em vez de ir à nuvem");
+    ok(v748.ics, "📆 v748: o .ics leva DTSTAMP e sessão sem hora vira evento de dia inteiro");
+    ok(v748.choque && /if \(!confirmaAgendar\(st, datasF, hora\)\) return;/.test(htmlV748), "⚠️ v748: a fixa passa pelos mesmos avisos de bloqueio e choque do agendamento normal");
+    ok(v748.hora, "⏰ v748: a hora digitada é normalizada pra HH:MM (7:30, 7h05) e o resto é recusado");
+    ok(v748.badgeAg, "🔔 v748: confirmar/recusar pedido atualiza o badge da Agenda na hora");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
@@ -4854,7 +5054,7 @@ async function abaPt(p, a) {
   });
   ok(/Esforço percebido/.test(painelNovo) && /Pesado/.test(painelNovo) && /considere aliviar/.test(painelNovo),
     "painel mostra o esforço percebido (RPE) com alerta de treino pesado");
-  ok(/Como o aluno se apresentou/.test(painelNovo) && /emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
+  ok(/Como o aluno se apresentou/.test(painelNovo) && /Emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
     "painel mostra objetivo, dias e a dor relatada no onboarding");
   // 💓 batimentos da cinta do app viram KPI + gráfico de esforço no perfil
   const painelFc = await p.evaluate(() => {
@@ -5096,8 +5296,8 @@ async function abaPt(p, a) {
         ativa: bt.classList.contains("ativa"), temBox: !!document.getElementById("pfQuestBox"),
         appEscondida: document.querySelector('[data-pfsec="app"]').hidden };
     });
-    ok(abaQ && /Check-ins/.test(abaQ.rot) && abaQ.visivel && abaQ.ativa && abaQ.temBox,
-      "o perfil tem uma aba própria de Check-ins que abre a seção das respostas");
+    ok(abaQ && /Questionários e hábitos/.test(abaQ.rot) && abaQ.visivel && abaQ.ativa && abaQ.temBox,
+      "o perfil tem uma aba própria de Questionários e hábitos (v748: era 'Check-ins', que queria dizer três coisas) que abre a seção das respostas");
     ok(abaQ && abaQ.appEscondida, "abrir Check-ins esconde as outras seções do perfil (aba de verdade)");
     ok(await p.evaluate(() => !/MOTEX/.test(window.__painelApp({ checks: [{ d: "2026-08-09", nome: "C", pts: 1, respostas: [{ sigla: "MOTEX", resposta: "Alto", pontos: 1 }] }] }))),
       "o painel 'Direto do app' não repete mais as respostas — elas vivem só na aba Check-ins");
@@ -6181,7 +6381,7 @@ async function abaPt(p, a) {
     ok(/Placar de cada semana/.test(questBox) && /data-cor=['"]ok['"]/.test(questBox) && /data-cor=['"]ruim['"]/.test(questBox) && /9 ponto/.test(questBox),
       "pontuação vira barras coloridas por semana (verde = boa, vermelha = fraca), com o valor no toque");
     ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação (sigla vale de reserva quando não veio a pergunta)");
-    ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
+    ok(/Questionários/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de questionários respondidos com a data do último (v748: o rótulo diz o que conta)");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {
       window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
@@ -6994,8 +7194,8 @@ async function abaPt(p, a) {
         honesto: /nenhum resumo escrito ainda/.test(semNotas) };
     });
     ok(/Relatos de treino/.test(relTre.htmlN) && /Sobrou gás/.test(relTre.htmlN) && /29\/08/.test(relTre.htmlN) &&
-      relTre.htmlN.indexOf("Sobrou") < relTre.htmlN.indexOf("Ombro"),
-      "📝 a aba Check-ins da ficha mostra os relatos entre aspas, o mais novo primeiro");
+      /Ver no histórico/.test(relTre.htmlN) && !/Ombro incomodou/.test(relTre.htmlN),
+      "📝 a aba de questionários resume o relato mais novo e aponta pro histórico (v748: a lista inteira vive só lá)");
     ok(relTre.temIA, "a IA recebe os relatos com data e tipo — dor e contexto entram na prescrição");
     ok(relTre.honesto, "sem relato nenhum, o texto da IA diz isso em vez de inventar");
   }

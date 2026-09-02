@@ -1759,6 +1759,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .agc.pedido { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
   .agc.pedido .ages { color: var(--tk-aten2); }
   .agc.dev .ages { color: var(--tk-erro); }
+  /* v748: sessão passada sem marcar — pede ação (tinta de atenção sobre token) */
+  .agc.pend { background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.34); border-style: dashed; }
+  .agc.pend .ages { color: var(--tk-aten2); }
+  .agl.pend .aglm i { color: var(--tk-aten2); font-weight: 700; }
+  #agPedFaixa.pisca { outline: 2px solid var(--pt-roxo); outline-offset: 2px; transition: outline-color .3s; }
   /* v728: resposta do aluno pelo app — quer remarcar (laranja) / confirmou (verde) */
   .agc.remarca { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.38); }
   .agc.remarca .ages { color: var(--tk-aten2); }
@@ -2164,6 +2169,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="sHora" type="time" style="width: auto;">
         <button class="btn" id="sAdd">+ Agendar</button>
       </div>
+      <div id="sEditAviso" class="dnota lado" hidden style="margin-top: 8px;">Remarcando a sessão de <b></b> — o Agendar troca a data/hora dela e avisa o aluno. <button class="btn sec mini" type="button" id="sEditCancela">Deixar como está</button></div>
       <div id="agFixasLista" style="margin-top: 10px;"></div>
       <div id="sTurmaBox" hidden style="margin-top: 8px;">
         <div class="muted" style="font-size: 12.5px; margin-bottom: 6px;">Quem entra nessa turma? Toque nos nomes (cada aluno ganha a própria sessão — presença e cobrança seguem individuais):</div>
@@ -3686,7 +3692,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <button data-pfa="cadastro"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='8' r='3.6'/><path d='M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5'/></svg> Cadastro</button>
     <button data-pfa="fin"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
     <button data-pfa="freq"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Frequência</button>
-    <button data-pfa="quest"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Check-ins</button>
+    <button data-pfa="quest"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Questionários e hábitos</button>
     <button data-pfa="aval"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Avaliações</button>
     <button data-pfa="treino"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Treino</button>
   </div>
@@ -3803,8 +3809,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   <div class="card" data-pfsec="freq">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Diário de sessões</h2>
-    <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
-      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1; min-width: 200px;">
+    <!-- v750: flex-wrap + largura do campo de data limitada — sem isso, num
+         celular de 390px a linha (texto 200px + data + botão) empurrava a
+         página pra 401px e ela rolava de lado -->
+    <div class="linha-flex" style="gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1 1 200px; min-width: 0;">
+      <input id="pfDiarioData" type="date" style="width: auto; max-width: 100%; min-width: 0; flex: 0 1 auto;" title="de que sessão é a anotação (vem a última sessão feita)">
       <button class="btn mini" id="pfDiarioAdd">+ Anotar</button>
     </div>
     <div id="pfDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;">Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.</div>
@@ -5189,8 +5199,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var linha = [a.objetivo || "", a.desde ? S.plural(Math.max(1, Math.round((new Date(S.todayISO()) - new Date(a.desde)) / 2629800000)), "mês", "meses") : "",
       pl.o, est === "devendo" ? "devendo" : "em dia", idade ? idade + " anos" : ""].filter(Boolean);
     $("pfDesde").textContent = linha.join(" · ") + (a.appRevogadoEm ? " · acesso ao app cortado" : "");
-    var hoje = S.todayISO();
-    var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+    var nMes = treinosMesDe(st, a).n; // v748: a MESMA conta do tile do Resumo
     var chips = $("pfChips");
     if (chips) {
       chips.innerHTML =
@@ -5214,32 +5223,82 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       pr.classList.toggle("semses", !hora && /sem sess/i.test(px.txt || ""));
     }
   }
+  /* v748: "Treinos no mês" era DUAS contas na mesma ficha — o Resumo contava
+   * as sessões marcadas Feita na agenda e media contra a meta do APP (que
+   * inclui treino sozinho), e a aba App contava o `retorno.feitos`. Aluno que
+   * treina 4x sozinho e faz 1 sessão com o professor lia "4 de 16" num tile e
+   * "16" no outro. Agora UMA função: a meta é medida contra o que o app marcou
+   * (numerosMesAluno, a MESMA conta do relatório do mês) e as sessões com o
+   * professor viram o segundo número, com rótulo. Sem app, valem as sessões —
+   * e o rótulo diz isso em vez de fingir. */
+  function treinosMesDe(st, a) {
+    var n = numerosMesAluno(st, a, S.todayISO().slice(0, 7));
+    var ret = a.retorno || a.demoRetorno || {};
+    var temApp = !!(ret.feitos && typeof ret.feitos === "object" && Object.keys(ret.feitos).length);
+    var meta = (+a.metaSemana || 3) * 4;
+    var nT = temApp ? n.feitos : n.sesFeitas;
+    return { n: nT, app: n.feitos, ses: n.sesFeitas, temApp: temApp, meta: meta,
+      sub: (nT >= meta ? "bateu a meta do mês" : S.plural(meta - nT, "treino", "treinos") + " pra bater") +
+        (temApp ? " · " + S.plural(n.sesFeitas, "sessão com você", "sessões com você") : " · só as sessões com você"),
+      cor: nT >= meta ? "var(--tk-ok)" : "var(--tk-tx4)" };
+  }
+  /* v748: peso subindo era SEMPRE pintado de vermelho — inclusive pra quem
+   * está no app pra ganhar músculo. O sentido sai do objetivo da ficha ou do
+   * que o aluno escolheu no app (onb.obj); sem nenhum dos dois, cor neutra.
+   * Vale pros três lugares: tile do Resumo, KPI da aba App e o PDF. */
+  function sentidoPeso(a, ret) {
+    var obj = String((a && a.objetivo) || "").toLowerCase();
+    var app = String(((ret || {}).onb || {}).obj || "").toLowerCase();
+    if (/hipertrof|massa|m[uú]scul|ganh|engord/.test(obj) || app === "musculo") return "sobe";
+    if (/emagre|perd|secar|defini|gordura/.test(obj) || app === "emagrecer") return "desce";
+    return "";
+  }
+  function corPeso(dif, sentido) {
+    if (!dif || !sentido) return "";
+    return (sentido === "sobe" ? dif > 0 : dif < 0) ? "var(--tk-ok)" : "var(--tk-erro)";
+  }
+  /* v748: o batimento médio também tinha duas contas (Resumo = média de TODOS
+   * os dias, sem validar; aba App = últimos 10 dias + últimas 10 corridas com
+   * bpm, 25–240). Uma função só, com a regra validada da aba App. */
+  function resumoFc(ret) {
+    var ok9 = function (v) { return isFinite(+v) && +v >= 25 && +v <= 240; };
+    var fcH = (ret && ret.fc && typeof ret.fc === "object" && !Array.isArray(ret.fc)) ? ret.fc : {};
+    var dias = Object.keys(fcH).filter(function (k) {
+      var v = fcH[k];
+      return /^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === "object" && !Array.isArray(v) && ok9(v.m) && ok9(v.x);
+    }).sort();
+    var crs = (ret && Array.isArray(ret.cardio) ? ret.cardio : []).filter(function (x) { return x && typeof x === "object" && ok9(x.fc); });
+    var ult = dias.slice(-10), ultCr = crs.slice(-10), soma = 0;
+    ult.forEach(function (k) { soma += +fcH[k].m; });
+    ultCr.forEach(function (x) { soma += +x.fc; });
+    var n = ult.length + ultCr.length, max = 0;
+    dias.forEach(function (k) { if (+fcH[k].x > max) max = +fcH[k].x; });
+    crs.forEach(function (x) { if (ok9(x.fcx) && +x.fcx > max) max = +x.fcx; else if (+x.fc > max) max = +x.fc; });
+    return { med: n ? Math.round(soma / n) : 0, max: max, n: n };
+  }
+  window.__resumoFc = resumoFc; window.__sentidoPeso = sentidoPeso; window.__treinosMes = treinosMesDe; // testes
   function pintaPfResumo(st, a) {
     var el = $("pfResumo"); if (!el) return;
     var hoje = S.todayISO();
     // demoRetorno: o que o demo do studio grava direto no aluno, sem nuvem
     var ret = a.retorno || a.demoRetorno || {};
-    var meta = metaMesDe(a); // v747: a mesma meta da barra da lista
-    var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+    var tm = treinosMesDe(st, a);
     // peso: o primeiro e o último que o aluno registrou no app
     var pesos = Object.keys(ret.peso || {}).sort();
     var pAtual = pesos.length ? +ret.peso[pesos[pesos.length - 1]] : 0;
     var pPri = pesos.length ? +ret.peso[pesos[0]] : 0;
     var dif = pesos.length > 1 ? Math.round((pAtual - pPri) * 10) / 10 : 0;
-    // batimento: média das médias que voltaram do app
-    var fcs = Object.keys(ret.fc || {}).map(function (k) { return ret.fc[k]; }).filter(Boolean);
-    var fcMed = fcs.length ? Math.round(fcs.reduce(function (t, x) { return t + (+x.m || 0); }, 0) / fcs.length) : 0;
-    var fcMax = fcs.length ? Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; })) : 0;
+    // batimento: a MESMA conta da aba App (resumoFc)
+    var fc9 = resumoFc(ret), fcMed = fc9.med, fcMax = fc9.max;
     function kpi(k, v, un, s, cor, id) {
       return '<div class="pfkpi"' + (id ? ' id="' + id + '"' : "") + '><div class="k">' + k + '</div><div class="v">' + v +
         (un ? "<small> " + un + "</small>" : "") + '</div><div class="s" style="color:' + (cor || "var(--tk-tx4)") + ';">' + s + "</div></div>";
     }
     var kpis = '<div class="pfkpis">' +
-      kpi("TREINOS NO MÊS", nMes, "de " + meta, nMes >= meta ? "bateu a meta do mês" : S.plural(meta - nMes, "treino", "treinos") + " pra bater",
-        nMes >= meta ? "var(--tk-ok)" : "var(--tk-tx4)") +
+      kpi("TREINOS NO MÊS", tm.n, "de " + tm.meta, tm.sub, tm.cor, "pfKpiTr") +
       kpi("PESO", pAtual ? String(pAtual).replace(".", ",") : "—", pAtual ? "kg" : "",
         pesos.length > 1 ? (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg desde o início" : "o aluno ainda não pesou no app",
-        dif < 0 ? "var(--tk-ok)" : "", "pfKpiPeso") +
+        corPeso(dif, sentidoPeso(a, ret)), "pfKpiPeso") +
       kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada",
         "", "pfKpiFc") +
       kpi("CHECK-IN", "—", "", "sem check-in esta semana", "", "pfKpiCk") +
@@ -5389,7 +5448,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * sempre. Buscamos junto com o check-in e guardamos a copia local: ela
      * tambem alimenta os blocos de evolucao que vao no pedido da IA. */
     try {
-      nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1)
+      buscaRetornoApp(nuvem, a.appTokenP)
         .then(function (r) {
           var ret = !r.error && r.data && r.data[0] && r.data[0].retorno;
           if (!ret || typeof ret !== "object") return;
@@ -5406,27 +5465,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           // S.write e nao save(): gravar sem redesenhar a tela embaixo de quem le
           if (a2) { a2.retorno = retLeve; S.write("ptStudio", st2); }
           if (!ainda()) return;
+          // v748: o tile de treinos segue a MESMA conta (treinosMesDe) com o retorno fresco
+          if (a2) { var tm2 = treinosMesDe(st2, a2); poeKpi("pfKpiTr", tm2.n, "de " + tm2.meta, tm2.sub, tm2.cor); }
           var pesos = Object.keys(ret.peso || {}).sort();
           if (pesos.length) {
             var pA = +ret.peso[pesos[pesos.length - 1]], pP = +ret.peso[pesos[0]];
             var d = Math.round((pA - pP) * 10) / 10;
             poeKpi("pfKpiPeso", String(pA).replace(".", ","), "kg",
               pesos.length > 1 ? (d > 0 ? "+" : "") + String(d).replace(".", ",") + " kg desde o início" : "primeiro peso anotado",
-              d < 0 ? "var(--tk-ok)" : "");
+              corPeso(d, sentidoPeso(a2 || a, ret)));
           }
-          var fcs = Object.keys(ret.fc || {}).map(function (k) { return ret.fc[k]; }).filter(Boolean);
-          if (fcs.length) {
-            var med = Math.round(fcs.reduce(function (t, x) { return t + (+x.m || 0); }, 0) / fcs.length);
-            var mx = Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; }));
-            if (med) poeKpi("pfKpiFc", med, "bpm", "pico " + mx + " bpm");
-          }
+          var fc2 = resumoFc(ret);
+          if (fc2.med) poeKpi("pfKpiFc", fc2.med, "bpm", "pico " + fc2.max + " bpm");
         }, function () {});
     } catch (e2) {}
   }
+  /* v748: ao abrir a ficha, o MESMO app_aluno.retorno era baixado DUAS vezes
+   * (pfResumoNuvem e pintaAppDados faziam a consulta idêntica, e é o payload
+   * mais pesado do sistema — leva as fotos). Agora a consulta é uma só por
+   * token, guardada por alguns segundos e consumida pelos dois. */
+  var pfRetCache = { tok: "", em: 0, p: null };
+  function buscaRetornoApp(nuvem, tok) {
+    if (pfRetCache.tok === tok && pfRetCache.p && Date.now() - pfRetCache.em < 1500) return pfRetCache.p;
+    var p = Promise.resolve(nuvem.client.from("app_aluno").select("retorno").eq("token", tok).limit(1));
+    pfRetCache = { tok: tok, em: Date.now(), p: p };
+    return p;
+  }
+  window.__buscaRetornoApp = buscaRetornoApp; // testes
+  /* v748: `criado` é timestamptz do servidor e a fatia `slice(0,10)` pegava a
+   * data em UTC — no Brasil (UTC-3) tudo respondido depois das 21h caía no dia
+   * seguinte (e no domingo, na SEMANA seguinte). Converte pro dia local antes
+   * de fatiar; string só de data (sem hora) passa como está. */
+  function diaLocalDe(iso) {
+    var s = String(iso || "");
+    if (!/T|\s\d{2}:/.test(s)) return s.slice(0, 10);
+    var d = new Date(s);
+    if (isNaN(d)) return s.slice(0, 10);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  /* v748: "Rode o SQL" só cabe quando a tabela/função NÃO EXISTE — queda de
+   * rede, RLS e timeout mandavam o professor copiar SQL que não resolve nada. */
+  function erroDeSql(err) {
+    var c = String((err && err.code) || ""), m = String((err && err.message) || "");
+    return /^42P01$|^42883$|^PGRST20/.test(c) || /does not exist|relation .* not|Could not find the (table|function)/i.test(m);
+  }
+  window.__diaLocalDe = diaLocalDe; window.__erroDeSql = erroDeSql; // testes
+  // v748: os rótulos dos chips de objetivo do app (o app grava a chave em ptonb.obj)
+  var OBJ_APP_ROT = { emagrecer: "Emagrecer", musculo: "Ganhar músculo", saude: "Saúde e disposição", performance: "Performance" };
   // as 4 ações do dia no cabeçalho da ficha (tela 2b)
   document.addEventListener("click", function (e) {
     var id = e.target && e.target.id;
     if (id === "pfEditar") { mostraPfAba("cadastro"); return; }
+    // v748: atalho dos relatos (aba Questionários e hábitos → histórico da aba App)
+    var vai9 = e.target.closest && e.target.closest("[data-pfvai]");
+    if (vai9) { mostraPfAba(vai9.getAttribute("data-pfvai")); return; }
     /* v741: os dois atalhos que abriam a tela SEM o aluno. O chat abria a
      * conversa genérica (e ainda trocava a sub-aba do perfil); Montar treino
      * gravava o aluno no select da aba de IA (#taAluno) e abria Fichas com o
@@ -5467,6 +5559,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
     perfilId = id;
+    pfRetCache = { tok: "", em: 0, p: null }; // v748: cada abertura busca o retorno UMA vez (e sempre fresco)
     mostraPfAba("resumo");
     $("pfTitulo").textContent = a.nome;
     pintaPfFoto(a);
@@ -5725,6 +5818,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var lista = (st.diarioPT || {})[alunoId] || [];
     $("pfDiarioTxt").value = "";
+    /* v748: a nota é DA SESSÃO, não do dia em que o professor lembrou de
+     * escrever — o padrão do campo de data é a última sessão feita do aluno
+     * (a Agenda só mostra a nota na sessão quando a data bate). */
+    var dtD = $("pfDiarioData");
+    if (dtD) dtD.value = idxDe(st).sessFeitasDe(alunoId).map(function (x) { return x.data; }).filter(Boolean).sort().pop() || S.todayISO();
     $("pfDiarioLista").innerHTML = lista.length ? lista.slice().reverse().map(function (x, i) {
       return '<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--linha);">' +
         '<b style="white-space:nowrap;">' + S.fmtData(x.d) + "</b><span style='flex:1;'>" + esc(x.t) + "</span>" +
@@ -5737,7 +5835,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!txt) { alert("Escreva a anotação da sessão."); return; }
     var st = load();
     st.diarioPT[perfilId] = st.diarioPT[perfilId] || [];
-    st.diarioPT[perfilId].push({ d: S.todayISO(), t: txt });
+    // v748: data escolhida (padrão = última sessão feita) e UMA nota por dia —
+    // anotar de novo no mesmo dia edita, a MESMA regra do Anotar da Agenda
+    var dD = ($("pfDiarioData") || {}).value || S.todayISO();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dD)) dD = S.todayISO();
+    var jaD = st.diarioPT[perfilId].filter(function (r) { return r.d === dD; }).pop();
+    if (jaD) jaD.t = txt;
+    else st.diarioPT[perfilId].push({ d: dD, t: txt });
     if (st.diarioPT[perfilId].length > 200) st.diarioPT[perfilId].shift();
     S.write("ptStudio", st);
     pintaDiario(perfilId);
@@ -5766,14 +5870,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var deltas = "";
     if (avs.length >= 2) {
       var pri = avs[0], ult = avs[avs.length - 1];
-      function delta(campo, unid, bomSeCai) {
+      /* v748: rótulo separado do nome do campo (o PDF imprimia "Braco" sem
+       * cedilha) e o peso segue o objetivo do aluno (sentidoPeso) — quem está
+       * em hipertrofia recebia "+3 kg" em laranja de alerta. `bomSeCai` null =
+       * sem juízo de valor (classe neutra). */
+      var sentP = sentidoPeso(a, a.retorno || a.demoRetorno || {});
+      function delta(campo, rotulo, unid, bomSeCai) {
         var d1 = +pri[campo], d2 = +ult[campo];
         if (!isFinite(d1) || !isFinite(d2)) return "";
         var dif = Math.round((d2 - d1) * 10) / 10;
-        var bom = bomSeCai ? dif <= 0 : dif >= 0;
-        return "<div class='delta " + (bom ? "bom" : "ruim") + "'><b>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + unid + "</b><span>" + campo + "</span></div>";
+        var cls = bomSeCai == null ? "" : ((bomSeCai ? dif <= 0 : dif >= 0) ? " bom" : " ruim");
+        return "<div class='delta" + cls + "'><b>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + unid + "</b><span>" + rotulo + "</span></div>";
       }
-      deltas = "<div class='deltas'>" + delta("peso", " kg", true) + delta("gordura", "%", true) + delta("cintura", " cm", true) + delta("braco", " cm", false) + "</div>";
+      deltas = "<div class='deltas'>" + delta("peso", "Peso", " kg", sentP === "sobe" ? false : sentP === "desce" ? true : null) +
+        delta("gordura", "Gordura", "%", true) + delta("cintura", "Cintura", " cm", true) + delta("braco", "Braço", " cm", false) + "</div>";
     }
     // gráfico simples de peso (SVG)
     var graf = "";
@@ -5849,6 +5959,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var HABS = [[mi("gota", 13), "Água"], [mi("maca", 13), "Alimentação"], [mi("lua", 13), "Sono 7h+"], [mi("corrida", 13), "Cardio"]];
         var corte30 = isoLocal(new Date(Date.now() - 29 * 864e5));
         var ult30 = diasHab.filter(function (k) { return k >= corte30; });
+        /* v748: a porcentagem dividia pelos dias COM registro — o app só cria a
+         * chave do dia quando o aluno toca num hábito, então quem marcou tudo
+         * em 2 dias e sumiu 28 aparecia com 100%. Agora divide pelos 30 dias
+         * (ou pelos dias desde o primeiro registro, se ele começou há menos). */
+        var base30 = ult30.length ? Math.min(30, Math.round((Date.now() - new Date(ult30[0] + "T12:00").getTime()) / 864e5) + 1) : 0;
+        if (base30 < ult30.length) base30 = ult30.length;
         var contHab = [0, 0, 0, 0], dias3 = 0;
         ult30.forEach(function (k) {
           // só objeto simples conta — string/array vindos de retorno adulterado não indexam
@@ -5868,19 +5984,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var kpis = [];
         if (ks.length) {
           var difTot = Math.round((+pz[ks[ks.length - 1]] - (+pz[ks[0]])) * 10) / 10;
+          // v748: a cor segue o objetivo do aluno (sentidoPeso) — subir não é sempre ruim
           kpis.push(kpi("Peso atual", num(+pz[ks[ks.length - 1]]) + " kg",
-            "<b style='color:" + (difTot < 0 ? "var(--tk-ok)" : difTot > 0 ? "var(--tk-erro)" : "var(--tk-tx3)") + ";'>" + (difTot > 0 ? "+" : "") + num(difTot) + " kg</b> desde o início"));
+            "<b style='color:" + (corPeso(difTot, sentidoPeso(aluno, ret)) || "var(--tk-tx3)") + ";'>" + (difTot > 0 ? "+" : "") + num(difTot) + " kg</b> desde o início"));
         }
         if (diasTreino.length) {
           kpis.push(kpi("Treinos no mês", treinosMes, diasTreino.length + " no total"));
           kpis.push(kpi("Maior sequência", seqMax + " dia" + (seqMax > 1 ? "s" : ""), "treinos em dias seguidos"));
         }
-        if (ult30.length) kpis.push(kpi("Hábitos em dia", Math.round(100 * dias3 / ult30.length) + "%", "dias com 3+ hábitos (30d)"));
+        if (ult30.length) kpis.push(kpi("Hábitos em dia", Math.round(100 * dias3 / base30) + "%", "dias com 3+ hábitos (dos últimos " + base30 + ")"));
         // check-ins de questionário (respostas que chegaram pela tabela app_quest)
         var cks = (Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
           return c && typeof c === "object" && dataRe(String(c.d || ""));
         }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
-        if (cks.length) kpis.push(kpi("Check-ins", cks.length, "último em " + cks[cks.length - 1].d.slice(8, 10) + "/" + cks[cks.length - 1].d.slice(5, 7)));
+        // v748: a consulta corta em 40 — o número diz "40+" em vez de travar em 40
+        if (cks.length) kpis.push(kpi("Questionários", cks.length >= 40 ? "40+" : cks.length, "último em " + cks[cks.length - 1].d.slice(8, 10) + "/" + cks[cks.length - 1].d.slice(5, 7)));
         // percepção de esforço pós-treino (RPE de 1 toque no app)
         var rpe = (ret.rpe && typeof ret.rpe === "object" && !Array.isArray(ret.rpe)) ? ret.rpe : {};
         var rks = Object.keys(rpe).filter(function (k) { return dataRe(k) && [1, 2, 3].indexOf(+rpe[k]) !== -1; }).sort().slice(-7);
@@ -6119,7 +6237,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (onb && (onb.obj || onb.dias || onb.dor)) {
           html += titulo("Como o aluno se apresentou no app") +
             "<div style='font-size:13px;'>" +
-            (onb.obj ? "Objetivo: <b>" + esc(String(onb.obj).slice(0, 40)) + "</b>" : "") +
+            // v748: o app grava a CHAVE do chip — o painel mostra o rótulo, não "musculo"
+            (onb.obj ? "Objetivo: <b>" + esc(OBJ_APP_ROT[String(onb.obj)] || String(onb.obj).slice(0, 40)) + "</b>" : "") +
             (onb.dias ? " · <b>" + esc(String(onb.dias).slice(0, 6)) + " dias/semana</b>" : "") +
             (onb.dor ? "<div style='color:var(--tk-aten);margin-top:4px;'>Atenção: relatou “" + esc(String(onb.dor).slice(0, 120)) + "” — adapte o treino.</div>" : "") +
             "</div>";
@@ -6182,16 +6301,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         // ---- hábitos diários ----
         if (ult30.length) {
-          html += titulo("Hábitos diários (últimos 30 dias — registrados pelo aluno)") +
+          html += titulo("Hábitos diários (dos últimos " + base30 + " dias — registrados pelo aluno)") +
             HABS.map(function (h2, i) {
-              var pct = Math.round(100 * contHab[i] / ult30.length);
+              var pct = Math.round(100 * contHab[i] / base30);
               return "<div style='display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;'>" +
                 "<span style='flex:none;width:120px;'>" + h2[0] + " " + h2[1] + "</span>" +
                 "<div style='flex:1;height:9px;background:var(--tk-trilha);border-radius:99px;overflow:hidden;'>" +
                 "<div style='width:" + pct + "%;height:100%;background:" + (pct >= 60 ? "var(--tk-ok)" : pct >= 30 ? "var(--tk-aten)" : "var(--tk-erro)") + ";border-radius:99px;'></div></div>" +
                 "<b style='flex:none;width:42px;text-align:right;'>" + pct + "%</b></div>";
             }).join("") +
-            "<div class='muted' style='font-size:12px;margin-top:4px;'>" + dias3 + " de " + ult30.length + " dia(s) com 3+ hábitos batidos.</div>";
+            "<div class='muted' style='font-size:12px;margin-top:4px;'>" + dias3 + " de " + base30 + " dia(s) com 3+ hábitos batidos" +
+            (ult30.length < base30 ? " (" + (base30 - ult30.length) + " sem nenhum registro)" : "") + ".</div>";
         }
         // (as respostas de questionário viram métricas na aba Check-ins do perfil)
         // fotos antes × depois
@@ -6612,14 +6732,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nts9 = (ret && Array.isArray(ret.notas) ? ret.notas : []).filter(function (n) {
       return n && dataRe(String(n.d || "")) && String(n.t || "").trim();
     });
+    /* v748: a lista inteira aparecia AQUI e de novo na gaveta do dia do
+     * histórico (aba App) — a mesma frase em duas abas, e a de cá sem o
+     * contexto (carga, corrida, esforço do dia). Fica só o atalho. */
     if (nts9.length) {
-      var ROT9 = { musc: "Musculação", wod: "Circuito", corrida: "Corrida" };
+      var ult9 = nts9[nts9.length - 1];
       html += titulo("📝 Relatos de treino — escritos pelo aluno") +
-        nts9.slice(-8).reverse().map(function (n) {
-          return "<div class='qscard'><div class='qstop'><span class='qsrot'>" + fmtD(String(n.d)) +
-            (ROT9[n.tp] ? " · " + ROT9[n.tp] : "") + "</span></div>" +
-            "<div style='font-size:14px;line-height:1.55;margin-top:6px;'>&ldquo;" + esc(String(n.t).slice(0, 400)) + "&rdquo;</div></div>";
-        }).join("");
+        "<div class='muted' style='font-size:13px;'>" + S.plural(nts9.length, "relato", "relatos") + " — o último em " + fmtD(String(ult9.d)) +
+        ": &ldquo;" + esc(String(ult9.t).slice(0, 120)) + (String(ult9.t).length > 120 ? "…" : "") + "&rdquo;. " +
+        "Cada relato está no histórico por dia, junto com carga, corrida e esforço. " +
+        "<button type='button' class='btn sec mini' data-pfvai='app'>Ver no histórico</button></div>";
     }
     return html;
   }
@@ -6664,7 +6786,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .then(function (r2) { return r2; }, function () { return null; });
     } catch (eCk) { qCk = Promise.resolve(null); }
     Promise.all([
-      nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1),
+      buscaRetornoApp(nuvem, a.appTokenP), // v748: a mesma consulta do Resumo, uma vez só
       qCk,
     ]).then(function (rs) {
         var r = rs[0];
@@ -6674,12 +6796,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // monta primeiro, senão um erro no app_aluno deixava a aba travada em "Carregando…"
         var checksQ = rowsQ.map(function (row) {
           var dd = (row && row.dados && typeof row.dados === "object") ? row.dados : {};
-          return { d: String(row.criado || "").slice(0, 10), nome: row.questionario || "Check-in",
+          return { d: diaLocalDe(row.criado), nome: row.questionario || "Check-in",
             pts: (dd.pontuacao == null || !isFinite(+dd.pontuacao)) ? null : +dd.pontuacao,
             respostas: Array.isArray(dd.respostas) ? dd.respostas : [] };
         });
         if (r && r.error) {
-          box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app.";
+          /* v748: só manda rodar o SQL quando o erro É de tabela/função que
+           * não existe — queda de rede, RLS e timeout ganham o texto honesto */
+          box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."
+            : "Não deu pra carregar agora — confira a internet e abra o perfil de novo.";
           pintaCheckins(checksQ.length ? { checks: checksQ } : null,
             "Não deu pra carregar agora — confira a internet e abra o perfil de novo.");
           return;
@@ -6906,6 +7031,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cfg = st.config || {};
     var quem = cfg.nome ? "Studio " + cfg.nome.split(" ")[0] : "Personal trainer";
     var w = window.open("", "_blank");
+    // v748: pop-up bloqueado devolve null — antes estourava calado no document.write
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
     w.document.write("<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Recibo</title>" +
       "<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7;}" +
       "h2{border-bottom:2px solid #111;padding-bottom:8px;}button{padding:10px 16px;margin-top:24px;cursor:pointer;}" +
@@ -7009,7 +7136,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         a.modalidade = plC.modalidade || "";
         // plano-PACOTE: abre o primeiro ciclo de aulas (a venda registra no card de pagamentos)
         if (+plC.pacoteQtd > 0) {
-          a.pacote = { total: +plC.pacoteQtd, usadas: 0, vendidoEm: S.todayISO(),
+          /* v748: o saldo do pacote ANTERIOR (aulas pagas e não usadas) entra
+           * no novo — antes era zerado e o aluno perdia as aulas, o mesmo
+           * caminho que o "vender pacote" já somava */
+          var saldoAnt = a.pacote ? Math.max(0, (+a.pacote.total || 0) - (+a.pacote.usadas || 0)) : 0;
+          a.pacote = { total: +plC.pacoteQtd + saldoAnt, usadas: 0, vendidoEm: S.todayISO(),
             planoId: plC.id, valor: +plC.valor, renova: !!plC.pacoteRenova };
         }
       }
@@ -7047,6 +7178,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * Os números saem do que o app do aluno devolveu (a.retorno: treinos feitos,
    * peso, cargas, corridas) mais as sessões marcadas no painel — e cada bloco
    * só aparece quando tem dado de verdade. */
+  /* v748: recorde de carga tinha DUAS regras — o relatório/card aceitava
+   * recorde sem histórico anterior (no primeiro mês de app TODO exercício
+   * anotado virava "— → 60 kg" e o card do Instagram estampava "novo recorde"
+   * pra quem só anotou o primeiro treino), enquanto o resumo da semana da IA
+   * exigia máximo anterior > 0. Agora é UMA função, com a regra honesta:
+   * recorde é bater o que já existia. `desde`/`ate` são ISO inclusivos. */
+  function recordesDe(ret, desde, ate) {
+    var recs = [];
+    var cg = (ret && ret.cargas && typeof ret.cargas === "object" && !Array.isArray(ret.cargas)) ? ret.cargas : {};
+    Object.keys(cg).forEach(function (ex) {
+      var maxPer = 0, maxAntes = 0;
+      (Array.isArray(cg[ex]) ? cg[ex] : []).forEach(function (e) {
+        if (!e || e.kg == null || !isFinite(+e.kg)) return;
+        var d = String(e.d || "").slice(0, 10);
+        if (d >= desde && d <= ate) { if (+e.kg > maxPer) maxPer = +e.kg; }
+        else if (d < desde) { if (+e.kg > maxAntes) maxAntes = +e.kg; }
+      });
+      if (maxPer > maxAntes && maxAntes > 0) recs.push({ ex: ex, de: maxAntes, pra: maxPer });
+    });
+    recs.sort(function (x, y) { return (y.pra - y.de) - (x.pra - x.de); });
+    return recs;
+  }
+  window.__recordesDe = recordesDe; // testes
   /* Os números do mês de UM aluno — a mesma conta serve o relatório mensal e
    * o card de resultado (v691): duas telas nunca contam histórias diferentes. */
   function numerosMesAluno(st, a, mes) {
@@ -7061,30 +7215,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pesoIni = ksMes.length ? +pz[ksMes[0]] : 0;
     var pesoFim = ksMes.length ? +pz[ksMes[ksMes.length - 1]] : (ksTodos.length ? +pz[ksTodos[ksTodos.length - 1]] : 0);
     var pesoDif = ksMes.length > 1 ? Math.round((pesoFim - pesoIni) * 10) / 10 : 0;
-    // recorde de carga = máximo do mês MAIOR que o máximo de antes do mês
-    var recs = [];
-    Object.keys(ret.cargas || {}).forEach(function (ex) {
-      var maxMes = 0, maxAntes = 0;
-      (ret.cargas[ex] || []).forEach(function (e) {
-        if (!e || e.kg == null) return;
-        if (String(e.d || "").slice(0, 7) === mes) { if (+e.kg > maxMes) maxMes = +e.kg; }
-        else if (String(e.d || "") < mes + "-01") { if (+e.kg > maxAntes) maxAntes = +e.kg; }
-      });
-      if (maxMes > maxAntes && maxMes > 0) recs.push({ ex: ex, de: maxAntes, pra: maxMes });
-    });
-    recs.sort(function (x, y) { return (y.pra - y.de) - (x.pra - x.de); });
+    // recorde de carga = máximo do período MAIOR que o máximo de antes (recordesDe)
+    var recs = recordesDe(ret, mes + "-01", mes + "-31");
     var cds = (ret.cardio || []).filter(function (c) { return String(c.d || "").slice(0, 7) === mes; });
     var kmMes = Math.round(cds.reduce(function (t, c) { return t + (+c.k || 0); }, 0) * 10) / 10;
     return { feitos: feitos, sesMes: sesMes, sesFeitas: sesFeitas, pesoIni: pesoIni, pesoFim: pesoFim,
              pesoDif: pesoDif, recs: recs, cds: cds, kmMes: kmMes };
   }
-  function montaRelMensal(alunoId) {
+  /* v748: relatório do mês e card pra postar cravavam o mês CORRENTE — no dia
+   * 2 de setembro, justamente quando se manda o "resultado de agosto", os dois
+   * diziam "ainda sem número". Agora o mês é parâmetro; sem ele, vale o mês
+   * que as setas ‹ › do histórico da aba App escolheram (pfHistOff) e, até o
+   * dia 5, o mês anterior quando o corrente ainda não tem registro nenhum. */
+  function mesRelPadrao(st, a) {
+    var hoje = S.todayISO();
+    var hj = new Date(hoje + "T12:00");
+    if (pfHistOff > 0) {
+      var alvo = new Date(hj.getFullYear(), hj.getMonth() - pfHistOff, 1, 12);
+      return alvo.getFullYear() + "-" + String(alvo.getMonth() + 1).padStart(2, "0");
+    }
+    var mes = hoje.slice(0, 7);
+    if (+hoje.slice(8, 10) <= 5 && a) {
+      var n = numerosMesAluno(st, a, mes);
+      if (!n.feitos && !n.sesMes.length && !n.recs.length && !n.cds.length && !n.pesoDif) {
+        var ant = new Date(hj.getFullYear(), hj.getMonth() - 1, 1, 12);
+        return ant.getFullYear() + "-" + String(ant.getMonth() + 1).padStart(2, "0");
+      }
+    }
+    return mes;
+  }
+  window.__mesRelPadrao = mesRelPadrao; // testes
+  function montaRelMensal(alunoId, mesQ) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return "";
     var studio = (st.config || {}).nome || "TORQUE PERSONAL";
     var hoje = S.todayISO();
-    var mes = hoje.slice(0, 7);
+    var mes = /^\d{4}-\d{2}$/.test(mesQ || "") ? mesQ : mesRelPadrao(st, a);
     var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var mesNome = MESES9[+mes.slice(5, 7) - 1] + " de " + mes.slice(0, 4);
     var n9 = numerosMesAluno(st, a, mes);
@@ -7146,14 +7313,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (fq >= 4) return { big: String(fq), rot: "treinos no mês", tag: "freq" };
     return null;
   }
-  function cardResultadoIG(alunoId, cb) {
+  function cardResultadoIG(alunoId, cb, mesQ) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return cb(null, "sem-aluno");
-    var mes = S.todayISO().slice(0, 7);
+    var mes = /^\d{4}-\d{2}$/.test(mesQ || "") ? mesQ : mesRelPadrao(st, a); // v748: mês fechado no começo do seguinte
     var n = numerosMesAluno(st, a, mes);
     var h = historiaDoMes(n);
-    if (!h) return cb(null, "sem-historia");
+    if (!h) return cb(null, "sem-historia", mes);
     var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var mesNome = MESES9[+mes.slice(5, 7) - 1];
     var COR = corOk((st.config || {}).cor) || "#7c3aed";
@@ -7220,15 +7387,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         x.save(); rr(84, 84, 96, 96, 20); x.clip();
         x.fillStyle = "#ffffff"; x.fillRect(84, 84, 96, 96);
         x.drawImage(im, 84, 84, 96, 96); x.restore();
-        cb(cv, "");
+        cb(cv, "", mes);
       };
-      im.onerror = function () { lg = ""; desenha(); cb(cv, ""); };
+      im.onerror = function () { lg = ""; desenha(); cb(cv, "", mes); };
       im.src = lg;
-    } else { desenha(); cb(cv, ""); }
+    } else { desenha(); cb(cv, "", mes); }
   }
   $("pfCardIG").addEventListener("click", function () {
     var bt = this;
-    cardResultadoIG(perfilId, function (cv, motivo) {
+    cardResultadoIG(perfilId, function (cv, motivo, mesC) {
       if (!cv) {
         bt.textContent = "Ainda sem número pra contar este mês";
         setTimeout(function () { bt.textContent = "🖼 Card pra postar"; }, 3200);
@@ -7237,7 +7404,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var st = load();
       var a = st.alunos.find(function (x) { return x.id === perfilId; }) || {};
       var lk = document.createElement("a");
-      lk.download = "resultado-" + String(a.nome || "aluno").split(" ")[0].toLowerCase() + "-" + S.todayISO().slice(0, 7) + ".png";
+      lk.download = "resultado-" + String(a.nome || "aluno").split(" ")[0].toLowerCase() + "-" + (mesC || S.todayISO().slice(0, 7)) + ".png";
       lk.href = cv.toDataURL("image/png");
       document.body.appendChild(lk); lk.click(); lk.remove();
       bt.textContent = "✓ Imagem baixada — é só postar";
@@ -7292,20 +7459,44 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var ret = a.retorno || {};
       var t7 = Object.keys(ret.feitos || {}).filter(function (k) { return k >= iso7 && k <= hoje; }).length;
       linhas.push("- " + a.nome + ": " + t7 + " treino(s) pelo app na semana" + (a.objetivo ? " · objetivo: " + a.objetivo : ""));
-      Object.keys(ret.cargas || {}).forEach(function (ex) {
-        var maxSem = 0, maxAntes = 0;
-        (ret.cargas[ex] || []).forEach(function (e2) {
-          if (!e2 || e2.kg == null) return;
-          if (String(e2.d || "") >= iso7) { if (+e2.kg > maxSem) maxSem = +e2.kg; }
-          else if (+e2.kg > maxAntes) maxAntes = +e2.kg;
-        });
-        if (maxSem > maxAntes && maxAntes > 0) recs.push(a.nome + ": " + ex + " " + maxSem + " kg (antes " + maxAntes + ")");
+      // v748: a MESMA regra de recorde do relatório/card (recordesDe)
+      recordesDe(ret, iso7, "9999-12-31").forEach(function (r) {
+        recs.push(a.nome + ": " + r.ex + " " + r.pra + " kg (antes " + r.de + ")");
       });
     });
     if (recs.length) linhas.push("", "RECORDES DA SEMANA: " + recs.join("; "));
     return linhas.join("\n").slice(0, 11000);
   }
-  window.__iaSemana = { dados: montaDadosSemanaIA }; // testes
+  /* v748: `a.retorno.cargas` só entrava no aluno quando a FICHA dele era
+   * aberta (pfResumoNuvem) — o resumo da semana elogiava recorde velho e
+   * ignorava o da semana de quem não teve a ficha aberta. Antes de montar os
+   * dados, puxa em lote feitos+cargas dos alunos ativos (o mesmo desenho do
+   * sinoNuvem) e grava a cópia leve com S.write. Falhou a leitura? Segue com
+   * o que está no aparelho — a IA nunca fica sem resposta por isso. */
+  function puxaRetornosSemana(st) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return Promise.resolve(st);
+    var toks = (st.alunos || []).filter(function (a) { return a.ativo !== false && a.appTokenP; }).map(function (a) { return a.appTokenP; });
+    if (!toks.length) return Promise.resolve(st);
+    var q;
+    try { q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,cargas:retorno->cargas").in("token", toks); }
+    catch (e) { return Promise.resolve(st); }
+    return Promise.resolve(q).then(function (r) {
+      if (!r || r.error || !Array.isArray(r.data)) return st;
+      var st2 = load(), mudou = false;
+      r.data.forEach(function (l) {
+        if (!l) return;
+        var a = (st2.alunos || []).find(function (x) { return x.appTokenP === l.token; });
+        if (!a) return;
+        a.retorno = a.retorno || {};
+        if (l.feitos && typeof l.feitos === "object" && JSON.stringify(a.retorno.feitos || {}) !== JSON.stringify(l.feitos)) { a.retorno.feitos = l.feitos; mudou = true; }
+        if (l.cargas && typeof l.cargas === "object" && JSON.stringify(a.retorno.cargas || {}) !== JSON.stringify(l.cargas)) { a.retorno.cargas = l.cargas; mudou = true; }
+      });
+      if (mudou) S.write("ptStudio", st2);
+      return st2;
+    }, function () { return st; });
+  }
+  window.__iaSemana = { dados: montaDadosSemanaIA, puxa: puxaRetornosSemana }; // testes
   $("iaSemanaBt").addEventListener("click", function () {
     var st = load();
     var nuvem = S.cloud && S.cloud();
@@ -7314,7 +7505,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!nuvem) { out.textContent = "Entre na sua conta da nuvem pra usar a IA — a leitura roda no servidor."; return; }
     var bt = $("iaSemanaBt");
     bt.disabled = true; bt.textContent = "🧠 Lendo a semana…";
-    self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "analisar", dados: montaDadosSemanaIA(st) }, "O resumo da semana")
+    puxaRetornosSemana(st).then(function (stF) {
+      return self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "analisar", dados: montaDadosSemanaIA(stF) }, "O resumo da semana");
+    })
       .then(function (d) {
         bt.disabled = false; bt.textContent = "Gerar o resumo da semana";
         if (d && d.ok && d.texto) {
@@ -8003,7 +8196,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.textContent = "Carregando…";
     nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
       .then(function (r) {
-        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os questionários."; return; }
+        if (r && r.error) { box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os questionários." : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var rows = (r && r.data) || [];
         if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima."; return; }
         var st = load();
@@ -8015,7 +8208,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var corP = pts == null ? "var(--tk-tx3)" : pts > 0 ? "var(--tk-ok)" : pts < 0 ? "var(--tk-erro)" : "var(--tk-aten2)";
           return '<div style="padding:10px 0;border-top:1px solid var(--tk-bd4);">' +
             "<b>" + esc(nomePorToken[row.token] || "Aluno") + "</b> · " + esc(row.questionario || "Check-in") +
-            ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
+            ' <span class="muted" style="font-size:12px;">' + S.fmtData(diaLocalDe(row.criado)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
             '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
               return esc(x.pergunta || x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
@@ -8141,7 +8334,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r.respostas.length) return; // ja tem a mais nova (a query vem em ordem)
         r.respostas = Array.isArray(d.respostas) ? d.respostas : [];
         r.quest = q.questionario || "";
-        var dq = String(q.criado || "").slice(0, 10);
+        var dq = diaLocalDe(q.criado); // v748: dia LOCAL, não a fatia UTC
         if (!r.quando || dq > r.quando) r.quando = dq;
       });
       var todos = Object.keys(porTok).map(function (k) { return porTok[k]; });
@@ -8327,7 +8520,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nuvem.client.rpc("app_desafio_ranking", { t: comToken.appTokenP, p_ini: d.ini, p_fim: d.fim })
       .then(function (r) {
         var dd = r && r.data;
-        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar o desafio."; return; }
+        if (r && r.error) { box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar o desafio." : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var ranking = (dd && dd.ranking) || [];
         if (!ranking.length) { box.textContent = "Ninguém pontuou ainda — cada 'Treinei hoje!' no app conta."; return; }
         pintaRankingDesafio(box, ranking, d.premio);
@@ -9458,6 +9651,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (x.pedido) return { cls: "pedido", txt: "PEDIDO" };
     if (x.faltou) return { cls: "faltou", txt: "FALTOU" };
     if (x.feita) return { cls: "feita", txt: "FEITA" };
+    /* v748: sessão de ONTEM sem Feita/Faltou ficava invisível quando o aluno
+     * tinha treino no plano — a célula mostrava só a letra da ficha, igual a
+     * uma sessão futura. Pendência vem antes de tudo: é o que o professor
+     * precisa resolver (assiduidade, pacote e cobrança por sessão dependem). */
+    if (x.data < hoje) { var trP = agTreinoTxt(st, x.alunoId, x.data); return { cls: "pend", txt: "SEM MARCAR" + (trP ? " · " + trP : "") }; }
     var a = st.alunos.find(function (y) { return y.id === x.alunoId; });
     // v728: a resposta do aluno pelo app (retorno.conf, chave "data|hora"):
     // -1 = pediu remarcação (pede ação, vence o DEVENDO); 1 = confirmou
@@ -9467,7 +9665,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tr = agTreinoTxt(st, x.alunoId, x.data);
     if (vcf === 1 && x.data >= hoje) return { cls: "confok", txt: "\u2713 " + (tr || "CONFIRMOU") };
     if (tr) return { cls: "", txt: tr };
-    return { cls: "", txt: x.data < hoje ? "SEM MARCAR" : "AGENDADA" };
+    return { cls: "", txt: "AGENDADA" };
   }
   /* v704: as ações de UMA sessão (Feita/Faltou/Cancelou, ou Desfazer quando já
    * está feita) só existiam na lista da visão Mês — na Semana (grade do
@@ -9478,23 +9676,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return x.feita
       ? '<button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê na hora de montar o próximo treino">Anotar</button>' +
         '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
-      : (x.faltou ? "" :
+      /* v748: Faltou marcado por engano não tinha volta (só Cancelou, que
+       * apagava o registro) — agora tem Desfazer Faltou e o Feita, do mesmo
+       * jeito que a sessão feita tem Desfazer Feita. E a sessão futura ganha
+       * Remarcar: o pedido mais comum do aluno ("QUER REMARCAR") não tinha
+       * botão nenhum — a única saída era cancelar e agendar de novo. */
+      : (x.faltou ?
           '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-          '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
+          '<button class="btn sec mini" data-desfalta="' + x.id + '" title="tira a falta — a sessão volta pra não marcada">Desfazer Faltou</button>' :
+          '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
+          '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>' +
+          (x.data >= S.todayISO() ? '<button class="btn sec mini" data-sremarca="' + x.id + '" title="muda a data/hora desta sessão (o aluno é avisado)">Remarcar</button>' : "")) +
         '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>';
   }
-  window.__sesAcoes = sesAcoesHtml; // testes
+  window.__sesAcoes = sesAcoesHtml; window.__agEstado = agEstado; // testes
   /* ---------- v716: encaixe — sessão CANCELADA vira vaga oferecida ----------
    * Cancelou uma sessão de hoje/futuro com horário? O quadro #agEncaixe abre
    * com até 5 candidatos: alunos ativos com WhatsApp e SEM sessão naquele dia,
    * os mais sumidos primeiro (quem mais precisa voltar). A vaga é efêmera de
    * propósito — memória da página, some ao recarregar ou no Fechar; vaga de
    * data passada expira sozinha. */
-  var vagaEncaixe = null; // {data, hora, nome}
-  function encaixeCandidatos(st, data) {
+  var vagaEncaixe = null; // {data, hora, nome, alunoId, n0}
+  function encaixeCandidatos(st, data, excluiId) {
     var hoje = S.todayISO();
     return st.alunos.filter(function (a) {
       if (a.ativo === false || !a.zap) return false;
+      // v748: quem acabou de cancelar não recebe a própria vaga de volta
+      if (excluiId && a.id === excluiId) return false;
       var ocupado = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data === data && !x.faltou; });
       return !ocupado;
     }).map(function (a) {
@@ -9507,11 +9715,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var el = $("agEncaixe");
     if (!el) return;
     if (vagaEncaixe && vagaEncaixe.data < S.todayISO()) vagaEncaixe = null; // vaga velha expira
+    /* v748: vaga preenchida fecha o quadro sozinha — conta as sessões naquele
+     * dia+hora contra as que existiam quando a vaga abriu (n0), pra turma no
+     * mesmo horário não fechar a vaga que ainda está aberta */
+    if (vagaEncaixe && (st.sessoes || []).filter(function (x) { return x.data === vagaEncaixe.data && (x.hora || "") === vagaEncaixe.hora && !x.faltou; }).length > (+vagaEncaixe.n0 || 0)) vagaEncaixe = null;
     if (!vagaEncaixe) { el.hidden = true; el.innerHTML = ""; return; }
     var v = vagaEncaixe;
     var hoje = S.todayISO();
     var quando = v.data === hoje ? "hoje" : S.fmtData(v.data);
-    var cands = encaixeCandidatos(st, v.data);
+    var cands = encaixeCandidatos(st, v.data, v.alunoId);
     el.innerHTML =
       '<div style="border:1.5px solid var(--tk-roxoFraco);border-radius:13px;padding:14px 16px;background:var(--tk-sup);">' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
@@ -9532,7 +9744,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "</div>";
     el.hidden = false;
   }
-  window.__encaixe = { abre: function (data, hora, nome) { vagaEncaixe = { data: data, hora: hora, nome: nome }; pintaEncaixe(load()); },
+  window.__encaixe = { abre: function (data, hora, nome, alunoId) {
+      var stE = load();
+      vagaEncaixe = { data: data, hora: hora, nome: nome, alunoId: alunoId || "",
+        n0: (stE.sessoes || []).filter(function (x) { return x.data === data && (x.hora || "") === hora && !x.faltou; }).length };
+      pintaEncaixe(stE); },
     candidatos: encaixeCandidatos, fecha: function () { vagaEncaixe = null; } }; // testes
   /* ============================================================
    * TELA 19 do handoff — A AGENDA NO CELULAR.
@@ -9579,7 +9795,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // v715: na linha FEITA a sublinha vira a NOTA do diário daquele dia (se
       // o professor anotou) — é o lembrete do que aconteceu, melhor que a ficha
       var notaD = x.feita ? (((st.diarioPT || {})[x.alunoId] || []).filter(function (r) { return r.d === x.data; }).pop() || {}).t : "";
-      var sub = x.pedido ? "Pediu pelo app" : (x.feita ? (notaD || trTxt || "") : (es.cls === "remarca" ? "Pediu pra remarcar pelo app" : es.cls === "confok" ? es.txt : (trTxt || es.txt)));
+      var sub = x.pedido ? "Pediu pelo app" : (x.feita ? (notaD || trTxt || "") : (es.cls === "remarca" ? "Pediu pra remarcar pelo app" : es.cls === "confok" || es.cls === "pend" ? es.txt : (trTxt || es.txt)));
       var hora = x.hora || "—";
       /* v704: o ⋮ com Feita/Faltou/Cancelou (o mesmo desenho da lista do Mês)
        * entra em TODA linha de sessão de verdade — antes só a "próxima" tinha
@@ -9610,10 +9826,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<div class="aglac"><button type="button" class="aglb pri" data-abreperfil="' + x.alunoId + '">Abrir ficha</button>' +
           '<button type="button" class="aglb" data-feita="' + x.id + '">Feita</button></div>' + painel + "</div>";
       }
-      var deve = !x.pedido && (dividaDe(st, aP) || {}).total > 0;
-      return '<div class="agl"><span class="aglh">' + esc(hora) + "</span>" +
+      // v748: DEVE pela MESMA conta da grade (agEstado → alEstado), não pelo dividaDe que soma o histórico inteiro
+      var deve = !x.pedido && es.cls === "dev";
+      return '<div class="agl' + (es.cls === "pend" ? " pend" : "") + '"><span class="aglh">' + esc(hora) + "</span>" +
         '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
-        (x.pedido ? '<button type="button" class="aglb pri" data-agok="' + String(x.id).slice(4) + '">Confirmar</button>'
+        (x.pedido ? '<button type="button" class="aglb pri" data-agok="' + String(x.id).slice(4) + '">Confirmar</button>' +
+            '<button type="button" class="aglb" data-agno="' + String(x.id).slice(4) + '">Recusar</button>'
           : deve ? '<span class="agsel">DEVE</span>' : "") + menu + painel + "</div>";
     }).join("");
 
@@ -9628,7 +9846,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).length;
         vaga = '<div class="agl vaga"><span class="aglh">' + hv + "</span>" +
           '<span class="aglm"><b>Vaga livre</b><i>' + S.plural(semSes, "aluno sem sessão", "alunos sem sessão") + "</i></span>" +
-          '<button type="button" class="aglb roxo" data-agnovo="' + d0.iso + "|" + hv + '">Oferecer</button></div>';
+          '<button type="button" class="aglb roxo" data-agnovo="' + d0.iso + "|" + hv + '">Marcar aqui</button></div>';
       }
     }
 
@@ -9743,7 +9961,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     linhas.forEach(function (h, li) {
-      html += '<div class="aghr" style="grid-column:1;grid-row:' + (li + 2) + ';">' + (h === "--:--" ? "sem hora" : h) + "</div>";
+      html += '<div class="aghr" style="grid-column:1;grid-row:' + (li + 2) + ';">' + (h === "--:--" ? "sem hora" : esc(h)) + "</div>";
       dias.forEach(function (d, di) {
         if (diasOff[d.iso]) return; // coluna de descanso: um bloco so, colocado depois
         var aqui = noIntervalo[d.iso].filter(function (x) { return (x.hora || "--:--") === h; });
@@ -9753,7 +9971,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           // horario fora do expediente daquele dia nao e vaga, e hora de folga
           var faixa = agFaixa[d.iso];
           if (faixa && h >= faixa.de && h <= faixa.ate) vagas++;
-          html += '<button type="button" class="agc vazio" style="' + pos + '" data-agnovo="' + d.iso + "|" + (h === "--:--" ? "" : h) +
+          html += '<button type="button" class="agc vazio" style="' + pos + '" data-agnovo="' + d.iso + "|" + (h === "--:--" ? "" : esc(h)) +
             '" title="marcar uma sessão nesse horário"><span class="agmais">+</span></button>';
           return;
         }
@@ -9830,8 +10048,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (gemeo9) { ok9.disabled = true; gemeo9.click(); }
       return;
     }
+    // v748: Recusar no dia-por-vez — o mesmo botao gemeo da faixa de pedidos
+    var no9 = e.target.closest && e.target.closest("#agDia [data-agno]");
+    if (no9) {
+      var gemeoN = $("listaPedidosApp").querySelector('[data-agno="' + no9.getAttribute("data-agno") + '"]');
+      if (gemeoN) { no9.disabled = true; gemeoN.click(); }
+      return;
+    }
     var cel = e.target.closest && e.target.closest("[data-agcel]");
-    if (cel) window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
+    if (cel) {
+      /* v748: clicar num PEDIDO na grade pintava a lista dentro do card do
+       * Mês, escondido na visão Semana — na tela, nada acontecia. Agora rola
+       * até a faixa de pedidos e a destaca por um instante. */
+      var fxP = $("agPedFaixa");
+      if (cel.classList.contains("pedido") && fxP && !fxP.hidden) {
+        fxP.scrollIntoView({ behavior: "smooth", block: "center" });
+        fxP.classList.add("pisca");
+        setTimeout(function () { fxP.classList.remove("pisca"); }, 1600);
+      }
+      window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
+    }
   });
   $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
 
@@ -9916,7 +10152,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // detalhe do dia escolhido + sessões antigas sem marcação
     function linhaSes(x, comData) {
       return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
-        '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + (x.hora || "+ hora") + "</button>" +
+        '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + esc(x.hora || "+ hora") + "</button>" +
         (comData ? '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" : "") +
         '<button data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">' + esc(nomeDe[x.alunoId] || "?") + "</button>" +
         // as ações vivem num menu retrátil ⋮ — a linha da agenda fica limpa
@@ -9968,19 +10204,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__agDia = function (iso) { window.__calDiaPT = iso; window.__calMesPT = iso.slice(0, 7); renderAgenda(load()); }; // testes
   // pedidos de horário vindos do app do aluno (nuvem)
-  function renderPedidosApp(st) {
+  var agPedEm = 0; // quando a última leitura de pedidos chegou
+  function renderPedidosApp(st, forca) {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
       agPedCache = null; $("agPedFaixa").hidden = true;
       $("agPedTopo").innerHTML = ""; $("listaPedidosApp").innerHTML = "";
       return;
     }
+    /* v748: todo save() reconstrói a Agenda e disparava esta consulta à nuvem
+     * — uma ida ao Supabase por clique em qualquer tela. Com a Agenda FORA da
+     * tela e uma leitura de menos de 60 s guardada, a grade usa o cache
+     * (agPedCache já alimenta o pintaSemana); na tela, consulta como sempre. */
+    var elAg = $("vAgenda");
+    var agNaTela = !!(elAg && elAg.offsetParent !== null);
+    if (!forca && !agNaTela && agPedCache && Date.now() - agPedEm < 60000) return;
     nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
       .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
+        agPedEm = Date.now();
         var pedidos = r.data || [];
         var alunoPorToken = {};
         st.alunos.forEach(function (a) { if (a.appTokenP && a.ativo !== false) alunoPorToken[a.appTokenP] = a; }); // encerrado não aparece nos pedidos
         pedidos = pedidos.filter(function (p) { return alunoPorToken[p.token]; });
+        // v748: a hora vem do aluno — só HH:MM entra na grade (o resto vira "a combinar")
+        pedidos.forEach(function (p) { if (!/^\d{2}:\d{2}$/.test(String(p.hora || ""))) p.hora = ""; });
+        // v748: o badge do menu conta a MESMA verdade da faixa, na hora (antes só no timer de 90 s)
+        poeBadge(document.querySelector('#navPt [data-nav="agenda"]'), pedidos.length);
         $("agPedFaixa").toggleAttribute("data-tem", pedidos.length > 0);
         if (window.__agAba) window.__agAba(window.__agAba.atual || "sessoes");
         $("listaPedidosApp").innerHTML = pedidos.map(function (p) {
@@ -10036,7 +10285,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // não cria a sessão duas vezes (mesmo aluno/dia/hora ainda não realizada)
         var jaTem = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data === diaP && (x.hora || "") === horaP && !x.feita && !x.faltou; });
         if (!jaTem) {
-          st.sessoes.push({ id: S.uid(), alunoId: a.id, data: diaP, hora: horaP, feita: false });
+          st.sessoes.push({ id: S.uid(), alunoId: a.id, data: diaP, hora: horaP, feita: false, pedidoId: okId }); // v748: pedidoId
           marcaAppPendente(st, a.id); // a sessão confirmada entra na agenda do app
           save(st);
         }
@@ -10053,18 +10302,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
     }
   });
-  window.__pedidosApp = renderPedidosApp; // testes
+  window.__pedidosApp = function (st) { renderPedidosApp(st, true); }; // testes (sempre consulta)
   // exporta a agenda pro calendário do celular/Google (arquivo .ics universal)
   function baixaICS(nomeArq, eventos) {
     var pad = function (n) { return ("0" + n).slice(-2); };
     var linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//TORQUE ON//Agenda//PT-BR"];
+    /* v748: DTSTAMP é obrigatório no RFC 5545 (importador estrito recusa o
+     * arquivo inteiro sem ele) e sessão SEM hora vira evento de dia inteiro
+     * em vez de nascer às 08:00 sem ninguém ter escolhido isso. */
+    var agora = new Date();
+    var stamp = agora.getUTCFullYear() + pad(agora.getUTCMonth() + 1) + pad(agora.getUTCDate()) + "T" + pad(agora.getUTCHours()) + pad(agora.getUTCMinutes()) + pad(agora.getUTCSeconds()) + "Z";
     eventos.forEach(function (ev) {
-      var hora = ev.hora || "08:00";
-      var ini = ev.data.replace(/-/g, "") + "T" + hora.replace(":", "") + "00";
+      var hora = /^\d{2}:\d{2}$/.test(ev.hora || "") ? ev.hora : "";
+      var diaN = ev.data.replace(/-/g, "");
+      if (!hora) {
+        var dSeg = new Date(ev.data + "T12:00"); dSeg.setDate(dSeg.getDate() + 1);
+        linhas.push("BEGIN:VEVENT", "UID:" + ev.id + "@torqueon.com.br", "DTSTAMP:" + stamp, "DTSTART;VALUE=DATE:" + diaN,
+          "DTEND;VALUE=DATE:" + dSeg.getFullYear() + pad(dSeg.getMonth() + 1) + pad(dSeg.getDate()),
+          "SUMMARY:" + String(ev.titulo).replace(/[\n,;]/g, " ") + " (hora a combinar)", "END:VEVENT");
+        return;
+      }
+      var ini = diaN + "T" + hora.replace(":", "") + "00";
       var fimD = new Date(ev.data + "T" + hora + ":00");
       fimD.setMinutes(fimD.getMinutes() + (ev.dur || 60));
       var fim = fimD.getFullYear() + pad(fimD.getMonth() + 1) + pad(fimD.getDate()) + "T" + pad(fimD.getHours()) + pad(fimD.getMinutes()) + "00";
-      linhas.push("BEGIN:VEVENT", "UID:" + ev.id + "@torqueon.com.br", "DTSTART:" + ini, "DTEND:" + fim,
+      linhas.push("BEGIN:VEVENT", "UID:" + ev.id + "@torqueon.com.br", "DTSTAMP:" + stamp, "DTSTART:" + ini, "DTEND:" + fim,
         "SUMMARY:" + String(ev.titulo).replace(/[\n,;]/g, " "), "END:VEVENT");
     });
     linhas.push("END:VCALENDAR");
@@ -10110,6 +10372,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var alunoId = ids[0], hora = $("sHora").value || "";
     var datas = [$("sData").value];
+    // v748: Remarcar em andamento — edita a sessão (mesmo id/fixaId), não cria outra
+    if (agEditId) {
+      var xe = st.sessoes.find(function (x) { return x.id === agEditId; });
+      agEditId = null; $("sEditAviso").hidden = true;
+      if (!xe) { alert("Essa sessão não existe mais — agende de novo."); return; }
+      if (!confirmaAgendar(st, datas, hora, xe.id)) return;
+      xe.data = datas[0]; xe.hora = hora;
+      avisaSessaoMudou(st, xe, "remarcou");
+      save(st);
+      alert("Sessão remarcada pra " + S.fmtData(xe.data) + (hora ? " às " + hora : "") + " — o aluno foi avisado.");
+      return;
+    }
     /* v723: repetir marcado SEM data de fim = sessão FIXA. Vira uma REGRA
      * (st.agFixas) e o extensor cria as próximas 4 semanas — e segue criando
      * sozinho, semana após semana, até o professor Encerrar. Cancelar UMA
@@ -10117,6 +10391,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if ($("sRep").checked && !$("sRepAte").value) {
       var diasSelF = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
       if (!diasSelF.length) diasSelF = [new Date($("sData").value + "T12:00:00").getDay()];
+      /* v748: a fixa pulava o aviso de dia bloqueado e o de choque de horário
+       * do agendamento normal — simula as 4 semanas e passa pelos MESMOS
+       * confirms antes de gravar */
+      var datasF = [], dF = new Date(($("sData").value > S.todayISO() ? $("sData").value : S.todayISO()) + "T12:00");
+      for (var iF = 0; iF < 29; iF++, dF.setDate(dF.getDate() + 1)) { if (diasSelF.indexOf(dF.getDay()) !== -1) datasF.push(S.todayISO(dF)); }
+      if (!confirmaAgendar(st, datasF, hora)) return;
       st.agFixas = st.agFixas || [];
       st.agFixas.push({ id: S.uid(), ids: ids.slice(), diaSem: diasSelF, hora: hora, desde: $("sData").value, geradoAte: "" });
       estendeAgFixas(st);
@@ -10149,22 +10429,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
       }
     }
-    // dia bloqueado (férias/feriado)?
-    var bloqueadas = datas.filter(function (dt) { return bloqueioDe(st, dt); });
-    if (bloqueadas.length) {
-      var b0 = bloqueioDe(st, bloqueadas[0]);
-      if (!confirm(S.plural(bloqueadas.length, "dia escolhido está bloqueado", "dias escolhidos estão bloqueados") + " na sua agenda (" + (b0.motivo || "bloqueio") + " — ex.: " + S.fmtData(bloqueadas[0]) + "). Agendar mesmo assim?")) return;
-    }
-    // choque de horário: já existe sessão no mesmo dia + hora?
-    if (hora) {
-      var nomeDe0 = {};
-      st.alunos.forEach(function (a) { nomeDe0[a.id] = a.nome; });
-      var choques = st.sessoes.filter(function (x) { return x.hora === hora && datas.indexOf(x.data) >= 0; });
-      if (choques.length) {
-        var c0 = choques[0];
-        if (!confirm("Você já tem " + S.plural(choques.length, "sessão", "sessões") + " nesse mesmo horário — ex.: " + S.fmtData(c0.data) + " às " + c0.hora + " com " + (nomeDe0[c0.alunoId] || "?") + ". Agendar mesmo assim?")) return;
-      }
-    }
+    if (!confirmaAgendar(st, datas, hora)) return;
     datas.forEach(function (dt) {
       ids.forEach(function (aid9) {
         st.sessoes.push({ id: S.uid(), alunoId: aid9, data: dt, hora: hora, feita: false });
@@ -10175,6 +10440,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (ids.length > 1) alert("Turma de " + ids.length + " agendada" + (datas.length > 1 ? " — " + (datas.length * ids.length) + " sessões até " + S.fmtData(datas[datas.length - 1]) : "") + ". Cada aluno tem a própria sessão: presença e cobrança seguem individuais.");
     else if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
   });
+  /* v748: os dois avisos do agendamento (dia bloqueado e choque de horário)
+   * viraram UMA função, usada pelo agendar normal, pela fixa e pelo Remarcar.
+   * `ignoraId` = a própria sessão sendo remarcada não é choque consigo mesma. */
+  function confirmaAgendar(st, datas, hora, ignoraId) {
+    var bloqueadas = datas.filter(function (dt) { return bloqueioDe(st, dt); });
+    if (bloqueadas.length) {
+      var b0 = bloqueioDe(st, bloqueadas[0]);
+      if (!confirm(S.plural(bloqueadas.length, "dia escolhido está bloqueado", "dias escolhidos estão bloqueados") + " na sua agenda (" + (b0.motivo || "bloqueio") + " — ex.: " + S.fmtData(bloqueadas[0]) + "). Agendar mesmo assim?")) return false;
+    }
+    if (hora) {
+      var nomeDe0 = {};
+      st.alunos.forEach(function (a) { nomeDe0[a.id] = a.nome; });
+      var choques = st.sessoes.filter(function (x) { return x.id !== ignoraId && x.hora === hora && datas.indexOf(x.data) >= 0; });
+      if (choques.length) {
+        var c0 = choques[0];
+        if (!confirm("Você já tem " + S.plural(choques.length, "sessão", "sessões") + " nesse mesmo horário — ex.: " + S.fmtData(c0.data) + " às " + c0.hora + " com " + (nomeDe0[c0.alunoId] || "?") + ". Agendar mesmo assim?")) return false;
+      }
+    }
+    return true;
+  }
+  window.__confirmaAgendar = confirmaAgendar; // testes
   /* ---------- v723: sessões FIXAS que rolam sozinhas ----------
    * A regra mora em st.agFixas: {id, ids, diaSem[], hora, desde, geradoAte,
    * fim?}. O extensor garante sessões até hoje+28 e avança o geradoAte —
@@ -10192,6 +10478,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ini = S.todayISO(dG);
       }
       if (ini < hoje) ini = hoje; // fixa nunca cria sessão no passado
+      /* v748: fixa marcada pra começar no FUTURO: na 1ª rodada o laço não
+       * criava nada mas gravava geradoAte = hoje+28, e na seguinte `ini`
+       * virava geradoAte+1 (< desde) — sessões semanas antes da data que o
+       * professor escolheu. O começo é o `desde`, sempre. */
+      if (fx.desde && ini < fx.desde) ini = fx.desde;
+      if (fx.desde && fimJ < fx.desde) return; // a janela ainda não alcançou o começo: nada a criar, nada a marcar
       for (var d = new Date(ini + "T12:00"); ; d.setDate(d.getDate() + 1)) {
         var iso9 = S.todayISO(d);
         if (iso9 > fimJ) break;
@@ -10229,6 +10521,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.sessoes = st.sessoes.filter(function (x) { return !(x.fixaId === fx.id && x.data > hoje && !x.feita && !x.faltou); });
     save(st);
   });
+  /* v748: a hora digitada no prompt entrava crua ("7:30" ordenava depois de
+   * "18:00", sumia da conta de vagas e quebrava o .ics). Aceita 7:30, 07:30 e
+   * 7h30 e devolve sempre HH:MM; qualquer outra coisa devolve "". */
+  function normalizaHora(txt) {
+    var m = String(txt || "").trim().match(/^(\d{1,2})[:h](\d{2})$/i);
+    if (!m || +m[1] > 23 || +m[2] > 59) return "";
+    return ("0" + (+m[1])).slice(-2) + ":" + m[2];
+  }
+  /* v748: cancelar ou mudar a hora de uma sessão não republicava o app nem
+   * avisava o aluno — o app dele seguia mostrando a sessão de pé (e a linha
+   * do pedido em app_agenda ficava "confirmado" pra sempre). Agora os três
+   * caminhos (Cancelou, mudar hora, Remarcar) passam por aqui: marca o app
+   * pendente (autoPublicaApps republica), manda o push e, quando a sessão
+   * nasceu de um pedido do app (pedidoId), atualiza a linha do pedido. */
+  var agEditId = null; // sessão sendo remarcada pelo formulário de agendar
+  function avisaSessaoMudou(st, x, tipo) {
+    var a = st.alunos.find(function (y) { return y.id === x.alunoId; });
+    if (!a) return;
+    marcaAppPendente(st, a.id);
+    var quando = S.fmtData(x.data) + (x.hora ? " às " + x.hora : "");
+    var msg = tipo === "cancelou"
+      ? ["Sessão desmarcada", "Sua sessão de " + quando + " foi desmarcada — me chama no chat pra combinar outra."]
+      : ["Horário mudou", "Sua sessão passou pra " + quando + ". Te espero! 💪"];
+    if (a.appTokenP) pushAluno(a.appTokenP, msg[0], msg[1]);
+    if (x.pedidoId) {
+      try {
+        var nuvem = S.cloud && S.cloud();
+        if (nuvem && nuvem.client && typeof nuvem.client.from === "function") {
+          var upd = tipo === "cancelou" ? { status: "recusado" } : { dia: x.data, hora: x.hora || null };
+          Promise.resolve(nuvem.client.from("app_agenda").update(upd).eq("id", x.pedidoId)).then(function () {}, function () {});
+        }
+      } catch (e) {}
+    }
+    window.__sessaoAvisos = (window.__sessaoAvisos || []).concat([{ tipo: tipo, id: x.id, alunoId: a.id, token: a.appTokenP || "" }]); // testes
+  }
+  window.__normalizaHora = normalizaHora; window.__avisaSessaoMudou = avisaSessaoMudou; // testes
   // usado no detalhe do dia (Agenda) e no card Seu dia hoje (Início)
   function trataCliqueSessao(e) {
     var vn = e.target.getAttribute && e.target.getAttribute("data-vernome");
@@ -10272,13 +10600,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       save(stN);
       return;
     }
+    // v748: Remarcar — abre a aba Agendar com aluno/data/hora da sessão; o
+    // Agendar EDITA a sessão (mesmo id e fixaId) em vez de criar outra
+    var rmk = e.target.getAttribute && e.target.getAttribute("data-sremarca");
+    if (rmk) {
+      var stR = load();
+      var xr = stR.sessoes.find(function (x) { return x.id === rmk; });
+      if (!xr) return;
+      var alR = stR.alunos.find(function (x) { return x.id === xr.alunoId; }) || {};
+      agEditId = xr.id;
+      if ($("sTurmaBox") && !$("sTurmaBox").hidden) $("sTurmaBt").click();
+      $("sAluno").value = xr.alunoId; $("sData").value = xr.data; $("sHora").value = xr.hora || "";
+      $("sRep").checked = false; $("sRepAte").value = "";
+      var avR = $("sEditAviso");
+      if (avR) { avR.hidden = false; avR.querySelector("b").textContent = String(alR.nome || "").split(" ")[0] + " em " + S.fmtData(xr.data) + (xr.hora ? " às " + xr.hora : ""); }
+      vaiAba("agenda");
+      if (window.__agAba) window.__agAba("agendar");
+      return;
+    }
     var f = e.target.getAttribute && e.target.getAttribute("data-feita");
     var c = e.target.getAttribute && e.target.getAttribute("data-cx");
     var ft = e.target.getAttribute && e.target.getAttribute("data-faltou");
     var sh = e.target.getAttribute && e.target.getAttribute("data-shora");
     var df = e.target.getAttribute && e.target.getAttribute("data-desfeita");
-    if (!f && !c && !ft && !sh && !df) return;
+    var dfa = e.target.getAttribute && e.target.getAttribute("data-desfalta");
+    if (!f && !c && !ft && !sh && !df && !dfa) return;
     var st = load();
+    // v748: Desfazer Faltou — a falta marcada por engano volta pra "não marcada"
+    if (dfa) {
+      var xfa = st.sessoes.find(function (x) { return x.id === dfa; });
+      if (xfa) { xfa.faltou = false; save(st); }
+      return;
+    }
     if (df) {
       // desfazer uma sessão FEITA: reverte a marcação e ESTORNA o que a Feita
       // consumiu (a aula do pacote e/ou o pagamento registrado) — antes o único
@@ -10344,7 +10697,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (xs) {
         var nh = prompt("Hora da sessão (ex.: 07:30):", xs.hora || "");
         if (nh === null) return;
-        xs.hora = nh.trim();
+        var nhN = normalizaHora(nh);
+        if (nh.trim() && !nhN) { alert("Hora inválida — use o formato 07:30."); return; }
+        if (nhN !== (xs.hora || "")) { xs.hora = nhN; avisaSessaoMudou(st, xs, "hora"); }
       }
     }
     if (c) {
@@ -10354,14 +10709,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var xc = st.sessoes.find(function (x) { return x.id === c; });
       if (xc && xc.hora && xc.data >= S.todayISO()) {
         var alC = st.alunos.find(function (x) { return x.id === xc.alunoId; }) || {};
-        vagaEncaixe = { data: xc.data, hora: xc.hora, nome: String(alC.nome || "o aluno").split(" ")[0] };
+        // v748: alunoId pra não oferecer a vaga pro próprio aluno que cancelou; n0 = quem fica no horário
+        vagaEncaixe = { data: xc.data, hora: xc.hora, nome: String(alC.nome || "o aluno").split(" ")[0], alunoId: xc.alunoId,
+          n0: st.sessoes.filter(function (x) { return x.id !== c && x.data === xc.data && (x.hora || "") === xc.hora && !x.faltou; }).length };
       }
+      if (xc) avisaSessaoMudou(st, xc, "cancelou"); // v748: app republicado + push + pedido do app fechado
       st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
     }
     save(st);
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
   $("bHojeP").addEventListener("click", trataCliqueSessao);
+  $("sEditCancela").addEventListener("click", function () { agEditId = null; $("sEditAviso").hidden = true; });
+  window.__agRemarca = { id: function () { return agEditId; }, limpa: function () { agEditId = null; $("sEditAviso").hidden = true; } }; // testes
   /* v704: a visão SEMANA também marca sessão agora — e o Feita da linha
    * "próxima" do celular, que existia desde a v625, não tinha NENHUM listener
    * cobrindo o #agDia (o do #vAgenda só trata navegação). Os listeners ficam
@@ -10577,7 +10937,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!Object.keys(tokens).length) return;
     try {
     Promise.all([
-      // v747: só o que está sem ler — antes vinha a tabela inteira a cada 90 s
+      // v748: filtra no servidor — antes baixava TODAS as mensagens da academia a cada 90 s e, passando de 1000 linhas, a contagem mentia
       nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).eq("de", "aluno").eq("lida", false),
       nuvem.client.from("app_agenda").select("id,token").eq("academia_id", nuvem.aid).eq("status", "pedido").gte("dia", S.todayISO()),
     ]).then(function (rs) {
@@ -17795,7 +18155,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!forca && chatPend.porAluno && Date.now() - chatPend.em < 10 * 60 * 1000) { pintaChatPend(); return; }
     var q;
     try {
-      q = nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).eq("de", "aluno").eq("lida", false);
+      q = nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).eq("de", "aluno").eq("lida", false); // v748
     } catch (e) { return; }
     var seq = ++chatPend.seq; // resposta velha que chega depois da nova é descartada
     q.then(function (r) {
