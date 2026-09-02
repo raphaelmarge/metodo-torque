@@ -7058,7 +7058,7 @@ async function abaPt(p, a) {
       "e a divisão pedida pelo professor vence o padrão de '1 ficha por dia' — era essa regra que ganhava dele");
     ok(/EXERCÍCIOS QUE O PROFESSOR CITOU\\" *, *"? *é OBRIGATÓRIO|é OBRIGATÓRIO/.test(fn) && /LEMBRETE FINAL/.test(fn),
       "a função sabe que o exercício citado é obrigatório e que existe um lembrete no fim dos dados");
-    ok(/regras: \["mes", "brief", "briefManda", "metodo"\]/.test(fn),
+    ok(/regras: \["mes", "brief", "briefManda", "metodo"(, "[a-z-]+")*\]/.test(fn),
       "o ping devolve as REGRAS que a versão publicada carrega — é assim que o painel descobre função velha");
     ok(/BASE CIENTÍFICA/.test(fn) && (fn.match(/Metodologia:/g) || []).length >= 3,
       "🔬 a base científica (sobrecarga, periodização, volume, RIR) entra nos TRÊS formatos e a IA declara a metodologia no resumo");
