@@ -1427,6 +1427,36 @@ internos sem EXECUTE público. Suíte nova: `tests/test-infra.js` (46
 asserts). ⚠️ Antes de republicar uma função, CONFIRA o que está no ar
 (`get_edge_function`) contra o repo — desta vez as 11 batiam.
 
+**Revisão — app do aluno, app-html e app-core (mt-v749, 29 itens)**: no
+`app/aluno-builder.js` (e `aluno-skin.js`): `raioX = D.raioX || []` (pacote
+sem raio-X derrubava o `monta()`); `nomeCurto()` → "seu personal" pro padrão
+e duas palavras pra Studio/Academia (era `studio.split(" ")[0]`, 14 usos
+viraram `STUDIO_CURTO`); A2 só vira cronômetro com `min`/`minutos`/`'` (
+"400 m" virava 90 min); check-in conta os 20 XP prometidos (`ptckh`, uma
+chave por semana enviada); `#topoExtra` (nunca visível) e os ajustes mortos
+do skin saíram; "Meu peso" ×3 e nome do studio ×2 no chat viraram "Meta" e
+"Conversa" — ⚠️ o `secDe` classificava o card do chat pelo texto "Fale com" e
+trocar o h2 escondia o chat inteiro: agora classifica por `#chMsgs`;
+`dinheiro()` com centavos (era "R$ 149,9/mês"); Pix com `esc()`; `urlOk()`
+compartilhado entre `linkRec` e a playlist; convite sem WhatsApp não sai
+"wa.me/ —"; `PLTXT` lê `ctApp.diaVenc`. Circuito: For Time no limite grava o
+cap (`wod.estourou`), AMRAP encerrado antes leva o decorrido (`wod.fimEl`,
+campo `du` no `ptwodres`), "Voltar" virou "Descartar" com `confirm()`, os
+`prompt()` de round/tempo/reps viraram campo dentro do tile (`wpEdita`); a
+corrida ganhou o MESMO botão de registrar o treino do dia (`#crRsFeito`);
+"Avisei que vou" só confirma quando o servidor responde `ok`; check-in sem
+nuvem mostra "É só enviar" + "Enviei ✓" (só aí grava `ptck` — ⚠️ o `fim()`
+era local ao `envia()`, virou callback); `.ics` com UID estável e
+`VALUE=DATE` quando não há hora (`__agIcsBaixa`/`__agIcs`); toque a mais não
+zera as séries (trava no máximo; segurar 600 ms tira uma — `__setbtnMenos`)
+e o "Treinei hoje" automático olha a `.fichabox` do botão; `ptconf` podado em
+60 dias e `ptckdraft` de outras semanas apagado. Mês/dia/semana declarados
+uma vez (`MESN/MES3/MESES/DSEM/DSEMA`). Ficaram pro painel: restringir a
+chave Pix e validar `linkRec` ao salvar. Testes: 27 asserts em
+`test-personal.js` + 3 em `test-app-sintaxe.js` (D mínimo, `nomeCurto`,
+`dinheiro`/`urlOk`); cinco antigos reancorados (`habStreak`→`stkLine`,
+`topoExtra`, `.tphab`, "Fale com", "treino +10 XP").
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
