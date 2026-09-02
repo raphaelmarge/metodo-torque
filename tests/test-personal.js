@@ -1813,7 +1813,8 @@ async function abaPt(p, a) {
   const resumo = await p.evaluate(() => document.getElementById("relResumo").textContent);
   ok(/Alunos ativos/.test(resumo) && /Recebido no mês/.test(resumo) && /400/.test(resumo), "resumo do mês: recebido R$ 400");
   ok(/Falta receber/.test(resumo) && /50/.test(resumo), "resumo: falta receber R$ 50 (contrato 450 − pago 400)");
-  ok(/Ticket médio/.test(resumo) && /1 pagante/.test(resumo), "resumo: ticket médio com nº de pagantes");
+  // v749: era "Ticket médio recebido" — o quarto "ticket médio" da aba; agora diz o que é
+  ok(/Recebido por pagante/.test(resumo) && /1 pagante/.test(resumo) && !/Ticket médio/.test(resumo), "resumo: recebido por pagante com nº de pagantes (sem mais um 'ticket médio')");
   const relPrev = await p.evaluate(() => document.getElementById("relPrevisto").textContent);
   ok(/Previsto: R\$\s?450/.test(relPrev) && /Recebido: R\$\s?400/.test(relPrev), "previsto×recebido usa o valor do CONTRATO (450)");
   ok(/89%/.test(relPrev), "barra de progresso da receita (400/450 = 89%)");
@@ -2128,8 +2129,9 @@ async function abaPt(p, a) {
   ok(/Recebido no mês/.test(dash.receb) && /R\$\s?400/.test(dash.receb), "bloco Recebimentos com a receita do mês (R$ 400)");
   ok(/Com contrato de plano/.test(dash.base) && /Alunos ativos/.test(dash.base), "bloco Status da base renderiza");
   ok(/Novos alunos no mês/.test(dash.mov) && /Churn do mês/.test(dash.mov), "bloco Movimentação com churn");
-  ok(/MRR/.test(dash.ind) && /Ticket médio/.test(dash.ind) && /LTV/.test(dash.ind) && /R\$/.test(dash.ind), "bloco Indicadores com MRR, ticket médio e LTV");
-  ok(/Ticket médio previsto/.test(dash.ind), "os dois 'Ticket médio' do produto agora dizem qual é qual (previsto × recebido)");
+  ok(/MRR/.test(dash.ind) && /Mensalidade média/.test(dash.ind) && /LTV/.test(dash.ind) && /R\$/.test(dash.ind), "bloco Indicadores com MRR, mensalidade média e LTV");
+  // v749: "Ticket médio" sumiu da aba — cada número diz o que é (mensalidade média × recebido por pagante × valor médio por venda)
+  ok(!/Ticket médio/.test(dash.ind) && !/Receita por sessão dada/.test(dash.ind), "a porta não repete 'Ticket médio' nem o 'Sua hora rendeu' com outro nome");
   ok(/Alunos que saíram no mês/.test(dash.mov) && !/Contratos encerrados no mês/.test(dash.mov),
     "o painel conta ALUNO que saiu (mesma conta dos Relatórios) — troca de plano não vira churn");
   // troca de plano encerra o contrato antigo mas não pode contar como saída
@@ -2183,8 +2185,10 @@ async function abaPt(p, a) {
         kpisVelho: !!document.getElementById("kpis"),
         porta: (document.querySelector('#vRelatorios .relporta > summary') || {}).textContent || "",
         portaCards: document.querySelectorAll("#vRelatorios .relporta .colunas-dash .card").length,
+        emailBt: (document.getElementById("fchEmailP") || {}).textContent || "",
       };
     });
+    const document_fchEmail = /e-mail/.test(b4c.emailBt);
     ok(/^[A-Z]\S* de \d{4}$/.test(b4c.rot), "🎨 4c: o cabeçalho da aba diz o mês por extenso (" + b4c.rot + ")");
     ok(b4c.rots === 1 && !b4c.selVelho,
       "🧹 v713: um rótulo de mês só e sem o seletor fchMesP duplicado (as setas da v712 mandam)");
@@ -2192,12 +2196,12 @@ async function abaPt(p, a) {
       "🧹 v713: o que pede ação hoje (alertas + aniversários) vem ANTES dos números");
     ok(b4c.caixas.length === 3 && /Movimenta/.test(b4c.caixas[0]) && /Indicadores/.test(b4c.caixas[1]) && /Sessões por semana/.test(b4c.caixas[2]),
       "🎨 4c: movimentação, indicadores e sessões por semana nas três caixas do mês");
-    ok(b4c.linhas.includes("Entraram") && b4c.linhas.includes("Ticket médio") && b4c.linhas.includes("Tempo de casa"),
+    ok(b4c.linhas.includes("Entraram") && b4c.linhas.includes("Mensalidade média") && b4c.linhas.includes("Ativos hoje") && b4c.linhas.includes("Tempo de casa (hoje)"), // v749: rótulos que dizem o que são
       "🎨 4c: cada caixa traz as linhas do desenho");
     ok(b4c.semanas >= 4, "🎨 4c: sessões por semana viram barras (" + b4c.semanas + " pedaços)");
     ok(b4c.niver && b4c.alertas, "🎨 4c: aniversários e alertas do studio moram dentro das caixas novas");
-    ok(/Mandar fechamento/.test(b4c.botao) && /Copiar resumo/.test(b4c.copia),
-      "🎨 4c: o fechamento do mês virou os dois botões do cabeçalho");
+    ok(/Mandar no WhatsApp/.test(b4c.botao) && /Copiar resumo/.test(b4c.copia) && !!document_fchEmail,
+      "🎨 4c: o fechamento do mês virou os botões do cabeçalho — e cada um diz pra onde manda (v749)");
     ok(!b4c.kpisVelho, "🧹 v713: a fileira #kpis (4 números repetidos) saiu da aba");
     ok(/Todos os números do mês/.test(b4c.porta) && b4c.portaCards === 6,
       "🧹 v713: os 6 cards de detalhe moram atrás da porta 'Todos os números do mês'");
@@ -9129,6 +9133,250 @@ async function abaPt(p, a) {
   ok(/Despesas: R\$ 350 · Sobrou: R\$ 650/.test(desp.fech), "o fechamento do mês ganha despesas e sobra");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapDesp);
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
+  // ---------- v749: revisão do Financeiro e dos Relatórios (achados pt-fin / pt-rel) ----------
+  console.log("v749 — Financeiro e Relatórios:");
+  const stSnap749 = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  const r749 = await p.evaluate(() => {
+    const S = window.MTStore;
+    const hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    const mesDe = (k) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - k); return S.monthKey(d); };
+    const mAnt = mesDe(1), m3 = mesDe(3);
+    const st = S.read("ptStudio", {});
+    st.config = st.config || {}; st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
+    st.pagamentos = st.pagamentos || []; st.sessoes = st.sessoes || []; st.despesas = st.despesas || [];
+    st.config.pixChave = st.config.pixChave || "x@y.com";
+    st.config.pagApi = { ligado: false };
+    st.config.zapModelos = Object.assign({}, st.config.zapModelos, { atraso: "MODELO {nome} deve {valor} há {dias}" });
+    st.planosPT.push({ id: "p749m", nome: "Mensal 749", valor: 300 }, { id: "p749s", nome: "Hora 749", valor: 90, cobranca: "sessao" });
+    st.alunos.push(
+      { id: "c749", nome: "Cortesia Sem Valor", ativo: true, desde: m3 + "-01", zap: "31900000001" }, // sem contrato e sem valor
+      { id: "d749", nome: "Devedor Modelo", ativo: true, desde: m3 + "-01", zap: "31900000002" },     // contrato há 3 meses, nunca pagou
+      { id: "e749", nome: "Em Dia Hoje", ativo: true, desde: m3 + "-01", zap: "31900000003" },        // paga em dia (vence dia 31)
+      { id: "n749", nome: "Novo Este Mes", ativo: true, desde: mes + "-02" },                          // entrou este mês e já pagou
+      { id: "s749", nome: "Sessao Pacote", ativo: true, modo: "sessao", valor: 80, pacote: { total: 5, usadas: 6 } },
+      { id: "h749", nome: "Hora Aula Contrato", ativo: true },
+      { id: "m749", nome: "Massagem So", ativo: true, desde: m3 + "-01" });                          // comprou massagem, não pagou o plano
+    st.contratosPT.push(
+      { id: "ct749d", alunoId: "d749", planoId: "p749m", status: "ativo", inicio: m3 + "-01", diaVenc: 1 },
+      { id: "ct749e", alunoId: "e749", planoId: "p749m", status: "ativo", inicio: m3 + "-01", diaVenc: 31 },
+      { id: "ct749n", alunoId: "n749", planoId: "p749m", status: "ativo", inicio: mes + "-02", diaVenc: 1 },
+      { id: "ct749h", alunoId: "h749", planoId: "p749s", status: "ativo", inicio: m3 + "-01", diaVenc: 5 },
+      { id: "ct749m", alunoId: "m749", planoId: "p749m", status: "ativo", inicio: m3 + "-01", diaVenc: 31 });
+    st.pagamentos.push(
+      { id: "pg749e1", alunoId: "e749", valor: 300, forma: "pix", data: mes + "-01" },
+      { id: "pg749e0", alunoId: "e749", valor: 300, forma: "pix", data: mAnt + "-10" },
+      { id: "pg749e2", alunoId: "e749", valor: 300, forma: "pix", data: mesDe(2) + "-10" },
+      { id: "pg749e3", alunoId: "e749", valor: 300, forma: "pix", data: m3 + "-10" },
+      { id: "pg749e4", alunoId: "e749", valor: 500, forma: "pix", data: mesDe(2) + "-12" }, // mais R$ 500 há 2 meses (gráfico)
+      { id: "pg749n", alunoId: "n749", valor: 300, forma: "pix", data: mes + "-02" },
+      { id: "pg749m", alunoId: "m749", valor: 1500, forma: "pix", desc: "Massagem", data: mes + "-01" },
+      { id: "pg749k", alunoId: "h749", valor: 360, forma: "crédito 4 aula(s)", data: mes + "-01" },
+      { id: "pg749p1", alunoId: "s749", valor: 400, forma: "pacote 10 sessões", desc: "Pacote de 10 aulas", data: mes + "-01" },
+      { id: "pg749p2", alunoId: "s749", valor: 200, forma: "pacote 5 sessões", desc: "Pacote de 5 aulas", data: mes + "-01" });
+    const ontem = (() => { const d = new Date(hoje + "T12:00"); d.setDate(d.getDate() - 1); return S.todayISO(d); })();
+    st.sessoes.push({ id: "ss749", alunoId: "e749", data: ontem, hora: "06:00" }); // passou sem Feita nem Faltou
+    st.despesas.push({ id: "dx749", desc: "Aluguel 749", cat: "Repasse/aluguel", valor: 100, data: m3 + "-05", fixa: true });
+    S.write("ptStudio", st);
+    window.__renderPT();
+    window.__pgAba("receb");
+    const out = {};
+    const stR = S.read("ptStudio", {});
+    const al = (id) => stR.alunos.find((a) => a.id === id);
+    // pt-fin 1: o mês corrente é FUNÇÃO — acompanha o relógio, não a carga da página
+    const todayOrig = S.todayISO;
+    try {
+      S.todayISO = (d) => d ? todayOrig(d) : "2031-03-15";
+      out.mesFn = window.__mesAtual() === "2031-03";
+      window.__renderPT();
+      out.mesVira = /Em Dia Hoje/.test(document.getElementById("pendentes").textContent); // em 2031 ninguém pagou março
+    } catch (e) { out.mesErro = String(e); }
+    S.todayISO = todayOrig;
+    window.__renderPT();
+    window.__pgAba("receb");
+    // pt-fin 5 e 7: cortesia fora da lista; pacote estourado numa linha só
+    const pend = document.getElementById("pendentes");
+    out.cortesiaFora = !/Cortesia Sem Valor/.test(pend.textContent);
+    out.pacoteUmaVez = (pend.innerHTML.match(/Sessao Pacote/g) || []).length === 1 && /Renovar pacote/.test(pend.innerHTML) &&
+      !/data-receb="s749"/.test(pend.innerHTML);
+    // pt-fin 6: um texto de cobrança só, com o modelo do professor
+    const msgD = window.__msgCobranca(stR, al("d749"));
+    out.modeloVale = /^MODELO Devedor deve R\$/.test(msgD) && /meses em aberto/.test(msgD);
+    const hrefD = (pend.querySelector('a[href*="31900000002"]') || {}).href || "";
+    out.botaoUsaModelo = /MODELO%20Devedor/.test(decodeURI(hrefD).replace(/ /g, "%20"));
+    const msgN = window.__msgCobranca(stR, al("n749"));
+    out.noPrazo = /Passando pra lembrar do plano deste mês/.test(msgN) && /vence dia 1\b/.test(msgN);
+    out.resolverUsa = /MODELO%20Devedor/.test(decodeURI((document.querySelector('#dashResolver a[href*="31900000002"]') || {}).href || "").replace(/ /g, "%20"));
+    // pt-fin 9: contrato de hora-aula sem "/mês · vence dia"
+    window.__pgAba("contratos");
+    const linhaH = document.getElementById("ctLista").innerHTML.split("sessao-pt").find((x) => /Hora Aula Contrato/.test(x)) || "";
+    out.contratoHora = /\/sessão/.test(linhaH) && !/vence dia/.test(linhaH) && !/\/mês/.test(linhaH);
+    window.__pgAba("receb");
+    // pt-fin 10: gráfico de 6 meses numa unidade só e média dos meses COM pagamento
+    const seis = document.getElementById("pg6meses").textContent;
+    const somaMes = (k) => stR.pagamentos.filter((p9) => (p9.data || "").slice(0, 7) === mesDe(k)).reduce((t, p9) => t + +p9.valor, 0);
+    out.seisMil = /valores em mil/.test(seis) && !/milhares/.test(seis) && seis.includes((somaMes(2) / 1000).toFixed(1).replace(".", ","));
+    let soma = 0, nCom = 0;
+    for (let k = 1; k <= 5; k++) { const v = somaMes(k); if (v > 0) { soma += v; nCom++; } }
+    out.seisMedia = nCom > 0 && nCom < 5 && seis.includes("média " + S.fmtBRL(Math.round(soma / nCom)));
+    // pt-fin 13/14: despesas com token; encerrar olhando o passado pede confirmação
+    window.__pgAba("desp"); window.__despesas.vaiPara(mAnt);
+    const dpHtml = document.getElementById("dpLista").innerHTML + document.getElementById("dpResumo").innerHTML;
+    out.despTokens = !/#211d2b|#86efac/.test(dpHtml) && /var\(--tk-bd\)/.test(dpHtml) && /var\(--tk-ok\)/.test(dpHtml);
+    const confOrig = window.confirm; let msgConf = "";
+    window.confirm = (m) => { msgConf = String(m); return false; };
+    document.querySelector("[data-dpfim='dx749']").click();
+    out.encerrarPede = /meses que já fecharam/.test(msgConf) && !S.read("ptStudio", {}).despesas.find((d) => d.id === "dx749").fim;
+    window.__despesas.vaiPara(mes);
+    let pediu = false; window.confirm = () => { pediu = true; return true; };
+    document.querySelector("[data-dpfim='dx749']").click();
+    window.confirm = confOrig;
+    out.encerrarHojeDireto = !pediu && !!S.read("ptStudio", {}).despesas.find((d) => d.id === "dx749").fim;
+    window.__pgAba("receb");
+    // ---- Relatórios ----
+    window.__relMes.off(0); window.__relPT();
+    const rel4c = () => document.getElementById("rel4c").textContent;
+    const bReceb = () => document.getElementById("bRecebP").textContent;
+    // pt-rel 1: uma conta só de churn (4c, porta e card Retenção)
+    const churn = window.__retencaoPT(stR, hoje).churn;
+    const churnTxt = String(Math.round(churn * 10) / 10).replace(".", ",") + "%";
+    out.churnUnico = rel4c().includes("Perda no mês" + churnTxt) && document.getElementById("bMovP").textContent.includes("(% da carteira que saiu)" + churnTxt) &&
+      document.getElementById("relRetencao").textContent.includes(churnTxt);
+    // pt-rel 2: nenhum "Ticket médio" na aba
+    out.semTicket = !/Ticket médio/.test(document.getElementById("vRelatorios").textContent) &&
+      /Mensalidade média/.test(rel4c()) && /Recebido por pagante/.test(document.getElementById("relResumo").textContent);
+    // pt-rel 3 e 8: massagem paga não quita o plano — falta receber > 0, barra < 100%, "Ainda sem pagar" conta o aluno
+    const prev = document.getElementById("relPrevisto").textContent;
+    out.faltamMassagem = /Massagem So/.test(prev) && !/100% da receita/.test(prev) && /só mensalidades/.test(prev);
+    out.faltaReceberPos = /Falta receberR\$ [1-9]/.test(document.getElementById("relResumo").textContent.replace(/ /g, " "));
+    const d0 = window.__dashDados(mes);
+    out.massagemNaoQuita = d0.semPagarNomes.includes("Massagem So") && !d0.semPagarNomes.includes("Hora Aula Contrato") && !d0.semPagarNomes.includes("Cortesia Sem Valor");
+    // pt-rel 12: "Sua hora rendeu" só com receita de aulas (sem desc), e a porta não repete o número
+    const hp = window.__horaPT(mes);
+    const fatAulasEsp = stR.pagamentos.filter((p9) => (p9.data || "").slice(0, 7) === mes && !p9.desc).reduce((t, p9) => t + +p9.valor, 0);
+    out.horaAulas = Math.abs(hp.fatAulas - fatAulasEsp) < 0.01 && hp.fatAulas < hp.fat && !/Receita por sessão dada/.test(document.getElementById("bIndP").textContent);
+    // pt-rel 5: sessão passada sem marcação não é falta — vira "sem registro"
+    const linhaE = document.getElementById("relAssiduidade").innerHTML.split("sessao-pt").find((x) => /Em Dia Hoje/.test(x)) || "";
+    out.semRegistro = /1 sem registro/.test(linhaE) && !/falta/.test(linhaE);
+    // pt-rel 13/14: crédito de hora-aula é venda; "Por forma" da porta agrupa a família
+    const vHtml = document.getElementById("relVendasLista").innerHTML + "|" + document.getElementById("relVendasKpis").textContent;
+    out.creditoVenda = /Créditos de aula/.test(vHtml) && /Valor médio por venda/.test(vHtml);
+    out.porForma = /pacote R\$/.test(bReceb()) && !/pacote 10/.test(bReceb()) && /crédito de aulas R\$/.test(bReceb());
+    out.familia = window.__formaFamilia("Pacote 10 sessões") === "pacote" && window.__formaFamilia("crédito 4 aula(s)") === "crédito de aulas" && window.__formaFamilia("pix") === "pix";
+    // pt-rel 10/11: rótulos das semanas e "Ativos hoje"
+    out.rotSem = /\d{2}\/\d{2}/.test(rel4c()) && !/ª SEM/.test(rel4c()) && /ESTA/.test(rel4c()) && /Ativos hoje/.test(rel4c());
+    // pt-rel 15: o De/Até das Vendas sobrevive a um redesenho do MESMO mês (e reseta quando o mês muda)
+    document.getElementById("rvDe").value = mes + "-03"; document.getElementById("rvAte").value = mes + "-04";
+    document.getElementById("rvAplica").click();
+    window.__relPT();
+    out.deAteFica = document.getElementById("rvDe").value === mes + "-03";
+    // pt-rel 4/6/7: as setas no mês PASSADO
+    window.__relMes.off(1); window.__relPT();
+    // só o GRUPO "Pagamento atrasado" — os mesmos nomes aparecem em "Sem ficha" e "Sumido"
+    const grpAtr = [...document.querySelectorAll("#relAlertas [data-algrupo]")].map((g) => g.textContent).find((t) => /^Pagamento atrasado/.test(t)) || "";
+    out.deAteReset = document.getElementById("rvDe").value === mAnt + "-01";
+    out.alertaHoje = !/Novo Este Mes/.test(grpAtr) && /Devedor Modelo/.test(grpAtr) && !/Em Dia Hoje/.test(grpAtr);
+    out.faltamRetro = !/Novo Este Mes/.test(document.getElementById("relPrevisto").textContent);
+    out.retLabel = /saíram em/.test(document.getElementById("relRetencao").textContent) && !/ESTA/.test(rel4c()) && /Alunos ativos hoje/.test(document.getElementById("relResumo").textContent);
+    const dA = window.__dashDados(mAnt);
+    out.semPagarAnt = dA.semPagarNomes.includes("Devedor Modelo") && !dA.semPagarNomes.includes("Novo Este Mes") && !dA.semPagarNomes.includes("Em Dia Hoje");
+    out.fechamentoAnt = /Ficaram sem pagar no mês/.test(window.__dashPT.resumo(mAnt)) && /Ficaram sem pagar/.test(bReceb());
+    window.__relMes.off(0); window.__relPT();
+    // pt-rel 16: 29/02 fora do bissexto casa com 28/02
+    out.niver = window.__casaNiver("2027-02-28", "1996-02-29") && !window.__casaNiver("2028-02-28", "1996-02-29") &&
+      window.__casaNiver("2028-02-29", "1996-02-29") && !window.__casaNiver("2027-03-01", "1996-02-29") && window.__casaNiver("2027-05-10", "1990-05-10");
+    return out;
+  });
+  ok(r749.mesFn && r749.mesVira && !r749.mesErro, "📅 o mês corrente é função — mudou o dia, a lista de cobrança muda junto" + (r749.mesErro ? " — " + r749.mesErro : ""));
+  ok(r749.cortesiaFora, "💸 aluno sem contrato e sem valor (cortesia) não aparece em 'Quem ainda não pagou'");
+  ok(r749.pacoteUmaVez, "💸 pacote estourado aparece UMA vez, com Renovar pacote — sem Recebi de R$ 0");
+  ok(r749.modeloVale && r749.botaoUsaModelo, "💬 o botão Cobrar usa o modelo 'atraso' que o professor editou (com meses em aberto)");
+  ok(r749.noPrazo, "💬 quem ainda está no prazo recebe o lembrete do mês com o dia do vencimento");
+  ok(r749.resolverUsa, "💬 o Resolver hoje cobra com o MESMO texto da lista");
+  ok(r749.contratoHora, "📄 contrato de hora-aula lista '/sessão' e não inventa 'vence dia'");
+  ok(r749.seisMil && r749.seisMedia, "📊 6 meses: valores sempre em mil e média só dos meses com pagamento");
+  ok(r749.despTokens, "🎨 despesas usam tokens (var(--tk-ok), var(--tk-bd)) — nada de hex fora da paleta");
+  ok(r749.encerrarPede && r749.encerrarHojeDireto, "🧾 encerrar despesa fixa olhando o passado pede confirmação; no mês atual vai direto");
+  ok(r749.churnUnico, "📉 churn é UMA conta na 4c, na porta e no card Retenção");
+  ok(r749.semTicket, "🏷️ nenhum 'Ticket médio' na aba — mensalidade média, recebido por pagante e valor médio por venda");
+  ok(r749.faltamMassagem && r749.faltaReceberPos && r749.massagemNaoQuita, "💆 massagem paga não quita o plano: Falta receber > 0, barra < 100% e 'Ainda sem pagar' conta o aluno");
+  ok(r749.horaAulas, "⏱ 'Sua hora rendeu' divide só a receita de aulas — e a porta não repete o número com outro nome");
+  ok(r749.semRegistro, "📋 sessão passada sem marcação vira 'sem registro', não falta");
+  ok(r749.creditoVenda && r749.porForma && r749.familia, "🛒 crédito de hora-aula é venda; 'Por forma' agrupa pacote/crédito como o card relFormas");
+  ok(r749.rotSem, "📆 semanas rotuladas pela data da segunda (e ESTA) — e 'Ativos hoje' no lugar de 'Saldo'");
+  ok(r749.deAteFica && r749.deAteReset, "🛒 o De/Até das Vendas sobrevive ao redesenho do mesmo mês e reseta quando o mês muda");
+  ok(r749.alertaHoje, "🚨 alerta de pagamento atrasado é de HOJE mesmo com as setas no mês passado");
+  ok(r749.faltamRetro && r749.retLabel, "📆 no mês passado: quem entrou depois não 'faltou pagar', Retenção e semanas seguem as setas, carteira rotulada 'hoje'");
+  ok(r749.semPagarAnt && r749.fechamentoAnt, "📧 o fechamento de mês passado leva 'Ficaram sem pagar' (pela régua do pagouMes)");
+  ok(r749.niver, "🎂 29/02 casa com 28/02 fora do bissexto (e só com 29/02 no bissexto)");
+
+  const r749b = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const out = {};
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    window.__cloudOrig = S.cloud;
+    S.cloud = () => ({ aid: "t749", client: {} });
+    const chamaOrig = window.MT_FUNCAO.chama;
+    const chamadas = [];
+    window.MT_FUNCAO.chama = (client, fn, corpo) => {
+      chamadas.push({ fn, corpo });
+      if (fn === "pagarme" && corpo.acao === "ping") return Promise.resolve({ ok: true, chaveConfigurada: true });
+      if (fn === "envia-email") return Promise.resolve({ ok: true });
+      return Promise.resolve({ ok: false });
+    };
+    const alertOrig = window.alert, confirmOrig = window.confirm, promptOrig = window.prompt;
+    const alerts = []; window.alert = (m) => alerts.push(String(m)); window.confirm = () => false; window.prompt = () => null;
+    // pt-fin 4 e 12: Link sem gateway dá recado em português e o botão volta com o próprio rótulo
+    const bt = document.querySelector('#pgAtrasados [data-pgm="d749"]');
+    const rot = bt ? bt.textContent : "";
+    if (bt) { bt.click(); await sleep(150); }
+    out.recadoHonesto = alerts.some((m) => /Configurações → Receber dos alunos/.test(m) && !/PAGARME_SECRET_KEY/.test(m));
+    out.rotuloVolta = !!bt && rot === "Link" && bt.textContent === "Link" && !bt.disabled;
+    // pt-fin 7: Recebi sem valor avisa em vez de sair calado
+    const fake = document.createElement("button"); fake.setAttribute("data-receb", "d749"); fake.setAttribute("data-v", "0");
+    document.getElementById("pendentes").appendChild(fake); fake.click(); fake.remove();
+    out.recebiZeroAvisa = alerts.some((m) => /não tem valor/.test(m));
+    // pt-fin 2: assinatura — gateway próprio ≠ Asaas não ganha o botão do Pagar.me global
+    const st = S.read("ptStudio", {});
+    st.config.pagApi = { ligado: true, provedor: "mercadopago" };
+    S.write("ptStudio", st);
+    window.__perfilPT("d749"); window.__pfAba("fin");
+    const box = () => document.getElementById("pfAssinaturaBox");
+    out.mpSemBotao = !box().querySelector("#pfAssinar") && /Asaas/.test(box().textContent) && !!box().querySelector("#pfAssinarCfg");
+    // sem gateway: o botão só entra depois do ping dizer que a chave global existe
+    const st2 = S.read("ptStudio", {}); st2.config.pagApi = { ligado: false }; S.write("ptStudio", st2);
+    window.__pingPagarme.cache = null;
+    window.__perfilPT("d749"); window.__pfAba("fin");
+    await sleep(100);
+    out.semGwComPing = !!box().querySelector("#pfAssinar") && chamadas.some((c) => c.fn === "pagarme" && c.corpo.acao === "ping");
+    window.__pingPagarme.cache = false;
+    window.__perfilPT("d749"); window.__pfAba("fin");
+    await sleep(50);
+    out.semGwSemChave = !box().querySelector("#pfAssinar") && !!box().querySelector("#pfAssinarCfg");
+    window.__pingPagarme.cache = null;
+    document.getElementById("pfFechar").click();
+    // pt-rel 9: fechamento por e-mail na hora (e o botão do zap diz que é zap)
+    const infoOrig = window.__syncInfoPT;
+    window.__syncInfoPT = null;
+    document.getElementById("fchEmailP").click();
+    out.emailSemConta = /Entre na sua conta/.test(document.getElementById("fchStatusP").textContent);
+    window.__syncInfoPT = { logado: true, email: "prof@teste.com" };
+    document.getElementById("fchEmailP").click();
+    await sleep(100);
+    const env = chamadas.find((c) => c.fn === "envia-email");
+    out.emailManda = !!env && env.corpo.para === "prof@teste.com" && /Fechamento/.test(env.corpo.html) && /fechamento/.test(env.corpo.assunto) &&
+      /enviado pra prof@teste.com/.test(document.getElementById("fchStatusP").textContent);
+    out.zapDizZap = /WhatsApp/.test(document.getElementById("fchZapP").textContent);
+    window.__syncInfoPT = infoOrig;
+    window.MT_FUNCAO.chama = chamaOrig; S.cloud = window.__cloudOrig;
+    window.alert = alertOrig; window.confirm = confirmOrig; window.prompt = promptOrig;
+    return out;
+  });
+  ok(r749b.recadoHonesto && r749b.rotuloVolta, "🔗 Link sem gateway: recado em português (sem PAGARME_SECRET_KEY) e o botão volta a dizer 'Link'");
+  ok(r749b.recebiZeroAvisa, "💸 Recebi numa linha sem valor avisa o que fazer em vez de sair calado");
+  ok(r749b.mpSemBotao, "💳 com Mercado Pago próprio não aparece 'mensalidade no cartão' do Pagar.me global — a tela diz que automática é só pelo Asaas");
+  ok(r749b.semGwComPing && r749b.semGwSemChave, "💳 sem gateway, o botão do Pagar.me global só entra quando o ping diz que a chave existe");
+  ok(r749b.emailSemConta && r749b.emailManda && r749b.zapDizZap, "📧 'Mandar pro meu e-mail' envia o fechamento do mês das setas; 'Mandar no WhatsApp' diz que é zap");
+  await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); window.__renderPT(); window.__pgAba("receb"); }, stSnap749);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   const serv = await p.evaluate(async () => {
@@ -11445,6 +11693,8 @@ async function abaPt(p, a) {
         if (u.includes("functions/v1/pagarme")) {
           const corpo = JSON.parse(opts.body);
           window.__cartaoChamadas.funcao.push(corpo);
+          // v749: o botão "Ativar mensalidade no cartão" só entra depois do ping dizer que a chave global existe
+          if (corpo.acao === "ping") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, chaveConfigurada: true })) });
           if (corpo.acao === "chave_publica") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, publicKey: "pk_teste" })) });
           if (corpo.acao === "assinar") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, assinaturaId: "sub_teste_1", status: "active" })) });
           if (corpo.acao === "assinatura_status") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, status: "active", proximaCobranca: "2026-09-07T12:00:00Z", valor: 45000 })) });
@@ -11452,13 +11702,14 @@ async function abaPt(p, a) {
         }
         return window.__fetchOrig(url, opts);
       };
+      window.__pingPagarme.cache = null; // v749: o ping é feito uma vez e guardado — zera pra este mock responder
       window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
     });
-    await p.waitForTimeout(250);
-    ok(await p.evaluate(() => {
+    const temBtCartao = await p.waitForFunction(() => {
       const b = document.getElementById("pfAssinar");
       return !!b && /Ativar mensalidade no cartão/.test(b.textContent);
-    }), "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão");
+    }, null, { timeout: 5000 }).then(() => true).catch(() => false);
+    ok(temBtCartao, "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão (v749: depois do ping confirmar a chave global)");
     await p.click("#pfAcoesBtn"); // as ações do perfil agora moram no menu retrátil ⚡
     await p.click("#pfAssinar");
     await p.waitForFunction(() => document.getElementById("dlgCartaoRec") && document.getElementById("dlgCartaoRec").open);
