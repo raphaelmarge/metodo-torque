@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v756** |
-| Estado do repo em | 2026-09-02 (commit `e7bd6b3`) |
+| App em | **mt-v757** |
+| Estado do repo em | 2026-09-02 (commit `dfafea6`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 217 |
+| Lançamentos no histórico | 218 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v756**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v757**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v757 | pt-push e pt-app-conta — publicar num caminho só, chat honesto |
 | mt-v756 | o apagão do estúdio de um professor — três travas |
 | mt-v755 | as sobras entre territórios da revisão (6 itens) |
 | mt-v754 | revisão por área — Configurações/Avaliação e o resto do app do aluno (69 itens) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v745 | Financeiro com competência e sincronização mais segura (frentes 3 e 11) |
 | mt-v744 | Semana do aluno reencaixada + isolamento e privacidade (frentes 10 e 12) |
 | mt-v743 | app do aluno — retorno do aluno novo, mescla de listas no banco, corrida e treino guiado (frentes 5 e 14) |
-| mt-v742 | dia da semana, chat, e-mail de acesso, fotos no ptStudio, IA e carinhas (frentes 2, 4, 6, 7, 8 e 13 da revisão) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
