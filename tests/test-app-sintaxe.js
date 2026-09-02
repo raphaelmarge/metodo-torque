@@ -44,6 +44,24 @@ ok(html.length > 50000, "app montado com tamanho de gente grande (" + html.lengt
 
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 
+/* v747: pacote mínimo não pode derrubar o monta() — com raioX ausente o
+ * .length estourava, o loader engolia o erro e o aluno caía no pac.html
+ * congelado, sem aviso. */
+{
+  let minimo = "";
+  try { minimo = self.MT_APP_ALUNO.monta({ a: { nome: "Só Nome" } }); } catch (e) { minimo = ""; }
+  ok(minimo.length > 50000, "🧱 v747: um D mínimo ({a:{nome}}) monta o app inteiro sem estourar");
+  const mural = { a: { nome: "X" }, cfg: { mural: ["oi"] } };
+  const padrao = self.MT_APP_ALUNO.monta(Object.assign({ studio: "Meu Personal" }, mural));
+  const generico = self.MT_APP_ALUNO.monta(Object.assign({ studio: "Studio Bruno Silva" }, mural));
+  const proprio = self.MT_APP_ALUNO.monta(Object.assign({ studio: "Bruno Silva" }, mural));
+  ok(/Recado do seu personal/.test(padrao) && /Recado do Studio Bruno</.test(generico) && /Recado do Bruno</.test(proprio),
+    "🏷️ v747: nome curto do studio — padrão vira 'seu personal', 'Studio X Y' leva duas palavras, nome próprio leva a primeira");
+  const plano = self.MT_APP_ALUNO.monta({ a: { nome: "X" }, plApp: { nome: "Mensal", valor: 149.9, linkRec: "pagar.me/x" }, ctApp: { diaVenc: 5 } });
+  ok(/R\$ 149,90\/mês · vence dia 5/.test(plano) && !/149,9\//.test(plano) && !/href='pagar\.me/.test(plano),
+    "💸 v747: dinheiro sempre com centavos, o vencimento vem do CONTRATO e link sem https:// não vira href");
+}
+
 /* ⚠️ NOME DE FUNÇÃO REPETIDO NO BLOCO DA CORRIDA.
  * Da v602 até a v642 o mapa ficou preto porque nasceu uma segunda crTile(v,r)
  * (o tile do resumo, que devolve HTML) no mesmo escopo da crTile(z,x,y) do

@@ -83,19 +83,42 @@
       .map(function (p) { return (p[0] || "").toUpperCase(); }).join("") || "?";
     var st = { config: D.cfg || {}, desafio: D.desafio || null };
     var studio = D.studio || "Meu Personal";
+    /* v747: o app usava a PRIMEIRA PALAVRA do studio como se fosse o nome do professor
+     * em doze frases — conta sem nome virava "Falar com Meu", e "Studio Bruno
+     * Silva" virava "Recado do Studio". Uma regra só: o padrão do painel vira
+     * "seu personal"; nome que começa com palavra genérica (studio, academia,
+     * personal…) leva as duas primeiras; o resto, a primeira. */
+    var nomeCurto = function (n) {
+      n = String(n || "").replace(/\s+/g, " ").trim();
+      if (!n || /^meu personal$/i.test(n)) return "seu personal";
+      var w = n.split(" ");
+      var generica = /^(studio|est[uú]dio|academia|personal|espa[cç]o|centro|box|team|equipe|cia\.?|assessoria|treinador|coach|prof\.?|professora?)$/i;
+      return (w.length > 1 && generica.test(w[0])) ? w[0] + " " + w[1] : w[0];
+    };
+    var STUDIO_CURTO = nomeCurto(studio);
+    // a legenda do XP num lugar só (faixa da Evolução e card do nível liam cópias)
+    var XPLEG = "treino = 10 XP · hábito = 2 XP · check-in ou questionário = 20 XP";
+    // dinheiro sempre com centavos (a Loja já saía "R$ 149,90" e o plano "R$ 149,9")
+    var dinheiro = function (v) { return "R$ " + (+v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    // link que vira href: só http(s), sem aspas — a mesma régua da playlist e do clube
+    var urlOk = function (u) { u = String(u || "").trim(); return /^https?:\/\/[^\s'"<>]+$/i.test(u) ? u.slice(0, 300) : ""; };
     var COR = D.COR, COR2 = D.COR2, CORC = D.CORC, CORE = D.CORE, CORCL1 = D.CORCL1, CORCL2 = D.CORCL2;
     var PAL = D.PAL || [], LOGOAPP = D.LOGOAPP || "";
     var zapPersonal = D.zapPersonal || "", metaSemana = D.metaSemana || 3;
     var sessApp = D.sessApp || [], vidsApp = D.vidsApp || [], qa = D.qa || null;
     // v735: playlist do treino (link colado pelo professor; vazio = sem botão)
-    var playApp = /^https?:\/\//i.test(String(D.playlistApp || "")) ? String(D.playlistApp).slice(0, 300) : "";
+    var playApp = urlOk(D.playlistApp);
     var clubeApp = D.clubeApp || []; // v697: parcerias do professor com cupom
     var lojaApp = D.lojaApp || [];   // v698: vitrine do professor (produtos + serviços)
     var ctApp = D.ctApp || null, plApp = D.plApp || null, pixApp = D.pixApp || null, svApp = D.svApp || [];
+    /* v747: o texto do plano nasce UMA vez. O dia do vencimento mora no
+     * CONTRATO (ctApp.diaVenc) — o menu lia o diaVenc do PLANO, campo que ele
+     * nunca teve, e o " · vence dia N" só aparecia nos Ajustes. */
+    var PLTXT = plApp ? String(plApp.nome || "") + " · " + dinheiro(plApp.valor) + "/mês" + (ctApp && ctApp.diaVenc ? " · vence dia " + ctApp.diaVenc : "") : "";
     var treino = D.treino || "", t2 = D.t2 || null, fichaVenceApp = D.fichaVenceApp || "";
     var fichasApp = D.fichasApp || null, fexs = D.fexs || [], guiaFichasP = D.guiaFichasP || [];
     var GIF = D.gif || null;
-    var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || null;
+    var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || []; // v747: [] — com null o .length derrubava o monta() inteiro
     var wodsApp = D.wodsApp || [], cardiosApp = D.cardiosApp || [];
     var planoApp = D.planoApp || null; // semana do aluno: dia → {tp, i, n}, já resolvido no painel
     var menuOculta = D.menuOculta || [], feedLigado = !!D.feedLigado;
@@ -184,7 +207,7 @@
         det("Chat e agenda", passos([
           "No <b>Chat</b> você fala direto com seu personal — ele responde quando puder.",
           "Quando a sessão do dia aparecer no Início, toque em <b>Confirmo presença</b> (ou avise que não vai).",
-          "No <b>Calendário</b> dá pra <b>pedir horário</b>: escolha dia e hora e espere a confirmação dele.",
+          "Na <b>Agenda</b> dá pra <b>pedir horário</b>: escolha dia e hora e espere a confirmação dele.",
         ]) + figA(focoA(bA("Confirmo presença", 1), "avisa seu personal") + bA("Não vou conseguir"))),
         det("Check-in e questionários", passos([
           "Uma vez por semana o app pede um <b>check-in</b>: 30 segundos, uma pergunta por tela.",
@@ -199,7 +222,7 @@
         (plApp && ve("pag") ? det("Meu plano e pagamentos", passos([
           "Em <b>Meu plano</b> (menu) você vê seu plano, o valor e o dia do vencimento.",
           "Na hora de pagar aparecem os caminhos que seu personal usa — Pix, link de cartão ou combinar direto.",
-          "Pagou? O comprovante e o histórico ficam ali também.",
+          "Pagou? Toque em <b>Já paguei</b> pra avisar seu personal — quem confirma é ele, no painel.",
         ])) : ""),
         (vidsApp.length ? det("Conteúdos e vídeos", passos([
           "Em <b>Conteúdos e vídeos</b> (menu) ficam os vídeos que seu personal publicou pra você: técnica, mobilidade, alongamento.",
@@ -217,7 +240,7 @@
             "Na <b>Loja</b> (menu) você vê os produtos e serviços do seu personal — o botão fecha a compra com ele.",
           ] : []))) : ""),
         det("Ajustes e privacidade", passos([
-          "Em <b>Ajustes</b> você troca o modo claro/escuro, liga os lembretes e configura a corrida.",
+          "Em <b>Ajustes</b> você troca o modo claro/escuro e liga os lembretes. A corrida se configura na engrenagem da própria tela de <b>Corrida</b>.",
           "Toque na sua <b>foto no topo</b> pra trocar a foto de perfil — ela é reduzida no seu próprio celular.",
           "Tem cinta de batimento? O app conecta por Bluetooth e mostra sua zona durante o treino.",
           "<b>Baixar meus dados</b> entrega tudo que é seu num arquivo; <b>Excluir minha conta</b> apaga de verdade.",
@@ -278,8 +301,12 @@
      * botão de começar — é o mesmo dia, não outro treino. Cada linha vira um
      * item marcável; linha com minutos ganha o cronômetro (o mesmo do descanso,
      * com rótulo próprio). O que foi marcado vale só pro dia de hoje. */
+    /* v747: só "min"/"minutos"/' viram cronômetro. Um "m" solto é METRO
+     * ("400 m", "800m") — antes caía no minuto e a linha de 400 metros ganhava
+     * um relógio de 1h30, justamente no cardio, que é pra que o A2 existe.
+     * Distância (m, km) fica sem cronômetro: o aluno mede com o pé. */
     var minutosDe = function (v) {
-      var m = /(\d+)\s*(min|m\b)/i.exec(String(v || ""));
+      var m = /(\d+)\s*(min|minutos?|')/i.exec(String(v || ""));
       if (m) return Math.min(90, +m[1]) * 60;
       var sg = /(\d+)\s*s\b/i.exec(String(v || ""));
       return sg ? Math.min(600, +sg[1]) : 0;
@@ -337,24 +364,11 @@
       ".tpav img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}" +
       // selinho de câmera: sem ele ninguém descobre que dá pra tocar na foto
       ".tpavc{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--cor2);border:1.5px solid rgba(255,255,255,.85);color:#fff;display:flex;align-items:center;justify-content:center;line-height:0}" +
-      // um cartão só dentro da faixa: sequência grande à esquerda, os quatro
-      // hábitos do dia em linhas finas à direita
-      "#topoExtra{display:flex;gap:12px;margin-top:14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:10px 12px}" +
-      ".tpsk{flex:none;width:42%;display:flex;align-items:center;gap:9px}" +
-      ".tpskico{flex:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;line-height:0}" +
-      ".tpskt{min-width:0}" +
-      // line-height folgado: com a caixa apertada o acento sumia cortado em cima
-      ".tpskn{display:block;font-size:25px;font-weight:800;line-height:1.15;letter-spacing:-.02em}" +
-      ".tpskn small{font-size:12px;font-weight:700;margin-left:3px}" +
-      ".tpsklab{display:block;font-style:normal;font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.62);margin-top:2px}" +
-      ".tpskrec{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:rgba(255,255,255,.45);margin-top:2px}" +
-      ".tphab{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;border-left:1px solid rgba(255,255,255,.16);padding-left:12px}" +
-      ".tphab button{display:flex;align-items:center;gap:7px;width:100%;min-height:34px;background:none;border:none;padding:0;color:rgba(255,255,255,.66);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;text-align:left}" +
-      ".tphab button.on{color:#fff}" +
-      ".tphab i{flex:none;font-style:normal;line-height:0}" +
-      ".tphab span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
-      ".tphab u{flex:none;text-decoration:none;font-size:10.5px;font-weight:800;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.45)}" +
-      ".tphab button.on u{color:rgba(255,255,255,.85)}" +
+      /* v747: o cartão #topoExtra (sequência + recorde dentro da faixa) saiu.
+       * Ele só era mostrado no Início — e no Início a faixa inteira some
+       * (body.semtopo .topo{display:none}), então nunca apareceu em lugar
+       * nenhum. A sequência e o recorde de hábitos moram no #stkLine do card
+       * dos hábitos, que é onde o aluno vê. */
       ".cardx{background:none;border:none;border-radius:0;margin:32px 20px 0;padding:0;box-shadow:none}" +
       ".cardx h2{font-size:10.5px;letter-spacing:.22em;color:#6e6a78;text-transform:uppercase;margin-bottom:14px;font-weight:700}" +
       "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.7;color:#d6d2df}" +
@@ -411,7 +425,10 @@
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
       "html.claro [style*='background:var(--bg4)']{background:#f3f1f7!important}" +
-      "html.claro [style*='var(--bg5)']{background:#e9e7ef!important}" +
+      // v747: a regra larga (a mesma de cima SEM o "background:") casava as
+      // linhas que só têm border-top com bg5 e pintava faixa cinza em voltas,
+      // 1RM, avaliação, cargas e marcas — a regra de cima já cobre o fundo
+
       "html.claro [style*='background:var(--bg7)']{background:#efedf4!important}" +
       "html.claro [style*='background:var(--bg1)']{background:#fff!important}" +
       "html.claro [style*='background:var(--bg8)']{background:#e6e3ed!important}" +
@@ -817,11 +834,7 @@
       "<span id='xpChip' class='tpchip'>" +
       "<svg width='13' height='13' viewBox='0 0 24 24' fill='#fff' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
-      // sequência e hábitos do dia dentro da faixa — trocaSec só mostra no Início
-      "<div id='topoExtra'>" +
-      "<div class='tpsk'><span class='tpskico'>" + crIco(MT_CQICONS.fogo, 17) + "</span>" +
-      "<span class='tpskt'><b id='habStreak' class='tpskn'></b>" +
-      "<i class='tpsklab'>Sequência</i><i id='habRec' class='tpskrec'></i></span></div></div></div>" +
+      "</div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
@@ -947,10 +960,10 @@
             "<div style='height:170px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;'></div>" + heroTopo +
             "<div class='cardx' id='primeiroDia' style='border-color:var(--cor);'>" +
             "<h2>Seu primeiro dia aqui</h2>" +
-            "<div class='vz' style='text-align:left;padding:2px 0 10px;'>" + esc(studio.split(" ")[0]) + " está montando o seu treino — assim que publicar, ele aparece aqui em cima. Enquanto isso:</div>" +
+            "<div class='vz' style='text-align:left;padding:2px 0 10px;'>" + esc(STUDIO_CURTO.charAt(0).toUpperCase() + STUDIO_CURTO.slice(1)) + " está montando o seu treino — assim que publicar, ele aparece aqui em cima. Enquanto isso:</div>" +
             "<button class='btnx' id='pdOnb' data-ajgo='inicio' data-ajgoto='onbCard' style='width:100%;margin-bottom:9px;'>Responder 3 perguntinhas (30 s)</button>" +
-            "<button class='btnx' data-ajgo='chat' style='width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Falar com " + esc(studio.split(" ")[0]) + "</button>" +
-            (vidsApp.length ? "<button class='btnx' data-ajgo='inicio' data-ajgoto='vidCard' style='width:100%;margin-top:9px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Ver os conteúdos de " + esc(studio.split(" ")[0]) + "</button>" : "") +
+            "<button class='btnx' data-ajgo='chat' style='width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Falar com " + esc(STUDIO_CURTO) + "</button>" +
+            (vidsApp.length ? "<button class='btnx' data-ajgo='inicio' data-ajgoto='vidCard' style='width:100%;margin-top:9px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);'>Ver os conteúdos de " + esc(STUDIO_CURTO) + "</button>" : "") +
             "</div></div>";
         }
         return "<div id='blocoHoje' style='position:relative;'>" +
@@ -984,7 +997,7 @@
       "<h2>Seu personal pediu um depoimento 💜</h2>" +
       "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Conta em poucas linhas como está sendo treinar — ele pode usar na página dele, com o seu primeiro nome.</div>" +
       "<textarea id='depoTx' maxlength='300' rows='3' style='width:100%;'></textarea>" +
-      "<button class='btnx' id='depoBt' style='width:100%;margin-top:10px;'>Enviar pro professor</button></div>" +
+      "<button class='btnx' id='depoBt' style='width:100%;margin-top:10px;'>Enviar pro meu personal</button></div>" +
       // hábitos do dia em grade, estilo "HOJE EU JÁ" — com a sequência de dias
       // de hábito logo abaixo (era #stkLine, que morava embaixo dos chips)
       "<div class='cardx' id='habWrap'><h2>Hoje eu já</h2><div id='habBox' class='habgrid' aria-label='Hábitos de hoje'></div>" +
@@ -1007,7 +1020,7 @@
           "<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>" +
           "<span aria-hidden='true' style='flex:none;width:34px;height:34px;border-radius:50%;background:rgba(var(--cor-rgb),.22);color:var(--corc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;overflow:hidden;'>" +
           (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
-          "<div style='flex:1;font-size:10.5px;font-weight:800;letter-spacing:.18em;color:#8a8695;text-transform:uppercase;'>Recado do " + esc(studio.split(" ")[0]) + "</div>" +
+          "<div style='flex:1;font-size:10.5px;font-weight:800;letter-spacing:.18em;color:#8a8695;text-transform:uppercase;'>Recado do " + esc(STUDIO_CURTO) + "</div>" +
           "<span style='font-size:11px;color:#6e6a78;'>fixado</span></div>" +
           ((st.config || {}).mural || []).map(function (av) {
             return "<div style='font-size:14.5px;line-height:1.55;padding:5px 0;'>" + esc(av) + "</div>";
@@ -1045,7 +1058,7 @@
       // da nuvem (ptagenda) e muda quando o aluno pede horário.
       "<div class='cardx' id='agTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:26px 20px 22px;color:#fff;'>" +
-      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Minha agenda</div>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Agenda</div>" +
       "<div id='agProxTit' style='font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:2px;'>Nada marcado</div>" +
       "<div id='agProxSub' style='font-size:13px;color:rgba(255,255,255,.85);margin-top:2px;'></div>" +
       "<div id='agTopoBts' style='display:flex;gap:10px;margin-top:14px;'></div></div></div>" +
@@ -1088,7 +1101,7 @@
       "<div style='min-width:0;flex:1;'>" +
       "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Minha evolução</div>" +
       "<div id='evXp' style='font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:2px;'>0 XP</div>" +
-      "<div style='font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;'>treino = 10 XP · hábito = 2 XP · check-in = 20 XP</div>" +
+      "<div style='font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;'>" + XPLEG + "</div>" +
       "<div id='evFalta' style='font-size:11.5px;font-weight:700;color:rgba(255,255,255,.9);'></div></div></span>" +
       "<span id='evTopoAlt' style='display:none;flex:1;min-width:0;'>" +
       "<span id='evAltK' style='display:block;font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'></span>" +
@@ -1155,7 +1168,7 @@
       // ---------- aba Treinos (tela 25): as fichas em cards ----------
       "<div class='cardx' id='trFichasWrap' style='margin:0;'>" +
       "<div style='padding:0 20px;'>" +
-      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-top:12px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
+      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-top:12px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(STUDIO_CURTO) + "!</div>" : "") +
       // cada ficha (A, B, C…) é um card-gaveta: a do dia abre sozinha
       (fichasApp ? fichasApp.map(function (f, gi) {
         // "A — Peito e tríceps" → letra no quadradinho + nome limpo
@@ -1210,7 +1223,7 @@
                 "<div class='altbox' style='display:none;color:var(--cor-cl1);font-size:12.5px;margin-top:5px;'>Troca por: <b>" + it.alts.map(function (nA) { return esc(nA); }).join("</b> ou <b>") + "</b> — mesmo padrão de movimento. Na dúvida, chama no chat!</div></div>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
               "<button class='inibtn' data-g='" + gi + "' data-e='" + ii + "' style='background:var(--cor);border:none;color:#fff;border-radius:99px;padding:8px 18px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;'>Iniciar exercício</button>" +
-              "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:var(--bg7);border:1px solid transparent;color:var(--cor-cl1);border-radius:99px;padding:8px 18px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
+              "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:var(--bg7);border:1px solid transparent;color:var(--cor-cl1);border-radius:99px;padding:8px 18px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;' title='Toque: +1 série · segure: −1'>0/" + (+it.series || 3) + " séries ✓</button>" +
               "<button class='tmrbtn' data-s='" + rst + "' style='background:rgba(var(--cor-rgb),.18);border:1px solid transparent;color:var(--cor-cl1);border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
               "<button class='tmrbtn' data-s='" + rAlt + "' style='background:var(--bg5);border:1px solid transparent;color:#a9a4b5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
               "</div></div></details>";
@@ -1419,7 +1432,7 @@
       "<div id='pzGraf' class='vz' style='padding:8px 0 0;'>Registre o peso de hoje — a curva aparece aqui.</div>" +
       "<div id='pzNota' style='font-size:12px;color:#8a8695;margin-top:8px;'></div></div>" +
       "<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;margin-top:12px;'>" +
-      "<div style='display:flex;justify-content:space-between;align-items:center;'><span class='wpk' style='margin:0;'>Meu peso</span><span id='mpMetaTxt' style='font-size:14px;color:#d6d2df;'></span></div>" +
+      "<div style='display:flex;justify-content:space-between;align-items:center;'><span class='wpk' style='margin:0;'>Meta</span><span id='mpMetaTxt' style='font-size:14px;color:#d6d2df;'></span></div>" +
       "<div id='mpBarra' style='margin-top:10px;'></div>" +
       "<div style='display:flex;gap:8px;margin-top:12px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='mpForm' style='display:none;gap:8px;margin-top:8px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
@@ -1497,7 +1510,7 @@
       "<input id='imcKg' inputmode='decimal' placeholder='Peso (kg)' style='flex:1;min-width:0'>" +
       "<input id='imcCm' inputmode='numeric' placeholder='Altura (cm)' style='width:110px'></div>" +
       "<div id='imcOut' style='margin-top:10px;'></div>" +
-      "<div class='vz' style='font-size:11px;'>O IMC é só uma referência — quem manda na avaliação é " + esc(studio.split(" ")[0]) + ".</div></div>" +
+      "<div class='vz' style='font-size:11px;'>O IMC é só uma referência — quem manda na avaliação é " + esc(STUDIO_CURTO) + ".</div></div>" +
       // (os hábitos de hoje subiram pra faixa colorida do topo)
       // tela 41: fotos por ângulo (Frente/Lado/Costas) + comparador com alça
       "<div class='cardx'><div style='display:flex;justify-content:space-between;align-items:baseline;'><h2>Fotos de progresso</h2>" +
@@ -1507,7 +1520,7 @@
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;cursor:pointer;'>+ Adicionar foto de frente" +
       "<input id='fotoInput' type='file' accept='image/*' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>Tirar na hora ou pegar da galeria — o celular pergunta. As fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
-      (vidsApp.length ? "<div class='cardx' id='vidCard'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
+      (vidsApp.length ? "<div class='cardx' id='vidCard'><h2>Conteúdos de " + esc(STUDIO_CURTO) + "</h2>" +
         (function () {
           var porCat = {};
           vidsApp.forEach(function (v) { (porCat[v.c] = porCat[v.c] || []).push(v); });
@@ -1523,7 +1536,7 @@
        * aluno — só nasce no HTML quando existe parceria cadastrada. Tocar no
        * cupom copia o código (handler .cupbt, perto do bloco do depoimento). */
       (clubeApp.length ? "<div class='cardx' id='clubeCard'><h2>Clube de vantagens</h2>" +
-        "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(studio.split(" ")[0]) + " pra quem treina aqui:</div>" +
+        "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(STUDIO_CURTO) + " pra quem treina aqui:</div>" +
         clubeApp.map(function (p) {
           return "<div style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
             "<b style='font-size:14.5px;'>" + esc(p.n) + "</b>" +
@@ -1536,9 +1549,9 @@
        * dele com o nome do item (a venda fecha como sempre, o dinheiro cai
        * direto com o professor). Sem WhatsApp cadastrado, o botão orienta pro
        * chat em vez de fingir que compra. Só nasce com item na vitrine. */
-      (lojaApp.length ? "<div class='cardx' id='lojaCard'><h2>Loja de " + esc(studio.split(" ")[0]) + "</h2>" +
+      (lojaApp.length ? "<div class='cardx' id='lojaCard'><h2>Loja de " + esc(STUDIO_CURTO) + "</h2>" +
         lojaApp.map(function (p) {
-          var precoL = "R$ " + (Math.round((+p.v) * 100) / 100).toFixed(2).replace(".", ",");
+          var precoL = dinheiro(p.v);
           return "<div style='display:flex;align-items:center;gap:12px;border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
             // v700: foto do produto (o painel só manda data:image validada)
             (p.f && /^data:image\//.test(p.f) ? "<img src='" + p.f + "' alt='' style='width:56px;height:56px;object-fit:cover;border-radius:12px;flex:none;'>" : "") +
@@ -1557,28 +1570,28 @@
       (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
       "<span style='flex:1;min-width:0;'><span style='display:block;font-size:22px;font-weight:900;letter-spacing:-.02em;'>" + esc(studio) + "</span>" +
       "<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>seu personal · responde quando puder</span></span></div></div>" +
-      "<div class='cardx'><h2>Fale com " + esc(studio) + "</h2>" +
+      "<div class='cardx'><h2>Conversa</h2>" +
       "<div id='chMsgs' style='max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div id='botChips' style='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;align-items:center;'><input id='chTexto' placeholder='Escreve pro seu personal…' style='flex:1;min-width:0;border-radius:99px;padding-left:18px;'>" +
       "<button class='btnx' id='chEnvia' aria-label='Enviar' style='flex:none;width:52px;height:52px;border-radius:50%;padding:0;'><svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
       // R3: o card virou o CONVITE do questionário (tela 03) — o fluxo abre por cima
       (plApp && ve("pag") ? "<div class='cardx'><h2>Meu plano</h2>" +
-        "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
+        "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>" + dinheiro(plApp.valor) + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
         (pixApp ? "<div style='text-align:center;margin-top:10px;'>" +
           (pixApp.qr ? "<img src='" + pixApp.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'>" : "") +
-          "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
+          "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + esc(pixApp.code) + "</textarea>" +
           "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
-        (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
-        "<button class='btnx' id='btnJaPaguei' style='display:block;width:100%;text-align:center;margin-top:8px;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Já paguei — avisar " + esc(studio.split(" ")[0]) + "</button>" +
-        "<div id='jaPagueiOk' class='vz' style='display:none;font-size:11.5px;'>Aviso enviado! " + esc(studio.split(" ")[0]) + " confirma e o pagamento entra no histórico.</div></div>" : "") +
+        (urlOk(plApp.linkRec) ? "<a href='" + esc(urlOk(plApp.linkRec)) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
+        "<button class='btnx' id='btnJaPaguei' style='display:block;width:100%;text-align:center;margin-top:8px;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Já paguei — avisar " + esc(STUDIO_CURTO) + "</button>" +
+        "<div id='jaPagueiOk' class='vz' style='display:none;font-size:11.5px;'>Aviso enviado! Agora " + esc(STUDIO_CURTO) + " confirma e o pagamento entra no histórico.</div></div>" : "") +
       // pacotes de serviços comprados (massagem etc.): saldo da última publicação do app
       (svApp.length && ve("pag") ? "<div class='cardx'><h2>Meus pacotes</h2>" +
         svApp.map(function (p) {
           return "<div class='kv'><span>" + esc(p.n) + "</span><b>" + (p.t - p.u === 1 ? "resta 1" : "restam " + (p.t - p.u)) + " de " + p.t + "</b></div>";
         }).join("") +
-        "<div class='vz' style='font-size:12px;'>Esse saldo é de quando o seu app foi atualizado pela última vez — pode estar um pouco atrasado. O número certinho tá com " + esc(studio.split(" ")[0]) + ".</div></div>" : "") +
+        "<div class='vz' style='font-size:12px;'>Esse saldo é de quando o seu app foi atualizado pela última vez — pode estar um pouco atrasado. O número certinho tá com " + esc(STUDIO_CURTO) + ".</div></div>" : "") +
       /* O card só existe pra quem AINDA não tem login: quem recebeu o acesso do
        * professor já entra com e-mail e senha, e pedir pra "criar um login"
        * ali só confunde (dava pra cadastrar um login diferente do que chegou). */
@@ -1617,7 +1630,7 @@
         var chev = "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span>";
         var rows = "";
         if (plApp && ve("pag")) rows += "<button class='mgrow' data-ajgo='pagamento'><span style='line-height:0;'>" + sv("<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>") + "</span>" +
-          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meu plano</span><span class='mgsub'>" + esc(plApp.nome) + " · R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês" + (ctApp && ctApp.diaVenc ? " · vence dia " + ctApp.diaVenc : "") + "</span></span>" + chev + "</button>";
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meu plano</span><span class='mgsub'>" + esc(PLTXT) + "</span></span>" + chev + "</button>";
         if (+a.altura) rows += "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'>" + sv("<path d='M12 3v18M8.5 6.5 12 3l3.5 3.5M8.5 17.5 12 21l3.5-3.5'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Altura</span><span class='mgsub'>" + String((+a.altura / 100).toFixed(2)).replace(".", ",") + " m · quem mede é seu personal</span></span></div>";
         // o check-in da semana também é questionário — sem qa a linha leva nele
@@ -1667,7 +1680,7 @@
       // WhatsApp com a mensagem pronta (aria mantém o nome antigo pros leitores)
       (ve("indica") ? "<div class='cardx'>" +
       "<a aria-label='Indique um amigo — Convidar no WhatsApp' target='_blank' rel='noopener' style='display:flex;align-items:center;gap:13px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;text-decoration:none;color:#fff;min-height:64px;' href='https://wa.me/?text=" +
-      encodeURIComponent("Treino com " + studio + " e tô curtindo demais! Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) + "'>" +
+      encodeURIComponent("Treino com " + studio + " e tô curtindo demais! " + (zapPersonal ? "Chama no WhatsApp pra fechar um horário: https://wa.me/55" + zapPersonal : "Me chama que eu te passo o contato") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) + "'>" +
       "<span style='flex:none;color:var(--corc);line-height:0;'>" + appIco(APPIC.presente, 22) + "</span>" +
       "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>Chamar um amigo</b>" +
       "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>treinar em dupla rende mais — manda o convite no WhatsApp</span></span>" +
@@ -1678,7 +1691,7 @@
       "<div id='indicaPr' class='vz' style='display:none;text-align:left;padding:8px 0 0;'></div>" +
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<input id='indicaNm' placeholder='nome do amigo (opcional)' style='flex:1;min-width:0;'>" +
-      "<button class='btnx' id='indicaOk' style='flex:none;white-space:nowrap;'>Avisar meu professor</button></div>" +
+      "<button class='btnx' id='indicaOk' style='flex:none;white-space:nowrap;'>Avisar meu personal</button></div>" +
       "<div id='indicaFb' class='vz' style='display:none;text-align:left;'></div></div>" : "") +
       /* ---------- Questionários: área PRÓPRIA (a partir da v585) ----------
        * O check-in da semana e o questionário do personal moravam embaixo da
@@ -1697,7 +1710,7 @@
        * serve e a lista de tudo o que ia ser perguntado. O aluno já sabe pra
        * que serve, e a lista de perguntas ele vê na hora de responder. */
       "<div class='cardx' id='ckCard'>" +
-      "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
+      "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal vê no painel. Até semana que vem!</div>" +
       "<div id='ckForm'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px 18px;color:#fff;'>" +
       "<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Toda semana</div>" +
@@ -1761,6 +1774,14 @@
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) +
       ",MEULOGIN=" + jsonApp(a.acessoEm ? String(a.email || "").trim().toLowerCase() : "") + ";" +
+      /* v747: os nomes de mês e de dia eram declarados SETE vezes pelo script
+       * (duas delas var MESN, uma com 'março' literal e outra com \u00e7) e a
+       * conta "treinos nesta semana" três vezes. Uma fonte só. */
+      "var MESN=['janeiro','fevereiro','mar\\u00e7o','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "var MES3=MESN.map(function(m){return m.slice(0,3);}),MESES=MESN.map(function(m){return m.charAt(0).toUpperCase()+m.slice(1);});" +
+      "var DSEM=['domingo','segunda','ter\\u00e7a','quarta','quinta','sexta','s\\u00e1bado'],DSEMA=DSEM.map(function(d){return d.toUpperCase();});" +
+      // treinos de segunda a domingo da semana corrente (f = ptfeitos)
+      "function naSemana(f){var n=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])n++;}return n;}" +
       // canvas (Stories, mapa do cardio) não entende var(--x) — CV() lê o valor real
       "function CV(n){try{return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()||'#fff';}catch(e){return '#fff';}}" +
       // barra do navegador na cor do studio — nasce da paleta, não do HTML
@@ -1785,7 +1806,7 @@
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
-      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
+      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
@@ -1876,8 +1897,10 @@
       "(function(){var pr=document.getElementById('indicaPr');if(pr&&INDPR){pr.style.display='';pr.textContent='\ud83c\udf81 '+INDPR;}" +
       "var bt=document.getElementById('indicaOk');if(!bt)return;bt.addEventListener('click',function(){" +
       "var nm=String((document.getElementById('indicaNm')||{}).value||'').trim().slice(0,80);" +
+      // v747: indicação de ninguém não entra — o prêmio não teria a quem ir
+      "var fb0=document.getElementById('indicaFb');if(!nm){if(fb0){fb0.style.display='';fb0.textContent='Conta quem \u00e9: escreve o nome de quem voc\u00ea indicou.';}var ni0=document.getElementById('indicaNm');if(ni0)ni0.focus();return;}" +
       "var l=L('ptindicas',[]);l.push({n:nm,em:isoHj()});if(l.length>30)l.shift();Sv('ptindicas',l);" +
-      "var fb=document.getElementById('indicaFb');if(fb){fb.style.display='';fb.textContent='Avisado! Seu professor j\u00e1 sabe que a indica\u00e7\u00e3o \u00e9 sua. \ud83d\udc9c';}" +
+      "var fb=document.getElementById('indicaFb');if(fb){fb.style.display='';fb.textContent='Avisado! Seu personal j\u00e1 sabe que a indica\u00e7\u00e3o \u00e9 sua. \ud83d\udc9c';}" +
       "var ni=document.getElementById('indicaNm');if(ni)ni.value='';});})();" +
       "window.__indica={premio:INDPR};" +
       // 🎁 cupom do clube (v697): tocar copia o código — com reserva pro
@@ -1950,7 +1973,7 @@
       "return GIF.b+encodeURIComponent(t)+'.'+(GIF.e||'gif');}" +
       "function vidHtml(u){u=String(u||'');var id=ytId(u);" +
       // GIF/imagem animada não é <video>: é <img>, sem controles e em loop
-      "if(/\\.(gif|webp|png|jpe?g)([?#][^'\"<>]*)?$/i.test(u))" +
+      "if(/^https?:\\/\\/[^'\\\"<>\\s]+\\.(gif|webp|png|jpe?g)([?#][^'\\\"<>]*)?$/i.test(u))" +
       "return \"<img src='\"+u+\"' alt='' loading='lazy' style='width:100%;border-radius:10px;margin-top:8px;display:block;background:#fff;'>\";" +
       "if(id)return vidMolde('https://www.youtube-nocookie.com/embed/'+id+'?rel=0&playsinline=1');" +
       "var pl=u.match(/[?&]list=([\\w-]{10,60})/);" +
@@ -2076,8 +2099,7 @@
       "document.getElementById('btnFeito').addEventListener('click',function(){var f=L('ptfeitos',{});var iso=isoHj();" +
       "if(f[iso]){alert('Treino de hoje já registrado! Descansa que amanhã tem mais.');return;}" +
       "f[iso]=1;Sv('ptfeitos',f);pintaSemana();" +
-      "var naSem=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
-      "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])naSem++;}" +
+      "var naSem=naSemana(f);" +
       "if(navigator.vibrate)navigator.vibrate(naSem>=META?[120,60,120,60,260]:[140]);" +
       "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML=(naSem>=META?icx(ICO.trofeu,20)+' META DA SEMANA BATIDA!<br><small>'+naSem+' treinos — orgulho define</small>':icx(ICO.raio,20)+' Treino registrado!<br><small>'+naSem+' de '+META+' na semana</small>');" +
@@ -2126,26 +2148,34 @@
       "var tx=document.getElementById('ckTexto');if(tx)tx.value=st9.texto;}" +
       "function avanca(){if(!fx)return;if(CKP[st9.i].k==='nota'&&!st9.nota)return;" +
       "if(st9.i<T-1){st9.i++;dSalva();pinta();}else{envia();}}" +
-      "function enviadoTela(){if(!fx)return;fx.innerHTML=\"<div style='min-height:100%;background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px calc(24px + env(safe-area-inset-bottom,0px));'>\"+" +
+      "function enviadoTela(zap,cb){if(!fx)return;fx.innerHTML=\"<div style='min-height:100%;background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px calc(24px + env(safe-area-inset-bottom,0px));'>\"+" +
       "\"<div style='width:82px;height:82px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:38px;color:#fff;'>✓</div>\"+" +
-      "\"<div style='font-size:11px;font-weight:800;letter-spacing:.26em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-top:22px;'>Check-in enviado</div>\"+" +
-      "\"<div style='font-size:30px;font-weight:900;color:#fff;letter-spacing:-.02em;margin-top:8px;'>Semana registrada</div>\"+" +
-      "\"<div style='font-size:15px;color:rgba(255,255,255,.85);margin-top:10px;max-width:320px;line-height:1.5;'>Seu personal já viu. O próximo check-in abre na segunda.</div>\"+" +
+      /* v747: sem nuvem o check-in vai pelo WhatsApp — e o app marcava a
+       * semana como enviada antes de o aluno tocar em enviar lá (ou mesmo se
+       * cancelasse). Agora a tela diz o que aconteceu e a semana só fecha no
+       * "Enviei". Com nuvem, "seu personal vê no painel" — dizer que ele JÁ tinha visto era chute. */
+      "\"<div style='font-size:11px;font-weight:800;letter-spacing:.26em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-top:22px;'>\"+(zap?'Check-in no WhatsApp':'Check-in enviado')+\"</div>\"+" +
+      "\"<div style='font-size:30px;font-weight:900;color:#fff;letter-spacing:-.02em;margin-top:8px;'>\"+(zap?'\u00c9 s\u00f3 enviar':'Semana registrada')+\"</div>\"+" +
+      "\"<div style='font-size:15px;color:rgba(255,255,255,.85);margin-top:10px;max-width:320px;line-height:1.5;'>\"+(zap?'Abrimos o WhatsApp com o seu check-in pronto \u2014 toca em enviar l\u00e1 e depois confirma aqui.':'Seu personal v\u00ea no painel. O pr\u00f3ximo check-in abre na segunda.')+\"</div>\"+" +
       "\"<div style='flex:1;min-height:24px;'></div>\"+" +
-      "\"<button id='ckVoltaIni' style='width:100%;min-height:58px;border-radius:99px;background:#fff;border:none;color:var(--cor-esc,#3b2b63);font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;'>Voltar pro início</button>\"+" +
+      "(zap?\"<button id='ckEnviei' style='width:100%;min-height:58px;border-radius:99px;background:#fff;border:none;color:var(--cor-esc,#3b2b63);font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;margin-bottom:10px;'>Enviei \u2713</button>\":'')+" +
+      "\"<button id='ckVoltaIni' style='width:100%;min-height:58px;border-radius:99px;background:\"+(zap?'rgba(255,255,255,.16)':'#fff')+\";border:\"+(zap?'1px solid rgba(255,255,255,.3)':'none')+\";color:\"+(zap?'#fff':'var(--cor-esc,#3b2b63)')+\";font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;'>\"+(zap?'Ainda n\u00e3o enviei':'Voltar pro in\u00edcio')+\"</button>\"+" +
       "\"<button id='ckChat' style='width:100%;min-height:52px;border-radius:99px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;'>Falar com o seu personal</button></div>\";" +
       "var vi=document.getElementById('ckVoltaIni');if(vi)vi.onclick=function(){fecha();if(window.__trocaSec)window.__trocaSec('inicio');};" +
+      "var ve9=document.getElementById('ckEnviei');if(ve9)ve9.onclick=function(){if(cb)cb();};" +
       "var fc=document.getElementById('ckChat');if(fc)fc.onclick=function(){fecha();if(window.__trocaSec)window.__trocaSec('chat');};}" +
       "function envia(){var peso=parseFloat(String(st9.peso||'').replace(',','.'))||null,texto=String(st9.texto||'').trim();" +
       "var bt=document.getElementById('ckProx');if(bt){bt.disabled=true;bt.textContent='Enviando…';}" +
-      "var fim=function(){Sv('ptck',semanaCK());dLimpa();" +
+      "var fim=function(){Sv('ptck',semanaCK());var ch9=L('ptckh',{});ch9[semanaCK()]=1;Sv('ptckh',ch9);dLimpa();" +
       "var fo=document.getElementById('ckForm'),ok9=document.getElementById('ckOk');if(fo)fo.style.display='none';if(ok9)ok9.style.display='';" +
       "if(window.__menuBadges)window.__menuBadges();enviadoTela();};" +
       "if(NUVEM){rpcApp('app_aluno_checkin',{t:TOKEN,p_nota:st9.nota,p_texto:texto,p_peso:peso}).then(function(r){" +
       "if(r&&r.ok){fim();}else{if(bt){bt.disabled=false;bt.textContent='Enviar check-in';}alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
       "else{var msg='Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[st9.nota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
-      "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}}" +
-      "function abreFluxo(){st9=dLe();fx=document.createElement('div');fx.id='ckFluxo';document.body.appendChild(fx);" +
+      "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');enviadoTela(true,fim);}}" +
+      // v747: rascunho de semana abandonada não fica pra sempre no aparelho
+      "function abreFluxo(){var a0=L('ptckdraft',{}),s0=semanaCK(),mx0=false;Object.keys(a0).forEach(function(k){if(k!==s0){delete a0[k];mx0=true;}});if(mx0)Sv('ptckdraft',a0);" +
+      "st9=dLe();fx=document.createElement('div');fx.id='ckFluxo';document.body.appendChild(fx);" +
       "fx.addEventListener('input',function(e){if(e.target.id==='ckPeso'){st9.peso=e.target.value;dSalva();}" +
       "if(e.target.id==='ckTexto'){st9.texto=e.target.value;dSalva();}});" +
       "fx.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;" +
@@ -2176,7 +2206,6 @@
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + jsonApp(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
-      "var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];" +
       "function agDados(){var l=L('ptagenda',[]);SESS.forEach(function(s){if(!l.some(function(x){return x.dia===s.d&&x.hora===(s.h||'')&&x.status==='confirmado';}))l.push({dia:s.d,hora:s.h||'',status:'confirmado',obs:'Sessão marcada'});});return l;}" +
       "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
@@ -2214,7 +2243,6 @@
       "bts.innerHTML=\"<button type='button' data-agics='\"+fut.dia+'|'+(fut.hora||'')+\"' style='\"+pill+\"'>Salvar no meu celular</button>\"+" +
       "\"<button type='button' data-agrem='\"+fut.dia+'|'+(fut.hora||'')+\"' style='\"+pill+\"'>Preciso remarcar</button>\";}" +
       // nomes locais porque o DSEM_ global só nasce mais pra baixo no script
-      "var DSEMA=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];" +
       "function pintaDia(){var box=document.getElementById('agDia');var form=document.getElementById('agForm');" +
       "var pend9=document.getElementById('agPend');if(pend9){var np9=agDados().filter(function(x){return x.status==='pedido'&&x.dia>=isoHj();}).length;" +
       "pend9.textContent=np9?'você tem '+pl(np9,'pedido esperando','pedidos esperando')+' resposta':'';}" +
@@ -2232,13 +2260,20 @@
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
       // salvar horário confirmado no calendário do celular (.ics)
-      "var AGTIT=" + jsonApp("Sessão com " + studio.split(" ")[0] + " (TORQUE ON)") + ";" +
+      "var AGTIT=" + jsonApp("Sessão com " + STUDIO_CURTO + " (TORQUE ON)") + ";" +
       "function agIcsBaixa(d9){" +
-      "var p9=d9.split('|');var h9=p9[1]||'08:00';var i9=p9[0].replace(/-/g,'')+'T'+h9.replace(':','')+'00';" +
-      "var f9=new Date(p9[0]+'T'+h9+':00');f9.setMinutes(f9.getMinutes()+60);var p2=function(n){return('0'+n).slice(-2);};" +
-      "var s9=f9.getFullYear()+p2(f9.getMonth()+1)+p2(f9.getDate())+'T'+p2(f9.getHours())+p2(f9.getMinutes())+'00';" +
-      "var ics='BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TORQUE ON//App//PT-BR\\r\\nBEGIN:VEVENT\\r\\nUID:'+Date.now()+'@torqueon.com.br\\r\\nDTSTART:'+i9+'\\r\\nDTEND:'+s9+'\\r\\nSUMMARY:'+AGTIT+'\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';" +
+      /* v747: UID estável (dia|hora + hash do token) — o calendário reconhece
+       * o MESMO compromisso e não duplica a cada toque; sessão "a combinar"
+       * vira evento de dia inteiro em vez de um 08:00 que ninguém marcou. */
+      "var p9=d9.split('|');var h9=p9[1]||'';var hx=0,tk9=String(TOKEN||'');for(var q9=0;q9<tk9.length;q9++)hx=(hx*31+tk9.charCodeAt(q9))>>>0;" +
+      "var uid9=p9[0]+'-'+(h9?h9.replace(':',''):'dia')+'-'+hx.toString(36)+'@torqueon.com.br';var p2=function(n){return('0'+n).slice(-2);};var dts='';" +
+      "if(h9){var i9=p9[0].replace(/-/g,'')+'T'+h9.replace(':','')+'00';var f9=new Date(p9[0]+'T'+h9+':00');f9.setMinutes(f9.getMinutes()+60);" +
+      "var s9=f9.getFullYear()+p2(f9.getMonth()+1)+p2(f9.getDate())+'T'+p2(f9.getHours())+p2(f9.getMinutes())+'00';dts='DTSTART:'+i9+'\\r\\nDTEND:'+s9;}" +
+      "else{var d0=new Date(p9[0]+'T12:00:00');var d1=new Date(d0);d1.setDate(d1.getDate()+1);var dd=function(x){return x.getFullYear()+p2(x.getMonth()+1)+p2(x.getDate());};dts='DTSTART;VALUE=DATE:'+dd(d0)+'\\r\\nDTEND;VALUE=DATE:'+dd(d1);}" +
+      "var ics='BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TORQUE ON//App//PT-BR\\r\\nBEGIN:VEVENT\\r\\nUID:'+uid9+'\\r\\n'+dts+'\\r\\nSUMMARY:'+AGTIT+'\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';" +
+      "window.__agIcs=ics;" +
       "var b9=new Blob([ics],{type:'text/calendar'});var a9=document.createElement('a');a9.href=URL.createObjectURL(b9);a9.download='treino.ics';document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},800);}" +
+      "window.__agIcsBaixa=agIcsBaixa;" +
       "document.getElementById('agDia').addEventListener('click',function(e){var t9=e.target.closest&&e.target.closest('[data-agics]');if(t9)agIcsBaixa(t9.getAttribute('data-agics'));});" +
       // os botões do cabeçalho: salvar .ics e "preciso remarcar" (abre o chat já escrito)
       "document.getElementById('agTopo').addEventListener('click',function(e){" +
@@ -2405,7 +2440,6 @@
        * a cor conta QUANTO foi treinado naquele dia: as séries marcadas
        * (ptsets_<dia>) em três degraus; dia que só foi marcado como treinado,
        * sem série anotada (uma corrida, por exemplo), fica no degrau leve. */
-      "var MESN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
       "var mapMes=0;" + // 0 = mês atual, 1 = o anterior, e assim por diante
       "function forcaDoDia(iso,f){if(!f[iso])return 0;var st=L('ptsets_'+iso,null);" +
       "if(!st)return 1;var n=0;for(var k in st)if(Object.prototype.hasOwnProperty.call(st,k))n+=+st[k]||0;" +
@@ -2423,11 +2457,10 @@
       "function mapSeta(id,rot,lab,off){return \"<button type='button' id='\"+id+\"' aria-label='\"+lab+\"'\"+(off?\" disabled style='opacity:.35;\":\" style='\")+\"width:30px;height:30px;border-radius:10px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\"+rot+'</button>';}" +
       // 52 semanas em colunas de 7 dias, a mais nova na direita (estilo GitHub)
       "function mapaAnoHtml(f){var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
-      "var MES3B=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
       "var cols='',labs='',tot=0,ultM=-1;" +
       "for(var w=51;w>=0;w--){var dSeg=new Date(fim);dSeg.setDate(dSeg.getDate()-w*7-6);" +
       "var mrc=dSeg.getMonth()!==ultM;ultM=dSeg.getMonth();" +
-      "labs+=\"<div style='width:13px;flex:none;white-space:nowrap;font-size:9.5px;font-weight:800;color:#6e6a78;'>\"+(mrc?MES3B[dSeg.getMonth()]:'')+'</div>';" +
+      "labs+=\"<div style='width:13px;flex:none;white-space:nowrap;font-size:9.5px;font-weight:800;color:#6e6a78;'>\"+(mrc?MES3[dSeg.getMonth()]:'')+'</div>';" +
       "cols+=\"<div style='width:13px;flex:none;display:flex;flex-direction:column;gap:3px;'>\";" +
       "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);" +
       "if(f[iso])tot++;var fut=dt>hoje&&iso!==isoHj();var fo=forcaDoDia(iso,f);" +
@@ -2500,12 +2533,11 @@
       // passado (até o mesmo dia), senão "-6 que em julho" no dia 20 desanima
       "var ag9=new Date();var mesK9=ag9.getFullYear()+'-'+String(ag9.getMonth()+1).padStart(2,'0');" +
       "var noMes9=Object.keys(f).filter(function(k){return k.slice(0,7)===mesK9;}).length;" +
-      "var MES39=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
       "var dAnt9=new Date(ag9.getFullYear(),ag9.getMonth()-1,1);" +
       "var antK9=dAnt9.getFullYear()+'-'+String(dAnt9.getMonth()+1).padStart(2,'0');var diaHj9=ag9.getDate();" +
       "var noAnt9=Object.keys(f).filter(function(k){return k.slice(0,7)===antK9&&+k.slice(8,10)<=diaHj9;}).length;" +
       "var tot9=Object.keys(f).length;var s29,c29;" +
-      "if(noAnt9){var dif9=noMes9-noAnt9;var mn9=MES39[dAnt9.getMonth()];" +
+      "if(noAnt9){var dif9=noMes9-noAnt9;var mn9=MES3[dAnt9.getMonth()];" +
       "s29=dif9?Math.abs(dif9)+(dif9>0?' a mais':' a menos')+' que em '+mn9+' até aqui':'igual a '+mn9+' até aqui';" +
       "c29=dif9>0?'#4ade80':dif9<0?'#f87171':'#8a8695';}" +
       "else{s29=tot9>noMes9?tot9+' no total':'seu primeiro mês';}" +
@@ -2542,8 +2574,8 @@
       "g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=3;g.beginPath();" +
       "if(g.roundRect)g.roundRect(60,58,bw+64,74,37);else g.rect(60,58,bw+64,74);g.stroke();" +
       "g.fillStyle='#fff';g.textAlign='left';g.fillText(bg9,92,108);}" +
-      "var MES3A=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];var dh9=new Date();" +
-      "g.textAlign='right';g.font='800 34px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.85)';g.fillText(dh9.getDate()+' '+MES3A[dh9.getMonth()],1020,108);" +
+      "var dh9=new Date();" +
+      "g.textAlign='right';g.font='800 34px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.85)';g.fillText(dh9.getDate()+' '+MES3[dh9.getMonth()].toUpperCase(),1020,108);" +
       // título com quebra em até 2 linhas
       "g.textAlign='left';g.fillStyle='#fff';g.font='900 88px system-ui,sans-serif';" +
       "var tit9=String(op.titulo||'').toUpperCase();var linhas=[];var atual='';" +
@@ -2594,8 +2626,7 @@
       "\"<div class='vz' style='font-size:11px;padding:4px 0 0;'>Sua foto com os números do treino por cima — a foto não sai do seu celular.</div>\";}" +
       "document.getElementById('btnCardStories').addEventListener('click',function(){" +
       "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);var stk2=streakSem(f);" +
-      "var naSem2=0;var seg2=new Date();seg2.setDate(seg2.getDate()-((seg2.getDay()+6)%7));" +
-      "for(var i2=0;i2<7;i2++){var d9=new Date(seg2);d9.setDate(d9.getDate()+i2);if(f[isoLoc(d9)])naSem2++;}" +
+      "var naSem2=naSemana(f);" +
       "var c=document.createElement('canvas');c.width=1080;c.height=1080;var g=c.getContext('2d');" +
       "var gr=g.createLinearGradient(0,0,1080,1080);gr.addColorStop(0,CV('bg6'));gr.addColorStop(1,CV('cor-esc'));g.fillStyle=gr;g.fillRect(0,0,1080,1080);" +
       "g.fillStyle=CV('corc');g.font='700 42px system-ui,sans-serif';g.textAlign='center';g.fillText(STUDIO.toUpperCase().slice(0,30),540,150);" +
@@ -2609,15 +2640,12 @@
       // mesma prévia do fim de treino: o share sai do toque, que o iPhone aceita
       "arteMostra(c,'conquista.png');});" +
       // retrospectiva do mês fechado: monta sozinha no comecinho do mês seguinte
-      "var MESN=['janeiro','fevereiro','mar\\u00e7o','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
       "function retroMes(){var d=new Date();d.setDate(1);d.setDate(0);return isoLoc(d).slice(0,7);}" +
       "function retroDados(){var m=retroMes();var f=L('ptfeitos',{});var tr=Object.keys(f).filter(function(k){return k.slice(0,7)===m;}).length;" +
       "var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){if(k.slice(0,7)===m){var dd=hb[k]||{};Object.keys(dd).forEach(function(j){if(dd[j])nh++;});}});" +
       "var dc=L('ptdc',{});var rec=null;Object.keys(dc).forEach(function(ex){(dc[ex]||[]).forEach(function(x){" +
       "if(String(x.d).slice(0,7)===m&&(!rec||+x.kg>rec.kg))rec={ex:ex,kg:+x.kg};});});" +
-      "var pz=L('ptpeso',{});var ks=Object.keys(pz).filter(function(k){return k.slice(0,7)===m;}).sort();" +
-      "var dp=ks.length>1?Math.round((pz[ks[ks.length-1]]-pz[ks[0]])*10)/10:null;" +
-      "return {m:m,nome:MESN[+m.slice(5,7)-1],tr:tr,nh:nh,rec:rec,dp:dp};}" +
+      "return {m:m,nome:MESN[+m.slice(5,7)-1],tr:tr,nh:nh,rec:rec};}" +
       "function pintaRetro(){var card=document.getElementById('retroCard');if(!card)return;var d=retroDados();" +
       "if(!d.tr||L('ptretroV','')===d.m){card.style.display='none';return;}" +
       "card.style.display='block';document.getElementById('retroTit').textContent='Seu m\\u00eas de '+d.nome;" +
@@ -2647,13 +2675,26 @@
       "var n=st[b.dataset.ex]||0,max=+b.dataset.n;b.textContent=n+'/'+max+' séries ✓';" +
       "b.style.background=n>=max?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg7)';});}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('.setbtn');" +
-      "if(b){var st=L('ptsets_'+isoHj(),{});var max=+b.dataset.n;var n=(st[b.dataset.ex]||0)+1;if(n>max)n=0;st[b.dataset.ex]=n;Sv('ptsets_'+isoHj(),st);pintaSets();" +
+      /* v747: (1) passar do máximo NÃO zera mais — um toque a mais no "3/3"
+       * apagava as séries do dia (e o mapa de calor caía de forte pra leve);
+       * segurar o botão tira uma. (2) o 'Treinei hoje!' automático olha a
+       * FICHA em que o botão está: FEXS é a união de A+B+C e com divisão o dia
+       * nunca fechava sozinho — a v743 remendou pelo player; aqui é o caminho
+       * das séries. */
+      "if(b){if(b._lp){b._lp=0;return;}var st=L('ptsets_'+isoHj(),{});var max=+b.dataset.n;var n=Math.min(max,(st[b.dataset.ex]||0)+1);st[b.dataset.ex]=n;Sv('ptsets_'+isoHj(),st);pintaSets();" +
       "if(n===max&&navigator.vibrate)navigator.vibrate(90);" +
-      "if(FEXS.length&&FEXS.every(function(x){return (st[x.n]||0)>=x.s;})){var f=L('ptfeitos',{});if(!f[isoHj()]){document.getElementById('btnFeito').click();}}return;}" +
+      "var fx9=b.closest('.fichabox');var todos9=fx9?Array.prototype.slice.call(fx9.querySelectorAll('.setbtn')):[];" +
+      "if(todos9.length&&todos9.every(function(x){return (st[x.dataset.ex]||0)>=+x.dataset.n;})){var f=L('ptfeitos',{});if(!f[isoHj()]){document.getElementById('btnFeito').click();}}return;}" +
       "var ab=e.target.closest('.altbtn');if(ab){var bx2=ab.nextElementSibling;if(bx2)bx2.style.display=bx2.style.display==='none'?'block':'none';return;}" +
       "var t=e.target.closest('.tmrbtn');if(t){iniciaTmr(+t.dataset.s,t.dataset.rot||'');return;}" +
       // parte 2 do dia: marcar/desmarcar a linha (vale só pro dia de hoje)
       "var pk=e.target.closest('.p2row');if(pk&&e.target.closest('.p2ck')){p2Marca(pk.dataset.p2);return;}});" +
+      // segurar o botão de séries (600 ms) tira uma série; o clique que vier junto é engolido
+      "(function(){var lpT=null;document.addEventListener('pointerdown',function(e){var b=e.target.closest&&e.target.closest('.setbtn');if(!b)return;clearTimeout(lpT);" +
+      "lpT=setTimeout(function(){var st=L('ptsets_'+isoHj(),{});st[b.dataset.ex]=Math.max(0,(st[b.dataset.ex]||0)-1);Sv('ptsets_'+isoHj(),st);pintaSets();b._lp=1;setTimeout(function(){b._lp=0;},700);if(navigator.vibrate)navigator.vibrate(40);},600);});" +
+      "['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(){clearTimeout(lpT);});});" +
+      "document.addEventListener('contextmenu',function(e){if(e.target.closest&&e.target.closest('.setbtn'))e.preventDefault();});" +
+      "window.__setbtnMenos=function(b){var st=L('ptsets_'+isoHj(),{});st[b.dataset.ex]=Math.max(0,(st[b.dataset.ex]||0)-1);Sv('ptsets_'+isoHj(),st);pintaSets();};})();" +
       "function p2Feitos(){var o=L('ptp2',{});return (o&&o.d===isoHj()&&o.f)?o.f:{};}" +
       "function p2Marca(k){var f=p2Feitos();if(f[k])delete f[k];else f[k]=1;Sv('ptp2',{d:isoHj(),f:f});p2Pinta();" +
       "if(navigator.vibrate)navigator.vibrate(8);}" +
@@ -2680,8 +2721,12 @@
       "var kcf=bx.dataset.d+'|'+bx.dataset.h;var pd=bx.dataset.d.split('-');var hh=bx.dataset.h;" +
       "var msg=vou?('Confirmo presen\u00e7a na sess\u00e3o de '+pd[2]+'/'+pd[1]+(hh?' \u00e0s '+hh:'')+' \u2713'):('N\u00e3o vou conseguir ir na sess\u00e3o de '+pd[2]+'/'+pd[1]+(hh?' \u00e0s '+hh:'')+' \u2014 podemos remarcar?');" +
       // Sv dispara o devolveApp (ptconf está na lista de chaves): a resposta chega no professor
-      "function marcaCf(){var f=L('ptconf',{});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
-      "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(){marcaCf();}).catch(function(){marcaCf();});}" +
+      // v747: poda o que passou de 60 dias — a chave viaja inteira em todo devolveApp
+      "function marcaCf(){var f=L('ptconf',{});var lm=new Date();lm.setDate(lm.getDate()-60);var lim=isoLoc(lm);Object.keys(f).forEach(function(k){if(k.slice(0,10)<lim)delete f[k];});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
+      /* v747: rpcApp nunca rejeita (devolve null na falha) e o .then não
+       * conferia r.ok — rede caída ou token cortado pintava "Avisei que vou"
+       * em verde e o "podemos remarcar?" nunca chegava no chat do professor. */
+      "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(r){if(r&&r.ok){marcaCf();}else{alert('N\u00e3o deu pra enviar o recado agora \u2014 tenta de novo ou avisa pelo WhatsApp.');}});}" +
       "else{marcaCf();alert('Sem internet agora \u2014 avisa tamb\u00e9m pelo WhatsApp, combinado?');}});})();" +
       // ---- modo circuito (WOD): For Time, AMRAP, EMOM e Tabata ----
       "function bip(fq,dur){try{var ac=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());" +
@@ -2700,7 +2745,7 @@
           ms: (w.movs && w.movs.length ? w.movs.map(function (m) { return { q: String(m.q || ""), n: String(m.n || "") }; })
             : (w.mov || []).map(function (n) { return { q: "", n: String(n) }; })).slice(0, 12) };
       })) + ";" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,gi:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,gi:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0,estourou:0,fimEl:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
       // último resultado de cada circuito prescrito aparece no card
@@ -2721,7 +2766,7 @@
       "\"<b style='flex:none;color:#4ade80;'>\"+res+'</b></div>';}).join(''):'';}}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
       "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
-      "wod.tipo=w.t;wod.voltas=0;wod.gi=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
+      "wod.tipo=w.t;wod.voltas=0;wod.gi=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.estourou=0;wod.fimEl=0;wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
       "if(w.t==='fortime')document.getElementById('wodCap').value=w.cap;" +
       "else if(w.t==='tabata'){document.getElementById('wodRounds').value=w.rd;document.getElementById('wodWork').value=w.wk;document.getElementById('wodRest').value=w.rs;}" +
       "else document.getElementById('wodMin').value=w.min;" +
@@ -2742,10 +2787,11 @@
       "function wodPinta(el2){var tela=document.getElementById('wodTela'),fase=document.getElementById('wodFase'),tmp=document.getElementById('wodTempo'),info=document.getElementById('wodInfo');" +
       "if(wod.tipo==='fortime'){var cap=60*(parseInt(document.getElementById('wodCap').value,10)||0);" +
       "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?pl(wod.voltas,'volta','voltas')+' · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
-      "if(cap)wodCd(cap-el2);if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''));return;}" +
+      // v747: sem o cap como val o placar nascia com tempo 0:00 e gravava "tempo 0:00"
+      "if(cap)wodCd(cap-el2);if(cap&&el2>=cap){wod.estourou=1;wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),cap);}return;}" +
       "if(wod.tipo==='amrap'){var tot=60*(parseInt(document.getElementById('wodMin').value,10)||10);var resta=tot-el2;" +
       "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=pl(wod.voltas,'volta completada','voltas completadas');" +
-      "wodCd(resta);if(resta<=0)wodFim(pl(wod.voltas,'volta','voltas')+' em '+wodFmt(tot)+'!',wod.voltas);return;}" +
+      "wodCd(resta);if(resta<=0){wod.fimEl=0;wodFim(pl(wod.voltas,'volta','voltas')+' em '+wodFmt(tot)+'!',wod.voltas);}return;}" +
       "if(wod.tipo==='emom'){var totE=60*(parseInt(document.getElementById('wodMin').value,10)||10);" +
       "if(el2>=totE){wodFim('EMOM completo — '+Math.round(totE/60)+' minutos!');return;}" +
       "var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
@@ -2791,7 +2837,8 @@
       "if(b.id==='wfFeito'){wfAvanca();return;}" +
       "if(b.id==='wfFim'){var el9=wod.run?(Date.now()-wod.t0)/1000:wod.acum;if(el9<1)return;" +
       "if(wod.tipo==='fortime'){document.getElementById('wodTermina').click();return;}" +
-      "if(wod.tipo==='amrap'){wodFim(pl(wod.voltas,'volta','voltas')+' — terminou antes do tempo',wod.voltas);return;}" +
+      // v747: guarda o tempo decorrido — o placar dizia "em 10:00" pra quem parou aos 4 min
+      "if(wod.tipo==='amrap'){wod.fimEl=Math.round(el9);wodFim(pl(wod.voltas,'volta','voltas')+' — terminou antes do tempo',wod.voltas);return;}" +
       "wodFim('Circuito encerrado');return;}" +
       "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv==null)return;" +
       "if(wod.tipo==='amrap'||wod.tipo==='fortime'){wod.gi=+mv;espelhaW();return;}" +
@@ -2878,7 +2925,9 @@
       // caixinha verde + "Registrar treino" (o fim de sempre); com op, entra o
       // "Compartilhar com foto" da R4 (tela 28 — post do circuito)
       "function wodMsgFim(msg,op){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
-      "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
+      // v747: msg leva a observação do aluno ('Placar salvo! … — obs: …') — escapa como o resto do placar
+      "var eh9=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;');};" +
+      "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+eh9(msg)+\"</div>\"+" +
       "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'')+" +
       "notaBox('wod')+" +
       "(op?arteBtns('wodShareArq','wodShareSem'):'');" +
@@ -2906,7 +2955,11 @@
       "var minA=pvi('wodMin',wm.min||10);var wk2=pvi('wodWork',wm.wk||20);var rs2=pvi('wodRest',wm.rs||10);" +
       "var rd=tipo==='tabata'?pvi('wodRounds',wm.rd||8):minA;" +
       "var lst0=(L('ptwodres',{}))[wod.wodId]||[];var ant=lst0.length?lst0[lst0.length-1]:null;" +
-      "var st={v:wod.voltas,ex:0,cf:'',reps:[],ob:'',nf:0,t:val==null?null:Math.round(val)};" +
+      /* v747: For Time que estourou o limite nasce "não terminei" (era o caso
+       * exato do cap, e vinha desmarcado); AMRAP guarda a duração REAL —
+       * parou antes do tempo, o placar diz em quanto parou. */
+      "var st={v:wod.voltas,ex:0,cf:'',reps:[],ob:'',nf:(tipo==='fortime'&&wod.estourou)?1:0,t:val==null?null:Math.round(val)};" +
+      "var durA=(tipo==='amrap'&&wod.fimEl>0)?Math.min(wod.fimEl,minA*60):minA*60;var duT=wodFmt(durA)+(durA<minA*60?' (parou antes)':'');" +
       "if(tipo==='emom'||tipo==='tabata')for(var q=0;q<Math.min(rd,24);q++)st.reps.push(null);" +
       "var laps=wod.laps.slice();var ov=document.createElement('div');ov.id='wodPlacar';document.body.appendChild(ov);" +
       "var cardW=function(rot,html){return \"<div class='wpcard'>\"+(rot?\"<div class='wpk'>\"+rot+'</div>':'')+html+'</div>';};" +
@@ -2915,10 +2968,10 @@
       "function pr(){var chip='',sub='',corpo='',nota='o seu personal vê o placar no painel';" +
       "var reps=st.reps.filter(function(x){return x!=null;});var tot=reps.reduce(function(a,b){return a+b;},0);" +
       "var pior=reps.length?Math.min.apply(null,reps):null;" +
-      "if(tipo==='amrap'){chip='AMRAP '+minA+' MIN';sub=(wm.mv?wm.mv+' movimentos · ':'')+'terminou em '+wodFmt(minA*60);nota='vira uma marca em Evolução · Marcas';" +
+      "if(tipo==='amrap'){chip='AMRAP '+minA+' MIN';sub=(wm.mv?wm.mv+' movimentos · ':'')+'terminou em '+duT;nota='vira uma marca em Evolução · Marcas';" +
       "corpo=cardW('Quantas voltas você fechou?',\"<div style='display:flex;gap:10px;'>\"+" +
       "\"<div class='wptile' style='flex:1;'><i>Voltas</i><b>\"+st.v+'</b></div>'+" +
-      "\"<button class='wptile wpr' id='wpExB' style='flex:1;'><i>+ reps</i><b>\"+st.ex+'</b></button></div>'+" +
+      "\"<div class='wptile wpr' role='button' tabindex='0' id='wpExB' style='flex:1;'><i>+ reps</i><b>\"+st.ex+'</b></div></div>'+" +
       "\"<div style='display:flex;gap:10px;margin-top:10px;'><button class='wpchip' id='wpMenos'>− 1 volta</button><button class='wpchip' id='wpMais'>+ 1 volta</button></div>\"+" +
       "\"<div style='font-size:12.5px;color:#6e6a78;margin-top:10px;'>o app conta as voltas que você tocou no cronômetro — só confirma · toque em + reps pra anotar a volta que ficou pela metade</div>\")+comoFez();" +
       "if(laps.length){corpo+=cardW('Tempo de cada volta',laps.map(function(lp,i){var dur=lp-(i?laps[i-1]:0);var antD=i?laps[i-1]-(i>1?laps[i-2]:0):null;" +
@@ -2942,7 +2995,7 @@
       "else{chip=tipo==='tabata'?'TABATA · '+rd+' ROUNDS':'EMOM '+minA+' MIN';" +
       "sub=tipo==='tabata'?wk2+'s trabalho / '+rs2+'s descanso':'um movimento a cada minuto cheio';nota='o seu personal vê o placar e a observação no painel';" +
       "corpo=cardW('Reps de cada round',\"<div style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;'>\"+st.reps.map(function(v,i){" +
-      "return \"<button class='wptile wpr\"+(v!=null&&v===pior?' pior':'')+\"' data-wpr='\"+i+\"'><i>R\"+(i+1)+'</i><b>'+(v==null?'—':v)+'</b></button>';}).join('')+'</div>'+" +
+      "return \"<div class='wptile wpr\"+(v!=null&&v===pior?' pior':'')+\"' role='button' tabindex='0' data-wpr='\"+i+\"'><i>R\"+(i+1)+'</i><b>'+(v==null?'—':v)+'</b></div>';}).join('')+'</div>'+" +
       "\"<div style='font-size:12.5px;color:#6e6a78;margin-top:10px;'>toque num round pra anotar as reps\"+(tipo==='tabata'&&pior!=null?\" · em Tabata o placar é a <b style='color:#fff;'>pior série: \"+pior+'</b>':'')+'</div>');" +
       "if(reps.length)corpo+=cardW('',\"<div style='display:flex;gap:10px;'>\"+" +
       "\"<div class='wptile' style='flex:1;'><i>Total</i><b>\"+tot+'<small>reps</small></b></div>'+" +
@@ -2950,7 +3003,7 @@
       "\"<div class='wptile' style='flex:1;'><i>Média</i><b>\"+String(Math.round(10*tot/reps.length)/10).replace('.',',')+'</b></div></div>');" +
       "corpo+=cardW('Uma observação pro seu personal',\"<textarea id='wpObs' rows='3' maxlength='300' class='wpobs' placeholder='Ex.: caiu no R6, ombro cansado…'></textarea>\");}" +
       "ov.innerHTML=\"<div style='max-width:480px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));'>\"+" +
-      "\"<div style='display:flex;align-items:center;margin-bottom:16px;'><button id='wpVoltar' class='wpchip' style='flex:none;padding:0 20px;'>Voltar</button><span style='margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.22em;color:#8a8695;'>MEU RESULTADO</span></div>\"+" +
+      "\"<div style='display:flex;align-items:center;margin-bottom:16px;'><button id='wpVoltar' class='wpchip' style='flex:none;padding:0 20px;'>Descartar</button><span style='margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.22em;color:#8a8695;'>MEU RESULTADO</span></div>\"+" +
       "\"<span class='wpctipo'>\"+chip+'</span>'+" +
       "\"<div style='font-size:clamp(26px,8vw,38px);font-weight:900;letter-spacing:-.03em;text-transform:uppercase;line-height:1;margin:10px 0 6px;'>\"+eh(wod.wodNome)+'</div>'+" +
       "\"<div style='font-size:13.5px;color:#8a8695;'>\"+sub+'</div>'+corpo+" +
@@ -2958,30 +3011,44 @@
       "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:10px;'>\"+nota+'</div></div>';" +
       "var obn=document.getElementById('wpObs');if(obn)obn.value=st.ob;}" +
       "ov.addEventListener('input',function(e){if(e.target.id==='wpObs')st.ob=e.target.value;});" +
-      "ov.addEventListener('click',function(e){var t=e.target.closest('button,#wpT');if(!t)return;" +
-      "if(t.id==='wpVoltar'){ov.remove();wodMsgFim(msg);return;}" +
+      /* v747: os prompt() do navegador (um por round num EMOM de 20 min, mais
+       * o tempo e as reps extras) viraram um campo DENTRO do próprio tile:
+       * toca, digita com teclado numérico, sai do campo (ou Enter) e o placar
+       * repinta. O painel aboliu os prompt() na v633 pelo mesmo motivo. */
+      "function wpEdita(t,chave,val,tempo){var b=t.id==='wpT'?t:t.querySelector('b');if(!b||b.querySelector('input'))return;" +
+      "b.innerHTML=\"<input class='wpin' data-wped='\"+chave+\"' inputmode='\"+(tempo?'text':'numeric')+\"' value='\"+eh(val)+\"' placeholder='\"+(tempo?'mm:ss':'0')+\"' style='width:100%;min-width:60px;background:none;border:none;border-bottom:2px solid var(--corc);color:inherit;font:inherit;text-align:center;outline:none;padding:0;'>\";" +
+      "var i=b.querySelector('input');i.focus();try{i.select();}catch(e9){}}" +
+      "function wpCommit(i){var k=i.getAttribute('data-wped'),v=String(i.value||'').trim();" +
+      "if(k==='t'){if(v){var pt=v.split(':');var sg=pt.length>1?60*(parseInt(pt[0],10)||0)+(parseInt(pt[1],10)||0):parseInt(pt[0],10)||0;if(sg>0)st.t=sg;}}" +
+      "else if(k==='ex'){st.ex=v===''?0:Math.max(0,parseInt(v,10)||0);}" +
+      "else if(k.slice(0,2)==='r:'){st.reps[+k.slice(2)]=v===''?null:Math.max(0,parseInt(v,10)||0);}pr();}" +
+      "ov.addEventListener('focusout',function(e){if(e.target.classList&&e.target.classList.contains('wpin'))wpCommit(e.target);});" +
+      "ov.addEventListener('keydown',function(e){if(!e.target.classList)return;if(e.key==='Enter'&&e.target.classList.contains('wpin')){e.preventDefault();e.target.blur();return;}" +
+      "if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('wpr')){e.preventDefault();e.target.click();}});" +
+      "ov.addEventListener('click',function(e){if(e.target.tagName==='INPUT')return;var t=e.target.closest('button,#wpT,.wpr');if(!t)return;" +
+      // v747: era "Voltar" e apagava voltas, tempos e observação sem aviso — e não há como reabrir o placar
+      "if(t.id==='wpVoltar'){if(!confirm('Descartar o resultado? O placar n\u00e3o fica salvo e n\u00e3o d\u00e1 pra reabrir.'))return;ov.remove();wodMsgFim(msg);return;}" +
       "if(t.id==='wpMenos'){st.v=Math.max(0,st.v-1);pr();return;}" +
       "if(t.id==='wpMais'){st.v++;pr();return;}" +
-      "if(t.id==='wpExB'){var ex=prompt('Reps da volta que ficou pela metade:',st.ex||'');if(ex!=null&&ex!=='')st.ex=Math.max(0,parseInt(ex,10)||0);pr();return;}" +
+      "if(t.id==='wpExB'){wpEdita(t,'ex',st.ex||'');return;}" +
       "if(t.id==='wpNf'){st.nf=st.nf?0:1;pr();return;}" +
-      "if(t.id==='wpT'){var tv=prompt('Corrige o tempo (mm:ss):',wodFmt(st.t||0));if(tv){var pt=String(tv).split(':');var sg=60*(parseInt(pt[0],10)||0)+(parseInt(pt[1],10)||0);if(sg>0)st.t=sg;}pr();return;}" +
+      "if(t.id==='wpT'){wpEdita(t,'t',wodFmt(st.t||0),true);return;}" +
       "if(t.dataset&&t.dataset.wpcf){st.cf=st.cf===t.dataset.wpcf?'':t.dataset.wpcf;pr();return;}" +
-      "if(t.dataset&&t.dataset.wpr!=null){var rp=prompt('Reps do round '+(1+ +t.dataset.wpr)+':',st.reps[+t.dataset.wpr]==null?'':st.reps[+t.dataset.wpr]);" +
-      "if(rp!=null&&rp!=='')st.reps[+t.dataset.wpr]=Math.max(0,parseInt(rp,10)||0);pr();return;}" +
+      "if(t.dataset&&t.dataset.wpr!=null){wpEdita(t,'r:'+t.dataset.wpr,st.reps[+t.dataset.wpr]==null?'':st.reps[+t.dataset.wpr]);return;}" +
       "if(t.id==='wpSalvar'){var reps2=st.reps.filter(function(x){return x!=null;});var tot2=reps2.reduce(function(a,b){return a+b;},0);" +
       "var pior2=reps2.length?Math.min.apply(null,reps2):null;" +
       "var cfT={rx:' · RX',esc:' · escalado',adp:' · adaptado'}[st.cf]||'';var r,v;" +
-      "if(tipo==='amrap'){v=st.v;r=pl(st.v,'volta','voltas')+(st.ex?' + '+st.ex+' reps':'')+' em '+wodFmt(minA*60)+cfT;}" +
+      "if(tipo==='amrap'){v=st.v;r=pl(st.v,'volta','voltas')+(st.ex?' + '+st.ex+' reps':'')+' em '+duT+cfT;}" +
       "else if(tipo==='fortime'){v=st.t;r=(st.nf?'não terminou · ':'')+'tempo '+wodFmt(st.t||0)+cfT;}" +
       "else{v=pior2;r=(reps2.length?tot2+' reps · pior série '+pior2:'circuito completo')+cfT;}" +
       "if(st.ob)r+=' — obs: '+st.ob.slice(0,120);" +
       "var wr2=L('ptwodres',{});var lst2=wr2[wod.wodId]||[];var ant2=lst2.length?lst2[lst2.length-1]:null;" +
       "if(ant2&&v!=null&&ant2.v!=null&&!st.nf){if(tipo==='fortime'?v<ant2.v:v>ant2.v)r+=' — BATEU o resultado anterior!';}" +
       "lst2.push({d:isoHj(),n:wod.wodNome,r:r,v:v==null?null:Math.round(v),tp:tipo,cf:st.cf||'',ex:st.ex||0,nf:st.nf?1:0," +
-      "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300)});" +
+      "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300),du:tipo==='amrap'?durA:undefined});" +
       "if(lst2.length>20)lst2.shift();wr2[wod.wodId]=lst2;Sv('ptwodres',wr2);pintaWodRes();" +
       // R4: o fim do circuito oferece o post com a foto (números do placar)
-      "var stW=tipo==='amrap'?[[st.v+(st.ex?'+'+st.ex:''),'voltas'],[wodFmt(minA*60),'tempo']]:" +
+      "var stW=tipo==='amrap'?[[st.v+(st.ex?'+'+st.ex:''),'voltas'],[wodFmt(durA),'tempo']]:" +
       "tipo==='fortime'?[[wodFmt(st.t||0),'tempo']].concat(st.cf?[[{rx:'RX',esc:'ESCALADO',adp:'ADAPTADO'}[st.cf],'como fez']]:[]):" +
       "[[tot2,'reps'],[pior2!=null?pior2:'—','pior série']];" +
       "var rotW={amrap:'AMRAP',fortime:'For Time',emom:'EMOM',tabata:'Tabata'}[tipo]||'Circuito';" +
@@ -2991,21 +3058,20 @@
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
       "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
-      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.gi=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
+      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.gi=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.estourou=0;wod.fimEl=0;wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
       "wod.run=true;wod.t0=Date.now()-wod.acum*1000;if(wod.acum<1)wod.gi=0;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
-      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';wod.estourou=0;wod.fimEl=0;soltaTela();fechaWodFull();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
       "wodChips();wodCfg();pintaWodRes();" +
       // data no cabeçalho e o montador manual atrás do botão (tela 50)
       "(function(){var wh=document.getElementById('wodHoje');if(wh){var d0=new Date();" +
-      "var ds=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
-      "wh.textContent=ds[d0.getDay()]+', '+d0.getDate()+' de '+ms[d0.getMonth()];}" +
+      "wh.textContent=DSEM[d0.getDay()]+', '+d0.getDate()+' de '+MESN[d0.getMonth()];}" +
       "var lb=document.getElementById('wodLivreBt');if(lb)lb.addEventListener('click',function(){" +
       "var lv=document.getElementById('wodLivre');lv.style.display=lv.style.display==='none'?'block':'none';});})();" +
       "window.__wod=wod;window.__wodGuia={avanca:wfAvanca};" +
@@ -3594,6 +3660,11 @@
       "\"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;'>\"+tiles.join('')+'</div>'+" +
       "((extras&&extras.length)?\"<div style='margin-top:16px;'>\"+extras.map(function(x){" +
       "return \"<div style='background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);border-radius:14px;padding:10px 14px;font-size:13.5px;color:#4ade80;font-weight:700;margin-top:8px;'>\"+crEh(x)+'</div>';}).join('')+'</div>':'')+" +
+      /* v747: corrida CONTA como treino. O fim do circuito oferecia o
+       * "Registrar treino de hoje" e o da corrida não — quem só corre via
+       * "Semana: 0 de 3" e sequência zerada depois de três corridas. É o
+       * MESMO botão (clica no btnFeito): uma regra pros dois. */
+      "((!L('ptfeitos',{})[isoHj()])?\"<button type='button' class='btnx' id='crRsFeito' style='display:block;width:100%;text-align:center;margin-top:16px;'>Registrar treino de hoje</button>\":'')+" +
       /* So aparece quando existe trajeto guardado: corrida de esteira, bike sem
        * GPS ou treino curto demais nao ganham botao que nao leva a lugar
        * nenhum. */
@@ -3606,6 +3677,7 @@
       "el.style.display='block';" +
       "var bf=document.getElementById('crRsFechar');if(bf)bf.addEventListener('click',crResumoFecha);" +
       "var bs=document.getElementById('crRsSem');if(bs)bs.addEventListener('click',function(){cardCorrida(null);});" +
+      "var bfe=document.getElementById('crRsFeito');if(bfe)bfe.addEventListener('click',function(){document.getElementById('btnFeito').click();bfe.style.display='none';});" +
       "var b3=document.getElementById('crRs3D');" +
       "if(b3)b3.addEventListener('click',function(){cr3DAbre(reg.r,reg.n);});" +
       "var ba=document.getElementById('crRsArq');if(ba)ba.addEventListener('change',function(){" +
@@ -4054,7 +4126,7 @@
       "function gmmss(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+g2(sg%60);}" +
       // o MESMO exercício pode estar em duas fichas com número de séries diferente
       // (abdômen na A e na B). Como ptsets_<hoje> é por NOME, pegar o botão errado
-      // fazia o handler zerar o dia no "if(n>max)n=0" — casa o data-n com as séries
+      // fazia o handler zerar o dia (passava do máximo) — casa o data-n com as séries
       // deste exercício e, no empate, fica com o primeiro.
       "function setbtnDe(ex,ns){var r=null;document.querySelectorAll('.setbtn').forEach(function(b){"+
       "if(b.dataset.ex.replace(/'/g,'')!==ex)return;"+
@@ -4823,9 +4895,7 @@
       "var streak=0;var d=new Date();" +
       "for(var i=0;i<400;i++){var iso=isoLoc(d);var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
       "if(n>=3)streak++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}" +
-      "document.getElementById('habStreak').innerHTML=streak+\" <small>dia\"+(streak===1?'':'s')+'</small>';" +
       "var rec=recHab(h);" +
-      "document.getElementById('habRec').textContent=rec>1?'Recorde: '+rec+' dias':'Marque 3 pra contar o dia';" +
       // a chama embaixo da semana (telas finais): sequência de dias com 3+ hábitos
       "var sl=document.getElementById('stkLine');if(sl){if(streak>0){sl.style.display='flex';" +
       // diz COM QUE a sequencia e: a do card da semana conta dias TREINADOS, e
@@ -5669,7 +5739,9 @@
       // treinos do mês é o pintaCqTiles, na aba Conquistas
       // XP calculado dos DADOS (nunca do #xpNum — o count-up anima o texto)
       "function xpDados(){var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
-      "var nq=Object.keys(L('ptqa',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
+      /* v747: o check-in da semana (ptckh = uma chave por semana enviada)
+       * entra na conta — o rótulo prometia 20 XP e só o questionário contava. */
+      "var nq=Object.keys(L('ptqa',{})).length+Object.keys(L('ptckh',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
       /* nível: o XP acumulado vira nível numa curva quadrática — chegar ao
        * nível n custa 50·(n−1)·n XP. Os primeiros vêm rápido (nível 2 com uma
        * semana de treino) e cada um seguinte custa mais, que é o padrão dos
@@ -5688,7 +5760,7 @@
       "\"<div style='flex:1;min-width:0;'><div style='font-weight:800;font-size:15px;'>Nível \"+n+' — '+nvTitulo(n)+\"</div>\"+" +
       "\"<div style='height:7px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:7px;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\"+" +
       "\"<div style='font-size:11.5px;color:#8a8695;margin-top:6px;'>\"+xp+' XP — faltam '+(alvo-xp)+' pro nível '+(n+1)+(nvTitulo(n+1)!==nvTitulo(n)?' ('+nvTitulo(n+1)+')':'')+'</div></div></div>'+" +
-      "\"<div style='font-size:11px;color:#8a8695;margin-top:7px;text-align:center;'>treino +10 XP · hábito do dia +2 · check-in respondido +20</div>\";}" +
+      "\"<div style='font-size:11px;color:#8a8695;margin-top:7px;text-align:center;'>" + XPLEG + "</div>\";}" +
       // celebra só quando SOBE: a 1ª abertura apenas anota o nível atual,
       // senão todo mundo ganhava festa do nada na atualização
       "var visto=+L('ptnivelok',0)||0;" +
@@ -5730,7 +5802,8 @@
       "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
-      "if(/Fale com/.test(t))return 'chat';" +
+      // v747: o card do chat é reconhecido pelo #chMsgs (por id, como a regra manda) — o h2 virou "Conversa"
+      "if(el.querySelector&&el.querySelector('#chMsgs'))return 'chat';" +
       "if(/Pagamento|Mensalidade|Meus pacotes/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Minha conta|Meu login|Lembretes/.test(t))return 'ajustes';" +
       "if(/Mural|Minha semana|Hábitos|Desafio/.test(t))return 'inicio';" +
@@ -5803,10 +5876,10 @@
       // Ajustes com o modo claro. Nome de gente e de plano entram por
       // textContent, nunca por innerHTML.
       "var gav=document.getElementById('menuApp');" +
-      "var MGNOME=" + jsonApp(a.nome || "") + ",PLSUB=" + jsonApp(plApp ? (plApp.nome + " · R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês" + (plApp.diaVenc ? " · vence dia " + plApp.diaVenc : "")) : "mensalidade e comprovantes") + ";" +
+      "var MGNOME=" + jsonApp(a.nome || "") + ",PLSUB=" + jsonApp(PLTXT || "mensalidade e vencimento") + ";" +
       "var CHEV=\"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg>\";" +
       "var MICO={};itens.forEach(function(m){MICO[m[0]]=m[1];});" +
-      "var MTIT={chat:'Chat',agenda:'Calendário',treino:'Minhas fichas',util:'Utilidades',feed:'Minha turma',pagamento:'Meu plano',ajustes:'Ajustes'};" +
+      "var MTIT={chat:'Chat',agenda:'Agenda',treino:'Minhas fichas',util:'Utilidades',feed:'Minha turma',pagamento:'Meu plano',ajustes:'Ajustes'};" +
       "function mgRow(sec,extra){return \"<button class='nitem mgrow' data-msec='\"+sec+\"'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(MICO[sec])+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>\"+(MTIT[sec]||sec)+\"</span><span class='mgsub'></span></span>\"+" +
@@ -5838,7 +5911,7 @@
       // 🛍 loja (v698): atalho no menu, gated pelo builder como os outros
       (lojaApp.length ? "\"<div class='mgcard'><button class='nitem mgrow' data-msec='loja'>\"+" +
         "\"<span style='line-height:0;'>\"+ic(\"<path d='M5 8h14l-1.2 12a1.8 1.8 0 0 1-1.8 1.6H8a1.8 1.8 0 0 1-1.8-1.6z'/><path d='M8.6 10.5V6.8a3.4 3.4 0 0 1 6.8 0v3.7'/>\")+\"</span>\"+" +
-        "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Loja</span><span class='mgsub'>" + lojaApp.length + (lojaApp.length > 1 ? " itens" : " item") + " de " + esc(studio.split(" ")[0]) + " pra você</span></span>\"+" +
+        "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Loja</span><span class='mgsub'>" + lojaApp.length + (lojaApp.length > 1 ? " itens" : " item") + " de " + esc(STUDIO_CURTO) + " pra você</span></span>\"+" +
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       // ❓ Ajuda (v706): sempre presente — todo app tem a tela de ajuda
       "\"<div class='mgcard'><button class='nitem mgrow' data-msec='ajuda'>\"+" +
@@ -5908,9 +5981,6 @@
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
       "if(s==='util'&&window.__utilVai)window.__utilVai(null);" +
-      // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
-      // colorida fica curta, só com o nome, o nível e o XP
-      "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +
       // entrou no chat = recados vistos; some a bolinha e o badge do menu
       "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);if(window.__menuBadges)window.__menuBadges();}" +
       // GPS sempre ativo: acompanha a navegação (liga na área de cardio, desliga fora se não tem treino rodando)
