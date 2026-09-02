@@ -3030,7 +3030,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <span class="muted" id="fchStatusP" style="font-size: 12px;"></span>
         <button type="button" class="btn sec mini" id="fchCopiaP">Copiar resumo</button>
-        <button type="button" class="dbt" id="fchZapP">Mandar fechamento</button>
+        <!-- v749: o botão dizia "Mandar fechamento" e abria o WhatsApp; a ajuda
+             prometia e-mail. Agora cada um diz o que faz, e o e-mail tem botão. -->
+        <button type="button" class="btn sec mini" id="fchEmailP">Mandar pro meu e-mail</button>
+        <button type="button" class="dbt" id="fchZapP">Mandar no WhatsApp</button>
       </div>
     </div>
     <div id="rel4c" data-relsec="geral" hidden></div>
@@ -3954,6 +3957,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return st;
   }
   function save(st) { idxInvalida(); S.write("ptStudio", st); render(); }
+  window.__renderPT = function () { idxInvalida(); render(); }; // testes (v749): repinta tudo sem recarregar
 
   // onboarding do módulo: pergunta o nome do personal na primeira abertura
   function verificaOnboarding() {
@@ -4037,7 +4041,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("obP4Depois").addEventListener("click", function () { obFecha(); render(); });
   window.__obGuia = { passo: obPasso, fecha: obFecha, verifica: verificaOnboarding }; // testes
-  var mesAtual = S.todayISO().slice(0, 7);
+  /* v749: era uma VARIÁVEL congelada na carga — num tablet deixado aberto no
+   * studio, no dia 1 o bloco Atrasados (que recalcula) falava do mês novo e a
+   * lista "Quem ainda não pagou" logo abaixo ainda cobrava o mês velho. Agora
+   * é função: cada pintura pergunta de novo que mês é. */
+  function mesAtual() { return S.todayISO().slice(0, 7); }
+  window.__mesAtual = mesAtual; // testes
 
   // ---------- menu lateral ----------
   $("btnMenuPt").onclick = function () { document.body.classList.toggle("menu-aberto"); };
@@ -4368,14 +4377,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       subs: [
         { t: "Do dia a dia", p: [
           "A primeira sub-aba junta KPIs do mês, movimentação, indicadores, aniversários e os alertas do studio.",
-          "<b>Mandar fechamento</b> envia o resumo do mês pro seu e-mail — e dá pra deixar automático.",
+          "<b>Mandar no WhatsApp</b> abre o resumo do mês pronto pra enviar; <b>Mandar pro meu e-mail</b> manda pra sua caixa — e o fechamento do mês anterior pode ir sozinho (card Sua ilha).",
         ] },
         { t: "Retenção (Radar)", p: [
           "O Radar mostra quem está esfriando ANTES de virar cancelamento: frequência caindo, check-in piorando, conversa parada.",
           "Cada linha traz a ação que puxa o aluno de volta.",
         ] },
         { t: "Quanto vale sua hora", p: [
-          "Nos Indicadores, <b>Sua hora rendeu</b> divide o que entrou pelo tempo de sessão dado — o número que decide reajuste e agenda cheia.",
+          "Nos Indicadores, <b>Sua hora rendeu</b> divide o que entrou de AULAS (mensalidade, sessão e crédito — venda avulsa fica fora) pelas sessões dadas — o número que decide reajuste e agenda cheia.",
         ] },
         { t: "O mês de UM aluno", p: [
           "O <b>relatório mensal</b> de um aluno específico (e o <b>card pra postar</b> no Instagram, com sua cor e logo) saem da FICHA dele, aba Avaliações.",
@@ -5618,13 +5627,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // mesma regra do resto do painel (lista, pendências, régua): venda de serviço
     // ou de pacote NÃO quita a mensalidade — senão o perfil diz "pago" e a cobrança
     // continua aberta em todas as outras telas
-    var pagoMes = idxDe(st).pagouMes(id, mesAtual);
-    var extrasMes = pgs.filter(function (p) { return p.desc && (p.data || "").slice(0, 7) === mesAtual; })
+    var pagoMes = idxDe(st).pagouMes(id, mesAtual());
+    var extrasMes = pgs.filter(function (p) { return p.desc && (p.data || "").slice(0, 7) === mesAtual(); })
       .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
     // ---- financeiro do aluno em 4 blocos: situação, contrato, pacotes, histórico ----
     var rotSec = function (t) { return "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--cinza-2);text-transform:uppercase;margin:14px 0 6px;'>" + t + "</div>"; };
     var MESES_ROT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    var mesNome = MESES_ROT[+mesAtual.slice(5, 7) - 1];
+    var mesNome = MESES_ROT[+mesAtual().slice(5, 7) - 1];
     var nPagsAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; }).length;
     var situacao = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
       "<div style='background:" + (pagoMes ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (pagoMes ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
@@ -7643,19 +7652,54 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" id="pfAssAsCancela">cancelar</button></div>';
       return;
     }
-    // com o gateway Asaas do PRÓPRIO professor ligado, a assinatura é a dele;
-    // senão fica o caminho antigo (cartão pelo Pagar.me global)
+    // com o gateway Asaas do PRÓPRIO professor ligado, a assinatura é a dele
     var pagApiA = ((load().config) || {}).pagApi || {};
-    box.innerHTML = pagApiA.ligado && pagApiA.provedor === "asaas"
-      ? '<button class="btn mini" id="pfAssinarAs">Ativar cobrança automática (Asaas)</button>' +
-        '<div class="muted" style="font-size:12px;margin-top:6px;">todo mês o Asaas manda a cobrança pro aluno (Pix, cartão ou boleto), direto na SUA conta — e a baixa entra sozinha aqui</div>'
-      : '<button class="btn mini" id="pfAssinar">Ativar mensalidade no cartão</button>' +
-        '<div class="muted" style="font-size:12px;margin-top:6px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</div>';
+    if (pagApiA.ligado && pagApiA.provedor === "asaas") {
+      box.innerHTML = '<button class="btn mini" id="pfAssinarAs">Ativar cobrança automática (Asaas)</button>' +
+        '<div class="muted" style="font-size:12px;margin-top:6px;">todo mês o Asaas manda a cobrança pro aluno (Pix, cartão ou boleto), direto na SUA conta — e a baixa entra sozinha aqui</div>';
+      return;
+    }
+    /* v749: o botão do Pagar.me GLOBAL (a conta do dono) era oferecido pra todo
+     * mundo sem Asaas — inclusive pra quem tem Mercado Pago/Pagar.me PRÓPRIO,
+     * e a mensalidade cairia na conta errada. E, com a conta global desligada,
+     * o botão falhava pra todo professor. Agora: outro gateway próprio → diz
+     * que a automática ainda é só pelo Asaas; sem gateway → o caminho antigo
+     * só aparece depois do ping da função pagarme dizer que a chave existe. */
+    var NOMES_GW = { mercadopago: "Mercado Pago", pagarme: "Pagar.me", outro: "link próprio" };
+    if (pagApiA.ligado && pagApiA.provedor) {
+      box.innerHTML = '<div class="muted" style="font-size:12px;">Cobrança automática todo mês ainda é só pelo <b>Asaas</b> — o seu ' +
+        esc(NOMES_GW[pagApiA.provedor] || pagApiA.provedor) + ' gera link por cobrança (botão Link de pagamento).</div>' +
+        '<button class="btn sec mini" id="pfAssinarCfg" style="margin-top:8px;">Configurações → Receber dos alunos</button>';
+      return;
+    }
+    box.innerHTML = '<div class="muted" style="font-size:12px;">Pra cobrar automático todo mês na SUA conta, ligue o Asaas em Configurações → Receber dos alunos.</div>' +
+      '<button class="btn sec mini" id="pfAssinarCfg" style="margin-top:8px;">Configurar recebimento</button>';
+    var alvoPing = a.id;
+    pingPagarmeGlobal(function (temChave) {
+      if (!temChave || perfilId !== alvoPing || $("pfAssinar")) return;
+      box.insertAdjacentHTML("beforeend", '<div style="margin-top:10px;"><button class="btn mini" id="pfAssinar">Ativar mensalidade no cartão</button>' +
+        '<div class="muted" style="font-size:12px;margin-top:6px;">cobrança automática todo mês no cartão do aluno, pela conta Pagar.me do TORQUE ON</div></div>');
+    });
   }
+  /* v749: pergunta UMA vez à função pagarme (global) se a PAGARME_SECRET_KEY
+   * existe. Sem conta na nuvem, a resposta é "não" na hora. O resultado fica
+   * em cache — é pra decidir se um botão aparece, não pra diagnosticar. */
+  function pingPagarmeGlobal(cb) {
+    if (pingPagarmeGlobal.cache !== null && pingPagarmeGlobal.cache !== undefined) { cb(pingPagarmeGlobal.cache); return; }
+    var nuvemP = S.cloud && S.cloud();
+    if (!nuvemP || !nuvemP.client || !self.MT_FUNCAO) { cb(false); return; }
+    self.MT_FUNCAO.chama(nuvemP.client, "pagarme", { acao: "ping" }, "O cartão recorrente").then(function (d) {
+      pingPagarmeGlobal.cache = !!(d && d.ok && d.chaveConfigurada);
+      cb(pingPagarmeGlobal.cache);
+    }, function () { cb(false); });
+  }
+  pingPagarmeGlobal.cache = null;
+  window.__pingPagarme = pingPagarmeGlobal; // testes
   $("pfAssinaturaBox").addEventListener("click", function (e) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });
     if (!a) return;
+    if (e.target.id === "pfAssinarCfg") { vaiAba("config"); return; }
     if (e.target.id === "pfAssinar") {
       var ct = contratoDe(st, a.id);
       var pl = ct && planoDe(st, ct.planoId);
@@ -7819,7 +7863,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ? "<div data-busca-cmd='1' style='padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;font-weight:700;color:var(--tk-roxoTx2);'>" +
         buscaCmdAtual.rot + " <span class='muted' style='font-weight:600;font-size:11px;'>· Enter executa</span></div>"
       : "") + achou.map(function (a) {
-      var pagoMes = idxDe(st).pagouMes(a.id, mesAtual);
+      var pagoMes = idxDe(st).pagouMes(a.id, mesAtual());
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
         (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
@@ -9109,7 +9153,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Já deixa separado — se precisar remarcar, me avisa pelo chat do app.");
       }
       // aniversário do aluno (1x por ano)
-      if (a.nasc && String(a.nasc).slice(5) === hoje.slice(5)) {
+      if (a.nasc && casaNiver(hoje, a.nasc)) { // v749: 29/02 também ganha o push fora do bissexto
         manda("niver|" + a.id + "|" + hoje.slice(0, 4), a.appTokenP,
           "Parabéns, " + a.nome.split(" ")[0] + "!",
           "Feliz aniversário! Que tal comemorar com um treino especial? Conta comigo sempre.");
@@ -11255,6 +11299,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function zapTexto(modelo, vars) {
     return String(modelo).replace(/\{(nome|hora|dia|dias|valor|servico|resta)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
   }
+  /* v749: UMA mensagem de cobrança pra todos os botões — lista de pendentes,
+   * Cobrar todos, Resolver hoje e os alertas dos Relatórios. Antes cada um
+   * montava a frase na mão (quatro textos diferentes, um "deste mes" sem
+   * acento) e o modelo "atraso" que o professor edita em Configurações só
+   * valia na fila do WhatsApp. Vencido → o modelo dele ({nome}/{dias}/{valor})
+   * mais o trecho dos meses em aberto, igual à fila; ainda no prazo → lembrete
+   * do mês com o dia do vencimento. */
+  function msgCobranca(st, a) {
+    var nome = String(a.nome || "").split(" ")[0];
+    var ct = contratoDe(st, a.id);
+    var pl = ct ? planoDe(st, ct.planoId) : null;
+    var dv = dividaDe(st, a) || { meses: 0, total: 0 };
+    var valor = dv.meses > 1 ? dv.total : (pl ? +pl.valor : +a.valor || 0);
+    var cv = cobrancaVencida(st, a);
+    if (cv) {
+      var diasV = cv.dias > 0 ? cv.dias + (cv.dias > 1 ? " dias" : " dia") : "alguns dias";
+      var tx = zapTexto(zapModelos(st).atraso, { nome: nome, dias: diasV, valor: S.fmtBRL(valor) });
+      if (dv.meses > 1) tx += " No total, ficaram " + dv.meses + " meses em aberto (" + S.fmtBRL(dv.total) + ").";
+      return tx;
+    }
+    return "Oi " + nome + "! Passando pra lembrar do plano deste mês" + (valor ? " (" + S.fmtBRL(valor) + ")" : "") +
+      (ct ? " — vence dia " + ct.diaVenc : "") + ". Te mando o Pix? 💪";
+  }
+  window.__msgCobranca = msgCobranca; // testes
   function filaZapDe(st) {
     if ((st.config || {}).zapFilaOff) return [];
     var hoje = S.todayISO();
@@ -11547,22 +11615,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
       var proj = Math.round(d.fat / diaHoje * diasNoMes);
       var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
-      var media = Math.round(soma / 5);
-      el6.innerHTML = '<h3>Últimos 6 meses<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-ok);">média ' + S.fmtBRL(media) + "</span></h3>" +
+      /* v749: a média dividia por 5 sempre — studio com 2 meses de história
+       * via a média derrubada pelos zeros. Agora é dos meses COM pagamento. */
+      var nComPg = meses.filter(function (m) { return !m.atual && m.v > 0; }).length;
+      var media = nComPg ? Math.round(soma / nComPg) : 0;
+      // v749: uma unidade só — "800" ao lado de "1,2" lia-se como 800 mil (ou 0,8?)
+      var emMil = function (v) { return v ? (v / 1000).toFixed(1).replace(".", ",") : "0"; };
+      el6.innerHTML = '<h3>Últimos 6 meses<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-ok);">média ' + S.fmtBRL(media) +
+        (nComPg && nComPg < 5 ? " <span style='font-weight:600;color:var(--tk-tx5);'>(" + nComPg + (nComPg > 1 ? " meses" : " mês") + ")</span>" : "") + "</span></h3>" +
         '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:6px;">' +
         meses.map(function (m) {
           var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
           var altReal = m.atual ? Math.round(110 * m.v / max) : alt;
           return '<div style="flex:1;text-align:center;">' +
             '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx)" : "var(--tk-tx4)") + ';">' +
-            (m.v >= 1000 ? (Math.round(m.v / 100) / 10).toFixed(1).replace(".", ",") : Math.round(m.v)) + "</div>" +
+            emMil(m.v) + "</div>" +
             '<div style="height:' + (114 - alt) + 'px;"></div>' +
             '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
             (m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "var(--tk-trilha)") + ';"></div>' +
             '<div style="font-size:10px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:5px;">' + m.rot + "</div></div>";
         }).join("") + "</div>" +
         '<div style="font-size:11.5px;color:var(--tk-tx5);margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
-        S.fmtBRL(proj) + ") · valores em milhares</div>";
+        S.fmtBRL(proj) + ") · valores em mil (R$)</div>";
     }
     // ---- como voce recebe: o que ESTA ligado hoje, sem prometer o que nao esta ----
     var elC = $("pgComo");
@@ -11578,7 +11652,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (vias.length ? vias.map(function (v) {
           return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:var(--tk-ok);">✓</div>' +
             '<div style="min-width:0;"><div class="dnm">' + esc(v.n) + '</div><div class="dfi">' + esc(v.d) + "</div></div></div>";
-        }).join("") : '<div class="muted" style="font-size:12.5px;padding:8px 0;">Nada configurado ainda — sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.</div>') +
+        }).join("") : '<div class="muted" style="font-size:12.5px;padding:8px 0;">Nada configurado ainda — sem chave Pix o botão Pix não aparece, e o Link de pagamento só gera link com um gateway seu.</div>') +
         '<button type="button" class="btn sec mini" id="pgIrConfig" style="margin-top:10px;">Configurar em Configurações</button>';
     }
     // ---- entrou hoje ----
@@ -11612,7 +11686,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var diaHoje = +S.todayISO().slice(8, 10);
     var pend = st.alunos.filter(function (a) {
       if (a.ativo === false) return false;
-      return !idxDe(st).pagouMes(a.id, mesAtual);
+      return !idxDe(st).pagouMes(a.id, mesAtual());
     });
     var linhasPend = pend.map(function (a) {
       var ct = contratoDe(st, a.id);
@@ -11639,12 +11713,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '" data-origem="pacote">Pix</button>' : "") +
             (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgP) + '">Cobrar</a>' : "") + "</span></div>";
         }
-        // quem paga por sessão: só aparece com carteira negativa ou pacote estourado
+        // quem paga por sessão: só aparece com carteira negativa
         if (!scSes) return "";
-        var msgS = scSes.pacote
-          ? "Oi " + a.nome.split(" ")[0] + "! O pacote zerou e " + (scSes.n === 1 ? "ficou 1 sessão" : "ficaram " + scSes.n + " sessões") + " além dele. Vamos renovar? 💪"
-          : "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + S.plural(scSes.n, "feita", "feitas") + " desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
-        var tagSes = scSes.pacote ? S.plural(scSes.n, "sessão além do pacote", "sessões além do pacote") : S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar");
+        // v749: pacote estourado tem linha PRÓPRIA (o laço logo abaixo, com
+        // Renovar pacote) — aqui saía uma segunda, com Recebi/Pix de R$ 0 mortos
+        if (scSes.pacote) return "";
+        // v749: n é o que FALTA cobrir (carteira negativa), não "feitas desde o
+        // último acerto" — o aluno que fez 8 e pagou 5 lia "3 feitas" e contestava
+        var msgS = "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + S.plural(scSes.n, "aula ainda sem cobrir", "aulas ainda sem cobrir") + " (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
+        var tagSes = S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar");
         return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
           '<span class="tag alerta">' + tagSes + "</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
           '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
@@ -11652,10 +11729,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + scSes.total + '">Pix</button>' : "") +
           (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgS) + '">Cobrar</a>' : "") + "</span></div>";
       }
+      // v749: aluno sem contrato E sem valor (cortesia, familiar, teste) não tem
+      // o que cobrar — aparecia todo mês com "sem contrato" e um Cobrar do plano
+      if (!ct && !valor) return "";
       var cobrar = dv.meses > 1 ? dv.total : valor;
-      var msg = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" +
-        (dv.meses > 1 ? " — ficaram " + dv.meses + " meses em aberto (" + S.fmtBRL(dv.total) + " no total)" : " deste mês" + (valor ? " (" + S.fmtBRL(valor) + ")" : "")) +
-        (ct ? " — vence dia " + ct.diaVenc : "") + ". Te mando o Pix? 💪";
+      var msg = msgCobranca(st, a); // v749: um texto só, com o modelo do professor
       return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
         (valor ? "<span>" + S.fmtBRL(valor) + "</span>" : "") +
         (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
@@ -11721,7 +11799,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (a.ativo === false) return;
       var ct2 = contratoDe(st, a.id);
       if (!ct2) return;
-      if (idxDe(st).pagouMes(a.id, mesAtual)) return;
+      if (idxDe(st).pagouMes(a.id, mesAtual())) return;
       var pl2 = planoDe(st, ct2.planoId);
       if ((pl2 && pl2.cobranca === "sessao") || (!pl2 && a.modo === "sessao")) return; // hora-aula: quem cobra é a carteira
       faltamMes += pl2 ? +pl2.valor : (+a.valor || 0);
@@ -11765,11 +11843,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!confirm("Abrir o WhatsApp de " + S.plural(alvos.length, "aluno", "alunos") + " pra cobrar?")) return;
       var bloqueadas = 0;
       alvos.forEach(function (a) {
-        var ctA = contratoDe(stT, a.id);
-        var dvA = dividaDe(stT, a);
-        var msgA = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" +
-          (dvA && dvA.meses > 1 ? " — ficaram " + dvA.meses + " meses em aberto (" + S.fmtBRL(dvA.total) + " no total)" : " deste mes") +
-          (ctA ? " — vence dia " + ctA.diaVenc : "") + ". Te mando o Pix? 💪";
+        var msgA = msgCobranca(stT, a); // v749: o mesmo texto da lista (era uma 4ª frase, sem acento)
         var w = window.open("https://wa.me/55" + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgA), "_blank");
         if (!w) bloqueadas++;
       });
@@ -11781,7 +11855,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var stR = load();
       var alR = stR.alunos.find(function (x) { return x.id === rb.getAttribute("data-receb"); });
       var vR = +rb.getAttribute("data-v") || 0;
-      if (!alR || !vR) return;
+      if (!alR) return;
+      // v749: linha sem valor saía calada no toque — agora diz o que fazer
+      if (!vR) { alert("Essa linha não tem valor pra registrar — abra o perfil do aluno e ajuste o plano, o valor ou o pacote."); return; }
       if (!confirm("Registrar " + S.fmtBRL(vR) + " recebido de " + alR.nome.split(" ")[0] + " agora?")) return;
       var pgR = registraRecebido(stR, alR, vR, "recebido"); // v745: com competência
       save(stR);
@@ -11812,11 +11888,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pg = e.target.closest("[data-pgm]");
     if (pg) {
       var origemPg = pg.getAttribute("data-origem") || "mensal";
+      var rotPg = pg.textContent; // v749: "Link" e "Mandar link" voltavam como "Link de pagamento" e a linha esticava
       pg.disabled = true;
       pg.textContent = "Gerando…";
       geraLinkPagamento(pg.getAttribute("data-pgm"), +pg.getAttribute("data-v"), function (r) {
         pg.disabled = false;
-        pg.textContent = "Link de pagamento";
+        pg.textContent = rotPg;
         if (r.erro) { alert(r.erro); return; }
         var st2 = load();
         var al2 = st2.alunos.find(function (x) { return x.id === pg.getAttribute("data-pgm"); });
@@ -11929,7 +12006,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         cb({ ok: true, link: d.linkPagamento });
       }
-      else cb({ erro: (d && d.erro) || "Publique a função pagarme (torqueon.com.br/funcoes.html) e configure a PAGARME_SECRET_KEY." });
+      // v749: o recado era jargão de desenvolvedor ("configure a PAGARME_SECRET_KEY")
+      // que só o Raphael consegue seguir — o professor precisa saber o caminho DELE
+      else cb({ erro: "Pra gerar link de pagamento, ligue um gateway seu em Configurações → Receber dos alunos (Mercado Pago, Asaas, Pagar.me ou o seu próprio link)." + (d && d.erro ? " Detalhe: " + d.erro : "") });
     }, function () { cb({ erro: "Sem conexão com a função pagarme agora." }); });
   }
   window.__pagarmePT = geraLinkPagamento; // testes
@@ -14516,7 +14595,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return "<div style='background:var(--tk-sup2);border-radius:12px;padding:10px;'><div style='font-weight:800;font-size:16px;color:" + cor + ";'>" + S.fmtBRL(val) + "</div><div class='muted' style='font-size:12px;'>" + rot + "</div></div>";
     }
     $("dpResumo").innerHTML = "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;'>" +
-      cx("recebido", recebido, "#86efac") + cx("gasto", gasto, "var(--tk-erro2)") +
+      cx("recebido", recebido, "var(--tk-ok)") + cx("gasto", gasto, "var(--tk-erro2)") + // v749: hex fora da paleta quebrava o modo claro
       cx(sobra >= 0 ? "sobrou" : "no vermelho", Math.abs(sobra), sobra >= 0 ? "var(--tk-roxoTx2)" : "var(--tk-erro2)") + "</div>";
     var porCat = {};
     doMes.forEach(function (d) { var c = d.cat || "Outros"; porCat[c] = (porCat[c] || 0) + (+d.valor || 0); });
@@ -14527,7 +14606,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div style='background:var(--tk-sup2);border-radius:99px;height:7px;overflow:hidden;'><div style='width:" + pc + "%;height:100%;background:#7c3aed;'></div></div></div>";
     }).join("");
     $("dpLista").innerHTML = doMes.length ? doMes.slice().sort(function (a, b) { return (b.data || "").localeCompare(a.data || ""); }).map(function (d) {
-      return "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #211d2b;'>" +
+      return "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--tk-bd);'>" +
         "<span>" + (d.fixa ? "<b style='color:var(--tk-roxoTx2);'>fixa</b> · " : "") + esc(d.desc || d.cat || "Despesa") +
         " <span class='muted' style='font-size:12px;'>" + esc(d.cat || "") + " · desde " + S.fmtData(d.data) + "</span></span>" +
         "<span style='white-space:nowrap;'><b>" + S.fmtBRL(+d.valor || 0) + "</b> " +
@@ -14559,6 +14638,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       st.despesas = st.despesas.filter(function (d) { return d.id !== del.getAttribute("data-dpdel"); });
     } else {
       var dx = st.despesas.find(function (d) { return d.id === fim.getAttribute("data-dpfim"); });
+      /* v749: encerrar olhando um mês PASSADO apaga a fixa dos meses seguintes
+       * pra trás — o "sobrou" de meses já fechados muda sem o professor ver.
+       * Vale, mas só com ele dizendo que é isso mesmo. */
+      if (dx && dpMes < S.todayISO().slice(0, 7) &&
+        !confirm("Você está olhando " + dpMesRot(dpMes) + ". Encerrar aqui faz a despesa fixa sumir de " + dpMesRot(dpMesVizinho(dpMes, 1)) +
+          " em diante — o resultado dos meses que já fecharam muda. Continuar?")) return;
       if (dx) dx.fim = dpMes + "-28"; // ainda conta neste mês; some dos seguintes
     }
     S.write("ptStudio", st);
@@ -16123,13 +16208,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function contratoDe(st, alunoId) {
     return (st.contratosPT || []).find(function (c) { return c.alunoId === alunoId && c.status === "ativo"; });
   }
+  // v749: "/mês", "/sessão" ou "/ 10 aulas" — uma regra só pro card de planos e
+  // pra lista de contratos (que dizia "R$ 600/mês · vence dia 5" pro pacote)
+  function rotuloValorPlano(pl) {
+    return +pl.pacoteQtd > 0 ? " / " + pl.pacoteQtd + " aulas" : pl.cobranca === "sessao" ? "/sessão" : "/mês";
+  }
   function renderPlanosPT() {
     var st = load();
     var el = $("plLista");
     el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
-      return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) +
-        (+pl.pacoteQtd > 0 ? " / " + pl.pacoteQtd + " aulas" : pl.cobranca === "sessao" ? "/sessão" : "/mês") + "</span>" +
+      return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + rotuloValorPlano(pl) + "</span>" +
         (+pl.pacoteQtd > 0 ? '<span class="tag roxo" title="pacote fechado de aulas' + (pl.pacoteRenova ? " — renova sozinho ao acabar" : "") + '">pacote' + (pl.pacoteRenova ? " ↻" : "") + "</span>"
           : pl.cobranca === "sessao" ? '<span class="tag roxo" title="hora-aula: cada Feita desconta da carteira de créditos">hora-aula</span>' : "") +
         (pl.treinosSem == null && !pl.modalidade ? "" : '<span class="muted">' + (pl.treinosSem == null ? "" : (+pl.treinosSem ? pl.treinosSem + "x/sem" : "consultoria")) + (pl.modalidade ? (pl.treinosSem == null ? "" : " · ") + esc(pl.modalidade) : "") + "</span>") +
@@ -16143,8 +16232,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ativos = st.contratosPT.filter(function (c) { return c.status === "ativo"; });
     $("ctLista").innerHTML = ativos.length ? ativos.map(function (c) {
       var pl = planoDe(st, c.planoId) || {};
+      // hora-aula/pacote não tem "vence dia": quem cobra é a carteira
       return '<div class="sessao-pt"><b>' + esc(nomeDe[c.alunoId] || "?") + "</b><span>" + esc(pl.nome || "?") + "</span>" +
-        "<span>" + S.fmtBRL(+pl.valor || 0) + "/mês</span><span class='muted'>vence dia " + c.diaVenc + " · desde " + S.fmtData(c.inicio) + "</span>" +
+        "<span>" + S.fmtBRL(+pl.valor || 0) + rotuloValorPlano(pl) + "</span><span class='muted'>" +
+        (pl.cobranca === "sessao" ? "" : "vence dia " + c.diaVenc + " · ") + "desde " + S.fmtData(c.inicio) + "</span>" +
         '<span style="margin-left:auto;"></span><button class="btn sec mini" data-ctrm="' + c.id + '">Encerrar</button></div>';
     }).join("") : "Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.";
   }
@@ -17090,6 +17181,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (k.sub ? '<div style="font-size:11.5px;color:var(--cinza);">' + k.sub + "</div>" : "") + "</div>";
     }).join("") + "</div>";
   }
+  /* v749: último dia de um mês "AAAA-MM" — ou hoje, se for o mês corrente.
+   * É a data de referência dos cards que seguem as setas dos Relatórios. */
+  function fimDoMes(mes) {
+    var hoje9 = S.todayISO();
+    if (!mes || mes >= hoje9.slice(0, 7)) return hoje9;
+    return mes + "-" + String(new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate()).padStart(2, "0");
+  }
+  window.__fimDoMes = fimDoMes; // testes
+  /* v749: a "família" da forma de pagamento — "pacote 10 sessões" e "pacote 5
+   * sessões" viram "pacote", "crédito 4 aula(s)" vira "crédito de aulas". Uma
+   * regra só pro card "Como o dinheiro entrou" e pra linha "Por forma" da
+   * porta (a porta agrupava pelo texto cru e pulverizava a lista). */
+  function formaFamilia(forma) {
+    var f9 = String(forma || "outro").toLowerCase().trim() || "outro";
+    if (f9.indexOf("pacote") === 0) return "pacote";
+    if (f9.indexOf("crédito") === 0 || f9.indexOf("credito") === 0) return "crédito de aulas";
+    return f9;
+  }
+  window.__formaFamilia = formaFamilia; // testes
+  /* v749: quem nasceu em 29/02 só casava em ano bissexto — três anos em quatro
+   * sem "Dar parabéns". Fora do bissexto o aniversário cai em 28/02, a mesma
+   * escolha da fila do WhatsApp. */
+  function casaNiver(iso, nasc) {
+    var md = String(nasc || "").slice(5, 10), dia = String(iso || "").slice(5, 10);
+    if (!md || !dia) return false;
+    if (md === dia) return true;
+    if (md !== "02-29") return false;
+    var y = +String(iso).slice(0, 4);
+    var bis = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    return !bis && dia === "02-28";
+  }
+  window.__casaNiver = casaNiver; // testes
   function valorMensalDe(st, a) {
     var ct = contratoDe(st, a.id);
     var pl = ct ? planoDe(st, ct.planoId) : null;
@@ -17111,8 +17234,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // inteira. O rótulo do mês também mora lá; aqui ninguém escreve nele.
     var mes = relMesSel();
     var d = dadosDoMes(st, mes);
-    var saldo = d.ativos.length;
-    var perda = d.ativos.length + d.encerrados ? d.encerrados / (d.ativos.length + d.encerrados) * 100 : 0;
+    var saldo = d.ativos.length; // a carteira de HOJE — e o rótulo diz isso
+    /* v749: eram três contas de "quem saiu" na mesma aba (aqui, na porta e no
+     * card Retenção), com três porcentagens diferentes. Agora é UMA —
+     * retencaoPT, a mais honesta: encerrados no mês ÷ quem COMEÇOU o mês na
+     * carteira, no mês das setas. */
+    var perda = retencaoPT(st, fimDoMes(mes)).churn;
     // ticket medio: o que cada mensalista paga, na media
     var soma = 0, n = 0;
     d.ativos.forEach(function (a) {
@@ -17136,19 +17263,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * feita = 1 hora). Ajuda a decidir preço e quais horários valem a pena.
      * Sem sessão no mês, "—" — número inventado não entra. A seta compara com
      * o mês ANTERIOR pela mesma conta. */
-    var horaV = d.feitas ? d.fat / d.feitas : 0;
+    var horaV = d.feitas ? d.fatAulas / d.feitas : 0; // v749: só receita de AULAS (sem desc)
     var mesAntH = (function () {
       var dt = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 1, 1, 12);
       dt.setMonth(dt.getMonth() - 1);
       return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2);
     })();
     var dAntH = dadosDoMes(st, mesAntH);
-    var horaAnt = dAntH.feitas ? dAntH.fat / dAntH.feitas : 0;
+    var horaAnt = dAntH.feitas ? dAntH.fatAulas / dAntH.feitas : 0;
     var horaTxt = d.feitas ? S.fmtBRL(horaV) +
       (horaAnt ? (horaV >= horaAnt ? " ↑" : " ↓") : "") : "—";
     // sessoes por semana das ultimas 4 semanas, com as faltas empilhadas em cima
+    // v749: as 4 semanas terminam no mês das SETAS (antes era sempre hoje, sob
+    // um cabeçalho que dizia junho) e o rótulo é a data da segunda-feira —
+    // "1ª SEM" parecia a primeira semana do mês e era "há 3 semanas"
     var hoje = S.todayISO();
-    var seg = new Date(hoje + "T12:00:00");
+    var refSem = fimDoMes(mes);
+    var seg = new Date(refSem + "T12:00:00");
     seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
     var sems = [];
     for (var i = 3; i >= 0; i--) {
@@ -17156,7 +17287,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var b1 = new Date(a1.getTime()); b1.setDate(b1.getDate() + 6);
       var de = S.todayISO(a1), ate = S.todayISO(b1);
       var na = st.sessoes.filter(function (x) { return x.data >= de && x.data <= ate; });
-      sems.push({ rot: i === 0 ? "ESTA" : (4 - i) + "ª SEM", feitas: na.filter(function (x) { return x.feita; }).length,
+      sems.push({ rot: i === 0 && refSem === hoje ? "ESTA" : de.slice(8, 10) + "/" + de.slice(5, 7), feitas: na.filter(function (x) { return x.feita; }).length,
         faltas: na.filter(function (x) { return x.faltou; }).length, agora: i === 0 });
     }
     var topo = Math.max(1, Math.max.apply(null, sems.map(function (x) { return x.feitas + x.faltas; })));
@@ -17176,11 +17307,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="pfbox"><div class="tdrot">Movimentação</div>' +
       relKv("Entraram", (d.novos ? "+" : "") + d.novos, d.novos ? "var(--tk-ok)" : null) +
       relKv("Encerraram", d.encerrados ? "-" + d.encerrados : "0", d.encerrados ? "var(--tk-erro)" : null) +
-      relKv("Saldo", saldo) + "</div>" +
+      // v749: "Saldo" abaixo de +N / −M lia-se como a diferença; é a carteira de hoje
+      relKv("Ativos hoje", saldo) + "</div>" +
       '<div class="pfbox"><div class="tdrot">Indicadores</div>' +
-      relKv("Ticket médio", S.fmtBRL(ticket)) +
+      // v749: eram quatro "Ticket médio" na aba com três contas — cada um diz o que é
+      relKv("Mensalidade média", S.fmtBRL(ticket)) +
       relKv("Sua hora rendeu", horaTxt, !d.feitas ? null : horaAnt && horaV < horaAnt ? "var(--tk-aten)" : "var(--tk-ok)") +
-      relKv("Tempo de casa", num1(casa) + " meses") +
+      relKv("Tempo de casa (hoje)", num1(casa) + " meses") +
       relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "var(--tk-erro)" : "var(--tk-ok)") + "</div>" +
       '<div class="pfbox"><div class="tdrot">Sessões por semana</div>' +
       '<div style="font-size:11px;font-weight:700;color:var(--tk-tx4);margin-top:2px;">' +
@@ -17219,13 +17352,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * ranking (não é venda avulsa), mas aparece somada embaixo pra fechar a
    * conta. mesDefault re-preenche o De/Até quando o mês global muda; o
    * Aplicar chama com manterInputs pra respeitar o que o professor digitou. */
+  var rvMesBase = ""; // v749: o mês-base que preencheu De/Até da última vez
   function pintaVendas(st, mesDefault, manterInputs) {
     var deEl = $("rvDe"), ateEl = $("rvAte");
     if (!deEl) return;
-    if (!manterInputs) {
+    /* v749: renderRelatorios roda em várias ações do painel (marcar um zap,
+     * registrar pagamento…) e apagava o De/Até que o professor tinha digitado.
+     * Agora só re-preenche quando o mês das setas MUDOU. */
+    if (!manterInputs && (mesDefault !== rvMesBase || !deEl.value || !ateEl.value)) {
       var dFim = new Date(+mesDefault.slice(0, 4), +mesDefault.slice(5, 7), 0);
       deEl.value = mesDefault + "-01";
       ateEl.value = mesDefault + "-" + String(dFim.getDate()).padStart(2, "0");
+      rvMesBase = mesDefault;
     }
     var de9 = deEl.value, ate9 = ateEl.value;
     if (de9 > ate9) { var t9 = de9; de9 = ate9; ate9 = t9; deEl.value = de9; ateEl.value = ate9; }
@@ -17241,7 +17379,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     noPer.forEach(function (p9) {
       var d9 = String(p9.desc || "").trim();
       var f9 = String(p9.forma || "").toLowerCase();
-      var chave = d9 ? d9 : (f9 === "sessão" ? "Aula avulsa (sessão)" : "");
+      // v749: compra de créditos de hora-aula (forma "crédito N aula(s)", sem desc)
+      // é VENDA — caía em "Mensalidades" e sumia do ranking
+      var chave = d9 ? d9 : (f9 === "sessão" ? "Aula avulsa (sessão)" : formaFamilia(f9) === "crédito de aulas" ? "Créditos de aula" : "");
       if (!chave) { mensal.n++; mensal.v += +p9.valor; return; }
       if (chave === "Compra na loja do app") chave = "Loja do app";
       var it9 = itens[chave] = itens[chave] || { n: 0, v: 0 };
@@ -17255,7 +17395,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // quebrava em duas linhas (o período já está escrito logo acima)
       { t: "Vendido", v: fmtR(totV), cor: "var(--pt-ok)", sub: "fora as mensalidades" },
       { t: "Vendas", v: totN },
-      { t: "Ticket médio", v: totN ? fmtR(totV / totN) : "—" },
+      { t: "Valor médio por venda", v: totN ? fmtR(totV / totN) : "—" }, // v749: era mais um "Ticket médio"
+
       { t: "Mensalidades", v: fmtR(mensal.v), sub: S.plural(mensal.n, "pagamento no período", "pagamentos no período") },
     ]);
     var vl = $("relVendasLista");
@@ -17289,11 +17430,55 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaVendas(load(), S.monthKey(dSel9), true);
   });
   window.__relMes = { off: function (n) { relMesOff = Math.max(0, +n || 0); }, atual: function () { return relMesOff; } }; // testes
+  /* v749: retencaoPT saiu de dentro de renderRelatorios — a 4c e a porta
+   * "Todos os números" passam a usar a MESMA conta de churn (eram três).
+   * hoje9 é a data de referência: hoje, ou o último dia do mês das setas. */
+  /* Retenção — as três contas que dizem se a carteira segura:
+   * tempo médio de casa (só dos ATIVOS, hoje − desde), churn do mês
+   * (encerrados no mês ÷ quem COMEÇOU o mês na carteira — quem entrou e
+   * saiu no próprio mês não infla a base) e sobrevivência de 6 meses
+   * (dos que entraram há 6+ meses, quantos chegaram a 6 meses de casa —
+   * encerrado que durou 7 meses CONTA como sobrevivente). */
+  function retencaoPT(st9, hoje9) {
+    var mesesDe = function (ini, fim) {
+      return Math.max(0, (new Date(String(fim).slice(0, 10) + "T12:00") - new Date(String(ini).slice(0, 10) + "T12:00")) / 2629800000);
+    };
+    // v749: só quem já tinha entrado na data de referência (o mês das setas)
+    var ativos9 = st9.alunos.filter(function (a) { return a.ativo !== false && a.desde && a.desde <= hoje9; });
+    var soma9 = 0;
+    ativos9.forEach(function (a) { soma9 += mesesDe(a.desde, hoje9); });
+    var mes9 = hoje9.slice(0, 7), iniMes9 = mes9 + "-01";
+    var noInicio = st9.alunos.filter(function (a) {
+      if (!a.desde || a.desde >= iniMes9) return false;
+      if (a.ativo === false && a.fim && a.fim < iniMes9) return false;
+      return true;
+    }).length;
+    var sairamMes = st9.alunos.filter(function (a) { return a.ativo === false && (a.fim || "").slice(0, 7) === mes9; }).length;
+    var corte9 = new Date(hoje9 + "T12:00"); corte9.setMonth(corte9.getMonth() - 6);
+    var corteISO9 = corte9.toISOString().slice(0, 10);
+    var coorte = st9.alunos.filter(function (a) { return a.desde && a.desde <= corteISO9; });
+    var passaram6 = coorte.filter(function (a) {
+      return mesesDe(a.desde, a.ativo === false ? (a.fim || a.desde) : hoje9) >= 6;
+    }).length;
+    return {
+      tempoMedio: ativos9.length ? Math.round(10 * soma9 / ativos9.length) / 10 : 0,
+      ativos: ativos9.length,
+      churn: noInicio ? Math.round(1000 * sairamMes / noInicio) / 10 : 0,
+      sairamMes: sairamMes, noInicio: noInicio,
+      coorte: coorte.length, passaram6: passaram6,
+    };
+  }
+  window.__retencaoPT = retencaoPT; // testes
   function renderRelatorios() {
     var st = load();
     var hoje = S.todayISO();
     var dSel = new Date(); dSel.setDate(1); dSel.setMonth(dSel.getMonth() - relMesOff);
-    var mesAtual = S.monthKey(dSel);
+    var mesRel = S.monthKey(dSel);
+    /* v749: as setas valiam só pra metade dos cards. fimRel é o último dia do
+     * mês olhado (ou hoje) e ativosRel a carteira que já EXISTIA naquele mês —
+     * quem entrou em agosto não pode aparecer como "faltou pagar" em junho. */
+    var retro = relMesOff > 0;
+    var fimRel = fimDoMes(mesRel);
     var MESES_R = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var rotEl = $("relMesRot");
     if (rotEl) {
@@ -17307,6 +17492,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    var ativosRel = ativos.filter(function (a) { return !a.desde || String(a.desde).slice(0, 10) <= fimRel; });
     var meses = [];
     for (var i = 5; i >= 0; i--) {
       var d = new Date(dSel); d.setMonth(d.getMonth() - i, 1);
@@ -17314,34 +17500,52 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
 
     // ---- resumo do mês ----
-    var pagsMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesAtual; });
+    var pagsMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesRel; });
     var recebidoMes = pagsMes.reduce(function (t, p) { return t + +p.valor; }, 0);
     var pagantes = {};
     pagsMes.forEach(function (p) { pagantes[p.alunoId] = 1; });
     var nPagantes = Object.keys(pagantes).length;
-    var previstoMes = ativos.reduce(function (t, a) { return t + valorMensalDe(st, a); }, 0);
-    var sessMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesAtual; }).length;
+    var previstoMes = ativosRel.reduce(function (t, a) { return t + valorMensalDe(st, a); }, 0);
+    /* v749: "Falta receber" era previsto − TODOS os pagamentos (massagem, loja,
+     * pacote) — uma venda avulsa grande zerava a linha e a barra dizia 100%
+     * enquanto a lista embaixo mostrava quem não pagou. Agora a conta é por
+     * aluno, só com MENSALIDADE (pagamento sem desc, na competência p.mes ou
+     * na data — a régua do pagouMes): o que ficou faltando de cada um. */
+    var pagoMensalDe = {};
+    st.pagamentos.forEach(function (p) {
+      if (p.desc) return;
+      if ((p.mes || String(p.data || "").slice(0, 7)) !== mesRel) return;
+      pagoMensalDe[p.alunoId] = (pagoMensalDe[p.alunoId] || 0) + (+p.valor || 0);
+    });
+    var faltaReceber = 0, recebidoMensal = 0;
+    ativosRel.forEach(function (a) {
+      var vM = valorMensalDe(st, a);
+      if (vM > 0) faltaReceber += Math.max(0, vM - (pagoMensalDe[a.id] || 0));
+    });
+    Object.keys(pagoMensalDe).forEach(function (k) { recebidoMensal += pagoMensalDe[k]; });
+    var sessMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesRel; }).length;
     kpiRow($("relResumo"), [
-      { t: "Alunos ativos", v: ativos.length },
+      // v749: a carteira é a de HOJE mesmo com as setas no passado — o rótulo diz
+      { t: retro ? "Alunos ativos hoje" : "Alunos ativos", v: ativos.length },
       { t: "Recebido no mês", v: fmtR(recebidoMes), cor: "var(--pt-ok)" },
-      { t: "Falta receber", v: fmtR(Math.max(0, previstoMes - recebidoMes)), cor: previstoMes > recebidoMes ? "var(--pt-atencao)" : "var(--pt-ok)" },
+      { t: "Falta receber", v: fmtR(faltaReceber), cor: faltaReceber > 0 ? "var(--pt-atencao)" : "var(--pt-ok)", sub: "só mensalidades" },
       { t: "Sessões no mês", v: sessMes },
-      // "recebido" e "previsto" são contas diferentes — o rótulo tem que dizer qual é
-      { t: "Ticket médio recebido", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s) — média de quem pagou" : "" },
+      // v749: era "Ticket médio recebido" — o quarto "ticket médio" da aba, cada um com uma conta
+      { t: "Recebido por pagante", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s) — média de quem pagou" : "" },
     ]);
 
     // ---- previsto × recebido ----
     if (ativos.length) {
-      var pct = previstoMes ? Math.min(100, Math.round(100 * recebidoMes / previstoMes)) : 0;
-      var faltam = ativos.filter(function (a) {
+      var pct = previstoMes ? Math.min(100, Math.round(100 * recebidoMensal / previstoMes)) : 0;
+      var faltam = ativosRel.filter(function (a) {
         // hora-aula (valorMensalDe = 0) não é devedor de mensalidade: fica de fora
-        return !idxDe(st).pagouMes(a.id, mesAtual) && valorMensalDe(st, a) > 0;
+        return !idxDe(st).pagouMes(a.id, mesRel) && valorMensalDe(st, a) > 0;
       });
       $("relPrevisto").innerHTML =
         '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
-        "<span>Recebido: " + fmtR(recebidoMes) + "</span><span>Previsto: " + fmtR(previstoMes) + "</span></div>" +
+        "<span>Recebido: " + fmtR(recebidoMensal) + "</span><span>Previsto: " + fmtR(previstoMes) + "</span></div>" +
         '<div style="height:14px;background:var(--pt-trilha);border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),var(--tk-roxoTx2));"></div></div>' +
-        '<div style="font-size:12px;color:var(--cinza);margin:4px 0 10px;">' + pct + "% da receita prevista já entrou.</div>" +
+        '<div style="font-size:12px;color:var(--cinza);margin:4px 0 10px;">' + pct + "% da receita prevista já entrou · só mensalidades (venda avulsa, pacote e loja ficam fora).</div>" +
         (faltam.length ? faltam.map(function (a) {
           var ct = contratoDe(st, a.id);
           return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b><span>" + fmtR(valorMensalDe(st, a)) + "</span>" +
@@ -17389,10 +17593,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (fmBox) {
       var porForma = {};
       pagsMes.forEach(function (p) {
-        var f9 = String(p.forma || "outro").toLowerCase();
-        // as variações de pacote/crédito viram uma família só, senão a lista pulveriza
-        if (f9.indexOf("pacote") === 0) f9 = "pacote";
-        if (f9.indexOf("crédito") === 0) f9 = "crédito de aulas";
+        var f9 = formaFamilia(p.forma); // v749: a mesma família da porta "Por forma"
         porForma[f9] = (porForma[f9] || 0) + (+p.valor || 0);
       });
       var fkeys = Object.keys(porForma).sort(function (a, b) { return porForma[b] - porForma[a]; });
@@ -17411,43 +17612,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
 
     // ---- v712: VENDAS (serviços, pacotes e produtos) com período livre ----
-    pintaVendas(st, mesAtual);
+    pintaVendas(st, mesRel);
 
-    /* Retenção — as três contas que dizem se a carteira segura:
-     * tempo médio de casa (só dos ATIVOS, hoje − desde), churn do mês
-     * (encerrados no mês ÷ quem COMEÇOU o mês na carteira — quem entrou e
-     * saiu no próprio mês não infla a base) e sobrevivência de 6 meses
-     * (dos que entraram há 6+ meses, quantos chegaram a 6 meses de casa —
-     * encerrado que durou 7 meses CONTA como sobrevivente). */
-    function retencaoPT(st9, hoje9) {
-      var mesesDe = function (ini, fim) {
-        return Math.max(0, (new Date(String(fim).slice(0, 10) + "T12:00") - new Date(String(ini).slice(0, 10) + "T12:00")) / 2629800000);
-      };
-      var ativos9 = st9.alunos.filter(function (a) { return a.ativo !== false && a.desde; });
-      var soma9 = 0;
-      ativos9.forEach(function (a) { soma9 += mesesDe(a.desde, hoje9); });
-      var mes9 = hoje9.slice(0, 7), iniMes9 = mes9 + "-01";
-      var noInicio = st9.alunos.filter(function (a) {
-        if (!a.desde || a.desde >= iniMes9) return false;
-        if (a.ativo === false && a.fim && a.fim < iniMes9) return false;
-        return true;
-      }).length;
-      var sairamMes = st9.alunos.filter(function (a) { return a.ativo === false && (a.fim || "").slice(0, 7) === mes9; }).length;
-      var corte9 = new Date(hoje9 + "T12:00"); corte9.setMonth(corte9.getMonth() - 6);
-      var corteISO9 = corte9.toISOString().slice(0, 10);
-      var coorte = st9.alunos.filter(function (a) { return a.desde && a.desde <= corteISO9; });
-      var passaram6 = coorte.filter(function (a) {
-        return mesesDe(a.desde, a.ativo === false ? (a.fim || a.desde) : hoje9) >= 6;
-      }).length;
-      return {
-        tempoMedio: ativos9.length ? Math.round(10 * soma9 / ativos9.length) / 10 : 0,
-        ativos: ativos9.length,
-        churn: noInicio ? Math.round(1000 * sairamMes / noInicio) / 10 : 0,
-        sairamMes: sairamMes, noInicio: noInicio,
-        coorte: coorte.length, passaram6: passaram6,
-      };
-    }
-    window.__retencaoPT = retencaoPT; // testes
 
     // ---- carteira: novos × encerrados por mês ----
     var linhasCart = meses.map(function (m) {
@@ -17466,7 +17632,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     } else $("relCarteira").textContent = "Sem dados ainda.";
 
     // ---- retenção: tempo de casa, churn do mês e sobrevivência de 6 meses ----
-    var ret = retencaoPT(st, hoje);
+    var ret = retencaoPT(st, fimRel); // v749: no mês das setas, não em hoje
     if (ret.ativos || ret.coorte) {
       var caixaRt = function (num, rot, sub) {
         return '<div style="background:var(--pt-caixa);border-radius:12px;padding:12px 14px;">' +
@@ -17476,7 +17642,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       };
       $("relRetencao").innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">' +
         caixaRt(String(ret.tempoMedio).replace(".", ",") + " meses", "tempo médio de casa", "dos " + S.plural(ret.ativos, "ativo", "ativos")) +
-        caixaRt(String(ret.churn).replace(".", ",") + "%", "saíram este mês", ret.noInicio ? ret.sairamMes + " de " + ret.noInicio + " que começaram o mês" : "ninguém tinha começado o mês") +
+        caixaRt(String(ret.churn).replace(".", ",") + "%", retro ? "saíram em " + MESES_R[dSel.getMonth()] : "saíram este mês", ret.noInicio ? ret.sairamMes + " de " + ret.noInicio + " que começaram o mês" : "ninguém tinha começado o mês") +
         caixaRt(ret.coorte ? Math.round(100 * ret.passaram6 / ret.coorte) + "%" : "—", "passam de 6 meses",
           ret.coorte ? ret.passaram6 + " de " + ret.coorte + " que entraram há 6+ meses" : "ninguém entrou há 6+ meses ainda") +
         "</div>";
@@ -17513,20 +17679,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- assiduidade + presença 30d ----
     var corte = new Date(); corte.setDate(corte.getDate() - 30);
     var corteISO = S.todayISO(corte);
-    var porAluno = {}, faltasDe = {};
+    /* v749: sessão passada SEM marcação contava como falta aqui e não contava
+     * no fechamento nem na "Taxa de presença" — dois números pro mesmo aluno.
+     * Agora falta é só o que foi marcado como falta (a régua do dadosDoMes) e
+     * o que ficou sem marcar aparece à parte, como "sem registro". */
+    var porAluno = {}, faltasDe = {}, semRegDe = {};
     st.sessoes.forEach(function (x) {
       if (x.data < corteISO || x.data > hoje) return;
       if (x.feita) porAluno[x.alunoId] = (porAluno[x.alunoId] || 0) + 1;
-      else if (x.faltou || x.data < hoje) faltasDe[x.alunoId] = (faltasDe[x.alunoId] || 0) + 1;
+      else if (x.faltou) faltasDe[x.alunoId] = (faltasDe[x.alunoId] || 0) + 1;
+      else if (x.data < hoje) semRegDe[x.alunoId] = (semRegDe[x.alunoId] || 0) + 1;
     });
     $("relAssiduidade").innerHTML = ativos.length ? ativos.map(function (a) {
       var n = porAluno[a.id] || 0;
       var f = faltasDe[a.id] || 0;
+      var sr = semRegDe[a.id] || 0;
       var cor = n >= 8 ? "var(--pt-ok)" : n >= 4 ? "var(--roxo)" : n >= 1 ? "var(--pt-atencao)" : "var(--pt-erro)";
       var taxa = n + f ? Math.round(100 * n / (n + f)) : null;
       return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
         (taxa !== null ? '<span class="muted">presença ' + taxa + "%</span>" : "") +
         (f ? '<span style="color:var(--pt-atencao);font-weight:700;">' + S.plural(f, "falta", "faltas") + "</span>" : "") +
+        (sr ? '<span class="muted" title="sessão que passou sem Feita nem Faltou — marque na Agenda">' + sr + " sem registro</span>" : "") +
         '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + S.plural(n, "sessão", "sessões") + "</span>" +
         (n === 0 ? ' <span class="tag erro">sumido — chame!</span>' : "") + "</div>";
     }).join("") : "Cadastre alunos primeiro.";
@@ -17578,16 +17751,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     ativos.forEach(function (a) {
       var ct = contratoDe(st, a.id);
-      var plAl = ct ? planoDe(st, ct.planoId) : null;
-      var ehSesAl = (plAl && plAl.cobranca === "sessao") || (!plAl && a.modo === "sessao");
-      var pagouMes = idxDe(st).pagouMes(a.id, mesAtual);
-      // hora-aula não gera alerta de "pagamento atrasado": quem cobra é a carteira
-      if (ct && !ehSesAl && !pagouMes && diaHoje > ct.diaVenc + atrasoTol(st)) {
-        var dvAl = dividaDe(st, a);
-        var cobrarAl = dvAl.total || dvAl.valor;
-        var msgC = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" + (dvAl.meses > 1 ? " — ficaram " + dvAl.meses + " meses em aberto (" + S.fmtBRL(dvAl.total) + ")" : "") + ". Te mando o Pix? 💪";
-        alertas.push({ tipo: "erro", g: "Pagamento atrasado", curto: "<b>" + esc(a.nome) + "</b> — venceu dia " + ct.diaVenc + (dvAl.meses > 1 ? " · " + dvAl.meses + " meses (" + S.fmtBRL(dvAl.total) + ")" : ""), txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ").",
-          ac: ((st.config || {}).pixChave && cobrarAl ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
+      /* v749: o alerta é de HOJE (a 4c diz "o que pede ação hoje") — usava o
+       * mês das SETAS e, olhando o mês passado, acusava quem está em dia (com
+       * Pix no valor cheio do plano) e escondia quem deve agora. Agora é a
+       * função-fonte cobrancaVencida, a mesma do Financeiro e da lista; hora-
+       * aula e assinatura automática ficam de fora por ela. O Pix só aparece
+       * com dívida de verdade. */
+      var cvAl = cobrancaVencida(st, a);
+      if (cvAl && cvAl.ct && !a.assinaturaRec && !a.assinaturaAs) {
+        var dvAl = cvAl.dv || { meses: 0, total: 0 };
+        var cobrarAl = +dvAl.total > 0 ? +dvAl.total : 0;
+        var msgC = msgCobranca(st, a);
+        alertas.push({ tipo: "erro", g: "Pagamento atrasado", curto: "<b>" + esc(a.nome) + "</b> — venceu dia " + cvAl.ct.diaVenc + (dvAl.meses > 1 ? " · " + dvAl.meses + " meses (" + S.fmtBRL(dvAl.total) + ")" : ""), txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + cvAl.ct.diaVenc + ").",
+          ac: ((st.config || {}).pixChave && cobrarAl > 0 ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
       }
       var ultimaFeita = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
@@ -17707,15 +17883,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
     var feitas = sesMes.filter(function (x) { return x.feita; }).length;
     var faltas = sesMes.filter(function (x) { return x.faltou; }).length;
-    var semPagar = 0;
-    if (mes === S.todayISO().slice(0, 7)) {
-      ativos.forEach(function (a) {
-        var ct = contratoDe(st, a.id);
-        var cobra = ct || (+a.valor && a.modo !== "sessao");
-        if (cobra && !pgs.some(function (p) { return p.alunoId === a.id; })) semPagar++;
-      });
-    }
-    return { fat: fat, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas, semPagar: semPagar, ativos: ativos };
+    /* v749: "sem pagar" pra QUALQUER mês (o fechamento automático manda o mês
+     * anterior e a linha "Ainda sem pagar" nunca ia no e-mail) e pela MESMA
+     * régua da lista de cobrança: pagouMes ignora pagamento com desc (massagem
+     * paga não quita o plano) e hora-aula fica de fora (valorMensalDe = 0).
+     * Quem entrou depois do mês olhado não devia nada nele; quem saiu antes,
+     * também não. No mês corrente vale só a carteira ativa, como a lista. */
+    var mesHojeD = S.todayISO().slice(0, 7);
+    var semPagar = 0, semPagarNomes = [];
+    st.alunos.forEach(function (a) {
+      if (a.ativo === false && (mes === mesHojeD || !a.fim || String(a.fim).slice(0, 7) < mes)) return;
+      if (a.desde && String(a.desde).slice(0, 7) > mes) return;
+      if (!(valorMensalDe(st, a) > 0)) return;
+      if (idxDe(st).pagouMes(a.id, mes)) return;
+      semPagar++; semPagarNomes.push(a.nome);
+    });
+    // receita de AULAS (pagamento sem desc): é o que "Sua hora rendeu" divide
+    // pelas sessões — uma massagem vendida não faz a hora de aula valer mais
+    var fatAulas = pgs.reduce(function (t, p) { return t + (p.desc ? 0 : +p.valor); }, 0);
+    return { fat: fat, fatAulas: fatAulas, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas,
+      semPagar: semPagar, semPagarNomes: semPagarNomes, ativos: ativos };
   }
   window.__dashDados = function (mes) { return dadosDoMes(load(), mes); }; // testes
   /* v747: "% vs mês anterior" — UMA conta pros dois cards (o mês do Início e o
@@ -17896,17 +18083,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var projFat = dR.fat / diaAtualR * diasNoMesR;
     // recebimentos
     var formas = {};
-    dR.pgs.forEach(function (p) { var f = (p.forma || "outros").toLowerCase(); formas[f] = (formas[f] || 0) + +p.valor; });
+    dR.pgs.forEach(function (p) { var f = formaFamilia(p.forma); formas[f] = (formas[f] || 0) + +p.valor; }); // v749: mesma família do card relFormas
+    /* v749: a mesma régua da lista de cobrança — pagouMes (massagem paga não
+     * quita o plano), hora-aula fora, a tolerância de dias do professor e só
+     * quem já tinha entrado no mês olhado */
     var atrasados = 0;
     ativos.forEach(function (a) {
       var ct = ctAtivos.find(function (c) { return c.alunoId === a.id; });
-      if (ct && diaAtualR > +ct.diaVenc && !dR.pgs.some(function (p) { return p.alunoId === a.id; })) atrasados++;
+      if (!ct || !(valorMensalDe(st, a) > 0)) return;
+      if (a.desde && String(a.desde).slice(0, 7) > mesR) return;
+      if (idxDe(st).pagouMes(a.id, mesR)) return;
+      if (diaAtualR > +ct.diaVenc + atrasoTol(st)) atrasados++;
     });
     $("bRecebP").innerHTML =
       kv("Recebido no mês", fmtR(dR.fat)) +
       kv("Projeção no ritmo atual", fmtR(projFat)) +
       kv("Previsto da carteira (mês cheio)", fmtR(mrr)) +
-      kv("Ainda sem pagar", dR.semPagar + " aluno(s)", dR.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
+      kv(mesR === mes ? "Ainda sem pagar" : "Ficaram sem pagar", dR.semPagar + " aluno(s)", dR.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "var(--tk-erro)" : "var(--tk-ok)") +
       (function () {
         var acum = 0;
@@ -17929,8 +18122,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Com acesso do app", comApp + " de " + ativos.length) +
       kv("Mensalidade no cartão", comRec + " aluno(s)");
     // movimentação
-    var iniBase = ativos.length - dR.novos + dR.encerrados;
-    var churn = iniBase > 0 ? 100 * dR.encerrados / iniBase : 0;
+    var churn = retencaoPT(st, fimDoMes(mesR)).churn; // v749: a MESMA conta da 4c e do card Retenção
     var saldo = dR.novos - dR.encerrados;
     $("bMovP").innerHTML =
       kv("Novos alunos no mês", dR.novos, dR.novos ? "var(--tk-ok)" : null) +
@@ -17948,10 +18140,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var vidaMedia = nVida >= 3 ? somaVida / nVida : 12;
     $("bIndP").innerHTML =
       kv("Receita recorrente (MRR)", fmtR(mrr)) +
-      kv("Ticket médio previsto (mensalidade média)", fmtR(ticket)) +
+      kv("Mensalidade média (prevista)", fmtR(ticket)) + // v749: era mais um "Ticket médio"
       kv("Vida média de contrato", fmt1(vidaMedia) + " meses" + (nVida < 3 ? " (estimada)" : "")) +
-      kv("Valor do aluno no ciclo (LTV)", fmtR(ticket * vidaMedia)) +
-      kv("Receita por sessão dada", dR.feitas ? fmtR(dR.fat / dR.feitas) : "—");
+      kv("Valor do aluno no ciclo (LTV)", fmtR(ticket * vidaMedia));
+      // v749: "Receita por sessão dada" saiu — era o "Sua hora rendeu" da 4c com outro nome
     // agenda e presença
     var fim7 = new Date(hoje + "T12:00"); fim7.setDate(fim7.getDate() + 7);
     var futuras7 = st.sessoes.filter(function (x) { return !x.feita && !x.faltou && x.data >= hoje && x.data <= S.todayISO(fim7); }).length;
@@ -18010,7 +18202,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       for (var di = 0; di <= 7; di++) {
         var dtN = new Date(hoje + "T12:00"); dtN.setDate(dtN.getDate() + di);
         var isoN = S.todayISO(dtN);
-        if (isoN.slice(5) === a.nasc.slice(5)) {
+        if (casaNiver(isoN, a.nasc)) { // v749: 29/02 casa com 28/02 fora do bissexto
           nive.push({ a: a, dia: isoN, di: di, idade: +isoN.slice(0, 4) - +a.nasc.slice(0, 4) });
           break;
         }
@@ -18046,7 +18238,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         " · Sobrou: R$ " + Math.round(d.fat - gastoMes).toLocaleString("pt-BR") : "") + "\n" +
       "Novos alunos: " + d.novos + " · Alunos que saíram: " + d.encerrados + "\n" +
       "Sessões dadas: " + d.feitas + " · Faltas: " + d.faltas + " (presença " + presenca + "%)" +
-      (d.semPagar ? "\nAinda sem pagar no mês: " + d.semPagar + " aluno(s)" : "") +
+      (d.semPagar ? "\n" + (mes === S.todayISO().slice(0, 7) ? "Ainda sem pagar no mês: " : "Ficaram sem pagar no mês: ") + d.semPagar + " aluno(s)" : "") + // v749: vale pra mês passado também
       "\n— TORQUE PERSONAL";
   }
   $("mtSalvarP").addEventListener("click", function () {
@@ -18066,6 +18258,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("fchZapP").addEventListener("click", function () {
     window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoPT(relMesSel())), "_blank");
+  });
+  /* v749: mandar o fechamento do mês das setas pro e-mail do professor NA
+   * HORA — antes o e-mail só existia no automático (uma vez por mês, e sem
+   * como reenviar se falhou). Mesmo HTML do automático. */
+  $("fchEmailP").addEventListener("click", function () {
+    var stE = $("fchStatusP");
+    var info = window.__syncInfoPT;
+    var nuvemE = S.cloud && S.cloud();
+    if (!info || !info.logado || !info.email || !nuvemE || !nuvemE.client || !self.MT_FUNCAO) {
+      stE.textContent = "Entre na sua conta pra mandar por e-mail — ou use Copiar resumo.";
+      return;
+    }
+    var mesE = relMesSel();
+    var rotE = mesE.slice(5, 7) + "/" + mesE.slice(0, 4);
+    stE.textContent = "Enviando…";
+    enviaEmailFn(nuvemE, info.email, "Seu fechamento de " + rotE + " — TORQUE PERSONAL",
+      htmlFechamento(resumoFechamentoPT(mesE), "Enviado pelo botão Mandar pro meu e-mail, em Relatórios → Do dia a dia."))
+      .then(function (r) {
+        stE.textContent = r && r.ok ? "✓ Fechamento de " + rotE + " enviado pra " + info.email : "Não deu pra enviar: " + ((r && r.erro) || "tenta de novo daqui a pouco");
+      }, function () { stE.textContent = "Sem conexão com o e-mail agora."; });
   });
   /* ---------- Início do desenho novo (canvas "Painel do professor", 1a e 1b) ----------
    *
@@ -18505,8 +18717,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (atrasados.length > 1 ? " · e mais " + (atrasados.length - 1) : ""),
         acao: '<button type="button" class="btn" data-pgm="' + v.a.id + '" data-v="' + v.dv.total + '" data-origem="mensal">Mandar link</button>' +
           (v.a.zap ? '<a class="btn whats ic" target="_blank" rel="noopener" title="cobrar no WhatsApp" href="https://wa.me/55' +
-            String(v.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(v.a.nome).split(" ")[0] +
-            "! Passando pra lembrar do plano — venceu dia " + v.ct.diaVenc + ". Te mando o Pix? 💪") + '">' + ZAPSVG + "</a>" : ""),
+            String(v.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgCobranca(st, v.a)) + '">' + ZAPSVG + "</a>" : ""),
       });
     }
     // 2) ficha vencendo — quem está na mesma ficha há muito tempo
@@ -18672,7 +18883,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__horaPT = function (mes9) {
     var st = load();
     var d = dadosDoMes(st, mes9 || S.todayISO().slice(0, 7));
-    return { fat: d.fat, horas: d.feitas, hora: d.feitas ? d.fat / d.feitas : 0 };
+    return { fat: d.fat, fatAulas: d.fatAulas, horas: d.feitas, hora: d.feitas ? d.fatAulas / d.feitas : 0 }; // v749: só receita de aulas
   };
 
   // ---------- primeiro dia guiado ----------
@@ -19260,6 +19471,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // uma vez por mês (config.fechamentoEnviado, gravado SÓ quando o servidor
   // responde ok — falhou, tenta na próxima abertura) e desligável no card
   // da ilha (config.fechamentoAutoOff).
+  // v749: o HTML do e-mail de fechamento, um só pro automático e pro botão.
+  // Hex cravado de propósito: e-mail é documento autônomo, var() não existe lá.
+  function htmlFechamento(texto, rodape) {
+    return "<div style='font-family:Arial,sans-serif;max-width:540px;margin:0 auto;padding:8px;'>" +
+      "<h2 style='color:#7c3aed;margin:0 0 12px;'>TORQUE PERSONAL</h2>" +
+      "<pre style='font:14px/1.7 Menlo,Consolas,monospace;background:#f4f3f7;color:#1a1723;padding:16px 18px;border-radius:12px;white-space:pre-wrap;margin:0;'>" + esc(texto) + "</pre>" +
+      "<p style='color:#8a8695;font-size:12px;margin-top:14px;'>" + esc(rodape) + "</p></div>";
+  }
   function fechamentoAuto() {
     try {
       if (localStorage.getItem("mtapp:ptDemo")) return;
@@ -19278,10 +19497,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var texto = (window.__dashPT && window.__dashPT.resumo) ? window.__dashPT.resumo(mesAnt) : "";
       if (!texto) return;
       var rotulo = mesAnt.slice(5, 7) + "/" + mesAnt.slice(0, 4);
-      var html = "<div style='font-family:Arial,sans-serif;max-width:540px;margin:0 auto;padding:8px;'>" +
-        "<h2 style='color:#7c3aed;margin:0 0 12px;'>TORQUE PERSONAL</h2>" +
-        "<pre style='font:14px/1.7 Menlo,Consolas,monospace;background:#f4f3f7;color:#1a1723;padding:16px 18px;border-radius:12px;white-space:pre-wrap;margin:0;'>" + esc(texto) + "</pre>" +
-        "<p style='color:#8a8695;font-size:12px;margin-top:14px;'>Enviado sozinho na primeira abertura do painel no mês novo. Pra parar de receber, desmarque \u201cReceber o fechamento do mês por e-mail\u201d no card da sua ilha.</p></div>";
+      var html = htmlFechamento(texto, "Enviado sozinho na primeira abertura do painel no mês novo. Pra parar de receber, desmarque \u201cReceber o fechamento do mês por e-mail\u201d no card da sua ilha.");
       enviaEmailFn(nuvem, info.email, "Seu fechamento de " + rotulo + " — TORQUE PERSONAL", html).then(function (r) {
         if (!(r && r.ok)) return;
         var st2 = load();
