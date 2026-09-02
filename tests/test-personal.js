@@ -10055,8 +10055,8 @@ async function abaPt(p, a) {
   ok(gateInfo.signUp === "novo@personal.com" && gateInfo.criou && gateInfo.acad && gateInfo.acad.id === "acad-gate",
     "criar conta cadastra na nuvem e já cria a ilha com o nome do studio");
   await g.waitForSelector("#telaAssinatura", { state: "visible", timeout: 5000 });
-  ok(/59,90/.test(await g.textContent("#telaAssinatura")),
-    "a oferta de assinatura aparece sozinha depois do cadastro, com o preço da loja (R$ 59,90/mês)");
+  ok(/R\$ 49/.test(await g.textContent("#telaAssinatura")),
+    "a oferta de assinatura aparece sozinha depois do cadastro, com o preço da loja (R$ 49/mês)");
   await g.click("#taDepois");
   ok(await g.isHidden("#telaAssinatura"), "dá pra continuar no teste grátis sem assinar");
   const compra = await g.evaluate(async () => {
