@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v748** |
-| Estado do repo em | 2026-09-02 (commit `022d81d`) |
+| App em | **mt-v749** |
+| Estado do repo em | 2026-09-02 (commit `7181193`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 209 |
+| Lançamentos no histórico | 210 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v748** — ou seja, **79 versões** aconteceram depois disso.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v749**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v743** (2026-09-02).
+O motor (`app/aluno-builder.js`) encostou em **(fora de um lote de versão)** (2026-09-02).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v749 | revisão por área — app do aluno (app-html, app-core, 29 itens) |
 | mt-v748 | revisão por área — infra, funções e SQL (43 itens) |
 | mt-v747 | revisão por área — NUTRI (36 itens) e Início/Alunos do Personal (22 itens) |
 | mt-v746 | os 3 graves que sobraram + timers do painel blindados + bateria em porta própria |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v737 | Central de ajuda no NUTRI |
 | mt-v736 | o push do dia diz QUAL treino |
 | mt-v735 | playlist do treino no app do aluno |
-| mt-v734 | tamanho do texto no app do aluno |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
