@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v747** |
-| Estado do repo em | 2026-09-02 (commit `e2987a7`) |
+| App em | **mt-v748** |
+| Estado do repo em | 2026-09-02 (commit `022d81d`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 208 |
+| Lançamentos no histórico | 209 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v747** — ou seja, **78 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v748** — ou seja, **79 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v748 | revisão por área — infra, funções e SQL (43 itens) |
 | mt-v747 | revisão por área — NUTRI (36 itens) e Início/Alunos do Personal (22 itens) |
 | mt-v746 | os 3 graves que sobraram + timers do painel blindados + bateria em porta própria |
 | mt-v745 | Financeiro com competência e sincronização mais segura (frentes 3 e 11) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v736 | o push do dia diz QUAL treino |
 | mt-v735 | playlist do treino no app do aluno |
 | mt-v734 | tamanho do texto no app do aluno |
-| mt-v733 | voz no treino guiado de musculação |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
