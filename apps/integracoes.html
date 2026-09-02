@@ -28,7 +28,7 @@
     <h1>Integrações</h1>
     </div>
   </div>
-  <p>As conexões do sistema com o mundo real: cobrança automática, WhatsApp oficial, notas fiscais e catraca. As chaves secretas ficam no Supabase — nunca no site.</p>
+  <p>As conexões do sistema com o mundo real: cobrança automática, WhatsApp oficial, notas fiscais e catraca. As chaves secretas ficam guardadas do lado do servidor — nunca neste site.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 4px;">
@@ -45,25 +45,22 @@
     <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola), boleto e <strong>link de cartão de crédito</strong> (checkout seguro do Pagar.me, até 3×) para cada mensalidade em atraso, direto da régua de cobrança — e confere sozinho se foi pago.</p>
     <div class="linha-flex" style="align-items: flex-end;">
-      <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → pagarme)</label>
-        <input id="pgUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/pagarme">
+      <div class="campo" style="flex: 1; min-width: 280px;"><label>Endereço da cobrança (eu te passo quando ligar o Pagar.me)</label>
+        <input id="pgUrl" placeholder="cole aqui o endereço que eu te mandar">
       </div>
       <div class="campo" style="flex: 1; min-width: 240px;"><label>Chave PÚBLICA do Pagar.me (pk_...) — para cartão recorrente</label>
         <input id="pgPk" placeholder="pk_...">
       </div>
       <button class="btn" id="btnTestar">Testar conexão</button>
-      <button class="btn sec" id="btnCodigo">Copiar código da função</button>
     </div>
     <div id="resultadoTeste" style="margin-top: 8px;"></div>
     <details class="passo-g">
       <summary>Passo a passo da instalação (uma vez só, ~10 minutos)</summary>
       <ol>
         <li><strong>Crie a conta no Pagar.me</strong> (pagar.me → Criar conta). Se você já usa maquininha Stone, dá para vincular na mesma conta e unificar o repasse.</li>
-        <li>No painel do Pagar.me, vá em <strong>Configurações → Chaves</strong> e copie a <strong>chave secreta</strong> (começa com <code>sk_</code>). <em>Não me mande essa chave nem cole no site — ela vai só no Supabase.</em></li>
-        <li>Abra o painel do <strong>Supabase</strong> (supabase.com) → seu projeto → <strong>Edge Functions</strong> → <strong>Deploy new function</strong> → nome <code>pagarme</code>.</li>
-        <li>Clique em <strong>Copiar código da função</strong> aqui em cima e cole no editor do Supabase. Clique em <strong>Deploy</strong>.</li>
-        <li>Na função <code>pagarme</code> → <strong>Secrets</strong> → adicione <code>PAGARME_SECRET_KEY</code> com a chave <code>sk_...</code> do passo 2.</li>
-        <li>Copie a <strong>URL da função</strong> (aparece na página dela) e cole no campo acima. Clique em <strong>Testar conexão</strong> — tem que ficar verde. ✅</li>
+        <li>No painel do Pagar.me, vá em <strong>Configurações → Chaves</strong> e copie a <strong>chave secreta</strong> (começa com <code>sk_</code>). <em>Guarde ela num lugar seguro: essa chave é sua e não se cola em site nenhum.</em></li>
+        <li><strong>Me avise que você quer ligar o Pagar.me.</strong> A parte do servidor é comigo — você não precisa (e nem consegue) mexer nela. Eu te devolvo o <strong>endereço da cobrança</strong> pra colar no campo aqui em cima.</li>
+        <li>Cole o endereço no campo acima e clique em <strong>Testar conexão</strong> — tem que ficar verde. ✅</li>
         <li><em>Para cartão recorrente:</em> em Configurações → Chaves do Pagar.me copie também a <strong>chave pública</strong> (<code>pk_...</code>) e cole no campo acima. Ela é pública mesmo — serve só para o navegador do sistema tokenizar o cartão direto no Pagar.me (o número nunca fica aqui).</li>
       </ol>
     </details>
@@ -109,7 +106,7 @@
         <li>Entre em <strong>developers.facebook.com</strong> → Meus apps → <strong>Criar app</strong> (tipo Business) e adicione o produto <strong>WhatsApp</strong>.</li>
         <li>Na tela <strong>API Setup</strong> a Meta te dá um número de teste na hora (dá pra cadastrar até 5 números receptores pra testar hoje mesmo). Para usar o número da academia em produção, é preciso <strong>verificar a empresa</strong> no Business Manager e migrar/registrar o número (ele não pode estar ativo no app comum do WhatsApp).</li>
         <li>Copie o <strong>Phone number ID</strong> e o <strong>token</strong> (para produção, gere um token permanente em Business Settings → System Users).</li>
-        <li>Cole os dois nos campos aqui em cima e clique em <strong>Ligar meu número</strong>. <em>Não precisa criar nada no Supabase — o servidor já é do sistema. O token fica guardado do lado de lá e não volta pra esta tela.</em></li>
+        <li>Cole os dois nos campos aqui em cima e clique em <strong>Ligar meu número</strong>. <em>Não precisa mexer em servidor nenhum — isso é com a gente. O token fica guardado do lado de lá e não volta pra esta tela.</em></li>
         <li><strong>Testar conexão</strong> e mandar um <strong>teste</strong> pro seu celular. ✅</li>
         <li>As mensagens são cobradas pela Meta <strong>na conta desta academia</strong> — responder o aluno dentro de 24h é grátis; template fora da janela custa centavos por mensagem.</li>
         <li>No <strong>WhatsApp Manager → Message templates</strong>, crie o template <code>cobranca_mensalidade</code> (pt_BR) com o corpo: <em>"Oi {{1}}! Sua mensalidade de {{2}} está em aberto. Qualquer dúvida é só responder por aqui. 💜"</em> — quando aprovar, informe o nome no campo acima. Com ele, a cobrança chega mesmo fora da janela de 24h.</li>
@@ -167,7 +164,7 @@
     var st = cfg();
     st.integracoes = st.integracoes || {};
     var v = this.value.trim();
-    if (v && v.indexOf("sk_") === 0) { alert("Essa é a chave SECRETA (sk_) — ela vai só nos Secrets do Supabase, nunca aqui! Cole a chave PÚBLICA (pk_)."); this.value = ""; return; }
+    if (v && v.indexOf("sk_") === 0) { alert("Essa é a chave SECRETA (sk_) — ela nunca se cola aqui! Guarde ela com você e cole a chave PÚBLICA (pk_)."); this.value = ""; return; }
     if (st.integracoes.pagarmePk === v) return;
     st.integracoes.pagarmePk = v;
     S.write("config", st);
@@ -205,7 +202,7 @@
     })
       .then(function (r) {
         if (r.j && r.j.ok && r.j.chaveConfigurada) out.innerHTML = '<span class="tag ok">Conectado — chave do Pagar.me configurada. Cobrança automática LIGADA.</span>';
-        else if (r.j && r.j.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas falta o secret PAGARME_SECRET_KEY (passo 5 do guia).</span>';
+        else if (r.j && r.j.ok) { console.error("[TORQUE ON] pagarme no ar sem PAGARME_SECRET_KEY"); out.innerHTML = '<span class="tag alerta">Quase lá: falta a chave do Pagar.me do lado do servidor — me avise que eu ligo.</span>'; }
         else out.innerHTML = '<span class="tag erro">Resposta inesperada (' + r.st + "): " + (r.j && r.j.erro ? r.j.erro : "confira a URL") + "</span>";
       })
       .catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + " — confira a URL e o deploy.</span>"; });
@@ -327,21 +324,10 @@
         else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "falhou") + (r && r.precisaTemplate ? " — fora da janela de 24h: use o template." : "") + "</span>";
       }).catch(function (e) { out.innerHTML = '<span class="tag erro">erro: ' + e.message + "</span>"; });
   });
-  /* Não existe botão de copiar o código da função whatsapp nesta tela de
-   * propósito: a whatsapp é UMA só, publicada pelo dono do sistema em
-   * torqueon.com.br/funcoes.html, e cada academia só cola aqui o número e o
-   * token dela. O handler tinha ficado pra trás e quebrava a página. */
-
-  liga("btnCodigo", function () {
-    fetch("../supabase/functions/pagarme/index.ts")
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-      .then(function (t) {
-        return navigator.clipboard.writeText(t).then(function () {
-          alert("Código copiado! Cole no editor da Edge Function \"pagarme\" no painel do Supabase e clique em Deploy.");
-        }, function () { prompt("Copie o código:", t); });
-      })
-      .catch(function () { alert("Não consegui carregar o arquivo — ele está no repositório em supabase/functions/pagarme/index.ts"); });
-  });
+  /* v757: esta tela não tem mais botão de copiar código de função nenhuma —
+   * nem da whatsapp, nem da pagarme. Publicar servidor é trabalho do DONO do
+   * sistema; a academia só cola aqui o que é dela (número, token, chave). O
+   * botão antigo mandava o cliente pra um painel que ele nunca teve acesso. */
 })();
 </script>
 </body>

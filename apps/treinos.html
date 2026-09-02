@@ -653,8 +653,9 @@
         if (r.error) {
           el.innerHTML = '<div class="card" style="color:#b45309;">' +
             (String(r.error.message).indexOf("does not exist") !== -1
-              ? "Rode o bloco TREINO SINCRONIZADO do supabase-setup.sql."
+              ? "Esta parte está fora do ar agora — não é coisa sua, a gente já foi avisado."
               : esc(r.error.message)) + "</div>";
+          console.error("[TORQUE ON] execução dos alunos:", r.error.message || r.error);
           return;
         }
         var logs = r.data || [];

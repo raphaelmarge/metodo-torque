@@ -3428,48 +3428,44 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="muted" style="margin: 14px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Criar mais</div>
       <div id="autoProntas" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;"></div>
       <button class="btn" id="autoNova">+ Criar automação do zero</button>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12px;" id="autoRodape">Cada mensagem sai do seu número com um toque. Ligando o <b>WhatsApp oficial</b> no cartão abaixo, a mesma fila sai sozinha — sem toque nenhum.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;" id="autoRodape">Cada mensagem sai do <b>seu</b> número, do jeito que seus alunos já te conhecem — é só tocar em Enviar na fila do Início.</p>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
       <h2>WhatsApp oficial (API da Meta)</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Com ele o sistema <b>manda as mensagens sozinho</b>, sem abrir o WhatsApp no celular. É opcional: sem configurar, tudo continua como está hoje. Você liga o <b>seu</b> número aqui — nada de mexer em servidor. O passo a passo pra pegar esses dois dados na Meta está em <a href="meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a>.</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
-        <label style="font-size: 12.5px; min-width: 200px;">ID do número (Phone number ID)
-          <input id="cfgZapFone" placeholder="123456789012345" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
-        <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Token permanente
-          <input id="cfgZapToken" type="password" autocomplete="off" placeholder="cole aqui o token da Meta" style="display:block; width: 100%; margin-top: 4px;"></label>
-        <label style="font-size: 12.5px; min-width: 200px;">Template aprovado (opcional)
-          <input id="cfgZapTpl" placeholder="cobranca_mensalidade" style="display:block; width: 100%; margin-top: 4px;"></label>
-      </div>
-      <details style="margin-top: 12px;">
-        <summary style="cursor: pointer; font-size: 13px; font-weight: 700;">Receber as respostas aqui dentro (opcional)</summary>
-        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Preenchendo isto, o que o aluno responder no WhatsApp cai no seu Chat — e o robô responde <b>pelo seu número</b>. Sem isto, o envio funciona igual; só as respostas continuam chegando no aplicativo do celular.</p>
+      <div id="cfgZapStatus" class="muted" style="margin: 2px 0 10px; font-size: 13px;"></div>
+      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Isto é <b>opcional</b> e só faz sentido pra quem já tem (ou quer montar) um app próprio na Meta. Com ele o sistema manda a mensagem sem abrir o WhatsApp do celular. Antes de tentar, veja o que a <b>Meta</b> cobra de quem liga isso:</p>
+      <ul class="muted" style="margin: 0 0 4px; padding-left: 20px; font-size: 12.5px; line-height: 1.6;">
+        <li>Um número de telefone que <b>não esteja em nenhum WhatsApp</b>. Se você usar o número do seu trabalho, ele sai do aplicativo verde e as conversas de lá param de chegar no seu celular.</li>
+        <li><b>CNPJ</b>, pra Meta aprovar o nome que os seus alunos vão ver.</li>
+        <li>Um <b>cartão internacional</b> cadastrado na conta da Meta: a conta das mensagens é da Meta direto com você — não passa pelo TORQUE ON.</li>
+        <li>Mesmo ligado, a fila do Início continua saindo com <b>um toque</b> (o botão "Enviar todas agora"). Ela não dispara sozinha de madrugada.</li>
+      </ul>
+      <details id="cfgZapAv" style="margin-top: 12px;">
+        <summary style="cursor: pointer; font-size: 13px; font-weight: 700;">Já tenho meu próprio app na Meta (avançado)</summary>
+        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">O passo a passo pra achar estes dois dados está em <a href="meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a>.</p>
         <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
-          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Chave secreta do app (App Secret)
-            <input id="cfgZapSeg" type="password" autocomplete="off" placeholder="cole aqui a chave secreta do app" style="display:block; width: 100%; margin-top: 4px;"></label>
-          <label style="font-size: 12.5px; min-width: 200px;">ID da conta do Instagram (opcional)
-            <input id="cfgZapIg" placeholder="17841400000000000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
-          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Token da Página do Instagram (opcional)
-            <input id="cfgZapIgTok" type="password" autocomplete="off" placeholder="cole aqui o token da Página" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px; min-width: 200px;">ID do número (Phone number ID)
+            <input id="cfgZapFone" placeholder="123456789012345" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Token permanente
+            <input id="cfgZapToken" type="password" autocomplete="off" placeholder="cole aqui o token da Meta" style="display:block; width: 100%; margin-top: 4px;"></label>
         </div>
-        <div id="cfgZapWebhook" hidden style="margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--roxo); border-radius: 12px; font-size: 12.5px;">
-          <b>Cole estes dois no painel da Meta</b> (WhatsApp → Configuração → Webhook → Editar):
-          <div style="margin-top: 8px;">URL de retorno<br><code id="cfgZapUrlWh" style="word-break: break-all;">—</code></div>
-          <div style="margin-top: 6px;">Token de verificação<br><code id="cfgZapVerify">—</code></div>
-          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Depois clique em <b>Verificar e salvar</b> e marque o campo <b>messages</b> — sem isso a Meta não manda nada.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 10px;">
+          <label style="font-size: 12.5px; min-width: 200px;">Template aprovado (opcional)
+            <input id="cfgZapTpl" placeholder="cobranca_mensalidade" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">O que entra nos espaços do template
+            <input id="cfgZapTplVars" placeholder="{nome} | {texto}" style="display:block; width: 100%; margin-top: 4px;"></label>
+        </div>
+        <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Pra que serve o template: a Meta só deixa você mandar um texto que VOCÊ escreveu até <b>24h</b> depois da última mensagem do aluno. Passou disso, só chega um <b>template aprovado</b> por ela. Se você tiver um, escreva o nome dele aqui e a fila usa ele sozinha quando esbarrar nas 24h — sem template, a linha avisa e devolve o botão de mandar pelo seu WhatsApp. No campo do lado escreva, <b>na ordem</b>, o que entra em cada espaço do template ({{1}}, {{2}}…), separado por <b>|</b>: <b>{nome}</b> é o primeiro nome do aluno e <b>{texto}</b> é a mensagem inteira da fila. Template sem espaço nenhum? Deixe vazio.</p>
+        <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px;">
+          <label style="font-size: 12.5px; min-width: 200px;">Mandar um teste pra (DDI+DDD+número)
+            <input id="cfgZapNum" placeholder="5531999990000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <button class="btn" id="cfgZapSalva">Ligar meu número</button>
+          <button class="btn sec" id="cfgZapTesta">Testar conexão</button>
+          <button class="btn sec" id="cfgZapEnvia">Enviar teste</button>
+          <button class="btn sec" id="cfgZapDesliga" hidden>Desligar</button>
         </div>
       </details>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px;">
-        <label style="font-size: 12.5px; min-width: 200px;">Mandar um teste pra (DDI+DDD+número)
-          <input id="cfgZapNum" placeholder="5531999990000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
-        <button class="btn" id="cfgZapSalva">Ligar meu número</button>
-        <button class="btn sec" id="cfgZapTesta">Testar conexão</button>
-        <button class="btn sec" id="cfgZapEnvia">Enviar teste</button>
-        <button class="btn sec" id="cfgZapDesliga" hidden>Desligar</button>
-      </div>
-      <div id="cfgZapStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Regra da Meta: texto livre só chega até <b>24h</b> depois da última mensagem do aluno. Fora dessa janela é preciso um <b>template aprovado</b> — quando o envio automático esbarrar nisso, a fila avisa e devolve o botão manual.</p>
     </div>
     <div class="card" data-cfgsec="app">
       <h2>O que o aluno vê no app</h2>
@@ -5723,6 +5719,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var c = String((err && err.code) || ""), m = String((err && err.message) || "");
     return /^42P01$|^42883$|^PGRST20/.test(c) || /does not exist|relation .* not|Could not find the (table|function)/i.test(m);
   }
+  /* v759: recado honesto quando um pedaço da nuvem não responde.
+   * O professor que assina o TORQUE PERSONAL NÃO tem Supabase, não tem GitHub e
+   * não tem como "rodar o SQL" nem "publicar a chat-envia" — quem faz isso é a
+   * gente. Mandar ele fazer é pedir uma coisa impossível E fazer parecer culpa
+   * dele. O detalhe técnico continua existindo, mas vai pro console.error, que
+   * é onde o suporte lê; a tela fica com a verdade em português.
+   * Uso: foraDoAr("A IA de treino", "PGRST202 ia_treino") */
+  function foraDoAr(oQue, tecnico) {
+    if (tecnico) { try { console.error("[TORQUE ON] " + (oQue || "recurso") + " — " + tecnico); } catch (e9) {} }
+    return (oQue || "Esse recurso") + " está fora do ar agora — não é coisa sua, a gente já foi avisado. " +
+      "Tente de novo daqui a pouco; se continuar assim, chame o suporte.";
+  }
+  window.__foraDoAr = foraDoAr; // testes
   window.__diaLocalDe = diaLocalDe; window.__erroDeSql = erroDeSql; // testes
   // v748: os rótulos dos chips de objetivo do app (o app grava a chave em ptonb.obj)
   var OBJ_APP_ROT = { emagrecer: "Emagrecer", musculo: "Ganhar músculo", saude: "Saúde e disposição", performance: "Performance" };
@@ -7026,7 +7035,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r && r.error) {
           /* v748: só manda rodar o SQL quando o erro É de tabela/função que
            * não existe — queda de rede, RLS e timeout ganham o texto honesto */
-          box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."
+          box.textContent = erroDeSql(r.error) ? foraDoAr("A sincronização do app do aluno", "SQL faltando: " + (r.error.code || r.error.message))
             : "Não deu pra carregar agora — confira a internet e abra o perfil de novo.";
           pintaCheckins(checksQ.length ? { checks: checksQ } : null,
             "Não deu pra carregar agora — confira a internet e abra o perfil de novo.");
@@ -8490,7 +8499,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nuvem.client.from("app_quest").select("token,questionario,dados,criado").eq("academia_id", nuvem.aid)
       .order("criado", { ascending: false }).limit(60)
       .then(function (r) {
-        if (r && r.error) { box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os questionários." : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
+        if (r && r.error) { box.textContent = erroDeSql(r.error) ? foraDoAr("Os questionários", "SQL faltando: " + (r.error.code || r.error.message)) : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var rows = (r && r.data) || [];
         if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima."; return; }
         var st = load();
@@ -8814,7 +8823,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nuvem.client.rpc("app_desafio_ranking", { t: comToken.appTokenP, p_ini: d.ini, p_fim: d.fim })
       .then(function (r) {
         var dd = r && r.data;
-        if (r && r.error) { box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar o desafio." : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
+        if (r && r.error) { box.textContent = erroDeSql(r.error) ? foraDoAr("O desafio da turma", "SQL faltando: " + (r.error.code || r.error.message)) : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var ranking = (dd && dd.ranking) || [];
         if (!ranking.length) { box.textContent = "Ninguém pontuou ainda — cada 'Treinei hoje!' no app conta."; return; }
         pintaRankingDesafio(box, ranking, d.premio);
@@ -8874,7 +8883,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     q.then(function (r) {
       if (r && r.error) {
         if ($("fdmResumo")) $("fdmResumo").textContent = "Falta rodar o SQL";
-        box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade.";
+        box.textContent = foraDoAr("A Comunidade", "SQL da Comunidade faltando neste projeto");
         return;
       }
       var posts = (r && r.data) || [];
@@ -9930,11 +9939,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // v750: as DUAS regras que o painel usa — sem "mes" o Plano do mês simplesmente não vinha, calado
         var faltam = ["briefManda", "mes"].filter(function (r) { return regras.indexOf(r) < 0; });
         if (!faltam.length) { av.hidden = true; return; }
-        av.innerHTML = "⚠️ <b>A IA publicada no seu Supabase é de uma versão antiga</b>" +
-          (faltam.indexOf("briefManda") >= 0 ? " e não trata esta leitura como regra — por isso o treino pode sair diferente do que você pediu" : "") +
-          (faltam.indexOf("mes") >= 0 ? (faltam.length > 1 ? "; ela também" : " e") + " não monta o Plano do mês (progressão das 4 semanas)" : "") +
-          ". Abra <a href='https://www.torqueon.com.br/funcoes.html' target='_blank' rel='noopener'>torqueon.com.br/funcoes.html</a>, " +
-          "copie a <b>chat-envia</b> e publique de novo no Supabase.";
+        /* v759: o professor não publica função nenhuma — quem atualiza a IA
+         * somos nós. O aviso continua existindo (senão o treino sai diferente
+         * do que ele pediu e nada explica por quê), mas escrito pra quem não
+         * tem Supabase; o detalhe técnico vai pro console. */
+        try { console.error("[TORQUE ON] chat-envia publicada sem as regras: " + faltam.join(", ")); } catch (eAv) {}
+        av.innerHTML = "⚠️ <b>A IA do sistema está sendo atualizada</b>" +
+          (faltam.indexOf("briefManda") >= 0 ? " — enquanto isso ela pode não seguir à risca a sua leitura, e o treino sair diferente do que você pediu" : "") +
+          (faltam.indexOf("mes") >= 0 ? (faltam.length > 1 ? "; ela também" : " —") + " pode vir sem o Plano do mês (progressão das 4 semanas)" : "") +
+          ". Confira o que ela prescrever antes de publicar pro aluno, e avise o suporte se continuar assim nos próximos dias.";
         av.hidden = false;
         if ($("taBrief")) $("taBrief").open = true; // o aviso mora na gaveta — abre pra ele ser visto
       }, function () { iaChecada = false; }); // caiu a rede: tenta de novo depois
@@ -11160,14 +11173,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!z) return Promise.resolve(false);
     var rot = botao ? botao.textContent : "";
     if (botao) { botao.disabled = true; botao.textContent = "Enviando…"; }
-    return zapApiEnvia(z.zap, z.texto).then(function (d) {
+    // v759: o template aprovado (quando existe) sai no lugar do texto livre
+    // assim que a Meta recusar por causa das 24h — {nome} e {texto} são o que
+    // o professor mandou pôr em cada espaço dele
+    return zapApiEnvia(z.zap, z.texto, { nome: String(z.nome || "").split(" ")[0], texto: z.texto }).then(function (d) {
       if (d && d.ok) {
         delete zapErros[chave];
         zapMarca(chave, emLote);
         return true;
       }
-      zapErros[chave] = d && d.precisaTemplate
-        ? "fora da janela de 24h — só chega com template aprovado"
+      zapErros[chave] = d && d.precisaTemplate && !d.tplFalhou
+        ? "fora da janela de 24h — só chega com template aprovado (cadastre o nome dele em Configurações → WhatsApp)"
         : ((d && d.erro) || "não deu pra enviar");
       if (botao) { botao.disabled = false; botao.textContent = rot || "Enviar"; }
       renderRelatorios(); // redesenha pra linha mostrar o motivo e o link manual
@@ -12323,7 +12339,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             }
             cb({ ok: true, link: d.link });
           }
-          else cb({ erro: (d && d.erro) || "Publique a função pagamentos (torqueon.com.br/funcoes.html) e confira a chave em Configurações → Receber dos alunos." });
+          else cb({ erro: (d && d.erro) || foraDoAr("O link de cobrança", "funcao pagamentos nao respondeu; conferir a chave em pag_config") });
         }, function () { cb({ erro: "Sem conexão com a função pagamentos agora." }); });
       return;
     }
@@ -13519,7 +13535,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o cabecalho conta a mesma verdade dos cards, numa frase
     var desligados = [];
     if (!pagApi.ligado && !cfg.pixChave) desligados.push("o recebimento");
-    if (!zapApi.ligado) desligados.push("o WhatsApp");
+    /* v759: o WhatsApp oficial saiu desta conta. Ele é o caminho de quem tem
+     * app próprio na Meta (CNPJ, cartão internacional, número dedicado) — não é
+     * uma pendência do professor que manda pelo celular, que é a maioria. */
     if (!cfg.feedOn) desligados.push("a Comunidade");
     var tit = $("cfgTitulo");
     if (tit) tit.textContent = !desligados.length ? "Tudo ligado"
@@ -13570,14 +13588,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             : "0% · você recebe tudo") + "</div></div>" +
         "</div>";
     }
-    // 2) WhatsApp oficial
+    /* 2) WhatsApp oficial — v759: DESLIGADO é um estado VÁLIDO, não pendência.
+     * Quase todo professor manda pelo próprio WhatsApp e está tudo certo; e
+     * quando o token da Meta morre, o card para de dizer "ligado" na hora. */
+    var zapMorreu = !!(zapApi.ligado && zapApi.falhou);
     html += cfgCard({
-      icone: "✆", on: !!zapApi.ligado,
+      icone: "✆", on: !!zapApi.ligado && !zapMorreu,
       titulo: "WhatsApp oficial",
-      selo: zapApi.ligado ? "seu número" : "desligado",
-      sub: zapApi.ligado ? "Mensagem sai e chega no seu número."
-        : "Sem credencial própria, as mensagens saem pelo WhatsApp do seu celular, uma a uma.",
-      acao: '<button type="button" class="btn sec" data-cfgir="zap">' + (zapApi.ligado ? "Ajustar" : "Ligar") + "</button>",
+      selo: zapMorreu ? "parou " + zapHoraFalha(zapApi) : zapApi.ligado ? "seu número" : "desligado (tudo certo)",
+      sub: zapMorreu ? "⚠️ A senha da Meta venceu. Sua fila voltou pro modo com um toque e nenhuma mensagem se perdeu."
+        : zapApi.ligado ? "Mensagem sai e chega no seu número."
+        : "Suas mensagens saem do seu WhatsApp com um toque na fila do Início. Nada está quebrado aqui.",
+      acao: '<button type="button" class="btn sec" data-cfgir="zap">' + (zapApi.ligado ? "Ajustar" : "Ver como é") + "</button>",
     });
     // 3) app dos alunos + os interruptores
     html += cfgCard({
@@ -13637,8 +13659,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var zapi = (st.config || {}).zapApi || {};
     $("cfgZapFone").value = zapi.phoneId || "";
     $("cfgZapTpl").value = zapi.template || "";
+    if ($("cfgZapTplVars")) $("cfgZapTplVars").value = (st.config || {}).zapTplVars || "";
     $("cfgZapToken").value = "";
     $("cfgZapDesliga").hidden = !zapi.ligado;
+    // v759: os campos moram numa gaveta fechada (é caminho de quem já tem app na
+    // Meta) — quem JÁ ligou abre nela, senão parece que a configuração sumiu
+    if ($("cfgZapAv")) $("cfgZapAv").open = !!zapi.ligado;
     pintaZapApiStatus();
     leZapConfigNuvem(); // confere com a nuvem (o token nunca vem junto)
     if (window.__pagCfg) window.__pagCfg.pinta(); // gateway de pagamento (a chave nunca vem junto)
@@ -13761,7 +13787,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             return nuvem.client.from("push_subs")
               .upsert({ token: "prof:" + uid, academia_id: nuvem.aid, sub: sub.toJSON ? sub.toJSON() : sub })
               .then(function (res) {
-                if (res && res.error) { out.textContent = "Não deu pra guardar a inscrição (" + res.error.message + ") — rode o SQL novo em torqueon.com.br/sql.html."; return false; }
+                if (res && res.error) { out.textContent = foraDoAr("Os avisos neste aparelho", "push_subs recusou: " + res.error.message); return false; }
                 out.textContent = "✓ Ativado! Este aparelho recebe os avisos de chat, horário e pagamento.";
                 $("pushProfBt").textContent = "✓ Avisos ativados";
                 return true;
@@ -13808,9 +13834,49 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * painel manda sozinho — a chave do WhatsApp fica só no Supabase, nunca aqui.
    */
   function zapApiCfg(st) { return ((st || load()).config || {}).zapApi || {}; }
-  // espelho local só pra saber SE está ligado (o desenho da fila é síncrono);
-  // a credencial de verdade mora na nuvem, em zap_config, separada por academia
-  function zapApiOn(st) { return !!zapApiCfg(st).ligado; }
+  /* espelho local só pra saber SE está ligado (o desenho da fila é síncrono);
+   * a credencial de verdade mora na nuvem, em zap_config, separada por academia.
+   * v759: token da Meta que MORREU (venceu, foi revogado, o número saiu do ar)
+   * derruba o "ligado" na hora. Antes o painel dizia LIGADO pra sempre e o
+   * professor só descobria quando o aluno reclamava que não recebeu nada. */
+  function zapApiOn(st) { var c = zapApiCfg(st); return !!c.ligado && !c.falhou; }
+  // a Meta devolve um código quando o problema é a CREDENCIAL, não a mensagem
+  var ZAP_COD_CRED = [190, 102, 10, 200, 2500, 803];
+  function zapCredMorreu(d) {
+    if (!d || d.ok) return false;
+    if (d.codigo != null && ZAP_COD_CRED.indexOf(+d.codigo) >= 0) return true;
+    var e = String(d.erro || "");
+    // a própria função whatsapp responde isto quando a linha da zap_config sumiu
+    if (/nenhum número do whatsapp ligado/i.test(e)) return true;
+    return /(token|credencial|access token|sess(ã|a)o).{0,40}(venc|expir|inv(á|a)lid|revogad)/i.test(e);
+  }
+  // guarda no espelho a hora em que parou de funcionar (e o motivo, em português)
+  function zapMarcaFalhou(motivo) {
+    var st = load();
+    st.config = st.config || {};
+    var c = st.config.zapApi || {};
+    if (!c.ligado || c.falhou) return false;
+    c.falhou = { em: new Date().toISOString(), motivo: String(motivo || "") };
+    st.config.zapApi = c;
+    S.write("ptStudio", st);
+    return true;
+  }
+  // voltou a funcionar (envio aceito, teste OK ou credencial nova): apaga a marca
+  function zapLimpaFalhou() {
+    var st = load();
+    var c = (st.config || {}).zapApi || {};
+    if (!c.falhou) return false;
+    delete c.falhou;
+    st.config.zapApi = c;
+    S.write("ptStudio", st);
+    return true;
+  }
+  // lê a resposta de um envio e atualiza a marca — é o único lugar que decide isso
+  function zapAnotaResposta(d) {
+    if (d && d.ok) { if (zapLimpaFalhou()) render(); return; }
+    if (zapCredMorreu(d)) { if (zapMarcaFalhou((d && d.erro) || "")) render(); }
+  }
+  window.__zapFalha = { marca: zapMarcaFalhou, limpa: zapLimpaFalhou, morreu: zapCredMorreu }; // testes
   function zapApiUrl() {
     var c = self.MT_CLOUD || {};
     return c.url ? String(c.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
@@ -13822,6 +13888,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var novo = d && d.tem_token
       ? { ligado: true, phoneId: String(d.phone_id || ""), template: String(d.template || "") }
       : { ligado: false, phoneId: String((d && d.phone_id) || ""), template: String((d && d.template) || "") };
+    /* v759: a marca de "parou de funcionar" NÃO pode sumir aqui. Esta leitura
+     * roda toda vez que o professor abre Configurações, e a nuvem não sabe se a
+     * Meta recusou o último envio — só o painel sabe. Quem apaga a marca é um
+     * envio aceito, o Testar conexão OK ou uma credencial nova. */
+    var falhouAntes = (((load().config || {}).zapApi) || {}).falhou;
+    if (novo.ligado && falhouAntes) novo.falhou = falhouAntes;
     // v752: essa leitura roda a cada abertura de Configurações; gravar (e
     // redesenhar o painel inteiro) quando NADA mudou era só custo
     if (JSON.stringify(st.config.zapApi || null) === JSON.stringify(novo)) return false;
@@ -13849,18 +13921,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if ($("cfgZapFone") && document.activeElement !== $("cfgZapFone")) $("cfgZapFone").value = d.phone_id || "";
       if ($("cfgZapTpl") && document.activeElement !== $("cfgZapTpl")) $("cfgZapTpl").value = d.template || "";
       if ($("cfgZapDesliga")) $("cfgZapDesliga").hidden = !d.tem_token;
-      if ($("cfgZapIg") && document.activeElement !== $("cfgZapIg")) $("cfgZapIg").value = d.ig_id || "";
-      if ($("cfgZapSeg")) $("cfgZapSeg").value = "";
-      if ($("cfgZapIgTok")) $("cfgZapIgTok").value = "";
-      // a URL e a senha do aperto de mão são o que ele cola no painel da Meta
-      var cx = $("cfgZapWebhook");
-      if (cx) {
-        cx.hidden = !d.verify_token;
-        if (d.verify_token) {
-          $("cfgZapUrlWh").textContent = String((self.MT_CLOUD || {}).url || "").replace(/\/+$/, "") + "/functions/v1/meta-webhook";
-          $("cfgZapVerify").textContent = d.verify_token;
-        }
-      }
+      /* v759: quem JÁ ligou o número não pode perder nada com a gaveta nova —
+       * ela abre sozinha pra ele, com o botão Desligar e os campos à mão. */
+      if (d.tem_token && $("cfgZapAv")) $("cfgZapAv").open = true;
       pintaZapApiStatus();
     });
   }
@@ -13878,21 +13941,66 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .catch(function () { return { erro: "Não consegui falar com a função — confira a URL e a internet." }; });
     });
   }
-  // manda uma mensagem da fila; devolve {ok} ou {erro, precisaTemplate}
-  function zapApiEnvia(zapDoAluno, texto) {
+  /* v759: o TEMPLATE aprovado finalmente sai do campo e vira envio.
+   * O que o professor escreve no campo do lado ("{nome} | {texto}") vira, NA
+   * ORDEM, o conteúdo de cada espaço do template ({{1}}, {{2}}…). Campo vazio =
+   * template sem espaço nenhum, e aí nada é mandado (a Meta recusa parâmetro a
+   * mais tanto quanto a menos). Só isso: o painel não tem como adivinhar
+   * quantos espaços o template DELE tem, então quem diz é ele. */
+  function zapTplVarsCfg(st) { return String(((st || load()).config || {}).zapTplVars || "").trim(); }
+  function zapTplVars(vars) {
+    var crua = zapTplVarsCfg();
+    if (!crua) return [];
+    return crua.split("|").map(function (p9) {
+      return p9.trim().replace(/\{(nome|texto)\}/g, function (_, k) { return (vars && vars[k] != null) ? String(vars[k]) : ""; });
+    }).filter(function (p9) { return p9 !== ""; });
+  }
+  window.__zapTplVars = zapTplVars; // testes
+  /* manda uma mensagem da fila; devolve {ok} ou {erro, precisaTemplate}.
+   * Primeiro vai o texto que o professor escreveu (é a mensagem de verdade);
+   * se a Meta recusar por causa das 24h E houver template aprovado guardado, o
+   * template sai no lugar — era ele que ficava escrito no campo e nunca era
+   * usado, então quem vencia os 8 passos da Meta ganhava uma fila que falhava. */
+  function zapApiEnvia(zapDoAluno, texto, vars) {
     var num = String(zapDoAluno || "").replace(/\D/g, "");
     if (!num) return Promise.resolve({ erro: "Esse aluno está sem WhatsApp no cadastro." });
     if (num.length <= 11) num = "55" + num; // cadastro guarda DDD+número
-    return chamaZapApi({ acao: "enviar", para: num, texto: texto });
+    return chamaZapApi({ acao: "enviar", para: num, texto: texto }).then(function (d) {
+      var tpl = String(zapApiCfg().template || "").trim();
+      if (!(d && d.precisaTemplate) || !tpl) { zapAnotaResposta(d); return d; }
+      return chamaZapApi({ acao: "enviar", para: num, template: tpl, idioma: "pt_BR", variaveis: zapTplVars(vars) })
+        .then(function (d2) {
+          if (d2 && d2.ok) { zapAnotaResposta(d2); d2.viaTemplate = true; return d2; }
+          zapAnotaResposta(d2);
+          // o template também não deu: o motivo dele é o que o professor precisa ler
+          return { erro: "fora da janela de 24h e o template \"" + tpl + "\" também não passou: " +
+            ((d2 && d2.erro) || "a Meta recusou"), precisaTemplate: true, tplFalhou: true, codigo: d2 && d2.codigo };
+        });
+    });
   }
+  // como o professor lê o estado do WhatsApp oficial, nas três telas
+  function zapHoraFalha(c) {
+    var q = new Date((c.falhou || {}).em || "");
+    if (isNaN(q)) return "";
+    var hhmm = String(q.getHours()).padStart(2, "0") + ":" + String(q.getMinutes()).padStart(2, "0");
+    return (S.todayISO(q) === S.todayISO() ? "hoje às " : "dia " + S.todayISO(q).slice(8, 10) + "/" + S.todayISO(q).slice(5, 7) + " às ") + hhmm;
+  }
+  window.__zapHoraFalha = zapHoraFalha; // testes
   function pintaZapApiStatus(msg) {
     var el = $("cfgZapStatus");
     if (!el) return;
     if (msg) { el.innerHTML = msg; return; }
     var c = zapApiCfg();
+    if (c.ligado && c.falhou) {
+      el.innerHTML = '<span class="tag erro">PAROU</span> ⚠️ Parou de funcionar ' + esc(zapHoraFalha(c)) +
+        " — a senha da Meta venceu. Sua fila voltou pro modo com um toque e <b>nenhuma mensagem se perdeu</b>. " +
+        "Pegue um token novo na Meta e cole aqui embaixo pra religar.";
+      return;
+    }
     el.innerHTML = zapApiOn()
-      ? '<span class="tag ok">LIGADO</span> número ' + esc(c.phoneId || "") + " — a fila do Início manda sozinha."
-      : '<span class="tag neutro">DESLIGADO</span> as mensagens saem do seu WhatsApp, com um toque.';
+      ? '<span class="tag ok">LIGADO</span> número ' + esc(c.phoneId || "") + " — o Enviar da fila manda direto, sem abrir o aplicativo."
+      : '<span class="tag neutro">DESLIGADO</span> Hoje suas mensagens saem do <b>seu</b> WhatsApp com um toque na fila do Início. ' +
+        "Nada está quebrado e nada está faltando aqui.";
   }
   // Ligar meu número: as credenciais vão pra nuvem (separadas por academia).
   // O token some da tela na hora — daqui pra frente ele só existe do lado do servidor.
@@ -13900,17 +14008,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fone = String($("cfgZapFone").value || "").replace(/\D/g, "");
     var tok = String($("cfgZapToken").value || "").trim();
     var tpl = String($("cfgZapTpl").value || "").trim();
+    var tplV = String((($("cfgZapTplVars") || {}).value) || "").trim().slice(0, 200);
     if (!fone) { pintaZapApiStatus("Cole o ID do número (Phone number ID) que a Meta te deu."); return; }
-    if (!tok && !zapApiOn()) { pintaZapApiStatus("Cole o token permanente da Meta na primeira vez."); return; }
+    if (!tok && !zapApiOn() && !zapApiCfg().ligado) { pintaZapApiStatus("Cole o token permanente da Meta na primeira vez."); return; }
     pintaZapApiStatus("Guardando…");
+    /* v759: o que entra em cada espaço do template mora AQUI, no aparelho
+     * (config.zapTplVars) — não é segredo nenhum e a RPC zap_config_salva2 não
+     * tem campo pra isso; mudar a RPC pediria SQL novo, e o professor teria de
+     * rodar SQL, que é exatamente o que estamos tirando da frente dele. */
+    var stTv = load();
+    stTv.config = stTv.config || {};
+    if (String(stTv.config.zapTplVars || "") !== tplV) { stTv.config.zapTplVars = tplV; S.write("ptStudio", stTv); }
+    /* Receber as respostas dentro do painel saiu do TORQUE PERSONAL: a
+     * conversa cai em chat_conversas/chat_mensagens, que só o portal da
+     * academia lê — no Personal o robô responderia pelo número dele e a
+     * mensagem não apareceria em tela nenhuma. Mandamos vazio de propósito: a
+     * RPC PRESERVA app_secret / Instagram de quem configurou pelo portal. */
     rpcZap("zap_config_salva2", {
       p_phone_id: fone, p_token: tok, p_template: tpl,
-      p_app_secret: String(($("cfgZapSeg") || {}).value || "").trim(),
-      p_ig_id: String(($("cfgZapIg") || {}).value || "").replace(/\D/g, ""),
-      p_ig_token: String(($("cfgZapIgTok") || {}).value || "").trim(),
+      p_app_secret: "", p_ig_id: "", p_ig_token: "",
     }).then(function (d) {
       if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
       $("cfgZapToken").value = "";
+      if (tok) zapLimpaFalhou(); // token novo: o painel volta a acreditar
       return leZapConfigNuvem().then(function () {
         pintaZapApiStatus('<span class="tag ok">GUARDADO</span> agora toque em Testar conexão.');
         render();
@@ -13932,6 +14052,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     chamaZapApi({ acao: "ping" }).then(function (d) {
       if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
       if (d && d.ok && d.tokenConfigurado && d.foneConfigurado) {
+        if (zapLimpaFalhou()) render(); // voltou a responder: some o aviso de "parou"
         pintaZapApiStatus('<span class="tag ok">CONEXÃO OK</span> ' +
           (d.numeroProprio ? "usando o número que você ligou aqui." : "usando o número padrão do sistema."));
         return;
@@ -13943,11 +14064,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var num = String($("cfgZapNum").value || "").replace(/\D/g, "");
     if (num.length < 12) { pintaZapApiStatus("Escreva o número completo com DDI e DDD (ex.: 5531999990000)."); return; }
     pintaZapApiStatus("Enviando…");
-    chamaZapApi({ acao: "enviar", para: num, texto: "Teste do TORQUE PERSONAL — o WhatsApp oficial está funcionando!" })
+    // o teste passa pelo MESMO caminho da fila, template inclusive: se o envio
+    // real vai cair no template, o professor descobre aqui e não com o aluno
+    zapApiEnvia(num, "Teste do TORQUE PERSONAL — o WhatsApp oficial está funcionando!", { nome: "teste", texto: "Teste do TORQUE PERSONAL" })
       .then(function (d) {
-        if (d && d.ok) { pintaZapApiStatus('<span class="tag ok">ENVIADO</span> confira o celular.'); return; }
+        if (d && d.ok) {
+          pintaZapApiStatus('<span class="tag ok">ENVIADO</span> confira o celular.' +
+            (d.viaTemplate ? " (saiu pelo template aprovado — esse número está fora da janela de 24h)" : ""));
+          return;
+        }
         pintaZapApiStatus(esc((d && d.erro) || "Não deu pra enviar.") +
-          (d && d.precisaTemplate ? " — esse número está fora da janela de 24h: só chega com template aprovado." : ""));
+          (d && d.precisaTemplate && !d.tplFalhou ? " — esse número está fora da janela de 24h: só chega com template aprovado." : ""));
       });
   });
   window.__zapApiOn = zapApiOn; // testes
@@ -14004,7 +14131,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.textContent = "";
     if (!esp.ligado || !esp.provedor || esp.provedor === "outro") return;
     if (esp.provedor !== "pagarme") {
-      el.textContent = "Baixa automática: quando o aluno pagar pelo link, o pagamento entra sozinho no financeiro (publique a função pagamentos-webhook — torqueon.com.br/funcoes.html).";
+      el.textContent = "Baixa automática: quando o aluno pagar pelo link, o pagamento entra sozinho no financeiro.";
       return;
     }
     el.textContent = "Carregando a URL da baixa automática…";
@@ -14014,7 +14141,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var urlHook = cfg.url + "/functions/v1/pagamentos-webhook?aid=" + encodeURIComponent(d.academia_id) + "&k=" + encodeURIComponent(d.webhook_token);
         el.innerHTML = "Baixa automática: no painel do Pagar.me → Configurações → Webhooks, cadastre esta URL (eventos <b>order.paid</b> e <b>charge.payment_failed</b>): <code style=\"word-break:break-all; user-select:all;\">" + urlHook + "</code>";
       } else {
-        el.textContent = "Baixa automática: rode o SQL novo (torqueon.com.br/sql.html) e toque em Ligar de novo pra ganhar a URL do webhook.";
+        el.textContent = foraDoAr("A baixa automática", "pag_config sem webhook_token — SQL novo faltando") + " Enquanto isso, dá pra marcar Recebi na mão.";
       }
     }, function () { el.textContent = ""; });
   }
@@ -14084,7 +14211,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaPagStatus("Testando…");
     self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "ping" }, "O gateway de pagamento").then(function (d) {
       if (d && d.ok) pintaPagStatus(d.temChave ? "Conectado: " + d.provedor + " com a chave guardada ✓" : "A função respondeu, mas ainda não tem chave guardada — cole a chave e toque em Ligar.");
-      else pintaPagStatus("Não deu: " + ((d && d.erro) || "publique a função pagamentos (torqueon.com.br/funcoes.html)."));
+      else pintaPagStatus((d && d.erro) || foraDoAr("O teste da sua chave", "funcao pagamentos nao respondeu"));
     }, function () { pintaPagStatus("Sem conexão com a função pagamentos agora."); });
   });
   if ($("cfgPagDesliga")) $("cfgPagDesliga").addEventListener("click", function () {
@@ -16350,19 +16477,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .then(function (d) {
       // versão antiga da chat-envia não conhece ia_treino e responde isto:
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
-        cb({ erro: "Sua chat-envia publicada é de uma versão antiga, sem a IA de treino — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
+        cb({ erro: foraDoAr("A IA de treino", "chat-envia antiga: nao conhece a acao ia_treino (respondeu 'conversa_id obrigatorio')") }); return;
       }
       // "IA indisponível agora." seco (sem o motivo entre parênteses) também é
       // assinatura de versão antiga: ela esconde o erro real da Anthropic
       if (d && /^IA indisponível agora\.?$/.test(String(d.erro || "").trim())) {
-        cb({ erro: "A IA falhou e sua chat-envia publicada é de uma versão antiga que esconde o motivo. Abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase — na próxima tentativa o erro real aparece (ex.: chave recusada). Aproveite e confira o secret ANTHROPIC_API_KEY." }); return;
+        cb({ erro: foraDoAr("A IA de treino", "chat-envia antiga respondeu 'IA indisponivel agora.' seco, sem o motivo real da Anthropic") }); return;
       }
-      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
+      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || foraDoAr("A IA de treino", "chat-envia respondeu sem ok/texto") }); return; }
       var plano = parseFichasIA(d.texto);
       // chat-envia antiga ignora o "tipo" e responde fichas de musculação:
       // detecta e explica, em vez de deixar o circuito cair na aba errada
       if (tipo !== "musculacao" && plano && (plano.fichas || []).length && !((plano.wods || []).length || (plano.cardio || []).length)) {
-        cb({ erro: "Sua chat-envia publicada é de uma versão antiga, que só prescreve musculação — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
+        cb({ erro: foraDoAr("A IA de " + (tipo === "wod" ? "circuito" : "corrida"), "chat-envia antiga ignora o campo 'tipo' e devolveu fichas de musculacao") }); return;
       }
       if (tipo === "wod") {
         var wodsIA = peneiraWodsIA(plano);
@@ -16452,8 +16579,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (cortes.series) cortesTxt.push(S.plural(cortes.series, "exercício com mais de " + IA_TETO.series + " séries (ficou em " + IA_TETO.series + ")", "exercícios com mais de " + IA_TETO.series + " séries (ficaram em " + IA_TETO.series + ")"));
       cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, planoAviso: orfIA || 0,
         nomesFora: nomesFora.slice(0, 8), mes: !!mF, cortes: cortes, cortesTxt: cortesTxt, resumo: String(plano.resumo || "").slice(0, 400) });
-    }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
-      " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
+    }, function (e) {
+      // v759: "Failed to fetch" é internet oscilando na maioria das vezes — e
+      // acontece no MEIO do trabalho do professor. Ele não tem como publicar
+      // função nenhuma; o detalhe vai pro console e a tela fala português.
+      cb({ erro: foraDoAr("A IA de treino", "falha na chamada: " + ((e && e.message) || "sem conexao")) });
+    });
   }
   window.__iaTreino = geraTreinoIA; // testes
   window.__iaParse = parseFichasIA; // testes
@@ -16482,7 +16613,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("taStatus").textContent = "A IA está lendo a anamnese e prescrevendo o treino… (leva uns 30 segundos)";
     $("taIA").disabled = true;
     // v750: sem "mes" na resposta o professor fica sabendo — antes r.mes era devolvido e nunca lido
-    var semMes = function (r) { return r.mes ? "" : " ⚠️ A IA não devolveu o Plano do mês (progressão das 4 semanas) — tente de novo ou republique a chat-envia."; };
+    var semMes = function (r) { return r.mes ? "" : " ⚠️ A IA não devolveu o Plano do mês (progressão das 4 semanas) — o treino entra igual; se quiser a progressão, é só gerar de novo."; };
     geraTreinoIA(id, tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, $("taEquip").value, function (r) {
       $("taIA").disabled = false;
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
@@ -18964,7 +19095,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     zapFilaCache = filaZ; // o botão Foto precisa achar o texto e a imagem do item
     var zapImgs = filaZ.some(function (z) { return z.img; }) ? imgsLe() : [];
     var zapTemFoto = false; // só imagem que ainda existe na galeria conta
-    var zapOfi = zapApiOn(st); // com a API da Meta ligada, a fila sai sozinha
+    var zapOfi = zapApiOn(st); // com a API da Meta ligada, o Enviar manda direto
+    // v759: token da Meta morto — a fila volta pro manual e DIZ por quê
+    var zapParou = !!(zapApiCfg(st).ligado && zapApiCfg(st).falhou);
     $("bZapP").innerHTML = (st.config || {}).zapFilaOff
       ? "Fila desligada — dá pra ligar de volta nas Configurações."
       : filaZ.length ? filaZ.map(function (z) {
@@ -18991,7 +19124,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn" id="zapTodas">Enviar todas agora</button>' +
         '<span class="muted" id="zapTodasSt" style="font-size:12px;">' + esc(zapResumo) + "</span></div>" : "") +
       '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">' +
-      (zapOfi ? "WhatsApp oficial ligado: o Enviar manda direto, sem abrir o aplicativo. Se o aluno não falou com você nas últimas 24h, a Meta exige template aprovado — nesse caso a linha avisa e volta o envio manual."
+      (zapOfi ? "WhatsApp oficial ligado: o Enviar manda direto, sem abrir o aplicativo. Se o aluno não falou com você nas últimas 24h, a Meta só aceita template aprovado — com um cadastrado, ele sai sozinho no lugar; sem, a linha avisa e volta o envio manual."
+              : zapParou ? "⚠️ O WhatsApp oficial parou " + esc(zapHoraFalha(zapApiCfg(st))) + " (a senha da Meta venceu) — a fila voltou pro modo com um toque e nenhuma mensagem se perdeu. Pra religar, cole um token novo em Configurações → WhatsApp."
               : "Toque em Enviar: abre o seu WhatsApp com a mensagem pronta.") + " Dá pra editar o texto de cada mensagem em Configurações → WhatsApp." +
       (zapTemFoto ? " Mensagem com foto: toque em <b>Foto</b> e escolha o aluno certo na lista do celular — a mensagem vai junto, de legenda. Se a legenda não for, mande o texto pelo Enviar; se foi, é só tocar em Pular pra tirar da fila." : "") + "</p>"
       : "Nenhuma mensagem pendente — todo mundo avisado.";
@@ -20411,7 +20545,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (r && r.error) {
         // função ainda não publicada: fala a verdade em vez de mostrar todo mundo como pendente
         var m = (r.error.code === "PGRST202" || /app_alunos_vistos/.test(r.error.message || ""))
-          ? "Rode o SQL novo no Supabase (bloco QUEM AINDA NÃO ABRIU PELO LINK) — sem ele eu não tenho como saber quem abriu."
+          ? foraDoAr("A conta de quem já abriu o app", "SQL do bloco QUEM AINDA NAO ABRIU PELO LINK faltando")
           : r.error.message;
         cb({ erro: m });
         return;
@@ -20560,7 +20694,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {
               if (r3 && r3.ok) cb({ ok: true, email: email, senha: senha });
-              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "publique a função envia-email (torqueon.com.br/funcoes.html)" });
+              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "o envio de e-mail está fora do ar agora — mande o acesso pelo WhatsApp" });
             }, function () {
               cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
             });
@@ -20613,7 +20747,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * instalou o app?" pra quem treinou ontem. */
       if (rs[0].error) {
         el.innerHTML = '<div class="card" style="border-left:4px solid var(--tk-aten);"><b>Não deu pra ler os treinos agora.</b>' +
-          '<p class="muted" style="margin:6px 0 0;">Tente de novo em instantes — e, se continuar, rode o bloco ASSESSORIA ONLINE do supabase-setup.sql (torqueon.com.br/sql.html). ' +
+          '<p class="muted" style="margin:6px 0 0;">' + esc(foraDoAr("A leitura dos treinos", "app_treino_log: " + ((rs[0].error || {}).message || ""))) + ' ' +
           'Não vou mostrar "sem registros" sem ter certeza: seus alunos podem estar treinando normalmente.</p></div>';
         return;
       }
@@ -20663,7 +20797,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var meusChecks = checks == null ? [] : checks.filter(function (c) { return c.token === a.appTokenP; }).slice(0, 3);
         var NOTAS = ["", "nota 1", "nota 2", "nota 3", "nota 4", "nota 5"];
         var checksHTML = checks == null
-          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Check-ins semanais: rode o bloco ASSESSORIA ONLINE do supabase-setup.sql pra recebê-los.</p>'
+          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Check-ins semanais: fora do ar agora — nada se perdeu, eles aparecem aqui quando voltar.</p>'
           : (meusChecks.length
             ? '<div style="margin-top:8px;">' + meusChecks.map(function (c) {
                 return '<div class="sessao-pt">' + (NOTAS[c.nota] || "check-in") + " <b>" + S.fmtData(c.dia) + "</b>" +
@@ -20795,7 +20929,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         btn.disabled = false;
         $("botZapOkP").textContent = r2.error
           ? "Não deu pra publicar: " + r2.error.message
-          : "✓ A automação 📶 foi publicada. Pra guardar TODAS na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html.";
+          : "✓ A automação 📶 foi publicada. As outras ficam neste aparelho por enquanto — a nuvem delas está fora do ar.";
       });
     });
   });
@@ -20850,7 +20984,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("chatCtx").hidden = true;
       $("chatSub").textContent = "";
       $("chatTitulo").textContent = "Chat interno";
-      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (menu → Sua ilha) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
+      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (menu → Sua ilha). Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
       $("chatEnvio").hidden = true;
       return;
     }

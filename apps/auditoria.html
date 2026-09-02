@@ -110,8 +110,9 @@
       .gte("criado", d7.toISOString()).order("criado", { ascending: false }).limit(100)
       .then(function (r) {
         if (r.error) {
+          console.error("[TORQUE ON] telemetria:", r.error.message || r.error);
           $("saudeInfo").textContent = String(r.error.message).indexOf("does not exist") !== -1
-            ? "⚠️ Rode o bloco TELEMETRIA DE ERROS do supabase-setup.sql."
+            ? "⚠️ Esta aba está fora do ar agora — não é coisa sua, a gente já foi avisado."
             : "⚠️ " + r.error.message;
           return;
         }

@@ -466,7 +466,7 @@
       html: "<pre style='font-family:system-ui,sans-serif;font-size:14px;line-height:1.7;'>" + texto.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</pre>" }, "O envio do fechamento")
       .then(function (d) {
       $("fechStatus").textContent = d && d.ok ? "✅ Fechamento enviado pra " + para + "!"
-        : "⚠️ " + ((d && d.erro) || "Publique a função envia-email (torqueon.com.br/funcoes.html) com a RESEND_API_KEY.");
+        : "⚠️ " + ((d && d.erro) || "O envio de e-mail está fora do ar agora — não é coisa sua, a gente já foi avisado.");
     }, function () { $("fechStatus").textContent = "⚠️ Sem conexão com a função envia-email agora."; });
   });
 

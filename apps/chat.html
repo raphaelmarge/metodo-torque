@@ -132,11 +132,13 @@
   <section id="aba-conversas">
     <div id="avisoNuvem" class="aviso-api" hidden>
       Para usar o chat, entre com a sua conta da nuvem (botão “Entrar” na página inicial do portal).
-      As conversas ficam no Supabase e aparecem em todos os aparelhos da equipe.
+      As conversas ficam guardadas na nuvem e aparecem em todos os aparelhos da equipe.
     </div>
     <div id="avisoTabela" class="aviso-api" hidden style="margin-bottom:10px">
-      As tabelas do chat ainda não existem na nuvem. Rode o bloco “CHAT UNIFICADO” do arquivo
-      <b>supabase-setup.sql</b> no SQL Editor do Supabase (aba Instalação, passo 1).
+      <!-- v757: publicar/rodar coisa no servidor é trabalho do dono do sistema. O
+           cliente só precisa saber que não é culpa dele e que a gente já sabe. -->
+      O chat está fora do ar agora — não é coisa sua, a gente já foi avisado.
+      Enquanto isso, fale com o cliente pelo WhatsApp normal.
     </div>
     <div class="chatwrap" id="chatwrap" hidden>
       <div class="lista" id="listaConversas"></div>
@@ -236,51 +238,45 @@
       <p class="mut">• Responde curto e simpático, em português, no tom de mensagem de chat.<br>
       • Usa só as informações das instruções acima — se não souber, diz que a equipe já responde.<br>
       • Cada resposta automática aparece na conversa marcada com 🤖, e você pode assumir a conversa a qualquer momento (é só desligar a chavinha e responder).<br>
-      • Modelo usado: <b>Claude Opus 4.8</b> (Anthropic), chamado com segurança pelo Supabase — a chave da API nunca fica no site.</p>
+      • Modelo usado: <b>Claude Opus 4.8</b> (Anthropic), chamado do lado do servidor — a chave da API nunca fica no site.</p>
     </div>
   </section>
 
   <!-- ============ INSTALAÇÃO ============ -->
+  <!-- v757: esta aba mandava rodar SQL, publicar função e criar chave num painel
+       de servidor que o cliente não tem (e não vai ter) — trabalho do dono do
+       sistema, e obsoleto desde a v471: hoje o próprio painel gera o token de
+       verificação e mostra a URL do webhook. Sobrou o que É do cliente. -->
   <section id="aba-instalar" hidden>
-    <p class="mut" style="margin-bottom:10px">A parte do sistema já está pronta. Para as mensagens chegarem, é preciso conectar o Supabase à Meta (dona do WhatsApp e do Instagram) e à Anthropic (dona do Claude) — faz uma vez só, leva uns 30–40 minutos.</p>
+    <p class="mut" style="margin-bottom:10px">A parte do servidor já vem pronta — isso é com a gente. Do seu lado são <b>3 passos</b>, feitos uma vez só, pra ligar o número da academia na Meta (dona do WhatsApp e do Instagram).</p>
 
     <div class="passo"><span class="num">1</span><div>
-      <b>Crie as tabelas do chat.</b> No painel do Supabase → SQL Editor, cole e rode o bloco
-      “CHAT UNIFICADO (WhatsApp + Instagram + IA)” do arquivo <code>supabase-setup.sql</code> do projeto.
-    </div></div>
-
-    <div class="passo"><span class="num">2</span><div>
-      <b>Publique as funções.</b> Abra
-      <a href="../funcoes.html" target="_blank" rel="noopener"><code>torqueon.com.br/funcoes.html</code></a> —
-      lá tem um botão que copia o código de cada função, já pronto pra colar no
-      Supabase → Edge Functions → Deploy new function (<code>meta-webhook</code> com
-      “Verify JWT” <u>desligado</u> — e desde a v494 <code>chat-envia</code> e <code>whatsapp</code> também: cada função confere sozinha quem está chamando).
-    </div></div>
-
-    <div class="passo"><span class="num">3</span><div>
-      <b>Guarde as chaves (Secrets).</b> Em Edge Functions → Secrets, adicione:<br>
-      <code>META_VERIFY_TOKEN</code> = uma senha qualquer que você inventa (ex.: torque123)<br>
-      <b>O WhatsApp e o Instagram NÃO entram aqui</b>: o número, o token e a chave secreta do app são colados em <b>Integrações</b> (ou, no TORQUE PERSONAL, em Configurações → WhatsApp) — assim cada academia usa o número dela e paga a própria conta na Meta. É lá também que aparecem a URL e a senha do aperto de mão pra colar no painel da Meta.<br>
-      <code>ANTHROPIC_API_KEY</code> = crie em <code>console.anthropic.com</code> → API Keys
-    </div></div>
-
-    <div class="passo"><span class="num">4</span><div>
-      <b>Aponte a Meta para o Supabase.</b> Em <code>developers.facebook.com</code> → seu app → Webhooks, configure:<br>
-      URL de callback: <code id="urlWebhook">https://SEU-PROJETO.supabase.co/functions/v1/meta-webhook</code><br>
-      Verify token: o mesmo <code>META_VERIFY_TOKEN</code> do passo 3.<br>
-      Assine o campo <b>messages</b> em <b>WhatsApp Business Account</b> e em <b>Instagram</b>.<br>
-      <b>Nunca mexeu na Meta?</b> O caminho inteiro, desde criar a conta, está em
+      <b>Ligue o seu número.</b> Vá em <b>Administrativo → Integrações</b> → cartão <b>WhatsApp oficial</b>,
+      cole a <b>Identificação do número (Phone number ID)</b> e o <b>token permanente</b> da Meta e clique em
+      <b>Ligar meu número</b>. Nunca mexeu na Meta? O caminho inteiro, desde criar a conta, está em
       <a href="../meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a> — inclusive o token
       permanente, que é o passo que todo mundo esquece e derruba o robô em 24 horas.
     </div></div>
 
-    <div class="passo"><span class="num">5</span><div>
+    <div class="passo"><span class="num">2</span><div>
+      <b>Deixe as respostas caírem aqui.</b> No mesmo cartão, abra <b>Receber as respostas aqui dentro</b>,
+      cole a <b>Chave secreta do app (App Secret)</b> (no painel da Meta, em Configurações do app → Básico) e
+      clique em <b>Ligar meu número</b>. Aparece um quadro com a <b>URL de retorno</b> e o <b>Token de
+      verificação</b> — os dois são seus e quem gera é o próprio painel.<br>
+      Leve os dois pra Meta: <code>developers.facebook.com</code> → seu app → <b>WhatsApp → Configuração →
+      Webhook → Editar</b>, cole, salve e marque o campo <b>messages</b> (em WhatsApp Business Account e, se
+      usar, em Instagram). <b>Sem marcar o messages a Meta não manda nada</b> e o Chat fica mudo.
+    </div></div>
+
+    <div class="passo"><span class="num">3</span><div>
       <b>Teste.</b> Mande um “oi” para o número do WhatsApp da academia (ou uma DM no Instagram) e veja
-      a conversa aparecer na aba 💬 Conversas. Depois clique em “🔎 Testar conexões” na aba de IA para
-      conferir cada chave. <b>Atenção às regras da Meta:</b> no WhatsApp, resposta em texto livre só
+      a conversa aparecer na aba 💬 Conversas. Depois clique em “🔎 Testar conexões” na aba de IA.
+      <b>Atenção às regras da Meta:</b> no WhatsApp, resposta em texto livre só
       dentro de 24h após a última mensagem do cliente; no Instagram, o app precisa estar aprovado
       (App Review) para conversar com o público geral.
     </div></div>
+
+    <p class="mut" style="margin-top:12px">Fez os 3 e mesmo assim nada chega? <b>Não é coisa sua</b> — me avise que eu confiro do lado de cá.</p>
   </section>
 
 </main>
@@ -492,7 +488,7 @@
       else alert(d && d.erro ? d.erro : "Não foi possível enviar. Confira a aba Instalação.");
     }).catch(function () {
       btn.disabled = false; btn.textContent = "Enviar";
-      alert("Sem conexão com a função chat-envia. Confira a aba Instalação (passo 2).");
+      alert("A IA está fora do ar agora — não é coisa sua, a gente já foi avisado.");
     });
   }
   $("#btnEnviar").addEventListener("click", envia);
@@ -507,10 +503,10 @@
     funcao({ acao: "sugerir", conversa_id: atual.id }).then(function (d) {
       btn.disabled = false; btn.textContent = "✨ Sugerir";
       if (d && d.ok && d.texto) { $("#txtMsg").value = d.texto; $("#txtMsg").focus(); }
-      else alert(d && d.erro ? d.erro : "A IA não respondeu. Confira o secret ANTHROPIC_API_KEY.");
+      else alert(d && d.erro ? d.erro : "A IA está fora do ar agora — não é coisa sua, a gente já foi avisado.");
     }).catch(function () {
       btn.disabled = false; btn.textContent = "✨ Sugerir";
-      alert("Sem conexão com a função chat-envia. Confira a aba Instalação (passo 2).");
+      alert("A IA está fora do ar agora — não é coisa sua, a gente já foi avisado.");
     });
   });
 
@@ -991,8 +987,8 @@
       // banco ainda sem a coluna de várias automações → salva pelo menos a principal
       return grava(false).then(function (r2) {
         $("#botStatus").textContent = r2.ok
-          ? "✅ A automação 📶 foi salva. Pra guardar VÁRIAS automações na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html (1 minuto)."
-          : "⚠️ Não deu para salvar (" + r2.status + "). Rode o SQL de www.torqueon.com.br/sql.html e tente de novo.";
+          ? "✅ A automação 📶 foi salva. Guardar VÁRIAS de uma vez na nuvem ainda não está funcionando aqui — a gente já foi avisado."
+          : "⚠️ Não deu para salvar (" + r2.status + ") — não é coisa sua, a gente já foi avisado. Tente de novo daqui a pouco.";
       });
     }).catch(function () { $("#botStatus").textContent = "Sem conexão com a nuvem agora."; });
   });
@@ -1023,7 +1019,7 @@
     var alvo = box.lastElementChild;
     funcao({ acao: "testar", historico: sim.historico }).then(function (d) {
       var t = (d && d.ok && d.texto) ? d.texto
-        : "(simulação: a IA de verdade responderia aqui — " + ((d && d.erro) || "publique a função chat-envia e configure a ANTHROPIC_API_KEY") + ")";
+        : "(simulação: a IA de verdade responderia aqui — " + ((d && d.erro) || "ela está fora do ar agora, e não é coisa sua") + ")";
       alvo.innerHTML = esc(t) + '<span class="meta-msg">IA</span>';
       sim.historico.push({ de: "ia", texto: t });
       box.scrollTop = box.scrollHeight;
@@ -1121,7 +1117,7 @@
       $("#cfgStatus").textContent = r.ok
         ? "✅ Salvo. A IA já usa estas instruções nas próximas respostas."
         : (r.status === 404
-          ? "⚠️ Rode o bloco CHAT UNIFICADO do supabase-setup.sql primeiro (aba Instalação, passo 1)."
+          ? "⚠️ O chat está fora do ar agora — não é coisa sua, a gente já foi avisado."
           : "Não deu para salvar (" + r.status + ").");
     }).catch(function () { $("#cfgStatus").textContent = "Sem conexão com a nuvem agora."; });
   });
@@ -1130,16 +1126,18 @@
     if (!temNuvem()) { $("#cfgStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
     $("#cfgStatus").textContent = "Testando…";
     funcao({ acao: "ping" }).then(function (d) {
-      if (!d || !d.ok) { $("#cfgStatus").textContent = "⚠️ Função chat-envia não publicada ainda (aba Instalação, passo 2)."; return; }
+      // v757: o cliente não publica função nenhuma — quando o robô está fora do
+      // ar, quem conserta somos nós, e a tela só precisa dizer isso
+      if (!d || !d.ok) { console.error("[TORQUE ON] chat-envia sem ping ok"); $("#cfgStatus").textContent = "⚠️ O robô está fora do ar agora — não é coisa sua, a gente já foi avisado."; return; }
       var linha = function (ok, nome) { return (ok ? "✅ " : "❌ ") + nome; };
       $("#cfgStatus").innerHTML = [
         linha(d.whatsapp, "WhatsApp (token + phone id)"),
         linha(d.instagram, "Instagram (token da página)"),
-        linha(d.ia, "IA Claude (ANTHROPIC_API_KEY)"),
-        linha(d.verify, "Webhook (META_VERIFY_TOKEN)"),
+        linha(d.ia, "IA Claude"),
+        linha(d.verify, "Webhook da Meta"),
       ].join(" &nbsp;·&nbsp; ");
     }).catch(function () {
-      $("#cfgStatus").textContent = "⚠️ Função chat-envia não publicada ainda (aba Instalação, passo 2).";
+      $("#cfgStatus").textContent = "⚠️ O robô está fora do ar agora — não é coisa sua, a gente já foi avisado.";
     });
   });
 
@@ -1162,9 +1160,8 @@
 
   function liga() {
     $("#chatwrap").hidden = false;
-    if (self.MT_CLOUD && MT_CLOUD.url) {
-      $("#urlWebhook").textContent = MT_CLOUD.url + "/functions/v1/meta-webhook";
-    }
+    // v757: a URL do webhook saiu daqui — quem mostra ela (junto com o token de
+    // verificação daquela academia) é o cartão do WhatsApp em Integrações
     carregaConversas();
     carregaCfg();
     clearInterval(timerLista); clearInterval(timerThread);
@@ -1173,7 +1170,7 @@
     window.addEventListener("focus", carregaConversas);
   }
 
-  // a nuvem (login Supabase) sobe assíncrona depois que a página carrega
+  // a nuvem (o login) sobe assíncrona depois que a página carrega
   setTimeout(inicia, 800);
 
   // usado nos testes
