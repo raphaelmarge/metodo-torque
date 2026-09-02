@@ -75,9 +75,15 @@ const SEED = {
   const errosReais = erros.filter((e) => !/service.?worker|Failed to register/i.test(e));
   assert(errosReais.length === 0, "zero erros de JS (" + errosReais.join(" | ").slice(0, 200) + ")");
 
-  await page.screenshot({ path: __dirname + "/mobile-home.png" });
+  /* v756: os dois PNG eram gravados dentro de tests/ e estavam versionados —
+   * cada rodada local mudava bytes binários que ninguém compara, e `git status`
+   * nunca ficava limpo depois de testar (ruído no repo que o Claude Code e o
+   * Claude Design dividem). Agora vão pra tests/out/, que está no .gitignore. */
+  const saida = require("path").join(__dirname, "out");
+  require("fs").mkdirSync(saida, { recursive: true });
+  await page.screenshot({ path: require("path").join(saida, "mobile-home.png") });
   await page.click("#btnMenu"); await page.waitForTimeout(350);
-  await page.screenshot({ path: __dirname + "/mobile-menu.png" });
+  await page.screenshot({ path: require("path").join(saida, "mobile-menu.png") });
 
   await browser.close();
   console.log("\nResultado: " + ok + " ok, " + fail + " falhas");

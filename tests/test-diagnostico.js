@@ -11,6 +11,9 @@ const EXEC = fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chro
 const BASE = process.env.BASE_URL || process.env.MT_BASE || "http://127.0.0.1:8765";
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suíte para no meio (senão sobra Chromium órfão e o resumo nunca sai)
+let navegadorV756 = null;
 function ok(cond, msg) {
   console.log((cond ? "  ✅ " : "  ❌ ") + msg);
   if (!cond) falhas++;
@@ -215,6 +218,7 @@ async function testaAjudantes() {
 (async () => {
   await testaAjudantes();
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  navegadorV756 = b;
   console.log("Diagnóstico da nuvem:");
 
   for (const c of CENARIOS) {
@@ -330,4 +334,10 @@ async function testaAjudantes() {
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

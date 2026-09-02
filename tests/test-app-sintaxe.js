@@ -3,6 +3,7 @@
  * (foi assim que um placar novo derrubou o app em desenvolvimento). Este
  * teste monta o app em node puro e faz o parse de cada <script> embutido. */
 process.env.TZ = "America/Sao_Paulo";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
 let falhas = 0;
 const ok = (cond, msg) => { console.log((cond ? "  ✅ " : "  ❌ ") + msg); if (!cond) falhas++; };
 
@@ -15,7 +16,7 @@ const D = {
   st: { config: { mural: ["Aviso do studio"] }, alunos: [], desafio: null },
   studio: "Studio Teste",
   stamp: new Date().toISOString(),
-  S: { fmtData: (x) => String(x || ""), todayISO: () => new Date().toISOString().slice(0, 10), uid: () => "u1" },
+  S: { fmtData: (x) => String(x || ""), todayISO: () => diaISO(new Date()), uid: () => "u1" },
   fichasApp: [{ titulo: "A — Peito e tríceps", capa: "", itens: [
     { nome: "Supino reto", series: "4", reps: "12", descanso: 60, video: "", desc: "d", obs: "o", grupo: "Peito", alts: ["Supino com halteres"] },
     { nome: "Tríceps na corda", series: "3", reps: "15", descanso: 45, video: "", desc: "", obs: "", grupo: "Tríceps", alts: [] },

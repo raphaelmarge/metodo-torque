@@ -22,17 +22,24 @@ const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 const LARGURA = 390;   // iPhone 12/13/14 em pé — o mais comum
 
 let ok = 0, falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suite para no meio (senao sobra Chromium orfao e o resumo nunca sai)
+let navegadorV756 = null;
 function t(cond, nome) {
   if (cond) { ok++; console.log("  ✅ " + nome); }
   else { falhas++; console.log("  ❌ " + nome); }
 }
 
 /* Casos PROPOSITAIS, que a régua acusa mas são o desenho certo. Cada linha
- * precisa dizer POR QUE — perdão sem motivo escrito vira tapete pra sujeira. */
-const PERDOADOS = [
-  // a fita do mapa de calor e as barras de gráfico rolam por dentro do card
-  { tipo: "vazou-do-pai", alvo: /canvas|svg/i, porque: "gráfico rola dentro da própria caixa" },
-];
+ * precisa dizer POR QUE — perdão sem motivo escrito vira tapete pra sujeira.
+ * v756: a lista tinha um único item, do tipo "vazou-do-pai", que a régua NUNCA
+ * emite (ela só emite texto-sumido, palavra-por-linha, nome-partido, sobrepoe e
+ * rola-de-lado). Era letra morta sugerindo uma cobertura que não existe — e um
+ * perdão morto é pior que nenhum, porque parece que algo está sendo tratado.
+ * A lista fica vazia até a régua ter um caso real; o TIPOS abaixo trava a volta
+ * de outro perdão que não case com tipo nenhum de verdade. */
+const TIPOS = ["texto-sumido", "palavra-por-linha", "nome-partido", "sobrepoe", "rola-de-lado"];
+const PERDOADOS = [];
 function perdoado(p) {
   return PERDOADOS.some(function (x) {
     return x.tipo === p.tipo && x.alvo.test(p.alvo || "");
@@ -188,6 +195,7 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
 
 (async () => {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
+  navegadorV756 = b;
   const ctx = await b.newContext({ viewport: { width: LARGURA, height: 880 }, locale: "pt-BR",
     isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const p = await ctx.newPage();
@@ -295,6 +303,11 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     sel.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
   });
+  /* v756: era `if (abriu) {` — com o seletor de aluno vazio os 9 asserts da
+   * tela cheia simplesmente NÃO rodavam e a suíte terminava verde. É o mesmo
+   * "passar de graça" que esta suíte diz ter fechado. Agora a falta de aluno
+   * é uma FALHA, e o bloco só é pulado depois de acusar. */
+  t(abriu, "o seletor de aluno tem aluno pra montar ficha (sem isso os 9 asserts da tela cheia não medem nada)");
   if (abriu) {
     await p.waitForTimeout(1400);
     await p.evaluate(() => { const d = document.querySelector("#fichasBox details"); if (d) d.open = true; });
@@ -340,7 +353,16 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     t(!(await ve(".tdesq")), "o ‹ Voltar fecha a tela cheia e devolve a ficha");
   }
 
+  t(PERDOADOS.every((x) => TIPOS.indexOf(x.tipo) > -1),
+    "todo perdão da lista casa com um tipo que a régua emite de verdade (nada de letra morta)");
+
   await b.close();
   console.log("\n" + ok + " ok, " + falhas + " falhas");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

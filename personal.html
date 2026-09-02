@@ -1966,7 +1966,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
     <div class="menu-cab">
-      <span class="mcab-txt">TORQUE ON<b>Módulo Personal</b></span>
+      <!-- v756: "Módulo Personal" não é marca nenhuma do guia (TORQUE ON / TORQUE
+           PERSONAL / TORQUE NUTRI). O professor assinava o TORQUE PERSONAL,
+           entrava num painel chamado "Módulo Personal" e mandava ao colaborador
+           um acesso ao "TORQUE ON" — pareciam três sistemas. A marca-mãe fica
+           em cima e o nome do produto embaixo. -->
+      <span class="mcab-txt">TORQUE ON<b>TORQUE PERSONAL</b></span>
       <button type="button" id="btnMenuFino" class="mcab-bt" aria-expanded="true"
         title="Encolher o menu" aria-label="Encolher o menu">
         <svg class="mi" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
@@ -2367,7 +2372,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
-      <h2>Quem ainda não pagou este mês</h2>
+      <!-- v756: quem já venceu fica no bloco vermelho "Atrasados", lá em cima.
+           Aqui sobra o que ainda VAI vencer e o que aquele bloco não cobre
+           (pacote renovado, sessões avulsas a cobrar) — uma lista de cobrança
+           só, em vez das duas iguais que existiam na mesma dobra. -->
+      <h2>Ainda vai vencer este mês</h2>
+      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Quem já passou do vencimento está no bloco <b>Atrasados</b>, no começo da tela.</p>
       <div id="pendentes" class="muted">Todo mundo em dia.</div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
@@ -2997,7 +3007,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Entrou × saiu × sobrou</h2><div id="relEntradas" class="muted">Sem pagamentos ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita dos 6 meses até aqui</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Como o dinheiro entrou no mês</h2><div id="relFormas" class="muted">Sem pagamentos ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
     <!-- v712: VENDAS — serviços, pacotes e produtos, com período livre -->
@@ -3528,7 +3537,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" style="margin-top: 14px; border-left: 4px solid #f87171;" data-cfgsec="conta">
       <h2>Excluir minha conta</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup em Conta → Backup dos dados.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup em Sua ilha → Backup dos dados.</p>
       <button class="btn sec" id="cfgExcluir" style="border-color: var(--pt-erro-borda); color: var(--tk-erro2);">Excluir minha conta e todos os dados</button>
       <div id="cfgExcluirStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
     </div>
@@ -3555,7 +3564,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vChat" hidden>
     <div class="abas" id="chAbas" style="margin: 0 0 14px;">
       <button data-cha="conversas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg> Conversas</button>
-      <button data-cha="robo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Robô e automações</button>
+      <button data-cha="robo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Fluxos do robô</button>
     </div>
     <!-- tela 3c do canvas: a lista de conversas de um lado, a conversa do outro -->
     <div class="chpanel" data-chsec="conversas">
@@ -3599,7 +3608,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <label style="font-size: 12.5px;">Opções do menu — uma por linha, no formato <b>Rótulo | Resposta</b> (escreva <b>humano</b> na resposta pra encaminhar pra você)
         <textarea id="botOpsP" rows="5" style="width: 100%; margin: 4px 0 10px; font-family: inherit; font-size: 13px; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;"></textarea></label>
       <div class="linha-flex"><button class="btn" id="botSalvaP">Salvar robô</button><span id="botOkP" class="muted"></span></div>
-      <h2 style="margin-top: 18px;">Automações (arrastar e ligar)</h2>
+      <!-- v756: chamava-se "Automações", o MESMO nome do card de Configurações →
+           WhatsApp, que é outra coisa (a fila de mensagens prontas). Quem criava
+           uma "automação" de aluno sumido lá procurava aqui e achava outro
+           mecanismo. Aqui são os FLUXOS do robô; lá são as MENSAGENS automáticas. -->
+      <h2 style="margin-top: 18px;">Fluxos do robô (arrastar e ligar)</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Crie quantas automações quiser, cada uma com seu quadro: arraste os balões pelo cabeçalho, toque em 🎯 pra ligar um passo no outro e ▶ marca onde a conversa começa. A marcada com 📶 é a que vai pro WhatsApp.</p>
       <div id="botFluxoP"></div>
       <div class="linha-flex" style="margin-top: 12px;">
@@ -3624,13 +3637,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <label style="margin: 0; font-size: 12.5px;">Cidade
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
-    <p class="muted" style="margin: 12px 0; font-size: 12.5px;">🎨 Cores e logo do app agora vivem na aba <b>Personalização</b> (menu de 3 traços).</p>
+    <!-- v756: os campos acima gravam no `change` e não diziam nada. Quem digita
+         a chave Pix, clica fora e não vê confirmação nenhuma fica sem saber se
+         salvou — e volta pra conferir toda vez. -->
+    <p class="muted" id="ilhaSalvo" style="margin: 4px 0 0; font-size: 12.5px; color: var(--tk-ok); display: none;"></p>
+    <p class="muted" style="margin: 12px 0; font-size: 12.5px;">🎨 Cores e logo do app agora vivem na aba <b>Personalização</b>, no menu.</p>
     <label style="display: block; margin: 10px 0; font-size: 12.5px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 21c-3.6-3.2-6-6.5-6-9.8a6 6 0 0 1 12 0c0 3.3-2.4 6.6-6 9.8z'/><circle cx='12' cy='11' r='2.2'/></svg> Mural dos alunos — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
       <textarea id="cfgMural" rows="3" placeholder="Semana que vem: treino ao ar livre no sábado!
 Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
-      <button class="btn sec" id="btnContaEquipe" hidden title="cria um login pro seu professor auxiliar — ele entra no painel sem ver Financeiro, Relatórios e Configurações">+ Login de colaborador</button>
+      <button class="btn sec" id="btnContaEquipe" hidden title="cria um login pro seu professor auxiliar — ele entra no painel sem ver Financeiro, Relatórios, Configurações, Personalização, Minha página, Sua ilha e Assessoria (e tem um Sair no pé do menu)">+ Login de colaborador</button>
       <button class="btn sec" id="btnContaSenha" hidden>Trocar minha senha</button>
       <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
     </div>
@@ -4159,7 +4176,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#navPt [data-nav]").forEach(function (x) { x.classList.toggle("ativa", x.dataset.nav === b.dataset.a); });
     $("vDash").hidden = b.dataset.a !== "dash";
     if (b.dataset.a === "dash") {
-      renderRelatorios();
+      /* v756: era `renderRelatorios()` — ou seja, cada volta ao Início
+       * recalculava KPIs, 6 meses, alertas e vendas e pintava o DOM de
+       * #vRelatorios, que está ESCONDIDO. Trabalho que cresce com a base (o
+       * projeto fala em milhares de alunos) e um acoplamento invisível: quem
+       * mexesse nos Relatórios quebrava o Início sem perceber, porque o
+       * renderDashPT era chamado lá no fim daquela função. O Início pinta o
+       * Início; os dois já leem os mesmos dados por dadosDoMes. */
+      renderDashPT(load());
       // v747: voltar pro Início é a hora de ler a nuvem de novo (chat parado e
       // dor relatada); nos saves do meio do caminho vale a cópia de 10 min
       if (window.__resolverChat) resolverChat(true);
@@ -4249,7 +4273,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ], fig: ajFig(ajFoco(ajBt("+ Novo aluno", "pri"), "passo 1") + " " + ajBt("Montar treino") + " " + ajFoco(ajBt("Salvar e publicar", "pri"), "passo 3")) + ajImg("p-novo-aluno.jpg", "O botão + Novo aluno no topo do Início, marcado com a seta") },
         { t: "Entrar na nuvem (sincronizar entre aparelhos)", p: [
           "Tudo funciona offline neste aparelho — a nuvem entra pra sincronizar e ligar chat, questionários e comunidade.",
-          "Toque no aviso <b>Entre na sua conta</b> (ou Configurações → Conta) e use seu e-mail.",
+          "Toque no aviso <b>Entre na sua conta</b> (ou Configurações → Cobrança e conta) e use seu e-mail.",
           "Depois de entrar, o que você fizer aqui aparece no seu outro computador/celular sozinho.",
         ] },
         { t: "Instalar o painel no celular", p: [
@@ -4443,7 +4467,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       subs: [
         { t: "Do dia a dia", p: [
           "A primeira sub-aba junta KPIs do mês, movimentação, indicadores, aniversários e os alertas do studio.",
-          "<b>Mandar no WhatsApp</b> abre o resumo do mês pronto pra enviar; <b>Mandar pro meu e-mail</b> manda pra sua caixa — e o fechamento do mês anterior pode ir sozinho (card Sua ilha).",
+          "<b>Mandar no WhatsApp</b> abre o resumo do mês pronto pra enviar; <b>Mandar pro meu e-mail</b> manda pra sua caixa — e o fechamento do mês anterior pode ir sozinho (Sua ilha).",
         ] },
         { t: "Retenção (Radar)", p: [
           "O Radar mostra quem está esfriando ANTES de virar cancelamento: frequência caindo, check-in piorando, conversa parada.",
@@ -4477,11 +4501,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Suba uma <b>foto por tipo de treino</b> (perna, peito, corrida…) — cada ficha ganha a capa certa sozinha.",
         ] },
         { t: "Clube de vantagens", p: [
-          "Em <b>Configurações → Clube de vantagens</b>, cadastre parcerias com comércios locais: nome, benefício, cupom e link.",
+          "Em <b>Personalização → Clube de vantagens</b>, cadastre parcerias com comércios locais: nome, benefício, cupom e link.",
           "No app do aluno vira um cartão com o cupom de copiar e o botão pro site do parceiro.",
         ], fig: ajFig(ajLinha("Suplementos do Zé", "15% off em creatina", "") + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("TORQUE15 · copiar") + ajFoco(ajBt("Ir pro site do parceiro"), "o link que você colou") + "</span>") },
         { t: "Loja no app", p: [
-          "Em <b>Configurações → Loja</b>, cadastre produtos e serviços com preço e foto.",
+          "Em <b>Personalização → Loja</b>, cadastre produtos e serviços com preço e foto.",
           "Sem gateway, o <b>Quero esse</b> cai no seu WhatsApp; com gateway próprio ligado, vira <b>Comprar</b> com pagamento dentro do app e baixa automática.",
         ] },
         { t: "Banco de imagens", p: [
@@ -4493,11 +4517,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Ao encerrar um aluno, o painel oferece <b>revogar o app</b> dele — o acesso morre na hora, em todos os aparelhos.",
         ] },
       ] },
-    { id: "zap", t: "WhatsApp e automações", d: "A fila, as automações e o robô oficial",
+    { id: "zap", t: "WhatsApp e mensagens automáticas", d: "A fila, as mensagens automáticas e o número oficial",
       ic: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/><path d='M9 10c.5 2 2.5 4 4.5 4.5'/>",
       subs: [
         { t: "Automações que caem na fila", p: [
-          "Em <b>Configurações → Suas automações</b>: boas-vindas, aniversário, aluno sumido, pacote acabando e mais.",
+          "Em <b>Configurações → WhatsApp → Mensagens automáticas de WhatsApp</b>: boas-vindas, aniversário, aluno sumido, pacote acabando e mais.",
           "Nada sai sozinho: tudo cai na <b>fila do Início</b> e você toca Enviar em cada um.",
           "Registrou um pagamento? O <b>recibo pronto</b> entra na fila também — um toque e o aluno recebe o comprovante.",
         ] },
@@ -4525,7 +4549,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "O interruptor <b>Modo claro</b> fica no pé do menu lateral.",
         ] },
         { t: "Seus dados são seus", p: [
-          "<b>Exportar meus dados</b> (em Sua ilha) baixa tudo num arquivo.",
+          "Em <b>Sua ilha</b>, <b>Baixar backup (.json)</b> leva tudo num arquivo só; <b>Baixar em Excel (CSV)</b> abre no Excel.",
           "Chaves de gateway e tokens NUNCA voltam pra tela — o painel só mostra se existem.",
         ] },
         { t: "Avisos no seu celular", p: [
@@ -4546,7 +4570,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
       return "<div class='card'><h2>Falar com o suporte</h2>" +
-        "<p class='muted' style='margin:6px 0 0;'>O chamado precisa da sua conta na nuvem — é ela que gera o protocolo e guarda o histórico. <b>Entre na sua conta</b> (Configurações → Conta) e volte aqui.</p></div>";
+        "<p class='muted' style='margin:6px 0 0;'>O chamado precisa da sua conta na nuvem — é ela que gera o protocolo e guarda o histórico. <b>Entre na sua conta</b> (Configurações → Cobrança e conta) e volte aqui.</p></div>";
     }
     return "<div class='card' style='margin-bottom:12px;'><h2>Abrir um chamado</h2>" +
       "<p class='muted' style='margin:4px 0 12px;font-size:12.5px;'>Bug, pedido de alteração, crítica ou sugestão — cai direto com a gente, e você recebe um <b>número de protocolo</b> pra acompanhar.</p>" +
@@ -4708,12 +4732,115 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- alunos ----------
   var alFiltro = "ativos"; // tela 2a: Ativos / Sumindo / Devendo / Encerrados
   var alBusca = "";
+  /* v756: "sumido" tinha QUATRO limiares no painel — 5 dias (lista e Radar),
+   * 7 (fila do WhatsApp), 14 (alerta dos Relatórios) e 30 (Assiduidade). O
+   * professor lia "3 sumindo" no Início e "Sumido há 14+ dias: 1 aluno" nos
+   * Relatórios no mesmo instante e não sabia qual era a conta oficial. Agora a
+   * conta é UMA (diasSemTreinar) e os ESTÁGIOS são nomeados: 5 = está sumindo
+   * (cutuca), 14 = alerta de verdade. O 7 da fila do WhatsApp continua
+   * documentado como régua de mensagem, não como estado do aluno.
+   * ⚠️ diasSemTreinar devolve null pra quem NUNCA treinou: aluno novo não é
+   * aluno sumido, e o alerta dos Relatórios caía no a.desde pra fingir que era.
+   * REAVALIA_DIAS junta os 60/90 dias da reavaliação num número só. */
+  var SUMINDO_DIAS = 5;      // a partir daqui a lista e o Radar cutucam
+  var SUMIDO_DIAS = 14;      // a partir daqui vira alerta nos Relatórios
+  var REAVALIA_DIAS = 90;    // avaliação física mais velha que isto pede reavaliação
+  function diasSemTreinar(st, a) {
+    var ult = idxDe(st).sessFeitasDe(a.id).map(function (x) { return x.data; }).sort().pop() || "";
+    if (!ult) return null;   // nunca treinou: é aluno novo, não aluno sumido
+    return Math.floor((Date.parse(S.todayISO() + "T12:00") - Date.parse(ult + "T12:00")) / 864e5);
+  }
+  window.__diasSemTreinar = diasSemTreinar; // testes
+  window.__reguaSumido = { sumindo: SUMINDO_DIAS, sumido: SUMIDO_DIAS, reavalia: REAVALIA_DIAS }; // testes
+  /* v756: "com acesso do app" tinha duas definições — Configurações contava
+   * quem tem appTokenP (app publicado, mesmo que nunca aberto) e Relatórios
+   * contava quem tem acessoEm (login criado). "18 de 24 usando" numa tela e
+   * "9 de 24 com acesso" na outra, pro mesmo studio. A ficha do aluno já sabia
+   * a diferença; agora as três leem daqui. */
+  function estadoAppDe(a) {
+    if (!a || !a.appTokenP) return "sem";
+    if (a.appRevogadoEm) return "cortado";
+    return a.acessoEm ? "ativo" : "gerado";
+  }
+  window.__estadoAppDe = estadoAppDe; // testes
+
+  /* v756: "está sumindo" é UMA regra, e ela NÃO depende de o aluno dever ou não.
+   * O Radar do Início cutucava todo mundo com 5+ dias sem treinar, enquanto o
+   * cabeçalho de Alunos contava só quem o alEstado tinha rotulado de "sumindo"
+   * — e lá o "devendo" vence. Resultado: quem devia E tinha sumido aparecia no
+   * Radar e não no "M sumindo" da lista. Agora as duas telas (e o filtro
+   * Sumindo, pra a conta bater com o que a lista mostra) chamam esta função. */
+  function estaSumindo(st, a) {
+    if (!a || a.ativo === false) return false;
+    var dias = diasSemTreinar(st, a);
+    if (dias === null || dias < SUMINDO_DIAS) return false;
+    var hoje = S.todayISO();
+    return !idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
+  }
+  window.__estaSumindo = estaSumindo; // testes
+
+  /* v756: "a receber" era calculado de CINCO jeitos entre Início, Financeiro e
+   * Relatórios — o Início só somava quem tem contrato (`if (!ct) return`), o
+   * Financeiro somava todo ativo e o Relatório somava dívida + sessões. O mesmo
+   * professor via R$ 1.200 numa tela e R$ 1.800 na outra no mesmo dia. Agora a
+   * conta é uma só, e cada tela escolhe QUAL número dela quer mostrar:
+   *   acumulado  — todos os meses em aberto de todo aluno ativo (com ou sem contrato)
+   *   vencido    — o pedaço que já passou do vencimento (cobrancaVencida)
+   *   sessoes    — hora-aula já dada e ainda não paga (fora de pacote)
+   *   comSessoes — acumulado + sessoes, que é o "a receber acumulado" do Relatório */
+  var recCache = { st: null, n: -1, val: null };
+  function aReceberDe(st) {
+    /* memória curta, no mesmo desenho do idxDe: Início, Financeiro e Relatórios
+     * pedem a MESMA conta na mesma repintura, e com 1000 alunos varrer três
+     * vezes 20 meses de dívida por aluno custa caro. Muda uma linha de
+     * pagamento, sessão, aluno ou contrato → a conta é refeita. */
+    var nR = (st.pagamentos || []).length + (st.sessoes || []).length +
+      (st.alunos || []).length + (st.contratosPT || []).length;
+    if (recCache.st === st && recCache.n === nR && recCache.val) return recCache.val;
+    var acumulado = 0, vencido = 0, sessoes = 0;
+    (st.alunos || []).forEach(function (a) {
+      if (a.ativo === false) return;
+      var dv = dividaDe(st, a) || {};
+      var tot = +dv.total || 0;
+      acumulado += tot;
+      if (tot && cobrancaVencida(st, a)) vencido += tot;
+      var sc = sessoesACobrar(st, a);
+      if (sc && !sc.pacote) sessoes += +sc.total || 0;
+    });
+    recCache = { st: st, n: nR, val: { acumulado: acumulado, vencido: vencido, sessoes: sessoes, comSessoes: acumulado + sessoes } };
+    return recCache.val;
+  }
+  window.__aReceberDe = aReceberDe; // testes
+
+  /* v756: a ficha do aluno de HORA-AULA dizia "em dia" no cabeçalho e
+   * "DEVENDO R$ 240" na aba Financeiro logo abaixo — e o card de situação dizia
+   * "setembro — em aberto" todo mês pra quem tinha crédito sobrando. É que
+   * "pagou o mês" não quer dizer nada pra quem paga por aula: quem manda ali é
+   * a CARTEIRA (pago − consumido). Agora existe uma leitura só, e ela sabe de
+   * qual tipo de aluno está falando. */
+  function situacaoFinDe(st, a) {
+    var cart = carteiraPT(st, a);
+    if (cart) {
+      var vs = cart.valorSessao || 1;
+      if (cart.saldo < 0) return { tipo: "hora", ok: false, cart: cart,
+        curto: "devendo " + S.plural(Math.ceil(-cart.saldo / vs), "sessão", "sessões"),
+        rot: "carteira", valor: "− " + S.fmtBRL(-cart.saldo), sub: "sessões já dadas além do pago" };
+      if (cart.saldo > 0) return { tipo: "hora", ok: true, cart: cart,
+        curto: "com créditos", rot: "carteira", valor: S.fmtBRL(cart.saldo),
+        sub: "dá pra mais " + S.plural(Math.floor(cart.saldo / vs), "sessão", "sessões") };
+      return { tipo: "hora", ok: true, cart: cart, curto: "em dia", rot: "carteira",
+        valor: S.fmtBRL(0), sub: "consumiu exatamente o que pagou" };
+    }
+    var devendo = !!cobrancaVencida(st, a);
+    return { tipo: "mensal", ok: !devendo, cart: null, curto: devendo ? "devendo" : "em dia" };
+  }
+  window.__situacaoFinDe = situacaoFinDe; // testes
+
   /* Os quatro estados que a tela 2a mostra. Cada um usa a MESMA regra da tela
    * dona do assunto: "devendo" é dividaDe + atrasoTol (igual ao Financeiro),
    * "sumindo" é 5+ dias sem treinar e nada marcado (igual ao Radar do Início).
    * Duas contas diferentes pro mesmo aluno seria pior que não ter o filtro. */
   function alEstado(st, a) {
-    var hoje = S.todayISO();
     if (a.ativo === false) return "encerrados";
     /* "devendo" é a MESMA conta da lista "Quem ainda não pagou este mês": não
      * pagou o mês corrente E já passou do vencimento. Usar dividaDe aqui marcava
@@ -4722,9 +4849,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v747: a MESMA função-fonte do Início, do Financeiro e do card do mês
     // (cobrancaVencida) — mês anterior em aberto também conta, não só o corrente
     if (cobrancaVencida(st, a)) return "devendo";
-    var ult = idxDe(st).sessFeitasDe(a.id).map(function (x) { return x.data; }).sort().pop() || "";
-    var futura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
-    if (ult && !futura && Math.floor((new Date(hoje) - new Date(ult)) / 864e5) >= 5) return "sumindo";
+    if (estaSumindo(st, a)) return "sumindo";
     return "ativos";
   }
   // "Hoje 18:00" / "Amanhã 07:30" / "Quinta 06:30" / sem nada marcado
@@ -4832,8 +4957,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       estadoDe[a.id] = e;
       (porEstado[e] = porEstado[e] || []).push(a);
     });
+    /* v756: "sumindo" é contado pela régua PRÓPRIA (estaSumindo), não pelo
+     * rótulo do alEstado — lá o "devendo" vence, então quem devia E tinha
+     * sumido não entrava no "M sumindo" do cabeçalho, mas entrava no Radar do
+     * Início. O filtro Sumindo passa a mostrar essa mesma lista, senão a conta
+     * do chip diria um número e a lista mostraria outro. */
+    var sumindoTodos = todos.filter(function (a) { return estaSumindo(st, a); });
     var qtd = { ativos: (porEstado.ativos || []).length + (porEstado.sumindo || []).length + (porEstado.devendo || []).length,
-      sumindo: (porEstado.sumindo || []).length, devendo: (porEstado.devendo || []).length,
+      sumindo: sumindoTodos.length, devendo: (porEstado.devendo || []).length,
       encerrados: (porEstado.encerrados || []).length };
     var rot = { ativos: "Ativos", sumindo: "Sumindo", devendo: "Devendo", encerrados: "Encerrados" };
     document.querySelectorAll("#alFiltro button").forEach(function (b) {
@@ -4847,6 +4978,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (qtd.sumindo ? ' · <span style="color:var(--tk-aten);">' + qtd.sumindo + " sumindo</span>" : "");
     var lista = alFiltro === "ativos"
       ? todos.filter(function (a) { return a.ativo !== false; })
+      : alFiltro === "sumindo" ? sumindoTodos
       : (porEstado[alFiltro] || []);
     if (alBusca) {
       var q = alBusca.toLowerCase();
@@ -5273,15 +5405,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaPfTopo(st, a) {
     var idade = a.nasc ? idadeDe(a.nasc) : 0;
     var pl = alPlano(st, a);
-    var est = alEstado(st, a);
+    /* v756: era `alEstado === "devendo" ? "devendo" : "em dia"`, e o alEstado
+     * deixa o hora-aula de fora de propósito — então o cabeçalho dizia "em dia"
+     * enquanto a aba Financeiro logo abaixo dizia "DEVENDO R$ 240". Agora a
+     * leitura é a mesma nas duas (situacaoFinDe), e ela sabe quem paga por aula. */
+    var sit = situacaoFinDe(st, a);
     var linha = [a.objetivo || "", a.desde ? S.plural(Math.max(1, Math.round((new Date(S.todayISO()) - new Date(a.desde)) / 2629800000)), "mês", "meses") : "",
-      pl.o, est === "devendo" ? "devendo" : "em dia", idade ? idade + " anos" : ""].filter(Boolean);
+      pl.o, sit.curto, idade ? idade + " anos" : ""].filter(Boolean);
     $("pfDesde").textContent = linha.join(" · ") + (a.appRevogadoEm ? " · acesso ao app cortado" : "");
     var nMes = treinosMesDe(st, a).n; // v748: a MESMA conta do tile do Resumo
     var chips = $("pfChips");
     if (chips) {
       chips.innerHTML =
-        (a.appTokenP ? "<span>" + (a.appRevogadoEm ? "App cortado" : a.acessoEm ? "App ativo" : "App gerado") + "</span>" : "<span>Sem app ainda</span>") +
+        ("<span>" + { sem: "Sem app ainda", cortado: "App cortado", ativo: "App ativo", gerado: "App gerado" }[estadoAppDe(a)] + "</span>") +
         "<span>" + S.plural(nMes, "treino no mês", "treinos no mês") + "</span>";
     }
     var px = alProxima(st, a);
@@ -5704,11 +5840,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var MESES_ROT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var mesNome = MESES_ROT[+mesAtual().slice(5, 7) - 1];
     var nPagsAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; }).length;
+    /* v756: pra quem paga por AULA o "mês em aberto" não quer dizer nada — o
+     * card dizia "setembro — em aberto" todo mês pra quem tinha crédito
+     * sobrando. Agora o primeiro tile fala a língua do aluno: mensalista vê o
+     * mês, hora-aula vê a carteira (a MESMA leitura do cabeçalho da ficha). */
+    var sitF = situacaoFinDe(st, a);
+    var okF = sitF.tipo === "hora" ? sitF.ok : pagoMes;
     var situacao = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
-      "<div style='background:" + (pagoMes ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (pagoMes ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
-      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>" + mesNome + "</div>" +
-      "<div style='font-size:17px;font-weight:800;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" + (pagoMes ? "✓ pago" : "em aberto") + "</div>" +
-      (!pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") +
+      "<div style='background:" + (okF ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (okF ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
+      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>" + (sitF.tipo === "hora" ? "carteira de sessões" : mesNome) + "</div>" +
+      "<div style='font-size:17px;font-weight:800;color:" + (okF ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
+      (sitF.tipo === "hora" ? sitF.valor : pagoMes ? "✓ pago" : "em aberto") + "</div>" +
+      (sitF.tipo === "hora" ? "<div class='muted' style='font-size:11.5px;'>" + sitF.sub + "</div>"
+        : !pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") +
       (extrasMes ? "<div class='muted' style='font-size:11.5px;'>+ " + S.fmtBRL(extrasMes) + " em serviços/pacotes</div>" : "") + "</div>" +
       "<div style='background:var(--tk-sup2);border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
       "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido em " + ano + "</div>" +
@@ -7815,7 +7959,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if ($("pfCpf")) $("pfCpf").value = cpfAs;
       }
       var nuvemAs = S.cloud && S.cloud();
-      if (!nuvemAs) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      if (!nuvemAs) { alert("Entre na sua conta (Sua ilha) primeiro."); return; }
       var btAs = e.target;
       // o alvo fica preso ao aluno do CLIQUE: se o professor trocar de perfil
       // enquanto a nuvem responde, a assinatura não pode cair no aluno errado
@@ -7849,7 +7993,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (e.target.id === "pfAssAsStatus" && a.assinaturaAs) {
       var btSt = e.target;
       var nuvemSt = S.cloud && S.cloud();
-      if (!nuvemSt) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      if (!nuvemSt) { alert("Entre na sua conta (Sua ilha) primeiro."); return; }
       btSt.disabled = true;
       self.MT_FUNCAO.chama(nuvemSt.client, "pagamentos", { acao: "assinatura_status", assinaturaId: a.assinaturaAs.id }, "A cobrança automática").then(function (d) {
         btSt.disabled = false;
@@ -7865,7 +8009,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!confirm("Cancelar a cobrança automática deste aluno? O Asaas para de gerar as mensalidades na hora.")) return;
       var btCa = e.target;
       var nuvemCa = S.cloud && S.cloud();
-      if (!nuvemCa) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      if (!nuvemCa) { alert("Entre na sua conta (Sua ilha) primeiro."); return; }
       var alvoCa = a.id; // preso ao aluno do clique — trocar de perfil no meio não pode apagar a assinatura de outro
       btCa.disabled = true;
       self.MT_FUNCAO.chama(nuvemCa.client, "pagamentos", { acao: "assinatura_cancela", assinaturaId: a.assinaturaAs.id }, "A cobrança automática").then(function (d) {
@@ -7973,12 +8117,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     { ico: "📊", t: "Relatórios — Do dia a dia", k: "relatorios dia a dia alertas aniversarios renovar contrato fechamento metas indicacoes", a: "relatorios", rel: "geral" },
     { ico: "🛒", t: "Relatórios — Vendas", k: "relatorios vendas servicos produtos loja ranking", a: "relatorios", rel: "vendas" },
     { ico: "📈", t: "Relatórios — Financeiro", k: "relatorios receita entrou saiu formas previsto ltv retroativo", a: "relatorios", rel: "fin" },
-    { ico: "⚙️", t: "Configurações — WhatsApp e mensagens", k: "configuracoes whatsapp mensagens modelos automacao fila vespera lembrete", a: "config" },
-    { ico: "⚙️", t: "Configurações — Receber dos alunos", k: "configuracoes receber gateway mercado pago asaas pagarme chave assinatura", a: "config" },
-    { ico: "🎨", t: "Personalização — a cara do app", k: "personalizacao cor logo fotos tipo treino publicar apps premio indicacao", a: "pers" },
+    /* v756: as entradas de Configurações só tinham a aba do MENU e caíam sempre
+     * no Resumo — quem escolhia "Receber dos alunos" ainda precisava achar a
+     * sub-aba na mão. Agora cada uma carrega o `cfg` e o vaiBuscaTela abre a
+     * sub-aba certa (o window.__cfgAba já existia e ninguém usava aqui). */
+    { ico: "⚙️", t: "Configurações — WhatsApp e mensagens", k: "configuracoes whatsapp mensagens modelos automacao fila vespera lembrete", a: "config", cfg: "zap" },
+    { ico: "⚙️", t: "Configurações — Receber dos alunos", k: "configuracoes receber gateway mercado pago asaas pagarme chave assinatura pix", a: "config", cfg: "conta" },
+    /* v756: as palavras do prêmio da indicação estavam na entrada de
+     * Personalização, mas o campo (#cfgIndicaPremio) mora em Configurações →
+     * App do aluno — quem digitava "prêmio" ia parar na tela errada. */
+    { ico: "⚙️", t: "Configurações — App do aluno", k: "configuracoes app do aluno areas premio indicacao playlist comunidade medidas camera", a: "config", cfg: "app" },
+    { ico: "🎨", t: "Personalização — a cara do app", k: "personalizacao cor logo fotos tipo treino publicar apps clube vantagens loja", a: "pers" },
     { ico: "🌐", t: "Minha página", k: "minha pagina site vendas depoimentos aula experimental link", a: "sitepro" },
     { ico: "🔐", t: "Sua ilha — conta e backup", k: "conta ilha backup exportar sair senha colaborador login assinatura", a: "conta" },
     { ico: "🖼️", t: "Banco de imagens", k: "imagens fotos banco galeria", a: "imagens" },
+    // v756: a Assessoria é item do menu e não estava no índice da busca
+    { ico: "🛰️", t: "Assessoria a distância", k: "assessoria distancia online remoto acompanhamento treino log", a: "assessoria" },
     { ico: "🆘", t: "Ajuda e suporte", k: "ajuda suporte chamado protocolo duvida como faz", a: "ajuda" },
   ];
   function vaiBuscaTela(ix) {
@@ -7987,6 +8141,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     vaiAba(it.a);
     if (it.rel && window.__relAba) window.__relAba(it.rel);
     if (it.aga && window.__agAba) window.__agAba(it.aga);
+    if (it.cfg && window.__cfgAba) window.__cfgAba(it.cfg);   // v756
   }
   window.__buscaTelas = { lista: BUSCA_TELAS, vai: vaiBuscaTela }; // testes
   /* ---------- v726: COMANDOS na busca — digita a ação e ela executa ----------
@@ -8266,7 +8421,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var avisoQ = $("qeAviso");
     avisoQ.hidden = false;
     if (!nuvemQ) {
-      avisoQ.textContent = "Entre na sua conta (card Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do aluno não chegam.";
+      avisoQ.textContent = "Entre na sua conta (Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do aluno não chegam.";
     } else {
       avisoQ.textContent = "Preparando o app do aluno na nuvem…";
       // v755: o mesmo publicaPacotes de todo mundo (upsert + carimbo num lugar só)
@@ -8307,7 +8462,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     aviso.hidden = false;
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      aviso.textContent = "Entre na sua conta (card Sua ilha) e clique de novo — sem a nuvem o app do aluno não atualiza.";
+      aviso.textContent = "Entre na sua conta (Sua ilha) e clique de novo — sem a nuvem o app do aluno não atualiza.";
       return;
     }
     aviso.textContent = "Publicando o app do aluno com o questionário…";
@@ -8442,7 +8597,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("qsResumo").textContent = "Precisa da sua conta";
       lista.innerHTML = "";
       if ($("qsCobrar")) $("qsCobrar").hidden = true;
-      det.innerHTML = '<div class="dnota">Entre na sua conta (card <b>Sua ilha</b>) pra receber os check-ins e as respostas dos alunos aqui.</div>';
+      det.innerHTML = '<div class="dnota">Entre na sua conta (<b>Sua ilha</b>) pra receber os check-ins e as respostas dos alunos aqui.</div>';
       return;
     }
     if (!ativos.length) {
@@ -8709,7 +8864,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
       if ($("fdmResumo")) $("fdmResumo").textContent = "Precisa da sua conta";
-      box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou.";
+      box.textContent = "Entre com a conta da nuvem (Sua ilha) pra ver o que a turma postou.";
       return;
     }
     box.textContent = "Carregando…";
@@ -9539,7 +9694,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alvo = $(idStatus || "geStatus");
     var st = load();
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { if (!silencioso) alert("Entre na sua conta (card Sua ilha) pra publicar os apps."); return; }
+    if (!nuvem) { if (!silencioso) alert("Entre na sua conta (Sua ilha) pra publicar os apps."); return; }
     var pend = st.alunos.filter(function (a) { return appPendente(st, a, soSistema); });
     if (!pend.length) {
       // antes voltava calado: o professor clicava e a tela nao dizia nada
@@ -9589,7 +9744,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v755: acesso cortado não recebe pacote nem push — religue primeiro
     if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra publicar o app." }); return; }
+    if (!nuvem) { cb({ erro: "Entre na sua conta (Sua ilha) pra publicar o app." }); return; }
     publicaPacotes(nuvem, [a]).then(function (r) {
       if (r.erro) { cb({ erro: "Não deu pra publicar agora: " + r.erro }); return; }
       pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
@@ -11705,12 +11860,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }).sort(function (x, y) { return y.dias - x.dias; });
     var totalAtr = atr.reduce(function (t, x) { return t + x.valor; }, 0);
     // a receber: tudo em aberto entre os ativos com cobrança
-    var aReceber = 0;
-    st.alunos.forEach(function (a) {
-      if (a.ativo === false) return;
-      var dv = dividaDe(st, a);
-      if (dv && dv.total) aReceber += dv.total;
-    });
+    // v756: a MESMA função do card do mês do Início e do Relatório (aReceberDe)
+    var aReceber = aReceberDe(st).acumulado;
     var rot = $("pgMesRot"); if (rot) rot.textContent = MES[+mes.slice(5, 7) - 1];
     /* Tela 21 do handoff: no celular o dinheiro do mes vira um CARD ROXO com o
      * numero de 34px, a meta, a barra e a linha "a receber · vencidos". Ele le
@@ -11749,10 +11900,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "</div>" +
         atr.map(function (x) {
           var a = x.a;
+          var planoAtr = x.ct ? planoDe(st, x.ct.planoId) : null;
           return '<div class="pgatrlin"><div class="alav" style="background:rgba(248,113,113,.16);color:var(--tk-erro);">' +
             esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
             '<div style="min-width:0;"><button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" +
             (a.cartaoFalhouEm ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:var(--tk-erro);">CARTÃO RECUSADO</span>' : "") +
+            // v756: o mesmo chip do card de baixo — o professor precisa saber POR QUE
+            // esta linha não tem os botões de receber (a baixa vem do gateway)
+            (a.assinaturaRec ? '<span class="tag ok">no cartão</span>' : a.assinaturaAs ? '<span class="tag ok">automática</span>' : "") +
             '<div class="alsub">' + (x.meses > 1 ? S.plural(x.meses, "mês em aberto", "meses em aberto") : "Mensalidade de " + MES[+mes.slice(5, 7) - 1]) +
             (x.ct ? " · venceu dia " + x.ct.diaVenc + (x.dias ? " · " + S.plural(x.dias, "dia", "dias") : "") : " · sem contrato") + "</div></div>" +
             '<b style="margin-left:auto;font-size:15px;white-space:nowrap;">' + S.fmtBRL(x.valor) + "</b>" +
@@ -11763,6 +11918,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (x.auto ? '<span class="muted" style="font-size:12px;">cobrança automática — a baixa entra sozinha</span>' :
             '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + x.valor + '" data-origem="mensal">Link</button>' +
             ((st.config || {}).pixChave ? '<button class="btn sec mini" data-pix="' + a.id + '" data-v="' + x.valor + '">Pix</button>' : "") +
+            /* v756: o Cobrar no WhatsApp de CADA linha veio pra cá junto com a
+             * lista. Antes ele só existia no card de baixo, e tirar o atrasado
+             * de lá (pra a mesma pessoa não aparecer duas vezes na dobra) teria
+             * levado embora a cobrança individual — sobraria só o "Cobrar
+             * todos". O texto é o mesmo msgCobranca do resto do painel. */
+            (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+              String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgCobranca(st, a)) + '">Cobrar</a>' : "") +
+            // e o link de assinatura do plano, quando o professor cadastrou um
+            (planoAtr && planoAtr.linkRec ? '<a class="btn sec mini" href="' + esc(planoAtr.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
             '<button class="btn whats mini" data-receb="' + a.id + '" data-v="' + x.valor + '">Recebi</button>') + "</div></div>";
         }).join("") + "</div>";
     }
@@ -11850,8 +12014,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("reguaOn").checked = !((st.config || {}).reguaOff);
     pintaReguaStatus(st, 0);
     var diaHoje = +S.todayISO().slice(8, 10);
+    /* v756: a mesma dobra da tela tinha DUAS listas de cobrança — o bloco
+     * vermelho "Atrasados" (pintaFin2e) e este card —, com os mesmos alunos e
+     * os mesmos botões. O professor cobrava, rolava a tela e via o mesmo nome
+     * de novo ("já cobrei este?"). Agora quem já está no bloco de cima NÃO
+     * se repete aqui: este card passa a ser só o que ainda VAI vencer (e os
+     * casos que o bloco não cobre: pacote renovado, sessões a cobrar). */
     var pend = st.alunos.filter(function (a) {
       if (a.ativo === false) return false;
+      if (cobrancaVencida(st, a)) return false;   // já aparece em Atrasados
       return !idxDe(st).pagouMes(a.id, mesAtual());
     });
     var linhasPend = pend.map(function (a) {
@@ -12131,7 +12302,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
-    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra gerar o link de pagamento." }); return; }
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (Sua ilha) pra gerar o link de pagamento." }); return; }
     // gateway do PRÓPRIO professor (Mercado Pago / Asaas / Pagar.me da conta dele):
     // o dinheiro cai direto na conta dele, sem repasse
     if (pagApi.ligado && pagApi.provedor) {
@@ -13338,7 +13509,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var zapApi = cfg.zapApi || {};
     var nuvem = S.cloud && S.cloud();
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
-    var comApp = ativos.filter(function (a) { return a.appTokenP; }).length;
+    // v756: a mesma régua do Relatório e da ficha (estadoAppDe) — antes esta
+    // tela contava app PUBLICADO e a outra contava login CRIADO
+    var comApp = ativos.filter(function (a) { return estadoAppDe(a) === "ativo"; }).length;
+    var appGerado = ativos.filter(function (a) { return estadoAppDe(a) === "gerado"; }).length;
     var mes = S.todayISO().slice(0, 7);
     var baixas = st.pagamentos.filter(function (x) { return x.eventoId && (x.data || "").slice(0, 7) === mes; }).length;
     var assinas = ativos.filter(function (a) { return a.assinaturaAs || a.assinaturaRec; }).length;
@@ -13373,7 +13547,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : ehLink ? "O botão Link abre o SEU link de cobrança. Quem pagou você marca em Recebi — nada entra sozinho."
         : cfg.pixChave ? "O Pix sai com a sua chave. Pra cartão e boleto, ligue um gateway."
         : "Sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.",
-      acao: '<button type="button" class="btn sec" data-cfgir="conta">' + (ehGateway ? "Trocar chave" : ehLink ? "Trocar link" : "Configurar") + "</button>",
+      /* v756: "receber dos alunos" tem duas metades em telas diferentes — o
+       * GATEWAY (cartão/boleto) mora aqui e a chave PIX mora em Sua ilha. O
+       * botão levava só pro gateway e o professor que veio atrás do Pix não
+       * achava. Enquanto as duas não moram juntas, a tela pelo menos DIZ onde
+       * cada uma está e leva pra lá. */
+      acao: '<button type="button" class="btn sec" data-cfgir="conta">' + (ehGateway ? "Trocar chave" : ehLink ? "Trocar link" : "Ligar cartão e boleto") + "</button>" +
+        ' <button type="button" class="btn sec" data-cfgpix="1">' + (cfg.pixChave ? "Trocar a chave Pix" : "Pôr minha chave Pix") + "</button>",
     });
     if (ehGateway) {
       html += '<div class="rel3" style="margin:-6px 0 12px;">' +
@@ -13381,7 +13561,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         S.plural(baixas, "baixa", "baixas") + " em " + MES_LONGO[+mes.slice(5, 7) - 1] + "</div></div>" +
         '<div class="pfbox pq"><div class="tdrot">Assinaturas</div><div class="cfgv">' +
         S.plural(assinas, "ativa", "ativas") + " · mensal</div></div>" +
-        '<div class="pfbox pq"><div class="tdrot">Comissão da plataforma</div><div class="cfgv">0% · você recebe tudo</div></div>' +
+        // v756: a comissão vem da nuvem (pag_config.comissao_pct). Sem leitura
+        // ainda, a tela diz que está conferindo — nunca crava 0%.
+        '<div class="pfbox pq"><div class="tdrot">Comissão da plataforma</div><div class="cfgv">' +
+        (pagApi.comissao === undefined ? "conferindo…"
+          : +pagApi.comissao > 0
+            ? (+pagApi.comissao) + "% pra plataforma · você recebe " + (100 - +pagApi.comissao) + "%"
+            : "0% · você recebe tudo") + "</div></div>" +
         "</div>";
     }
     // 2) WhatsApp oficial
@@ -13397,7 +13583,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     html += cfgCard({
       icone: "▤", on: comApp > 0,
       titulo: "App dos alunos",
-      sub: comApp + " de " + ativos.length + " usando · correção de código chega em todos sem republicar",
+      // v756: "usando" agora quer dizer ABRIU o app (acessoEm). Quem só tem o
+      // app publicado aparece separado — antes os dois viravam o mesmo número
+      sub: comApp + " de " + ativos.length + " abriram o app" +
+        (appGerado ? " · " + appGerado + " com o app publicado e ainda sem abrir" : "") +
+        " · correção de código chega em todos sem republicar",
       acao: '<button type="button" class="btn sec" data-cfgir="app">Ajustar o que aparece</button>',
     });
     html += '<div class="cfgsw">' + CFG_TOGGLES.map(function (t) {
@@ -13411,6 +13601,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("cfgResumo").addEventListener("click", function (e) {
     var ir = e.target.closest && e.target.closest("[data-cfgir]");
     if (ir) { window.__cfgAba(ir.getAttribute("data-cfgir")); return; }
+    // v756: a chave Pix mora em Sua ilha — o botão leva até ela em vez de
+    // deixar o professor procurando pelo menu
+    if (e.target.closest && e.target.closest("[data-cfgpix]")) {
+      vaiAba("conta");
+      var cp9 = $("cfgPixChave");
+      if (cp9) { try { cp9.focus(); cp9.scrollIntoView({ block: "center" }); } catch (e9) {} }
+    }
   });
   $("cfgResumo").addEventListener("change", function (e) {
     var tg = e.target.getAttribute && e.target.getAttribute("data-cfgtg");
@@ -13418,6 +13615,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     st.config = st.config || {};
     st.config[tg] = e.target.checked;
+    /* v756: o MESMO liga/desliga tem duas caras — este interruptor do Resumo e a
+     * caixinha #cfgFeed/#cfgScan da sub-aba "App do aluno". Só o renderConfigPT
+     * sincronizava as duas, e ele roda apenas no clique da aba do menu. Quem
+     * ligava a Comunidade aqui, ia ajustar a tolerância de atraso e tocava
+     * "Salvar configurações" via a Comunidade voltar a DESLIGADA sem aviso
+     * nenhum (o cfgSalva lê a caixinha velha) — e todos os apps entravam na
+     * fila de publicar de novo. Agora um espelha o outro na hora. */
+    var par = CFG_TOGGLES.filter(function (t) { return t[0] === tg; })[0];
+    if (par && $(par[2])) $(par[2]).checked = e.target.checked;
     // o app dos alunos muda de cara: todos entram na fila de publicar (mesma
     // regra do botao Salvar da sub-aba — nada de dois caminhos diferentes)
     if (tg === "feedOn") st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
@@ -13476,6 +13682,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o app dos alunos muda de cara — todos entram na fila de publicar
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
     save(st);
+    // v756: e o interruptor do Resumo acompanha, senão ele fica dizendo
+    // "Tudo ligado" até a próxima repintura da tela
+    document.querySelectorAll("#cfgResumo [data-cfgtg]").forEach(function (sw) {
+      sw.checked = !!st.config[sw.getAttribute("data-cfgtg")];
+    });
     $("cfgStatus").textContent = mudouApp
       ? "Salvo! " + MSG_PUBLICAR_TODOS
       : "Salvo!";
@@ -13535,7 +13746,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ativa: function () {
       var out = $("pushProfStatus");
       var nuvem = S.cloud && S.cloud();
-      if (!nuvem) { out.textContent = "Entre na sua conta da nuvem primeiro (Configurações → Conta) — o aviso viaja pelo servidor."; return Promise.resolve(false); }
+      if (!nuvem) { out.textContent = "Entre na sua conta da nuvem primeiro (Configurações → Cobrança e conta) — o aviso viaja pelo servidor."; return Promise.resolve(false); }
       if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
         out.textContent = "Este navegador não aceita notificação de site. No iPhone, adicione o painel à tela de início primeiro (Compartilhar → Adicionar à Tela de Início).";
         return Promise.resolve(false);
@@ -13621,7 +13832,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__guardaZapEspelho = guardaZapEspelho; // testes
   function rpcZap(nome, args) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) primeiro." });
+    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (Sua ilha) primeiro." });
     return nuvem.client.rpc(nome, args || {}).then(function (r) {
       if (r && r.error) return { erro: r.error.message };
       return (r && r.data) || {};
@@ -13660,7 +13871,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var heads = { "Content-Type": "application/json" };
     if (self.MT_CLOUD && self.MT_CLOUD.anonKey) heads.apikey = self.MT_CLOUD.anonKey;
     return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
-      if (!tok) return { erro: "Entre na sua conta (card Sua ilha) — a função oficial só aceita usuário logado." };
+      if (!tok) return { erro: "Entre na sua conta (Sua ilha) — a função oficial só aceita usuário logado." };
       heads.Authorization = "Bearer " + tok;
       return fetch(url, { method: "POST", headers: heads, body: JSON.stringify(payload) })
         .then(function (r) { return r.json().catch(function () { return { erro: "Resposta estranha da função (HTTP " + r.status + ")." }; }); })
@@ -13750,9 +13961,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * cola o próprio link de cobrança (config.pagLink) e o botão usa ele. */
   function pagEspelho(st) { return (st.config || {}).pagApi || {}; }
   function pintaPagStatus(msg) { if ($("cfgPagStatus")) $("cfgPagStatus").textContent = msg || ""; }
+  /* v756: a tela cravava "Comissão da plataforma 0% · você recebe tudo" pra
+   * todo mundo, mas a RPC pag_config_ve DEVOLVE a comissão real (comissao_pct)
+   * e o dono pode subi-la por academia com um UPDATE, sem republicar nada. O
+   * professor com split ativo lia "você recebe tudo" e depois estranhava o
+   * valor menor caindo na conta — número inventado na tela, justamente o que
+   * este projeto não aceita. Agora o espelho local guarda o que a nuvem disse. */
+  function leComissaoDaNuvem() {
+    if (!(S.cloud && S.cloud())) return;
+    rpcZap("pag_config_ve").then(function (d) {
+      if (!d || !d.ok) return;
+      var pct = +d.comissao || 0;
+      var st2 = load();
+      var esp2 = (st2.config || {}).pagApi || {};
+      if (+esp2.comissao === pct) return;          // nada mudou: não repinta à toa
+      esp2.comissao = pct;
+      st2.config.pagApi = esp2;
+      S.write("ptStudio", st2);
+      if (typeof renderConfigPT === "function") renderConfigPT();
+    }, function () { /* sem nuvem a tela diz o que sabe */ });
+  }
+  window.__leComissao = leComissaoDaNuvem; // testes
   function pintaPagCampos() {
     var st = load();
     var esp = pagEspelho(st);
+    if (esp.ligado) leComissaoDaNuvem();
     if ($("cfgPagProv") && document.activeElement !== $("cfgPagProv")) $("cfgPagProv").value = esp.provedor || "";
     var ehOutro = ($("cfgPagProv") ? $("cfgPagProv").value : "") === "outro";
     if ($("cfgPagLbChave")) $("cfgPagLbChave").hidden = ehOutro;
@@ -13847,7 +14080,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     if (pagEspelho(st).provedor === "outro") { pintaPagStatus("Outra plataforma é só o link — não tem conexão pra testar."); return; }
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { pintaPagStatus("Entre na sua conta (card Sua ilha) primeiro."); return; }
+    if (!nuvem) { pintaPagStatus("Entre na sua conta (Sua ilha) primeiro."); return; }
     pintaPagStatus("Testando…");
     self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "ping" }, "O gateway de pagamento").then(function (d) {
       if (d && d.ok) pintaPagStatus(d.temChave ? "Conectado: " + d.provedor + " com a chave guardada ✓" : "A função respondeu, mas ainda não tem chave guardada — cole a chave e toque em Ligar.");
@@ -14305,7 +14538,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-spdesce="' + k + '"' + (i === ordem.length - 1 ? " disabled" : "") + ' aria-label="descer ' + ROT_SEC[k] + '">Descer</button></span></div>';
     }).join("");
     var cfg = st.config || {};
-    $("spAuto").innerHTML = "Entram sozinhos: WhatsApp " + (cfg.zap ? "<b>" + esc(cfg.zap) + "</b>" : "<b>nenhum — preencha no card Sua ilha</b>") +
+    $("spAuto").innerHTML = "Entram sozinhos: WhatsApp " + (cfg.zap ? "<b>" + esc(cfg.zap) + "</b>" : "<b>nenhum — preencha no Sua ilha</b>") +
       " · " + (st.planosPT || []).length + " plano(s) · " + (st.servicosPT || []).length + " serviço(s) · logo e cores da Personalização.";
     $("spPreview").srcdoc = montaSitePro(st);
     pintaSpDepos(st);
@@ -14534,7 +14767,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      $("spStatus").textContent = "Entre na sua conta (card Sua ilha, no menu Conta) pra publicar na internet — ou toque em Baixar o arquivo.";
+      $("spStatus").textContent = "Entre na sua conta (menu → Sua ilha) pra publicar na internet — ou toque em Baixar o arquivo.";
       return;
     }
     $("spStatus").textContent = "Publicando…";
@@ -16106,7 +16339,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a) { cb({ erro: "Escolha o aluno." }); return; }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
-    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra usar a IA de treino — sem nuvem, use o Gerar fichas." }); return; }
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (Sua ilha) pra usar a IA de treino — sem nuvem, use o Gerar fichas." }); return; }
     var dados = tipo === "corrida" ? montaDadosCorridaIA(st, a, objetivo) : montaDadosIA(st, a, objetivo, equip, tipo);
     /* MT_FUNCAO renova o crachá do login antes de chamar e tenta de novo se o
      * Supabase recusar — era isso que fazia a IA "funcionar por um tempo e
@@ -16761,7 +16994,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function abrePix(aluno, valor, origem) {
     var st = load();
     var cfg = st.config || {};
-    if (!cfg.pixChave) { alert("Configure sua chave Pix no card Sua ilha (lá embaixo)."); return; }
+    if (!cfg.pixChave) { alert("Configure sua chave Pix em Sua ilha (no menu)."); return; }
     var txid = "TQP" + S.todayISO().replace(/-/g, "").slice(0, 8) + semAcento(aluno.nome.split(" ")[0]).slice(0, 8);
     var payload = pixPayload(cfg.pixChave, cfg.pixNome || cfg.nome, cfg.pixCidade, valor, txid);
     $("pixTitulo").textContent = "Pix de " + S.fmtBRL(valor) + " — " + aluno.nome.split(" ")[0];
@@ -18290,12 +18523,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("") : '<div class="muted">Todo mundo pagou este mês.</div>');
     } else $("relPrevisto").textContent = "Cadastre alunos e contratos para ver a previsão.";
 
-    // ---- receita 6 meses ----
-    var rec = meses.map(function (m) {
-      return { rot: m.rot, v: st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === m.chave; }).reduce(function (t, p) { return t + +p.valor; }, 0) };
-    });
-    if (rec.some(function (x) { return x.v; })) barras($("relReceita"), rec, "var(--roxo)", function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); });
-    else $("relReceita").textContent = "Sem pagamentos ainda.";
+    /* ---- v756: o card "Receita dos 6 meses até aqui" saiu daqui.
+     * Ele desenhava a MESMA série de pagamentos por mês que o "Entrou × saiu ×
+     * sobrou" logo acima — dois gráficos idênticos, um embaixo do outro, e o
+     * professor rolava por eles antes de chegar no "Previsto × recebido". Quem
+     * ficou é o superset (entrou/saiu/sobrou); a projeção hachurada continua no
+     * Financeiro (pg6meses), que é onde ela faz falta. ---- */
 
     /* ---- v712: entrou × saiu × sobrou (6 meses até o mês escolhido) ----
      * As despesas usam a MESMA régua do Financeiro (despesasDoMes: fixa conta
@@ -18502,14 +18735,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         alertas.push({ tipo: "erro", g: "Pagamento atrasado", curto: "<b>" + esc(a.nome) + "</b> — venceu dia " + cvAl.ct.diaVenc + (dvAl.meses > 1 ? " · " + dvAl.meses + " meses (" + S.fmtBRL(dvAl.total) + ")" : ""), txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + cvAl.ct.diaVenc + ").",
           ac: ((st.config || {}).pixChave && cobrarAl > 0 ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
       }
+      /* v756: caía no `a.desde` quando não havia sessão nenhuma — quem acabou
+       * de entrar e ainda não treinou era listado como "sumido". Agora a conta
+       * é a mesma do resto do painel (diasSemTreinar, que devolve null pra quem
+       * nunca treinou) e o limiar é a constante SUMIDO_DIAS. */
       var ultimaFeita = idxDe(st).sessFeitasDe(a.id)
-        .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
-      var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
-      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", g: "Sumido há 14+ dias", curto: "<b>" + esc(a.nome) + "</b> — último treino em " + S.fmtData(ultimaFeita), txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
+        .map(function (x) { return x.data; }).sort().pop() || "";
+      var diasSem = diasSemTreinar(st, a);
+      if (diasSem !== null && diasSem >= SUMIDO_DIAS) alertas.push({ tipo: "aviso", g: "Sumido há " + SUMIDO_DIAS + "+ dias", curto: "<b>" + esc(a.nome) + "</b> — último treino em " + S.fmtData(ultimaFeita), txt: "<b>" + esc(a.nome) + "</b> não treina há mais de " + SUMIDO_DIAS + " dias — manda um resgate.",
         ac: zapAl(a, zapTexto(zapModelos(st).chamar, { nome: a.nome.split(" ")[0] })) + '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
       var ultimaAv = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; }).map(function (v) { return v.data; }).sort().pop();
-      var corte60 = new Date(); corte60.setDate(corte60.getDate() - 60);
-      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", g: "Sem avaliação há 60+ dias", curto: "<b>" + esc(a.nome) + "</b> — última em " + S.fmtData(ultimaAv), txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução.",
+      // v756: era 60 aqui e 90 no Resolver hoje do Início — durante um mês
+      // inteiro o Relatório gritava e o Início dizia que estava tudo em dia
+      var corte60 = new Date(); corte60.setDate(corte60.getDate() - REAVALIA_DIAS);
+      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", g: "Sem avaliação há " + REAVALIA_DIAS + "+ dias", curto: "<b>" + esc(a.nome) + "</b> — última em " + S.fmtData(ultimaAv), txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há " + REAVALIA_DIAS + "+ dias — hora de medir a evolução.",
         ac: '<button class="btn sec mini" data-alav="' + a.id + '">Registrar avaliação</button>' });
       var temFicha = st.treinosV2 && st.treinosV2[a.id] && (st.treinosV2[a.id].fichas || []).length;
       if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", g: "Sem ficha de treino", curto: "<b>" + esc(a.nome) + "</b>", txt: "<b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada.",
@@ -18765,13 +19004,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- Radar de retenção: quem precisa de atenção antes de sumir de vez ----
     var radar = [];
     ativos.forEach(function (a) {
-      var ultF = idxDe(st).sessFeitasDe(a.id)
-        .map(function (x) { return x.data; }).sort().pop();
-      if (!ultF) return;
-      var diasP = Math.floor((new Date(hoje) - new Date(ultF)) / 864e5);
-      if (diasP < 5) return;
-      var temFutura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
-      if (temFutura) return;
+      if (!estaSumindo(st, a)) return;     // v756: a régua única (a mesma do cabeçalho de Alunos)
+      var diasP = diasSemTreinar(st, a);
       var msgR = zapTexto(zapModelos(st).chamar, { nome: a.nome.split(" ")[0] });
       // linha do Radar no desenho da 1a: iniciais, nome, o motivo e o atalho
       radar.push('<div class="drad"><div class="dav2">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
@@ -18782,6 +19016,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" title="chamar no WhatsApp" href="https://wa.me/55' +
           String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgR) + '">Chamar</a>' : "") + "</div></div>");
     });
+    // v756: o cabeçalho dizia "N sumindo" com o radar.length INTEIRO — e logo
+    // abaixo entram a linha de chat parado e a de pedido de horário. Com 1 aluno
+    // sumido, 1 conversa e 1 pedido a tela dizia "3 sumindo". Conta antes.
+    var nSumindo = radar.length;
     var nuvemR = S.cloud && S.cloud();
     var bd = window.__badgesPT || {};
     if (nuvemR && bd.chat) radar.push('<div class="drad"><div class="dav2">' + "\u2709" + '</div><div style="min-width:0;">' +
@@ -18792,7 +19030,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="dac"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></div></div>');
     var cabR = $("dashRadar") && $("dashRadar").querySelector("h2");
     if (cabR) cabR.innerHTML = "Radar de retenção" + (radar.length ?
-      '<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-aten);text-transform:none;letter-spacing:0;">' + radar.length + " sumindo</span>" : "");
+      '<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-aten);text-transform:none;letter-spacing:0;">' +
+      (nSumindo ? nSumindo + " sumindo" : "") + (nSumindo && radar.length > nSumindo ? " · " : "") +
+      (radar.length > nSumindo ? S.plural(radar.length - nSumindo, "pendência", "pendências") : "") + "</span>" : "");
     $("bRadarP").innerHTML = radar.length ? radar.join("")
       : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
     // carteira: MRR, ticket, contratos
@@ -18839,17 +19079,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv(mesR === mes ? "Ainda sem pagar" : "Ficaram sem pagar", dR.semPagar + " aluno(s)", dR.semPagar ? "var(--tk-aten2)" : "var(--tk-ok)") +
       kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "var(--tk-erro)" : "var(--tk-ok)") +
       (function () {
-        var acum = 0;
-        ativos.forEach(function (a) {
-          acum += dividaDe(st, a).total;
-          var scA = sessoesACobrar(st, a);
-          if (scA && !scA.pacote) acum += scA.total;
-        });
+        // v756: a MESMA função do Início e do Financeiro (aReceberDe) — antes
+        // eram três varreduras parecidas e o professor via três números
+        var acum = aReceberDe(st).comSessoes;
         return kv("A receber acumulado (meses + sessões)", fmtR(acum), acum ? "var(--tk-aten2)" : "var(--tk-ok)");
       })() +
       (Object.keys(formas).length ? kv("Por forma", Object.keys(formas).map(function (f) { return f + " " + fmtR(formas[f]); }).join(" · ")) : "");
     // status da base
-    var comApp = ativos.filter(function (a) { return a.acessoEm; }).length;
+    var comApp = ativos.filter(function (a) { return estadoAppDe(a) === "ativo"; }).length;   // v756: mesma régua de Configurações
     var comRec = ativos.filter(function (a) { return a.assinaturaRec || a.assinaturaAs; }).length;
     $("bBaseP").innerHTML =
       kv("Alunos ativos", ativos.length) +
@@ -18905,7 +19142,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (tA.validade && tA.validade < hoje) fichasVencidas++;
       }
     });
-    var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - 60);
+    var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - REAVALIA_DIAS);   // v756: uma régua só
     var semAvaliacao = ativos.filter(function (a) {
       var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; });
       var ult = avs.length ? avs.map(function (v) { return v.data; }).sort().pop() : "";
@@ -19027,8 +19264,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // menu (classe .ativa, seções escondidas) continua saindo de um lugar só
   function vaiAba(a) {
     var b = document.querySelector('#abas [data-a="' + a + '"]');
+    /* v756: o `b.click()` funcionava mesmo com o botão em display:none, então
+     * qualquer atalho da tela ("Ver relatórios" do Início, o #pgIrConfig, a
+     * faixa "Entrar de novo") furava o modo colaborador e levava o auxiliar
+     * justamente às telas que o modo esconde. Promessa quebrada é pior que
+     * promessa nenhuma: quem confiou no botão achava que estava protegido. */
+    if (b && b.style.display === "none") {
+      alert("Esta tela fica com o dono do studio (modo colaborador).");
+      return;
+    }
     if (b) b.click();
   }
+  window.__vaiAba = vaiAba; // testes (v756: prova que o modo colaborador não é furado)
   /* O terceiro card do Resolver hoje (conversa parada) vem da NUVEM: o chat
    * mora em app_chat, e o renderDashPT é síncrono. Então ele entra depois, por
    * aqui. Sem nuvem, sem leitura ou sem mensagem parada, o card simplesmente
@@ -19479,16 +19726,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         acao: '<button type="button" class="btn" data-montatreino="' + w.a.id + '">Montar nova</button>',
       });
     }
-    // 2b) v729: reavaliação em atraso — a última avaliação física do aluno
-    //     passou de 90 dias. Só pra quem JÁ tem avaliação: aluno sem nenhuma
-    //     é caso da esteira do aluno novo, que já cobra "Avaliação física
-    //     feita" na ficha.
+    /* 2b) v729: reavaliação em atraso. Só pra quem JÁ tem avaliação: aluno sem
+     *     nenhuma é caso da esteira do aluno novo, que já cobra "Avaliação
+     *     física feita" na ficha.
+     *     v756: eram DOIS limiares pro mesmo dado — 90 dias aqui e 60 nos
+     *     Relatórios. Durante um mês inteiro (do dia 60 ao 90) o Relatório
+     *     gritava "sem avaliação" e o Início dizia que estava tudo em dia.
+     *     Agora os três lugares passam por REAVALIA_DIAS. */
     var reav = st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) {
       var ult = (st.avaliacoes || []).filter(function (v9) { return v9.alunoId === a.id; })
         .map(function (v9) { return String(v9.data || "").slice(0, 10); }).sort().pop();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(ult || "")) return null;
       var dias = Math.floor((Date.parse(hoje + "T12:00") - Date.parse(ult + "T12:00")) / 864e5);
-      if (dias < 90) return null;
+      if (dias < REAVALIA_DIAS) return null;
       return { a: a, dias: dias };
     }).filter(Boolean).sort(function (x, y) { return y.dias - x.dias; });
     if (reav[0]) {
@@ -19552,16 +19802,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fatAnt = cmp.fatAte, vs = cmp.vs;
     // a receber e o que já venceu (v747: "vencido" pela função-fonte
     // cobrancaVencida — o mês anterior em aberto conta desde o dia 1)
-    var aReceber = 0, vencidos = 0;
-    st.alunos.forEach(function (a) {
-      if (a.ativo === false) return;
-      var ct = contratoDe(st, a.id);
-      if (!ct) return;
-      var dv = dividaDe(st, a);
-      if (!dv || !dv.total) return;
-      aReceber += dv.total;
-      if (cobrancaVencida(st, a)) vencidos += dv.total;
-    });
+    /* v756: a conta era desta tela e SÓ dela — `if (!ct) return` deixava de
+     * fora quem não tem contrato cadastrado, então o Início dizia R$ 1.200 e o
+     * Financeiro R$ 1.800 no mesmo dia. Agora as duas telas (e o Relatório)
+     * leem o mesmo aReceberDe. */
+    var rec = aReceberDe(st);
+    var aReceber = rec.acumulado, vencidos = rec.vencido;
     var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
     var marcadas = sesMes.filter(function (x) { return x.feita || x.faltou; }).length;
     var pres = marcadas ? Math.round(d.feitas / marcadas * 100) : 0;
@@ -20063,7 +20309,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     };
     espera(6).then(function (nuvem) {
       if (!nuvem) {
-        alert("Pra entregar o app você precisa da sua conta na nuvem — é grátis e leva um minuto.\n\nEntre pelo card lá embaixo (ou em Configurações → Cobrança e conta). É a conta que gera o link do aluno, mantém o app atualizado sozinho e deixa você cortar o acesso quando alguém sair.");
+        alert("Pra entregar o app você precisa da sua conta na nuvem — é grátis e leva um minuto.\n\nEntre pelo menu → Sua ilha (ou em Configurações → Cobrança e conta). É a conta que gera o link do aluno, mantém o app atualizado sozinho e deixa você cortar o acesso quando alguém sair.");
         return;
       }
       // v755: publicaPacotes — o mesmo upsert + carimbo dos outros seis pontos
@@ -20095,7 +20341,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a || !a.appTokenP) { cb({ erro: "Esse aluno ainda não tem app publicado." }); return; }
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) — sem a nuvem eu não consigo cortar o acesso." }); return; }
+    if (!nuvem) { cb({ erro: "Entre na sua conta (Sua ilha) — sem a nuvem eu não consigo cortar o acesso." }); return; }
     nuvem.client.rpc("aluno_revoga_acesso", { p_token: a.appTokenP, p_apagar: !!apagarDeVez }).then(function (r) {
       var d = (r && r.data) || {};
       if ((r && r.error) || d.erro) { cb({ erro: (r && r.error && r.error.message) || d.erro }); return; }
@@ -20281,7 +20527,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v755: acesso cortado não ganha login novo sem religar antes
     if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra criar o acesso online." }); return; }
+    if (!nuvem) { cb({ erro: "Entre na sua conta (Sua ilha) pra criar o acesso online." }); return; }
     if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
     var stamp = new Date().toISOString();
     /* v755: o acessoEm tem de estar gravado ANTES de montar o pacote. O app
@@ -20347,7 +20593,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ativos.length) { el.innerHTML = '<div class="card muted">Cadastre alunos primeiro.</div>'; return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      el.innerHTML = '<div class="card" style="border-left:4px solid #d97706;"><b>A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (card lá embaixo) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
+      el.innerHTML = '<div class="card" style="border-left:4px solid var(--tk-aten);"><b>A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (menu → Sua ilha) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
       return;
     }
     var tokens = ativos.filter(function (a) { return a.appTokenP; }).map(function (a) { return a.appTokenP; });
@@ -20380,9 +20626,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (!a.appTokenP) {
           return '<div class="card" style="margin-bottom:10px;"><b>' + esc(a.nome) + '</b> <span class="muted">— gere o App dele na aba Alunos pra acompanhar.</span></div>';
         }
-        var meus = logs.filter(function (l) { return l.token === a.appTokenP; });
+        /* v756: esta tela contava "dia treinado" só pelo app_treino_log,
+         * enquanto o resto do painel (perfil, relatórios, lista de Alunos,
+         * Resolver hoje) conta pelo `retorno.feitos` que chega no devolveApp.
+         * As duas fontes divergem — retorno sincronizado e log ainda não, ou o
+         * contrário — e o professor via "3/3 na semana" numa tela e "parado há
+         * 6 dias" na outra, e mandava o "senti sua falta" pra quem tinha
+         * treinado. Agora o `retorno.feitos` é a fonte (a MESMA do resto) e o
+         * log só ACRESCENTA o dia que ele ainda não tem: são o mesmo evento
+         * (o "Treinei hoje" do app), então a união nunca conta a mais. */
         var dias = {};
-        meus.forEach(function (l) { dias[l.dia] = 1; });
+        var retA = a.retorno || a.demoRetorno || {};
+        var feA = (retA.feitos && typeof retA.feitos === "object" && !Array.isArray(retA.feitos)) ? retA.feitos : {};
+        Object.keys(feA).forEach(function (d9) { if (d9 >= iso28) dias[d9] = 1; });
+        logs.forEach(function (l) { if (l.token === a.appTokenP) dias[l.dia] = 1; });
         var listaDias = Object.keys(dias).sort();
         var ultimo = listaDias.length ? listaDias[listaDias.length - 1] : null;
         var diasSem = ultimo ? Math.round((new Date(hoje) - new Date(ultimo)) / 864e5) : null;
@@ -20391,13 +20648,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stAtu, cor, msg;
         var primeiro = a.nome.split(" ")[0];
         if (ultimo == null) {
-          stAtu = "sem registros ainda"; cor = "var(--cinza)";
+          stAtu = "sem registros ainda"; cor = "var(--tk-tx4)";
           msg = "Oi " + primeiro + "! Já instalou seu app de treino? Qualquer dúvida pra abrir eu te ajudo — bora começar! 💪";
         } else if (diasSem >= 5) {
-          stAtu = "parado há " + diasSem + " dias"; cor = "#dc2626";
+          stAtu = "parado há " + diasSem + " dias"; cor = "var(--tk-erro)";   // v756: token, não hex novo
           msg = "Oi " + primeiro + "! Senti sua falta nos treinos 😢 Aconteceu alguma coisa? Se a planilha ficou pesada ou a rotina mudou, me fala que eu ajusto — o importante é não parar. Bora retomar essa semana? 💪";
         } else if (naSemana >= meta) {
-          stAtu = "meta da semana batida (" + naSemana + "/" + meta + ")"; cor = "#16a34a";
+          stAtu = "meta da semana batida (" + naSemana + "/" + meta + ")"; cor = "var(--tk-ok)";
           msg = "AEEE " + primeiro + "! 🔥 Meta da semana batida (" + naSemana + " treinos)! Tô acompanhando tudo por aqui e o comprometimento tá impecável — segue assim que o resultado não tem pra onde correr. 👏";
         } else {
           stAtu = naSemana + "/" + meta + " treinos na semana"; cor = "var(--roxo)";
@@ -20422,7 +20679,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "</div>" + checksHTML + "</div>";
       }).join("");
     }, function () {
-      el.innerHTML = '<div class="card" style="color:#b45309;">Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
+      el.innerHTML = '<div class="card" style="color:var(--tk-aten2);">Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
     });
   }
   window.__assessoria = renderAssessoria; // testes
@@ -20521,7 +20778,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("botZapP").addEventListener("click", function () {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { $("botZapOkP").textContent = "Entre na sua conta (card lá embaixo) primeiro."; return; }
+    if (!nuvem) { $("botZapOkP").textContent = "Entre na sua conta (menu → Sua ilha) primeiro."; return; }
     montaBuilderP();
     var reg = builderP.reg();
     var fluxo = builderP.principal();
@@ -20593,7 +20850,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("chatCtx").hidden = true;
       $("chatSub").textContent = "";
       $("chatTitulo").textContent = "Chat interno";
-      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
+      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (menu → Sua ilha) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
       $("chatEnvio").hidden = true;
       return;
     }
@@ -21148,8 +21405,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nav9 = $("abas");
       if (nav9) nav9.appendChild(nota9);
     }
-    nota9.textContent = aux ? "modo colaborador — financeiro e configurações ficam com o dono do studio" : "";
+    /* v756: a nota prometia menos do que o modo faz. Somem SETE telas —
+     * Financeiro, Relatórios, Configurações, Personalização, Minha página,
+     * Sua ilha e Assessoria —, não só as três que o texto citava. */
+    nota9.textContent = aux ? "modo colaborador — dinheiro, configurações e a conta ficam com o dono do studio" : "";
     nota9.style.display = aux ? "" : "none";
+    /* v756: as DUAS telas que têm "Sair da conta" (Sua ilha e Configurações →
+     * Cobrança e conta) estão nessa lista — ou seja, o colaborador entrava e
+     * NÃO tinha como sair do painel no computador do studio. O botão de sair
+     * passa a viver no pé do menu, junto do Modo claro, só nesse modo. */
+    var sai9 = $("papelSair");
+    if (aux && !sai9) {
+      sai9 = document.createElement("button");
+      sai9.id = "papelSair";
+      sai9.type = "button";
+      sai9.className = "btn sec";
+      sai9.textContent = "Sair da conta";
+      sai9.style.cssText = "margin:8px 14px 0;width:calc(100% - 28px);";
+      // o MESMO caminho dos outros dois botões de sair (contaP.sair já
+      // confirma antes) — nada de uma segunda rota de logout
+      sai9.addEventListener("click", function () {
+        if (contaP && contaP.sair) contaP.sair();
+      });
+      var nav8 = $("abas");
+      if (nav8) nav8.appendChild(sai9);
+    }
+    if (sai9) sai9.style.display = aux ? "" : "none";
     return aux;
   }
   window.__papelPT = { aplica: aplicaPapel }; // testes
@@ -21171,11 +21452,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderRelatorios(); // o Dashboard (aba inicial) mostra os alertas
     setTimeout(autoPublicaApps, 1500); // deixa a tela pintar antes de subir os apps
   }
+  /* v756: "salvo" na tela. Os campos da ilha gravam no change e ficavam
+   * mudos — sem confirmação, o professor não sabe se pode sair da tela. */
+  var ilhaTimer = null;
+  function ilhaSalvou(oque) {
+    var el = $("ilhaSalvo");
+    if (!el) return;
+    el.textContent = "✓ " + oque + " — salvo";
+    el.style.display = "";
+    clearTimeout(ilhaTimer);
+    ilhaTimer = setTimeout(function () { el.style.display = "none"; }, 3000);
+  }
+  window.__ilhaSalvou = ilhaSalvou; // testes
   $("cfgZap").addEventListener("change", function () {
     var st = load();
     st.config = st.config || {};
     st.config.zap = this.value.replace(/\D/g, "");
     S.write("ptStudio", st);
+    ilhaSalvou("Seu WhatsApp");
   });
   /* v755: a chave Pix ia crua pro QR — com espaço no meio ou meia chave, o
    * banco do aluno recusa o código e o professor só descobre pela reclamação.
@@ -21215,6 +21509,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       st.config[par[1]] = v;
       S.write("ptStudio", st);
+      ilhaSalvou({ pixChave: "Sua chave Pix", pixNome: "Nome do recebedor", pixCidade: "Cidade" }[par[1]]);
     });
   });
   $("cfgMural").addEventListener("change", function () {
@@ -21223,6 +21518,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.mural = this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
     st.config.appEditGeralEm = new Date().toISOString(); // mural entra no app de todo mundo
     S.write("ptStudio", st);
+    // o mural só chega no aluno depois de publicar — o recado diz isso
+    ilhaSalvou("Mural dos alunos (publique os apps pra chegar no aluno)");
   });
   // tema do studio: cor principal + logo
   $("cfgCor").addEventListener("change", function () {

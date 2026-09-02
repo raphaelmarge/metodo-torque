@@ -5,6 +5,11 @@ catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromi
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
+
+
+
 /* E2E da Grade de Aulas (apps/grade.html) */
 
 
@@ -14,7 +19,7 @@ function assert(cond, msg) {
   else { fail++; console.log("  ✘ FALHOU: " + msg); }
 }
 const hoje = new Date();
-const hojeISO = hoje.toISOString().slice(0, 10);
+const hojeISO = diaISO(hoje);
 const dow = new Date(hojeISO + "T12:00").getDay();
 
 const SEED = {
@@ -37,6 +42,8 @@ SEED.grade.presencas["g1|" + hojeISO] = ["Ana Silva"];
 
 (async () => {
   const browser = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  comDiaISO(browser);   // v756: todo contexto nasce com o window.diaISO
+
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const erros = [];
   ctx.on("weberror", (e) => erros.push(e.error().message));

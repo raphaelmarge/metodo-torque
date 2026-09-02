@@ -9,8 +9,12 @@ const { chromium } = require("/opt/node22/lib/node_modules/playwright");
 const fs = require("fs");
 const path = require("path");
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { comMockNuvem } = require("./_nuvem.js");   // v756: cliente de nuvem falso compartilhado
 
 let ok = 0, falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suite para no meio (senao sobra Chromium orfao e o resumo nunca sai)
+let navegadorV756 = null;
 function t(cond, nome) {
   if (cond) { ok++; console.log("  ✅ " + nome); }
   else { falhas++; console.log("  ❌ " + nome); }
@@ -20,6 +24,9 @@ function t(cond, nome) {
  * guardado aqui: um objeto inventado à mão não monta o app e o teste mediria a
  * coisa errada. Regenere com o painel se o formato do pacote mudar. */
 const PACOTE = JSON.parse(fs.readFileSync(path.join(__dirname, "pacote-exemplo.json"), "utf8"));
+// v756: a versão desta build, pra provar que o pacote gerado na hora é o de HOJE
+const MT_VERSAO_REPO = (fs.readFileSync(path.join(__dirname, "..", "assets/versao.js"), "utf8")
+  .match(/MT_VERSAO\s*=\s*"(mt-v\d+)"/) || [])[1] || "";
 /* O que o painel realmente GRAVA na nuvem é o embrulho — não o D solto. Testar
  * com o D solto escondeu por semanas o defeito que derrubava o app de quem
  * rodou o SQL novo: o carregador embrulhava o embrulho. */
@@ -27,8 +34,11 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
 
 (async () => {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
+  navegadorV756 = b;
+  comMockNuvem(b);   // v756: todo contexto nasce com o window.mockNuvem
 
-  async function abreApp(resposta) {
+  async function abreApp(resposta, pacote) {
+    const PAC = pacote || PACOTE;
     const ctx = await b.newContext({ viewport: { width: 430, height: 900 } });
     const p = await ctx.newPage();
     await p.goto(BASE + "/app/");
@@ -37,7 +47,7 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       localStorage.setItem("tq_app_token", "tok-rev");
       localStorage.setItem("mt_aluno_token", "tok-rev");
       localStorage.setItem("ptpeso", JSON.stringify({ "2026-08-01": 80 }));
-    }, PACOTE);
+    }, PAC);
     await p.route("**/rest/v1/rpc/app_aluno_estado", resposta.estado);
     if (resposta.busca) await p.route("**/rest/v1/rpc/app_aluno_busca", resposta.busca);
     await p.goto(BASE + "/app/?t=tok-rev");
@@ -122,11 +132,9 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       const S = window.MTStore, snap = JSON.stringify(S.read("ptStudio", {}));
       const chamadas = [];
       const cloudOrig = S.cloud;
-      const enc = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "upsert", "insert", "update", "delete"].forEach((k) => { o[k] = () => o; }); o.then = (f) => Promise.resolve({ data: [], error: null }).then(f); return o; };
-      S.cloud = () => ({ aid: "acad-1", client: {
-        from: () => enc(),
-        rpc: (fn, args) => { chamadas.push({ fn, args }); return Promise.resolve({ data: fn === "app_aluno_faxina" ? { ok: true, revogados: 3 } : { ok: true, revogado: true } }); },
-      } });
+      // v756: o cliente encadeável mora em tests/_nuvem.js — aqui só a rpc importa
+      S.cloud = () => window.mockNuvem({ aid: "acad-1",
+        rpc: (fn, args) => { chamadas.push({ fn, args }); return Promise.resolve({ data: fn === "app_aluno_faxina" ? { ok: true, revogados: 3 } : { ok: true, revogado: true } }); } });
       const st = S.read("ptStudio", {});
       st.alunos = [{ id: "r1", nome: "Ana Revoga", ativo: true, desde: S.todayISO(), appTokenP: "tok-da-ana", appPubEm: "2026-08-01T00:00:00Z" }];
       S.write("ptStudio", st);
@@ -263,9 +271,50 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       "tem botão de tentar de novo e os detalhes técnicos pro professor (" + quebrado.detalhe.replace(/\n/g, " ").slice(0, 60) + ")");
   }
 
+  /* v756: o pacote-exemplo.json está congelado no mt-v474 — 279 versões atrás,
+   * sem `tipo`, sem planoApp/mesApp/p2/TERMO. Ele continua valioso (prova que o
+   * carregador aguenta um pacote ANTIGO), mas sozinho ele testava um envelope
+   * que nenhum aluno recebe mais: uma mudança no carregador que quebrasse só
+   * pacote NOVO passava batido. Agora o painel gera um pacote de verdade na
+   * hora e os mesmos caminhos rodam com ele. */
+  {
+    console.log("");
+    console.log("O mesmo carregador com um pacote gerado AGORA pelo painel:");
+    const ctxP = await b.newContext({ viewport: { width: 1280, height: 900 } });
+    await ctxP.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pp = await ctxP.newPage();
+    await pp.goto(BASE + "/personal.html");
+    await pp.waitForFunction(() => window.__ptStudio && window.__dadosApp);
+    const fresco = await pp.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos = [{ id: "rev1", nome: "Aluno Fresco", ativo: true, desde: "2026-01-10",
+        appTokenP: "tok-rev", metaSemana: 3 }];
+      S.write("ptStudio", st);
+      return window.__dadosApp(st.alunos[0], new Date().toISOString());
+    });
+    await ctxP.close();
+    t(!!fresco && fresco.ver === MT_VERSAO_REPO,
+      "o painel gerou o pacote do aluno na hora, na versão desta build (" + ((fresco && fresco.ver) || "?") + " × " + MT_VERSAO_REPO + ")");
+    const regFresco = { html: "", dados: fresco, ver: (fresco && fresco.ver) || "", stamp: (fresco && fresco.stamp) || "" };
+    const vivoF = await abreApp({ estado: json({ ok: true, dados: regFresco }) }, fresco);
+    t(vivoF.montou && !!vivoF.pacote, "pacote de HOJE monta o app pelo mesmo caminho do pacote velho");
+    const cortadoF = await abreApp({ estado: json({ ok: false, motivo: "revogado" }) }, fresco);
+    t(!cortadoF.montou && !cortadoF.pacote && !cortadoF.token,
+      "e a revogação apaga o aparelho igual, com o pacote no formato novo");
+  }
+
   console.log("");
   console.log(falhas ? "💥 " + falhas + " FALHA(S)" : "🏁 TUDO PASSOU");
   console.log("Resultado: " + ok + " ok, " + falhas + " falhas");
   await b.close();
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

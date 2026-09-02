@@ -21,6 +21,9 @@ const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 const ARQ = path.join(__dirname, "..", "personal.html");
 
 let ok = 0, falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suite para no meio (senao sobra Chromium orfao e o resumo nunca sai)
+let navegadorV756 = null;
 function t(cond, nome) {
   if (cond) { ok++; console.log("  ✅ " + nome); }
   else { falhas++; console.log("  ❌ " + nome); }
@@ -124,10 +127,26 @@ const ESPERADO = {
   {
     const alias = (src.match(/--tk-[a-zA-Z0-9]+:\s*var\(--pt-[a-z0-9-]+\)/g) || []).length;
     t(alias >= 18, "a maioria dos nomes antigos virou apelido de var(--pt-…) (" + alias + ")");
-    // o bloco do tema claro não pode redefinir apelido que já segue o --pt-*
-    const claro = src.slice(src.indexOf('html[data-tema="claro"] {'));
-    const fim = claro.indexOf("\n  }");
-    const dentro = claro.slice(0, fim);
+    /* o bloco do tema claro não pode redefinir apelido que já segue o --pt-*.
+     * v756: o recorte procurava a string "\n  }" — ou seja, dependia da
+     * INDENTAÇÃO exata. Reformatar o <style> (ou o Claude Design salvar o
+     * arquivo com outro recuo) devolvia -1, o slice passava a cobrir o resto do
+     * personal.html inteiro e a regex casava com os `--tk-sup:` legítimos do
+     * :root — suíte vermelha acusando o motivo errado. Agora o corpo é achado
+     * contando CHAVES, o mesmo laço que o arquivo já usa pro dadosAppAluno. */
+    const corpoRegra = (texto, marca) => {
+      const i = texto.indexOf(marca);
+      if (i < 0) return "";
+      const j = texto.indexOf("{", i);
+      let n = 0;
+      for (let k = j; k < texto.length; k++) {
+        if (texto[k] === "{") n++;
+        else if (texto[k] === "}") { n--; if (!n) return texto.slice(j + 1, k); }
+      }
+      return "";
+    };
+    const dentro = corpoRegra(src, 'html[data-tema="claro"] {');
+    t(dentro.length > 200, "o bloco do tema claro foi achado pelas chaves (recorte vazio reprova aqui, não lá na frente)");
     const repetidos = (dentro.match(/--tk-(sup|sup2|bd|bd2|bd3|bd4|trilha|tx|tx2|tx3|tx4|tx5|ok|erro|aten|swBg|swBd|roxoFraco|roxoTx|roxoTx2):/g) || []);
     if (repetidos.length) console.log("     redefinidos à toa: " + repetidos.join(" "));
     t(repetidos.length === 0, "o tema claro não repete apelido que já acompanha sozinho");
@@ -135,6 +154,7 @@ const ESPERADO = {
 
   // ------------------------------------------------- o navegador confirma
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
+  navegadorV756 = b;
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
   await ctx.addInitScript(() => {
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
@@ -288,4 +308,10 @@ const ESPERADO = {
   await b.close();
   console.log("\n" + ok + " ok, " + falhas + " falhas");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

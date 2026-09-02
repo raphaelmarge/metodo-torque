@@ -33,6 +33,17 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   const email = fn("envia-email");
   t(/rest\/v1\/membros\?select=academia_id/.test(email) && /"membro"/.test(email),
     "envia-email: só membro de academia envia (regra membro)");
+  /* v756: a envia-email é a função que manda a SENHA do aluno e os e-mails da
+   * régua, e não tinha uma linha de teste sobre o que ela aceita — só o
+   * roteamento no test-diagnostico. Ela sai em nome do domínio da marca: um
+   * destino torto ou um corpo gigante queimam a reputação do remetente no
+   * Resend e o e-mail de senha de TODO MUNDO passa a cair no spam. */
+  t(/\^\[\^@\\s\]\+@\[\^@\\s\]\+\\\.\[\^@\\s\]\+\$/.test(email),
+    "envia-email: confere o e-mail de destino antes de gastar a cota do Resend");
+  t(/html\.length > 100_000/.test(email) && /!assunto \|\| !html/.test(email),
+    "envia-email: recusa corpo vazio e corpo gigante (o remetente é o domínio da marca)");
+  t(/const de = [^\n]*EMAIL_DE/.test(email) && !/body\.de\b/.test(email),
+    "envia-email: o remetente sai do Secret EMAIL_DE — quem chama não escolhe de quem o e-mail parece vir");
   const chat = fn("chat-envia");
   t(/async function respostaIA\([^)]*\): Promise<\{ ok: boolean/.test(chat) && /erroAnthropic\(r\.status\) \}/.test(chat) &&
     !/IA indisponível — confira o secret ANTHROPIC_API_KEY/.test(chat),
@@ -94,6 +105,60 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
     /revoke execute on function public\.app_retorno_mescla\(jsonb, jsonb\)/.test(sql),
     "helpers internos sem EXECUTE público");
   t(/add column if not exists assinatura_evento_em timestamptz/.test(sql), "academias.assinatura_evento_em existe pro assinatura-loja");
+
+  /* ============================================== higiene da PRÓPRIA suíte
+   * v756: três armadilhas que já custaram caro apareceram nas revisões. Elas
+   * não são regra de produto — são regra de TESTE —, e sem uma vigia voltam
+   * na próxima suíte que alguém escrever copiando a de cima. */
+  console.log("\nHigiene das suítes (tests/):");
+  {
+    const arqs = fs.readdirSync(__dirname).filter((f) => /^test-.*\.js$/.test(f));
+    t(arqs.length >= 20, "achou as suítes pra conferir (" + arqs.length + ")");
+
+    /* 1) data de semente em UTC. `toISOString().slice(0,10)` é UTC; o painel
+     * decide "hoje" com S.todayISO(), que é LOCAL. Rodando às 22h no Brasil a
+     * semente dizia "amanhã" e a suíte ficava vermelha sem motivo. */
+    // (tira comentário antes de medir — o próprio aviso desta regra cita o padrão)
+    const semComentario = (f) => fs.readFileSync(path.join(__dirname, f), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const comUtc = arqs.filter((f) => /toISOString\(\)\s*\.slice\(0,\s*10\)/.test(semComentario(f)));
+    if (comUtc.length) console.log("     " + comUtc.join(", "));
+    t(comUtc.length === 0, "nenhuma suíte calcula dia de semente em UTC (use diaISO(), que é local)");
+
+    /* 2) `|| true` num campo que um ok() vai ler: o valor vira constante e o
+     * assert deixa de medir qualquer coisa (achado real no contrato digital). */
+    const comOuTrue = arqs.filter((f) => /\|\|\s*true,\s*$/m.test(fs.readFileSync(path.join(__dirname, f), "utf8")));
+    if (comOuTrue.length) console.log("     " + comOuTrue.join(", "));
+    t(comOuTrue.length === 0, "nenhum campo de resultado termina em `|| true` (constante disfarçada de medida)");
+
+    /* 3) suíte de navegador sem .catch: uma seleção que falha vira rejeição
+     * não tratada, o resumo não é impresso e sobra Chromium órfão. */
+    const semCatch = arqs.filter((f) => {
+      const src = fs.readFileSync(path.join(__dirname, f), "utf8");
+      if (!/chromium\.launch/.test(src)) return false;   // suíte de node puro não precisa
+      return !/\.catch\(/.test(src) && !/unhandledRejection/.test(src);
+    });
+    if (semCatch.length) console.log("     " + semCatch.join(", "));
+    t(semCatch.length === 0, "toda suíte de navegador trata a exceção que a derruba (.catch ou unhandledRejection)");
+
+    /* 4) o cliente de nuvem de mentira é UM só (tests/_nuvem.js). Cada suíte
+     * com o seu, ESTREITO, é como nascia o "nuvem.client.from(...).upsert is
+     * not a function": bastava um timer do painel tocar outra tabela enquanto
+     * o mock daquele bloco estava instalado. */
+    const comCloud = arqs.filter((f) => /(MTStore|S)\.cloud\s*=/.test(fs.readFileSync(path.join(__dirname, f), "utf8")));
+    const semHelper = comCloud.filter((f) => !/require\(["']\.\/_nuvem\.js["']\)/.test(fs.readFileSync(path.join(__dirname, f), "utf8")));
+    if (semHelper.length) console.log("     " + semHelper.join(", "));
+    t(fs.existsSync(path.join(__dirname, "_nuvem.js")) && comCloud.length >= 4 && semHelper.length === 0,
+      "toda suíte que troca o MTStore.cloud usa o cliente compartilhado (tests/_nuvem.js) — " + comCloud.length + " suítes");
+
+    // 5) e todas leem o servidor do ambiente (rodar noutra porta não pode calar suíte)
+    const semBase = arqs.filter((f) => {
+      const src = fs.readFileSync(path.join(__dirname, f), "utf8");
+      return /goto\(/.test(src) && !/process\.env\.(BASE_URL|MT_BASE)/.test(src);
+    });
+    if (semBase.length) console.log("     " + semBase.join(", "));
+    t(semBase.length === 0, "toda suíte que abre página lê o endereço do ambiente (BASE_URL)");
+  }
 
   // ================================================================ navegador
   console.log("\nstore.js no navegador:");

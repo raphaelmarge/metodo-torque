@@ -4,8 +4,12 @@ try { chromium = require("playwright").chromium; } catch (e) { chromium = requir
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suíte para no meio (senão sobra Chromium órfão e o resumo nunca sai)
+let navegadorV756 = null;
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -13,15 +17,17 @@ function ok(cond, nome) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  navegadorV756 = b;
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = diaISO(new Date());
   await ctx.addInitScript(([hoje]) => {
     if (window !== window.top) return;
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
-    function d(off) { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); }
+    function d(off) { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); }
     localStorage.setItem("mtapp:alunos", JSON.stringify({
       alunos: [
         // paga tabela, faz coletiva, evolui nas avaliações
@@ -151,7 +157,7 @@ function ok(cond, nome) {
     const st = JSON.parse(localStorage.getItem("mtapp:riscoHist"));
     const antes = new Date(); antes.setDate(antes.getDate() - 7);
     const seg = new Date(antes); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
-    st.snapshots.unshift({ semana: seg.toISOString().slice(0, 10), alto: 0, medio: 1, total: 1 });
+    st.snapshots.unshift({ semana: diaISO(seg), alto: 0, medio: 1, total: 1 });
     localStorage.setItem("mtapp:riscoHist", JSON.stringify(st));
     window.__copiloto.renderTendencia();
     return document.getElementById("tendencia").textContent;
@@ -183,4 +189,10 @@ function ok(cond, nome) {
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

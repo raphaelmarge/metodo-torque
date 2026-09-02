@@ -4,8 +4,12 @@ try { chromium = require("playwright").chromium; } catch (e) { chromium = requir
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suíte para no meio (senão sobra Chromium órfão e o resumo nunca sai)
+let navegadorV756 = null;
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -13,8 +17,10 @@ function ok(cond, nome) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  navegadorV756 = b;
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = diaISO(new Date());
   const mesAtual = hoje.slice(0, 7);
   await ctx.addInitScript(([hoje, mesAtual]) => {
     if (window !== window.top) return;
@@ -209,7 +215,7 @@ function ok(cond, nome) {
   await pApp2.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
   await pApp2.goto(BASE + "/app-teste-prog.html", { waitUntil: "domcontentloaded" });
   await pApp2.evaluate(() => {
-    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); };
     localStorage.setItem("ptdc", JSON.stringify({ "Supino reto": [{ d: d(-7), kg: 60 }, { d: d(-4), kg: 60 }] }));
   });
   await pApp2.reload({ waitUntil: "domcontentloaded" });
@@ -228,4 +234,10 @@ function ok(cond, nome) {
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });
