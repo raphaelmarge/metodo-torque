@@ -2402,6 +2402,53 @@ async function abaPt(p, a) {
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
     ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
 
+    /* ---- v747: revisão do app do aluno (app-html + app-core), lida no builder servido ---- */
+    ok(/Toque em <b>Já paguei<\/b>/.test(bld) && !/comprovante e o histórico/.test(bld) && /engrenagem da própria tela de <b>Corrida<\/b>/.test(bld) && /"mensalidade e vencimento"/.test(bld),
+      "📖 v747: a Ajuda parou de prometer comprovante/histórico e corrida nos Ajustes");
+    ok(/\(min\|minutos\?\|'\)\/i/.test(bld) && !/\(min\|m\\b\)/.test(bld), "⏱ v747: no A2, 'm' solto é metro — só min/minutos viram cronômetro");
+    ok(!/\[style\*='var\(--bg5\)'\]/.test(bld) && /\[style\*='background:var\(--bg5\)'\]/.test(bld),
+      "☀️ v747: modo claro não pinta mais fundo cinza em linha que só tem BORDA com bg5");
+    ok(!/id='topoExtra'/.test(bld) && !/habRec/.test(bld) && !/\.tphab/.test(bld) && /recorde \\"\+rec\+' dias/.test(bld),
+      "🧹 v747: o cartão #topoExtra (que nunca aparecia) saiu; o recorde de hábitos mora no #stkLine");
+    ok(/var nomeCurto = function/.test(bld) && !/studio\.split\(" "\)\[0\]/.test(bld) && (bld.match(/STUDIO_CURTO/g) || []).length >= 12,
+      "🏷️ v747: a primeira palavra do studio não vira mais 'nome do professor' — um helper só (nomeCurto)");
+    ok(/L\('ptckh',\{\}\)\)\.length/.test(bld) && /ch9\[semanaCK\(\)\]=1;Sv\('ptckh',ch9\)/.test(bld) && /k==='ptckh'/.test(bld) && (bld.match(/XPLEG/g) || []).length === 3,
+      "⭐ v747: o check-in da semana rende os 20 XP que o rótulo promete (ptckh), legenda num lugar só");
+    ok(/raioX = D\.raioX \|\| \[\]/.test(bld), "🧱 v747: raioX nasce [] — pacote sem raioX não derruba o monta()");
+    ok(/agenda:'Agenda'/.test(bld) && !/agenda:'Calendário'/.test(bld) && /Na <b>Agenda<\/b> dá pra/.test(bld) && /Enviar pro meu personal/.test(bld) && /Avisar meu personal/.test(bld) && !/meu professor</.test(bld),
+      "🗓️ v747: a área chama Agenda em todo lugar, e os botões dizem 'personal' como o resto do app");
+    ok(/<h2>Conversa<\/h2>/.test(bld) && />Meta<\/span><span id='mpMetaTxt'/.test(bld), "🧾 v747: 'Meu peso' não aparece três vezes no card, e o chat não repete o nome do studio");
+    ok(/var dinheiro = function/.test(bld) && !/toLocaleString\("pt-BR"\)/.test(bld) && /PLSUB=" \+ jsonApp\(PLTXT/.test(bld) && /ctApp && ctApp\.diaVenc/.test(bld) && !/plApp\.diaVenc/.test(bld),
+      "💸 v747: dinheiro num formato só (com centavos) e o texto do plano montado UMA vez, lendo o vencimento do contrato");
+    ok(/esc\(pixApp\.code\)/.test(bld) && /urlOk\(plApp\.linkRec\)/.test(bld) && /var playApp = urlOk\(D\.playlistApp\)/.test(bld),
+      "🔒 v747: Pix copia-e-cola escapado como o resto do pacote; linkRec e playlist passam pela MESMA régua de URL (urlOk)");
+    ok(/Me chama que eu te passo o contato/.test(bld) && !/wa\.me\/" \+ \(zapPersonal \? "55"/.test(bld),
+      "🎁 v747: convite sem WhatsApp do professor sai sem link quebrado");
+    ok(/app_chat_envia',\{t:TOKEN,p_texto:msg\}\)\.then\(function\(r\)\{if\(r&&r\.ok\)\{marcaCf\(\);\}else\{alert\(/.test(bld),
+      "🙋 v747: 'Avisei que vou' só pinta quando o recado do chat chegou de verdade");
+    ok(/wod\.estourou=1;wodFim\('TEMPO! '[^;]*,cap\);/.test(bld) && /nf:\(tipo==='fortime'&&wod\.estourou\)\?1:0/.test(bld),
+      "⏲️ v747: For Time que bate o limite leva o tempo do cap e nasce 'não terminei' — nada de 'tempo 0:00'");
+    ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:undefined/.test(bld),
+      "⏱️ v747: AMRAP encerrado antes da hora grava o tempo REAL (e diz 'parou antes')");
+    ok(/id='crRsFeito'[^>]*>Registrar treino de hoje/.test(bld) && /bfe\.addEventListener\('click',function\(\)\{document\.getElementById\('btnFeito'\)\.click\(\)/.test(bld),
+      "🏃 v747: o resumo da corrida oferece o MESMO 'Registrar treino de hoje' do circuito");
+    ok(/>Descartar<\/button>/.test(bld) && /wpVoltar'\)\{if\(!confirm\(/.test(bld), "🗑️ v747: o 'Voltar' do placar virou 'Descartar' com confirmação");
+    ok(!/prompt\('Reps do round/.test(bld) && !/prompt\('Corrige o tempo/.test(bld) && !/prompt\('Reps da volta/.test(bld) && /function wpEdita\(/.test(bld) && /class='wpin'/.test(bld),
+      "⌨️ v747: reps por round, tempo e reps extras se editam num campo dentro do tile — sem prompt() do navegador");
+    ok(/if\(!nm\)\{if\(fb0\)/.test(bld), "🎁 v747: indicação sem nome não é registrada");
+    ok(/\^https\?:[^\n]{0,60}\(gif\|webp\|png\|jpe\?g\)/.test(bld), "🖼️ v747: imagem do exercício exige http(s) e URL sem aspas, igual ao ramo do <video>");
+    ok(/enviadoTela\(true,fim\)/.test(bld) && /id='ckEnviei'/.test(bld) && !/já viu/.test(bld) && /vê no painel/.test(bld),
+      "📲 v747: check-in pelo WhatsApp espera o 'Enviei'; com nuvem diz 'vê no painel' em vez de 'já viu'");
+    ok(/VALUE=DATE:/.test(bld) && !/UID:'\+Date\.now\(\)/.test(bld), "📅 v747: .ics com UID estável e sessão sem hora como dia inteiro");
+    ok((bld.match(/"var MESN=/g) || []).length === 1 && !/var MES3B=/.test(bld) && !/var MES39=/.test(bld) && !/var MES3A=/.test(bld) && !/var MESES=\['Janeiro'/.test(bld) &&
+      /function naSemana\(f\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
+      "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
+    ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
+    ok(/n=Math\.min\(max,\(st\[b\.dataset\.ex\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld),
+      "✅ v747: séries travam no máximo e o 'Treinei hoje' automático olha a FICHA que o aluno está fazendo, não a união de todas");
+    ok(/k\.slice\(0,10\)<lim\)delete f\[k\]/.test(bld) && /if\(k!==s0\)\{delete a0\[k\]/.test(bld), "🧽 v747: ptconf podado em 60 dias e rascunho de check-in de semana velha apagado");
+    ok(/eh9\(msg\)/.test(bld), "🔒 v747: a observação do aluno entra escapada na caixinha verde do fim do circuito");
+
     /* ---- v744: Semana do aluno reencaixada quando as fichas trocam ---- */
     const v744 = await p.evaluate(() => {
       const tPl = { plano: { dias: { "1": { tp: "ficha", id: "fa" }, "3": { tp: "ficha", id: "fb" }, "5": { tp: "ficha", id: "fc" } } } };
@@ -4792,7 +4839,7 @@ async function abaPt(p, a) {
       const ini = (h) => (bt(h).match(/<span id='avIni'[^>]*>(.*?)<\/span>/) || ["", ""])[1];
       return { nada: ini(nada), nadaSemImg: !/src=/.test(img(nada)), com: img(com),
         torto: ini(torto), tortoSemImg: !/src=/.test(img(torto)),
-        faixa: /class='topo'/.test(com) && /id='topoExtra'/.test(com) };
+        faixa: /class='topo'/.test(com) && !/id='topoExtra'/.test(com) };
     }, S1);
     ok(av.com.indexOf(S1) > 0 && /^<img id='avImg'/.test(av.com), "a foto do aluno vai no pacote e vira o avatar do topo");
     ok(av.nada === "JC" && av.torto === "JC" && av.nadaSemImg && av.tortoSemImg,
@@ -6671,7 +6718,7 @@ async function abaPt(p, a) {
     ok(!seloNaLista.test(appHtml) && !/<span class='tecchip'>(Up set|Rest-pause|Bi-set|Isometria)/.test(appHtml),
       "exercício sem técnica não ganha selo nenhum (nada de rótulo vazio)");
   }
-  ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
+  ok(/<h2>Conversa<\/h2>/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(!/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "sem diário manual, mas o recorde segue celebrado pelo player");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
   ok(/Meu plano/.test(appHtml) && /Mensal 3x/.test(appHtml) && new RegExp("todo dia " + diaVenc).test(appHtml), "app tem o card Meu plano (plano + vencimento)");
@@ -7585,6 +7632,7 @@ async function abaPt(p, a) {
         txt: (el.textContent || "").replace(/\s+/g, " "),
         tiles: el.querySelectorAll("div[style*='border-radius:18px']").length,
         flag: window.__cr.resumo,
+        feitoBt: !!document.getElementById("crRsFeito") || !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[new Date().toISOString().slice(0, 10)],
         // a arte sai mesmo sem GPS: o número grande vira o TEMPO
         arteSemKm: (function () {
           window.__cr.fimReg = { d: "2026-08-25", n: "Esteira", m: "corrida", s: 1500, k: 0, p: null, fc: 150 };
@@ -7593,6 +7641,12 @@ async function abaPt(p, a) {
           return c ? c.width + "x" + c.height : "";
         })(),
       };
+      // v747: o .ics tem UID estável (mesmo compromisso, mesmo UID) e sessão sem hora vira dia inteiro
+      window.__agIcsBaixa("2026-01-05|");
+      const ics1 = window.__agIcs; window.__agIcsBaixa("2026-01-05|"); const ics2 = window.__agIcs;
+      window.__agIcsBaixa("2026-01-05|08:00"); const ics3 = window.__agIcs;
+      out.ics = { diaInteiro: /DTSTART;VALUE=DATE:20260105/.test(ics1) && !/T080000/.test(ics1), estavel: ics1 === ics2,
+        comHora: /DTSTART:20260105T080000/.test(ics3), uidDiferente: (ics1.match(/UID:[^\r]+/) || [])[0] !== (ics3.match(/UID:[^\r]+/) || [])[0] };
       document.getElementById("crRsFechar").click();
       out.fechou = { vis: el.style.display, flag: window.__cr.resumo };
       window.__fc.on = false; window.__fc.bpm = 0;
@@ -7607,6 +7661,9 @@ async function abaPt(p, a) {
     ok(rs.arteSemKm === "1080x1350",
       "a arte de postar sai mesmo sem GPS (esteira): o número grande vira o tempo");
     ok(rs.fechou.vis === "none" && rs.fechou.flag === false, "Fechar sai do resumo e libera a tela");
+    ok(rs.feitoBt, "🏃 v747: o resumo da corrida traz o 'Registrar treino de hoje' (ou o dia já estava marcado)");
+    ok(rs.ics.diaInteiro && rs.ics.estavel && rs.ics.comHora && rs.ics.uidDiferente,
+      "📅 v747: .ics — sessão sem hora vira dia inteiro, o mesmo horário gera o MESMO UID, hora diferente gera outro");
   }
   // importar do relógio: GPX sintético de ~2 km em 12 min entra no ptcardio
   const imp = await pCr.evaluate(() => {
@@ -9311,6 +9368,15 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(400);
   const feitoAuto = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos") || "{}"));
   ok(Object.keys(feitoAuto).length === 1, "completar todas as séries marca 'treinei hoje' sozinho");
+  const setMax = await pApp.evaluate(() => {
+    const b = document.querySelector(".setbtn"); const max = +b.dataset.n;
+    b.click(); const cheio = b.textContent;
+    window.__setbtnMenos(b); const menos = b.textContent;
+    b.click();
+    return { cheio, menos, max };
+  });
+  ok(setMax.cheio === setMax.max + "/" + setMax.max + " séries ✓" && setMax.menos === (setMax.max - 1) + "/" + setMax.max + " séries ✓",
+    "🔢 v747: um toque a mais no botão cheio NÃO zera as séries; segurar tira uma (" + setMax.cheio + " → " + setMax.menos + ")");
   {
     const xp1 = parseInt(((await pApp.evaluate(() => document.getElementById("xpChip").textContent)).match(/\d+/) || ["0"])[0], 10);
     ok(xp1 === xp0 + 10, "treino registrado rende +10 XP (" + xp0 + " → " + xp1 + ")");
@@ -9331,7 +9397,7 @@ async function abaPt(p, a) {
       const c = document.getElementById("nvCard");
       return c ? c.textContent.replace(/\s+/g, " ") : "";
     });
-    ok(/Nível \d+ — /.test(nvCard) && /faltam \d+ pro nível/.test(nvCard) && /treino \+10 XP/.test(nvCard),
+    ok(/Nível \d+ — /.test(nvCard) && /faltam \d+ pro nível/.test(nvCard) && /treino = 10 XP/.test(nvCard),
       "o card Seu nível mostra título, quanto falta pro próximo e como se ganha XP");
     // subir de nível de verdade: injeta 30 treinos antigos (+300 XP, cruza o
     // limiar com folga) gravando pelo Sv() do próprio app — é ele que dispara
@@ -9692,8 +9758,8 @@ async function abaPt(p, a) {
     document.querySelectorAll("[data-hab]")[1].click();
     document.querySelectorAll("[data-hab]")[2].click();
   });
-  const hab = await pApp.evaluate(() => document.getElementById("habStreak").textContent);
-  ok(/1 dia/.test(hab), "streak de hábitos conta o dia com 3+");
+  const hab = await pApp.evaluate(() => document.getElementById("stkLine").textContent);
+  ok(/1 dia/.test(hab), "streak de hábitos conta o dia com 3+ (no #stkLine do card dos hábitos)");
 
   // motivação: treinei hoje → bolinha, meta e toast
   pApp.on("dialog", (d) => d.accept());
@@ -10222,9 +10288,31 @@ async function abaPt(p, a) {
   const ckOk = await pApp.evaluate(() => document.getElementById("ckOk").style.display !== "none");
   ok(ckOk, "check-in enviado marca a semana como feita");
   const ckFim = await pApp.evaluate(() => (document.getElementById("ckFluxo") || {}).textContent || "");
-  ok(/Semana registrada/.test(ckFim), "o fluxo termina na tela de enviado");
+  ok(/Semana registrada/.test(ckFim) && /vê no painel/.test(ckFim) && !/já viu/.test(ckFim),
+    "o fluxo termina na tela de enviado (v747: 'seu personal vê no painel', não 'já viu')");
   await pApp.click("#ckVoltaIni");          // fecha o overlay pro resto do teste seguir
   await pApp.waitForTimeout(250);
+  // v747: SEM nuvem o check-in vai pelo WhatsApp — e o app só fecha a semana
+  // no "Enviei". Antes marcava e dizia "seu personal já viu" antes de o
+  // aluno tocar em enviar lá (ou mesmo se cancelasse). O pApp tem nuvem
+  // (mock), então o caminho é forçado desligando NUVEM só neste bloco.
+  const ckZap = await pApp.evaluate(async () => {
+    const nv = window.NUVEM; window.NUVEM = null; localStorage.removeItem("ptck");
+    const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+    window.__ckFluxo();
+    document.querySelector("[data-ckn='3']").click(); await espera(500);
+    document.getElementById("ckProx").click(); await espera(60);   // peso (opcional)
+    document.getElementById("ckProx").click(); await espera(300);  // recado → envia
+    const fx = document.getElementById("ckFluxo");
+    const out = { txt: fx ? fx.textContent : "", temEnviei: !!document.getElementById("ckEnviei"),
+      semPtck: localStorage.getItem("ptck") == null, ckOkFechado: document.getElementById("ckOk").style.display === "none" };
+    const be = document.getElementById("ckEnviei"); if (be) be.click(); await espera(300);
+    out.depois = localStorage.getItem("ptck") != null && /Semana registrada/.test((document.getElementById("ckFluxo") || {}).textContent || "");
+    const vi = document.getElementById("ckVoltaIni"); if (vi) vi.click(); await espera(200);
+    window.NUVEM = nv; return out;
+  });
+  ok(/É só enviar/.test(ckZap.txt) && ckZap.temEnviei && ckZap.semPtck && ckZap.depois,
+    "📲 v747: check-in pelo WhatsApp NÃO fecha a semana sozinho — só no 'Enviei' (" + (ckZap.semPtck ? "esperou" : "fechou antes") + ")");
   await pApp.evaluate(() => window.__trocaSec("quest"));
   // o card some na semana seguinte (pedido do Raphael): a área não pode ficar
   // só com a faixa roxa e mais nada
@@ -10999,13 +11087,13 @@ async function abaPt(p, a) {
       return {
         temSkin: !!self.MT_APP_SKIN && typeof self.MT_APP_SKIN.css === "string" && typeof self.MT_APP_SKIN.js === "string",
         embute: html.indexOf(self.MT_APP_SKIN.css) > -1 && html.indexOf(self.MT_APP_SKIN.js) > -1,
-        toque: /min-height:58px!important/.test(self.MT_APP_SKIN.css) && /\.tphab button\{min-height:44px!important\}/.test(self.MT_APP_SKIN.css),
+        toque: /min-height:58px!important/.test(self.MT_APP_SKIN.css) && /#agCal button\{min-height:44px/.test(self.MT_APP_SKIN.css),
         utilitarios: /\.carr\{/.test(self.MT_APP_SKIN.css) && /\.notabtn\{/.test(self.MT_APP_SKIN.css) && /\.listrow\{/.test(self.MT_APP_SKIN.css),
       };
     });
     ok(skin.temSkin, "🎭 o skin do redesenho carrega junto do builder no painel");
     ok(skin.embute, "o app publicado EMBUTE o skin (o aluno leva o visual junto, sem referência externa)");
-    ok(skin.toque, "os alvos de toque do handoff (botão principal 58px, hábitos 44px) estão no skin");
+    ok(skin.toque, "os alvos de toque do handoff (botão principal 58px, agenda 44px) estão no skin");
     ok(skin.utilitarios, "as classes das receitas (carrossel, notas 58px, listrow) já viajam no skin");
     const fontes = await p.evaluate(async () => ({
       painel: /app\/aluno-skin\.js/.test(await (await fetch("personal.html")).text()),

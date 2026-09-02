@@ -25,7 +25,6 @@
     /* ---------- alvos de toque: 44px é o piso ---------- */
     + ".btnx{min-height:46px;font-size:14px}"
     + ".btnx[style*='width:100%']{min-height:58px!important;font-size:16px!important;box-shadow:0 16px 40px -18px rgba(var(--cor-rgb),1)}"
-    + ".tphab button{min-height:44px!important}"
     + "input,select,textarea{min-height:48px;border-radius:14px}"
     + ".rpebtn{min-height:48px;border-radius:16px;font-weight:800;font-size:13px}"
     /* alvos que ficaram abaixo do piso de 44px do handoff (conferido tela a tela
@@ -73,7 +72,6 @@
     /* ---------- player do treino guiado (classes .g*, sem inline) ---------- */
     + ".gtit{font-size:clamp(26px,8vw,36px);font-weight:900;letter-spacing:-.03em}"
     + ".gsets i{min-height:48px;border-radius:14px}"
-    + ".gsets.mini i{min-height:28px;height:28px;border-radius:10px}" // fileira compacta acima dos tiles (tela 47)
     + ".gpe button{min-height:58px;border-radius:99px;font-weight:800}"
     + ".grelo b{font-variant-numeric:tabular-nums}"
     + ".gcard{border-radius:26px}"
@@ -148,7 +146,6 @@
 
     /* ---------- listas, conquistas, agenda ---------- */
     + "#cqGrid{gap:10px!important}"
-    + "#cqGrid>div{border-radius:18px!important}"
     + "#agCal button{min-height:44px;min-width:40px;border-radius:12px}"
     + "#trTabs button{min-height:44px!important;border-radius:99px!important}"
     + "#menuApp .nitem{min-height:56px}"
@@ -191,14 +188,13 @@
     /* respiro extra antes da barra de abas */
     + "body{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}";
 
-  var js = ""
-    + "document.addEventListener('DOMContentLoaded',function(){try{"
-    /* 1. 'Início' vira 'Hoje' na barra de abas (só o rótulo — a navegação não muda) */
-    + "document.querySelectorAll('#navApp .nitem span').forEach(function(s){if(s.textContent.trim()==='In\\u00edcio')s.textContent='Hoje';});"
-    /* 2. herói primeiro: com foto na ficha, o treino do dia sobe pra cima da faixa de dias */
-    + "var h=document.getElementById('heroTreino'),d=document.getElementById('diasSem');"
-    + "if(h&&d&&h.classList.contains('comfoto')&&h.parentElement===d.parentElement){h.parentElement.insertBefore(h,d);d.style.marginTop='10px';}"
-    + "}catch(e){}});";
+  /* v747: os dois ajustes de DOM que viviam aqui saíram — eram letra morta.
+   * (1) 'Início' → 'Hoje': o builder já escreve "Hoje" no HTML e no menu.
+   * (2) mover #heroTreino pra cima de #diasSem: nunca são irmãos (o herói
+   * mora em #heroCarr, os dias em #semBlock). O js fica vazio de propósito:
+   * o builder continua embutindo a tag, e quem precisar de um ajuste de DOM
+   * de verdade escreve aqui. */
+  var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);
