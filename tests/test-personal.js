@@ -14412,9 +14412,11 @@ async function abaPt(p, a) {
       const r = await window.__publicaPacotes(S.cloud(), [st.alunos[0]]);
       const a = S.read("ptStudio", {}).alunos.find((x) => x.id === "v1");
       S.cloud = window.__cloudOrigV;
-      return { ok: !!r.ok, ver: a.appVer, pubEm: a.appPubEm, subiu: (window.__v755.upserts[0] || {}).t };
+      /* a versão vem do site, não cravada aqui: com o número na mão o teste
+       * quebrava no lote seguinte sem que nada tivesse mudado de regra. */
+      return { ok: !!r.ok, ver: a.appVer, doSite: window.MT_VERSAO, pubEm: a.appPubEm, subiu: (window.__v755.upserts[0] || {}).t };
     });
-    ok(pub1.ok && pub1.subiu === "app_aluno" && pub1.ver === "mt-v753" && !!pub1.pubEm,
+    ok(pub1.ok && pub1.subiu === "app_aluno" && !!pub1.ver && pub1.ver === pub1.doSite && !!pub1.pubEm,
       "v755: publicaPacotes sobe o pacote E carimba appPubEm/appVer no mesmo lugar");
 
     /* 2) acesso cortado não é pendência: a revogação apagava appPubEm/appVer e

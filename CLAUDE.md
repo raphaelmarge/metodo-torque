@@ -1672,6 +1672,22 @@ contagem do `store.js` junto com o `localStorage` — sem isso a trava da camada
 compararia com um número velho. Ganchos: `window.__estudioEhDoDemo`,
 `window.__zerouTudo`, `window.__demoMarcas`.
 
+**Revisão — pt-push e pt-app-conta (mt-v757)**: 32 achados das duas últimas
+áreas do Personal. Publicar o app do aluno virou **um caminho só**
+(`publicaPacotes`) — havia SETE cópias do `from("app_aluno").upsert` espalhadas,
+e cada uma esquecia um detalhe diferente. A régua de lembretes e o push de
+pendências ficaram separados de propósito (a de pendências LÊ a nuvem; a
+antiga é síncrona e os testes contam com isso). No chat, o selo "✓✓ lido" foi
+**removido em vez de fingido**: ele exigiria uma RPC nova (`app_chat_leu`) e
+mexer no app do aluno — mesma recusa do "digitando…" da v618, e o motivo está
+escrito no código. ⚠️ `nomeStudio()` é a fonte única do nome do estúdio: o
+recibo (`abreRecibo`) e o resumo do fechamento (`resumoFechamentoPT`) faziam
+`"Studio " + cfg.nome.split(" ")[0]` na mão, e quem se cadastrou como "Studio
+Léo" recebia recibo do **Studio Studio**. No fechamento a variável local se
+chamava `nomeStudio` e **sombrearia a função** — virou `nomeSt` (o mesmo
+defeito do `esc` na v630). Trava: o teste conta as ocorrências de
+`"Studio " + …split` no arquivo e só aceita **uma**, a de dentro do helper.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
