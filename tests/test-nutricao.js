@@ -1256,6 +1256,11 @@ async function abaNt(p, a) {
   ok(ajn.chamadoHonesto, "❓ sem conta na nuvem o chamado pede pra entrar — nada de formulário que não envia");
   ok(ajn.voltou, "❓ Todos os tópicos volta pra grade");
 
+  // v746: paciente de pacote/assinatura fica fora da régua e de Atrasados
+  const cm = await p.evaluate(() => window.__cobraMensalN ? {
+    mensal: window.__cobraMensalN({ ativo: true }), pacote: window.__cobraMensalN({ ativo: true, pagto: "plano" }),
+    assin: window.__cobraMensalN({ ativo: true, assinaturaAs: { id: 1 } }), inativo: window.__cobraMensalN({ ativo: false }) } : null);
+  ok(cm && cm.mensal && !cm.pacote && !cm.assin && !cm.inativo, "💳 v746: régua e Atrasados só cobram mensalista (pacote e assinatura ficam fora)");
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

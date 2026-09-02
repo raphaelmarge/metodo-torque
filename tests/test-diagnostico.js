@@ -8,7 +8,7 @@ try { chromium = require("playwright").chromium; } catch (e) { chromium = requir
 
 const RAIZ = path.join(__dirname, "..");
 const EXEC = fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined;
-const BASE = process.env.MT_BASE || "http://127.0.0.1:8765";
+const BASE = process.env.BASE_URL || process.env.MT_BASE || "http://127.0.0.1:8765";
 
 let falhas = 0;
 function ok(cond, msg) {
