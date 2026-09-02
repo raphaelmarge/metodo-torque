@@ -950,12 +950,12 @@ async function abaPt(p, a) {
   // abre a sub-página do Supino e coloca vídeo
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    const supino = st.exercicios.find((e) => e.nome === "Supino reto");
+    const supino = st.exercicios.find((e) => e.nome === "Supino reto com barra");
     window.__supinoId = supino.id;
   });
   const supinoId = await p.evaluate(() => window.__supinoId);
   // a lista unificada corta em 40 — busca primeiro pro Supino aparecer
-  await p.fill("#catBusca", "Supino reto");
+  await p.fill("#catBusca", "Supino reto com barra");
   await p.waitForTimeout(200);
   await p.click('[data-exedit="' + supinoId + '"]');
   await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
@@ -964,12 +964,12 @@ async function abaPt(p, a) {
   // espera o salvamento chegar no storage (150ms fixos flakavam sob carga)
   await p.waitForFunction(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    const e = (st.exercicios || []).find((x) => x.nome === "Supino reto");
+    const e = (st.exercicios || []).find((x) => x.nome === "Supino reto com barra");
     return e && /abc123/.test(e.video || "");
   }, null, { timeout: 5000 }).catch(() => {});
   const comVideo = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return st.exercicios.find((e) => e.nome === "Supino reto").video;
+    return st.exercicios.find((e) => e.nome === "Supino reto com barra").video;
   });
   ok(/abc123/.test(comVideo), "sub-página do exercício salva o vídeo");
 
@@ -997,7 +997,7 @@ async function abaPt(p, a) {
     }, { fid: fid, nome: nome });
     return achou;
   }
-  ok(await escolheEx(p, fichaId, "Supino reto"), "🎨 2d: buscar e tocar no chip escolhe o exercício");
+  ok(await escolheEx(p, fichaId, "Supino reto com barra"), "🎨 2d: buscar e tocar no chip escolhe o exercício");
   await p.fill('[data-exser="' + fichaId + '"]', "4");
   await p.fill('[data-exrep="' + fichaId + '"]', "10");
   await p.click('[data-additem="' + fichaId + '"]');
@@ -1485,7 +1485,7 @@ async function abaPt(p, a) {
     return { ok: r.ok, ganhou: novas.length, nomes, temExId: novas.every((f) => f.itens.every((it) => !!it.exId)) };
   });
   ok(modAplica.ok && modAplica.ganhou >= 1 && modAplica.temExId, "aplicar o modelo em outra aluna cria as fichas com os exercícios ligados na biblioteca");
-  ok(modAplica.nomes.indexOf("Supino reto") >= 0, "o exercício do modelo virou o MESMO exercício da biblioteca (achado pelo nome)");
+  ok(modAplica.nomes.indexOf("Supino reto com barra") >= 0, "o exercício do modelo virou o MESMO exercício da biblioteca (achado pelo nome)");
   const modApaga = await p.evaluate(() => {
     const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const sel = document.getElementById("tplSel");
@@ -7262,12 +7262,15 @@ async function abaPt(p, a) {
       const semanas = [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n }));
       st.treinosV2[id].mes = { musculacao: { geradoEm: velho, semanas } };
       st.treinosV2[id].iaParams = { tipo: "musculacao", objetivo: "forca", equip: "casa", em: velho };
+      // v750: o card só aparece quando as fichas ainda são as da IA (geradaIA + ficha existindo)
+      st.treinosV2[id].geradaIA = true;
+      if (!(st.treinosV2[id].fichas || []).length) st.treinosV2[id].fichas = [{ id: "fRenova", titulo: "A — Peito", itens: [] }];
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
       window.__trAba("fichas");
       document.getElementById("tAluno").value = id;
       window.__pintaMes(st.treinosV2[id]);
       const card = document.getElementById("mesBox").innerHTML;
-      window.__pintaMes({ mes: { musculacao: { geradoEm: new Date().toISOString().slice(0, 10), semanas } } });
+      window.__pintaMes({ fichas: [{ id: "x" }], geradaIA: true, mes: { musculacao: { geradoEm: new Date().toISOString().slice(0, 10), semanas } } });
       const cardNovo = document.getElementById("mesBox").innerHTML;
       window.__pintaMes(st.treinosV2[id]);
       window.confirm = () => true;
@@ -7429,6 +7432,406 @@ async function abaPt(p, a) {
       "o exercício inventado é contado E devolvido pelo nome, em vez de sumir calado");
     ok(fora.exercicios === 2,
       "o nome escrito sem acento e em caixa alta é RECUPERADO pelo banco (AGACHAMENTO BULGARO → Agachamento búlgaro)");
+  }
+  /* ---- v750: revisão por área — Montar treino (pt-treinos) e IA de treino (pt-ia) ---- */
+  {
+    // helpers puros: letra da ficha, descanso, catálogo, equipamento, iaParams, data local
+    const puro = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const L = window.__letraFicha;
+      out.letra = L({ titulo: "Treino único — Full Body" }, 0) === "A" && L({ titulo: "Circuito — 3 voltas" }, 2) === "C" &&
+        L({ titulo: "b — Costas" }, 0) === "B" && L({ titulo: "A2 — Cardio" }, 0) === "A2" && L({ titulo: "A — Peito" }, 3) === "A";
+      const tpl = window.__templates, cat = window.MT_EXERCICIOS;
+      out.tplLetras = Object.keys(tpl).every((k) => tpl[k].fichas.every((f) => /^[A-C] — /.test(f[0])));
+      out.tplNomes = Object.keys(tpl).every((k) => tpl[k].fichas.every((f) => f[1].every((it) => cat.some((c) => c.n === it[0]))));
+      const st0 = S.read("ptStudio", {});
+      out.seed = st0.exercicios.filter((e) => /^(Supino reto com barra|Leg press 45°|Rosca direta com barra)$/.test(e.nome)).length === 3 &&
+        !st0.exercicios.some((e) => e.grupo === "Pernas" || e.grupo === "Braços");
+      const acha = window.__catalogoAcha;
+      out.acha = acha("Supino reto").n === "Supino reto com barra" && acha("leg press").n === "Leg press 45°" &&
+        acha("AGACHAMENTO BULGARO").n === "Agachamento búlgaro" && acha("Prancha").n === "Prancha" && !acha("Voador de marte");
+      const D = window.__descansoDe;
+      out.descanso = D({ descanso: 0 }) === 0 && D({}) === 60 && D({ descanso: "45" }) === 45 && D({ descanso: "" }) === 60;
+      const E = window.__eqAceito;
+      out.eq = E("corpo", "Peso do corpo") && E("corpo", "Colchonete") && !E("corpo", "Barra") && !E("corpo", "Máquina") &&
+        E("casa", "Halteres") && E("casa", "Peso corporal") && !E("casa", "Máquina") && !E("casa", "Piscina") && E("academia", "Piscina");
+      const P = window.__iaParamsDe;
+      out.iaParams = Object.keys(P({ iaParams: { tipo: "corrida", objetivo: "10 km" } }, "musculacao")).length === 0 &&
+        P({ iaParams: { tipo: "corrida", objetivo: "10 km" } }, "corrida").objetivo === "10 km" &&
+        P({ iaParams: { musculacao: { objetivo: "forca" }, corrida: { objetivo: "10 km" } } }, "musculacao").objetivo === "forca";
+      const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
+      out.geradoLocal = window.__peneiraMes(bom).geradoEm === S.todayISO() && window.__semanaMes({ geradoEm: S.todayISO(), semanas: [1, 2, 3, 4] }) === 1;
+      // memoização da lista unificada: mesma referência até a biblioteca mudar
+      const l1 = window.__listaUnificada(st0), l2 = window.__listaUnificada(st0);
+      const st1 = JSON.parse(JSON.stringify(st0));
+      st1.exercicios.push({ id: "v750x", nome: "Exercício v750", grupo: "Core", video: "", descricao: "d" });
+      const l3 = window.__listaUnificada(st1);
+      out.memo = l1 === l2 && l3 !== l1 && l3.length === l1.length + 1;
+      return out;
+    });
+    ok(puro.letra && puro.tplLetras, "🔤 v750: só letra (A, B, A2) antes do travessão vale como letra — 'Treino único — Full Body' não vira 'Tr'; os templates saem como 'A — …'");
+    ok(puro.tplNomes && puro.seed && puro.acha, "📚 v750: fichas prontas e semente usam os nomes/grupos do catálogo, e o catálogo é achado por prefixo ('Supino reto' → 'Supino reto com barra')");
+    ok(puro.descanso, "⏱ v750: descanso 0 é ZERO (bi-set); só o campo ausente vale 60");
+    ok(puro.eq, "🏠 v750: 'Só o peso do corpo' aceita Peso do corpo/Colchonete e 'casa' aceita Halteres — máquina e piscina ficam fora");
+    ok(puro.iaParams, "🔄 v750: os parâmetros da IA valem por TIPO — objetivo da corrida não vaza pra musculação");
+    ok(puro.geradoLocal, "📅 v750: geradoEm e a semana do mês usam a data LOCAL (S.todayISO), não UTC");
+    ok(puro.memo, "⚡ v750: listaUnificada é memoizada (mesma referência) e refaz quando a biblioteca muda");
+
+    // tela de montar ficha: descanso 0 na linha, chips '+N' que crescem, foco que não some
+    const tela = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const t = st.treinosV2[id];
+      t.fichas[0].itens[0].descanso = 0;
+      S.write("ptStudio", st);
+      window.__vaiMontarTreino(id); // a área Treinos precisa estar NA TELA — focus() em elemento escondido não vale
+      const fid = t.fichas[0].id;
+      // a gaveta da ficha aberta
+      const det = document.querySelector('[data-fdet="' + fid + '"]');
+      if (det) det.open = true;
+      const sub0 = document.querySelector('[data-tdex="' + fid + ':0"] .tdsub');
+      out.zeroNaLinha = !!sub0 && /· 0 s/.test(sub0.textContent);
+      const pac = window.__dadosApp(st.alunos[0], "t");
+      out.zeroNoPacote = pac.guiaFichasP[0].it[0].d === 0 && pac.fichasApp[0].itens[0].descanso === 0;
+      // chips: filtro "Todos…" e busca vazia
+      const mov = document.querySelector('[data-exmov="' + fid + '"]'); mov.value = ""; mov.dispatchEvent(new Event("change", { bubbles: true }));
+      const zona = document.querySelector('[data-exzona="' + fid + '"]'); zona.value = ""; zona.dispatchEvent(new Event("change", { bubbles: true }));
+      const bs = document.querySelector('[data-exbusca="' + fid + '"]'); bs.value = ""; bs.dispatchEvent(new Event("input", { bubbles: true }));
+      const conta = () => document.querySelectorAll('[data-exchip="' + fid + '"]').length;
+      out.c0 = conta();
+      document.querySelector('[data-exmais="' + fid + '"]').click();
+      out.c1 = conta();
+      out.resta = !!document.querySelector('[data-exresta="' + fid + '"]');
+      document.querySelector('[data-exmais="' + fid + '"]').click();
+      out.c2 = conta();
+      document.querySelector('[data-exmenos="' + fid + '"]').click();
+      out.c3 = conta();
+      // editor: abre pela linha, muda Séries com o foco já em Repetições (é o Tab)
+      document.querySelector('[data-exab="' + fid + ':0"]').click();
+      const reps = document.querySelector('[data-tfld="' + fid + ':0:reps"]');
+      const ser = document.querySelector('[data-tfld="' + fid + ':0:series"]');
+      reps.focus();
+      ser.value = "5";
+      ser.dispatchEvent(new Event("change", { bubbles: true }));
+      out.focoFicou = document.activeElement === reps && document.contains(reps);
+      const sub1 = document.querySelector('[data-tdex="' + fid + ':0"] .tdsub');
+      out.resumoNovo = !!sub1 && /^5 × /.test(sub1.textContent);
+      out.gravou = S.read("ptStudio", {}).treinosV2[id].fichas[0].itens[0].series === 5;
+      // fecha o editor e devolve o descanso
+      document.querySelector('[data-exab="' + fid + ':0"]').click();
+      const st2 = S.read("ptStudio", {});
+      st2.treinosV2[id].fichas[0].itens[0].descanso = 60;
+      S.write("ptStudio", st2);
+      return out;
+    });
+    ok(tela.zeroNaLinha && tela.zeroNoPacote, "⏱ v750: descanso 0 aparece como '0 s' na linha e chega como 0 no pacote E no treino guiado (era 60 no guiado)");
+    ok(tela.c0 === 5 && tela.c1 === 65 && tela.c2 === 125 && tela.c3 === 5 && tela.resta,
+      "➕ v750: cada toque no '+N' dos chips mostra mais 60 (5 → 65 → 125), com o aviso 'mostrando X de Y', e 'mostrar menos' volta a 5 (" + [tela.c0, tela.c1, tela.c2, tela.c3].join("/") + ")");
+    ok(tela.focoFicou && tela.resumoNovo && tela.gravou, "⌨️ v750: editar Séries com o foco já em Repetições grava, repinta só a linha e NÃO rouba o foco (Tab funciona)");
+
+    // mensagem única de publicar, com o botão Publicar agora que leva pra Fichas e clica no tdPublica
+    const pub = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const msg = window.__msgPublicar(id, "Salvo!");
+      out.frase = /Publicar agora/.test(msg) && /Salvar e publicar/.test(msg) && msg.indexOf(st.alunos[0].nome.split(" ")[0]) > 0;
+      const fonte = await (await fetch("personal.html")).text();
+      out.semTextoVelho = !/aba Fichas → Enviar pro app/.test(fonte) && !/Toque em Publicar apps atualizados pro aluno receber/.test(fonte) &&
+        !/Publique o app do aluno pra chegar no celular dele/.test(fonte);
+      window.__trAba("plano");
+      document.getElementById("plnStatus").innerHTML = msg;
+      const alertOrig = window.alert; window.alert = () => {};
+      document.getElementById("tEnvioStatus").textContent = "";
+      document.querySelector("#plnStatus [data-pubagora]").click();
+      await new Promise((r) => setTimeout(r, 300));
+      window.alert = alertOrig;
+      out.foiPraFichas = !document.querySelector('[data-trsec="fichas"]').hidden && document.getElementById("tAluno").value === id;
+      out.tentouPublicar = document.getElementById("tEnvioStatus").textContent.length > 0;
+      return out;
+    });
+    ok(pub.frase && pub.semTextoVelho, "📤 v750: UMA frase pra 'salvou, agora publica' — os quatro textos com botões que não existem sumiram");
+    ok(pub.foiPraFichas && pub.tentouPublicar, "📤 v750: 'Publicar agora' leva pra Fichas com o aluno certo e clica no MESMO Salvar e publicar");
+
+    // gerador por regras × plano do mês × evoluir semana × modelo com vídeo × semana do aluno × datalist do WOD
+    const regras = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id, id2 = id; // a suíte pode ter um aluno só: tudo no alunos[0], restaurado no fim
+      const guarda = JSON.stringify(st.treinosV2[id2] || null);
+      const anGuarda = JSON.stringify(st.alunos[0].anamnese || null);
+      const quatro = { geradoEm: S.todayISO(), semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "f", ajuste: "a" })) };
+      // T8: plano da IA some quando as fichas passam a ser do gerador por regras
+      st.treinosV2[id2] = { fichas: [{ id: "v750f", titulo: "A — X", itens: [] }], geradaIA: true, mes: { musculacao: quatro }, iaParams: { musculacao: { objetivo: "forca" } } };
+      st.alunos[0].anamnese = Object.assign({}, st.alunos[0].anamnese || {}, { dias: 3 });
+      S.write("ptStudio", st);
+      const r = window.__treinoAuto.gera(id2, "hipertrofia", "corpo");
+      const stA = S.read("ptStudio", {});
+      const tA = stA.treinosV2[id2];
+      out.geraOk = !!r.ok;
+      out.mesSaiu = !tA.mes && !tA.geradaIA && !tA.iaParams;
+      // T7: todo exercício gerado no modo "corpo" é de peso do corpo de verdade
+      const eqDe = (n) => ((window.MT_EXERCICIOS || []).find((c) => c.n === n) || {}).eq || "";
+      const nomes = []; tA.fichas.forEach((f) => f.itens.forEach((it) => { const ex = stA.exercicios.find((e) => e.id === it.exId); nomes.push(ex ? ex.nome : "?"); }));
+      out.nExs = nomes.length;
+      out.todosCorpo = nomes.every((n) => window.__eqAceito("corpo", eqDe(n)));
+      out.temPesoDoCorpo = nomes.some((n) => eqDe(n) === "Peso do corpo");
+      // pintaMesPlano só pinta o que ainda é da IA
+      window.__pintaMes({ fichas: [{ id: "x" }], mes: { musculacao: quatro } });
+      out.semIaNaoPinta = document.getElementById("mesBox").innerHTML === "";
+      window.__pintaMes({ fichas: [{ id: "x" }], geradaIA: true, mes: { musculacao: quatro } });
+      out.comIaPinta = /Plano do mês/.test(document.getElementById("mesBox").textContent);
+      // T9: Evoluir semana recusa ficha da IA e preserva a faixa "8-12"
+      const st3 = S.read("ptStudio", {});
+      st3.treinosV2[id2] = { fichas: [{ id: "v750g", titulo: "A — X", itens: [{ exId: st3.exercicios[0].id, series: 3, reps: "8-12", descanso: 60 }, { exId: st3.exercicios[1].id, series: 3, reps: "10", descanso: 60 }] }], geradaIA: true, mes: { musculacao: quatro } };
+      S.write("ptStudio", st3);
+      const rIA = window.__treinoAuto.evolui(id2);
+      out.evoluiRecusa = !!rIA.erro && /Plano do mês/.test(rIA.erro);
+      const st4 = S.read("ptStudio", {});
+      delete st4.treinosV2[id2].geradaIA; delete st4.treinosV2[id2].mes;
+      S.write("ptStudio", st4);
+      const rOk = window.__treinoAuto.evolui(id2);
+      const its = S.read("ptStudio", {}).treinosV2[id2].fichas[0].itens;
+      out.evoluiFaixa = !!rOk.ok && its[0].reps === "8-12" && its[1].reps === "11";
+      // T14: modelo guarda o vídeo por exercício
+      const st5 = S.read("ptStudio", {});
+      st5.treinosV2[id2].fichas[0].itens[0].video = "https://youtu.be/v750";
+      S.write("ptStudio", st5);
+      document.getElementById("tAluno").value = id2;
+      const rM = window.__tplMeu.salva("Modelo v750");
+      const st6 = S.read("ptStudio", {});
+      const mod = st6.modelosPT[st6.modelosPT.length - 1];
+      out.modeloVideo = !!rM.ok && mod.fichas[0].itens[0].video === "https://youtu.be/v750";
+      // tira o vídeo da ficha do aluno ANTES de aplicar: o que voltar tem de vir do MODELO
+      const st6b = S.read("ptStudio", {});
+      delete st6b.treinosV2[id].fichas[0].itens[0].video;
+      S.write("ptStudio", st6b);
+      const antes = ((st6b.treinosV2[id] || {}).fichas || []).length;
+      const confOrig = window.confirm; window.confirm = () => true;
+      const rAp = window.__tplMeu.aplica(id, "meu:" + mod.id);
+      window.confirm = confOrig;
+      const st7 = S.read("ptStudio", {});
+      const nova = st7.treinosV2[id].fichas[antes];
+      out.aplicaVideo = !!rAp.ok && !!nova && nova.itens[0].video === "https://youtu.be/v750";
+      // limpa: tira o modelo e devolve o treino e a anamnese do aluno como estavam
+      st7.modelosPT = st7.modelosPT.filter((m) => m.id !== mod.id);
+      st7.treinosV2[id2] = JSON.parse(guarda) || undefined;
+      if (!st7.treinosV2[id2]) delete st7.treinosV2[id2];
+      st7.alunos[0].anamnese = JSON.parse(anGuarda) || undefined;
+      if (!st7.alunos[0].anamnese) delete st7.alunos[0].anamnese;
+      S.write("ptStudio", st7);
+      document.getElementById("tAluno").value = id;
+      window.__tplMeu.popula();
+      // T13: Semana do aluno só oferece os 10 circuitos que viajam pro app
+      const st8 = S.read("ptStudio", {});
+      const wodsGuarda = JSON.stringify(st8.treinosV2[id].wods || []);
+      st8.treinosV2[id].wods = Array.from({ length: 12 }, (_, i) => ({ id: "w750" + i, nome: "Circuito " + i, tipo: "amrap", min: 10, mov: ["10 Burpee"], movs: [{ q: "10", n: "Burpee" }] }));
+      S.write("ptStudio", st8);
+      document.getElementById("plnAluno").value = id;
+      window.__planoPT.render();
+      const sel0 = document.querySelector("#plnDias [data-plndia]");
+      out.dezWods = [...sel0.querySelectorAll("option")].filter((o) => o.value.indexOf("wod:") === 0).length === 10;
+      out.avisoDez = /só os 10 primeiros vão pro app/.test([...sel0.querySelectorAll("optgroup")].map((g) => g.label).join(" "));
+      const st9 = S.read("ptStudio", {});
+      st9.treinosV2[id].wods = JSON.parse(wodsGuarda);
+      // T12: exercício novo na biblioteca aparece no datalist do circuito, e o catálogo vai inteiro
+      st9.exercicios.push({ id: "v750nado", nome: "Nado teste v750", grupo: "Natação e aquático", video: "", descricao: "d" });
+      S.write("ptStudio", st9);
+      window.__trAba("wod");
+      const ops = [...document.querySelectorAll("#wpExs option")].map((o) => o.textContent);
+      out.datalistNovo = ops.indexOf("Nado teste v750") >= 0;
+      out.datalistInteiro = ops.length > 1700 && ops.indexOf("Nado crawl com palmar") >= 0;
+      const st10 = S.read("ptStudio", {});
+      st10.exercicios = st10.exercicios.filter((e) => e.id !== "v750nado");
+      S.write("ptStudio", st10);
+      window.__trAba("fichas");
+      return out;
+    });
+    ok(regras.geraOk && regras.mesSaiu, "🧹 v750: 'Gerar fichas' por regras apaga o Plano do mês da IA (e geradaIA/iaParams) — o card não conta progressão de ficha que não existe");
+    ok(regras.nExs > 0 && regras.todosCorpo && regras.temPesoDoCorpo, "🏠 v750: 'Só o peso do corpo' gera " + regras.nExs + " exercícios, todos sem aparelho, com os 187 de 'Peso do corpo' dentro");
+    ok(regras.semIaNaoPinta && regras.comIaPinta, "📅 v750: o card Plano do mês só aparece quando as fichas ainda são da IA");
+    ok(regras.evoluiRecusa && regras.evoluiFaixa, "📈 v750: Evoluir semana recusa ficha da IA (dois relógios) e preserva a faixa '8-12' (10 → 11 continua)");
+    ok(regras.modeloVideo && regras.aplicaVideo, "🎥 v750: 'Salvar como modelo' guarda o vídeo por exercício e 'aplicar' devolve ele");
+    ok(regras.dezWods && regras.avisoDez, "📆 v750: a Semana do aluno oferece só os 10 circuitos que viajam pro app e avisa na etiqueta");
+    ok(regras.datalistNovo && regras.datalistInteiro, "🔎 v750: o datalist do circuito recarrega com exercício novo e leva o catálogo INTEIRO (sem cortar em 1500)");
+
+    // Renovar o mês: campo de busca acompanha o aluno e o objetivo de corrida não vaza
+    const renova = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const t = st.treinosV2[id];
+      const guardaMes = JSON.stringify({ mes: t.mes || null, geradaIA: !!t.geradaIA, iaParams: t.iaParams || null });
+      const ha30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+      t.geradaIA = true;
+      t.mes = { musculacao: { geradoEm: ha30, semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "f", ajuste: "a" })) } };
+      t.iaParams = { tipo: "corrida", objetivo: "10 km", equip: "academia", em: ha30 }; // formato antigo, de OUTRO tipo
+      S.write("ptStudio", st);
+      window.__trAba("auto");
+      // simula o campo visível preso no aluno ANTERIOR (o defeito: o select mudava, o campo não)
+      document.getElementById("taAlunoBusca").value = "Fulano Antigo";
+      out.antes = document.getElementById("taAlunoBusca").value;
+      document.getElementById("taObjetivo").value = "forca";
+      window.__trAba("fichas");
+      document.getElementById("tAluno").value = id;
+      document.getElementById("tAluno").dispatchEvent(new Event("change", { bubbles: true }));
+      const bt = document.querySelector('#mesBox [data-renovames="musculacao"]');
+      out.temBotao = !!bt;
+      const confOrig = window.confirm; window.confirm = () => false; // para no "substituir?"
+      if (bt) bt.click();
+      await new Promise((r) => setTimeout(r, 100));
+      window.confirm = confOrig;
+      out.busca = document.getElementById("taAlunoBusca").value;
+      out.nome = st.alunos[0].nome.split(" ")[0];
+      out.objetivo = document.getElementById("taObjetivo").value;
+      const st2 = S.read("ptStudio", {});
+      const g = JSON.parse(guardaMes);
+      const t2 = st2.treinosV2[id];
+      if (g.mes) t2.mes = g.mes; else delete t2.mes;
+      if (g.geradaIA) t2.geradaIA = true; else delete t2.geradaIA;
+      if (g.iaParams) t2.iaParams = g.iaParams; else delete t2.iaParams;
+      S.write("ptStudio", st2);
+      document.getElementById("taAluno").value = id;
+      document.getElementById("taAluno").dispatchEvent(new Event("change", { bubbles: true }));
+      return out;
+    });
+    ok(renova.temBotao && renova.busca.indexOf(renova.nome) >= 0 && renova.antes.indexOf(renova.nome) < 0,
+      "🔄 v750: Renovar o mês troca o aluno no campo de busca visível (" + renova.antes + " → " + renova.busca + ")");
+    ok(renova.objetivo === "forca", "🔄 v750: objetivo de CORRIDA guardado não zera o select de musculação ao renovar (ficou " + renova.objetivo + ")");
+
+    // IA: o que a IA recebe (perfil, cabeçalho comum, honestidade, WOD, orçamento) e o que o painel devolve
+    const ia = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const base = { alunos: [], exercicios: [], exFav: [], avaliacoes: [] };
+      // I3: fita e bioimpedância no formato SALVO (reg.circ / reg.bia)
+      const stA = Object.assign({}, base, { avaliacoes: [{ alunoId: "z", data: "2026-08-10", peso: 80, gordura: 20, circ: { coxa: 58 }, bia: { mme: 40, visceral: 8 } }] });
+      const tA = window.__montaDadosIA(stA, { id: "z", nome: "Z" }, "hipertrofia", "academia");
+      out.perfil = /coxa 58 cm/.test(tA) && /massa magra 40 kg/.test(tA) && /gordura visceral 8/.test(tA);
+      const stB = Object.assign({}, base, { avaliacoes: [
+        { alunoId: "z", data: "2026-05-10", peso: 88, bia: { mme: 34 } }, { alunoId: "z", data: "2026-08-10", peso: 83, bia: { mme: 36 } }] });
+      out.deltaMme = /massa magra \+2 kg/.test(window.__montaDadosIA(stB, { id: "z", nome: "Z" }, "o", "academia"));
+      // I13: anamnese em branco não vira afirmação
+      out.honesto = /NÍVEL: não informado/.test(tA) && /DOENÇAS CRÔNICAS: não informado \| MEDICAMENTOS: não informado/.test(tA) && !/NÍVEL: iniciante/.test(tA);
+      // I15: cabeçalho comum — corrida ganha SONO/GOSTA e a idade é por aniversário
+      const am = new Date(); am.setDate(am.getDate() + 1);
+      const nasc = (am.getFullYear() - 30) + "-" + String(am.getMonth() + 1).padStart(2, "0") + "-" + String(am.getDate()).padStart(2, "0");
+      const tC = window.__montaDadosCorridaIA(base, { id: "z", nome: "Z", nasc: nasc }, "10 km");
+      out.corridaCab = /SONO:/.test(tC) && /GOSTA DE:/.test(tC) && /OBJETIVO DA CORRIDA: 10 km/.test(tC) && /LEMBRETE|CORRIDAS REGISTRADAS/.test(tC);
+      out.idade = /ALUNO: Z, 29 anos/.test(tC) && /ALUNO: Z, 29 anos/.test(window.__montaDadosIA(base, { id: "z", nome: "Z", nasc: nasc }, "o", "academia"));
+      // I14: o circuito recebe os MOVIMENTOS dos circuitos, não as fichas de musculação
+      const stW = Object.assign({}, base, { exercicios: [{ id: "e1", nome: "Supino reto com barra", grupo: "Peito" }],
+        treinosV2: { w: { fichas: [{ id: "f", titulo: "A", itens: [{ exId: "e1", series: 3, reps: "10" }] }], wods: [{ id: "w1", nome: "C", tipo: "amrap", movs: [{ q: "10", n: "Burpee" }, { q: "200m", n: "Corrida" }] }] } } });
+      const tW = window.__montaDadosIA(stW, { id: "w", nome: "W" }, "condicionamento", "academia", "wod");
+      out.wod = /MOVIMENTOS DOS CIRCUITOS QUE ELE JÁ FAZ HOJE[^\n]*Burpee \| Corrida/.test(tW) && /quantidade de circuitos/.test(tW) && !/O QUE ELE JÁ TREINA HOJE/.test(tW);
+      const tM = window.__montaDadosIA(stW, { id: "w", nome: "W" }, "hipertrofia", "academia");
+      out.musc = /O QUE ELE JÁ TREINA HOJE[^\n]*Supino reto com barra/.test(tM) && /quantidade de fichas/.test(tM);
+      // I7: teto por grupo — os grupos do tipo crescem, os outros ficam em 12
+      const cands = (window.MT_EXERCICIOS || []).map((x) => ({ n: x.n, g: x.g }));
+      const conta = (txt, g) => { const l = txt.split("\n").find((x) => x.indexOf(g + ": ") === 0) || ""; return l ? l.split(" | ").length : 0; };
+      const cFoco = window.__catalogoIA(cands, [], 60000, ["Costas", "Quadríceps"]).texto;
+      const cSem = window.__catalogoIA(cands, [], 60000).texto;
+      out.foco = conta(cFoco, "Natação e aquático") <= 12 && conta(cFoco, "Costas") > 100 && conta(cSem, "Natação e aquático") > 60;
+      const cCit = window.__catalogoIA(cands, ["Nado crawl", "Nado costas", "Nado peito", "Nado borboleta", "Pernada com prancha", "Braçada com pull buoy", "Nado medley", "Flutuação", "Batida de pernas na borda", "Mergulho", "Nado livre com nadadeira", "Virada olímpica", "Saída do bloco"], 60000, ["Costas"]).texto;
+      out.focoCitados = conta(cCit, "Natação e aquático") >= 12;
+      out.nadoNaMusc = !/Natação e aquático: [^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|[^\n]*\|/.test(tM); // ≤ 12 nomes
+      // I8: leitura no máximo (4 × 2000) e o LEMBRETE FINAL continua inteiro dentro do envelope
+      const st = S.read("ptStudio", {});
+      const a = Object.assign({}, st.alunos[0], { obs: "x".repeat(1500), briefIA: { desejo: "d".repeat(2000), quer: "q".repeat(2000), adapta: "a".repeat(2000), leitura: "l".repeat(2000) } });
+      const tG = window.__montaDadosIA(st, a, "hipertrofia", "academia");
+      out.envelope = tG.length < 60000 && /=== fim do lembrete ===$/.test(tG.trim());
+      out.catalogoAinda = (tG.slice(tG.indexOf("CATÁLOGO DISPONÍVEL")).match(/\|/g) || []).length > 700;
+      // I6: frases genéricas e o desempate pelo movimento base
+      const ex = (t) => window.__exCitados(t, cands);
+      out.cit = ex("ela gosta de treinar na máquina e com barra, quer foco em glúteo").length === 0 &&
+        ex("quer treinar no banco e com corda").length === 0 && ex("foco em glúteo e posterior").length === 0 &&
+        ex("quer ABCD com stiff e remada curvada").indexOf("Remada curvada com barra") >= 0 &&
+        ex("quero supino reto e agachamento livre").indexOf("Supino reto com barra") >= 0 &&
+        !ex("quero supino reto e agachamento livre").some((n) => /Salto|1 e 1\/2/.test(n));
+      // I10: a semana do plano virou desde a publicação → app pendente
+      const ha10 = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
+      const stP = { alunos: [], config: {}, treinosV2: { pz: { fichas: [{ id: "f" }], geradaIA: true, mes: { musculacao: { geradoEm: ha10, semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "f", ajuste: "a" })) } } } } };
+      const aP = { id: "pz", appTokenP: "tk", appVer: self.MT_VERSAO, appEditEm: "2020-01-01T00:00:00Z" };
+      const pend = window.__appsPendentes.pendente;
+      out.semanaVirou = pend(stP, Object.assign({}, aP, { appPubEm: new Date(Date.now() - 8 * 864e5).toISOString() })) === true &&
+        pend(stP, Object.assign({}, aP, { appPubEm: new Date().toISOString() })) === false;
+      return out;
+    });
+    ok(ia.perfil && ia.deltaMme, "🧬 v750: coxa, massa magra e gordura visceral chegam à IA lidos de reg.circ/reg.bia (e a massa magra entra no MUDOU DESDE)");
+    ok(ia.honesto, "🧠 v750: anamnese em branco vira 'não informado' — nunca 'iniciante' nem 'nenhuma doença'");
+    ok(ia.corridaCab && ia.idade, "🧠 v750: cabeçalho ÚNICO — corrida ganha SONO/GOSTA e a idade é por aniversário (29, não 30, na véspera)");
+    ok(ia.wod && ia.musc, "🧠 v750: a IA de circuito recebe os movimentos dos circuitos e fala em 'circuitos'; a de musculação segue com as fichas");
+    ok(ia.foco && ia.focoCitados && ia.nadoNaMusc, "🧠 v750: o catálogo prioriza os grupos do TIPO (Costas cresce, Natação fica em 12 — a não ser que o professor cite mais)");
+    ok(ia.envelope && ia.catalogoAinda, "🧠 v750: com a leitura no máximo o envio cabe em 60000 e o LEMBRETE FINAL chega inteiro (o catálogo cede espaço)");
+    ok(ia.cit, "🧠 v750: 'no banco e com corda' e 'foco em glúteo' não citam exercício; 'remada curvada' vira a com barra, não a do smith");
+    ok(ia.semanaVirou, "📅 v750: quando a semana do Plano do mês vira, o app entra na fila de republicar (a automática atualiza o 'Semana N de 4')");
+
+    // IA de verdade (mock): tetos folgados e contados, plano do mês ausente avisado, chat-envia velha avisada sem abrir a gaveta
+    const iaClique = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const t = st.treinosV2[id];
+      const guarda = JSON.stringify({ fichas: t.fichas, mes: t.mes || null, geradaIA: !!t.geradaIA, iaParams: t.iaParams || null, plano: t.plano || null });
+      t.mes = { musculacao: { geradoEm: S.todayISO(), semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "velho", ajuste: "a" })) } };
+      S.write("ptStudio", st);
+      // nomes que JÁ estão na biblioteca (a geração não pode encher a biblioteca de exercício novo)
+      const base10 = st.exercicios.slice(0, 10).map((e) => e.nome);
+      const nomes = base10.concat(base10);
+      // 9 fichas (1 além do teto); a primeira com 20 exercícios de 10 séries, as outras com 3 normais
+      const plano = { fichas: Array.from({ length: 9 }, (_, i) => ({ titulo: String.fromCharCode(65 + i) + " — Peito",
+        itens: (i === 0 ? nomes : nomes.slice(0, 3)).map((n) => ({ nome: n, series: i === 0 ? 10 : 3, reps: "10", descanso: 60 })) })), resumo: "r" };
+      const orig = S.cloud; S.cloud = () => ({ client: {} });
+      const cham = window.MT_FUNCAO.chama;
+      window.MT_FUNCAO.chama = (cl, fn, corpo) => Promise.resolve(corpo && corpo.acao === "ping" ? { regras: ["brief"] } : { ok: true, texto: JSON.stringify(plano) });
+      window.__brief.confereReset();
+      document.getElementById("brAviso").hidden = true;
+      document.getElementById("taBrief").open = false;
+      window.__trAba("auto");
+      document.getElementById("taAluno").value = id;
+      document.getElementById("taTipo").value = "musculacao";
+      document.getElementById("taTipo").dispatchEvent(new Event("change"));
+      const confOrig = window.confirm; window.confirm = () => true;
+      // o teste antigo do Renovar deixa uma chamada da IA pendurada pra sempre (promise que nunca resolve) — o botão ficou disabled
+      document.getElementById("taIA").disabled = false;
+      document.getElementById("taIA").click();
+      await new Promise((r) => setTimeout(r, 400));
+      window.confirm = confOrig;
+      window.MT_FUNCAO.chama = cham; S.cloud = orig;
+      out.status = document.getElementById("taStatus").textContent;
+      const st2 = S.read("ptStudio", {});
+      const t2 = st2.treinosV2[id];
+      out.fichas = t2.fichas.length;
+      out.itens = t2.fichas[0].itens.length;
+      out.series = t2.fichas[0].itens[0].series;
+      out.mesSaiu = !(t2.mes && t2.mes.musculacao);
+      out.iaParamsTipo = !!(t2.iaParams && t2.iaParams.musculacao && !t2.iaParams.tipo);
+      out.avisoVisivel = !document.getElementById("brAviso").hidden && document.getElementById("taBrief").open;
+      out.avisoTexto = document.getElementById("brAviso").textContent;
+      // devolve o estúdio
+      const g = JSON.parse(guarda);
+      t2.fichas = g.fichas;
+      if (g.mes) t2.mes = g.mes; else delete t2.mes;
+      if (g.geradaIA) t2.geradaIA = true; else delete t2.geradaIA;
+      if (g.iaParams) t2.iaParams = g.iaParams; else delete t2.iaParams;
+      if (g.plano) t2.plano = g.plano; else delete t2.plano;
+      delete t2.planoAviso;
+      S.write("ptStudio", st2);
+      document.getElementById("brAviso").hidden = true;
+      document.getElementById("taBrief").open = false;
+      window.__brief.confereReset();
+      window.__trAba("fichas");
+      return out;
+    });
+    ok(iaClique.fichas === 8 && iaClique.itens === 16 && iaClique.series === 8,
+      "🧠 v750: os tetos subiram (8 fichas, 16 exercícios, 8 séries) — a IA que obedece o professor não é cortada em 6/10/6");
+    ok(/O painel limitou/.test(iaClique.status) && /1 ficha além das 8/.test(iaClique.status) && /4 exercícios além dos 16/.test(iaClique.status) && /16 exercícios com mais de 8 séries/.test(iaClique.status),
+      "🧠 v750: o que passou do teto é CONTADO e aparece no status, em vez de sumir calado");
+    ok(iaClique.mesSaiu && /não devolveu o Plano do mês/.test(iaClique.status),
+      "🧠 v750: resposta sem 'mes' apaga o plano do mês velho e o status diz que ele não veio");
+    ok(iaClique.iaParamsTipo, "🧠 v750: a geração grava iaParams.musculacao (por tipo)");
+    ok(iaClique.avisoVisivel && /Plano do mês/.test(iaClique.avisoTexto),
+      "🧠 v750: 'Gerar com IA' confere a chat-envia publicada sem precisar abrir a gaveta, e a falta de 'mes' aparece no aviso (a gaveta abre sozinha)");
   }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
@@ -10352,12 +10755,15 @@ async function abaPt(p, a) {
     // cópia antiga sem vídeo herda o padrão do catálogo ao passar por exercicioPorNome
     const S = window.MTStore, st = S.read("ptStudio", {});
     st.exercicios = st.exercicios || [];
-    st.exercicios.push({ id: "exvT", nome: "Supino reto com barra", grupo: "Peito", video: "", descricao: "x" });
-    const ex = window.__exPorNome(st, "Supino reto com barra");
+    // v750: a semente já traz o Supino com barra (e um teste acima deu vídeo próprio a ele) —
+    // a cópia antiga tem de ser de um exercício com vídeo que NÃO está na biblioteca
+    const fora = cat.find((c) => !st.exercicios.some((e) => e.nome.toLowerCase() === c.n.toLowerCase()));
+    st.exercicios.push({ id: "exvT", nome: fora.n, grupo: fora.g, video: "", descricao: "x" });
+    const ex = window.__exPorNome(st, fora.n);
     const herdou = ex.video;
     st.exercicios = st.exercicios.filter((e) => e.id !== "exvT");
     S.write("ptStudio", st);
-    return { total: cat.length, temSupino: !!supino, okUrls, herdou, esperado: supino && supino.v };
+    return { total: cat.length, temSupino: !!supino, okUrls, herdou, esperado: fora.v };
   });
   ok(vidCat.total >= 13 && vidCat.temSupino && vidCat.okUrls,
     "catálogo tem vídeos padrão (13+) em formato watch do YouTube — tocam embutidos no app");
@@ -12350,9 +12756,9 @@ async function abaPt(p, a) {
     // 4) a estrela ao lado do seletor favorita sem sair da ficha
     const pelaFicha = await pF.evaluate(() => {
       const bs = document.querySelector('[data-exbusca="ff1"]');
-      bs.value = "Remada curvada";
+      bs.value = "Remada curvada com barra"; // v750: a semente usa o nome do catálogo
       bs.dispatchEvent(new Event("input", { bubbles: true }));
-      const c = [...document.querySelectorAll('[data-exchip="ff1"]')].find((x) => x.getAttribute("data-nome") === "Remada curvada");
+      const c = [...document.querySelectorAll('[data-exchip="ff1"]')].find((x) => x.getAttribute("data-nome") === "Remada curvada com barra");
       c.click();
       const antes = document.querySelector('[data-exfavsel="ff1"]').textContent;
       document.querySelector('[data-exfavsel="ff1"]').click();

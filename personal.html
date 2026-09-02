@@ -2517,7 +2517,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="plnLimpa">Limpar dias</button>
       </div>
       <p id="plnStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Os treinos das abas Fichas, Circuito (WOD) e Corrida e bike aparecem aqui pra escolher. Depois de salvar, publique o app do aluno (aba Fichas → Enviar pro app) pra chegar no celular.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Os treinos das abas Fichas, Circuito (WOD) e Corrida e bike aparecem aqui pra escolher. Depois de salvar, toque em <b>Salvar e publicar</b> (aba Fichas) pra chegar no celular.</p>
     </div>
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="auto">
@@ -3941,18 +3941,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!load._fotosLimpas) { load._fotosLimpas = 1; if (tiraFotosDoRetorno(st)) S.write("ptStudio", st); } // v742
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
-      [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
-       ["Agachamento livre", "Pernas", "Pés na largura dos ombros, desça até a coxa passar da paralela mantendo o peito aberto e o calcanhar no chão."],
+      /* v750: os nomes e grupos são os do CATÁLOGO (exercicios-db.js). Antes a
+       * semente dizia "Supino reto", "Leg press", grupo "Pernas"/"Braços" — nada
+       * disso existe lá com esse nome, então o app do aluno recebia a ficha sem
+       * vídeo, sem alternativa e o aquecimento automático ignorava pernas e
+       * braços (AQ_MAPA só conhece Quadríceps/Bíceps/Tríceps). */
+      [["Supino reto com barra", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
+       ["Agachamento livre", "Quadríceps", "Pés na largura dos ombros, desça até a coxa passar da paralela mantendo o peito aberto e o calcanhar no chão."],
        ["Levantamento terra", "Costas", "Barra rente à canela, costas neutras, empurre o chão com as pernas e finalize com o quadril."],
-       ["Puxada aberta", "Costas", "Puxe a barra até a parte alta do peito, cotovelos apontando para baixo, sem balançar o tronco."],
-       ["Desenvolvimento", "Ombros", "Suba os halteres até estender os cotovelos sem bater, desça controlando até a altura das orelhas."],
-       ["Rosca direta", "Braços", "Cotovelos colados no tronco, suba sem balançar e desça em 2 segundos."],
-       ["Tríceps corda", "Braços", "Cotovelos fixos, estenda até o fim e abra a corda no final do movimento."],
-       ["Leg press", "Pernas", "Desça até 90° sem tirar o quadril do banco e empurre com o pé inteiro."],
+       ["Puxada na frente com pegada aberta", "Costas", "Puxe a barra até a parte alta do peito, cotovelos apontando para baixo, sem balançar o tronco."],
+       ["Desenvolvimento com halteres", "Ombros", "Suba os halteres até estender os cotovelos sem bater, desça controlando até a altura das orelhas."],
+       ["Rosca direta com barra", "Bíceps", "Cotovelos colados no tronco, suba sem balançar e desça em 2 segundos."],
+       ["Tríceps corda", "Tríceps", "Cotovelos fixos, estenda até o fim e abra a corda no final do movimento."],
+       ["Leg press 45°", "Quadríceps", "Desça até 90° sem tirar o quadril do banco e empurre com o pé inteiro."],
        ["Prancha", "Core", "Corpo alinhado da cabeça ao calcanhar, abdômen e glúteo contraídos — segure o tempo marcado."],
-       ["Remada curvada", "Costas", "Tronco a ~45°, puxe a barra na direção do umbigo e aperte as escápulas no topo."]
+       ["Remada curvada com barra", "Costas", "Tronco a ~45°, puxe a barra na direção do umbigo e aperte as escápulas no topo."]
       ].forEach(function (e) { st.exercicios.push({ id: S.uid(), nome: e[0], grupo: e[1], video: "", descricao: e[2] }); });
       S.write("ptStudio", st);
+    }
+    /* v750: quem já tinha a semente velha ganha o grupo do catálogo uma vez só
+     * ("Pernas" → Quadríceps, "Braços" → Bíceps/Tríceps), casando pelo PREFIXO
+     * do nome — o nome fica como está, porque as fichas apontam pro id. */
+    if (!st._exSeed2) {
+      st._exSeed2 = 1;
+      var mudouSeed = false;
+      st.exercicios.forEach(function (e) {
+        if (e.grupo !== "Pernas" && e.grupo !== "Braços") return;
+        var c = catalogoAcha(e.nome);
+        if (c && c.g) { e.grupo = c.g; mudouSeed = true; }
+      });
+      if (mudouSeed) S.write("ptStudio", st);
     }
     return st;
   }
@@ -8527,7 +8545,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     save(st);
     renderDesafio();
     carregaRankingDesafio();
-    alert("Desafio salvo! Agora toque em Publicar apps atualizados (aba Treinos) pra ele entrar no celular dos alunos.");
+    alert("Desafio salvo! " + MSG_PUBLICAR_TODOS);
   });
   $("dsEncerrar").addEventListener("click", function () {
     if (!confirm("Encerrar o desafio atual?")) return;
@@ -9379,7 +9397,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * lote nem aparecia, porque ninguém contava como pendente. */
     if ((a.appVer || "") !== (self.MT_VERSAO || "")) return true;
     var edit = Math.max(Date.parse(a.appEditEm || "") || 0, Date.parse((st.config || {}).appEditGeralEm || "") || 0);
-    return edit > (Date.parse(a.appPubEm || "") || 0);
+    if (edit > (Date.parse(a.appPubEm || "") || 0)) return true;
+    /* v750: o pacote leva a semana do Plano do mês JÁ resolvida (1 a 4) e o
+     * app só imprime. Sem isto o aluno ficava o mês inteiro em "Semana 1 de 4"
+     * enquanto o painel dizia semana 3. Quando a semana de HOJE é outra que a
+     * do dia da publicação, o app entra na fila — a automática republica. */
+    var tM = (st.treinosV2 || {})[a.id];
+    var pubIso = String(a.appPubEm || "").slice(0, 10);
+    if (tM && tM.mes && /^\d{4}-\d{2}-\d{2}$/.test(pubIso)) {
+      for (var k in tM.mes) {
+        var pl = tM.mes[k];
+        if (pl && (pl.semanas || []).length === 4 && semanaDoMes(pl, pubIso) !== semanaDoMes(pl)) return true;
+      }
+    }
+    return false;
   }
   function renderPubPendentes(st) {
     var pend = st.alunos.filter(function (a) { return appPendente(st, a); });
@@ -9610,17 +9641,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try {
       self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ping" }, "A IA de treino").then(function (d) {
         var regras = (d && d.regras) || [];
-        if (regras.indexOf("briefManda") >= 0) { av.hidden = true; return; }
-        av.innerHTML = "⚠️ <b>A IA publicada no seu Supabase é de uma versão antiga</b> e não trata esta leitura " +
-          "como regra — por isso o treino pode sair diferente do que você pediu. Abra " +
-          "<a href='https://www.torqueon.com.br/funcoes.html' target='_blank' rel='noopener'>torqueon.com.br/funcoes.html</a>, " +
+        // v750: as DUAS regras que o painel usa — sem "mes" o Plano do mês simplesmente não vinha, calado
+        var faltam = ["briefManda", "mes"].filter(function (r) { return regras.indexOf(r) < 0; });
+        if (!faltam.length) { av.hidden = true; return; }
+        av.innerHTML = "⚠️ <b>A IA publicada no seu Supabase é de uma versão antiga</b>" +
+          (faltam.indexOf("briefManda") >= 0 ? " e não trata esta leitura como regra — por isso o treino pode sair diferente do que você pediu" : "") +
+          (faltam.indexOf("mes") >= 0 ? (faltam.length > 1 ? "; ela também" : " e") + " não monta o Plano do mês (progressão das 4 semanas)" : "") +
+          ". Abra <a href='https://www.torqueon.com.br/funcoes.html' target='_blank' rel='noopener'>torqueon.com.br/funcoes.html</a>, " +
           "copie a <b>chat-envia</b> e publique de novo no Supabase.";
         av.hidden = false;
+        if ($("taBrief")) $("taBrief").open = true; // o aviso mora na gaveta — abre pra ele ser visto
       }, function () { iaChecada = false; }); // caiu a rede: tenta de novo depois
     } catch (eIa) { iaChecada = false; }
   }
   if ($("taBrief")) $("taBrief").addEventListener("toggle", function () { if (this.open) confereIaPublicada(); });
-  window.__brief = { carrega: carregaBrief, salva: salvaBrief, confere: confereIaPublicada }; // testes
+  window.__brief = { carrega: carregaBrief, salva: salvaBrief, confere: confereIaPublicada, confereReset: function () { iaChecada = false; } }; // testes
   BRIEF_CAMPOS.forEach(function (c) {
     var el = $(c[0]); if (!el) return;
     el.addEventListener("change", salvaBrief);
@@ -12095,9 +12130,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return orfaos;
   }
   window.__remapeiaPlano = remapeiaPlano; // testes
+  /* v750: só LETRA (com dígito opcional: A, B, A2) antes do travessão vale como
+   * letra. "Treino único — Full Body" virava "Tr" no quadradinho, "Tr2" na parte
+   * 2 e "Ainda falta Tr2" no recibo. Fora disso, vale a posição (A, B, C…).
+   * ⚠️ o builder do app faz o mesmo split — mudou aqui, confira lá. */
   function letraFicha(f, idx) {
     var p = String((f && f.titulo) || "").split("—");
-    if (p.length > 1) { var l = p[0].trim().slice(0, 2); if (l) return l; }
+    if (p.length > 1) { var l = p[0].trim(); if (/^[A-Za-z]\d?$/.test(l)) return l.toUpperCase(); }
     return String.fromCharCode(65 + (idx || 0));
   }
   window.__letraFicha = letraFicha; // testes
@@ -12105,7 +12144,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaMesPlano(t) {
     var el = $("mesBox"); if (!el) return;
     var mes = (t && t.mes) || {};
-    var tipos = Object.keys(MES_ROT).filter(function (k) { return mes[k] && (mes[k].semanas || []).length === 4; });
+    /* v750: o card só aparece quando o treino daquele tipo AINDA é o que a IA
+     * montou — "Gerar fichas" por regras apaga o plano da musculação, e um tipo
+     * sem treino nenhum (circuitos/corridas apagados) não pinta progressão. */
+    var temDo = { musculacao: !!(t && t.geradaIA && (t.fichas || []).length), wod: !!(t && (t.wods || []).length), corrida: !!(t && (t.cardio || []).length) };
+    var tipos = Object.keys(MES_ROT).filter(function (k) { return temDo[k] && mes[k] && (mes[k].semanas || []).length === 4; });
     if (!tipos.length) { el.innerHTML = ""; return; }
     el.innerHTML = tipos.map(function (k) {
       var m = mes[k], atual = semanaDoMes(m);
@@ -12143,10 +12186,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alunoId = $("tAluno").value;
     if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
     var tipoR = b.getAttribute("data-renovames");
-    var par = (((load().treinosV2 || {})[alunoId]) || {}).iaParams || {};
+    // v750: só os parâmetros da geração DESTE tipo — o objetivo da corrida
+    // ("10 km") não existe no select de musculação e deixava o campo vazio
+    var par = iaParamsDe(((load().treinosV2 || {})[alunoId]) || {}, tipoR);
     window.__trAba("auto");
     $("taAluno").value = alunoId;
-    if (window.__brief && window.__brief.carrega) window.__brief.carrega();
+    // v750: o change sincroniza o campo de busca visível (senão ficava o nome do
+    // aluno anterior) e carrega a leitura do professor — o mesmo caminho do tAluno
+    $("taAluno").dispatchEvent(new Event("change", { bubbles: true }));
     if ($("taTipo")) {
       $("taTipo").value = tipoR;
       $("taTipo").dispatchEvent(new Event("change", { bubbles: true }));
@@ -12159,6 +12206,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("taIA").click();
   });
   window.__renovaMes = true; // marca de recurso pros testes
+  /* v750: t.iaParams guarda os parâmetros da última geração POR TIPO
+   * ({musculacao: {...}, wod: {...}, corrida: {...}}). O formato antigo era um
+   * objeto só com `tipo` dentro — vale enquanto for do tipo pedido. */
+  function iaParamsDe(t, tipo) {
+    var ia = (t && t.iaParams) || {};
+    if (ia[tipo] && typeof ia[tipo] === "object") return ia[tipo];
+    if (ia.tipo && ia.tipo === tipo) return ia;
+    return {};
+  }
+  function guardaIaParams(t, tipo, par) {
+    var ia = t.iaParams;
+    if (!ia || typeof ia !== "object" || ia.tipo) ia = {}; // formato antigo vira o novo
+    ia[tipo] = par;
+    t.iaParams = ia;
+  }
+  window.__iaParamsDe = iaParamsDe; // testes
+  /* v750: descanso ausente vale 60 s; ZERO é zero (bi-set = "sem descanso no
+   * meio"). Antes `+it.descanso || 60` fazia o 0 gravado virar 60 na linha, no
+   * editor e no treino guiado — o professor achava que não tinha salvo. */
+  function descansoDe(it) {
+    if (!it || it.descanso == null || it.descanso === "") return 60;
+    var d = +it.descanso;
+    return isFinite(d) && d >= 0 ? d : 60;
+  }
+  window.__descansoDe = descansoDe; // testes
   // a frase roxa do rodape da ficha: pra quem vai e quando ele treina de novo.
   // Se nao houver sessao marcada, ela NAO inventa data — diz o que sabe.
   function notaPublica(st, alunoId) {
@@ -12214,8 +12286,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var p2 = f.p2 || {};
       var p2l = p2.l || [];
       // ~N min: series x (descanso + 40s de execucao). E estimativa, e o title diz isso.
-      var seg = f.itens.reduce(function (t2, it) { return t2 + (+it.series || 1) * ((+it.descanso || 60) + 40); }, 0);
-      var min = Math.max(1, Math.round(seg / 60));
+      var min = minutosFicha(f);
       return '<details data-fdet="' + f.id + '"' + (fichasAbertas[f.id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
         '<summary style="padding:14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<span class="tdl" style="width:28px;height:28px;flex:none;border-radius:9px;background:var(--roxo);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:900;">' + esc(letraF) + "</span>" +
@@ -12264,7 +12335,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tddir"><div class="tdficha">' +
         /* o NOME da ficha ja esta na tampa da gaveta, logo acima — repetir
          * aqui era a segunda duplicata da tela. Fica so o tamanho dela. */
-        '<div class="tdfcab"><div class="tds">' +
+        '<div class="tdfcab"><div class="tds" data-fmin="' + f.id + '">' +
         (f.itens.length ? "~" + min + " min de treino" : "Ficha vazia") + "</div>" +
         '<button class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">✕ apagar ficha</button></div>' +
         /* UMA forma de editar (conserto da v633). Antes a mesma linha tinha
@@ -12280,16 +12351,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
           var chave = f.id + ":" + i;
           var aberto = !!exAberto[chave];
-          var resumo = it.series + " × " + esc(String(it.reps)) + " · " + (+it.descanso || 60) + " s" +
-            (it.tec ? " · " + esc(tecNome(it.tec)) : "") +
-            (it.obs ? " · " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "");
-          return '<div class="tdex' + (aberto ? " aberto" : "") + '">' +
+          var resumo = resumoItem(it);
+          return '<div class="tdex' + (aberto ? " aberto" : "") + '" data-tdex="' + chave + '">' +
             '<button type="button" class="tdexbt" data-exab="' + chave + '" aria-expanded="' + (aberto ? "true" : "false") + '">' +
             '<span class="tdnm">' + esc(ex.nome) + "</span>" +
             // o "tem video" e FATO do exercicio, entao vive na linha dos fatos —
             // colado no nome ele caia sozinho numa segunda linha e parecia parte do nome
             '<span class="tdsub">' + resumo +
-            (videoDoEx(ex) ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + "</span></button>" +
+            (videoDoEx(ex) || it.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + "</span></button>" +
             '<span class="tdac">' +
             (i > 0 ? '<button data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">↑</button>' : "") +
             (i < f.itens.length - 1 ? '<button data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">↓</button>' : "") +
@@ -12297,7 +12366,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<div class="tdedit"' + (aberto ? "" : " hidden") + '>' +
             '<label>Séries<input type="number" min="1" inputmode="numeric" data-tfld="' + chave + ':series" value="' + esc(String(it.series || 3)) + '"></label>' +
             '<label>Repetições<input data-tfld="' + chave + ':reps" value="' + esc(String(it.reps == null ? "" : it.reps)) + '" placeholder="12 ou 30s"></label>' +
-            '<label>Descanso (s)<input type="number" min="0" inputmode="numeric" data-tfld="' + chave + ':descanso" value="' + (+it.descanso || 60) + '"></label>' +
+            '<label>Descanso (s)<input type="number" min="0" inputmode="numeric" data-tfld="' + chave + ':descanso" value="' + descansoDe(it) + '"></label>' +
             '<label>Tipo de série<select data-tfld="' + chave + ':tec">' + opcoesTec(it.tec) + "</select></label>" +
             '<label class="tdeobs">Observação pro aluno<input data-tfld="' + chave + ':obs" value="' + esc(String(it.obs || "")) + '" placeholder="ex.: pegada fechada, desce devagar"></label>' +
             /* v730: o vídeo do PROFESSOR neste exercício — vence o da biblioteca
@@ -12339,12 +12408,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdnota">' + esc(notaPublica(st, alunoId)) + "</div>" +
         "</div></div></div></details>";
     }).join("");
-    t.fichas.forEach(function (f) { populaCascata(f.id); });
+    t.fichas.forEach(function (f) { populaCascata(f.id, st); });
   }
   // cascata da ficha: tipo de treino filtra os grupamentos, que filtram o exercício.
   // Na tela 2d quem aparece sao os CHIPS; o <select data-exsel> continua existindo,
   // escondido, porque e ele que o "+ Adicionar" le (e o que os testes dirigem).
-  var chipsAbertos = {}; // fid -> mostrar a lista inteira em vez dos 5 primeiros
+  /* fid -> quantos chips mostrar (0/ausente = só os 5 primeiros). v750: é um
+   * teto que CRESCE a cada toque no "+N" — antes era um booleano que travava
+   * em 60: com o filtro "Todos…" (1,8 mil) o "+1765" seguinte não fazia nada. */
+  var chipsAbertos = {};
+  var CHIPS_TETO = 5, CHIPS_PASSO = 60;
+  // ~N min: series x (descanso + 40s de execucao). E estimativa, e o title diz isso.
+  function minutosFicha(f) {
+    var seg = (f.itens || []).reduce(function (t2, it) { return t2 + (+it.series || 1) * (descansoDe(it) + 40); }, 0);
+    return Math.max(1, Math.round(seg / 60));
+  }
+  function resumoItem(it) {
+    return it.series + " × " + esc(String(it.reps)) + " · " + descansoDe(it) + " s" +
+      (it.tec ? " · " + esc(tecNome(it.tec)) : "") +
+      (it.obs ? " · " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "");
+  }
   /* qual exercicio esta com o editor aberto ("fid:i" -> 1). Fica FORA do
    * render porque renderFichas() reconstroi a lista inteira a cada troca de
    * campo — sem isso o editor fechava na cara do professor a cada digito. */
@@ -12352,15 +12435,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   /* a tela cheia de escolher exercicio (celular) vive numa classe no DOM, nao
    * no estado: renderFichas() reconstroi a lista e ela fecha sozinha — que e
    * justamente o que tem de acontecer depois de "+ Adicionar". */
-  function populaCascata(fid) {
+  function populaCascata(fid, stJa) {
     var movSel = document.querySelector('[data-exmov="' + fid + '"]');
     var zonaSel = document.querySelector('[data-exzona="' + fid + '"]');
     var exSel = document.querySelector('[data-exsel="' + fid + '"]');
     if (!movSel || !zonaSel || !exSel) return;
-    var st = load();
+    // v750: o renderFichas passa o st já carregado (era um load() por ficha) e
+    // a listaUnificada é memoizada — cada tecla na busca refazia movimentoDe
+    // pra 1,8 mil exercícios, duas vezes por ficha aberta
+    var st = stJa || load();
+    var todosU = listaUnificada(st);
     var mov = movSel.value;
     var soFav = mov === FAV_FILTRO;
-    var itens = listaUnificada(st).filter(function (x) { return soFav ? x.fav : (!mov || x.mov === mov); });
+    var itens = todosU.filter(function (x) { return soFav ? x.fav : (!mov || x.mov === mov); });
     var zonas = {};
     itens.forEach(function (x) { zonas[x.grupo] = 1; });
     var zonaAtual = zonas[zonaSel.value] ? zonaSel.value : "";
@@ -12384,20 +12471,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // contador da caixa de busca: quantos sobraram e de onde
     var elN = document.querySelector('[data-exn="' + fid + '"]');
     if (elN) elN.textContent = lista.length + (zonaAtual ? " em " + zonaAtual : soFav ? " favoritos" : "");
-    if (bs && !bs.placeholder.match(/^Buscar nos \d/)) bs.placeholder = "Buscar nos " + listaUnificada(st).length + " exercícios";
-    // chips: os 5 primeiros e um "+N" que abre o resto
+    if (bs && !bs.placeholder.match(/^Buscar nos \d/)) bs.placeholder = "Buscar nos " + todosU.length + " exercícios";
+    // chips: os 5 primeiros e um "+N" que abre mais 60 a cada toque
     var box = document.querySelector('[data-exchips="' + fid + '"]');
     if (box) {
-      var TETO = 5;
-      var abre = !!chipsAbertos[fid];
-      var mostra = abre ? lista.slice(0, 60) : lista.slice(0, TETO);
+      var teto = chipsAbertos[fid] > CHIPS_TETO ? chipsAbertos[fid] : CHIPS_TETO;
+      var abre = teto > CHIPS_TETO;
+      var mostra = lista.slice(0, teto);
       box.innerHTML = (lista.length ? mostra.map(function (x) {
         var on = x.nome === exSel.value;
         return '<button type="button" class="tdchip' + (on ? " on" : "") + '" data-exchip="' + fid + '" data-nome="' + esc(x.nome) + '">' +
           (on ? "+ " : "") + esc(x.nome) + (x.fav ? " ★" : "") + "</button>";
       }).join("") : '<span class="muted" style="font-size:12.5px;">Nada com esse filtro — limpe a busca ou troque o grupamento.</span>') +
         (lista.length > mostra.length ? '<button type="button" class="tdchip mais" data-exmais="' + fid + '">+' + (lista.length - mostra.length) + "</button>" : "") +
-        (abre && lista.length > TETO ? '<button type="button" class="tdchip mais" data-exmenos="' + fid + '">mostrar menos</button>' : "");
+        // v750: quando ainda sobra muito, diz o caminho curto em vez de deixar o professor tocando "+N"
+        (abre && lista.length > mostra.length ? '<span class="muted" style="font-size:12px;align-self:center;" data-exresta="' + fid + '">mostrando ' + mostra.length + " de " + lista.length + " — digite na busca pra filtrar</span>" : "") +
+        (abre ? '<button type="button" class="tdchip mais" data-exmenos="' + fid + '">mostrar menos</button>' : "");
     }
     pintaEstrelaCascata(fid);
   }
@@ -12441,7 +12530,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       } else return;
       marcaTreinoMudou(stF, $("tAluno").value);
       S.write("ptStudio", stF);
-      renderFichas();
+      /* v750: NÃO reconstrói a lista aqui. O change dispara no blur — com Tab de
+       * Séries pra Repetições, o renderFichas destruía o campo de destino e o
+       * foco ia pro body (no celular o teclado fechava a cada campo). Agora só
+       * a linha de resumo daquele exercício e o "~N min" da ficha são repintados;
+       * os campos continuam os mesmos nós do DOM. A lista inteira é refeita
+       * quando o editor fecha (clique na linha) ou noutra ação. */
+      var linhaF = document.querySelector('[data-tdex="' + pf[0] + ":" + pf[1] + '"]');
+      if (linhaF) {
+        var subF = linhaF.querySelector(".tdsub");
+        var exF = exPorId(stF, itF.exId) || {};
+        if (subF) subF.innerHTML = resumoItem(itF) + (videoDoEx(exF) || itF.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "");
+        // devolve ao campo o valor normalizado (série vazia volta pra 3, descanso negativo pra 0)
+        var norm = { series: itF.series, reps: itF.reps, descanso: descansoDe(itF), obs: itF.obs || "", tec: itF.tec || "", video: itF.video || "" };
+        if (norm[campo] != null && String(e.target.value) !== String(norm[campo])) e.target.value = norm[campo];
+      }
+      var minF = document.querySelector('[data-fmin="' + pf[0] + '"]');
+      if (minF) minF.textContent = "~" + minutosFicha(fF) + " min de treino";
       return;
     }
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
@@ -12503,7 +12608,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     var mais = e.target.closest && e.target.closest("[data-exmais]");
-    if (mais) { chipsAbertos[mais.getAttribute("data-exmais")] = 1; populaCascata(mais.getAttribute("data-exmais")); return; }
+    if (mais) {
+      var fMais = mais.getAttribute("data-exmais");
+      chipsAbertos[fMais] = (chipsAbertos[fMais] > CHIPS_TETO ? chipsAbertos[fMais] : CHIPS_TETO) + CHIPS_PASSO; // v750: cresce a cada toque
+      populaCascata(fMais); return;
+    }
     var menos = e.target.closest && e.target.closest("[data-exmenos]");
     if (menos) { chipsAbertos[menos.getAttribute("data-exmenos")] = 0; populaCascata(menos.getAttribute("data-exmenos")); }
   });
@@ -12571,6 +12680,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sinc();
   }
   function sincronizaBusca(id) { if (buscaSinc[id]) buscaSinc[id](); }
+  /* v750: UMA frase pra "salvou, agora publica" — Semana do aluno, circuito e
+   * corrida mandavam cada um pra um botão com nome diferente ("Enviar pro
+   * app", "Publicar apps atualizados", "Publique o app"), e o único visível
+   * desde a v632 é o Salvar e publicar da aba Fichas. A frase traz o botão
+   * "Publicar agora", que leva pra lá com o aluno certo e clica no MESMO
+   * tdPublica — nunca outra rota pra nuvem. */
+  var MSG_PUBLICAR_TODOS = "Agora publique os apps (Treinos → Em grupo → Publicar apps atualizados) pra valer no celular de todo mundo.";
+  function msgPublicar(alunoId, prefixo) {
+    var a = (load().alunos || []).find(function (x) { return x.id === alunoId; });
+    var quem = a ? String(a.nome || "").split(" ")[0] : "";
+    return esc(prefixo || "Salvo!") + " <button type='button' class='btn sec mini' data-pubagora='" + esc(alunoId || "") + "'>Publicar agora</button>" +
+      " <span>ou toque em <b>Salvar e publicar</b> (Treinos → Fichas) pra chegar no app" + (quem ? " de " + esc(quem) : " do aluno") + ".</span>";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-pubagora]");
+    if (!b) return;
+    var idPub = b.getAttribute("data-pubagora");
+    if (!idPub) { alert("Escolha o aluno primeiro."); return; }
+    mostraTrAba("fichas");
+    $("tAluno").value = idPub;
+    $("tAluno").dispatchEvent(new Event("change", { bubbles: true }));
+    renderFichas();
+    $("tdPublica").click();
+  });
+  window.__msgPublicar = msgPublicar; // testes
   ["sAluno", "pAluno", "avAluno", "taAluno", "qeAluno"].forEach(function (id) { buscaEmSelect(id); });
   buscaEmSelect("tAluno", "Digite o aluno (ou treino de disparo)…");
   // quais fichas estão abertas (recolhíveis — o re-render preserva)
@@ -12623,15 +12757,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   var wpEditando = null;
   // linhas de movimento estilo ficha (quantidade + exercício com busca no banco)
+  /* v750: era um booleano — carregava UMA vez e exercício criado depois na
+   * Biblioteca não aparecia até recarregar a página; e o .slice(0, 1500) cortava
+   * os ~340 do fim do catálogo (Natação, Cardio, Costas…). Agora a lista é
+   * refeita quando a biblioteca/favoritos mudam (mesma chave da memoização) e
+   * vai inteira — um <datalist> de 1,8 mil opções é leve. */
   var wpExsCarregado = false;
   function wpCarregaExs() {
-    if (wpExsCarregado) return;
-    wpExsCarregado = true;
     var st = load();
+    var chaveW = chaveListaUnificada(st);
+    if (wpExsCarregado === chaveW) return;
+    wpExsCarregado = chaveW;
     // favoritos primeiro — o datalist mostra as primeiras opções antes de digitar
     var todos = listaUnificada(st);
     $("wpExs").innerHTML = todos.filter(function (e) { return e.fav; }).concat(todos.filter(function (e) { return !e.fav; }))
-      .slice(0, 1500).map(function (e) {
+      .map(function (e) {
         return "<option>" + esc(e.nome || e.n || "") + "</option>";
       }).join("");
   }
@@ -12782,8 +12922,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("wpLimpa").hidden = true;
     $("wpNome").value = ""; $("wpAq").value = ""; $("wpObs").value = "";
     wpMontaLinhas();
-    $("wpStatus").textContent = "✓ salvo! Toque em Publicar apps atualizados pro aluno receber.";
-    setTimeout(function () { $("wpStatus").textContent = ""; }, 4000);
+    $("wpStatus").innerHTML = msgPublicar($("wpAluno").value, "✓ salvo!");
+    setTimeout(function () { $("wpStatus").textContent = ""; }, 8000);
     renderWods();
   });
   $("wpLimpa").addEventListener("click", function () {
@@ -12907,7 +13047,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cbFormTit").textContent = "Novo treino";
     $("cbLimpa").hidden = true;
     $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
-    $("cbStatus").textContent = "Salvo! Publique o app do aluno pra chegar no celular dele.";
+    $("cbStatus").innerHTML = msgPublicar($("cbAluno").value, "Salvo!");
     renderCardios();
   });
   $("cbLimpa").addEventListener("click", function () {
@@ -12973,11 +13113,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return "<option value='" + tp + ":" + x.id + "'>" + esc(nomeDe(x)) + "</option>";
       }).join("") + "</optgroup>";
     };
+    // só os 10 primeiros circuitos e cardios viajam pro app — o plano segue a
+    // MESMA janela (v750: os WODs listavam todos e o 11º virava dia DESCANSO no app)
+    var soDez = function (rot, lista) { return (lista || []).length > 10 ? rot + " (só os 10 primeiros vão pro app)" : rot; };
     var ops = "<option value=''>— descanso —</option>" +
       grupo("Fichas", t.fichas, "ficha", function (f) { return f.titulo || "Ficha"; }) +
-      // só os 10 primeiros cardios viajam pro app — o plano segue a mesma janela
-      grupo("Circuitos (WOD)", t.wods, "wod", function (w) { return w.nome || "Circuito"; }) +
-      grupo("Corrida e bike", (t.cardio || []).slice(0, 10), "cardio", function (c) { return c.nome || "Cardio"; });
+      grupo(soDez("Circuitos (WOD)", t.wods), (t.wods || []).slice(0, 10), "wod", function (w) { return w.nome || "Circuito"; }) +
+      grupo(soDez("Corrida e bike", t.cardio), (t.cardio || []).slice(0, 10), "cardio", function (c) { return c.nome || "Cardio"; });
     var temAlgo = (t.fichas || []).length || (t.wods || []).length || (t.cardio || []).length;
     box.innerHTML = (temAlgo ? "" : "<p style='margin:0 0 8px;'>Este aluno ainda não tem treino montado — crie nas abas Fichas, Circuito (WOD) ou Corrida e bike, e eles aparecem aqui.</p>") +
       PLN_DIAS.map(function (d) {
@@ -13006,8 +13148,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     marcaTreinoMudou(st, alunoId);
     save(st);
     renderPlanoSem();
-    $("plnStatus").textContent = Object.keys(dias).length
-      ? "Planejamento salvo! Agora publique o app do aluno (aba Fichas → Enviar pro app) pra chegar no celular."
+    $("plnStatus").innerHTML = Object.keys(dias).length
+      ? msgPublicar(alunoId, "Planejamento salvo!")
       : "Planejamento limpo — o card HOJE do app volta ao rodízio automático de fichas.";
   });
   if ($("plnLimpa")) $("plnLimpa").addEventListener("click", function () {
@@ -13174,7 +13316,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
     save(st);
     $("cfgStatus").textContent = mudouApp
-      ? "Salvo! Agora publique os apps (Treinos → Em grupo → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
+      ? "Salvo! " + MSG_PUBLICAR_TODOS
       : "Salvo!";
   });
   /* 🔔 Push do PROFESSOR: a inscrição vai pra push_subs com o token
@@ -14737,21 +14879,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- fichas prontas (templates estilo Trainerize) ----------
   // cada item: [nome do exercício na biblioteca, séries, reps]; exercício que faltar é criado na hora
+  /* v750: nomes CANÔNICOS do catálogo (senão chegam no app sem vídeo e fora do
+   * aquecimento/raio-X) e título sempre "LETRA — nome": "Treino único — Full
+   * Body" virava letra "Tr" no quadradinho da ficha, "Tr2" na parte 2 e o card
+   * do app dizia "Treino Treino único Full Body". */
   var TEMPLATES_FICHA = {
     fullbody: { nome: "Full Body iniciante (3x/semana)", fichas: [
-      ["Treino único — Full Body", [["Agachamento livre", 3, "12", 90], ["Supino reto", 3, "12", 90], ["Remada curvada", 3, "12", 90], ["Desenvolvimento", 3, "12", 60], ["Prancha", 3, "30s", 45]]],
+      ["A — Full Body", [["Agachamento livre", 3, "12", 90], ["Supino reto com barra", 3, "12", 90], ["Remada curvada com barra", 3, "12", 90], ["Desenvolvimento com halteres", 3, "12", 60], ["Prancha", 3, "30s", 45]]],
     ] },
     abc: { nome: "ABC hipertrofia", fichas: [
-      ["A — Peito/Tríceps", [["Supino reto", 4, "10", 90], ["Desenvolvimento", 3, "10", 60], ["Tríceps corda", 4, "12", 60]]],
-      ["B — Costas/Bíceps", [["Puxada aberta", 4, "10", 90], ["Remada curvada", 4, "10", 90], ["Rosca direta", 4, "12", 60]]],
-      ["C — Pernas/Core", [["Agachamento livre", 4, "10", 90], ["Leg press", 4, "12", 90], ["Levantamento terra", 3, "8", 120], ["Prancha", 3, "40s", 45]]],
+      ["A — Peito/Tríceps", [["Supino reto com barra", 4, "10", 90], ["Desenvolvimento com halteres", 3, "10", 60], ["Tríceps corda", 4, "12", 60]]],
+      ["B — Costas/Bíceps", [["Puxada na frente com pegada aberta", 4, "10", 90], ["Remada curvada com barra", 4, "10", 90], ["Rosca direta com barra", 4, "12", 60]]],
+      ["C — Pernas/Core", [["Agachamento livre", 4, "10", 90], ["Leg press 45°", 4, "12", 90], ["Levantamento terra", 3, "8", 120], ["Prancha", 3, "40s", 45]]],
     ] },
     inferior: { nome: "Foco em pernas e glúteo (AB)", fichas: [
-      ["A — Quadríceps", [["Agachamento livre", 4, "10", 90], ["Leg press", 4, "12", 90], ["Prancha", 3, "40s", 45]]],
-      ["B — Posterior/Glúteo", [["Levantamento terra", 4, "8", 120], ["Leg press", 3, "15", 60], ["Prancha", 3, "40s", 45]]],
+      ["A — Quadríceps", [["Agachamento livre", 4, "10", 90], ["Leg press 45°", 4, "12", 90], ["Prancha", 3, "40s", 45]]],
+      ["B — Posterior/Glúteo", [["Levantamento terra", 4, "8", 120], ["Leg press 45°", 3, "15", 60], ["Prancha", 3, "40s", 45]]],
     ] },
     funcional: { nome: "Funcional / condicionamento", fichas: [
-      ["Circuito — 3 voltas", [["Agachamento livre", 3, "15", 45], ["Prancha", 3, "45s", 45], ["Remada curvada", 3, "15", 45], ["Desenvolvimento", 3, "12", 45]]],
+      ["A — Circuito 3 voltas", [["Agachamento livre", 3, "15", 45], ["Prancha", 3, "45s", 45], ["Remada curvada com barra", 3, "15", 45], ["Desenvolvimento com halteres", 3, "12", 45]]],
     ] },
   };
   /* O seletor mistura DUAS fontes: os modelos DO PROFESSOR (st.modelosPT,
@@ -14785,9 +14931,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("tplSel").addEventListener("change", function () {
     $("tplApagar").hidden = this.value.indexOf("meu:") !== 0;
   });
+  /* v750: acha o exercício no CATÁLOGO por nome exato, depois sem acento e
+   * pontuação (chaveEx) e, por último, pelo prefixo — "Supino reto" →
+   * "Supino reto com barra", "Leg press" → "Leg press 45°" (o mais curto que
+   * começa assim, pulando as variações de técnica). Antes o casamento era só
+   * exato: template e semente com nome fora do vocabulário viravam exercício
+   * novo, sem grupo do banco e sem vídeo. */
+  function catalogoAcha(nome) {
+    var lista = self.MT_EXERCICIOS || [];
+    var n = String(nome || "").toLowerCase();
+    if (!n) return null;
+    var c = lista.find(function (x) { return x.n.toLowerCase() === n; });
+    if (c) return c;
+    var k = chaveEx(nome);
+    if (k.length < 4) return null;
+    c = lista.find(function (x) { return chaveEx(x.n) === k; });
+    if (c) return c;
+    var pref = lista.filter(function (x) { return chaveEx(x.n).indexOf(k + " ") === 0 && !/pausa de|excêntrica|1 e 1\/2|isométric/i.test(x.n); });
+    pref.sort(function (x, y) { return x.n.length - y.n.length; });
+    return pref[0] || null;
+  }
+  window.__catalogoAcha = catalogoAcha; // testes
   function exercicioPorNome(st, nome) {
     var ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); });
-    var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
+    var cat = catalogoAcha(nome);
+    if (!ex && cat) ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === cat.n.toLowerCase(); }); // v750: já cadastrado pelo nome canônico
     if (!ex) {
       ex = { id: S.uid(), nome: cat ? cat.n : nome, grupo: (cat && cat.g) || "", video: (cat && cat.v) || "", descricao: (cat && cat.d) || "" };
       st.exercicios.push(ex);
@@ -14830,8 +14998,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (meu) {
       meu.fichas.forEach(function (f) {
         var nova = { id: S.uid(), titulo: f.titulo, itens: (f.itens || []).map(function (it) {
-          var item = { exId: exercicioPorNome(st, it.nome).id, series: it.series, reps: it.reps, descanso: it.descanso || 60, obs: it.obs || "" };
+          var item = { exId: exercicioPorNome(st, it.nome).id, series: it.series, reps: it.reps, descanso: it.descanso == null ? 60 : it.descanso, obs: it.obs || "" };
           if (it.tec) item.tec = it.tec;
+          if (it.video) item.video = it.video; // v750: o vídeo do professor viaja no modelo
           return item;
         }) };
         if (f.p2) nova.p2 = JSON.parse(JSON.stringify(f.p2));
@@ -14871,6 +15040,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
         var item = { nome: (ex && ex.nome) || "", series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "" };
         if (it.tec) item.tec = it.tec;
+        if (it.video) item.video = it.video; // v750: sem isto o modelo perdia o vídeo por exercício (v730)
         return item;
       }).filter(function (it) { return it.nome; }) };
       if (f.p2) m.p2 = JSON.parse(JSON.stringify(f.p2));
@@ -14907,7 +15077,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- treino automático (motor de regras sobre a anamnese) ----------
   var TA_SPLITS = {
-    1: [["Treino único — Full Body", [["Quadríceps", 2], ["Peito", 1], ["Costas", 1], ["Posterior e glúteo", 1], ["Ombros", 1], ["Core", 1]]]],
+    1: [["A — Full Body", [["Quadríceps", 2], ["Peito", 1], ["Costas", 1], ["Posterior e glúteo", 1], ["Ombros", 1], ["Core", 1]]]],
     2: [["A — Corpo todo (ênfase superior)", [["Peito", 2], ["Costas", 2], ["Ombros", 1], ["Core", 1]]],
        ["B — Corpo todo (ênfase inferior)", [["Quadríceps", 2], ["Posterior e glúteo", 2], ["Core", 2]]]],
     3: [["A — Peito e Tríceps", [["Peito", 3], ["Tríceps", 2]]],
@@ -14929,11 +15099,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     emagrecimento: { s: 3, r: "15", d: 45, teto: 20, piso: 12 },
     condicionamento: { s: 3, r: "12", d: 60, teto: 15, piso: 10 },
   };
+  /* v750: as tags REAIS do exercicios-db.js pra "sem aparelho" são Peso do
+   * corpo (187), Peso corporal (32), Colchonete (43) e Livre (44) — nenhuma
+   * estava na lista, então "Só o peso do corpo" sobrava com 6 exercícios de
+   * peito (mochila, galão de água…) e deixava a Flexão de braço de fora; e
+   * "Halteres" (142) não entrava em casa, só "Barra/Halteres" (43). Agora é um
+   * casamento por expressão, e o exercício DO PROFESSOR herda o equipamento do
+   * catálogo pelo nome (o campo eq nunca existiu na biblioteca dele). */
   var TA_EQUIP = {
     academia: null, // tudo liberado
-    casa: ["Barra/Halteres", "Elástico", "Mini band", "Solo", "Sem equipamento", "Parede", "Banco", "Kettlebell", "Cadeira", "Degrau", "Toalha", "Caneleira", "Bastão"],
-    corpo: ["Solo", "Sem equipamento", "Parede", "Barra fixa", "Cadeira", "Degrau", "Toalha", "Banco"],
+    casa: /^(barra\/halteres|halteres?|el[áa]stico|el[áa]stico\/mini band|mini band|superband|solo|sem equipamento|parede|banco|kettlebell|cadeira|degrau|toalha|caneleira|bast[ãa]o|peso do corpo|peso corporal|colchonete|livre|bola su[íi][çc]a|trx|peso do corpo\/trx|sof[áa]|mochila|gal[ãa]o|garrafa de [áa]gua|barra fixa|corda|anilha|caixa|step|step\/caixa)$/i,
+    corpo: /^(solo|sem equipamento|parede|barra fixa|cadeira|degrau|toalha|banco|peso do corpo|peso corporal|colchonete|livre|sof[áa]|paralelas)$/i,
   };
+  function eqAceito(equip, eq) {
+    var re = TA_EQUIP[equip];
+    if (!re) return true; // academia = tudo liberado
+    return re.test(String(eq || "").trim());
+  }
+  var eqCatalogoPorNome = null;
+  function eqDoCatalogo(nome) {
+    if (!eqCatalogoPorNome) {
+      eqCatalogoPorNome = {};
+      (self.MT_EXERCICIOS || []).forEach(function (c) { eqCatalogoPorNome[c.n.toLowerCase()] = c.eq || ""; });
+    }
+    return eqCatalogoPorNome[String(nome || "").toLowerCase()] || "";
+  }
+  window.__eqAceito = eqAceito; // testes
   // lesão citada na anamnese → exercícios que o gerador evita (o personal sempre revisa)
   var TA_LESOES = [
     [/joelho|menisco|lca|patela/i, /agachamento|afundo|avanço|passada|leg |búlgaro|salto|pistol|sissy|hack|extensora|pliometr/i],
@@ -14950,18 +15141,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nivel = an.nivel || "iniciante";
     var series = nivel === "iniciante" ? Math.max(2, obj.s - 1) : obj.s;
     // filtros: equipamento, lesões e "não gosta"
-    var eqOk = TA_EQUIP[equip] || null;
     var vetos = [];
     TA_LESOES.forEach(function (par) { if (par[0].test(an.lesoes || "")) vetos.push(par[1]); });
     var naoGosta = String(an.naogosta || "").split(/[,;]/).map(function (s) { return s.trim().toLowerCase(); }).filter(function (s) { return s.length > 2; });
     var usados = {};
     var favG = favMapa(st);
     function candidatos(grupo) {
-      var meus = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo, eq: e.eq || "" }; });
+      var meus = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo, eq: e.eq || eqDoCatalogo(e.nome) }; }); // v750: herda o eq do catálogo
       var cat = (self.MT_EXERCICIOS || []).map(function (c) { return { n: c.n, g: c.g, eq: c.eq || "" }; });
       var lista = meus.concat(cat).filter(function (c) {
         if (c.g !== grupo || usados[c.n.toLowerCase()]) return false;
-        if (eqOk && eqOk.indexOf(c.eq) < 0) return false;
+        if (!eqAceito(equip, c.eq)) return false;
         if (vetos.some(function (v) { return v.test(c.n); })) return false;
         if (naoGosta.some(function (s) { return c.n.toLowerCase().indexOf(s) >= 0; })) return false;
         // variações de tempo/técnica avançada não entram na ficha automática
@@ -15000,6 +15190,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     t.geradaAuto = new Date().toISOString();
     t.objetivo = objetivo;
     t.semana = 1;
+    esqueceMesIA(t, "musculacao"); // v750: as fichas não são mais as da IA — o Plano do mês dela sai junto
     marcaTreinoMudou(st, alunoId);
     S.write("ptStudio", st);
     var avisos = [];
@@ -15007,16 +15198,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (naoGosta.length) avisos.push("preferências respeitadas");
     return { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos, planoAviso: orfAuto || 0 };
   }
+  /* v750: o Plano do mês da IA é amarrado às fichas que ELA montou. Quando o
+   * treino daquele tipo é trocado por outro caminho (gerador por regras, ficha
+   * apagada, resposta da IA sem "mes"), o plano velho sairia contando a
+   * progressão de fichas que não existem mais — e o "Renovar o mês" acenderia
+   * pra um treino que nem veio da IA. */
+  function esqueceMesIA(t, tipo) {
+    if (!t) return;
+    if (t.mes && t.mes[tipo]) { delete t.mes[tipo]; if (!Object.keys(t.mes).length) delete t.mes; }
+    if (tipo === "musculacao") delete t.geradaIA;
+    if (t.iaParams && typeof t.iaParams === "object") {
+      if (t.iaParams.tipo === tipo) delete t.iaParams;
+      else if (t.iaParams[tipo]) { delete t.iaParams[tipo]; if (!Object.keys(t.iaParams).length) delete t.iaParams; }
+    }
+  }
+  window.__esqueceMesIA = esqueceMesIA; // testes
   // progressão dupla: sobe rep até o teto; no teto, volta pro piso e ganha 1 série (máx. 5)
   function evoluiTreino(alunoId) {
     var st = load();
     var t = (st.treinosV2 || {})[alunoId];
     if (!t || !(t.fichas || []).length) return { erro: "Esse aluno ainda não tem ficha montada." };
+    /* v750: ficha da IA já TEM progressão — o Plano do mês diz o que muda a
+     * cada semana (e a 4ª é mais leve). Evoluir por cima subia as reps na
+     * semana de descarga. Dois relógios pro mesmo treino não podem coexistir. */
+    if (t.geradaIA || (t.mes && t.mes.musculacao)) {
+      return { erro: "Esta ficha veio da IA e o Plano do mês dela já traz a progressão semana a semana — siga o card 📅 e, na semana 4, use Renovar o mês com IA." };
+    }
     var obj = TA_OBJ[t.objetivo] || TA_OBJ.hipertrofia;
     t.fichas.forEach(function (f) {
       f.itens.forEach(function (it) {
         var mTempo = String(it.reps).match(/^(\d+)\s*s$/i);
         if (mTempo) { it.reps = Math.min(60, +mTempo[1] + 5) + "s"; return; }
+        // v750: só número puro evolui — "8-12" e "até a falha" ficam como o professor escreveu
+        if (!/^\d+$/.test(String(it.reps).trim())) return;
         var r = parseInt(it.reps, 10);
         if (!isFinite(r)) return;
         if (r < obj.teto) it.reps = String(r + 1);
@@ -15099,15 +15313,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var u = avs[avs.length - 1], p0 = avs[0];
     var linhas = [];
     var med = function (r, v, un) { return (v == null || v === "") ? "" : r + " " + String(v).replace(".", ",") + un; };
+    /* v750: o registro salvo guarda a fita em reg.circ (coxa, panturrilha…) e a
+     * bioimpedância em reg.bia (mme, visceral) — os ids do FORMULÁRIO (ccCoxa,
+     * biaMme) nunca existem no registro, então coxa, massa magra e visceral
+     * não chegavam à IA. O nome antigo ainda vale (avaliações importadas). */
+    var campo = function (r, k1, k2, k3) {
+      var v = r && r[k1] && typeof r[k1] === "object" ? r[k1][k2] : null;
+      if (v == null || v === "") v = r ? r[k3] : null;
+      return v;
+    };
     var partes = [med("peso", u.peso, " kg"), med("gordura", u.gordura, "%"), med("cintura", u.cintura, " cm"),
-      med("quadril", u.quadril, " cm"), med("braço", u.braco, " cm"), med("coxa", u.ccCoxa, " cm"),
-      med("massa magra", u.biaMme, " kg"), med("gordura visceral", u.biaVisceral, "")].filter(Boolean);
+      med("quadril", u.quadril, " cm"), med("braço", u.braco, " cm"), med("coxa", campo(u, "circ", "coxa", "ccCoxa"), " cm"),
+      med("panturrilha", campo(u, "circ", "panturrilha", "ccPanturrilha"), " cm"),
+      med("massa magra", campo(u, "bia", "mme", "biaMme"), " kg"), med("gordura visceral", campo(u, "bia", "visceral", "biaVisceral"), "")].filter(Boolean);
     linhas.push("AVALIAÇÃO FÍSICA (" + S.fmtData(u.data) + "): " + (partes.join(" · ") || "sem números"));
     if (avs.length >= 2) {
       var dl = [];
       [["peso", "peso", " kg"], ["gordura", "% de gordura", "%"], ["cintura", "cintura", " cm"], ["biaMme", "massa magra", " kg"]]
         .forEach(function (c) {
-          var a0 = parseFloat(p0[c[0]]), a1 = parseFloat(u[c[0]]);
+          var a0 = parseFloat(c[0] === "biaMme" ? campo(p0, "bia", "mme", "biaMme") : p0[c[0]]),
+            a1 = parseFloat(c[0] === "biaMme" ? campo(u, "bia", "mme", "biaMme") : u[c[0]]);
           if (!isFinite(a0) || !isFinite(a1)) return;
           var d = Math.round((a1 - a0) * 10) / 10;
           if (d) dl.push(c[1] + " " + (d > 0 ? "+" : "") + String(d).replace(".", ",") + c[2]);
@@ -15163,7 +15388,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       : "RELATOS DO ALUNO: nenhum resumo escrito ainda.");
     return out.join("\n");
   }
-  window.__montaDadosIA = function (st, a, obj, eq) { return montaDadosIA(st, a, obj, eq); }; // testes
+  window.__montaDadosIA = function (st, a, obj, eq, tipo) { return montaDadosIA(st, a, obj, eq, tipo); }; // testes (v750: leva o tipo)
   /* O texto que o professor escreveu, TODO junto: a leitura (briefIA), as
    * observações do aluno e os campos da anamnese onde ele fala de exercício.
    * Serve pra duas coisas: achar os exercícios que ele CITOU e repetir o
@@ -15199,7 +15424,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   /* palavras de EQUIPAMENTO e posição: uma frase feita só delas ("com barra",
    * "na máquina", "com halteres") não cita exercício nenhum — antes casava
    * um exercício aleatório do catálogo e o tornava obrigatório. */
-  var GENERICA = { barra: 1, barras: 1, halter: 1, halteres: 1, maquina: 1, maquinas: 1, cabo: 1, cabos: 1, polia: 1, kettlebell: 1, elastico: 1, elasticos: 1, peso: 1, corpo: 1, livre: 1, sentado: 1, sentada: 1, deitado: 1, deitada: 1, unilateral: 1, bilateral: 1, alternado: 1, alternada: 1, pe: 1, em: 1, com: 1, no: 1, na: 1, de: 1, do: 1, da: 1, e: 1, ou: 1, para: 1, pra: 1, a: 1, o: 1, um: 1, uma: 1, treino: 1, treinos: 1, exercicio: 1, exercicios: 1, serie: 1, series: 1 };
+  var GENERICA = { barra: 1, barras: 1, halter: 1, halteres: 1, maquina: 1, maquinas: 1, cabo: 1, cabos: 1, polia: 1, kettlebell: 1, elastico: 1, elasticos: 1, peso: 1, corpo: 1, livre: 1, sentado: 1, sentada: 1, deitado: 1, deitada: 1, unilateral: 1, bilateral: 1, alternado: 1, alternada: 1, pe: 1, em: 1, com: 1, no: 1, na: 1, de: 1, do: 1, da: 1, e: 1, ou: 1, para: 1, pra: 1, a: 1, o: 1, um: 1, uma: 1, treino: 1, treinos: 1, exercicio: 1, exercicios: 1, serie: 1, series: 1,
+    // v750: mais equipamento/posição ("no banco", "com corda" casavam Sled pull e uma remada aleatória) e
+    // partes do corpo ("foco em glúteo" não é exercício — é objetivo)
+    banco: 1, corda: 1, cordas: 1, bola: 1, caixa: 1, step: 1, degrau: 1, parede: 1, chao: 1, solo: 1, smith: 1, landmine: 1, trx: 1, anilha: 1, anilhas: 1, bastao: 1, cross: 1, mini: 1, band: 1, colchonete: 1, esteira: 1, bike: 1, piscina: 1,
+    gluteo: 1, gluteos: 1, posterior: 1, posteriores: 1, quadriceps: 1, peito: 1, peitoral: 1, costas: 1, ombro: 1, ombros: 1, braco: 1, bracos: 1, perna: 1, pernas: 1, core: 1, abdomen: 1, abdominal: 1, biceps: 1, triceps: 1, panturrilha: 1, panturrilhas: 1, foco: 1, membros: 1, superiores: 1, inferiores: 1, superior: 1, inferior: 1, tronco: 1, quadril: 1, lombar: 1, coxa: 1, coxas: 1, dorsal: 1, dorsais: 1 };
+  // v750: variação de técnica/implemento fica atrás do movimento base no desempate
+  var VARIACAO = /pausa|excentric|1 e 1\/2|isometric|salto|agua|smith|landmine|kettlebell|sandbag|mochila|galao|garrafa|elastico|mini band|toalha|cadeira|sofa|meia amplitude|unilateral|alternad|declinad|pegada|bola|trx|argola|paralela|caixa|degrau|escada/;
   /* Quais exercícios do banco o professor citou. Casa nos DOIS sentidos,
    * porque ele escreve dos dois jeitos:
    *   1. o nome do catálogo inteiro dentro do texto dele
@@ -15262,12 +15493,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var frase = pal.slice(i2, i2 + tam).join(" ");
         if (frase.length < 9) continue;
         if (frase.indexOf(";") >= 0) continue; // não atravessa a vírgula
-        if (pal.slice(i2, i2 + tam).every(function (w) { return GENERICA[w]; })) continue; // "com barra e halteres"
+        var pals = pal.slice(i2, i2 + tam);
+        if (pals.every(function (w) { return GENERICA[w]; })) continue; // "com barra e halteres"
+        // v750: trecho que COMEÇA ou TERMINA em palavra de ligação/equipamento não é
+        // um nome ("e agachamento" casava "Salto de agachamento na água")
+        if (GENERICA[pals[0]] || GENERICA[pals[pals.length - 1]]) continue;
         if (negado(t.indexOf(frase)) || fraseRestrita(t.indexOf(frase))) continue;
-        var casam = cands.filter(function (c) { return chaveEx(c.n).indexOf(frase) >= 0; });
+        // v750: casa por PALAVRA inteira — "e posterior" não pode casar dentro de "de posterior"
+        var casam = cands.filter(function (c) { return (" " + chaveEx(c.n) + " ").indexOf(" " + frase + " ") >= 0; });
         if (!casam.length || casam.length > 60) continue; // 60+ = trecho genérico demais
-        // só o mais CURTO: é o movimento base, não a variação com kettlebell
-        casam.sort(function (x, y) { return x.n.length - y.n.length; });
+        /* o movimento BASE, não a variação: v750 — antes valia só o nome mais
+         * curto, e "supino reto" virava "Supino reto 1 e 1/2" (mais curto que
+         * "Supino reto com barra") e "remada curvada" virava "no smith".
+         * Ordem: sem variação de técnica/implemento > menos palavras > mais curto. */
+        casam.sort(function (x, y) {
+          var kx = chaveEx(x.n), ky = chaveEx(y.n);
+          var vx = VARIACAO.test(kx) ? 1 : 0, vy = VARIACAO.test(ky) ? 1 : 0;
+          if (vx !== vy) return vx - vy;
+          var px = kx.split(" ").length, py = ky.split(" ").length;
+          if (px !== py) return px - py;
+          return x.n.length - y.n.length;
+        });
         poe(casam[0].n);
       }
     }
@@ -15283,20 +15529,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * Agora manda o máximo que couber no envelope (a chat-envia aceita 60000
    * caracteres em "dados") e, dentro de cada grupo, quem o professor citou,
    * favoritou ou já usa com este aluno vem PRIMEIRO — então nunca é cortado. */
-  function catalogoIA(cands, primeiro, orcamento) {
+  /* v750: `foco` é a lista de grupos que importam pro TIPO de treino. Eles
+   * crescem até o orçamento; os outros (Natação, Pilates, Boxe, Gestante…)
+   * ficam num teto baixo — só o que o professor citou/favoritou/já usa e mais
+   * uns poucos. Medido antes: com teto uniforme entravam 77 de natação inteiros
+   * enquanto Costas e Quadríceps ficavam pela metade. */
+  var CAT_FORA_TETO = 12;
+  var GRUPOS_MUSC = ["Peito", "Costas", "Quadríceps", "Posterior e glúteo", "Ombros", "Bíceps", "Tríceps", "Core", "Mobilidade e alongamento"];
+  var GRUPOS_WOD = ["Funcional e Cross", "Cardio", "Core", "Ginástica e calistenia", "Quadríceps", "Posterior e glúteo", "Costas", "Peito", "Ombros"];
+  function catalogoIA(cands, primeiro, orcamento, foco) {
     var peso = {};
     primeiro.forEach(function (n, i) { peso[chaveEx(n)] = i + 1; });
-    var porGrupo = {};
-    cands.forEach(function (c) { (porGrupo[c.g] = porGrupo[c.g] || []).push(c.n); });
+    var porGrupo = {}, citadosNoGrupo = {};
+    cands.forEach(function (c) {
+      (porGrupo[c.g] = porGrupo[c.g] || []).push(c.n);
+      if (peso[chaveEx(c.n)]) citadosNoGrupo[c.g] = (citadosNoGrupo[c.g] || 0) + 1;
+    });
     Object.keys(porGrupo).forEach(function (g) {
       porGrupo[g].sort(function (x, y) {
         var px = peso[chaveEx(x)] || 9999, py = peso[chaveEx(y)] || 9999;
         return px - py;
       });
     });
+    var ehFoco = {};
+    (foco || []).forEach(function (g) { ehFoco[g] = 1; });
+    var tetoDe = function (g, cap) {
+      if (!foco || !foco.length || ehFoco[g]) return cap;
+      return Math.min(cap, Math.max(CAT_FORA_TETO, citadosNoGrupo[g] || 0));
+    };
     var monta = function (cap) {
       return Object.keys(porGrupo).map(function (g) {
-        return g + ": " + porGrupo[g].slice(0, cap).join(" | ");
+        return g + ": " + porGrupo[g].slice(0, tetoDe(g, cap)).join(" | ");
       }).join("\n");
     };
     var cap = 25, txt = monta(cap);
@@ -15315,53 +15578,93 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return "DIÁRIO DO PROFESSOR (anotações das últimas sessões — leve a sério, é o que ele viu de perto):\n" +
       lin.map(function (r) { return "- " + String(r.d || "") + ": " + String(r.t || "") ; }).join("\n");
   }
-  function montaDadosIA(st, a, objetivo, equip) {
+  /* v750: o cabeçalho do envio é UM só pros três tipos (musculação, circuito e
+   * corrida). Antes era copiado em montaDadosIA e montaDadosCorridaIA — a
+   * versão de corrida já tinha perdido SONO/ESTRESSE e GOSTA/NÃO GOSTA, e cada
+   * uma calculava a idade com Date.now()/31557600000 (perto do aniversário
+   * dava um ano a mais do que a idadeDe() da zona de batimento).
+   *
+   * Anamnese em branco diz "não informado" — nunca afirma "iniciante" ou
+   * "nenhuma doença": a IA cai no conservador por FALTA de dado, não por um
+   * fato que ninguém escreveu. */
+  var ENVELOPE_IA = 60000; // o que a chat-envia aceita em "dados"
+  function cabecalhoIA(st, a, rotDias, plural) {
     var an = a.anamnese || {};
     var parqSim = [];
     for (var q = 1; q <= 7; q++) if (an["parq" + q]) parqSim.push(PARQ_RESUMO[q - 1]);
     var dias = Math.min(6, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
-    var eqOk = TA_EQUIP[equip] || null;
+    var id = idadeDe(a.nasc);
+    var idade = id ? id + " anos" : "";
+    return {
+      dias: dias,
+      topo: [
+        briefIA(a),
+        // as observações do professor sobem pra JUNTO da leitura dele: enterradas
+        // no meio da anamnese, viravam mais uma linha de contexto
+        ((a.obs || "").trim() ? "OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO (leve a sério): " + a.obs + "\n" : ""),
+        "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
+      ],
+      anamnese: [
+        "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
+        "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
+        "DOENÇAS CRÔNICAS: " + (an.doencas || "não informado") + " | MEDICAMENTOS: " + (an.meds || "não informado"),
+        "SONO: " + (an.sono || "?") + " | ESTRESSE: " + (an.estresse || "?") + " | FUMA: " + (an.fuma || "?") + " | ÁLCOOL: " + (an.alcool || "?"),
+        "NÍVEL: " + (an.nivel || "não informado — na dúvida, conservador") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
+        "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
+        "",
+        perfilFisicoIA(st, a),
+        evolucaoIA(a),
+      ],
+      lembrete: (function () {
+        var recado = textoDoProfessor(a);
+        return recado.trim()
+          ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
+            "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recado +
+            "\n=== fim do lembrete ==="
+          : "";
+      })(),
+    };
+  }
+  window.__cabecalhoIA = cabecalhoIA; // testes
+  function montaDadosIA(st, a, objetivo, equip, tipo) {
+    var wod = tipo === "wod";
     var vistos = {};
-    var cands = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo || "Outros", eq: e.eq || "" }; })
+    var cands = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo || "Outros", eq: e.eq || eqDoCatalogo(e.nome) }; })
       .concat((self.MT_EXERCICIOS || []).map(function (c) { return { n: c.n, g: c.g, eq: c.eq || "" }; }))
       .filter(function (c) {
         if (vistos[c.n.toLowerCase()]) return false;
         vistos[c.n.toLowerCase()] = 1;
-        return !(eqOk && eqOk.indexOf(c.eq) < 0);
+        return eqAceito(equip, c.eq); // v750: casa as tags reais do banco (Peso do corpo, Halteres…)
       });
-    var recado = textoDoProfessor(a);
     var citados = exCitados(textoPedidoDoProfessor(a), cands);
-    // o que este aluno já treina hoje: trocar o treino inteiro sem motivo é
-    // justamente o que faz o professor achar que a IA não ouviu ninguém
+    /* o que este aluno já treina hoje: trocar o treino inteiro sem motivo é
+     * justamente o que faz o professor achar que a IA não ouviu ninguém.
+     * v750: pro CIRCUITO o "já treina" são os movimentos dos circuitos atuais —
+     * mandar as fichas de musculação fazia a IA copiar o treino de força. */
     var jaUsa = [];
     var tAtual = (st.treinosV2 || {})[a.id];
-    ((tAtual && tAtual.fichas) || []).forEach(function (f) {
-      (f.itens || []).forEach(function (it) {
-        var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
-        if (ex && ex.nome && jaUsa.indexOf(ex.nome) < 0) jaUsa.push(ex.nome);
+    if (wod) {
+      ((tAtual && tAtual.wods) || []).forEach(function (w) {
+        ((w.movs || []).map(function (m) { return m && m.n; }).concat(w.mov || [])).forEach(function (n) {
+          var nn = String(n || "").replace(/^[\d.,]+\s*(m|km|s|min|x)?\s*/i, "").trim();
+          if (nn && jaUsa.indexOf(nn) < 0) jaUsa.push(nn);
+        });
       });
-    });
+    } else {
+      ((tAtual && tAtual.fichas) || []).forEach(function (f) {
+        (f.itens || []).forEach(function (it) {
+          var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
+          if (ex && ex.nome && jaUsa.indexOf(ex.nome) < 0) jaUsa.push(ex.nome);
+        });
+      });
+    }
     var primeiro = citados.concat((st.exFav || []).slice(0, 60)).concat(jaUsa.slice(0, 40));
-    var cat = catalogoIA(cands, primeiro, 44000);
-    var idade = "";
-    if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
-    return [
-      briefIA(a),
-      // as observações do professor sobem pra JUNTO da leitura dele: enterradas
-      // no meio da anamnese, viravam mais uma linha de contexto
-      ((a.obs || "").trim() ? "OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO (leve a sério): " + a.obs + "\n" : ""),
-      "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
-      "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias +
-        " (o DIAS/SEMANA é o padrão da anamnese; se o professor pediu outra quantidade de fichas ou outra divisão na leitura dele, vale o que ELE pediu)",
-      "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
-      "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
-      "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
-      "SONO: " + (an.sono || "?") + " | ESTRESSE: " + (an.estresse || "?") + " | FUMA: " + (an.fuma || "?") + " | ÁLCOOL: " + (an.alcool || "?"),
-      "NÍVEL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
-      "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
-      "",
-      perfilFisicoIA(st, a),
-      evolucaoIA(a),
+    var cab = cabecalhoIA(st, a);
+    var unidade = wod ? "circuitos" : "fichas";
+    var fixo = cab.topo.concat([
+      "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + cab.dias +
+        " (o DIAS/SEMANA é o padrão da anamnese; se o professor pediu outra quantidade de " + unidade + " ou outra divisão na leitura dele, vale o que ELE pediu)",
+    ]).concat(cab.anamnese).concat([
       diarioIA(st, a),
       "",
       // o que o professor citou pelo nome não é sugestão: é encomenda
@@ -15374,53 +15677,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? "EXERCÍCIOS FAVORITOS DO PERSONAL (prefira estes quando servirem ao objetivo): " + st.exFav.slice(0, 60).join(" | ") + "\n"
         : "") +
       (jaUsa.length
-        ? "O QUE ELE JÁ TREINA HOJE (mantenha o que ainda serve; não troque o treino inteiro sem motivo): " +
+        ? (wod
+          ? "MOVIMENTOS DOS CIRCUITOS QUE ELE JÁ FAZ HOJE (mantenha o que ainda serve; não troque tudo sem motivo): "
+          : "O QUE ELE JÁ TREINA HOJE (mantenha o que ainda serve; não troque o treino inteiro sem motivo): ") +
           jaUsa.slice(0, 40).join(" | ") + "\n"
         : "") +
       "CATÁLOGO DISPONÍVEL (use somente estes nomes, agrupados por grupo muscular):",
+    ]);
+    /* v750: o catálogo recebe o que SOBRA do envelope depois dos blocos fixos
+     * e do lembrete — antes era 44000 cravado e, com a leitura do professor
+     * caprichada (4 campos × 2000), a chat-envia cortava justamente o
+     * LEMBRETE FINAL que o prompt manda a IA conferir. */
+    var fixoTam = fixo.join("\n").length + cab.lembrete.length + 200;
+    var cat = catalogoIA(cands, primeiro, Math.max(12000, ENVELOPE_IA - fixoTam), wod ? GRUPOS_WOD : GRUPOS_MUSC);
+    return fixo.concat([
       cat.texto,
       // repetir o pedido no FIM ajuda: é a última coisa que o modelo lê antes
       // de responder, e era comum a leitura do professor se perder no meio
-      (recado.trim()
-        ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
-          "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recado +
-          "\n=== fim do lembrete ==="
-        : ""),
-    ].filter(function (x) { return x !== ""; }).join("\n");
+      cab.lembrete,
+    ]).filter(function (x) { return x !== ""; }).join("\n");
   }
   window.__catalogoIA = catalogoIA; // testes
   window.__exCitados = exCitados; // testes
   // corrida: a IA não precisa do catálogo de exercícios — só da anamnese e do alvo
   function montaDadosCorridaIA(st, a, prova) {
-    var an = a.anamnese || {};
-    var parqSim = [];
-    for (var q = 1; q <= 7; q++) if (an["parq" + q]) parqSim.push(PARQ_RESUMO[q - 1]);
-    var dias = Math.min(6, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
-    var idade = "";
-    if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
-    var recadoC = textoDoProfessor(a);
-    return [
-      briefIA(a),
-      ((a.obs || "").trim() ? "OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO (leve a sério): " + a.obs + "\n" : ""),
-      "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
-      "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + dias +
+    var cab = cabecalhoIA(st, a);
+    return cab.topo.concat([
+      "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + cab.dias +
         " (é o padrão da anamnese; se o professor pediu outra quantidade de treinos na leitura dele, vale o que ELE pediu)",
-      "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
-      "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
-      "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
-      "NÍVEL GERAL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
-      "",
-      perfilFisicoIA(st, a),
-      evolucaoIA(a),
+    ]).concat(cab.anamnese).concat([
       corridasIA(a),
       diarioIA(st, a),
-      (recadoC.trim()
-        ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
-          "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recadoC +
-          "\n=== fim do lembrete ==="
-        : ""),
-    ].filter(function (x) { return x !== ""; }).join("\n");
+      cab.lembrete,
+    ]).filter(function (x) { return x !== ""; }).join("\n");
   }
+  window.__montaDadosCorridaIA = montaDadosCorridaIA; // testes
   /* Corridas que ele já fez (vêm do app): a IA precisa saber o pace real antes
    * de prescrever tiro nenhum. */
   function corridasIA(a) {
@@ -15498,7 +15789,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sem.push({ n: Math.min(4, Math.max(1, parseInt(x.n, 10) || i + 1)), foco: foco, ajuste: aj });
     });
     if (sem.length !== 4) return null;
-    return { geradoEm: new Date().toISOString().slice(0, 10), semanas: sem };
+    // v750: data LOCAL (S.todayISO) — em UTC, das 21h às 24h em Brasília o
+    // "montado em" saía com a data de amanhã e a semana virava um dia antes
+    return { geradoEm: S.todayISO(), semanas: sem };
   }
   window.__peneiraMes = peneiraMesIA; // testes
   /* Em que semana do plano o aluno está (1 a 4), contando do dia em que foi
@@ -15506,7 +15799,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function semanaDoMes(mes, hojeIso) {
     if (!mes || !mes.geradoEm || !(mes.semanas || []).length) return 0;
     var d0 = Date.parse(mes.geradoEm + "T12:00:00");
-    var d1 = Date.parse((hojeIso || new Date().toISOString().slice(0, 10)) + "T12:00:00");
+    var d1 = Date.parse((hojeIso || S.todayISO()) + "T12:00:00"); // v750: local, como geradoEm
     if (!isFinite(d0) || !isFinite(d1) || d1 < d0) return 1;
     return Math.min(4, Math.floor((d1 - d0) / (7 * 864e5)) + 1);
   }
@@ -15540,7 +15833,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra usar a IA de treino — sem nuvem, use o Gerar fichas." }); return; }
-    var dados = tipo === "corrida" ? montaDadosCorridaIA(st, a, objetivo) : montaDadosIA(st, a, objetivo, equip);
+    var dados = tipo === "corrida" ? montaDadosCorridaIA(st, a, objetivo) : montaDadosIA(st, a, objetivo, equip, tipo);
     /* MT_FUNCAO renova o crachá do login antes de chamar e tenta de novo se o
      * Supabase recusar — era isso que fazia a IA "funcionar por um tempo e
      * depois dar erro": o token vence em ~1 hora e o painel fica aberto. */
@@ -15570,7 +15863,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stW = load();
         var tW = treinoDe(stW, alunoId);
         tW.wods = wodsIA;
-        var mW = peneiraMesIA(plano); if (mW) { tW.mes = tW.mes || {}; tW.mes.wod = mW; }
+        // v750: sem "mes" na resposta, o plano do mês ANTERIOR não fica colado nos circuitos novos
+        var mW = peneiraMesIA(plano); if (mW) { tW.mes = tW.mes || {}; tW.mes.wod = mW; } else esqueceMesIA(tW, "wod");
         marcaTreinoMudou(stW, alunoId);
         S.write("ptStudio", stW);
         cb({ ok: true, tipo: "wod", wods: wodsIA.length, mes: !!mW, resumo: String(plano.resumo || "").slice(0, 400) });
@@ -15582,7 +15876,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stC = load();
         var tC = treinoDe(stC, alunoId);
         tC.cardio = cardIA;
-        var mC = peneiraMesIA(plano); if (mC) { tC.mes = tC.mes || {}; tC.mes.corrida = mC; }
+        var mC = peneiraMesIA(plano); if (mC) { tC.mes = tC.mes || {}; tC.mes.corrida = mC; } else esqueceMesIA(tC, "corrida"); // v750
         marcaTreinoMudou(stC, alunoId);
         S.write("ptStudio", stC);
         cb({ ok: true, tipo: "corrida", cardios: cardIA.length, mes: !!mC, resumo: String(plano.resumo || "").slice(0, 400) });
@@ -15592,9 +15886,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var st2 = load();
       var t = treinoDe(st2, alunoId);
       var fichas = [], total = 0, ignorados = 0, nomesFora = [];
-      plano.fichas.slice(0, 6).forEach(function (f) {
+      /* v750: a BRIEF_REGRA diz à IA que a estrutura pedida pelo professor
+       * vence os padrões — e o painel cortava calado a 7ª ficha, o 11º
+       * exercício e a 7ª série. Tetos mais folgados (8 fichas, 16 por ficha,
+       * 8 séries) e o que ainda passar deles é CONTADO e mostrado. */
+      var IA_TETO = { fichas: 8, itens: 16, series: 8 };
+      var cortes = { fichas: Math.max(0, plano.fichas.length - IA_TETO.fichas), itens: 0, series: 0 };
+      plano.fichas.slice(0, IA_TETO.fichas).forEach(function (f) {
         var itens = [];
-        (f.itens || []).slice(0, 10).forEach(function (it) {
+        cortes.itens += Math.max(0, (f.itens || []).length - IA_TETO.itens);
+        (f.itens || []).slice(0, IA_TETO.itens).forEach(function (it) {
           var nome = String(it.nome || "").trim();
           if (!nome) return;
           // a IA só pode usar exercício que existe (catálogo ou biblioteca) — nada inventado
@@ -15606,15 +15907,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
            * professor tinha pedido pelo nome. */
           if (!existe) {
             var k = chaveEx(nome);
-            var achou = (st2.exercicios || []).find(function (e) { return chaveEx(e.nome) === k; }) ||
-              (self.MT_EXERCICIOS || []).find(function (c) { return chaveEx(c.n) === k; });
+            // v750: catalogoAcha também casa por PREFIXO ("Supino reto" → "Supino reto com barra")
+            var achou = (st2.exercicios || []).find(function (e) { return chaveEx(e.nome) === k; }) || catalogoAcha(nome);
             if (achou) { nome = achou.nome || achou.n; existe = true; }
           }
           if (!existe) { ignorados++; if (nomesFora.indexOf(nome) < 0) nomesFora.push(nome); return; }
           var ex = exercicioPorNome(st2, nome);
+          if (parseInt(it.series, 10) > IA_TETO.series) cortes.series++;
           itens.push({
             exId: ex.id,
-            series: Math.min(6, Math.max(1, parseInt(it.series, 10) || 3)),
+            series: Math.min(IA_TETO.series, Math.max(1, parseInt(it.series, 10) || 3)),
             reps: String(it.reps || "10").slice(0, 8),
             descanso: Math.min(300, Math.max(15, parseInt(it.descanso, 10) || 60)),
             obs: String(it.obs || "").slice(0, 120),
@@ -15632,11 +15934,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       t.geradaIA = true;
       t.objetivo = objetivo;
       t.semana = 1;
-      var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; }
+      // v750: resposta sem "mes" apaga o plano do mês ANTERIOR — senão o card
+      // seguia contando a progressão de fichas que não existem mais
+      var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; } else { if (t.mes) delete t.mes.musculacao; if (t.mes && !Object.keys(t.mes).length) delete t.mes; }
       marcaTreinoMudou(st2, alunoId);
       S.write("ptStudio", st2);
+      var cortesTxt = [];
+      if (cortes.fichas) cortesTxt.push(S.plural(cortes.fichas, "ficha além das " + IA_TETO.fichas, "fichas além das " + IA_TETO.fichas));
+      if (cortes.itens) cortesTxt.push(S.plural(cortes.itens, "exercício além dos " + IA_TETO.itens + " por ficha", "exercícios além dos " + IA_TETO.itens + " por ficha"));
+      if (cortes.series) cortesTxt.push(S.plural(cortes.series, "exercício com mais de " + IA_TETO.series + " séries (ficou em " + IA_TETO.series + ")", "exercícios com mais de " + IA_TETO.series + " séries (ficaram em " + IA_TETO.series + ")"));
       cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, planoAviso: orfIA || 0,
-        nomesFora: nomesFora.slice(0, 8), mes: !!mF, resumo: String(plano.resumo || "").slice(0, 400) });
+        nomesFora: nomesFora.slice(0, 8), mes: !!mF, cortes: cortes, cortesTxt: cortesTxt, resumo: String(plano.resumo || "").slice(0, 400) });
     }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
       " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
   }
@@ -15661,22 +15969,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var jaTem = t ? (tipoIA === "wod" ? (t.wods || []).length : tipoIA === "corrida" ? (t.cardio || []).length : (t.fichas || []).length) : 0;
     var rotJa = tipoIA === "wod" ? (jaTem === 1 ? "circuito" : "circuitos") : tipoIA === "corrida" ? (jaTem === 1 ? "treino de corrida" : "treinos de corrida") : (jaTem === 1 ? "ficha" : "fichas");
     if (jaTem && !confirm("Este aluno já tem " + jaTem + " " + rotJa + ". Substituir pelo que a IA prescrever?")) return;
+    // v750: confere a chat-envia publicada TAMBÉM aqui — o aviso de versão
+    // antiga só aparecia pra quem abrisse a gaveta "Sua leitura"
+    confereIaPublicada();
     $("taStatus").textContent = "A IA está lendo a anamnese e prescrevendo o treino… (leva uns 30 segundos)";
     $("taIA").disabled = true;
+    // v750: sem "mes" na resposta o professor fica sabendo — antes r.mes era devolvido e nunca lido
+    var semMes = function (r) { return r.mes ? "" : " ⚠️ A IA não devolveu o Plano do mês (progressão das 4 semanas) — tente de novo ou republique a chat-envia."; };
     geraTreinoIA(id, tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, $("taEquip").value, function (r) {
       $("taIA").disabled = false;
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
       // guarda COM QUAIS parâmetros este treino foi gerado — é o que o botão
       // "Renovar o mês" reusa na semana 4, sem o professor preencher de novo
+      // (v750: por TIPO — o objetivo da corrida não serve pra musculação)
       (function () {
         var stOk = load();
         var tOk = treinoDe(stOk, id);
-        tOk.iaParams = { tipo: tipoIA, objetivo: tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, equip: $("taEquip").value, em: S.todayISO() };
+        guardaIaParams(tOk, tipoIA, { tipo: tipoIA, objetivo: tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, equip: $("taEquip").value, em: S.todayISO() });
         S.write("ptStudio", stOk);
       })();
       if (r.tipo === "wod") {
         // o circuito caiu na aba certa — leva o professor até ele já carregado
-        var msgW = S.plural(r.wods, "circuito prescrito", "circuitos prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + " Revise, ajuste e envie!";
+        var msgW = S.plural(r.wods, "circuito prescrito", "circuitos prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + semMes(r) + " Revise, ajuste e envie!";
         $("taStatus").textContent = msgW;
         $("wpAluno").value = id;
         mostraTrAba("wod");
@@ -15685,7 +15999,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return;
       }
       if (r.tipo === "corrida") {
-        var msgC = S.plural(r.cardios, "treino de corrida prescrito", "treinos de corrida prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + " Revise, monte a semana em Semana do aluno e envie!";
+        var msgC = S.plural(r.cardios, "treino de corrida prescrito", "treinos de corrida prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + semMes(r) + " Revise, monte a semana em Semana do aluno e envie!";
         $("taStatus").textContent = msgC;
         $("cbAluno").value = id;
         mostraTrAba("cardio");
@@ -15704,6 +16018,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             ((r.nomesFora || []).length ? " (" + r.nomesFora.join(", ") + ")" : "") +
             " — cadastre na biblioteca ou escreva o nome do banco na sua leitura."
           : "") +
+        // v750: o que o painel LIMITOU também aparece (a IA obedeceu o professor e o painel cortava calado)
+        ((r.cortesTxt || []).length ? " ⚠️ O painel limitou: " + r.cortesTxt.join("; ") + "." : "") +
+        semMes(r) +
         (r.resumo ? " " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
       $("tAluno").value = id; sincronizaBusca("tAluno");
       renderFichas();
@@ -15803,6 +16120,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rmF) {
       if (!confirm("Remover esta ficha inteira?")) return;
       t.fichas = t.fichas.filter(function (x) { return x.id !== rmF; });
+      if (!t.fichas.length) esqueceMesIA(t, "musculacao"); // v750: sem ficha não há Plano do mês
     }
     if (rmI) {
       var pi = rmI.split(":");
@@ -15927,7 +16245,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__favPT = { alterna: alternaFav, eh: function (n) { return ehFav(load(), n); }, lista: function () { return (load().exFav || []).slice(); } }; // testes
 
   // lista única: os seus personalizados vencem o catálogo (mesmo nome)
+  /* v750: memoização. A lista só muda quando a biblioteca do professor ou os
+   * favoritos mudam — e movimentoDe roda dezenas de indexOf pra cada um dos
+   * 1,8 mil exercícios. populaCascata a chamava DUAS vezes por ficha a cada
+   * tecla da busca e a cada campo editado. A chave é barata: só os poucos
+   * exercícios DO PROFESSOR e os favoritos entram nela. */
+  var listaUniCache = { chave: null, itens: null };
+  function chaveListaUnificada(st) {
+    return ((st.exercicios || []).length + "|" + (st.exercicios || []).map(function (e) { return e.id + "" + e.nome + "" + (e.grupo || "") + "" + (e.video || "") + "" + (e.descricao ? 1 : 0); }).join("") +
+      "|" + (st.exFav || []).join("") + "|" + (self.MT_EXERCICIOS || []).length);
+  }
   function listaUnificada(st) {
+    var chave = chaveListaUnificada(st);
+    if (listaUniCache.chave === chave && listaUniCache.itens) return listaUniCache.itens;
+    var itens = listaUnificadaCrua(st);
+    listaUniCache = { chave: chave, itens: itens };
+    return itens;
+  }
+  window.__listaUnificada = listaUnificada; // testes
+  function listaUnificadaCrua(st) {
     var meus = {};
     (st.exercicios || []).forEach(function (e) { meus[e.nome.toLowerCase()] = 1; });
     // o personalizado herda o equipamento do catálogo (senão some da busca por "kettlebell" etc.)
@@ -19056,7 +19392,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : null;
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
+        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: descansoDe(it), obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;
@@ -19080,7 +19416,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: +it.descanso || 60,
+        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
           v: it.video || "" };
       }) };
