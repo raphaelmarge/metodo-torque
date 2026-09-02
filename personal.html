@@ -11484,6 +11484,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__treinoTexto = treinoTexto; // testes
   /* A letra da ficha sai do título ("A — Peito/Tríceps" → A) e, sem traço,
    * da posição. É a MESMA regra do app do aluno — a parte 2 vira letra+"2". */
+  /* v744: a Semana do aluno guarda o ID da ficha. Gerar fichas (regras ou
+   * IA) e apagar ficha criavam/trocavam ids sem mexer no plano — o dia ficava
+   * apontando pra ficha morta, o pacote pulava esse dia e o app mostrava
+   * DESCANSO num dia de treino, sem ninguém ser avisado. Agora o plano é
+   * REENCAIXADO: pela posição (1ª ficha velha → 1ª nova) ou pela letra do
+   * título; o que não casa some do plano e o professor é avisado. Devolve
+   * quantos dias ficaram órfãos. */
+  function remapeiaPlano(t, fichasVelhas, fichasNovas) {
+    var dias = (t && t.plano && t.plano.dias) || null;
+    if (!dias) return 0;
+    var velhas = fichasVelhas || [], novas = fichasNovas || [], orfaos = 0;
+    Object.keys(dias).forEach(function (d) {
+      var it = dias[d];
+      if (!it || it.tp !== "ficha") return;
+      if (novas.some(function (f) { return f.id === it.id; })) return; // ainda existe
+      var iv = velhas.findIndex(function (f) { return f.id === it.id; });
+      var alvo = null;
+      if (iv >= 0) {
+        var letraV = letraFicha(velhas[iv], iv);
+        novas.forEach(function (f, i) { if (!alvo && letraFicha(f, i) === letraV) alvo = f; });
+        if (!alvo && novas[iv]) alvo = novas[iv];
+      }
+      if (alvo) it.id = alvo.id; else { delete dias[d]; orfaos++; }
+    });
+    return orfaos;
+  }
+  window.__remapeiaPlano = remapeiaPlano; // testes
   function letraFicha(f, idx) {
     var p = String((f && f.titulo) || "").split("—");
     if (p.length > 1) { var l = p[0].trim().slice(0, 2); if (l) return l; }
@@ -14377,7 +14404,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       fichasNovas.push({ id: S.uid(), titulo: f[0], itens: itens });
     });
     if (!total) return { erro: "Não sobrou exercício com esses filtros — afrouxe o equipamento ou revise a anamnese." };
+    var orfAuto = remapeiaPlano(t, t.fichas, fichasNovas); // v744: a Semana do aluno acompanha
     t.fichas = fichasNovas;
+    if (orfAuto) t.planoAviso = orfAuto;
     t.geradaAuto = new Date().toISOString();
     t.objetivo = objetivo;
     t.semana = 1;
@@ -14386,7 +14415,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var avisos = [];
     if (vetos.length) avisos.push("lesões da anamnese respeitadas");
     if (naoGosta.length) avisos.push("preferências respeitadas");
-    return { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos };
+    return { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos, planoAviso: orfAuto || 0 };
   }
   // progressão dupla: sobe rep até o teto; no teto, volta pro piso e ganha 1 série (máx. 5)
   function evoluiTreino(alunoId) {
@@ -14417,7 +14446,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelas fichas geradas automaticamente?")) return;
     var r = geraTreinoAuto(id, $("taObjetivo").value, $("taEquip").value);
     if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = S.plural(r.fichas, "ficha gerada", "fichas geradas") + " com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
+    $("taStatus").textContent = (r.planoAviso ? "⚠️ " + S.plural(r.planoAviso, "dia da Semana do aluno ficou sem ficha", "dias da Semana do aluno ficaram sem ficha") + " — confira em Semana do aluno. " : "") +
+      S.plural(r.fichas, "ficha gerada", "fichas geradas") + " com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
       (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
     $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
@@ -15005,7 +15035,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (itens.length) fichas.push({ id: S.uid(), titulo: String(f.titulo || "Treino").slice(0, 60), itens: itens });
       });
       if (!total) { cb({ erro: "A IA não devolveu exercícios do catálogo — tente de novo." }); return; }
+      var orfIA = remapeiaPlano(t, t.fichas, fichas); // v744: a Semana do aluno acompanha
       t.fichas = fichas;
+      if (orfIA) t.planoAviso = orfIA;
       t.geradaAuto = new Date().toISOString();
       t.geradaIA = true;
       t.objetivo = objetivo;
@@ -15013,7 +15045,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; }
       marcaAppPendente(st2, alunoId);
       S.write("ptStudio", st2);
-      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados,
+      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, planoAviso: orfIA || 0,
         nomesFora: nomesFora.slice(0, 8), mes: !!mF, resumo: String(plano.resumo || "").slice(0, 400) });
     }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
       " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
@@ -18544,7 +18576,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var meus = st.alunos.filter(function (a) { return a.appTokenP && !a.appRevogadoEm; })
       .map(function (a) { return a.appTokenP; });
-    nuvem.client.rpc("app_aluno_faxina", { p_tokens: meus }).then(function (r) {
+    // v744: só os acessos DESTE módulo nesta academia (os pacientes do Nutri
+    // moram na mesma tabela e ficavam sem app)
+    nuvem.client.rpc("app_aluno_faxina", { p_tokens: meus, p_academia: nuvem.aid || null, p_modulo: "personal" }).then(function (r) {
       var d = (r && r.data) || {};
       if ((r && r.error) || d.erro) { cb({ erro: (r && r.error && r.error.message) || d.erro }); return; }
       cb({ ok: true, revogados: +d.revogados || 0 });

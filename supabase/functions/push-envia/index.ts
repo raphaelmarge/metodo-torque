@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
   try { corpo = await req.json(); } catch { /* vazio */ }
 
   if (corpo.acao === "ping") {
-    return json({ ok: true, vapid: !!(pub && priv), acoes: ["ping", "para", "aviso", "aulas_hoje", "prof"] });
+    return json({ ok: true, vapid: !!(pub && priv), acoes: ["ping", "para", "aviso", "aulas_hoje", "prof"], regras: ["prof-membro"] });
   }
   /* Aviso pro PROFESSOR vindo dos GATILHOS do banco (aluno mandou mensagem,
    * pediu horário): o gatilho não tem crachá de usuário, então ele se
@@ -139,6 +139,20 @@ Deno.serve(async (req: Request) => {
     const tituloP = String(corpo.titulo || "TORQUE PERSONAL").slice(0, 80);
     const textoP = String(corpo.corpo || "").slice(0, 200);
     if (!aid || !textoP) return json({ erro: "academia/corpo vazio" }, 400);
+    /* v744: sem a senha da push_config, quem chama tem de ser MEMBRO dessa
+     * academia (ou o cron, com a service key). Antes qualquer conta logada —
+     * inclusive um teste grátis — mandava título e texto livres pro celular
+     * do professor de qualquer outra academia. */
+    if (!senhaProfOk) {
+      const jwtP = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+      const srvP = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+      if (!(srvP && jwtP === srvP)) {
+        const uidP = await usuarioValidado(req);
+        const rm = uidP ? await sb(`membros?select=academia_id&user_id=eq.${uidP}&academia_id=eq.${aid}&limit=1`) : null;
+        const ms = rm && rm.ok ? await rm.json() : [];
+        if (!ms.length) return json({ erro: "Você não é membro dessa academia." }, 403);
+      }
+    }
     const rp = await sb(`push_subs?select=token,sub&academia_id=eq.${aid}&token=like.prof:*`);
     const profs = rp.ok ? await rp.json() : [];
     let envP = 0;

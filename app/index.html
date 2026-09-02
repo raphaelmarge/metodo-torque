@@ -26,8 +26,26 @@
 <script>
 (function () {
   // token: da URL ou, se instalado/aberto sem ?t=, o último usado neste aparelho
-  var t = new URLSearchParams(location.search).get("t") || "";
+  var tUrl = new URLSearchParams(location.search).get("t") || "";
+  var t = tUrl;
   try { t = t || localStorage.getItem("tq_app_token") || ""; } catch (e) {}
+  /* v744: outro aluno abrindo o app no MESMO aparelho (ou o professor
+   * conferindo dois alunos no próprio celular): os registros pt e nt do
+   * anterior ficavam e subiam pra nuvem no nome do novo — peso, fotos e chat
+   * de um aparecendo pro outro. Token diferente do guardado = limpa antes. */
+  try {
+    var tAnt = localStorage.getItem("tq_app_token") || "";
+    if (tUrl && tAnt && tUrl !== tAnt) {
+      var fora0 = [];
+      for (var i0 = 0; i0 < localStorage.length; i0++) {
+        var k0 = localStorage.key(i0);
+        if (k0 && /^(pt|nt)[a-z]/.test(k0)) fora0.push(k0);
+      }
+      fora0.forEach(function (k) { localStorage.removeItem(k); });
+      ["tq_app_pacote", "tq_app_html", "tq_app_stamp", "tq_app_visto"].forEach(function (k) { localStorage.removeItem(k); });
+      window.__limpouOutroAluno = fora0.length;
+    }
+  } catch (e) {}
   var cfg = self.MT_CLOUD || {};
   function abre(html) { document.open(); document.write(html); document.close(); }
   function recado(txt) { document.getElementById("msg").textContent = txt; }

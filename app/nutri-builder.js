@@ -142,7 +142,7 @@
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
-      "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
+      "<div class='vz' style='font-size:11px;'>A primeira e a última foto vão pra ficha do seu nutricionista (só ele vê); as outras ficam só neste aparelho.</div></div>" +
       (pixAppN ? "<div class='cardx'><h2>Pagamento da consulta</h2>" +
         (pixAppN.v ? "<div class='vz' style='padding:0 0 8px;'>Valor: <b style='color:" + CORC + "'>R$ " + pixAppN.v.toFixed(2).replace(".", ",") + "</b></div>" : "") +
         (pixAppN.qr ? "<div style='text-align:center;'><img src='" + pixAppN.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'></div>" : "") +
