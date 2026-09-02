@@ -108,6 +108,33 @@ async function nomeAcademia(aid: string): Promise<string> {
   } catch { return ""; }
 }
 
+/* v753: TETO DE USO DA IA POR ACADEMIA. A chave da Anthropic é do dono do
+ * sistema e QUALQUER conta logada (inclusive um teste grátis de 14 dias)
+ * podia gastar sem limite nenhum — uma conta esperta rodava "gerar treino"
+ * em laço e a fatura era do Raphael. Cada chamada de IA conta uma unidade no
+ * dia pela RPC ia_uso_conta (tabela selada, service key); passando do teto a
+ * função recusa com recado honesto em vez de seguir gastando. Padrão 80 por
+ * dia por academia — dá pra renovar o mês de 24 alunos e ainda sobrar; o
+ * Secret IA_TETO_DIA muda o número sem republicar nada. Banco sem o SQL novo
+ * (ou fora do ar) NÃO trava ninguém: na dúvida, deixa passar. */
+async function tetoIa(aid: string): Promise<{ ok: boolean; erro?: string }> {
+  if (!aid) return { ok: true };
+  const teto = Math.max(1, parseInt(env("IA_TETO_DIA") || "80", 10) || 80);
+  try {
+    const r = await sb("rpc/ia_uso_conta", {
+      method: "POST",
+      body: JSON.stringify({ p_academia: aid, p_teto: teto }),
+    });
+    if (!r.ok) return { ok: true };
+    const d: any = await r.json().catch(() => null);
+    if (d && d.ok === false) {
+      return { ok: false, erro: "Esta conta já usou a IA " + d.n + " vezes hoje (o limite é " +
+        d.teto + " por dia). O contador zera amanhã de manhã — se precisar de mais, fale com o suporte." };
+    }
+    return { ok: true };
+  } catch { return { ok: true }; }
+}
+
 /* Credencial da academia DONA da conversa. Sem isso, o robô responderia pelo
  * número do profissional e o botão Enviar da equipe pelo número do dono do
  * sistema — a mesma conversa saindo por dois números diferentes. */
@@ -274,7 +301,7 @@ Deno.serve(async (req: Request) => {
        * que ele espera e avisa quando a função publicada é velha demais —
        * sem isso, uma chat-envia antiga ignorava a leitura do professor e
        * nada na tela dizia por quê: o treino só saía "errado". */
-      regras: ["mes", "brief", "briefManda", "metodo", "erro-ia", "nome-academia", "membro-ordenado"],
+      regras: ["mes", "brief", "briefManda", "metodo", "erro-ia", "nome-academia", "membro-ordenado", "teto-ia"],
     });
   }
 
@@ -285,6 +312,8 @@ Deno.serve(async (req: Request) => {
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
+    const limT = await tetoIa(m.academia_id);
+    if (!limT.ok) return json({ erro: limT.erro }, 429);
     r = await sb(`chat_config?select=prompt&academia_id=eq.${m.academia_id}`);
     const prompt = ((r.ok ? await r.json() : [])[0] || {}).prompt || "";
     const hist = Array.isArray(corpo.historico) ? corpo.historico.slice(-20) : [];
@@ -297,7 +326,10 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ajuda") {
     const uid = await usuarioDoToken(req);
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
-    if (!(r.ok ? await r.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const mAj = (r.ok ? await r.json() : [])[0];
+    if (!mAj) return json({ erro: "sem permissão" }, 403);
+    const limAj = await tetoIa(mAj.academia_id);
+    if (!limAj.ok) return json({ erro: limAj.erro }, 429);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
     const manual = String(corpo.contexto || "").slice(0, 24000);
@@ -337,6 +369,8 @@ Deno.serve(async (req: Request) => {
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
+    const limAn = await tetoIa(m.academia_id);
+    if (!limAn.ok) return json({ erro: limAn.erro }, 429);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
     const dados = String(corpo.dados || "").slice(0, 12000);
@@ -367,7 +401,10 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ia_treino") {
     const uid = await usuarioDoToken(req);
     const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
-    if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const mTr = (r1.ok ? await r1.json() : [])[0];
+    if (!mTr) return json({ erro: "sem permissão" }, 403);
+    const limTr = await tetoIa(mTr.academia_id);
+    if (!limTr.ok) return json({ erro: limTr.erro }, 429);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
     // 60000: a anamnese + catálogo passam folgado; 30000 cortava o rabo do catálogo
@@ -479,7 +516,8 @@ Deno.serve(async (req: Request) => {
         "comentários, neste formato exato: " +
         '{"cardio":[{"nome":"Rodagem leve","mod":"corrida","tipo":"continuo","dist":5,"tempo":0,"pace":"6:30","reps":8,"tiro":60,"desc":90,"obs":"dica curta"}],' +
         '"mes":[{"n":1,"foco":"foco da semana","ajuste":"o que muda nesta semana"}],"resumo":"2 a 3 frases explicando o mês"} ' +
-        'Regras: monte a SEMANA de treinos (1 por dia disponível, máximo 6), variando rodagem leve, intervalado ' +
+        'Regras: monte os treinos que se repetem nas 4 semanas do mes (1 por dia disponível, máximo 6), '  +
+        'variando rodagem leve, intervalado ' +
         '(tiros) e um treino mais longo; mod é "corrida", "caminhada" ou "bike"; tipo é "continuo" (use dist em km ' +
         'e/ou tempo em minutos; 0 = livre; pace alvo opcional no formato "6:30"), "intervalado" (use reps = número ' +
         'de tiros, tiro = segundos forte, desc = segundos leve) ou "misto" (o MESMO treino tem parte contínua E ' +
@@ -512,7 +550,10 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ia_dieta") {
     const uid = await usuarioDoToken(req);
     const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
-    if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const mDi = (r1.ok ? await r1.json() : [])[0];
+    if (!mDi) return json({ erro: "sem permissão" }, 403);
+    const limDi = await tetoIa(mDi.academia_id);
+    if (!limDi.ok) return json({ erro: limDi.erro }, 429);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
     // 60000: perfil + catálogo de alimentos passam folgado; 30000 cortava os
@@ -565,6 +606,8 @@ Deno.serve(async (req: Request) => {
   if (!membro) return json({ erro: "sem permissão nesta academia" }, 403);
 
   if (corpo.acao === "sugerir") {
+    const limSu = await tetoIa(conversa.academia_id);
+    if (!limSu.ok) return json({ erro: limSu.erro }, 429);
     r = await sb(`chat_mensagens?select=de,texto&conversa_id=eq.${conversa.id}&order=criado.desc&limit=20`);
     const hist = (r.ok ? await r.json() : []).reverse();
     r = await sb(`chat_config?select=prompt&academia_id=eq.${conversa.academia_id}`);

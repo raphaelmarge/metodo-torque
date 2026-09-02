@@ -3160,3 +3160,50 @@ create policy "galeria_membro_apaga" on storage.objects
   for delete to authenticated
   using (bucket_id = 'galeria'
     and ((storage.foldername(name))[1])::uuid in (select public.minhas_academias()));
+
+
+-- ============================================================
+-- TETO DE USO DA IA POR ACADEMIA (v753)
+--
+-- A chave da Anthropic é do dono do sistema: qualquer conta logada
+-- (inclusive um teste grátis de 14 dias) podia chamar a IA em laço e a
+-- fatura era do dono. Agora cada chamada de IA conta uma unidade no dia,
+-- por academia, e a chat-envia recusa com recado honesto quando passa do
+-- teto. Tabela SELADA (RLS sem política: só a service key alcança) e a RPC
+-- não é executável por anon/authenticated — quem conta é a função.
+--
+-- Teto padrão: 80 por dia (o Secret IA_TETO_DIA da chat-envia muda o número
+-- sem republicar nada). Pra soltar uma academia num dia específico:
+--   delete from public.ia_uso where academia_id = '...' and dia = current_date;
+-- ============================================================
+
+create table if not exists public.ia_uso (
+  academia_id uuid not null references public.academias(id) on delete cascade,
+  dia date not null default public.hoje_br(),
+  n int not null default 0,
+  atualizado timestamptz not null default now(),
+  primary key (academia_id, dia)
+);
+alter table public.ia_uso enable row level security;  -- selada de propósito
+
+create or replace function public.ia_uso_conta(p_academia uuid, p_teto int default 80)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_n int; v_teto int := greatest(1, coalesce(p_teto, 80));
+begin
+  if p_academia is null then
+    return json_build_object('ok', true, 'n', 0, 'teto', v_teto);
+  end if;
+  insert into ia_uso (academia_id, dia, n)
+    values (p_academia, public.hoje_br(), 1)
+    on conflict (academia_id, dia) do update
+      set n = ia_uso.n + 1, atualizado = now()
+    returning n into v_n;
+  -- faxina barata: contagem de mais de 45 dias não serve pra nada
+  delete from ia_uso where dia < public.hoje_br() - 45;
+  return json_build_object('ok', v_n <= v_teto, 'n', v_n, 'teto', v_teto);
+end;
+$$;
+revoke execute on function public.ia_uso_conta(uuid, int) from public, anon, authenticated;
