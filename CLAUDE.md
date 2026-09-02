@@ -1688,6 +1688,37 @@ chamava `nomeStudio` e **sombrearia a função** — virou `nomeSt` (o mesmo
 defeito do `esc` na v630). Trava: o teste conta as ocorrências de
 `"Studio " + …split` no arquivo e só aceita **uma**, a de dentro do helper.
 
+**Revisão — redundância, organização e testes (mt-v758)**: o fim da varredura
+por área. **Testes**: `tests/_nuvem.js` (`MOCK_NUVEM` + `comMockNuvem`) é agora
+o cliente de nuvem de mentira de TODAS as suítes que trocam `MTStore.cloud` —
+cada uma escrevia o seu, sempre ESTREITO, e enquanto ele estava instalado um
+timer do painel chamava outro método e estourava `upsert is not a function`
+dentro do "nenhuma página com erro de JS": falha intermitente num bloco que
+não tinha nada a ver. A consulta devolvida é encadeável e guarda o que foi
+pedido (`q.filtros`, `q.colunas`, `q.ops`, `q.corpo`), então o bloco confere o
+que a tela consultou sem mock próprio. O arquivo não começa com `test-`, então
+o `run.sh` não o roda como suíte. ⚠️ quem troca o `cloud` continua tendo de
+guardar o original e devolver no fim. Trava: suíte que troca `MTStore.cloud`
+sem `require("./_nuvem.js")` reprova no test-infra.
+**Redundância**: `aReceberDe(st)` (os cinco cálculos de "a receber" viraram um,
+com memória curta — sem ela o painel de 1000 alunos passava de 900 ms);
+`situacaoFinDe(st, a)` (hora-aula dizia "em dia" no cabeçalho e "DEVENDO
+R$ 240" na aba de baixo); `estaSumindo` (o "N sumindo" do cabeçalho de Alunos
+não batia com o Radar); o bloco Atrasados virou a única lista de cobrança e o
+card de baixo virou "Ainda vai vencer este mês"; saiu o gráfico "Receita dos 6
+meses", cópia do "Entrou × saiu × sobrou".
+**Organização**: 4 tópicos da Central de ajuda mandavam pra tela que não existe
+(assert com lista proibida + assert de que foram reescritos, não apagados);
+"Salvar configurações" desligava em silêncio a Comunidade ligada no Resumo;
+o modo colaborador não tinha como sair (as duas telas com "Sair" são escondidas
+dele) e o `vaiAba` furava o bloqueio; o Início repintava a tela inteira de
+Relatórios, escondida, a cada toque; a Assessoria contava treino por
+`app_treino_log` e o resto do painel por `retorno.feitos`.
+⚠️ Ficou de fora, registrado: fundir "Sua ilha" com "Cobrança e conta" (é
+decisão de produto do Raphael, não de código) e tirar o acoplamento de ordem
+das 87 leituras de `st.alunos[0]` no test-personal (lote próprio — converter
+tudo às cegas vira "ajustar o teste" em vez de investigar).
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

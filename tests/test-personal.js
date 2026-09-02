@@ -7304,7 +7304,7 @@ async function abaPt(p, a) {
   const buscaSes = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const mesAnt = new Date(); mesAnt.setDate(1); mesAnt.setMonth(mesAnt.getMonth() - 1);
-    const ini = mesAnt.toISOString().slice(0, 10);
+    const ini = window.diaISO(mesAnt); // local, como o painel decide "hoje"
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.planosPT.push({ id: "plSes755", nome: "Hora-aula", valor: 80, cobranca: "sessao" });
     st.alunos.push({ id: "aSes755", nome: "Zezinho HoraAula", ativo: true, desde: ini, metaSemana: 3 });
@@ -14715,7 +14715,7 @@ async function abaPt(p, a) {
     const cobrar755 = await pV.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const d = new Date(); d.setMonth(d.getMonth() - 2); d.setDate(1);
-      const ini = d.toISOString().slice(0, 10);
+      const ini = window.diaISO(d); // local, como o painel decide "hoje"
       st.planosPT = [{ id: "plv", nome: "Mensal", valor: 200, cobranca: "mes" }];
       st.contratosPT = [{ id: "ctv", alunoId: "v1", planoId: "plv", status: "ativo", inicio: ini, diaVenc: 1 }];
       S.write("ptStudio", st);
@@ -14819,7 +14819,7 @@ async function abaPt(p, a) {
     /* 18) teste grátis: com conta, o painel diz até quando vai */
     const trial = await pV.evaluate(() => {
       const S = window.MTStore;
-      const vence = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      const vence = window.diaISO(Date.now() + 5 * 864e5); // local, como o painel decide "hoje"
       localStorage.setItem("mtapp:ptAssinatura", JSON.stringify({ status: "trial", vence }));
       const uOrig = S.usuario;
       S.usuario = () => ({ logado: true, email: "prof@x.com" });
