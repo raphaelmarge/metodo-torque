@@ -1402,14 +1402,28 @@ async function abaPt(p, a) {
   ok(!/MUDOU SÓ NA BIA/.test(independente), "cópia é independente — mexer na ficha da Bia não muda a do João");
 
   // treino de DISPARO (pré-montado, sem aluno): monta com template e dispara pro grupo
-  await p.evaluate(() => { window.prompt = () => "Hipertrofia Agosto"; });
+  /* v755: o nome saía num prompt() do navegador — agora é campo de verdade,
+   * do lado do botão (a mesma linguagem do "Nome do grupo" logo abaixo). */
+  const gtSemNome = await p.evaluate(() => {
+    let avisou = "";
+    const al = window.alert; window.alert = (m) => { avisou = String(m); };
+    document.getElementById("gtNome").value = "";
+    document.getElementById("gtNovo").click();
+    window.alert = al;
+    return { avisou, criados: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).treinosGrupo || []).length };
+  });
+  ok(/nome/i.test(gtSemNome.avisou) && gtSemNome.criados === 0,
+    "v755: treino de disparo sem nome não é criado — o painel pede o nome no campo (nada de prompt do navegador)");
+  await p.fill("#gtNome", "Hipertrofia Agosto");
   await p.click("#gtNovo");
   await p.waitForTimeout(200);
   const gtSel = await p.evaluate(() => ({
     valor: document.getElementById("tAluno").value,
     rotulo: document.getElementById("tAluno").selectedOptions[0].textContent,
     lista: document.getElementById("gtLista").textContent,
+    campoLimpo: document.getElementById("gtNome").value === "",
   }));
+  ok(gtSel.campoLimpo, "v755: criado o treino de disparo, o campo do nome volta vazio pro próximo");
   ok(/^gt/.test(gtSel.valor) && /Hipertrofia Agosto/.test(gtSel.rotulo), "criar treino de disparo já abre ele no montador de fichas");
   ok(/Hipertrofia Agosto/.test(gtSel.lista) && /0 ficha/.test(gtSel.lista), "treino de disparo aparece na lista do card");
   await p.selectOption("#tplSel", "abc");
@@ -4774,7 +4788,16 @@ async function abaPt(p, a) {
     window.__cmdPT.executa(c1);
     out.marcou = S.read("ptStudio", {}).sessoes.some((x) => x.alunoId === c1.aluno.id && x.data === amanha && x.hora === "18:00");
     window.__cmdPT.executa(c2);
-    out.pagou = S.read("ptStudio", {}).pagamentos.some((x) => x.alunoId === c2.aluno.id && x.valor === 150.5 && x.forma === "recebido");
+    /* v755: o comando gravava forma "recebido", que o formulário não conhece —
+     * o relatório "Como você recebe" ganhava uma categoria inventada. */
+    out.pagou = S.read("ptStudio", {}).pagamentos.some((x) => x.alunoId === c2.aluno.id && x.valor === 150.5 && x.forma === "Pix");
+    out.formaConhecida = ["Pix", "Dinheiro", "Cartão", "Transferência"]
+      .indexOf((S.read("ptStudio", {}).pagamentos.find((x) => x.valor === 150.5) || {}).forma) >= 0;
+    // "marcar ana 99" não pode virar sessão às 99:00 (v755)
+    const cH = window.__cmdPT.interpreta("marca joão 99", st);
+    out.horaMaluca = !cH || cH.hora === "";
+    const cH2 = window.__cmdPT.interpreta("marca joão às 19:30", st);
+    out.horaBoa = !!cH2 && cH2.hora === "19:30";
     abriu = "";
     window.__cmdPT.executa(c3);
     out.zap = /wa\.me\/55/.test(abriu) && /text=/.test(abriu);
@@ -4782,7 +4805,7 @@ async function abaPt(p, a) {
     // limpa
     const st9 = S.read("ptStudio", {});
     st9.sessoes = st9.sessoes.filter((x) => !(x.data === amanha && x.hora === "18:00" && x.alunoId === c1.aluno.id));
-    st9.pagamentos = st9.pagamentos.filter((x) => !(x.valor === 150.5 && x.forma === "recebido"));
+    st9.pagamentos = st9.pagamentos.filter((x) => !(x.valor === 150.5 && x.forma === "Pix"));
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
     document.getElementById("buscaAluno").value = ""; window.__buscaPT();
     return out;
@@ -4791,6 +4814,8 @@ async function abaPt(p, a) {
   ok(cmd.recebi && cmd.cobrar && cmd.nada, "🤖 'recebi 150,50 do joão' e 'cobrar joão' interpretam — frase solta não vira comando");
   ok(cmd.linha, "🤖 a busca mostra o comando interpretado em cima, com o rótulo em português");
   ok(cmd.marcou && cmd.pagou, "🤖 executar cria a sessão e registra o pagamento (com confirmação)");
+  ok(cmd.formaConhecida, "v755: o pagamento do comando entra com uma forma que o painel conhece (Pix), não com a categoria inventada 'recebido'");
+  ok(cmd.horaMaluca && cmd.horaBoa, "v755: 'marca joão 99' não vira sessão às 99:00 — hora fora de 0–23 é ignorada, e 19:30 continua valendo");
   ok(cmd.zap, "🤖 cobrar abre o WhatsApp com o modelo de atraso preenchido");
 
   // ⚧ v727: o SEXO do aluno agora tem campo na Avaliação (salva no cadastro)
@@ -7071,18 +7096,29 @@ async function abaPt(p, a) {
       const st = window.MTStore.read("ptStudio", {});
       const a = st.alunos.find((x) => x.ativo !== false);
       window.__cloudOrig2 = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({
-        aid: "x",
-        client: { from: () => ({ select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
+      /* v755: mock encadeável — e ele ANOTA os filtros, porque a RLS de
+       * app_quest devolve todas as academias do usuário e a consulta tem de
+       * peneirar pela academia deste painel. */
+      window.__filtrosQuest = [];
+      const q = () => {
+        const o = {};
+        ["select", "order", "limit", "gte", "in", "neq"].forEach((m) => { o[m] = () => o; });
+        o.eq = (col, val) => { window.__filtrosQuest.push(col + "=" + val); return o; };
+        o.then = (f, g) => Promise.resolve({ data: [{
           token: a.appTokenP, questionario: "Check-in semanal", criado: new Date().toISOString(),
           dados: { pontuacao: 10, respostas: [{ sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 }, { sigla: "AEROB", resposta: "8", pontos: 8 }] },
-        }] }) }) }) }) },
-      });
+        }], error: null }).then(f, g);
+        return o;
+      };
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => q() } });
       window.__questPT.respostas();
     });
     await p.waitForTimeout(300);
     const resp = await p.evaluate(() => document.getElementById("qRespostas").textContent);
     ok(/João Cliente/.test(resp) && /\+10 pts/.test(resp) && /MOTEX/.test(resp), "resposta salva aparece com aluno, pontuação e siglas");
+    const filtroQ = await p.evaluate(() => (window.__filtrosQuest || []).join(","));
+    ok(/academia_id=x/.test(filtroQ),
+      "v755: a lista de respostas peneira pela academia deste painel (quem é dono e colaborador não vê resposta do outro studio)");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig2; });
   }
   // questionário enviado DIRETO pro app do aluno: trava por data e vira métrica
@@ -7178,7 +7214,37 @@ async function abaPt(p, a) {
     aberta: !document.getElementById("buscaAlunoLista").hidden,
     texto: document.getElementById("buscaAlunoLista").textContent,
   }));
-  ok(busca.aberta && /João Cliente/.test(busca.texto) && /pago/.test(busca.texto), "busca no topo acha o aluno com status");
+  ok(busca.aberta && /João Cliente/.test(busca.texto) && /em dia|em aberto/.test(busca.texto), "busca no topo acha o aluno com status");
+  /* v755: a busca dizia "em aberto" só por não haver pagamento do mês — todo
+   * aluno de hora-aula e todo mundo no cartão automático saía laranja, ao lado
+   * de "Pago dia 5" na lista. Agora é a MESMA cobrancaVencida do Financeiro. */
+  const buscaSes = await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const mesAnt = new Date(); mesAnt.setDate(1); mesAnt.setMonth(mesAnt.getMonth() - 1);
+    const ini = mesAnt.toISOString().slice(0, 10);
+    st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
+    st.planosPT.push({ id: "plSes755", nome: "Hora-aula", valor: 80, cobranca: "sessao" });
+    st.alunos.push({ id: "aSes755", nome: "Zezinho HoraAula", ativo: true, desde: ini, metaSemana: 3 });
+    st.contratosPT.push({ id: "ctSes755", alunoId: "aSes755", planoId: "plSes755", status: "ativo", inicio: ini, diaVenc: 1 });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__renderPT();
+    document.getElementById("buscaAluno").value = "zezinho";
+    window.__buscaPT();
+    const txt = document.getElementById("buscaAlunoLista").textContent;
+    const venc = !!window.__cobrancaVencida(S.read("ptStudio", {}), S.read("ptStudio", {}).alunos.find((x) => x.id === "aSes755"));
+    const st9 = S.read("ptStudio", {});
+    st9.alunos = st9.alunos.filter((x) => x.id !== "aSes755");
+    st9.planosPT = st9.planosPT.filter((x) => x.id !== "plSes755");
+    st9.contratosPT = st9.contratosPT.filter((x) => x.id !== "ctSes755");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    document.getElementById("buscaAluno").value = "";
+    window.__buscaPT();
+    return { txt, venc };
+  });
+  ok(/Zezinho/.test(buscaSes.txt) && /em dia/.test(buscaSes.txt) && !buscaSes.venc,
+    "v755: aluno de hora-aula não aparece 'em aberto' na busca — a regra é a mesma do Financeiro");
+  await p.fill("#buscaAluno", "joão"); // o bloco acima mexeu no campo
+  await p.waitForTimeout(150);
   await p.press("#buscaAluno", "Enter");
   ok(await p.evaluate(() => !document.getElementById("vPerfil").hidden), "Enter na busca abre a página de perfil do aluno");
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -12148,7 +12214,11 @@ async function abaPt(p, a) {
     ok(b3c.avatar.length === 2 && b3c.ficha, "🎨 3c: o topo da conversa tem o avatar e o atalho Abrir ficha");
     ok(b3c.dias === 1 && b3c.minhas === 1 && b3c.delas === 1,
       "🎨 3c: as mensagens saem em bolhas separadas por dia, minhas de um lado e as do aluno do outro");
-    ok(b3c.lido, "🎨 3c: a última mensagem minha diz quando foi lida");
+    /* v755: o "✓✓ lido" era sempre verdadeiro — o painel gravava a própria
+     * mensagem com lida:true e ninguém marcava depois (o app lê pela RPC
+     * app_chat_lista, que nem devolve o campo). Sem dado, sem selo: é a mesma
+     * recusa da v618 pro "digitando…". Pra ele voltar falta SQL. */
+    ok(!b3c.lido, "🎨 3c/v755: não existe selo '✓✓ lido' — nada no sistema marca a mensagem do professor como lida");
     ok(b3c.rapidas.length === 3 && /Bora treinar/.test(b3c.rapidas[0]),
       "🎨 3c: as respostas rápidas ficam acima do campo de escrever");
   }
@@ -13343,29 +13413,40 @@ async function abaPt(p, a) {
     ok(compressao.temTetos && compressao.temTentativas, "a foto do post é reduzida até caber no limite antes de subir");
 
     // 4) moderação no painel: esconder e apagar pela tabela app_feed
-    const mod = await pC.evaluate(() => {
+    const mod = await pC.evaluate(async () => {
       const chamadas = [];
       window.__cloudOrigF = window.MTStore.cloud;
-      const tabela = () => ({
+      const tabela = (t) => ({
         select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ eq: () => ({
           then: (cb) => cb({ data: [
             { id: "f1", nome: "Mariana", texto: "PR de agacho!", foto: "", treino: "Treino B", oculto: false, criado: "2026-08-11T10:00:00Z" },
           ] }),
         }), then: (cb) => cb({ data: [] }) }) }) }) }),
         update: (v) => ({ eq: (c, id) => { chamadas.push(["update", id, v.oculto]); return { then: (cb) => cb({}) }; } }),
-        delete: () => ({ eq: (c, id) => { chamadas.push(["delete", id]); return { then: (cb) => cb({}) }; } }),
+        // v755: a tabela entra na anotação — apagar o post tem de apagar as
+        // reações dele também (curtida e comentário viviam órfãos no banco)
+        delete: () => ({ eq: (c, id) => { chamadas.push(["delete", t, c, id]); return { then: (cb) => cb({}) }; } }),
       });
-      window.MTStore.cloud = () => ({ aid: "acad-1", client: { from: () => tabela() } });
+      window.MTStore.cloud = () => ({ aid: "acad-1", client: { from: (t) => tabela(t) } });
       window.__feedMod.carrega();
       const html = document.getElementById("fdmLista").innerHTML;
       // clica em Esconder no post que veio da nuvem
       const bt = document.querySelector("[data-fdmoc]");
       if (bt) bt.click();
+      // e agora o Apagar: post + reações
+      const confirmOrig = window.confirm; window.confirm = () => true;
+      const btRm = document.querySelector("[data-fdmrm]");
+      if (btRm) btRm.click();
+      await new Promise((r) => setTimeout(r, 120));
+      window.confirm = confirmOrig;
       window.MTStore.cloud = window.__cloudOrigF;
       return { html: html, chamadas: chamadas };
     });
     ok(/Mariana/.test(mod.html) && /PR de agacho/.test(mod.html), "o professor vê no painel o que a turma postou");
     ok(mod.chamadas.some((c) => c[0] === "update" && c[1] === "f1" && c[2] === true), "'Esconder' marca o post como oculto na nuvem (some do app na hora)");
+    ok(mod.chamadas.some((c) => c[0] === "delete" && c[1] === "app_feed" && c[3] === "f1") &&
+       mod.chamadas.some((c) => c[0] === "delete" && c[1] === "app_reacoes" && c[3] === "feed:f1"),
+      "v755: apagar o post pela moderação apaga também as curtidas e comentários dele (a RPC do aluno já fazia as duas coisas)");
 
     /* ---- Comunidade repaginada (tela 4d) ---- */
     {
@@ -14261,6 +14342,459 @@ async function abaPt(p, a) {
       "a página pública de exclusão está no ar, com o caminho pelo app e o e-mail de contato");
     ok(/30 dias|7 dias/.test(pag), "e diz os prazos, que é o que a loja cobra na revisão");
     await ctxP.close();
+  }
+  {
+    /* ---- v755: régua de push, publicação do app, conta e chat ----
+     * A revisão por área achou 32 itens nestas duas frentes (pt-push e
+     * pt-app-conta). Cada conserto de comportamento tem um assert aqui. */
+    console.log("Revisão v755 — push, app do aluno, conta e chat:");
+    const ctxV = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxV.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pV = await ctxV.newPage();
+    pV.on("pageerror", (e) => erros.push("v755: " + e.message));
+    await pV.goto(BASE + "/personal.html");
+    await pV.waitForTimeout(700);
+
+    // estado controlado: 3 alunos com app, um deles com o acesso CORTADO
+    await pV.evaluate(() => {
+      const S = window.MTStore;
+      const hoje = S.todayISO();
+      const ontem = new Date(Date.now() - 864e5).toISOString();
+      const st = S.read("ptStudio", {});
+      st.alunos = [
+        { id: "v1", nome: "Vera Versao", ativo: true, desde: hoje, metaSemana: 3, zap: "31999990001",
+          email: "vera@x.com", appTokenP: "tv1", appVer: "mt-v001", appPubEm: ontem },
+        { id: "v2", nome: "Edu Editado", ativo: true, desde: hoje, metaSemana: 3, zap: "31999990002",
+          email: "edu@x.com", appTokenP: "tv2", appVer: self.MT_VERSAO, appPubEm: ontem,
+          appEditEm: new Date().toISOString() },
+        { id: "v3", nome: "Corta Acesso", ativo: true, desde: hoje, metaSemana: 3, zap: "31999990003",
+          email: "corta@x.com", appTokenP: "tv3", appRevogadoEm: hoje },
+      ];
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      st.treinosV2 = {};
+      st.config = st.config || {};
+      S.write("ptStudio", st);
+      // mock de nuvem ENCADEÁVEL (qualquer gravação repinta o painel inteiro,
+      // e o render faz .from().select() — mock estreito derruba a página)
+      window.__v755 = { upserts: [], updates: [], deletes: [], filtros: [], dados: {} };
+      window.__qV755 = (t) => {
+        const o = {};
+        ["select", "order", "limit", "gte", "lte", "in", "neq", "is", "not"].forEach((m) => { o[m] = () => o; });
+        o.eq = (c, v) => { window.__v755.filtros.push(t + ":" + c + "=" + v); return o; };
+        o.upsert = (l) => { window.__v755.upserts.push({ t, l }); return Promise.resolve({ error: null }); };
+        o.insert = (l) => { window.__v755.inserted = { t, l }; return Promise.resolve({ error: window.__v755.erroInsert || null }); };
+        o.update = (v) => { window.__v755.updates.push({ t, v }); return { eq: () => o, then: (f) => Promise.resolve({ error: null }).then(f) }; };
+        o.delete = () => { const d = {}; d.eq = (c, v) => { window.__v755.deletes.push(t + ":" + c + "=" + v); return Promise.resolve({ error: null }); }; return d; };
+        o.then = (f, g) => Promise.resolve({ data: (window.__v755.dados[t] || []), error: window.__v755.erro && window.__v755.erro[t] ? { message: "x" } : null }).then(f, g);
+        return o;
+      };
+      window.__cloudV755 = () => ({ aid: "acad-v", client: {
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
+        from: (t) => window.__qV755(t),
+        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
+        storage: { from: () => ({ upload: () => Promise.resolve({ error: null }) }) },
+      } });
+      window.__cloudOrigV = S.cloud;
+    });
+
+    /* 1) UM caminho pra publicar: o par upsert + carimbo estava copiado em
+     *    SETE lugares e já divergia. */
+    const fonteV = fs.readFileSync(require("path").join(__dirname, "..", "personal.html"), "utf8");
+    ok((fonteV.match(/from\("app_aluno"\)\.upsert/g) || []).length === 1,
+      "v755: o upsert do pacote do aluno existe UMA vez no arquivo (publicaPacotes) — antes eram sete cópias");
+    const pub1 = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      S.cloud = window.__cloudV755;
+      const st = S.read("ptStudio", {});
+      const r = await window.__publicaPacotes(S.cloud(), [st.alunos[0]]);
+      const a = S.read("ptStudio", {}).alunos.find((x) => x.id === "v1");
+      S.cloud = window.__cloudOrigV;
+      return { ok: !!r.ok, ver: a.appVer, pubEm: a.appPubEm, subiu: (window.__v755.upserts[0] || {}).t };
+    });
+    ok(pub1.ok && pub1.subiu === "app_aluno" && pub1.ver === "mt-v753" && !!pub1.pubEm,
+      "v755: publicaPacotes sobe o pacote E carimba appPubEm/appVer no mesmo lugar");
+
+    /* 2) acesso cortado não é pendência: a revogação apagava appPubEm/appVer e
+     *    o aluno voltava pra fila — a automática devolvia o pacote dele. */
+    const cortado = await pV.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const v3 = st.alunos.find((x) => x.id === "v3");
+      const out = { pendente: window.__appsPendentes.pendente(st, v3) };
+      S.cloud = window.__cloudV755;
+      out.erro = (await new Promise((res) => window.__appsPendentes.publicaUm("v3", res))).erro || "";
+      S.cloud = window.__cloudOrigV;
+      return out;
+    });
+    ok(!cortado.pendente && /acesso/i.test(cortado.erro),
+      "v755: aluno com acesso cortado não entra na fila de publicar e o envio recusa explicando");
+
+    /* 3) a automática publica só o que é do SISTEMA (versão/semana). Antes ela
+     *    subia a ficha pela metade 1,5 s depois do primeiro save da sessão. */
+    const auto755 = await pV.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos.find((x) => x.id === "v1").appVer = "mt-v001"; // o bloco de cima publicou ele
+      S.write("ptStudio", st);
+      const v2 = st.alunos.find((x) => x.id === "v2");
+      const out = {
+        editPend: window.__appsPendentes.pendente(st, v2),
+        editSistema: window.__appsPendentes.pendente(st, v2, true),
+      };
+      window.__v755.upserts = [];
+      S.cloud = window.__cloudV755;
+      window.__appsPendentes.auto(true);
+      await new Promise((r) => setTimeout(r, 400));
+      S.cloud = window.__cloudOrigV;
+      out.tokens = window.__v755.upserts.map((u) => u.l.map((x) => x.token).join(",")).join(",");
+      return out;
+    });
+    ok(auto755.editPend && !auto755.editSistema,
+      "v755: ficha em edição continua pendente pro professor, mas não conta como pendência de sistema");
+    ok(auto755.tokens === "tv1",
+      "v755: a publicação automática leva só quem está em versão antiga (tv1) — a ficha que está sendo montada fica (" + auto755.tokens + ")");
+
+    /* 4) o clique manual recebia o MouseEvent como "silencioso" e pulava
+     *    progresso, recado final e o push pro aluno. */
+    const manual = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      const st = S.read("ptStudio", {});
+      st.alunos.find((x) => x.id === "v1").appVer = "mt-v001"; // volta a ficar pendente
+      S.write("ptStudio", st);
+      S.cloud = window.__cloudV755;
+      document.getElementById("geStatus").textContent = "";
+      document.getElementById("btnPubPendentes").click();
+      await new Promise((r) => setTimeout(r, 500));
+      const txt = document.getElementById("geStatus").textContent;
+      S.cloud = window.__cloudOrigV;
+      return txt;
+    });
+    ok(/app/.test(manual) && /nuvem|atualizado/.test(manual),
+      "v755: o clique em 'Publicar apps atualizados' escreve o resultado na tela (era engolido pelo MouseEvent) — " + manual.slice(0, 50));
+
+    /* 5) o Publicar da Personalização escrevia num status que mora noutra aba */
+    const pers = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      S.cloud = window.__cloudV755;
+      document.getElementById("persStatus").textContent = "";
+      document.getElementById("persPublica").click();
+      await new Promise((r) => setTimeout(r, 500));
+      const txt = document.getElementById("persStatus").textContent;
+      S.cloud = window.__cloudOrigV;
+      return txt;
+    });
+    ok(/atualizados|app/.test(pers),
+      "v755: o botão Publicar da Personalização dá o retorno NA tela dele (" + pers.slice(0, 45) + ")");
+
+    /* 6) régua: o interruptor é de COBRANÇA e só cala a cobrança */
+    const regua755 = await pV.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const hoje = S.todayISO();
+      st.config.reguaOff = true;
+      st.pushLog = {};
+      st.alunos.find((x) => x.id === "v1").nasc = "1990-" + hoje.slice(5);
+      // 26 sessões feitas: o marco de 25 tem de sair mesmo pulando o número
+      st.sessoes = [];
+      for (let i = 0; i < 26; i++) st.sessoes.push({ id: "s" + i, alunoId: "v1", data: hoje, feita: true });
+      S.write("ptStudio", st);
+      S.cloud = window.__cloudV755;
+      const r = window.__reguaPT();
+      const status = document.getElementById("reguaStatus").textContent;
+      const pend = await window.__pendPT();
+      S.cloud = window.__cloudOrigV;
+      return { enviados: r.enviados || 0, motivo: r.motivo || "", status, pendMotivo: pend.motivo || "" };
+    });
+    ok(regua755.motivo !== "desligada" && regua755.enviados >= 2,
+      "v755: com a régua de cobrança DESLIGADA, aniversário e marco de treinos continuam saindo (" + regua755.enviados + " avisos)");
+    ok(regua755.pendMotivo !== "desligada",
+      "v755: os lembretes de check-in e questionário não são cobrança — o interruptor da cobrança não cala mais eles");
+    ok(/servidor/.test(regua755.status) && /Cobran/.test(regua755.status),
+      "v755: o status da régua diz o que sai do servidor todo dia e o que depende do painel aberto");
+
+    /* 7) religar a régua importa antes o que o servidor já mandou (senão o
+     *    aluno recebe o mesmo aviso duas vezes no mesmo dia) */
+    const religa = await pV.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.config.reguaOff = true; st.pushLog = {};
+      S.write("ptStudio", st);
+      window.__v755.dados.push_log_srv = [{ chave: "treino|v1|" + S.todayISO() }];
+      S.cloud = window.__cloudV755;
+      const cx = document.getElementById("reguaOn");
+      cx.checked = true;
+      cx.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 400));
+      const log = S.read("ptStudio", {}).pushLog || {};
+      S.cloud = window.__cloudOrigV;
+      window.__v755.dados.push_log_srv = [];
+      return Object.keys(log).some((k) => k.indexOf("treino|v1|") === 0);
+    });
+    ok(religa,
+      "v755: religar a régua importa antes o push_log do servidor — nada é mandado duas vezes no mesmo dia");
+
+    /* 8) apps congelados: a conferência tenta de novo quando a nuvem ainda
+     *    não subiu (antes era uma vez só, 3,5 s depois de abrir) */
+    const cong = await pV.evaluate(() => {
+      const S = window.MTStore;
+      const orig = window.setTimeout;
+      let agendou = 0;
+      window.setTimeout = (fn, ms) => { if (ms === 15000) agendou++; return 0; };
+      S.cloud = () => null;
+      window.__congelados.checa();
+      window.setTimeout = orig;
+      S.cloud = window.__cloudOrigV;
+      return agendou;
+    });
+    ok(cong === 1,
+      "v755: sem nuvem pronta, a conferência de apps congelados se reagenda em vez de desistir pela sessão inteira");
+
+    /* 9) questionário sem pergunta não é "enviado" */
+    const qVazio = await pV.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.questPerguntas = st.questPerguntas || [];
+      st.questionarios = [{ id: "qz", nome: "Vazio", perguntas: [] }];
+      S.write("ptStudio", st);
+      window.__questPT.render();
+      const sel = document.getElementById("qeAluno"), selQ = document.getElementById("qeQuest");
+      sel.value = "v1"; selQ.value = "qz";
+      let avisou = "";
+      const al = window.alert; window.alert = (m) => { avisou = String(m); };
+      document.getElementById("qeApp").click();
+      window.alert = al;
+      const a = S.read("ptStudio", {}).alunos.find((x) => x.id === "v1");
+      return { avisou, temQuest: !!a.questApp };
+    });
+    ok(/sem pergunta/i.test(qVazio.avisou) && !qVazio.temQuest,
+      "v755: questionário sem pergunta nenhuma é recusado — antes dizia '✓ Enviado' e o pacote descartava calado");
+
+    /* 10) a métrica de cada pergunta mora na aba Check-ins desde a v630 */
+    ok(/métrica no perfil do aluno \(aba Check-ins\)/.test(fonteV) && !/métrica no perfil do aluno \(aba App do aluno\)/.test(fonteV),
+      "v755: o recado do 'Mandar pro app' aponta a métrica pra aba Check-ins, que é onde ela está");
+
+    /* 11) primeiro envio do acesso: o pacote tem de sair COM acessoEm, senão o
+     *     app pede pra 'criar um login' pra quem acabou de receber um */
+    const acesso = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      S.cloud = window.__cloudV755;
+      window.__v755.upserts = [];
+      const r = await new Promise((res) => window.__acessoAluno.cria("v1", res));
+      const up = (window.__v755.upserts[0] || {}).l || [];
+      S.cloud = window.__cloudOrigV;
+      return { ok: !!r.ok, acessoNoPacote: !!(up[0] && up[0].dados && up[0].dados.dados && up[0].dados.dados.a && up[0].dados.dados.a.acessoEm),
+        acessoGravado: !!(S.read("ptStudio", {}).alunos.find((x) => x.id === "v1") || {}).acessoEm };
+    });
+    ok(acesso.acessoNoPacote && acesso.acessoGravado,
+      "v755: o primeiro app publicado pelo 'Enviar acesso' já sai com acessoEm — o aluno vê 'Minha conta', não 'Crie um login'");
+
+    /* 12) t2 fora do pacote (o builder lia e nunca usava) */
+    const pac755 = await pV.evaluate(() => {
+      const S = window.MTStore, a = S.read("ptStudio", {}).alunos[0];
+      const d = window.__dadosApp(a, "t");
+      return { temT2: Object.prototype.hasOwnProperty.call(d, "t2"),
+        temFichas: Object.prototype.hasOwnProperty.call(d, "fichasApp") };
+    });
+    ok(!pac755.temT2 && pac755.temFichas,
+      "v755: o pacote do aluno não leva mais o t2 cru (o app nunca leu) e continua levando as fichas resolvidas");
+
+    /* 13) nome do studio x nome do professor */
+    const nomes = await pV.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.config.nome = "Studio Léo"; delete st.config.professor;
+      S.write("ptStudio", st);
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Studio Léo" }));
+      const out = { prof: window.__nomeProf.prof(), studio: window.__nomeProf.studio() };
+      const st2 = S.read("ptStudio", {});
+      st2.config.professor = "Léo Andrade";
+      S.write("ptStudio", st2);
+      out.profCampo = window.__nomeProf.prof();
+      out.tituloAntes = document.getElementById("tituloStudio").textContent;
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      return out;
+    });
+    ok(nomes.prof === "Léo" && nomes.studio === "Studio Léo",
+      "v755: quem escreveu 'Studio Léo' vira 'Studio Léo' no cabeçalho e 'Léo' no lugar do nome da pessoa (era 'Studio Studio')");
+    ok(nomes.profCampo === "Léo",
+      "v755: com config.professor gravado pelo onboarding, o primeiro nome sai dele");
+
+    /* 13b) os dois textos que ainda montavam "Studio " + primeira palavra */
+    const stStudio = await pV.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.config.nome = "Studio Léo";
+      S.write("ptStudio", st);
+      return { fech: window.__dashPT.resumo(S.todayISO().slice(0, 7)) };
+    });
+    ok(/— Studio Léo/.test(stStudio.fech) && !/Studio Studio/.test(stStudio.fech),
+      "v755: o resumo do fechamento assina 'Studio Léo' (antes virava 'Studio Studio')");
+    // o único "Studio " + primeira-palavra que sobra é o de dentro do próprio
+    // helper; recibo e fechamento montavam o deles na mão (eram 3)
+    ok((fonteV.match(/"Studio " \+ [\w.]+\.split/g) || []).length === 1,
+      "v755: só o helper nomeStudio() monta 'Studio ' + primeira palavra — o recibo e o fechamento passaram a chamar ele");
+
+    /* 14) comando "cobrar" usa a MESMA conta do Financeiro */
+    const cobrar755 = await pV.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const d = new Date(); d.setMonth(d.getMonth() - 2); d.setDate(1);
+      const ini = d.toISOString().slice(0, 10);
+      st.planosPT = [{ id: "plv", nome: "Mensal", valor: 200, cobranca: "mes" }];
+      st.contratosPT = [{ id: "ctv", alunoId: "v1", planoId: "plv", status: "ativo", inicio: ini, diaVenc: 1 }];
+      S.write("ptStudio", st);
+      const st2 = S.read("ptStudio", {});
+      const a = st2.alunos.find((x) => x.id === "v1");
+      const cmd = window.__cmdPT.interpreta("cobrar vera", st2);
+      let abriu = "";
+      const op = window.open; window.open = (u) => { abriu = u; return { focus: () => {} }; };
+      window.__cmdPT.executa(cmd);
+      window.open = op;
+      const texto = decodeURIComponent((abriu.split("text=")[1] || "").replace(/\+/g, " "));
+      return { texto, oficial: window.__msgCobranca(st2, a), divida: (window.__cobrancaVencida(st2, a) || {}).dv };
+    });
+    ok(cobrar755.texto === cobrar755.oficial && cobrar755.texto.length > 5,
+      "v755: 'cobrar <aluno>' manda o MESMO texto do Financeiro (dias reais e valor do mês), não o histórico somado");
+
+    /* 15) assessoria: erro na leitura dos treinos não vira "sem registros" */
+    const asse755 = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      window.__v755.erro = { app_treino_log: true };
+      S.cloud = window.__cloudV755;
+      window.__assessoria();
+      await new Promise((r) => setTimeout(r, 300));
+      const txt = document.getElementById("assessoriaLista").textContent;
+      window.__v755.erro = null;
+      S.cloud = window.__cloudOrigV;
+      return txt;
+    });
+    ok(/não deu pra ler os treinos/i.test(asse755) && !/Já instalou/.test(asse755),
+      "v755: quando a leitura dos treinos falha, a Assessoria avisa — antes mandava 'já instalou o app?' pra quem treinou ontem");
+
+    /* 16) robô salvo entra na fila de publicar E vira o fluxo do WhatsApp */
+    const robo = await pV.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      delete st.config.appEditGeralEm; delete st.config.automacoes;
+      S.write("ptStudio", st);
+      document.getElementById("botOpsP").value = "Horário | Seus horários ficam na Agenda\nFalar com o professor | humano";
+      document.getElementById("botOiP").value = "Oi! Sou o robô do studio.";
+      document.getElementById("botAtivoP").checked = true;
+      document.getElementById("botSalvaP").click();
+      const st2 = S.read("ptStudio", {});
+      const pri = (st2.config.automacoes.lista || []).find((x) => x.id === st2.config.automacoes.principal);
+      const rot = JSON.stringify(pri.dados).indexOf("Seus horários ficam na Agenda") >= 0;
+      return { marcou: !!st2.config.appEditGeralEm, fluxoNovo: rot, recado: document.getElementById("botOkP").textContent };
+    });
+    ok(robo.marcou, "v755: salvar o robô marca a pendência do app (antes o botão 'Publicar apps atualizados' nem aparecia)");
+    ok(robo.fluxoNovo && /WhatsApp/.test(robo.recado),
+      "v755: a automação principal do WhatsApp passa a ser derivada do robô salvo — não existem mais dois robôs diferentes");
+
+    /* 17) chat: sem selo fingido, envio que falha não some com o texto e o
+     *     polling não repinta (nem rouba a rolagem) quando não há novidade */
+    const chat755 = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      const hoje = S.todayISO();
+      window.__v755.dados.app_chat = [
+        { token: "tv1", de: "aluno", texto: "Bom dia!", criado: hoje + "T08:00:00", lida: true },
+        { token: "tv1", de: "personal", texto: "Bom dia, Vera!", criado: hoje + "T08:05:00", lida: true },
+      ];
+      S.cloud = window.__cloudV755;
+      window.__chatPT.abre("v1");
+      await new Promise((r) => setTimeout(r, 250));
+      const out = { lido: /lido/.test(document.getElementById("chatMsgs").textContent) };
+      // sentinela: se o timer repintar sem novidade, ela some
+      const sent = document.createElement("i"); sent.id = "__v755sent";
+      document.getElementById("chatMsgs").appendChild(sent);
+      window.__chatPT.abre("v1");
+      await new Promise((r) => setTimeout(r, 250));
+      out.naoRepintou = !!document.getElementById("__v755sent");
+      // com mensagem nova, repinta
+      window.__v755.dados.app_chat = window.__v755.dados.app_chat.concat([
+        { token: "tv1", de: "aluno", texto: "Consigo trocar o horário?", criado: hoje + "T09:00:00", lida: false }]);
+      window.__chatPT.abre("v1");
+      await new Promise((r) => setTimeout(r, 250));
+      out.repintou = !document.getElementById("__v755sent") && /trocar o horário/.test(document.getElementById("chatMsgs").textContent);
+      // envio que FALHA: o texto fica, o recado aparece e ninguém é notificado
+      window.__v755.erroInsert = { message: "sem rede" };
+      window.__v755.inserted = null;
+      document.getElementById("chatTexto").value = "mensagem que não vai";
+      document.getElementById("chatEnviar").click();
+      await new Promise((r) => setTimeout(r, 250));
+      out.textoFicou = document.getElementById("chatTexto").value === "mensagem que não vai";
+      out.avisou = !document.getElementById("chatEnvioErro").hidden;
+      // envio que dá certo: limpa a caixa e a mensagem nasce NÃO lida
+      window.__v755.erroInsert = null;
+      document.getElementById("chatEnviar").click();
+      await new Promise((r) => setTimeout(r, 300));
+      out.limpou = document.getElementById("chatTexto").value === "";
+      out.naoLida = ((window.__v755.inserted || {}).l || {}).lida === false;
+      S.cloud = window.__cloudOrigV;
+      return out;
+    });
+    ok(!chat755.lido,
+      "v755: o chat não mostra mais '✓✓ lido' — nada no sistema marca a mensagem do professor como lida");
+    ok(chat755.naoRepintou && chat755.repintou,
+      "v755: o polling de 25 s só repinta a conversa quando chega mensagem nova (antes jogava a rolagem pro fim toda vez)");
+    ok(chat755.textoFicou && chat755.avisou,
+      "v755: envio que falhou mantém o texto na caixa e avisa — antes a mensagem sumia calada e o aluno recebia push de nada");
+    ok(chat755.limpou && chat755.naoLida,
+      "v755: envio que deu certo limpa a caixa, e a mensagem do professor nasce NÃO lida (pronta pro dia em que existir a RPC de leitura)");
+
+    /* 18) teste grátis: com conta, o painel diz até quando vai */
+    const trial = await pV.evaluate(() => {
+      const S = window.MTStore;
+      const vence = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      localStorage.setItem("mtapp:ptAssinatura", JSON.stringify({ status: "trial", vence }));
+      const uOrig = S.usuario;
+      S.usuario = () => ({ logado: true, email: "prof@x.com" });
+      window.__assinatura.render();
+      const out = { info: document.getElementById("assinaturaInfo").textContent,
+        escondido: document.getElementById("assinaturaInfo").hidden };
+      // e a contagem local do teste sai de cena quando existe conta
+      localStorage.setItem("mtapp:ptTesteDesde", "2020-01-01");
+      window.__faixaTeste(true);
+      out.local = localStorage.getItem("mtapp:ptTesteDesde");
+      S.usuario = uOrig;
+      localStorage.removeItem("mtapp:ptAssinatura");
+      return out;
+    });
+    ok(!trial.escondido && /Teste grátis/.test(trial.info) && /dias/.test(trial.info),
+      "v755: quem está no teste grátis E logado passa a ver até quando vai (a data vem do servidor) — " + trial.info.slice(0, 45));
+    ok(!trial.local,
+      "v755: com conta, a contagem local do teste (uma por aparelho) sai do caminho — quem conta é o servidor");
+
+    /* 19) chamado do suporte sem rede não trava o botão */
+    const chamado = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      S.cloud = window.__cloudV755;
+      const fOrig = window.MT_FUNCAO.chama;
+      window.MT_FUNCAO.chama = () => Promise.reject(new Error("sem rede"));
+      window.__ajudaPT.abre("_chamado");
+      document.getElementById("supMsg").value = "O botão de publicar não responde no meu celular";
+      document.getElementById("supEnvia").click();
+      await new Promise((r) => setTimeout(r, 250));
+      const out = { travado: document.getElementById("supEnvia").disabled,
+        status: document.getElementById("supStatus").textContent };
+      window.MT_FUNCAO.chama = fOrig;
+      S.cloud = window.__cloudOrigV;
+      return out;
+    });
+    ok(!chamado.travado && /tente de novo|não deu/i.test(chamado.status),
+      "v755: sem internet, abrir chamado devolve o botão e explica — antes ficava preso em 'Abrindo o chamado…'");
+
+    /* 20) CSV "Exportar meus dados": Plano e Valor saem do contrato ativo */
+    const csv = await pV.evaluate(async () => {
+      const S = window.MTStore;
+      const blobs = [];
+      const orig = URL.createObjectURL;
+      URL.createObjectURL = (bl) => { blobs.push(bl); return "blob:v755"; };
+      const cl = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function () {};
+      document.getElementById("btnExcel").click();
+      HTMLAnchorElement.prototype.click = cl;
+      URL.createObjectURL = orig;
+      const txt = blobs.length ? await blobs[0].text() : "";
+      return txt.split("\r\n").find((l) => /Vera Versao/.test(l)) || "";
+    });
+    ok(/Mensal/.test(csv) && /200/.test(csv),
+      "v755: a planilha de alunos traz o plano do contrato ativo (a coluna Plano saía vazia, lendo um campo que nada grava) — " + csv.slice(0, 60));
+
+    await ctxV.close();
   }
   {
     /* ---- Modo claro (tela 3d): as telas novas seguem o tema ---- */

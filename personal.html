@@ -2582,6 +2582,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg> Enviar treino em grupo</h2>
       <p class="muted" style="margin: 4px 0 10px;">Funciona como uma lista de transmissão: <b>1)</b> monte um treino de disparo (pré-montado, sem estar preso a nenhum aluno), <b>2)</b> crie o grupo, <b>3)</b> dispare — todo mundo do grupo recebe o mesmo treino e os apps publicados atualizam sozinhos.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <input id="gtNome" placeholder="Nome do treino de disparo (ex.: Hipertrofia ABC agosto)" style="width: 260px;">
         <button class="btn sec" id="gtNovo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Montar treino de disparo</button>
       </div>
       <div id="gtLista" class="muted" style="margin-top: 8px; font-size: 13.5px;">Nenhum treino de disparo ainda.</div>
@@ -3082,6 +3083,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <button type="button" class="dbt" id="persPublica" style="margin-left:auto;">Publicar</button>
     </div>
+    <!-- v755: o recado do publicar mora AQUI. Antes ele saía no #geStatus, que
+         vive na aba Treinos → Em grupo: o professor clicava e não via nada. -->
+    <p id="persStatus" class="muted" style="margin: 0 0 10px; font-size: 12.5px;"></p>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Cores do app</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca — a <b>paleta inteira</b> do app do aluno muda junto: botões, gráficos, gradientes, cronômetros e até o card pro Stories, com os tons claro e escuro calculados sozinhos. O seu painel pinta na hora.</p>
@@ -3581,6 +3585,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <input id="chatTexto" placeholder="Escrever pro aluno…" style="flex: 1; min-width: 150px;">
             <button class="btn" id="chatEnviar" aria-label="enviar a mensagem">Enviar</button>
           </div>
+          <!-- v755: envio que falhou tem de aparecer; antes o texto sumia calado -->
+          <p id="chatEnvioErro" hidden style="margin: 6px 0 0; font-size: 12.5px; color: var(--tk-erro);"></p>
         </div>
       </div>
     </div>
@@ -3987,13 +3993,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__renderPT = function () { idxInvalida(); render(); }; // testes (v749): repinta tudo sem recarregar
 
+  /* v755: config.nome é ora o nome do PROFESSOR (onboarding: "Seu nome"), ora
+   * o nome do STUDIO (cadastro na nuvem: "Nome do seu studio"). Quem escreveu
+   * "Studio Léo" via "Studio Studio" no cabeçalho, "Falar com Studio" no robô
+   * e "Bom treino, Studio" no Início. Agora existem os dois helpers:
+   *   nomeStudio()        — como o studio se chama, sem repetir a palavra
+   *   primeiroNomeProf()  — o primeiro nome de QUEM atende
+   * config.professor é gravado pelo onboarding (que pergunta a pessoa); o
+   * cadastro da nuvem só mexe em config.nome. Sem professor, o helper tira o
+   * genérico da frente ("Studio Léo" → "Léo") em vez de chutar. */
+  var GENERICO_STUDIO = /^(studio|st[uú]dio|academia|box|ct|centro|espa[çc]o|personal|treinamento|assessoria|team|time|equipe|cross\w*)$/i;
+  function nomeStudio() {
+    var n = String((load().config || {}).nome || "").trim();
+    if (!n) return "Meu Studio";
+    return GENERICO_STUDIO.test(n.split(" ")[0]) ? n : "Studio " + n.split(" ")[0];
+  }
+  function primeiroNomeProf() {
+    var cfg = load().config || {};
+    var prof = String(cfg.professor || "").trim();
+    if (prof) return prof.split(" ")[0];
+    try {
+      var pf = String((JSON.parse(localStorage.getItem("mtapp:perfil") || "{}") || {}).nome || "").trim();
+      if (pf && !GENERICO_STUDIO.test(pf.split(" ")[0])) return pf.split(" ")[0];
+    } catch (e) {}
+    var partes = String(cfg.nome || "").trim().split(/\s+/).filter(Boolean);
+    while (partes.length > 1 && GENERICO_STUDIO.test(partes[0])) partes.shift(); // "Studio Léo" → "Léo"
+    return partes[0] || "";
+  }
+  window.__nomeProf = { studio: nomeStudio, prof: primeiroNomeProf }; // testes
   // onboarding do módulo: pergunta o nome do personal na primeira abertura
   function verificaOnboarding() {
     var st = load();
     var cfg = st.config || {};
     var nome = cfg.nome;
     $("boasVindas").hidden = !!nome;
-    if (nome) $("tituloStudio").textContent = "Studio " + nome.split(" ")[0];
+    if (nome) $("tituloStudio").textContent = nomeStudio(); // v755: nada de "Studio Studio"
     // guia do professor novo: só aparece pra quem acabou de chegar (tem nome,
     // mas nenhum aluno nem plano) e some pra sempre quando ele termina ou pula
     var precisaGuia = !!nome && !cfg.onboardFim && !(st.alunos || []).length && !(st.planosPT || []).length;
@@ -4017,6 +4051,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     st.config = st.config || {};
     st.config.nome = nome;
+    // v755: aqui a pergunta é "Seu nome" — então esta é a pessoa, e é ela que
+    // o app do aluno chama ("Falar com Léo"). O cadastro da nuvem, que pede o
+    // nome do STUDIO, não mexe neste campo.
+    if (!st.config.professor) st.config.professor = nome;
     S.write("ptStudio", st);
     verificaOnboarding();
     obPasso(2);
@@ -4562,7 +4600,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     MT_FUNCAO.chama(nuvem.client, "suporte", {
       acao: "abrir", aid: nuvem.aid, tipo: $("supTipo").value,
       msg: msg, email: ($("supEmail").value || "").trim(),
-    }, "Abrir chamado").then(function (r) {
+    }, "Abrir chamado").catch(function () { return null; }).then(function (r) {
+      // v755: fetch que REJEITA (sem rede) não passava pelo {erro} do
+      // MT_FUNCAO — o botão ficava desabilitado em "Abrindo o chamado…" até
+      // recarregar a página
       bt.disabled = false;
       if (!r || !r.ok || !r.protocolo) { st9.textContent = (r && r.erro) || "Não deu pra abrir agora — tente de novo."; return; }
       st9.textContent = "";
@@ -7067,7 +7108,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!p) return;
     var a = st.alunos.find(function (x) { return x.id === p.alunoId; }) || { nome: "—" };
     var cfg = st.config || {};
-    var quem = cfg.nome ? "Studio " + cfg.nome.split(" ")[0] : "Personal trainer";
+    // v755: nomeStudio() não repete a palavra — quem se cadastrou como
+    // "Studio Léo" via "Studio Studio" no cabeçalho do recibo
+    var quem = cfg.nome ? nomeStudio() : "Personal trainer";
     var w = window.open("", "_blank");
     // v748: pop-up bloqueado devolve null — antes estourava calado no document.write
     if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
@@ -7892,10 +7935,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ? "<div data-busca-cmd='1' style='padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;font-weight:700;color:var(--tk-roxoTx2);'>" +
         buscaCmdAtual.rot + " <span class='muted' style='font-weight:600;font-size:11px;'>· Enter executa</span></div>"
       : "") + achou.map(function (a) {
-      var pagoMes = idxDe(st).pagouMes(a.id, mesAtual());
+      /* v755: a busca dizia "em aberto" só por não haver pagamento do mês —
+       * então todo aluno de hora-aula e todo mundo no cartão automático saía
+       * laranja, ao lado de "Pago dia 5" na lista. cobrancaVencida é a MESMA
+       * função-fonte do Financeiro, da lista e do Resolver hoje. */
+      var devendo = !!cobrancaVencida(st, a);
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
-        "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "var(--tk-ok)" : "var(--tk-aten2)") + ";'>" +
-        (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
+        "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (devendo ? "var(--tk-aten2)" : "var(--tk-ok)") + ";'>" +
+        (devendo ? "· em aberto" : "· em dia") + "</span></div>";
     }).join("");
     if (telas.length) {
       htmlB += "<div style='padding:7px 14px 3px;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--tk-tx4);'>TELAS E AÇÕES</div>" +
@@ -7971,7 +8018,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (m) {
       var resto = m[1], hora = "";
       var mh = /\s+(?:às\s+|as\s+)?(\d{1,2})(?::(\d{2})|h(\d{2})?)?\s*$/i.exec(resto);
-      if (mh) { hora = ("0" + mh[1]).slice(-2) + ":" + (mh[2] || mh[3] || "00"); resto = resto.slice(0, mh.index); }
+      /* v755: "marcar ana 99" criava sessão às 99:00 na grade. Hora fora de
+       * 0–23 (ou minuto fora de 0–59) deixa de ser hora e o trecho volta pro
+       * nome — quem escreveu um número maluco não perde o comando. */
+      if (mh) {
+        var hNum = +mh[1], mNum = +(mh[2] || mh[3] || 0);
+        if (hNum >= 0 && hNum <= 23 && mNum >= 0 && mNum <= 59) {
+          hora = ("0" + hNum).slice(-2) + ":" + ("0" + mNum).slice(-2);
+          resto = resto.slice(0, mh.index);
+        }
+      }
       var dia = "";
       var md = /\s+(hoje|amanh[ãa]|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo)\s*$/i.exec(resto);
       if (md) { dia = md[1].toLowerCase(); resto = resto.slice(0, md.index); }
@@ -8013,17 +8069,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (cmd.tipo === "recebi") {
       if (!confirm("Registrar " + S.fmtBRL(cmd.valor) + " recebido de " + cmd.aluno.nome.split(" ")[0] + " hoje?")) return;
       var st2 = load();
-      var pg2 = { id: S.uid(), alunoId: cmd.aluno.id, valor: cmd.valor, forma: "recebido", data: S.todayISO() };
+      // v755: "recebido" não é forma de pagamento — o formulário só conhece
+      // Pix/Dinheiro/Cartão/Transferência, e o relatório "Como você recebe"
+      // ganhava uma linha inventada. Pix é o padrão do painel inteiro.
+      var pg2 = { id: S.uid(), alunoId: cmd.aluno.id, valor: cmd.valor, forma: "Pix", data: S.todayISO() };
       st2.pagamentos.push(pg2);
       save(st2);
       mandaReciboZap(st2, cmd.aluno, pg2);
       return;
     }
     if (cmd.tipo === "cobrar") {
+      /* v755: msgCobranca é a MESMA conta da régua e do Financeiro (dias reais
+       * de atraso e o valor do mês; meses somados só quando são vários). Antes
+       * o comando mandava o total do dividaDe — o histórico inteiro, até 36
+       * meses — com "uns dias" no lugar do atraso, cobrando o que régua
+       * nenhuma tinha cobrado. */
       var st3 = load();
-      var dv3 = dividaDe(st3, cmd.aluno);
-      var tx3 = zapTexto(zapModelos(st3).atraso, { nome: cmd.aluno.nome.split(" ")[0],
-        dias: "uns dias", valor: S.fmtBRL(dv3 && dv3.total ? dv3.total : (+cmd.aluno.valor || 0)) });
+      var aC = st3.alunos.find(function (x) { return x.id === cmd.aluno.id; }) || cmd.aluno;
+      var tx3 = msgCobranca(st3, aC);
       window.open("https://wa.me/55" + String(cmd.aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(tx3), "_blank");
       return;
     }
@@ -8186,8 +8249,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
     var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
     if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
-    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
     var payload = montaPayloadQuest(st, q);
+    // v755: questionário que ficou sem pergunta (a última foi excluída) era
+    // "enviado" com sucesso e descartado em silêncio pelo pacote
+    if (!payload.ps.length) { alert("Esse questionário ficou sem pergunta nenhuma — edite ele primeiro (card Perguntas)."); return; }
+    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
     var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     var link = location.origin + location.pathname.replace(/personal\.html$/, "") + "quest.html?t=" + a.appTokenP + "&q=" + b64;
     $("qeSaida").hidden = false;
@@ -8203,17 +8269,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       avisoQ.textContent = "Entre na sua conta (card Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do aluno não chegam.";
     } else {
       avisoQ.textContent = "Preparando o app do aluno na nuvem…";
-      var stampQ = new Date().toISOString();
-      nuvemQ.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvemQ.aid, dados: pacoteApp(a, stampQ), atualizado: stampQ }])
-        .then(function (r) {
-          if (r && r.error) { avisoQ.textContent = "Não deu pra publicar o app do aluno (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
-          var stQ = load();
-          var aQ = stQ.alunos.find(function (x) { return x.id === a.id; });
-          if (aQ) { aQ.appPubEm = stampQ; aQ.appVer = self.MT_VERSAO || ""; S.write("ptStudio", stQ); }
-          avisoQ.textContent = "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
-        }, function () {
-          avisoQ.textContent = "Sem conexão agora — o aluno pode ver erro ao enviar. Gere o link de novo com internet.";
-        });
+      // v755: o mesmo publicaPacotes de todo mundo (upsert + carimbo num lugar só)
+      publicaPacotes(nuvemQ, [a]).then(function (r) {
+        avisoQ.textContent = r.erro
+          ? "Não deu pra publicar o app do aluno (" + r.erro + ") — gere o link de novo antes de mandar."
+          : "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
+      });
     }
   });
   $("qeCopia").addEventListener("click", function () {
@@ -8223,14 +8284,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     setTimeout(function () { b.innerHTML = mi("prancheta") + " Copiar link"; }, 1800);
   });
   // manda o questionário DIRETO pro app do aluno: fica trancado até a data de
-  // liberação e cada pergunta vira uma métrica no perfil (aba App do aluno)
+  // liberação e cada pergunta vira uma métrica no perfil (aba Check-ins, v755)
   $("qeApp").addEventListener("click", function () {
     var st = questSt(load());
     var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
     var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
     if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
-    if (!a.appTokenP) a.appTokenP = S.uid() + S.uid();
     var payload = montaPayloadQuest(st, q);
+    // v755: sem pergunta, o pacote descarta o questionário e o professor fica
+    // esperando resposta de uma coisa que o aluno nunca viu
+    if (!payload.ps.length) { alert("Esse questionário ficou sem pergunta nenhuma — edite ele primeiro (card Perguntas)."); return; }
+    if (!a.appTokenP) a.appTokenP = S.uid() + S.uid();
     a.questApp = {
       nome: q.nome,
       ps: payload.ps,
@@ -8247,27 +8311,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     aviso.textContent = "Publicando o app do aluno com o questionário…";
-    var stamp = new Date().toISOString();
-    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp }])
-      .then(function (r) {
-        if (r && r.error) { aviso.textContent = "Não deu pra publicar o app (" + r.error.message + ") — tenta de novo."; return; }
-        var st2 = load();
-        var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; S.write("ptStudio", st2); }
-        aviso.textContent = "✓ Enviado! O questionário " +
-          (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
-          " no app do aluno" + (a.questApp.repete ? " e repete toda semana" : "") +
-          ". As respostas caem aqui embaixo e cada pergunta vira uma métrica no perfil do aluno (aba App do aluno), com o valor de hoje, a tendência e o histórico.";
-      }, function () {
-        aviso.textContent = "Sem conexão agora — tenta de novo com internet.";
-      });
+    // v755: publicaPacotes é o caminho único (upsert + carimbo appPubEm/appVer)
+    publicaPacotes(nuvem, [a]).then(function (r) {
+      if (r.erro) { aviso.textContent = "Não deu pra publicar o app (" + r.erro + ") — tenta de novo."; return; }
+      aviso.textContent = "✓ Enviado! O questionário " +
+        (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
+        " no app do aluno" + (a.questApp.repete ? " e repete toda semana" : "") +
+        /* v755: a métrica por pergunta mora na aba Check-ins da ficha desde a
+         * v630 — o texto mandava o professor pra "App do aluno" e ele
+         * concluía que a resposta não tinha chegado. */
+        ". As respostas caem aqui embaixo e cada pergunta vira uma métrica no perfil do aluno (aba Check-ins), com o valor de hoje, a tendência e o histórico.";
+    });
   });
   function carregaRespostasQuest() {
     var box = $("qRespostas");
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra receber as respostas dos alunos."; return; }
     box.textContent = "Carregando…";
-    nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
+    /* v755: a RLS de app_quest devolve TODAS as academias do usuário (dono +
+     * colaborador), então sem o filtro a janela de 60 linhas era ocupada por
+     * respostas do outro studio — em texto aberto e como "Aluno". A tela "A
+     * semana" já filtrava por token; aqui faltava. */
+    nuvem.client.from("app_quest").select("token,questionario,dados,criado").eq("academia_id", nuvem.aid)
+      .order("criado", { ascending: false }).limit(60)
       .then(function (r) {
         if (r && r.error) { box.textContent = erroDeSql(r.error) ? "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os questionários." : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var rows = (r && r.data) || [];
@@ -8688,7 +8754,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     e.target.disabled = true;
     if (rm) {
       if (!confirm("Apagar este post de vez? Não dá pra voltar atrás.")) { e.target.disabled = false; return; }
-      nuvem.client.from("app_feed").delete().eq("id", rm).then(carregaFeedMod, carregaFeedMod);
+      /* v755: apagar o post deixava curtidas e comentários órfãos em
+       * app_reacoes (post_id = "feed:<id>"). A RPC que o ALUNO usa pra apagar
+       * o próprio post já limpava as duas tabelas; o caminho do painel não.
+       * Se a RLS não deixar apagar reação, o post some do mesmo jeito. */
+      nuvem.client.from("app_feed").delete().eq("id", rm).then(function () {
+        try {
+          var q9 = nuvem.client.from("app_reacoes").delete().eq("post_id", "feed:" + rm);
+          Promise.resolve(q9).then(carregaFeedMod, carregaFeedMod);
+        } catch (e) { carregaFeedMod(); }
+      }, carregaFeedMod);
       return;
     }
     var escondendo = /Esconder/.test(e.target.textContent);
@@ -8801,12 +8876,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<option value="__todos">Todos os alunos ativos</option>';
   }
   $("gtNovo").addEventListener("click", function () {
-    var nome = prompt("Nome do treino de disparo (ex.: Hipertrofia ABC agosto):", "");
-    if (!nome || !nome.trim()) return;
+    // v755: campo de verdade no lugar do prompt() do navegador — a mesma
+    // linguagem do "Nome do grupo" logo abaixo (a v633 tirou os prompt() do
+    // resto do painel justamente por isso)
+    var nome = ($("gtNome").value || "").trim();
+    if (!nome) { alert("Dê um nome pro treino de disparo (ex.: Hipertrofia ABC agosto)."); $("gtNome").focus(); return; }
+    $("gtNome").value = "";
     var st = load();
     st.treinosGrupo = st.treinosGrupo || [];
     var id = "gt" + S.uid();
-    st.treinosGrupo.push({ id: id, nome: nome.trim() });
+    st.treinosGrupo.push({ id: id, nome: nome });
     st.treinosV2 = st.treinosV2 || {};
     st.treinosV2[id] = { fichas: [] };
     save(st);
@@ -8889,33 +8968,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     r.ids.forEach(function (id) { marcaAppPendente(st, id); });
     S.write("ptStudio", st);
     var nuvem = S.cloud && S.cloud();
-    var comToken = st.alunos.filter(function (a) { return r.ids.indexOf(a.id) >= 0 && a.appTokenP; });
+    // v755: aluno com acesso cortado fica de fora da republicação em lote
+    var comToken = st.alunos.filter(function (a) { return r.ids.indexOf(a.id) >= 0 && a.appTokenP && !a.appRevogadoEm; });
     if (!nuvem || !comToken.length) {
       $("geStatus").textContent = "✓ Treino copiado pra " + r.ids.length + " aluno(s). " +
         (comToken.length ? "Entre na nuvem pra atualizar os apps." : "Gere o app de cada um pra levar o treino novo.");
       render();
       return;
     }
-    var stamp = new Date().toISOString();
-    var linhas = comToken.map(function (a) {
-      return { token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp };
-    });
-    nuvem.client.from("app_aluno").upsert(linhas).then(function (res) {
-      if (!res || !res.error) {
-        var stOk = load();
+    // v755: mesmo caminho de publicar de todo mundo (upsert + carimbo)
+    publicaPacotes(nuvem, comToken).then(function (res) {
+      if (!res.erro) {
         comToken.forEach(function (a) {
-          var a2 = stOk.alunos.find(function (x) { return x.id === a.id; });
-          if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; }
           pushAluno(a.appTokenP, "Treino novo no app!", "Seu personal mandou treino novo — abre o app pra conferir.");
         });
-        S.write("ptStudio", stOk);
       }
-      $("geStatus").textContent = (res && res.error)
-        ? "✓ Treino copiado pra " + r.ids.length + " aluno(s), mas os apps NÃO atualizaram na nuvem (" + res.error.message + ")."
-        : "Treino enviado pra " + S.plural(r.ids.length, "aluno", "alunos") + " — " + S.plural(linhas.length, "app atualizado", "apps atualizados") + " na nuvem!";
-      render();
-    }, function () {
-      $("geStatus").textContent = "✓ Treino copiado, mas sem conexão pra atualizar os apps agora.";
+      $("geStatus").textContent = res.erro
+        ? "✓ Treino copiado pra " + r.ids.length + " aluno(s), mas os apps NÃO atualizaram na nuvem (" + res.erro + ")."
+        : "Treino enviado pra " + S.plural(r.ids.length, "aluno", "alunos") + " — " + S.plural(comToken.length, "app atualizado", "apps atualizados") + " na nuvem!";
       render();
     });
   });
@@ -9100,12 +9170,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!el) return;
     var rr = (st.config || {}).reguaRodouEm;
     var txt = enviados ? enviados + " aviso(s) enviado(s) agora há pouco. " : "";
-    if (!rr) {
-      txt += "A régua roda sozinha com o Personal aberto (a cada 6 horas).";
-    } else {
-      txt += "Última rodada: " + S.fmtData(rr.slice(0, 10)) + " às " + rr.slice(11, 16) + ".";
+    /* v755: desde a v721 treino do dia, véspera e aniversário saem do
+     * SERVIDOR todo dia (regua-diaria + pg_cron). O texto antigo dizia que
+     * nada saía sem o painel aberto — e o professor achava que o aluno tinha
+     * ficado sem lembrete. O que ainda depende do painel é a cobrança e os
+     * lembretes de check-in/questionário. */
+    txt += "Treino do dia, véspera e aniversário saem do servidor todo dia de manhã. ";
+    txt += "Cobrança e lembretes de check-in/questionário saem enquanto o Personal está aberto (a cada 6 horas). ";
+    if (rr) {
+      txt += "Última rodada aqui: " + S.fmtData(rr.slice(0, 10)) + " às " + rr.slice(11, 16) + ".";
       if (Date.now() - Date.parse(rr) > 26 * 3600 * 1000) {
-        txt += " Atenção: faz mais de 1 dia — abre o Personal de vez em quando pra régua disparar.";
+        txt += " Faz mais de 1 dia — abre o Personal de vez em quando pra parte da cobrança disparar.";
       }
     }
     el.textContent = txt;
@@ -9142,7 +9217,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return { motivo: "sem-nuvem", enviados: 0 };
     var st = load();
-    if ((st.config || {}).reguaOff && !st.sessoes.length) return { motivo: "desligada", enviados: 0 };
+    /* v755: o interruptor se chama "Régua de COBRANÇA" e agora só cala a
+     * cobrança (o bloco lá embaixo). Aqui ele barrava a rotina inteira quando
+     * não havia sessão marcada, e junto iam embora aniversário, marco de
+     * treinos, resgate de quem sumiu e o fim do desafio — nada disso é
+     * dinheiro. */
     var hoje = S.todayISO();
     var amanhaP = (function () { var d9 = new Date(hoje + "T12:00"); d9.setDate(d9.getDate() + 1); return S.todayISO(d9); })();
     var mes = hoje.slice(0, 7);
@@ -9189,8 +9268,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       // marcos de consistência: 25, 50 e 100 treinos concluídos
       var nFeitasM = idxDe(st).sessFeitasDe(a.id).length;
+      // v755: >= e não ===. A régua roda a cada 6 h: marcar duas sessões (ou
+      // importar histórico) entre duas rodadas pulava de 24 pra 26 e o marco
+      // 25 nunca saía. A chave marco25|<id> no pushLog garante um envio só.
       [25, 50, 100].forEach(function (mc) {
-        if (nFeitasM === mc) {
+        if (nFeitasM >= mc) {
           manda("marco" + mc + "|" + a.id, a.appTokenP, mc + " treinos concluídos!",
             "Que consistência! Você completou " + mc + " sessões comigo — orgulho demais. Bora pro próximo marco?");
         }
@@ -9267,7 +9349,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return Promise.resolve({ motivo: "sem-nuvem", enviados: 0 });
     var st = load();
-    if ((st.config || {}).reguaOff) return Promise.resolve({ motivo: "desligada", enviados: 0 });
+    /* v755: check-in e questionário não são cobrança. O interruptor "Régua de
+     * cobrança ligada" calava estes lembretes junto — quem cobra pelo cartão
+     * desliga a régua e os alunos paravam de ser cutucados sem ninguém saber
+     * que as duas coisas estavam amarradas. */
     var ativos = (st.alunos || []).filter(function (a) { return a.ativo !== false && a.appTokenP; });
     var tokens = ativos.map(function (a) { return a.appTokenP; });
     if (!tokens.length) return Promise.resolve({ motivo: "sem-token", enviados: 0 });
@@ -9381,7 +9466,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.reguaOff = !this.checked;
     S.write("ptStudio", st);
-    if (this.checked) rotinaDiariaPush();
+    /* v755: importa o que o servidor já mandou ANTES de rodar a régua local —
+     * é a mesma regra da abertura e do timer de 6 h. Sem isso, religar a régua
+     * num dia em que o cron já avisou "Hoje é Peito" mandava o aviso de novo.
+     * pushPendencias entra junto: ela também estava presa neste interruptor. */
+    if (this.checked) importaPushSrv(function () { rotinaDiariaPush(); pushPendencias(); });
   });
 
   function marcaAppPendente(st, alunoId) {
@@ -9400,15 +9489,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     marcaAppPendente(st, alunoId);
   }
   window.__marcaTreinoMudou = marcaTreinoMudou; // testes
-  function appPendente(st, a) {
+  /* v755: `soSistema` separa as duas pendências que viviam misturadas —
+   * VERSÃO/semana do plano (do sistema, pode subir sozinha) e EDIÇÃO (do
+   * professor, só sobe quando ele mandar). Sem isso a automática de 1,5 s
+   * publicava a ficha pela metade no meio da montagem. */
+  function appPendente(st, a, soSistema) {
     if (!a.appTokenP || a.ativo === false) return false;
+    /* v755: acesso cortado não é pendência. A revogação apaga appPubEm/appVer,
+     * então o aluno virava "pendente" na hora e a automática devolvia o pacote
+     * inteiro dele pra nuvem — com push e link no WhatsApp. */
+    if (a.appRevogadoEm) return false;
     /* App publicado com uma versão ANTIGA do sistema também está pendente. Sem
      * isto, melhoria minha (card novo, conserto no app) só chegava no aluno se
      * o professor por acaso editasse a ficha dele — e o botão de publicar em
      * lote nem aparecia, porque ninguém contava como pendente. */
     if ((a.appVer || "") !== (self.MT_VERSAO || "")) return true;
     var edit = Math.max(Date.parse(a.appEditEm || "") || 0, Date.parse((st.config || {}).appEditGeralEm || "") || 0);
-    if (edit > (Date.parse(a.appPubEm || "") || 0)) return true;
+    if (!soSistema && edit > (Date.parse(a.appPubEm || "") || 0)) return true;
     /* v750: o pacote leva a semana do Plano do mês JÁ resolvida (1 a 4) e o
      * app só imprime. Sem isto o aluno ficava o mês inteiro em "Semana 1 de 4"
      * enquanto o painel dizia semana 3. Quando a semana de HOJE é outra que a
@@ -9430,48 +9527,54 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     btn.innerHTML = mi("enviar") + " Publicar apps atualizados (" + pend.length + ")";
   }
   // publica em lotes de 5 com progresso — falhou um lote, ele continua pendente pro retry
-  function publicaAppsPendentes(silencioso) {
+  /* v755: tres consertos numa assinatura so.
+   * 1) `silencioso` chegava como MouseEvent (o listener do botao passava a
+   *    funcao direto) — objeto e verdadeiro, entao o CLIQUE MANUAL pulava
+   *    progresso, recado final e o push pro aluno. Agora so o true cala.
+   * 2) `soSistema` deixa a automatica publicar apenas versao/semana.
+   * 3) `idStatus` diz ONDE o recado aparece: o botao da Personalizacao (4b)
+   *    escrevia num status que mora na aba Treinos, ou seja, em lugar nenhum. */
+  function publicaAppsPendentes(silencioso, soSistema, idStatus) {
+    silencioso = silencioso === true;
+    var alvo = $(idStatus || "geStatus");
     var st = load();
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { if (!silencioso) alert("Entre na sua conta (card Sua ilha) pra publicar os apps."); return; }
-    var pend = st.alunos.filter(function (a) { return appPendente(st, a); });
-    if (!pend.length) return;
+    var pend = st.alunos.filter(function (a) { return appPendente(st, a, soSistema); });
+    if (!pend.length) {
+      // antes voltava calado: o professor clicava e a tela nao dizia nada
+      if (!silencioso && alvo) alvo.textContent = "Todos os apps já estão atualizados.";
+      return;
+    }
     var btn = $("btnPubPendentes");
-    if (!silencioso) btn.disabled = true;
+    if (!silencioso && btn) btn.disabled = true;
     var total = pend.length, feitos = 0, falhas = 0;
     var stampP = new Date().toISOString();
     var fila = pend.slice();
     (function lote() {
       if (!fila.length) {
-        if (!silencioso) btn.disabled = false;
+        if (!silencioso && btn) btn.disabled = false;
         if (silencioso) { render(); return; }
-        $("geStatus").textContent = falhas
+        if (alvo) alvo.textContent = falhas
           ? S.plural(feitos, "app atualizado", "apps atualizados") + ", " + falhas + " falharam — clique de novo pra tentar os que faltaram."
           : S.plural(feitos, "app atualizado", "apps atualizados") + " na nuvem — os alunos já veem a novidade!";
         render();
         return;
       }
       var grupo = fila.splice(0, 5);
-      if (!silencioso) $("geStatus").textContent = "Publicando apps… " + (feitos + falhas + grupo.length) + " de " + total;
-      var linhas = grupo.map(function (a) {
-        return { token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stampP), atualizado: stampP };
-      });
-      nuvem.client.from("app_aluno").upsert(linhas).then(function (r) {
-        if (r && r.error) { falhas += grupo.length; }
+      if (!silencioso && alvo) alvo.textContent = "Publicando apps… " + (feitos + falhas + grupo.length) + " de " + total;
+      publicaPacotes(nuvem, grupo, stampP).then(function (r) {
+        if (r.erro) { falhas += grupo.length; }
         else {
           feitos += grupo.length;
-          var st2 = load();
-          grupo.forEach(function (a) {
-            var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-            if (a2) { a2.appPubEm = stampP; a2.appVer = self.MT_VERSAO || ""; }
-            // atualização automática não incomoda o aluno com notificação:
-            // ele não fez nada, e o app se atualiza sozinho na próxima abertura
-            if (!silencioso) pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
+          // atualização automática não incomoda o aluno com notificação:
+          // ele não fez nada, e o app se atualiza sozinho na próxima abertura
+          if (!silencioso) grupo.forEach(function (a) {
+            pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
           });
-          S.write("ptStudio", st2);
         }
         lote();
-      }, function () { falhas += grupo.length; lote(); });
+      });
     })();
   }
   /* Publica o app de UM aluno. A ficha nova só chega no celular dele depois
@@ -9483,21 +9586,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
     if (!a.appTokenP) { cb({ erro: "Este aluno ainda não tem o app criado. Abra o perfil dele e toque em Enviar acesso do app." }); return; }
+    // v755: acesso cortado não recebe pacote nem push — religue primeiro
+    if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra publicar o app." }); return; }
-    var stampP = new Date().toISOString();
-    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid,
-      dados: pacoteApp(a, stampP), atualizado: stampP }])
-      .then(function (r) {
-        if (r && r.error) { cb({ erro: "Não deu pra publicar agora: " + r.error.message }); return; }
-        var st2 = load();
-        var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
-        if (a2) { a2.appPubEm = stampP; a2.appVer = self.MT_VERSAO || ""; }
-        S.write("ptStudio", st2);
-        pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
-        render();
-        cb({ ok: true, nome: a.nome });
-      }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+    publicaPacotes(nuvem, [a]).then(function (r) {
+      if (r.erro) { cb({ erro: "Não deu pra publicar agora: " + r.erro }); return; }
+      pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
+      render();
+      cb({ ok: true, nome: a.nome });
+    });
   }
   // liga qualquer botão "enviar pro app" a um seletor de aluno + caixa de recado
   function ligaEnvioApp(idBotao, idSeletor, idStatus) {
@@ -9528,15 +9626,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // sem conta na nuvem (ou com o cliente ainda montando) não há o que publicar
     if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
     var st = load();
-    if (!st.alunos.some(function (a) { return appPendente(st, a); })) return;
+    /* v755: SÓ pendência de sistema. O render() agenda esta rotina a cada
+     * pintura e todo save() chama render(): a primeira ficha salva na sessão
+     * subia sozinha 1,5 s depois e o aluno abria o app com o treino pela
+     * metade. Publicar o que o professor está EDITANDO é decisão dele. */
+    if (!st.alunos.some(function (a) { return appPendente(st, a, true); })) return;
     autoJaRodou = true;
-    publicaAppsPendentes(true);
+    publicaAppsPendentes(true, true);
   }
   window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe, auto: autoPublicaApps }; // testes
-  $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
-  // o botao da tela 4b e o MESMO caminho de publicar de sempre
-  // o botao da tela 4b e o MESMO caminho de publicar de sempre
-  if ($("persPublica")) $("persPublica").addEventListener("click", function () { publicaAppsPendentes(); });
+  // v755: sem o embrulho, o MouseEvent virava o argumento "silencioso" e o
+  // clique manual não mostrava progresso nem avisava o aluno
+  $("btnPubPendentes").addEventListener("click", function () { publicaAppsPendentes(false); });
+  // o botao da tela 4b e o MESMO caminho de publicar de sempre — mas o recado
+  // tem de sair NA tela dele (v755), senao o professor clica e nao ve nada
+  if ($("persPublica")) $("persPublica").addEventListener("click", function () { publicaAppsPendentes(false, false, "persStatus"); });
 
   /* ---------- apps congelados no formato antigo ----------
    * Antes da v467 o app do aluno era um HTML pronto guardado na nuvem, sem o
@@ -9573,20 +9677,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       renderCongelados();
     });
   }
+  /* v755: a conferência rodava UMA vez, 3,5 s depois de abrir. Com login
+   * lento (ou sem sinal nos primeiros segundos) ela saía pelo `return` e o
+   * aviso de app congelado não aparecia mais na sessão inteira. Agora tenta de
+   * novo a cada 15 s, até 4 vezes — os outros leitores da nuvem deste bloco
+   * (pagamentos, régua) já se recuperavam sozinhos assim. */
+  var congTentativas = 0;
   function checaAppsCongelados() {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
-    nuvem.client.from("app_aluno").select("token,ver:dados->>ver").eq("academia_id", nuvem.aid)
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") {
+      if (++congTentativas <= 4) setTimeout(timerSeguro(checaAppsCongelados), 15000);
+      return;
+    }
+    var consulta;
+    // roda em timer: se o cliente da nuvem não tiver a consulta, tenta depois
+    try { consulta = nuvem.client.from("app_aluno").select("token,ver:dados->>ver").eq("academia_id", nuvem.aid); }
+    catch (e) { if (++congTentativas <= 4) setTimeout(timerSeguro(checaAppsCongelados), 15000); return; }
+    Promise.resolve(consulta)
       .then(function (r) {
         if (!r || r.error || !Array.isArray(r.data)) return;
         var sem = {};
         r.data.forEach(function (row) { if (!row.ver) sem[row.token] = true; });
         congeladosTokens = sem;
         renderCongelados();
-      }, function () { /* sem rede agora — tenta na próxima sessão */ });
+      }, function () {
+        // v755: sem rede agora — tenta de novo daqui a pouco, nesta mesma sessão
+        if (++congTentativas <= 4) setTimeout(timerSeguro(checaAppsCongelados), 15000);
+      });
   }
   window.__congelados = { checa: checaAppsCongelados, render: renderCongelados, lista: alunosCongelados }; // testes
-  setTimeout(checaAppsCongelados, 3500);
+  setTimeout(timerSeguro(checaAppsCongelados), 3500);
   /* A leitura do professor sobre ESTE aluno: fica guardada nele (a.briefIA),
    * não só na hora de gerar — no mês seguinte ele ajusta o que mudou em vez
    * de reescrever tudo. É o que dá a "visão humana" pra IA. */
@@ -18846,10 +18966,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function resumoFechamentoPT(mes) {
     var st = load();
     var d = dadosDoMes(st, mes);
-    var nomeStudio = ((st.config || {}).nome) || "meu studio";
+    // v755: o mesmo helper do cabeçalho — "Studio Léo" não vira "Studio Studio"
+    // (e o nome local não pode se chamar nomeStudio: sombrearia a função)
+    var nomeSt = (st.config || {}).nome ? nomeStudio() : "meu studio";
     var presenca = d.feitas + d.faltas ? Math.round(100 * d.feitas / (d.feitas + d.faltas)) : 100;
     var gastoMes = despesasDoMes(st, mes).reduce(function (s, dp) { return s + (+dp.valor || 0); }, 0);
-    return "Fechamento " + mes.slice(5, 7) + "/" + mes.slice(0, 4) + " — Studio " + nomeStudio.split(" ")[0] + "\n" +
+    return "Fechamento " + mes.slice(5, 7) + "/" + mes.slice(0, 4) + " — " + nomeSt + "\n" +
       "Receita: " + "R$ " + Math.round(d.fat).toLocaleString("pt-BR") +
       (gastoMes ? " · Despesas: R$ " + Math.round(gastoMes).toLocaleString("pt-BR") +
         " · Sobrou: R$ " + Math.round(d.fat - gastoMes).toLocaleString("pt-BR") : "") + "\n" +
@@ -19238,9 +19360,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     /* o desenho (tela 1a) saúda pelo primeiro nome. O onboarding pergunta
      * "como você se chama?" e guarda em config.nome — o mesmo nome que o
      * cabeçalho usa em "Studio Léo". Sem nome, a saudação vai sozinha. */
-    var proNome = "";
-    try { proNome = String((JSON.parse(localStorage.getItem("mtapp:perfil") || "{}") || {}).nome || "").trim().split(" ")[0]; } catch (e) {}
-    if (!proNome) proNome = String((st.config || {}).nome || "").trim().split(" ")[0];
+    var proNome = primeiroNomeProf(); // v755: um helper só (nunca "Bom treino, Studio")
     var aP = prox ? st.alunos.find(function (x) { return x.id === prox.alunoId; }) : null;
     var fp = prox ? faltaPra(prox.hora) : null;
     el.className = "dtopo";
@@ -19792,7 +19912,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (botCfg.ativo !== false) {
       botApp = { oi: botCfg.oi, ops: botCfg.ops.map(function (o) {
         return { r: o.r, t: String(o.t).trim().toLowerCase() === "humano"
-          ? "Pode escrever aqui embaixo que " + studio.split(" ")[0] + " te responde assim que puder!" : o.t };
+          ? "Pode escrever aqui embaixo que " + (primeiroNomeProf() || studio.split(" ")[0]) + " te responde assim que puder!" : o.t };
       }) };
     }
     var nuvemCfg = self.MT_CLOUD || {};
@@ -19839,7 +19959,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       studio: studio, COR: COR, COR2: COR2, CORC: CORC, CORE: CORE, CORCL1: CORCL1, CORCL2: CORCL2,
       PAL: PAL, LOGOAPP: LOGOAPP, zapPersonal: zapPersonal, metaSemana: metaSemana,
       sessApp: sessApp, vidsApp: vidsApp, qa: qa, ctApp: ctApp, plApp: plApp, pixApp: pixApp, svApp: svApp,
-      treino: treino, t2: t2, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs, mesApp: mesApp,
+      /* v755: o t2 CRU (fichas com exIds, o mês com 12 semanas de texto, plano,
+       * validade) viajava junto das versões já resolvidas — e o builder lia
+       * `D.t2` uma vez e nunca usava. Cada pacote publicado, e cada
+       * app_aluno_busca do aluno, levava o dobro do necessário. */
+      treino: treino, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs, mesApp: mesApp,
       guiaFichasP: guiaFichasP, aqPorFicha: aqPorFicha, raioX: raioX,
       wodsApp: wodsApp, cardiosApp: cardiosApp, planoApp: planoApp, ve: cfgVe, menuOculta: menuOculta,
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
@@ -19890,6 +20014,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var D = dadosAppAluno(a, stamp);
     return { html: self.MT_APP_ALUNO.monta(D), dados: D, ver: self.MT_VERSAO || "", stamp: stamp };
   }
+  /* v755: UM caminho pro "publica o pacote e carimba". O par upsert em
+   * app_aluno + a2.appPubEm/appVer estava copiado em SETE lugares e ja
+   * divergia (uns carimbavam, outros nao). Quem esquecia o carimbo deixava o
+   * aluno com app velho sem ninguem ver. Devolve sempre {ok} ou {erro} —
+   * nunca rejeita, porque quase todo chamador roda dentro de um botao. */
+  function publicaPacotes(nuvem, alunos, stamp) {
+    stamp = stamp || new Date().toISOString();
+    var linhas = alunos.map(function (a) {
+      return { token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp };
+    });
+    return Promise.resolve(nuvem.client.from("app_aluno").upsert(linhas)).then(function (r) {
+      if (r && r.error) return { erro: (r.error.message || "erro na nuvem"), stamp: stamp };
+      var st2 = load();
+      alunos.forEach(function (a) {
+        var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
+        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; }
+      });
+      S.write("ptStudio", st2);
+      return { ok: true, stamp: stamp, linhas: linhas };
+    }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp }; });
+  }
+  window.__publicaPacotes = publicaPacotes; // testes
+  // v755: um recado so pro aluno com acesso cortado (publicar, mandar app, criar acesso)
+  var APP_CORTADO = "O acesso deste aluno está cortado — devolva o acesso primeiro (menu ··· do perfil → Devolver acesso).";
   $("listaAlunos").addEventListener("click", function (e) {
     var bt = e.target.closest && e.target.closest("[data-app]"); // v747: closest, como os outros
     if (bt) publicaAppDoAluno(bt.getAttribute("data-app"));
@@ -19898,9 +20046,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
+    // v755: "Mandar app" não republica quem está com o acesso cortado
+    if (a.appRevogadoEm) { alert(APP_CORTADO); return; }
     if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
-    var stamp = new Date().toISOString();
-    var pacote = pacoteApp(a, stamp);
     /* O app é SÓ pelo link. O arquivo .html que a gente baixava aqui virava uma
      * foto congelada no celular do aluno: não recebia conserto, não recebia
      * treino novo, não tocava notificação e não dava pra cortar o acesso. Quem
@@ -19918,21 +20066,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         alert("Pra entregar o app você precisa da sua conta na nuvem — é grátis e leva um minuto.\n\nEntre pelo card lá embaixo (ou em Configurações → Cobrança e conta). É a conta que gera o link do aluno, mantém o app atualizado sozinho e deixa você cortar o acesso quando alguém sair.");
         return;
       }
-      nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: pacote, atualizado: stamp }])
-        .then(function (r) {
-          if (r.error) { alert("O app NÃO foi publicado: " + r.error.message + "\n\nO link do aluno só funciona depois de publicar com internet."); return; }
-          var stPub = load();
-          var aPub = stPub.alunos.find(function (x) { return x.id === a.id; });
-          if (aPub) { aPub.appPubEm = stamp; aPub.appVer = self.MT_VERSAO || ""; S.write("ptStudio", stPub); }
-          pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
-          var url = location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + a.appTokenP;
-          var msg = "Oi " + a.nome.split(" ")[0] + "! Seu app de treino tá pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
-          if (confirm("App publicado! Mandar o link pro " + a.nome.split(" ")[0] + " no WhatsApp agora?")) {
-            window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
-          }
-        }, function (e) {
-          alert("O app NÃO foi publicado (sem conexão: " + ((e && e.message) || "rede") + "). Tente de novo com internet.");
-        });
+      // v755: publicaPacotes — o mesmo upsert + carimbo dos outros seis pontos
+      publicaPacotes(nuvem, [a]).then(function (r) {
+        if (r.erro) { alert("O app NÃO foi publicado: " + r.erro + "\n\nO link do aluno só funciona depois de publicar com internet."); return; }
+        pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
+        var url = location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + a.appTokenP;
+        var msg = "Oi " + a.nome.split(" ")[0] + "! Seu app de treino tá pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
+        if (confirm("App publicado! Mandar o link pro " + a.nome.split(" ")[0] + " no WhatsApp agora?")) {
+          window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+        }
+      });
     });
   }
   // catálogo TORQUE de exercícios no autocompletar
@@ -20135,24 +20278,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
     var email = String(a.email || "").trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { cb({ erro: "Cadastre um e-mail válido pro aluno primeiro (perfil dele)." }); return; }
+    // v755: acesso cortado não ganha login novo sem religar antes
+    if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra criar o acesso online." }); return; }
     if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
     var stamp = new Date().toISOString();
-    var pacote = pacoteApp(a, stamp);
-    var html = pacote.html;
+    /* v755: o acessoEm tem de estar gravado ANTES de montar o pacote. O app
+     * decide por ele qual card mostrar — sem acessoEm ele pede "crie um
+     * login" pra quem ACABOU de receber login e senha por e-mail, e o card de
+     * trocar a senha temporária nem aparecia até uma republicação por outro
+     * motivo. Se o login falhar depois, o campo volta ao que era. */
+    var acessoAntes = a.acessoEm || "";
+    (function () {
+      var stAc = load();
+      var aAc = stAc.alunos.find(function (x) { return x.id === alunoId; });
+      if (aAc) { aAc.acessoEm = stamp; S.write("ptStudio", stAc); }
+      a.acessoEm = stamp;
+    })();
+    var desfazAcesso = function () {
+      var stD = load();
+      var aD = stD.alunos.find(function (x) { return x.id === alunoId; });
+      if (aD) { if (acessoAntes) aD.acessoEm = acessoAntes; else delete aD.acessoEm; S.write("ptStudio", stD); }
+      a.acessoEm = acessoAntes;
+    };
     var senha = senhaAleatoria();
-    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: pacote, atualizado: stamp }])
+    publicaPacotes(nuvem, [a], stamp)
       .then(function (r) {
-        if (r && r.error) { cb({ erro: "Não deu pra publicar o app na nuvem: " + r.error.message }); return; }
+        if (r.erro) { desfazAcesso(); cb({ erro: "Não deu pra publicar o app na nuvem: " + r.erro }); return; }
         nuvem.client.rpc("aluno_define_login", { t: a.appTokenP, p_login: email, p_senha: senha }).then(function (r2) {
           var d = r2 && r2.data;
-          if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
-          if (d && d.erro) { cb({ erro: d.erro }); return; }
-          // marca na lista que este aluno já tem o acesso do app (chip APP )
-          var st3 = load();
-          var a3 = st3.alunos.find(function (x) { return x.id === alunoId; });
-          if (a3) { a3.acessoEm = stamp; a3.appPubEm = stamp; a3.appVer = self.MT_VERSAO || ""; S.write("ptStudio", st3); }
+          if (r2 && r2.error) { desfazAcesso(); cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
+          if (d && d.erro) { desfazAcesso(); cb({ erro: d.erro }); return; }
           var studio = (load().config || {}).nome || "Seu personal";
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {
@@ -20161,8 +20318,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             }, function () {
               cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
             });
-        }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
-      }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+        }, function () { desfazAcesso(); cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+      });
   }
   function msgAcesso(r, a) {
     if (r.erro) return esc(r.erro);
@@ -20204,6 +20361,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       nuvem.client.from("app_treino_log").select("token,dia,exercicio").gte("dia", iso28).in("token", tokens).limit(2000),
       nuvem.client.from("app_checkin").select("token,dia,nota,texto,peso").gte("dia", iso28).in("token", tokens).order("dia", { ascending: false }).limit(200),
     ]).then(function (rs) {
+      /* v755: só o erro dos check-ins era tratado. Se a leitura dos TREINOS
+       * falhasse (RLS, SQL não rodado, timeout), a lista vinha vazia e todo
+       * aluno caía em "sem registros ainda" — com a mensagem pronta de "já
+       * instalou o app?" pra quem treinou ontem. */
+      if (rs[0].error) {
+        el.innerHTML = '<div class="card" style="border-left:4px solid var(--tk-aten);"><b>Não deu pra ler os treinos agora.</b>' +
+          '<p class="muted" style="margin:6px 0 0;">Tente de novo em instantes — e, se continuar, rode o bloco ASSESSORIA ONLINE do supabase-setup.sql (torqueon.com.br/sql.html). ' +
+          'Não vou mostrar "sem registros" sem ter certeza: seus alunos podem estar treinando normalmente.</p></div>';
+        return;
+      }
       var logs = (rs[0].data || []);
       var checks = rs[1].error ? null : (rs[1].data || []);
       var hoje = S.todayISO();
@@ -20269,7 +20436,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         { r: "Meus horários", t: "Seus horários confirmados ficam no card Agenda aqui do app — e dá pra pedir horário novo por lá." },
         { r: "Pagamento", t: "No card Pagamento você encontra o valor e o Pix copia e cola. Qualquer coisa me chama!" },
         { r: "Meu treino", t: "Seu treino completo tá no card Meu treino, com vídeos e marcação de séries." },
-        { r: "Falar com " + studio.split(" ")[0], t: "humano" },
+        { r: "Falar com " + (primeiroNomeProf() || studio.split(" ")[0]), t: "humano" }, // v755
       ] };
   }
   function botDe(st) {
@@ -20291,9 +20458,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ops.length) { alert("Escreva pelo menos uma opção no formato Rótulo | Resposta."); return; }
     st.config = st.config || {};
     st.config.bot = { ativo: $("botAtivoP").checked, oi: $("botOiP").value.trim() || botPadraoP(st).oi, ops: ops };
+    /* v755: o robô salvo NÃO marcava pendência — mural, cor e logo marcam
+     * config.appEditGeralEm, o robô não. O professor lia "republique os apps"
+     * e o botão de publicar nem aparecia, porque ninguém contava como
+     * pendente. Agora ele entra na fila como qualquer outra mudança do app. */
+    st.config.appEditGeralEm = new Date().toISOString();
+    /* v755: e o WhatsApp deixa de ter um robô diferente. O construtor visual
+     * nascia UMA vez de config.bot e depois vivia só em config.automacoes:
+     * quem editava aqui e clicava em "Publicar no WhatsApp" publicava o fluxo
+     * ANTIGO. Agora a automação principal é derivada do que acabou de ser
+     * salvo — config.bot é a fonte. */
+    var fluxoNovo = fluxoDe(st.config.bot, primeiroNomeProf() || "o personal");
+    var reg9 = st.config.automacoes;
+    if (reg9 && reg9.lista && reg9.lista.length) {
+      var pri9 = reg9.lista.find(function (x) { return x.id === reg9.principal; }) || reg9.lista[0];
+      pri9.dados = fluxoNovo;
+    } else {
+      st.config.automacoes = { principal: "a1", lista: [{ id: "a1", nome: "Automação principal", dados: fluxoNovo }] };
+    }
     save(st);
-    $("botOkP").textContent = "Robô salvo! Republique os apps dos alunos pra valer por lá.";
-    setTimeout(function () { $("botOkP").textContent = ""; }, 5000);
+    if (builderP) { builderP.reg().lista = st.config.automacoes.lista; builderP.reg().principal = st.config.automacoes.principal; builderP.render(); }
+    var pendBot = load().alunos.filter(function (a) { return appPendente(load(), a); }).length;
+    $("botOkP").textContent = "Robô salvo! Vai pros apps na próxima publicação" +
+      (pendBot ? " (" + pendBot + " pendente(s) — o botão Publicar apps atualizados está na aba Treinos → Em grupo)." : ".") +
+      " O WhatsApp oficial também passou a responder com este fluxo.";
+    setTimeout(function () { $("botOkP").textContent = ""; }, 8000);
   });
   // fluxograma com linhas (mesmo desenho de blocos do chatbot da academia)
   function botDoEditorP() {
@@ -20325,7 +20514,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var reg = (st.config || {}).automacoes;
     if (!reg) reg = { principal: "a1", lista: [{ id: "a1", nome: "Automação principal",
-      dados: fluxoDe(botDe(st), (((st.config || {}).nome) || "o personal").split(" ")[0]) }] };
+      dados: fluxoDe(botDe(st), primeiroNomeProf() || "o personal") }] }; // v755
     builderP = MT_BotBuilder({ raiz: $("botFluxoP"), cor: "#7c3aed", reg: reg,
       salva: function (r) { var st2 = load(); st2.config = st2.config || {}; st2.config.automacoes = r; S.write("ptStudio", st2); } });
     window.__builderP = builderP; // testes
@@ -20449,6 +20638,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("") : '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Nenhum aluno com esse nome.</div>';
     });
   }
+  /* v755: marca da última conversa pintada — {id, marca}. O timer de 25 s
+   * chamava abreChat e ele reconstruía tudo por innerHTML, jogava a rolagem
+   * pro fim (quem estava lendo mensagem antiga era puxado a cada 25 s) e
+   * rodava o update de lidas + uma segunda consulta mesmo sem novidade. */
+  var chatPintado = { id: "", marca: "" };
   function abreChat(id) {
     chatAluno = id;
     /* tela 22 do handoff: no celular a conversa e uma TELA CHEIA — a lista de
@@ -20484,8 +20678,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nuvem.client.from("app_chat").select("de,texto,criado,lida").eq("token", a.appTokenP)
       .order("criado", { ascending: false }).limit(80).then(function (r) {
         var msgs = (r.data || []).slice().reverse();
+        var caixaCh = $("chatMsgs");
+        var marca = msgs.length + "|" + String((msgs[msgs.length - 1] || {}).criado || "");
+        var mesma = chatPintado.id === id && chatPintado.marca === marca;
+        if (mesma) return; // nada mudou: não repinta, não rola, não consulta de novo
+        // só rola pro fim quem já estava no fim (ou acabou de abrir a conversa)
+        var noFim = chatPintado.id !== id ||
+          (caixaCh.scrollHeight - caixaCh.scrollTop - caixaCh.clientHeight) < 40;
+        chatPintado = { id: id, marca: marca };
         var diaAnt = "";
-        $("chatMsgs").innerHTML = msgs.length ? msgs.map(function (m, i) {
+        caixaCh.innerHTML = msgs.length ? msgs.map(function (m, i) {
           var minha = m.de === "personal";
           var dia = String(m.criado || "").slice(0, 10);
           var sep = "";
@@ -20493,23 +20695,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             diaAnt = dia;
             sep = '<div class="chdia"><span>' + esc(dia === S.todayISO() ? "HOJE" : S.fmtData(dia)) + "</span></div>";
           }
-          var ultimaMinha = minha && !msgs.slice(i + 1).some(function (x) { return x.de === "personal"; });
           return sep + '<div class="chbolha' + (minha ? " minha" : "") + '">' +
             (minha ? "" : '<span class="qsav" style="width:28px;height:28px;font-size:10px;border-radius:9px;">' +
               esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</span>") +
+            /* v755: o "✓✓ lido" era sempre verdadeiro — o painel inseria a
+             * própria mensagem com lida:true e ninguém nunca marcava depois
+             * (o app do aluno lê pela RPC app_chat_lista, que nem devolve o
+             * campo). O professor achava que o aluno tinha lido. Mesma recusa
+             * da v618 pro "digitando…": sem dado, sem selo. Pra ele voltar
+             * falta SQL — uma RPC app_chat_leu(t) chamada quando o aluno abre
+             * a conversa; o insert daqui já grava lida:false esperando isso. */
             '<div><div class="cht">' + esc(m.texto) + "</div>" +
-            '<div class="chm">' + chHora(m.criado) + (ultimaMinha && m.lida ? " · ✓✓ lido" : "") + "</div></div></div>";
+            '<div class="chm">' + chHora(m.criado) + "</div></div></div>";
         }).join("") : '<div class="muted" style="padding:16px;">Nenhuma mensagem ainda — puxe o assunto!</div>';
-        $("chatMsgs").scrollTop = $("chatMsgs").scrollHeight;
+        if (noFim) caixaCh.scrollTop = caixaCh.scrollHeight;
+        // v755: o update de lidas (e a consulta que vem atrás dele) só roda
+        // quando existe mensagem do aluno por ler — antes saía a cada 25 s
+        if (!msgs.some(function (m) { return m.de === "aluno" && !m.lida; })) return;
         // marca como lidas SÓ as que apareceram na tela (as 80 mais novas)
         var qLida = nuvem.client.from("app_chat").update({ lida: true }).eq("token", a.appTokenP).eq("de", "aluno").eq("lida", false);
         if (msgs.length >= 80 && msgs[0] && msgs[0].criado && qLida.gte) qLida = qLida.gte("criado", msgs[0].criado);
         qLida.then(function () { renderChatPT(); });
       });
   }
-  if ($("chatBusca")) $("chatBusca").addEventListener("input", renderChatPT);
+  // v755: cada tecla na busca disparava uma consulta de até 1200 linhas
+  var chatBuscaTmr = null;
+  if ($("chatBusca")) $("chatBusca").addEventListener("input", function () {
+    clearTimeout(chatBuscaTmr);
+    chatBuscaTmr = setTimeout(renderChatPT, 300);
+  });
   if ($("chatVolta")) $("chatVolta").addEventListener("click", function () {
     chatAluno = null;
+    chatPintado = { id: "", marca: "" }; // v755
     if ($("vChat")) $("vChat").classList.remove("chat-aberto");
     renderChatPT();
   });
@@ -20541,12 +20758,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === chatAluno; });
     var nuvem = S.cloud && S.cloud();
     if (!texto || !a || !nuvem) return;
-    $("chatTexto").value = "";
-    nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto.slice(0, 1000), lida: true })
-      .then(function () {
+    /* v755: a caixa era limpa ANTES de gravar e o supabase-js resolve com
+     * {error} em vez de rejeitar — então, sem rede, o texto sumia, o aluno
+     * recebia push de uma mensagem que não existe e a tela repintava sem ela.
+     * Agora: só limpa, avisa e notifica quando a gravação deu certo.
+     * lida:false porque a mensagem do professor nasce NÃO lida (ninguém marca
+     * ainda; ver o comentário do selo lá em cima). Os contadores de novas
+     * filtram de="aluno", então isso não acende badge nenhum. */
+    var btEnv = this;
+    btEnv.disabled = true;
+    var falhou = function () {
+      btEnv.disabled = false;
+      $("chatTexto").value = texto;
+      $("chatEnvioErro").hidden = false;
+      $("chatEnvioErro").textContent = "Não deu pra enviar — confere a internet e tenta de novo.";
+    };
+    $("chatEnvioErro").hidden = true;
+    Promise.resolve(nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto.slice(0, 1000), lida: false }))
+      .then(function (r) {
+        btEnv.disabled = false;
+        if (r && r.error) { falhou(); return; }
+        $("chatTexto").value = "";
         pushAluno(a.appTokenP, "Mensagem do seu personal", texto.slice(0, 120));
         abreChat(chatAluno);
-      });
+      }, falhou);
   });
   $("chatTexto") && $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviar").click(); });
   clearInterval(chatTimer);
@@ -20631,7 +20866,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var alunos = [["Nome", "Telefone", "E-mail", "Objetivo", "Plano", "Valor (R$)", "Cobrança", "Situação", "Cliente desde", "CPF"]];
     (st.alunos || []).forEach(function (a) {
-      alunos.push([a.nome, a.zap, a.email, a.objetivo, a.plano, a.valor, a.modo === "mes" ? "mensal" : (a.modo || ""), a.ativo === false ? "encerrado" : "ativo", a.desde, a.cpf]);
+      /* v755: a coluna Plano lia a.plano, campo LEGADO que nada no painel
+       * grava — a planilha saía com Plano em branco e o valor antigo. O plano
+       * de verdade vive no contrato ativo (contratoDe → planoDe); o campo
+       * velho só vale pra quem nunca fechou contrato. */
+      var ctCsv = contratoDe(st, a.id);
+      var plCsv = ctCsv ? planoDe(st, ctCsv.planoId) : null;
+      var cobrCsv = plCsv ? (plCsv.cobranca === "sessao" ? "por sessão" : "mensal")
+        : (a.modo === "mes" ? "mensal" : (a.modo || ""));
+      alunos.push([a.nome, a.zap, a.email, a.objetivo, (plCsv ? plCsv.nome : a.plano) || "",
+        (plCsv ? plCsv.valor : a.valor) || "", cobrCsv, a.ativo === false ? "encerrado" : "ativo", a.desde, a.cpf]);
     });
     baixaCsv("alunos", alunos);
     var porId = {};
@@ -20688,7 +20932,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // faixa do modo teste (14 dias grátis) — some quando o personal entra na conta
   function renderFaixaTeste(logado) {
     var faixa = $("faixaTeste");
-    if (logado) { faixa.hidden = true; return; }
+    if (logado) {
+      faixa.hidden = true;
+      /* v755: ptTesteDesde nasce no primeiro render de CADA aparelho — quem
+       * abria o painel no celular depois de 10 dias ganhava "dia 1 de 14" ali.
+       * Com conta, quem conta é o servidor (assinatura_status/vence), então a
+       * marca local sai do caminho pra não contar uma história diferente. */
+      try { localStorage.removeItem("mtapp:ptTesteDesde"); } catch (e) {}
+      return;
+    }
     var desde = "";
     try {
       desde = localStorage.getItem("mtapp:ptTesteDesde") || "";
@@ -20728,8 +20980,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var u = S.usuario ? S.usuario() : {};
     faixa.hidden = true;
     $("faixaAssinaturaBtn").hidden = true;
-    if (!u.logado || !ass || !ass.status || ass.status === "trial") { info.hidden = true; return; }
+    if (!u.logado || !ass || !ass.status) { info.hidden = true; return; }
     var vence = ass.vence ? S.fmtData(String(ass.vence).slice(0, 10)) : "";
+    /* v755: quem está no teste grátis E logado não via NADA sobre o teste — a
+     * faixa some ao entrar na conta e este card escondia o status "trial".
+     * O servidor manda e-mail nos dias 1/3/7/12 e o painel ficava calado até o
+     * dia do vencimento. Agora a data que vale (a do servidor) aparece aqui. */
+    if (ass.status === "trial") {
+      var diasT = ass.vence ? Math.ceil((Date.parse(String(ass.vence).slice(0, 10) + "T23:59:59") - Date.now()) / 864e5) : 0;
+      info.hidden = false;
+      info.innerHTML = diasT > 0
+        ? "🎁 <b>Teste grátis</b> até " + vence + " — " + S.plural(diasT, "dia", "dias") + " pra assinar sem perder nada."
+        : "🎁 <b>Teste grátis</b>" + (vence ? " terminou em " + vence : " terminou") + " — assine pra manter a nuvem e o app dos alunos.";
+      return;
+    }
     var viaTxt = ass.via === "app_store" ? "App Store" : ass.via === "play_store" ? "Play Store" : "";
     info.hidden = false;
     if (ass.status === "ativa") {
