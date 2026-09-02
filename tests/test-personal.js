@@ -4486,7 +4486,7 @@ async function abaPt(p, a) {
       };
     });
     ok(rec.ordem && rec.kg, "🏆 o mural lista do maior pro menor com a carga máxima de cada exercício");
-    ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde dos últimos 7 dias");
+    ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde batido este mês com mais de uma anotação (v751: a mesma regra do cabeçalho e de Marcas)");
     ok(rec.umSo, "🏆 com um exercício só o mural não aparece (o destaque do grupo já conta)");
 
     // 📊 v732: o volume do treino ganha memória (ptvol) e o recibo compara —
@@ -8675,6 +8675,44 @@ async function abaPt(p, a) {
     "GPX do relógio vira registro com km, pace e a DATA do treino (" + (imp.reg && imp.reg.k + " km · " + imp.reg.p) + ")");
   ok(imp.lst.some((x) => x.n === "Corrida do relógio") && /RELÓGIO IMPORTADO/.test(imp.fase),
     "a corrida importada entra no histórico e a tela confirma");
+  {
+    // v751: importar na mão abre o MESMO resumo da corrida do GPS, guarda o
+    // trajeto (r) e a modalidade vem do ARQUIVO, não do chip da tela
+    const imp2 = await pCr.evaluate(() => {
+      const out = { resumoVis: document.getElementById("crResumoF").style.display, flag: window.__cr.resumo,
+        share: document.getElementById("crShare").style.display };
+      const lst = JSON.parse(localStorage.getItem("ptcardio") || "[]");
+      const x = lst.find((q) => q.n === "Corrida do relógio");
+      out.temR = !!(x && x.r && x.r.length > 4);
+      document.getElementById("crRsFechar").click();
+      out.fechou = window.__cr.resumo === false;
+      const gpxDe = (nome, tipo, dia) => {
+        let seg9 = "";
+        for (let i = 0; i <= 24; i++) {
+          const t9 = new Date(Date.UTC(2026, 7, dia, 7, 0, 0) + i * 30000).toISOString();
+          seg9 += "<trkpt lat='" + (-19.90 - i * 0.00075).toFixed(5) + "' lon='-43.90'><time>" + t9 + "</time></trkpt>";
+        }
+        return "<gpx><trk><name>" + nome + "</name>" + (tipo ? "<type>" + tipo + "</type>" : "") + "<trkseg>" + seg9 + "</trkseg></trk></gpx>";
+      };
+      // o arquivo diz PEDAL com o chip da tela em corrida: vale o arquivo
+      window.__cr.mod = "corrida";
+      const reg = window.__crImporta(gpxDe("Pedal do relógio", "cycling", 16));
+      out.modArq = reg && reg.m;
+      document.getElementById("crRsFechar").click();
+      // sem tipo no arquivo E no modo automático (relógio do app nativo, sem confirm): corrida, nunca o chip
+      window.__cr.mod = "bike";
+      const reg2 = window.__crImporta(gpxDe("Sem tipo", "", 17), "Do relógio", true);
+      out.modAuto = reg2 && reg2.m;
+      out.autoSemResumo = window.__cr.resumo === false;
+      window.__cr.mod = "corrida";
+      return out;
+    });
+    ok(imp2.resumoVis === "block" && imp2.flag === true && imp2.share !== "none" && imp2.fechou,
+      "🏃 v751: importar do relógio abre a tela de resumo (com o botão de postar) e o Fechar libera o espelho");
+    ok(imp2.temR, "🏃 v751: a corrida importada guarda o trajeto (r) — ganha o 3D no histórico e a arte com traçado");
+    ok(imp2.modArq === "bike" && imp2.modAuto === "corrida" && imp2.autoSemResumo,
+      "🏃 v751: a modalidade vem do arquivo (cycling → bike); no modo automático nunca do chip, e sem resumo (" + imp2.modArq + "/" + imp2.modAuto + ")");
+  }
   // área estilo app de corrida: trajeto, botão redondo, meta e configurações
   const nrc = await pCr.evaluate(async () => {
     const out = {
@@ -9040,6 +9078,9 @@ async function abaPt(p, a) {
     out.painel = document.getElementById("crPainelF").style.display !== "none";
     out.tempoF = document.getElementById("crTempoF").textContent;
     out.goF = document.getElementById("crGoF").textContent;
+    // v751: o Terminei! só aparece a partir de 5 s de corrida — adianta o relógio pra medir
+    out.termineiCedo = document.getElementById("crFimF").style.display;
+    window.__cr.t0 -= 6000; window.__pintaCr();
     out.terminei = document.getElementById("crFimF").style.display !== "none";
     // métrica gigante paginada: um toque troca, as bolinhas mostram a página
     out.gigaL = document.getElementById("crGigaL").textContent;
@@ -9068,6 +9109,7 @@ async function abaPt(p, a) {
     "tocar no mapa abre a tela cheia já na página do mapa (com a pill de meta) e o ✕ fecha");
   ok(full.abriuAoIniciar && full.painel && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
     "iniciar a corrida abre o painel de cor chapada com botão Pausar gigante (estilo NRC)");
+  ok(full.termineiCedo === "none", "🏃 v751: com menos de 5 s o Terminei! da tela cheia ainda não aparece (toque sem querer não vira 'botão que não funciona')");
   ok(full.gigaL !== full.gigaL2 && full.dots === 4, "a métrica gigante troca com um toque e as 4 bolinhas mostram a página");
   ok(full.lock && full.destravou, "o cadeado bloqueia a tela na corrida e destrava segurando 1 segundo");
   ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
@@ -9269,6 +9311,95 @@ async function abaPt(p, a) {
     "o batimento vira zona (Z1 a Z5) com as barrinhas acendendo até a faixa atual");
   ok(fcZonas.resumo && fcZonas.resumo.m === 138 && fcZonas.resumo.x === 175,
     "o resumo do esforço guarda média e máximo (" + JSON.stringify(fcZonas.resumo) + ")");
+  {
+    // v751: sem idade o app NÃO chuta 30 anos — pede a idade em vez de mostrar zona e máxima falsas
+    const semIdade = await pCr.evaluate(() => {
+      const ia = document.getElementById("fcIdade"); ia.value = ""; ia.dispatchEvent(new Event("change"));
+      window.__fcZera(); window.__fc.on = true; window.__fcAmostra(150);
+      const out = { zona: document.getElementById("fcZona").textContent, max: document.getElementById("fcMaxT").textContent,
+        idade: localStorage.getItem("ptidade") };
+      window.__fc.on = false;
+      ia.value = "40"; ia.dispatchEvent(new Event("change"));
+      return out;
+    });
+    ok(/idade/i.test(semIdade.zona) && !/^Z\d/.test(semIdade.zona) && !/\d+ bpm/.test(semIdade.max) && /idade/i.test(semIdade.max),
+      "❤️ v751: sem idade o app não inventa máxima nem zona — pede a idade (" + semIdade.zona + " · " + semIdade.max + ")");
+  }
+  {
+    // v751 — corrida: os consertos da revisão, medidos no app servido
+    const c751 = await pCr.evaluate(async () => {
+      const out = {};
+      const cr = window.__cr;
+      // um teste anterior deixou a tela de resumo aberta (cr.resumo trava o espelho da tela cheia)
+      const rf = document.getElementById("crRsFechar"); if (cr.resumo && rf) rf.click();
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "off", ap: 0, bl: 0 }));
+      document.getElementById("crZera").click();
+      // (a) km na mão vence enquanto o GPS ainda não somou nada
+      cr.gpsOn = true; cr.km = 0;
+      document.getElementById("crKm").value = "5";
+      out.kmMao = window.__crKmAtual();
+      cr.km = 1.25; out.kmGps = window.__crKmAtual();
+      cr.gpsOn = false; cr.km = 0; document.getElementById("crKm").value = "";
+      // (b) uma regra só pro fim da parte contínua
+      out.fimSemGps = window.__crFimContinua(5, 1800, 6, 100);
+      cr.gpsOn = true; out.fimComGps = window.__crFimContinua(5, 1800, 6, 100); cr.gpsOn = false;
+      out.fimSoKm = window.__crFimContinua(5, 0, 6, 100);
+      out.fimSemAlvo = window.__crFimContinua(0, 0, 6, 9999);
+      // (c) misto sem tempo nem distância na parte contínua: só o Pular leva aos tiros
+      cr.plano = { id: "mx", n: "Misto livre", m: "corrida", t: "misto", d: 0, tp: 0, p: "", r: 3, ti: 20, de: 40 };
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 450));
+      out.faseAntes = document.getElementById("crFase").textContent;
+      out.caixa = document.getElementById("crBlocoBox").style.display;
+      out.infoAntes = document.getElementById("crInfo").textContent;
+      document.getElementById("crPulaF").click();
+      await new Promise((r) => setTimeout(r, 300));
+      out.faseDepois = document.getElementById("crFase").textContent;
+      // (d) Terminei só aparece a partir de 5 s
+      out.fimCedo = document.getElementById("crFim").style.display;
+      out.fimFCedo = document.getElementById("crFimF").style.display;
+      cr.t0 -= 6000; window.__pintaCr();
+      out.fimTarde = document.getElementById("crFim").style.display;
+      out.fimFTarde = document.getElementById("crFimF").style.display;
+      // (e) pausar e continuar NÃO zera o batimento
+      window.__fc.on = true; window.__fcAmostra(150); window.__fcAmostra(160);
+      document.getElementById("crGo").click(); // pausa
+      document.getElementById("crGo").click(); // continua → crLarga
+      await new Promise((r) => setTimeout(r, 250));
+      out.fcResumo = window.__fcResumo();
+      window.__fc.on = false;
+      // (f) trocar de treino no meio da corrida pede confirmação e passa pelo Zerar
+      cr.rota = [{ lat: -19.9, lng: -43.9 }, { lat: -19.901, lng: -43.901 }];
+      const planoAntes = cr.plano;
+      const confAntes = window.confirm;
+      window.confirm = () => false;
+      document.querySelectorAll("[data-cbstart]")[1].click();
+      await new Promise((r) => setTimeout(r, 100));
+      out.recusou = cr.run === true && cr.plano === planoAntes && cr.rota.length === 2;
+      window.confirm = () => true;
+      document.querySelectorAll("[data-cbstart]")[1].click();
+      await new Promise((r) => setTimeout(r, 100));
+      out.trocou = cr.run === false && cr.plano !== planoAntes && cr.rota.length === 0 && cr.mistoVai === false;
+      window.confirm = confAntes;
+      // (g) Zerar limpa o estado do misto e o rumo
+      cr.mistoT0 = 100; cr.mistoVai = true; cr.rumo = 90;
+      document.getElementById("crZera").click();
+      out.zerou = cr.mistoT0 === null && cr.mistoVai === false && cr.rumo === null;
+      return out;
+    });
+    ok(c751.kmMao === 5 && c751.kmGps === 1.25,
+      "🏃 v751: com o GPS ligado mas sem km somado o número digitado vale — e sai de cena quando o GPS começa a contar");
+    ok(c751.fimSemGps === false && c751.fimComGps === true && c751.fimSoKm === true && c751.fimSemAlvo === false,
+      "🏃 v751: uma regra só pro fim da parte contínua — distância com GPS, tempo sem, km na mão de reserva, sem alvo nunca sozinho");
+    ok(/PARTE CONTÍNUA/.test(c751.faseAntes) && c751.caixa === "block" && /Pular/.test(c751.infoAntes) && /TIRO 1 DE 3/.test(c751.faseDepois),
+      "🏃 v751: misto sem alvo na parte contínua mostra o Pular e é ele que leva aos tiros (" + c751.faseDepois + ")");
+    ok(c751.fimCedo === "none" && c751.fimFCedo === "none" && c751.fimTarde === "block" && c751.fimFTarde === "block",
+      "🏃 v751: o Terminei! (card e tela cheia) só aparece a partir de 5 s de corrida");
+    ok(c751.fcResumo && c751.fcResumo.m > 0, "🏃 v751: pausar e continuar não apaga a média de batimento da corrida");
+    ok(c751.recusou && c751.trocou,
+      "🏃 v751: Começar outro treino no meio da corrida pede confirmação; aceitando, passa pelo Zerar e o trajeto não vaza pra próxima");
+    ok(c751.zerou, "🏃 v751: Zerar limpa mistoT0/mistoVai e o rumo (refazer o misto não mostra 'TIRO -1')");
+  }
   await pCr.close();
   // com a ponte do app de loja (window.MTNativo.fc) tudo acende e a corrida guarda o resumo
   const pFc = await ctx.newPage();
@@ -10934,6 +11065,70 @@ async function abaPt(p, a) {
     ok(await pApp.evaluate(() => document.getElementById("guiaBox").style.display === "none" && document.body.style.overflow === ""),
       "fechar devolve a rolagem da página (nada de app travado depois do treino)");
   }
+  {
+    console.log("v751 — treino guiado:");
+    const g751 = await pApp.evaluate(async () => {
+      const out = {};
+      const d0 = new Date(); const hj = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
+      const G = window.GUIA; if (!G || !G.length) return null;
+      // um exercício com 2+ séries e repetições prescritas
+      const ei = G[0].it.findIndex((x) => +x.s >= 2 && parseInt(x.r, 10) > 0); if (ei < 0) return null;
+      const it0 = G[0].it[ei]; const nome = it0.e; const alvo = parseInt(it0.r, 10);
+      const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+      // (a) 'Iniciar exercício' semeia as séries já marcadas hoje pela ficha
+      const stK = "ptsets_" + hj; const stAntes = localStorage.getItem(stK);
+      const st = {}; st[nome] = 1; localStorage.setItem(stK, JSON.stringify(st));
+      const bIni = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); out.temIni = !!bIni;
+      if (bIni) bIni.click();
+      await dorme(200);
+      out.semeou = window.__gvDe().s === 1 && /Série 2 de/.test(document.getElementById("gGrupo").textContent);
+      document.getElementById("gFechar").click(); await dorme(100);
+      if (stAntes == null) localStorage.removeItem(stK); else localStorage.setItem(stK, stAntes);
+      // (b) aceitar a sugestão grava SÓ a carga e não deixa gv.sujo pendurado
+      const dcAntes = localStorage.getItem("ptdc"); const dc = JSON.parse(dcAntes || "{}");
+      const d7 = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+      dc[nome] = [{ d: "2026-01-05", kg: 20, r: alvo }, { d: d7, kg: 20, r: alvo }];
+      localStorage.setItem("ptdc", JSON.stringify(dc));
+      const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
+      // (b0) em 'Mudar a carga' a sugestão é LEMBRETE (não botão) e as reps nascem com as confirmadas na última vez
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const rp0 = document.getElementById("gReps");
+      out.semBotaoSug = !document.getElementById("gSug") && !!document.getElementById("gSugNota") && !!rp0 && rp0.value === String(alvo);
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const bt = document.getElementById("gSugT"); out.temSugT = !!bt;
+      if (bt) bt.click(); await dorme(150);
+      const reg = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
+      out.sugKg = reg && reg.kg; out.sugSemR = !!reg && !("r" in reg); out.sujo = window.__gvDe().sujo;
+      // (c) depois de aceitar: reps vazias (nenhuma confirmada hoje) com o alvo de placeholder
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const rp = document.getElementById("gReps");
+      out.repsVazio = !!rp && rp.value === "" && rp.placeholder === String(alvo);
+      // (d) 'Série feita' guarda a carga digitada no formulário aberto
+      const kgI = document.getElementById("gKg"); kgI.value = "33"; kgI.dispatchEvent(new Event("input"));
+      document.getElementById("gSerie").click(); await dorme(250);
+      const reg2 = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
+      out.serieSalvou = !!reg2 && reg2.kg === 33;
+      // (e) pular exercício no meio do descanso mata o tick antigo
+      out.tickVivo = window.__gDescVivo();
+      document.getElementById("gPularEx").click(); await dorme(120);
+      out.tickMorto = !window.__gDescVivo();
+      const fechar = document.getElementById("gFechar") || document.getElementById("gFim"); if (fechar) fechar.click(); await dorme(100);
+      if (dcAntes == null) localStorage.removeItem("ptdc"); else localStorage.setItem("ptdc", dcAntes);
+      // o toast de NOVO RECORDE desta carga não pode sobrar pro teste seguinte
+      [].forEach.call(document.body.children, (d) => { if (d.tagName === "DIV" && /NOVO RECORDE|Bora tentar/.test(d.textContent || "")) d.remove(); });
+      return out;
+    });
+    ok(!!g751, "o app de teste tem ficha com exercício de 2+ séries e reps prescritas (base dos asserts v751)");
+    if (g751) {
+      ok(g751.temIni && g751.semeou, "🏋️ v751: 'Iniciar exercício' já nasce na série seguinte à marcada na ficha (Série 2 de N)");
+      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemR && g751.sujo === false,
+        "🏋️ v751: aceitar a sugestão grava só a CARGA (22,5), sem repetições que o aluno ainda não fez, e nada fica pendurado");
+      ok(g751.repsVazio && g751.semBotaoSug,
+        "🏋️ v751: em 'Carga de hoje' as reps nascem vazias com o alvo de placeholder, e a sugestão é lembrete, não botão");
+      ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva a carga digitada em 'Mudar a carga' (33 kg) em vez de jogar fora");
+      ok(g751.tickVivo && g751.tickMorto, "🏋️ v751: pular exercício no descanso mata o tick antigo (nada de 'Descanso acabou' fantasma ao voltar do 2º plano)");
+    }
+  }
   // card de conquista pro Stories: abre a PRÉVIA (o share precisa sair do
   // toque no iPhone) e o Salvar baixa a imagem
   {
@@ -11576,6 +11771,120 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(400);
   const thread = await pApp.evaluate(() => document.getElementById("chMsgs").textContent);
   ok(/dúvida no supino/.test(thread), "mensagem do aluno aparece no chat do app");
+  {
+    console.log("v751 — o resto do app:");
+    const r751 = await pApp.evaluate(async () => {
+      const out = {};
+      const d0 = new Date(); const hj = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
+      // (a) chat em hora LOCAL e sem puxar a rolagem de quem lê o histórico
+      const iso = "2026-09-02T10:00:00-05:00";
+      const dt = new Date(iso); const local = ("0" + dt.getHours()).slice(-2) + ":" + ("0" + dt.getMinutes()).slice(-2);
+      const msgs = [];
+      for (let i = 0; i < 40; i++) msgs.push({ de: i % 2 ? "aluno" : "personal", texto: "msg " + i, criado: "2026-08-0" + (1 + (i % 5)) + "T0" + (i % 9) + ":1" + (i % 9) + ":00+00:00" });
+      msgs.push({ de: "personal", texto: "hora local?", criado: iso });
+      window.__pintaChat(msgs);
+      const el = document.getElementById("chMsgs");
+      out.hora = window.__chLocal(iso).h === local && el.textContent.indexOf("hora local?" + local) > -1 && (local === "10:00" || !/hora local\?10:00/.test(el.textContent));
+      out.rola = el.scrollHeight > el.clientHeight;
+      el.scrollTop = 0;
+      window.__pintaChat(msgs.slice());
+      out.ficouEmCima = el.scrollTop === 0;
+      msgs.push({ de: "personal", texto: "nova!", criado: "2026-09-03T12:00:00+00:00" });
+      window.__pintaChat(msgs);
+      out.desceu = el.scrollTop > 0 && /nova!/.test(el.textContent);
+      window.__pintaChat(JSON.parse(localStorage.getItem("ptchat") || "[]"));
+      // (b) melhor pace comparado como número (10:30 não ganha de 6:15)
+      const cardioAntes = localStorage.getItem("ptcardio");
+      localStorage.setItem("ptcardio", JSON.stringify([
+        { d: "2026-08-01", n: "lenta", m: "corrida", s: 3150, k: 5, p: "10:30" },
+        { d: "2026-08-05", n: "rápida", m: "corrida", s: 1875, k: 5, p: "6:15" }]));
+      window.__pintaMarcas();
+      const mk = document.getElementById("mkBox").textContent;
+      out.pace = /Melhor pace médio \(3 km\+\)(NOVA)?6:15/.test(mk) && !/Melhor pace médio \(3 km\+\)(NOVA)?10:30/.test(mk);
+      // (c) recordes de carga: uma conta e uma regra de 'novo'
+      const dcAntes = localStorage.getItem("ptdc"); const mmAntes = localStorage.getItem("ptmarcas");
+      localStorage.removeItem("ptmarcas");
+      localStorage.setItem("ptdc", JSON.stringify({
+        "Primeiro dia": [{ d: hj, kg: 50 }],
+        "Subiu": [{ d: "2026-01-10", kg: 40 }, { d: hj, kg: 45 }],
+        "Parado": [{ d: "2026-01-10", kg: 30 }, { d: "2026-02-10", kg: 30 }] }));
+      localStorage.setItem("ptcardio", "[]");
+      out.novos = window.__maxPorExercicio().filter(window.__recNovo).map((r) => r.n).join(",");
+      window.__recordes();
+      const rb = document.getElementById("recBox").textContent;
+      out.muralNovo = (rb.match(/NOVO/g) || []).length === 1 && /Subiu[^]*?NOVO/.test(rb);
+      window.__pintaMarcas();
+      const mk2 = document.getElementById("mkBox");
+      out.forcaAtalho = !!mk2.querySelector("[data-evsub-bt='cargas']") && !/Parado/.test(mk2.textContent) && /1 recorde novo/.test(mk2.textContent);
+      window.__evTopoPinta("cargas"); const nC = document.getElementById("evAltN").textContent;
+      window.__evTopoPinta("marcas"); const nM = document.getElementById("evAltN").textContent;
+      out.cabecalho = nC === "1" && nM === "1";
+      // (d) marcar na mão: formulário no card, com apagar
+      document.getElementById("mkAdd").click();
+      out.formAbriu = document.getElementById("mkForm").style.display === "block";
+      document.getElementById("mkSalva").click();
+      out.avisouVazio = document.getElementById("mkErro").style.display === "block" && JSON.parse(localStorage.getItem("ptmarcas") || "[]").length === 0;
+      document.getElementById("mkNome").value = "Prancha"; document.getElementById("mkVal").value = "2:30";
+      document.getElementById("mkSalva").click();
+      const mm1 = JSON.parse(localStorage.getItem("ptmarcas") || "[]");
+      out.salvou = mm1.length === 1 && mm1[0].n === "Prancha" && mm1[0].v === "2:30" && /Prancha/.test(document.getElementById("mkBox").textContent);
+      const confAntes = window.confirm; window.confirm = () => true;
+      document.querySelector("[data-mkrm]").click();
+      window.confirm = confAntes;
+      out.apagou = JSON.parse(localStorage.getItem("ptmarcas") || "[]").length === 0 && !document.querySelector("[data-mkrm]");
+      if (dcAntes == null) localStorage.removeItem("ptdc"); else localStorage.setItem("ptdc", dcAntes);
+      if (mmAntes == null) localStorage.removeItem("ptmarcas"); else localStorage.setItem("ptmarcas", mmAntes);
+      if (cardioAntes == null) localStorage.removeItem("ptcardio"); else localStorage.setItem("ptcardio", cardioAntes);
+      window.__recordes(); window.__pintaMarcas();
+      // (e) o post da Comunidade leva o treino DO DIA (Semana do aluno), não a ficha A
+      const plAntes = (typeof PLANO !== "undefined") ? PLANO : undefined;
+      const dia = String(new Date().getDay());
+      window.PLANO = {}; window.PLANO[dia] = { tp: "wod", i: 0, n: "Circuito do dia" };
+      out.postWod = window.__treinoHoje();
+      window.PLANO = {}; out.postDescanso = window.__treinoHoje();
+      window.PLANO = plAntes;
+      // (f) baixar meus dados leva tudo
+      const ex = window.__exportaDados();
+      out.exporta = "fotos_progresso" in ex && "chat" in ex && "questionarios" in ex && "volume_por_treino" in ex && "termo_aceito" in ex &&
+        !!ex.tudo_no_aparelho && Object.keys(ex.tudo_no_aparelho).some((k) => /^pt/.test(k));
+      // (g) um rótulo por área: a gaveta usa o nome da barra e não repete a aba fixa Treinos
+      const gav = document.getElementById("menuApp");
+      const rows = gav.querySelectorAll(".mgrow[data-msec]");
+      const ROT = { chat: "Chat", agenda: "Agenda", util: "Utilidades", feed: "Turma", pagamento: "Plano", ajustes: "Ajustes", quest: "Questionários" }; // os rótulos do MENU
+      out.menu = rows.length > 0 && !gav.querySelector(".mgrow[data-msec='treino']") && [].every.call(rows, (b) => {
+        const s = b.getAttribute("data-msec"); return !ROT[s] || b.querySelector(".mgtit").textContent === ROT[s]; });
+      return out;
+    });
+    ok(r751.hora, "💬 v751: a hora da mensagem é a LOCAL (o criado chega em UTC do Supabase)");
+    ok(r751.rola && r751.ficouEmCima && r751.desceu,
+      "💬 v751: repintar sem mensagem nova não puxa a rolagem de quem lê o histórico — mensagem nova, sim");
+    ok(r751.pace, "🏅 v751: 'Melhor pace' compara como número — 6:15 vence 10:30");
+    ok(r751.novos === "Subiu" && r751.muralNovo, "🏆 v751: recorde NOVO = máximo do mês com mais de uma anotação (a 1ª anotação não é recorde)");
+    ok(r751.forcaAtalho && r751.cabecalho,
+      "🏆 v751: Marcas não repete a lista de cargas (só o atalho pro mural) e o cabeçalho conta igual nas duas abas");
+    ok(r751.formAbriu && r751.avisouVazio && r751.salvou && r751.apagou,
+      "🏅 v751: marcar na mão é formulário dentro do card (valida, salva) e cada marca tem o ✕");
+    ok(r751.postWod === "Circuito do dia" && r751.postDescanso === "",
+      "👥 v751: o post da Comunidade leva o treino do DIA pela Semana do aluno (e nada no dia de descanso)");
+    ok(r751.exporta, "📦 v751: 'Baixar meus dados' leva fotos, chat, questionários, volume, termo e todas as chaves pt*");
+    ok(r751.menu, "☰ v751: a gaveta usa o mesmo rótulo da barra e não repete a aba fixa Treinos");
+    const foto751 = await pApp.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 40; c.height = 40;
+      const g = c.getContext("2d"); g.fillStyle = "#f00"; g.fillRect(0, 0, 40, 40);
+      const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+      const f = new File([blob], "f.png", { type: "image/png" });
+      const setOrig = Storage.prototype.setItem; const alertOrig = window.alert; let avisou = "";
+      Storage.prototype.setItem = function (k, v) { if (k === "ptfotos") throw new Error("QuotaExceededError"); return setOrig.call(this, k, v); };
+      window.alert = (m) => { avisou = String(m); };
+      const antes = localStorage.getItem("ptfotos");
+      window.__fotoProg(f);
+      await new Promise((r) => setTimeout(r, 700));
+      Storage.prototype.setItem = setOrig; window.alert = alertOrig;
+      return { avisou, igual: localStorage.getItem("ptfotos") === antes };
+    });
+    ok(/Memória de fotos cheia/.test(foto751.avisou) && foto751.igual,
+      "📷 v751: localStorage cheio → o app AVISA 'Memória de fotos cheia' em vez de sumir com a foto calado");
+  }
 
   const barraApp = await pApp.evaluate(() => {
     const m = document.querySelector("meta[name=theme-color]");
@@ -13354,6 +13663,21 @@ async function abaPt(p, a) {
       return { selo: /Nv \d/.test(feed), custom: /Rato de academia/.test(cq) && /Lenda do Studio/.test(cq) };
     });
     ok(demoNv.selo, "no feed da Turma cada autor aparece com o selo Nv dele");
+    {
+      // v751: curtir enquanto o feed carrega não pode sumir até o timer de 45 s —
+      // a chamada no meio de outra vira pendência e roda quando a de agora termina
+      const fd751 = await pA.evaluate(async () => {
+        window.__trocaSec("feed");
+        await new Promise((r) => setTimeout(r, 300));
+        if (!window.__feed) return null;
+        window.__feed.carrega(); window.__feed.carrega();
+        const meio = { ocupado: window.__feed.ocupado(), pendente: window.__feed.pendente() };
+        await new Promise((r) => setTimeout(r, 900));
+        return { meio, fim: { ocupado: window.__feed.ocupado(), pendente: window.__feed.pendente() } };
+      });
+      ok(!!fd751 && fd751.meio.ocupado && fd751.meio.pendente && !fd751.fim.ocupado && !fd751.fim.pendente,
+        "👥 v751: pedido de recarga no meio de outra vira pendência e roda em seguida (a curtida não espera 45 s)");
+    }
     ok(demoNv.custom, "as conquistas criadas pelo professor aparecem no card Conquistas do demo");
     await pA.close();
     await ctxA.close();
