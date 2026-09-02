@@ -1357,6 +1357,22 @@ régua de cobrança, de Atrasados e do filtro Devendo (o campo era gravado e
 nunca lido). Ganchos: `__enviaTreinoGrupo`, `__loadPT`, `__salvaNomeTeste`,
 `__cobraMensalN`. Os 366 médios/leves seguem por área em mt-v747+.
 
+**Revisão — os 366 médios e leves, por área (mt-v747+)**: cada área foi
+atacada por um agente num worktree próprio, com um assert por conserto, e
+integrada em lotes. NUTRI (nt-1, nt-2 — 36 itens): régua única de atraso
+`pacAtrasadoN` (usa `cobraMensalN`, dia de cobrança e `pagouMesN`) pra lista,
+Financeiro, Resolver hoje e lembretes; `cartaoFalhouEvt` monotônico como no
+Personal; `diasSumidoN` ignora consulta faltada (Radar reaproveita);
+`sexoDe(p)` normaliza o sexo (importador gravava "f"); Reativar paciente e
+encerrar oferece revogar o app; `laudoDeN` com fator de atividade do cadastro
+(um só "basal"); avaliação retroativa entra ordenada e só muda `p.peso` se for
+a mais nova; perfil repinta só o pedaço (peso/financeiro) em vez de
+`abrePerfilN`; IA de dieta vê o banco quase inteiro (`catalogoDietaIA`) e os
+ignorados aparecem pelo nome; `config.appMudouEmN` + `autoPublicaAppsN` pelo
+`stamp`; app do paciente: lembrete de água via `showNotification`, adesão em
+data local, `feitos` devolvido (ranking), código de barras grava macros.
+`tests/test-tokens-nutri.js` reprova `var(--` dentro de documento autônomo.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

@@ -82,7 +82,8 @@ async function abaPt(p, a) {
   // ---------- 2) TORQUE ON Personal ----------
   console.log("TORQUE ON Personal:");
   p = await ctx.newPage();
-  p.on("pageerror", (e) => erros.push(String(e)));
+  // o erro sai na hora (e não só no fim da suíte) pra dizer EM QUAL teste estourou
+  p.on("pageerror", (e) => { erros.push(String(e)); console.log("  ⚠️ erro de página agora: " + String(e.stack || e).split("\n").slice(0, 3).join(" | ").slice(0, 400)); });
   p.on("dialog", (d) => d.accept());
   await p.goto(BASE + "/personal.html");
   await p.waitForFunction(() => window.__ptStudio);
@@ -2486,6 +2487,217 @@ async function abaPt(p, a) {
     });
     ok(v746.grupo, "👥 v746: enviar em grupo copia só as fichas (ids novos, Semana reencaixada); circuitos, corridas, validade ficam e o mês da IA não vai");
     ok(v746.config, "🆕 v746: instalação nova nasce com config — criar a conta antes do onboarding não trava mais");
+    /* ---- v747: revisão pt-inicio e pt-alunos (médios e leves) ---- */
+    const v747 = await p.evaluate(async () => {
+      const S = window.MTStore, hoje = S.todayISO(), mes = hoje.slice(0, 7);
+      const out = {};
+      const guardado = localStorage.getItem("mtapp:ptStudio");
+      const dAnt = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 2, 1);
+      const mesAnt = dAnt.getFullYear() + "-" + ("0" + (dAnt.getMonth() + 1)).slice(-2);
+      const base = () => ({ alunos: [], sessoes: [], pagamentos: [], treinos: {}, treinosV2: {}, contratosPT: [], planosPT: [], avaliacoes: [], config: {} });
+      // 1) cobrancaVencida: a função-fonte — mês anterior em aberto é vencido desde o dia 1
+      {
+        const st = base();
+        st.planosPT.push({ id: "p7", nome: "Plano <b>Sete</b>", valor: 100 });
+        st.alunos.push({ id: "v7a", nome: "Deve Agosto", ativo: true, desde: mesAnt + "-01" },
+          { id: "v7b", nome: "Pagou Tudo", ativo: true, desde: mesAnt + "-01" });
+        st.contratosPT.push({ id: "c7a", alunoId: "v7a", planoId: "p7", status: "ativo", inicio: mesAnt + "-01", diaVenc: 28 },
+          { id: "c7b", alunoId: "v7b", planoId: "p7", status: "ativo", inicio: mesAnt + "-01", diaVenc: 28 });
+        // o "b" pagou agosto e setembro; o "a" só setembro (deve o mês PASSADO)
+        st.pagamentos.push({ id: "g1", alunoId: "v7b", valor: 100, data: mesAnt + "-03", mes: mesAnt },
+          { id: "g2", alunoId: "v7b", valor: 100, data: mes + "-01", mes: mes },
+          { id: "g3", alunoId: "v7a", valor: 100, data: mes + "-01", mes: mes });
+        const cvA = window.__cobrancaVencida(st, st.alunos[0]);
+        const cvB = window.__cobrancaVencida(st, st.alunos[1]);
+        out.vencidoAntigo = !!cvA && cvA.antigos === 1 && cvA.dv.total === 100;
+        out.emDiaNull = cvB === null;
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__dashPT.resolver(S.read("ptStudio", {}));
+        window.__dashPT.mes(S.read("ptStudio", {}), window.__dashDados(mes));
+        const res = document.getElementById("dashResolver").textContent;
+        out.resolverVe = /COBRANÇA VENCIDA/.test(res) && /Deve Agosto/.test(res) && !/Pagou Tudo/.test(res);
+        out.kpiVencidos = /R\$\s?100[^\d]*vencidos/.test(document.getElementById("dashMes").textContent);
+        window.__alFiltro("devendo");
+        const lst = document.getElementById("listaAlunos").textContent;
+        out.listaDevendo = /Deve Agosto/.test(lst) && !/Pagou Tudo/.test(lst);
+        // selo por token, não hex cravado (o modo claro precisa acompanhar)
+        const sel = document.querySelector("#dashResolver .dsel");
+        out.selToken = !!sel && /var\(--pt-erro\)/.test(sel.getAttribute("style") || "");
+        // o nome do plano entra escapado na lista (era cru no ramo do contrato)
+        window.__alFiltro("ativos");
+        out.planoEsc = !document.querySelector("#listaAlunos .alp1 b") && /Plano <b>Sete<\/b>/.test(document.getElementById("listaAlunos").textContent);
+      }
+      // 2) compMesAnterior: mesmo dia do mês anterior, e (ano, mês−2) em vez de setMonth(−1)
+      {
+        const st = base();
+        st.pagamentos.push({ id: "m1", alunoId: "x", valor: 100, data: "2026-02-01" }, { id: "m2", alunoId: "x", valor: 100, data: "2026-02-20" });
+        const c5 = window.__compMesAnterior(st, "2026-03", 5, 100);
+        const c31 = window.__compMesAnterior(st, "2026-03", 31, 100);
+        out.cmp = c5.mesAnt === "2026-02" && c5.fatAte === 100 && c5.vs === 0 && c31.fatAte === 200 && c31.vs === -50 && /fevereiro até o dia 5/.test(c5.rot);
+      }
+      // 3) meta do mês: uma conta só (lista e Resumo)
+      {
+        const st = base();
+        st.alunos.push({ id: "v7m", nome: "Meta Dois", ativo: true, metaSemana: 2 });
+        st.sessoes.push({ id: "s7a", alunoId: "v7m", data: mes + "-01", hora: "07:00", feita: true },
+          { id: "s7b", alunoId: "v7m", data: mes + "-02", hora: "07:00", feita: true });
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__alFiltro("ativos");
+        const barra = document.querySelector("#listaAlunos .albar i");
+        out.metaMes = window.__metaMesDe(st.alunos[0]) === 8 && !!barra && /width:\s*25%/.test(barra.getAttribute("style") || "");
+        window.__perfilPT("v7m");
+        out.metaResumo = /de 8/.test((document.getElementById("pfResumo") || {}).textContent || "");
+      }
+      // 4) idade da ficha: carimbo próprio (fichasEm), não a última publicação do app
+      {
+        const t = { fichas: [{ id: "f1", titulo: "Peito e tríceps", itens: [] }], fichasEm: "2026-01-05" };
+        const a = { id: "v7f", appPubEm: hoje + "T10:00:00.000Z" };
+        out.presc = window.__prescricaoEm(t, a) === "2026-01-05" &&
+          window.__prescricaoEm({ fichas: [] }, a) === hoje &&
+          window.__prescricaoEm({ fichasEm: "2026-01-05", mes: { musculacao: { geradoEm: "2026-03-01T00:00:00Z" } } }, a) === "2026-03-01";
+        const st = base();
+        st.alunos.push({ id: "v7f", nome: "Ficha Velha", ativo: true, appPubEm: hoje + "T10:00:00.000Z" });
+        st.treinosV2.v7f = { fichas: [{ id: "f1", titulo: "Push-pull", itens: [] }, { id: "f2", titulo: "B — Pernas", itens: [] }],
+          fichasEm: "2026-01-05", plano: { dias: { "1": { tp: "ficha", id: "f1" }, "3": { tp: "ficha", id: "f2" } } } };
+        window.__marcaTreinoMudou(st, "v7f");
+        out.carimba = st.treinosV2.v7f.fichasEm === hoje && !!st.alunos[0].appEditEm;
+        st.treinosV2.v7f.fichasEm = "2026-01-05";
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__alFiltro("ativos");
+        const row = document.querySelector("#listaAlunos .alrow");
+        out.fichaVelha = !!row && /vencida/.test(row.textContent) && /Montar ficha/.test(row.textContent) && /Push-pull/.test(row.textContent) && !/Push · pull/.test(row.textContent);
+        window.__dashPT.resolver(S.read("ptStudio", {}));
+        out.fichaVencendo = /FICHA VENCENDO/.test(document.getElementById("dashResolver").textContent);
+        // a letra do chip da Semana é a MESMA do app (letraFicha): posição, não 1º caractere
+        window.__perfilPT("v7f");
+        const chips = [...document.querySelectorAll("#pfResumo .pfsem .c.tem")].map((c) => c.textContent.trim());
+        out.chipLetra = chips.join(",") === "A,B";
+      }
+      // 5) alPlano: venda de serviço (desc) não vira "Pago dia N"
+      {
+        const st = base();
+        st.planosPT.push({ id: "p7", nome: "Mensal", valor: 100 });
+        st.alunos.push({ id: "v7s", nome: "Massagem Só", ativo: true, desde: mes + "-01" });
+        st.contratosPT.push({ id: "c7s", alunoId: "v7s", planoId: "p7", status: "ativo", inicio: mes + "-01", diaVenc: 28 });
+        st.pagamentos.push({ id: "sv1", alunoId: "v7s", valor: 80, data: mes + "-02", desc: "Massagem" });
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__alFiltro("ativos");
+        const row = document.querySelector("#listaAlunos .alrow");
+        out.servicoNaoQuita = !!row && !/Pago dia/.test(row.textContent) && /Vence/.test(row.textContent);
+      }
+      // 6) importar: DDI sai, CPF não é telefone, separador solto não é nome, desde vazio
+      {
+        const r = window.__impAlunos("Maria Silva, +55 31 99999-8888\nJoão Pedro - 31 98888-7777\nPedro Souza 123.456.789-00\nAna | 3199991111\nBeatriz 55 (31) 9 6666-5555", base());
+        const n = Object.fromEntries(r.novos.map((x) => [x.nome, x.zap]));
+        out.imp = n["Maria Silva"] === "31999998888" && n["João Pedro"] === "31988887777" && n["Pedro Souza"] === "" &&
+          n["Ana"] === "3199991111" && n["Beatriz"] === "31966665555";
+      }
+      // 7) Seu dia hoje: o cabeçalho zera junto com o corpo
+      {
+        // o estado real da suíte (o render do Início lê muitos campos), só com as sessões de hoje trocadas
+        const st = JSON.parse(guardado);
+        st.sessoes = (st.sessoes || []).filter((x) => x.data !== hoje);
+        st.alunos.push({ id: "v7d", nome: "Dia Teste", ativo: true });
+        st.sessoes.push({ id: "s7d", alunoId: "v7d", data: hoje, hora: "20:43" });
+        window.__dashPT.render(st);
+        const com = document.querySelector("#dashDia h2").textContent;
+        st.sessoes = st.sessoes.filter((x) => x.id !== "s7d");
+        window.__dashPT.render(st);
+        const sem = document.querySelector("#dashDia h2").textContent;
+        out.cabDia = /0 de 1 feitas/.test(com) && !/feitas/.test(sem) && /Ver semana/.test(sem);
+      }
+      // 8) Resolver hoje: estado vazio tem .dgrid; o card do chat troca o ✓, não duplica e apaga o .cnt
+      {
+        const st = base();
+        st.alunos.push({ id: "v7c", nome: "Chat Parado", ativo: true, appTokenP: "tok-v7c" });
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__dashPT.resolver(S.read("ptStudio", {}));
+        const el = document.getElementById("dashResolver");
+        out.vazioGrid = !!el.querySelector(".dgrid [data-vazio]") && !/sem mensagem esperando/.test(el.textContent);
+        const RC = window.__resolverChat;
+        RC.cache.porAluno = { "tok-v7c": 2 }; RC.cache.em = Date.now();
+        RC.pinta(); RC.pinta(); // duas pinturas cruzadas: UM card
+        const cnt = document.querySelector('#abas [data-a="chat"] .cnt');
+        out.chatCard = el.querySelectorAll("#dVaiChat").length === 1 && /SEM RESPOSTA/.test(el.textContent) && (el.querySelector("[data-chatcard] .dpq") || {}).textContent === "Chat" &&
+          !el.querySelector("[data-vazio]") && !!cnt && cnt.textContent === "2";
+        RC.cache.porAluno = {};
+        RC.pinta();
+        out.chatZera = !document.querySelector('#abas [data-a="chat"] .cnt') && !el.querySelector("#dVaiChat") && !!el.querySelector("[data-vazio]");
+        // freio: com a cópia fresca não consulta; com forca consulta; a consulta pede só o que está sem ler
+        let leu = 0, filtros = [];
+        const consulta = (resp) => { const o = { then: (fn) => Promise.resolve(resp).then(fn) }; ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = (c, v) => { if (k === "eq") filtros.push(c + "=" + v); return o; }; }); return o; };
+        const cloudOrig = S.cloud;
+        // escrita resolvida: um publicar de app que ficou pendente de outro teste não pode estourar aqui
+        const okW = () => Promise.resolve({ error: null, data: [] });
+        S.cloud = () => ({ aid: "a1", client: { from: (t) => ({ upsert: okW, insert: okW, update: okW, delete: okW,
+          select: () => { if (t === "app_chat") leu++; return consulta({ data: [{ token: "tok-v7c", de: "aluno", lida: false }] }); } }) } });
+        RC.cache.porAluno = {}; RC.cache.em = Date.now();
+        RC.le(); RC.le();
+        const leuComCache = leu;
+        RC.le(true);
+        await new Promise((r) => setTimeout(r, 60));
+        S.cloud = cloudOrig;
+        out.freio = leuComCache === 0 && leu === 1 && filtros.includes("de=aluno") && filtros.includes("lida=false") &&
+          el.querySelectorAll("#dVaiChat").length === 1;
+        RC.cache.porAluno = null; RC.cache.em = 0;
+        window.__dashPT.resolver(S.read("ptStudio", {}));
+        const c9 = document.querySelector('#abas [data-a="chat"] .cnt'); if (c9) c9.remove();
+      }
+      // 9) sino: só baixa automática e aluno de outro caminho; treinos agrupados; visto pela data do evento
+      {
+        const st = base();
+        const amanha20 = new Date(Date.now() + 20 * 864e5).toISOString().slice(0, 10);
+        const d1 = new Date(Date.now() - 1 * 864e5).toISOString().slice(0, 10);
+        const d2 = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+        st.alunos.push({ id: "v7n", nome: "Manual Novo", ativo: true, desde: hoje, retorno: { feitos: { [hoje]: 1, [d1]: 1, [d2]: 1 }, conf: { [amanha20 + "|18:00"]: -1 } } },
+          { id: "v7i", nome: "Importado Novo", ativo: true, desde: "", origem: "importa", importadoEm: hoje });
+        st.pagamentos.push({ id: "pm", alunoId: "v7n", valor: 150, forma: "pix", data: hoje },
+          { id: "pa", alunoId: "v7n", valor: 200, forma: "cartão", data: hoje, eventoId: "asaas:1:pago" });
+        const ev = window.__sino.eventos(st);
+        const ks = ev.map((e) => e.k);
+        out.sino = !ks.includes("pg:pm") && ks.includes("pg:pa") && !ks.includes("novo:v7n") && ks.includes("novo:v7i") &&
+          ev.filter((e) => /^tr:v7n/.test(e.k)).length === 1 && /3× em 14 dias/.test(ev.find((e) => /^tr:v7n/.test(e.k)).t);
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        window.__sino.pinta(S.read("ptStudio", {}));
+        document.querySelector("#dashSino [data-sinook]").click();
+        const visto = (S.read("ptStudio", {}).config || {}).sinoVisto || {};
+        out.vistoFuturo = visto["cf:v7n:" + amanha20 + "|18:00"] === amanha20 && visto["pg:pa"] === hoje;
+      }
+      // 10) montar treino: um caminho só, os dois selects andam juntos
+      {
+        const st = base();
+        st.alunos.push({ id: "v7t", nome: "Monta Treino", ativo: true });
+        localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+        // os selects são repovoados pelo render() do save; aqui entra a opção na mão
+        ["tAluno", "taAluno"].forEach((id) => document.getElementById(id).insertAdjacentHTML("beforeend", '<option value="v7t" data-v7t>Monta Treino</option>'));
+        window.__vaiMontarTreino("v7t");
+        out.monta = document.getElementById("tAluno").value === "v7t" && document.getElementById("taAluno").value === "v7t";
+        document.querySelectorAll("option[data-v7t]").forEach((o) => o.remove());
+      }
+      localStorage.setItem("mtapp:ptStudio", guardado);
+      // o Visto do sino fez save() → render() com o estado de mentira e os
+      // selects de aluno ficaram só com ele: o render() de verdade repovoa
+      window.__ptStudio.render();
+      window.__relPT();
+      window.__alFiltro("ativos");
+      document.querySelector('#abas [data-a="dash"]').click();
+      return out;
+    });
+    ok(v747.vencidoAntigo && v747.emDiaNull && v747.resolverVe && v747.kpiVencidos && v747.listaDevendo,
+      "💰 v747: cobrancaVencida é a função-fonte — mês anterior em aberto vence desde o dia 1 no Resolver, no card do mês e na lista");
+    ok(v747.selToken && v747.planoEsc, "🎨 v747: selo do Resolver por token (--pt-erro) e nome do plano escapado na lista");
+    ok(v747.cmp, "📈 v747: % vs mês anterior compara até o mesmo dia e acha o mês anterior sem transbordar no dia 31");
+    ok(v747.metaMes && v747.metaResumo, "🏋️ v747: a meta do mês é metaMesDe(a) na barra da lista E no Resumo da ficha");
+    ok(v747.presc && v747.carimba && v747.fichaVelha && v747.fichaVencendo,
+      "📅 v747: a idade da ficha sai do carimbo da prescrição (fichasEm) — republicar o app não a rejuvenesce; ficha velha acusa na lista e no Início");
+    ok(v747.chipLetra, "🔤 v747: o chip da Semana usa letraFicha — a mesma letra que o app mostra");
+    ok(v747.servicoNaoQuita, "💆 v747: venda de serviço (desc) não vira 'Pago dia N' na coluna Plano");
+    ok(v747.imp, "📥 v747: importar tira o +55, ignora CPF e separador solto no nome");
+    ok(v747.cabDia, "📆 v747: o cabeçalho de Seu dia hoje zera quando as sessões do dia somem");
+    ok(v747.vazioGrid && v747.chatCard && v747.chatZera, "💬 v747: o card SEM RESPOSTA entra no estado vazio, não duplica e o .cnt da aba Chat some ao zerar");
+    ok(v747.freio, "☁️ v747: resolverChat usa a cópia de 10 min, só lê com forca e pede só de=aluno/lida=false");
+    ok(v747.sino && v747.vistoFuturo, "🔔 v747: o sino só lista baixa automática e aluno de outro caminho, agrupa treinos e guarda o visto pela data do evento futuro");
+    ok(v747.monta, "🖱️ v747: vaiMontarTreino leva o aluno pros dois selects (Fichas e IA)");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
@@ -3100,12 +3312,15 @@ async function abaPt(p, a) {
     st1.config = st1.config || {}; st1.config.zapFixasOff = { resgate: 1 };
     const r3 = acha(window.__zapFila(st1));
     delete st1.config.zapFixasOff;
-    // o Resolver hoje mostra a contagem da fila com o botão Ver a fila
+    // v747: a fila mora no card "WhatsApp de hoje" do próprio Início (#bZapP) —
+    // o Resolver hoje NÃO repete a contagem (era a mesma coisa duas vezes)
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st1));
     window.__dashPT.resolver(st1);
     const card = [...document.querySelectorAll("#dashResolver .dcard")].find((c) => /MENSAGENS PRONTAS/.test(c.textContent));
+    window.__relPT();
+    const naFila = /Sumido/.test((document.getElementById("bZapP") || {}).textContent || "");
     const out = { tem: !!r, texto: r ? r.texto : "", rotulo: r ? r.rotulo : "",
-      futura: !!r2, desligada: !!r3, card: !!card, cardBt: card ? !!card.querySelector("[data-vaifila]") : false };
+      futura: !!r2, desligada: !!r3, card: !!card, naFila };
     // limpa o que semeou
     const st9 = S.read("ptStudio", {});
     st9.alunos = st9.alunos.filter((a) => a.id !== "al-sumido");
@@ -3118,7 +3333,7 @@ async function abaPt(p, a) {
     "📣 10 dias sumido entra na fila com a mensagem de resgate pronta");
   ok(!rzg.futura, "📣 sessão futura marcada = não está sumido, sai da fila");
   ok(rzg.desligada === false, "📣 a fixa de resgate desliga em Configurações como as outras");
-  ok(rzg.card && rzg.cardBt, "📣 o Resolver hoje mostra as mensagens esperando OK, com o Ver a fila");
+  ok(!rzg.card && rzg.naFila, "📣 v747: a fila aparece no card WhatsApp de hoje do Início — o Resolver hoje não a repete");
 
   // ⏰ v714: lembrete de VÉSPERA — sessão marcada pra amanhã entra na fila do
   // WhatsApp e na régua de push, desligável como as outras fixas
@@ -3463,10 +3678,12 @@ async function abaPt(p, a) {
     const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
     const st = S.read("ptStudio", {});
     const vistoAntes = JSON.stringify((st.config || {}).sinoVisto || null);
+    // v747: só o aluno que chegou por OUTRO caminho (origem) e a baixa
+    // AUTOMÁTICA (eventoId) são novidade — o que o professor fez ele já sabe
     st.alunos.push({ id: "sn-a", nome: "Sino <img src=x onerror=window.__xsss=1> Silva", ativo: true,
-      desde: hoje, appTokenP: "sn-tok",
+      desde: hoje, origem: "site", appTokenP: "sn-tok",
       retorno: { feitos: { [hoje]: 1 }, indicas: [{ n: "Amiga Nova", em: hoje }] } });
-    st.pagamentos.push({ id: "sn-p1", alunoId: "sn-a", valor: 150, forma: "pix", data: hoje });
+    st.pagamentos.push({ id: "sn-p1", alunoId: "sn-a", valor: 150, forma: "pix", data: hoje, eventoId: "mp:sn1:pago" });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     window.__relPT();
     const el = document.getElementById("dashSino");
@@ -3482,7 +3699,7 @@ async function abaPt(p, a) {
     out.guardou = Object.keys((S.read("ptStudio", {}).config || {}).sinoVisto || {}).length >= 4;
     // evento NOVO reaparece depois do visto — os antigos não voltam
     const st2 = S.read("ptStudio", {});
-    st2.pagamentos.push({ id: "sn-p2", alunoId: "sn-a", valor: 90, forma: "pix", data: hoje });
+    st2.pagamentos.push({ id: "sn-p2", alunoId: "sn-a", valor: 90, forma: "pix", data: hoje, eventoId: "mp:sn2:pago" });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
     window.__sino.pinta(S.read("ptStudio", {}));
     const el2 = document.getElementById("dashSino");
@@ -5771,8 +5988,10 @@ async function abaPt(p, a) {
   // ---------- perfil completo do aluno ----------
   console.log("Perfil do aluno:");
   await abaPt(p, "alunos");
-  ok(await p.evaluate(() => !!document.querySelector('[data-perfil]')), "lista tem o botão 👤 Perfil");
-  await p.evaluate(() => document.querySelector("[data-perfil]").click());
+  // v747: o "Perfil" saiu do menu ··· — o NOME do aluno (data-abreperfil) é o caminho pra ficha
+  ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-abreperfil]') && !document.querySelector('#listaAlunos .al-acoes [data-perfil]')),
+    "lista abre a ficha pelo nome do aluno (o Perfil repetido do ··· saiu)");
+  await p.evaluate(() => document.querySelector("#listaAlunos [data-abreperfil]").click());
   let perfil = await p.evaluate(() => ({
     aberto: !document.getElementById("vPerfil").hidden && document.getElementById("vAlunos").hidden,
     titulo: document.getElementById("pfTitulo").textContent,
