@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v745** |
-| Estado do repo em | 2026-09-01 (commit `ff28995`) |
+| App em | **mt-v746** |
+| Estado do repo em | 2026-09-02 (commit `e2a3d65`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 206 |
+| Lançamentos no histórico | 207 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v745** — ou seja, **76 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v746** — ou seja, **77 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v746 | os 3 graves que sobraram + timers do painel blindados + bateria em porta própria |
 | mt-v745 | Financeiro com competência e sincronização mais segura (frentes 3 e 11) |
 | mt-v744 | Semana do aluno reencaixada + isolamento e privacidade (frentes 10 e 12) |
 | mt-v743 | app do aluno — retorno do aluno novo, mescla de listas no banco, corrida e treino guiado (frentes 5 e 14) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v734 | tamanho do texto no app do aluno |
 | mt-v733 | voz no treino guiado de musculação |
 | mt-v732 | o volume do treino ganha memória e comparação |
-| mt-v731 | mural Seus recordes na Evolução do aluno |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
