@@ -2825,7 +2825,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="alh" id="avCmpNome">Escolha o aluno</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="dbt sec" id="avCmpLaudo">Mandar laudo</button>
+        <button type="button" class="dbt sec" id="avCmpLaudo" title="abre o laudo pronto pra imprimir ou salvar em PDF">Abrir laudo</button>
         <button type="button" class="dbt" id="avCmpNova">+ Nova medição</button>
       </div>
     </div>
@@ -3409,7 +3409,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
       <h2>Mensagens automáticas de WhatsApp</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b> com as mensagens da lista abaixo, cada uma pronta pra sair do seu WhatsApp com um toque. As quatro primeiras são do sistema (dá pra editar o texto e desligar cada uma); as outras você cria — toque numa <b>pronta</b> pra ajustar e ligar, ou monte do zero, até com foto do seu banco de imagens. As palavras entre chaves são trocadas sozinhas: <b>{nome}</b>, <b>{hora}</b>, <b>{dias}</b> e <b>{valor}</b>.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b> com as mensagens da lista abaixo, cada uma pronta pra sair do seu WhatsApp com um toque. As primeiras da lista (<span id="autoQtdSis">as automáticas e as de botão</span>) são do sistema — dá pra editar o texto de todas e desligar as automáticas; as outras você cria — toque numa <b>pronta</b> pra ajustar e ligar, ou monte do zero, até com foto do seu banco de imagens. As palavras entre chaves são trocadas sozinhas: <b>{nome}</b>, <b>{hora}</b>, <b>{dias}</b> e <b>{valor}</b>.</p>
       <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px; margin-bottom: 10px;"><input type="checkbox" id="cfgZapFila" checked style="width: 17px; height: 17px;"> Montar a fila WhatsApp de hoje no Início</label>
       <div id="autoLista" class="muted" style="margin-top: 4px; font-size: 13px;"></div>
       <div class="muted" style="margin: 14px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Criar mais</div>
@@ -3805,7 +3805,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   <div class="card" data-pfsec="aval">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase; margin: 0;">Avaliações físicas — relatório e evolução</h2>
-      <button class="btn mini" id="pfRelPdf" style="margin-left: auto;" title="abre o relatório pronto pra imprimir ou salvar em PDF"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Relatório PDF</button>
+      <button class="btn mini" id="pfRelPdf" style="margin-left: auto;" title="tabela de peso, % de gordura, cintura, quadril, braço e RCQ de todas as medições, mais as suas últimas anotações — pronto pra imprimir ou salvar em PDF"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Medidas e anotações (PDF)</button>
     </div>
     <div id="pfPeso" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
   </div>
@@ -3974,7 +3974,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return st;
   }
-  function save(st) { idxInvalida(); S.write("ptStudio", st); render(); }
+  /* v752: o ouvinte do store (S.onChange, lá no boot) já redesenha o painel
+   * em TODA gravação de ptStudio — ele roda síncrono, dentro do write(). Chamar
+   * render() aqui de novo pintava tudo DUAS vezes por Salvar/Recebi/Feita. Só
+   * pinta na mão quando o ouvinte ainda não existe (boot) ou a gravação falhou
+   * (cota cheia), pra tela não ficar velha. */
+  var ouvinteRender = false;
+  function save(st) {
+    idxInvalida();
+    var gravou = S.write("ptStudio", st);
+    if (!gravou || !ouvinteRender) render();
+  }
   window.__renderPT = function () { idxInvalida(); render(); }; // testes (v749): repinta tudo sem recarregar
 
   // onboarding do módulo: pergunta o nome do personal na primeira abertura
@@ -5906,7 +5916,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var d1 = +pri[campo], d2 = +ult[campo];
         if (!isFinite(d1) || !isFinite(d2)) return "";
         var dif = Math.round((d2 - d1) * 10) / 10;
-        var cls = bomSeCai == null ? "" : ((bomSeCai ? dif <= 0 : dif >= 0) ? " bom" : " ruim");
+        // v752: igual é NEUTRO (a mesma regra da tela 3a e da lista) — antes "= igual" saía verde de "bom"
+        var cls = bomSeCai == null || !dif ? "" : ((bomSeCai ? dif < 0 : dif > 0) ? " bom" : " ruim");
         return "<div class='delta" + cls + "'><b>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + unid + "</b><span>" + rotulo + "</span></div>";
       }
       deltas = "<div class='deltas'>" + delta("peso", "Peso", " kg", sentP === "sobe" ? false : sentP === "desce" ? true : null) +
@@ -13177,6 +13188,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="cfgs">' + o.sub + "</div></div>" +
       '<div style="margin-left:auto;flex:none;">' + (o.acao || "") + "</div></div>";
   }
+  /* v752: o selo dizia "Nuvem sincronizada · HH:MM" com a hora em que a TELA
+   * foi pintada — bastava estar logado, mesmo sem internet ou com envio
+   * pendente. A verdade mora no MT_syncInfo que o store.js avisa a cada
+   * sincronização (window.__syncInfoPT): última puxada e quantas alterações
+   * ainda esperam pra subir. Sem carimbo, diz que ainda não sincronizou. */
+  function cfgNuvemTexto(nuvem) {
+    if (!nuvem) return "Só neste aparelho";
+    var info = window.__syncInfoPT || {};
+    var hhmm = function (d) { return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+    if (info.pendentes) return "Nuvem conectada · " + S.plural(info.pendentes, "alteração esperando", "alterações esperando") + " pra subir";
+    if (info.ultima && info.ultima.getHours) return "Nuvem sincronizada · " + hhmm(info.ultima);
+    return "Nuvem conectada · ainda não sincronizou";
+  }
+  window.__cfgNuvemTexto = cfgNuvemTexto; // testes
   function pintaCfgResumo() {
     var box = $("cfgResumo");
     if (!box) return;
@@ -13201,21 +13226,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       : "Falta ligar " + desligados.slice(0, -1).join(", ") + " e " + desligados[desligados.length - 1];
     var nv = $("cfgNuvem");
     if (nv) {
-      nv.textContent = nuvem ? "Nuvem sincronizada · " + new Date().toTimeString().slice(0, 5) : "Só neste aparelho";
+      nv.textContent = cfgNuvemTexto(nuvem);
       nv.className = "cfgnuvem" + (nuvem ? " on" : "");
     }
     var html = "";
+    // v752: "Outra plataforma" é só um link colado — NÃO tem chave no servidor,
+    // webhook nem baixa automática. O card tratava pagApi.ligado como sinônimo
+    // de gateway e prometia baixa sozinha pra quem dá baixa na mão.
+    var ehGateway = !!(pagApi.ligado && pagApi.provedor !== "outro");
+    var ehLink = !!(pagApi.ligado && pagApi.provedor === "outro");
     // 1) receber dos alunos
     html += cfgCard({
       icone: "$", on: !!(pagApi.ligado || cfg.pixChave),
       titulo: "Receber dos alunos",
-      selo: pagApi.ligado ? (PROV_NOME[pagApi.provedor] || pagApi.provedor) + " · sua conta" : cfg.pixChave ? "Pix · sua chave" : "desligado",
-      sub: pagApi.ligado ? "O dinheiro cai direto com você. Chave guardada e selada — nem o painel lê de volta."
+      selo: ehGateway ? (PROV_NOME[pagApi.provedor] || pagApi.provedor) + " · sua conta"
+        : ehLink ? "link próprio · baixa manual"
+        : cfg.pixChave ? "Pix · sua chave" : "desligado",
+      sub: ehGateway ? "O dinheiro cai direto com você. Chave guardada e selada — nem o painel lê de volta."
+        : ehLink ? "O botão Link abre o SEU link de cobrança. Quem pagou você marca em Recebi — nada entra sozinho."
         : cfg.pixChave ? "O Pix sai com a sua chave. Pra cartão e boleto, ligue um gateway."
         : "Sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.",
-      acao: '<button type="button" class="btn sec" data-cfgir="conta">' + (pagApi.ligado ? "Trocar chave" : "Configurar") + "</button>",
+      acao: '<button type="button" class="btn sec" data-cfgir="conta">' + (ehGateway ? "Trocar chave" : ehLink ? "Trocar link" : "Configurar") + "</button>",
     });
-    if (pagApi.ligado) {
+    if (ehGateway) {
       html += '<div class="rel3" style="margin:-6px 0 12px;">' +
         '<div class="pfbox pq"><div class="tdrot">Baixa automática</div><div class="cfgv on">Ligada · ' +
         S.plural(baixas, "baixa", "baixas") + " em " + MES_LONGO[+mes.slice(5, 7) - 1] + "</div></div>" +
@@ -13276,6 +13309,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaZapApiStatus();
     leZapConfigNuvem(); // confere com a nuvem (o token nunca vem junto)
     if (window.__pagCfg) window.__pagCfg.pinta(); // gateway de pagamento (a chave nunca vem junto)
+    pushProf.pinta(); // v752: o card diz se este aparelho já recebe os avisos
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgIndicaPremio").value = (st.config || {}).indicaPremio || "";
@@ -13339,6 +13373,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pegaSub: function () {
       return navigator.serviceWorker.ready.then(function (reg) {
         return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidArrP(PUSH_VAPID_PUB) });
+      });
+    },
+    // v752: a inscrição que JÁ existe neste aparelho (null quando não há) —
+    // separada pra teste poder trocar
+    subAtual: function () {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) return Promise.resolve(null);
+      return navigator.serviceWorker.getRegistration().then(function (reg) {
+        return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+      }).catch(function () { return null; });
+    },
+    /* v752: o card nunca dizia se JÁ estava ativo — depois de recarregar, o
+     * aparelho inscrito voltava a mostrar "Ativar neste aparelho" e o
+     * professor reativava "só pra garantir". Agora a pintura lê a inscrição
+     * de verdade e a permissão do navegador. */
+    pinta: function () {
+      var bt = $("pushProfBt"), out = $("pushProfStatus");
+      if (!bt || !out) return Promise.resolve(false);
+      if (("Notification" in window) && Notification.permission === "denied") {
+        bt.textContent = "Ativar neste aparelho";
+        out.textContent = "Permissão bloqueada — libere as notificações deste site nas configurações do navegador e toque em Ativar.";
+        return Promise.resolve(false);
+      }
+      return pushProf.subAtual().then(function (sub) {
+        if (sub) {
+          bt.textContent = "✓ Avisos ativados neste aparelho";
+          out.textContent = "Este aparelho já recebe os avisos de chat, horário e pagamento. Tocar de novo só renova a inscrição.";
+          return true;
+        }
+        bt.textContent = "Ativar neste aparelho";
+        return false;
       });
     },
     ativa: function () {
@@ -13417,11 +13481,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function guardaZapEspelho(d) {
     var st = load();
     st.config = st.config || {};
-    st.config.zapApi = d && d.tem_token
+    var novo = d && d.tem_token
       ? { ligado: true, phoneId: String(d.phone_id || ""), template: String(d.template || "") }
       : { ligado: false, phoneId: String((d && d.phone_id) || ""), template: String((d && d.template) || "") };
-    save(st);
+    // v752: essa leitura roda a cada abertura de Configurações; gravar (e
+    // redesenhar o painel inteiro) quando NADA mudou era só custo
+    if (JSON.stringify(st.config.zapApi || null) === JSON.stringify(novo)) return false;
+    st.config.zapApi = novo;
+    S.write("ptStudio", st);
+    return true;
   }
+  window.__guardaZapEspelho = guardaZapEspelho; // testes
   function rpcZap(nome, args) {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) primeiro." });
@@ -13608,11 +13678,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (prov === "outro") {
       var lk = ($("cfgPagLink").value || "").trim();
       if (!/^https:\/\//.test(lk)) { pintaPagStatus("Cole um link completo, começando com https://"); return; }
-      st.config.pagLink = lk;
-      st.config.pagApi = { ligado: true, provedor: "outro" };
-      save(st);
-      pintaPagCampos();
-      pintaPagStatus("Ligado: o botão Link de pagamento passa a abrir o SEU link.");
+      var espAntes = pagEspelho(st);
+      var ligaLink = function () {
+        var st3 = load();
+        st3.config = st3.config || {};
+        st3.config.pagLink = lk;
+        st3.config.pagApi = { ligado: true, provedor: "outro" };
+        save(st3);
+        pintaPagCampos();
+        pintaPagStatus("Ligado: o botão Link de pagamento passa a abrir o SEU link.");
+      };
+      /* v752: vinha de um gateway de verdade? A chave (e o webhook do Asaas)
+       * continuavam VIVOS no servidor — e o Desligar de depois pulava a RPC e
+       * dizia "chave apagada". Chave de gateway é dado sensível: apaga agora,
+       * e sem conseguir apagar não troca (a mensagem tem que ser verdade). */
+      if (espAntes.ligado && espAntes.provedor && espAntes.provedor !== "outro") {
+        pintaPagStatus("Apagando a chave do " + (PROV_NOME[espAntes.provedor] || espAntes.provedor) + " no servidor…");
+        rpcZap("pag_config_apaga").then(function (d) {
+          if (d && d.erro) { pintaPagStatus("Não deu pra apagar a chave do servidor (" + d.erro + ") — a troca não foi feita; entre na sua conta e tente de novo."); return; }
+          ligaLink();
+        });
+        return;
+      }
+      ligaLink();
       return;
     }
     var chave = ($("cfgPagChave").value || "").trim();
@@ -13647,18 +13735,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!confirm(msgDeslg)) return;
     var st = load();
     var eraOutro = pagEspelho(st).provedor === "outro";
-    var fim = function () {
+    // v752: só diz "chave apagada" quando a RPC rodou de verdade — no link
+    // próprio não existe chave nenhuma, o que sai é o link
+    var fim = function (msg) {
       var st2 = load();
       st2.config = st2.config || {};
       delete st2.config.pagApi;
       save(st2);
       pintaPagCampos();
-      pintaPagStatus("Desligado. A chave foi apagada do servidor.");
+      pintaPagStatus(msg);
     };
-    if (eraOutro) { fim(); return; }
+    if (eraOutro) { fim("Desligado. O botão Link de pagamento deixa de abrir o seu link (não havia chave no servidor)."); return; }
     rpcZap("pag_config_apaga").then(function (d) {
       if (d && d.erro) { pintaPagStatus("Não deu: " + d.erro); return; }
-      fim();
+      fim("Desligado. A chave foi apagada do servidor.");
     });
   });
   window.__pagCfg = { pinta: pintaPagCampos, espelho: pagEspelho }; // testes
@@ -13696,6 +13786,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     parabens: { nome: "Parabéns de aniversário", desc: "botão Dar parabéns do card de aniversários", dica: "Dá pra usar {nome}." },
     encaixe: { nome: "Oferecer a vaga (encaixe)", desc: "botão do quadro Vaga aberta da Agenda", dica: "Dá pra usar {nome}, {dia} (ex.: 'hoje') e {hora}." },
   };
+  // as chaves do sistema, em UM lugar: a lista e os textos que contam "quantas" leem daqui (v752)
+  var FIXAS_AUTO = ["vespera", "treino", "niver", "atraso", "renova", "resgate"];
+  var FIXAS_BOTAO = ["falta", "chamar", "parabens", "encaixe"];
   function autoDescGat(au) {
     var n = Math.max(0, +au.dias || 0);
     if (au.gat === "sumido") return "sem treinar há " + Math.max(1, n) + "+ dias"; // o motor também força mínimo 1
@@ -13712,7 +13805,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<button class="btn sec mini" data-autopronta="' + i + '">' + esc(pr.nome) + "</button>";
     }).join("");
     var fixOff = (st.config || {}).zapFixasOff || {};
-    var fixasHtml = ["vespera", "treino", "niver", "atraso", "renova", "resgate"].map(function (k) {
+    // v752: os textos diziam "quatro primeiras" e "essas seis" pra uma lista
+    // com DEZ linhas do sistema — a contagem sai das próprias listas
+    var qtdSis = S.plural(FIXAS_AUTO.length, "automática", "automáticas") + " e " + S.plural(FIXAS_BOTAO.length, "de botão", "de botão");
+    if ($("autoQtdSis")) $("autoQtdSis").textContent = qtdSis;
+    var fixasHtml = FIXAS_AUTO.map(function (k) {
       return '<div class="sessao-pt"><b>' + FIXAS_ROT[k].nome + "</b>" +
         '<span class="muted" style="font-size:12px;">' + FIXAS_ROT[k].desc + "</span>" +
         (fixOff[k] ? ' <span class="tag">desligada</span>' : "") +
@@ -13723,7 +13820,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v718: as mensagens de BOTÃO (falta, chamar, parabéns, encaixe) também são
     // editáveis — mas não têm liga/desliga, porque só saem quando o professor toca
     var botsHtml = '<div class="muted" style="margin:10px 0 4px;font-size:12px;font-weight:700;">MENSAGENS DOS BOTÕES (saem na hora, quando você toca)</div>' +
-      ["falta", "chamar", "parabens", "encaixe"].map(function (k) {
+      FIXAS_BOTAO.map(function (k) {
         return '<div class="sessao-pt"><b>' + FIXAS_ROT[k].nome + "</b>" +
           '<span class="muted" style="font-size:12px;">' + FIXAS_ROT[k].desc + "</span>" +
           '<span style="margin-left:auto;">' +
@@ -13737,7 +13834,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         '<button class="btn sec mini" data-autotg="' + esc(au.id) + '">' + (au.off ? "Ligar" : "Desligar") + "</button>" +
         '<button class="btn mini" data-autoed="' + esc(au.id) + '">Editar</button></span></div>';
-    }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Essas seis são do sistema. As suas você cria logo abaixo — numa pronta ou do zero.</div>');
+    }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Essas ' + (FIXAS_AUTO.length + FIXAS_BOTAO.length) + " (" + qtdSis + ") são do sistema. As suas você cria logo abaixo — numa pronta ou do zero.</div>");
   }
   var autoEditId = null; // id da automação aberta no editor (null = criando)
   var autoFixa = null;   // chave da mensagem fixa em edição (vespera|treino|niver|atraso|renova|resgate)
@@ -13849,8 +13946,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // mensagem fixa: só o texto muda; vazio volta pro padrão do sistema
       var stFx = load();
       stFx.config = stFx.config || {};
-      var zmFx = zapModelos(stFx);
-      zmFx[autoFixa] = $("autoTexto").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO[autoFixa];
+      /* v752: guarda só o que o professor PERSONALIZOU. Antes zapModelos()
+       * devolvia os 10 textos com o padrão preenchido e tudo era gravado de
+       * volta — "Voltar pro texto padrão" virava uma cópia congelada, e quem
+       * tocou nele nunca mais recebia melhoria do padrão (v714, v718). */
+      var zmFx = Object.assign({}, stFx.config.zapModelos || {});
+      var txFx = $("autoTexto").value.trim().slice(0, 400);
+      if (!txFx || txFx === ZAP_MODELOS_PADRAO[autoFixa]) delete zmFx[autoFixa]; else zmFx[autoFixa] = txFx;
       stFx.config.zapModelos = zmFx;
       save(stFx);
       $("dlgAuto").close();
@@ -14134,6 +14236,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * síncrona — por isso o card carrega à parte quando a aba abre. 'Atendido'
    * marca status='importado' e a linha some; sem nuvem ou sem pedido, o card
    * inteiro fica escondido (nada de caixa vazia). */
+  // instante da nuvem (UTC) → data local AAAA-MM-DD; sem instante válido, vazio
+  function dataLocalDe(iso) {
+    var t = Date.parse(String(iso || ""));
+    return isFinite(t) ? S.todayISO(new Date(t)) : "";
+  }
+  window.__dataLocalDe = dataLocalDe; // testes
   function pintaAulaExp(rows) {
     var card = $("aexpCard");
     if (!card) return;
@@ -14144,7 +14252,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="sessao-pt" style="flex-wrap:wrap;gap:8px;">' +
         "<b>" + esc(r.nome) + "</b>" +
         (r.horario ? '<span class="muted">' + esc(r.horario) + "</span>" : "") +
-        '<span class="muted" style="font-size:12px;">' + S.fmtData(String(r.criado || "").slice(0, 10)) + "</span>" +
+        // v752: `criado` é timestamptz em UTC — cortar os 10 primeiros caracteres
+        // datava de AMANHÃ o pedido feito às 22h em BH; converte pro fuso local antes
+        '<span class="muted" style="font-size:12px;">' + S.fmtData(dataLocalDe(r.criado)) + "</span>" +
         '<span style="margin-left:auto;display:flex;gap:6px;">' +
         (dig ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + dig +
           "?text=" + encodeURIComponent("Oi " + String(r.nome).split(" ")[0] + "! Vi seu pedido de aula experimental" + (r.horario ? " (" + r.horario + ")" : "") + " — bora confirmar? 💪") + '">Confirmar no WhatsApp</a>' : "") +
@@ -14193,8 +14303,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sp.email = $("spEmail").value.trim().slice(0, 80);
     sp.mostraPlanos = $("spMostraPlanos").checked;
     sp.mostraServ = $("spMostraServ").checked;
-    sp.cor = corOk($("spCor").value) || "";
-    sp.fundo = corOk($("spFundo").value) || "";
+    /* v752: input type=color SEMPRE tem valor — gravar o que está nele a cada
+     * Salvar congelava a cor da Personalização dentro da página (sp.cor), e
+     * daí trocar a cor do studio não mudava mais a página, enquanto o texto
+     * prometia que "entra sozinha". Só vira cor PRÓPRIA o que difere da
+     * Personalização; igual = vazio = continua acompanhando. */
+    var cfgSp = st.config || {};
+    var corPers = corOk(cfgSp.cor) || "#7c3aed", fundoPers = corOk(cfgSp.fundo) || "#0d0c10";
+    var corIn = corOk($("spCor").value) || "", fundoIn = corOk($("spFundo").value) || "";
+    sp.cor = corIn && corIn.toLowerCase() !== corPers.toLowerCase() ? corIn : "";
+    sp.fundo = fundoIn && fundoIn.toLowerCase() !== fundoPers.toLowerCase() ? fundoIn : "";
     st.config.sitePro = sp;
     S.write("ptStudio", st);
     return st;
@@ -14302,16 +14420,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             : "Não deu pra publicar (" + r.error.message + ") — tenta de novo.";
           return;
         }
-        // mudou de endereço? tira a página velha do ar
-        if (sp.slugPub && sp.slugPub !== sp.slug && nuvem.client.from("site_pro").delete) {
-          nuvem.client.from("site_pro").delete().eq("slug", sp.slugPub);
-        }
+        /* mudou de endereço? tira a página velha do ar. v752: o query builder
+         * do supabase-js é preguiçoso — sem .then() o DELETE nunca era
+         * enviado e a página antiga ficava pública pra sempre (com o
+         * endereço preso). Agora a chamada sai e, se falhar, o status avisa. */
+        var slugVelho = sp.slugPub && sp.slugPub !== sp.slug ? sp.slugPub : "";
+        var apagaVelha = slugVelho && nuvem.client.from("site_pro").delete
+          ? Promise.resolve(nuvem.client.from("site_pro").delete().eq("slug", slugVelho)).then(function (r) { return !(r && r.error); }, function () { return false; })
+          : Promise.resolve(true);
         var st2 = load();
         st2.config.sitePro = st2.config.sitePro || {};
         st2.config.sitePro.slugPub = sp.slug;
         S.write("ptStudio", st2);
         var url = "https://www.torqueon.com.br/pagina.html?s=" + encodeURIComponent(sp.slug);
         $("spStatus").innerHTML = "No ar! Sua página: <a href='" + url + "' target='_blank' rel='noopener' style='color:var(--roxo);'>" + esc(url.replace("https://www.", "")) + "</a> — publique de novo sempre que mudar algo aqui.";
+        apagaVelha.then(function (apagou) {
+          if (apagou || !slugVelho) return;
+          $("spStatus").innerHTML += " <b>Atenção:</b> não consegui tirar do ar o endereço antigo (" + esc(slugVelho) + ") — ele continua público; publique de novo com internet pra apagar.";
+        });
       }, function () {
         $("spStatus").textContent = "Sem conexão agora — tenta de novo com internet.";
       });
@@ -14391,12 +14517,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("persPublica").style.opacity = pendP ? "" : ".55";
     }
     var st = load();
-    if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
+    pintaCorELogo(st);
     if (document.activeElement !== $("cfgFundo")) $("cfgFundo").value = corOk((st.config || {}).fundo) || "#0d0c10";
-    var lgP = logoOk((st.config || {}).logo);
-    if (lgP) { $("cfgLogoPrev").src = lgP; $("cfgLogoPrev").hidden = false; }
-    else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
-    $("cfgLogoDel").hidden = !lgP;
     if (window.__capaPers) window.__capaPers();
     if (window.__pintaCapasTipo) window.__pintaCapasTipo();
     pintaPersPrev();
@@ -16710,6 +16832,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaAvisoAv();
     $("avResultado").textContent = "";
     $("avAltura").value = aAlt && +aAlt.altura ? aAlt.altura : "";
+    // v752: medição da câmera pendente é de UM aluno — trocou o seletor pra
+    // outro, ela sai (senão a cintura e o % da Carla entravam na ficha do João)
+    if (scanPend && scanPend.alunoId !== (aAlt && aAlt.id)) scanPend = null;
   });
   /* v727: o Raphael reparou que "não tem onde colocar o sexo" — o campo só
    * existia escondido no Editar cadastro da ficha, e a Avaliação cobrava sem
@@ -16791,12 +16916,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return (st.alunos || []).find(function (a) { return a.id === $("scanAluno").value; }) || null;
   }
   function scanDiz(t) { $("scanEstado").innerHTML = t || ""; }
+  /* v752: trocar o aluno no card da câmera mantinha a altura e o sexo do
+   * ANTERIOR — a régua de 185 cm servia a aluna de 1,62 m e toda medida saía
+   * ~14% maior, sem aviso. Agora o seletor limpa o que é do aluno de antes:
+   * altura/sexo do cadastro (vazio quando não tem), resultado, fotos e a
+   * medição pendente. */
+  if ($("scanAluno")) $("scanAluno").addEventListener("change", function () {
+    var a = scanAlunoAtual();
+    $("scanAltura").value = a && +a.altura ? a.altura : "";
+    $("scanSexo").value = (a && a.sexo) || "M";
+    scanPend = null;
+    scanFotos = { frente: null, lado: null };
+    if ($("scanFrente")) $("scanFrente").value = "";
+    if ($("scanLado")) $("scanLado").value = "";
+    ["scanResultado", "scanPreparo", "scanTermo"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
+    scanDiz("");
+    scanAtualizaBotao();
+  });
 
-  // pares fita × foto do próprio aluno viram o ajuste da régua dele
+  /* pares fita × foto do próprio aluno viram o ajuste da régua dele.
+   * v752: a foto guardada em scan.circ já vem CORRIGIDA pelo desvio da vez
+   * (scanner-corporal soma cal.desvio) — comparar a fita com ela fazia a
+   * calibração se realimentar e cair pela metade a cada medição. A crua é
+   * circ − scan.desvio (gravado desde a v752); registro antigo já calibrado
+   * sem saber quanto fica de fora, e par com fita IGUAL à foto também (é a
+   * estimativa que foi copiada como fita antes da v752 — diferença zero). */
   function scanCalibracao(st, alunoId) {
     var pares = (st.avaliacoes || []).filter(function (v) {
-      return v.alunoId === alunoId && v.scan && v.scan.circ && v.scan.circ.cintura && v.cintura;
-    }).slice(-5).map(function (v) { return { fita: v.cintura, foto: v.scan.circ.cintura }; });
+      return v.alunoId === alunoId && v.scan && v.scan.circ && v.scan.circ.cintura && v.cintura &&
+        !(v.scan.calibrado && v.scan.desvio == null); // já corrigida sem dizer quanto: não dá pra desfazer
+    }).map(function (v) {
+      return { fita: v.cintura, foto: Math.round((v.scan.circ.cintura - (+v.scan.desvio || 0)) * 10) / 10 };
+    }).filter(function (p) {
+      // fita IGUAL à medida crua = a estimativa foi copiada pro campo de fita
+      // (o que acontecia antes da v752): diferença zero que só puxa a média pra baixo
+      return p.fita !== p.foto;
+    }).slice(-5);
     return self.MT_SCANNER.calibra(pares);
   }
 
@@ -16878,6 +17033,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!$("scanAltura").value && a.altura) $("scanAltura").value = a.altura;
     if (a.sexo) $("scanSexo").value = a.sexo;
     if (!$("scanAltura").value) { alert("Preencha a altura do aluno (em cm) — é ela que serve de régua."); return; }
+    scanPend = null; // v752: começar de novo descarta a medição pendente (pode ser de outro aluno)
     var jaAceitou = (a.consentimentoScan || {}).versao === TERMO_SCAN;
     $("scanTermo").hidden = jaAceitou;
     $("scanPreparo").hidden = !jaAceitou;
@@ -16921,11 +17077,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }).then(function (par) {
       scanDiz("Medindo…");
       var st = load();
+      var cal = scanCalibracao(st, a.id);
       var r = self.MT_SCANNER.medidas(par.frente, par.lado, {
         alturaCm: alturaCm, sexo: $("scanSexo").value, peso: null,
-        calibracao: scanCalibracao(st, a.id),
+        calibracao: cal,
       });
       if (!r.ok) throw new Error(r.erro || "não consegui medir nesta foto");
+      r.desvio = +cal.desvio || 0; // v752: quanto a régua já corrigiu — a calibração seguinte precisa da medida crua
       if (par.avisoLado) r.avisos.push("A foto de lado não deu certo (" + par.avisoLado + ") — medi só com a de frente.");
       r.quando = S.todayISO();
       scanFotos = { frente: null, lado: null };   // a imagem sai da memória aqui
@@ -16941,6 +17099,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
 
   function pintaScanResultado(r, a) {
+    r.alunoId = a && a.id; // v752: a medição sabe de quem é — o salvar só usa se o aluno bater
     scanPend = r;
     var box = $("scanResultado");
     box.hidden = false;
@@ -16983,6 +17142,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanUsar").addEventListener("click", function () {
       $("avAluno").value = a.id;
       $("avAluno").dispatchEvent(new Event("change", { bubbles: true })); // atualiza dobras e aviso
+      /* v752: o change acima repõe a altura DO CADASTRO — vazia pra aluno
+       * novo — e a altura que o professor acabou de digitar na câmera sumia:
+       * fitaDe recebia 0, o % da Marinha não saía, o laudo dizia "precisa de
+       * altura". A altura e o sexo do card da câmera valem aqui (o sexo grava
+       * no cadastro com o mesmo S.write do #avSexo, sem redesenhar). */
+      var altScan = +$("scanAltura").value || 0;
+      if (altScan > 0 && !(+$("avAltura").value)) $("avAltura").value = altScan;
+      var sexoScan = $("scanSexo").value;
+      if (sexoScan && !a.sexo) {
+        var stSx = load();
+        var aSx = (stSx.alunos || []).find(function (x) { return x.id === a.id; });
+        if (aSx) { aSx.sexo = sexoScan; S.write("ptStudio", stSx); }
+        $("avSexo").value = sexoScan;
+        renderDobrasCampos();
+        pintaAvisoAv();
+      }
       // os números da foto entram nos campos pro professor CONFERIR, mas marcados
       // de origem: estimativa não vira medida de fita (rcq/Marinha só com fita real)
       [["avCintura", "cintura"], ["avQuadril", "quadril"], ["avBraco", "braco"]].forEach(function (par) {
@@ -17190,13 +17365,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (av.cintura) circ.cintura = av.cintura;
     if (av.quadril) circ.quadril = av.quadril;
     if (av.braco) circ.braco = av.braco;
+    /* v752: % que veio da FOTO vai pro motor pelo scan (scan.gordura), não
+     * pelo campo gordura — é assim que ele liga estimadoPorFoto e o laudo
+     * impresso avisa "estimado por foto" em vez de "medido por dobras ou fita" */
+    var scanL = av.scan ? Object.assign({}, av.scan) : null;
+    var gordL = av.gordura;
+    if (av.gorduraFonte === "foto" && av.gordura) { scanL = scanL || {}; scanL.gordura = scanL.gordura || av.gordura; gordL = null; }
     var r = self.MT_CORPO.calcula({
       sexo: a.sexo || "M", idade: idadeDe(a.nasc), altura: +a.altura || null,
-      peso: av.peso, gordura: av.gordura, circ: circ, dobras: av.dobras, bia: av.bia,
-      scan: av.scan || null,
+      peso: av.peso, gordura: gordL, circ: circ, dobras: av.dobras, bia: av.bia,
+      scan: scanL,
     });
     return r && r.ok ? r : null;
   }
+  // rótulo da origem do % de gordura — o mesmo pra tela 3a, lista e perfil (v752)
+  var FONTE_G_ROT = { balanca: "% medido na balança", dobras: "dobras cutâneas", fita: "estimativa por fita e peso", foto: "estimado pela câmera" };
+  function fonteGorduraDe(av, l) {
+    if (l && l.medido && l.medido.gordura) return "bioimpedância · vence a estimativa";
+    if (av && av.gorduraFonte && FONTE_G_ROT[av.gorduraFonte]) return FONTE_G_ROT[av.gorduraFonte];
+    // registro de antes da v752 (sem a origem gravada): a dedução antiga
+    return av && av.metodoDobras ? "dobras cutâneas" : l && l.estimadoPorFoto ? "estimado pela câmera" : "estimativa por fita e peso";
+  }
+  window.__fonteGordura = fonteGorduraDe; // testes
   function histDe(st, alunoId) {
     return (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
@@ -17218,18 +17408,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     w.document.write(html); w.document.close();
   }
   // laudo em cards da última avaliação DO ALUNO — mora no perfil, aba Avaliações
+  /* v752: QUAIS medições comparar era decidido de três jeitos — a tela 3a
+   * pegava as duas ÚLTIMAS e desistia se a última não gerasse laudo, o perfil
+   * varria de trás pra frente até achar uma que gerasse, e o PDF ia da
+   * primeira à última. Resultado: o mesmo aluno, no mesmo minuto, via os cards
+   * do laudo no perfil e "precisa de altura e peso" na 3a, só porque a última
+   * medição tinha sido só de fita. Agora as duas leem daqui: a última que GERA
+   * laudo e a anterior que também gera (senão o delta compararia com nada).
+   * O PDF segue de propósito comparando a PRIMEIRA com a última — ele é o
+   * histórico do aluno inteiro —, mas o julgamento de bom/ruim é o mesmo. */
+  function avPar(st, alunoId) {
+    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    var r = { lista: avs, ult: null, l: null, pen: null, lp: null, parcial: null };
+    var i9 = avs.length - 1;
+    for (; i9 >= 0 && !r.l; i9--) {
+      var cand = laudoDe(st, avs[i9]);
+      if (cand) { r.l = cand; r.ult = avs[i9]; }
+    }
+    for (var j9 = i9; j9 >= 0 && !r.lp; j9--) {
+      var cand2 = laudoDe(st, avs[j9]);
+      if (cand2) { r.lp = cand2; r.pen = avs[j9]; }
+    }
+    // a medição mais recente ficou de fora (só fita, sem peso)? a tela diz isso
+    if (r.ult && avs.length && avs[avs.length - 1] !== r.ult) r.parcial = avs[avs.length - 1];
+    return r;
+  }
+  window.__avPar = avPar; // testes
   function pintaLaudoPerfil(st, alunoId) {
     var el = $("pfLaudo");
     if (!el) return;
-    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
-      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
-    // a última avaliação pode ser parcial (só fita, sem peso) — varre de trás pra
-    // frente e pinta o laudo mais recente que dá conta
-    var ult = null, l = null;
-    for (var i9 = avs.length - 1; i9 >= 0 && !l; i9--) {
-      var cand = laudoDe(st, avs[i9]);
-      if (cand) { l = cand; ult = avs[i9]; }
-    }
+    var par9 = avPar(st, alunoId);
+    var avs = par9.lista, ult = par9.ult, l = par9.l;
     if (!l) {
       el.innerHTML = avs.length
         ? "As avaliações registradas não têm o que o laudo precisa — inclua o <b>peso</b> (e a altura no cadastro do aluno) que os cards aparecem aqui."
@@ -17239,14 +17449,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var U = self.MT_AVAL_UI;
     el.innerHTML =
       "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'>" +
-      S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura" : " · valores medidos na bioimpedância") + "</div>" +
+      S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura (" + fonteGorduraDe(ult, l) + ")" : " · valores medidos na bioimpedância") + "</div>" + // v752: diz de onde veio o %
       (U ? U.cardsLaudo(l) : "") +
       (U && l.gordura != null && l.massaGordura != null
         ? "<div style='margin-top:12px;background:rgba(124,58,237,.05);border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" + U.blocoGordura(l) + "</div>"
         : "") +
       "<div class='linha-flex' style='margin-top:12px;'>" +
-      "<button class='btn' id='pfLaudoAbrir'>Laudo completo</button>" +
-      "<span class='muted' style='font-size:12px;'>abre pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";
+      // v752: dois papéis no mesmo card — cada botão diz o que traz (este é a composição corporal; o outro, as medidas + anotações)
+      "<button class='btn' id='pfLaudoAbrir'>Laudo de composição corporal</button>" +
+      "<span class='muted' style='font-size:12px;'>água, proteína, massa magra, TMB e histórico — pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";
     $("pfLaudoAbrir").addEventListener("click", function () { abreLaudo(load(), ult); });
   }
   window.__laudoPT = { calcula: laudoDe, pinta: pintaLaudoPerfil, idade: idadeDe }; // testes
@@ -17272,13 +17483,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === id; });
     var av = $("avCmpAv"), nm = $("avCmpNome");
     if (av) av.textContent = a ? String(a.nome || "?").trim().slice(0, 2).toUpperCase() : "—";
-    var lista = !a ? [] : (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; })
-      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    // v752: a MESMA regra do perfil (avPar) — senão as duas telas mostram
+    // coisas diferentes pro mesmo aluno no mesmo minuto
+    var par3 = !a ? { lista: [] } : avPar(st, id);
+    var lista = par3.lista;
     if (nm) nm.textContent = !a ? "Escolha o aluno" : a.nome + (lista.length ? " · " + lista.length + "ª medição" : " · sem medição ainda");
     if (!a) { box.innerHTML = '<div class="dnota">Escolha um aluno pra comparar as medições dele.</div>'; return; }
     if (!lista.length) { box.innerHTML = '<div class="dnota">Nenhuma medição ainda — use <b>+ Nova medição</b>.</div>'; return; }
-    var ult = lista[lista.length - 1], pen = lista.length > 1 ? lista[lista.length - 2] : null;
-    var l = laudoDe(st, ult), lp = pen ? laudoDe(st, pen) : null;
+    var ult = par3.ult, pen = par3.pen, l = par3.l, lp = par3.lp;
     if (!l) {
       box.innerHTML = '<div class="dnota">Pro comparativo o aluno precisa de <b>altura no cadastro</b> e <b>peso na medição</b>. ' +
         "O histórico completo continua na lista abaixo.</div>";
@@ -17293,8 +17505,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       { k: "Massa magra", v: l.massaMagra ? avNum(l.massaMagra) : "—", u: "kg", d: l.massaMagra ? avDelta(l.massaMagra, lpv.massaMagra, true) : "" },
       { k: "IMC", v: avNum(l.imc), u: "", d: '<span style="color:var(--tk-tx4);">' + esc(l.classeImc || "") + "</span>" },
     ];
-    var fonte = l.medido && l.medido.gordura ? "bioimpedância · vence a estimativa"
-      : ult.metodoDobras ? "dobras cutâneas" : l.estimadoPorFoto ? "estimado pela câmera" : "estimativa por fita e peso";
+    var fonte = fonteGorduraDe(ult, l); // v752: lê a origem gravada
     var comps = [];
     if (l.agua) comps.push(["Água", l.agua, "var(--tk-roxoTx2)"]);
     if (l.mme) comps.push(["Músculo", l.mme, "#7c3aed"]);
@@ -17332,8 +17543,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="muted" style="font-size:11.5px;">O laudo imprimível sai com esses números e o histórico das ' +
         S.plural(lista.length, "medição", "medições") + ".</div></div>" : "") +
       "</div></div>" +
+      // v752: a medição mais recente pode ter sido só de fita — a tela DIZ por
+      // que está comparando uma anterior, em vez de o professor achar que sumiu
+      (par3.parcial ? '<div class="dnota" style="margin-bottom:14px;">A medição de <b>' + S.fmtData(par3.parcial.data) +
+        "</b> não entra na comparação: pra isso ela precisa de <b>peso</b> (e altura no cadastro). Ela continua na lista abaixo.</div>" : "") +
       '<div class="dnota lado" style="margin-bottom:14px;"><span style="font-size:16px;">🖼</span>' +
-      "<span>As fotos de progresso que " + esc(String(a.nome).split(" ")[0]) + " manda pelo app moram na ficha dela, na aba <b>App do aluno</b>.</span>" +
+      "<span>As fotos de progresso que " + esc(String(a.nome).split(" ")[0]) + " manda pelo app moram na ficha " + (a.sexo === "F" ? "dela" : "dele") + ", na aba <b>App do aluno</b>.</span>" + // v752: gênero pelo cadastro
       '<button type="button" class="btn sec mini" id="avCmpFotos" style="margin-left:auto;">Ver as fotos</button></div>';
   }
   window.__avCmp = pintaAvCmp; // testes
@@ -17363,7 +17578,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<details data-avdet="' + id + '"' + (avAbertos[id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
         '<summary style="padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<b style="font-size:14.5px;">' + esc(nomeDe[id] || "?") + "</b>" +
-        '<span class="muted" style="font-size:12px;">' + lista.length + " avaliação(ões) · última em " + S.fmtData(lista[lista.length - 1].data) + "</span>" +
+        '<span class="muted" style="font-size:12px;">' + S.plural(lista.length, "avaliação", "avaliações") + " · última em " + S.fmtData(lista[lista.length - 1].data) + "</span>" +
         '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
         '<div style="padding:0 14px 12px;">' +
         lista.map(function (v, i) {
@@ -17374,7 +17589,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.cintura ? "<span>cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
-            (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:var(--tk-ok);">bioimpedância</span>' : "") +
+            (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:var(--tk-ok);">bioimpedância</span>'
+              // v752: % digitado da balança (sem os kg da bioimpedância) também ganha a etiqueta da origem
+              : v.gorduraFonte === "balanca" ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:var(--tk-ok);">% da balança</span>' : "") +
             (v.scan ? '<span class="tag" style="font-size:10px;background:var(--pt-sel);color:var(--pt-roxo-claro);">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
@@ -17402,20 +17619,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (db && db.erro) { alert(db.erro); return; }
     var ft = fitaDe(sexoAv, +a.altura || 0);
     st.avaliacoes = st.avaliacoes || [];
+    /* v752: campo pré-preenchido pela câmera (dataset.origem = scan) NÃO vira
+     * cintura/braço/quadril "de fita" no registro — a estimativa (±3 cm) já
+     * viaja em reg.scan e no reg.circ mesclado; como fita ela entrava na
+     * lista com delta, no gráfico do app, no prompt da IA e na calibração. */
+    var soFita = function (id) { var el = $(id); return el.dataset.origem === "scan" ? null : (+el.value || null); };
     var reg = {
       id: S.uid(), alunoId: a.id, data: $("avData").value || S.todayISO(),
       peso: +$("avPeso").value || null,
-      cintura: +$("avCintura").value || null, braco: +$("avBraco").value || null,
+      cintura: soFita("avCintura"), braco: soFita("avBraco"),
     };
-    if (+$("avQuadril").value) reg.quadril = +$("avQuadril").value;
-    // o % de gordura é RESULTADO: medido na balança > dobras > fita > foto
+    if (soFita("avQuadril")) reg.quadril = soFita("avQuadril");
+    // o % de gordura é RESULTADO: medido na balança > dobras > fita > foto.
+    // v752: a ORIGEM fica gravada (gorduraFonte) — antes cada tela re-deduzia
+    // com regra própria e o laudo impresso rotulava a foto como dobras/fita
     var medido = +$("avGord").value || null;
     var fonteG = "";
-    if (medido) { reg.gordura = medido; fonteG = "medido na balança"; }
+    if (medido) { reg.gordura = medido; reg.gorduraFonte = "balanca"; fonteG = "medido na balança"; }
     else if (db) {
       reg.gordura = db.gordura;
+      reg.gorduraFonte = "dobras";
       fonteG = "dobras " + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" })[db.metodo] + " + Siri";
-    } else if (ft && ft.gordura) { reg.gordura = ft.gordura; fonteG = "fita (Marinha americana)"; }
+    } else if (ft && ft.gordura) { reg.gordura = ft.gordura; reg.gorduraFonte = "fita"; fonteG = "fita (Marinha americana)"; }
     if (db) {
       reg.dobras = db.dobras;
       reg.metodoDobras = db.metodo;
@@ -17425,12 +17650,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       reg.circ = ft.circ;
       if (ft.rcq) { reg.rcq = ft.rcq; reg.riscoRcq = ft.risco; }
     }
-    // medidas vindas da câmera: guardadas à parte, pra nunca se passarem por fita
-    if (scanPend) {
+    // medidas vindas da câmera: guardadas à parte, pra nunca se passarem por fita.
+    // v752: só a medição DESTE aluno (scanPend.alunoId) — a da Carla não entra no João
+    if (scanPend && scanPend.alunoId === a.id) {
       reg.scan = { v: 1, quando: scanPend.quando, circ: scanPend.circ, confianca: scanPend.confianca,
-        rcest: scanPend.rcest, margemCm: scanPend.margemCm, calibrado: !!scanPend.calibrado };
+        rcest: scanPend.rcest, margemCm: scanPend.margemCm, calibrado: !!scanPend.calibrado,
+        desvio: +scanPend.desvio || 0,                                 // v752: o quanto a régua já corrigiu
+        gordura: scanPend.gordura ? scanPend.gordura.valor : null };   // v752: o % da foto, pro motor marcar "estimado por foto"
       reg.circ = Object.assign({}, scanPend.circ, reg.circ || {});   // o que foi medido de fita vence
-      if (!reg.gordura && scanPend.gordura) { reg.gordura = scanPend.gordura.valor; fonteG = "estimativa pela foto"; }
+      if (!reg.gordura && scanPend.gordura) { reg.gordura = scanPend.gordura.valor; reg.gorduraFonte = "foto"; fonteG = "estimativa pela foto"; }
     }
     scanPend = null;
     // números da balança de bioimpedância (opcionais) — vencem as estimativas
@@ -17453,8 +17681,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ["avPeso", "avAltura", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
      "ccAntebraco", "ccCoxa", "ccPanturrilha", "biaAgua", "biaProteina", "biaMineral",
      "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
-     "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) $(id).value = ""; });
+     "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) { $(id).value = ""; delete $(id).dataset.origem; } });
     Array.prototype.forEach.call(document.querySelectorAll(".dbIn"), function (i) { i.value = ""; });
+    // v752: a data volta pra hoje — quem registrou uma InBody retroativa e
+    // emendou a de hoje pra outro aluno gravava as duas na data antiga
+    $("avData").value = S.todayISO();
     save(st);
     // o resultado científico na cara: % calculado + atalho pro laudo no perfil.
     // Sem % com fita preenchida, diz o MOTIVO (quadril de mulher, altura, pescoço)
@@ -17465,9 +17696,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       else if (!ft.circ.pescoco) semPq = " A fita não gerou o % porque faltou o <b>pescoço</b>.";
       else if (!ft.circ.cintura) semPq = " A fita não gerou o % porque faltou a <b>cintura</b>.";
     }
+    var salvoEm = "Salvo em " + S.fmtData(reg.data) + "!"; // v752: a data na cara — erro de data fica visível
     $("avResultado").innerHTML = (reg.gordura != null
-      ? "Salvo! % de gordura: <b>" + String(reg.gordura).replace(".", ",") + "%</b> (" + fonteG + ")."
-      : "Salvo! Sem % de gordura desta vez." + (semPq || " Registre dobras, fita completa ou o valor da balança na próxima.")) +
+      ? salvoEm + " % de gordura: <b>" + String(reg.gordura).replace(".", ",") + "%</b> (" + fonteG + ")."
+      : salvoEm + " Sem % de gordura desta vez." + (semPq || " Registre dobras, fita completa ou o valor da balança na próxima.")) +
       ' <a href="#" data-avperfil="' + esc(reg.alunoId) + '" style="color:var(--roxo);">Ver o laudo no perfil</a>';
   });
   $("avResultado").addEventListener("click", function (e) {
@@ -17490,7 +17722,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var id = e.target.getAttribute("data-avrm");
     if (!id || !confirm("Remover esta avaliação?")) return;
     var st = load();
+    var avRm = (st.avaliacoes || []).find(function (v) { return v.id === id; });
     st.avaliacoes = (st.avaliacoes || []).filter(function (v) { return v.id !== id; });
+    // v752: a avaliação apagada (quase sempre por estar ERRADA) continuava no
+    // app do aluno até outra edição republicar — a exclusão também marca pendente
+    if (avRm) marcaAppPendente(st, avRm.alunoId);
     save(st);
   });
 
@@ -20258,14 +20494,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__chatPT = { render: renderChatPT, abre: abreChat }; // testes
 
   // ---------- conta / ilha ----------
+  /* v752: cor e logo da Personalização eram pintadas em DOIS lugares (renderPers
+   * e renderConta), com as mesmas cinco linhas — um lugar só, pra regra da
+   * logo (logoOk) nunca divergir entre as telas. */
+  function pintaCorELogo(st) {
+    if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
+    var lg = logoOk((st.config || {}).logo);
+    if (lg) { $("cfgLogoPrev").src = lg; $("cfgLogoPrev").hidden = false; }
+    else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
+    $("cfgLogoDel").hidden = !lg;
+  }
+  window.__pintaCorELogo = pintaCorELogo; // testes
   function renderConta() {
     var st = load();
     aplicaTema(st);
-    if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
-    var lgConta = logoOk((st.config || {}).logo);
-    if (lgConta) { $("cfgLogoPrev").src = lgConta; $("cfgLogoPrev").hidden = false; }
-    else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
-    $("cfgLogoDel").hidden = !lgConta;
+    pintaCorELogo(st);
     if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
     [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
       if (document.activeElement !== $(par[0])) $(par[0]).value = (st.config || {})[par[1]] || "";
@@ -20585,6 +20828,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__papelPT = { aplica: aplicaPapel }; // testes
   function render() {
+    render._n = (render._n || 0) + 1; // contador de teste (v752: um save = um render)
     var st = load();
     aplicaPapel();
     pintaContasNav(st);
@@ -20647,7 +20891,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * já nasce em pé) para de perder as pontas.
    * As miniaturas do painel usam object-fit:cover, então aceitam qualquer
    * formato — inclusive as fotos 16:9 que já estão salvas, que seguem valendo. */
-  function leCapa(arq, pronto) {
+  /* v752: `falhou(motivo)` é opcional — quem lê um LOTE precisa saber que a
+   * foto não entrou pra seguir pra próxima (antes o laço morria calado na
+   * primeira que falhava). Sem o callback, o alert de sempre. */
+  function leCapa(arq, pronto, falhou) {
+    var erro = function (msg) { if (falhou) falhou(msg); else alert(msg); };
     var url = URL.createObjectURL(arq);
     var img = new Image();
     img.onload = function () {
@@ -20660,10 +20908,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       c.height = Math.round(c.width / alvoR);
       c.getContext("2d").drawImage(img, Math.round((lw - cw) / 2), Math.round((lh - ch) / 2), cw, ch, 0, 0, c.width, c.height);
       var d = c.toDataURL("image/jpeg", .78);
-      if (d.length > 320 * 1024) { alert("Foto muito pesada — tente outra imagem."); return; }
+      if (d.length > 320 * 1024) { erro("Foto muito pesada — tente outra imagem."); return; }
       pronto(d);
     };
-    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
+    img.onerror = function () { URL.revokeObjectURL(url); erro("Não consegui ler essa imagem — tenta outro arquivo?"); };
     img.src = url;
   }
   window.__leCapa = leCapa; // testes
@@ -20676,6 +20924,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var t = treinoDe(st, alunoId);
     var alvo = capaColecao(t, tipo).find(function (x) { return x.id === id; });
     if (!alvo) return;
+    if (!cabeFotoNoStudio(st, dado, (alvo.capa || "").length)) return; // v752: teto das fotos do ptStudio
     alvo.capa = dado;
     marcaAppPendente(st, alunoId); // o app precisa ser republicado pra foto chegar
     save(st);
@@ -20761,7 +21010,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return '<div class="card" style="padding:10px;">' +
             '<img src="' + im.d + '" alt="' + esc(im.n) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;display:block;">' +
             '<div style="font-weight:700;font-size:13px;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(im.n) + "</div>" +
-            '<div class="muted" style="font-size:11.5px;">' + imgFmt((im.d || "").length) + " · " + S.fmtData(im.em) + "</div>" +
+            // v752: foto da nuvem é só uma URL de ~120 letras — imprimir o tamanho dela dava "0 KB", cara de foto quebrada
+            '<div class="muted" style="font-size:11.5px;">' + (imgEhNuvem(im) ? "na nuvem" : imgFmt((im.d || "").length)) + " · " + S.fmtData(im.em) + "</div>" +
             '<div class="linha-flex" style="gap:6px;margin-top:8px;">' +
             '<button class="btn sec mini" data-imgnome="' + im.id + '">Renomear</button>' +
             '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card “treino de hoje” (vale pra todos os alunos)">Usar no card</button>' +
@@ -20776,22 +21026,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     this.value = "";
     if (!arqs.length) return;
     var fila = arqs.slice(0, 10); // um lote por vez, pra não travar o navegador
+    /* v752: a foto que falha (pesada, ilegível, banco cheio) NÃO derruba o
+     * lote — conta como ignorada, o laço segue e a galeria repinta no fim com
+     * o resumo. Antes a 3ª de 8 falhando descartava as outras 5 sem aviso e
+     * as 2 que entraram só apareciam ao sair e voltar na aba. */
+    var entraram = 0, ignoradas = [];
+    var fim = function () {
+      renderImagens();
+      if (ignoradas.length) {
+        alert(S.plural(entraram, "foto entrou", "fotos entraram") + " no banco; " +
+          S.plural(ignoradas.length, "foi ignorada", "foram ignoradas") + ":\n• " + ignoradas.join("\n• "));
+      }
+    };
     (function proxima() {
       var arq = fila.shift();
-      if (!arq) { renderImagens(); return; }
+      if (!arq) { fim(); return; }
+      var nomeArq = String(arq.name || "foto");
       leCapa(arq, function (d) {
         subaGaleria(d, function (urlNuvem) {
           var lista = imgsLe();
           if (!urlNuvem && imgsPeso(lista) + d.length > IMG_TETO) {
-            alert("O banco de imagens está cheio (" + imgFmt(IMG_TETO) + ").\n\nApague alguma foto antiga antes de enviar esta — ou entre na sua conta: com a nuvem ligada, as fotos novas nem pesam no aparelho.");
-            renderImagens();
+            ignoradas.push(nomeArq + " — o banco está cheio (" + imgFmt(IMG_TETO) + "); apague alguma foto antiga ou entre na sua conta (com a nuvem, as fotos novas nem pesam aqui)");
+            proxima();
             return;
           }
-          lista.unshift({ id: S.uid(), n: String(arq.name || "foto").replace(/\.[a-z0-9]+$/i, "").slice(0, 40),
+          lista.unshift({ id: S.uid(), n: nomeArq.replace(/\.[a-z0-9]+$/i, "").slice(0, 40),
             d: urlNuvem || d, em: S.todayISO() });
           S.write("ptImagens", lista);
+          entraram++;
           proxima();
         });
+      }, function (motivo) {
+        ignoradas.push(nomeArq + " — " + motivo);
+        proxima();
       });
     })();
   });
@@ -20827,26 +21094,80 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (cp) {
       var imc = lista.find(function (x) { return x.id === cp; });
       if (!imc) return;
-      var poeCapa = function (dado) {
-        var st = load();
-        st.config = st.config || {};
-        st.config.capaTreino = dado;
-        st.config.appEditGeralEm = new Date().toISOString();
-        S.write("ptStudio", st);
+      resolveImagemGaleria(imc, function (dado) {
+        if (!dado) return;
+        if (!poeCapaGeral(dado)) return;
         alert("Pronto! “" + imc.n + "” virou a foto do card de treino do dia.\n\nToque em Publicar apps atualizados pros alunos verem.");
-      };
-      if (!imgEhNuvem(imc)) { poeCapa(imc.d); return; }
-      // v725: o app do aluno funciona SEM internet — a capa tem de viajar
-      // embutida (data:), então a foto da nuvem é baixada antes de virar capa
-      fetch(imc.d).then(function (r) { return r.blob(); }).then(function (b) {
-        var fr = new FileReader();
-        fr.onload = function () { poeCapa(String(fr.result)); };
-        fr.onerror = function () { alert("Não consegui baixar essa foto da nuvem agora — tenta de novo com internet."); };
-        fr.readAsDataURL(b);
-      }).catch(function () { alert("Não consegui baixar essa foto da nuvem agora — tenta de novo com internet."); });
+      });
     }
     renderImagens();
   });
+  /* v752: a foto que vai virar CAPA tem de ser data: — o app do aluno funciona
+   * sem internet e o builder (capaOk/imgOk) descarta URL em silêncio. Desde a
+   * v725 a galeria guarda só a URL da foto que subiu pro Storage, e só o "Usar
+   * no card" baixava antes; os outros três destinos da MESMA ação (foto por
+   * tipo, geral pela galeria, ficha/circuito/corrida) gravavam a URL e o aluno
+   * nunca via a foto. Agora todo destino passa por aqui. `cb("")` = falhou (já avisado). */
+  function resolveImagemGaleria(im, cb) {
+    if (!im || !im.d) return cb("");
+    if (!imgEhNuvem(im)) return cb(im.d);
+    var falhou = function () { alert("Não consegui baixar essa foto da nuvem agora — tenta de novo com internet."); cb(""); };
+    fetch(im.d).then(function (r) { return r.blob(); }).then(function (b) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        var d = String(fr.result || "");
+        if (!/^data:image\//.test(d)) { falhou(); return; }
+        cb(d);
+      };
+      fr.onerror = falhou;
+      fr.readAsDataURL(b);
+    }).catch(falhou);
+  }
+  window.__resolveImagemGaleria = resolveImagemGaleria; // testes
+  // a foto geral (card "treino de hoje" de todo mundo) entra por UM caminho só
+  function poeCapaGeral(dado) {
+    var st = load();
+    st.config = st.config || {};
+    if (!cabeFotoNoStudio(st, dado, (st.config.capaTreino || "").length)) return false;
+    st.config.capaTreino = dado;
+    st.config.appEditGeralEm = new Date().toISOString(); // entra no app de todo mundo
+    S.write("ptStudio", st);
+    pintaCapaPers();
+    return true;
+  }
+  /* v752: teto pras fotos que moram DENTRO do ptStudio. O banco de imagens tem
+   * chave própria e IMG_TETO de 2 MB justamente porque o navegador dá ~5 MB
+   * pro site inteiro — mas foto por tipo, capa geral, logos, itens da loja e
+   * a capa de CADA ficha de CADA aluno viajam no ptStudio, sem limite nenhum.
+   * Quando a cota estoura, o S.write descarta a gravação: aluno novo, pagamento
+   * e ficha param de gravar. Soma o que já está lá e recusa com aviso honesto. */
+  var FOTOS_STUDIO_TETO = IMG_TETO;
+  function pesoFotosStudio(st) {
+    var t = 0;
+    var soma = function (d) { if (/^data:/.test(String(d || ""))) t += String(d).length; };
+    var cfg = (st || {}).config || {};
+    Object.keys(cfg.capasTipo || {}).forEach(function (k) { soma(cfg.capasTipo[k]); });
+    soma(cfg.capaTreino); soma(cfg.logo); soma((cfg.sitePro || {}).logo);
+    (cfg.lojaItens || []).forEach(function (it) { soma(it && it.f); });
+    var tv = (st || {}).treinosV2 || {};
+    Object.keys(tv).forEach(function (aid) {
+      var tr = tv[aid] || {};
+      ["fichas", "wods", "cardio"].forEach(function (col) { (tr[col] || []).forEach(function (f) { soma(f && f.capa); }); });
+    });
+    return t;
+  }
+  // `substitui` = tamanho da foto que esta vai trocar (não conta duas vezes)
+  function cabeFotoNoStudio(st, dado, substitui) {
+    var novo = String(dado || "").length;
+    if (!novo) return true;
+    var total = pesoFotosStudio(st) - (substitui || 0) + novo;
+    if (total <= FOTOS_STUDIO_TETO) return true;
+    alert("As fotos do studio (por tipo, geral, logos e das fichas) já somam " + imgFmt(total - novo) +
+      " — o limite é " + imgFmt(FOTOS_STUDIO_TETO) + ", senão a memória do navegador enche e o painel para de gravar aluno, pagamento e ficha.\n\n" +
+      "Tire a foto de alguma ficha (a foto por TIPO cobre todas de uma vez) ou use fotos mais leves.");
+    return false;
+  }
+  window.__fotosStudio = { peso: pesoFotosStudio, cabe: cabeFotoNoStudio, teto: FOTOS_STUDIO_TETO }; // testes
   // escolher da galeria: usado pela Personalização e pelas fichas
   var galDestino = null; // {tipo:'geral'} ou {tipo:'ficha', id, aluno}
   function abreGaleria(destino) {
@@ -20880,17 +21201,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       st.config.sitePro.capaId = im.id;
       S.write("ptStudio", st);
       renderSitePro();
-    } else if (galDestino.tipo === "tipocapa") {
-      salvaCapaTipo(galDestino.chave, im.d);
-    } else if (galDestino.tipo === "geral") {
-      st.config = st.config || {};
-      st.config.capaTreino = im.d;
-      st.config.appEditGeralEm = new Date().toISOString();
-      S.write("ptStudio", st);
-      pintaCapaPers();
     } else {
-      // ficha, circuito ou corrida — o destino diz em qual coleção mexer
-      poeCapa(galDestino.tipo, galDestino.id, galDestino.aluno, im.d);
+      // v752: capa é data: sempre — a foto da nuvem é baixada antes (o app é offline)
+      var dest = galDestino;
+      resolveImagemGaleria(im, function (dado) {
+        if (!dado) return;
+        if (dest.tipo === "tipocapa") salvaCapaTipo(dest.chave, dado);
+        else if (dest.tipo === "geral") poeCapaGeral(dado);
+        else poeCapa(dest.tipo, dest.id, dest.aluno, dado); // ficha, circuito ou corrida — o destino diz em qual coleção mexer
+      });
     }
     $("dlgGaleria").close();
   });
@@ -20963,6 +21282,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     st.config = st.config || {};
     st.config.capasTipo = st.config.capasTipo || {};
+    if (dado && !cabeFotoNoStudio(st, dado, (st.config.capasTipo[k] || "").length)) return false; // v752: teto
     if (dado) st.config.capasTipo[k] = dado; else delete st.config.capasTipo[k];
     st.config.appEditGeralEm = new Date().toISOString(); // entra no app de todo mundo
     S.write("ptStudio", st);
@@ -20998,14 +21318,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var arq = this.files && this.files[0];
     this.value = "";
     if (!arq) return;
-    leCapa(arq, function (d) {
-      var st = load();
-      st.config = st.config || {};
-      st.config.capaTreino = d;
-      st.config.appEditGeralEm = new Date().toISOString(); // entra no app de todo mundo
-      S.write("ptStudio", st);
-      pintaCapaPers();
-    });
+    leCapa(arq, function (d) { poeCapaGeral(d); }); // v752: um caminho só pra foto geral (com o teto)
   });
   $("cfgCapaDel").addEventListener("click", function () {
     var st = load();
@@ -21113,6 +21426,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("avData").value = S.todayISO();
   renderDobrasCampos();
   S.onChange(function (k) { if (k === "ptStudio") render(); });
+  ouvinteRender = true; // a partir daqui o save() deixa o redesenho com o ouvinte (v752)
+  window.__renderPT.conta = function () { return render._n || 0; }; // testes: quantas vezes pintou
+  window.__renderPT.save = save;                                    // testes: grava sem passar pela tela
   verificaOnboarding();
   aplicaTema(load()); // tema no boot (a cor/logo do studio pintam o painel na hora)
   render();
