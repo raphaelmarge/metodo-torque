@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TORQUE PERSONAL — o sistema que te oferece o que você não pode comprar: tempo</title>
-<meta name="description" content="Você é uma empresa de uma pessoa só. O TORQUE PERSONAL assume os departamentos que comem a sua semana — treinos com IA, app do aluno com a sua marca, cobrança com baixa automática, agenda e retenção — por R$ 49/mês. 14 dias grátis, sem cartão.">
+<title>TORQUE PERSONAL — App do aluno com a sua marca. Tempo de volta.</title>
+<meta name="description" content="App do aluno com a sua marca. O TORQUE PERSONAL assume fichas, cobrança, agenda e retenção — por R$ 49/mês. 14 dias grátis, sem cartão.">
 <link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <style>
@@ -36,6 +36,7 @@
   .nums .linha { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 44px; padding: 22px 20px; text-align: center; }
   .nums b { font-size: 22px; display: block; letter-spacing: -.01em; }
   .nums span { color: #8a8695; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .nums .prova-linha { text-align: center; color: #b9b3c6; font-size: 14px; line-height: 1.55; padding: 0 20px 20px; }
 
   /* seções */
   .sec { padding: 64px 0 10px; }
@@ -128,6 +129,7 @@
   .preco-card .p { font-size: 54px; font-weight: 800; letter-spacing: -.02em; margin-top: 8px; }
   .preco-card .p small { font-size: 17px; color: #a9a4b5; font-weight: 600; }
   .preco-card ul { list-style: none; padding: 0; margin: 16px 0 6px; color: #cfcbdb; font-size: 14.5px; line-height: 2.05; text-align: left; display: inline-block; }
+  .preco-card .ctaRow { justify-content: center; margin-top: 18px; }
   .preco-card li { padding-left: 28px; position: relative; }
   .preco-card li svg { position: absolute; left: 0; top: 8px; color: #4ade80; }
   .preco .sob { color: #8a8695; font-size: 13px; margin-top: 14px; }
@@ -172,11 +174,12 @@
     <div class="grid">
       <div>
         <div class="kicker">TORQUE ON · TORQUE PERSONAL</div>
-        <h1>O sistema que te oferece o que você não pode comprar: <em>tempo</em></h1>
-        <p class="sub">Você não é "só" um personal trainer. Você é uma <b style="color:#fff">empresa de uma pessoa só</b> — e hoje acumula todos os cargos dela. O TORQUE PERSONAL assume os departamentos que comem a sua noite: fichas, cobrança, agenda, retenção. E te devolve as horas.</p>
+        <h1>App do aluno com a sua marca. Tempo de <em>volta</em>.</h1>
+        <p class="sub">Você não é "só" um personal. Você é uma <b style="color:#fff">empresa de uma pessoa só</b>. O TORQUE PERSONAL coloca o treino no celular dele com o SEU nome, assume fichas, cobrança, agenda e retenção, e te devolve as horas.</p>
         <span class="selo">14 dias grátis, sem cartão · depois R$ 49/mês · sem fidelidade</span>
         <div class="ctaRow">
-          <a class="cta" id="ctaZap" href="personal.html">Quero meu tempo de volta</a>
+          <a class="cta" href="personal.html">Quero meu tempo de volta</a>
+          <a class="cta ghost" data-zap href="https://wa.me/5521994429198?text=Oi!%20Quero%20conhecer%20o%20TORQUE%20PERSONAL.%20Como%20funciona?">Falar no WhatsApp</a>
           <a class="cta ghost" href="demo-aluno.html">Ver o app do aluno ao vivo</a>
         </div>
       </div>
@@ -192,6 +195,7 @@
     <div><b>Funciona offline</b><span>academia sem sinal não trava</span></div>
     <div><b>R$ 49 fixo</b><span>sem cobrança por aluno</span></div>
   </div>
+  <p class="prova-linha wrap">O mesmo motor que roda a TORQUE FIT todo dia. 14 dias sem cartão pra você ver com os seus alunos.</p>
 </div>
 
 <main>
@@ -423,6 +427,10 @@
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Financeiro com baixa automática — na SUA conta</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Sem fidelidade — cancele quando quiser</li>
         </ul>
+        <div class="ctaRow">
+          <a class="cta" href="personal.html">Começar os 14 dias grátis</a>
+          <a class="cta ghost" data-zap href="https://wa.me/5521994429198?text=Oi!%20Quero%20conhecer%20o%20TORQUE%20PERSONAL.%20Como%20funciona?">Falar no WhatsApp</a>
+        </div>
       </div>
       <p class="sob">Menos que o valor de UMA aula sua. Por mês. Pela empresa inteira.</p>
     </div>
@@ -458,14 +466,26 @@
       <summary>E se eu já uso outro app ou planilha?</summary>
       <p>Você cadastra seus alunos em minutos (o treino automático monta as fichas pela anamnese) e manda o link novo pra turma. A maioria migra a carteira inteira em uma tarde — e dá pra testar com dois ou três alunos antes.</p>
     </details>
+    <details>
+      <summary>Como eu pago os R$ 49?</summary>
+      <p>Nos 14 dias não pede cartão. Depois você assina no app, R$ 49/mês, sem adesão. Cancela quando quiser.</p>
+    </details>
+    <details>
+      <summary>Funciona no iPhone?</summary>
+      <p>Sim. Safari, Compartilhar, Adicionar à Tela de Início. Android igual, no Chrome. Sem App Store, sem Play.</p>
+    </details>
+    <details>
+      <summary>Como cancelo?</summary>
+      <p>No app, quando quiser. Sem multa, sem ligar.</p>
+    </details>
   </section>
 
   <div class="fim">
     <h2>Dinheiro você faz de novo.<br>Terça-feira à noite, não.</h2>
-    <p>Contrate os seis departamentos por R$ 49 e fique só com o que ninguém faz por você.</p>
+    <p>Contrate os departamentos por R$ 49 e fique só com o que ninguém faz por você.</p>
     <div class="ctaRow" style="justify-content:center;">
-      <a class="cta" id="ctaZap2" href="personal.html">Começar meu teste grátis</a>
-      <a class="cta ghost" href="personal.html">Testar grátis por 14 dias — começa agora</a>
+      <a class="cta" href="personal.html">Quero meu tempo de volta</a>
+      <a class="cta ghost" data-zap href="https://wa.me/5521994429198?text=Oi!%20Quero%20conhecer%20o%20TORQUE%20PERSONAL.%20Como%20funciona?">Falar no WhatsApp</a>
       <a class="cta ghost" href="demo-personal.html">Ver o painel do personal ao vivo</a>
     </div>
   </div>
@@ -483,10 +503,9 @@
   try {
     var zap = (new URLSearchParams(location.search).get("zap") || "5521994429198").replace(/\D/g, "");
     if (zap) {
-      ["ctaZap", "ctaZap2"].forEach(function (id) {
-        var cta = document.getElementById(id);
-        if (!cta) return;
-        cta.href = "https://wa.me/" + zap + "?text=" + encodeURIComponent("Oi! Quero conhecer o TORQUE PERSONAL. Como funciona?");
+      var href = "https://wa.me/" + zap + "?text=" + encodeURIComponent("Oi! Quero conhecer o TORQUE PERSONAL. Como funciona?");
+      document.querySelectorAll("[data-zap]").forEach(function (cta) {
+        cta.href = href;
         cta.target = "_blank";
         cta.rel = "noopener";
       });
