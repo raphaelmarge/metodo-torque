@@ -2174,6 +2174,7 @@ begin
     select count(*) into v_donos from membros where academia_id = v_acad and papel = 'dono';
     if v_donos <= 1 then
       delete from academias where id = v_acad;
+      perform public.app_hist_apaga_academia(v_acad); -- v744: o histórico morre junto
       v_ilhas := v_ilhas + 1;
     end if;
   end loop;
@@ -2604,6 +2605,7 @@ begin
     delete from public.app_quest        where token = p_token;
     delete from public.app_feed         where token = p_token;
     delete from public.app_aluno        where token = p_token;
+    delete from public.app_aluno_hist   where token = p_token; -- v744: apagar de vez apaga o histórico também
     return json_build_object('ok', true, 'apagado', true);
   end if;
   -- revogar: some o pacote e o login, mas o retorno (histórico que o painel lê)
@@ -2632,30 +2634,50 @@ begin
 end;
 $$;
 
--- Faxina: o painel manda os tokens que ele AINDA conhece e o banco corta o resto
--- da academia. É o conserto de quem formatou o computador ou restaurou um backup
--- antigo e ficou com acessos fantasmas na nuvem, sem saber.
--- Devolve só a contagem — token nunca volta pro navegador.
-create or replace function public.app_aluno_faxina(p_tokens text[])
+-- v744: a faxina só alcança os acessos do MÓDULO e da ACADEMIA que chamou.
+-- Antes ela revogava toda linha de app_aluno de TODAS as academias do
+-- usuário que não estivesse na lista — e a lista vinha só com os alunos do
+-- Personal: os pacientes do Nutri (mesma tabela, mesma academia) e os alunos
+-- de outra academia em que ele fosse membro ficavam sem app.
+create or replace function public.app_aluno_faxina(p_tokens text[], p_academia uuid default null, p_modulo text default 'personal')
 returns json
 language plpgsql security definer
 set search_path = public
 as $$
 declare v_n int;
 begin
+  if p_academia is not null and p_academia not in (select public.minhas_academias()) then
+    return json_build_object('erro', 'Essa academia não é desta conta.');
+  end if;
   update public.app_aluno
      set revogado_em = now(), dados = null, login = '', senha = ''
    where academia_id in (select public.minhas_academias())
+     and (p_academia is null or academia_id = p_academia)
      and revogado_em is null
+     and dados is not null
+     and (case when p_modulo = 'nutri'
+               then coalesce(dados->'dados'->>'tipo', '') = 'nutri'
+               else coalesce(dados->'dados'->>'tipo', '') <> 'nutri' end)
      and not (token = any (coalesce(p_tokens, array[]::text[])));
   get diagnostics v_n = row_count;
   return json_build_object('ok', true, 'revogados', v_n);
 end;
 $$;
+grant execute on function public.app_aluno_faxina(text[], uuid, text) to authenticated;
+
+-- v744: "apagar de vez" e "excluir minha conta" limpam também as cópias de
+-- histórico (dados_hist / app_aluno_hist), que não têm chave estrangeira e
+-- ficavam pra sempre — o oposto do que a exclusão promete.
+create or replace function public.app_hist_apaga_academia(p_acad uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.dados_hist     where academia_id = p_acad;
+  delete from public.app_aluno_hist where academia_id = p_acad;
+end $$;
+revoke all on function public.app_hist_apaga_academia(uuid) from public, anon, authenticated;
 
 grant execute on function public.aluno_revoga_acesso(text, boolean) to authenticated;
 grant execute on function public.aluno_religa_acesso(text) to authenticated;
-grant execute on function public.app_aluno_faxina(text[]) to authenticated;
 
 -- ==================== QUEM AINDA NÃO ABRIU PELO LINK ====================
 -- (2026-08) O app deixou de existir como arquivo .html baixado. Quem ficou com

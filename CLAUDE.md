@@ -1298,6 +1298,26 @@ PROGRAMÁTICO (`rd._prog`, 500 ms) não reescreve o campo nem marca `gv.mexe`
 de progresso: teto de 12 **por ângulo**, e a primeira de cada ângulo (o
 "antes") nunca sai — sai a segunda mais antiga. Ganchos: `window.__gw`.
 
+**Revisão — frentes 10 e 12 (mt-v744)**: (1) **Semana do aluno** guarda o ID
+da ficha; Gerar fichas (regras/IA) e apagar ficha trocavam ids sem mexer no
+plano e o app mostrava DESCANSO no dia de treino. `remapeiaPlano(t, velhas,
+novas)` reencaixa pela LETRA do título (`letraFicha`) ou pela posição; o dia
+sem par sai e o status do gerador avisa (`planoAviso`). (2) **isolamento**:
+push-envia `prof` exige ser MEMBRO da academia do corpo (senha da push_config
+e service key seguem valendo; regra `prof-membro` no ping); chat-envia só cai
+em `donoUnico` quando NINGUÉM tem número (com outros cadastrados devolve `{}`
+— era latente porque o WHATSAPP_TOKEN global está vazio); `app_aluno_faxina`
+ganhou `p_academia` e `p_modulo` — só revoga linhas da academia que chamou e
+do módulo certo (pacote com `dados->'dados'->>'tipo'`; os pacientes do Nutri
+moram na mesma tabela e ficavam sem app); `excluir_minha_conta` e "apagar de
+vez" limpam `dados_hist`/`app_aluno_hist` (`app_hist_apaga_academia`,
+revogada de anon/authenticated). Tudo aplicado no banco em 2026-09-02 e
+espelhado no setup; push-envia e chat-envia republicadas. (3) `app/index.html`:
+token da URL diferente do guardado = limpa `pt*`/`nt*` e o pacote antes de
+abrir (`window.__limpouOutroAluno`) — dois alunos no mesmo celular misturavam
+peso, fotos e chat. (4) o app do paciente diz a verdade: a primeira e a última
+foto vão pra ficha do nutricionista.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

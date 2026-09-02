@@ -2398,6 +2398,33 @@ async function abaPt(p, a) {
     ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)return;/.test(bld),
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
     ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
+
+    /* ---- v744: Semana do aluno reencaixada quando as fichas trocam ---- */
+    const v744 = await p.evaluate(() => {
+      const tPl = { plano: { dias: { "1": { tp: "ficha", id: "fa" }, "3": { tp: "ficha", id: "fb" }, "5": { tp: "ficha", id: "fc" } } } };
+      const velhas = [{ id: "fa", titulo: "A — Peito" }, { id: "fb", titulo: "B — Costas" }, { id: "fc", titulo: "C — Pernas" }];
+      const novas = [{ id: "na", titulo: "A — Peito e ombro" }, { id: "nb", titulo: "B — Costas" }];
+      const orf = window.__remapeiaPlano(tPl, velhas, novas);
+      return orf === 1 && tPl.plano.dias["1"].id === "na" && tPl.plano.dias["3"].id === "nb" && !tPl.plano.dias["5"];
+    });
+    ok(v744, "🗓️ v744: a Semana do aluno é reencaixada quando as fichas trocam (A→A, B→B; C sem par sai)");
+
+    /* ---- v744: isolamento e privacidade — lido nos arquivos servidos ---- */
+    const srv744 = await p.evaluate(async () => {
+      const t = async (u) => await (await fetch(u)).text();
+      return { push: await t("supabase/functions/push-envia/index.ts"), chat: await t("supabase/functions/chat-envia/index.ts"),
+        sql: await t("supabase-setup.sql"), shell: await t("app/index.html"), nutri: await t("app/nutri-builder.js"), painel: await t("personal.html") };
+    });
+    ok(/membros\?select=academia_id&user_id=eq\.\$\{uidP\}&academia_id=eq\.\$\{aid\}/.test(srv744.push) && /Você não é membro dessa academia/.test(srv744.push),
+      "🔐 v744: push 'prof' exige ser membro da academia (senha ou service key continuam valendo)");
+    ok(/if \(!outros\.length\) return \{ donoUnico: true \};\s*[\s\S]{0,600}return \{\};/.test(srv744.chat),
+      "🔐 v744: chat-envia só cai em 'dono único' quando NINGUÉM tem número próprio");
+    ok(/app_aluno_faxina\(p_tokens text\[\], p_academia uuid default null, p_modulo text default 'personal'\)/.test(srv744.sql) &&
+      /app_hist_apaga_academia/.test(srv744.sql) && /delete from public\.app_aluno_hist   where token = p_token/.test(srv744.sql) &&
+      /p_academia: nuvem\.aid \|\| null, p_modulo: "personal"/.test(srv744.painel),
+      "🔐 v744: a faxina só alcança o módulo/academia que chamou e a exclusão limpa o histórico");
+    ok(/tUrl !== tAnt/.test(srv744.shell) && /__limpouOutroAluno/.test(srv744.shell), "🔐 v744: outro aluno no mesmo aparelho limpa os registros do anterior");
+    ok(/A primeira e a última foto vão pra ficha do seu nutricionista/.test(srv744.nutri), "🔐 v744: o app do paciente diz a verdade sobre as fotos");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
@@ -11137,12 +11164,14 @@ async function abaPt(p, a) {
   p = await ctx.newPage();
   p.on("pageerror", (e) => erros.push(String(e)));
   await p.goto(BASE + "/personal-vendas.html?zap=5531999990000");
-  const cta = await p.evaluate(() => document.getElementById("ctaZap").href);
+  // v744: a landing nova (Claude Design, 2026-09-01) trocou o #ctaZap por vários CTAs com data-zap
+  const cta = await p.evaluate(() => (document.querySelector("[data-zap]") || document.getElementById("ctaZap") || {}).href || "");
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
-  ok(/personal trainer/.test(corpo) && /treino guiado/i.test(corpo) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
+  const htmlV = await p.evaluate(() => document.documentElement.outerHTML);
+  ok(/personal trainer/i.test(corpo) && /treino guiado/i.test(htmlV) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
   ok(/14 dias grátis/.test(corpo) && /sem cartão/.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
-  ok(await p.evaluate(() => [...document.querySelectorAll("a.cta")].some((a) => /Testar grátis/.test(a.textContent) && /personal\.html/.test(a.href))), "CTA 'Testar grátis' leva direto pro módulo");
+  ok(await p.evaluate(() => [...document.querySelectorAll("a.cta")].some((a) => /Testar grátis|14 dias grátis|meu tempo de volta/i.test(a.textContent) && /personal\.html/.test(a.href))), "CTA principal leva direto pro módulo");
   {
     // o número de exercícios anunciado nunca pode ficar acima do banco real
     const anunciado = +((corpo.match(/(\d{3,4})\+? exercícios/) || [])[1] || 0);

@@ -109,7 +109,12 @@ async function credencialDa(aid: string): Promise<any> {
     const r2 = await sb("zap_config?select=academia_id&token=neq.&limit=1");
     const outros = r2.ok ? await r2.json() : [];
     if (!outros.length) return { donoUnico: true };
-  } catch { /* sem banco: cai no modo dono único abaixo */ }
+    /* v744: OUTRAS academias têm número próprio → esta não pode pegar o do
+     * dono do sistema (a conta da Meta dele pagaria o WhatsApp dos outros e o
+     * cliente responderia pro número errado). Antes caía em donoUnico do
+     * mesmo jeito — latente só porque o WHATSAPP_TOKEN global está vazio. */
+    return {};
+  } catch { /* sem banco: cai no modo dono único */ }
   return { donoUnico: true };
 }
 
