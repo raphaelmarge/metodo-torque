@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v743** |
-| Estado do repo em | 2026-09-01 (commit `cc7fb92`) |
+| App em | **mt-v744** |
+| Estado do repo em | 2026-09-01 (commit `9477321`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 204 |
+| Lançamentos no histórico | 205 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v669** (2026-08-29), e o app está em **mt-v743** — ou seja, **74 versões** aconteceram depois disso.
+vez em **mt-v669** (2026-08-29), e o app está em **mt-v744** — ou seja, **75 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v744 | Semana do aluno reencaixada + isolamento e privacidade (frentes 10 e 12) |
 | mt-v743 | app do aluno — retorno do aluno novo, mescla de listas no banco, corrida e treino guiado (frentes 5 e 14) |
 | mt-v742 | dia da semana, chat, e-mail de acesso, fotos no ptStudio, IA e carinhas (frentes 2, 4, 6, 7, 8 e 13 da revisão) |
 | mt-v741 | botões do redesenho respondem ao clique; Montar treino e Chat da ficha levam o aluno |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v732 | o volume do treino ganha memória e comparação |
 | mt-v731 | mural Seus recordes na Evolução do aluno |
 | mt-v730 | o vídeo do professor no exercício da ficha |
-| mt-v729 | reavaliação em atraso entra no Resolver hoje |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
