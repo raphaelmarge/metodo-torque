@@ -1490,6 +1490,38 @@ asserts); três asserts antigos mudaram de propósito (rótulo da aba, do KPI,
 cherry-pick conflitou com o lote v747 em três pontos triviais (o KPI de
 treinos e a consulta do chat) — o lado do agente venceu.
 
+**Revisão — Financeiro e Relatórios, pt-fin e pt-rel (mt-v751, 26 itens)**:
+**Financeiro** — `mesAtual()` virou FUNÇÃO (a variável era congelada na
+carga e, na virada do mês, duas listas na mesma tela cobravam meses
+diferentes); "Ativar mensalidade no cartão" só aparece sem gateway próprio
+E depois que o `pingPagarmeGlobal` confirma `chaveConfigurada` (cache em
+`window.__pingPagarme` — teste que precisa do botão zera
+`__pingPagarme.cache` e responde `{ok, chaveConfigurada: true}` ao ping da
+`pagarme`); com Mercado Pago/Pagar.me próprio a tela diz "automática só pelo
+Asaas" com atalho; Link sem gateway dá recado em português (o botão CONTINUA
+aparecendo de propósito: o caminho da `pagarme` global é documentado como
+intencional); cortesia (sem contrato e sem valor) sai da lista de quem não
+pagou; `msgCobranca(st, a)` é o texto ÚNICO de cobrança (lista, Cobrar
+todos, Resolver hoje, alertas — usa o modelo `atraso` do professor);
+`rotuloValorPlano(pl)` (/sessão, / N aulas); gráfico de 6 meses sempre em
+mil e média só dos meses com pagamento; despesas com tokens; encerrar fixa
+em mês passado pede confirmação. **Relatórios** — churn = `retencaoPT` nos
+3 lugares (`fimDoMes(mes)`); rótulos honestos (Mensalidade média / Recebido
+por pagante / Valor médio por venda); "falta receber" só de mensalidades por
+competência (`p.mes`); setas retroativas valem pra retenção, semanas,
+`ativosRel` e atrasados; assiduidade separa "sem registro" de falta; alerta
+de atraso usa `cobrancaVencida`; `semPagar(mes)`/`semPagarNomes` pra
+qualquer mês; fechamento ganhou `#fchEmailP` (reusa `enviaEmailFn` +
+`htmlFechamento`); semanas rotuladas pela segunda-feira; "Saldo" → "Ativos
+hoje"; "Sua hora rendeu" divide `fatAulas`; crédito de hora-aula vira venda
+"Créditos de aula"; `formaFamilia()` nos dois cards; De/Até das Vendas
+sobrevive ao redesenho (`rvMesBase`); `casaNiver()` casa 29/02 com 28/02
+fora do bissexto (card e régua de push). ⚠️ Alertas dos Relatórios: o mesmo
+aluno aparece em vários grupos (`[data-algrupo]`) — assert sobre "Pagamento
+atrasado" tem de recortar o grupo. `window.__renderPT` repinta o painel sem
+`reload`. Já resolvidos na v745 e conferidos: Recebi escondido pra
+assinatura automática; Pix da renovação do pacote com desc.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
