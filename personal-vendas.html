@@ -10,14 +10,21 @@
 <style>
   * { box-sizing: border-box; margin: 0; }
   html { scroll-behavior: smooth; }
-  body { font-family: "Archivo", system-ui, sans-serif; background: #0d0c10; color: #f5f4f7; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #0d0c10; color: #f5f4f7; overflow-x: hidden; }
   img { max-width: 100%; height: auto; display: block; }
   a { color: inherit; }
 
   .wrap { max-width: 1020px; margin: 0 auto; padding: 0 20px; }
 
   /* hero */
-  .hero { background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.35), transparent 60%), #0d0c10; padding: 54px 0 0; overflow: hidden; }
+  .hero { position: relative; background: #0d0c10; padding: 64px 0 0; overflow: hidden; }
+  .heroBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 42%; z-index: 0; pointer-events: none; }
+  .hero::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(13,12,16,.88) 0%, rgba(13,12,16,.58) 46%, rgba(13,12,16,.28) 100%),
+      linear-gradient(180deg, rgba(13,12,16,.28) 0%, rgba(13,12,16,.18) 50%, #0d0c10 100%),
+      radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.42), transparent 58%); }
+  .hero .wrap { position: relative; z-index: 1; }
   .hero .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 30px; align-items: center; }
   .kicker { font-size: 12px; letter-spacing: .24em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
   .hero h1 { font-size: clamp(31px, 5vw, 50px); font-weight: 800; letter-spacing: -.02em; line-height: 1.08; margin: 14px 0 16px; }
@@ -32,7 +39,7 @@
   .hero .fone { transform: translateY(26px) rotate(2deg); }
 
   /* números */
-  .nums { border-top: 1px solid #211d2b; border-bottom: 1px solid #211d2b; background: #121016; margin-top: 0; }
+  .nums { position: relative; z-index: 1; border-top: 1px solid #211d2b; border-bottom: 1px solid #211d2b; background: #121016; margin-top: 0; }
   .nums .linha { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 44px; padding: 22px 20px; text-align: center; }
   .nums b { font-size: 22px; display: block; letter-spacing: -.01em; }
   .nums span { color: #8a8695; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
@@ -142,16 +149,61 @@
   .faq p { color: #b9b3c6; font-size: 14px; line-height: 1.65; margin-top: 10px; }
 
   /* fim */
-  .fim { text-align: center; padding: 40px 20px 70px; }
+  .fim { position: relative; isolation: isolate; text-align: center; padding: 80px 20px 90px; overflow: hidden; }
+  .fimBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 42%; z-index: -2; }
+  .fim::before { content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(13,12,16,.42) 0%, rgba(13,12,16,.62) 100%),
+                radial-gradient(80% 80% at 50% 40%, rgba(124,58,237,.22), transparent 70%); }
   .fim h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 10px; }
   .fim p { color: #b9b3c6; font-size: 15.5px; margin-bottom: 20px; }
   .rodape { border-top: 1px solid #211d2b; color: #8a8695; font-size: 12.5px; text-align: center; padding: 22px 20px 30px; line-height: 1.8; }
   .rodape a { color: #a78bfa; }
 
+
+  /* fotos editoriais */
+  .foto { border-radius: 18px; overflow: hidden; background: #17141d; }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .diagGrid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 36px; align-items: center; }
+  .diagFoto { height: 420px; }
+  .diagFoto img { height: 420px; object-position: 58% 22%; }
+
+  .corridaVis { position: relative; display: block; margin-bottom: 12px; }
+  .corridaVis .foto { height: 460px; }
+  .corridaVis .foto img { height: 460px; object-position: 72% 40%; }
+  .corridaVis .fone { position: absolute; right: 14px; bottom: -22px; width: min(196px, 46%); margin: 0; z-index: 2; }
+
+  .provaApp { margin-top: 22px; height: 240px; }
+  .provaApp img { height: 240px; object-position: 60% 30%; }
+
+  .vcol.gratis.hasFoto { padding: 0; overflow: hidden; }
+  .vFoto { height: 188px; overflow: hidden; }
+  .vFoto img { width: 100%; height: 188px; object-fit: cover; object-position: center 28%; display: block; }
+  .vcol.gratis.hasFoto h3 { padding: 20px 22px 12px; }
+  .vcol.gratis.hasFoto ul { padding: 0 22px 22px; }
+
+  .honesto { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
+  .honesto .foto { height: 420px; }
+  .honesto .foto img { height: 420px; object-position: 45% 40%; }
+  .honesto .maisGrid { grid-template-columns: 1fr; }
+
+  .fotoStripWrap { padding: 36px 0 8px; }
+  .fotoStrip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .fotoStrip .foto { height: 168px; border-radius: 14px; }
+  .fotoStrip img { height: 168px; object-fit: cover; }
+
   @media (max-width: 760px) {
-    .hero .grid, .sec .grid, .versus .cols { grid-template-columns: 1fr; }
+    .hero .grid, .sec .grid, .versus .cols, .diagGrid, .honesto, .corridaVis { grid-template-columns: 1fr; }
     .maisGrid { grid-template-columns: 1fr 1fr; }
     .empGrid { grid-template-columns: 1fr; }
+    .diagFoto, .diagFoto img { height: 260px; }
+    .corridaVis .foto, .corridaVis .foto img { height: 240px; }
+    .corridaVis .fone { position: static; width: min(260px, 70vw); margin: 12px auto 0; }
+    .honesto .foto, .honesto .foto img { height: 260px; }
+    .honesto .maisGrid { grid-template-columns: 1fr; }
+    .fotoStrip .foto, .fotoStrip img { height: 112px; }
+    .vFoto, .vFoto img { height: 160px; }
+    .provaApp, .provaApp img { height: 200px; }
   }
   @media (max-width: 520px) {
     .maisGrid { grid-template-columns: 1fr; }
@@ -159,6 +211,14 @@
     .par .fone.sm:last-child { margin-top: 18px; }
     .sec.inv .grid .txt { order: 0; }
     .hero { text-align: center; }
+    .hero::after {
+      background:
+        linear-gradient(180deg, rgba(13,12,16,.76) 0%, rgba(13,12,16,.68) 50%, #0d0c10 100%),
+        radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.38), transparent 58%);
+    }
+    .fotoStrip { gap: 6px; }
+    .fotoStrip .foto, .fotoStrip img { height: 88px; border-radius: 10px; }
+    .fim { padding: 64px 16px 72px; }
     .hero .sub { margin: 0 auto; }
     .ctaRow { justify-content: center; }
     .hero .fone { transform: translateY(20px); }
@@ -170,6 +230,7 @@
 <body>
 
 <header class="hero">
+  <img class="heroBg" src="assets/vendas/lifestyle/studio.webp" alt="Academia boutique vazia, piso de borracha escuro e LED roxo no teto ao entardecer" width="1536" height="1024" fetchpriority="high">
   <div class="wrap">
     <div class="grid">
       <div>
@@ -183,7 +244,7 @@
           <a class="cta ghost" href="demo-aluno.html">Ver o app do aluno ao vivo</a>
         </div>
       </div>
-      <div class="fone"><img src="assets/vendas/app-inicio.webp" alt="Tela inicial do app do aluno, com o nome do studio, o treino do dia e a semana" width="780" height="1688"></div>
+      <div class="fone"><img src="assets/vendas/app-inicio-novo.webp" alt="Tela inicial do app do aluno, com o nome do studio, o treino do dia e a semana" width="780" height="1688"></div>
     </div>
   </div>
 </header>
@@ -215,9 +276,16 @@
 
   <section class="sec" style="padding-bottom:0;">
     <div class="wrap">
-      <div class="kicker">O diagnóstico</div>
-      <h2 style="max-width:640px;">Você tem uma empresa. Ela só não tem funcionários.</h2>
-      <p style="max-width:640px;">Toda academia grande tem gente pra cada coisa: quem monta o produto, quem cobra, quem atende, quem segura o cliente. Você faz tudo isso sozinho — e as horas que sobram pro que realmente paga a conta (dar aula e vender aula) são as que sobraram.</p>
+      <div class="diagGrid">
+        <div class="txt">
+          <div class="kicker">O diagnóstico</div>
+          <h2>Você tem uma empresa. Ela só não tem funcionários.</h2>
+          <p>Toda academia grande tem gente pra cada coisa: quem monta o produto, quem cobra, quem atende, quem segura o cliente. Você faz tudo isso sozinho — e as horas que sobram pro que realmente paga a conta (dar aula e vender aula) são as que sobraram.</p>
+        </div>
+        <div class="foto diagFoto">
+          <img src="assets/vendas/lifestyle/personal-mulher.webp" alt="Personal trainer com tablet acompanhando o aluno na remada, numa academia escura com LED roxo" width="1536" height="1024" loading="lazy">
+        </div>
+      </div>
       <div class="empGrid">
         <div class="emp"><div class="num">7</div><p><b>departamentos</b> que uma academia tem e você também: produto, entrega, financeiro, comercial, atendimento, qualidade e marketing.</p></div>
         <div class="emp"><div class="num">1</div><p><b>funcionário</b>: você. Que ainda precisa estar na sala, do lado do aluno, olhando a execução.</p></div>
@@ -276,6 +344,14 @@
     </div>
   </section>
 
+  <div class="fotoStripWrap">
+    <div class="wrap fotoStrip">
+      <div class="foto"><img src="assets/vendas/lifestyle/coaching.webp" alt="Personal corrigindo o agachamento de uma aluna" width="1536" height="1024" loading="lazy"></div>
+      <div class="foto"><img src="assets/vendas/lifestyle/spotting.webp" alt="Personal fazendo o spotting de um supino, mãos perto da barra" width="1536" height="1024" loading="lazy"></div>
+      <div class="foto"><img src="assets/vendas/lifestyle/personal-mulher.webp" alt="Personal com tablet ao lado do aluno na remada" width="1536" height="1024" loading="lazy"></div>
+    </div>
+  </div>
+
   <section class="sec">
     <div class="wrap grid">
       <div class="txt">
@@ -288,7 +364,12 @@
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>O resultado volta pro seu painel automaticamente</li>
         </ul>
       </div>
-      <div class="fone"><img src="assets/vendas/app-corrida.webp" alt="Tela cheia da corrida com os quilômetros em número gigante, tempo, ritmo e calorias" loading="lazy" width="780" height="1688"></div>
+      <div class="corridaVis">
+        <div class="foto">
+          <img src="assets/vendas/lifestyle/corrida-lifestyle.webp" alt="Aluna correndo ao entardecer na orla, relógio GPS no pulso, céu roxo e laranja" width="1536" height="1024" loading="lazy">
+        </div>
+        <div class="fone"><img src="assets/vendas/app-corrida.webp" alt="Tela cheia da corrida com os quilômetros em número gigante, tempo, ritmo e calorias" loading="lazy" width="780" height="1688"></div>
+      </div>
     </div>
   </section>
 
@@ -314,6 +395,9 @@
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg><b style="color:#fff">Circuito rodando</b>: relógio gigante, voltas contadas e um movimento por vez com o botão "Feito"</li>
           <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg><b style="color:#fff">E o jogo que segura aluno</b>: XP, níveis com títulos, medalhas — e a Turma, com o ranking da semana. Aluno que joga não cancela</li>
         </ul>
+        <div class="foto provaApp">
+          <img src="assets/vendas/lifestyle/app-aluno.webp" alt="Aluna sorrindo na academia, mostrando o celular com o app de treino na mão" width="1536" height="1024" loading="lazy">
+        </div>
       </div>
       <div class="tourWrap">
         <div class="fone tour">
@@ -345,7 +429,10 @@
       <h2>O que muda na prática</h2>
       <p class="subt">A semana é a mesma. O que muda é quem faz o trabalho repetido dela.</p>
       <div class="cols">
-        <div class="vcol gratis">
+        <div class="vcol gratis hasFoto">
+          <div class="vFoto">
+            <img src="assets/vendas/lifestyle/caderno.webp" alt="Personal no banco da academia com caderno espiral e celular na mão" width="1536" height="1024" loading="lazy">
+          </div>
           <h3>Hoje, tudo na sua mão</h3>
           <ul>
             <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Abrir o WhatsApp e tentar lembrar quem não pagou</li>
@@ -370,14 +457,19 @@
   </section>
 
   <section class="sec" style="padding-bottom:8px;">
-    <div class="wrap">
-      <div class="kicker" style="text-align:center;">Honestidade</div>
-      <h2 style="text-align:center;">O que o TORQUE PERSONAL não faz</h2>
-      <p style="text-align:center;max-width:560px;margin:0 auto;">Página que só promete não ajuda ninguém a decidir. Então, na cara:</p>
+    <div class="wrap honesto">
+      <div class="foto">
+        <img src="assets/vendas/lifestyle/coaching.webp" alt="Personal agachado ao lado da aluna, corrigindo o movimento de um agachamento com barra" width="1536" height="1024" loading="lazy">
+      </div>
+      <div>
+      <div class="kicker">Honestidade</div>
+      <h2>O que o TORQUE PERSONAL não faz</h2>
+      <p>Página que só promete não ajuda ninguém a decidir. Então, na cara:</p>
       <div class="maisGrid">
         <div class="mais"><b>Não dá aula por você</b><p>Correção de execução, olho no aluno e relação continuam sendo o seu trabalho — e é exatamente por isso que ele te paga.</p></div>
         <div class="mais"><b>Não fica com o seu dinheiro</b><p>O pagamento do aluno vai direto pra sua conta, no gateway que você escolher. Não somos intermediários do seu caixa.</p></div>
         <div class="mais"><b>Não inventa número</b><p>Quando falta um dado — batimento, foto, resposta — a tela diz que falta, em vez de mostrar um gráfico bonito e falso.</p></div>
+      </div>
       </div>
     </div>
   </section>
@@ -481,6 +573,7 @@
   </section>
 
   <div class="fim">
+    <img class="fimBg" src="assets/vendas/lifestyle/celebracao.webp" alt="Personal e aluna comemorando o treino com um toque de mãos na academia, LED roxo ao fundo" width="1536" height="1024" loading="lazy">
     <h2>Dinheiro você faz de novo.<br>Terça-feira à noite, não.</h2>
     <p>Contrate os departamentos por R$ 49 e fique só com o que ninguém faz por você.</p>
     <div class="ctaRow" style="justify-content:center;">
