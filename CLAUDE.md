@@ -1357,6 +1357,34 @@ régua de cobrança, de Atrasados e do filtro Devendo (o campo era gravado e
 nunca lido). Ganchos: `__enviaTreinoGrupo`, `__loadPT`, `__salvaNomeTeste`,
 `__cobraMensalN`. Os 366 médios/leves seguem por área em mt-v747+.
 
+**Revisão — os 366 médios e leves, por área (mt-v747+)**: cada área foi
+atacada por um agente num worktree próprio, com um assert por conserto, e
+integrada em lotes. NUTRI (nt-1, nt-2 — 36 itens): régua única de atraso
+`pacAtrasadoN` (usa `cobraMensalN`, dia de cobrança e `pagouMesN`) pra lista,
+Financeiro, Resolver hoje e lembretes; `cartaoFalhouEvt` monotônico como no
+Personal; `diasSumidoN` ignora consulta faltada (Radar reaproveita);
+`sexoDe(p)` normaliza o sexo (importador gravava "f"); Reativar paciente e
+encerrar oferece revogar o app; `laudoDeN` com fator de atividade do cadastro
+(um só "basal"); avaliação retroativa entra ordenada e só muda `p.peso` se for
+a mais nova; perfil repinta só o pedaço (peso/financeiro) em vez de
+`abrePerfilN`; IA de dieta vê o banco quase inteiro (`catalogoDietaIA`) e os
+ignorados aparecem pelo nome; `config.appMudouEmN` + `autoPublicaAppsN` pelo
+`stamp`; app do paciente: lembrete de água via `showNotification`, adesão em
+data local, `feitos` devolvido (ranking), código de barras grava macros.
+`tests/test-tokens-nutri.js` reprova `var(--` dentro de documento autônomo.
+Personal — Início e Alunos (pt-inicio, pt-alunos — 22 itens, mt-v747):
+`cobrancaVencida(st, a)` é a função-fonte de "vencido" (Resolver hoje, card
+do mês, Atrasados, DEVENDO da lista — conta os meses em aberto);
+`compMesAnterior()` compara até o MESMO dia do mês anterior (era mês parcial ×
+mês cheio, e `setMonth` transbordava no dia 31); `metaMesDe(a)` nos dois
+lugares (era 12 fixo × metaSemana×4); `prescricaoEm(t, a)` lê `t.fichasEm`
+carimbado por `marcaTreinoMudou` em toda prescrição — a "idade da ficha" não
+zera mais com a republicação automática; `resolverChat`/`pintaBadges` leem só
+`de=aluno, lida=false` com cópia de 10 min (`chatPend`) e o contador do Chat
+some quando zera; sino sem ruído (só pagamento com `eventoId`, treinos numa
+linha por aluno); importador tira o +55 e o CPF; `letraFicha` nos chips e no
+`alFicha`; `vaiMontarTreino()` único pra ficha/lista/Resolver.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

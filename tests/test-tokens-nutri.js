@@ -33,6 +33,9 @@ for (const [ini, fim] of REGIOES) {
   const a = limpo.indexOf(ini);
   const b = a < 0 ? -1 : limpo.indexOf(fim, a);
   ok(a > -1 && b > a, "achou a região autônoma que começa em “" + ini.slice(0, 30) + "…”");
+  // v747: o inverso também vale — DENTRO do documento autônomo var(--…) não existe
+  // (o e-mail de acesso saía com background:var(--card) e a caixa da senha chegava sem fundo)
+  if (a > -1 && b > a) ok(!/var\(--/.test(limpo.slice(a, b)), "documento autônomo “" + ini.slice(0, 30) + "…” não usa var(--…) — lá não tem :root");
   if (a > -1 && b > a) limpo = limpo.slice(0, a) + limpo.slice(b);
 }
 // o gradiente do topo e o theme-color são contrato do test-nutricao — ficam

@@ -405,7 +405,7 @@ async function abaNt(p, a) {
     fin: document.getElementById("pnFin").textContent,
   }));
   ok(perfilN.aberto && /Bruno Paciente/.test(perfilN.titulo), "perfil abre com o nome do paciente");
-  ok(/TMB 1780/.test(perfilN.alvo) && /2140/.test(perfilN.alvo), "alvo calórico calculado no perfil");
+  ok(/TMB.*1780/.test(perfilN.alvo) && /2140/.test(perfilN.alvo), "alvo calórico calculado no perfil");
   // acesso do paciente por e-mail (site com login e senha)
   ok(await p.evaluate(() => !!document.getElementById("pEmail") && !!document.getElementById("pAcessoStatus")), "cadastro rápido tem o campo de e-mail que cria o acesso do app");
   ok(await p.evaluate(() => !!document.getElementById("pnAcesso") && !!document.getElementById("pnEmail") && !!window.__acessoNutri), "perfil tem e-mail + botão 📧 Enviar acesso do app");
@@ -623,10 +623,10 @@ async function abaNt(p, a) {
       const st = window.MTStore.read("ntStudio", {});
       const pc = st.pacientes[0];
       window.__cloudOrig = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
         token: pc.appTokenN, questionario: "Check-in semanal", criado: new Date().toISOString(),
         dados: { pontuacao: 3, respostas: [{ sigla: "FOME", resposta: "Bom", pontos: 1 }, { sigla: "AGUA", resposta: "2", pontos: 2 }] },
-      }] }) }) }) }) } });
+      }] }) }) }) }) }) } });
       window.__questNT.respostas();
     });
     await p.waitForTimeout(300);
@@ -902,7 +902,8 @@ async function abaNt(p, a) {
     await pN.evaluate(() => {
       localStorage.setItem("mtapp:ntSemConta", "1");
       const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
-      const st = { config: { nome: "Consultório Q" }, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
+      // diaCobraN: 1 — "Sem pagamento" usa a régua do Financeiro (v747), e no dia 1 o mês já venceu em qualquer data do teste
+      const st = { config: { nome: "Consultório Q", diaCobraN: 1 }, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
         consultas: [], pagamentosN: [], pesagens: {} };
       for (let i = 0; i < 5; i++) {
         const id = "q" + i;
@@ -1261,6 +1262,423 @@ async function abaNt(p, a) {
     mensal: window.__cobraMensalN({ ativo: true }), pacote: window.__cobraMensalN({ ativo: true, pagto: "plano" }),
     assin: window.__cobraMensalN({ ativo: true, assinaturaAs: { id: 1 } }), inativo: window.__cobraMensalN({ ativo: false }) } : null);
   ok(cm && cm.mensal && !cm.pacote && !cm.assin && !cm.inativo, "💳 v746: régua e Atrasados só cobram mensalista (pacote e assinatura ficam fora)");
+  // ---------- revisão de código do NUTRI (nt-1 e nt-2): cada conserto com o seu assert ----------
+  {
+    console.log("Revisão NUTRI (nt-1, nt-2):");
+    const pR = await b.newPage();
+    pR.on("pageerror", (e) => erros.push("revisao nutri: " + e.message));
+    pR.on("dialog", (d) => d.accept());
+    await pR.goto(BASE + "/nutricao.html");
+    await pR.evaluate(() => {
+      localStorage.setItem("mtapp:ntSemConta", "1");
+      const iso = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+      const base = { sexo: "F", idade: 30, peso: 70, altura: 165, atividade: "mod", objetivo: "manter", ativo: true, zap: "31999990000", desde: iso(200) };
+      const st = { config: { nome: "Consultório R", diaCobraN: 28 }, pacientes: [
+        Object.assign({}, base, { id: "r0", nome: "Paciente R0", appTokenN: "tokr0" }),
+        Object.assign({}, base, { id: "r1", nome: "Paciente R1", assinaturaRec: { id: "sub_r1", desde: iso(60), valor: 150 } }),
+        Object.assign({}, base, { id: "r2", nome: "Paciente R2", ativo: false, fim: "2026-08-01", appTokenN: "tokr2" }),
+        Object.assign({}, base, { id: "r3", nome: "Paciente R3", appTokenN: "tokr3", appPubEmN: "2026-08-20T10:00:00.000Z", pagto: "pix", email: "r3@x.com" }),
+      ], dietas: {}, alimentos: [], catalogoOff: {}, consultas: [
+        { id: "cr0a", pacienteId: "r0", data: iso(100), hora: "09:00" },
+        { id: "cr0b", pacienteId: "r0", data: iso(40), hora: "09:00", faltou: true },
+      ], pagamentosN: [], pesagens: {} };
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify(st));
+    });
+    await pR.reload();
+    await pR.waitForTimeout(900);
+    const hojeR = await pR.evaluate(() => window.MTStore.todayISO());
+
+    // nt-1 #3 — falta não é presença: Sumindo e Radar contam a última consulta que ACONTECEU
+    const sum = await pR.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      const r0 = st.pacientes.find((x) => x.id === "r0");
+      return { dias: window.__encerraN.sumido(st, r0, window.MTStore.todayISO()), radar: document.getElementById("bRadarN").textContent };
+    });
+    ok(sum.dias >= 99 && sum.dias <= 101 && /Paciente R0/.test(sum.radar) && /há 100 dias/.test(sum.radar),
+      "🚶 v747: consulta em que o paciente FALTOU não zera o 'sumindo' — R0 está há 100 dias, não 40 (lista e Radar na mesma régua)");
+
+    // nt-1 #4 — "Sem pagamento" da lista usa a MESMA régua do Financeiro (dia de cobrança + assinatura fora)
+    const atr = await pR.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      const antes = window.__finN.atrasados(st, "2026-09-05").map((x) => x.p.id);
+      const depois = window.__finN.atrasados(st, "2026-09-28").map((x) => x.p.id);
+      const r1 = st.pacientes.find((x) => x.id === "r1");
+      const cobraR1 = window.__encerraN.cobraMensal(r1); // assinante em dia: fora da conta
+      r1.cartaoFalhouEm = "2026-09-10";
+      const recusado = window.__finN.atrasados(st, "2026-09-28").map((x) => x.p.id);
+      window.__pacFiltro("todos");
+      const rot = [...document.querySelectorAll("#pacFiltro button")].map((b) => b.textContent).join(" ");
+      const chipR1 = (document.querySelector('#listaPacientes [data-perfil="r1"]') || {}).parentElement.textContent;
+      const chipR0 = (document.querySelector('#listaPacientes [data-perfil="r0"]') || {}).parentElement.textContent;
+      const atrasadoR0 = window.__encerraN.atrasado(st, st.pacientes[0]);
+      return { antes, depois, recusado, rot, chipR1, chipR0, atrasadoR0, cobraR1 };
+    });
+    ok(atr.antes.length === 0 && atr.depois.join() === "r0,r3",
+      "💸 v747: antes do dia de cobrança ninguém é atrasado; depois entram só quem cobra mensal (assinatura no cartão e encerrado ficam fora)");
+    ok(atr.recusado.join() === "r0,r1,r3" && atr.cobraR1 === false,
+      "💸 v747: cartão RECUSADO devolve o assinante pra conta dos atrasados");
+    ok(/cartão automático/.test(atr.chipR1) && !/sem pagamento/.test(atr.chipR1) &&
+      (atr.atrasadoR0 ? /sem pagamento/.test(atr.chipR0) : /vence dia 28/.test(atr.chipR0) && !/sem pagamento/.test(atr.chipR0)) &&
+      /Sem pagamento \(0\)/.test(atr.rot) === !atr.atrasadoR0,
+      "💸 v747: a lista diz 'cartão automático' pro assinante e 'vence dia N' (sem âmbar) antes do vencimento — o contador do filtro bate com o Financeiro");
+
+    // nt-1 #6 — encerrado: 'encerrado em', Reativar, sem chip de pagamento e sem Encerrar de novo
+    const enc = await pR.evaluate(() => {
+      window.__pacFiltro("encerrados");
+      const linha = document.querySelector("#listaPacientes .pac");
+      const out = { txt: linha.textContent, reativa: !!linha.querySelector("[data-reativa]"), rm: !!linha.querySelector("[data-rm]"), app: !!linha.querySelector("[data-app]") };
+      linha.querySelector("[data-reativa]").click();
+      const st = window.MTStore.read("ntStudio", {});
+      const r2 = st.pacientes.find((x) => x.id === "r2");
+      out.ativo = r2.ativo; out.fim = r2.fim;
+      window.__pacFiltro("todos");
+      out.lista = document.getElementById("listaPacientes").textContent;
+      return out;
+    });
+    ok(/encerrado em 01\/08\/2026/.test(enc.txt) && enc.reativa && !enc.rm && !enc.app && !/sem pagamento/.test(enc.txt),
+      "🔚 v747: a linha do encerrado diz quando saiu e só oferece Perfil + Reativar (nada de 'sem pagamento' nem 'Encerrar' de novo)");
+    ok(enc.ativo === true && enc.fim === undefined && /Paciente R2/.test(enc.lista),
+      "🔚 v747: Reativar devolve o paciente pra lista de ativos");
+
+    // nt-2 #28 — "app ✓" e "Com acesso do app" contam quem recebeu pelo link
+    const acc = await pR.evaluate(() => {
+      const chip = document.querySelector('#listaPacientes [data-perfil="r3"]').parentElement.querySelector(".tagn[title*='link']");
+      return { chip: chip ? chip.textContent : "", base: document.getElementById("bBaseN").textContent.replace(/\s+/g, " ") };
+    });
+    ok(/app ✓/.test(acc.chip) && /Com acesso do app\s*1 de 4/.test(acc.base),
+      "📲 v747: paciente que recebeu o app pelo link conta como 'app ✓' e no KPI 'Com acesso do app' (1 de 4)");
+
+    // nt-1 #11 — Enter no nome (role=button) abre o perfil
+    const kb = await pR.evaluate(() => {
+      const el = document.querySelector('#listaPacientes [data-perfil="r0"][role="button"]');
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+      return { aberto: document.getElementById("dlgPerfilN").open, titulo: document.getElementById("pnTitulo").textContent, acesso: document.getElementById("pnAcesso").textContent };
+    });
+    ok(kb.aberto && /Paciente R0/.test(kb.titulo), "⌨️ v747: Enter no nome do paciente (role=button) abre o perfil, não só o clique");
+    ok(/Enviar acesso do app/.test(kb.acesso) && !/Reenviar/.test(kb.acesso), "📧 v747: sem login criado o botão diz 'Enviar acesso do app'");
+
+    // nt-1 #1 + #17 — reenviar acesso pede confirmação (senha nova) e o ícone do envelope existe no MICO
+    const reenv = await pR.evaluate(async () => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.pacientes.find((x) => x.id === "r0").acessoEm = "2026-08-01T10:00:00.000Z";
+      st.pacientes.find((x) => x.id === "r0").email = "r0@x.com";
+      window.MTStore.write("ntStudio", st);
+      window.__perfilNT("r0");
+      const label = document.getElementById("pnAcesso").textContent;
+      const msgs = [];
+      const confOrig = window.confirm;
+      window.confirm = (m) => { msgs.push(m); return false; };
+      document.getElementById("pnAcesso").click();
+      await new Promise((r) => setTimeout(r, 150));
+      window.confirm = confOrig;
+      return { label, msgs, disabled: document.getElementById("pnAcesso").disabled, envelope: !!window.MICO.envelope, mi: /<rect/.test(window.mi("envelope")) };
+    });
+    ok(/Reenviar acesso \(gera senha nova\)/.test(reenv.label), "📧 v747: com login já criado o botão avisa que reenviar gera senha nova");
+    ok(reenv.msgs.length === 1 && /SENHA NOVA/.test(reenv.msgs[0]) && !reenv.disabled,
+      "📧 v747: reenviar pede confirmação — cancelou, nada é enviado e o botão continua vivo");
+    ok(reenv.envelope && reenv.mi, "✉️ v747: mi('envelope') existe no MICO — o botão não perde o ícone depois do primeiro uso");
+
+    // nt-1 #14 + #10 — 'prefere Pix' aparece onde se cobra; registrar pesagem não apaga a fita métrica digitada
+    const kg = await pR.evaluate(() => {
+      window.__perfilNT("r3");
+      const fin = document.getElementById("pnFin").textContent;
+      document.getElementById("avnCintura").value = "80";
+      document.getElementById("pnKg").value = "70";
+      document.getElementById("pnKgAdd").click();
+      const st = window.MTStore.read("ntStudio", {});
+      return { fin, cintura: document.getElementById("avnCintura").value, pnPeso: document.getElementById("pnPeso").value,
+        peso: st.pacientes.find((x) => x.id === "r3").peso, graf: document.getElementById("pnPesoGraf").textContent };
+    });
+    ok(/prefere Pix/.test(kg.fin), "💳 v747: o 'Pagamento preferido' do cadastro passou a ser lido — aparece no bloco financeiro do perfil");
+    ok(kg.cintura === "80" && kg.pnPeso === "70" && kg.peso === 70 && /70/.test(kg.graf),
+      "⚖️ v747: '+ Registrar pesagem' repinta só o peso — a cintura que estava sendo digitada continua lá");
+
+    // nt-1 #8 + #12 — avaliação com data retroativa não vira 'peso atual'; IMC não some com avaliação só de fita
+    const retro = await pR.evaluate(() => {
+      const iso = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+      document.getElementById("avnData").value = iso(30);
+      document.getElementById("avnPeso").value = "75";
+      document.getElementById("avnAdd").click();
+      let st = window.MTStore.read("ntStudio", {});
+      const out = { pes: (st.pesagens.r3 || []).map((x) => x.kg), peso: st.pacientes.find((x) => x.id === "r3").peso, imc1: /IMC/.test(document.getElementById("avnCalc").textContent) };
+      window.__perfilNT("r3");
+      document.getElementById("avnData").value = iso(0);
+      document.getElementById("avnCintura").value = "82";
+      document.getElementById("avnAdd").click();
+      out.imc2 = /IMC/.test(document.getElementById("avnCalc").textContent);
+      return out;
+    });
+    ok(retro.pes.join() === "75,70" && retro.peso === 70,
+      "📅 v747: avaliação lançada com data antiga entra no lugar certo da linha do tempo e NÃO troca o peso atual pelo antigo");
+    ok(retro.imc1 && retro.imc2, "📏 v747: o IMC continua no cabeçalho quando a última avaliação só tem fita métrica");
+
+    // nt-1 #13 — 'Salvar dados' com peso mudado gera pesagem (st.pesagens é a fonte única)
+    const salvo = await pR.evaluate(() => {
+      window.__perfilNT("r3");
+      document.getElementById("pnPeso").value = "69,5";
+      document.getElementById("pnSalvar").click();
+      const st = window.MTStore.read("ntStudio", {});
+      const l = st.pesagens.r3;
+      return { ult: l[l.length - 1], peso: st.pacientes.find((x) => x.id === "r3").peso };
+    });
+    ok(salvo.ult.kg === 69.5 && salvo.ult.d === hojeR && salvo.peso === 69.5,
+      "⚖️ v747: mudar o peso em 'Salvar dados' registra a pesagem de hoje — gráfico e cadastro contam a mesma coisa");
+
+    // nt-1 #16 — recibo com pop-up bloqueado avisa em vez de estourar
+    const rec = await pR.evaluate(async () => {
+      document.getElementById("pnPgValor").value = "180";
+      document.getElementById("pnPgAdd").click();
+      const st = window.MTStore.read("ntStudio", {});
+      const pg = st.pagamentosN.find((x) => x.pacienteId === "r3");
+      const openOrig = window.open, alertOrig = window.alert;
+      const avisos = [];
+      window.open = () => null; window.alert = (m) => avisos.push(m);
+      let erro = "";
+      try { window.__reciboN(pg.id); } catch (e) { erro = String(e); }
+      window.open = openOrig; window.alert = alertOrig;
+      return { avisos, erro, fin: document.getElementById("pnFin").textContent };
+    });
+    ok(!rec.erro && rec.avisos.length === 1 && /bloqueou/.test(rec.avisos[0]) && /180,00/.test(rec.fin),
+      "🧾 v747: pop-up bloqueado no recibo vira aviso (a mesma guarda do laudo) e o pagamento registrado repinta o bloco do dinheiro");
+
+    // nt-1 #15 — sem WhatsApp no cadastro o link não abre wa.me vazio: vai direto pra copiar; e o title não fala mais em Pagar.me
+    const lk = await pR.evaluate(async () => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.pagApi = { ligado: true, provedor: "outro" }; st.config.pagLink = "https://minha.plataforma/cobra";
+      const p3 = st.pacientes.find((x) => x.id === "r3"); const zapAntes = p3.zap; p3.zap = "";
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify(st));
+      window.__perfilNT("r3");
+      document.getElementById("pnPgValor").value = "180";
+      const openOrig = window.open, confOrig = window.confirm, alertOrig = window.alert, clipOrig = navigator.clipboard;
+      const abertos = [], avisos = []; let confirms = 0, copiado = "";
+      window.open = (u) => { abertos.push(u); return null; }; window.confirm = () => { confirms++; return true; }; window.alert = (m) => avisos.push(m);
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: (t) => { copiado = t; return Promise.resolve(); } }, configurable: true });
+      document.getElementById("pnPgLink").click();
+      await new Promise((r) => setTimeout(r, 300));
+      window.open = openOrig; window.confirm = confOrig; window.alert = alertOrig;
+      Object.defineProperty(navigator, "clipboard", { value: clipOrig, configurable: true });
+      const st2 = window.MTStore.read("ntStudio", {}); delete st2.config.pagApi; delete st2.config.pagLink;
+      st2.pacientes.find((x) => x.id === "r3").zap = zapAntes; localStorage.setItem("mtapp:ntStudio", JSON.stringify(st2));
+      return { abertos, confirms, copiado, avisos, title: document.getElementById("pnPgLink").title };
+    });
+    ok(lk.abertos.length === 0 && lk.confirms === 0 && lk.copiado === "https://minha.plataforma/cobra" && /não tem WhatsApp/.test(lk.avisos.join(" ")) && !/Pagar\.me/.test(lk.title) && /SUA plataforma/.test(lk.title),
+      "🔗 v747: sem WhatsApp no cadastro o link de pagamento vai direto pra copiar (nada de wa.me vazio) e o botão fala da SUA plataforma, não do Pagar.me");
+
+    // nt-1 #9 — 'Cartão recusado' não volta depois de pago (marcador monotônico, como no Personal)
+    const rec2 = await pR.evaluate(async () => {
+      document.getElementById("dlgPerfilN").close();
+      const eventos = [
+        { id: "evr1", tipo: "charge.payment_failed", valor_centavos: 15000, assinatura_id: "sub_r1", criado: "2026-08-06T10:00:00Z" },
+        { id: "evr2", tipo: "charge.paid", valor_centavos: 15000, assinatura_id: "sub_r1", criado: "2026-08-10T10:00:00Z" },
+      ];
+      const orig = window.MTStore.cloud;
+      // a gravação dispara render(); as outras tabelas ganham uma cadeia genérica pra não derrubar a página
+      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "pagarme_eventos" ? gen : ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) } });
+      window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
+      window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
+      window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
+      window.MTStore.cloud = orig;
+      const st = window.MTStore.read("ntStudio", {});
+      const r1 = st.pacientes.find((x) => x.id === "r1");
+      return { falhou: r1.cartaoFalhouEm, evt: r1.cartaoFalhouEvt, pagos: st.pagamentosN.filter((x) => x.eventoId === "evr2").length };
+    });
+    ok(rec2.falhou === "" && /evr2/.test(rec2.evt) && rec2.pagos === 1,
+      "💳 v747: recusa antiga + pagamento novo, lidos três vezes: a recusa fica apagada (não reacende a cada 120 s)");
+
+    // nt-1 #5 + #7 — sexo normalizado (importador gravava 'f') e o laudo usa o fator de atividade do cadastro
+    const sx = await pR.evaluate(() => {
+      const a = window.__nutri.kcalAlvo({ sexo: "f", idade: 30, peso: 70, altura: 165, atividade: "mod", objetivo: "manter" });
+      const b2 = window.__nutri.kcalAlvo({ sexo: "F", idade: 30, peso: 70, altura: 165, atividade: "mod", objetivo: "manter" });
+      const c = window.__nutri.kcalAlvo({ sexo: "M", idade: 30, peso: 70, altura: 165, atividade: "mod", objetivo: "manter" });
+      document.getElementById("impTextoN").value = "Maria Import, 31 99999-8888";
+      document.getElementById("impTextoN").dispatchEvent(new Event("input"));
+      document.getElementById("impConfirmaN").click();
+      const st = window.MTStore.read("ntStudio", {});
+      const imp = st.pacientes.find((x) => x.nome === "Maria Import");
+      const av = { peso: 70, gordura: 30, data: "2026-09-01" };
+      const sed = window.__laudoN.calcula(st, Object.assign({}, st.pacientes[0], { atividade: "sed" }), av);
+      const alto = window.__laudoN.calcula(st, Object.assign({}, st.pacientes[0], { atividade: "alto" }), av);
+      return { a: a.tmb, b: b2.tmb, c: c.tmb, impSexo: imp && imp.sexo, fSed: sed && sed.fatorAtividade, fAlto: alto && alto.fatorAtividade,
+        alvo: (document.getElementById("pnAlvo").textContent), kpiTxt: document.getElementById("avnLaudo").textContent };
+    });
+    ok(sx.a === sx.b && sx.a !== sx.c && sx.impSexo === "F",
+      "♀ v747: 'f' minúsculo vale como F na TMB e o importador grava 'F' — a paciente importada não cai na fórmula masculina");
+    ok(sx.fSed === 1.2 && sx.fAlto === 1.725 && /Mifflin/.test(sx.alvo),
+      "🔥 v747: o laudo recebe o fator de atividade do cadastro (sed 1,2 / alto 1,725) e cada 'basal' diz de onde veio");
+
+    // nt-1 #2 — Central de ajuda com os rótulos que existem no Nutri
+    const aj = await pR.evaluate(() => JSON.stringify(window.__ajudaNT.dados));
+    ok(!/\+ Novo paciente/.test(aj) && !/\+ Nova dieta/.test(aj) && !/horário livre/.test(aj) &&
+      /Gerar dieta automática/.test(aj) && /\+ Refeição/.test(aj) && /sub-aba <b>Marcar<\/b>/.test(aj) && /Modo claro<\/b> fica no pé do menu/.test(aj),
+      "❓ v747: a Ajuda ensina com os botões reais (+ Adicionar, Gerar dieta automática, + Refeição, sub-aba Marcar)");
+
+    // nt-2 #25 + #24 + #31 + #36 + #33 + #35 — cor padrão, KPIs sem duplicata, semana na segunda, texto do Financeiro, e-mail, chat
+    const misc = await pR.evaluate(async () => {
+      const out = {};
+      out.cor = document.getElementById("cfgCorN").value;
+      out.kpis = !!document.getElementById("kpisN");
+      out.base = /Pacientes ativos/.test(document.getElementById("bBaseN").textContent);
+      const src = await (await fetch("/nutricao.html")).text();
+      out.chatFiltro = (src.match(/from\("app_chat"\)\.select\("token,de,lida"\)\.eq\("academia_id", nuvem\.aid\)\.eq\("de", "aluno"\)\.eq\("lida", false\)/g) || []).length;
+      out.email = window.__acessoNutri.email("Consultório R", "Ana", "a@b.c", "Xyz12345");
+      return out;
+    });
+    ok(misc.cor === "#16a34a", "🎨 v747: sem cor personalizada o seletor mostra o verde da marca, não preto (var() não vale em input color)");
+    ok(!misc.kpis && misc.base, "📊 v747: a fileira #kpisN saiu do Início — os quatro números já estão nos cards de baixo");
+    ok(misc.chatFiltro === 2, "💬 v747: chat e badges só baixam as mensagens do paciente NÃO lidas (filtro no servidor, 2 consultas)");
+    ok(!/var\(--/.test(misc.email) && /#ffffff/.test(misc.email), "✉️ v747: o e-mail de acesso é documento autônomo — a caixa do login sai com hex, sem var(--card)");
+    await abaNt(pR, "agenda");
+    const cal = await pR.evaluate(() => [...document.querySelectorAll("#calAgendaN .cal-sem")].map((x) => x.textContent));
+    ok(cal[0] === "seg" && cal[6] === "dom", "📆 v747: o calendário do painel começa na segunda, igual ao app do paciente");
+    await abaNt(pR, "financeiro");
+    const fnTxt = await pR.evaluate(() => document.getElementById("fnComo").textContent);
+    ok(/sai pela plataforma TORQUE ON/.test(fnTxt) && !/os botões Link e Pix não aparecem/.test(fnTxt),
+      "💰 v747: 'Como você recebe' diz a verdade — o Link aparece sempre e sai pela plataforma até ligar o gateway");
+
+    // nt-2 #21 + #22 — a IA de dieta enxerga o banco inteiro (teto cresce até o orçamento) e recupera nomes 'soltos'
+    const ia = await pR.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      const beb = self.MT_ALIMENTOS.filter((a) => a.c === "Bebidas");
+      const ultimaBebida = beb[beb.length - 1].n;
+      st.alFav = [ultimaBebida];
+      window.MTStore.write("ntStudio", st);
+      const dados = window.__iaDietaDados(st.pacientes[0]);
+      const linhaBeb = dados.split("\n").find((l) => l.indexOf("Bebidas: ") === 0) || "";
+      const itens = (dados.match(/ \| /g) || []).length + 16;
+      const solto = window.__alimPorNomeSolto("ARROZ BRANCO COZIDO!");
+      return { itens, tam: dados.length, favNaFrente: linhaBeb.indexOf("Bebidas: " + ultimaBebida) === 0, total: self.MT_ALIMENTOS.length,
+        solto: solto && solto.nome, nada: window.__alimPorNomeSolto("comida inventada xyz") };
+    });
+    // o banco inteiro tem ~73 KB e a chat-envia aceita 60000 em dados: o teto sobe até caber (1153 = 74%, era 639 = 41%)
+    ok(ia.itens >= 1100 && ia.tam <= 60000,
+      "🥦 v747: a IA de dieta recebe " + ia.itens + " de " + ia.total + " alimentos (era 40 por categoria = 41%), dentro do teto da chat-envia");
+    ok(ia.favNaFrente, "🥦 v747: o alimento favorito do nutricionista vai na FRENTE da categoria dele — nunca fica fora do corte");
+    ok(ia.solto === "Arroz branco cozido" && ia.nada === null,
+      "🥦 v747: nome que a IA devolve em CAIXA ALTA/pontuação é recuperado; o inventado continua fora (e agora aparece pelo nome no aviso)");
+
+    // nt-2 #34 — Respostas lê app_quest só dos tokens deste consultório
+    const qf = await pR.evaluate(async () => {
+      const orig = window.MTStore.cloud;
+      let inArgs = null;
+      // as outras tabelas (agenda, chat) ganham uma cadeia genérica: um render no meio não pode derrubar o teste
+      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "app_quest" ? gen : ({ select: () => ({ in: (col, vals) => { inArgs = [col, vals]; return { order: () => ({ limit: () => Promise.resolve({ data: [] }) }) }; } }) }) } });
+      window.__questNT.respostas();
+      await new Promise((r) => setTimeout(r, 200));
+      window.MTStore.cloud = orig;
+      return inArgs;
+    });
+    ok(qf && qf[0] === "token" && qf[1].indexOf("tokr3") >= 0 && qf[1].indexOf("tokr0") >= 0,
+      "📋 v747: a aba Respostas filtra app_quest pelos tokens dos pacientes (a RLS devolve as outras ilhas)");
+
+    // nt-2 #27 — 'Cobrar quem falta' manda o LINK do check-in e só cobra de 'não respondeu' quem recebeu link
+    await abaNt(pR, "quest"); // a aba semeia o "Check-in semanal" padrão (questStN)
+    const cq = await pR.evaluate(async () => {
+      const st = window.MTStore.read("ntStudio", {});
+      const q = (st.questionarios || [])[0];
+      const r3 = st.pacientes.find((x) => x.id === "r3");
+      const out = { link: q ? window.__linkQuestN(st, r3, q) : "" };
+      const orig = window.MTStore.cloud;
+      const chain = { select: () => chain, gte: () => chain, in: () => chain, order: () => chain, limit: () => chain, then: (f) => Promise.resolve({ data: [] }).then(f) };
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => chain } });
+      window.__qsSemanaN.pinta();
+      await new Promise((r) => setTimeout(r, 250));
+      out.grupos1 = document.getElementById("qsListaN").textContent;
+      out.botao = document.getElementById("qsCobrarN").textContent;
+      const openOrig = window.open, alertOrig = window.alert;
+      const urls = [];
+      window.open = (u) => { urls.push(u); return {}; };
+      window.alert = () => {};
+      document.getElementById("qsCobrarN").click();
+      window.open = openOrig; window.alert = alertOrig;
+      out.urls = urls;
+      window.__qsSemanaN.pinta();
+      await new Promise((r) => setTimeout(r, 250));
+      out.grupos2 = document.getElementById("qsListaN").textContent;
+      window.MTStore.cloud = orig;
+      out.enviadoEm = window.MTStore.read("ntStudio", {}).pacientes.find((x) => x.id === "r3").questEnviadoEm;
+      return out;
+    });
+    ok(/quest\.html\?t=tokr3&q=/.test(cq.link), "📋 v747: linkQuestN gera o link do check-in (quest.html?t=…&q=…)");
+    ok(/Sem link esta semana/.test(cq.grupos1) && !/Não responderam/.test(cq.grupos1) && /Cobrar/.test(cq.botao),
+      "📋 v747: quem nunca recebeu o link não é 'não respondeu' — vira 'Sem link esta semana'");
+    ok(cq.urls.length >= 2 && cq.urls.every((u) => /quest\.html%3Ft%3D/.test(u)) && cq.enviadoEm === hojeR && /Não responderam/.test(cq.grupos2),
+      "📋 v747: 'Cobrar' abre o WhatsApp COM o link do check-in, marca o envio e o paciente passa pra 'Não responderam'");
+
+    // nt-2 #23 — mudou robô/mural/Comunidade/cor/logo/Pix: a republicação automática compara o stamp do pacote
+    const ap = await pR.evaluate(async () => {
+      const st = window.MTStore.read("ntStudio", {});
+      window.__marcaAppMudouN(st);
+      window.MTStore.write("ntStudio", st);
+      const orig = window.MTStore.cloud;
+      let sel = "", ups = null;
+      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "app_aluno" ? gen : ({
+        select: (s) => { sel = s; return { in: () => Promise.resolve({ data: [{ token: "tokr3", ver: window.MT_VERSAO, stamp: "2020-01-01T00:00:00.000Z" }, { token: "tokr0", ver: window.MT_VERSAO, stamp: new Date(Date.now() + 60000).toISOString() }] }) }; },
+        upsert: (rows) => { ups = rows; return Promise.resolve({ data: rows }); },
+      }) } });
+      window.__autoPublicaN();
+      await new Promise((r) => setTimeout(r, 400));
+      window.MTStore.cloud = orig;
+      return { sel, tokens: (ups || []).map((x) => x.token), mudou: !!st.config.appMudouEmN };
+    });
+    ok(ap.mudou && /stamp/.test(ap.sel) && ap.tokens.join() === "tokr3",
+      "🚀 v747: pacote mais velho que a última mudança de robô/mural/cor/Pix é republicado sozinho (mesma versão, stamp velho) — o atual fica quieto");
+
+    // nt-1 #6 — cortar o acesso do app ao encerrar (RPC aluno_revoga_acesso, a mesma do Personal)
+    const rv = await pR.evaluate(async () => {
+      const orig = window.MTStore.cloud;
+      let chamada = null;
+      window.MTStore.cloud = () => ({ aid: "x", client: { rpc: (fn, args) => { chamada = [fn, args]; return Promise.resolve({ data: { ok: true } }); } } });
+      const r = await new Promise((res) => window.__encerraN.revoga("r3", res));
+      window.MTStore.cloud = orig;
+      const r3 = window.MTStore.read("ntStudio", {}).pacientes.find((x) => x.id === "r3");
+      return { r, chamada, revogado: r3.appRevogadoEm, pub: r3.appPubEmN };
+    });
+    ok(rv.r.ok && rv.chamada && rv.chamada[0] === "aluno_revoga_acesso" && rv.chamada[1].p_token === "tokr3" && rv.revogado === hojeR && !rv.pub,
+      "🔚 v747: encerrar oferece cortar o acesso do app — a RPC aluno_revoga_acesso corre com o token do paciente e o painel marca appRevogadoEm");
+
+    // nt-2 #32 — receita vira alimento marcado como incompleto e o total da dieta avisa
+    const rcMac = await pR.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.alimentos.push({ id: "rcX", nome: "Receita: Teste", porcao: "1 porção", kcal: 100, prot: 10, semMacros: true });
+      return window.__nutri.macrosDaDieta(st, { refeicoes: [{ itens: [{ alimId: "rcX", qtd: 1 }] }] });
+    });
+    const rcFlag = await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ntStudio")).alimentos.find((a) => /^Receita: /.test(a.nome)) || {}).semMacros);
+    ok(rcFlag === true && rcMac.incompletos === 1 && rcMac.prot === 10,
+      "🍲 v747: receita usada na dieta nasce marcada sem carbo/gordura e o total da dieta conta os itens incompletos em vez de somar 0 calado");
+
+    // nt-2 #18/#19/#20/#29/#30 — o app do paciente: notificação pelo SW, data local, feitos, texto e código de barras
+    const appR = await pR.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      return window.__montaAppNutri(st.pacientes.find((x) => x.id === "r0"), new Date().toISOString());
+    });
+    ok(/getRegistration\(\)/.test(appR) && /reg\.showNotification\('Hora da água!'/.test(appR) && /setInterval\(agNotif,3600000\)/.test(appR) && !/\)new Notification\(/.test(appR),
+      "💧 v747: o lembrete de água vai pelo service worker (showNotification) — new Notification() na página quebra no Chrome do Android");
+    ok(/var iso8=isoDe\(d8\)/.test(appR) && !/toISOString\(\)\.slice\(0,10\)/.test(appR),
+      "📊 v747: o gráfico de adesão usa a data LOCAL — à noite a barra de hoje não some mais");
+    ok(/k==='ntplano'/.test(appR) && /feitos:L\('ntplano',\{\}\)/.test(appR),
+      "🏆 v747: 'Segui o plano hoje' devolve `feitos` pro painel — é o que o ranking da turma conta");
+    ok(/quando Consultório R montar/.test(appR), "🥗 v747: 'Sua dieta aparece aqui quando <consultório> montar' usa o nome do consultório inteiro");
+    ok(/proteins_100g/.test(appR) && /pt:pt,cb:cb,gd:gd\}\);Sv\('ntdi_'\+isoHj\(\),l\);pintaDiario\(\);pintaXPN\(\);/.test(appR),
+      "📦 v747: o código de barras registra proteína/carbo/gordura e repinta o XP");
+    {
+      const pApp = await ctx.newPage();
+      const errosApp = [];
+      pApp.on("pageerror", (e) => errosApp.push(String(e)));
+      await pApp.route("**/app-teste-nutri-rev.html", (r) => r.fulfill({ contentType: "text/html", body: appR }));
+      await pApp.goto(BASE + "/app-teste-nutri-rev.html", { waitUntil: "domcontentloaded" });
+      await pApp.waitForTimeout(500);
+      const dl = await pApp.evaluate(() => ({ iso: window.__isoDeN(new Date(2026, 0, 1, 23, 30)), ag: typeof agNotif }));
+      ok(dl.iso === "2026-01-01" && dl.ag === "function" && !errosApp.length,
+        "📊 v747: isoDe(23h30 local) = o próprio dia, e o app abre sem erro com o lembrete novo (" + (errosApp[0] || "ok") + ")");
+      await pApp.close();
+    }
+    await pR.close();
+  }
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

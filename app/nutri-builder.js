@@ -119,7 +119,7 @@
           "<div style='padding:0 14px 12px;'>" +
           r.itens.map(function (it) { return "<div class='kv'><span>" + esc(it.n) + "</span><span style='color:#9fb8a6'>" + esc(it.q) + " · " + it.k + " kcal</span></div>"; }).join("") +
           "<button class='refok off' data-refok='" + r.id + "' data-k='" + r.k + "' style='width:100%;margin-top:10px;'>Marcar como feita ✓</button></div></details>";
-      }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar.</div>") + "</div>" +
+      }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(studio === "Minha Nutri" ? "o nutricionista" : studio) + " montar.</div>") + "</div>" +
       "<div class='cardx'><h2>Registrar o que comi</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Comeu algo fora da dieta? Busque no banco (" + aldb.length + " alimentos) e registre — entra na contagem do dia.</div>" +
       "<input id='diBusca' list='dlApp' placeholder='O que você comeu?' style='width:100%;margin-bottom:8px;'>" +
@@ -213,8 +213,10 @@
       ",ZAPN=" + jsonApp(String(zapN || "").replace(/\D/g, "")) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ntpeso'||k==='ntfotos'||k.indexOf('ntdi_')===0||k.indexOf('ntref_')===0||k.indexOf('ntag_')===0)devolveApp();}" +
-      "function isoHj(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
+      // ntplano (os dias de "Segui o plano hoje") também devolve: é o que o ranking da turma conta
+      "if(k==='ntpeso'||k==='ntfotos'||k==='ntplano'||k.indexOf('ntdi_')===0||k.indexOf('ntref_')===0||k.indexOf('ntag_')===0)devolveApp();}" +
+      "function isoDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
+      "function isoHj(){return isoDe(new Date());}window.__isoDeN=isoDe;" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
       // devolve pro nutricionista o que o paciente registra (peso, diário, refeições, água, fotos)
@@ -222,9 +224,11 @@
       "var fs=L('ntfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       "var rf=L('ntref_'+isoHj(),{});var nrf=0;for(var kk in rf)nrf++;" +
       // celular novo/limpo: sem registro local não devolve nada (senão apagaria o histórico da nuvem)
-      "if(!L('ntpeso',[]).length&&!L('ntdi_'+isoHj(),[]).length&&!nrf&&!L('ntag_'+isoHj(),0)&&!fs.length)return;" +
+      "if(!L('ntpeso',[]).length&&!L('ntdi_'+isoHj(),[]).length&&!nrf&&!L('ntag_'+isoHj(),0)&&!fs.length&&!Object.keys(L('ntplano',{})).length)return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:" + jsonApp(primeiro) + ",nivel:nivelDeN(xpDadosN()),peso:L('ntpeso',[]),diario:L('ntdi_'+isoHj(),[])," +
-      "refsFeitas:nrf,refsTotal:REFS.length,agua:L('ntag_'+isoHj(),0),aguaMeta:AGUAML,kcalMeta:KCALMETA,dia:isoHj()," +
+      // feitos = {dia: 1} dos "Segui o plano hoje": o MESMO nome que o app do aluno usa — a RPC
+      // app_desafio_ranking conta as chaves de retorno->'feitos'; sem isso o ranking vinha vazio
+      "refsFeitas:nrf,refsTotal:REFS.length,agua:L('ntag_'+isoHj(),0),aguaMeta:AGUAML,kcalMeta:KCALMETA,dia:isoHj(),feitos:L('ntplano',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -272,13 +276,19 @@
       "document.getElementById('agAdd').addEventListener('click',function(){Sv('ntag_'+isoHj(),L('ntag_'+isoHj(),0)+250);pintaAgua();pintaXPN();" +
       "if(navigator.vibrate)navigator.vibrate(60);});pintaAgua();" +
       // lembretes de água (notificação local com o app aberto)
+      // no Chrome do Android construir Notification na página lança "Illegal
+      // constructor": o caminho certo é showNotification do service worker (o app
+      // registra app-sw.js). Sem SW (computador) cai no construtor, dentro de try.
+      "function agNotif(){var ml=L('ntag_'+isoHj(),0);if(ml>=AGUAML)return;var o={body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'};" +
+      "function crua(){try{new Notification('Hora da água!',o);}catch(e){}}" +
+      "try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){navigator.serviceWorker.getRegistration().then(function(reg){if(reg&&reg.showNotification)return reg.showNotification('Hora da água!',o);crua();}).catch(crua);return;}}catch(e){}crua();}" +
       "var agTimer=null;document.getElementById('agLembrete').addEventListener('click',function(){var b=this;" +
       "if(!('Notification' in window)){alert('Este navegador não permite notificações — deixa o app aberto que a barra de água te lembra.');return;}" +
       "Notification.requestPermission().then(function(perm){if(perm!=='granted'){alert('Permissão negada — ative nas configurações do navegador.');return;}" +
       "b.textContent='Lembretes ligados (a cada hora)';b.disabled=true;Sv('ntlembra',1);" +
-      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);});});" +
+      "agTimer=setInterval(agNotif,3600000);});});" +
       "if(L('ntlembra',0)&&('Notification' in window)&&Notification.permission==='granted'){document.getElementById('agLembrete').textContent='Lembretes ligados (a cada hora)';document.getElementById('agLembrete').disabled=true;" +
-      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);}" +
+      "agTimer=setInterval(agNotif,3600000);}" +
       // diário alimentar (registrar o que comeu — MyFitnessPal style)
       "document.getElementById('dlApp').innerHTML=ALDB.map(function(a){return \"<option value='\"+a.n.replace(/'/g,'&#39;')+\"'>\"+a.p+' · '+a.k+' kcal</option>';}).join('');" +
       "function kcalDiario(){return L('ntdi_'+isoHj(),[]).reduce(function(t,x){return t+x.k;},0);}" +
@@ -298,9 +308,11 @@
       "fetch('https://world.openfoodfacts.org/api/v2/product/'+cod+'.json').then(function(r){return r.json();}).then(function(d){" +
       "if(!d||d.status!==1||!d.product){alert('Produto não encontrado — registra pela busca mesmo.');return;}" +
       "var nut=d.product.nutriments||{};var k=Math.round(+nut['energy-kcal_100g']||(+nut.energy_100g||0)/4.184);" +
+      // os mesmos campos que o painel lê do Open Food Facts (proteins/carbohydrates/fat _100g)
+      "var pt=Math.round(+nut.proteins_100g||0),cb=Math.round(+nut.carbohydrates_100g||0),gd=Math.round(+nut.fat_100g||0);" +
       "var nome=d.product.product_name_pt||d.product.product_name||('Produto '+cod);" +
       "if(!k){alert('Achei \\''+nome+'\\' mas sem kcal no rótulo.');return;}" +
-      "var l=L('ntdi_'+isoHj(),[]);l.push({n:nome+' (100 g)',q:1,k:k});Sv('ntdi_'+isoHj(),l);pintaDiario();" +
+      "var l=L('ntdi_'+isoHj(),[]);l.push({n:nome+' (100 g)',q:1,k:k,pt:pt,cb:cb,gd:gd});Sv('ntdi_'+isoHj(),l);pintaDiario();pintaXPN();" +
       "}).catch(function(){alert('Precisa de internet pra buscar o código — registra pela busca.');});});" +
       // refeições feitas + kcal do dia + próxima
       "function pintaRefs(){var f=L('ntref_'+isoHj(),{});var kc=0,n=0;" +
@@ -385,7 +397,7 @@
       "return \"<div style='text-align:center;padding:10px 4px;border-radius:11px;\"+(tem?'background:" + CORA + ";border:1px solid " + COR + ";':'background:#0f1a12;border:1px solid #1f3126;opacity:.55;')+\"'>\"+" +
       "\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'" + CORL + "':'#5d7a66')+\";'>\"+icq(b[0])+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
       "(tem?\"<div style='font-size:9.5px;color:#4ade80;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#5d7a66;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
-      "var bars='';var ds=[];for(var v2=13;v2>=0;v2--){var d8=new Date();d8.setDate(d8.getDate()-v2);var iso8=d8.toISOString().slice(0,10);" +
+      "var bars='';var ds=[];for(var v2=13;v2>=0;v2--){var d8=new Date();d8.setDate(d8.getDate()-v2);var iso8=isoDe(d8);" +
       "var f8=L('ntref_'+iso8,{});var pct8=REFS.length?Math.min(100,Math.round(100*Object.keys(f8).length/REFS.length)):0;ds.push({d:d8,p:pct8,agua:L('ntag_'+iso8,0)>=AGUAML});}" +
       "bars=\"<div style='font-size:11px;color:#9fb8a6;margin-bottom:6px;'>Adesão à dieta (últimos 14 dias)</div><div style='display:flex;gap:4px;align-items:flex-end;height:80px;'>\"+ds.map(function(s8){" +
       "var hh8=Math.round(52*s8.p/100);" +
