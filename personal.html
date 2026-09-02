@@ -4744,7 +4744,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * está com a ficha velha, remonta; quem sumiu, chama. É a regra 1 do
        * handoff (todo aviso tem botão) aplicada à lista. */
       var acao = est === "devendo"
-        ? '<button type="button" class="btn mini" data-pgm="' + a.id + '" data-v="' + ((dividaDe(st, a) || {}).total || 0) + '" data-origem="mensal">Cobrar</button>'
+        ? '<button type="button" class="btn mini" data-pgm="' + a.id + '" data-v="' + valorCobranca(st, a) + '" data-origem="mensal">Cobrar</button>'
         : fi.velha && a.ativo !== false
         ? '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '">Montar ficha</button>'
         : est === "sumindo"
@@ -5346,16 +5346,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   document.addEventListener("click", function (e) {
     var id = e.target && e.target.id;
     if (id === "pfEditar") { mostraPfAba("cadastro"); return; }
-    if (id === "pfIrChat") { mostraPfAba("app"); vaiAba("chat"); return; }
+    /* v741: os dois atalhos que abriam a tela SEM o aluno. O chat abria a
+     * conversa genérica (e ainda trocava a sub-aba do perfil); Montar treino
+     * gravava o aluno no select da aba de IA (#taAluno) e abria Fichas com o
+     * aluno de antes — dava pra publicar ficha no aluno errado. Agora fazem o
+     * mesmo que #chatFicha e o data-altreino da lista. */
+    if (id === "pfIrChat") { vaiAba("chat"); if (perfilId) abreChat(perfilId); return; }
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
     if (id === "pfIrAgenda") { vaiAba("agenda"); return; }
     if (id === "pfMontaTreino" && perfilId) {
       vaiAba("treinos");
-      var sel = $("taAluno");
-      if (sel) { sel.value = perfilId; sel.dispatchEvent(new Event("change")); }
+      if (window.__trAba) window.__trAba("fichas");
+      var sel = $("tAluno");
+      if (sel) { sel.value = perfilId; sel.dispatchEvent(new Event("change", { bubbles: true })); }
       return;
     }
   });
+  /* v741: quanto cobrar de quem está DEVENDO — a dívida acumulada quando
+   * existe, senão o valor do plano (ou o do cadastro). Antes a linha de Alunos
+   * mandava dividaDe().total, que é 0 pra aluno sem contrato no mês, e o link
+   * caía em "Valor inválido". É a MESMA conta do bloco Atrasados. */
+  function valorCobranca(st, a) {
+    var dv = dividaDe(st, a) || {};
+    if (+dv.total > 0) return +dv.total;
+    var ct = contratoDe(st, a.id);
+    var pl = ct ? planoDe(st, ct.planoId) : null;
+    return (pl ? +pl.valor : +a.valor) || 0;
+  }
+  window.__valorCobranca = valorCobranca; // testes
   function abrePerfil(id) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
@@ -6934,8 +6952,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     abrePix(a, (pl ? +pl.valor : +a.valor) || 0);
   });
   $("pfApp").addEventListener("click", function () {
-    var b = document.querySelector('[data-app="' + perfilId + '"]');
-    if (b) b.click();
+    if (perfilId) publicaAppDoAluno(perfilId);
   });
   /* 📄 Relatório do mês do aluno — documento AUTÔNOMO (imprime/vira PDF pra
    * mandar no WhatsApp), por isso hex cravado: var(--pt-*) não existe lá.
@@ -11241,6 +11258,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("pendentes").addEventListener("click", cliqueCobranca);
   $("pgAtrasados").addEventListener("click", cliqueCobranca);
+  /* v741: os redesenhos (v614–v627) espalharam data-abreperfil / data-feita /
+   * data-pgm / data-pix / data-app pela faixa roxa do Início, pelo Resolver
+   * hoje, pela lista de Alunos, pelo Resumo da ficha e pelo dia-por-vez da
+   * Agenda — mas quem escutava o clique continuou preso aos containers
+   * antigos (#pendentes, #listaSessoes, #listaAlunos…), e o professor tocava
+   * em Feita / Abrir ficha / Cobrar / Mandar app sem nada acontecer. Este é o
+   * dono de ÚLTIMA instância: só age quando o clique NÃO nasceu dentro de um
+   * container que já tem dono — senão a ação rodaria duas vezes. Botão novo
+   * com um desses atributos, em qualquer tela, já nasce funcionando.
+   * ⚠️ Fase de CAPTURA de propósito: o dono antigo trata o clique e chama
+   * save() → render(), que reconstrói a lista — quando o evento chegasse ao
+   * document na fase de bolha, o botão já estaria fora do DOM, closest() não
+   * acharia mais o container e a ação rodava DE NOVO (medido: dois "Registrar
+   * R$ 80?" num Feita só). Na captura o DOM ainda está inteiro. */
+  var DONOS_CLIQUE = {
+    "data-feita": "#listaSessoes,#bHojeP,#agDia,#agGrade",
+    "data-abreperfil": "#listaAlunos,#pendentes,#pgAtrasados",
+    "data-pgm": "#pendentes,#pgAtrasados",
+    "data-pix": "#pendentes,#pgAtrasados",
+    "data-app": "#listaAlunos"
+  };
+  document.addEventListener("click", function (e) {
+    if (!e.target || !e.target.closest) return;
+    var attrs = Object.keys(DONOS_CLIQUE);
+    for (var i = 0; i < attrs.length; i++) {
+      var el = e.target.closest("[" + attrs[i] + "]");
+      if (!el || el.closest(DONOS_CLIQUE[attrs[i]])) continue;
+      if (attrs[i] === "data-feita") { trataCliqueSessao({ target: el }); return; }
+      if (attrs[i] === "data-abreperfil") { abrePerfil(el.getAttribute("data-abreperfil")); return; }
+      if (attrs[i] === "data-app") { publicaAppDoAluno(el.getAttribute("data-app")); return; }
+      cliqueCobranca({ target: el }); // data-pgm / data-pix
+      return;
+    }
+  }, true);
+  window.__donosClique = DONOS_CLIQUE; // testes
   // Pagar.me: gera o link de checkout seguro (cartão/Pix/boleto) pela função da nuvem
   function geraLinkPagamento(alunoId, valor, cb, origem) {
     cb = cb || function () {};
@@ -18289,7 +18341,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("listaAlunos").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-app");
-    if (!id) return;
+    if (id) publicaAppDoAluno(id);
+  });
+  function publicaAppDoAluno(id) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
@@ -18329,7 +18383,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           alert("O app NÃO foi publicado (sem conexão: " + ((e && e.message) || "rede") + "). Tente de novo com internet.");
         });
     });
-  });
+  }
   // catálogo TORQUE de exercícios no autocompletar
   (function () {
     var dl = document.getElementById("dlExCat");

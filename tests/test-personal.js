@@ -2298,6 +2298,57 @@ async function abaPt(p, a) {
     });
     ok(/dmes/.test(mes1a.cls) && /No ritmo de agora fecha em/.test(mes1a.txt),
       "🎨 1a: a coluna da direita traz o mês com a projeção pelo ritmo de agora");
+
+    /* ---- v741: os botões do redesenho RESPONDEM (antes só existiam) ----
+     * data-abreperfil / data-feita / data-pgm / data-app nasceram em telas
+     * novas (faixa roxa, Resolver hoje, Resumo da ficha, Agenda-dia) com o
+     * listener preso aos containers antigos. O teste da v614 só conferia que
+     * o botão EXISTIA — e passou verde com todos mortos. Agora clica. */
+    const v741 = await p.evaluate(async () => {
+      const out = {};
+      const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const alvo = st0.alunos[0];
+      // Abrir ficha da faixa roxa
+      document.getElementById("pfTitulo").textContent = "";
+      document.querySelector("#dashTopo .dagora [data-abreperfil]").click();
+      out.fichaAbriu = document.getElementById("pfTitulo").textContent === alvo.nome;
+      // Feita da faixa roxa
+      document.querySelector('#dashTopo .dagora [data-feita="sc-prox"]').click();
+      await new Promise((r) => setTimeout(r, 150));
+      out.feitaMarcou = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.find((x) => x.id === "sc-prox").feita === true;
+      // Cobrar / Mandar link (data-pgm) fora dos containers antigos: o handler
+      // roda e o valor é válido (sem nuvem a resposta honesta é "entre na conta")
+      const alerts = [];
+      const alertOrig = window.alert; window.alert = (m) => alerts.push(String(m));
+      document.body.insertAdjacentHTML("beforeend", '<div id="tmp741"><button data-pgm="' + alvo.id + '" data-v="150" data-origem="mensal">Cobrar</button>' +
+        '<button data-app="' + alvo.id + '">Mandar app</button></div>');
+      document.querySelector("#tmp741 [data-pgm]").click();
+      await new Promise((r) => setTimeout(r, 100));
+      out.pgmRodou = alerts.some((m) => /Entre na sua conta|link/i.test(m));
+      // Mandar app (data-app) fora de #listaAlunos — sem nuvem, avisa em vez de calar
+      const cloudOrig = window.MTStore.cloud; window.MTStore.cloud = () => null;
+      const tickOrig = window.__nuvemTickMs; window.__nuvemTickMs = 5;
+      document.querySelector("#tmp741 [data-app]").click();
+      await new Promise((r) => setTimeout(r, 400));
+      out.appRodou = alerts.some((m) => /entregar o app/.test(m));
+      window.MTStore.cloud = cloudOrig; window.__nuvemTickMs = tickOrig;
+      window.alert = alertOrig;
+      document.getElementById("tmp741").remove();
+      // valor de cobrança de quem não tem contrato no mês: o do cadastro, não 0
+      out.valorSemContrato = window.__valorCobranca(st0, { id: "zz-nao-existe", valor: 180 }) === 180;
+      // Montar treino e Chat do cabeçalho da ficha levam o aluno junto
+      document.querySelector("#listaAlunos [data-abreperfil]") && document.querySelector("#listaAlunos [data-abreperfil]").click();
+      document.getElementById("pfMontaTreino").click();
+      out.montaAluno = document.getElementById("tAluno").value === alvo.id &&
+        !!document.querySelector('#vTreinos [data-tra="fichas"].ativa');
+      document.getElementById("pfIrChat").click();
+      out.chatAbriu = document.getElementById("vChat").classList.contains("chat-aberto");
+      return out;
+    });
+    ok(v741.fichaAbriu && v741.feitaMarcou, "🖱️ v741: Abrir ficha e Feita da faixa roxa do Início respondem ao clique");
+    ok(v741.pgmRodou && v741.appRodou, "🖱️ v741: Cobrar/Mandar link e Mandar app respondem fora dos containers antigos");
+    ok(v741.valorSemContrato, "🖱️ v741: Cobrar de quem não tem contrato no mês cobra o valor do cadastro, não R$ 0");
+    ok(v741.montaAluno && v741.chatAbriu, "🖱️ v741: Montar treino e Chat da ficha levam o aluno junto (select certo, aba Fichas)");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
