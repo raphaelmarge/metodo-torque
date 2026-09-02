@@ -1522,6 +1522,35 @@ atrasado" tem de recortar o grupo. `window.__renderPT` repinta o painel sem
 `reload`. Já resolvidos na v745 e conferidos: Recebi escondido pra
 assinatura automática; Pix da renovação do pacote com desc.
 
+**Revisão — Montar treino e IA, pt-treinos e pt-ia (mt-v752, 27 itens)**:
+**Montar treino** — `letraFicha` só tira a letra do título quando ela é
+`A`/`B`/`A2` (`^[A-Za-z]\d?$` antes do travessão); antes "Treino de peito"
+virava a letra "Tr". ⚠️ o `aluno-builder.js` faz o MESMO `split("—")` com o
+`slice(0,2)` antigo — enquanto os títulos gerados forem "A — …" nada
+aparece, mas os dois têm de andar juntos. `descansoDe(it)` nos 5 pontos
+(linha, editor, "~N min", pacote, guiado): **descanso 0 é dado**, e
+`+it.descanso || 60` transformava "sem descanso" em 60 s. Botão "+N" da
+busca passou a crescer 60 por toque com "mostrando X de Y"; editar um campo
+repinta só a `.tdsub` (o Tab funcionava e o foco era roubado a cada tecla);
+`msgPublicar()` é o texto único de publicar, com "Publicar agora" clicando
+no `#tdPublica`; nomes e grupos da semente viraram os canônicos do catálogo
+(com migração de "Pernas"/"Braços"); "só o peso do corpo" virou regex sobre
+as tags reais (excluía 306 exercícios); Gerar fichas esquece o mês da IA
+(`esqueceMesIA()`) e `pintaMesPlano` exige `geradaIA`; "Evoluir semana" não
+mexe em ficha da IA e só evolui reps `^\d+$` (preserva "8-12"); o datalist
+do WOD recarrega pela chave da biblioteca; o 11º circuito não vira DESCANSO
+(`.slice(0,10)` também nos WODs, com aviso); modelo de ficha preserva o
+vídeo do item. **IA** — parâmetros por tipo, catálogo com orçamento =
+envelope − texto fixo (o lembrete final ia inteiro), tetos 8/16/8 com os
+cortes mostrados, `confereIaPublicada` no botão (cobra a regra `mes`), IA de
+circuito recebe os movimentos dos circuitos, cabeçalho único com `idadeDe`,
+data local, e sem `mes` na resposta o plano velho é apagado com aviso.
+⚠️ Semente do `load()` renomeada: teste que procurava "Supino reto" na
+biblioteca agora acha "Supino reto com barra". ⚠️ `focus()` não vale em
+elemento escondido — o teste do Tab precisa de `__vaiMontarTreino(id)`.
+Ficaram de fora: teto de uso da IA por academia (precisa de tabela `ia_uso`
+e trava na chat-envia) e a frase "monte a SEMANA" do prompt de corrida.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
