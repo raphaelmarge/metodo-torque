@@ -19,6 +19,8 @@ const D = {
   fichasApp: [{ titulo: "A — Peito e tríceps", capa: "", itens: [
     { nome: "Supino reto", series: "4", reps: "12", descanso: 60, video: "", desc: "d", obs: "o", grupo: "Peito", alts: ["Supino com halteres"] },
     { nome: "Tríceps na corda", series: "3", reps: "15", descanso: 45, video: "", desc: "", obs: "", grupo: "Tríceps", alts: [] },
+    // v751: nome com apóstrofo — a chave do ptsets tem de ser a MESMA do GUIA (sem ele)
+    { nome: "Farmer's walk", series: "3", reps: "20", descanso: 60, video: "", desc: "", obs: "", grupo: "Core", alts: [] },
   ] }],
   wodsApp: [{ id: "w1", nome: "Chipper", tipo: "amrap", min: 20, resumo: "AMRAP 20 min", aq: "aq", obs: "obs", movs: [{ q: "10", n: "burpees" }] }],
   cardiosApp: [{ id: "c1", nome: "Rodagem", mod: "corrida", tipo: "continuo", dist: 5, tempo: 30, pace: "6:00" }],
@@ -31,7 +33,7 @@ const D = {
   ctApp: { diaVenc: 5 }, plApp: { nome: "Mensal", valor: 120, diaVenc: 5, linkRec: "" }, pixApp: null, svApp: [],
   treino: "", t2: {}, fichaVenceApp: "2026-12-01",
   fexs: [{ n: "Supino reto", s: 4 }],
-  guiaFichasP: [{ n: "A — Peito e tríceps", it: [{ e: "Supino reto", s: 4, r: "12", d: 60, v: "" }] }],
+  guiaFichasP: [{ n: "A — Peito e tríceps", it: [{ e: "Supino reto", s: 4, r: "12", d: 60, v: "" }, { e: "Farmers walk", s: 3, r: "20", d: 60, v: "" }] }],
   aqPorFicha: [[["Marcha no lugar", "60s"], ["Flexão na parede", "40s"]]],
   raioX: [{ g: "Peito", s: 4 }, { g: "Tríceps", s: 3 }],
   ve: () => true, menuOculta: [], feedLigado: true, avs: [], botApp: null, atualizador: "",
@@ -266,6 +268,69 @@ try { htmlN2 = self.MT_APP_NUTRI.monta(DN2); } catch (e) { ok(false, "monta(D va
 });
 ok(htmlN2.indexOf("fdListaN") < 0 && htmlN2.indexOf("Meu login") < 0,
   "sem nuvem o app sai sem Comunidade e sem o card Meu login — nada de fingir recurso");
+
+/* ===== v751: regras estáticas dos consertos da revisão (corrida, guiado e o resto) =====
+ * O que dá pra medir no app montado sem navegador fica aqui; o comportamento
+ * mora em test-personal.js (blocos "v751"). */
+console.log("v751 — regras estáticas:");
+{
+  const corr = html.slice(html.indexOf("function crResumo"), html.indexOf("function crGpsPara"));
+  ok(html.indexOf("function crLeFoto") > -1 && !/readAsDataURL/.test(corr) && (html.match(/crLeFoto\(f,function\(im\)/g) || []).length === 2,
+    "🏃 as duas leituras de foto da corrida passam pelo mesmo crLeFoto (com onerror)");
+  const fin = html.slice(html.indexOf("function crFinaliza"), html.indexOf("function crImporta"));
+  ok(fin.indexOf("var km=crKmAtual()") > -1 && fin.indexOf("var km=crKmAtual()") < fin.indexOf("crGpsPara()"),
+    "🏃 crFinaliza lê o km ANTES de desligar o GPS (senão o 'km na mão' esquecido vencia o GPS na hora de gravar)");
+  const gps = html.slice(html.indexOf("cr.watch=navigator.geolocation.watchPosition"), html.indexOf("function crAutoGps"));
+  ok(!/Ligar GPS/.test(gps) && /GPS\\u2026/.test(gps), "🏃 erro de GPS que não é permissão não escreve 'Ligar GPS' com o watch vivo");
+  ok(gps.indexOf("if(cr.autoP){cr.autoP=false") < gps.indexOf("cr.km+=dK"), "🏃 o km é somado DEPOIS de retomar a pausa automática");
+  ok(gps.indexOf("cr.gpsOn=true") > gps.indexOf("accuracy>40)return;"), "🏃 gpsOn só vira true com um fix que passou no filtro de precisão");
+  ok(!/crMMSS/.test(html), "🏃 crMMSS (cópia do wodFmt) saiu");
+  ok((html.match(/crFimContinua\(/g) || []).length >= 3, "🏃 os dois caminhos do misto e os blocos usam a MESMA crFimContinua");
+  ok((html.match(/crRecordes\(lst,reg,med\)/g) || []).length === 2 && (html.match(/RECORDE: sua corrida mais longa/g) || []).length === 1,
+    "🏃 recorde/medalha calculados num lugar só (crFinaliza e crImporta chamam crRecordes)");
+  ok(/crQrap=crMedQ\(crQt\)\[5\]/.test(html), "🏆 o card Conquistas lê o pace pelo crMedQ, não refaz a conta");
+  ok(/function crLarga\(\)\{if\(cr\.acum<1\)hrZera\(\)/.test(html), "🏃 só a largada zera o batimento (Continuar não)");
+  ok(/function hrMax\(\)\{var i9=hrIdade\(\);return i9\?220-i9:0;\}/.test(html) && /if\(!mx\|\|!\(b>0\)\)return -1/.test(html),
+    "❤️ sem idade não há máxima inventada: hrMax devolve 0 e hrZ devolve -1");
+  ok(/showNotification\(STUDIO\+' \\u2014 treino'/.test(html) && /showNotification\(STUDIO\+' \\u2014 \\u00e1gua'/.test(html) && !/showNotification\('TORQUE/.test(html),
+    "🔔 a notificação local assina com o nome do studio, como o resto do app");
+  const bg = html.slice(html.indexOf("function beepG"), html.indexOf("function beepG") + 200);
+  ok(/bip\(880/.test(bg) && !/AudioContext/.test(bg), "🔊 beepG toca pelo bip() compartilhado (um contexto de áudio só)");
+  ok(/Voz e avisos \(km, blocos e zonas\)/.test(html) && !/Aviso a cada km/.test(html), "⚙️ o rótulo diz que a opção controla km, blocos e zonas");
+  ok(/var jpMes=isoHj\(\)\.slice\(0,7\)/.test(html), "💳 'Já paguei' guarda o mês LOCAL");
+  const seg = html.slice(html.indexOf("function segunda()"), html.indexOf("function segunda()") + 160);
+  ok(/return isoLoc\(d\);\}/.test(seg) && !/toISOString/.test(seg), "👥 a segunda-feira do ranking é em data LOCAL");
+  ok(/if\(carregando\)\{pendente=true;return;\}/.test(html) && /\{carrega\(\);rankSemana\(\);\}\},45000\)/.test(html),
+    "👥 carga no meio de outra vira pendência e o placar da semana atualiza com o timer");
+  const gs = html.slice(html.indexOf("if(e.target.id==='gSerie')"), html.indexOf("if(e.target.id==='gSerie')") + 120);
+  ok(/gSerie'\)\{gSalvaSeSujo\(\)/.test(gs), "🏋️ 'Série feita' salva a carga pendente antes de repintar");
+  const gp = html.slice(html.indexOf("if(e.target.id==='gPularEx')"), html.indexOf("if(e.target.id==='gPularEx')") + 160);
+  const gvx = html.slice(html.indexOf("if(e.target.id==='gVoltaEx')"), html.indexOf("if(e.target.id==='gVoltaEx')") + 220);
+  ok(/gv\.timer=null;gDescTick=null/.test(gp) && /gv\.timer=null;gDescTick=null/.test(gvx), "🏋️ pular/voltar exercício mata o tick do descanso");
+  ok(!/id='gSug'/.test(html) && /id='gSugNota'/.test(html), "🏋️ dentro de 'Carga de hoje' a sugestão é lembrete, não botão que troca o campo");
+  ok(/gGrava\(itS\.e,\+e\.target\.dataset\.kg,0,/.test(html), "🏋️ aceitar a sugestão grava só a carga (sem as reps prescritas)");
+  ok(/var sug=gPasso\(kg\)/.test(html) && !/var sug=kg<20\?1:2\.5/.test(html), "🏋️ o toast de progressão usa o MESMO degrau (gPasso) do botão de sugestão");
+  ok(/vol9\+=kg9\*r9\*sf9/.test(html), "🏋️ o volume do recibo usa as séries FEITAS, não as prescritas");
+  const sb = html.slice(html.indexOf("closest('.setbtn')"), html.indexOf("closest('.setbtn')") + 900);
+  ok(/GUIA\.some\(function\(f9\)/.test(sb), "🏋️ o 'Treinei hoje' automático fecha com UMA ficha inteira, não com a união A+B+C");
+  ok(/function exKey\(/.test(html) && /st\[exKey\(b\.dataset\.ex\)\]/.test(html) && /data-ex='Farmer&#39;s walk'/.test(html) && /"e":"Farmers walk"/.test(html),
+    "🏋️ o ptsets usa a chave canônica (sem apóstrofo), a mesma que o GUIA usa");
+  ok((html.match(/function avMg\(/g) || []).length === 1 && /var mg=avMg\(u\)/.test(html) && /var mgP=avMg\(p\)/.test(html) && (html.match(/epley\(/g) || []).length >= 3,
+    "📉 massa de gordura (avMg) e 1RM (epley) numa régua só, usada pelo gráfico, pelo laudo, pela calculadora e pelo destaque");
+  ok(/volume_por_treino:L\('ptvol'/.test(html) && /fotos_progresso:L\('ptfotos'/.test(html) && /tudo_no_aparelho/.test(html),
+    "📦 'Baixar meus dados' leva volume, fotos, chat e tudo que é pt*");
+  ok(/MTIT\[m\[0\]\]=m\[2\]/.test(html) && !/'Minhas fichas'/.test(html) && !/'Calendário'/.test(html), "☰ um rótulo por área (o do MENU)");
+  ok(!/prompt\('Qual marca/.test(html) && /id='mkForm'/.test(html) && /data-mkrm=/.test(html), "🏅 marcar na mão é formulário no card, com apagar");
+  ok(/function chLocal\(/.test(html) && !/String\(m\.criado\)\.slice\(11,16\)/.test(html), "💬 a hora do chat vem do Date local, não da fatia do texto");
+  ok(/function maxPorExercicio\(/.test(html) && /function recNovo\(/.test(html) && !/var d7=new Date\(Date\.now\(\)-7\*864e5\)/.test(html),
+    "🏆 recorde de carga: uma conta (maxPorExercicio) e uma regra de novo (recNovo)");
+  ok(/var mp=null,mpV=0/.test(html) && !/x\.p<mp\.p/.test(html), "🏅 'Melhor pace' compara segundos por km, não texto");
+  ok(/function treinoHojeTitulo\(/.test(html) && /trHoje=\(typeof treinoHojeTitulo==='function'&&treinoHojeTitulo\(\)\)\|\|'Treinou hoje'/.test(html),
+    "👥 o post da Comunidade leva o treino do DIA (plano ou rodízio), não a ficha A");
+  ok(/function Sv\(k,v\)\{var ok9=true;/.test(html) && /if\(!Sv\('ptfotos',fs\)\)\{alert\('Memória de fotos cheia/.test(html),
+    "📷 Sv diz se gravou, e a foto de progresso só entra quando coube");
+  ok(/data-ex='Farmer&#39;s walk'/.test(html), "🏋️ o nome com apóstrofo continua escapado no atributo (o esc() protege)");
+}
 
 console.log(falhas ? "\n💥 " + falhas + " falha(s)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);

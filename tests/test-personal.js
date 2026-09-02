@@ -1726,7 +1726,7 @@ async function abaPt(p, a) {
       };
     });
     ok(/Avaliação de/i.test(b3a.kicker) && /medição/.test(b3a.nome) && b3a.botoes,
-      "🎨 3a: o topo diz de quem é a avaliação, qual medição, e traz Mandar laudo + Nova medição");
+      "🎨 3a: o topo diz de quem é a avaliação, qual medição, e traz Abrir laudo + Nova medição");
     ok(/De .* para /.test(b3a.periodo) && b3a.tiles.length === 4,
       "🎨 3a: as duas datas comparadas e os quatro números do aluno (" + b3a.tiles.join(", ") + ")");
     ok(b3a.deltas.some((d) => /↓|↑/.test(d)), "🎨 3a: cada número mostra o quanto mudou desde a medição anterior");
@@ -2419,7 +2419,8 @@ async function abaPt(p, a) {
     ok(/L\('ptckh',\{\}\)\)\.length/.test(bld) && /ch9\[semanaCK\(\)\]=1;Sv\('ptckh',ch9\)/.test(bld) && /k==='ptckh'/.test(bld) && (bld.match(/XPLEG/g) || []).length === 3,
       "⭐ v747: o check-in da semana rende os 20 XP que o rótulo promete (ptckh), legenda num lugar só");
     ok(/raioX = D\.raioX \|\| \[\]/.test(bld), "🧱 v747: raioX nasce [] — pacote sem raioX não derruba o monta()");
-    ok(/agenda:'Agenda'/.test(bld) && !/agenda:'Calendário'/.test(bld) && /Na <b>Agenda<\/b> dá pra/.test(bld) && /Enviar pro meu personal/.test(bld) && /Avisar meu personal/.test(bld) && !/meu professor</.test(bld),
+    // v754: o MTIT deixou de repetir os rótulos e passa a sair do próprio MENU
+    ok(/\['agenda',[^\]]*,'Agenda'\]/.test(bld) && /var MTIT=\{\};itens\.forEach/.test(bld) && !/agenda:'Calendário'/.test(bld) && /Na <b>Agenda<\/b> dá pra/.test(bld) && /Enviar pro meu personal/.test(bld) && /Avisar meu personal/.test(bld) && !/meu professor</.test(bld),
       "🗓️ v747: a área chama Agenda em todo lugar, e os botões dizem 'personal' como o resto do app");
     ok(/<h2>Conversa<\/h2>/.test(bld) && />Meta<\/span><span id='mpMetaTxt'/.test(bld), "🧾 v747: 'Meu peso' não aparece três vezes no card, e o chat não repete o nome do studio");
     ok(/var dinheiro = function/.test(bld) && !/toLocaleString\("pt-BR"\)/.test(bld) && /PLSUB=" \+ jsonApp\(PLTXT/.test(bld) && /ctApp && ctApp\.diaVenc/.test(bld) && !/plApp\.diaVenc/.test(bld),
@@ -2448,7 +2449,8 @@ async function abaPt(p, a) {
       /function naSemana\(f\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
       "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
     ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
-    ok(/n=Math\.min\(max,\(st\[b\.dataset\.ex\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld),
+    // v754: a chave passa pelo exKey (a mesma do GUIA); o teto e o fecha-por-ficha continuam
+    ok(/var kx=exKey\(b\.dataset\.ex\);var n=Math\.min\(max,\(st\[kx\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld) && /var kl=exKey\(b\.dataset\.ex\)/.test(bld),
       "✅ v747: séries travam no máximo e o 'Treinei hoje' automático olha a FICHA que o aluno está fazendo, não a união de todas");
     ok(/k\.slice\(0,10\)<lim\)delete f\[k\]/.test(bld) && /if\(k!==s0\)\{delete a0\[k\]/.test(bld), "🧽 v747: ptconf podado em 60 dias e rascunho de check-in de semana velha apagado");
     ok(/eh9\(msg\)/.test(bld), "🔒 v747: a observação do aluno entra escapada na caixinha verde do fim do circuito");
@@ -3116,6 +3118,392 @@ async function abaPt(p, a) {
     await p.evaluate((s) => localStorage.setItem("mtapp:ptStudio", s), stAntesC);
     await p.reload();
     await p.waitForTimeout(700);
+  }
+
+  {
+    /* ---- v752: revisão pt-config (Configurações, Personalização, Minha página, galeria) e pt-aval (avaliação, laudo) ---- */
+    console.log("v752 — pt-config e pt-aval:");
+    const v752 = await p.evaluate(async () => {
+      const out = {};
+      const S9 = window.MTStore;
+      const le = () => JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+      const snap = localStorage.getItem("mtapp:ptStudio");
+      const snapImg = localStorage.getItem("mtapp:ptImagens");
+      const cloudOrig = S9.cloud, alertOrig = window.alert, confirmOrig = window.confirm, fetchOrig = window.fetch;
+      const infoOrig = window.__syncInfoPT, notifOrig = window.Notification, subOrig = window.__pushProf.subAtual;
+      const alerts = [];
+      window.alert = (m) => alerts.push(String(m));
+      window.confirm = () => true;
+      const htmlP = await (await fetch("personal.html")).text();
+      /* nuvem de mentira COMPLETA: enquanto o mock está no ar, cada S.write
+       * dispara o render() inteiro (renderAgenda → renderPedidosApp faz
+       * .from().select()…). Mock só com `rpc` derrubava a página com
+       * "select is not a function" — o cliente precisa ser encadeável. */
+      const enc = (resp) => {
+        const o = { then: (f, r) => Promise.resolve(resp).then(f, r) };
+        ["select", "eq", "neq", "gte", "lte", "in", "is", "order", "limit", "single", "maybeSingle"].forEach((k) => { o[k] = () => o; });
+        return o;
+      };
+      const tabela = () => Object.assign(enc({ data: [], error: null }), {
+        upsert: () => Promise.resolve({ error: null }),
+        insert: () => Promise.resolve({ error: null }),
+        update: () => enc({ error: null }),
+        delete: () => enc({ error: null }),
+      });
+      const cliente = (extra) => Object.assign({ rpc: () => Promise.resolve({ data: {} }), from: tabela }, extra || {});
+      let st;
+      try {
+        // 1. Resumo 4a com "Outra plataforma": link próprio = baixa manual — sem chave, sem baixa automática
+        st = le(); st.config = st.config || {};
+        st.config.pagApi = { ligado: true, provedor: "outro" }; st.config.pagLink = "https://cobra.exemplo/x";
+        S9.write("ptStudio", st);
+        window.__cfg4a();
+        let box = document.getElementById("cfgResumo").textContent;
+        out.resumoOutro = /link próprio · baixa manual/.test(box) && /Trocar link/.test(box) && /marca em Recebi/.test(box) &&
+          !/Baixa automática/.test(box) && !/Chave guardada/.test(box) && !/Assinaturas/.test(box);
+        st = le(); st.config.pagApi = { ligado: true, provedor: "asaas" }; S9.write("ptStudio", st);
+        window.__cfg4a();
+        box = document.getElementById("cfgResumo").textContent;
+        out.resumoGateway = /Asaas · sua conta/.test(box) && /Trocar chave/.test(box) && /Baixa automática/.test(box);
+
+        // 2. trocar Asaas → Outra plataforma apaga a chave no servidor (pag_config_apaga)
+        const rpcs = [];
+        S9.cloud = () => ({ aid: "acad-1", client: cliente({ rpc: (n) => { rpcs.push(n); return Promise.resolve({ data: { ok: true } }); } }) });
+        document.getElementById("cfgPagProv").value = "outro";
+        document.getElementById("cfgPagProv").dispatchEvent(new Event("change"));
+        document.getElementById("cfgPagLink").value = "https://cobra.exemplo/novo";
+        document.getElementById("cfgPagSalva").click();
+        await espera(120);
+        out.apagouAoTrocar = rpcs.indexOf("pag_config_apaga") >= 0 && le().config.pagApi.provedor === "outro" && le().config.pagLink === "https://cobra.exemplo/novo";
+        // sem conseguir apagar, NÃO troca — a mensagem tem que ser verdade
+        st = le(); st.config.pagApi = { ligado: true, provedor: "asaas" }; S9.write("ptStudio", st);
+        S9.cloud = () => ({ aid: "acad-1", client: cliente({ rpc: () => Promise.resolve({ error: { message: "sem rede" } }) }) });
+        document.getElementById("cfgPagProv").value = "outro";
+        document.getElementById("cfgPagLink").value = "https://cobra.exemplo/novo2";
+        document.getElementById("cfgPagSalva").click();
+        await espera(120);
+        out.naoTrocouSemApagar = le().config.pagApi.provedor === "asaas" && /Não deu pra apagar a chave/.test(document.getElementById("cfgPagStatus").textContent);
+        // Desligar vindo do link próprio: nenhuma RPC e nada de "chave apagada"
+        st = le(); st.config.pagApi = { ligado: true, provedor: "outro" }; S9.write("ptStudio", st);
+        rpcs.length = 0;
+        S9.cloud = () => ({ aid: "acad-1", client: cliente({ rpc: (n) => { rpcs.push(n); return Promise.resolve({ data: { ok: true } }); } }) });
+        document.getElementById("cfgPagDesliga").click();
+        await espera(60);
+        const stDes = document.getElementById("cfgPagStatus").textContent;
+        out.desligaLink = !rpcs.length && !le().config.pagApi && /Desligado/.test(stDes) && !/chave foi apagada/.test(stDes);
+        // e vindo de um gateway, a RPC roda e aí sim a frase é "chave apagada"
+        st = le(); st.config.pagApi = { ligado: true, provedor: "mercadopago" }; S9.write("ptStudio", st);
+        document.getElementById("cfgPagDesliga").click();
+        await espera(60);
+        out.desligaGateway = rpcs.indexOf("pag_config_apaga") >= 0 && /chave foi apagada/.test(document.getElementById("cfgPagStatus").textContent);
+        S9.cloud = cloudOrig;
+
+        // 3. Minha página: Salvar não congela a cor da Personalização dentro da página
+        st = le(); st.config.cor = "#123456"; delete st.config.fundo;
+        st.config.sitePro = Object.assign({}, st.config.sitePro, { cor: "", fundo: "" }); S9.write("ptStudio", st);
+        window.__sitePro.render();
+        document.getElementById("spSalvar").click();
+        await espera(60);
+        out.corSegue = le().config.sitePro.cor === "" && le().config.sitePro.fundo === "";
+        st = le(); st.config.cor = "#654321"; S9.write("ptStudio", st);
+        out.corAcompanha = /#654321/.test(window.__sitePro.monta(le()));
+        window.__sitePro.render();
+        document.getElementById("spCor").value = "#abcdef";
+        document.getElementById("spSalvar").click();
+        await espera(60);
+        out.corPropria = le().config.sitePro.cor === "#abcdef" && /#abcdef/.test(window.__sitePro.monta(le()));
+
+        // 4. trocar o endereço da página tira a antiga do ar — o DELETE é ENVIADO (tem .then)
+        st = le(); st.config.sitePro.slug = "novo-end"; st.config.sitePro.slugPub = "velho-end"; S9.write("ptStudio", st);
+        window.__sitePro.render();
+        let deletou = null, fezThen = false;
+        const mockPub = (resp) => ({ aid: "acad-1", client: cliente({ from: () => Object.assign(tabela(), {
+          upsert: () => Promise.resolve({ error: null }),
+          delete: () => ({ eq: (c, v) => { deletou = v; return { then: (okF, errF) => { fezThen = true; return Promise.resolve(resp).then(okF, errF); } }; } }),
+        }) }) });
+        S9.cloud = () => mockPub({});
+        document.getElementById("spPublicar").click();
+        await espera(200);
+        out.delEnviado = deletou === "velho-end" && fezThen && le().config.sitePro.slugPub === "novo-end" && !/Atenção/.test(document.getElementById("spStatus").textContent);
+        st = le(); st.config.sitePro.slug = "novo-end2"; S9.write("ptStudio", st);
+        window.__sitePro.render();
+        S9.cloud = () => mockPub({ error: { message: "policy" } });
+        document.getElementById("spPublicar").click();
+        await espera(200);
+        const stPub = document.getElementById("spStatus").textContent;
+        out.delAvisa = /endereço antigo/.test(stPub) && /novo-end\)/.test(stPub) && /continua público/.test(stPub);
+        S9.cloud = cloudOrig;
+
+        // 5. foto da galeria guardada na nuvem vira capa como data: nos TRÊS destinos (tipo, geral, ficha)
+        const url = "https://x.supabase.co/storage/v1/object/public/galeria/acad/1.jpg";
+        S9.write("ptImagens", [{ id: "v752n", n: "Nuvem", d: url, em: S9.todayISO() }]);
+        window.fetch = () => Promise.resolve({ blob: () => Promise.resolve(new Blob([Uint8Array.from([255, 216, 255])], { type: "image/jpeg" })) });
+        window.__galeriaPT({ tipo: "tipocapa", chave: "pernas" });
+        document.querySelector('#galEscolher [data-galsel="v752n"]').click();
+        await espera(120);
+        out.tipoData = /^data:image\/jpeg/.test((le().config.capasTipo || {}).pernas || "");
+        window.__galeriaPT({ tipo: "geral" });
+        document.querySelector('#galEscolher [data-galsel="v752n"]').click();
+        await espera(120);
+        out.geralData = /^data:image\/jpeg/.test(le().config.capaTreino || "");
+        st = le(); const alunoF = st.alunos[0];
+        st.treinosV2 = st.treinosV2 || {}; st.treinosV2[alunoF.id] = st.treinosV2[alunoF.id] || { fichas: [] };
+        st.treinosV2[alunoF.id].fichas = (st.treinosV2[alunoF.id].fichas || []).concat([{ id: "v752f", nome: "A — Teste", itens: [] }]);
+        S9.write("ptStudio", st);
+        window.__galeriaPT({ tipo: "ficha", id: "v752f", aluno: alunoF.id });
+        document.querySelector('#galEscolher [data-galsel="v752n"]').click();
+        await espera(120);
+        out.fichaData = /^data:image\/jpeg/.test((le().treinosV2[alunoF.id].fichas.find((f) => f.id === "v752f") || {}).capa || "");
+        window.fetch = fetchOrig;
+        // a galeria diz "na nuvem" em vez de "0 KB"
+        window.__imagensPT.render();
+        const gal = document.getElementById("imgGaleria").textContent;
+        out.naNuvem = /na nuvem/.test(gal) && !/0 KB/.test(gal);
+
+        // 6. teto das fotos que moram DENTRO do ptStudio
+        const grande = "data:image/jpeg;base64," + "A".repeat(1200 * 1024);
+        const fake = { config: { capasTipo: { peito: grande }, capaTreino: grande, capaX: url }, treinosV2: { a: { fichas: [{ capa: grande }], wods: [{ capa: url }] } } };
+        out.pesoSoma = window.__fotosStudio.peso(fake) === 3 * grande.length;
+        alerts.length = 0;
+        out.recusa = window.__fotosStudio.cabe(fake, grande, 0) === false && /limite é 2 MB/.test(alerts[0] || "");
+        out.trocaCabe = window.__fotosStudio.cabe({ config: { capaTreino: grande } }, grande, grande.length) === true;
+        st = le(); st.config.capasTipo = { peito: "data:image/jpeg;base64," + "B".repeat(1950 * 1024) }; S9.write("ptStudio", st);
+        S9.write("ptImagens", [{ id: "v752g", n: "Grande", d: "data:image/jpeg;base64," + "C".repeat(150 * 1024), em: S9.todayISO() }]);
+        alerts.length = 0;
+        window.__galeriaPT({ tipo: "tipocapa", chave: "pernas" });
+        document.querySelector('#galEscolher [data-galsel="v752g"]').click();
+        await espera(60);
+        out.tetoReal = !(le().config.capasTipo || {}).pernas && alerts.some((a) => /limite é 2 MB/.test(a));
+        localStorage.setItem("mtapp:ptStudio", snap); // sai o peso antes de seguir
+
+        // 7. um Salvar = UM render; espelho do WhatsApp igual não grava nem redesenha
+        const n0 = window.__renderPT.conta();
+        window.__renderPT.save(le());
+        out.umRender = window.__renderPT.conta() === n0 + 1;
+        st = le(); st.config.zapApi = { ligado: false, phoneId: "", template: "" }; S9.write("ptStudio", st);
+        const n1 = window.__renderPT.conta();
+        const gravou = window.__guardaZapEspelho({ tem_token: false, phone_id: "", template: "" });
+        out.espelhoIgual = gravou === false && window.__renderPT.conta() === n1;
+        out.espelhoMudou = window.__guardaZapEspelho({ tem_token: true, phone_id: "99", template: "t" }) === true && le().config.zapApi.ligado === true && le().config.zapApi.phoneId === "99";
+
+        // 8. o selo da nuvem diz a verdade (última sincronização, pendências, ainda não sincronizou)
+        S9.cloud = () => ({ aid: "a", client: cliente() });
+        window.__syncInfoPT = { ativa: true, ultima: new Date(2026, 0, 1, 14, 32), pendentes: 0 };
+        out.nuvemHora = window.__cfgNuvemTexto(true) === "Nuvem sincronizada · 14:32";
+        window.__syncInfoPT = { ativa: true, ultima: new Date(2026, 0, 1, 14, 32), pendentes: 2 };
+        out.nuvemPend = /2 alterações esperando/.test(window.__cfgNuvemTexto(true)) && !/sincronizada/.test(window.__cfgNuvemTexto(true));
+        window.__syncInfoPT = null;
+        out.nuvemSem = /ainda não sincronizou/.test(window.__cfgNuvemTexto(true)) && window.__cfgNuvemTexto(null) === "Só neste aparelho";
+        window.__cfg4a();
+        out.nuvemNaTela = /ainda não sincronizou/.test(document.getElementById("cfgNuvem").textContent);
+        window.__syncInfoPT = infoOrig; S9.cloud = cloudOrig;
+
+        // 9. o card dos avisos lê a inscrição que JÁ existe neste aparelho
+        window.__pushProf.subAtual = () => Promise.resolve({ endpoint: "https://push/x" });
+        out.pushAtivo = (await window.__pushProf.pinta()) === true && /Avisos ativados neste aparelho/.test(document.getElementById("pushProfBt").textContent);
+        window.__pushProf.subAtual = () => Promise.resolve(null);
+        out.pushInativo = (await window.__pushProf.pinta()) === false && document.getElementById("pushProfBt").textContent === "Ativar neste aparelho";
+        window.Notification = { permission: "denied" };
+        out.pushBloq = (await window.__pushProf.pinta()) === false && /bloqueada/.test(document.getElementById("pushProfStatus").textContent);
+        window.Notification = notifOrig; window.__pushProf.subAtual = subOrig;
+        out.pushNoRender = /pushProf\.pinta\(\); \/\/ v752/.test(htmlP);
+
+        // 10. contagem das mensagens do sistema sai das listas (10 linhas = 6 automáticas + 4 de botão)
+        window.__autosPT();
+        const nSis = document.querySelectorAll("#autoLista [data-fixaed]").length;
+        out.contagem = nSis === 10 && /6 automáticas e 4 de botão/.test(document.getElementById("autoQtdSis").textContent);
+        out.semTextoVelho = !/quatro primeiras são do sistema/.test(htmlP) && !/Essas seis são do sistema/.test(htmlP);
+
+        // 11. mensagem fixa: só o personalizado fica gravado; "Voltar pro texto padrão" apaga a chave
+        const chavesAntes = Object.keys(le().config.zapModelos || {}).sort().join(",");
+        window.__autoFixaEdita("niver");
+        document.getElementById("autoTexto").value = "Meu texto {nome}";
+        document.getElementById("autoSalva").click();
+        await espera(60);
+        const zm1 = le().config.zapModelos || {};
+        out.fixaGrava = zm1.niver === "Meu texto {nome}" &&
+          Object.keys(zm1).filter((k) => k !== "niver").sort().join(",") === chavesAntes.split(",").filter((k) => k && k !== "niver").sort().join(",");
+        window.__autoFixaEdita("niver");
+        document.getElementById("autoApaga").click();
+        document.getElementById("autoSalva").click();
+        await espera(60);
+        window.__autoFixaEdita("niver");
+        const txPadrao = document.getElementById("autoTexto").value;
+        document.getElementById("autoCancela").click();
+        out.fixaPadrao = !("niver" in (le().config.zapModelos || {})) && /feliz aniversário/.test(txPadrao);
+
+        // 12. cor e logo da Personalização pintadas num lugar só
+        window.__pintaCorELogo({ config: { logo: "data:image/png;base64,iVBORw0KGgo=" } });
+        const lgOn = !document.getElementById("cfgLogoPrev").hidden && !document.getElementById("cfgLogoDel").hidden;
+        window.__pintaCorELogo({ config: {} });
+        out.corLogo = lgOn && document.getElementById("cfgLogoPrev").hidden && document.getElementById("cfgLogoDel").hidden &&
+          (htmlP.match(/\$\("cfgLogoDel"\)\.hidden = /g) || []).length === 1;
+
+        // 13. excluir avaliação marca o app do aluno pra republicar
+        st = le();
+        const al = st.alunos.find((a) => a.nome === "João Cliente") || st.alunos[0];
+        al.appTokenP = al.appTokenP || "tok752"; al.appVer = self.MT_VERSAO;
+        al.appPubEm = new Date(Date.now() - 5000).toISOString(); al.appEditEm = "2020-01-01T00:00:00.000Z";
+        st.avaliacoes = (st.avaliacoes || []).concat([{ id: "v752av", alunoId: al.id, data: "2026-01-05", peso: 80 }]);
+        S9.write("ptStudio", st);
+        window.__avAba("historico");
+        document.querySelector('#listaAvaliacoes [data-avrm="v752av"]').click();
+        await espera(60);
+        const alDepois = le().alunos.find((a) => a.id === al.id);
+        out.rmPendente = !le().avaliacoes.some((v) => v.id === "v752av") && Date.parse(alDepois.appEditEm) > Date.parse(alDepois.appPubEm);
+
+        // 14. textos: gênero pelo cadastro, plural sem parênteses, botões que dizem o que fazem
+        const selC = document.getElementById("avCmpAluno");
+        selC.value = al.id; selC.dispatchEvent(new Event("change", { bubbles: true }));
+        out.genero = /ficha dele/.test(document.getElementById("avCmp").textContent);
+        const lst = document.getElementById("listaAvaliacoes").textContent;
+        out.plural = /\d+ avaliaç(ão|ões) · última em/.test(lst) && !/\(ões\)/.test(lst);
+        out.rotulos = document.getElementById("avCmpLaudo").textContent.trim() === "Abrir laudo" &&
+          /Medidas e anotações/.test(document.getElementById("pfRelPdf").textContent) && !/Mandar laudo/.test(htmlP) && !/Relatório PDF</.test(htmlP);
+        // relatório PDF: medida igual é NEUTRA (não sai como "bom")
+        st = le(); st.alunos.push({ id: "v752b", nome: "Neutro Teste", ativo: true, altura: 170 });
+        st.avaliacoes.push({ id: "v752r1", alunoId: "v752b", data: "2019-01-01", peso: 80, cintura: 90 }, { id: "v752r2", alunoId: "v752b", data: "2019-02-01", peso: 80, cintura: 90 });
+        S9.write("ptStudio", st);
+        const pdf = window.__relPdf("v752b");
+        out.pdfNeutro = /class='delta'><b>0 cm/.test(pdf) && !/delta bom'><b>0/.test(pdf) && !/delta ruim'><b>0/.test(pdf);
+
+        // 15. a data volta pra hoje depois de salvar e o "Salvo" mostra a data gravada
+        window.__avAba("avaliar");
+        const selA = document.getElementById("avAluno");
+        selA.value = al.id; selA.dispatchEvent(new Event("change", { bubbles: true }));
+        document.getElementById("avData").value = "2026-01-10";
+        document.getElementById("avPeso").value = "81";
+        document.getElementById("avAdd").click();
+        await espera(80);
+        out.dataVolta = document.getElementById("avData").value === S9.todayISO() &&
+          /Salvo em 10\/01\/2026/.test(document.getElementById("avResultado").textContent) &&
+          le().avaliacoes.some((v) => v.alunoId === al.id && v.data === "2026-01-10" && v.peso === 81);
+
+        // 16. a ORIGEM do % de gordura fica gravada e as telas leem dela
+        selA.value = al.id; selA.dispatchEvent(new Event("change", { bubbles: true }));
+        document.getElementById("avPeso").value = "81";
+        document.getElementById("avGord").value = "22";
+        document.getElementById("avAdd").click();
+        await espera(80);
+        const avB = le().avaliacoes.filter((v) => v.alunoId === al.id).pop();
+        out.fonteBalanca = avB.gorduraFonte === "balanca" && avB.gordura === 22;
+        selC.value = al.id; selC.dispatchEvent(new Event("change", { bubbles: true }));
+        out.fonteNa3a = /% medido na balança/.test(document.getElementById("avCmp").textContent) &&
+          />% da balança</.test(document.getElementById("listaAvaliacoes").innerHTML);
+        out.fonteRotulo = window.__fonteGordura({ gorduraFonte: "foto" }, {}) === "estimado pela câmera" &&
+          window.__fonteGordura({ metodoDobras: "p3" }, {}) === "dobras cutâneas" &&
+          window.__fonteGordura({}, { medido: { gordura: true } }) === "bioimpedância · vence a estimativa";
+
+        // 17. a 3a e o perfil comparam as MESMAS medições (avPar): a última que gera laudo
+        st = le();
+        st.alunos.push({ id: "v752c", nome: "Par Teste", ativo: true, altura: 170 });
+        st.avaliacoes = st.avaliacoes.concat([
+          { id: "v752c1", alunoId: "v752c", data: "2026-01-01", peso: 80 },
+          { id: "v752c2", alunoId: "v752c", data: "2026-02-01", peso: 78 },
+          { id: "v752c3", alunoId: "v752c", data: "2026-03-01", cintura: 88 }, // só fita: não gera laudo
+        ]);
+        S9.write("ptStudio", st);
+        const par = window.__avPar(le(), "v752c");
+        out.parRegra = par.ult.id === "v752c2" && par.pen.id === "v752c1" && par.parcial.id === "v752c3" && par.lista.length === 3;
+        selC.value = "v752c"; selC.dispatchEvent(new Event("change", { bubbles: true }));
+        const txt3a = document.getElementById("avCmp").textContent;
+        out.tela3a = /De 01\/01\/2026 para 01\/02\/2026/.test(txt3a) && /não entra na comparação/.test(txt3a) &&
+          !/Pro comparativo o aluno precisa/.test(txt3a);
+        window.__laudoPT.pinta(le(), "v752c");
+        out.perfilIgual = /01\/02\/2026/.test(document.getElementById("pfLaudo").textContent) &&
+          /Laudo de composição corporal/.test(document.getElementById("pfLaudo").textContent);
+      } finally {
+        window.alert = alertOrig; window.confirm = confirmOrig; S9.cloud = cloudOrig; window.fetch = fetchOrig;
+        window.__syncInfoPT = infoOrig; window.Notification = notifOrig; window.__pushProf.subAtual = subOrig;
+        localStorage.setItem("mtapp:ptStudio", snap);
+        if (snapImg == null) localStorage.removeItem("mtapp:ptImagens"); else localStorage.setItem("mtapp:ptImagens", snapImg);
+      }
+      return out;
+    });
+    ok(v752.resumoOutro, "⚙️ 4a com link próprio diz 'baixa manual' e 'Trocar link' — sem prometer chave, baixa automática nem assinaturas");
+    ok(v752.resumoGateway, "⚙️ 4a com gateway de verdade continua com chave, Trocar chave e Baixa automática");
+    ok(v752.apagouAoTrocar, "💳 trocar de gateway pra Outra plataforma apaga a chave no servidor (pag_config_apaga) antes de ligar o link");
+    ok(v752.naoTrocouSemApagar, "💳 sem conseguir apagar a chave, a troca NÃO acontece e o status diz o motivo");
+    ok(v752.desligaLink, "💳 Desligar vindo do link próprio não chama RPC nenhuma e não mente que apagou chave");
+    ok(v752.desligaGateway, "💳 Desligar vindo de um gateway roda a RPC e só então diz 'chave apagada'");
+    ok(v752.corSegue && v752.corAcompanha, "🌐 Salvar a Minha página com a cor da Personalização grava vazio — trocar a cor do studio muda a página");
+    ok(v752.corPropria, "🌐 cor escolhida de propósito na página (diferente da Personalização) continua valendo");
+    ok(v752.delEnviado, "🌐 trocar o endereço da página ENVIA o DELETE do endereço antigo (o builder preguiçoso ganhou .then)");
+    ok(v752.delAvisa, "🌐 se o DELETE falhar, o status avisa que o endereço antigo continua público");
+    ok(v752.tipoData && v752.geralData && v752.fichaData, "🖼 foto da galeria guardada na nuvem vira capa como data: por tipo, geral e na ficha (o app é offline)");
+    ok(v752.naNuvem, "🖼 a galeria mostra 'na nuvem' pra foto do Storage, em vez de '0 KB'");
+    ok(v752.pesoSoma && v752.recusa && v752.trocaCabe, "🖼 teto das fotos do ptStudio: soma só data: (URL não pesa), recusa acima de 2 MB e trocar a mesma foto não conta duas vezes");
+    ok(v752.tetoReal, "🖼 com o studio já cheio de fotos, escolher outra pra um tipo é recusado com aviso honesto");
+    ok(v752.umRender, "⚡ um save() = UM render (o ouvinte do store já redesenha; o render() de dentro do save saiu)");
+    ok(v752.espelhoIgual && v752.espelhoMudou, "⚡ o espelho do WhatsApp só grava (e redesenha) quando a nuvem respondeu algo diferente");
+    ok(v752.nuvemHora && v752.nuvemPend && v752.nuvemSem && v752.nuvemNaTela, "☁️ o selo do Resumo mostra a ÚLTIMA sincronização, as pendências ou 'ainda não sincronizou' — nunca a hora da pintura");
+    ok(v752.pushAtivo && v752.pushInativo && v752.pushBloq && v752.pushNoRender, "🔔 o card dos avisos diz se este aparelho já está inscrito (ou com permissão bloqueada) ao pintar a tela");
+    ok(v752.contagem && v752.semTextoVelho, "💬 a contagem das mensagens do sistema sai das listas (6 automáticas e 4 de botão) — os textos velhos 'quatro'/'seis' sumiram");
+    ok(v752.fixaGrava && v752.fixaPadrao, "💬 só o texto personalizado fica em zapModelos; Voltar pro texto padrão APAGA a chave (recebe melhorias do padrão)");
+    ok(v752.corLogo, "🎨 cor e logo da Personalização são pintadas por UMA função (renderPers e renderConta chamam a mesma)");
+    ok(v752.rmPendente, "📏 excluir uma avaliação marca o app do aluno pra republicar (a errada sai do app)");
+    ok(v752.genero && v752.plural, "📏 'ficha dele/dela' segue o cadastro e a contagem usa S.plural (sem 'avaliação(ões)')");
+    ok(v752.rotulos, "📏 'Abrir laudo' (não 'Mandar') e 'Medidas e anotações (PDF)' dizem o que cada papel traz");
+    ok(v752.pdfNeutro, "📏 no relatório PDF, medida igual é neutra — não sai verde de 'bom'");
+    ok(v752.dataVolta, "📏 depois de salvar a data volta pra hoje e o 'Salvo em dd/mm/aaaa' mostra a data gravada");
+    ok(v752.fonteBalanca && v752.fonteNa3a && v752.fonteRotulo, "📏 a origem do % de gordura fica gravada (gorduraFonte) e a 3a, a lista e o perfil leem dela");
+    ok(v752.parRegra, "📏 avPar escolhe a última medição que GERA laudo e a anterior que também gera (a só-de-fita fica marcada como parcial)");
+    ok(v752.tela3a && v752.perfilIgual, "📏 a tela 3a e o perfil comparam as MESMAS medições — e a 3a diz por que a mais recente ficou de fora, em vez de sumir com o comparativo");
+    await p.reload();
+    await p.waitForTimeout(700);
+
+    // lote de fotos no banco de imagens: a que falha não derruba as outras e a galeria repinta no fim
+    const lote = await p.evaluate(async () => {
+      const S9 = window.MTStore;
+      const alertOrig = window.alert, alerts = [];
+      window.alert = (m) => alerts.push(String(m));
+      const antes = S9.read("ptImagens", []);
+      S9.write("ptImagens", []);
+      const cv = document.createElement("canvas"); cv.width = 40; cv.height = 50;
+      const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], "boa1.png", { type: "image/png" }));
+      dt.items.add(new File([new Blob(["isto não é imagem"], { type: "image/png" })], "quebrada.png", { type: "image/png" }));
+      dt.items.add(new File([blob], "boa2.png", { type: "image/png" }));
+      const inp = document.getElementById("imgFile");
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event("change"));
+      await new Promise((r) => setTimeout(r, 600));
+      const lista = S9.read("ptImagens", []);
+      const out = {
+        entraram: lista.length === 2 && lista.every((x) => /^data:image\/jpeg/.test(x.d)),
+        nomes: lista.map((x) => x.n).sort().join(","),
+        repintou: document.querySelectorAll("#imgGaleria [data-imgcapa]").length === 2,
+        resumo: alerts.length === 1 && /2 fotos entraram/.test(alerts[0]) && /1 foi ignorada/.test(alerts[0]) && /quebrada\.png/.test(alerts[0]),
+      };
+      window.alert = alertOrig;
+      S9.write("ptImagens", antes);
+      window.__imagensPT.render();
+      return out;
+    });
+    ok(lote.entraram && lote.nomes === "boa1,boa2", "🖼 lote de 3 fotos com uma ilegível no meio: as duas boas entram (" + lote.nomes + ")");
+    ok(lote.repintou && lote.resumo, "🖼 a galeria repinta no fim do lote e UM aviso resume '2 entraram · 1 ignorada' com o nome do arquivo");
+
+    // pedido de aula experimental na data LOCAL (o carimbo da nuvem é UTC): às 22h30 em BH ainda é o dia 1
+    {
+      const ctxTz = await b.newContext({ viewport: { width: 1360, height: 900 }, timezoneId: "America/Sao_Paulo" });
+      await ctxTz.addInitScript(() => {
+        localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+        localStorage.setItem("mtapp:ptSemConta", "1");
+      });
+      const pTz = await ctxTz.newPage();
+      pTz.on("pageerror", (e) => erros.push("tz: " + e.message));
+      await pTz.goto(BASE + "/personal.html");
+      await pTz.waitForFunction(() => window.__aulaExp);
+      const tz = await pTz.evaluate(() => {
+        window.__aulaExp.pinta([{ id: "m9", nome: "Noite Teste", zap: "31988887777", horario: "", criado: "2026-09-02T01:30:00+00:00" }]);
+        return { txt: document.getElementById("aexpLista").textContent, cru: String("2026-09-02T01:30:00+00:00").slice(0, 10) };
+      });
+      ok(/01\/09\/2026/.test(tz.txt) && !/02\/09\/2026/.test(tz.txt) && tz.cru === "2026-09-02",
+        "🎯 pedido feito 22h30 de 1/9 em BH aparece em 01/09 (o corte cru do timestamptz diria 02/09)");
+      await ctxTz.close();
+    }
   }
 
   // ---------- gestão pro dia a dia: bloqueio, pacote, renovação, recibo, régua, aniversário ----------
@@ -4100,7 +4488,7 @@ async function abaPt(p, a) {
       };
     });
     ok(rec.ordem && rec.kg, "🏆 o mural lista do maior pro menor com a carga máxima de cada exercício");
-    ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde dos últimos 7 dias");
+    ok(rec.novoSoNoDeHoje, "🏆 o selo NOVO só aparece no recorde batido este mês com mais de uma anotação (v751: a mesma regra do cabeçalho e de Marcas)");
     ok(rec.umSo, "🏆 com um exercício só o mural não aparece (o destaque do grupo já conta)");
 
     // 📊 v732: o volume do treino ganha memória (ptvol) e o recibo compara —
@@ -8289,6 +8677,44 @@ async function abaPt(p, a) {
     "GPX do relógio vira registro com km, pace e a DATA do treino (" + (imp.reg && imp.reg.k + " km · " + imp.reg.p) + ")");
   ok(imp.lst.some((x) => x.n === "Corrida do relógio") && /RELÓGIO IMPORTADO/.test(imp.fase),
     "a corrida importada entra no histórico e a tela confirma");
+  {
+    // v751: importar na mão abre o MESMO resumo da corrida do GPS, guarda o
+    // trajeto (r) e a modalidade vem do ARQUIVO, não do chip da tela
+    const imp2 = await pCr.evaluate(() => {
+      const out = { resumoVis: document.getElementById("crResumoF").style.display, flag: window.__cr.resumo,
+        share: document.getElementById("crShare").style.display };
+      const lst = JSON.parse(localStorage.getItem("ptcardio") || "[]");
+      const x = lst.find((q) => q.n === "Corrida do relógio");
+      out.temR = !!(x && x.r && x.r.length > 4);
+      document.getElementById("crRsFechar").click();
+      out.fechou = window.__cr.resumo === false;
+      const gpxDe = (nome, tipo, dia) => {
+        let seg9 = "";
+        for (let i = 0; i <= 24; i++) {
+          const t9 = new Date(Date.UTC(2026, 7, dia, 7, 0, 0) + i * 30000).toISOString();
+          seg9 += "<trkpt lat='" + (-19.90 - i * 0.00075).toFixed(5) + "' lon='-43.90'><time>" + t9 + "</time></trkpt>";
+        }
+        return "<gpx><trk><name>" + nome + "</name>" + (tipo ? "<type>" + tipo + "</type>" : "") + "<trkseg>" + seg9 + "</trkseg></trk></gpx>";
+      };
+      // o arquivo diz PEDAL com o chip da tela em corrida: vale o arquivo
+      window.__cr.mod = "corrida";
+      const reg = window.__crImporta(gpxDe("Pedal do relógio", "cycling", 16));
+      out.modArq = reg && reg.m;
+      document.getElementById("crRsFechar").click();
+      // sem tipo no arquivo E no modo automático (relógio do app nativo, sem confirm): corrida, nunca o chip
+      window.__cr.mod = "bike";
+      const reg2 = window.__crImporta(gpxDe("Sem tipo", "", 17), "Do relógio", true);
+      out.modAuto = reg2 && reg2.m;
+      out.autoSemResumo = window.__cr.resumo === false;
+      window.__cr.mod = "corrida";
+      return out;
+    });
+    ok(imp2.resumoVis === "block" && imp2.flag === true && imp2.share !== "none" && imp2.fechou,
+      "🏃 v751: importar do relógio abre a tela de resumo (com o botão de postar) e o Fechar libera o espelho");
+    ok(imp2.temR, "🏃 v751: a corrida importada guarda o trajeto (r) — ganha o 3D no histórico e a arte com traçado");
+    ok(imp2.modArq === "bike" && imp2.modAuto === "corrida" && imp2.autoSemResumo,
+      "🏃 v751: a modalidade vem do arquivo (cycling → bike); no modo automático nunca do chip, e sem resumo (" + imp2.modArq + "/" + imp2.modAuto + ")");
+  }
   // área estilo app de corrida: trajeto, botão redondo, meta e configurações
   const nrc = await pCr.evaluate(async () => {
     const out = {
@@ -8654,6 +9080,9 @@ async function abaPt(p, a) {
     out.painel = document.getElementById("crPainelF").style.display !== "none";
     out.tempoF = document.getElementById("crTempoF").textContent;
     out.goF = document.getElementById("crGoF").textContent;
+    // v751: o Terminei! só aparece a partir de 5 s de corrida — adianta o relógio pra medir
+    out.termineiCedo = document.getElementById("crFimF").style.display;
+    window.__cr.t0 -= 6000; window.__pintaCr();
     out.terminei = document.getElementById("crFimF").style.display !== "none";
     // métrica gigante paginada: um toque troca, as bolinhas mostram a página
     out.gigaL = document.getElementById("crGigaL").textContent;
@@ -8682,6 +9111,7 @@ async function abaPt(p, a) {
     "tocar no mapa abre a tela cheia já na página do mapa (com a pill de meta) e o ✕ fecha");
   ok(full.abriuAoIniciar && full.painel && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
     "iniciar a corrida abre o painel de cor chapada com botão Pausar gigante (estilo NRC)");
+  ok(full.termineiCedo === "none", "🏃 v751: com menos de 5 s o Terminei! da tela cheia ainda não aparece (toque sem querer não vira 'botão que não funciona')");
   ok(full.gigaL !== full.gigaL2 && full.dots === 4, "a métrica gigante troca com um toque e as 4 bolinhas mostram a página");
   ok(full.lock && full.destravou, "o cadeado bloqueia a tela na corrida e destrava segurando 1 segundo");
   ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
@@ -8883,6 +9313,95 @@ async function abaPt(p, a) {
     "o batimento vira zona (Z1 a Z5) com as barrinhas acendendo até a faixa atual");
   ok(fcZonas.resumo && fcZonas.resumo.m === 138 && fcZonas.resumo.x === 175,
     "o resumo do esforço guarda média e máximo (" + JSON.stringify(fcZonas.resumo) + ")");
+  {
+    // v751: sem idade o app NÃO chuta 30 anos — pede a idade em vez de mostrar zona e máxima falsas
+    const semIdade = await pCr.evaluate(() => {
+      const ia = document.getElementById("fcIdade"); ia.value = ""; ia.dispatchEvent(new Event("change"));
+      window.__fcZera(); window.__fc.on = true; window.__fcAmostra(150);
+      const out = { zona: document.getElementById("fcZona").textContent, max: document.getElementById("fcMaxT").textContent,
+        idade: localStorage.getItem("ptidade") };
+      window.__fc.on = false;
+      ia.value = "40"; ia.dispatchEvent(new Event("change"));
+      return out;
+    });
+    ok(/idade/i.test(semIdade.zona) && !/^Z\d/.test(semIdade.zona) && !/\d+ bpm/.test(semIdade.max) && /idade/i.test(semIdade.max),
+      "❤️ v751: sem idade o app não inventa máxima nem zona — pede a idade (" + semIdade.zona + " · " + semIdade.max + ")");
+  }
+  {
+    // v751 — corrida: os consertos da revisão, medidos no app servido
+    const c751 = await pCr.evaluate(async () => {
+      const out = {};
+      const cr = window.__cr;
+      // um teste anterior deixou a tela de resumo aberta (cr.resumo trava o espelho da tela cheia)
+      const rf = document.getElementById("crRsFechar"); if (cr.resumo && rf) rf.click();
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "off", ap: 0, bl: 0 }));
+      document.getElementById("crZera").click();
+      // (a) km na mão vence enquanto o GPS ainda não somou nada
+      cr.gpsOn = true; cr.km = 0;
+      document.getElementById("crKm").value = "5";
+      out.kmMao = window.__crKmAtual();
+      cr.km = 1.25; out.kmGps = window.__crKmAtual();
+      cr.gpsOn = false; cr.km = 0; document.getElementById("crKm").value = "";
+      // (b) uma regra só pro fim da parte contínua
+      out.fimSemGps = window.__crFimContinua(5, 1800, 6, 100);
+      cr.gpsOn = true; out.fimComGps = window.__crFimContinua(5, 1800, 6, 100); cr.gpsOn = false;
+      out.fimSoKm = window.__crFimContinua(5, 0, 6, 100);
+      out.fimSemAlvo = window.__crFimContinua(0, 0, 6, 9999);
+      // (c) misto sem tempo nem distância na parte contínua: só o Pular leva aos tiros
+      cr.plano = { id: "mx", n: "Misto livre", m: "corrida", t: "misto", d: 0, tp: 0, p: "", r: 3, ti: 20, de: 40 };
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 450));
+      out.faseAntes = document.getElementById("crFase").textContent;
+      out.caixa = document.getElementById("crBlocoBox").style.display;
+      out.infoAntes = document.getElementById("crInfo").textContent;
+      document.getElementById("crPulaF").click();
+      await new Promise((r) => setTimeout(r, 300));
+      out.faseDepois = document.getElementById("crFase").textContent;
+      // (d) Terminei só aparece a partir de 5 s
+      out.fimCedo = document.getElementById("crFim").style.display;
+      out.fimFCedo = document.getElementById("crFimF").style.display;
+      cr.t0 -= 6000; window.__pintaCr();
+      out.fimTarde = document.getElementById("crFim").style.display;
+      out.fimFTarde = document.getElementById("crFimF").style.display;
+      // (e) pausar e continuar NÃO zera o batimento
+      window.__fc.on = true; window.__fcAmostra(150); window.__fcAmostra(160);
+      document.getElementById("crGo").click(); // pausa
+      document.getElementById("crGo").click(); // continua → crLarga
+      await new Promise((r) => setTimeout(r, 250));
+      out.fcResumo = window.__fcResumo();
+      window.__fc.on = false;
+      // (f) trocar de treino no meio da corrida pede confirmação e passa pelo Zerar
+      cr.rota = [{ lat: -19.9, lng: -43.9 }, { lat: -19.901, lng: -43.901 }];
+      const planoAntes = cr.plano;
+      const confAntes = window.confirm;
+      window.confirm = () => false;
+      document.querySelectorAll("[data-cbstart]")[1].click();
+      await new Promise((r) => setTimeout(r, 100));
+      out.recusou = cr.run === true && cr.plano === planoAntes && cr.rota.length === 2;
+      window.confirm = () => true;
+      document.querySelectorAll("[data-cbstart]")[1].click();
+      await new Promise((r) => setTimeout(r, 100));
+      out.trocou = cr.run === false && cr.plano !== planoAntes && cr.rota.length === 0 && cr.mistoVai === false;
+      window.confirm = confAntes;
+      // (g) Zerar limpa o estado do misto e o rumo
+      cr.mistoT0 = 100; cr.mistoVai = true; cr.rumo = 90;
+      document.getElementById("crZera").click();
+      out.zerou = cr.mistoT0 === null && cr.mistoVai === false && cr.rumo === null;
+      return out;
+    });
+    ok(c751.kmMao === 5 && c751.kmGps === 1.25,
+      "🏃 v751: com o GPS ligado mas sem km somado o número digitado vale — e sai de cena quando o GPS começa a contar");
+    ok(c751.fimSemGps === false && c751.fimComGps === true && c751.fimSoKm === true && c751.fimSemAlvo === false,
+      "🏃 v751: uma regra só pro fim da parte contínua — distância com GPS, tempo sem, km na mão de reserva, sem alvo nunca sozinho");
+    ok(/PARTE CONTÍNUA/.test(c751.faseAntes) && c751.caixa === "block" && /Pular/.test(c751.infoAntes) && /TIRO 1 DE 3/.test(c751.faseDepois),
+      "🏃 v751: misto sem alvo na parte contínua mostra o Pular e é ele que leva aos tiros (" + c751.faseDepois + ")");
+    ok(c751.fimCedo === "none" && c751.fimFCedo === "none" && c751.fimTarde === "block" && c751.fimFTarde === "block",
+      "🏃 v751: o Terminei! (card e tela cheia) só aparece a partir de 5 s de corrida");
+    ok(c751.fcResumo && c751.fcResumo.m > 0, "🏃 v751: pausar e continuar não apaga a média de batimento da corrida");
+    ok(c751.recusou && c751.trocou,
+      "🏃 v751: Começar outro treino no meio da corrida pede confirmação; aceitando, passa pelo Zerar e o trajeto não vaza pra próxima");
+    ok(c751.zerou, "🏃 v751: Zerar limpa mistoT0/mistoVai e o rumo (refazer o misto não mostra 'TIRO -1')");
+  }
   await pCr.close();
   // com a ponte do app de loja (window.MTNativo.fc) tudo acende e a corrida guarda o resumo
   const pFc = await ctx.newPage();
@@ -10548,6 +11067,70 @@ async function abaPt(p, a) {
     ok(await pApp.evaluate(() => document.getElementById("guiaBox").style.display === "none" && document.body.style.overflow === ""),
       "fechar devolve a rolagem da página (nada de app travado depois do treino)");
   }
+  {
+    console.log("v751 — treino guiado:");
+    const g751 = await pApp.evaluate(async () => {
+      const out = {};
+      const d0 = new Date(); const hj = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
+      const G = window.GUIA; if (!G || !G.length) return null;
+      // um exercício com 2+ séries e repetições prescritas
+      const ei = G[0].it.findIndex((x) => +x.s >= 2 && parseInt(x.r, 10) > 0); if (ei < 0) return null;
+      const it0 = G[0].it[ei]; const nome = it0.e; const alvo = parseInt(it0.r, 10);
+      const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+      // (a) 'Iniciar exercício' semeia as séries já marcadas hoje pela ficha
+      const stK = "ptsets_" + hj; const stAntes = localStorage.getItem(stK);
+      const st = {}; st[nome] = 1; localStorage.setItem(stK, JSON.stringify(st));
+      const bIni = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); out.temIni = !!bIni;
+      if (bIni) bIni.click();
+      await dorme(200);
+      out.semeou = window.__gvDe().s === 1 && /Série 2 de/.test(document.getElementById("gGrupo").textContent);
+      document.getElementById("gFechar").click(); await dorme(100);
+      if (stAntes == null) localStorage.removeItem(stK); else localStorage.setItem(stK, stAntes);
+      // (b) aceitar a sugestão grava SÓ a carga e não deixa gv.sujo pendurado
+      const dcAntes = localStorage.getItem("ptdc"); const dc = JSON.parse(dcAntes || "{}");
+      const d7 = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+      dc[nome] = [{ d: "2026-01-05", kg: 20, r: alvo }, { d: d7, kg: 20, r: alvo }];
+      localStorage.setItem("ptdc", JSON.stringify(dc));
+      const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
+      // (b0) em 'Mudar a carga' a sugestão é LEMBRETE (não botão) e as reps nascem com as confirmadas na última vez
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const rp0 = document.getElementById("gReps");
+      out.semBotaoSug = !document.getElementById("gSug") && !!document.getElementById("gSugNota") && !!rp0 && rp0.value === String(alvo);
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const bt = document.getElementById("gSugT"); out.temSugT = !!bt;
+      if (bt) bt.click(); await dorme(150);
+      const reg = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
+      out.sugKg = reg && reg.kg; out.sugSemR = !!reg && !("r" in reg); out.sujo = window.__gvDe().sujo;
+      // (c) depois de aceitar: reps vazias (nenhuma confirmada hoje) com o alvo de placeholder
+      document.getElementById("gMudaCarga").click(); await dorme(100);
+      const rp = document.getElementById("gReps");
+      out.repsVazio = !!rp && rp.value === "" && rp.placeholder === String(alvo);
+      // (d) 'Série feita' guarda a carga digitada no formulário aberto
+      const kgI = document.getElementById("gKg"); kgI.value = "33"; kgI.dispatchEvent(new Event("input"));
+      document.getElementById("gSerie").click(); await dorme(250);
+      const reg2 = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
+      out.serieSalvou = !!reg2 && reg2.kg === 33;
+      // (e) pular exercício no meio do descanso mata o tick antigo
+      out.tickVivo = window.__gDescVivo();
+      document.getElementById("gPularEx").click(); await dorme(120);
+      out.tickMorto = !window.__gDescVivo();
+      const fechar = document.getElementById("gFechar") || document.getElementById("gFim"); if (fechar) fechar.click(); await dorme(100);
+      if (dcAntes == null) localStorage.removeItem("ptdc"); else localStorage.setItem("ptdc", dcAntes);
+      // o toast de NOVO RECORDE desta carga não pode sobrar pro teste seguinte
+      [].forEach.call(document.body.children, (d) => { if (d.tagName === "DIV" && /NOVO RECORDE|Bora tentar/.test(d.textContent || "")) d.remove(); });
+      return out;
+    });
+    ok(!!g751, "o app de teste tem ficha com exercício de 2+ séries e reps prescritas (base dos asserts v751)");
+    if (g751) {
+      ok(g751.temIni && g751.semeou, "🏋️ v751: 'Iniciar exercício' já nasce na série seguinte à marcada na ficha (Série 2 de N)");
+      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemR && g751.sujo === false,
+        "🏋️ v751: aceitar a sugestão grava só a CARGA (22,5), sem repetições que o aluno ainda não fez, e nada fica pendurado");
+      ok(g751.repsVazio && g751.semBotaoSug,
+        "🏋️ v751: em 'Carga de hoje' as reps nascem vazias com o alvo de placeholder, e a sugestão é lembrete, não botão");
+      ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva a carga digitada em 'Mudar a carga' (33 kg) em vez de jogar fora");
+      ok(g751.tickVivo && g751.tickMorto, "🏋️ v751: pular exercício no descanso mata o tick antigo (nada de 'Descanso acabou' fantasma ao voltar do 2º plano)");
+    }
+  }
   // card de conquista pro Stories: abre a PRÉVIA (o share precisa sair do
   // toque no iPhone) e o Salvar baixa a imagem
   {
@@ -11190,6 +11773,120 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(400);
   const thread = await pApp.evaluate(() => document.getElementById("chMsgs").textContent);
   ok(/dúvida no supino/.test(thread), "mensagem do aluno aparece no chat do app");
+  {
+    console.log("v751 — o resto do app:");
+    const r751 = await pApp.evaluate(async () => {
+      const out = {};
+      const d0 = new Date(); const hj = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
+      // (a) chat em hora LOCAL e sem puxar a rolagem de quem lê o histórico
+      const iso = "2026-09-02T10:00:00-05:00";
+      const dt = new Date(iso); const local = ("0" + dt.getHours()).slice(-2) + ":" + ("0" + dt.getMinutes()).slice(-2);
+      const msgs = [];
+      for (let i = 0; i < 40; i++) msgs.push({ de: i % 2 ? "aluno" : "personal", texto: "msg " + i, criado: "2026-08-0" + (1 + (i % 5)) + "T0" + (i % 9) + ":1" + (i % 9) + ":00+00:00" });
+      msgs.push({ de: "personal", texto: "hora local?", criado: iso });
+      window.__pintaChat(msgs);
+      const el = document.getElementById("chMsgs");
+      out.hora = window.__chLocal(iso).h === local && el.textContent.indexOf("hora local?" + local) > -1 && (local === "10:00" || !/hora local\?10:00/.test(el.textContent));
+      out.rola = el.scrollHeight > el.clientHeight;
+      el.scrollTop = 0;
+      window.__pintaChat(msgs.slice());
+      out.ficouEmCima = el.scrollTop === 0;
+      msgs.push({ de: "personal", texto: "nova!", criado: "2026-09-03T12:00:00+00:00" });
+      window.__pintaChat(msgs);
+      out.desceu = el.scrollTop > 0 && /nova!/.test(el.textContent);
+      window.__pintaChat(JSON.parse(localStorage.getItem("ptchat") || "[]"));
+      // (b) melhor pace comparado como número (10:30 não ganha de 6:15)
+      const cardioAntes = localStorage.getItem("ptcardio");
+      localStorage.setItem("ptcardio", JSON.stringify([
+        { d: "2026-08-01", n: "lenta", m: "corrida", s: 3150, k: 5, p: "10:30" },
+        { d: "2026-08-05", n: "rápida", m: "corrida", s: 1875, k: 5, p: "6:15" }]));
+      window.__pintaMarcas();
+      const mk = document.getElementById("mkBox").textContent;
+      out.pace = /Melhor pace médio \(3 km\+\)(NOVA)?6:15/.test(mk) && !/Melhor pace médio \(3 km\+\)(NOVA)?10:30/.test(mk);
+      // (c) recordes de carga: uma conta e uma regra de 'novo'
+      const dcAntes = localStorage.getItem("ptdc"); const mmAntes = localStorage.getItem("ptmarcas");
+      localStorage.removeItem("ptmarcas");
+      localStorage.setItem("ptdc", JSON.stringify({
+        "Primeiro dia": [{ d: hj, kg: 50 }],
+        "Subiu": [{ d: "2026-01-10", kg: 40 }, { d: hj, kg: 45 }],
+        "Parado": [{ d: "2026-01-10", kg: 30 }, { d: "2026-02-10", kg: 30 }] }));
+      localStorage.setItem("ptcardio", "[]");
+      out.novos = window.__maxPorExercicio().filter(window.__recNovo).map((r) => r.n).join(",");
+      window.__recordes();
+      const rb = document.getElementById("recBox").textContent;
+      out.muralNovo = (rb.match(/NOVO/g) || []).length === 1 && /Subiu[^]*?NOVO/.test(rb);
+      window.__pintaMarcas();
+      const mk2 = document.getElementById("mkBox");
+      out.forcaAtalho = !!mk2.querySelector("[data-evsub-bt='cargas']") && !/Parado/.test(mk2.textContent) && /1 recorde novo/.test(mk2.textContent);
+      window.__evTopoPinta("cargas"); const nC = document.getElementById("evAltN").textContent;
+      window.__evTopoPinta("marcas"); const nM = document.getElementById("evAltN").textContent;
+      out.cabecalho = nC === "1" && nM === "1";
+      // (d) marcar na mão: formulário no card, com apagar
+      document.getElementById("mkAdd").click();
+      out.formAbriu = document.getElementById("mkForm").style.display === "block";
+      document.getElementById("mkSalva").click();
+      out.avisouVazio = document.getElementById("mkErro").style.display === "block" && JSON.parse(localStorage.getItem("ptmarcas") || "[]").length === 0;
+      document.getElementById("mkNome").value = "Prancha"; document.getElementById("mkVal").value = "2:30";
+      document.getElementById("mkSalva").click();
+      const mm1 = JSON.parse(localStorage.getItem("ptmarcas") || "[]");
+      out.salvou = mm1.length === 1 && mm1[0].n === "Prancha" && mm1[0].v === "2:30" && /Prancha/.test(document.getElementById("mkBox").textContent);
+      const confAntes = window.confirm; window.confirm = () => true;
+      document.querySelector("[data-mkrm]").click();
+      window.confirm = confAntes;
+      out.apagou = JSON.parse(localStorage.getItem("ptmarcas") || "[]").length === 0 && !document.querySelector("[data-mkrm]");
+      if (dcAntes == null) localStorage.removeItem("ptdc"); else localStorage.setItem("ptdc", dcAntes);
+      if (mmAntes == null) localStorage.removeItem("ptmarcas"); else localStorage.setItem("ptmarcas", mmAntes);
+      if (cardioAntes == null) localStorage.removeItem("ptcardio"); else localStorage.setItem("ptcardio", cardioAntes);
+      window.__recordes(); window.__pintaMarcas();
+      // (e) o post da Comunidade leva o treino DO DIA (Semana do aluno), não a ficha A
+      const plAntes = (typeof PLANO !== "undefined") ? PLANO : undefined;
+      const dia = String(new Date().getDay());
+      window.PLANO = {}; window.PLANO[dia] = { tp: "wod", i: 0, n: "Circuito do dia" };
+      out.postWod = window.__treinoHoje();
+      window.PLANO = {}; out.postDescanso = window.__treinoHoje();
+      window.PLANO = plAntes;
+      // (f) baixar meus dados leva tudo
+      const ex = window.__exportaDados();
+      out.exporta = "fotos_progresso" in ex && "chat" in ex && "questionarios" in ex && "volume_por_treino" in ex && "termo_aceito" in ex &&
+        !!ex.tudo_no_aparelho && Object.keys(ex.tudo_no_aparelho).some((k) => /^pt/.test(k));
+      // (g) um rótulo por área: a gaveta usa o nome da barra e não repete a aba fixa Treinos
+      const gav = document.getElementById("menuApp");
+      const rows = gav.querySelectorAll(".mgrow[data-msec]");
+      const ROT = { chat: "Chat", agenda: "Agenda", util: "Utilidades", feed: "Turma", pagamento: "Plano", ajustes: "Ajustes", quest: "Questionários" }; // os rótulos do MENU
+      out.menu = rows.length > 0 && !gav.querySelector(".mgrow[data-msec='treino']") && [].every.call(rows, (b) => {
+        const s = b.getAttribute("data-msec"); return !ROT[s] || b.querySelector(".mgtit").textContent === ROT[s]; });
+      return out;
+    });
+    ok(r751.hora, "💬 v751: a hora da mensagem é a LOCAL (o criado chega em UTC do Supabase)");
+    ok(r751.rola && r751.ficouEmCima && r751.desceu,
+      "💬 v751: repintar sem mensagem nova não puxa a rolagem de quem lê o histórico — mensagem nova, sim");
+    ok(r751.pace, "🏅 v751: 'Melhor pace' compara como número — 6:15 vence 10:30");
+    ok(r751.novos === "Subiu" && r751.muralNovo, "🏆 v751: recorde NOVO = máximo do mês com mais de uma anotação (a 1ª anotação não é recorde)");
+    ok(r751.forcaAtalho && r751.cabecalho,
+      "🏆 v751: Marcas não repete a lista de cargas (só o atalho pro mural) e o cabeçalho conta igual nas duas abas");
+    ok(r751.formAbriu && r751.avisouVazio && r751.salvou && r751.apagou,
+      "🏅 v751: marcar na mão é formulário dentro do card (valida, salva) e cada marca tem o ✕");
+    ok(r751.postWod === "Circuito do dia" && r751.postDescanso === "",
+      "👥 v751: o post da Comunidade leva o treino do DIA pela Semana do aluno (e nada no dia de descanso)");
+    ok(r751.exporta, "📦 v751: 'Baixar meus dados' leva fotos, chat, questionários, volume, termo e todas as chaves pt*");
+    ok(r751.menu, "☰ v751: a gaveta usa o mesmo rótulo da barra e não repete a aba fixa Treinos");
+    const foto751 = await pApp.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 40; c.height = 40;
+      const g = c.getContext("2d"); g.fillStyle = "#f00"; g.fillRect(0, 0, 40, 40);
+      const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+      const f = new File([blob], "f.png", { type: "image/png" });
+      const setOrig = Storage.prototype.setItem; const alertOrig = window.alert; let avisou = "";
+      Storage.prototype.setItem = function (k, v) { if (k === "ptfotos") throw new Error("QuotaExceededError"); return setOrig.call(this, k, v); };
+      window.alert = (m) => { avisou = String(m); };
+      const antes = localStorage.getItem("ptfotos");
+      window.__fotoProg(f);
+      await new Promise((r) => setTimeout(r, 700));
+      Storage.prototype.setItem = setOrig; window.alert = alertOrig;
+      return { avisou, igual: localStorage.getItem("ptfotos") === antes };
+    });
+    ok(/Memória de fotos cheia/.test(foto751.avisou) && foto751.igual,
+      "📷 v751: localStorage cheio → o app AVISA 'Memória de fotos cheia' em vez de sumir com a foto calado");
+  }
 
   const barraApp = await pApp.evaluate(() => {
     const m = document.querySelector("meta[name=theme-color]");
@@ -12968,6 +13665,21 @@ async function abaPt(p, a) {
       return { selo: /Nv \d/.test(feed), custom: /Rato de academia/.test(cq) && /Lenda do Studio/.test(cq) };
     });
     ok(demoNv.selo, "no feed da Turma cada autor aparece com o selo Nv dele");
+    {
+      // v751: curtir enquanto o feed carrega não pode sumir até o timer de 45 s —
+      // a chamada no meio de outra vira pendência e roda quando a de agora termina
+      const fd751 = await pA.evaluate(async () => {
+        window.__trocaSec("feed");
+        await new Promise((r) => setTimeout(r, 300));
+        if (!window.__feed) return null;
+        window.__feed.carrega(); window.__feed.carrega();
+        const meio = { ocupado: window.__feed.ocupado(), pendente: window.__feed.pendente() };
+        await new Promise((r) => setTimeout(r, 900));
+        return { meio, fim: { ocupado: window.__feed.ocupado(), pendente: window.__feed.pendente() } };
+      });
+      ok(!!fd751 && fd751.meio.ocupado && fd751.meio.pendente && !fd751.fim.ocupado && !fd751.fim.pendente,
+        "👥 v751: pedido de recarga no meio de outra vira pendência e roda em seguida (a curtida não espera 45 s)");
+    }
     ok(demoNv.custom, "as conquistas criadas pelo professor aparecem no card Conquistas do demo");
     await pA.close();
     await ctxA.close();
@@ -12989,7 +13701,8 @@ async function abaPt(p, a) {
     await pS.evaluate(() => {
       const S2 = window.MTStore, st = S2.read("ptStudio", {});
       st.config = st.config || {};
-      st.alunos = [{ id: "s1", nome: "Marina Souza", sexo: "F", altura: 165, ativo: true }];
+      st.alunos = [{ id: "s1", nome: "Marina Souza", sexo: "F", altura: 165, ativo: true },
+        { id: "s2", nome: "Novato Sem Altura", ativo: true }]; // v752: sem altura nem sexo no cadastro
       st.avaliacoes = [];
       S2.write("ptStudio", st);
     });
@@ -13000,6 +13713,9 @@ async function abaPt(p, a) {
     await pS.click('#abas [data-a="avaliacoes"]');
     await pS.waitForTimeout(300);
 
+    // v752: a seção Dobras já abre com os campos do protocolo (antes nascia vazia até escolher o aluno)
+    ok(await pS.evaluate(() => document.querySelectorAll("#dbCampos .dbIn").length >= 3),
+      "📏 a seção Dobras cutâneas abre com os campos de mm já na tela, sem depender de escolher o aluno");
     ok(await pS.evaluate(() => document.getElementById("scanCard").hidden),
       "o card fica escondido enquanto a chave nas Configurações estiver desligada");
 
@@ -13117,6 +13833,86 @@ async function abaPt(p, a) {
     ok(salvo.etiqueta, "a avaliação ganha a etiqueta 'câmera' no histórico");
     ok(salvo.laudoCintura === 78.4 && salvo.laudoRcq === 0.81,
       "as circunferências da câmera alimentam o laudo (cintura-quadril calculada)");
+
+    /* ---- v752: revisão pt-aval (scanner) ---- */
+    const v752s = await pS.evaluate(async () => {
+      const out = {};
+      const S2 = window.MTStore;
+      const le = () => S2.read("ptStudio", {});
+      const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+      const alertOrig = window.alert; window.alert = () => {};
+      // 1. a estimativa da câmera NÃO vira cintura/quadril "de fita" no registro (fica só em scan.circ)
+      const av0 = le().avaliacoes[0];
+      out.semFitaFalsa = av0.cintura == null && av0.quadril == null && av0.braco == null && av0.scan.circ.cintura === 78.4;
+      // 2. a origem do % é a FOTO: gravada no registro, o motor marca estimadoPorFoto e o laudo impresso avisa
+      const l0 = window.__laudoPT.calcula(le(), av0);
+      out.fonteFoto = av0.gorduraFonte === "foto" && av0.gordura === 25.9 && av0.scan.gordura === 25.9 &&
+        !!l0 && l0.estimadoPorFoto === true && l0.gordura === 25.9 &&
+        /estimada por foto/.test(window.MT_CORPO.laudoHtml(l0, { nome: "x" }));
+      const selC = document.getElementById("avCmpAluno");
+      selC.value = "s1"; selC.dispatchEvent(new Event("change", { bubbles: true }));
+      out.fonteNa3a = /estimado pela câmera/.test(document.getElementById("avCmp").textContent);
+      // 3. calibração usa a medida CRUA (circ − desvio) e ignora par com fita igual à foto
+      const cal = window.__scan.calibracao({ avaliacoes: [
+        { alunoId: "z", cintura: 80, scan: { circ: { cintura: 76 }, calibrado: false, desvio: 0 } },
+        { alunoId: "z", cintura: 80, scan: { circ: { cintura: 80 }, calibrado: true, desvio: 4 } }, // já corrigida em +4: crua = 76
+        { alunoId: "z", cintura: 79, scan: { circ: { cintura: 79 }, calibrado: false } },              // estimativa copiada como fita (pré-v752): fora
+        { alunoId: "z", cintura: 82, scan: { circ: { cintura: 81 }, calibrado: true } },              // antiga, corrigida sem saber quanto: fora
+      ] }, "z");
+      out.calibra = cal.desvio === 4 && cal.n === 2;
+      // 4. trocar o aluno no card da câmera limpa altura/sexo/resultado/pendência do anterior
+      window.__scan.pinta({ ok: true, quando: "2026-08-12", circ: { cintura: 70 }, confianca: {}, rcest: 0.42, margemCm: 3, calibrado: false, gordura: null, avisos: [] }, le().alunos[0]);
+      out.pendDeQuem = window.__scan.pend() && window.__scan.pend().alunoId === "s1";
+      const selS = document.getElementById("scanAluno");
+      selS.value = "s2"; selS.dispatchEvent(new Event("change", { bubbles: true }));
+      out.trocaLimpa = document.getElementById("scanAltura").value === "" && document.getElementById("scanSexo").value === "M" &&
+        document.getElementById("scanResultado").hidden && window.__scan.pend() === null;
+      // 5. a medição pendente é de UM aluno: trocar o seletor da avaliação pra outro descarta; salvar noutro não usa
+      window.__scan.pinta({ ok: true, quando: "2026-08-12", circ: { cintura: 70 }, confianca: {}, rcest: 0.42, margemCm: 3, calibrado: false, gordura: null, avisos: [] }, le().alunos[0]);
+      const selA = document.getElementById("avAluno");
+      selA.value = "s2"; selA.dispatchEvent(new Event("change", { bubbles: true }));
+      out.pendSome = window.__scan.pend() === null;
+      window.__scan.pinta({ ok: true, quando: "2026-08-12", circ: { cintura: 70 }, confianca: {}, rcest: 0.42, margemCm: 3, calibrado: false, gordura: null, avisos: [] }, le().alunos[0]);
+      selA.value = "s2"; // sem change: a pendência da Marina continua viva, mas o salvar é do Novato
+      document.getElementById("avPeso").value = "70";
+      document.getElementById("avAdd").click();
+      await espera(150);
+      const avN = le().avaliacoes.filter((v) => v.alunoId === "s2").pop();
+      out.naoMistura = !!avN && !avN.scan && !avN.circ;
+      // 6. altura e sexo digitados no card da câmera chegam à avaliação (aluno sem os dois no cadastro)
+      selS.value = "s2"; selS.dispatchEvent(new Event("change", { bubbles: true }));
+      document.getElementById("scanAltura").value = "162";
+      document.getElementById("scanSexo").value = "F";
+      window.__scan.pinta({ ok: true, quando: "2026-08-12", circ: { cintura: 74.2, quadril: 95 }, confianca: {}, rcest: 0.46, margemCm: 3, calibrado: false, gordura: null, avisos: [] }, le().alunos[1]);
+      document.getElementById("avAltura").value = "";
+      document.getElementById("scanUsar").click();
+      await espera(100);
+      out.alturaChega = document.getElementById("avAltura").value === "162" && document.getElementById("avSexo").value === "F" &&
+        le().alunos[1].sexo === "F" && /Tríceps/.test(document.getElementById("dbCampos").textContent);
+      document.getElementById("avPeso").value = "60";
+      document.getElementById("avAdd").click();
+      await espera(150);
+      const avN2 = le().avaliacoes.filter((v) => v.alunoId === "s2").pop();
+      const lN2 = window.__laudoPT.calcula(le(), avN2);
+      out.laudoSai = le().alunos[1].altura === 162 && !!avN2.scan && !!lN2 && lN2.altura === 162;
+      // devolve o card da câmera ao estado em que o resto da suíte o encontrou:
+      // a Marina escolhida e o preparo aberto (o change de aluno FECHA o preparo,
+      // e é lá que mora o botão da câmera guiada que o próximo teste clica)
+      selS.value = "s1"; selS.dispatchEvent(new Event("change", { bubbles: true }));
+      document.getElementById("scanIniciar").click();
+      await espera(80);
+      document.getElementById("scanTutoPula").click();
+      out.voltou = !document.getElementById("scanPreparo").hidden;
+      window.alert = alertOrig;
+      return out;
+    });
+    ok(v752s.semFitaFalsa, "📏 a estimativa da câmera NÃO vira cintura/quadril/braço 'de fita' no registro — fica só em scan.circ");
+    ok(v752s.fonteFoto && v752s.fonteNa3a, "📏 % vindo da foto fica gravado como origem 'foto': o motor marca estimadoPorFoto, o laudo impresso avisa e a 3a diz 'estimado pela câmera'");
+    ok(v752s.calibra, "📏 a calibração compara a fita com a medida CRUA (circ − desvio) e ignora par fita = foto e registro antigo já corrigido");
+    ok(v752s.pendDeQuem && v752s.trocaLimpa, "📏 trocar o aluno no card da câmera limpa altura, sexo, resultado e a medição pendente do anterior");
+    ok(v752s.pendSome && v752s.naoMistura, "📏 a medição pendente sabe de quem é: trocar o aluno da avaliação descarta, e salvar pra outro aluno não usa");
+    ok(v752s.alturaChega && v752s.laudoSai, "📏 altura e sexo digitados na câmera chegam à avaliação (e ao cadastro) — o laudo sai com a altura certa");
+    ok(v752s.voltou, "📏 escolher o aluno de novo reabre o preparo (o card volta a servir a próxima medição)");
 
     // a fita sempre vence a foto, e a bioimpedância vence as duas
     const precede = await pS.evaluate(() => {
