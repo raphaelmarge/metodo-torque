@@ -12301,7 +12301,11 @@ async function abaPt(p, a) {
       const st0 = S.read("ptStudio", {});
       st0.alunos = []; st0.planosPT = []; st0.sessoes = []; st0.pagamentos = []; st0.contratosPT = [];
       st0.config = { nome: "Novo Professor" };
+      /* v756: zerar os alunos de propósito é justamente o que a trava do apagão
+       * pega — aqui o teste está FINGINDO um professor novo, então ele avisa. */
+      window.__MT_LIMPANDO = true;
       S.write("ptStudio", st0);
+      window.__MT_LIMPANDO = false;
       window.__obGuia.verifica();
       out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP2").hidden;
       // escolhe HORA-AULA → o campo da mensalidade some e o da aula aparece

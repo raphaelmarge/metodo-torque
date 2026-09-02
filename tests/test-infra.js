@@ -155,6 +155,74 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   t(r4.igual === 0 && r4.ts1 === "2099-01-01T00:00:00.000000+00:00", "eco da nuvem com o MESMO conteúdo não dispara os ouvintes (o painel não repinta) — só o carimbo é atualizado");
   t(r4.dif === 1 && r4.val && r4.val.a === 2, "conteúdo diferente vindo da nuvem é aplicado e avisa os ouvintes");
 
+  /* v756 — O APAGÃO DO ESTÚDIO. Um professor de verdade perdeu 11 alunos, 77
+   * sessões e 15 pagamentos: a marca do demo tinha sido sincronizada pra conta
+   * dele semanas antes, e ao entrar na conta a limpeza do demo apagou o
+   * ptStudio do aparelho. O carimbo local era IGUAL ao da nuvem (o estado
+   * normal logo depois de um envio), então a puxada não caía em nenhum dos
+   * dois braços — a nuvem nunca era reaplicada, o painel abria vazio e o vazio
+   * subia por cima. Estas três travas fecham o caminho inteiro. */
+  const r4b = await p.evaluate(async () => {
+    const S = window.MTStore, sync = window.__MTSync._estado;
+    const stamp = "2099-05-01T00:00:00.000000+00:00";
+    const cheio = { alunos: [{ id: "a1" }, { id: "a2" }, { id: "a3" }] };
+    function cliente(rows) {
+      const q = { select: () => q, eq: () => q, gt: () => q, then: (res) => Promise.resolve({ data: rows, error: null }).then(res) };
+      return { from: () => q };
+    }
+    S.write("estudioX", cheio);
+    const m = JSON.parse(localStorage.getItem("mtsync:ts") || "{}");
+    m["mtapp:estudioX"] = stamp; localStorage.setItem("mtsync:ts", JSON.stringify(m));
+    localStorage.removeItem("mtapp:estudioX");           // foi isso que a limpeza do demo fez
+    sync.client = cliente([{ chave: "mtapp:estudioX", valor: cheio, atualizado: stamp }]);
+    sync.aid = "acad-t"; sync.marca = "2000-01-01T00:00:00.000000+00:00"; sync.marcaAid = "acad-t"; sync.reconciliou = true;
+    await window.__MTSync.puxa();
+    const voltou = ((S.read("estudioX", { alunos: [] }) || {}).alunos || []).length;
+    sync.client = null;
+    return { voltou };
+  });
+  t(r4b.voltou === 3, "chave apagada do aparelho volta da nuvem mesmo com o carimbo IGUAL — o caminho que levou o estúdio de um professor");
+
+  // a trava do apagão: nenhuma gravação leva uma lista de gente de 3+ pra zero
+  const r4c = await p.evaluate(() => {
+    const S = window.MTStore;
+    const puro = window.__zerouTudo;
+    const avisos = []; const alertaOrig = window.alert; window.alert = (msg) => avisos.push(String(msg));
+    S.write("estudioY", { alunos: [{ id: "a" }, { id: "b" }, { id: "c" }], pagamentos: [{ v: 1 }] });
+    const gravou = S.write("estudioY", { alunos: [], pagamentos: [{ v: 1 }] });
+    const restou = ((S.read("estudioY", { alunos: [] }) || {}).alunos || []).length;
+    const bak = !!localStorage.getItem("mtsync:bak:mtapp:estudioY");
+    // apagar um por um continua valendo, e uma lista curta não trava
+    const tirouUm = S.write("estudioY", { alunos: [{ id: "a" }, { id: "b" }], pagamentos: [{ v: 1 }] });
+    S.write("curta", { alunos: [{ id: "a" }, { id: "b" }] });
+    const curtaZera = S.write("curta", { alunos: [] });
+    // quem limpa de propósito avisa
+    window.__MT_LIMPANDO = true;
+    S.write("estudioZ", { alunos: [{ id: "a" }, { id: "b" }, { id: "c" }] });
+    const dePropósito = S.write("estudioZ", { alunos: [] });
+    window.__MT_LIMPANDO = false;
+    window.alert = alertaOrig;
+    return { gravou, restou, bak, avisos: avisos.length, tirouUm, curtaZera, dePropósito,
+      puroPega: puro({ alunos: 11 }, { alunos: 0 }) === "alunos",
+      puroDeixa: puro({ alunos: 11 }, { alunos: 10 }) === "" };
+  });
+  t(r4c.gravou === false && r4c.restou === 3 && r4c.bak && r4c.avisos === 1,
+    "gravação que zera 3+ alunos de uma vez é RECUSADA, guarda o que tentou gravar e avisa em português");
+  t(r4c.tirouUm === true && r4c.curtaZera === true && r4c.dePropósito === true && r4c.puroPega && r4c.puroDeixa,
+    "apagar um por um, lista curta e limpeza de propósito (__MT_LIMPANDO) continuam passando");
+
+  // v756: quem apaga a conta DE PROPÓSITO avisa a trava — senão a última
+  // gravação antes de sair da página seria recusada com um alerta assustador
+  await p.addScriptTag({ url: BASE + "/assets/excluir-conta.js" });
+  const r4d = await p.evaluate(() => {
+    const fonte = String(window.MT_EXCLUIR && window.MT_EXCLUIR.limpaAparelho || "");
+    return { temFlag: /__MT_LIMPANDO\s*=\s*true/.test(fonte),
+             esquece: /esqueceChave/.test(fonte),
+             temEsqueceNoStore: typeof window.MTStore.esqueceChave === "function" };
+  });
+  t(r4d.temFlag && r4d.esquece && r4d.temEsqueceNoStore,
+    "excluir minha conta declara a limpeza (__MT_LIMPANDO) e limpa a memória de contagem do store");
+
   // enviaSujas(): guarda o carimbo que o servidor devolveu
   const r5 = await p.evaluate(async () => {
     const S = window.MTStore, sync = window.__MTSync._estado;
