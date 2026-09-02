@@ -4,8 +4,12 @@ try { chromium = require("playwright").chromium; } catch (e) { chromium = requir
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suíte para no meio (senão sobra Chromium órfão e o resumo nunca sai)
+let navegadorV756 = null;
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -13,6 +17,8 @@ function ok(cond, nome) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  navegadorV756 = b;
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
   await ctx.addInitScript(() => {
     if (window !== window.top) return;
@@ -50,11 +56,11 @@ function ok(cond, nome) {
       // segunda é 7 de setembro — e o teste quebrava uma vez por ano): pula de
       // 7 em 7 até cair num dia comum, que é o que este teste quer medir
       for (let j = 0; j < 8; j++) {
-        const iso = d.toISOString().slice(0, 10);
+        const iso = diaISO(d);
         if (!S.horarioDoDia(iso).feriado) return iso;
         d.setDate(d.getDate() + 7);
       }
-      return d.toISOString().slice(0, 10);
+      return diaISO(d);
     }
     const natal = (new Date().getFullYear() + 1) + "-12-25";
     // feriado cadastrado com horário especial
@@ -115,4 +121,10 @@ function ok(cond, nome) {
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

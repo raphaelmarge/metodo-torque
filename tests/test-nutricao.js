@@ -2,10 +2,17 @@
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
+const { testaBotBuilder } = require("./_bot-builder.js"); // v756: robô testado num lugar só
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
+const { comMockNuvem } = require("./_nuvem.js");    // v756: o mesmo cliente de nuvem falso do Personal
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally conseguir fechá-lo mesmo
+// quando a suíte para no meio (senão sobra Chromium órfão na máquina)
+let navegador = null;
+process.on("unhandledRejection", (e) => { falhas++; console.log("  ❌ promessa solta rejeitada — " + e); });
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -21,6 +28,9 @@ async function abaNt(p, a) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
+  comMockNuvem(b); // v756: … e com o window.mockNuvem (teto de 20 s por ação junto)
+  navegador = b;
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
   await ctx.addInitScript(() => {
     if (window !== window.top) return;
@@ -243,7 +253,7 @@ async function abaNt(p, a) {
       const semNuvem = await new Promise((res) => window.__pagarmeNT(id, 150, res));
       window.__cloudOrigPg = window.MTStore.cloud;
       window.__fetchOrigPg = window.fetch;
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } });   // v756
       let corpo = null;
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagarme")) {
@@ -370,28 +380,10 @@ async function abaNt(p, a) {
     });
     ok(padrao.varVerde === "" && !padrao.logoTopo && padrao.app.includes("linear-gradient(135deg,#16a34a,#15803d)") && !padrao.app.includes(LOGO_PNG), "voltar ao padrão limpa o painel e o app volta ao verde");
   }
-  {
-    const botEd = await p.evaluate(() => ({
-      temCard: !!document.getElementById("botAtivoN"),
-      ativo: document.getElementById("botAtivoN").checked,
-      ops: document.getElementById("botOpsN").value,
-    }));
-    ok(botEd.temCard && botEd.ativo, "módulo tem o editor do robô, ligado por padrão");
-    ok(/\|/.test(botEd.ops) && /humano/.test(botEd.ops), "opções padrão no formato Rótulo | Resposta com encaminhamento humano");
-    const fluxo = await p.evaluate(() => {
-      const desenho = {
-        paths: document.querySelectorAll("#botFluxoN svg path").length,
-        baloes: document.querySelectorAll("#botFluxoN .bb-bloco").length,
-        temZap: !!document.getElementById("botZapN"),
-        temBar: !!document.querySelector("#botFluxoN #bbSel") && !!document.querySelector("#botFluxoN #bbNova"),
-      };
-      const f = window.__botFluxoN({ ativo: true, oi: "Oi!", ops: [{ r: "Dieta", t: "No card refeições." }, { r: "Falar comigo", t: "humano" }] }, "Ana");
-      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), voltaMenu: f.blocos[2].destino };
-    });
-    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "construtor desenhado com linhas e balões arrastáveis");
-    ok(fluxo.desenho.temZap && fluxo.desenho.temBar, "barra de automações e Publicar no WhatsApp");
-    ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe" && fluxo.voltaMenu === "b_menu", "fluxo no formato do chatbot da academia");
-  }
+  // v756: mesmos asserts do Personal, um arquivo só (tests/_bot-builder.js)
+  await testaBotBuilder(p, ok, { sufixo: "N", fluxo: "__botFluxoN", rotulo: "🤖 Nutri",
+    nome: "Ana",
+    ops: [{ r: "Dieta", t: "No card refeições." }, { r: "Falar comigo", t: "humano" }] });
 
   // ---------- perfil completo do paciente ----------
   console.log("Perfil do paciente:");
@@ -476,10 +468,9 @@ async function abaNt(p, a) {
       { id: "evn1", tipo: "charge.paid", valor_centavos: 15000, assinatura_id: "sub_hook_n", criado: "2026-08-01T10:00:00Z" },
       { id: "evn2", tipo: "charge.payment_failed", valor_centavos: 15000, assinatura_id: "sub_hook_n", criado: "2026-08-06T10:00:00Z" },
     ];
-    window.MTStore.cloud = () => ({
-      aid: "x",
-      client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
-    });
+    // v756: mockNuvem — qualquer tabela devolve os eventos, e o resto do
+    // cliente (upsert, rpc, storage) responde sozinho, sem derrubar um render
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: () => eventos });
     window.__pagAutoN();
     await new Promise((res) => setTimeout(res, 300));
     window.__pagAutoN();
@@ -568,7 +559,8 @@ async function abaNt(p, a) {
     const pubN = await p.evaluate(async () => {
       window.__cloudOrig = window.MTStore.cloud;
       let upsertRow = null;
-      window.MTStore.cloud = () => ({ aid: "acad-n", client: { from: (tb) => ({ upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-n",   // v756
+        onEscreve: (w) => { if (w.acao === "upsert") upsertRow = { tb: w.tabela, row: w.corpo[0] }; } });
       document.getElementById("qeGerarN").click();
       await new Promise((res) => setTimeout(res, 300));
       window.MTStore.cloud = window.__cloudOrig;
@@ -623,10 +615,10 @@ async function abaNt(p, a) {
       const st = window.MTStore.read("ntStudio", {});
       const pc = st.pacientes[0];
       window.__cloudOrig = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: () => [{   // v756
         token: pc.appTokenN, questionario: "Check-in semanal", criado: new Date().toISOString(),
         dados: { pontuacao: 3, respostas: [{ sigla: "FOME", resposta: "Bom", pontos: 1 }, { sigla: "AGUA", resposta: "2", pontos: 2 }] },
-      }] }) }) }) }) }) } });
+      }] });
       window.__questNT.respostas();
     });
     await p.waitForTimeout(300);
@@ -780,7 +772,7 @@ async function abaNt(p, a) {
       const semNuvem = await new Promise((res) => window.__iaDieta(pid, res));
       window.__cloudOrigIA = window.MTStore.cloud;
       window.__fetchOrigIA = window.fetch;
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } });   // v756
       const arroz = self.MT_ALIMENTOS.find((a) => /Arroz branco cozido/i.test(a.n)).n;
       const frango = self.MT_ALIMENTOS.find((a) => /Peito de frango grelhado/i.test(a.n)).n;
       let corpo = null;
@@ -901,7 +893,7 @@ async function abaNt(p, a) {
     await pN.goto(BASE + "/nutricao.html");
     await pN.evaluate(() => {
       localStorage.setItem("mtapp:ntSemConta", "1");
-      const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+      const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
       // diaCobraN: 1 — "Sem pagamento" usa a régua do Financeiro (v747), e no dia 1 o mês já venceu em qualquer data do teste
       const st = { config: { nome: "Consultório Q", diaCobraN: 1 }, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
         consultas: [], pagamentosN: [], pesagens: {} };
@@ -1115,7 +1107,7 @@ async function abaNt(p, a) {
     const av = await pA2.evaluate(() => {
       window.__perfilNT("av1");
       const set = (id, v) => { document.getElementById(id).value = v; };
-      const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+      const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
       set("avnData", iso(90)); set("avnPeso", "74,6"); set("avnGord", "32"); set("avnCintura", "88"); set("avnQuadril", "104"); set("avnBraco", "28");
       document.getElementById("avnAdd").click();
       set("avnData", iso(0)); set("avnPeso", "68,4"); set("avnGord", "27"); set("avnCintura", "79"); set("avnQuadril", "99"); set("avnBraco", "29");
@@ -1473,9 +1465,9 @@ async function abaNt(p, a) {
         { id: "evr2", tipo: "charge.paid", valor_centavos: 15000, assinatura_id: "sub_r1", criado: "2026-08-10T10:00:00Z" },
       ];
       const orig = window.MTStore.cloud;
-      // a gravação dispara render(); as outras tabelas ganham uma cadeia genérica pra não derrubar a página
-      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "pagarme_eventos" ? gen : ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) } });
+      // v756: a gravação dispara render() e a página toca outras tabelas — o
+      // mockNuvem já responde a todas elas; aqui só a pagarme_eventos tem linha
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: { pagarme_eventos: eventos } });
       window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
       window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
       window.__pagAutoN(); await new Promise((r) => setTimeout(r, 250));
@@ -1562,9 +1554,12 @@ async function abaNt(p, a) {
     const qf = await pR.evaluate(async () => {
       const orig = window.MTStore.cloud;
       let inArgs = null;
-      // as outras tabelas (agenda, chat) ganham uma cadeia genérica: um render no meio não pode derrubar o teste
-      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "app_quest" ? gen : ({ select: () => ({ in: (col, vals) => { inArgs = [col, vals]; return { order: () => ({ limit: () => Promise.resolve({ data: [] }) }) }; } }) }) } });
+      // v756: o mockNuvem guarda o que a tela PEDIU em q.ops — dá pra ler o
+      // in() sem cadeia própria (e as outras tabelas respondem sozinhas)
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: (q, tab) => {
+        if (tab === "app_quest") { const op = q.ops.filter((o) => o.m === "in")[0]; if (op) inArgs = op.args; }
+        return [];
+      } });
       window.__questNT.respostas();
       await new Promise((r) => setTimeout(r, 200));
       window.MTStore.cloud = orig;
@@ -1581,8 +1576,7 @@ async function abaNt(p, a) {
       const r3 = st.pacientes.find((x) => x.id === "r3");
       const out = { link: q ? window.__linkQuestN(st, r3, q) : "" };
       const orig = window.MTStore.cloud;
-      const chain = { select: () => chain, gte: () => chain, in: () => chain, order: () => chain, limit: () => chain, then: (f) => Promise.resolve({ data: [] }).then(f) };
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => chain } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x" });   // v756: tudo responde lista vazia
       window.__qsSemanaN.pinta();
       await new Promise((r) => setTimeout(r, 250));
       out.grupos1 = document.getElementById("qsListaN").textContent;
@@ -1614,11 +1608,14 @@ async function abaNt(p, a) {
       window.MTStore.write("ntStudio", st);
       const orig = window.MTStore.cloud;
       let sel = "", ups = null;
-      const gen = { select: () => gen, eq: () => gen, gte: () => gen, in: () => gen, order: () => gen, limit: () => gen, then: (f) => Promise.resolve({ data: [] }).then(f) };
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: (tab) => tab !== "app_aluno" ? gen : ({
-        select: (s) => { sel = s; return { in: () => Promise.resolve({ data: [{ token: "tokr3", ver: window.MT_VERSAO, stamp: "2020-01-01T00:00:00.000Z" }, { token: "tokr0", ver: window.MT_VERSAO, stamp: new Date(Date.now() + 60000).toISOString() }] }) }; },
-        upsert: (rows) => { ups = rows; return Promise.resolve({ data: rows }); },
-      }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x",   // v756
+        tabelas: (q, tab) => {
+          if (tab !== "app_aluno") return [];
+          if (q.acao === "select") sel = q.colunas;   // só a leitura carimba o `sel`
+          return [{ token: "tokr3", ver: window.MT_VERSAO, stamp: "2020-01-01T00:00:00.000Z" },
+            { token: "tokr0", ver: window.MT_VERSAO, stamp: new Date(Date.now() + 60000).toISOString() }];
+        },
+        onEscreve: (w) => { if (w.acao === "upsert") ups = w.corpo; } });
       window.__autoPublicaN();
       await new Promise((r) => setTimeout(r, 400));
       window.MTStore.cloud = orig;
@@ -1631,7 +1628,7 @@ async function abaNt(p, a) {
     const rv = await pR.evaluate(async () => {
       const orig = window.MTStore.cloud;
       let chamada = null;
-      window.MTStore.cloud = () => ({ aid: "x", client: { rpc: (fn, args) => { chamada = [fn, args]; return Promise.resolve({ data: { ok: true } }); } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", rpc: (fn, args) => { chamada = [fn, args]; return Promise.resolve({ data: { ok: true } }); } });   // v756
       const r = await new Promise((res) => window.__encerraN.revoga("r3", res));
       window.MTStore.cloud = orig;
       const r3 = window.MTStore.read("ntStudio", {}).pacientes.find((x) => x.id === "r3");
@@ -1680,8 +1677,15 @@ async function abaNt(p, a) {
   }
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
-
-  await b.close();
-  console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
-  process.exit(falhas ? 1 : 0);
-})();
+})()
+  /* v756: o IIFE não tinha .catch. Uma seleção que falhasse (id renomeado, aba
+   * lenta) virava rejeição não tratada: o node saía com 1, mas o resumo 🏁/💥
+   * não era impresso, o navegador ficava órfão e ninguém ficava sabendo QUAIS
+   * asserts ainda tinham rodado. Agora a exceção vira UMA falha contada, com o
+   * stack na tela, e o finally sempre fecha o navegador e imprime o resumo. */
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegador) await navegador.close(); } catch (e) { /* já fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

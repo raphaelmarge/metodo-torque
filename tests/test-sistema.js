@@ -5,6 +5,12 @@ catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromi
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
+const { comMockNuvem } = require("./_nuvem.js");    // v756: cliente de nuvem falso compartilhado
+
+
+
 /* E2E do Sistema da Academia (apps/sistema.html) */
 
 
@@ -13,7 +19,7 @@ function assert(cond, msg) {
   if (cond) { ok++; console.log("  ✔ " + msg); }
   else { fail++; console.log("  ✘ FALHOU: " + msg); }
 }
-const hojeISO = new Date().toISOString().slice(0, 10);
+const hojeISO = diaISO(new Date());
 const mes = hojeISO.slice(0, 7);
 
 const SEED = {
@@ -49,6 +55,9 @@ const SEED = {
 
 (async () => {
   const browser = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  comDiaISO(browser);   // v756: todo contexto nasce com o window.diaISO
+  comMockNuvem(browser); // v756: … e com o window.mockNuvem
+
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const erros = [];
   ctx.on("weberror", (e) => erros.push((e.page() ? e.page().url() : "?") + " :: " + e.error().message + " :: " + (e.error().stack || "").split("\n").slice(0,3).join(" / ")));
@@ -302,10 +311,9 @@ const SEED = {
     const eventos = [
       { id: "eva1", tipo: "charge.paid", valor_centavos: 12000, assinatura_id: "sub_hook_a", criado: "2026-08-05T09:00:00Z" },
     ];
-    window.MTStore.cloud = () => ({
-      aid: "x",
-      client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
-    });
+    // v756: mockNuvem (tests/_nuvem.js) — qualquer tabela devolve os eventos e
+    // o resto do cliente responde sozinho, sem cadeia montada à mão
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: () => eventos });
     window.__pagAutoAcad();
     await new Promise((res) => setTimeout(res, 300));
     window.__pagAutoAcad();

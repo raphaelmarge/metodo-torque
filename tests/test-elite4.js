@@ -4,8 +4,13 @@ try { chromium = require("playwright").chromium; } catch (e) { chromium = requir
 const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado
+const { comMockNuvem } = require("./_nuvem.js");    // v756: cliente de nuvem falso, o mesmo das outras suítes
 
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
+// suíte para no meio (senão sobra Chromium órfão e o resumo nunca sai)
+let navegadorV756 = null;
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -13,9 +18,12 @@ function ok(cond, nome) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  navegadorV756 = b;
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
+  comMockNuvem(b); // v756: … e com o window.mockNuvem
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = diaISO(new Date());
   const mesAtual = hoje.slice(0, 7);
   await ctx.addInitScript(([hoje, mesAtual]) => {
     if (window !== window.top) return;
@@ -255,10 +263,9 @@ function ok(cond, nome) {
   // com a nuvem (simulada) → upsert em app_aluno e o link aparece
   pubOk = await p.evaluate(() => {
     window.__upserts = [];
-    window.MTStore.cloud = () => ({
-      aid: "acad-teste",
-      client: { from: (t) => ({ upsert: (linhas) => { window.__upserts.push({ t, linhas }); return Promise.resolve({ data: linhas, error: null }); } }) },
-    });
+    // v756: mockNuvem — espia o upsert sem precisar montar um cliente à mão
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-teste",
+      onEscreve: (w) => { if (w.acao === "upsert") window.__upserts.push({ t: w.tabela, linhas: w.corpo }); } });
     return window.__appPub(false);
   });
   ok(pubOk === true, "com nuvem, publicar devolve verdadeiro");
@@ -275,10 +282,9 @@ function ok(cond, nome) {
   ok(copiaEsc === false, "botão copiar aparece junto com o link");
   // erro da nuvem → status honesto de falha
   pubOk = await p.evaluate(() => {
-    window.MTStore.cloud = () => ({
-      aid: "acad-teste",
-      client: { from: () => ({ upsert: () => Promise.resolve({ error: { message: "permission denied" } }) }) },
-    });
+    // v756: mockNuvem — a tabela devolve ERRO, que é o que este bloco mede
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-teste",
+      tabelas: () => ({ data: null, error: { message: "permission denied" } }) });
     return window.__appPub(false);
   });
   ok(pubOk === false, "erro da nuvem devolve falso");
@@ -329,10 +335,10 @@ function ok(cond, nome) {
         { id: "g1", nome: "CROSSFIT", prof: "Pedro Coach", sala: "Sala 2", vagas: 14, inicio: hhmm(em10), dur: 60, dias: [0, 1, 2, 3, 4, 5, 6], fixos: ["João Fixo"] },
         { id: "g2", nome: "SPINNING", prof: "Carla", sala: "Sala 1", vagas: 20, inicio: hhmm(new Date(Math.min(em5h.getTime(), new Date(agora).setHours(23, 50)))), dur: 45, dias: [0, 1, 2, 3, 4, 5, 6] },
       ],
-      avulsas: [], presencas: (() => { const o = {}; o["g1|" + new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10)] = ["Maria do App 📲"]; return o; })(), faltas: {}, config: {},
+      avulsas: [], presencas: (() => { const o = {}; o["g1|" + diaISO(agora)] = ["Maria do App 📲"]; return o; })(), faltas: {}, config: {},
     }));
     localStorage.setItem("mtapp:tvAvisos", JSON.stringify({ itens: ["Sábado tem aulão de funcional às 9h 💪"] }));
-    localStorage.setItem("mtapp:wod", JSON.stringify({ dias: (() => { const o = {}; o[new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10)] = { nome: "Filthy Fifty", tipo: "FOR TIME", treino: "50 box jumps\n50 wall balls\n50 burpees", resultados: [{ aluno: "Rafa", resultado: "22:10" }] }; return o; })() }));
+    localStorage.setItem("mtapp:wod", JSON.stringify({ dias: (() => { const o = {}; o[diaISO(agora)] = { nome: "Filthy Fifty", tipo: "FOR TIME", treino: "50 box jumps\n50 wall balls\n50 burpees", resultados: [{ aluno: "Rafa", resultado: "22:10" }] }; return o; })() }));
   });
   await p.goto(BASE + "/apps/tv.html?painel=aulas");
   await p.waitForTimeout(600);
@@ -342,17 +348,6 @@ function ok(cond, nome) {
     alertaTxt: document.getElementById("alertaTxt").textContent,
   }));
   ok(/Horários de hoje/.test(tvAulas.corpo) && /CROSSFIT/.test(tvAulas.corpo) && /Pedro Coach/.test(tvAulas.corpo) && /Sala 2/.test(tvAulas.corpo), "quadro de horários lista a aula de hoje com professor e sala");
-  /* Perto da meia-noite não existe "próxima aula de hoje" — o painel está CERTO
-   * em não avisar nada, e a aula semeada pra daqui a 10 min cairia no dia
-   * seguinte. Em vez de fingir que passou, o teste diz que não deu pra medir. */
-  var quaseMeiaNoite = (function () { var d = new Date(); return d.getHours() === 23 && d.getMinutes() >= 40; })();
-  if (quaseMeiaNoite) {
-    console.log("  ⏭  alerta da próxima aula: não dá pra medir a " + new Date().toTimeString().slice(0, 5) +
-      " (não existe aula de hoje depois da meia-noite) — rode de dia");
-  } else {
-    ok(/EM \d+ MIN/.test(tvAulas.corpo), "aula chegando ganha a etiqueta EM X MIN no quadro");
-    ok(/urgente/.test(tvAulas.alerta) && /COMEÇA/.test(tvAulas.alertaTxt) && /CROSSFIT/.test(tvAulas.alertaTxt), "alerta 🔔 pulsante avisa a aula que está pra começar");
-  }
   await p.goto(BASE + "/apps/tv.html?painel=avisos");
   await p.waitForTimeout(600);
   const tvAvisos = await p.evaluate(() => document.body.textContent);
@@ -406,6 +401,53 @@ function ok(cond, nome) {
     t: document.getElementById("ttTempo").textContent,
   }));
   ok(tvTimerFim.t === "FIM!" && /TABATA COMPLETO/.test(tvTimerFim.fase), "timer do telão completa o tabata e avisa o fim");
+
+  /* v756: o alerta 🔔 da próxima aula era pulado quando a suíte rodava depois
+   * das 23h40 (não existe "próxima aula de hoje" perto da meia-noite) — quer
+   * dizer, justo o que o aluno vê na TV ficava sem medida nenhuma naquela hora.
+   * Agora ele roda numa aba PRÓPRIA com o relógio congelado às 10h da manhã.
+   * `setFixedTime` fixa a data e deixa os timers andando (o `clock.install`
+   * pararia todo setInterval do telão); a aba é separada e o bloco fica por
+   * ÚLTIMO porque o congelamento não tem como ser desfeito — o cronômetro
+   * Tabata e o telão por modalidade precisam do relógio andando de verdade. */
+  {
+    // a aba nasce no MESMO contexto (o telão precisa da semente que já está no
+    // localStorage; num contexto novo a página cai no login do portal)
+    const grade0 = await p.evaluate(() => localStorage.getItem("mtapp:grade"));
+    const pTv = await ctx.newPage();
+    pTv.on("pageerror", (e) => erros.push(String(e)));
+    await pTv.clock.setFixedTime(new Date("2026-03-18T10:00:00-03:00"));
+    await pTv.goto(BASE + "/apps/tv.html");
+    await pTv.evaluate(() => {
+      const agora = new Date();
+      const hhmm = (d) => ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      const em10 = new Date(agora.getTime() + 10 * 60000);
+      const em5h = new Date(agora.getTime() + 5 * 3600000);
+      localStorage.setItem("mtapp:grade", JSON.stringify({
+        aulas: [
+          { id: "g1", nome: "CROSSFIT", prof: "Pedro Coach", sala: "Sala 2", vagas: 14, inicio: hhmm(em10), dur: 60, dias: [0, 1, 2, 3, 4, 5, 6], fixos: ["João Fixo"] },
+          { id: "g2", nome: "SPINNING", prof: "Carla", sala: "Sala 1", vagas: 20, inicio: hhmm(em5h), dur: 45, dias: [0, 1, 2, 3, 4, 5, 6] },
+        ],
+        avulsas: [], presencas: {}, faltas: {}, config: {},
+      }));
+    });
+    await pTv.goto(BASE + "/apps/tv.html?painel=aulas");
+    await pTv.waitForTimeout(700);
+    const tv10 = await pTv.evaluate(() => ({
+      corpo: document.body.textContent,
+      alerta: document.getElementById("alertaAula").className,
+      alertaTxt: document.getElementById("alertaTxt").textContent,
+    }));
+    ok(/EM \d+ MIN/.test(tv10.corpo), "aula chegando ganha a etiqueta EM X MIN no quadro (relógio congelado às 10h)");
+    ok(/urgente/.test(tv10.alerta) && /COMEÇA/.test(tv10.alertaTxt) && /CROSSFIT/.test(tv10.alertaTxt),
+      "alerta 🔔 pulsante avisa a aula que está pra começar — medido em qualquer hora do dia");
+    await pTv.close();
+    // devolve a grade de antes: o congelamento é só deste bloco
+    await p.evaluate((g) => { if (g) localStorage.setItem("mtapp:grade", g); }, grade0);
+    // ⚠️ abrir outra aba deixa esta em SEGUNDO PLANO, e o Chromium estrangula o
+    // setInterval de aba escondida — bringToFront devolve o foco pra quem vier
+    await p.bringToFront();
+  }
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
@@ -413,4 +455,10 @@ function ok(cond, nome) {
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);
-})();
+})()
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegadorV756) await navegadorV756.close(); } catch (e) { /* ja fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });

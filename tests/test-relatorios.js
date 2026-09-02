@@ -5,6 +5,11 @@ const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
+
+
+
+
 let falhas = 0;
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
@@ -13,9 +18,11 @@ function ok(cond, nome) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
+
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = diaISO(new Date());
   const mesAtual = hoje.slice(0, 7);
   const ano = hoje.slice(0, 4);
   await ctx.addInitScript(([hoje, mesAtual]) => {
@@ -23,7 +30,7 @@ function ok(cond, nome) {
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
-    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); };
     // dm: como d(), mas nunca sai do mês atual — no começo do mês, d(-10) cairia
     // no mês passado e a receita "deste mês" sumiria do relatório anual
     const dm = (off) => { const x = d(off); return x.slice(0, 7) === mesAtual ? x : mesAtual + "-01"; };

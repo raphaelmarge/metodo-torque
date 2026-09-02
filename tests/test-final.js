@@ -6,10 +6,17 @@ const fs = require("fs");
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
+
+
+
+
 (async () => {
   const browser = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
-  const hoje = new Date().toISOString().slice(0, 10);
-  const amanha = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
+  comDiaISO(browser);   // v756: todo contexto nasce com o window.diaISO
+
+  const hoje = diaISO(new Date());
+  const amanha = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return diaISO(d); })();
 
   async function pagina(url) {
     const p = await browser.newPage({ viewport: { width: 1400, height: 950 } });
@@ -78,7 +85,7 @@ const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
   await p.evaluate(({ hoje }) => {
     const d3 = new Date(hoje + "T12:00"); d3.setDate(d3.getDate() - 3);
     const stA = JSON.parse(localStorage.getItem("mtapp:alunos"));
-    stA.alunos[0].contratos[0].inicio = d3.toISOString().slice(0, 10);
+    stA.alunos[0].contratos[0].inicio = diaISO(d3);
     localStorage.setItem("mtapp:alunos", JSON.stringify(stA));
     const st = JSON.parse(localStorage.getItem("mtapp:automacao"));
     st.jornada.ativa = true;

@@ -2,10 +2,22 @@
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
+const { testaBotBuilder } = require("./_bot-builder.js"); // v756: robô testado num lugar só
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 
+const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
+// v756: o cliente de nuvem de mentira mora em tests/_nuvem.js — UM pra todas
+// as suítes (o mock estreito de cada bloco estourava "upsert is not a function"
+// quando um timer do painel tocava outra tabela)
+const { comMockNuvem } = require("./_nuvem.js");
+
+
 let falhas = 0;
+// v756: o navegador vive FORA do IIFE pra o finally conseguir fechá-lo mesmo
+// quando a suíte para no meio (senão sobra Chromium órfão na máquina)
+let navegador = null;
+process.on("unhandledRejection", (e) => { falhas++; console.log("  ❌ promessa solta rejeitada — " + e); });
 function ok(cond, nome) {
   console.log((cond ? "  ✅ " : "  ❌ ") + nome);
   if (!cond) falhas++;
@@ -19,6 +31,9 @@ async function abaPt(p, a) {
   await p.click('#abas [data-a="' + a + '"]');
 }
 
+
+
+
 (async () => {
   // câmera falsa: deixa a captura guiada abrir de verdade no teste (imagem sem
   // ninguém, então o semáforo fica vermelho — é isso que a gente quer conferir)
@@ -26,6 +41,9 @@ async function abaPt(p, a) {
     executablePath: EXEC,
     args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
   });
+  navegador = b;
+  comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO (dia LOCAL)
+  comMockNuvem(b); // v756: … e com o window.mockNuvem (mais o teto de 20 s por ação)
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
   await ctx.addInitScript(() => {
@@ -35,7 +53,7 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
     localStorage.setItem("mtapp:ptSemConta", "1");
     localStorage.setItem("mtapp:ntSemConta", "1");
-    function d(off) { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); }
+    function d(off) { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); }
     localStorage.setItem("mtapp:alunos", JSON.stringify({
       alunos: [
         // cancelou há 60 dias e virou Wellhub (3 visitas depois)
@@ -278,8 +296,8 @@ async function abaPt(p, a) {
 
   // 🔁 recorrência semanal: 4 sessões de uma vez a partir de amanhã
   await p.evaluate(() => {
-    document.getElementById("sData").value = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
-    document.getElementById("sRepAte").value = new Date(Date.now() + 22 * 864e5).toISOString().slice(0, 10);
+    document.getElementById("sData").value = diaISO(new Date(Date.now() + 864e5));
+    document.getElementById("sRepAte").value = diaISO(new Date(Date.now() + 22 * 864e5));
     document.getElementById("sRep").checked = true;
   });
   await p.evaluate(() => window.__agAba("agendar"));
@@ -288,7 +306,7 @@ async function abaPt(p, a) {
   await p.click("#sAdd");
   const rec = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(rec === 4, "🔁 repetir toda semana gera as 4 sessões de uma vez");
-  await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
+  await p.evaluate(() => window.__agDia(diaISO(new Date(Date.now() + 864e5))));
   ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "clicar no dia de amanhã no calendário mostra o cabeçalho Amanhã");
   ok(await p.evaluate(() => /08:00/.test(document.getElementById("listaSessoes").textContent)), "detalhe do dia lista horário e aluno da sessão");
 
@@ -306,7 +324,7 @@ async function abaPt(p, a) {
 
   // Faltou: falta explícita com etiqueta (no dia de amanhã do calendário)
   await p.evaluate(() => window.__agAba("sessoes"));
-  await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
+  await p.evaluate(() => window.__agDia(diaISO(new Date(Date.now() + 864e5))));
   await p.evaluate(() => document.querySelector("#listaSessoes [data-smais]").click());
   // v704: o seletor solto achava primeiro o [data-faltou] GÊMEO da visão
   // semana (#agDia/#agGrade, escondidos) — escopado na lista do Mês
@@ -319,8 +337,8 @@ async function abaPt(p, a) {
 
   // vários dias da semana de uma vez (seg/qua/sex): 3 dias × 2 semanas = 6 sessões
   await p.evaluate(() => {
-    document.getElementById("sData").value = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
-    document.getElementById("sRepAte").value = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+    document.getElementById("sData").value = diaISO(new Date(Date.now() + 864e5));
+    document.getElementById("sRepAte").value = diaISO(new Date(Date.now() + 14 * 864e5));
     document.getElementById("sRep").checked = true;
     document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = ["1", "3", "5"].includes(c.value); });
   });
@@ -340,7 +358,14 @@ async function abaPt(p, a) {
 
   // pagamento: registra e some da pendência
   await abaPt(p, "pagamentos");
-  let pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
+  /* v756: a cobrança do mês mora em DOIS blocos que não se repetem mais — o
+   * vermelho "Atrasados" (quem passou do vencimento) e o card "Ainda vai
+   * vencer". Quem é do primeiro sai do segundo, então o teste olha os dois
+   * juntos: o que importa é o aluno aparecer numa lista de cobrança, com ação. */
+  const cobranca = () => p.evaluate(() =>
+    ((document.getElementById("pgAtrasados") || {}).textContent || "") + " ⏐ " +
+    ((document.getElementById("pendentes") || {}).textContent || ""));
+  let pend = await cobranca();
   ok(/João Cliente/.test(pend) && /Cobrar/.test(pend), "pendente com botão de cobrança WhatsApp");
 
   // ---------- pagamentos: sub-abas, plano, contrato (no perfil) e Pix BR Code ----------
@@ -382,12 +407,15 @@ async function abaPt(p, a) {
   await p.evaluate(() => window.__pgAba("receb"));
 
   // pendência agora usa o valor do CONTRATO, não o do cadastro
-  pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
-  ok(/450/.test(pend) && new RegExp("vence dia " + diaVenc).test(pend), "pendência mostra o valor do plano e o dia de vencimento");
-  if (diaHoje > 1) ok(/ATRASADO/.test(pend), "passou do vencimento → etiqueta ATRASADO");
-  else ok(!/ATRASADO/.test(pend), "dia 1 do mês: ainda sem atraso");
+  pend = await cobranca();
+  ok(/450/.test(pend) && new RegExp("venceu? dia " + diaVenc).test(pend), "pendência mostra o valor do plano e o dia de vencimento");
+  // "Atrasados" (o bloco vermelho) ou "ATRASADO" (a etiqueta do card) — as duas
+  // dizem a mesma coisa; qual delas aparece depende do dia do mês
+  if (diaHoje > 1) ok(/atrasad/i.test(pend), "passou do vencimento → etiqueta ATRASADO");
+  else ok(!/atrasad/i.test(pend), "dia 1 do mês: ainda sem atraso");
   ok(/Assinatura/.test(pend), "botão 🔁 Assinatura (link recorrente do gateway do personal)");
-  let temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
+  const temPixEm = () => p.evaluate(() => !!document.querySelector("#pendentes [data-pix], #pgAtrasados [data-pix]"));
+  let temPix = await temPixEm();
   ok(!temPix, "sem chave Pix configurada não há botão 💠");
 
   // chave Pix no card da ilha (que agora tem aba própria no menu — Sua ilha)
@@ -401,7 +429,7 @@ async function abaPt(p, a) {
   await p.waitForTimeout(250);
   await abaPt(p, "pagamentos");
   ok(await p.evaluate(() => document.getElementById("cardConta").hidden), "card da ilha some nas outras abas (sem repetir em toda página)");
-  temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
+  temPix = await temPixEm();
   ok(temPix, "com a chave configurada o botão 💠 Pix aparece");
 
   /* ---- Financeiro repaginado (tela 2e) ---- */
@@ -436,7 +464,9 @@ async function abaPt(p, a) {
   }
 
   // abre o Pix e valida o BR Code oficial (EMV do BC + CRC16)
-  await p.evaluate(() => document.querySelector("#pendentes [data-pix]").click());
+  // v756: o Pix do atrasado agora está no bloco vermelho; nos dias 1 do mês
+  // ele ainda está no card "Ainda vai vencer" — os dois seletores valem
+  await p.evaluate(() => document.querySelector("#pgAtrasados [data-pix], #pendentes [data-pix]").click());
   await p.waitForFunction(() => document.getElementById("dlgPix").open);
   const pix = await p.evaluate(() => ({
     titulo: document.getElementById("pixTitulo").textContent,
@@ -467,8 +497,8 @@ async function abaPt(p, a) {
   await p.selectOption("#pAluno", { index: 1 });
   await p.fill("#pValor", "400");
   await p.click("#pAdd");
-  pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
-  ok(/em dia/.test(pend), "após pagar, pendências zeram");
+  pend = await cobranca();
+  ok(/em dia/.test(pend) && !/João Cliente/.test(pend), "após pagar, pendências zeram");
   const hist = await p.evaluate(() => document.getElementById("listaPagamentos").textContent);
   ok(/João Cliente/.test(hist) && /400/.test(hist) && /Pix/.test(hist), "histórico registra o pagamento");
 
@@ -482,10 +512,10 @@ async function abaPt(p, a) {
   {
     // guarda o estado pra devolver no fim (os alunos injetados não podem vazar pros testes seguintes)
     const stAntes = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     const diaHoje = +hoje.slice(8, 10);
     const dIni = new Date(); dIni.setDate(1); dIni.setMonth(dIni.getMonth() - 3);
-    const ini = dIni.toISOString().slice(0, 10); // dia 1, três meses atrás
+    const ini = diaISO(dIni); // dia 1, três meses atrás
     const expMeses = 3 + (diaHoje > 1 ? 1 : 0); // 3 meses cheios + o atual se já venceu (diaVenc 1)
     const fin = await p.evaluate(([ini, hoje]) => {
       const st = window.MTStore.read("ptStudio", {});
@@ -515,11 +545,20 @@ async function abaPt(p, a) {
     await p.reload();
     await p.waitForTimeout(600);
     await abaPt(p, "pagamentos");
-    const pendHtml = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
-    ok(new RegExp("deve " + expMeses + " meses").test(pendHtml) && /Devedor Antigo/.test(pendHtml), "pendência mostra a etiqueta 'deve N meses' no lugar do ATRASADO simples");
+    // v756: os dois blocos de cobrança juntos (quem venceu foi pro vermelho)
+    const pendHtml = await p.evaluate(() =>
+      ((document.getElementById("pgAtrasados") || {}).innerHTML || "") +
+      ((document.getElementById("pendentes") || {}).innerHTML || ""));
+    ok(new RegExp("(deve " + expMeses + " meses|" + expMeses + " meses em aberto)").test(pendHtml) && /Devedor Antigo/.test(pendHtml),
+      "pendência mostra a etiqueta 'deve N meses' no lugar do ATRASADO simples");
     ok(/sess(ão|ões) a cobrar/.test(pendHtml) && /Paga Sessao/.test(pendHtml) && /data-receb="axSes"/.test(pendHtml), "linha própria de quem paga por sessão, com botão Recebi");
     ok(/além do pacote/.test(pendHtml) && /data-abreperfil="axPac"/.test(pendHtml) && /Renovar pacote/.test(pendHtml), "pacote estourado aparece com botão Renovar pacote");
     ok(new RegExp('data-receb="axDev" data-v="' + expMeses * 100 + '"').test(pendHtml), "botões de cobrança do devedor usam o TOTAL acumulado, não só o mês");
+    // e o mesmo aluno não pode aparecer nas DUAS listas (o defeito que a v756 fechou)
+    const repetido = await p.evaluate(() =>
+      /Devedor Antigo/.test((document.getElementById("pgAtrasados") || {}).textContent || "") &&
+      /Devedor Antigo/.test((document.getElementById("pendentes") || {}).textContent || ""));
+    ok(!repetido, "o devedor aparece numa lista de cobrança só (nunca nas duas na mesma dobra)");
 
     // botão Recebi registra com 1 toque (o confirm é auto-aceito pelo teste)
     await p.evaluate(() => document.querySelector('#pendentes [data-receb="axSes"]').click());
@@ -535,7 +574,7 @@ async function abaPt(p, a) {
     ok(!/Paga Sessao/.test(receb.pend), "após o Recebi a linha some das pendências");
 
     // dialog do Pix ganhou o botão 'Já recebi' — registra e fecha
-    await p.evaluate(() => document.querySelector('#pendentes [data-pix="axDev"]').click());
+    await p.evaluate(() => document.querySelector('#pgAtrasados [data-pix="axDev"], #pendentes [data-pix="axDev"]').click());
     await p.waitForFunction(() => document.getElementById("dlgPix").open);
     ok(await p.evaluate((exp) => window.__pixCtx && window.__pixCtx.alunoId === "axDev" && +window.__pixCtx.valor === exp, expMeses * 100), "abrir o Pix guarda aluno e valor pro botão de baixa");
     await p.click("#pixRecebi");
@@ -679,7 +718,7 @@ async function abaPt(p, a) {
       const troca = await p.evaluate(() => {
         const st = window.MTStore.read("ptStudio", {});
         const F = window.__financeiroPT, hj = window.MTStore.todayISO();
-        const antes = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10); // 60 dias atrás
+        const antes = diaISO(new Date(Date.now() - 60 * 864e5)); // 60 dias atrás
         st.planosPT = st.planosPT || [];
         if (!st.planosPT.find((x) => x.id === "plHoraT")) st.planosPT.push({ id: "plHoraT", nome: "Hora T", valor: 100, ciclo: 1, cobranca: "sessao" });
         st.alunos.push({ id: "axTroca", nome: "Ex Mensalista", ativo: true, modo: "mes", valor: 500 });
@@ -714,7 +753,7 @@ async function abaPt(p, a) {
         const st = window.MTStore.read("ptStudio", {});
         const F = window.__financeiroPT;
         const d = new Date(); d.setMonth(d.getMonth() - 44);
-        const ini = d.toISOString().slice(0, 10), iniMes = ini.slice(0, 7);
+        const ini = diaISO(d), iniMes = ini.slice(0, 7);
         st.planosPT.push({ id: "plMenT", nome: "Mensal T", valor: 500, cobranca: "mes", ciclo: 1 });
         st.alunos.push({ id: "axVelho", nome: "Antigo", ativo: true, modo: "mes", desde: ini });
         st.contratosPT.push({ id: "ctVelho", alunoId: "axVelho", planoId: "plMenT", diaVenc: 5, status: "ativo", inicio: ini });
@@ -765,19 +804,25 @@ async function abaPt(p, a) {
       "dashboard NÃO mantém os 3 meses antigos do devedor em 'A receber' depois de ele quitar o total");
 
     // baixa automática do link Pagar.me: casa o pedido guardado com o evento pago do webhook
-    const link = await p.evaluate((hoje) => {
+    const link = await p.evaluate(async (hoje) => {
       const st = window.MTStore.read("ptStudio", {});
       st.alunos.find((a) => a.id === "axDev").pedidosPg = [{ id: "or_teste_1", v: 123.45, em: hoje }];
       window.MTStore.write("ptStudio", st);
       window.__cloudOrig = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ client: { from: () => ({ select: () => ({ in: (col, ids) => {
-        window.__pagIds = ids.slice();
-        return { order: () => ({ limit: () => ({ then: (cb) => cb({ data: [
-          { id: "evt_falha", tipo: "order.payment_failed", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T11:00:00" },
-          { id: "evt_pago", tipo: "order.paid", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T12:00:00" },
-        ] }) }) }) };
-      } }) }) } });
+      // v756: mockNuvem — o filtro que a tela pediu fica em q.filtros
+      window.MTStore.cloud = () => window.mockNuvem({ tabelas: {
+        pagarme_eventos: (q) => {
+          if (q.filtros.pedido_id) window.__pagIds = [].concat(q.filtros.pedido_id);
+          return [
+            { id: "evt_falha", tipo: "order.payment_failed", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T11:00:00" },
+            { id: "evt_pago", tipo: "order.paid", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T12:00:00" },
+          ];
+        },
+      } });
       window.__pagLink();
+      // v756: o mockNuvem resolve como promessa de verdade (o mock antigo chamava
+      // o callback na hora) — sem a espera a baixa ainda não teria acontecido
+      await new Promise((r) => setTimeout(r, 60));
       window.MTStore.cloud = window.__cloudOrig;
       const st2 = window.MTStore.read("ptStudio", {});
       return {
@@ -793,7 +838,7 @@ async function abaPt(p, a) {
 
     // 🏦 baixa automática MULTI-GATEWAY: eventos da pag_eventos viram pagamento
     // pelos 3 casamentos (referência carimbada, pedido guardado, assinatura)
-    const gwBaixa = await p.evaluate((hoje) => {
+    const gwBaixa = await p.evaluate(async (hoje) => {
       const S = window.MTStore;
       const st = S.read("ptStudio", {});
       st.config.pagApi = { ligado: true, provedor: "asaas" };
@@ -813,21 +858,18 @@ async function abaPt(p, a) {
         { id: "asaas:p9:pago", provedor: "asaas", tipo: "pago", valor_centavos: 99900, ref: "mt|axDev|mensal", link_id: "", assinatura_id: "", criado: hoje + "T15:00:00", academia_id: "OUTRA" },
       ];
       window.__gwFiltros = {};
-      S.cloud = () => ({ aid: "acadT", client: { from: (tb) => {
-        const q = {
-          eq: (col, v) => { window.__gwFiltros[col] = v; return q; },
-          gt: (col, v) => { window.__gwFiltros["gt_" + col] = v; return q; },
-          order: () => q,
-          limit: () => q,
-          then: (cb) => cb({ data: tb === "pag_eventos"
-            ? eventos.filter((e) => (e.academia_id || "acadT") === window.__gwFiltros.academia_id)
-            : [] }),
-        };
-        return { select: () => q };
-      } } });
+      // v756: mockNuvem — q.filtros guarda o que a tela pediu (aqui: academia_id)
+      S.cloud = () => window.mockNuvem({ aid: "acadT", tabelas: {
+        pag_eventos: (q) => {
+          Object.keys(q.filtros).forEach((c) => { window.__gwFiltros[c] = q.filtros[c]; });
+          return eventos.filter((e) => (e.academia_id || "acadT") === q.filtros.academia_id);
+        },
+      } });
       window.__pagGateway();
+      await new Promise((r) => setTimeout(r, 60));   // v756: a leitura é assíncrona de verdade
       // roda de novo com os MESMOS eventos: nada pode entrar duas vezes
       window.__pagGateway();
+      await new Promise((r) => setTimeout(r, 60));
       const alertaAcendeu = S.read("ptStudio", {}).alunos.find((a) => a.id === "axDev").cartaoFalhouEm;
       // aluno pagou depois (alerta limpo na mão): o MESMO evento antigo de
       // falha não pode re-acender o alerta na leitura seguinte
@@ -835,6 +877,7 @@ async function abaPt(p, a) {
       stLimpa.alunos.find((a) => a.id === "axDev").cartaoFalhouEm = "";
       S.write("ptStudio", stLimpa);
       window.__pagGateway();
+      await new Promise((r) => setTimeout(r, 60));
       const alertaDepoisDePagar = S.read("ptStudio", {}).alunos.find((a) => a.id === "axDev").cartaoFalhouEm;
       S.cloud = window.__cloudOrig;
       const st3 = S.read("ptStudio", {});
@@ -1550,7 +1593,7 @@ async function abaPt(p, a) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.evaluate(() => {
     const d = new Date(); d.setDate(d.getDate() + 2);
-    document.getElementById("sData").value = d.toISOString().slice(0, 10);
+    document.getElementById("sData").value = diaISO(d);
   });
   await p.fill("#sHora", "07:30");
   await p.click("#sAdd");
@@ -1704,7 +1747,7 @@ async function abaPt(p, a) {
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const antes = new Date(); antes.setDate(antes.getDate() - 60);
-    st.avaliacoes[0].data = antes.toISOString().slice(0, 10);
+    st.avaliacoes[0].data = diaISO(antes);
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
   });
   await p.selectOption("#avAluno", { index: 1 });
@@ -1761,8 +1804,15 @@ async function abaPt(p, a) {
 
   // relatórios
   await abaPt(p, "relatorios");
-  const relR = await p.evaluate(() => document.getElementById("relReceita").textContent);
-  ok(/R\$\s?400/.test(relR), "relatório de receita mostra os R$ 400 do mês");
+  /* v756: o card "Receita dos 6 meses até aqui" saiu — ele desenhava a MESMA
+   * série de pagamentos por mês que o "Entrou × saiu × sobrou" logo acima. O
+   * assert passou a medir o que ficou (e confere que o duplicado NÃO voltou). */
+  const relR = await p.evaluate(() => ({
+    entradas: document.getElementById("relEntradas").innerHTML,
+    sumiu: !document.getElementById("relReceita"),
+  }));
+  ok(/entrou R\$\s?400/.test(relR.entradas), "o gráfico de entrou × saiu × sobrou mostra os R$ 400 do mês");
+  ok(relR.sumiu, "o gráfico duplicado 'Receita dos 6 meses' não voltou pra aba Financeiro dos Relatórios");
   const relA = await p.evaluate(() => document.getElementById("relAssiduidade").textContent);
   ok(/João Cliente/.test(relA) && /1 sessão/.test(relA), "assiduidade conta a sessão feita");
   ok(/presença 100%/.test(relA), "taxa de presença 100% (1 feita, 0 faltas)");
@@ -1893,7 +1943,7 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     const dados = window.__iaSemana.dados(JSON.parse(localStorage.getItem("mtapp:ptStudio")));
     window.__cloudOrigIa = window.MTStore.cloud;
-    window.MTStore.cloud = () => ({ client: {} });
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "" }); // v756
     const chamaOrig = self.MT_FUNCAO.chama;
     let corpo = null;
     self.MT_FUNCAO.chama = (cli, fn, body) => { corpo = body; return Promise.resolve({ ok: true, texto: "Leitura da semana: foque no João." }); };
@@ -1922,7 +1972,14 @@ async function abaPt(p, a) {
     return {
       termo: st.config.termo,
       status: document.getElementById("cfgTermoStatus").textContent,
-      pendente: !!a.appPendente || !!(st.appsPendentes || []).length || true,
+      /* v756: tinha um `|| true` que deixava o campo sempre verdadeiro — e
+       * nenhum ok() o lia. Agora prova a regra de verdade: salvar o termo chama
+       * marcaAppPendente em TODO aluno ativo (appEditEm mais novo que appPubEm),
+       * e num aluno com app publicado isso vira `pendente` na régua do painel. */
+      pendente: st.alunos.filter((x) => x.ativo !== false)
+        .every((x) => (Date.parse(x.appEditEm || "") || 0) > (Date.parse(x.appPubEm || "") || 0)),
+      pendenteRegra: window.__appsPendentes.pendente(st,
+        Object.assign({}, a, { appTokenP: "tok-termo", appVer: self.MT_VERSAO, appPubEm: "2020-01-01T00:00:00Z" })),
       pacoteTermo: pacote.termoApp,
     };
   });
@@ -1930,6 +1987,8 @@ async function abaPt(p, a) {
     "📜 salvar o termo guarda {texto, versão = data de hoje}");
   ok(/Publique os apps/.test(termoP.status) && termoP.pacoteTermo && termoP.pacoteTermo.v === termoP.termo.v,
     "o recado manda publicar e o pacote do aluno leva o termo com a versão");
+  ok(termoP.pendente && termoP.pendenteRegra,
+    "📜 salvar o termo marca os apps como pendentes de publicar (senão o aluno aceita a versão velha)");
   const termoFicha = await p.evaluate(async () => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const a = st.alunos[0];
@@ -1984,10 +2043,10 @@ async function abaPt(p, a) {
     await window.__pushProf.ativa();
     const msgSemNuvem = document.getElementById("pushProfStatus").textContent;
     let upsert = null;
-    window.MTStore.cloud = () => ({ aid: "acad-1", client: {
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
       auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "user-9" } } } }) },
-      from: (t) => ({ upsert: (row) => { upsert = { t, row }; return Promise.resolve({}); } }),
-    } });
+      onEscreve: (e) => { if (e.acao === "upsert") upsert = { t: e.tabela, row: e.corpo }; },
+    });
     const notifOrig = window.Notification;
     window.Notification = { requestPermission: () => Promise.resolve("granted") };
     const pegaOrig = window.__pushProf.pegaSub;
@@ -2105,12 +2164,28 @@ async function abaPt(p, a) {
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const d = new Date(); d.setDate(d.getDate() - 40);
-    st.alunos.push({ id: "maria-t", nome: "Maria Sumida", valor: 300, ativo: true, desde: d.toISOString().slice(0, 10) });
+    st.alunos.push({ id: "maria-t", nome: "Maria Sumida", valor: 300, ativo: true, desde: diaISO(d) });
+    /* v756: a Maria precisa de um treino ANTIGO pra ser "sumida" de verdade.
+     * Antes o alerta caía no `a.desde` quando não havia sessão nenhuma — quem
+     * acabou de entrar e ainda não treinou era anunciado como sumido. */
+    st.sessoes.push({ id: "maria-s1", alunoId: "maria-t", data: diaISO(d), hora: "07:00", feita: true });
+    // e um aluno NOVO de verdade: entrou faz 40 dias e nunca treinou
+    // valor 0 de propósito: ele existe só pra provar que NÃO vira "sumido"
+    st.alunos.push({ id: "novo-t", nome: "Novato Sem Treino", valor: 0, ativo: true, desde: diaISO(d) });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     window.__relPT();
   });
   const relAl = await p.evaluate(() => document.getElementById("relAlertas").textContent);
   ok(/Maria Sumida/.test(relAl) && /Sumido há 14\+ dias/.test(relAl), "alerta 👻 de aluna sumida (14+ dias), no grupo certo");
+  {
+    const grpSum = await p.evaluate(() => {
+      const g = [...document.querySelectorAll("#relAlertas [data-algrupo]")]
+        .find((x) => /SUMIDO H/i.test(x.textContent));
+      return g ? g.textContent : "";
+    });
+    ok(/Maria Sumida/.test(grpSum) && !/Novato Sem Treino/.test(grpSum),
+      "👻 v756: aluno que NUNCA treinou não é 'sumido' — antes o alerta caía no a.desde e anunciava o novato");
+  }
   ok(/ficha de treino/.test(relAl), "alerta 📋 de aluna sem ficha montada");
   const resumo2 = await p.evaluate(() => document.getElementById("relResumo").textContent);
   ok(/350/.test(resumo2), "falta receber recalcula com a aluna nova (R$ 350)");
@@ -2122,7 +2197,8 @@ async function abaPt(p, a) {
   // limpa a aluna de teste pra não interferir no resto
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    st.alunos = st.alunos.filter((a) => a.id !== "maria-t");
+    st.alunos = st.alunos.filter((a) => a.id !== "maria-t" && a.id !== "novo-t");
+    st.sessoes = st.sessoes.filter((x) => x.id !== "maria-s1");
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     window.__relPT();
   });
@@ -2233,7 +2309,7 @@ async function abaPt(p, a) {
   console.log("Dia a dia e retenção:");
   {
     const stAntesC = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     await p.evaluate((hoje) => {
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       const j = st.alunos.find((a) => a.nome === "João Cliente");
@@ -2241,7 +2317,7 @@ async function abaPt(p, a) {
       st.sessoes.push({ id: "sc1", alunoId: j.id, data: hoje, hora: "07:30", feita: false });
       const d6 = new Date(); d6.setDate(d6.getDate() - 6);
       st.alunos.push({ id: "axPar", nome: "Parado Silva", ativo: true, zap: "31988887777" });
-      st.sessoes.push({ id: "sc2", alunoId: "axPar", data: d6.toISOString().slice(0, 10), feita: true });
+      st.sessoes.push({ id: "sc2", alunoId: "axPar", data: diaISO(d6), feita: true });
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     }, hoje);
     await p.reload();
@@ -2282,7 +2358,7 @@ async function abaPt(p, a) {
       // grava direto no localStorage: MTStore.write dispara a sincronização com
       // a nuvem, e aqui pode haver mock estreito instalado por outro bloco
       const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-      st2.sessoes.push({ id: "sc-prox", alunoId: st2.alunos[0].id, data: new Date().toISOString().slice(0, 10), hora: hh, feita: false });
+      st2.sessoes.push({ id: "sc-prox", alunoId: st2.alunos[0].id, data: diaISO(new Date()), hora: hh, feita: false });
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
       window.__dashPT.render(st2);
       const topo = document.getElementById("dashTopo");
@@ -2692,12 +2768,12 @@ async function abaPt(p, a) {
         out.chatZera = !document.querySelector('#abas [data-a="chat"] .cnt') && !el.querySelector("#dVaiChat") && !!el.querySelector("[data-vazio]");
         // freio: com a cópia fresca não consulta; com forca consulta; a consulta pede só o que está sem ler
         let leu = 0, filtros = [];
-        const consulta = (resp) => { const o = { then: (fn) => Promise.resolve(resp).then(fn) }; ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = (c, v) => { if (k === "eq") filtros.push(c + "=" + v); return o; }; }); return o; };
         const cloudOrig = S.cloud;
-        // escrita resolvida: um publicar de app que ficou pendente de outro teste não pode estourar aqui
-        const okW = () => Promise.resolve({ error: null, data: [] });
-        S.cloud = () => ({ aid: "a1", client: { from: (t) => ({ upsert: okW, insert: okW, update: okW, delete: okW,
-          select: () => { if (t === "app_chat") leu++; return consulta({ data: [{ token: "tok-v7c", de: "aluno", lida: false }] }); } }) } });
+        // v756: mockNuvem — escrita e leitura de QUALQUER tabela já vêm resolvidas,
+        // então um publicar de app pendente de outro bloco não estoura aqui
+        S.cloud = () => window.mockNuvem({ aid: "a1", tabelas: {
+          app_chat: (q) => { leu++; Object.keys(q.filtros).forEach((c) => filtros.push(c + "=" + q.filtros[c])); return [{ token: "tok-v7c", de: "aluno", lida: false }]; },
+        } });
         RC.cache.porAluno = {}; RC.cache.em = Date.now();
         RC.le(); RC.le();
         const leuComCache = leu;
@@ -2713,9 +2789,9 @@ async function abaPt(p, a) {
       // 9) sino: só baixa automática e aluno de outro caminho; treinos agrupados; visto pela data do evento
       {
         const st = base();
-        const amanha20 = new Date(Date.now() + 20 * 864e5).toISOString().slice(0, 10);
-        const d1 = new Date(Date.now() - 1 * 864e5).toISOString().slice(0, 10);
-        const d2 = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+        const amanha20 = diaISO(new Date(Date.now() + 20 * 864e5));
+        const d1 = diaISO(new Date(Date.now() - 1 * 864e5));
+        const d2 = diaISO(new Date(Date.now() - 2 * 864e5));
         st.alunos.push({ id: "v7n", nome: "Manual Novo", ativo: true, desde: hoje, retorno: { feitos: { [hoje]: 1, [d1]: 1, [d2]: 1 }, conf: { [amanha20 + "|18:00"]: -1 } } },
           { id: "v7i", nome: "Importado Novo", ativo: true, desde: "", origem: "importa", importadoEm: hoje });
         st.pagamentos.push({ id: "pm", alunoId: "v7n", valor: 150, forma: "pix", data: hoje },
@@ -2810,8 +2886,10 @@ async function abaPt(p, a) {
       out.erroSql = window.__erroDeSql({ code: "42P01" }) && window.__erroDeSql({ code: "PGRST205", message: "Could not find the table" }) && !window.__erroDeSql({ message: "Failed to fetch" });
       // 5. abrir a ficha baixa o retorno UMA vez (Resumo e aba App consomem a mesma consulta)
       let chamadas = 0;
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: (cols) => { if (t === "app_aluno" && cols === "retorno") chamadas++;
-        return consulta({ data: t === "app_aluno" ? [{ retorno: { feitos: f, peso: { "2026-08-01": 80 }, fc: { "2026-08-01": { m: 140, x: 170 } } } }] : [] }); } }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+        app_aluno: (q) => { if (q.colunas === "retorno") chamadas++;
+          return [{ retorno: { feitos: f, peso: { "2026-08-01": 80 }, fc: { "2026-08-01": { m: 140, x: 170 } } } }]; },
+      } });
       window.__perfilPT("v748a");
       await new Promise((r) => setTimeout(r, 450));
       window.MTStore.cloud = orig;
@@ -2849,8 +2927,9 @@ async function abaPt(p, a) {
       const fcR = window.__resumoFc({ fc: { "2026-08-01": { m: 140, x: 170 } }, cardio: [{ d: "2026-08-02", fc: 150, fcx: 188 }] });
       out.fc = fcR.med === 145 && fcR.max === 188;
       // 13. IA da semana puxa cargas/feitos em lote antes de montar os dados
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta({ data: t === "app_aluno"
-        ? [{ token: "tok-v748", feitos: f, cargas: { Supino: [{ d: iso(-40), kg: 50 }, { d: iso(-1), kg: 60 }] } }] : [] }) }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+        app_aluno: [{ token: "tok-v748", feitos: f, cargas: { Supino: [{ d: iso(-40), kg: 50 }, { d: iso(-1), kg: 60 }] } }],
+      } });
       const stI = await window.__iaSemana.puxa(le());
       window.MTStore.cloud = orig;
       out.iaLote = /Treinos Teste: Supino 60 kg \(antes 50\)/.test(window.__iaSemana.dados(stI));
@@ -2890,8 +2969,9 @@ async function abaPt(p, a) {
       window.__encaixe.fecha();
       // A8. badge de chat pede ao servidor só o que conta (de=aluno, lida=false)
       const eqs = [];
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => { const o = { then: (fn, fr) => Promise.resolve({ data: [] }).then(fn, fr) };
-        ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = (...a) => { if (t === "app_chat" && k === "eq") eqs.push(a.join("=")); return o; }; }); return o; } }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+        app_chat: (q) => { Object.keys(q.filtros).forEach((c) => eqs.push(c + "=" + q.filtros[c])); return []; },
+      } });
       window.__badgesRun();
       await new Promise((r) => setTimeout(r, 120));
       window.MTStore.cloud = orig;
@@ -2913,8 +2993,9 @@ async function abaPt(p, a) {
       window.confirm = cOrig;
       out.choque = okC === false && perguntou === 1 && okS === true;
       // A16. o badge da Agenda acompanha a faixa de pedidos na hora; hora fora de HH:MM vira "a combinar"
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta({ data: t === "app_agenda"
-        ? [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }] : [] }) }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+        app_agenda: [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }],
+      } });
       window.__pedidosApp(le());
       await new Promise((r) => setTimeout(r, 150));
       out.badgeAg = (document.querySelector('#navPt [data-nav="agenda"] .nav-bad') || {}).textContent === "2" &&
@@ -3023,6 +3104,12 @@ async function abaPt(p, a) {
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       // 12 alunos sem ficha nenhuma: antes virava 12 linhas soltas, uma embaixo da outra
       for (let i = 0; i < 12; i++) st.alunos.push({ id: "agru" + i, nome: "Agrupado " + (i + 1), ativo: true, desde: "2026-01-05", valor: 100, modo: "mes" });
+      /* v756: um sumido DE VERDADE (treinou e parou), pra continuar existindo
+       * mais de um assunto. Sem sessão nenhuma o alerta de sumido não entra
+       * mais — aluno novo não é aluno sumido. */
+      const dSum = new Date(); dSum.setDate(dSum.getDate() - 40);
+      st.alunos.push({ id: "agruSum", nome: "Agrupado Sumido", ativo: true, desde: "2026-01-05", valor: 100, modo: "mes" });
+      st.sessoes.push({ id: "agruSumS", alunoId: "agruSum", data: window.diaISO(dSum), hora: "07:00", feita: true });
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     });
     await p.reload();
@@ -3060,6 +3147,7 @@ async function abaPt(p, a) {
     await p.evaluate(() => {
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       st.alunos = st.alunos.filter((a) => String(a.id).indexOf("agru") !== 0);
+      st.sessoes = st.sessoes.filter((x) => x.id !== "agruSumS");   // v756
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     });
     await p.reload();
@@ -3070,11 +3158,11 @@ async function abaPt(p, a) {
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       st.alunos.find((a) => a.nome === "João Cliente").appTokenP = "tok-b";
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
-      const consulta = (resp) => { const o = { then: (fn) => Promise.resolve(resp).then(fn) }; ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = () => o; }); return o; };
       window.__cloudOrigB = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta(t === "app_chat"
-        ? { data: [{ token: "tok-b", de: "aluno", lida: false }, { token: "tok-b", de: "aluno", lida: false }] }
-        : { data: [{ id: "p1", token: "tok-b" }] }) }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: (q) => // v756
+        q.tabela === "app_chat"
+          ? [{ token: "tok-b", de: "aluno", lida: false }, { token: "tok-b", de: "aluno", lida: false }]
+          : [{ id: "p1", token: "tok-b" }] });
       window.__badgesRun();
       await new Promise((r) => setTimeout(r, 200));
       window.MTStore.cloud = window.__cloudOrigB;
@@ -3089,8 +3177,8 @@ async function abaPt(p, a) {
 
     // pushes de retenção: aniversário, resgate do sumido e fim do desafio
     const pushesR = await p.evaluate(async () => {
-      const hoje = new Date().toISOString().slice(0, 10);
-      const ontem = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
+      const ontem = diaISO(new Date(Date.now() - 864e5));
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       const par = st.alunos.find((a) => a.id === "axPar");
       par.appTokenP = "tok-par";
@@ -3102,7 +3190,7 @@ async function abaPt(p, a) {
       window.__fetchOrig2 = window.fetch;
       window.__pushesC = [];
       window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
-      window.MTStore.cloud = () => ({ aid: "a1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } }); // v756
       window.fetch = async (u, o) => { window.__pushesC.push(JSON.parse(o.body)); return { ok: true }; };
       window.__reguaPT();
       await new Promise((r) => setTimeout(r, 200));
@@ -3525,17 +3613,17 @@ async function abaPt(p, a) {
   // bloqueio de agenda: cria, risca o calendário e avisa; depois remove
   await abaPt(p, "agenda");
   await p.evaluate(() => window.__agAba("agendar"));
-  const hojeISO = await p.evaluate(() => new Date(Date.now() + 12 * 3600e3).toISOString().slice(0, 10));
+  const hojeISO = await p.evaluate(() => diaISO(new Date(Date.now() + 12 * 3600e3)));
   await p.evaluate(() => {
     document.querySelector("#vAgenda details").open = true;
-    document.getElementById("blDe").value = document.getElementById("sData").value || new Date().toISOString().slice(0, 10);
+    document.getElementById("blDe").value = document.getElementById("sData").value || diaISO(new Date());
     document.getElementById("blMotivo").value = "féria-teste";
-    document.getElementById("blDe").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("blDe").value = diaISO(new Date());
   });
   await p.click("#blAdd");
   ok(await p.evaluate(() => /féria-teste/.test(document.getElementById("blLista").textContent)), "bloqueio criado aparece na lista");
   ok(await p.evaluate(() => {
-    const iso = new Date().toISOString().slice(0, 10);
+    const iso = diaISO(new Date());
     const cel = document.querySelector('#calAgenda .cal-dia[data-caldia="' + iso + '"]');
     return !!cel && cel.classList.contains("bloq");
   }), "dia bloqueado fica riscado no calendário");
@@ -3598,11 +3686,11 @@ async function abaPt(p, a) {
   await p.evaluate(() => document.getElementById("pfFechar").click());
   await abaPt(p, "agenda");
   await p.evaluate(() => window.__agAba("agendar"));
-  await p.evaluate(() => { document.getElementById("sData").value = new Date().toISOString().slice(0, 10); });
+  await p.evaluate(() => { document.getElementById("sData").value = diaISO(new Date()); });
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "20:00");
   await p.click("#sAdd");
-  await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(new Date().toISOString().slice(0, 10)); });
+  await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(diaISO(new Date())); });
   await p.evaluate(() => {
     const linhas = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).filter((x) => x.querySelector("[data-feita]"));
     const ultima = linhas[linhas.length - 1];
@@ -3620,7 +3708,7 @@ async function abaPt(p, a) {
   await p.waitForTimeout(250);
   ok(await p.evaluate(() => {
     const ct = JSON.parse(localStorage.getItem("mtapp:ptStudio")).contratosPT.find((c) => c.status === "ativo");
-    return ct.inicio === new Date().toISOString().slice(0, 10);
+    return ct.inicio === diaISO(new Date());
   }), "Renovar ciclo zera o início do contrato pra hoje");
   await p.evaluate(() => document.getElementById("pfFechar").click());
 
@@ -3633,14 +3721,14 @@ async function abaPt(p, a) {
   const regua1 = await p.evaluate(async () => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     st.alunos.find((a) => a.nome === "João Cliente").appTokenP = "tok-joao";
-    st.sessoes.push({ id: "ses-regua", alunoId: st.alunos.find((a) => a.nome === "João Cliente").id, data: new Date().toISOString().slice(0, 10), hora: "21:30", feita: false });
+    st.sessoes.push({ id: "ses-regua", alunoId: st.alunos.find((a) => a.nome === "João Cliente").id, data: diaISO(new Date()), hora: "21:30", feita: false });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     window.__cloudOrigRg = window.MTStore.cloud;
     window.__mtCloudOrig = window.MT_CLOUD;
     window.__fetchOrig = window.fetch;
     window.__pushes = [];
     window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
-    window.MTStore.cloud = () => ({ aid: "acad-1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } }); // v756
     window.fetch = async (url, opts) => { window.__pushes.push(JSON.parse(opts.body)); return { ok: true }; };
     const r = window.__reguaPT();
     await new Promise((res) => setTimeout(res, 120));
@@ -3650,7 +3738,7 @@ async function abaPt(p, a) {
     "lembrete de treino do dia sai pelo push do app (v736: com o nome do treino quando há plano)");
   // 📣 v736: o push diz QUAL treino — o nome sai do plano da semana
   const ptx = await p.evaluate(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     // v742: a chave do plano é a do getDay() (0 = domingo) — a MESMA que o
     // formulário grava e o app lê. A v736 tinha escrito o teste com (getDay()+6)%7.
     const dow = String(new Date(hoje + "T12:00:00").getDay());
@@ -3683,7 +3771,7 @@ async function abaPt(p, a) {
 
   // push que FALHA não marca o log — a régua tenta de novo na rodada seguinte
   const reguaF = await p.evaluate(async () => {
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const j = st.alunos.find((a) => a.nome === "João Cliente");
     j.appTokenP = "tok-joao";
@@ -3695,7 +3783,7 @@ async function abaPt(p, a) {
     window.__mtCloudOrig = window.MT_CLOUD;
     window.__fetchOrig = window.fetch;
     window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
-    window.MTStore.cloud = () => ({ aid: "acad-1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } }); // v756
     window.fetch = async () => ({ ok: false });
     const r1 = window.__reguaPT();
     await new Promise((res) => setTimeout(res, 120));
@@ -3718,7 +3806,7 @@ async function abaPt(p, a) {
   });
   ok(reguaF.r1 >= 1 && !reguaF.marcouNaFalha, "push que falhou NÃO marca o log (vai tentar de novo)");
   ok(reguaF.r2 >= 1 && reguaF.marcouNoOk && reguaF.r3 === 0, "na rodada seguinte o push sai, marca o log e não repete mais");
-  ok(reguaF.rodou.startsWith(new Date().toISOString().slice(0, 10)) && /Última rodada/.test(reguaF.status),
+  ok(reguaF.rodou.startsWith(diaISO(new Date())) && /Última rodada/.test(reguaF.status),
     "reguaRodouEm registra a última rodada e o card mostra");
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -3729,7 +3817,7 @@ async function abaPt(p, a) {
 
   // --- push de check-in e questionário esperando resposta ---
   const pendQ = await p.evaluate(async () => {
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const j = st.alunos.find((a) => a.nome === "João Cliente");
     j.appTokenP = "tok-pend";
@@ -3737,15 +3825,10 @@ async function abaPt(p, a) {
     st.pushLog = {};
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     // nuvem falsa: devolve o que cada tabela "respondeu"
-    const mockCloud = (ck, qu, erro) => {
-      const alvo = (nome) => {
-        const linhas = nome === "app_checkin" ? ck : qu;
-        const enc = { select: () => enc, gte: () => enc, in: () => enc,
-          limit: () => Promise.resolve(erro ? { error: { message: "off" } } : { data: linhas }) };
-        return enc;
-      };
-      return () => ({ aid: "acad-1", client: { from: alvo, auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
-    };
+    const mockCloud = (ck, qu, erro) => () => window.mockNuvem({ aid: "acad-1", // v756
+      auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) },
+      tabelas: (q) => erro ? { error: { message: "off" } } : (q.tabela === "app_checkin" ? ck : qu),
+    });
     window.__cloudOrigP = window.MTStore.cloud;
     window.__mtCloudOrigP = window.MT_CLOUD;
     window.__fetchOrigP = window.fetch;
@@ -3783,6 +3866,56 @@ async function abaPt(p, a) {
     ? pendQ.semNada.titulos.includes("Seu check-in da semana")
     : !pendQ.semNada.titulos.includes("Seu check-in da semana"),
     "check-in da semana avisa da sexta em diante (hoje: dia " + pendQ.dSem + " da semana)");
+  /* v756: o assert acima escolhe o esperado pelo dia em que a suíte roda — de
+   * segunda a quinta ele só prova que o push NÃO sai, de sexta a domingo só que
+   * sai. Uma regressão que invertesse a regra (`dSem > 4`, por exemplo) ficaria
+   * invisível metade da semana. Aqui os DOIS lados são provados na mesma
+   * rodada, com o relógio congelado numa quarta e numa sexta. */
+  {
+    const ctxCk = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxCk.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const rodaNoDia = async (dia) => {
+      const pk = await ctxCk.newPage();
+      pk.on("pageerror", (e) => erros.push("checkin-dia: " + e.message));
+      await pk.clock.setFixedTime(new Date(dia + "T10:00:00-03:00"));
+      await pk.goto(BASE + "/personal.html");
+      await pk.waitForFunction(() => window.__ptStudio);
+      const r = await pk.evaluate(async (d) => {
+        const S = window.MTStore, st = S.read("ptStudio", {});
+        st.alunos = [{ id: "ck1", nome: "Ana Check", ativo: true, desde: "2026-03-01", appTokenP: "tok-ck", metaSemana: 3 }];
+        st.pushLog = {};
+        S.write("ptStudio", st);
+        window.__mtCloudOrigCk = window.MT_CLOUD;
+        window.__fetchOrigCk = window.fetch;
+        window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+        const enviados = [];
+        window.fetch = async (u, o) => { enviados.push(JSON.parse(o.body)); return { ok: true }; };
+        const cloudOrig = S.cloud;
+        // nuvem que responde "ninguém respondeu nada" pras duas tabelas
+        S.cloud = () => window.mockNuvem({ aid: "acad-ck",
+          auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } });
+        const saida = await window.__pendPT();
+        await new Promise((res) => setTimeout(res, 150));
+        window.fetch = window.__fetchOrigCk;
+        window.MT_CLOUD = window.__mtCloudOrigCk;
+        S.cloud = cloudOrig;
+        return { dia: d, dSem: (new Date(d + "T12:00").getDay() + 6) % 7, motivo: saida.motivo || "",
+          titulos: enviados.map((x) => x.titulo) };
+      }, dia);
+      await pk.close();
+      return r;
+    };
+    const quarta = await rodaNoDia("2026-03-18");
+    const sexta = await rodaNoDia("2026-03-20");
+    await ctxCk.close();
+    ok(quarta.dSem === 2 && !quarta.titulos.includes("Seu check-in da semana"),
+      "🕐 numa QUARTA o check-in não cutuca ninguém (os dois lados da regra provados na mesma rodada)");
+    ok(sexta.dSem === 4 && sexta.titulos.includes("Seu check-in da semana"),
+      "🕐 na SEXTA o mesmo aluno recebe o aviso do check-in");
+  }
   ok(pendQ.respondeu.enviados === 0,
     "quem JÁ respondeu não recebe aviso nenhum");
   ok(pendQ.cego.enviados === 0 && pendQ.cego.motivo === "sem-leitura",
@@ -3805,7 +3938,7 @@ async function abaPt(p, a) {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const j = st.alunos.find((a) => a.nome === "João Cliente");
     const m = st.alunos.find((a) => a.ativo !== false && a.nome !== "João Cliente");
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     j.retorno = Object.assign({}, j.retorno, { notas: [{ d: hoje, tp: "musc", t: "Treino bom mas senti dor no ombro no supino" }] });
     if (m) m.retorno = Object.assign({}, m.retorno, { notas: [{ d: hoje, tp: "musc", t: "Tudo ótimo, sem dor nenhuma hoje" }] });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
@@ -3840,7 +3973,7 @@ async function abaPt(p, a) {
   // 🧭 v690: esteira do aluno novo — checklist no topo do Resumo da ficha
   const est = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     const novo = { id: "al-esteira", nome: "Esteira Teste", ativo: true, desde: hoje };
     const velho = { id: "al-velho9", nome: "Velho Teste", ativo: true, desde: "2020-01-01" };
     st.alunos.push(novo, velho);
@@ -3914,7 +4047,7 @@ async function abaPt(p, a) {
     if (!st.alunos.find((a) => a.id === "tm2")) st.alunos.push({ id: "tm2", nome: "Turma Dois", ativo: true, desde: "2026-01-01" });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
     document.querySelector('#abas [data-a="agenda"]').click();
-    window.__agDia(new Date().toISOString().slice(0, 10)); // repinta a agenda com o aluno semeado
+    window.__agDia(diaISO(new Date())); // repinta a agenda com o aluno semeado
   });
   await p.waitForTimeout(300);
   const turma = await p.evaluate(() => {
@@ -3925,7 +4058,7 @@ async function abaPt(p, a) {
     const c1 = [...chips].find((c) => c.value === j.id), c2 = [...chips].find((c) => c.value === "tm2");
     if (c1) c1.checked = true; if (c2) c2.checked = true;
     const d = new Date(); d.setDate(d.getDate() + 3);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = diaISO(d);
     document.getElementById("sData").value = iso;
     document.getElementById("sHora").value = "07:30";
     const antesN = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.length;
@@ -3950,7 +4083,7 @@ async function abaPt(p, a) {
   const rzg = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const agora = Date.now();
-    const d10 = new Date(agora - 10 * 864e5).toISOString().slice(0, 10);
+    const d10 = diaISO(new Date(agora - 10 * 864e5));
     st.alunos.push({ id: "al-sumido", nome: "Sumido Silva", ativo: true, zap: "31999990000", desde: "2026-01-01" });
     st.sessoes.push({ id: "ss-rzg1", alunoId: "al-sumido", data: d10, hora: "08:00", feita: true });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
@@ -3958,7 +4091,7 @@ async function abaPt(p, a) {
     const acha = (fila) => fila.find((z) => z.chave === "zresgate|al-sumido");
     const r = acha(window.__zapFila(st1));
     // com sessão futura marcada, o aluno não está "sumido": sai da fila
-    st1.sessoes.push({ id: "ss-rzg2", alunoId: "al-sumido", data: new Date(agora + 2 * 864e5).toISOString().slice(0, 10), hora: "08:00", feita: false });
+    st1.sessoes.push({ id: "ss-rzg2", alunoId: "al-sumido", data: diaISO(new Date(agora + 2 * 864e5)), hora: "08:00", feita: false });
     const r2 = acha(window.__zapFila(st1));
     st1.sessoes = st1.sessoes.filter((s) => s.id !== "ss-rzg2");
     // desligável como as outras fixas
@@ -3992,7 +4125,7 @@ async function abaPt(p, a) {
   // WhatsApp e na régua de push, desligável como as outras fixas
   const vsp = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
-    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const amanha = diaISO(new Date(Date.now() + 864e5));
     st.alunos.push({ id: "al-vsp", nome: "Vespera Souza", ativo: true, zap: "31999991111", desde: "2026-01-01" });
     st.sessoes.push({ id: "ss-vsp1", alunoId: "al-vsp", data: amanha, hora: "18:00", feita: false });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
@@ -4077,7 +4210,7 @@ async function abaPt(p, a) {
   // na Agenda, com os candidatos mais sumidos primeiro e o WhatsApp pronto
   const enc = await p.evaluate(() => {
     const S = window.MTStore, hoje = S.todayISO();
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const st = S.read("ptStudio", {});
     st.alunos.push(
       { id: "enc-sumido", nome: "Sumido Encaixe", ativo: true, zap: "31988880001", desde: "2026-01-01" },
@@ -4136,7 +4269,7 @@ async function abaPt(p, a) {
   // proposta pro WhatsApp usando o modelo editável da fila
   const ren = await p.evaluate(() => {
     const S = window.MTStore, hoje = S.todayISO();
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const st = S.read("ptStudio", {});
     st.alunos.push({ id: "ren-a", nome: "Renova Silva", ativo: true, zap: "31977770001", desde: iso(80) });
     st.planosPT = st.planosPT || [];
@@ -4302,9 +4435,9 @@ async function abaPt(p, a) {
     const logAntes = JSON.stringify(st0.pushLog || null);
     // nuvem falsa: o servidor "já mandou" duas chaves hoje
     const cloudOrig = S.cloud;
-    const enc = { select: () => enc, eq: () => enc, upsert: () => Promise.resolve({ error: null }),
-      gte: () => Promise.resolve({ data: [{ chave: "treino|psrv1|2026-09-01" }, { chave: "vespera|psrv1|2026-09-02" }] }) };
-    S.cloud = () => ({ aid: "acad-1", client: { from: () => enc } });
+    S.cloud = () => window.mockNuvem({ aid: "acad-1", tabelas: { // v756
+      push_log_srv: [{ chave: "treino|psrv1|2026-09-01" }, { chave: "vespera|psrv1|2026-09-02" }],
+    } });
     await new Promise((res) => window.__pushSrv(res));
     const log = S.read("ptStudio", {}).pushLog || {};
     const out = { importou: !!log["treino|psrv1|2026-09-01"] && !!log["vespera|psrv1|2026-09-02"] };
@@ -4328,7 +4461,7 @@ async function abaPt(p, a) {
   // o Visto limpa por chave, e a busca fresca traz o retorno em lote
   const sino = await p.evaluate(async () => {
     const S = window.MTStore, hoje = S.todayISO();
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const st = S.read("ptStudio", {});
     const vistoAntes = JSON.stringify((st.config || {}).sinoVisto || null);
     // v747: só o aluno que chegou por OUTRO caminho (origem) e a baixa
@@ -4359,9 +4492,9 @@ async function abaPt(p, a) {
     out.novoVolta = !el2.hidden && /90/.test(el2.textContent) && !/150/.test(el2.textContent);
     // busca fresca: a nuvem tem um treino que a cópia local não tinha
     const cloudOrig = S.cloud;
-    const enc = { select: () => enc, upsert: () => Promise.resolve({ error: null }),
-      in: () => Promise.resolve({ data: [{ token: "sn-tok", feitos: { [hoje]: 1, [iso(1)]: 1 }, indicas: [] }] }) };
-    S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
+    S.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+      app_aluno: [{ token: "sn-tok", feitos: { [hoje]: 1, [iso(1)]: 1 }, indicas: [] }],
+    } });
     window.__sino.nuvem(true);
     await new Promise((r) => setTimeout(r, 80));
     out.fresco = /treinou pelo app/.test(document.getElementById("dashSino").textContent);
@@ -4386,7 +4519,7 @@ async function abaPt(p, a) {
   // sinoNuvem puxa a chave em lote junto com feitos/indicas
   const cf = await p.evaluate(async () => {
     const S = window.MTStore, hoje = S.todayISO();
-    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const amanha = diaISO(new Date(Date.now() + 864e5));
     const st = S.read("ptStudio", {});
     st.alunos.push({ id: "cf-a", nome: "Confirma Silva", ativo: true, appTokenP: "cf-tok",
       retorno: { conf: { [amanha + "|18:00"]: 1, [hoje + "|07:00"]: -1 } } });
@@ -4403,10 +4536,10 @@ async function abaPt(p, a) {
     const cloudOrig = S.cloud;
     // outros trechos do painel (pedidos da agenda) também chamam a nuvem mockada:
     // o sel ACUMULA, senão o select deles sobrescreve o nosso com false
-    const enc = { select: (q) => { if (/conf:retorno->conf/.test(String(q))) out.sel = true; return enc; },
-      upsert: () => Promise.resolve({ error: null }),
-      in: () => Promise.resolve({ data: [{ token: "cf-tok", conf: { [amanha + "|09:00"]: -1 } }] }) };
-    S.cloud = () => ({ aid: "a1", client: { from: () => enc } });
+    S.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
+      app_aluno: (q) => { if (/conf:retorno->conf/.test(String(q.colunas))) out.sel = true;
+        return [{ token: "cf-tok", conf: { [amanha + "|09:00"]: -1 } }]; },
+    } });
     window.__sino.nuvem(true);
     await new Promise((r) => setTimeout(r, 80));
     S.cloud = cloudOrig;
@@ -4434,7 +4567,7 @@ async function abaPt(p, a) {
   // dias e o Resolver hoje avisa, com botão que abre Avaliações no aluno certo
   const rav = await p.evaluate(() => {
     const S = window.MTStore;
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const st = S.read("ptStudio", {});
     st.avaliacoes = st.avaliacoes || [];
     st.alunos.push({ id: "rv-a", nome: "Reava Costa", ativo: true });
@@ -4484,7 +4617,7 @@ async function abaPt(p, a) {
     await pR.route("**/app-teste-rec.html", (r) => r.fulfill({ contentType: "text/html", body: appRec }));
     await pR.goto(BASE + "/app-teste-rec.html", { waitUntil: "domcontentloaded" });
     const rec = await pR.evaluate(() => {
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
       localStorage.setItem("ptdc", JSON.stringify({
         "Supino reto": [{ d: "2026-05-10", kg: 40 }, { d: hoje, kg: 62.5 }],
         "Agachamento": [{ d: "2026-06-01", kg: 80 }],
@@ -4508,7 +4641,7 @@ async function abaPt(p, a) {
     // 📊 v732: o volume do treino ganha memória (ptvol) e o recibo compara —
     // recorde de volume, +X% vs último treino, e primeira vez sem comparação
     const vol = await pR.evaluate(() => {
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
       const out = {};
       localStorage.removeItem("ptvol");
       out.primeira = window.__vol(3000, hoje) === "" &&
@@ -4572,7 +4705,7 @@ async function abaPt(p, a) {
       const apj = document.getElementById("agPedeJa");
       const form = document.getElementById("agForm");
       if (!apj || !form) return { pulou: true };
-      const hj = new Date().toISOString().slice(0, 10);
+      const hj = diaISO(new Date());
       // sem dia escolhido: só o atalho (conta o que o aluno VÊ — lição v612)
       const out = { antes: getComputedStyle(apj).display !== "none" && getComputedStyle(form).display === "none" };
       const cel = document.querySelector("[data-agdia='" + hj + "']");
@@ -4712,11 +4845,11 @@ async function abaPt(p, a) {
     // nuvem mockada: upload ok e URL pública devolvida
     const cloudOrig = S.cloud;
     let subiu = null, removeu = null;
-    S.cloud = () => ({ aid: "acad-uuid-1", client: { storage: { from: () => ({
+    S.cloud = () => window.mockNuvem({ aid: "acad-uuid-1", storage: { from: () => ({ // v756
       upload: (path) => { subiu = path; return Promise.resolve({ data: { path } }); },
       getPublicUrl: (path) => ({ data: { publicUrl: "https://x.supabase.co/storage/v1/object/public/galeria/" + path } }),
       remove: (l) => { removeu = l; return Promise.resolve({}); },
-    }) } } });
+    }) } });
     const url = await new Promise((res) => window.__galeriaNuvem(px, res));
     out.subiu = /^acad-uuid-1\//.test(subiu || "") && /\.jpg$/.test(subiu || "");
     out.url = /\/galeria\/acad-uuid-1\//.test(url);
@@ -4733,8 +4866,8 @@ async function abaPt(p, a) {
     window.__imagensPT.render();
     out.render = document.querySelector('#imgGaleria img[src*="/galeria/"]') !== null &&
       /na nuvem do studio/.test(document.getElementById("imgEspaco").textContent);
-    S.cloud = () => ({ aid: "acad-uuid-1", client: { storage: { from: () => ({
-      remove: (l) => { removeu = l; return Promise.resolve({}); } }) } } });
+    S.cloud = () => window.mockNuvem({ aid: "acad-uuid-1", storage: { from: () => ({ // v756
+      remove: (l) => { removeu = l; return Promise.resolve({}); } }) } });
     const confirmOrig = window.confirm; window.confirm = () => true;
     document.querySelector('[data-imgrm="stg1"]').click();
     window.confirm = confirmOrig;
@@ -4770,7 +4903,7 @@ async function abaPt(p, a) {
   // 🤖 v726: comandos na busca — interpretados na hora, com confirmação
   const cmd = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
-    const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const amanha = diaISO(new Date(Date.now() + 864e5));
     const out = {};
     const c1 = window.__cmdPT.interpreta("marca joão amanhã às 18", st);
     out.marcar = !!c1 && c1.tipo === "marcar" && c1.data === amanha && c1.hora === "18:00" && /João/.test(c1.aluno.nome);
@@ -5088,7 +5221,7 @@ async function abaPt(p, a) {
 
   // 💳 v701: venda interna — com gateway próprio o botão vira Comprar e chama
   // a função pagamentos (ação loja, preço do SERVIDOR); a baixa entra COM desc
-  const v701 = await p.evaluate((hoje) => {
+  const v701 = await p.evaluate(async (hoje) => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const snapPag = JSON.stringify(st.config.pagApi || null);
     const snapItens = JSON.stringify(st.config.lojaItens || null);
@@ -5117,11 +5250,9 @@ async function abaPt(p, a) {
     window.__cloudOrig9 = S.cloud;
     const evs = [{ id: "mp:loja1:pago", provedor: "mercadopago", tipo: "pago", valor_centavos: 7990,
       ref: "mt|" + a.id + "|loja", link_id: "", assinatura_id: "", criado: hoje + "T10:00:00" }];
-    S.cloud = () => ({ aid: "acadT", client: { from: () => {
-      const q = { eq: () => q, gt: () => q, order: () => q, limit: () => q, then: (cb) => cb({ data: evs }) };
-      return { select: () => q };
-    } } });
+    S.cloud = () => window.mockNuvem({ aid: "acadT", tabelas: { pag_eventos: evs } }); // v756
     window.__pagGateway();
+    await new Promise((r) => setTimeout(r, 60));   // v756: a leitura da nuvem é assíncrona
     S.cloud = window.__cloudOrig9;
     const st3 = S.read("ptStudio", {});
     const pg = st3.pagamentos.find((x) => x.eventoId === "mp:loja1:pago");
@@ -5132,7 +5263,7 @@ async function abaPt(p, a) {
     if (snapItens === "null") delete st3.config.lojaItens; else st3.config.lojaItens = JSON.parse(snapItens);
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
     return out;
-  }, new Date().toISOString().slice(0, 10));
+  }, diaISO(new Date()));
   ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Comprar no app (lojaPg no pacote)");
   ok(v701.chamaFn, "v701: o Comprar chama a função pagamentos com ação loja — só nome do item, preço é do servidor");
   ok(v701.semGw, "v701: sem gateway o botão segue Quero esse (WhatsApp)");
@@ -5143,12 +5274,12 @@ async function abaPt(p, a) {
   // chips moram no #agDia, irmão da grade)
   await p.evaluate(() => {
     document.querySelector('#abas [data-a="agenda"]').click();
-    window.__agDia(new Date().toISOString().slice(0, 10));
+    window.__agDia(diaISO(new Date()));
   });
   await p.waitForTimeout(250);
   const ag2 = await p.evaluate(() => {
     const out = {};
-    const iso = (d) => d.toISOString().slice(0, 10);
+    const iso = (d) => diaISO(d);
     window.__agVis.troca("mes");
     const card = document.getElementById("agCardMes");
     out.mesVisivel = card.style.display !== "none";
@@ -5179,7 +5310,7 @@ async function abaPt(p, a) {
   // .altopo não existem, então elas moram aqui
   const ag3 = await p.evaluate(() => {
     const out = {};
-    const iso = (d) => d.toISOString().slice(0, 10);
+    const iso = (d) => diaISO(d);
     const hoje = iso(new Date());
     const prox = iso(new Date(Date.now() + 7 * 864e5));
     window.__agVis.troca("semana");
@@ -5202,7 +5333,7 @@ async function abaPt(p, a) {
   // o MESMO menu de ações (sesAcoesHtml), tratado pelo MESMO trataCliqueSessao
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    const iso = new Date().toISOString().slice(0, 10);
+    const iso = diaISO(new Date());
     st.sessoes = st.sessoes || [];
     st.sessoes.push({ id: "sesV704", alunoId: st.alunos[0].id, data: iso, hora: "05:15", feita: false });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
@@ -5303,10 +5434,9 @@ async function abaPt(p, a) {
     out.semConta = /Entre na sua conta/.test(document.getElementById("vAjuda").textContent);
     // nuvem de mentira + função de mentira: o fluxo inteiro até o protocolo
     window.__cloudOrigSup = window.MTStore.cloud;
-    window.MTStore.cloud = () => ({ aid: "a1", client: {
-      from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [] }) }) }) }) }),
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", // v756
       auth: { getSession: () => Promise.resolve({ data: { session: { user: { email: "prof@x.com" } } } }) },
-    } });
+    });
     window.__fnOrigSup = window.MT_FUNCAO.chama;
     window.MT_FUNCAO.chama = (cl, nome, corpo) => {
       window.__supCorpo = { nome, corpo };
@@ -5465,7 +5595,7 @@ async function abaPt(p, a) {
   }
   // painel do personal entende RPE e onboarding devolvidos pelo app
   const painelNovo = await p.evaluate(() => {
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = diaISO(new Date());
     const rpe = {}; rpe[hoje] = 3;
     return window.__painelApp({ feitos: {}, rpe, onb: { obj: "emagrecer", dias: "4", dor: "joelho estala" } });
   });
@@ -5475,7 +5605,7 @@ async function abaPt(p, a) {
     "painel mostra objetivo, dias e a dor relatada no onboarding");
   // 💓 batimentos da cinta do app viram KPI + gráfico de esforço no perfil
   const painelFc = await p.evaluate(() => {
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const fc = {};
     for (let i = 27; i >= 0; i -= 2) { const m = 140 + (i % 4) * 6; fc[iso(i)] = { m, x: m + 22 }; }
     const ret = { feitos: {}, fc, cardio: [{ d: iso(3), n: "Rodagem", m: "corrida", k: 5.2, s: 1860, p: "5:58", fc: 158, fcx: 188 }] };
@@ -5503,7 +5633,7 @@ async function abaPt(p, a) {
   // 🗓 v710: histórico de treino por MÊS — o professor navega o passado do
   // aluno dia a dia (‹ ›), e as listas/gráficos completos ficam atrás da porta
   const hist10 = await p.evaluate(() => {
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const hoje = iso(0);
     const dAntes = new Date(); dAntes.setDate(1); dAntes.setMonth(dAntes.getMonth() - 1); dAntes.setDate(15);
     const mesPassado = dAntes.getFullYear() + "-" + String(dAntes.getMonth() + 1).padStart(2, "0") + "-15";
@@ -5537,7 +5667,7 @@ async function abaPt(p, a) {
 
   // 📆 v711: período livre (de/até), fotos dos 3 ângulos e "mostrar todos"
   const hist11 = await p.evaluate(() => {
-    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const iso = (n) => diaISO(new Date(Date.now() - n * 864e5));
     const px = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
     const out = {};
     // período cruzando dois meses: os DOIS registros aparecem juntos
@@ -5575,7 +5705,7 @@ async function abaPt(p, a) {
       // 8 semanas: motivação subindo mês a mês, sono caindo, dor de resposta livre
       const checks = [];
       for (let i = 7; i >= 0; i--) {
-        const d = new Date(Date.UTC(2026, 5, 1 + (7 - i) * 7)).toISOString().slice(0, 10);
+        const d = diaISO(new Date(Date.UTC(2026, 5, 1 + (7 - i) * 7)));
         const resp = [
           { sigla: "MOTEX", pergunta: "Qual foi sua motivação?", resposta: i === 0 ? "Altíssimo" : "Médio", pontos: 8 - i },
           { sigla: "SONO", pergunta: "Como está o sono?", resposta: String(1 + i), pontos: 1 + i },
@@ -5607,7 +5737,7 @@ async function abaPt(p, a) {
         const m = { 0: true };
         if (d % 2 === 0) m[2] = true;
         if (Math.floor(d / 7) <= 4) m[3] = true;
-        hab[dt.toISOString().slice(0, 10)] = m;
+        hab[diaISO(dt)] = m;
       }
       return { html: window.__checkinsPT({ habitos: hab }), vazio: window.__checkinsPT({ checks: [] }) };
     });
@@ -6060,7 +6190,7 @@ async function abaPt(p, a) {
   {
     const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
     const banco = await p.evaluate((JPG) => {
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
       window.MTStore.write("ptImagens", [
         { id: "i1", n: "Sala de musculação", d: JPG, em: hoje },
         { id: "i2", n: "Área de perna", d: JPG, em: hoje },
@@ -6197,13 +6327,10 @@ async function abaPt(p, a) {
       window.__cloudOrig = window.MTStore.cloud;
       window.__fetchOrig = window.fetch;
       const chamadas = { upsert: 0, rpc: null, email: null };
-      window.MTStore.cloud = () => ({
-        aid: "acad-teste",
-        client: {
-          from: () => ({ upsert: () => { chamadas.upsert++; return Promise.resolve({ data: [] }); } }),
-          rpc: (fn, args) => { chamadas.rpc = { fn, login: args.p_login, temSenha: (args.p_senha || "").length >= 8 }; return Promise.resolve({ data: { ok: true, login: args.p_login } }); },
-          auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-teste" } } }) },
-        },
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-teste", // v756
+        onEscreve: (e) => { if (e.acao === "upsert") chamadas.upsert++; },
+        rpc: (fn, args) => { chamadas.rpc = { fn, login: args.p_login, temSenha: (args.p_senha || "").length >= 8 }; return Promise.resolve({ data: { ok: true, login: args.p_login } }); },
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-teste" } } }) },
       });
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/envia-email")) {
@@ -6247,14 +6374,11 @@ async function abaPt(p, a) {
     const visivel = await p.evaluate(async () => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       window.__cloudOrig = window.__cloudOrig || S.cloud;
-      // consulta encadeada que termina em promise vazia (o perfil faz vários selects)
-      const q = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "upsert", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
-        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f); return o; };
-      S.cloud = () => ({ aid: "a1", client: {
+      // v756: mockNuvem — o perfil faz vários selects em tabelas diferentes
+      S.cloud = () => window.mockNuvem({ aid: "a1",
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
-        from: () => q(),
         rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
-      } });
+      });
       window.__fetchOrig = window.__fetchOrig || window.fetch;
       window.fetch = (u, o) => String(u).includes("functions/v1/envia-email")
         ? Promise.resolve({ status: 200, json: () => Promise.resolve({ ok: true }) })
@@ -6284,14 +6408,12 @@ async function abaPt(p, a) {
       a.appTokenP = a.appTokenP || "tok-envio";
       S.write("ptStudio", st);
       let publicado = null;
-      const q = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
-        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f);
-        o.upsert = (linhas) => { publicado = linhas; return Promise.resolve({ error: null }); }; return o; };
       window.__cloudOrig = window.__cloudOrig || S.cloud;
-      S.cloud = () => ({ aid: "a1", client: {
+      S.cloud = () => window.mockNuvem({ aid: "a1", // v756
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
-        from: () => q(), rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
-      } });
+        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
+        onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") publicado = e.corpo; },
+      });
       const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
       S.cloud = window.__cloudOrig;
       return { r: r, token: publicado && publicado[0].token, temHtml: !!(publicado && String(publicado[0].dados.html).length > 5000),
@@ -6428,6 +6550,9 @@ async function abaPt(p, a) {
         const S = window.MTStore, st = S.read("ptStudio", {});
         window.__cloudOrigL = window.__cloudOrigL || S.cloud;
         S.cloud = () => null;
+        // v756: o tick acelerado era ligado e NUNCA desligado — todo "Publicar
+        // app" do resto da suíte passava a dar 6 ms pra nuvem em vez de 4,2 s
+        const tickOrig = window.__nuvemTickMs;
         window.__nuvemTickMs = 1;
         let recado = "", baixou = false;
         const alertOrig = window.alert;
@@ -6440,6 +6565,7 @@ async function abaPt(p, a) {
         window.alert = alertOrig;
         document.createElement = criaOrig;
         S.cloud = window.__cloudOrigL;
+        window.__nuvemTickMs = tickOrig;
         return { recado: recado, baixou: baixou };
       });
       ok(!semConta.baixou, "sem conta na nuvem, clicar em Publicar app NÃO baixa arquivo nenhum");
@@ -6452,13 +6578,13 @@ async function abaPt(p, a) {
         S.write("ptStudio", st);
         window.__cloudOrigQ = window.__cloudOrigQ || S.cloud;
         let pedido = null;
-        S.cloud = () => ({ aid: "a1", client: { rpc: (nome, args) => {
+        S.cloud = () => window.mockNuvem({ aid: "a1", rpc: (nome, args) => { // v756
           pedido = { nome: nome, tokens: (args || {}).p_tokens || [] };
           return Promise.resolve({ data: [
             { token: "t-abriu", visto_em: "2026-08-18T10:00:00Z", publicado_em: "2026-08-10T10:00:00Z" },
             { token: "t-sumiu", visto_em: null, publicado_em: "2026-08-10T10:00:00Z" },
           ], error: null });
-        } } });
+        } });
         const r = await new Promise((res) => window.__quemNaoAbriu(res));
         S.cloud = window.__cloudOrigQ;
         return { r: r, pedido: pedido };
@@ -6474,7 +6600,7 @@ async function abaPt(p, a) {
       const semSql = await p.evaluate(async () => {
         const S = window.MTStore;
         window.__cloudOrigQ2 = window.__cloudOrigQ2 || S.cloud;
-        S.cloud = () => ({ aid: "a1", client: { rpc: () => Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.app_alunos_vistos" } }) } });
+        S.cloud = () => window.mockNuvem({ aid: "a1", rpc: () => Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.app_alunos_vistos" } }) }); // v756
         const r = await new Promise((res) => window.__quemNaoAbriu(res));
         S.cloud = window.__cloudOrigQ2;
         return r;
@@ -6545,15 +6671,13 @@ async function abaPt(p, a) {
       st.alunos.push({ id: "auto2", nome: "Auto Dois", ativo: true, desde: S.todayISO(), appTokenP: "t-auto2", appVer: "mt-v001", appPubEm: "2030-01-01T00:00:00Z", metaSemana: 3 });
       S.write("ptStudio", st);
       let subiu = [], tocouPush = false;
-      const q = (t) => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
-        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f);
-        o.upsert = (l) => { if (t === "app_aluno") subiu = subiu.concat(l); return Promise.resolve({ error: null }); }; return o; };
       window.__cloudOrig3 = S.cloud;
-      S.cloud = () => ({ aid: "a", client: {
+      S.cloud = () => window.mockNuvem({ aid: "a", // v756
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
-        from: (t) => { if (t === "push_subs") tocouPush = true; return q(t); },
         rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
-      } });
+        onFrom: (t) => { if (t === "push_subs") tocouPush = true; },
+        onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") subiu = subiu.concat(e.corpo); },
+      });
       window.__appsPendentes.auto(true);   // força: o painel já pode ter rodado a automática antes
       await new Promise((r) => setTimeout(r, 1200));
       const st2 = S.read("ptStudio", {});
@@ -6591,7 +6715,7 @@ async function abaPt(p, a) {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const id = st.alunos[0].id;
       window.__cloudOrig2 = S.cloud;
-      S.cloud = () => ({ aid: "a1", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) } } });
+      S.cloud = () => window.mockNuvem({ aid: "a1", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) } }); // v756
       window.__fetchOrig = window.__fetchOrig || window.fetch;
       window.fetch = (u, o) => String(u).includes("functions/v1/chat-envia")
         ? Promise.resolve({ status: 546, text: () => Promise.resolve("<html>Function failed</html>") })
@@ -6619,29 +6743,11 @@ async function abaPt(p, a) {
   ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /data-cqok/.test(appHtml), "medalhas de sequência e volume no app");
   ok(/botChips/.test(appHtml) && />assistente</.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro personal");
-  {
-    const botEd = await p.evaluate(() => ({
-      temCard: !!document.getElementById("botAtivoP"),
-      ativo: document.getElementById("botAtivoP").checked,
-      ops: document.getElementById("botOpsP").value,
-    }));
-    ok(botEd.temCard && botEd.ativo, "módulo tem o editor do robô, ligado por padrão");
-    ok(/\|/.test(botEd.ops) && /humano/.test(botEd.ops), "opções padrão no formato Rótulo | Resposta com encaminhamento humano");
-    const fluxo = await p.evaluate(() => {
-      const desenho = {
-        paths: document.querySelectorAll("#botFluxoP svg path").length,
-        baloes: document.querySelectorAll("#botFluxoP .bb-bloco").length,
-        temZap: !!document.getElementById("botZapP"),
-        temBar: !!document.querySelector("#botFluxoP #bbSel") && !!document.querySelector("#botFluxoP #bbNova") && !!document.querySelector("#botFluxoP #bbPrincipal"),
-      };
-      const f = window.__botFluxoP({ ativo: true, oi: "Oi!", ops: [{ r: "Horários", t: "Na Agenda." }, { r: "Falar comigo", t: "humano" }] }, "Léo");
-      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), menuOps: f.blocos[1].opcoes.length, voltaMenu: f.blocos[2].destino, opDestino: f.blocos[1].opcoes[0].destino, temPos: !!f.blocos[0].pos };
-    });
-    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "construtor desenhado com linhas e balões arrastáveis");
-    ok(fluxo.desenho.temZap && fluxo.desenho.temBar, "barra de automações (+ Nova, seletor, 📶) e Publicar no WhatsApp");
-    ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe", "fluxo no formato do chatbot da academia (mensagem → menu → respostas/equipe)");
-    ok(fluxo.menuOps === 2 && fluxo.voltaMenu === "b_menu" && fluxo.opDestino === "b_r0" && fluxo.temPos, "destino/pos no formato que o webhook anda de verdade");
-  }
+  // v756: os asserts do robô moram num arquivo só (tests/_bot-builder.js) —
+  // é o MESMO módulo nos dois painéis, e a cópia colada divergia sem ninguém ver
+  await testaBotBuilder(p, ok, { sufixo: "P", fluxo: "__botFluxoP", rotulo: "🤖 Personal",
+    nome: "Léo", temPrincipal: true,
+    ops: [{ r: "Horários", t: "Na Agenda." }, { r: "Falar comigo", t: "humano" }] });
   {
     // os pedidos do app viraram UM bloco so (v635): a faixa roxa leva a lista dentro
     const perModulo = await p.evaluate(() => document.body.innerHTML);
@@ -6747,25 +6853,24 @@ async function abaPt(p, a) {
         { questionario: "Check-in semanal", criado: "2026-07-27T10:00:00Z", dados: { pontuacao: 6, respostas: [] } },
         { questionario: "Check-in semanal", criado: "2026-07-20T10:00:00Z", dados: { pontuacao: 2, respostas: [] } },
       ];
-      const qMock = { select: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: qRows }) }) }) }) };
-      window.MTStore.cloud = () => ({
-        aid: "x",
-        client: { from: (tb) => tb === "app_quest" ? qMock : ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: { // v756
+        app_quest: qRows,
+        app_aluno: [{ retorno: {
           peso: { "2026-07-01": 86, "2026-07-20": 84.2, "2026-08-01": 83.1 },
           cargas: { "Supino reto": [{ d: "2026-07-01", kg: 60 }, { d: "2026-08-01", kg: 72.5 }] },
           feitos: { "2026-07-02": 1, "2026-07-03": 1, "2026-07-04": 1, "2026-08-01": 1 },
           habitos: (() => {
             const h = {};
             for (let i = 0; i < 10; i++) {
-              const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+              const d = diaISO(new Date(Date.now() - i * 864e5));
               h[d] = { 0: true, 1: i % 2 === 0, 2: true, 3: false };
             }
             return h;
           })(),
           fotoAntes: px, fotoAntesD: "2026-05-01", fotoDepois: px, fotoDepoisD: "2026-08-01",
           fotoPerfil: px,
-        } }] }) }) }) }) },
-      });
+        } }],
+      } });
       window.__perfilPT(a.id);
     });
     await p.waitForTimeout(400);
@@ -6801,10 +6906,12 @@ async function abaPt(p, a) {
     ok(/Questionários/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de questionários respondidos com a data do último (v748: o rótulo diz o que conta)");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
-        fotoAntes: "x' onerror='window.__xssHit=1", fotoAntesD: "1234567'><b>9",
-        fotoPerfil: "x' onerror='window.__xssHit=1",
-      } }] }) }) }) }) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: { // v756
+        app_aluno: [{ retorno: {
+          fotoAntes: "x' onerror='window.__xssHit=1", fotoAntesD: "1234567'><b>9",
+          fotoPerfil: "x' onerror='window.__xssHit=1",
+        } }],
+      } });
       window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
       await new Promise((r) => setTimeout(r, 350));
       return { html: document.getElementById("pfAppDados").innerHTML, hit: !!window.__xssHit };
@@ -6829,25 +6936,12 @@ async function abaPt(p, a) {
         alunos: [{ id: "cg1", nome: "Congelado Um", ativo: true, appTokenP: "tok-cong" }],
       }));
       let upserts = 0;
-      // consulta encadeável: qualquer .eq/.order/.limit devolve ela mesma, e o
-      // await resolve — assim nenhum outro pedaço da página tropeça no mock
-      const cadeia = (resp) => {
-        const o = { eq: () => o, neq: () => o, gt: () => o, gte: () => o, lt: () => o, lte: () => o,
-          is: () => o, in: () => o, ilike: () => o, not: () => o, order: () => o, limit: () => o,
-          single: () => o, maybeSingle: () => o,
-          then: (ok, erro) => Promise.resolve(resp).then(ok, erro) };
-        return o;
-      };
-      S.cloud = () => ({ aid: "x", client: {
+      // v756: mockNuvem — a conferência pede só token + ver, nunca o HTML de 200 KB
+      S.cloud = () => window.mockNuvem({ aid: "x",
         auth: { getSession: () => Promise.resolve({ data: {} }) },
-        from: () => ({
-          // a conferência pede só token + ver — nunca o HTML de 200 KB
-          select: (cols) => cadeia(/token/.test(cols) && /ver/.test(cols)
-            ? { data: [{ token: "tok-cong", ver: null }] } : { data: [] }),
-          upsert: (l) => { upserts += (l || []).length; return cadeia({}); },
-          insert: () => cadeia({}), update: () => cadeia({}), delete: () => cadeia({}),
-        }),
-      } });
+        tabelas: (q) => (/token/.test(q.colunas) && /ver/.test(q.colunas) ? [{ token: "tok-cong", ver: null }] : []),
+        onEscreve: (e) => { if (e.acao === "upsert") upserts += (e.corpo || []).length; },
+      });
       window.__congelados.checa();
       await new Promise((r) => setTimeout(r, 250));
       const box = document.getElementById("avisoCongelados");
@@ -6912,7 +7006,7 @@ async function abaPt(p, a) {
   console.log("Desafio em grupo:");
   await abaPt(p, "desafio");
   {
-    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); };
     await p.fill("#dsNome", "30 dias TORQUE");
     await p.fill("#dsIni", d(-10));
     await p.fill("#dsFim", d(20));
@@ -6960,7 +7054,7 @@ async function abaPt(p, a) {
       const st = window.MTStore.read("ptStudio", {});
       st.alunos.slice(0, 4).forEach((a, i) => { a.appTokenP = "qtk" + i; a.ativo = true; });
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
       const CK = { qtk0: { nota: 2, texto: "ombro incomodando" }, qtk1: { nota: 5, texto: "" } };
       const Q = { qtk0: [{ sigla: "DOR", pergunta: "Dor no ombro", resposta: 8, menos: true }] };
       const todos = (t) => t === "app_checkin"
@@ -6968,13 +7062,8 @@ async function abaPt(p, a) {
         : t === "app_quest"
           ? Object.keys(Q).map((k) => ({ token: k, questionario: "Semanal", criado: hoje + "T20:00:00", dados: { respostas: Q[k] } }))
           : [];
-      function q(t) {
-        const o = { data: todos(t), error: null };
-        const h = { get: (_, k) => (k === "then" ? (f, g) => Promise.resolve(o).then(f, g) : () => new Proxy({}, h)) };
-        return new Proxy({}, h);
-      }
       window.__cloudOrigQS = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => q(t) } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: (q) => todos(q.tabela) }); // v756
       window.__qsSemana.pinta();
       await new Promise((r) => setTimeout(r, 250));
       window.MTStore.cloud = window.__cloudOrigQS;
@@ -7038,9 +7127,8 @@ async function abaPt(p, a) {
     const pub = await p.evaluate(async () => {
       window.__cloudOrigQ = window.MTStore.cloud;
       let upsertRow = null;
-      window.MTStore.cloud = () => ({
-        aid: "acad-1",
-        client: { from: (tb) => ({ upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) },
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+        onEscreve: (e) => { if (e.acao === "upsert") upsertRow = { tb: e.tabela, row: e.corpo[0] }; },
       });
       document.getElementById("qeGerar").click();
       await new Promise((res) => setTimeout(res, 300));
@@ -7096,21 +7184,17 @@ async function abaPt(p, a) {
       const st = window.MTStore.read("ptStudio", {});
       const a = st.alunos.find((x) => x.ativo !== false);
       window.__cloudOrig2 = window.MTStore.cloud;
-      /* v755: mock encadeável — e ele ANOTA os filtros, porque a RLS de
+      /* v756: usa o mock COMPARTILHADO, e ainda anota os filtros — a RLS de
        * app_quest devolve todas as academias do usuário e a consulta tem de
-       * peneirar pela academia deste painel. */
+       * peneirar pela academia deste painel (o assert da v755 continua valendo). */
       window.__filtrosQuest = [];
-      const q = () => {
-        const o = {};
-        ["select", "order", "limit", "gte", "in", "neq"].forEach((m) => { o[m] = () => o; });
-        o.eq = (col, val) => { window.__filtrosQuest.push(col + "=" + val); return o; };
-        o.then = (f, g) => Promise.resolve({ data: [{
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: (q) => {
+        Object.keys(q.filtros).forEach((c) => window.__filtrosQuest.push(c + "=" + q.filtros[c]));
+        return [{
           token: a.appTokenP, questionario: "Check-in semanal", criado: new Date().toISOString(),
           dados: { pontuacao: 10, respostas: [{ sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 }, { sigla: "AEROB", resposta: "8", pontos: 8 }] },
-        }], error: null }).then(f, g);
-        return o;
-      };
-      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => q() } });
+        }];
+      } });
       window.__questPT.respostas();
     });
     await p.waitForTimeout(300);
@@ -7134,9 +7218,8 @@ async function abaPt(p, a) {
       document.getElementById("qeSemanal").checked = true;
       let upsert = null;
       window.__cloudOrigQA = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({
-        aid: "acad-1",
-        client: { from: (tb) => ({ upsert: (rows) => { upsert = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) },
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+        onEscreve: (e) => { if (e.acao === "upsert") upsert = { tb: e.tabela, row: e.corpo[0] }; },
       });
       document.getElementById("qeApp").click();
       await new Promise((res) => setTimeout(res, 300));
@@ -7221,7 +7304,7 @@ async function abaPt(p, a) {
   const buscaSes = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const mesAnt = new Date(); mesAnt.setDate(1); mesAnt.setMonth(mesAnt.getMonth() - 1);
-    const ini = mesAnt.toISOString().slice(0, 10);
+    const ini = window.diaISO(mesAnt); // local, como o painel decide "hoje"
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.planosPT.push({ id: "plSes755", nome: "Hora-aula", valor: 80, cobranca: "sessao" });
     st.alunos.push({ id: "aSes755", nome: "Zezinho HoraAula", ativo: true, desde: ini, metaSemana: 3 });
@@ -7486,7 +7569,7 @@ async function abaPt(p, a) {
     await new Promise((r) => setTimeout(r, 250));
     out.agua = document.getElementById("agInfo").textContent;
     out.copos = document.querySelectorAll("#agCopos .copo").length;
-    out.habAgua = (JSON.parse(localStorage.getItem("pthab") || "{}")[new Date().toISOString().slice(0, 10)] || {})[0] === true;
+    out.habAgua = (JSON.parse(localStorage.getItem("pthab") || "{}")[diaISO(new Date())] || {})[0] === true;
     document.getElementById("rmKg").value = "100";
     document.getElementById("rmReps").value = "5";
     document.getElementById("rmKg").dispatchEvent(new Event("input"));
@@ -7663,7 +7746,7 @@ async function abaPt(p, a) {
       // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
       // os números que este bloco quer conferir
       const hj = new Date();
-      const dISO = (n) => new Date(hj.getTime() - n * 864e5).toISOString().slice(0, 10);
+      const dISO = (n) => diaISO(new Date(hj.getTime() - n * 864e5));
       const feitos = {}; for (let i = 1; i <= 10; i++) feitos[dISO(i * 2)] = 1;
       const a = {
         id: "aIA", nome: "Teste IA", metaSemana: 4, anamnese: { nivel: "intermediário", dias: 4 },
@@ -7678,8 +7761,8 @@ async function abaPt(p, a) {
       ] };
       const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
       const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
-      const hoje = new Date().toISOString().slice(0, 10);
-      const mais = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
+      const mais = (n) => diaISO(new Date(Date.now() + n * 864e5));
       const pl = window.__peneiraMes(bom);
       return {
         temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(10\/08\/2026\): peso 83 kg · gordura 21%/.test(txt),
@@ -7691,8 +7774,8 @@ async function abaPt(p, a) {
         tres: window.__peneiraMes({ mes: [{ n: 1, foco: "a", ajuste: "b" }] }),
         semMes: window.__peneiraMes({}),
         s1: window.__semanaMes({ geradoEm: hoje, semanas: [1, 2, 3, 4] }),
-        s2: window.__semanaMes({ geradoEm: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
-        s4: window.__semanaMes({ geradoEm: new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        s2: window.__semanaMes({ geradoEm: diaISO(new Date(Date.now() - 8 * 864e5)), semanas: [1, 2, 3, 4] }),
+        s4: window.__semanaMes({ geradoEm: diaISO(new Date(Date.now() - 60 * 864e5)), semanas: [1, 2, 3, 4] }),
         futuro: window.__semanaMes({ geradoEm: mais(5), semanas: [1, 2, 3, 4] }),
       };
     });
@@ -7712,7 +7795,7 @@ async function abaPt(p, a) {
       const id = st.alunos[0].id;
       st.treinosV2 = st.treinosV2 || {};
       st.treinosV2[id] = st.treinosV2[id] || { fichas: [] };
-      const velho = new Date(Date.now() - 23 * 864e5).toISOString().slice(0, 10);
+      const velho = diaISO(new Date(Date.now() - 23 * 864e5));
       const semanas = [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n }));
       st.treinosV2[id].mes = { musculacao: { geradoEm: velho, semanas } };
       st.treinosV2[id].iaParams = { tipo: "musculacao", objetivo: "forca", equip: "casa", em: velho };
@@ -7724,7 +7807,7 @@ async function abaPt(p, a) {
       document.getElementById("tAluno").value = id;
       window.__pintaMes(st.treinosV2[id]);
       const card = document.getElementById("mesBox").innerHTML;
-      window.__pintaMes({ fichas: [{ id: "x" }], geradaIA: true, mes: { musculacao: { geradoEm: new Date().toISOString().slice(0, 10), semanas } } });
+      window.__pintaMes({ fichas: [{ id: "x" }], geradaIA: true, mes: { musculacao: { geradoEm: diaISO(new Date()), semanas } } });
       const cardNovo = document.getElementById("mesBox").innerHTML;
       window.__pintaMes(st.treinosV2[id]);
       window.confirm = () => true;
@@ -7732,7 +7815,7 @@ async function abaPt(p, a) {
       let corpo = null;
       self.MT_FUNCAO.chama = (cli, fn2, body) => { corpo = body; return new Promise(() => {}); };
       const cloudOrig = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ client: {} });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "" }); // v756
       if (!self.MT_CLOUD) self.MT_CLOUD = {};
       const urlOrig = self.MT_CLOUD.url;
       self.MT_CLOUD.url = self.MT_CLOUD.url || "https://x.supabase.co";
@@ -7863,7 +7946,7 @@ async function abaPt(p, a) {
     // 🔎 exercício que a IA prescreveu e o painel jogou fora aparece na tela
     const fora = await p.evaluate(() => {
       const orig = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ client: {} });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "" }); // v756
       const cham = window.MT_FUNCAO.chama;
       window.MT_FUNCAO.chama = () => Promise.resolve({ ok: true, texto: JSON.stringify({
         fichas: [{ titulo: "A — Peito", itens: [
@@ -8117,7 +8200,7 @@ async function abaPt(p, a) {
       const id = st.alunos[0].id;
       const t = st.treinosV2[id];
       const guardaMes = JSON.stringify({ mes: t.mes || null, geradaIA: !!t.geradaIA, iaParams: t.iaParams || null });
-      const ha30 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+      const ha30 = diaISO(new Date(Date.now() - 30 * 864e5));
       t.geradaIA = true;
       t.mes = { musculacao: { geradoEm: ha30, semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "f", ajuste: "a" })) } };
       t.iaParams = { tipo: "corrida", objetivo: "10 km", equip: "academia", em: ha30 }; // formato antigo, de OUTRO tipo
@@ -8203,7 +8286,7 @@ async function abaPt(p, a) {
         ex("quero supino reto e agachamento livre").indexOf("Supino reto com barra") >= 0 &&
         !ex("quero supino reto e agachamento livre").some((n) => /Salto|1 e 1\/2/.test(n));
       // I10: a semana do plano virou desde a publicação → app pendente
-      const ha10 = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
+      const ha10 = diaISO(new Date(Date.now() - 10 * 864e5));
       const stP = { alunos: [], config: {}, treinosV2: { pz: { fichas: [{ id: "f" }], geradaIA: true, mes: { musculacao: { geradoEm: ha10, semanas: [1, 2, 3, 4].map((n) => ({ n, foco: "f", ajuste: "a" })) } } } } };
       const aP = { id: "pz", appTokenP: "tk", appVer: self.MT_VERSAO, appEditEm: "2020-01-01T00:00:00Z" };
       const pend = window.__appsPendentes.pendente;
@@ -8235,7 +8318,7 @@ async function abaPt(p, a) {
       // 9 fichas (1 além do teto); a primeira com 20 exercícios de 10 séries, as outras com 3 normais
       const plano = { fichas: Array.from({ length: 9 }, (_, i) => ({ titulo: String.fromCharCode(65 + i) + " — Peito",
         itens: (i === 0 ? nomes : nomes.slice(0, 3)).map((n) => ({ nome: n, series: i === 0 ? 10 : 3, reps: "10", descanso: 60 })) })), resumo: "r" };
-      const orig = S.cloud; S.cloud = () => ({ client: {} });
+      const orig = S.cloud; S.cloud = () => window.mockNuvem({ aid: "" }); // v756
       const cham = window.MT_FUNCAO.chama;
       window.MT_FUNCAO.chama = (cl, fn, corpo) => Promise.resolve(corpo && corpo.acao === "ping" ? { regras: ["brief"] } : { ok: true, texto: JSON.stringify(plano) });
       window.__brief.confereReset();
@@ -8693,7 +8776,7 @@ async function abaPt(p, a) {
         txt: (el.textContent || "").replace(/\s+/g, " "),
         tiles: el.querySelectorAll("div[style*='border-radius:18px']").length,
         flag: window.__cr.resumo,
-        feitoBt: !!document.getElementById("crRsFeito") || !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[new Date().toISOString().slice(0, 10)],
+        feitoBt: !!document.getElementById("crRsFeito") || !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[diaISO(new Date())],
         // a arte sai mesmo sem GPS: o número grande vira o TEMPO
         arteSemKm: (function () {
           window.__cr.fimReg = { d: "2026-08-25", n: "Esteira", m: "corrida", s: 1500, k: 0, p: null, fc: 150 };
@@ -9644,24 +9727,19 @@ async function abaPt(p, a) {
       let guardado = { phone_id: "", template: "", tem_token: false, verify_token: "", ig_id: "", tem_app_secret: false };
       // o painel redesenha depois de salvar e toca em várias tabelas: o mock da
       // nuvem precisa ser encadeável, senão o render estoura no meio do teste
-      const enc = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "upsert", "insert", "update", "delete", "single", "maybeSingle"].forEach((k) => { o[k] = () => o; }); o.then = (f) => Promise.resolve({ data: [], error: null }).then(f); return o; };
-      S.cloud = () => ({
-        aid: "acad-1",
-        client: {
-          from: () => enc(),
-          rpc: (fn, args) => {
-            chamadas.push({ fn, args: args || {} });
-            if (fn === "zap_config_salva2") {
-              guardado = { phone_id: args.p_phone_id, template: args.p_template,
-                tem_token: !!args.p_token || guardado.tem_token,
-                tem_app_secret: !!args.p_app_secret, ig_id: args.p_ig_id || "",
-                verify_token: "torque-ABCDEFGHJK" };
-              return Promise.resolve({ data: { ok: true, verify_token: "torque-ABCDEFGHJK" } });
-            }
-            if (fn === "zap_config_apaga") { guardado = { phone_id: "", template: "", tem_token: false }; return Promise.resolve({ data: { ok: true } }); }
-            if (fn === "zap_config_ve") return Promise.resolve({ data: guardado });
-            return Promise.resolve({ data: {} });
-          },
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+        rpc: (fn, args) => {
+          chamadas.push({ fn, args: args || {} });
+          if (fn === "zap_config_salva2") {
+            guardado = { phone_id: args.p_phone_id, template: args.p_template,
+              tem_token: !!args.p_token || guardado.tem_token,
+              tem_app_secret: !!args.p_app_secret, ig_id: args.p_ig_id || "",
+              verify_token: "torque-ABCDEFGHJK" };
+            return Promise.resolve({ data: { ok: true, verify_token: "torque-ABCDEFGHJK" } });
+          }
+          if (fn === "zap_config_apaga") { guardado = { phone_id: "", template: "", tem_token: false }; return Promise.resolve({ data: { ok: true } }); }
+          if (fn === "zap_config_ve") return Promise.resolve({ data: guardado });
+          return Promise.resolve({ data: {} });
         },
       });
       document.querySelector('#abas button[data-a="config"]').click();
@@ -9869,7 +9947,7 @@ async function abaPt(p, a) {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const semNuvem = window.__sitePro.monta(st);
     const cloudOrig = window.MTStore.cloud;
-    window.MTStore.cloud = () => ({ aid: "acad-77", client: {} });
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-77" }); // v756
     const comNuvem = window.__sitePro.monta(st);
     window.MTStore.cloud = cloudOrig;
     window.__aulaExp.pinta([{ id: "m1", nome: "Lia Souza", zap: "31988887777", horario: "Quarta 18:00", criado: "2026-08-30T12:00:00Z" }]);
@@ -9899,12 +9977,8 @@ async function abaPt(p, a) {
   const pubSite = await p.evaluate(async () => {
     window.__cloudOrigSP = window.MTStore.cloud;
     let upsertRow = null;
-    window.MTStore.cloud = () => ({
-      aid: "acad-1",
-      client: { from: (tb) => ({
-        upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); },
-        delete: () => ({ eq: () => Promise.resolve({}) }),
-      }) },
+    window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+      onEscreve: (e) => { if (e.acao === "upsert") upsertRow = { tb: e.tabela, row: e.corpo[0] }; },
     });
     document.getElementById("spPublicar").click();
     await new Promise((r) => setTimeout(r, 300));
@@ -9953,20 +10027,20 @@ async function abaPt(p, a) {
     try {
       S.usuario = () => ({ logado: true, email: "pt@teste.com" });
       let pediu = "";
-      S.cloud = () => ({ aid: "acad-1", client: { rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } } });
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } }); // v756
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.pediu = pediu;
       out.tarjaAtras = !document.getElementById("faixaAssinatura").hidden;
       out.txtAtras = document.getElementById("faixaAssinaturaTxt").textContent;
       // o webhook marcou bloqueada (assinatura venceu de vez)
-      S.cloud = () => ({ aid: "acad-1", client: { rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) } });
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) }); // v756
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.txtBloq = document.getElementById("faixaAssinaturaTxt").textContent;
       out.btnBloq = document.getElementById("faixaAssinaturaBtn").textContent;
       // pagou de novo: ativa — tarja some e o card Sua ilha mostra a loja
-      S.cloud = () => ({ aid: "acad-1", client: { rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) } });
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) }); // v756
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.tarjaAtiva = !document.getElementById("faixaAssinatura").hidden;
@@ -10176,20 +10250,24 @@ async function abaPt(p, a) {
       S.todayISO = (d) => d ? todayOrig(d) : "2031-03-15";
       out.mesFn = window.__mesAtual() === "2031-03";
       window.__renderPT();
-      out.mesVira = /Em Dia Hoje/.test(document.getElementById("pendentes").textContent); // em 2031 ninguém pagou março
+      // v756: as duas listas de cobrança juntas (quem venceu está no bloco vermelho)
+      out.mesVira = /Em Dia Hoje/.test(document.getElementById("pendentes").textContent +
+        document.getElementById("pgAtrasados").textContent); // em 2031 ninguém pagou março
     } catch (e) { out.mesErro = String(e); }
     S.todayISO = todayOrig;
     window.__renderPT();
     window.__pgAba("receb");
     // pt-fin 5 e 7: cortesia fora da lista; pacote estourado numa linha só
     const pend = document.getElementById("pendentes");
-    out.cortesiaFora = !/Cortesia Sem Valor/.test(pend.textContent);
-    out.pacoteUmaVez = (pend.innerHTML.match(/Sessao Pacote/g) || []).length === 1 && /Renovar pacote/.test(pend.innerHTML) &&
-      !/data-receb="s749"/.test(pend.innerHTML);
+    const atrBox = document.getElementById("pgAtrasados");
+    const cobr = { textContent: pend.textContent + atrBox.textContent, innerHTML: pend.innerHTML + atrBox.innerHTML };
+    out.cortesiaFora = !/Cortesia Sem Valor/.test(cobr.textContent);
+    out.pacoteUmaVez = (cobr.innerHTML.match(/Sessao Pacote/g) || []).length === 1 && /Renovar pacote/.test(cobr.innerHTML) &&
+      !/data-receb="s749"/.test(cobr.innerHTML);
     // pt-fin 6: um texto de cobrança só, com o modelo do professor
     const msgD = window.__msgCobranca(stR, al("d749"));
     out.modeloVale = /^MODELO Devedor deve R\$/.test(msgD) && /meses em aberto/.test(msgD);
-    const hrefD = (pend.querySelector('a[href*="31900000002"]') || {}).href || "";
+    const hrefD = ((pend.querySelector('a[href*="31900000002"]') || atrBox.querySelector('a[href*="31900000002"]')) || {}).href || "";
     out.botaoUsaModelo = /MODELO%20Devedor/.test(decodeURI(hrefD).replace(/ /g, "%20"));
     const msgN = window.__msgCobranca(stR, al("n749"));
     out.noPrazo = /Passando pra lembrar do plano deste mês/.test(msgN) && /vence dia 1\b/.test(msgN);
@@ -10302,7 +10380,7 @@ async function abaPt(p, a) {
     const out = {};
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     window.__cloudOrig = S.cloud;
-    S.cloud = () => ({ aid: "t749", client: {} });
+    S.cloud = () => window.mockNuvem({ aid: "t749" }); // v756
     const chamaOrig = window.MT_FUNCAO.chama;
     const chamadas = [];
     window.MT_FUNCAO.chama = (client, fn, corpo) => {
@@ -10615,25 +10693,49 @@ async function abaPt(p, a) {
   await ctxGps.close();
   // --- aba Configurações: tolerância de atraso + o que o aluno vê no app ---
   const stSnapCfg = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
-  const hojeDia = new Date().getDate();
-  const zedRow = () => p.evaluate(() =>
-    [...document.querySelectorAll("#pendentes .sessao-pt")].map((x) => x.textContent).find((t) => /Zed Config/.test(t)) || "");
-  if (hojeDia >= 5) {
-    // aluno com contrato novo vencido há 3 dias e sem tolerância: ATRASADO
-    await p.evaluate(async () => {
-      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-      const iso3 = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
-      st.alunos.push({ id: "cfg1", nome: "Zed Config", valor: 100, ativo: true });
-      st.planosPT.push({ id: "plcfg", nome: "CfgPlan", valor: 100 });
-      st.contratosPT.push({ id: "ctcfg", alunoId: "cfg1", planoId: "plcfg", status: "ativo", inicio: iso3(-3), diaVenc: new Date().getDate() - 3 });
-      st.config = st.config || {};
-      delete st.config.atrasoDias;
-      window.MTStore.write("ptStudio", st);
+  /* v756: os dois lados da tolerância de atraso rodavam só com `hojeDia >= 5` —
+   * do dia 1 ao 4 do mês os asserts eram PULADOS e um `ok(true, "pulado")` os
+   * contava como verdes. Como merge na main publica na hora, uma regressão na
+   * etiqueta ATRASADO entrava em produção sem alarme em 4 dias por mês.
+   * Agora o cenário roda numa página com o relógio CONGELADO num dia do meio
+   * do mês (18/03/2026) — `clock.setFixedTime` fixa a data e deixa os timers
+   * andando, ao contrário do `clock.install`, que pararia todo setTimeout do
+   * painel e travaria a própria espera do teste. */
+  {
+    const ctxTol = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxTol.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
     });
-    await abaPt(p, "pagamentos");
-    await p.waitForTimeout(250);
-    const semTol = await zedRow();
-    ok(/ATRASADO/.test(semTol), "sem tolerância, aluno vencido há 3 dias aparece ATRASADO");
+    const pTol = await ctxTol.newPage();
+    pTol.on("pageerror", (e) => erros.push("tolerancia: " + e.message));
+    await pTol.clock.setFixedTime(new Date("2026-03-18T10:00:00-03:00"));
+    await pTol.goto(BASE + "/personal.html");
+    await pTol.waitForFunction(() => window.__ptStudio);
+    const zed = async (tol) => await pTol.evaluate((t) => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos = [{ id: "cfg1", nome: "Zed Config", valor: 100, ativo: true, desde: "2026-03-01" }];
+      st.planosPT = [{ id: "plcfg", nome: "CfgPlan", valor: 100 }];
+      // vence dia 15, hoje é 18 → vencido há 3 dias, sempre
+      st.contratosPT = [{ id: "ctcfg", alunoId: "cfg1", planoId: "plcfg", status: "ativo", inicio: "2026-03-01", diaVenc: 15 }];
+      st.pagamentos = [];
+      st.config = st.config || {};
+      if (t === null) delete st.config.atrasoDias; else st.config.atrasoDias = t;
+      S.write("ptStudio", st);
+      window.__renderPT();
+      // v756: quem venceu está no bloco vermelho de Atrasados; o card de baixo
+      // guarda só o que ainda vai vencer — o teste olha os dois
+      return ((document.getElementById("pgAtrasados") || {}).textContent || "") + " ⏐ " +
+        ((document.getElementById("pendentes") || {}).textContent || "");
+    }, tol);
+    const semTol = await zed(null);
+    // "Atrasados" (bloco vermelho) ou "ATRASADO" (etiqueta do card): a mesma coisa
+    ok(/atrasad/i.test(semTol) && /Zed Config/.test(semTol),
+      "sem tolerância, aluno vencido há 3 dias aparece ATRASADO (relógio congelado em 18/03)");
+    const comTol = await zed(5);
+    ok(/Zed Config/.test(comTol) && !/atrasad/i.test(comTol),
+      "tolerância de 5 dias tira a etiqueta ATRASADO do recém-vencido (o mesmo cenário, todo dia do mês)");
+    await ctxTol.close();
   }
   await abaPt(p, "config");
   const cfgSalvo = await p.evaluate(async () => {
@@ -10650,14 +10752,6 @@ async function abaPt(p, a) {
   });
   ok(cfgSalvo.visivel && cfgSalvo.salvo && /publique os apps/i.test(cfgSalvo.status),
     "aba Configurações salva a tolerância e as áreas do app (e pede pra republicar)");
-  if (hojeDia >= 5) {
-    await abaPt(p, "pagamentos");
-    await p.waitForTimeout(250);
-    const comTol = await zedRow();
-    ok(comTol !== "" && !/ATRASADO/.test(comTol), "tolerância de 5 dias tira a etiqueta ATRASADO do recém-vencido");
-  } else {
-    ok(true, "tolerância de atraso: teste do ATRASADO pulado no comecinho do mês (não dá pra vencer há 3 dias)");
-  }
   ok(!/data-trsub='wod'/.test(cfgSalvo.appHtml) && !/id='cardWod'/.test(cfgSalvo.appHtml) && !/id='cardCardio'/.test(cfgSalvo.appHtml) && !/Modo circuito \(WOD\)/.test(cfgSalvo.appHtml),
     "app do aluno some com o WOD e o cardio quando o professor desliga");
   const pCfg = await ctx.newPage();
@@ -10842,7 +10936,7 @@ async function abaPt(p, a) {
       const antes = JSON.stringify(window.L("ptfeitos", {}));
       const f = JSON.parse(antes);
       const d = new Date("2025-01-01T12:00:00");
-      for (let i = 0; i < 30; i++) { f[d.toISOString().slice(0, 10)] = 1; d.setDate(d.getDate() + 1); }
+      for (let i = 0; i < 30; i++) { f[diaISO(d)] = 1; d.setDate(d.getDate() + 1); }
       window.Sv("ptfeitos", f);
       return new Promise((res) => setTimeout(() => {
         const r = {
@@ -11154,7 +11248,7 @@ async function abaPt(p, a) {
       if (stAntes == null) localStorage.removeItem(stK); else localStorage.setItem(stK, stAntes);
       // (b) aceitar a sugestão grava SÓ a carga e não deixa gv.sujo pendurado
       const dcAntes = localStorage.getItem("ptdc"); const dc = JSON.parse(dcAntes || "{}");
-      const d7 = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+      const d7 = window.diaISO(new Date(Date.now() - 7 * 864e5));   // v756: dia LOCAL, como o app conta
       dc[nome] = [{ d: "2026-01-05", kg: 20, r: alvo }, { d: d7, kg: 20, r: alvo }];
       localStorage.setItem("ptdc", JSON.stringify(dc));
       const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
@@ -11304,7 +11398,7 @@ async function abaPt(p, a) {
     const seg = new Date(); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
     for (let w = 1; w <= 2; w++) for (let i = 0; i < 3; i++) {
       const d = new Date(seg); d.setDate(d.getDate() - 7 * w + i);
-      f[d.toISOString().slice(0, 10)] = 1;
+      f[diaISO(d)] = 1;
     }
     localStorage.setItem("ptfeitos", JSON.stringify(f));
     document.getElementById("btnFeito").click();
@@ -11336,7 +11430,7 @@ async function abaPt(p, a) {
     "aba Treino sem o diário manual de cargas (a leitura mora em Evolução → Cargas)");
   // progressão sugerida continua viva no caminho do player: 3ª carga igual → sugere subir
   const prog = await pApp.evaluate(async () => {
-    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return diaISO(x); };
     const h = JSON.parse(localStorage.getItem("ptdc") || "{}");
     h["Agachamento"] = [{ d: d(-7), kg: 90, r: 6 }, { d: d(-4), kg: 90, r: 6 }];
     localStorage.setItem("ptdc", JSON.stringify(h));
@@ -11486,8 +11580,8 @@ async function abaPt(p, a) {
   const leva2 = await pApp.evaluate(async () => {
     window.__trocaSec("evolucao");
     const pz = {};
-    pz[new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)] = 90;
-    pz[new Date().toISOString().slice(0, 10)] = 85;
+    pz[diaISO(new Date(Date.now() - 30 * 864e5))] = 90;
+    pz[diaISO(new Date())] = 85;
     localStorage.setItem("ptpeso", JSON.stringify(pz));
     document.getElementById("mpAlvo").value = "80";
     document.getElementById("mpSalva").click();
@@ -11535,7 +11629,7 @@ async function abaPt(p, a) {
     await new Promise((r) => setTimeout(r, 150));
     const comMeta = document.getElementById("mcBox").textContent;
     const dc2 = JSON.parse(localStorage.getItem("ptdc"));
-    dc2["Supino reto"].push({ d: new Date().toISOString().slice(0, 10), kg: 82, r: 5 });
+    dc2["Supino reto"].push({ d: diaISO(new Date()), kg: 82, r: 5 });
     localStorage.setItem("ptdc", JSON.stringify(dc2));
     window.__metaCarga.pinta();
     await new Promise((r) => setTimeout(r, 150));
@@ -12177,18 +12271,13 @@ async function abaPt(p, a) {
       const a = st.alunos[0];
       a.appTokenP = "chtk"; a.ativo = true;
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaISO(new Date());
       const MSG = [
         { token: "chtk", de: "aluno", texto: "Consigo treinar hoje mesmo com o ombro assim?", criado: hoje + "T14:22:00", lida: true },
         { token: "chtk", de: "personal", texto: "Consegue sim, já troquei o exercício.", criado: hoje + "T14:26:00", lida: true },
       ];
-      function q() {
-        const o = { data: MSG, error: null };
-        const h = { get: (_, k) => (k === "then" ? (f, g) => Promise.resolve(o).then(f, g) : () => new Proxy({}, h)) };
-        return new Proxy({}, h);
-      }
       window.__cloudOrigCH = window.MTStore.cloud;
-      window.MTStore.cloud = () => ({ aid: "a1", client: { from: () => q() } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: () => MSG }); // v756
       window.__chatPT.render();
       await new Promise((r) => setTimeout(r, 200));
       window.__chatPT.abre(a.id);
@@ -12282,7 +12371,7 @@ async function abaPt(p, a) {
       const semNuvem = await new Promise((res) => window.__pagarmePT(id, 400, res));
       window.__cloudOrig = window.MTStore.cloud;
       window.__fetchOrig = window.fetch;
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } }); // v756
       let corpo = null;
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagarme")) {
@@ -12325,7 +12414,7 @@ async function abaPt(p, a) {
       S.write("ptStudio", st2);
       window.__cloudOrig = S.cloud;
       window.__fetchOrig = window.fetch;
-      S.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      S.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } }); // v756
       let corpo = null, urlChamada = "";
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagamentos")) {
@@ -12546,7 +12635,7 @@ async function abaPt(p, a) {
       const semNuvem = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
       window.__cloudOrig = window.MTStore.cloud;
       window.__fetchOrig = window.fetch;
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } }); // v756
       const peito = self.MT_EXERCICIOS.find((c) => c.g === "Peito").n;
       const costas = self.MT_EXERCICIOS.find((c) => c.g === "Costas").n;
       let corpo = null;
@@ -12589,7 +12678,7 @@ async function abaPt(p, a) {
       const id = st.alunos[0].id;
       window.__cloudOrig = S.cloud;
       window.__fetchOrig = window.fetch;
-      S.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      S.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } }); // v756
       let corpo = null;
       const responde = (plano) => (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) {
@@ -12741,7 +12830,7 @@ async function abaPt(p, a) {
       let chamou = 0;
 
       // 1) sessão caída: nem chega a chamar a função
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: null } }) } } });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { getSession: () => Promise.resolve({ data: { session: null } }) } }); // v756
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) { chamou++; return Promise.resolve({ status: 200, ok: true, text: () => Promise.resolve('{"ok":true,"texto":"x"}') }); }
         return window.__fetchOrig(url, opts);
@@ -12752,10 +12841,10 @@ async function abaPt(p, a) {
       // 2) crachá recusado no meio do caminho, mas a renovação funciona:
       //    o sistema tem que se recuperar sozinho, sem erro nenhum na tela
       let tentativas = 0;
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: {
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { // v756
         getSession: () => Promise.resolve({ data: { session: { access_token: "tok-velho" } } }),
         refreshSession: () => Promise.resolve({ data: { session: { access_token: "tok-novo" } } }),
-      } } });
+      } });
       const peito2 = self.MT_EXERCICIOS.find((c) => c.g === "Peito").n;
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) {
@@ -12769,10 +12858,10 @@ async function abaPt(p, a) {
       const recuperou = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
 
       // 3) crachá recusado E renovação sem sucesso: aí é sessão caída mesmo
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: {
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", auth: { // v756
         getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }),
         refreshSession: () => Promise.resolve({ data: { session: null } }),
-      } } });
+      } });
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) {
           const corpo = '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}';
@@ -12848,18 +12937,8 @@ async function abaPt(p, a) {
       window.__cloudOrig = window.MTStore.cloud;
       window.__fetchOrig = window.fetch;
       window.__cartaoChamadas = { token: null, funcao: [] };
-      // cadeia flexível: qualquer .select().eq().eq().limit()… resolve { data: [] }
-      const cadeia = () => {
-        const o = { then: (res, rej) => Promise.resolve({ data: [] }).then(res, rej) };
-        ["select", "eq", "neq", "gte", "lte", "in", "is", "not", "order", "limit", "single"].forEach((m) => { o[m] = () => o; });
-        return o;
-      };
-      window.MTStore.cloud = () => ({
-        aid: "x",
-        client: {
-          auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-cartao" } } }) },
-          from: () => cadeia(),
-        },
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", // v756
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-cartao" } } }) },
       });
       window.fetch = (url, opts) => {
         const u = String(url);
@@ -12932,7 +13011,9 @@ async function abaPt(p, a) {
       document.getElementById("pfSalvar").click(); // re-renderiza tudo (inclui pendências)
     });
     await p.waitForTimeout(250);
-    const pendCartao = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
+    // v756: as duas listas juntas — o atrasado com cartão vai pro bloco vermelho
+    const pendCartao = await p.evaluate(() =>
+      document.getElementById("pendentes").innerHTML + document.getElementById("pgAtrasados").innerHTML);
     ok(/João Cliente/.test(pendCartao) && /no cartão/.test(pendCartao) && /tag ok/.test(pendCartao), "pendência de quem tem assinatura ganha o chip 🔁 no cartão");
     await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -12974,10 +13055,7 @@ async function abaPt(p, a) {
         { id: "ev1", tipo: "charge.paid", valor_centavos: 45000, assinatura_id: "sub_hook_1", criado: "2026-08-01T10:00:00Z" },
         { id: "ev2", tipo: "charge.payment_failed", valor_centavos: 45000, assinatura_id: "sub_hook_1", criado: "2026-08-06T10:00:00Z" },
       ];
-      window.MTStore.cloud = () => ({
-        aid: "x",
-        client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
-      });
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "x", tabelas: () => eventos }); // v756
       window.__pagAuto();
       await new Promise((res) => setTimeout(res, 300));
       window.__pagAuto(); // segunda chamada não pode duplicar
@@ -13055,7 +13133,7 @@ async function abaPt(p, a) {
     try { document.getElementById("btnBackup").click(); } finally { URL.createObjectURL = orig; }
   });
   await p.waitForTimeout(250);
-  ok(await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).config || {}).backupEm === new Date().toISOString().slice(0, 10) &&
+  ok(await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).config || {}).backupEm === diaISO(new Date()) &&
     /Último backup/.test(document.getElementById("bkAviso").textContent)), "baixar backup grava a data e o aviso passa a mostrar");
   ok(await p.evaluate(() => {
     window.MT_syncInfo({ ativa: true, ultima: new Date(), pendentes: 0 });
@@ -13416,23 +13494,24 @@ async function abaPt(p, a) {
     const mod = await pC.evaluate(async () => {
       const chamadas = [];
       window.__cloudOrigF = window.MTStore.cloud;
-      const tabela = (t) => ({
-        select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ eq: () => ({
-          then: (cb) => cb({ data: [
-            { id: "f1", nome: "Mariana", texto: "PR de agacho!", foto: "", treino: "Treino B", oculto: false, criado: "2026-08-11T10:00:00Z" },
-          ] }),
-        }), then: (cb) => cb({ data: [] }) }) }) }) }),
-        update: (v) => ({ eq: (c, id) => { chamadas.push(["update", id, v.oculto]); return { then: (cb) => cb({}) }; } }),
-        // v755: a tabela entra na anotação — apagar o post tem de apagar as
-        // reações dele também (curtida e comentário viviam órfãos no banco)
-        delete: () => ({ eq: (c, id) => { chamadas.push(["delete", t, c, id]); return { then: (cb) => cb({}) }; } }),
-      });
-      window.MTStore.cloud = () => ({ aid: "acad-1", client: { from: (t) => tabela(t) } });
+      /* v756: mock COMPARTILHADO, mas a anotação guarda a TABELA — o assert da
+       * v755 exige que apagar o post apague as reações dele também, e sem o
+       * nome da tabela não dá pra provar que as duas foram chamadas.
+       * A escrita é anotada no resolve (e não no onEscreve) porque o
+       * `.eq("id", …)` vem DEPOIS do update: só ali os filtros estão completos. */
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", tabelas: (q, t) => {
+        if (q.acao === "update") chamadas.push(["update", q.filtros.id, q.corpo.oculto]);
+        if (q.acao === "delete") chamadas.push(["delete", t, "id", q.filtros.id || q.filtros.post_id]);
+        if (t !== "app_feed") return [];
+        return [{ id: "f1", nome: "Mariana", texto: "PR de agacho!", foto: "", treino: "Treino B", oculto: false, criado: "2026-08-11T10:00:00Z" }];
+      } });
       window.__feedMod.carrega();
+      await new Promise((r) => setTimeout(r, 60));
       const html = document.getElementById("fdmLista").innerHTML;
       // clica em Esconder no post que veio da nuvem
       const bt = document.querySelector("[data-fdmoc]");
       if (bt) bt.click();
+      await new Promise((r) => setTimeout(r, 60));
       // e agora o Apagar: post + reações
       const confirmOrig = window.confirm; window.confirm = () => true;
       const btRm = document.querySelector("[data-fdmrm]");
@@ -14636,7 +14715,7 @@ async function abaPt(p, a) {
     const cobrar755 = await pV.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const d = new Date(); d.setMonth(d.getMonth() - 2); d.setDate(1);
-      const ini = d.toISOString().slice(0, 10);
+      const ini = window.diaISO(d); // local, como o painel decide "hoje"
       st.planosPT = [{ id: "plv", nome: "Mensal", valor: 200, cobranca: "mes" }];
       st.contratosPT = [{ id: "ctv", alunoId: "v1", planoId: "plv", status: "ativo", inicio: ini, diaVenc: 1 }];
       S.write("ptStudio", st);
@@ -14740,7 +14819,7 @@ async function abaPt(p, a) {
     /* 18) teste grátis: com conta, o painel diz até quando vai */
     const trial = await pV.evaluate(() => {
       const S = window.MTStore;
-      const vence = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      const vence = window.diaISO(Date.now() + 5 * 864e5); // local, como o painel decide "hoje"
       localStorage.setItem("mtapp:ptAssinatura", JSON.stringify({ status: "trial", vence }));
       const uOrig = S.usuario;
       S.usuario = () => ({ logado: true, email: "prof@x.com" });
@@ -15012,7 +15091,7 @@ async function abaPt(p, a) {
       const ret = { vol: {}, cargas: {}, feitos: {} };
       for (let i = 1; i <= 12; i++) {
         const d = new Date(2026, 0, i);
-        ret.vol[d.toISOString().slice(0, 10)] = i <= 6 ? 8000 : 12000;
+        ret.vol[window.diaISO(d)] = i <= 6 ? 8000 : 12000;   // v756: dia LOCAL
       }
       const txt = window.__montaDadosIA({ alunos: [], config: {} }, { id: "x", nome: "Teste", retorno: ret }, "hipertrofia", "", "musculacao");
       return { tem: /VOLUME POR TREINO/.test(txt), sobe: /subindo 50%/.test(txt) };
@@ -15027,9 +15106,255 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
-  ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
+  /* ================= v756 — x-redund e x-org (uma página só, do zero) =======
+   * Cada assert aqui foi escrito pra FALHAR no código velho. A página é nova
+   * de propósito: os blocos acima deixam estado, e medir "quantos sumindo" ou
+   * "quanto a receber" em cima de um estúdio já mexido não prova nada. */
+  console.log("\n🧹 v756 — redundância e organização:");
+  {
+    const ctxR = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxR.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pr = await ctxR.newPage();
+    pr.on("pageerror", (e) => erros.push("v756: " + e.message));
+    pr.on("dialog", (d) => d.accept());
+    await pr.goto(BASE + "/personal.html");
+    await pr.waitForFunction(() => window.__ptStudio && window.__renderPT);
 
-  await b.close();
-  console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
-  process.exit(falhas ? 1 : 0);
-})();
+    // --- semente: um sumido que TAMBÉM deve, um hora-aula com dívida na carteira,
+    //     e um devedor SEM contrato (o que o card do mês do Início ignorava)
+    const cen = await pr.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const dia = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return window.diaISO(d); };
+      const mes = window.diaISO(new Date()).slice(0, 7);
+      st.alunos = [
+        // some há 20 dias E deve: no alEstado vira "devendo" e o "sumindo" some
+        { id: "v756a", nome: "Sumida Devedora", ativo: true, desde: "2026-01-05", valor: 200 },
+        // hora-aula: 1 aula paga, 3 dadas → carteira devendo 2 sessões
+        { id: "v756h", nome: "Hora Aula", ativo: true, desde: "2026-01-05", modo: "sessao" },
+        // devedor SEM contrato cadastrado (só o a.valor)
+        { id: "v756s", nome: "Sem Contrato", ativo: true, desde: "2026-01-05", valor: 300 },
+      ];
+      st.planosPT = [{ id: "v756p", nome: "Mensal 200", valor: 200 }, { id: "v756ph", nome: "Avulsa", valor: 100, cobranca: "sessao" }];
+      st.contratosPT = [
+        { id: "v756c", alunoId: "v756a", planoId: "v756p", status: "ativo", inicio: "2026-01-05", diaVenc: 1 },
+        { id: "v756ch", alunoId: "v756h", planoId: "v756ph", status: "ativo", inicio: "2026-01-05", diaVenc: 1 },
+      ];
+      st.sessoes = [
+        { id: "s1", alunoId: "v756a", data: dia(20), hora: "07:00", feita: true },
+        { id: "s2", alunoId: "v756h", data: dia(3), hora: "07:00", feita: true },
+        { id: "s3", alunoId: "v756h", data: dia(2), hora: "07:00", feita: true },
+        { id: "s4", alunoId: "v756h", data: dia(1), hora: "07:00", feita: true },
+      ];
+      st.pagamentos = [{ id: "pg1", alunoId: "v756h", data: dia(4), valor: 100, forma: "pix" }];
+      st.config = st.config || {};
+      st.config.atrasoDias = 0;
+      S.write("ptStudio", st);
+      window.__renderPT();
+      const st2 = S.read("ptStudio", {});
+      const aSum = st2.alunos.find((a) => a.id === "v756a");
+      const aHora = st2.alunos.find((a) => a.id === "v756h");
+      const aSem = st2.alunos.find((a) => a.id === "v756s");
+      return {
+        mes,
+        // 1) sumindo é régua própria: o mesmo aluno é "devendo" no rótulo E sumindo na conta
+        rotulo: window.__estaSumindo ? "tem" : "falta",
+        sumindoDoDevedor: window.__estaSumindo(st2, aSum),
+        resumo: (document.getElementById("alResumo") || {}).textContent || "",
+        // 2) a receber: uma conta só, e ela inclui quem não tem contrato
+        rec: window.__aReceberDe(st2),
+        semContratoDeve: (window.__financeiroPT.divida(st2, aSem) || {}).total || 0,
+        // 3) hora-aula: cabeçalho e card financeiro falam a mesma língua
+        sitHora: window.__situacaoFinDe(st2, aHora),
+        sitMensal: window.__situacaoFinDe(st2, aSum),
+      };
+    });
+    ok(cen.rotulo === "tem" && cen.sumindoDoDevedor === true,
+      "😶‍🌫️ v756: quem deve E sumiu conta como sumindo (o rótulo do alEstado não manda mais na conta)");
+    ok(/1 sumindo/.test(cen.resumo),
+      "😶‍🌫️ v756: o cabeçalho de Alunos mostra esse sumido — antes o 'devendo' o escondia (" + cen.resumo.trim() + ")");
+    ok(cen.semContratoDeve > 0 && cen.rec.acumulado >= cen.semContratoDeve,
+      "💰 v756: o 'a receber' soma também quem não tem contrato cadastrado (a conta do Início ignorava)");
+    ok(cen.sitHora.tipo === "hora" && /devendo 2 sess/.test(cen.sitHora.curto),
+      "🧾 v756: aluno de hora-aula tem a situação lida na CARTEIRA (" + cen.sitHora.curto + ")");
+    ok(cen.sitMensal.tipo === "mensal" && cen.sitMensal.curto === "devendo",
+      "🧾 v756: mensalista continua lido pelo mês (devendo/em dia)");
+
+    // o cabeçalho da ficha e a aba Financeiro da MESMA ficha não podem discordar
+    const fichaH = await pr.evaluate(() => {
+      window.__perfilPT("v756h");
+      const topo = (document.getElementById("pfDesde") || {}).textContent || "";
+      window.__pfAba("fin");
+      const fin = (document.querySelector('#vPerfil [data-pfsec="fin"]') || {}).textContent || "";
+      return { topo, fin };
+    });
+    ok(/devendo 2 sess/.test(fichaH.topo),
+      "🧾 v756: o cabeçalho da ficha do hora-aula diz 'devendo 2 sessões' — antes dizia 'em dia'");
+    ok(/carteira de sess/i.test(fichaH.fin) && !/em aberto/.test(fichaH.fin),
+      "🧾 v756: e o card de situação fala de carteira, não de 'setembro em aberto'");
+
+    // --- Financeiro: UMA lista de cobrança (o atrasado não se repete embaixo)
+    const fin2 = await pr.evaluate(() => {
+      document.querySelector('#abas [data-a="pagamentos"]').click();
+      return {
+        atras: (document.getElementById("pgAtrasados") || {}).textContent || "",
+        pend: (document.getElementById("pendentes") || {}).textContent || "",
+        titulo: document.body.innerHTML,
+      };
+    });
+    ok(/Sumida Devedora/.test(fin2.atras) && !/Sumida Devedora/.test(fin2.pend),
+      "💸 v756: quem já venceu aparece SÓ no bloco Atrasados — o card de baixo não repete a mesma pessoa");
+    ok(/Ainda vai vencer este mês/.test(fin2.titulo),
+      "💸 v756: e o card de baixo passou a se chamar pelo que ele mostra");
+
+    // --- Configurações: o interruptor do Resumo e a caixinha da sub-aba são um só
+    const tg = await pr.evaluate(async () => {
+      document.querySelector('#abas [data-a="config"]').click();
+      window.__cfgAba("resumo");
+      const sw = document.querySelector('#cfgResumo [data-cfgtg="feedOn"]');
+      sw.checked = true;
+      sw.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 120));
+      const espelhou = document.getElementById("cfgFeed").checked;
+      // agora o professor vai ajustar OUTRA coisa e toca Salvar configurações
+      window.__cfgAba("app");
+      document.getElementById("cfgSalva").click();
+      await new Promise((r) => setTimeout(r, 150));
+      return { espelhou, sobreviveu: !!window.MTStore.read("ptStudio", {}).config.feedOn };
+    });
+    ok(tg.espelhou, "🔀 v756: ligar a Comunidade no Resumo marca também a caixinha da sub-aba");
+    ok(tg.sobreviveu, "🔀 v756: e o 'Salvar configurações' não desliga ela de volta em silêncio");
+
+    // --- modo colaborador: tem como SAIR e os atalhos não furam o bloqueio
+    const col = await pr.evaluate(() => {
+      window.__papelPT.aplica("funcionario");
+      const bt = document.getElementById("papelSair");
+      const esc = document.querySelector('#abas [data-a="pagamentos"]');
+      const antes = document.getElementById("vPagamentos").hidden;
+      window.__vaiAba("pagamentos");
+      const depois = document.getElementById("vPagamentos").hidden;
+      // lê ANTES de devolver o papel — o aplica("") esconde o botão de novo
+      const out = { temSair: !!bt && bt.style.display !== "none", escondido: esc.style.display === "none", antes, depois };
+      window.__papelPT.aplica("");
+      out.voltou = !!bt && bt.style.display === "none" && esc.style.display === "";
+      return out;
+    });
+    ok(col.temSair, "🧑‍🏫 v756: no modo colaborador aparece um 'Sair da conta' no menu (as duas telas com Sair ficam escondidas)");
+    ok(col.escondido && col.antes && col.depois,
+      "🧑‍🏫 v756: e o atalho não abre a tela escondida — o vaiAba respeita o modo");
+    ok(col.voltou, "🧑‍🏫 v756: sair do modo colaborador devolve as telas e esconde o botão extra");
+
+    /* --- Sua ilha: campo que grava no `change` tem de DIZER que gravou ---
+     * Sem confirmação nenhuma o professor digita a chave Pix, clica fora e não
+     * sabe se salvou — volta pra conferir toda vez. */
+    const ilha = await pr.evaluate(async () => {
+      document.querySelector('#abas [data-a="conta"]').click();
+      const cp = document.getElementById("cfgPixChave");
+      cp.value = "11122233344";
+      cp.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 60));
+      const av = document.getElementById("ilhaSalvo");
+      return {
+        texto: av ? av.textContent : "",
+        visivel: av ? av.style.display !== "none" : false,
+        gravou: window.MTStore.read("ptStudio", {}).config.pixChave === "11122233344",
+      };
+    });
+    ok(ilha.gravou && ilha.visivel && /salvo/.test(ilha.texto),
+      "💾 v756: campo da Sua ilha que grava sozinho agora avisa '✓ salvo' (" + ilha.texto.trim() + ")");
+
+    /* --- as duas metades de "receber dos alunos" moram em telas diferentes:
+     * o gateway em Configurações e a chave Pix em Sua ilha. O card do Resumo
+     * tinha um botão só, o do gateway — quem veio atrás do Pix não achava. */
+    const pix = await pr.evaluate(async () => {
+      document.querySelector('#abas [data-a="config"]').click();
+      window.__cfgAba("resumo");
+      await new Promise((r) => setTimeout(r, 80));
+      const bt = document.querySelector("#cfgResumo [data-cfgpix]");
+      const rot = bt ? bt.textContent : "";
+      if (bt) bt.click();
+      await new Promise((r) => setTimeout(r, 150));
+      return { rot, naIlha: !document.getElementById("cardConta").hidden, focou: document.activeElement === document.getElementById("cfgPixChave") };
+    });
+    ok(/chave Pix/.test(pix.rot), "🔑 v756: o card 'Receber dos alunos' ganhou o botão da chave Pix (" + pix.rot.trim() + ")");
+    ok(pix.naIlha && pix.focou, "🔑 v756: e ele leva direto ao campo, em Sua ilha, em vez de mandar procurar");
+
+    // --- busca de telas: prêmio da indicação e a sub-aba certa de Configurações
+    const bus = await pr.evaluate(() => {
+      const lista = window.__buscaTelas.lista;
+      const premio = lista.filter((x) => /premio/.test(x.k));
+      const ix = lista.findIndex((x) => x.cfg === "conta");
+      window.__buscaTelas.vai(ix);
+      const sub = document.querySelector('#cfgAbas button.ativa');
+      return {
+        premioNaConfig: premio.length === 1 && premio[0].a === "config" && premio[0].cfg === "app",
+        temAssessoria: lista.some((x) => x.a === "assessoria"),
+        subAtiva: sub ? sub.getAttribute("data-cfga") : "",
+      };
+    });
+    ok(bus.premioNaConfig, "🔎 v756: 'prêmio' na busca leva a Configurações → App do aluno, onde o campo mora");
+    ok(bus.subAtiva === "conta", "🔎 v756: a busca abre a SUB-ABA certa de Configurações, não o Resumo");
+    ok(bus.temAssessoria, "🔎 v756: a Assessoria (item do menu) entrou no índice da busca");
+
+    /* --- os caminhos escritos na tela apontam pra onde a coisa MORA ---
+     * O professor é iniciante e segue a instrução ao pé da letra: procura
+     * "Configurações → Loja" e não acha, rola a tela atrás de um "card lá
+     * embaixo" que não está lá. Cada linha desta lista ESTAVA no código e
+     * apontava pro lugar errado — a Central de ajuda, que nasceu pra reduzir
+     * chamado, mandava pro vazio em quatro tópicos. */
+    const PROIBIDOS = [
+      ["Configurações → Conta", 'a sub-aba se chama "Cobrança e conta"'],
+      ["Configurações → Loja", "a Loja mora em Personalização"],
+      ["Configurações → Clube de vantagens", "o Clube mora em Personalização"],
+      ["Configurações → Suas automações", 'o card se chama "Mensagens automáticas de WhatsApp"'],
+      ["Conta → Backup dos dados", "o backup mora em Sua ilha; não existe tela Conta"],
+      ["card lá embaixo", "a conta ganhou aba própria — não fica embaixo de nada"],
+      ["card Sua ilha", "Sua ilha é uma aba do menu, não um card no pé da tela"],
+      ["no menu Conta", "não existe menu Conta"],
+      ["menu de 3 traços)", "no computador não há hambúrguer"],
+      ["<b>Exportar meus dados</b>", 'os botões são "Baixar backup (.json)" e "Baixar em Excel (CSV)"'],
+      ["Robô e automações", '"automações" nomeava duas telas diferentes — aqui são os Fluxos do robô'],
+    ];
+    const srcP = await pr.evaluate(async () => await (await fetch("personal.html")).text());
+    const achados = PROIBIDOS.filter((x) => srcP.indexOf(x[0]) > -1);
+    if (achados.length) achados.forEach((x) => console.log("     ainda aponta pro lugar errado: " + x[0] + " — " + x[1]));
+    ok(achados.length === 0, "🧭 v756: nenhum texto da tela manda o professor pra uma tela que mudou de nome ou de lugar");
+    // e os nomes NOVOS estão lá (senão bastaria apagar as frases pra ficar verde)
+    ok(/Configurações → Cobrança e conta/.test(srcP) && /Personalização → Loja/.test(srcP) &&
+      /Sua ilha → Backup dos dados/.test(srcP) && /menu → Sua ilha/.test(srcP),
+      "🧭 v756: e os caminhos foram REESCRITOS pro nome certo, não simplesmente apagados");
+
+    // --- o Início não repinta os Relatórios só pra chegar no dashboard
+    const dash = await pr.evaluate(async () => {
+      document.querySelector('#abas [data-a="relatorios"]').click();
+      await new Promise((r) => setTimeout(r, 60));
+      const marca = "v756-marca-" + Date.now();
+      document.getElementById("relEntradas").setAttribute("data-v756", marca);
+      document.querySelector('#abas [data-a="dash"]').click();
+      await new Promise((r) => setTimeout(r, 120));
+      return {
+        intacto: document.getElementById("relEntradas").getAttribute("data-v756") === marca,
+        pintouDash: !!(document.getElementById("dashDia") || {}).textContent,
+      };
+    });
+    ok(dash.intacto, "⚡ v756: voltar pro Início não redesenha a tela de Relatórios escondida");
+    ok(dash.pintouDash, "⚡ v756: e o Início continua pintando (renderDashPT direto, sem passar por renderRelatorios)");
+
+    await ctxR.close();
+  }
+
+  ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
+})()
+  /* v756: o IIFE não tinha .catch. Uma seleção que falhasse (id renomeado, aba
+   * lenta) virava rejeição não tratada: o node saía com 1, mas o resumo 🏁/💥
+   * não era impresso, o navegador ficava órfão e ninguém ficava sabendo QUAIS
+   * asserts ainda tinham rodado. Agora a exceção vira UMA falha contada, com o
+   * stack na tela, e o finally sempre fecha o navegador e imprime o resumo. */
+  .catch((e) => { falhas++; console.log("  ❌ a suíte parou no meio — " + (e && e.stack ? e.stack : e)); })
+  .finally(async () => {
+    try { if (navegador) await navegador.close(); } catch (e) { /* já fechado */ }
+    console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
+    process.exit(falhas ? 1 : 0);
+  });
