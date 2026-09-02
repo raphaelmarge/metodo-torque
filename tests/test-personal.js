@@ -2419,7 +2419,8 @@ async function abaPt(p, a) {
     ok(/L\('ptckh',\{\}\)\)\.length/.test(bld) && /ch9\[semanaCK\(\)\]=1;Sv\('ptckh',ch9\)/.test(bld) && /k==='ptckh'/.test(bld) && (bld.match(/XPLEG/g) || []).length === 3,
       "⭐ v747: o check-in da semana rende os 20 XP que o rótulo promete (ptckh), legenda num lugar só");
     ok(/raioX = D\.raioX \|\| \[\]/.test(bld), "🧱 v747: raioX nasce [] — pacote sem raioX não derruba o monta()");
-    ok(/agenda:'Agenda'/.test(bld) && !/agenda:'Calendário'/.test(bld) && /Na <b>Agenda<\/b> dá pra/.test(bld) && /Enviar pro meu personal/.test(bld) && /Avisar meu personal/.test(bld) && !/meu professor</.test(bld),
+    // v754: o MTIT deixou de repetir os rótulos e passa a sair do próprio MENU
+    ok(/\['agenda',[^\]]*,'Agenda'\]/.test(bld) && /var MTIT=\{\};itens\.forEach/.test(bld) && !/agenda:'Calendário'/.test(bld) && /Na <b>Agenda<\/b> dá pra/.test(bld) && /Enviar pro meu personal/.test(bld) && /Avisar meu personal/.test(bld) && !/meu professor</.test(bld),
       "🗓️ v747: a área chama Agenda em todo lugar, e os botões dizem 'personal' como o resto do app");
     ok(/<h2>Conversa<\/h2>/.test(bld) && />Meta<\/span><span id='mpMetaTxt'/.test(bld), "🧾 v747: 'Meu peso' não aparece três vezes no card, e o chat não repete o nome do studio");
     ok(/var dinheiro = function/.test(bld) && !/toLocaleString\("pt-BR"\)/.test(bld) && /PLSUB=" \+ jsonApp\(PLTXT/.test(bld) && /ctApp && ctApp\.diaVenc/.test(bld) && !/plApp\.diaVenc/.test(bld),
@@ -2448,7 +2449,8 @@ async function abaPt(p, a) {
       /function naSemana\(f\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
       "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
     ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
-    ok(/n=Math\.min\(max,\(st\[b\.dataset\.ex\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld),
+    // v754: a chave passa pelo exKey (a mesma do GUIA); o teto e o fecha-por-ficha continuam
+    ok(/var kx=exKey\(b\.dataset\.ex\);var n=Math\.min\(max,\(st\[kx\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld) && /var kl=exKey\(b\.dataset\.ex\)/.test(bld),
       "✅ v747: séries travam no máximo e o 'Treinei hoje' automático olha a FICHA que o aluno está fazendo, não a união de todas");
     ok(/k\.slice\(0,10\)<lim\)delete f\[k\]/.test(bld) && /if\(k!==s0\)\{delete a0\[k\]/.test(bld), "🧽 v747: ptconf podado em 60 dias e rascunho de check-in de semana velha apagado");
     ok(/eh9\(msg\)/.test(bld), "🔒 v747: a observação do aluno entra escapada na caixinha verde do fim do circuito");

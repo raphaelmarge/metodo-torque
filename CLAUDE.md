@@ -1570,6 +1570,51 @@ no setup; `chat-envia` v17 publicada e conferida pelo ping. Pra soltar uma
 academia num dia: `delete from ia_uso where academia_id = '…' and dia =
 current_date;`.
 
+**Revisão — Configurações/Avaliação e o resto do app do aluno (mt-v754, 69
+itens)**: dois lotes no mesmo pacote. **Configurações e Avaliação** (28) —
+o Resumo das Configurações parou de mentir com "Outra plataforma"
+(`ehGateway`/`ehLink`: link próprio diz "baixa manual"); trocar de gateway
+apaga a chave no servidor ANTES de ligar o link (falhou = não troca);
+`resolveImagemGaleria()` nos três destinos que faltavam — **capa do app é
+sempre `data:`**, o builder descarta URL em silêncio; fotos dentro do
+`ptStudio` ganharam teto próprio (`pesoFotosStudio`/`cabeFotoNoStudio`,
+2 MB); "Nuvem sincronizada · HH:MM" lê a sync de verdade
+(`cfgNuvemTexto` + `__syncInfoPT`), não a hora da pintura; o card de push do
+professor mostra se está ativo (`pushProf.pinta` lê `getSubscription()`);
+`FIXAS_AUTO`/`FIXAS_BOTAO` acabam com as três contagens de mensagens; aula
+experimental em data local. Avaliação: estimativa da câmera não vira mais
+medida "de fita" (`gorduraFonte` gravada, o laudo diz "estimado por foto"),
+a calibração usa a medida CRUA (`scan.desvio`) e para de se realimentar,
+`scanPend.alunoId` impede a medição de um cair na ficha de outro, `avPar()`
+unifica a 3a com o perfil, excluir avaliação marca o app pendente.
+⚠️ **`save()` não chama mais `render()`**: o `S.onChange` do boot já redesenha
+dentro do `write()`; `save()` só pinta na mão no boot ou quando o `write`
+devolve `false` (cota cheia). ⚠️ Mock de nuvem em teste tem de ser
+ENCADEÁVEL: com um mock estreito instalado, qualquer `S.write` dispara o
+render inteiro e ele faz `.from().select()`.
+**Resto do app do aluno** (41) — corrida: `crFimContinua()` unifica o fim da
+parte contínua, `hrMax`/`hrZ` não chutam mais 30 anos, `cr.gpsOn` só depois
+do filtro de precisão, começar outra corrida no meio pede confirmação,
+`crFinaliza` lê o km antes de parar o GPS e avisa abaixo de 5 s, importação
+do relógio lê a modalidade e guarda o trajeto, `crRecordes()` unifica
+recordes e medalhas. Guiado: reps nascem com as CONFIRMADAS (não com as
+prescritas), `gSugT` grava só a carga, tick do descanso morto no
+pular/voltar/concluir, volume por séries feitas, um bipe só. Resto: `Sv`
+devolve `false` e o aviso de memória cheia aparece, chat em hora local,
+`maxPorExercicio()`/`recNovo()` unificam os recordes nos três lugares,
+"melhor pace" comparado em segundos por km, export LGPD completo.
+⚠️ **`crMedQ`/`CRMEDN` moram no escopo do app** (logo depois do `Sv`), fora
+do bloco da corrida: o card Conquistas e o bloco de cardio vivem em IIFEs
+diferentes e deixar a função lá dentro derruba o `pintaConquistas` — `node
+--check` e o test-app-sintaxe passam, quem pega é abrir o app.
+⚠️ Ao integrar os dois lotes houve conflito real no builder: o toque no
+botão de séries agora usa `exKey()` (chave sem apóstrofo, a mesma do GUIA)
+**e** mantém o teto do v749 (passar do máximo não zera) com o segurar-tira-uma
+— e o dia fecha quando UMA ficha inteira está marcada, seja pela gaveta do
+DOM, seja pelo GUIA. Ficaram pro painel, registrados: exigir distância OU
+tempo no cardio misto, pintar o `ret.vol` em Evolução → Cargas e a hora do
+chat em UTC no `personal.html`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
