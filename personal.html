@@ -3904,6 +3904,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__tema = { corOk: corOk, escurece: escurece, clareia: clareia }; // testes
 
   var FAV_FILTRO = "★ Meus favoritos"; // opção do seletor de tipo de treino (cascata da ficha)
+  /* v742: quem abriu fichas antes desta versão carrega fotos dentro do
+   * a.retorno de cada aluno (até 400 KB por aluno no ptStudio). Tira na
+   * primeira carga e grava uma vez — daí pra frente pfResumoNuvem já não põe. */
+  function tiraFotosDoRetorno(st) {
+    var mexeu = false;
+    (st && st.alunos || []).forEach(function (a) {
+      var r = a && a.retorno;
+      if (!r || typeof r !== "object") return;
+      Object.keys(r).forEach(function (k) { if (/^foto/i.test(k)) { delete r[k]; mexeu = true; } });
+    });
+    return mexeu;
+  }
+  window.__tiraFotosDoRetorno = tiraFotosDoRetorno; // testes
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || []; st.despesas = st.despesas || [];
@@ -3911,6 +3924,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.diarioPT = st.diarioPT || {};
     st.exFav = st.exFav || []; // exercícios favoritos do professor (nomes)
+    if (!load._fotosLimpas) { load._fotosLimpas = 1; if (tiraFotosDoRetorno(st)) S.write("ptStudio", st); } // v742
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
       [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
@@ -5183,10 +5197,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // Semana do aluno: os 7 dias com a letra da ficha de cada um
     var t = (st.treinosV2 || {})[a.id] || {};
     var dias = (t.plano || {}).dias || {};
+    /* v742: o plano é gravado com a chave do getDay() — 0 = domingo, 1 =
+     * segunda (PLN_DIAS) — e o app lê do mesmo jeito. A fita começa na
+     * segunda só na ORDEM de exibição; a chave continua a do getDay. Antes
+     * lia com 0 = segunda e todo dia aparecia embaixo da letra errada. */
     var DS = ["S", "T", "Q", "Q", "S", "S", "D"];
-    var hojeI = (new Date().getDay() + 6) % 7;
+    var ORD = [1, 2, 3, 4, 5, 6, 0];
+    var hojeI = new Date().getDay();
     var cels = "";
-    for (var i = 0; i < 7; i++) {
+    for (var k = 0; k < 7; k++) {
+      var i = ORD[k];
       var d = dias[String(i)];
       var rot = "—";
       if (d && d.tp === "ficha") {
@@ -5194,7 +5214,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         rot = f ? (String(f.titulo || "A").trim()[0] || "A").toUpperCase() : "A";
       } else if (d && d.tp === "wod") rot = "W";
       else if (d && d.tp === "cardio") rot = "CR";
-      cels += '<div><div class="d">' + DS[i] + '</div><div class="c' + (d ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
+      cels += '<div><div class="d">' + DS[k] + '</div><div class="c' + (d ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
     }
     var fi = alFicha(st, a);
     var f0 = (t.fichas || [])[0];
@@ -5320,10 +5340,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .then(function (r) {
           var ret = !r.error && r.data && r.data[0] && r.data[0].retorno;
           if (!ret || typeof ret !== "object") return;
+          /* v742: a cópia local NÃO leva foto. O retorno de um aluno com fotos
+           * pesa centenas de KB (6 fotos de progresso + perfil), o ptStudio é
+           * UM blob no localStorage e ainda sobe inteiro pra nuvem — abrir a
+           * ficha de uns 8 alunos com foto bastava pra estourar a cota e todo
+           * salvamento do painel passar a falhar. As fotos continuam vindo da
+           * nuvem na hora, na aba App do aluno, que faz a própria busca. */
+          var retLeve = {};
+          Object.keys(ret).forEach(function (kR) { if (!/^foto/i.test(kR)) retLeve[kR] = ret[kR]; });
           var st2 = load();
           var a2 = (st2.alunos || []).find(function (x) { return x.id === a.id; });
           // S.write e nao save(): gravar sem redesenhar a tela embaixo de quem le
-          if (a2) { a2.retorno = ret; S.write("ptStudio", st2); }
+          if (a2) { a2.retorno = retLeve; S.write("ptStudio", st2); }
           if (!ainda()) return;
           var pesos = Object.keys(ret.peso || {}).sort();
           if (pesos.length) {
@@ -7951,13 +7979,49 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var dom = new Date(seg.getTime()); dom.setDate(dom.getDate() + 6);
     return { ini: S.todayISO(seg), fim: S.todayISO(dom) };
   }
+  /* v742: a ESCALA vem da pergunta, não de um "10" chutado. Nas perguntas de
+   * carinhas o app grava resposta = rótulo ("Alto") e pontos = o peso da
+   * alternativa, que por padrão vai de -2 a 2; comparar isso com 0–10 punha
+   * TODO mundo em "Pede atenção" (2 ≤ 3,5), inclusive quem respondeu Ótimo, e
+   * a pergunta "menor é melhor" nunca alertava (2 ≥ 6 é impossível). A mesma
+   * regra da aba Check-ins do perfil (escalaDe): min/max das alternativas da
+   * pergunta do professor; sem a pergunta, o padrão das carinhas (-2 a 2). */
+  var qsCfgPerg = null;
+  function qsPergDe(r) {
+    if (!qsCfgPerg) {
+      qsCfgPerg = {};
+      ((load().questPerguntas) || []).forEach(function (q) {
+        if (q && q.sigla) qsCfgPerg[String(q.sigla).toLowerCase()] = q;
+        if (q && q.texto) qsCfgPerg[String(q.texto).toLowerCase()] = q;
+      });
+    }
+    return qsCfgPerg[String(r.sigla || "").toLowerCase()] || qsCfgPerg[String(r.pergunta || "").toLowerCase()] || null;
+  }
   // um numero pra pintar barra: a resposta em si quando e numero, senao os pontos
   function qsValor(r) {
+    var q = qsPergDe(r);
     var v = parseFloat(String(r.resposta == null ? "" : r.resposta).replace(",", "."));
-    if (isFinite(v)) return { v: v, max: v <= 10 ? 10 : Math.ceil(v) };
-    if (r.pontos != null && isFinite(+r.pontos)) return { v: +r.pontos, max: 10 };
+    if (isFinite(v)) return { v: v, min: 0, max: (q && q.tipo === "linear") ? 10 : (v <= 10 ? 10 : Math.ceil(v)) };
+    if (r.pontos != null && isFinite(+r.pontos)) {
+      var ps = (q && Array.isArray(q.ops) ? q.ops : []).map(function (o) { return +o.p; }).filter(function (x) { return isFinite(x); });
+      if (ps.length) return { v: +r.pontos, min: Math.min.apply(null, ps), max: Math.max.apply(null, ps) };
+      return { v: +r.pontos, min: -2, max: 2 };
+    }
     return null;
   }
+  // "menor é melhor" vem da resposta (o app grava) ou da pergunta (o link do
+  // WhatsApp não gravava — v742 passou a gravar, mas resposta antiga não tem)
+  function qsMenos(r) {
+    if (r.menos != null) return !!r.menos;
+    var q = qsPergDe(r);
+    return !!(q && q.menosMelhor);
+  }
+  // ruim = no terço de baixo da escala (ou no de cima, quando menor é melhor)
+  function qsRuim(r, n) {
+    var frac = (n.v - (n.min || 0)) / ((n.max - (n.min || 0)) || 1);
+    return qsMenos(r) ? frac >= 0.6 : frac <= 0.35;
+  }
+  window.__qsValor = qsValor; window.__qsRuim = qsRuim; // testes
   // pede atencao = nota baixa no check-in, ou resposta ALTA numa pergunta em que
   // nota menor e melhor (dor, cansaco), ou resposta BAIXA numa pergunta normal
   function qsAlerta(reg) {
@@ -7967,14 +8031,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var n = qsValor(r);
       if (!n) return;
       var rot = String(r.pergunta || r.sigla || "").slice(0, 24);
-      if (r.menos && n.v >= n.max * 0.6) motivos.push(rot + ": " + n.v);
-      else if (!r.menos && n.v <= n.max * 0.35) motivos.push(rot + ": " + n.v);
+      if (qsRuim(r, n)) motivos.push(rot + ": " + (String(r.resposta || "").trim() && !isFinite(parseFloat(r.resposta)) ? String(r.resposta).slice(0, 14) : n.v));
     });
     return motivos;
   }
   function pintaQuestSemana() {
     var lista = $("qsLista"), det = $("qsDet");
     if (!lista || !det) return;
+    qsCfgPerg = null; // v742: relê as perguntas do professor a cada pintura
     var sem = qsSemana();
     var rot = $("qsSemRot");
     if (rot) rot.textContent = "Check-in da semana · " + sem.ini.slice(8, 10) + "/" + sem.ini.slice(5, 7) +
@@ -8071,7 +8135,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     (reg.respostas || []).forEach(function (r) {
       var n = qsValor(r);
       if (!n) return;
-      var ruim = r.menos ? n.v >= n.max * 0.6 : n.v <= n.max * 0.35;
+      var ruim = qsRuim(r, n); // v742: escala da pergunta
       tiles.push({ k: String(r.pergunta || r.sigla || "").slice(0, 22), v: n.v, max: n.max, ruim: ruim });
     });
     var livres = (reg.respostas || []).filter(function (r) { return !qsValor(r) && String(r.resposta || "").trim(); });
@@ -8705,10 +8769,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   /* v736: o push diz QUAL treino. agTreinoTxt devolve a LETRA ("A — Peito" →
    * "A"), bom pra célula da agenda e ruim pra notificação — aqui sai o NOME
    * ("Peito"). Sem plano naquele dia, devolve vazio e o texto antigo vale. */
+  /* v742: UMA regra pra chave do dia no plano da semana. O plano é gravado
+   * pelo formulário com PLN_DIAS (1 = segunda … 6 = sábado, 0 = domingo — o
+   * padrão do getDay()), o pacote copia a chave sem converter e o app lê
+   * PLANO[String(new Date().getDay())]. Quatro leitores do painel calculavam
+   * (getDay()+6)%7 (0 = segunda) antes de indexar: o Início, a Agenda, os
+   * chips do Resumo e o push "Hoje é X" mostravam o treino de UM dia antes
+   * do que o aluno via no app. Sem data, vale hoje. */
+  function diaDoPlano(iso) {
+    return String((iso ? new Date(iso + "T12:00:00") : new Date()).getDay());
+  }
+  window.__diaDoPlano = diaDoPlano; // testes
   function pushTreinoTxt(st, alunoId, iso) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t) return "";
-    var dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+    var dia = diaDoPlano(iso); // v742: a chave do getDay, a mesma do app
     var pl = ((t.plano || {}).dias || {})[dia];
     if (!pl) return "";
     if (pl.tp === "wod") return "circuito";
@@ -9277,7 +9352,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function agTreinoTxt(st, alunoId, iso) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t) return "";
-    var dia = String((new Date(iso + "T12:00:00").getDay() + 6) % 7);
+    var dia = diaDoPlano(iso); // v742: a chave do getDay, a mesma do app
     var pl = ((t.plano || {}).dias || {})[dia];
     if (!pl) return "";
     if (pl.tp === "ficha") {
@@ -14444,7 +14519,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rpe = (ret.rpe && typeof ret.rpe === "object" && !Array.isArray(ret.rpe)) ? ret.rpe : {};
     var ks = Object.keys(rpe).sort().slice(-8), sm = 0, nn = 0;
     ks.forEach(function (k) { var v = +(rpe[k] && rpe[k].v != null ? rpe[k].v : rpe[k]); if (isFinite(v) && v > 0) { sm += v; nn++; } });
-    if (nn) out.push("ESFORÇO PERCEBIDO (RPE médio dos últimos " + nn + " treinos, escala 1-5): " + (Math.round(10 * sm / nn) / 10));
+    // v742: o app só tem TRÊS botões (1 leve · 2 na medida · 3 pesado) — dizer
+    // "escala 1-5" fazia a IA ler "pesado" como esforço médio e acelerar a carga
+    if (nn) out.push("ESFORÇO PERCEBIDO (RPE médio dos últimos " + nn + " treinos, escala 1-3 onde 1 = leve, 2 = na medida, 3 = pesado): " + (Math.round(10 * sm / nn) / 10));
     var fcH = (ret.fc && typeof ret.fc === "object" && !Array.isArray(ret.fc)) ? ret.fc : {};
     var fks = Object.keys(fcH).sort().slice(-6);
     if (fks.length) {
@@ -14490,7 +14567,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return [b.desejo, b.quer, a && a.obs, an.gosta]
       .filter(function (x) { return (x || "").trim(); }).join("\n");
   }
-  var NEGA = /\b(nada|nao|sem|evitar|evite|proibid[oa]|tirar|tire|retirar|cortar|corte|menos|exceto|fora|trocar|troque|substituir)\b/;
+  /* v742: a lista de negações não conhecia a fala mais comum do professor
+   * quando ele RESTRINGE — "cuidado com", "atenção", "nunca", "jamais",
+   * "evitando", "dor", "lesão", "hérnia", "limitar", "contraindicado". Rodado
+   * contra o banco: "cuidado com levantamento terra, tem hérnia" virava terra
+   * OBRIGATÓRIO. Além da palavra colada (negado), toda a FRASE (até a vírgula
+   * ou o ponto) em que o exercício aparece é lida: se ela tem qualquer uma
+   * dessas palavras, o exercício NÃO vira obrigação — vai pro texto livre,
+   * onde a IA lê a ressalva inteira. */
+  var NEGA = /\b(nada|nao|sem|evitar|evite|evitem|evitando|evita|proibid[oa]|proibir|tirar|tire|retirar|cortar|corte|menos|exceto|fora|trocar|troque|substituir|cuidado|atencao|nunca|jamais|dor|dores|doi|doeu|lesao|lesoes|lesionad[oa]|hernia|limitar|limite|limitad[oa]|contraindicad[oa]|risco|perigos[oa]|machuca|machucou|incomoda|incomodo|restricao|restrito|restrita)\b/;
+  /* palavras de EQUIPAMENTO e posição: uma frase feita só delas ("com barra",
+   * "na máquina", "com halteres") não cita exercício nenhum — antes casava
+   * um exercício aleatório do catálogo e o tornava obrigatório. */
+  var GENERICA = { barra: 1, barras: 1, halter: 1, halteres: 1, maquina: 1, maquinas: 1, cabo: 1, cabos: 1, polia: 1, kettlebell: 1, elastico: 1, elasticos: 1, peso: 1, corpo: 1, livre: 1, sentado: 1, sentada: 1, deitado: 1, deitada: 1, unilateral: 1, bilateral: 1, alternado: 1, alternada: 1, pe: 1, em: 1, com: 1, no: 1, na: 1, de: 1, do: 1, da: 1, e: 1, ou: 1, para: 1, pra: 1, a: 1, o: 1, um: 1, uma: 1, treino: 1, treinos: 1, exercicio: 1, exercicios: 1, serie: 1, series: 1 };
   /* Quais exercícios do banco o professor citou. Casa nos DOIS sentidos,
    * porque ele escreve dos dois jeitos:
    *   1. o nome do catálogo inteiro dentro do texto dele
@@ -14501,9 +14590,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * kettlebell. E um trecho logo depois de uma negação ("nada de
    * desenvolvimento militar") não vira obrigação: seria o oposto do pedido. */
   function exCitados(texto, cands) {
-    var t = chaveEx(texto);
+    // v742: pontuação vira " ; " ANTES do chaveEx (que apagaria a vírgula) —
+    // é ela que delimita a frase da ressalva
+    var t = String(texto || "").split(/[,.;:!?\n()]+/).map(chaveEx).filter(Boolean).join(" ; ");
     if (t.length < 6) return [];
     var cerca = " " + t + " ", achados = [], vistos = {};
+    var fraseRestrita = function (pos) {
+      if (pos < 0) return false;
+      var ini = t.lastIndexOf(";", pos), fim = t.indexOf(";", pos);
+      var frase = t.slice(ini < 0 ? 0 : ini + 1, fim < 0 ? t.length : fim);
+      return frase.split(" ").some(function (w) { return w && NEGA.test(" " + w + " "); });
+    };
     /* Uma variação não entra quando o movimento base já entrou: com
      * "agachamento búlgaro" pedido, obrigar também o "com salto", o "1 e 1/2"
      * e o "com pausa de 2 segundos" encheria a ficha de repetição. */
@@ -14535,7 +14632,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var k = chaveEx(c.n);
       if (k.length <= 4) return; // "remo" casaria dentro de "remoção"
       var i = cerca.indexOf(" " + k + " ");
-      if (i >= 0 && !negado(i)) poe(c.n);
+      if (i >= 0 && !negado(i) && !fraseRestrita(i)) poe(c.n);
     });
     // 2) trecho do professor dentro do nome do catálogo
     var pal = t.split(" ").filter(Boolean);
@@ -14544,7 +14641,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (i2 + tam > pal.length) continue;
         var frase = pal.slice(i2, i2 + tam).join(" ");
         if (frase.length < 9) continue;
-        if (negado(t.indexOf(frase))) continue;
+        if (frase.indexOf(";") >= 0) continue; // não atravessa a vírgula
+        if (pal.slice(i2, i2 + tam).every(function (w) { return GENERICA[w]; })) continue; // "com barra e halteres"
+        if (negado(t.indexOf(frase)) || fraseRestrita(t.indexOf(frase))) continue;
         var casam = cands.filter(function (c) { return chaveEx(c.n).indexOf(frase) >= 0; });
         if (!casam.length || casam.length > 60) continue; // 60+ = trecho genérico demais
         // só o mais CURTO: é o movimento base, não a variação com kettlebell
@@ -17628,7 +17727,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function treinoDoDiaTxt(st, alunoId, curto) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t) return curto ? "" : "Sem ficha montada ainda";
-    var dia = String((new Date().getDay() + 6) % 7);
+    var dia = diaDoPlano(); // v742: a chave do getDay, a mesma do app
     var pl = ((t.plano || {}).dias || {})[dia];
     if (pl && pl.tp === "ficha") {
       var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
@@ -18506,16 +18605,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function emailAcessoHtml(studio, primeiro, email, senha) {
     var url = "https://www.torqueon.com.br/aluno-login.html";
-    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#efedf4;color:#fff;border-radius:16px;padding:28px;'>" +
-      "<div style='font-size:11px;letter-spacing:.2em;color:var(--tk-roxoTx2);font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
-      "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de treino está pronto, " + esc(primeiro) + "!</h1>" +
-      "<p style='color:#6b6579;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
-      "<div style='background:#dcd9e4;border:1px solid var(--tk-bd4);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
-      "<div style='margin-bottom:6px;'><span style='color:#6b6579;'>Login:</span> <b>" + esc(email) + "</b></div>" +
-      "<div><span style='color:#6b6579;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
+    /* v742: e-mail é DOCUMENTO AUTÔNOMO — var(--tk-*) não existe no Gmail e o
+     * texto branco (herdado do tema escuro do painel) sumia no fundo claro:
+     * o aluno recebia login e senha invisíveis. Hex cravado, como no Nutri. */
+    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#efedf4;color:#1c1826;border-radius:16px;padding:28px;'>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:#7c3aed;font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
+      "<h1 style='font-size:22px;margin:8px 0 4px;color:#1c1826;'>Seu app de treino está pronto, " + esc(primeiro) + "!</h1>" +
+      "<p style='color:#5f5a70;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#1c1826'>Meu login</b>.</p>" +
+      "<div style='background:#ffffff;border:1px solid #dcd9e4;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;color:#1c1826;'>" +
+      "<div style='margin-bottom:6px;'><span style='color:#5f5a70;'>Login:</span> <b style='color:#1c1826;'>" + esc(email) + "</b></div>" +
+      "<div><span style='color:#5f5a70;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;color:#1c1826;'>" + esc(senha) + "</b></div></div>" +
       "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
       "<p style='color:#8a8695;font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
   }
+  window.__emailAcessoHtml = emailAcessoHtml; // testes
   function enviaEmailFn(nuvem, para, assunto, html) {
     return self.MT_FUNCAO.chama(nuvem.client, "envia-email",
       { acao: "enviar", para: para, assunto: assunto, html: html }, "O envio de e-mail");
@@ -18837,12 +18940,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     // a lista precisa da ULTIMA mensagem de cada um (era so a contagem de novas):
     // sem previa, escolher a conversa virava adivinhacao
+    /* v742: ORDER ascendente + LIMIT devolvia as 1200 mensagens mais VELHAS
+     * da academia — o PostgREST ordena e depois corta. Com a base crescendo, a
+     * prévia e o contador de novas paravam no passado. Agora vêm as mais
+     * novas; a primeira vista de cada aluno é a última mensagem dele. */
     nuvem.client.from("app_chat").select("token,de,lida,texto,criado").eq("academia_id", nuvem.aid)
-      .order("criado", { ascending: true }).limit(1200).then(function (r) {
+      .order("criado", { ascending: false }).limit(1200).then(function (r) {
       var novas = {}, ultima = {};
       (r.data || []).forEach(function (m) {
         if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1;
-        ultima[m.token] = m;
+        if (!ultima[m.token] || String(m.criado || "") > String(ultima[m.token].criado || "")) ultima[m.token] = m;
       });
       var termo = ($("chatBusca") ? $("chatBusca").value : "").trim().toLowerCase();
       var linhas = ativos.map(function (a) {
@@ -18893,9 +19000,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ctx.hidden = !partes.length;
     ctx.textContent = partes.join(" · ");
     $("chatFicha").hidden = false;
+    /* v742: ORDER asc + LIMIT 80 congelava a conversa nas 80 mensagens mais
+     * ANTIGAS: passado disso o professor nunca mais via o que o aluno
+     * escrevia, e o update abaixo marcava tudo como lido. Busca as 80 mais
+     * novas e vira a lista pra ficar em ordem de leitura. */
     nuvem.client.from("app_chat").select("de,texto,criado,lida").eq("token", a.appTokenP)
-      .order("criado", { ascending: true }).limit(80).then(function (r) {
-        var msgs = r.data || [];
+      .order("criado", { ascending: false }).limit(80).then(function (r) {
+        var msgs = (r.data || []).slice().reverse();
         var diaAnt = "";
         $("chatMsgs").innerHTML = msgs.length ? msgs.map(function (m, i) {
           var minha = m.de === "personal";
@@ -18913,8 +19024,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<div class="chm">' + chHora(m.criado) + (ultimaMinha && m.lida ? " · ✓✓ lido" : "") + "</div></div></div>";
         }).join("") : '<div class="muted" style="padding:16px;">Nenhuma mensagem ainda — puxe o assunto!</div>';
         $("chatMsgs").scrollTop = $("chatMsgs").scrollHeight;
-        // marca como lidas
-        nuvem.client.from("app_chat").update({ lida: true }).eq("token", a.appTokenP).eq("de", "aluno").eq("lida", false).then(function () { renderChatPT(); });
+        // marca como lidas SÓ as que apareceram na tela (as 80 mais novas)
+        var qLida = nuvem.client.from("app_chat").update({ lida: true }).eq("token", a.appTokenP).eq("de", "aluno").eq("lida", false);
+        if (msgs.length >= 80 && msgs[0] && msgs[0].criado && qLida.gte) qLida = qLida.gte("criado", msgs[0].criado);
+        qLida.then(function () { renderChatPT(); });
       });
   }
   if ($("chatBusca")) $("chatBusca").addEventListener("input", renderChatPT);

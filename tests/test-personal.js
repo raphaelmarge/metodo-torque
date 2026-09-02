@@ -2349,6 +2349,42 @@ async function abaPt(p, a) {
     ok(v741.pgmRodou && v741.appRodou, "🖱️ v741: Cobrar/Mandar link e Mandar app respondem fora dos containers antigos");
     ok(v741.valorSemContrato, "🖱️ v741: Cobrar de quem não tem contrato no mês cobra o valor do cadastro, não R$ 0");
     ok(v741.montaAluno && v741.chatAbriu, "🖱️ v741: Montar treino e Chat da ficha levam o aluno junto (select certo, aba Fichas)");
+
+    /* ---- v742: seis consertos da revisão, cada um com a prova ---- */
+    const v742 = await p.evaluate(() => {
+      const out = {};
+      // dia da semana: a chave do plano é a do getDay() (domingo = 0), igual ao app
+      out.dom0 = window.__diaDoPlano("2026-09-06") === "0" && window.__diaDoPlano("2026-09-07") === "1";
+      // e-mail de acesso: documento autônomo, sem var() e sem texto branco fora do botão
+      const em = window.__emailAcessoHtml("Studio Teste", "Ana", "ana@x.com", "abc123");
+      out.email = !/var\(/.test(em) && (em.match(/color:#fff/g) || []).length === 1 && /color:#1c1826/.test(em);
+      // cópia local do retorno sem fotos
+      const stF = { alunos: [{ id: "q", retorno: { peso: { "2026-01-01": 80 }, fotoAntes: "data:image/jpeg;base64,AAA", fotoPerfil: "data:x" } }] };
+      out.fotosFora = window.__tiraFotosDoRetorno(stF) === true && !("fotoAntes" in stF.alunos[0].retorno) && stF.alunos[0].retorno.peso["2026-01-01"] === 80;
+      // IA: ressalva NÃO vira obrigação; frase de equipamento não casa exercício
+      const cands = (window.MT_EXERCICIOS || []).map((x) => ({ n: x.n, g: x.g }));
+      const ex = (t) => window.__exCitados(t, cands);
+      out.iaHernia = ex("cuidado com levantamento terra, tem hérnia").length === 0;
+      out.iaNunca = ex("nunca fazer agachamento livre com esse aluno").length === 0;
+      out.iaPede = ex("quero stiff e remada curvada, nada de terra").some((n) => /^stiff$/i.test(n)) && !ex("quero stiff e remada curvada, nada de terra").some((n) => /terra/i.test(n));
+      out.iaBarra = ex("treino com barra e halteres na máquina").length === 0;
+      // carinhas: a escala é a da pergunta (-2 a 2), não 0-10
+      const otimo = { resposta: "Ótimo", pontos: 2 }, pessimo = { resposta: "Péssimo", pontos: -2 }, dorAlta = { resposta: "Altíssimo", pontos: 2, menos: true };
+      const nO = window.__qsValor(otimo);
+      out.carinha = nO && nO.min === -2 && nO.max === 2 && !window.__qsRuim(otimo, nO) &&
+        window.__qsRuim(pessimo, window.__qsValor(pessimo)) && window.__qsRuim(dorAlta, window.__qsValor(dorAlta));
+      // chat: as mensagens mais NOVAS (order desc) — lido no código servido
+      return out;
+    });
+    const htmlChat = await p.evaluate(async () => await (await fetch("personal.html")).text());
+    ok(v742.dom0, "📅 v742: o dia do plano usa a chave do getDay() (domingo = 0), a mesma do app");
+    ok(v742.email, "✉️ v742: e-mail de acesso sem var() e com texto escuro legível (branco só no botão)");
+    ok(v742.fotosFora, "🗂️ v742: a cópia local do retorno perde as fotos e mantém o resto");
+    ok(v742.iaHernia && v742.iaNunca && v742.iaPede && v742.iaBarra, "🧠 v742: 'cuidado com X' / 'nunca X' não viram obrigação; pedido continua valendo; 'com barra' não casa nada");
+    ok(v742.carinha, "🙂 v742: carinhas usam a escala da pergunta — Ótimo não pede atenção, Péssimo e dor alta pedem");
+    ok(/app_chat"\)\.select\("de,texto,criado,lida"\)[^;]*ascending: false[^;]*limit\(80\)/.test(htmlChat) &&
+      /app_chat"\)\.select\("token,de,lida,texto,criado"\)[^;]*ascending: false/.test(htmlChat),
+      "💬 v742: o chat busca as mensagens mais NOVAS (order desc) na conversa e na lista");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
@@ -2649,7 +2685,9 @@ async function abaPt(p, a) {
   // 📣 v736: o push diz QUAL treino — o nome sai do plano da semana
   const ptx = await p.evaluate(() => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const dow = String((new Date(hoje + "T12:00:00").getDay() + 6) % 7);
+    // v742: a chave do plano é a do getDay() (0 = domingo) — a MESMA que o
+    // formulário grava e o app lê. A v736 tinha escrito o teste com (getDay()+6)%7.
+    const dow = String(new Date(hoje + "T12:00:00").getDay());
     const st = { treinosV2: {
       "px-a": { plano: { dias: { [dow]: { tp: "ficha", id: "f1" } } }, fichas: [{ id: "f1", titulo: "A — Peito e tríceps" }] },
       "px-b": { plano: { dias: { [dow]: { tp: "wod" } } }, fichas: [] } } };
