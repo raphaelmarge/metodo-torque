@@ -1346,6 +1346,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 
   // ---------- pacientes ----------
   // pagou o mês? (varre st.pagamentosN, gravado pelo #pnPgAdd e pelo webhook do Pagar.me)
+  /* v746: quem NÃO é mensalista não entra na régua nem em Atrasados — o campo
+   * "Pagamento preferido → Plano/pacote" era gravado e nunca lido, então o
+   * paciente que fechou pacote (ou faz retorno a cada 2-3 meses) recebia
+   * cobrança automática todo mês e aparecia em vermelho. */
+  function cobraMensalN(p) {
+    return !!p && p.ativo !== false && p.pagto !== "plano" && !p.assinaturaRec && !p.assinaturaAs;
+  }
+  window.__cobraMensalN = cobraMensalN; // testes
   function pagouMesN(st, pid, mes) {
     return (st.pagamentosN || []).some(function (x) {
       return x.pacienteId === pid && String(x.data || "").slice(0, 7) === mes;
@@ -1369,7 +1377,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var mesAtual = S.todayISO().slice(0, 7);
     var temDietaDe = function (p) { var d = st.dietas[p.id]; return !!(d && (d.refeicoes || []).length); };
     var nSemDieta = ativos.filter(function (p) { return !temDietaDe(p); }).length;
-    var nDevendo = ativos.filter(function (p) { return !pagouMesN(st, p.id, mesAtual); }).length;
+    var nDevendo = ativos.filter(function (p) { return cobraMensalN(p) && !pagouMesN(st, p.id, mesAtual); }).length;
     var hojeF = S.todayISO();
     var nSumindo = ativos.filter(function (p) { return diasSumidoN(st, p, hojeF) >= 30; }).length;
     var nEncerrados = st.pacientes.filter(function (p) { return p.ativo === false; }).length;
@@ -1383,7 +1391,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var base = pacFiltro === "encerrados" ? st.pacientes.filter(function (p) { return p.ativo === false; }) : ativos;
     var lista = base.filter(function (p) {
       if (pacFiltro === "semdieta") return !temDietaDe(p);
-      if (pacFiltro === "devendo") return !pagouMesN(st, p.id, mesAtual);
+      if (pacFiltro === "devendo") return cobraMensalN(p) && !pagouMesN(st, p.id, mesAtual);
       if (pacFiltro === "sumindo") return diasSumidoN(st, p, hojeF) >= 30;
       return true;
     });
@@ -4599,7 +4607,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var mes = hoje.slice(0, 7);
     if (+hoje.slice(8, 10) < diaCobraN(st)) return []; // o mês ainda não venceu pra ninguém
     return (st.pacientes || []).filter(function (p) {
-      return p.ativo !== false && !pagouMesN(st, p.id, mes);
+      return cobraMensalN(p) && !pagouMesN(st, p.id, mes);
     }).map(function (p) { return { p: p, valor: valorConsultaN(st, p) }; });
   }
   var MESES_N = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -4913,7 +4921,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var alvoR = diaCobraN(st);
       st.pacientes.forEach(function (p) {
         if (p.ativo === false || !p.appTokenN) return;
-        if (p.assinaturaRec || p.assinaturaAs) return;
+        if (!cobraMensalN(p)) return; // v746: pacote e assinatura ficam fora
         if (pagouMesN(st, p.id, mesR)) return;
         var vR = valorConsultaN(st, p);
         var txtV = vR ? " (R$ " + Math.round(vR).toLocaleString("pt-BR") + ")" : "";

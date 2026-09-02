@@ -2458,6 +2458,34 @@ async function abaPt(p, a) {
     ok(/x\.auto \? '<span class="muted"/.test(htmlFin) && /if \(a\.assinaturaRec \|\| a\.assinaturaAs\) return false; \/\/ v745/.test(htmlFin) &&
       /data-v="' \+ vPac \+ '" data-origem="pacote">Pix/.test(htmlFin),
       "💰 v745: Atrasados e Cobrar todos poupam quem tem cobrança automática; o Pix do pacote leva a origem");
+
+    /* ---- v746: os 3 graves que sobraram ---- */
+    const v746 = await p.evaluate(() => {
+      const out = {};
+      // enviar em grupo copia SÓ as fichas: circuitos, corridas, semana e mês do aluno ficam
+      const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st0.alunos.push({ id: "gA", nome: "Origem G", ativo: true }, { id: "gB", nome: "Destino G", ativo: true });
+      st0.gruposPT = [{ id: "grp1", nome: "Turma", alunoIds: ["gB"] }];
+      st0.treinosV2 = st0.treinosV2 || {};
+      st0.treinosV2.gA = { fichas: [{ id: "fx1", titulo: "A — Peito", itens: [] }], mes: { musculacao: { geradoEm: "2026-01-01" } } };
+      st0.treinosV2.gB = { fichas: [{ id: "fy1", titulo: "A — Velha", itens: [] }], wods: [{ id: "w1", nome: "Circuito" }], cardio: [{ id: "c1", nome: "Corrida" }],
+        plano: { dias: { "1": { tp: "ficha", id: "fy1" }, "3": { tp: "cardio", id: "c1" } } }, validade: "2026-12-31" };
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st0));
+      const r = window.__enviaTreinoGrupo("gA", "grp1");
+      const tB = JSON.parse(localStorage.getItem("mtapp:ptStudio")).treinosV2.gB;
+      out.grupo = r.ok && tB.fichas.length === 1 && /Peito/.test(tB.fichas[0].titulo) && tB.fichas[0].id !== "fx1" &&
+        tB.wods.length === 1 && tB.cardio.length === 1 && tB.validade === "2026-12-31" && !tB.mes &&
+        tB.plano.dias["1"].id === tB.fichas[0].id && tB.plano.dias["3"].tp === "cardio";
+      // instalação nova: config existe desde o load e salvaNome não estoura
+      const stL = JSON.parse(localStorage.getItem("mtapp:ptStudio")); delete stL.config;
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(stL));
+      let estourou = false;
+      try { window.MT_CONTA_ATUAL && window.__ptStudio; window.__salvaNomeTeste ? window.__salvaNomeTeste("Studio X") : null; } catch (e) { estourou = true; }
+      out.config = !estourou && !!(window.__loadPT ? window.__loadPT().config : true);
+      return out;
+    });
+    ok(v746.grupo, "👥 v746: enviar em grupo copia só as fichas (ids novos, Semana reencaixada); circuitos, corridas, validade ficam e o mês da IA não vai");
+    ok(v746.config, "🆕 v746: instalação nova nasce com config — criar a conta antes do onboarding não trava mais");
     ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
       "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia

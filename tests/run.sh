@@ -2,7 +2,11 @@
 # Roda todas as suítes contra um servidor local do site.
 set -e
 cd "$(dirname "$0")/.."
-python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &
+# v747: PORT=8790 bash tests/run.sh roda numa porta própria (dois worktrees
+# testando ao mesmo tempo disputavam a 8765 e cada um lia os arquivos do outro)
+PORT="${PORT:-8765}"
+export BASE_URL="http://127.0.0.1:$PORT" MT_BASE="http://127.0.0.1:$PORT"
+python3 -m http.server "$PORT" --bind 127.0.0.1 >/dev/null 2>&1 &
 SRV=$!
 trap "kill $SRV 2>/dev/null" EXIT
 sleep 1

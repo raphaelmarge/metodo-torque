@@ -79,7 +79,7 @@ ok(/--nt-fundo:/.test(blocoClaro) && !/--fundo:/.test(blocoClaro.replace(/--nt-f
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
   const erros = [];
   p.on("pageerror", (e) => erros.push(e.message));
-  await p.goto("http://127.0.0.1:8765/nutricao.html");
+  await p.goto((process.env.BASE_URL || "http://127.0.0.1:8765") + "/nutricao.html");
   await p.evaluate(() => {
     localStorage.setItem("mtapp:ntSemConta", "1");
     localStorage.setItem("mtapp:ntStudio", JSON.stringify({

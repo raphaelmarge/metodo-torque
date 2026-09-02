@@ -1345,6 +1345,18 @@ entrar/criar conta vindo do demo apaga as marcas, o estúdio falso e as imagens
 do demo ANTES de ligar a sync (`window.__demoLimpo`). Ganchos:
 `__nuvemTemMais`, `__sincronizavel`.
 
+**Revisão — os 3 graves que sobraram (mt-v746)**: (1) `enviaTreinoGrupo`
+copia SÓ as fichas (ids novos, `remapeiaPlano` reencaixa a Semana) — antes ia a
+entrada inteira do `treinosV2` e o aluno do grupo perdia circuitos, corridas,
+Semana, validade e ganhava o plano do mês gerado pra OUTRA pessoa; o botão
+pede confirmação dizendo o que substitui. (2) `load()` garante `st.config`
+(criar a conta antes do onboarding chamava `salvaNome` com config indefinido
+e travava calado). (3) NUTRI: `cobraMensalN(p)` — paciente com "Pagamento
+preferido → Plano/pacote" (`p.pagto === "plano"`) ou assinatura fica fora da
+régua de cobrança, de Atrasados e do filtro Devendo (o campo era gravado e
+nunca lido). Ganchos: `__enviaTreinoGrupo`, `__loadPT`, `__salvaNomeTeste`,
+`__cobraMensalN`. Os 366 médios/leves seguem por área em mt-v747+.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

@@ -3924,6 +3924,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.diarioPT = st.diarioPT || {};
     st.exFav = st.exFav || []; // exercícios favoritos do professor (nomes)
+    st.config = st.config || {}; // v746: criar a conta antes do onboarding chamava salvaNome com config indefinido e travava calado
     if (!load._fotosLimpas) { load._fotosLimpas = 1; if (tiraFotosDoRetorno(st)) S.write("ptStudio", st); } // v742
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
@@ -8536,8 +8537,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ids = ids.filter(function (id) { return id !== origemId; });
     if (!ids.length) return { erro: "O grupo está vazio." };
     st.treinosV2 = st.treinosV2 || {};
+    /* v746: copia SÓ as fichas. Antes ia a entrada inteira do treinosV2 —
+     * circuitos, corridas, Semana do aluno, plano do mês da IA (gerado pra
+     * OUTRA pessoa) e validade — e o aluno do grupo perdia tudo de individual
+     * sem aviso. As fichas ganham id novo e a Semana é reencaixada. */
+    var fichasCopia = JSON.parse(JSON.stringify(fonte.fichas)).map(function (f) { f.id = S.uid(); return f; });
     ids.forEach(function (id) {
-      st.treinosV2[id] = JSON.parse(JSON.stringify(fonte));
+      var t = st.treinosV2[id] || {};
+      remapeiaPlano(t, t.fichas || [], fichasCopia);
+      t.fichas = JSON.parse(JSON.stringify(fichasCopia));
+      if (fonte.objetivo) t.objetivo = fonte.objetivo;
+      delete t.mes; // a progressão do mês era do aluno de origem
+      st.treinosV2[id] = t;
     });
     S.write("ptStudio", st);
     return { ok: true, ids: ids };
@@ -8545,9 +8556,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("geEnviar").addEventListener("click", function () {
     var origem = $("geOrigem").value, grupo = $("geGrupo").value;
     if (!origem || !grupo) { alert("Escolha de quem copiar o treino e pra qual grupo enviar."); return; }
+    if (!confirm("As FICHAS deste treino vão substituir as fichas de cada aluno do grupo (circuitos, corridas e a Semana de cada um ficam). Continuar?")) return;
     var r = enviaTreinoGrupo(origem, grupo);
     if (r.erro) { alert(r.erro); return; }
-    $("geStatus").textContent = "✓ Treino copiado pra " + r.ids.length + " aluno(s). Atualizando os apps…";
+    $("geStatus").textContent = "✓ Fichas copiadas pra " + r.ids.length + " aluno(s). Atualizando os apps…";
     // republica na nuvem os apps de quem já tem link
     var st = load();
     r.ids.forEach(function (id) { marcaAppPendente(st, id); });
@@ -8744,11 +8756,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__pagLink = puxaPagamentosLink; // testes
   window.__pagGateway = puxaPagamentosGateway; // testes
   setTimeout(puxaPagamentosCartao, 3000);
-  setInterval(puxaPagamentosCartao, 120000);
+  /* v746: todo timer do painel roda embrulhado. Um erro síncrono dentro de um
+   * timer (nuvem indisponível, cliente da nuvem trocado por um mock estreito,
+   * tabela que ainda não existe) virava "Uncaught TypeError" na página — e o
+   * timer seguinte continuava tentando. Agora o erro vai pro console e o
+   * painel segue vivo. */
+  function timerSeguro(fn) { return function () { try { return fn.apply(this, arguments); } catch (e) { try { console.warn("timer do painel", e && e.message); } catch (e2) {} } }; }
+  window.__timerSeguro = timerSeguro; // testes
+  setInterval(timerSeguro(puxaPagamentosCartao), 120000);
   setTimeout(puxaPagamentosLink, 4000);
-  setInterval(puxaPagamentosLink, 120000);
+  setInterval(timerSeguro(puxaPagamentosLink), 120000);
   setTimeout(puxaPagamentosGateway, 5000);
-  setInterval(puxaPagamentosGateway, 120000);
+  setInterval(timerSeguro(puxaPagamentosGateway), 120000);
 
   // ---------- rotina diária: lembrete de treino + régua de cobrança (push pelo app) ----------
   var pushEmVoo = {}; // chaves esperando resposta do push-envia (não repete na mesma sessão)
@@ -9032,7 +9051,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__pushSrv = importaPushSrv; // testes
   setTimeout(function () { importaPushSrv(rotinaDiariaPush); pushPendencias(); }, 5000);
-  setInterval(function () { importaPushSrv(rotinaDiariaPush); pushPendencias(); }, 6 * 3600 * 1000);
+  setInterval(timerSeguro(function () { importaPushSrv(rotinaDiariaPush); pushPendencias(); }), 6 * 3600 * 1000);
   $("reguaOn").addEventListener("change", function () {
     var st = load();
     st.config = st.config || {};
@@ -10125,7 +10144,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (estendeAgFixas(st)) save(st);
   }
   setTimeout(estendeFixasTick, 3000);
-  setInterval(estendeFixasTick, 6 * 3600 * 1000);
+  setInterval(timerSeguro(estendeFixasTick), 6 * 3600 * 1000);
   window.__agFixas = { estende: estendeAgFixas, tick: estendeFixasTick }; // testes
   $("agFixasLista").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-fixafim]");
@@ -10502,7 +10521,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__badgesRun = pintaBadges; // testes
   setTimeout(pintaBadges, 6000);
-  setInterval(pintaBadges, 90000);
+  setInterval(timerSeguro(pintaBadges), 90000);
 
   // ---------- pagamentos ----------
   // dívida acumulada: meses sem pagamento desde o início do contrato (não some na virada do mês)
@@ -18565,6 +18584,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (dl && self.MT_EXERCICIOS) dl.innerHTML = self.MT_EXERCICIOS.map(function (x) { return "<option value=\"" + esc(x.n) + "\">" + esc(x.g) + "</option>"; }).join("");
   })();
   window.__montaAppAluno = montaAppAluno; // testes
+  window.__enviaTreinoGrupo = enviaTreinoGrupo; window.__loadPT = load; // testes (v746)
   /* ---------- cortar o acesso de um aluno ----------
    * Faltava a coisa mais básica do sistema: um botão de "tirar o acesso". Sem
    * ele, apagar o aluno no painel (ou até formatar o computador) não mexia em
@@ -19151,9 +19171,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("chatTexto") && $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviar").click(); });
   clearInterval(chatTimer);
-  chatTimer = setInterval(function () {
+  chatTimer = setInterval(timerSeguro(function () {
     if (!$("vChat").hidden) { if (chatAluno) abreChat(chatAluno); else renderChatPT(); }
-  }, 25000);
+  }), 25000);
   window.__chatPT = { render: renderChatPT, abre: abreChat }; // testes
 
   // ---------- conta / ilha ----------
@@ -19357,11 +19377,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   // a conexão com a nuvem é assíncrona — tenta por ~1 minuto depois de abrir
   var assTenta = 0;
-  var assTimer = setInterval(function () {
+  var assTimer = setInterval(timerSeguro(function () {
     assTenta++;
     if (S.cloud && S.cloud()) { clearInterval(assTimer); consultaAssinatura(); }
     else if (assTenta > 20) clearInterval(assTimer);
-  }, 3000);
+  }), 3000);
   renderAssinatura();
   window.__assinatura = { consulta: consultaAssinatura, render: renderAssinatura, nativo: ehAppNativo }; // testes
 
@@ -20028,13 +20048,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     flag: "mtapp:ptSemConta",
     nomeCampo: "Nome do seu studio (ex.: Studio Léo)",
     nomeIlha: function () { return (load().config || {}).nome || ""; },
-    salvaNome: function (nome) { var st = load(); if (!st.config.nome) { st.config.nome = nome; S.write("ptStudio", st); } },
+    salvaNome: function (nome) { var st = load(); st.config = st.config || {}; if (!st.config.nome) { st.config.nome = nome; S.write("ptStudio", st); } },
+    // (testes) o mesmo salvaNome chamado de fora
+
     depois: function () { verificaOnboarding(); render(); mostraTelaAssinatura(); },
   });
   /* A faixa de sessão caída precisa abrir o login DIRETO: o painel ainda acha
    * que você está logado (o e-mail ficou da carga da página), então mandar
    * pro card só mostraria "Conectado como…" — e você teria que sair antes. */
   self.MT_CONTA_ATUAL = contaP;
+  window.__salvaNomeTeste = function (n) { var stN = load(); stN.config = stN.config || {}; if (!stN.config.nome) { stN.config.nome = n; S.write("ptStudio", stN); } }; // testes (v746)
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
