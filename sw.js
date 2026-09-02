@@ -118,10 +118,14 @@ var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug 
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(PRECACHE).then(function (cache) {
-      // cache: "reload" ignora o cache HTTP do navegador — cada versão nova
-      // nasce 100% fresca (sem misturar página nova com script velho)
+      /* cache: "no-cache" REVALIDA cada arquivo no servidor (o GitHub Pages
+       * responde 304 pelo ETag quando o arquivo não mudou) — continua sem
+       * misturar página nova com script velho, mas só TRANSFERE o que mudou.
+       * v747: era "reload", que ignora até o ETag: os 7,8 MB do precache
+       * (fontes, react, bancos de dados, 152 páginas do curso) eram baixados
+       * de novo a cada mt-vNNN — e saíram 12 versões num único dia. */
       return cache.addAll(CORE.concat(DOC_PAGES).map(function (u) {
-        return new Request(u, { cache: "reload" });
+        return new Request(u, { cache: "no-cache" });
       }));
     }).then(function () { return self.skipWaiting(); })
   );
@@ -131,6 +135,11 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
+        // v747: a cache do app do aluno (mt-app-*, do app/app-sw.js) é da MESMA
+        // origem e este activate a apagava a cada versão do site — o aluno que
+        // também abriu o portal perdia a cópia offline até a próxima abertura
+        // online. Quem cuida das mt-app-* é o app-sw.js.
+        if (k.indexOf("mt-app-") === 0) return null;
         if (k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })

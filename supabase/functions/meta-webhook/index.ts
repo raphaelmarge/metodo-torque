@@ -44,6 +44,13 @@ function env(k: string): string {
   return Deno.env.get(k) || "";
 }
 
+// o dia "de verdade" é o do Brasil — o servidor vive em UTC e vira o dia às
+// 21h de Brasília (v747: agendar "hoje" às 22h dava "essa data já passou")
+function diaBR(mais = 0): string {
+  const d = new Date(Date.now() + mais * 864e5);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+}
+
 function sb(path: string, init: RequestInit = {}): Promise<Response> {
   const url = env("SUPABASE_URL") + "/rest/v1/" + path;
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
@@ -219,7 +226,7 @@ async function executaFerramenta(nome: string, entrada: any, ctx: { aid: string;
       const abertos = ((alunosVal && alunosVal.recebiveis) || []).filter(function (r: any) {
         return r.alunoId === aluno.id && r.status === "aberto";
       });
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = diaBR();
       const linhas = ["Cliente: " + aluno.nome, contrato ? "Plano ativo: sim" : "SEM plano ativo"];
       if (!abertos.length) linhas.push("Nenhuma mensalidade em aberto. Tudo em dia! ✅");
       else abertos.forEach(function (r: any) {
@@ -231,7 +238,7 @@ async function executaFerramenta(nome: string, entrada: any, ctx: { aid: string;
     if (nome === "agendar_aula") {
       const data = String(entrada.data || "").slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return "Data inválida — use AAAA-MM-DD.";
-      if (data < new Date().toISOString().slice(0, 10)) return "Essa data já passou — peça uma data futura.";
+      if (data < diaBR()) return "Essa data já passou — peça uma data futura.";
       const alunosVal = await leDados(ctx.aid, "alunos");
       const aluno = achaAlunoPorFone(alunosVal, ctx.contato);
       if (!aluno) return "Não encontrei cadastro com este número — o agendamento pela conversa só funciona com o WhatsApp cadastrado. Oriente a falar com a recepção.";
@@ -274,7 +281,7 @@ async function executaFerramenta(nome: string, entrada: any, ctx: { aid: string;
 async function respostaIA(
   historico: { de: string; texto: string }[],
   promptExtra: string,
-  ctx?: { aid: string; contato: string },
+  ctx?: { aid: string; contato: string; conversaId?: string },
 ): Promise<string> {
   const chave = env("ANTHROPIC_API_KEY");
   if (!chave) return "";
@@ -289,9 +296,19 @@ async function respostaIA(
   if (!msgs.length) return "";
   if (msgs[0].role === "assistant") msgs.unshift({ role: "user", content: "(início da conversa)" });
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = diaBR();
+  // v747: o nome da academia DONA da conversa — o robô se apresentava como
+  // "TORQUE FIT" pra cliente de qualquer profissional
+  let nomeAcad = "";
+  if (ctx && ctx.aid) {
+    try {
+      const rn = await sb(`academias?select=nome&id=eq.${ctx.aid}&limit=1`);
+      const rows = rn.ok ? await rn.json() : [];
+      nomeAcad = String((rows[0] && rows[0].nome) || "").trim().slice(0, 80);
+    } catch { /* fala genérico */ }
+  }
   const sistema =
-    "Você é o atendente virtual de uma academia (TORQUE FIT) respondendo clientes " +
+    "Você é o atendente virtual " + (nomeAcad ? "de " + nomeAcad + " (academia/studio)" : "de uma academia/studio") + " respondendo clientes " +
     "pelo WhatsApp e pelo Instagram. Responda em português do Brasil, de forma curta, " +
     "simpática e objetiva, como uma mensagem de chat (sem markdown, sem listas longas). " +
     "Hoje é " + hoje + ". Você tem FERRAMENTAS reais: consultar a grade, AGENDAR aulas " +
@@ -338,7 +355,17 @@ async function respostaIA(
     }
     mensagens = mensagens.concat([{ role: "user", content: resultados }]);
   }
-  return "Já anotei tudo aqui! A equipe confirma com você em instantes. 💜";
+  /* v747: esgotou as voltas de ferramenta → a conversa PASSA pra equipe de
+   * verdade (mesmo PATCH do bloco "equipe" do chatbot). Antes o texto
+   * prometia "a equipe confirma em instantes" e ninguém era acionado. */
+  if (ctx && ctx.conversaId) {
+    try {
+      await sb(`chat_conversas?id=eq.${ctx.conversaId}`, {
+        method: "PATCH", body: JSON.stringify({ modo_auto: false, bot_estado: "humano" }),
+      });
+    } catch { /* segue com o texto */ }
+  }
+  return "Já anotei tudo aqui e vou pedir pra alguém da equipe confirmar com você. 💜";
 }
 
 // ---------- envio pela Meta ----------
@@ -490,34 +517,50 @@ async function processa(msg: any, cred: any) {
   let conversa = rows[0];
   const nova = !conversa;
   if (!conversa) {
-    r = await sb("chat_conversas", {
+    /* v747: duas primeiras mensagens ao mesmo tempo passavam as duas no select
+     * e a segunda inserção violava unique(academia_id, canal, contato_id) —
+     * a mensagem era descartada com "falha ao criar conversa". Com
+     * merge-duplicates + on_conflict as duas caem na MESMA linha. */
+    r = await sb("chat_conversas?on_conflict=academia_id,canal,contato_id", {
       method: "POST",
-      headers: { Prefer: "return=representation" },
+      headers: { Prefer: "return=representation,resolution=merge-duplicates" },
       body: JSON.stringify({
         academia_id: cfg.aid, canal, contato_id: contato, nome,
-        modo_auto: cfg.auto_global, ultima_msg: texto, nao_lidas: 1,
+        modo_auto: cfg.auto_global, ultima_msg: texto, nao_lidas: 0,
       }),
     });
     rows = r.ok ? await r.json() : [];
     conversa = rows[0];
     if (!conversa) { console.error("falha ao criar conversa", await r.text()); return; }
-  } else {
-    await sb(`chat_conversas?id=eq.${conversa.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        ultima_msg: texto, atualizado: new Date().toISOString(),
-        nao_lidas: (conversa.nao_lidas || 0) + 1, ...(nome ? { nome } : {}),
-      }),
-    });
   }
 
-  // guarda a mensagem do cliente (mid único evita reentrega duplicada da Meta)
+  /* v747: a mensagem entra ANTES de mexer na conversa — é o INSERT (mid único)
+   * que detecta a reentrega da Meta. Antes o PATCH vinha primeiro: cada
+   * reentrega somava +1 em nao_lidas e subia a conversa pro topo da lista sem
+   * mensagem nova. */
   r = await sb("chat_mensagens", {
     method: "POST",
     headers: { Prefer: "return=representation" },
     body: JSON.stringify({ conversa_id: conversa.id, academia_id: cfg.aid, de: "cliente", texto, mid }),
   });
   if (!r.ok) { console.error("mensagem duplicada ou erro", r.status); return; }
+
+  await sb(`chat_conversas?id=eq.${conversa.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      ultima_msg: texto, atualizado: new Date().toISOString(),
+      nao_lidas: (conversa.nao_lidas || 0) + 1, ...(nome ? { nome } : {}),
+    }),
+  });
+
+  /* v747: número PRÓPRIO sem a Chave Secreta do App colada = a assinatura da
+   * Meta não foi conferida. A mensagem fica guardada (a caixa de entrada
+   * continua honesta), mas o robô e as ferramentas (agendar, pendências, IA)
+   * NÃO rodam com um POST que qualquer um pode forjar sabendo o phone_number_id. */
+  if (cred.semAssinatura) {
+    console.warn("robô desligado nesta conversa: cole a Chave Secreta do App em Configurações → WhatsApp");
+    return;
+  }
 
   // ---- chatbot (fluxo de blocos): roda antes da IA ----
   const bot = botCompat(cfg.bot);
@@ -567,7 +610,7 @@ async function processa(msg: any, cred: any) {
   // modo automático: monta o histórico e pede a resposta ao Claude
   r = await sb(`chat_mensagens?select=de,texto&conversa_id=eq.${conversa.id}&order=criado.desc&limit=20`);
   const hist = (r.ok ? await r.json() : []).reverse();
-  const resposta = await respostaIA(hist, cfg.prompt, { aid: cfg.aid, contato: contato });
+  const resposta = await respostaIA(hist, cfg.prompt, { aid: cfg.aid, contato: contato, conversaId: conversa.id });
   if (!resposta) return;
   await respondeAuto(conversa, cred, canal, contato, resposta);
 }
@@ -667,6 +710,12 @@ Deno.serve(async (req: Request) => {
 
   // verificação do webhook (a Meta faz um GET com o verify token)
   if (req.method === "GET") {
+    // diagnóstico (padrão das outras funções): GET ?acao=ping → as regras desta versão
+    if (url.searchParams.get("acao") === "ping") {
+      return new Response(JSON.stringify({ ok: true, regras: ["dono-unico", "fuso-br", "msg-antes-conversa", "sem-assinatura-so-grava", "nome-academia", "equipe-de-verdade"] }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
     const modo = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const desafio = url.searchParams.get("hub.challenge") || "";
@@ -717,6 +766,8 @@ Deno.serve(async (req: Request) => {
       }
     } else {
       console.warn("sem conferência de assinatura — cole a Chave Secreta do App no painel");
+      // número próprio sem segredo: grava, mas não deixa o robô agir (ver processa)
+      if (cred && cred.origem === "propria") cred.semAssinatura = true;
     }
   }
 

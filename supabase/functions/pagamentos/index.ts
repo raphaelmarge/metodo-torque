@@ -107,7 +107,7 @@ async function configDe(userId: string): Promise<Cfg | null> {
   if (!url || !key || !userId) return null;
   const heads = { apikey: key, Authorization: "Bearer " + key };
   try {
-    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
+    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&order=criado.asc&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
     const membros = rm.ok ? await rm.json() : [];
     const aid = membros?.[0]?.academia_id;
     if (!aid) return null;
@@ -127,7 +127,32 @@ function urlWebhookDe(cfg: Cfg): string {
 // só a baixa automática espera a próxima tentativa.
 async function garanteWebhookAsaas(cfg: Cfg, emailDono: string): Promise<void> {
   const hook = urlWebhookDe(cfg);
-  if (!hook || cfg.asaasWebhookId) return;
+  if (!hook) return;
+  if (cfg.asaasWebhookId) {
+    /* v747: o Asaas INTERROMPE a fila de webhooks da conta depois de respostas
+     * não-2xx repetidas (um soluço de rede na volta 2 basta) e só volta com
+     * religamento manual — a baixa automática "parava pra sempre" sem aviso.
+     * A cada link, uma consulta barata: se está interrompido, religa. Webhook
+     * apagado na conta (404) cai na criação abaixo. */
+    try {
+      const rg = await fetch("https://api.asaas.com/v3/webhooks/" + encodeURIComponent(cfg.asaasWebhookId), {
+        headers: { access_token: cfg.chave },
+      });
+      if (rg.status === 404) {
+        cfg.asaasWebhookId = "";
+      } else {
+        const dg: any = await rg.json().catch(() => ({}));
+        if (rg.ok && (dg.interrupted === true || dg.enabled === false)) {
+          await fetch("https://api.asaas.com/v3/webhooks/" + encodeURIComponent(cfg.asaasWebhookId), {
+            method: "PUT",
+            headers: { access_token: cfg.chave, "Content-Type": "application/json" },
+            body: JSON.stringify({ interrupted: false, enabled: true }),
+          });
+        }
+        return;
+      }
+    } catch { return; /* sem drama: tenta de novo no próximo link */ }
+  }
   try {
     const resp = await fetch("https://api.asaas.com/v3/webhooks", {
       method: "POST",
@@ -263,23 +288,36 @@ async function assinaAsaas(cfg: Cfg, corpo: any, ref: string) {
   // vencimento da primeira cobrança (o painel manda a data; padrão = hoje)
   const venc = /^\d{4}-\d{2}-\d{2}$/.test(String(corpo.venc || "")) ? String(corpo.venc) : new Date().toISOString().slice(0, 10);
 
-  // 1. o cliente na conta Asaas do professor
-  const cli: any = { name: nome, cpfCnpj: cpf };
-  if (email) cli.email = email;
-  const rc = await fetch("https://api.asaas.com/v3/customers", {
-    method: "POST",
-    headers: { access_token: cfg.chave, "Content-Type": "application/json" },
-    body: JSON.stringify(cli),
-  });
-  const dc: any = await rc.json().catch(() => ({}));
-  if (!rc.ok || !dc.id) throw new Error("Asaas recusou o cadastro do aluno: " + erroAsaas(dc, rc));
+  // 1. o cliente na conta Asaas do professor — v747: REUSA o que já existe com
+  // esse CPF (cada tentativa criava um "Fulano" repetido, inclusive a que
+  // falhava na etapa seguinte e o professor clicava de novo)
+  let clienteId = "";
+  try {
+    const rb = await fetch("https://api.asaas.com/v3/customers?cpfCnpj=" + encodeURIComponent(cpf) + "&limit=1", {
+      headers: { access_token: cfg.chave },
+    });
+    const db: any = await rb.json().catch(() => ({}));
+    if (rb.ok && Array.isArray(db.data) && db.data[0] && db.data[0].id) clienteId = String(db.data[0].id);
+  } catch { /* cria abaixo */ }
+  if (!clienteId) {
+    const cli: any = { name: nome, cpfCnpj: cpf };
+    if (email) cli.email = email;
+    const rc = await fetch("https://api.asaas.com/v3/customers", {
+      method: "POST",
+      headers: { access_token: cfg.chave, "Content-Type": "application/json" },
+      body: JSON.stringify(cli),
+    });
+    const dc: any = await rc.json().catch(() => ({}));
+    if (!rc.ok || !dc.id) throw new Error("Asaas recusou o cadastro do aluno: " + erroAsaas(dc, rc));
+    clienteId = String(dc.id);
+  }
 
   // 2. a assinatura mensal — billingType UNDEFINED: a cada mês o Asaas gera a
   // cobrança e o aluno escolhe Pix, cartão ou boleto; o webhook dá a baixa.
   // O split configurado aqui vira MODELO: toda mensalidade gerada já nasce
   // dividida (comissão 0 = sem split, professor recebe 100%)
   const corpoAs: any = {
-    customer: dc.id,
+    customer: clienteId,
     billingType: "UNDEFINED",
     value: valorReais,
     nextDueDate: venc,
@@ -363,9 +401,14 @@ async function compraLoja(body: any): Promise<Response> {
   if (!valorCentavos || valorCentavos < 100) return json({ erro: "este item não está mais na loja — fale com o seu personal." }, 404);
   // 3) o aluno dono do token (pra referência da baixa) e o gateway da academia
   const aluno: any = ((st as any).alunos || []).find((x: any) => x.appTokenP === t) || null;
+  /* v747: token válido mas o blob ainda não conhece esse aluno (sync atrasada,
+   * painel de outro aparelho) → o link sairia SEM referência e o pagamento
+   * entraria órfão — "Caiu R$ X" sem nome nem baixa. Mesmo recado honesto do
+   * caso vizinho (blob ausente). */
+  if (!aluno || !aluno.id) return json({ erro: "a loja ainda não sincronizou com a nuvem — peça pelo WhatsApp do seu personal." }, 409);
   const cfg = await configDaAcademia(aid);
   if (!cfg) return json({ erro: "sem-gateway" }, 400);
-  const ref = aluno && aluno.id ? "mt|" + String(aluno.id).slice(0, 40) + "|loja" : "";
+  const ref = "mt|" + String(aluno.id).slice(0, 40) + "|loja";
   const descricao = ("Loja do app — " + String(achado.n)).slice(0, 120);
   const nome = aluno && aluno.nome ? String(aluno.nome).slice(0, 60) : "Aluno";
   const email = aluno && aluno.email ? String(aluno.email).trim().slice(0, 120) : "";
@@ -402,7 +445,8 @@ Deno.serve(async (req: Request) => {
   const cfg = await configDe(usuario.id);
 
   if (body.acao === "ping") {
-    return json({ ok: true, provedor: cfg ? cfg.provedor : null, temChave: !!cfg });
+    return json({ ok: true, provedor: cfg ? cfg.provedor : null, temChave: !!cfg,
+      regras: ["loja-ref", "asaas-cliente-unico", "asaas-webhook-religa", "membro-ordenado"] });
   }
 
   if (!cfg) {

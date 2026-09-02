@@ -442,13 +442,28 @@
         if (reg.update) { try { var p = reg.update(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
       }).catch(function () {});
     });
-    // versão nova assumiu? recarrega uma vez sozinho
+    // versão nova assumiu? recarrega uma vez sozinho — mas só com a página
+    // ociosa (v747: sem campo focado nem envio pendente pra nuvem; antes o
+    // reload caía no meio de um formulário). O store.js deixou de registrar
+    // o mesmo listener: era um segundo reload no portal.
+    function pwaOcioso() {
+      try {
+        var a = document.activeElement;
+        if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox" && a.type !== "radio" && a.type !== "button") return false;
+        var st = window.__MTSync && window.__MTSync._estado;
+        if (st && st.sujas && Object.keys(st.sujas).length) return false;
+      } catch (e) {}
+      return true;
+    }
     if (navigator.serviceWorker.controller) {
       var jaRecarregou = false;
       navigator.serviceWorker.addEventListener("controllerchange", function () {
         if (jaRecarregou) return;
         jaRecarregou = true;
-        location.reload();
+        (function tenta() {
+          if (pwaOcioso()) { location.reload(); return; }
+          setTimeout(tenta, 5000);
+        })();
       });
     }
   }

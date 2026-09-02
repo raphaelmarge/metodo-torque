@@ -120,8 +120,14 @@ Deno.serve(async (req: Request) => {
   const chave = Deno.env.get("PAGARME_SECRET_KEY") || "";
 
   if (body.acao === "ping") {
-    return json({ ok: true, chaveConfigurada: !!chave });
+    return json({ ok: true, chaveConfigurada: !!chave, regras: ["acao-normalizada"] });
   }
+  /* v747: o portal (apps/perfil-aluno.html) chama as ações com hífen e o painel
+   * com sublinhado — eram QUATRO handlers pra duas ações, com tratamento de
+   * erro diferente (o do portal mostrava o erro cru do Pagar.me). Normaliza
+   * aqui e os dois blocos duplicados saíram. */
+  if (body.acao === "assinatura-status") body.acao = "assinatura_status";
+  if (body.acao === "assinatura-cancelar") body.acao = "assinatura_cancela";
 
   // ---------- chave pública (pra tokenizar o cartão no navegador) ----------
   // Só devolve a chave PÚBLICA (pk_...) — a secreta nunca sai daqui.
@@ -295,25 +301,6 @@ Deno.serve(async (req: Request) => {
     if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + erroPagarme(dados, resp.status) }, 502);
     return json({ ok: true, status: (dados && dados.status) || "canceled" });
   }
-  if (body.acao === "assinatura-status") {
-    const id = String(body.assinaturaId || "").trim();
-    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
-    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } });
-    const dados: any = await resp.json().catch(() => ({}));
-    if (!resp.ok) return json({ erro: "Pagar.me recusou: " + (dados?.message || resp.status) }, 502);
-    return json({ ok: true, status: dados.status, proximaCobranca: dados.next_billing_at || null });
-  }
-  if (body.acao === "assinatura-cancelar") {
-    const id = String(body.assinaturaId || "").trim();
-    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
-    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), {
-      method: "DELETE",
-      headers: { Authorization: auth },
-    });
-    const dados: any = await resp.json().catch(() => ({}));
-    if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + (dados?.message || resp.status) }, 502);
-    return json({ ok: true, status: dados.status || "canceled" });
-  }
 
   // ---------- consultar situação ----------
   if (body.acao === "status") {
@@ -328,5 +315,5 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, status: ch.status || dados.status, pagoEm: ch.paid_at || null });
   }
 
-  return json({ erro: "acao desconhecida (use ping, chave_publica, criar, status, assinar, assinatura_status ou assinatura_cancela)." }, 400);
+  return json({ erro: "acao desconhecida (use ping, chave_publica, criar, status, assinar, assinatura_status ou assinatura_cancela — as formas com hífen também valem)." }, 400);
 });

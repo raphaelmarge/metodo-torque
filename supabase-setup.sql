@@ -37,6 +37,19 @@ create table if not exists public.dados (
 );
 
 -- ==================== HELPERS ====================
+-- v747: o DIA no fuso do produto. O servidor vive em UTC e vira o dia às 21h
+-- de Brasília: check-in de domingo à noite caía na segunda (semana seguinte,
+-- e o painel cobrava de quem já tinha respondido), pedir horário pra HOJE
+-- depois das 21h dava dia_invalido. A base é toda no Brasil — fuso fixo aqui é
+-- o caminho mais simples e não exige republicar app nenhum.
+create or replace function public.hoje_br()
+returns date
+language sql stable
+set search_path = public
+as $$
+  select (now() at time zone 'America/Sao_Paulo')::date
+$$;
+
 
 -- academias das quais o usuário logado faz parte (security definer para
 -- não recursionar nas políticas)
@@ -467,6 +480,14 @@ begin
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
+  -- v747: post do feed tem de ser da MESMA academia do aluno — com o uuid de um
+  -- post de outra academia dava pra comentar nele, e a moderação de lá não
+  -- enxergava a linha (RLS pela academia de quem escreveu)
+  if p_post like 'feed:%' and not exists (
+       select 1 from app_feed f
+        where f.id::text = substr(p_post, 6) and f.academia_id = v_acad) then
+    return json_build_object('erro', 'post_invalido');
+  end if;
   if p_tipo = 'like' then
     if exists (select 1 from app_reacoes where token = t and post_id = p_post and tipo = 'like') then
       delete from app_reacoes where token = t and post_id = p_post and tipo = 'like';
@@ -524,12 +545,15 @@ begin
                and status in ('pendente', 'confirmado', 'espera')) then
     return json_build_object('erro', 'ja_agendado');
   end if;
+  -- v747: a nuvem guarda a chave COMPLETA do localStorage ('mtapp:grade') —
+  -- com 'grade' a consulta nunca achava nada e o limite configurado na Grade
+  -- (inclusive 0 = sem limite) era ignorado: todo aluno travava em 3
   select coalesce((valor->'config'->>'maxAtivos')::int, 3) into v_max
-    from dados where academia_id = v_acad and chave = 'grade';
+    from dados where academia_id = v_acad and chave = 'mtapp:grade';
   if v_max is null then v_max := 3; end if;
   if v_max > 0 and (select count(*) from app_agendamentos
       where token = t and status in ('pendente', 'confirmado')
-        and data >= current_date) >= v_max then
+        and data >= public.hoje_br()) >= v_max then
     return json_build_object('erro', 'limite', 'max', v_max);
   end if;
   insert into app_agendamentos (academia_id, token, aluno, aula_id, aula_nome, data)
@@ -728,6 +752,9 @@ as $$
 declare
   v_acad uuid;
   v_id uuid;
+  v_total numeric;
+  v_faltam int;
+  v_tem_catalogo boolean;
 begin
   v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
@@ -736,10 +763,32 @@ begin
   if jsonb_array_length(coalesce(p_itens, '[]'::jsonb)) = 0 then
     return json_build_object('erro', 'vazio');
   end if;
+  -- v747: o TOTAL sai do catálogo da academia (mtapp:produtos), nunca do app —
+  -- o token mora no aparelho do aluno e um pedido de R$ 0 virava venda de R$ 0
+  -- quando a recepção marcava "Entregue". Item que não existe mais no catálogo
+  -- (ou sem preço) recusa com item_invalido. p_total só é lido se NÃO houver
+  -- catálogo na nuvem (academia sem o programa Produtos sincronizado).
+  select coalesce(sum(
+           coalesce(nullif(i->>'q', '')::numeric, 1) *
+           (select p->>'preco' from jsonb_array_elements(coalesce(d.valor->'itens', '[]'::jsonb)) p
+             where lower(trim(p->>'nome')) = lower(trim(i->>'n'))
+             order by (p->>'preco')::numeric desc limit 1)::numeric), 0),
+         count(*) filter (where not exists (
+           select 1 from jsonb_array_elements(coalesce(d.valor->'itens', '[]'::jsonb)) p
+            where lower(trim(p->>'nome')) = lower(trim(i->>'n')))),
+         count(d.academia_id) > 0
+    into v_total, v_faltam, v_tem_catalogo
+    from jsonb_array_elements(p_itens) i
+    left join dados d on d.academia_id = v_acad and d.chave = 'mtapp:produtos';
+  if not v_tem_catalogo then
+    v_total := coalesce(p_total, 0);
+  elsif v_faltam > 0 or v_total <= 0 then
+    return json_build_object('erro', 'item_invalido');
+  end if;
   insert into app_pedidos (academia_id, token, aluno, itens, total)
-    values (v_acad, t, coalesce(p_nome, ''), p_itens, coalesce(p_total, 0))
+    values (v_acad, t, coalesce(p_nome, ''), p_itens, v_total)
     returning id into v_id;
-  return json_build_object('ok', true, 'id', v_id);
+  return json_build_object('ok', true, 'id', v_id, 'total', v_total);
 end;
 $$;
 
@@ -974,7 +1023,7 @@ begin
     return json_build_object('erro', 'token_invalido');
   end if;
   insert into app_checkin (academia_id, token, dia, nota, texto, peso)
-    values (v_acad, t, current_date, greatest(1, least(5, coalesce(p_nota, 3))),
+    values (v_acad, t, public.hoje_br(), greatest(1, least(5, coalesce(p_nota, 3))),
             left(coalesce(p_texto, ''), 500), p_peso)
   on conflict (token, dia) do update
     set nota = excluded.nota, texto = excluded.texto, peso = excluded.peso, criado = now();
@@ -1139,6 +1188,19 @@ begin
     on conflict (academia_id) do update
       set tipo = excluded.tipo, plano = excluded.plano, valor = excluded.valor,
           status = excluded.status, obs = excluded.obs, atualizado = now();
+  -- v747: UMA verdade pra "está pagando". A régua do teste (regua_pendentes)
+  -- e o painel (minha_assinatura) leem academias.assinatura_status, que só o
+  -- RevenueCat escrevia — cliente marcado "ativo" aqui (pagou por Pix) seguia
+  -- 'trial' lá e recebia os e-mails "seu teste" nos dias 1, 3, 7 e 12.
+  -- 'trial' NÃO mexe (não derruba um status que a loja já gravou).
+  if coalesce(p_status, '') in ('ativo', 'pausado', 'cancelado') then
+    update academias
+       set assinatura_status = case p_status when 'ativo' then 'ativa'
+                                             when 'pausado' then 'atrasada'
+                                             else 'bloqueada' end,
+           assinatura_via = 'hq'
+     where id = p_academia;
+  end if;
   return json_build_object('ok', true);
 end;
 $$;
@@ -1250,6 +1312,19 @@ begin
     on conflict (academia_id) do update
       set tipo = excluded.tipo, plano = excluded.plano, valor = excluded.valor,
           status = excluded.status, obs = excluded.obs, zap = excluded.zap, atualizado = now();
+  -- v747: UMA verdade pra "está pagando". A régua do teste (regua_pendentes)
+  -- e o painel (minha_assinatura) leem academias.assinatura_status, que só o
+  -- RevenueCat escrevia — cliente marcado "ativo" aqui (pagou por Pix) seguia
+  -- 'trial' lá e recebia os e-mails "seu teste" nos dias 1, 3, 7 e 12.
+  -- 'trial' NÃO mexe (não derruba um status que a loja já gravou).
+  if coalesce(p_status, '') in ('ativo', 'pausado', 'cancelado') then
+    update academias
+       set assinatura_status = case p_status when 'ativo' then 'ativa'
+                                             when 'pausado' then 'atrasada'
+                                             else 'bloqueada' end,
+           assinatura_via = 'hq'
+     where id = p_academia;
+  end if;
   return json_build_object('ok', true);
 end;
 $$;
@@ -1308,7 +1383,7 @@ declare
   v_acad uuid;
   v_email text;
 begin
-  select academia_id into v_acad from public.membros where user_id = auth.uid() limit 1;
+  select academia_id into v_acad from public.membros where user_id = auth.uid() order by criado limit 1;
   if v_acad is null then
     raise exception 'faça login e crie sua conta antes';
   end if;
@@ -1331,7 +1406,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from public.membros where user_id = auth.uid() limit 1;
+  select academia_id into v_acad from public.membros where user_id = auth.uid() order by criado limit 1;
   if v_acad is null then
     return '[]'::json;
   end if;
@@ -1548,7 +1623,7 @@ begin
     return json_build_object('erro', 'nota_invalida');
   end if;
   insert into app_aval_aula (academia_id, token, aluno, aula, data, nota, texto)
-    values (v_acad, t, coalesce(p_nome, ''), coalesce(p_aula, 'Aula'), coalesce(p_data, current_date), p_nota, left(coalesce(p_texto, ''), 400))
+    values (v_acad, t, coalesce(p_nome, ''), coalesce(p_aula, 'Aula'), coalesce(p_data, public.hoje_br()), p_nota, left(coalesce(p_texto, ''), 400))
     on conflict (token, aula, data) do update set nota = excluded.nota, texto = excluded.texto;
   return json_build_object('ok', true);
 end;
@@ -1667,7 +1742,7 @@ declare
   v_uid uuid;
 begin
   select academia_id into v_acad from membros
-    where user_id = auth.uid() and papel = 'dono' limit 1;
+    where user_id = auth.uid() and papel = 'dono' order by criado limit 1;
   if v_acad is null then
     raise exception 'apenas o dono da conta cria logins de colaboradores';
   end if;
@@ -1717,7 +1792,7 @@ begin
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
-  if p_dia is null or p_dia < current_date then
+  if p_dia is null or p_dia < public.hoje_br() then
     return json_build_object('erro', 'dia_invalido');
   end if;
   if (select count(*) from app_agenda where token = t and status = 'pedido') >= 10 then
@@ -1834,6 +1909,11 @@ begin
   return saida;
 end $$;
 
+-- v747: as duas mesclas são helpers puros chamados só pelo app_aluno_devolve
+-- (security definer) — fora do /rest/v1/rpc do anônimo
+revoke execute on function public.app_lista_mescla(jsonb, jsonb) from public, anon, authenticated;
+revoke execute on function public.app_retorno_mescla(jsonb, jsonb) from public, anon, authenticated;
+
 create or replace function public.app_aluno_devolve(t text, p_dados jsonb)
 returns json language plpgsql security definer set search_path = public as $$
 begin
@@ -1882,7 +1962,10 @@ begin
   if t is null or length(t) < 10 then
     return json_build_object('erro', 'token inválido');
   end if;
-  select academia_id into v_acad from public.app_aluno where token = t limit 1;
+  -- v747: pela porta única (app_aluno_ativo) — era a ÚNICA RPC do aluno que lia
+  -- o token cru: aluno cortado seguia respondendo e a resposta aparecia na
+  -- aba A semana, no perfil e no push de pendências como se fosse aluno ativo
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'app não encontrado');
   end if;
@@ -1941,13 +2024,17 @@ grant execute on function public.app_desafio_ranking(text, date, date) to anon, 
 -- A página pública agora passa ?a=<academia_id> e as funções filtram
 -- por ele; sem o parâmetro (links antigos), cai no comportamento antigo.
 drop function if exists public.matricula_info();
+-- v747: sem ?a= (link antigo, QR impresso) só atende quando existe UMA
+-- matricula_config no banco — com duas ou mais, "a mais recente" era a de OUTRA
+-- academia: planos errados na tela e o lead caindo no funil errado
 create or replace function public.matricula_info(p_academia uuid default null)
 returns jsonb
 language sql security definer stable
 set search_path = public
 as $$
   select dados from matricula_config
-   where (p_academia is null or academia_id = p_academia)
+   where (p_academia is null and (select count(*) from matricula_config) = 1)
+      or academia_id = p_academia
    order by atualizado desc limit 1
 $$;
 drop function if exists public.matricula_nova(text, text, text, text);
@@ -1961,10 +2048,13 @@ declare
   v_acad uuid;
 begin
   select academia_id into v_acad from matricula_config
-   where (p_academia is null or academia_id = p_academia)
+   where (p_academia is null and (select count(*) from matricula_config) = 1)
+      or academia_id = p_academia
    order by atualizado desc limit 1;
   if v_acad is null then
-    return json_build_object('erro', 'sem_config');
+    -- v747: link antigo (sem ?a=) com mais de uma academia no banco → a
+    -- página pede o link novo em vez de cadastrar na academia errada
+    return json_build_object('erro', case when p_academia is null then 'sem_academia' else 'sem_config' end);
   end if;
   if length(trim(coalesce(p_nome, ''))) < 2 then
     return json_build_object('erro', 'nome');
@@ -2104,14 +2194,15 @@ begin
       -- (retorno.nivel entra pelo app_aluno_devolve; app antigo = sem selo)
       'nivel', coalesce(nullif(a.retorno->>'nivel', '')::int, 0),
       'meu', (f.token = t),
+      -- v747: só reações da MESMA academia do post
       'curtidas', (select count(*) from app_reacoes r
-                     where r.post_id = 'feed:' || f.id and r.tipo = 'like'),
+                     where r.post_id = 'feed:' || f.id and r.tipo = 'like' and r.academia_id = f.academia_id),
       'curti', exists (select 1 from app_reacoes r
-                         where r.post_id = 'feed:' || f.id and r.tipo = 'like' and r.token = t),
+                         where r.post_id = 'feed:' || f.id and r.tipo = 'like' and r.token = t and r.academia_id = f.academia_id),
       'comentarios', (select coalesce(json_agg(json_build_object(
                           'nome', c.nome, 'texto', c.texto, 'criado', c.criado) order by c.criado), '[]'::json)
                         from app_reacoes c
-                        where c.post_id = 'feed:' || f.id and c.tipo = 'coment')
+                        where c.post_id = 'feed:' || f.id and c.tipo = 'coment' and c.academia_id = f.academia_id)
     ) as linha
     from app_feed f
     left join app_aluno a on a.token = f.token
@@ -2230,6 +2321,10 @@ alter table public.academias add column if not exists assinatura_status text not
 alter table public.academias add column if not exists assinatura_via text not null default '';
 alter table public.academias add column if not exists assinatura_vence timestamptz;
 alter table public.academias add column if not exists assinatura_ref text not null default '';
+-- v747: o instante do ÚLTIMO evento do RevenueCat aplicado — a função
+-- assinatura-loja só grava evento mais novo que este (retry de uma EXPIRATION
+-- antiga não bloqueia quem acabou de renovar)
+alter table public.academias add column if not exists assinatura_evento_em timestamptz;
 
 -- o profissional logado vê a situação da própria assinatura (nunca a dos outros)
 create or replace function public.minha_assinatura()
@@ -2290,7 +2385,7 @@ set search_path = public
 as $$
 declare aid uuid;
 begin
-  select academia_id into aid from public.membros where user_id = auth.uid() limit 1;
+  select academia_id into aid from public.membros where user_id = auth.uid() order by criado limit 1;
   if aid is null then
     return jsonb_build_object('erro', 'Entre na sua conta primeiro.');
   end if;
@@ -2371,6 +2466,9 @@ as $$
   select 'torque-' || string_agg(substr('ABCDEFGHJKMNPQRSTUVWXYZ23456789', (floor(random() * 31)::int) + 1, 1), '')
     from generate_series(1, 10)
 $$;
+-- v747: helper interno — só as RPCs (security definer) chamam; sem isso ele
+-- herdava EXECUTE de PUBLIC e virava endpoint /rest/v1/rpc pra anônimo
+revoke execute on function public.zap_verify_novo() from public, anon, authenticated;
 
 -- salva a credencial completa (enviar + receber) da academia de quem está logado.
 -- Campo secreto vazio = "não mexi nesse": mantém o que já estava guardado.
@@ -2383,7 +2481,7 @@ set search_path = public
 as $$
 declare aid uuid; vt text;
 begin
-  select academia_id into aid from public.membros where user_id = auth.uid() limit 1;
+  select academia_id into aid from public.membros where user_id = auth.uid() order by criado limit 1;
   if aid is null then
     return jsonb_build_object('erro', 'Entre na sua conta primeiro.');
   end if;
@@ -2444,6 +2542,7 @@ set search_path = public
 as $$
   select 'tq' || replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
 $$;
+revoke execute on function public.pag_token_novo() from public, anon, authenticated; -- v747: helper interno
 
 -- quem já tinha gateway ligado antes desta versão ganha a senha agora
 update public.pag_config set webhook_token = public.pag_token_novo() where coalesce(webhook_token, '') = '';
@@ -2459,7 +2558,7 @@ create or replace function public.pag_config_salva(p_provedor text, p_chave text
 returns json language plpgsql security definer set search_path = public as $$
 declare v_acad uuid;
 begin
-  select academia_id into v_acad from membros where user_id = auth.uid() limit 1;
+  select academia_id into v_acad from membros where user_id = auth.uid() order by criado limit 1;
   if v_acad is null then return json_build_object('erro', 'entre na sua conta'); end if;
   if p_provedor not in ('mercadopago', 'asaas', 'pagarme') then
     return json_build_object('erro', 'provedor desconhecido');
@@ -2508,7 +2607,7 @@ create or replace function public.pag_config_apaga()
 returns json language plpgsql security definer set search_path = public as $$
 declare v_acad uuid;
 begin
-  select academia_id into v_acad from membros where user_id = auth.uid() limit 1;
+  select academia_id into v_acad from membros where user_id = auth.uid() order by criado limit 1;
   if v_acad is null then return json_build_object('erro', 'entre na sua conta'); end if;
   delete from pag_config where academia_id = v_acad;
   return json_build_object('ok', true);
@@ -2613,6 +2712,10 @@ begin
   update public.app_aluno
      set revogado_em = now(), dados = null, login = '', senha = ''
    where token = p_token;
+  -- v747: a inscrição de push sai junto — ex-aluno seguia recebendo os
+  -- "avisos pra todos" meses depois, sem ter como se descadastrar (o app dele
+  -- já tinha sido apagado)
+  delete from public.push_subs where token = p_token;
   return json_build_object('ok', true, 'revogado', true);
 end;
 $$;
@@ -2649,17 +2752,24 @@ begin
   if p_academia is not null and p_academia not in (select public.minhas_academias()) then
     return json_build_object('erro', 'Essa academia não é desta conta.');
   end if;
-  update public.app_aluno
-     set revogado_em = now(), dados = null, login = '', senha = ''
-   where academia_id in (select public.minhas_academias())
-     and (p_academia is null or academia_id = p_academia)
-     and revogado_em is null
-     and dados is not null
-     and (case when p_modulo = 'nutri'
-               then coalesce(dados->'dados'->>'tipo', '') = 'nutri'
-               else coalesce(dados->'dados'->>'tipo', '') <> 'nutri' end)
-     and not (token = any (coalesce(p_tokens, array[]::text[])));
-  get diagnostics v_n = row_count;
+  -- v747: quem é revogado aqui também perde a inscrição de push (returning →
+  -- push_subs), senão o "aviso pra todos" continuava chegando no ex-aluno
+  with rev as (
+    update public.app_aluno
+       set revogado_em = now(), dados = null, login = '', senha = ''
+     where academia_id in (select public.minhas_academias())
+       and (p_academia is null or academia_id = p_academia)
+       and revogado_em is null
+       and dados is not null
+       and (case when p_modulo = 'nutri'
+                 then coalesce(dados->'dados'->>'tipo', '') = 'nutri'
+                 else coalesce(dados->'dados'->>'tipo', '') <> 'nutri' end)
+       and not (token = any (coalesce(p_tokens, array[]::text[])))
+     returning token
+  ), lixo as (
+    delete from public.push_subs where token in (select token from rev) returning token
+  )
+  select count(*) into v_n from rev;
   return json_build_object('ok', true, 'revogados', v_n);
 end;
 $$;

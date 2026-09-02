@@ -67,8 +67,9 @@ function rest(caminho: string, init: RequestInit = {}): Promise<Response> {
 
 // TQ-AAAAMMDD-XXXX — sem 0/O/1/I pra ninguém soletrar errado no telefone
 function novoProtocolo(): string {
-  const d = new Date();
-  const dia = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+  // v747: a data é a do BRASIL — o servidor vive em UTC e um chamado aberto às
+  // 22h em BH nascia com a data de amanhã, diferente da que o professor via
+  const dia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date()).replace(/-/g, "");
   const alf = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let suf = "";
   const rnd = crypto.getRandomValues(new Uint8Array(4));
@@ -93,7 +94,7 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return json({ erro: "JSON inválido" }, 400); }
 
   if (body.acao === "ping") {
-    return json({ ok: true, regras: ["chamado"], emailConfigurado: !!env("RESEND_API_KEY") });
+    return json({ ok: true, regras: ["chamado", "tipo-validado", "protocolo-br", "email-validado"], emailConfigurado: !!env("RESEND_API_KEY") });
   }
 
   const uid = await usuarioValidado(req);
@@ -103,7 +104,9 @@ Deno.serve(async (req: Request) => {
     const aid = String(body.aid || "").trim();
     const tipo = TIPOS[String(body.tipo || "")] ? String(body.tipo) : "bug";
     const msg = String(body.msg || "").trim().slice(0, 4000);
-    const email = String(body.email || "").trim().toLowerCase().slice(0, 200);
+    // e-mail inválido vira vazio (ele só serve de reply_to — o Resend recusaria o envio inteiro)
+    const emailCru = String(body.email || "").trim().toLowerCase().slice(0, 200);
+    const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailCru) ? emailCru : "";
     if (!/^[0-9a-f-]{36}$/.test(aid)) return json({ erro: "academia inválida." }, 400);
     if (msg.length < 10) return json({ erro: "Escreva o chamado com pelo menos 10 caracteres." }, 400);
 
@@ -121,7 +124,8 @@ Deno.serve(async (req: Request) => {
       const ri = await rest("suporte_chamados", {
         method: "POST",
         headers: { Prefer: "return=minimal" },
-        body: JSON.stringify({ protocolo, academia_id: aid, user_id: uid, email, tipo: body.tipo || "bug", mensagem: msg }),
+        // v747: grava o tipo VALIDADO (o cru deixava entrar valor fora da lista, diferente do e-mail)
+        body: JSON.stringify({ protocolo, academia_id: aid, user_id: uid, email, tipo, mensagem: msg }),
       });
       if (ri.ok) gravado = true;
       else if (ri.status !== 409) {

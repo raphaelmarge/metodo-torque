@@ -83,6 +83,11 @@ function treinoDe(st: any, alunoId: string, iso: string): string {
 // As regras são as mesmas da rotinaDiariaPush do painel — de propósito.
 function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
   const out: Aviso[] = [];
+  /* v747: o interruptor "Régua de lembretes" do painel (config.reguaOff) vale
+   * AQUI também. Antes o cron lia alunos/sessões do blob e nunca olhava o
+   * config: o professor desligava na tela e o aluno seguia recebendo "Hoje tem
+   * treino" — sem nenhum jeito de parar, a não ser tirar o push dos alunos. */
+  if (st && st.config && st.config.reguaOff) return out;
   const alunos: any[] = Array.isArray(st && st.alunos) ? st.alunos : [];
   const sessoes: any[] = Array.isArray(st && st.sessoes) ? st.sessoes : [];
   for (const a of alunos) {
@@ -117,7 +122,7 @@ Deno.serve(async (req: Request) => {
     return json({
       ok: true,
       vapid: !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY")),
-      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino", "dia-getday"],
+      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino", "dia-getday", "regua-off"],
     });
   }
 
@@ -132,7 +137,7 @@ Deno.serve(async (req: Request) => {
 
   const pub = env("VAPID_PUBLIC_KEY"), priv = env("VAPID_PRIVATE_KEY");
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
-  webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
+  webpush.setVapidDetails("mailto:suporte@torqueon.com.br", pub, priv);
 
   // 1) só academias que TÊM aluno inscrito no push — o resto nem é lido
   const rSubs = await sb("push_subs?select=token,sub,academia_id&token=not.like.prof:*");

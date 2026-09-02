@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
 
   if (req.method === "GET") {
-    return json({ ok: true, servico: "assinatura-loja TORQUE ON" });
+    return json({ ok: true, servico: "assinatura-loja TORQUE ON", regras: ["ordem-eventos"] });
   }
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
 
@@ -97,23 +97,45 @@ Deno.serve(async (req: Request) => {
     linha.assinatura_vence = new Date(Number(ev.expiration_at_ms)).toISOString();
   }
 
-  const r = await fetch(base + "/rest/v1/academias?id=eq." + encodeURIComponent(academiaId), {
-    method: "PATCH",
-    headers: {
-      apikey: srv, Authorization: "Bearer " + srv,
-      "Content-Type": "application/json",
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify(linha),
-  });
-  const dados = await r.json().catch(() => []);
+  /* v747: guarda de ORDEM. O RevenueCat reenvia por horas o evento que falhou;
+   * uma EXPIRATION antiga chegando DEPOIS de uma RENEWAL gravava "bloqueada"
+   * por cima de quem acabou de renovar. Cada evento traz event_timestamp_ms:
+   * o PATCH só aplica quando ele é mais novo que o último aplicado
+   * (academias.assinatura_evento_em — coluna do SQL novo; banco sem ela cai
+   * no PATCH antigo, com aviso no log). */
+  const quando = Number(ev.event_timestamp_ms || 0);
+  const heads = {
+    apikey: srv, Authorization: "Bearer " + srv,
+    "Content-Type": "application/json",
+    Prefer: "return=representation",
+  };
+  const alvo = base + "/rest/v1/academias?id=eq." + encodeURIComponent(academiaId);
+  let r: Response;
+  let dados: any;
+  if (quando > 0) {
+    const iso = new Date(quando).toISOString();
+    r = await fetch(alvo + "&or=(assinatura_evento_em.is.null,assinatura_evento_em.lt." + encodeURIComponent(iso) + ")", {
+      method: "PATCH", headers: heads, body: JSON.stringify({ ...linha, assinatura_evento_em: iso }),
+    });
+    dados = await r.json().catch(() => []);
+    if (r.status === 400 && /assinatura_evento_em/.test(JSON.stringify(dados))) {
+      console.warn("academias sem a coluna assinatura_evento_em — rode o SQL novo; aplicando sem guarda de ordem");
+      r = await fetch(alvo, { method: "PATCH", headers: heads, body: JSON.stringify(linha) });
+      dados = await r.json().catch(() => []);
+    }
+  } else {
+    r = await fetch(alvo, { method: "PATCH", headers: heads, body: JSON.stringify(linha) });
+    dados = await r.json().catch(() => []);
+  }
   if (!r.ok) {
     console.error("academias update", r.status, JSON.stringify(dados).slice(0, 200));
     return json({ erro: "não deu pra gravar (rode o SQL novo?)" }, 500);
   }
   if (!Array.isArray(dados) || !dados.length) {
-    // id válido mas nenhuma academia com ele — evento de outra instalação
-    return json({ ok: true, ignorado: "academia não encontrada" });
+    // id válido mas nenhuma academia com ele — evento de outra instalação —
+    // OU evento mais velho que o último aplicado (guarda de ordem): 200 pro
+    // RevenueCat parar de reenviar
+    return json({ ok: true, ignorado: quando > 0 ? "academia não encontrada ou evento mais antigo que o último aplicado" : "academia não encontrada" });
   }
   return json({ ok: true, status: status });
 });

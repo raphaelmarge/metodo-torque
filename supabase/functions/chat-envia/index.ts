@@ -95,6 +95,19 @@ async function usuarioDoToken(req: Request): Promise<string> {
   } catch { return ""; }
 }
 
+/* v747: o nome da academia/studio pro prompt da IA — o robô se apresentava
+ * como "TORQUE FIT" pra cliente de qualquer profissional (o sistema é
+ * multi-inquilino; TORQUE FIT é só a academia do dono). Sem nome, fala
+ * genérico. */
+async function nomeAcademia(aid: string): Promise<string> {
+  try {
+    if (!aid) return "";
+    const r = await sb(`academias?select=nome&id=eq.${aid}&limit=1`);
+    const rows = r.ok ? await r.json() : [];
+    return String((rows[0] && rows[0].nome) || "").trim().slice(0, 80);
+  } catch { return ""; }
+}
+
 /* Credencial da academia DONA da conversa. Sem isso, o robô responderia pelo
  * número do profissional e o botão Enviar da equipe pelo número do dono do
  * sistema — a mesma conversa saindo por dois números diferentes. */
@@ -182,9 +195,12 @@ function textoDaResposta(d: any): { ok: boolean; texto?: string; erro?: string }
   return { ok: true, texto };
 }
 
-async function respostaIA(historico: { de: string; texto: string }[], promptExtra: string): Promise<string> {
+/* v747: devolve { ok, texto | erro } em vez de "" — "testar" e "sugerir"
+ * traduziam QUALQUER falha como "confira o secret", inclusive 429 (sem
+ * crédito/limite) e 5xx, e o profissional ia trocar uma chave certa. */
+async function respostaIA(historico: { de: string; texto: string }[], promptExtra: string, nomeAcad = ""): Promise<{ ok: boolean; texto?: string; erro?: string }> {
   const chave = env("ANTHROPIC_API_KEY");
-  if (!chave) return "";
+  if (!chave) return { ok: false, erro: "Secret ANTHROPIC_API_KEY não configurado." };
   const msgs: { role: "user" | "assistant"; content: string }[] = [];
   for (const m of historico) {
     const role = m.de === "cliente" ? "user" : "assistant";
@@ -192,14 +208,14 @@ async function respostaIA(historico: { de: string; texto: string }[], promptExtr
     if (ultimo && ultimo.role === role) ultimo.content += "\n" + m.texto;
     else msgs.push({ role, content: m.texto });
   }
-  if (!msgs.length) return "";
+  if (!msgs.length) return { ok: false, erro: "A conversa está vazia — não há o que responder." };
   if (msgs[0].role === "assistant") msgs.unshift({ role: "user", content: "(início da conversa)" });
   if (msgs[msgs.length - 1].role === "assistant") {
     msgs.push({ role: "user", content: "(o cliente ainda não respondeu — sugira uma continuação curta)" });
   }
 
   const sistema =
-    "Você é o atendente virtual de uma academia (TORQUE FIT) respondendo clientes " +
+    "Você é o atendente virtual " + (nomeAcad ? "de " + nomeAcad + " (academia/studio)" : "de uma academia/studio") + " respondendo clientes " +
     "pelo WhatsApp e pelo Instagram. Responda em português do Brasil, de forma curta, " +
     "simpática e objetiva, como uma mensagem de chat (sem markdown, sem listas longas). " +
     "Nunca invente preços, horários ou promoções que não estejam nas instruções abaixo — " +
@@ -221,11 +237,8 @@ async function respostaIA(historico: { de: string; texto: string }[], promptExtr
       messages: msgs.slice(-20),
     }),
   });
-  if (!r.ok) { console.error("anthropic", r.status, await r.text()); return ""; }
-  const d = await r.json();
-  let texto = "";
-  for (const b of d.content || []) if (b.type === "text") texto += b.text;
-  return texto.trim();
+  if (!r.ok) { console.error("anthropic", r.status, await r.text()); return { ok: false, erro: erroAnthropic(r.status) }; }
+  return textoDaResposta(await r.json());
 }
 
 Deno.serve(async (req: Request) => {
@@ -241,7 +254,7 @@ Deno.serve(async (req: Request) => {
     const uidP = await usuarioDoToken(req);
     let credP: any = null;
     if (uidP) {
-      const rm = await sb(`membros?select=academia_id&user_id=eq.${uidP}&limit=1`);
+      const rm = await sb(`membros?select=academia_id&user_id=eq.${uidP}&order=criado.asc&limit=1`);
       const ms = rm.ok ? await rm.json() : [];
       if (ms[0]) credP = await credencialDa(ms[0].academia_id);
     }
@@ -261,7 +274,7 @@ Deno.serve(async (req: Request) => {
        * que ele espera e avisa quando a função publicada é velha demais —
        * sem isso, uma chat-envia antiga ignorava a leitura do professor e
        * nada na tela dizia por quê: o treino só saía "errado". */
-      regras: ["mes", "brief", "briefManda", "metodo"],
+      regras: ["mes", "brief", "briefManda", "metodo", "erro-ia", "nome-academia", "membro-ordenado"],
     });
   }
 
@@ -269,21 +282,21 @@ Deno.serve(async (req: Request) => {
   // (não envia nada para a Meta, não grava nada)
   if (corpo.acao === "testar") {
     const uid = await usuarioDoToken(req);
-    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
     r = await sb(`chat_config?select=prompt&academia_id=eq.${m.academia_id}`);
     const prompt = ((r.ok ? await r.json() : [])[0] || {}).prompt || "";
     const hist = Array.isArray(corpo.historico) ? corpo.historico.slice(-20) : [];
-    const texto = await respostaIA(hist, prompt);
-    if (!texto) return json({ erro: "IA indisponível — confira o secret ANTHROPIC_API_KEY." }, 502);
-    return json({ ok: true, texto });
+    const rIa = await respostaIA(hist, prompt, await nomeAcademia(m.academia_id));
+    if (!rIa.ok) return json({ erro: rIa.erro }, 502);
+    return json({ ok: true, texto: rIa.texto });
   }
 
   // central de ajuda: o Claude responde dúvidas de uso com base no manual
   if (corpo.acao === "ajuda") {
     const uid = await usuarioDoToken(req);
-    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     if (!(r.ok ? await r.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
@@ -304,7 +317,7 @@ Deno.serve(async (req: Request) => {
         model: "claude-opus-4-8",
         max_tokens: 900,
         thinking: { type: "adaptive" },
-        system: "Você é o assistente de suporte do TORQUE ON, o sistema de gestão da academia TORQUE FIT. " +
+        system: "Você é o assistente de suporte do TORQUE ON, o sistema de gestão pra academias, studios, personais e nutricionistas. " +
           "Responda em português do Brasil, curto e direto, SEMPRE com base no manual abaixo. " +
           "Cite o caminho do menu exatamente como está no manual (ex.: Sistema → Operação → Entrada). " +
           "Se a resposta não estiver no manual, diga honestamente que esse recurso não existe (ou ainda não) " +
@@ -321,7 +334,7 @@ Deno.serve(async (req: Request) => {
   // copiloto do dono: análise de gestão com o Claude (não envia nada a ninguém)
   if (corpo.acao === "analisar") {
     const uid = await usuarioDoToken(req);
-    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
@@ -353,7 +366,7 @@ Deno.serve(async (req: Request) => {
   // que faz o treino cair na aba certa do painel (fichas × circuito × corrida).
   if (corpo.acao === "ia_treino") {
     const uid = await usuarioDoToken(req);
-    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
@@ -498,7 +511,7 @@ Deno.serve(async (req: Request) => {
   // 🥦 IA de dieta: recebe o perfil do paciente + alvos + catálogo de alimentos e devolve o plano em JSON
   if (corpo.acao === "ia_dieta") {
     const uid = await usuarioDoToken(req);
-    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&order=criado.asc&limit=1`);
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
@@ -556,9 +569,9 @@ Deno.serve(async (req: Request) => {
     const hist = (r.ok ? await r.json() : []).reverse();
     r = await sb(`chat_config?select=prompt&academia_id=eq.${conversa.academia_id}`);
     const prompt = ((r.ok ? await r.json() : [])[0] || {}).prompt || "";
-    const texto = await respostaIA(hist, prompt);
-    if (!texto) return json({ erro: "IA indisponível — confira o secret ANTHROPIC_API_KEY." }, 502);
-    return json({ ok: true, texto });
+    const rIa = await respostaIA(hist, prompt, await nomeAcademia(conversa.academia_id));
+    if (!rIa.ok) return json({ erro: rIa.erro }, 502);
+    return json({ ok: true, texto: rIa.texto });
   }
 
   if (corpo.acao === "enviar") {

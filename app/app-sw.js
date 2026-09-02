@@ -8,8 +8,14 @@
  * mesmo assim com a última versão que ele viu. Os DADOS do aluno ficam no
  * localStorage (tq_app_pacote) — aqui só mora o código.
  */
-try { importScripts("../assets/versao.js"); } catch (e) {}
-var CACHE = "mt-app-" + (self.MT_VERSAO || "v1");
+/* v747: a versão fica CRAVADA aqui, igual ao sw.js da raiz — pelo MESMO motivo.
+ * Este arquivo tirava a versão do assets/versao.js por importScripts, e seus
+ * bytes não mudavam desde o mt-v665: o Safari não confere arquivo importado,
+ * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
+ * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
+ * este número bate com o do assets/versao.js e o do sw.js. */
+var VERSION = "mt-v746";
+var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
  *
@@ -79,7 +85,16 @@ self.addEventListener("fetch", function (e) {
       if (r && r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); }
       return r;
     }).catch(function () {
-      return caches.match(req).then(function (c) { return c || caches.match("index.html"); });
+      return caches.match(req).then(function (c) {
+        if (c) return c;
+        /* v747: o index.html só serve de reserva pra NAVEGAÇÃO. Antes qualquer
+         * arquivo que faltasse offline (script, imagem, JSON) recebia HTML com
+         * status 200: o onerror nunca disparava e o erro aparecia longe
+         * ("SyntaxError", "window.X is undefined"). Sub-recurso que falta
+         * falha de verdade, como a rede falharia. */
+        if (req.mode === "navigate") return caches.match("index.html");
+        return Response.error();
+      });
     })
   );
 });
@@ -87,7 +102,8 @@ self.addEventListener("fetch", function (e) {
 self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
-  e.waitUntil(self.registration.showNotification(d.t || "TORQUE FIT", {
+  // sem título no payload vale a marca do produto (nunca a academia do dono)
+  e.waitUntil(self.registration.showNotification(d.t || "TORQUE ON", {
     body: d.b || "",
     icon: "../assets/icons/icon-192.png",
     badge: "../assets/icons/icon-192.png",
