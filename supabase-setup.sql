@@ -3434,6 +3434,41 @@ as $$
 $$;
 grant execute on function public.minha_assinatura() to authenticated;
 
+-- O VITALÍCIO É GRUDADO (v762). A promessa "nunca trava" era falsa: DOIS
+-- caminhos escreviam assinatura_status por cima sem saber do vitalício —
+-- (1) hq_cliente_set, ao classificar o cliente como pausado/cancelado na lista
+-- do HQ, e (2) assinatura-loja, o webhook do RevenueCat, que grava o status que
+-- vier da loja (bastava o professor instalar o app e chegar um evento de
+-- expiração). Em vez de consertar os dois — e o terceiro que alguém escrever
+-- ano que vem —, a trava mora no BANCO: um gatilho devolve 'vitalicia' pro
+-- lugar, venha a escrita de onde vier.
+--
+-- Ele NÃO levanta exceção de propósito: o webhook da loja precisa responder
+-- 200, senão o RevenueCat reenvia o evento por horas. O resto da linha (via,
+-- referência) grava normalmente; só o status e o vencimento voltam.
+create or replace function public.academias_protege_vitalicio()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if old.assinatura_status = 'vitalicia'
+     and new.assinatura_status is distinct from 'vitalicia'
+     and coalesce(current_setting('app.vitalicio_ok', true), '') <> '1' then
+    new.assinatura_status := 'vitalicia';
+    new.assinatura_vence := null;
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.academias_protege_vitalicio() from public, anon, authenticated;
+
+drop trigger if exists academias_vitalicio_grudado on public.academias;
+create trigger academias_vitalicio_grudado
+  before update on public.academias
+  for each row execute function public.academias_protege_vitalicio();
+
+-- o ÚNICO caminho que TIRA o vitalício: avisa o gatilho antes de escrever
 create or replace function public.hq_vitalicio(p_academia uuid, p_ligar boolean)
 returns json
 language plpgsql security definer
@@ -3443,6 +3478,7 @@ begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
     raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
+  if not p_ligar then perform set_config('app.vitalicio_ok', '1', true); end if;
   update academias
      set assinatura_status = case when p_ligar then 'vitalicia' else 'trial' end,
          assinatura_vence  = case when p_ligar then null else assinatura_vence end
