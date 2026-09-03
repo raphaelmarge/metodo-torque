@@ -6249,6 +6249,34 @@ async function abaPt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
+
+  /* v763: o pedido de push saiu dos Ajustes. Medido em 2026-09-03: 12 alunos
+   * com app publicado e UM com push ligado — o pedido existia, mas só numa
+   * linha da aba Ajustes que ninguém visita, e o card do Início vinha
+   * desligado por uma condição que nunca era falsa. */
+  {
+    const i = appHtml.indexOf("id='cardNotif'");
+    const iSem = appHtml.indexOf("id='semBlock'");
+    const iFim = appHtml.indexOf("Gerado em");
+    ok(i > iSem && i < iFim && (iFim - i) > 2000,
+      "🔔 o card de notificação mora no INÍCIO, embaixo do 'Treinei hoje!' — não no rodapé");
+    ok(!/!document\.getElementById\('ajNotif'\)/.test(appHtml),
+      "🔔 sumiu a condição que desligava o card sempre que a linha dos Ajustes existia");
+    ok(/btnNotifNao/.test(appHtml) && /ptpushAdiado/.test(appHtml),
+      "🔔 tem 'Agora não', e o 'não' é lembrado — o app não insiste no dia seguinte");
+    ok(/Notification\.permission==='denied'\)return/.test(appHtml),
+      "🔔 quem já negou nunca mais é incomodado (no navegador, um 'não' não se desfaz)");
+    // o pedido do navegador só sai no toque — pedir sem contexto queima a chance
+    const corpoMostra = appHtml.slice(appHtml.indexOf("function pushMostra"), appHtml.indexOf("window.__pushMostra"));
+    const ateOPedido = appHtml.slice(appHtml.indexOf("window.__pushMostra"), appHtml.indexOf("Notification.requestPermission().then(function(p2)"));
+    ok(!/requestPermission/.test(corpoMostra) && /btn\.addEventListener\('click'/.test(ateOPedido) && ateOPedido.length < 200,
+      "🔔 a janelinha do navegador só aparece no toque em 'Quero receber', nunca sozinha");
+    ok(/onbCard/.test(corpoMostra) && /btnFeito/.test(appHtml.slice(appHtml.indexOf("window.__pushMostra"))),
+      "🔔 não aparece em cima do onboarding, e volta assim que ele marca o primeiro treino");
+    ok(/iPad\|iPhone\|iPod/.test(appHtml) && /Adicionar à Tela de Início/.test(appHtml) &&
+       /navigator\.standalone/.test(appHtml),
+      "🔔 no iPhone sem o app instalado, o card ensina a instalar em vez de sumir calado");
+  }
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
   // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
   // fixo saiu do app montado de propósito, era ele que fazia o atalho do
@@ -11975,6 +12003,15 @@ async function abaPt(p, a) {
       msgs.push({ de: "personal", texto: "nova!", criado: "2026-09-03T12:00:00+00:00" });
       window.__pintaChat(msgs);
       out.desceu = el.scrollTop > 0 && /nova!/.test(el.textContent);
+      /* v763: a saudação do assistente é carimbada na HORA em que o app abre,
+       * então ela é quase sempre a mensagem mais nova da lista — e o chat, que
+       * decidia descer comparando a data da última, parava de descer pro recado
+       * do professor. Aqui a mensagem nova entra com data antiga de propósito:
+       * quem manda é a CONTAGEM, não a data. */
+      el.scrollTop = 0;
+      msgs.push({ de: "personal", texto: "vê isso aqui", criado: "2026-08-01T00:00:00+00:00" });
+      window.__pintaChat(msgs);
+      out.desceuMesmoSemSerAMaisNova = el.scrollTop > 0;
       window.__pintaChat(JSON.parse(localStorage.getItem("ptchat") || "[]"));
       // (b) melhor pace comparado como número (10:30 não ganha de 6:15)
       const cardioAntes = localStorage.getItem("ptcardio");
@@ -12041,6 +12078,8 @@ async function abaPt(p, a) {
     ok(r751.hora, "💬 v751: a hora da mensagem é a LOCAL (o criado chega em UTC do Supabase)");
     ok(r751.rola && r751.ficouEmCima && r751.desceu,
       "💬 v751: repintar sem mensagem nova não puxa a rolagem de quem lê o histórico — mensagem nova, sim");
+    ok(r751.desceuMesmoSemSerAMaisNova,
+      "💬 v763: o chat desce pra mensagem nova mesmo quando a saudação do assistente é a mais recente da lista");
     ok(r751.pace, "🏅 v751: 'Melhor pace' compara como número — 6:15 vence 10:30");
     ok(r751.novos === "Subiu" && r751.muralNovo, "🏆 v751: recorde NOVO = máximo do mês com mais de uma anotação (a 1ª anotação não é recorde)");
     ok(r751.forcaAtalho && r751.cabecalho,

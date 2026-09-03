@@ -1798,6 +1798,44 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Pedir o push no primeiro dia** (mt-v763): medido no banco em 2026-09-03 —
+**12 apps publicados, 5 abertos, UM aluno com push ligado**. O pedido de
+permissão existia, mas só numa linha da aba **Ajustes**, que ninguém visita; e
+o card do Início que deveria pedir estava **morto desde sempre** por uma
+condição que nunca era falsa (`if(card&&btn&&!document.getElementById('ajNotif'))`
+— o `ajNotif` é a tal linha dos Ajustes, que existe em todo app). Sem push, o
+aluno só lembra do treino se abrir o app por conta própria: é o buraco entre
+"o professor publicou" e "o aluno treinou".
+
+Agora o card `#cardNotif` mora no **Início**, logo abaixo do "Treinei hoje!" —
+o momento em que ele acabou de ver o treino do dia. O desenho é de **dois
+passos de propósito**: o card é NOSSO ("Posso te avisar no dia do treino…"),
+e a janelinha do navegador só aparece quando ele toca em **Quero receber**.
+Motivo: no navegador um "não" é **permanente** — `Notification.permission`
+vira `denied` e não existe jeito de perguntar de novo. Pedir sem contexto
+queima a única chance que o app tem.
+
+Regras: quem já negou (`denied`) nunca mais é incomodado; **Agora não** guarda
+`ptpushAdiado` e some por 3 dias, mas volta logo depois do **primeiro treino
+marcado** (`btnFeito`), que é quando o app acabou de provar que serve pra
+alguma coisa; e o card nunca aparece por cima do onboarding (`onbCard`).
+⚠️ **iPhone**: `window.Notification` **não existe** enquanto o app não está na
+tela de início — então lá o card não some calado, ele ensina *Compartilhar →
+Adicionar à Tela de Início* e o botão vira "Entendi". Gancho:
+`window.__pushMostra`.
+
+**O chat não descia pra mensagem nova** (conserto na v763): a régua da v751
+("só desce quando chegou mensagem nova ou o aluno já estava no fim") comparava
+a **data da última mensagem** (`el._chUlt`). Só que a saudação do assistente é
+carimbada na **hora em que o app abre** — ela é quase sempre a mais nova da
+lista inteira, então a data nunca mudava, `cresceu` era sempre falso e o recado
+do professor entrava sem o chat descer até ele. Agora quem manda é a
+**contagem** (`el._chN`), que é o que "chegou mensagem nova" quer dizer.
+⚠️ O teste da v751 já cobria isso e **falhava de forma intermitente** — ele só
+reprovava quando o relógio passava do horário cravado na mensagem de mentira.
+O assert novo põe a mensagem nova com data **antiga de propósito**, então a
+regressão não depende mais da hora do dia.
+
 **O vitalício é grudado** (mt-v762): a v761 criou o status `vitalicia`
 prometendo "nunca trava", e a promessa era **falsa**. Dois caminhos escreviam
 `academias.assinatura_status` por cima sem saber do vitalício: (1)
