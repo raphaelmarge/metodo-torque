@@ -3370,3 +3370,84 @@ begin
 end;
 $$;
 grant execute on function public.hq_uso() to authenticated;
+
+-- ============================================================
+-- TRAVA DO TESTE VENCIDO E ACESSO VITALÍCIO (v761)
+-- ============================================================
+-- O teste dura 14 dias e, até aqui, vencer não fazia NADA: a tela mostrava uma
+-- faixa e o professor seguia usando pra sempre. Agora o SERVIDOR decide se está
+-- travado (campo `travado` da minha_assinatura) e o painel só obedece. Decidir
+-- no servidor importa porque o relógio do aparelho é do usuário: mudar a data
+-- do celular não destrava nada.
+--
+-- Carência de 3 DIAS depois do fim do teste (dias 15, 16 e 17 ainda passam).
+-- Trava a partir do dia 18. Os dois números ficam em assinatura_regras, pra
+-- mudar a política sem republicar nada.
+--
+-- 'vitalicia' é o acesso permanente de cortesia: nunca trava, nunca recebe
+-- e-mail de teste (a regua_pendentes filtra por 'trial') e o painel diz isso
+-- com todas as letras em vez de fingir que é assinatura paga.
+--
+-- ⚠️ O painel FALHA ABERTO: só trava quando esta função DISSE que está travado.
+-- Sem internet, com SQL antigo ou com a RPC fora do ar, ninguém trava.
+
+create table if not exists public.assinatura_regras (
+  id int primary key default 1,
+  dias_teste int not null default 14,
+  dias_carencia int not null default 3,
+  constraint assinatura_regras_uma_linha check (id = 1)
+);
+insert into public.assinatura_regras (id) values (1) on conflict (id) do nothing;
+alter table public.assinatura_regras enable row level security;
+revoke all on public.assinatura_regras from anon, authenticated;
+
+create or replace function public.minha_assinatura()
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'status', a.assinatura_status,
+    'via', a.assinatura_via,
+    'vence', a.assinatura_vence,
+    'academia_id', a.id,
+    'dia_do_teste', (floor(extract(epoch from now() - a.criada) / 86400)::int + 1),
+    'dias_de_teste', r.dias_teste,
+    'dias_carencia', r.dias_carencia,
+    'dias_ate_travar', case
+      when a.assinatura_status in ('ativa', 'vitalicia') then null
+      else greatest(0, (r.dias_teste + r.dias_carencia)
+                       - (floor(extract(epoch from now() - a.criada) / 86400)::int + 1)) end,
+    'travado', case
+      when a.assinatura_status in ('ativa', 'vitalicia') then false
+      when a.assinatura_status = 'trial'
+        then (floor(extract(epoch from now() - a.criada) / 86400)::int + 1)
+             > (r.dias_teste + r.dias_carencia)
+      when a.assinatura_status = 'atrasada' then false
+      else true end
+  )
+  from public.academias a
+  cross join (select dias_teste, dias_carencia from public.assinatura_regras where id = 1) r
+  where a.id in (select public.minhas_academias())
+  order by a.criada
+  limit 1
+$$;
+grant execute on function public.minha_assinatura() to authenticated;
+
+create or replace function public.hq_vitalicio(p_academia uuid, p_ligar boolean)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
+  end if;
+  update academias
+     set assinatura_status = case when p_ligar then 'vitalicia' else 'trial' end,
+         assinatura_vence  = case when p_ligar then null else assinatura_vence end
+   where id = p_academia;
+  return json_build_object('ok', true, 'vitalicia', p_ligar);
+end;
+$$;
+grant execute on function public.hq_vitalicio(uuid, boolean) to authenticated;

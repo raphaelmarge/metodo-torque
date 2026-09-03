@@ -1959,6 +1959,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 4px 0 16px; font-size: 12.5px;">A assinatura é cobrada pela loja do seu celular e renova sozinha. Cancela quando quiser, direto na loja — sem multa.</p>
       <button class="btn" id="taAssinar" style="width: 100%;">Assinar agora</button>
       <button class="btn sec" id="taDepois" style="width: 100%; margin-top: 8px;">Continuar no teste grátis</button>
+      <!-- v761: modo TRAVADO. Os dois botões abaixo são a promessa que a trava
+           NÃO pode quebrar: os dados continuam sendo dele e voltam na hora que
+           pagar. Sem eles isto seria sequestro de dado, não cobrança. -->
+      <button class="btn sec" id="taRever" hidden style="width: 100%; margin-top: 8px;">Já assinei — verificar de novo</button>
+      <button class="btn sec" id="taBackup" hidden style="width: 100%; margin-top: 8px;">Baixar meus dados (.json)</button>
+      <p id="taTravaAjuda" hidden class="muted" style="font-size: 12px; margin: 12px 0 0; line-height: 1.6;">
+        Seus dados continuam guardados e <b>nada foi apagado</b>. O app que seus alunos já têm no celular continua funcionando com o último treino publicado.
+        Precisa de ajuda? Fale com a gente no WhatsApp <b>(31) 99775-6034</b>.</p>
       <p id="taErro" hidden style="font-size: 12.5px; margin: 10px 0 0; line-height: 1.5; color: #fca5a5;"></p>
     </div>
   </div>
@@ -21377,12 +21385,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * faixa some ao entrar na conta e este card escondia o status "trial".
      * O servidor manda e-mail nos dias 1/3/7/12 e o painel ficava calado até o
      * dia do vencimento. Agora a data que vale (a do servidor) aparece aqui. */
+    /* v761: acesso vitalício — cortesia permanente do dono. Diz o que É, em vez
+     * de fingir assinatura paga (e antes caía no ramo "vencida", em vermelho). */
+    if (ass.status === "vitalicia") {
+      info.hidden = false;
+      info.innerHTML = "♾️ <b>Acesso vitalício</b> — liberado pelo TORQUE ON, sem prazo e sem mensalidade.";
+      return;
+    }
     if (ass.status === "trial") {
       var diasT = ass.vence ? Math.ceil((Date.parse(String(ass.vence).slice(0, 10) + "T23:59:59") - Date.now()) / 864e5) : 0;
       info.hidden = false;
       info.innerHTML = diasT > 0
         ? "🎁 <b>Teste grátis</b> até " + vence + " — " + S.plural(diasT, "dia", "dias") + " pra assinar sem perder nada."
-        : "🎁 <b>Teste grátis</b>" + (vence ? " terminou em " + vence : " terminou") + " — assine pra manter a nuvem e o app dos alunos.";
+        : "🎁 <b>Teste grátis</b>" + (vence ? " terminou em " + vence : " terminou") + " — assine pra manter a nuvem e o app dos alunos."
+          + (ass.dias_ate_travar > 0
+              ? " <b style=\"color:var(--tk-aten2)\">O painel trava em " + S.plural(ass.dias_ate_travar, "dia", "dias") + ".</b>"
+              : "");
       return;
     }
     var viaTxt = ass.via === "app_store" ? "App Store" : ass.via === "play_store" ? "Play Store" : "";
@@ -21413,6 +21431,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (r && !r.error && r.data && r.data.status) {
         try { localStorage.setItem("mtapp:ptAssinatura", JSON.stringify(r.data)); } catch (e) {}
         renderAssinatura();
+        aplicaTrava();   // v761: o servidor acabou de falar — obedece na hora
       }
     }, function () { /* sem internet ou SQL antigo: fica o último status guardado */ });
   }
@@ -21423,8 +21442,58 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (S.cloud && S.cloud()) { clearInterval(assTimer); consultaAssinatura(); }
     else if (assTenta > 20) clearInterval(assTimer);
   }), 3000);
+  /* ---------- v761: A TRAVA DO TESTE VENCIDO ----------
+   * Quem manda é o SERVIDOR (campo `travado` da minha_assinatura). O painel não
+   * recalcula prazo nenhum, porque o relógio do aparelho é do usuário: mudar a
+   * data do celular não destrava nada.
+   *
+   * ⚠️ FALHA ABERTA, sempre. Só trava quando o servidor DISSE que está travado.
+   * Sem internet, com SQL antigo, com a RPC fora do ar ou com resposta que não
+   * é o envelope esperado, o painel NÃO trava — é a mesma regra do
+   * app_aluno_estado da v475. Um cliente pago não pode perder a agenda do dia
+   * por causa de uma oscilação de rede nossa.
+   *
+   * E a trava nunca vira sequestro: a tela travada leva "Baixar meus dados" e
+   * "Já assinei — verificar de novo". Nada é apagado, e o app que o aluno já
+   * tem no celular continua funcionando com o último treino publicado. */
+  function estaTravado() {
+    var ass = leAssinatura();
+    return !!(ass && ass.travado === true);
+  }
+  function aplicaTrava() {
+    var tela = $("telaAssinatura");
+    if (!tela || !estaTravado()) return false;
+    var h = tela.querySelector("h2");
+    if (h) h.textContent = "Seu teste grátis acabou";
+    $("taDepois").hidden = true;      // não há "depois": é isto que trava
+    $("taRever").hidden = false;
+    $("taBackup").hidden = false;
+    $("taTravaAjuda").hidden = false;
+    $("taErro").hidden = true;
+    tela.hidden = false;
+    return true;
+  }
+  // "Já assinei" — pergunta de novo pro servidor e destrava na hora se pagou
+  var btRever = $("taRever");
+  if (btRever) btRever.addEventListener("click", function () {
+    btRever.disabled = true;
+    btRever.textContent = "Verificando…";
+    consultaAssinatura();
+    setTimeout(function () {
+      btRever.disabled = false;
+      btRever.textContent = "Já assinei — verificar de novo";
+      if (!estaTravado()) { $("telaAssinatura").hidden = true; renderAssinatura(); }
+      else { var e = $("taErro"); e.textContent = "Ainda não caiu aqui. Se você acabou de pagar, pode levar alguns minutos."; e.hidden = false; }
+    }, 2500);
+  });
+  // os dados continuam sendo dele, travado ou não
+  var btBk = $("taBackup");
+  if (btBk) btBk.addEventListener("click", function () { S.exportBackup(); });
+
   renderAssinatura();
-  window.__assinatura = { consulta: consultaAssinatura, render: renderAssinatura, nativo: ehAppNativo }; // testes
+  aplicaTrava();   // v761: abriu travado? mostra a tela antes de qualquer coisa
+  window.__assinatura = { consulta: consultaAssinatura, render: renderAssinatura, nativo: ehAppNativo,
+    travado: estaTravado, aplica: aplicaTrava }; // testes
 
   // ---------- tela de assinatura (aparece logo depois do login no app da loja) ----------
   function mostraTelaAssinatura(forca) {
