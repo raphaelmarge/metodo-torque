@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v760** |
-| Estado do repo em | 2026-09-02 (commit `7a79530`) |
+| App em | **mt-v761** |
+| Estado do repo em | 2026-09-02 (commit `7115573`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 221 |
+| Lançamentos no histórico | 222 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v760**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v761**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v761 | a trava do teste vencido e o acesso vitalício |
 | mt-v760 | o painel que avisa o dono, e a régua contra construir no escuro |
 | mt-v759 | o WhatsApp parou de pedir Supabase ao professor |
 | mt-v758 | redundância, organização e testes — o fim da varredura por área |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v749 | revisão por área — app do aluno (app-html, app-core, 29 itens) |
 | mt-v748 | revisão por área — infra, funções e SQL (43 itens) |
 | mt-v747 | revisão por área — NUTRI (36 itens) e Início/Alunos do Personal (22 itens) |
-| mt-v746 | os 3 graves que sobraram + timers do painel blindados + bateria em porta própria |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
