@@ -401,7 +401,9 @@
       $("hqSaude").innerHTML = L.map(function (c) {
         var sinais = c.sinais || [];
         var cor = c.urgencia >= 100 ? "#dc2626" : (c.urgencia >= 20 ? "#d97706" : "var(--cinza)");
-        var selo = c.status === "ativo"
+        var selo = c.status === "vitalicia"
+          ? '<span class="tag ativo">SEM PRAZO</span>'
+          : c.status === "ativo"
           ? '<span class="tag ativo">CLIENTE</span>'
           : (c.dia_do_teste > 14
               ? '<span class="tag cancelado">TESTE VENCIDO</span>'
@@ -416,6 +418,9 @@
         return '<div style="border-top:1px solid var(--linha);padding:12px 0;">' +
           '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;">' +
             '<b style="font-size:15px;">' + esc(c.nome || "sem nome") + "</b>" + selo +
+            (c.status === "vitalicia"
+              ? '<span class="tag ativo">VITALÍCIO</span>'
+              : '<button class="btn sec mini" data-vital="' + c.id + '" style="margin-left:6px;">Dar acesso vitalício</button>') +
             '<span class="muted" style="font-size:12px;margin-left:auto;">entrou ' + fmtD(c.criada) +
               (c.ultimo_uso ? " · último uso " + fmtD(c.ultimo_uso) : " · nunca usou") + "</span>" +
           "</div>" +
@@ -428,6 +433,20 @@
       }).join("");
     }, function () { $("cardSaude").hidden = true; });
   }
+
+  /* v761: acesso vitalício — cortesia permanente. Uma RPC, sem tabela nova:
+   * vira academias.assinatura_status = 'vitalicia', que a trava do painel do
+   * professor nunca alcança e a régua de e-mail de teste ignora. */
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-vital]");
+    if (!b) return;
+    if (!confirm("Dar acesso VITALÍCIO a esta conta?\n\nEla para de receber os e-mails do teste e nunca trava. Dá pra desfazer aqui mesmo depois.")) return;
+    b.disabled = true; b.textContent = "…";
+    cli.rpc("hq_vitalicio", { p_academia: b.getAttribute("data-vital"), p_ligar: true }).then(function (r) {
+      if (r.error) { b.disabled = false; b.textContent = "Dar acesso vitalício"; alert("Não deu: " + r.error.message); return; }
+      carregaSaude();
+    });
+  });
 
   function carregaUso() {
     cli.rpc("hq_uso").then(function (r) {

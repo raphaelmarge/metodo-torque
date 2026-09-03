@@ -1798,6 +1798,46 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**A trava do teste vencido e o acesso vitalício** (mt-v761): até aqui o teste
+grátis vencer não fazia NADA — a tela mostrava uma faixa e o professor seguia
+usando pra sempre. Medido no dia: as 3 academias estavam em `trial`, duas delas
+no dia 19 (as do próprio Raphael) e o Diogo no dia 16. Agora o **servidor**
+decide: `minha_assinatura` devolve `travado`, `dia_do_teste`, `dias_ate_travar`
+e o painel só OBEDECE — não recalcula prazo nenhum, porque o relógio do
+aparelho é do usuário e mudar a data do celular destravaria tudo. Os prazos
+moram em `assinatura_regras` (14 dias de teste + 3 de carência), pra mudar a
+política sem republicar nada.
+
+O Raphael escolheu a opção mais dura: **bloqueia o painel inteiro**, com 3 dias
+de folga. A ressalva foi dita uma vez (um professor sem a agenda no meio do
+expediente vira detrator) e a decisão é dele. Três proteções entraram junto e
+NÃO são negociáveis:
+1. **Falha aberta.** Só trava quando o servidor DISSE que está travado. Sem
+   internet, com SQL antigo, com a RPC fora do ar ou com resposta sem o campo,
+   o painel **não** trava — a mesma regra do `app_aluno_estado` da v475. Um
+   cliente pago não pode perder a agenda do dia por oscilação de rede nossa.
+2. **Cobrança não é sequestro.** A tela travada leva *Baixar meus dados
+   (.json)* e *Já assinei — verificar de novo* (que reconsulta e destrava na
+   hora). Nada é apagado.
+3. **O aluno não paga pelo professor.** O app que ele já tem no celular
+   continua funcionando com o último treino publicado — a trava é do painel.
+
+⚠️ A trava REUSA o `#telaAssinatura` que já existia (a tela de assinar do app
+de loja), só que sem o *Continuar no teste grátis* — é justamente a ausência
+desse botão que faz dela uma trava. Zero tela nova, conforme a regra da
+superfície da v760.
+⚠️ `vitalicia` é status novo em `academias.assinatura_status`: nunca trava,
+sai da régua de e-mail (`regua_pendentes` filtra por `trial`) e o painel diz
+"Acesso vitalício — liberado pelo TORQUE ON" em vez de cair no ramo "vencida",
+em vermelho, que é onde um status desconhecido cairia. Liga e desliga pela
+`hq_vitalicio(academia, ligar)`, com botão em cada linha do card de saúde do
+`apps/hq.html`. Aplicado às 3 academias existentes em 2026-09-03 (o Diogo por
+decisão do Raphael; as duas do próprio Raphael porque travariam no mesmo dia).
+⚠️ Continua sem e-mail de "seu teste acabou": a `regua-teste` só dispara nos
+dias 1, 3, 7 e 12. Agora isso importa mais, porque no dia 18 o painel trava sem
+nenhum aviso por e-mail antes. Consertar exige republicar a função.
+Ganchos: `window.__assinatura.travado` e `.aplica`.
+
 **O painel que avisa o dono** (mt-v760): o Raphael perguntou o que melhorar, e
 os números responderam melhor que qualquer opinião. Medido no banco em
 2026-09-03: **3 academias, TODAS em `trial`** — a demo, a do próprio Raphael

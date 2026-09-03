@@ -14839,6 +14839,64 @@ async function abaPt(p, a) {
     ok(chat755.limpou && chat755.naoLida,
       "v755: envio que deu certo limpa a caixa, e a mensagem do professor nasce NÃO lida (pronta pro dia em que existir a RPC de leitura)");
 
+    /* v761: A TRAVA DO TESTE VENCIDO. Três coisas têm de ser verdade ao mesmo
+     * tempo: trava quando o SERVIDOR manda, NÃO trava quando o servidor não
+     * falou (rede caída não pode tirar a agenda do dia de um cliente pago), e
+     * a tela travada continua devolvendo os dados dele. */
+    const trava = await pV.evaluate(async () => {
+      const S = window.MTStore, T = window.__assinatura;
+      // renderAssinatura só fala com quem está logado — o card é da conta
+      const uOrig = S.usuario;
+      S.usuario = () => ({ logado: true, email: "prof@x.com" });
+      const põe = (o) => localStorage.setItem("mtapp:ptAssinatura", JSON.stringify(o));
+      const tela = () => !document.getElementById("telaAssinatura").hidden;
+      const fecha = () => { document.getElementById("telaAssinatura").hidden = true; };
+
+      // 1) servidor mandou travar
+      põe({ status: "trial", travado: true, dia_do_teste: 18 });
+      T.aplica();
+      const travou = tela();
+      const semDepois = document.getElementById("taDepois").hidden;
+      const temBackup = !document.getElementById("taBackup").hidden;
+      const temRever = !document.getElementById("taRever").hidden;
+      const titulo = (document.getElementById("telaAssinatura").querySelector("h2") || {}).textContent || "";
+      fecha();
+
+      // 2) servidor NÃO falou (sem internet, SQL antigo): não trava
+      localStorage.removeItem("mtapp:ptAssinatura");
+      T.aplica();
+      const semVeredito = tela();
+      põe({ status: "trial" });        // resposta velha, sem o campo
+      T.aplica();
+      const campoAusente = tela();
+      fecha();
+
+      // 3) vitalício nunca trava, e a tela DIZ o que é
+      põe({ status: "vitalicia", travado: false });
+      T.aplica();
+      const vitalTrava = tela();
+      T.render();
+      const vitalTxt = document.getElementById("assinaturaInfo").textContent;
+      fecha();
+
+      // 4) pagou: destrava
+      põe({ status: "ativa", travado: false });
+      const aindaTravado = T.travado();
+      localStorage.removeItem("mtapp:ptAssinatura");
+      S.usuario = uOrig;
+      return { travou, semDepois, temBackup, temRever, titulo, semVeredito, campoAusente,
+               vitalTrava, vitalTxt, aindaTravado, temExport: typeof S.exportBackup === "function" };
+    });
+    ok(trava.travou && /acabou/i.test(trava.titulo), "v761: servidor manda travar → a tela de assinar cobre o painel");
+    ok(trava.semDepois, "v761: sem 'Continuar no teste grátis' — é isso que faz dela uma trava");
+    ok(trava.temBackup && trava.temRever && trava.temExport,
+      "v761: travado, ele AINDA baixa os dados dele e tem como dizer 'já assinei' (cobrança, não sequestro)");
+    ok(!trava.semVeredito && !trava.campoAusente,
+      "v761: FALHA ABERTA — sem resposta do servidor (rede caída ou SQL antigo) o painel NÃO trava");
+    ok(!trava.vitalTrava && /vital/i.test(trava.vitalTxt),
+      "v761: acesso vitalício nunca trava e a tela diz que é cortesia, não assinatura paga");
+    ok(!trava.aindaTravado, "v761: assinou → destrava na hora");
+
     /* 18) teste grátis: com conta, o painel diz até quando vai */
     const trial = await pV.evaluate(() => {
       const S = window.MTStore;
