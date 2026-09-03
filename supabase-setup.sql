@@ -3207,3 +3207,166 @@ begin
 end;
 $$;
 revoke execute on function public.ia_uso_conta(uuid, int) from public, anon, authenticated;
+
+-- ============================================================
+-- SAÚDE DA BASE E USO DOS RECURSOS (v760)
+-- ============================================================
+-- Por que existe: até aqui o dono só descobria que um cliente estava indo
+-- embora quando o cliente mandava áudio no WhatsApp. Não havia UM lugar que
+-- dissesse quem entrou, quem travou e de quem o teste vence. Estas duas RPCs
+-- são esse lugar — e são SÓ LEITURA do que já está no banco: nenhuma tabela
+-- nova, nenhuma coleta nova, nenhum dado de aluno exposto.
+--
+-- hq_saude()  → uma linha por academia, com os sinais do que travou.
+-- hq_uso()    → quantas academias usam CADA recurso do produto. É o número
+--               que segura a mão de quem quer construir a vigésima tela antes
+--               de a quinta ser usada por alguém.
+
+-- conta itens de um pedaço do blob, seja ele lista (alunos) ou objeto
+-- (treinosV2 é objeto, com uma chave por aluno)
+create or replace function public.blob_qtd(v jsonb)
+returns int
+language sql immutable
+as $$
+  select case
+    when v is null then 0
+    when jsonb_typeof(v) = 'array' then jsonb_array_length(v)
+    when jsonb_typeof(v) = 'object' then (select count(*)::int from jsonb_object_keys(v))
+    else 0 end
+$$;
+revoke execute on function public.blob_qtd(jsonb) from public, anon, authenticated;
+
+-- SAÚDE: uma linha por academia. O campo `sinais` é o "Resolver hoje" do dono —
+-- frases prontas, na ordem em que doem, montadas a partir do que já existe.
+create or replace function public.hq_saude()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
+  end if;
+
+  return coalesce((select json_agg(x order by x.urgencia desc, x.dia_do_teste desc) from (
+    select
+      a.id, a.nome, a.criada::date as criada, a.assinatura_status as status,
+      -- o mesmo dia que a régua de e-mail usa (dia 1 é o dia do cadastro)
+      (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) as dia_do_teste,
+      greatest(0, 14 - (floor(extract(epoch from now() - a.criada) / 86400)::int + 1)) as dias_de_teste_restantes,
+      s.alunos, s.com_treino, s.sessoes, s.pagamentos,
+      s.apps_publicados, s.apps_abertos,
+      s.ultima_atividade::date as ultimo_uso,
+      s.dias_parado,
+      s.emails_do_teste,
+      s.sinais,
+      -- urgência: quem está a um passo de virar cliente ou de ir embora sobe
+      (case when a.assinatura_status = 'trial'
+                 and (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) > 14
+                 and s.alunos > 0 then 100 else 0 end
+       + least(s.dias_parado, 30)
+       + (case when s.alunos > 0 and s.apps_abertos = 0 then 20 else 0 end)
+       + (case when s.alunos = 0 then 15 else 0 end)) as urgencia
+    from academias a
+    join lateral (
+      select
+        blob_qtd(d.valor->'alunos')     as alunos,
+        blob_qtd(d.valor->'treinosV2')  as com_treino,
+        blob_qtd(d.valor->'sessoes')    as sessoes,
+        blob_qtd(d.valor->'pagamentos') as pagamentos,
+        (select count(*) from app_aluno p where p.academia_id = a.id and p.revogado_em is null) as apps_publicados,
+        -- "abriu" = o app já devolveu alguma coisa (peso, treino marcado, foto)
+        (select count(*) from app_aluno p where p.academia_id = a.id and p.revogado_em is null
+           and p.retorno is not null and p.retorno <> '{}'::jsonb) as apps_abertos,
+        (select max(dd.atualizado) from dados dd where dd.academia_id = a.id) as ultima_atividade,
+        coalesce((select floor(extract(epoch from now() - max(dd.atualizado)) / 86400)::int
+                  from dados dd where dd.academia_id = a.id), 999) as dias_parado,
+        (select count(*) from regua_log l where l.academia_id = a.id) as emails_do_teste,
+        (select coalesce(json_agg(t), '[]'::json) from (
+           select unnest(array_remove(array[
+             case when blob_qtd(d.valor->'alunos') = 0
+                  then 'Criou a conta e não cadastrou nenhum aluno' end,
+             case when blob_qtd(d.valor->'alunos') > 0
+                   and (select count(*) from app_aluno p where p.academia_id = a.id and p.revogado_em is null) = 0
+                  then 'Tem aluno mas nunca publicou o app de ninguém' end,
+             case when (select count(*) from app_aluno p where p.academia_id = a.id and p.revogado_em is null) > 0
+                   and (select count(*) from app_aluno p where p.academia_id = a.id and p.revogado_em is null
+                          and p.retorno is not null and p.retorno <> '{}'::jsonb) = 0
+                  then 'Publicou o app e nenhum aluno abriu ainda' end,
+             case when blob_qtd(d.valor->'alunos') > 0 and blob_qtd(d.valor->'treinosV2') = 0
+                  then 'Tem aluno e nenhum treino montado' end,
+             case when a.assinatura_status = 'trial'
+                   and (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) > 14
+                  then 'TESTE VENCIDO há ' || ((floor(extract(epoch from now() - a.criada) / 86400)::int + 1) - 14) || ' dias — ninguém pediu pra assinar' end,
+             case when a.assinatura_status = 'trial'
+                   and (floor(extract(epoch from now() - a.criada) / 86400)::int + 1) between 12 and 14
+                  then 'Teste acaba em ' || (14 - (floor(extract(epoch from now() - a.criada) / 86400)::int + 1)) || ' dias' end,
+             case when coalesce((select floor(extract(epoch from now() - max(dd.atualizado)) / 86400)::int
+                                 from dados dd where dd.academia_id = a.id), 999) >= 7
+                  then 'Sem abrir o painel há ' || coalesce((select floor(extract(epoch from now() - max(dd.atualizado)) / 86400)::int
+                                 from dados dd where dd.academia_id = a.id), 999) || ' dias' end
+           ], null)) as t
+         ) t) as sinais
+      from dados d
+      where d.academia_id = a.id and d.chave = 'mtapp:ptStudio'
+      union all
+      -- academia que nem chegou a gravar o estúdio ainda
+      select 0, 0, 0, 0, 0, 0, null::timestamptz, 999, 0,
+             '["Entrou e não gravou nada — parou na primeira tela"]'::json
+      where not exists (select 1 from dados d2 where d2.academia_id = a.id and d2.chave = 'mtapp:ptStudio')
+      limit 1
+    ) s on true
+  ) x), '[]'::json);
+end;
+$$;
+grant execute on function public.hq_saude() to authenticated;
+
+-- USO DOS RECURSOS: quantas academias têm CONTEÚDO em cada recurso do produto.
+-- Serve pra uma pergunta só: vale a pena mexer nisto de novo? Recurso com zero
+-- é superfície que só custa manutenção. Nada aqui olha dado de aluno — só
+-- conta se a lista está vazia ou não.
+create or replace function public.hq_uso()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_total int;
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
+  end if;
+  select count(*) into v_total from academias;
+
+  return json_build_object(
+    'academias', v_total,
+    'recursos', coalesce((select json_agg(r order by r.usam desc, r.recurso) from (
+      select 'Alunos'::text as recurso, count(*) filter (where blob_qtd(d.valor->'alunos') > 0)::int as usam from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Treinos montados', count(*) filter (where blob_qtd(d.valor->'treinosV2') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Agenda (sessões)', count(*) filter (where blob_qtd(d.valor->'sessoes') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Financeiro (pagamentos)', count(*) filter (where blob_qtd(d.valor->'pagamentos') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Planos e contratos', count(*) filter (where blob_qtd(d.valor->'planosPT') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Avaliação física', count(*) filter (where blob_qtd(d.valor->'avaliacoes') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Diário da sessão', count(*) filter (where blob_qtd(d.valor->'diarioPT') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Despesas', count(*) filter (where blob_qtd(d.valor->'despesas') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Videoteca', count(*) filter (where blob_qtd(d.valor->'videoteca') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Loja do personal', count(*) filter (where blob_qtd(d.valor->'produtos') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Clube de vantagens', count(*) filter (where blob_qtd(d.valor->'parcerias') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Desafio da turma', count(*) filter (where blob_qtd(d.valor->'desafios') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Questionários', count(*) filter (where blob_qtd(d.valor->'questPerguntas') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Pacotes de serviço', count(*) filter (where blob_qtd(d.valor->'servicosPT') > 0)::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'Comunidade (feed)', count(*) filter (where d.valor->'config'->>'feedOn' = 'true')::int from dados d where d.chave = 'mtapp:ptStudio'
+      union all select 'App do aluno publicado', (select count(distinct academia_id) from app_aluno where revogado_em is null)::int
+      union all select 'Aluno abriu o app', (select count(distinct academia_id) from app_aluno where revogado_em is null and retorno is not null and retorno <> '{}'::jsonb)::int
+      union all select 'Chat com o aluno', (select count(distinct academia_id) from app_chat)::int
+      union all select 'Check-in da semana', (select count(distinct academia_id) from app_checkin)::int
+      union all select 'Push no celular do aluno', (select count(distinct academia_id) from push_subs where token not like 'prof:%')::int
+      union all select 'WhatsApp oficial ligado', (select count(*) from zap_config where token is not null and token <> '')::int
+      union all select 'Gateway próprio de pagamento', (select count(*) from pag_config where chave is not null and chave <> '')::int
+      union all select 'Matrícula pela Minha página', (select count(distinct academia_id) from matriculas_online)::int
+      union all select 'Chamado de suporte aberto', (select count(distinct academia_id) from suporte_chamados)::int
+    ) r), '[]'::json)
+  );
+end;
+$$;
+grant execute on function public.hq_uso() to authenticated;

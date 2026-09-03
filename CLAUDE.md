@@ -1798,6 +1798,67 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**O painel que avisa o dono** (mt-v760): o Raphael perguntou o que melhorar, e
+os números responderam melhor que qualquer opinião. Medido no banco em
+2026-09-03: **3 academias, TODAS em `trial`** — a demo, a do próprio Raphael
+(0 alunos, parada desde 15/08) e a do Diogo (11 alunos, 6 apps publicados, 3
+alunos abriram, usando ontem). O teste do Diogo venceu no dia 1º e **ninguém
+pediu pra ele assinar**; a régua mandou UM e-mail na vida (o do dia 12) porque
+ela só dispara nos dias 1, 3, 7 e 12 e ele se cadastrou antes dela existir.
+Somando: 0 chamados de suporte, 0 matrículas pela Minha página, 1 aluno com
+push, 12 mensagens de chat na história. O Raphael só descobria problema quando
+o cliente mandava áudio no WhatsApp — os dois defeitos do dia (apagão e
+WhatsApp) chegaram assim.
+
+Entraram duas RPCs de LEITURA (nenhuma tabela nova, nenhuma coleta nova,
+nenhum dado de aluno exposto) e dois cards no `apps/hq.html`, acima de tudo:
+**`hq_saude()`** → uma linha por academia com o funil numa frase (alunos → com
+treino → app publicado → app aberto pelo aluno) e os `sinais` do que travou,
+ordenados por urgência: teste vencido COM aluno dentro primeiro, depois quem
+sumiu, depois quem parou antes do produto entregar valor. Quem está bem também
+aparece ("Tudo em dia por aqui") — lista só de bronca ninguém abre.
+**`hq_uso()`** → quantas academias têm conteúdo em CADA recurso, com os zerados
+visíveis. É a régua do item "parar de aumentar a superfície".
+⚠️ `blob_qtd(jsonb)` conta lista OU objeto (`treinosV2` é objeto, uma chave por
+aluno; `alunos` é lista). Ele NÃO se chama `hq_qtd` de propósito: o
+`test-saas.js` exige guarda de admin em toda função `hq_*`, e este ajudante não
+lê dado de ninguém — o nome errado fazia a regra certa reprovar. Migrações
+`v760_saude_da_base_e_uso_dos_recursos` e `v760b_renomeia_helper...` aplicadas
+no banco e espelhadas no setup.
+⚠️ O `saudeDe(c)` que já existia no hq.html usa `diasDesde > 7` pra trial, e o
+teste real são **14** dias (é a conta da `regua_pendentes`). Os dois convivem:
+o antigo é o farol da lista de clientes, o novo é o card de cima. Ficou
+registrado — quem mexer num, confira o outro.
+⚠️ Buraco que apareceu e NÃO foi tapado: a régua de e-mail não tem marco depois
+do dia 12. Ninguém recebe "seu teste acabou". Consertar exige republicar a
+`regua-teste`; ficou pro Raphael decidir.
+
+## A regra da superfície (v760) — leia antes de aceitar uma ideia nova
+
+Em 2026-09-03 os números da base eram: **3 academias, todas em `trial`, uma
+delas de verdade** (11 alunos, 6 apps publicados, 3 alunos abriram). Nesse
+mesmo dia a revisão geral fechou **388 achados** — o custo de manter loja,
+clube, comunidade, desafio, questionários, videoteca, avaliação, Nutri, portal
+e 16 telas de painel. O único usuário real usa **quatro** coisas: alunos,
+agenda, financeiro e treino.
+
+A conclusão que virou regra: **enquanto o número de contas que usam um recurso
+for zero, mexer nele não melhora o produto — só aumenta o que pode quebrar.**
+
+Antes de construir qualquer coisa nova, abra `apps/hq.html` → *Recursos que
+alguém usa de verdade* (RPC `hq_uso()`) e responda: **quantas contas usam a
+parte que eu vou encostar?** Se for zero, o trabalho não é código — é achar
+alguém que precise daquilo. Se o pedido vier do Raphael mesmo assim, faça:
+é a empresa dele. Mas diga o número antes.
+
+O que isto NÃO proíbe: consertar bug em recurso pouco usado (bug é dívida, não
+superfície), e melhorar os quatro recursos que o cliente real usa todo dia.
+
+⚠️ As duas RPCs (`hq_saude`, `hq_uso`) são SÓ LEITURA do que já está no banco —
+nenhuma tabela nova, nenhuma coleta nova, nenhum dado de aluno exposto. O
+`blob_qtd(jsonb)` conta lista OU objeto porque `treinosV2` é objeto (uma chave
+por aluno) e `alunos` é lista.
+
 ## Supabase
 
 - `supabase-setup.sql`: TODO idempotente. Depois de alterar, o Raphael precisa

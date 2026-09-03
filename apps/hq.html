@@ -65,6 +65,23 @@
 
     <div class="kpis" id="hqKpis"></div>
 
+    <!-- v760: o "Resolver hoje" do DONO. Antes só dava pra saber que um cliente
+         estava indo embora quando ele mandava áudio no WhatsApp. Isto é leitura
+         do que já existe no banco — nenhuma coleta nova. -->
+    <div class="card" style="margin-top: 16px;" id="cardSaude" hidden>
+      <h2>Quem precisa de você hoje</h2>
+      <p class="muted" style="font-size: 13px;">Onde cada conta parou. A ordem é a da urgência: teste vencido com aluno dentro vem primeiro, depois quem sumiu, depois quem travou antes de o produto entregar valor.</p>
+      <div id="hqSaude" class="muted" style="margin-top: 10px;">Carregando…</div>
+    </div>
+
+    <!-- v760: a régua contra construir a vigésima tela antes de a quinta ser
+         usada. Recurso com zero é superfície que só custa manutenção. -->
+    <div class="card" style="margin-top: 16px;" id="cardUso" hidden>
+      <h2>Recursos que alguém usa de verdade</h2>
+      <p class="muted" style="font-size: 13px;">Quantas contas têm conteúdo em cada parte do produto. Antes de mexer num recurso de novo, olhe aqui: o que está em zero não precisa de melhoria, precisa de alguém.</p>
+      <div id="hqUso" class="muted" style="margin-top: 10px;">Carregando…</div>
+    </div>
+
     <div class="card" style="margin-top: 16px;" id="cardCobrancas">
       <h2>Cobranças do mês</h2>
       <p class="muted" style="font-size: 13px;">Clientes ativos que ainda não pagaram a mensalidade deste mês — a rotina de faturamento de todo dia 1º, no estilo Stripe Billing.</p>
@@ -214,6 +231,11 @@
   var S = window.MTStore;
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   var fmtR = function (v) { return "R$ " + Math.round(+v || 0).toLocaleString("pt-BR"); };
+  // v760: data curta (dd/mm) — as duas telas novas mostram muitas datas em linha
+  var fmtD = function (d) {
+    var t = String(d || "").slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t.slice(8, 10) + "/" + t.slice(5, 7) : "—";
+  };
 
   // ---------- Pix BR Code (mesmo padrão EMV do módulo Personal) ----------
   function semAcento(t) {
@@ -364,7 +386,72 @@
             '<div style="font-size:10px;color:var(--cinza);margin-top:4px;">' + x.rot + "</div></div>";
         }).join("") + "</div>";
     }, function () { $("cardReceita12").hidden = true; });
+    carregaSaude();
+    carregaUso();
   }
+
+  /* ---------- v760: saúde da base e uso dos recursos ----------
+   * As duas RPCs são novas; se o SQL ainda não foi rodado, o card some em vez
+   * de mostrar erro — o mesmo desenho do hq_receita_mensal aqui de cima. */
+  function carregaSaude() {
+    cli.rpc("hq_saude").then(function (r) {
+      var L = (!r.error && r.data) || [];
+      if (!L.length) { $("cardSaude").hidden = true; return; }
+      $("cardSaude").hidden = false;
+      $("hqSaude").innerHTML = L.map(function (c) {
+        var sinais = c.sinais || [];
+        var cor = c.urgencia >= 100 ? "#dc2626" : (c.urgencia >= 20 ? "#d97706" : "var(--cinza)");
+        var selo = c.status === "ativo"
+          ? '<span class="tag ativo">CLIENTE</span>'
+          : (c.dia_do_teste > 14
+              ? '<span class="tag cancelado">TESTE VENCIDO</span>'
+              : '<span class="tag trial">teste · dia ' + c.dia_do_teste + " de 14</span>");
+        // o funil, em números que cabem numa linha
+        var funil = [
+          c.alunos + " aluno" + (c.alunos === 1 ? "" : "s"),
+          c.com_treino + " com treino",
+          c.apps_publicados + " app" + (c.apps_publicados === 1 ? "" : "s") + " publicado" + (c.apps_publicados === 1 ? "" : "s"),
+          c.apps_abertos + " aberto" + (c.apps_abertos === 1 ? "" : "s") + " pelo aluno",
+        ].join(" · ");
+        return '<div style="border-top:1px solid var(--linha);padding:12px 0;">' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;">' +
+            '<b style="font-size:15px;">' + esc(c.nome || "sem nome") + "</b>" + selo +
+            '<span class="muted" style="font-size:12px;margin-left:auto;">entrou ' + fmtD(c.criada) +
+              (c.ultimo_uso ? " · último uso " + fmtD(c.ultimo_uso) : " · nunca usou") + "</span>" +
+          "</div>" +
+          '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + funil + "</div>" +
+          (sinais.length
+            ? '<ul style="margin:8px 0 0;padding-left:18px;font-size:13px;color:' + cor + ';font-weight:700;">' +
+                sinais.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>"
+            : '<div style="font-size:13px;color:#16a34a;font-weight:700;margin-top:6px;">Tudo em dia por aqui.</div>') +
+          "</div>";
+      }).join("");
+    }, function () { $("cardSaude").hidden = true; });
+  }
+
+  function carregaUso() {
+    cli.rpc("hq_uso").then(function (r) {
+      var d = (!r.error && r.data) || null;
+      if (!d || !d.recursos || !d.recursos.length) { $("cardUso").hidden = true; return; }
+      $("cardUso").hidden = false;
+      var tot = d.academias || 1;
+      var zerados = d.recursos.filter(function (x) { return !x.usam; }).length;
+      $("hqUso").innerHTML =
+        '<p style="font-size:13px;margin:0 0 10px;"><b>' + zerados + " de " + d.recursos.length +
+          "</b> recursos não são usados por ninguém. São eles que custam manutenção sem devolver nada.</p>" +
+        d.recursos.map(function (x) {
+          var pct = Math.round(100 * (x.usam || 0) / tot);
+          var cor = x.usam ? "var(--roxo)" : "var(--linha)";
+          return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+            '<div style="flex:0 0 190px;font-size:12.5px;' + (x.usam ? "" : "color:var(--cinza);") + '">' + esc(x.recurso) + "</div>" +
+            '<div style="flex:1;height:9px;background:var(--linha);border-radius:5px;overflow:hidden;">' +
+              '<div style="width:' + pct + '%;height:100%;background:' + cor + ';"></div></div>' +
+            '<div style="flex:0 0 62px;text-align:right;font-size:12px;font-weight:800;' +
+              (x.usam ? "" : "color:var(--cinza);") + '">' + (x.usam || 0) + " de " + tot + "</div></div>";
+        }).join("");
+    }, function () { $("cardUso").hidden = true; });
+  }
+  window.__hqSaude = { saude: carregaSaude, uso: carregaUso }; // testes
 
   // ---------- health score (estilo Customer Success: sinais de churn) ----------
   function saudeDe(c) {
