@@ -450,6 +450,27 @@ function crcNode(s) {
         if (nome === "hq_receita_mensal") return Promise.resolve({ data: [{ mes: "2026-01", total: 100 }, { mes: "2026-02", total: 350 }] });
         if (nome === "hq_suporte_threads") return Promise.resolve({ data: [{ academia_id: "acad-1", nome: "Academia Ferro Pesado", ultima: dISO(0), ultima_msg: "O totem travou aqui", nao_lidas: 2 }] });
         if (nome === "hq_suporte_lista") return Promise.resolve({ data: [{ de: "cliente", quem: "dono@ferro.com", texto: "O totem travou aqui", criado: dISO(0) }] });
+        // v760: saúde da base e uso dos recursos
+        if (nome === "hq_saude") return Promise.resolve({ data: [
+          { id: "pers-3", nome: "Studio Léo Personal", criada: dISO(-25).slice(0, 10), status: "trial",
+            dia_do_teste: 26, dias_de_teste_restantes: 0, alunos: 11, com_treino: 3, sessoes: 77, pagamentos: 15,
+            apps_publicados: 6, apps_abertos: 3, ultimo_uso: dISO(-1).slice(0, 10), dias_parado: 1, emails_do_teste: 1,
+            sinais: ["TESTE VENCIDO há 12 dias — ninguém pediu pra assinar"], urgencia: 101 },
+          { id: "stud-2", nome: "Studio Pilates Vida", criada: dISO(-3).slice(0, 10), status: "trial",
+            dia_do_teste: 4, dias_de_teste_restantes: 10, alunos: 0, com_treino: 0, sessoes: 0, pagamentos: 0,
+            apps_publicados: 0, apps_abertos: 0, ultimo_uso: dISO(-3).slice(0, 10), dias_parado: 3, emails_do_teste: 2,
+            sinais: ["Criou a conta e não cadastrou nenhum aluno"], urgencia: 18 },
+          { id: "acad-1", nome: "Academia Ferro Pesado", criada: dISO(-80).slice(0, 10), status: "ativo",
+            dia_do_teste: 81, dias_de_teste_restantes: 0, alunos: 40, com_treino: 30, sessoes: 200, pagamentos: 90,
+            apps_publicados: 38, apps_abertos: 33, ultimo_uso: dISO(0).slice(0, 10), dias_parado: 0, emails_do_teste: 4,
+            sinais: [], urgencia: 0 },
+        ] });
+        if (nome === "hq_uso") return Promise.resolve({ data: { academias: 4, recursos: [
+          { recurso: "Alunos", usam: 3 },
+          { recurso: "Agenda (sessões)", usam: 2 },
+          { recurso: "Loja do personal", usam: 0 },
+          { recurso: "Clube de vantagens", usam: 0 },
+        ] } });
         if (nome === "hq_erros") return Promise.resolve({ data: [
           { academia_id: "sumi-4", nome: "Academia Sumida", erros: 3, ultimo: dISO(0), ultima_msg: "x is not defined", ultima_pagina: "apps/totem.html" },
           { academia_id: "acad-1", nome: "Academia Ferro Pesado", erros: 1, ultimo: dISO(0), ultima_msg: "TypeError no leitor de QR", ultima_pagina: "apps/entrada.html" },
@@ -464,6 +485,31 @@ function crcNode(s) {
   ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUE ON (R$ 443)");
   ok(/ARPU/.test(kpis) && /148/.test(kpis), "ARPU calculado (443/3 ≈ R$ 148) — métrica ChartMogul");
   ok(/Empresas clientes/.test(kpis) && /4/.test(kpis), "KPI de total de empresas");
+
+  /* v760 — "Quem precisa de você hoje" e "Recursos que alguém usa".
+   * Existem porque, até aqui, o dono só sabia que um cliente estava indo
+   * embora quando o cliente mandava áudio no WhatsApp. */
+  const saude = await p.evaluate(() => ({
+    visivel: !document.getElementById("cardSaude").hidden,
+    txt: document.getElementById("hqSaude").textContent,
+    ordem: [...document.querySelectorAll("#hqSaude b")].map((b) => b.textContent),
+  }));
+  ok(saude.visivel, "🩺 o card 'Quem precisa de você hoje' aparece pro dono");
+  ok(/TESTE VENCIDO/.test(saude.txt), "🩺 teste vencido é dito com todas as letras");
+  ok(/ninguém pediu pra assinar/.test(saude.txt), "🩺 e diz o que FALTOU fazer, não só o estado");
+  ok(/Criou a conta e não cadastrou nenhum aluno/.test(saude.txt), "🩺 quem travou na primeira tela aparece");
+  ok(saude.ordem[0] === "Studio Léo Personal", "🩺 a ordem é a da urgência: teste vencido COM aluno dentro vem primeiro");
+  ok(/11 alunos · 3 com treino · 6 apps publicados · 3 abertos pelo aluno/.test(saude.txt),
+    "🩺 o funil cabe numa linha — de aluno cadastrado até aluno que abriu o app");
+  ok(/Tudo em dia por aqui/.test(saude.txt), "🩺 quem está bem também é dito, senão a lista vira só bronca");
+
+  const uso = await p.evaluate(() => ({
+    visivel: !document.getElementById("cardUso").hidden,
+    txt: document.getElementById("hqUso").textContent,
+  }));
+  ok(uso.visivel, "📊 o card 'Recursos que alguém usa de verdade' aparece");
+  ok(/2 de 4/.test(uso.txt), "📊 conta quantos recursos estão em ZERO — é o número que segura obra nova");
+  ok(/Loja do personal/.test(uso.txt) && /0 de 4/.test(uso.txt), "📊 recurso sem nenhum usuário aparece com zero, não some");
   // provisionamento de cliente novo direto do HQ
   await p.fill("#pvEmpresa", "Academia Nova Era");
   await p.fill("#pvEmail", "dono@novaera.com");
