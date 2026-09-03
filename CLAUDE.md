@@ -1798,6 +1798,42 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Pedir o GPS na hora certa** (mt-v764): o GPS era pedido **calado** — a
+janelinha do navegador pulava assim que o aluno entrava na área de corrida
+(`crAutoGps` chamava `crGpsLiga` direto), sem ninguém explicar pra quê. E aqui
+vale a MESMA regra do push: no navegador um "não" é **permanente**, então o
+pedido sem contexto queima a única chance que o app tem. Agora existe o card
+`#crGpsCard`, acima do mapa, com o mesmo desenho de dois passos: a explicação é
+nossa, a janelinha só sai no toque em **Ligar o GPS**.
+
+Quem decide o que o card mostra é `navigator.permissions.query({name:
+'geolocation'})`:
+- `granted` → **nenhum card**, o GPS liga sozinho como sempre;
+- `prompt` → o convite ("sem ele o app não desenha o trajeto, não conta a
+  distância e não calcula o pace… o trajeto vai pro seu professor junto com o
+  treino" — que é a verdade, o `ptcardio` viaja no `devolveApp`);
+- `denied` → o card **ensina a liberar** (Android: ícone do app → Permissões;
+  iPhone: Ajustes → Privacidade → Serviços de Localização), porque daí em
+  diante o navegador não deixa mais perguntar.
+⚠️ Estado **desconhecido** (o Safari não responde por `geolocation`) segue o
+caminho ANTIGO, pedindo direto: melhor o comportamento de sempre do que um card
+perguntando uma coisa que o aluno já liberou.
+⚠️ No **Iniciar** (`crGo`) o pedido vai direto por `crGpsAgora()`, sem card: a
+tela cheia abre por cima e o card não seria visto — e quem acabou de tocar em
+Iniciar já deu todo o contexto que existe.
+
+"GPS sempre ligado" tem um **limite honesto**: no navegador não existe GPS em
+segundo plano. Ao travar a tela ou sair do app o sistema suspende o
+`watchPosition` e ele **não voltava sozinho** — o aluno voltava pro app no meio
+da corrida e os km tinham parado calados. Agora o `visibilitychange` religa o
+GPS e a trava de tela acesa quando `cr.run` está de pé. E o erro **código 2**
+(posição indisponível) ganhou recado próprio — quase sempre é a chavinha de
+localização do aparelho desligada, e dizer "procurando o sinal" deixava o aluno
+esperando por uma coisa que não vem. Ganchos: `window.__crGps`.
+⚠️ Como o auto-ligar agora passa por uma promise, teste que entra na área e
+clica no botão do GPS no mesmo `evaluate` vê `cr.watch` ainda nulo e LIGA em vez
+de desligar — precisa esperar entre as duas coisas.
+
 **Pedir o push no primeiro dia** (mt-v763): medido no banco em 2026-09-03 —
 **12 apps publicados, 5 abertos, UM aluno com push ligado**. O pedido de
 permissão existia, mas só numa linha da aba **Ajustes**, que ninguém visita; e
