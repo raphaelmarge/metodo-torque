@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v763** |
-| Estado do repo em | 2026-09-03 (commit `f530a08`) |
+| App em | **mt-v764** |
+| Estado do repo em | 2026-09-03 (commit `b9ff521`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 224 |
+| Lançamentos no histórico | 225 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v763**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v764**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v763** (2026-09-03).
+O motor (`app/aluno-builder.js`) encostou em **mt-v764** (2026-09-03).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v764 | pedir o GPS na hora certa (e religar quando o aluno volta pro app) |
 | mt-v763 | pedir o push no primeiro dia (e o chat volta a descer pra mensagem nova) |
 | mt-v762 | o vitalício é grudado — nenhum caminho derruba mais |
 | mt-v761 | a trava do teste vencido e o acesso vitalício |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v752 | revisão por área — Montar treino e IA (pt-treinos, pt-ia, 27 itens) |
 | mt-v751 | revisão por área — Financeiro e Relatórios (pt-fin, pt-rel, 26 itens) |
 | mt-v750 | revisão por área — ficha do aluno e Agenda (pt-perfil, pt-agenda, 33 itens) |
-| mt-v749 | revisão por área — app do aluno (app-html, app-core, 29 itens) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
