@@ -106,6 +106,27 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
     "helpers internos sem EXECUTE público");
   t(/add column if not exists assinatura_evento_em timestamptz/.test(sql), "academias.assinatura_evento_em existe pro assinatura-loja");
 
+  /* v761/v762: a trava do teste vencido e o vitalício grudado.
+   * O "nunca trava" só vale se NENHUM caminho puder derrubar o status — e
+   * dois derrubavam (hq_cliente_set e o webhook da loja). Por isso a guarda
+   * mora num gatilho do banco, não em cada função. */
+  t(/'travado', case/.test(sql) && /when a\.assinatura_status in \('ativa', 'vitalicia'\) then false/.test(sql),
+    "v761: quem decide a trava é o SERVIDOR (minha_assinatura devolve `travado`), e vitalício nunca trava");
+  t(/create table if not exists public\.assinatura_regras/.test(sql) && /dias_carencia int not null default 3/.test(sql),
+    "v761: o prazo do teste e a carência ficam em tabela — dá pra mudar a política sem republicar");
+  t(/create trigger academias_vitalicio_grudado/.test(sql) &&
+    /new\.assinatura_status := 'vitalicia'/.test(sql),
+    "v762: gatilho devolve 'vitalicia' pro lugar — nem o HQ nem o webhook da loja derrubam");
+  {
+    // a ÚNICA porta de saída é a hq_vitalicio, e ela tem de pedir licença
+    const bloco = sql.slice(sql.indexOf("create or replace function public.hq_vitalicio"));
+    const corpo = bloco.slice(0, bloco.indexOf("$$;") + 3);
+    t(/set_config\('app\.vitalicio_ok', '1', true\)/.test(corpo) && /if not p_ligar then/.test(corpo),
+      "v762: só o hq_vitalicio(…, false) destrava, e só pra DESLIGAR — ligar não precisa de licença");
+    t((sql.match(/set_config\('app\.vitalicio_ok'/g) || []).length === 1,
+      "v762: existe UMA porta de saída no arquivo inteiro — mais de uma seria o buraco de volta");
+  }
+
   /* ============================================== higiene da PRÓPRIA suíte
    * v756: três armadilhas que já custaram caro apareceram nas revisões. Elas
    * não são regra de produto — são regra de TESTE —, e sem uma vigia voltam

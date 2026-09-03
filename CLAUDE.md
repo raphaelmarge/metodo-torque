@@ -1798,6 +1798,26 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**O vitalício é grudado** (mt-v762): a v761 criou o status `vitalicia`
+prometendo "nunca trava", e a promessa era **falsa**. Dois caminhos escreviam
+`academias.assinatura_status` por cima sem saber do vitalício: (1)
+`hq_cliente_set`, ao classificar o cliente como pausado/cancelado na lista do
+HQ, gravava `atrasada`/`bloqueada`; (2) `assinatura-loja`, o webhook do
+RevenueCat, grava o status que vier da loja — bastava o professor instalar o
+app e chegar um evento de expiração pra ele travar.
+
+Em vez de consertar os dois (e o terceiro que alguém escrever ano que vem), a
+guarda mora no **banco**: o gatilho `academias_vitalicio_grudado` devolve
+`vitalicia` pro lugar e zera o `assinatura_vence`, venha a escrita de onde
+vier — RPC, webhook ou SQL na mão. Testado com os três ataques no banco de
+verdade: nenhum passou. ⚠️ Ele **não levanta exceção** de propósito: o webhook
+da loja precisa responder 200, senão o RevenueCat reenvia o evento por horas —
+o resto da linha (via, referência) grava normalmente, só o status volta.
+⚠️ A ÚNICA porta de saída é `hq_vitalicio(academia, false)`, que marca
+`set_config('app.vitalicio_ok','1',true)` na sessão antes de escrever. O teste
+conta as ocorrências dessa marca no arquivo e exige **uma** — duas seriam o
+buraco de volta.
+
 **A trava do teste vencido e o acesso vitalício** (mt-v761): até aqui o teste
 grátis vencer não fazia NADA — a tela mostrava uma faixa e o professor seguia
 usando pra sempre. Medido no dia: as 3 academias estavam em `trial`, duas delas
