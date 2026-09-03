@@ -6277,6 +6277,32 @@ async function abaPt(p, a) {
        /navigator\.standalone/.test(appHtml),
       "🔔 no iPhone sem o app instalado, o card ensina a instalar em vez de sumir calado");
   }
+
+  /* v764: o GPS era pedido calado assim que o aluno entrava na área de
+   * corrida — e no navegador um "não" é permanente, igual ao aviso. */
+  {
+    const iCard = appHtml.indexOf("id='crGpsCard'");
+    ok(iCard > -1 && iCard < appHtml.indexOf("id='crMapa'"),
+      "🛰️ v764: o card do GPS existe e vem ANTES do mapa (é ele que explica por que o mapa está vazio)");
+    ok(/crGpsPerm/.test(appHtml) && /navigator\.permissions\.query\(\{name:'geolocation'\}\)/.test(appHtml),
+      "🛰️ v764: o app olha o estado da permissão antes de decidir se pede ou explica");
+    const miolo = appHtml.slice(appHtml.indexOf("function crGpsCard()"), appHtml.indexOf("function crGpsAgora"));
+    ok(/st==='granted'[^]{0,80}crGpsLiga\(true\)/.test(miolo),
+      "🛰️ v764: quem já liberou não vê card nenhum — o GPS liga sozinho, como antes");
+    ok(/st==null[^]{0,80}crGpsLiga\(true\)/.test(miolo),
+      "🛰️ v764: navegador que não sabe responder (Safari) segue o caminho antigo, pedindo direto — nada de card no vazio");
+    ok(/st==='denied'\|\|crGpsNeg/.test(miolo) && /Serviços de Localização/.test(miolo) && /Permissões/.test(miolo),
+      "🛰️ v764: GPS bloqueado deixou de ser silêncio — o card ensina a liberar no iPhone e no Android");
+    ok(!/crGpsLiga/.test(appHtml.slice(appHtml.indexOf("crEl('crGpsOk')"), appHtml.indexOf("crEl('crGpsOk')") + 40)) &&
+       /crEl\('crGpsOk'\)\.addEventListener\('click',function\(\)\{crGpsCardOff\(\);Sv\('ptgpsAuto',1\);crGpsNeg=false;crGpsLiga\(false\);\}\)/.test(appHtml),
+      "🛰️ v764: a janelinha do navegador só sai no toque em 'Ligar o GPS'");
+    ok(/crGpsAgora\(\);abreCrFull\(0\)/.test(appHtml),
+      "🛰️ v764: no 'Iniciar' o pedido vai direto — a tela cheia abriria por cima do card e ele não seria visto");
+    ok(/visibilitychange[^]{0,140}!cr\.run\)return[^]{0,120}cr\.watch==null&&!crGpsNeg\)crGpsLiga\(true\)/.test(appHtml),
+      "🛰️ v764: voltando pro app com a corrida rodando, o GPS e a tela acesa religam (o navegador suspende os dois)");
+    ok(/err&&err\.code===2\)\?'A localiza/.test(appHtml),
+      "🛰️ v764: localização do APARELHO desligada tem recado próprio — não é 'procurando o sinal'");
+  }
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
   // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
   // fixo saiu do app montado de propósito, era ele que fazia o atalho do
@@ -10735,7 +10761,11 @@ async function abaPt(p, a) {
   await pGps.evaluate(() => { document.getElementById("crZera").click(); window.__trocaSec("inicio"); });
   await pGps.waitForTimeout(300);
   ok(await pGps.evaluate(() => window.__cr.watch === null && !window.__cr.gpsOn), "sair da área desliga o GPS pra poupar bateria");
-  await pGps.evaluate(() => { window.__trocaSec("treino"); document.getElementById("crGps").click(); });
+  // v764: entrar na área religa o GPS por dentro de uma promise (a consulta da
+  // permissão), então o clique no botão só vale depois que o watch está de pé
+  await pGps.evaluate(() => window.__trocaSec("treino"));
+  await pGps.waitForTimeout(600);
+  await pGps.evaluate(() => document.getElementById("crGps").click());
   await pGps.waitForTimeout(200);
   ok(await pGps.evaluate(() => JSON.parse(localStorage.getItem("ptgpsAuto")) === 0 && !window.__cr.gpsOn && window.__cr.watch === null),
     "aluno que desliga o GPS pelo botão tem a escolha respeitada (não religa sozinho)");

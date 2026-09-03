@@ -1328,6 +1328,13 @@
           "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:10px;'>Começar</button></div></details>";
       }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:14px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
       "<div id='crTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
+      /* v764: o pedido de GPS em dois passos — este card explica ANTES, e a
+       * janelinha do navegador so aparece no toque em "Ligar o GPS". */
+      "<div id='crGpsCard' style='display:none;background:var(--bg4);border:1px solid var(--cor);border-radius:14px;padding:13px 14px;margin-bottom:10px;text-align:left;'>" +
+      "<div id='crGpsTit' style='font-size:14px;font-weight:900;margin-bottom:5px;'></div>" +
+      "<div id='crGpsTxt' style='font-size:12.5px;color:#a9a4b5;line-height:1.55;'></div>" +
+      "<button class='btnx' id='crGpsOk' style='width:100%;margin-top:11px;'>Ligar o GPS</button>" +
+      "<button id='crGpsNao' style='display:block;width:100%;margin-top:7px;padding:8px;background:none;border:none;color:#6e6a78;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;'>Agora não</button></div>" +
       // trajeto estilo app de corrida: o caminho do GPS vai sendo desenhado aqui
       "<div style='position:relative;margin-bottom:10px;'>" +
       "<canvas id='crMapa' width='640' height='300' style='width:100%;height:150px;display:block;border-radius:14px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);'></canvas>" +
@@ -3910,13 +3917,55 @@
       /* v751: timeout/indisponivel deixam o watch VIVO — o botao dizia 'Ligar
        * GPS' e o toque desligava (e ainda gravava ptgpsAuto=0 pra sempre). */
       "},function(err){if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').innerHTML='GPS\\u2026';}" +
-      "crEl('crInfo').textContent=(err&&err.code===1)?'Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.':'Procurando o sinal do GPS \\u2014 ou digite os km na m\\u00e3o.';" +
+      "if(err&&err.code===1)try{crGpsCard();}catch(e9){}" +
+      /* v764: codigo 2 e "posicao indisponivel" — quase sempre a chavinha de
+       * localizacao do proprio celular desligada. Dizer "procurando o sinal"
+       * nesse caso deixa o aluno esperando por uma coisa que nao vem. */
+      "crEl('crInfo').textContent=(err&&err.code===1)?'Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.':(err&&err.code===2)?'A localiza\\u00e7\\u00e3o do celular parece desligada \\u2014 ligue a chavinha de GPS do aparelho, ou digite os km na m\\u00e3o.':'Procurando o sinal do GPS \\u2014 ou digite os km na m\\u00e3o.';" +
       "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}" +
-      "function crAutoGps(){var v=localStorage.getItem('ptgpsAuto');if(v==null||+v)crGpsLiga(true);}" +
+      /* v764: o GPS era pedido CALADO — a janelinha do navegador pulava assim
+       * que o aluno entrava na area de corrida, sem ninguem explicar pra que.
+       * E no navegador um "nao" e PERMANENTE, igual ao aviso: gasta-se a unica
+       * chance que o app tem. Agora, quando da pra saber o estado da permissao
+       * (navigator.permissions), o pedido e em dois passos — nosso card
+       * primeiro, a janelinha so no toque. Quando NAO da pra saber (Safari nao
+       * responde por 'geolocation'), tudo segue como antes, pedindo direto:
+       * melhor o comportamento de sempre do que um card perguntando uma coisa
+       * que o aluno ja liberou. */
+      "function crGpsCardOff(){var c=crEl('crGpsCard');if(c)c.style.display='none';}" +
+      "var crGpsAdiado=false;" +
+      "function crGpsPerm(cb){try{if(navigator.permissions&&navigator.permissions.query){" +
+      "navigator.permissions.query({name:'geolocation'}).then(function(s9){cb(s9.state);" +
+      "try{s9.onchange=function(){crGpsCard();};}catch(e){}}).catch(function(){cb(null);});return;}}catch(e){}cb(null);}" +
+      "function crGpsCard(){var c=crEl('crGpsCard');if(!c)return;" +
+      "if(!navigator.geolocation){c.style.display='none';return;}" +
+      "if(cr.watch!=null){c.style.display='none';return;}" +
+      "crGpsPerm(function(st){" +
+      "if(st==='granted'){c.style.display='none';crGpsLiga(true);return;}" +
+      "if(st==='denied'||crGpsNeg){" +
+      "crEl('crGpsTit').textContent='O GPS est\u00e1 bloqueado pra este app';" +
+      "crEl('crGpsTxt').innerHTML='O navegador n\u00e3o deixa perguntar de novo \u2014 quem libera agora \u00e9 voc\u00ea, nos ajustes do aparelho.<br><br><b>Android:</b> segure o \u00edcone do app \u2192 Informa\u00e7\u00f5es do app \u2192 Permiss\u00f5es \u2192 Localiza\u00e7\u00e3o.<br><b>iPhone:</b> Ajustes \u2192 Privacidade e Seguran\u00e7a \u2192 Servi\u00e7os de Localiza\u00e7\u00e3o \u2192 Safari.<br><br>At\u00e9 l\u00e1, d\u00e1 pra digitar os km na m\u00e3o aqui embaixo \u2014 o pace sai igual.';" +
+      "crEl('crGpsOk').style.display='none';crEl('crGpsNao').textContent='Entendi';c.style.display='block';return;}" +
+      "if(st==null){c.style.display='none';crGpsLiga(true);return;}" +
+      "if(crGpsAdiado){c.style.display='none';return;}" +
+      "crEl('crGpsTit').textContent='Ligue o GPS pra contar seus km';" +
+      "crEl('crGpsTxt').textContent='Sem ele o app n\u00e3o desenha o trajeto, n\u00e3o conta a dist\u00e2ncia e n\u00e3o calcula o pace. A localiza\u00e7\u00e3o s\u00f3 \u00e9 usada enquanto voc\u00ea corre, e o trajeto vai pro seu professor junto com o treino.';" +
+      "crEl('crGpsOk').style.display='';crEl('crGpsNao').textContent='Agora n\u00e3o';c.style.display='block';});}" +
+      "crEl('crGpsOk').addEventListener('click',function(){crGpsCardOff();Sv('ptgpsAuto',1);crGpsNeg=false;crGpsLiga(false);});" +
+      "crEl('crGpsNao').addEventListener('click',function(){crGpsAdiado=true;crGpsCardOff();});" +
+      "function crAutoGps(){var v=localStorage.getItem('ptgpsAuto');if(v!=null&&!+v){crGpsCardOff();return;}crGpsCard();}" +
+      "function crGpsAgora(){var v=localStorage.getItem('ptgpsAuto');if(v!=null&&!+v)return;if(cr.watch==null)crGpsLiga(false);}" +
+      /* v764: "GPS sempre ligado" tem um limite honesto — no navegador nao
+       * existe GPS em segundo plano. Ao travar a tela ou sair do app o sistema
+       * suspende o watchPosition, e ele nao volta sozinho: o aluno voltava pro
+       * app no meio da corrida e os km tinham parado calados. Agora, voltando
+       * com a corrida rodando, o app religa o GPS e a trava de tela acesa. */
+      "document.addEventListener('visibilitychange',function(){if(document.hidden||!cr.run)return;" +
+      "try{ligaTela();}catch(e){}if(cr.watch==null&&!crGpsNeg)crGpsLiga(true);});" +
       "crEl('crGps').addEventListener('click',function(){" +
       "if(cr.watch!=null){Sv('ptgpsAuto',0);crGpsPara();pintaCr();return;}" +
       "Sv('ptgpsAuto',1);crGpsNeg=false;crGpsLiga(false);});" +
-      "window.__crGpsLiga=crGpsLiga;" +
+      "window.__crGpsLiga=crGpsLiga;window.__crGps={card:crGpsCard,perm:crGpsPerm,auto:crAutoGps,agora:crGpsAgora};" +
       "function crChips(){var box=crEl('crTipos');if(!box)return;box.innerHTML=Object.keys(CRMODS).map(function(m){var on=!cr.plano&&cr.mod===m;" +
       "return \"<button type='button' class='crModBt' data-crmod='\"+m+\"' style='flex:1;padding:8px 2px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;background:\"+(on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)')+\";border:\"+(on?'none':'1px solid var(--bg11)')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+CRMODS[m]+\"</button>\";}).join('');}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('.crModBt');if(!b||cr.run)return;" +
@@ -3998,7 +4047,10 @@
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
       "if(cr.run){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.autoP=false;cr.acum=(Date.now()-cr.t0)/1000;this.textContent='Continuar';soltaTela();pintaCr();return;}" +
-      "crAutoGps();abreCrFull(0);var cd=cr.acum>0?0:crCfg().cd;" +
+      /* v764: aqui NAO entra o card — a tela cheia abre por cima dele e o
+       * aluno nunca o veria. Quem acabou de tocar em "Iniciar" ja deu o
+       * contexto: a janelinha do navegador pode ir direto. */
+      "crGpsAgora();abreCrFull(0);var cd=cr.acum>0?0:crCfg().cd;" +
       "if(!cd){crLarga();return;}" +
       // contagem regressiva estilo app de corrida (configurável: 3, 5 ou 10 segundos)
       "var elC=crEl('crContagem'),elF=crEl('crContagemF');elC.style.display='flex';elC.textContent=cd;" +
