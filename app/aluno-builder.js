@@ -991,6 +991,20 @@
       "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
+      /* v763 — O PEDIDO DE PUSH SAIU DOS AJUSTES. Medido em 2026-09-03: 12
+       * alunos com app publicado e UM com push ligado. O pedido existia, mas
+       * só na linha "Notificações" da aba Ajustes, que ninguém visita — e o
+       * card daqui vinha com display:none e uma condição que o desligava
+       * sempre que a linha dos Ajustes existisse (ou seja: sempre).
+       * Agora ele mora no Início, embaixo do "Treinei hoje!", que é o bloco
+       * que todo aluno vê. Continua sendo um card NOSSO: a janelinha do
+       * navegador só aparece quando ele toca em "Quero receber" — pedir a
+       * permissão sem contexto queima a chance pra sempre, porque um "não"
+       * do navegador não dá pra desfazer. */
+      "<div class='cardx' id='cardNotif' style='display:none;border-color:var(--cor);'><h2>" + appIco(APPIC.sino, 14) + "Não esquecer do treino</h2>" +
+      "<div class='vz' id='notifTxt' style='text-align:left;padding:2px 0 10px;'>Posso te avisar no dia do treino e quando " + esc(STUDIO_CURTO) + " mandar recado. Só isso — nada de propaganda.</div>" +
+      "<button class='btnx' id='btnNotif' style='width:100%;'>Quero receber</button>" +
+      "<button class='btnx sec' id='btnNotifNao' style='width:100%;margin-top:8px;background:none;border:1px solid var(--bd);'>Agora não</button></div>" +
       // depoimento (v694): só aparece quando o PROFESSOR pediu (D.pedeDepo) e
       // o aluno ainda não escreveu — a lógica de mostrar mora perto do TERMO
       "<div class='cardx' id='depoCard' style='display:none;'>" +
@@ -1769,9 +1783,6 @@
       "<div class='gtrilho' id='gTrilhoCx' style='display:none;'><b id='gTrilho'></b></div>" +
       "</div>" +
       "</div>" +
-      "<div class='cardx' id='cardNotif' style='display:none;'><h2>" + appIco(APPIC.sino, 14) + "Lembretes</h2>" +
-      "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
-      "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
       "<script>var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
@@ -2034,12 +2045,52 @@
       "return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:va(VP)});" +
       "}).then(function(sub){rpcApp('app_aluno_push',{t:TOKEN,p_sub:sub.toJSON()});}).catch(function(e){});}" +
       "if(Notification.permission==='granted'){tentaPushP();return;}" +
+      "if(Notification.permission==='denied')return;" +   // negou: nao da pra pedir de novo, nao insiste
+      "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif'),nao=document.getElementById('btnNotifNao');" +
+      "if(!card||!btn)return;" +
+      /* v763: quem decide QUANDO o card aparece. Regras, na ordem:
+       *  - nunca em cima do onboarding (dois pedidos na mesma tela viram zero)
+       *  - "Agora não" some por 3 dias, mas volta na hora que ele marca o
+       *    primeiro treino — que é o momento em que o app provou que serve
+       *  - no iPhone sem o app na tela de início, notificação NEM EXISTE:
+       *    aí o card conta a verdade e ensina a instalar, em vez de sumir */
+      "function pushMostra(forca){" +
       "if(Notification.permission!=='default')return;" +
-      "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif');" +
-      // a linha Notificações dos Ajustes (tela 11) assumiu o papel deste card —
-      // ele só volta a aparecer se a linha não existir
-      "if(card&&btn&&!document.getElementById('ajNotif')){card.style.display='block';btn.addEventListener('click',function(){" +
-      "Notification.requestPermission().then(function(p2){card.style.display='none';if(p2==='granted')tentaPushP();});});}})();" +
+      "var onb=document.getElementById('onbCard');" +
+      "if(!forca&&onb&&onb.style.display!=='none')return;" +
+      "if(!forca){var ad=0;try{ad=+(localStorage.getItem('ptpushAdiado')||0);}catch(e){}" +
+      "if(ad&&Date.now()-ad<3*864e5)return;}" +
+      "card.style.display='block';}" +
+      "window.__pushMostra=pushMostra;" +
+      "btn.addEventListener('click',function(){" +
+      "Notification.requestPermission().then(function(p2){card.style.display='none';" +
+      "try{localStorage.setItem('ptpushAdiado',String(Date.now()));}catch(e){}" +
+      "if(p2==='granted')tentaPushP();});});" +
+      "if(nao)nao.addEventListener('click',function(){card.style.display='none';" +
+      "try{localStorage.setItem('ptpushAdiado',String(Date.now()));}catch(e){}});" +
+      "pushMostra(false);" +
+      // marcou o primeiro treino: é AQUI que o app acabou de provar que serve
+      "var bf=document.getElementById('btnFeito');" +
+      "if(bf)bf.addEventListener('click',function(){setTimeout(function(){pushMostra(true);},900);});" +
+      "})();" +
+      /* v763: iPhone sem o app na tela de início não TEM notificação — o
+       * `Notification` nem existe no Safari fora do modo instalado. Antes o
+       * bloco de cima saía calado e o aluno nunca ficava sabendo. Agora o
+       * mesmo card explica o que fazer, sem prometer o que não dá. */
+      "(function(){if(!NUVEM)return;if('Notification'in window)return;" +
+      "var ios=/iPad|iPhone|iPod/.test(navigator.userAgent);" +
+      "if(!ios||navigator.standalone||matchMedia('(display-mode: standalone)').matches)return;" +
+      "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif')," +
+      "nao=document.getElementById('btnNotifNao'),txt=document.getElementById('notifTxt');" +
+      "if(!card||!btn)return;" +
+      "var ad=0;try{ad=+(localStorage.getItem('ptpushAdiado')||0);}catch(e){}" +
+      "if(ad&&Date.now()-ad<3*864e5)return;" +
+      "if(txt)txt.innerHTML='No iPhone, os avisos só funcionam com o app na tela de início. Toque em <b>Compartilhar</b> (o quadradinho com a seta), depois em <b>Adicionar à Tela de Início</b> — e abra o app por lá.';" +
+      "btn.textContent='Entendi';" +
+      "btn.addEventListener('click',function(){card.style.display='none';" +
+      "try{localStorage.setItem('ptpushAdiado',String(Date.now()));}catch(e){}});" +
+      "if(nao)nao.style.display='none';" +
+      "card.style.display='block';})();" +
       // sequência de semanas consecutivas batendo a meta (a atual conta se já bateu, sem quebrar enquanto corre)
       "function streakSem(f){var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
       "var n=0;var d2=new Date();" +
@@ -5069,7 +5120,11 @@
        * mensagem nova ou o aluno ja estava no fim. */
       "var chK=all.map(function(m){return String(m.criado)+'|'+String(m.de);}).join(';');" +
       "if(el._chK===chK)return;" +
-      "var ultC=String(all[all.length-1].criado);var cresceu=el._chUlt!==ultC;var noFim=el._chK==null||(el.scrollTop+el.clientHeight)>=(el.scrollHeight-40);" +
+      /* v763: "chegou mensagem nova" e contar QUANTAS, nao olhar a data da
+       * ultima. O bot escreve a saudacao na hora em que o app abre, entao ela
+       * fica sendo sempre a mais nova da lista e a comparacao por data nunca
+       * mudava — recado do professor entrava sem o chat descer ate ele. */
+      "var cresceu=all.length>(el._chN||0);var noFim=el._chK==null||(el.scrollTop+el.clientHeight)>=(el.scrollHeight-40);" +
       "var ontem9=isoLoc(new Date(Date.now()-864e5));" +
       "el.innerHTML=all.map(function(m,ix){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
       "var d0=chLocal(m.criado).d;var ant=ix>0?chLocal(all[ix-1].criado).d:null;var div='';" +
@@ -5079,7 +5134,7 @@
       "var pess=!minha&&!bot;" +
       "var bolha=\"<div style='\"+(pess?'':('align-self:'+(minha?'flex-end':'flex-start')+';'))+\"background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'rgba(255,255,255,.05)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:\"+(minha?'18px 18px 6px 18px':'18px 18px 18px 6px')+\";padding:11px 14px;max-width:\"+(pess?'100%':'84%')+\";font-size:14px;line-height:1.45;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:3px;\"+(minha?'text-align:right;':'')+\"'>\"+chLocal(m.criado).h+\"</div></div>\";" +
       "return div+(pess?\"<div style='align-self:flex-start;display:flex;align-items:flex-end;gap:7px;max-width:86%;'>\"+CHAV+bolha+'</div>':bolha);}).join('');" +
-      "if(cresceu||noFim)el.scrollTop=el.scrollHeight;el._chK=chK;el._chUlt=ultC;" +
+      "if(cresceu||noFim)el.scrollTop=el.scrollHeight;el._chK=chK;el._chN=all.length;" +
       "var ultP=null;all.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')ultP=m.criado;});" +
       "if(window.__chatDot)window.__chatDot(ultP);}" +
       "window.__pintaChat=pintaChat;window.__chLocal=chLocal;" +
