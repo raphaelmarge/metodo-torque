@@ -167,11 +167,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { n: 4, foco: "deload", ajuste: "reduza 30% das séries e mantenha a carga — semana de recuperação" },
       ] } },
       plano: { dias: {
-        "1": [{ tp: "ficha", id: "dmf0", h: "07:00" }],
-        "3": [{ tp: "cardio", id: "dmc1", h: "06:30" }, { tp: "ficha", id: "dmf1", h: "19:00" }],
-        "5": [{ tp: "ficha", id: "dmf2", h: "07:00" }],
+        "1": [{ tp: "ficha", id: "dmf0", h: "07:00" }, { tp: "cardio", id: "dmc1", h: "19:00" }],
+        "3": [{ tp: "cardio", id: "dmc2", h: "06:30" }, { tp: "ficha", id: "dmf1", h: "19:00" }],
+        "5": [{ tp: "ficha", id: "dmf2", h: "07:00" }, { tp: "cardio", id: "dmc4", h: "18:30" }],
         "6": [{ tp: "wod", id: "dmw1", h: "09:00" }],
-        "0": [{ tp: "cardio", id: "dmc1" }],
+        "0": [{ tp: "cardio", id: "dmc3" }],
       } },
     };
     window.MTStore.write("ptStudio", st);
