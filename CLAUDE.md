@@ -1798,6 +1798,48 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**A aba Marcas estava bagunçada** (conserto na v767): o Raphael abriu
+Evolução → Marcas e mandou a foto. Eram três cards com três desenhos
+diferentes, e a causa era uma só — a linha era um **flex de duas pontas**
+(`justify-content: space-between`), então o NOME quebrava em duas linhas de um
+lado enquanto o VALOR quebrava do outro, e nenhum número alinhava com o de
+baixo. No circuito ficava escancarado: o "valor" era a frase inteira
+**"5 voltas + 2 — BATEU o resultado anterior!"** em negrito de 15 px, porque o
+card reusava a prosa gravada em `ptwodres[].r` (que é o texto do histórico, e
+lá faz sentido). Consertos:
+
+1. **Uma linha só, em GRADE** (`minmax(0,1fr) auto`): nome à esquerda, o
+   detalhe e a data embaixo dele em letra miúda, e **um** número à direita.
+   Assim todos os números caem na mesma coluna, um embaixo do outro.
+2. **O valor do circuito é montado dos campos estruturados** (`tp`, `v`, `ex`,
+   `du`, `cf`) e nunca da prosa: "5+2 voltas", "8:41", "10 reps" — e o que
+   qualifica ("na pior série", "escalado", "em 12:00") vai pra linha de baixo.
+3. **Circuito passou a mostrar o MELHOR, não o último.** A aba se chama Marcas
+   e todo o resto é o melhor; mostrar o último ali era a maior fonte da
+   sensação de bagunça. `mkWodMelhor` ignora quem não terminou (`nf`) e compara
+   pelo `tp` (fortime = menor tempo).
+4. **O card Força não mostrava marca nenhuma** — o corpo inteiro era um botão
+   grande "Ver meus recordes em Cargas". Num painel cuja razão de existir é
+   mostrar marca, isso é um card vazio. Agora traz as **três maiores** inline e
+   o atalho vira uma linha discreta, só quando existe uma quarta.
+5. **O selo NOVA saiu do card Força**: quase toda carga anotada no mês é
+   recorde, e três selos iguais em três linhas seguidas param de significar
+   algo — quem conta essa história é a linha do cabeçalho, uma vez só.
+6. `"Melhor pace médio (3 km+)"` virou **"Melhor pace"** com *"corridas de 3 km
+   ou mais"* embaixo, e `5 km`/`10 km` viraram `Melhor 5 km`/`Melhor 10 km` —
+   toda linha lê como a mesma coisa. A contagem da direita do cabeçalho
+   ("4 marcas") deixou de ser `<b>` claro brigando com o título e virou letra
+   miúda cinza, que é o peso de um dado de apoio.
+
+⚠️ O ✕ das marcas anotadas na mão entra pelo **próprio `rowMk`** (campo `rm`,
+que abre uma terceira coluna), em vez do `.replace()` em cima do HTML pronto
+que existia antes — remendo de string quebra silenciosamente quando o desenho
+da linha muda.
+⚠️ Pra semear dado no **demo do aluno** em teste, `localStorage.setItem` NÃO
+serve: o demo troca o `localStorage` por um objeto em memória (`__demoDados`),
+então a escrita vai pro lugar errado e a tela não muda. Escreva em
+`window.__demoDados.<chave>`.
+
 **A gamificação premiava um botão e ninguém olhava** (mt-v765): o Raphael
 perguntou como melhorar a área de gamificação. Medido no banco em 2026-09-03,
 antes de opinar: dos **12 apps publicados**, 5 alunos mandaram retorno — e os

@@ -12104,7 +12104,7 @@ async function abaPt(p, a) {
         { d: "2026-08-05", n: "rápida", m: "corrida", s: 1875, k: 5, p: "6:15" }]));
       window.__pintaMarcas();
       const mk = document.getElementById("mkBox").textContent;
-      out.pace = /Melhor pace médio \(3 km\+\)(NOVA)?6:15/.test(mk) && !/Melhor pace médio \(3 km\+\)(NOVA)?10:30/.test(mk);
+      out.pace = /Melhor pace(NOVA)?corridas de 3 km ou mais · \d\d\/\d\d6:15\/km/.test(mk) && !/6:15[^]{0,40}10:30\/km/.test(mk);
       // (c) recordes de carga: uma conta e uma regra de 'novo'
       const dcAntes = localStorage.getItem("ptdc"); const mmAntes = localStorage.getItem("ptmarcas");
       localStorage.removeItem("ptmarcas");
@@ -12119,7 +12119,22 @@ async function abaPt(p, a) {
       out.muralNovo = (rb.match(/NOVO/g) || []).length === 1 && /Subiu[^]*?NOVO/.test(rb);
       window.__pintaMarcas();
       const mk2 = document.getElementById("mkBox");
-      out.forcaAtalho = !!mk2.querySelector("[data-evsub-bt='cargas']") && !/Parado/.test(mk2.textContent) && /1 recorde novo/.test(mk2.textContent);
+      /* v767: o card Força não mostrava marca NENHUMA — o corpo era só um botão
+       * pra outra aba. Agora traz as três maiores inline, em ordem de carga, e
+       * o atalho só aparece quando existe uma quarta pra ver. */
+      out.forcaTop3 = [].map.call(mk2.querySelectorAll("div"), (d) => d.textContent)
+        .some((t) => /Primeiro dia[^]*Subiu[^]*Parado/.test(t)) && /1 recorde novo/.test(mk2.textContent);
+      out.forcaSemAtalho = !mk2.querySelector("[data-evsub-bt='cargas']");
+      const dc4 = JSON.parse(localStorage.getItem("ptdc"));
+      dc4["Quarto"] = [{ d: "2026-01-10", kg: 20 }];
+      localStorage.setItem("ptdc", JSON.stringify(dc4));
+      window.__pintaMarcas();
+      const mk3 = document.getElementById("mkBox");
+      out.forcaAtalho = !!mk3.querySelector("[data-evsub-bt='cargas']") && /Ver as 4 em Cargas/.test(mk3.textContent) &&
+        !/Quarto/.test(mk3.textContent);   // o 4º fica na lista de Cargas, não aqui
+      delete dc4["Quarto"];
+      localStorage.setItem("ptdc", JSON.stringify(dc4));
+      window.__pintaMarcas();
       window.__evTopoPinta("cargas"); const nC = document.getElementById("evAltN").textContent;
       window.__evTopoPinta("marcas"); const nM = document.getElementById("evAltN").textContent;
       out.cabecalho = nC === "1" && nM === "1";
@@ -12166,8 +12181,10 @@ async function abaPt(p, a) {
       "💬 v763: o chat desce pra mensagem nova mesmo quando a saudação do assistente é a mais recente da lista");
     ok(r751.pace, "🏅 v751: 'Melhor pace' compara como número — 6:15 vence 10:30");
     ok(r751.novos === "Subiu" && r751.muralNovo, "🏆 v751: recorde NOVO = máximo do mês com mais de uma anotação (a 1ª anotação não é recorde)");
+    ok(r751.forcaTop3 && r751.forcaSemAtalho,
+      "🏆 v767: o card Força mostra as três maiores cargas em ordem — antes o corpo era só um botão pra outra aba");
     ok(r751.forcaAtalho && r751.cabecalho,
-      "🏆 v751: Marcas não repete a lista de cargas (só o atalho pro mural) e o cabeçalho conta igual nas duas abas");
+      "🏆 v767: com mais de três, entra o atalho 'Ver as N em Cargas' (a lista inteira mora num lugar só) e o cabeçalho conta igual nas duas abas");
     ok(r751.formAbriu && r751.avisouVazio && r751.salvou && r751.apagou,
       "🏅 v751: marcar na mão é formulário dentro do card (valida, salva) e cada marca tem o ✕");
     ok(r751.postWod === "Circuito do dia" && r751.postDescanso === "",
