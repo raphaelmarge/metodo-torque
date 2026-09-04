@@ -2550,10 +2550,12 @@ async function abaPt(p, a) {
       const tPl = { plano: { dias: { "1": { tp: "ficha", id: "fa" }, "3": { tp: "ficha", id: "fb" }, "5": { tp: "ficha", id: "fc" } } } };
       const velhas = [{ id: "fa", titulo: "A — Peito" }, { id: "fb", titulo: "B — Costas" }, { id: "fc", titulo: "C — Pernas" }];
       const novas = [{ id: "na", titulo: "A — Peito e ombro" }, { id: "nb", titulo: "B — Costas" }];
+      tPl.plano.dias["2"] = [{ tp: "ficha", id: "fc" }, { tp: "cardio", id: "cx" }];
       const orf = window.__remapeiaPlano(tPl, velhas, novas);
-      return orf === 1 && tPl.plano.dias["1"].id === "na" && tPl.plano.dias["3"].id === "nb" && !tPl.plano.dias["5"];
+      return orf === 2 && tPl.plano.dias["1"][0].id === "na" && tPl.plano.dias["3"][0].id === "nb" && !tPl.plano.dias["5"] &&
+        tPl.plano.dias["2"].length === 1 && tPl.plano.dias["2"][0].tp === "cardio";
     });
-    ok(v744, "🗓️ v744: a Semana do aluno é reencaixada quando as fichas trocam (A→A, B→B; C sem par sai)");
+    ok(v744, "🗓️ v768: a Semana do aluno é reencaixada quando as fichas trocam (A→A, B→B; C sem par sai) e o dia com dois treinos perde só o órfão");
 
     /* ---- v744: isolamento e privacidade — lido nos arquivos servidos ---- */
     const srv744 = await p.evaluate(async () => {
@@ -2619,7 +2621,7 @@ async function abaPt(p, a) {
       const tB = JSON.parse(localStorage.getItem("mtapp:ptStudio")).treinosV2.gB;
       out.grupo = r.ok && tB.fichas.length === 1 && /Peito/.test(tB.fichas[0].titulo) && tB.fichas[0].id !== "fx1" &&
         tB.wods.length === 1 && tB.cardio.length === 1 && tB.validade === "2026-12-31" && !tB.mes &&
-        tB.plano.dias["1"].id === tB.fichas[0].id && tB.plano.dias["3"].tp === "cardio";
+        tB.plano.dias["1"][0].id === tB.fichas[0].id && tB.plano.dias["3"][0].tp === "cardio";
       // instalação nova: config existe desde o load e salvaNome não estoura
       const stL = JSON.parse(localStorage.getItem("mtapp:ptStudio")); delete stL.config;
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(stL));
@@ -8251,7 +8253,9 @@ async function abaPt(p, a) {
       S.write("ptStudio", st8);
       document.getElementById("plnAluno").value = id;
       window.__planoPT.render();
-      const sel0 = document.querySelector("#plnDias [data-plndia]");
+      // v768: o dia nasce vazio (é uma lista) — abre uma linha pra ler as opções
+      document.querySelector('#plnDias [data-plnadd="1"]').click();
+      const sel0 = document.querySelector('#plnDias [data-plnsel="1:0"]');
       out.dezWods = [...sel0.querySelectorAll("option")].filter((o) => o.value.indexOf("wod:") === 0).length === 10;
       out.avisoDez = /só os 10 primeiros vão pro app/.test([...sel0.querySelectorAll("optgroup")].map((g) => g.label).join(" "));
       const st9 = S.read("ptStudio", {});
@@ -12909,25 +12913,59 @@ async function abaPt(p, a) {
       out.abaExiste = !document.querySelector('[data-trsec="plano"]').hidden;
       document.getElementById("plnAluno").value = id;
       window.__planoPT.render();
-      out.seteDias = document.querySelectorAll("#plnDias [data-plndia]").length === 7;
-      // segunda = ficha A, quarta = circuito, sábado = corrida — o resto descansa
-      document.querySelector('#plnDias [data-plndia="1"]').value = "ficha:" + t.fichas[0].id;
-      document.querySelector('#plnDias [data-plndia="3"]').value = "wod:" + t.wods[0].id;
-      document.querySelector('#plnDias [data-plndia="6"]').value = "cardio:" + t.cardio[0].id;
+      out.seteDias = document.querySelectorAll("#plnDias [data-plnadd]").length === 7;
+      /* v768: cada dia aceita MAIS DE UM treino, com horário opcional. Aqui:
+       * segunda = ficha A; quarta = circuito de manhã E corrida à noite (o caso
+       * que o Raphael pediu — planilha de corrida junto com musculação);
+       * sábado = corrida. O resto descansa. */
+      const poe = (dia, i, valor, hora) => {
+        const add = document.querySelector('#plnDias [data-plnadd="' + dia + '"]');
+        while (!document.querySelector('#plnDias [data-plnsel="' + dia + ':' + i + '"]')) add.click();
+        const sel = document.querySelector('#plnDias [data-plnsel="' + dia + ':' + i + '"]');
+        sel.value = valor; sel.dispatchEvent(new Event("change", { bubbles: true }));
+        if (hora) {
+          const h = document.querySelector('#plnDias [data-plnh="' + dia + ':' + i + '"]');
+          h.value = hora; h.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      };
+      poe("1", 0, "ficha:" + t.fichas[0].id, "07:00");
+      // de propósito FORA de ordem: a corrida às 19h entra antes do circuito das 6h
+      poe("3", 0, "cardio:" + t.cardio[0].id, "19:00");
+      poe("3", 1, "wod:" + t.wods[0].id, "06:30");
+      poe("6", 0, "cardio:" + t.cardio[0].id);
       document.getElementById("plnSalva").click();
       const st2 = S.read("ptStudio", {});
       const plano = st2.treinosV2[id].plano;
-      out.salvo = !!(plano && plano.dias && plano.dias["1"] && plano.dias["1"].tp === "ficha" &&
-        plano.dias["3"] && plano.dias["3"].tp === "wod" && plano.dias["6"] && plano.dias["6"].tp === "cardio");
+      const d3 = (plano.dias || {})["3"] || [];
+      out.salvo = !!(plano && plano.dias && Array.isArray(plano.dias["1"]) && plano.dias["1"][0].tp === "ficha" &&
+        Array.isArray(d3) && d3.length === 2 && Array.isArray(plano.dias["6"]) && plano.dias["6"][0].tp === "cardio");
+      // ordenado pelo relógio, não pela ordem em que o professor digitou
+      out.ordenado = d3.length === 2 && d3[0].tp === "wod" && d3[0].h === "06:30" && d3[1].tp === "cardio" && d3[1].h === "19:00";
+      // sem horário continua valendo (o sábado)
+      out.semHora = !plano.dias["6"][0].h;
       out.pendente = !!st2.alunos.find((a) => a.id === id).appEditEm;
       window.__planoPT.render();
-      out.pintou = document.querySelector('#plnDias [data-plndia="3"]').value === "wod:" + t.wods[0].id;
+      out.pintou = document.querySelector('#plnDias [data-plnsel="3:0"]').value === "wod:" + t.wods[0].id &&
+        document.querySelector('#plnDias [data-plnh="3:1"]').value === "19:00";
+      // o ✕ tira UMA linha e o dia sobrevive com a outra
+      document.querySelector('#plnDias [data-plnrm="3:1"]').click();
+      out.tirouUma = document.querySelectorAll('#plnDias [data-plnsel^="3:"]').length === 1;
+      poe("3", 1, "cardio:" + t.cardio[0].id, "19:00");   // devolve pro resto do teste
+      document.getElementById("plnSalva").click();
+      // formato ANTIGO (um objeto por dia) continua sendo lido
+      const stV = S.read("ptStudio", {});
+      stV.treinosV2[id].plano.dias["2"] = { tp: "ficha", id: t.fichas[0].id };
+      S.write("ptStudio", stV);
+      out.leFormatoVelho = window.__plnDoDia(stV.treinosV2[id].plano.dias, 2).length === 1;
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var MESAPP=/);
+      const m = html.match(/var PLANO=(.+?);(?=var |function )/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
-      out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
+      // v768: o leitor do dia virou plnPri (o primeiro treino do dia); a agenda
+      // com o dia inteiro é o card #agHojeCard
+      out.heroLeDia = html.indexOf("plnPri(new Date().getDay())") > -1 && html.indexOf("Dia de recuperar") > -1;
+      out.agendaCard = /id='agHojeCard'/.test(html) && /function plnDia\(d\)/.test(html) && /data-aghoje=/.test(html);
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela
       // cheia, com risquinhos por card ("1 de 3 · arraste") e um botão por tipo
       out.carrossel = /id='heroCarr'/.test(html) && /class='htdash'/.test(html) &&
@@ -12947,11 +12985,19 @@ async function abaPt(p, a) {
     });
     ok(pln.temTudo && pln.abaExiste && pln.seteDias, "📅 aba Semana do aluno existe, com os 7 dias e os treinos do aluno pra escolher");
     ok(pln.salvo && pln.pendente && pln.pintou, "salvar amarra treino ↔ dia (ficha/circuito/corrida), marca republicação e re-render preserva as escolhas");
-    ok(pln.planoApp && pln.planoApp["1"] && pln.planoApp["1"].tp === "ficha" &&
-      pln.planoApp["3"] && pln.planoApp["3"].tp === "wod" && typeof pln.planoApp["3"].i === "number" && !!pln.planoApp["3"].n &&
-      pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
-      "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
+    ok(pln.salvo && pln.ordenado,
+      "📅 v768: o MESMO dia aceita mais de um treino (circuito de manhã + corrida à noite), gravado em ordem de relógio");
+    ok(pln.semHora, "📅 v768: o horário é opcional — quem não marcou hora continua valendo");
+    ok(pln.tirouUma, "📅 v768: o ✕ tira UMA linha do dia e o resto do dia continua de pé");
+    ok(pln.leFormatoVelho, "📅 v768: plano no formato ANTIGO (um treino por dia) continua sendo lido — sem migração destrutiva");
+    ok(pln.planoApp && Array.isArray(pln.planoApp["1"]) && pln.planoApp["1"][0].tp === "ficha" &&
+      Array.isArray(pln.planoApp["3"]) && pln.planoApp["3"].length === 2 &&
+      pln.planoApp["3"][0].tp === "wod" && pln.planoApp["3"][0].h === "06:30" &&
+      typeof pln.planoApp["3"][0].i === "number" && !!pln.planoApp["3"][0].n &&
+      Array.isArray(pln.planoApp["6"]) && pln.planoApp["6"][0].tp === "cardio",
+      "📅 v768: o pacote leva a LISTA de cada dia resolvida (tipo + índice + nome + hora)");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
+    ok(pln.agendaCard, "📅 v768: o app ganhou a agenda do dia — a lista por horário, que o card único não dava conta de mostrar");
     ok(pln.carrossel, "🎠 R1: os treinos do dia viram carrossel — cards de circuito e corrida com botão pro fluxo certo");
     ok(pln.cardFicha, "🎠 o carrossel tem card de musculação também — em dia de circuito/corrida a ficha não sumia mais do Início");
   }

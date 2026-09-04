@@ -120,7 +120,15 @@
     var GIF = D.gif || null;
     var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || []; // v747: [] — com null o .length derrubava o monta() inteiro
     var wodsApp = D.wodsApp || [], cardiosApp = D.cardiosApp || [];
-    var planoApp = D.planoApp || null; // semana do aluno: dia → {tp, i, n}, já resolvido no painel
+    // v768: semana do aluno — dia → LISTA de {tp, i, n, h}, já resolvida e
+    // ordenada por horário no painel. Formato antigo (um objeto por dia)
+    // continua valendo: plnLista devolve os dois como lista.
+    var planoApp = D.planoApp || null;
+    var plnLista = function (dk) {
+      var v = planoApp ? planoApp[String(dk)] : null;
+      if (!v) return [];
+      return Array.isArray(v) ? v.filter(Boolean) : [v];
+    };
     var menuOculta = D.menuOculta || [], feedLigado = !!D.feedLigado;
     var avs = D.avs || [], botApp = D.botApp || null, atualizador = D.atualizador || "";
     var vem = D.ve || {};
@@ -133,7 +141,9 @@
       var rot7 = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
       var hj7 = String(new Date().getDay()), out = "";
       Object.keys(planoApp).some(function (dk) {
-        if (planoApp[dk].tp === tipo && planoApp[dk].i === idx) { out = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true; }
+        if (plnLista(dk).some(function (p) { return p.tp === tipo && p.i === idx; })) {
+          out = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true;
+        }
         return false;
       });
       return out;
@@ -969,6 +979,14 @@
         return "<div id='blocoHoje' style='position:relative;'>" +
           "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + fichaCard + wodCard + crCard + "</div>" + heroTopo + "</div>";
       })() +
+      /* v768: a agenda do dia. O plano da semana passou a aceitar mais de um
+       * treino no mesmo dia (tem aluno que faz planilha de corrida E
+       * musculação), com horário opcional — e aí o card único de HOJE não dava
+       * conta: ele mostra UM treino. Este bloco lista o dia inteiro na ordem do
+       * relógio e cada linha abre o treino certo. Só aparece quando o dia tem
+       * DOIS ou mais: com um treino só, o card grande já é a resposta. */
+      "<div class='cardx' id='agHojeCard' style='display:none;'><h2>Seu dia</h2>" +
+      "<div id='agHojeLista'></div></div>" +
       /* ---------- MINHA SEMANA: um card só ----------
        * Estavam separados o card do coach (com anel X/Y), os chips seg-dom e um
        * terceiro card com a barra "Meta da semana" + o Treinei hoje!. Os três
@@ -1201,7 +1219,9 @@
           var rot7 = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
           var hj7 = String(new Date().getDay());
           Object.keys(planoApp).some(function (dk) {
-            if (planoApp[dk].tp === "ficha" && planoApp[dk].i === gi) { diaTxt = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true; }
+            if (plnLista(dk).some(function (p) { return p.tp === "ficha" && p.i === gi; })) {
+              diaTxt = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true;
+            }
             return false;
           });
         }
@@ -1828,7 +1848,8 @@
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "function Sv(k,v){var ok9=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){ok9=false;}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
-      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}return ok9;}" +
+      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
+      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}return ok9;}" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
        * (escopo do app, antes de tudo) porque o card Conquistas e o bloco da
        * corrida moram em IIFEs diferentes e cada um refazia a conta do pace. */
@@ -5893,6 +5914,40 @@
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
           "var PLANO=" + jsonApp(planoApp) + ";" +
+      /* v768: o dia do plano virou uma LISTA (corrida + musculação no mesmo
+       * dia). `plnDia` aceita os dois formatos — o antigo, que é um objeto só,
+       * e o novo — e devolve sempre uma lista; `plnPri` é o PRIMEIRO do dia
+       * (o mais cedo, porque o painel já manda ordenado por horário) e é o que
+       * o card grande de HOJE, o recado do coach e as abas continuam usando.
+       * Assim nada do que já existia mudou de comportamento. */
+      "function plnDia(d){var v=(typeof PLANO!=='undefined'&&PLANO)?PLANO[String(d)]:null;" +
+      "if(!v)return [];return Array.isArray(v)?v.filter(Boolean):[v];}" +
+      "function plnPri(d){return plnDia(d)[0]||null;}" +
+      "function plnHoje(){return plnDia(new Date().getDay());}" +
+      "window.__plnDia=plnDia;window.__plnHoje=plnHoje;" +
+      /* A agenda do dia: só entra com DOIS ou mais treinos, senão repete o que
+       * o card grande já diz. Cada linha abre a área certa. */
+      "function pintaAgHoje(){var card=document.getElementById('agHojeCard');if(!card)return;" +
+      "var lst=plnHoje();if(lst.length<2){card.style.display='none';return;}" +
+      "var ICOTP={ficha:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\"," +
+      "wod:\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\"," +
+      "cardio:\"<circle cx='12' cy='13' r='8'/><path d='M12 9v4l2.5 2.5M9 2h6'/>\"};" +
+      "var feitoHj=!!L('ptfeitos',{})[isoHj()];" +
+      "document.getElementById('agHojeLista').innerHTML=lst.map(function(p,i){" +
+      "return \"<button type='button' data-aghoje='\"+i+\"' style='display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:16px;padding:12px 14px;margin-top:8px;font-family:inherit;color:inherit;cursor:pointer;'>\"+" +
+      "\"<b style='font-size:14px;font-weight:900;color:\"+(p.h?'var(--corc)':'#6e6a78')+\";'>\"+(p.h||'livre')+'</b>'+" +
+      "\"<span style='min-width:0;'><span style='display:block;font-size:14px;font-weight:700;line-height:1.3;'>\"+String(p.n||'Treino').replace(/</g,'&lt;')+'</span>'+" +
+      "\"<span style='display:block;font-size:11.5px;color:#6e6a78;margin-top:1px;'>\"+(p.tp==='wod'?'circuito':p.tp==='cardio'?'corrida e bike':'musculação')+'</span></span>'+" +
+      "\"<span style='line-height:0;color:#6e6a78;'>\"+icx(ICOTP[p.tp]||'',19)+'</span></button>';}).join('');" +
+      "var sub=card.querySelector('h2');if(sub)sub.textContent=feitoHj?'Seu dia \u2713':'Seu dia \u00b7 '+lst.length+' treinos';" +
+      "card.style.display='block';}" +
+      "window.__agHoje=pintaAgHoje;" +
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-aghoje]');if(!b)return;" +
+      "var p=plnHoje()[+b.getAttribute('data-aghoje')];if(!p)return;" +
+      "if(window.__trocaSec)window.__trocaSec('treino');" +
+      "if(window.__trSub)window.__trSub(p.tp==='wod'?'wod':p.tp==='cardio'?'cardio':'ficha');" +
+      "setTimeout(function(){var sel=p.tp==='wod'?'[data-wi=\"'+p.i+'\"]':p.tp==='cardio'?'[data-cri=\"'+p.i+'\"]':'[data-fi=\"'+p.i+'\"]';" +
+      "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
           // texto da faixa roxa dos Treinos, um por aba (o script só troca o texto)
           "var MESAPP=" + jsonApp(D.mesApp || {}) + ";" +
           "var TRHEAD=" + jsonApp((function () {
@@ -5922,7 +5977,7 @@
        * Sem dado nenhum, devolve null e o card segue com o recado da semana. */
       "function coachDica(){try{" +
       "function e9(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}" +
-      "var pj=PLANO&&PLANO[String(new Date().getDay())];var fm=null;" +
+      "var pj=plnPri(new Date().getDay());var fm=null;" +
       "if(PLANO){if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i])fm=FICHAS_META[pj.i];" +
       "else if(pj&&pj.tp==='wod'){var w=WODS[pj.i];if(!w)return null;" +
       "var u=(L('ptwodres',{})[w.id]||[]).slice(-1)[0];" +
@@ -5959,7 +6014,7 @@
        * (Semana do aluno → ficha/circuito/corrida; sem plano, o rodizio). O
        * post da Comunidade saia sempre com a ficha A. Dia marcado como
        * treinado ja avancou o rodizio, por isso desconta hoje. */
-      "function treinoHojeTitulo(){try{var pj=(typeof PLANO!=='undefined'&&PLANO)?PLANO[String(new Date().getDay())]:null;" +
+      "function treinoHojeTitulo(){try{var pj=plnPri(new Date().getDay());" +
       "if(typeof PLANO!=='undefined'&&PLANO)return pj?String(pj.n||'').slice(0,80):'';" +
       "var ks=Object.keys(L('ptfeitos',{}));var tot=ks.length-(ks.indexOf(isoHj())>=0?1:0);" +
       "var fm=(typeof FICHAS_META!=='undefined'&&FICHAS_META.length)?FICHAS_META[((tot%FICHAS_META.length)+FICHAS_META.length)%FICHAS_META.length]:null;" +
@@ -5968,7 +6023,7 @@
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
       "var i=-1,fm=null,rt='',tit='',sub='',cImg='',btn='Começar treino',gLin=null,gSvg='';" +
       "var hjD=new Date();var dataHj=DSEM_[hjD.getDay()]+', '+hjD.getDate()+' DE '+MESL_[hjD.getMonth()];" +
-      "var pj=PLANO&&PLANO[String(hjD.getDay())];" +
+      "var pj=plnPri(hjD.getDay());" +
       "if(PLANO){" +
       "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
       // circuito do plano: o card ganha o resumo do quadro, a contagem de
@@ -6011,13 +6066,13 @@
       "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
       // Começar treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
-      "var pj2=PLANO&&PLANO[String(new Date().getDay())];if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
+      "var pj2=plnPri(new Date().getDay());if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
       // carrossel de treinos do dia (telas final-44/45/46): cada card mostra os
       // próprios risquinhos ("2 de 3 · arraste →") e o botão leva pro fluxo certo
       "(function(){" +
       "var sa=document.getElementById('heroSauda');if(sa){var hh=new Date().getHours();sa.textContent=(hh<12?'Bom dia':hh<18?'Boa tarde':'Boa noite')+', '+PRIMEIRO;}" +
       "var cr=document.getElementById('heroCarr');if(!cr)return;" +
-      "var pj3=PLANO&&PLANO[String(new Date().getDay())];var tpHoje=pj3?pj3.tp:'ficha';" +
+      "var pj3=plnPri(new Date().getDay());var tpHoje=pj3?pj3.tp:'ficha';" +
       "var cw=document.getElementById('heroWod');if(cw&&tpHoje!=='wod')cw.style.display='';" +
       "var cc=document.getElementById('heroCr');if(cc&&tpHoje!=='cardio')cc.style.display='';" +
       "var cf=document.getElementById('heroFicha');" +
@@ -6099,6 +6154,7 @@
       "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
       // repinta a semana DEPOIS do herói: agora o coachDica já enxerga o plano
       "pintaHero();pintaXP();try{pintaSemana();pintaCqTiles();}catch(e0){}" +
+      "try{pintaAgHoje();}catch(e0b){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
@@ -6315,7 +6371,7 @@
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
       "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);if(window.__menuBadges)window.__menuBadges();};" +
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
-      "(function(){var pj9=PLANO&&PLANO[String(new Date().getDay())];" +
+      "(function(){var pj9=plnPri(new Date().getDay());" +
       "[['data-wi','wod'],['data-cri','cardio']].forEach(function(par){" +
       "var gv9=document.querySelectorAll('['+par[0]+']');if(gv9.length<2)return;" +
       "var alvo9=(pj9&&pj9.tp===par[1]&&typeof pj9.i==='number')?pj9.i:0;" +
