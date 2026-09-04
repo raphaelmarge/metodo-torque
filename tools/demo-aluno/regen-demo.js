@@ -166,7 +166,13 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { n: 3, foco: "volume máximo", ajuste: "+1 série no primeiro exercício de cada ficha, mantenha a carga" },
         { n: 4, foco: "deload", ajuste: "reduza 30% das séries e mantenha a carga — semana de recuperação" },
       ] } },
-      plano: { dias: { "1": { tp: "ficha", id: "dmf0" }, "3": { tp: "ficha", id: "dmf1" }, "5": { tp: "ficha", id: "dmf2" }, "6": { tp: "wod", id: "dmw1" }, "0": { tp: "cardio", id: "dmc1" } } },
+      plano: { dias: {
+        "1": [{ tp: "ficha", id: "dmf0", h: "07:00" }],
+        "3": [{ tp: "cardio", id: "dmc1", h: "06:30" }, { tp: "ficha", id: "dmf1", h: "19:00" }],
+        "5": [{ tp: "ficha", id: "dmf2", h: "07:00" }],
+        "6": [{ tp: "wod", id: "dmw1", h: "09:00" }],
+        "0": [{ tp: "cardio", id: "dmc1" }],
+      } },
     };
     window.MTStore.write("ptStudio", st);
     const out = window.__montaAppAluno(alex, new Date().toISOString());

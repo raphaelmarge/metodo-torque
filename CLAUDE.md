@@ -1798,6 +1798,50 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Mais de um treino no mesmo dia, e o dia vira agenda** (mt-v768): o Raphael
+mandou o calendário de treinos de um app de corrida e pediu — tem aluno que faz
+**planilha de corrida E musculação ao mesmo tempo**, e a Semana do aluno só
+aceitava UM treino por dia: escolher a corrida apagava a ficha. Mudança de
+modelo, não de tela.
+
+**O dado.** `t.plano.dias["3"]` era `{tp, id}` e virou `[{tp, id, h}, …]` — uma
+LISTA, com `h` (horário, "HH:MM") opcional. `plnDoDia(dias, k)` é o leitor
+único do painel: aceita os DOIS formatos (o antigo continua sendo lido, sem
+migração destrutiva), devolve sempre uma lista **ordenada por horário** e é por
+onde passam todos os leitores — chips do Resumo, `pushTreinoTxt`, `agTreinoTxt`,
+`remapeiaPlano` e o pacote. Quem não marcou hora vai pro fim da lista, não pro
+começo: o professor que marcou 07:00 quer aquilo primeiro.
+
+**O editor.** Cada dia é um bloco com N linhas (treino + hora + ✕) e um
+**+ Treino neste dia**. Guarda um RASCUNHO (`plnRasc`) em vez de ler o DOM no
+Salvar: somar ou tirar linha obriga a repintar, e repintar lendo do estado
+salvo jogaria fora o que o professor acabou de mexer. Linha deixada em branco
+simplesmente não entra — não é erro.
+
+**O app.** `PLANO[dia]` virou lista; `plnDia(d)` aceita os dois formatos e
+`plnPri(d)` devolve o PRIMEIRO do dia — é ele que o card grande de HOJE, o
+recado do coach e as abas passaram a usar, então **nada do que já existia mudou
+de comportamento**. O que é novo é o card **`#agHojeCard` ("Seu dia")**, que só
+aparece com **DOIS ou mais** treinos no dia: a lista por horário, cada linha
+abrindo a gaveta certa (`data-aghoje` → `__trSub` + `[data-fi|data-wi|data-cri]`).
+Com um treino só ele fica escondido, porque o card grande já é a resposta.
+
+⚠️ Os ícones da agenda são de **traço** (`icx`), não emoji — a mesma regra dos
+outros cards dinâmicos.
+⚠️ **A armadilha da v583 mordeu de novo**: o teste recortava o pacote com
+`/var PLANO=(.+?);var MESAPP=/`, e os leitores novos entraram exatamente entre
+os dois — o `JSON.parse` passou a receber função junto. Agora o corte para no
+primeiro `;` seguido de uma DECLARAÇÃO qualquer
+(`/var PLANO=(.+?);(?=var |function )/`), que não quebra na próxima vez que
+alguém escrever código ali.
+⚠️ `plnDoDia` filtra só por `tp`, **não** por `tp && id`: item sem id é dado
+torto (o push diz "circuito" mesmo assim), enquanto linha em branco do editor
+quem filtra é o Salvar. Exigir id no leitor apagava o texto do push.
+⚠️ `remapeiaPlano` normaliza o dia pra lista na volta e só apaga o DIA quando
+sobrou nada — antes uma ficha órfã levava o dia inteiro junto.
+Ganchos: `window.__plnDoDia`, `__plnDia`, `__plnHoje`, `__agHoje`,
+`__planoPT.rasc`.
+
 **A aba Marcas estava bagunçada** (conserto na v767): o Raphael abriu
 Evolução → Marcas e mandou a foto. Eram três cards com três desenhos
 diferentes, e a causa era uma só — a linha era um **flex de duas pontas**

@@ -2527,7 +2527,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" style="margin-bottom: 14px;" data-trsec="plano" hidden>
       <h2>Semana do aluno (planejamento)</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Amarre cada dia da semana a um treino — ficha, circuito ou corrida. O padrão vale pro <b>mês inteiro</b> (e pros seguintes) até você mudar. No app, o card <b>HOJE</b> do aluno passa a seguir este plano, com o treino certo já aberto; dia sem treino aparece como descanso.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Monte a semana do aluno: cada dia aceita <b>quantos treinos você quiser</b> — ficha, circuito e corrida juntos, pra quem faz planilha de corrida e musculação ao mesmo tempo. O <b>horário é opcional</b>; com ele, o dia vira uma agenda no celular do aluno, na ordem certa. O padrão vale pro <b>mês inteiro</b> (e pros seguintes) até você mudar; dia sem treino aparece como descanso.</p>
       <div class="linha-flex" style="margin: 0 0 10px;"><select id="plnAluno" style="min-width: 200px;"></select></div>
       <div id="plnDias" class="muted">Escolha o aluno pra montar a semana dele.</div>
       <div class="linha-flex" style="gap: 10px; margin-top: 12px;">
@@ -5536,17 +5536,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cels = "";
     for (var k = 0; k < 7; k++) {
       var i = ORD[k];
-      var d = dias[String(i)];
-      var rot = "—";
-      if (d && d.tp === "ficha") {
+      // v768: o dia virou uma LISTA — o chip mostra a letra de cada treino
+      // ("A+CR" pra quem faz musculação e corrida no mesmo dia)
+      var lst = plnDoDia(dias, i);
+      var rot = lst.map(function (d) {
+        if (d.tp === "wod") return "W";
+        if (d.tp === "cardio") return "CR";
         var fIx = (t.fichas || []).findIndex(function (x) { return x.id === d.id; });
         var f = fIx > -1 ? t.fichas[fIx] : null;
         // v747: a MESMA letra que o app e a aba Treinos mostram (letraFicha);
         // antes pegava o 1º caractere do título — "Peito e tríceps" virava "P"
-        rot = f ? letraFicha(f, fIx) : "A";
-      } else if (d && d.tp === "wod") rot = "W";
-      else if (d && d.tp === "cardio") rot = "CR";
-      cels += '<div><div class="d">' + DS[k] + '</div><div class="c' + (d ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
+        return f ? letraFicha(f, fIx) : "A";
+      }).join("+") || "—";
+      cels += '<div><div class="d">' + DS[k] + '</div><div class="c' + (lst.length ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
     }
     var fi = alFicha(st, a);
     var f0 = (t.fichas || [])[0];
@@ -9414,14 +9416,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var t = (st.treinosV2 || {})[alunoId];
     if (!t) return "";
     var dia = diaDoPlano(iso); // v742: a chave do getDay, a mesma do app
-    var pl = ((t.plano || {}).dias || {})[dia];
-    if (!pl) return "";
-    if (pl.tp === "wod") return "circuito";
-    if (pl.tp === "cardio") return "corrida";
-    var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
-    if (!f) return "";
-    var tt = String(f.titulo || "").split("—");
-    return (tt[1] || tt[0] || "").trim().slice(0, 40);
+    // v768: o dia pode ter mais de um treino — o push diz os dois ("Peito +
+    // corrida"), que é o que o aluno vai encontrar quando abrir o app
+    var nomes = plnDoDia((t.plano || {}).dias, dia).map(function (pl) {
+      if (pl.tp === "wod") return "circuito";
+      if (pl.tp === "cardio") return "corrida";
+      var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
+      if (!f) return "";
+      var tt = String(f.titulo || "").split("—");
+      return (tt[1] || tt[0] || "").trim();
+    }).filter(Boolean);
+    return nomes.join(" + ").slice(0, 60);
   }
   window.__pushTreinoTxt = pushTreinoTxt; // testes
   function rotinaDiariaPush() {
@@ -10061,15 +10066,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var t = (st.treinosV2 || {})[alunoId];
     if (!t) return "";
     var dia = diaDoPlano(iso); // v742: a chave do getDay, a mesma do app
-    var pl = ((t.plano || {}).dias || {})[dia];
-    if (!pl) return "";
-    if (pl.tp === "ficha") {
-      var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
-      return f ? (f.titulo || "Ficha").split("—")[0].trim() : "";
-    }
-    if (pl.tp === "wod") return "Circuito";
-    if (pl.tp === "cardio") return "Corrida";
-    return "";
+    // v768: com mais de um treino no dia, a célula diz os dois separados por +
+    var nomes = plnDoDia((t.plano || {}).dias, dia).map(function (pl) {
+      if (pl.tp === "ficha") {
+        var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
+        return f ? (f.titulo || "Ficha").split("—")[0].trim() : "";
+      }
+      if (pl.tp === "wod") return "Circuito";
+      if (pl.tp === "cardio") return "Corrida";
+      return "";
+    }).filter(Boolean);
+    return nomes.join(" + ");
   }
   // o rotulo da celula: o que essa sessao E hoje, em uma palavra
   function agEstado(st, x, hoje) {
@@ -12505,18 +12512,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var dias = (t && t.plano && t.plano.dias) || null;
     if (!dias) return 0;
     var velhas = fichasVelhas || [], novas = fichasNovas || [], orfaos = 0;
+    // v768: o dia é uma lista — reencaixa item a item e só apaga o DIA quando
+    // sobrou nada (antes o dia inteiro sumia por causa de uma ficha órfã)
     Object.keys(dias).forEach(function (d) {
-      var it = dias[d];
-      if (!it || it.tp !== "ficha") return;
-      if (novas.some(function (f) { return f.id === it.id; })) return; // ainda existe
-      var iv = velhas.findIndex(function (f) { return f.id === it.id; });
-      var alvo = null;
-      if (iv >= 0) {
-        var letraV = letraFicha(velhas[iv], iv);
-        novas.forEach(function (f, i) { if (!alvo && letraFicha(f, i) === letraV) alvo = f; });
-        if (!alvo && novas[iv]) alvo = novas[iv];
-      }
-      if (alvo) it.id = alvo.id; else { delete dias[d]; orfaos++; }
+      var lst = plnDoDia(dias, d);
+      var fica = lst.filter(function (it) {
+        if (it.tp !== "ficha") return true;
+        if (novas.some(function (f) { return f.id === it.id; })) return true; // ainda existe
+        var iv = velhas.findIndex(function (f) { return f.id === it.id; });
+        var alvo = null;
+        if (iv >= 0) {
+          var letraV = letraFicha(velhas[iv], iv);
+          novas.forEach(function (f, i) { if (!alvo && letraFicha(f, i) === letraV) alvo = f; });
+          if (!alvo && novas[iv]) alvo = novas[iv];
+        }
+        if (alvo) { it.id = alvo.id; return true; }
+        orfaos++; return false;
+      });
+      if (fica.length) dias[d] = fica; else delete dias[d];
     });
     return orfaos;
   }
@@ -13497,14 +13510,54 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * Vai pro app resolvido (dadosAppAluno → planoApp) e o card HOJE segue o
    * plano — o padrão semanal vale pro mês inteiro até o professor mudar. */
   var PLN_DIAS = [[1, "Segunda"], [2, "Terça"], [3, "Quarta"], [4, "Quinta"], [5, "Sexta"], [6, "Sábado"], [0, "Domingo"]];
+  /* v768: o dia deixou de ser UM treino e virou uma LISTA — tem aluno que faz
+   * planilha de corrida e musculação no mesmo dia, e antes um excluía o outro.
+   * `plnDoDia` é o leitor único: aceita o formato antigo (um objeto) e o novo
+   * (lista), devolve SEMPRE uma lista ordenada por horário, e é por onde
+   * passam TODOS os leitores do painel e o pacote do app. Nada de migração
+   * destrutiva: quem já tinha plano continua lendo igual. */
+  function plnDoDia(dias, k) {
+    var v = (dias || {})[String(k)];
+    if (!v) return [];
+    var l = Array.isArray(v) ? v.slice() : [v];
+    return l.filter(function (x) { return x && x.tp; }).sort(plnOrdem);
+  }
+  /* Sem hora vai pro fim: o professor que não marcou horário não quer o treino
+   * dele antes do que tem hora marcada. */
+  function plnOrdem(a, b) {
+    var ha = plnHora(a), hb = plnHora(b);
+    if (ha === hb) return 0;
+    if (!ha) return 1;
+    if (!hb) return -1;
+    return ha < hb ? -1 : 1;
+  }
+  function plnHora(x) { return /^([01]\d|2[0-3]):[0-5]\d$/.test(String((x || {}).h || "")) ? x.h : ""; }
+  window.__plnDoDia = plnDoDia; // testes
+  /* v768: o editor guarda um RASCUNHO (plnRasc) em vez de ler o DOM na hora de
+   * salvar. Com lista por dia, somar ou tirar uma linha obriga a repintar — e
+   * repintar lendo do estado salvo jogaria fora o que o professor acabou de
+   * mexer. O select e a hora escrevem direto no rascunho; o + e o ✕ repintam. */
+  var plnRasc = null, plnRascAluno = "";
+  function plnCarregaRasc(alunoId) {
+    var st = load();
+    var t = (st.treinosV2 || {})[alunoId] || {};
+    var dias = (t.plano && t.plano.dias) || {};
+    plnRasc = {};
+    PLN_DIAS.forEach(function (d) {
+      plnRasc[String(d[0])] = plnDoDia(dias, d[0]).map(function (x) {
+        return { tp: x.tp, id: x.id, h: plnHora(x) };
+      });
+    });
+    plnRascAluno = alunoId;
+  }
   function renderPlanoSem() {
     var box = $("plnDias");
     if (!box) return;
     var alunoId = $("plnAluno").value;
-    if (!alunoId) { box.textContent = "Escolha o aluno pra montar a semana dele."; return; }
+    if (!alunoId) { plnRasc = null; box.textContent = "Escolha o aluno pra montar a semana dele."; return; }
+    if (!plnRasc || plnRascAluno !== alunoId) plnCarregaRasc(alunoId);
     var st = load();
     var t = (st.treinosV2 || {})[alunoId] || {};
-    var plano = (t.plano && t.plano.dias) || {};
     var grupo = function (rot, lista, tp, nomeDe) {
       if (!(lista || []).length) return "";
       return "<optgroup label='" + rot + "'>" + lista.map(function (x) {
@@ -13514,46 +13567,86 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // só os 10 primeiros circuitos e cardios viajam pro app — o plano segue a
     // MESMA janela (v750: os WODs listavam todos e o 11º virava dia DESCANSO no app)
     var soDez = function (rot, lista) { return (lista || []).length > 10 ? rot + " (só os 10 primeiros vão pro app)" : rot; };
-    var ops = "<option value=''>— descanso —</option>" +
+    var ops = "<option value=''>— escolha o treino —</option>" +
       grupo("Fichas", t.fichas, "ficha", function (f) { return f.titulo || "Ficha"; }) +
       grupo(soDez("Circuitos (WOD)", t.wods), (t.wods || []).slice(0, 10), "wod", function (w) { return w.nome || "Circuito"; }) +
       grupo(soDez("Corrida e bike", t.cardio), (t.cardio || []).slice(0, 10), "cardio", function (c) { return c.nome || "Cardio"; });
     var temAlgo = (t.fichas || []).length || (t.wods || []).length || (t.cardio || []).length;
     box.innerHTML = (temAlgo ? "" : "<p style='margin:0 0 8px;'>Este aluno ainda não tem treino montado — crie nas abas Fichas, Circuito (WOD) ou Corrida e bike, e eles aparecem aqui.</p>") +
       PLN_DIAS.map(function (d) {
-        return "<label style='display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px;'><span style='width:76px;flex:none;font-weight:700;'>" + d[1] + "</span>" +
-          "<select data-plndia='" + d[0] + "' style='flex:1;max-width:340px;'>" + ops + "</select></label>";
+        var k = String(d[0]), lst = plnRasc[k] || [];
+        return "<div style='border-top:1px solid var(--tk-bd);padding:9px 0;display:grid;grid-template-columns:82px minmax(0,1fr);gap:10px;align-items:start;'>" +
+          "<div style='font-weight:700;font-size:13px;padding-top:9px;'>" + d[1] + "</div>" +
+          "<div>" + (lst.length ? lst.map(function (it, i) {
+            return "<div style='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;'>" +
+              "<select data-plnsel='" + k + ":" + i + "' style='flex:1;min-width:170px;max-width:320px;'>" + ops + "</select>" +
+              "<input type='time' data-plnh='" + k + ":" + i + "' value='" + esc(it.h || "") + "' title='horário (opcional)' style='width:112px;flex:none;'>" +
+              "<button type='button' class='btn sec mini' data-plnrm='" + k + ":" + i + "' aria-label='Tirar este treino do dia'>✕</button></div>";
+          }).join("") : "<div class='muted' style='font-size:12.5px;padding:9px 0 4px;'>descanso</div>") +
+          "<button type='button' class='btn sec mini' data-plnadd='" + k + "' style='margin-top:2px;'>+ Treino neste dia</button></div></div>";
       }).join("");
     // pinta os valores salvos depois do innerHTML (antes disso o value não pega)
-    box.querySelectorAll("[data-plndia]").forEach(function (sel) {
-      var p = plano[sel.getAttribute("data-plndia")];
-      if (p) sel.value = p.tp + ":" + p.id;
+    box.querySelectorAll("[data-plnsel]").forEach(function (sel) {
+      var r = sel.getAttribute("data-plnsel").split(":");
+      var it = (plnRasc[r[0]] || [])[+r[1]];
+      if (it && it.tp && it.id) sel.value = it.tp + ":" + it.id;
     });
   }
-  if ($("plnAluno")) $("plnAluno").addEventListener("change", renderPlanoSem);
+  function plnItem(alvo) {
+    var r = String(alvo || "").split(":");
+    return { k: r[0], i: +r[1], lst: plnRasc ? (plnRasc[r[0]] || []) : [] };
+  }
+  if ($("plnAluno")) $("plnAluno").addEventListener("change", function () { plnRasc = null; renderPlanoSem(); });
+  if ($("plnDias")) {
+    $("plnDias").addEventListener("change", function (e) {
+      if (!plnRasc || !e.target) return;
+      var sel = e.target.closest("[data-plnsel]");
+      if (sel) {
+        var o = plnItem(sel.getAttribute("data-plnsel")), v = String(sel.value).split(":");
+        if (o.lst[o.i]) { o.lst[o.i].tp = v.length === 2 ? v[0] : ""; o.lst[o.i].id = v.length === 2 ? v[1] : ""; }
+        return;
+      }
+      var hr = e.target.closest("[data-plnh]");
+      if (hr) { var oh = plnItem(hr.getAttribute("data-plnh")); if (oh.lst[oh.i]) oh.lst[oh.i].h = hr.value || ""; }
+    });
+    $("plnDias").addEventListener("click", function (e) {
+      if (!e.target || !e.target.closest || !plnRasc) return;
+      var add = e.target.closest("[data-plnadd]");
+      if (add) { var ka = add.getAttribute("data-plnadd"); (plnRasc[ka] = plnRasc[ka] || []).push({ tp: "", id: "", h: "" }); renderPlanoSem(); return; }
+      var rm = e.target.closest("[data-plnrm]");
+      if (rm) { var o2 = plnItem(rm.getAttribute("data-plnrm")); o2.lst.splice(o2.i, 1); renderPlanoSem(); }
+    });
+  }
   if ($("plnSalva")) $("plnSalva").addEventListener("click", function () {
     var alunoId = $("plnAluno").value;
     if (!alunoId) { alert("Escolha o aluno."); return; }
+    if (!plnRasc) plnCarregaRasc(alunoId);
     var st = load();
     var t = treinoDe(st, alunoId);
-    var dias = {};
-    $("plnDias").querySelectorAll("[data-plndia]").forEach(function (sel) {
-      var v = sel.value.split(":");
-      if (v.length === 2 && v[0] && v[1]) dias[sel.getAttribute("data-plndia")] = { tp: v[0], id: v[1] };
+    var dias = {}, total = 0;
+    PLN_DIAS.forEach(function (d) {
+      var k = String(d[0]);
+      // linha deixada em branco simplesmente não entra — não é erro do professor
+      var lst = (plnRasc[k] || []).filter(function (x) { return x && x.tp && x.id; })
+        .map(function (x) { return { tp: x.tp, id: x.id, h: plnHora(x) }; }).sort(plnOrdem);
+      if (lst.length) { dias[k] = lst; total += lst.length; }
     });
-    if (Object.keys(dias).length) t.plano = { dias: dias };
+    if (total) t.plano = { dias: dias };
     else delete t.plano;
     marcaTreinoMudou(st, alunoId);
     save(st);
+    plnRasc = null;
     renderPlanoSem();
-    $("plnStatus").innerHTML = Object.keys(dias).length
-      ? msgPublicar(alunoId, "Planejamento salvo!")
+    $("plnStatus").innerHTML = total
+      ? msgPublicar(alunoId, S.plural(total, "treino", "treinos") + " na semana — salvo!")
       : "Planejamento limpo — o card HOJE do app volta ao rodízio automático de fichas.";
   });
   if ($("plnLimpa")) $("plnLimpa").addEventListener("click", function () {
-    document.querySelectorAll("#plnDias [data-plndia]").forEach(function (sel) { sel.value = ""; });
+    if (!plnRasc) return;
+    Object.keys(plnRasc).forEach(function (k) { plnRasc[k] = []; });
+    renderPlanoSem();
   });
-  window.__planoPT = { render: renderPlanoSem }; // testes
+  window.__planoPT = { render: renderPlanoSem, rasc: function () { return plnRasc; } }; // testes
 
   // ---------- configurações do studio: tolerância de atraso + o que o aluno vê no app ----------
   /* ---------- tela 4a: o resumo com o ESTADO de cada grupo ----------
@@ -20352,21 +20445,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var planoApp = null;
     if (t2 && t2.plano && t2.plano.dias) {
       planoApp = {};
+      // v768: cada dia é uma LISTA (o aluno pode ter corrida e musculação no
+      // mesmo dia), já ordenada por horário, com o `h` viajando junto
       Object.keys(t2.plano.dias).forEach(function (d) {
         if (!/^[0-6]$/.test(String(d))) return;
-        var it = t2.plano.dias[d] || {};
-        var ix = -1, nomePl = "";
-        if (it.tp === "ficha") {
-          ix = (t2.fichas || []).findIndex(function (f) { return f.id === it.id; });
-          if (ix >= 0) nomePl = t2.fichas[ix].titulo || "Ficha";
-        } else if (it.tp === "wod") {
-          ix = ((t2.wods || []).slice(0, 10)).findIndex(function (w) { return w.id === it.id; });
-          if (ix >= 0) nomePl = t2.wods[ix].nome || "Circuito";
-        } else if (it.tp === "cardio") {
-          ix = cardiosApp.findIndex(function (c) { return c.id === it.id; });
-          if (ix >= 0) nomePl = cardiosApp[ix].nome || "Cardio";
-        } else return;
-        if (ix >= 0) planoApp[d] = { tp: it.tp, i: ix, n: String(nomePl).slice(0, 60) };
+        var saida = [];
+        plnDoDia(t2.plano.dias, d).forEach(function (it) {
+          var ix = -1, nomePl = "";
+          if (it.tp === "ficha") {
+            ix = (t2.fichas || []).findIndex(function (f) { return f.id === it.id; });
+            if (ix >= 0) nomePl = t2.fichas[ix].titulo || "Ficha";
+          } else if (it.tp === "wod") {
+            ix = ((t2.wods || []).slice(0, 10)).findIndex(function (w) { return w.id === it.id; });
+            if (ix >= 0) nomePl = t2.wods[ix].nome || "Circuito";
+          } else if (it.tp === "cardio") {
+            ix = cardiosApp.findIndex(function (c) { return c.id === it.id; });
+            if (ix >= 0) nomePl = cardiosApp[ix].nome || "Cardio";
+          } else return;
+          if (ix >= 0) saida.push({ tp: it.tp, i: ix, n: String(nomePl).slice(0, 60), h: plnHora(it) });
+        });
+        if (saida.length) planoApp[d] = saida;
       });
       if (!Object.keys(planoApp).length) planoApp = null;
     }
