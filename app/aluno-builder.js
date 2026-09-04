@@ -2305,11 +2305,29 @@
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + jsonApp(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
-      "function agDados(){var l=L('ptagenda',[]);SESS.forEach(function(s){if(!l.some(function(x){return x.dia===s.d&&x.hora===(s.h||'')&&x.status==='confirmado';}))l.push({dia:s.d,hora:s.h||'',status:'confirmado',obs:'Sessão marcada'});});return l;}" +
+      "function agDados(){var l=L('ptagenda',[]);SESS.forEach(function(s){if(!l.some(function(x){return x.dia===s.d&&x.hora===(s.h||'')&&x.status==='confirmado';}))l.push({dia:s.d,hora:s.h||'',status:'confirmado',obs:s.sv||'Sessão marcada',sv:s.sv||''});});return l;}" +
+      /* v770: a agenda do aluno mostra o DIA INTEIRO — o treino do plano
+       * (projetado da semana pra qualquer data), a sessão com o professor e o
+       * serviço comprado, tudo na ordem do relógio. O plano é DERIVADO da data:
+       * ele se repete toda semana, então não precisa (nem deve) viajar como 60
+       * linhas prontas — o que envelheceria no dia em que o professor mudasse a
+       * semana. Quem tem data de verdade são as sessões, e essas vêm no pacote. */
+      "function agItensDia(iso){var out=[];" +
+      "var d9=new Date(iso+'T12:00:00');" +
+      "plnDia(d9.getDay()).forEach(function(p){" +
+      "out.push({k:'treino',tp:p.tp,h:p.h||'',tit:p.n||'Treino'," +
+      "sub:p.tp==='wod'?'circuito':p.tp==='cardio'?'corrida e bike':'musculação'});});" +
+      "agDados().forEach(function(x){if(x.dia!==iso)return;" +
+      "out.push({k:x.sv?'servico':'sessao',h:x.hora||'',tit:x.sv||" + jsonApp("Sessão com " + STUDIO_CURTO) + "," +
+      "sub:x.sv?'serviço':'presencial',status:x.status});});" +
+      "return out.sort(function(a9,b9){if(a9.h===b9.h)return 0;if(!a9.h)return 1;if(!b9.h)return -1;return a9.h<b9.h?-1:1;});}" +
+      "window.__agItens=agItensDia;" +
       "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
       "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
+      "(function(){for(var dp=1;dp<=nd;dp++){var isoP=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dp).slice(-2);" +
+      "if(pontos[isoP])continue;var dw=new Date(isoP+'T12:00:00').getDay();if(plnDia(dw).length)pontos[isoP]='treino';}})();" +
       "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' aria-label='Mês anterior' style='background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' aria-label='Próximo mês' style='background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
@@ -2322,9 +2340,10 @@
       "else if(hoje2)cls='aghoje';" +
       "else if(st2==='confirmado')sty='background:linear-gradient(160deg,var(--corc),var(--cor));color:#fff;';" +
       "else if(st2==='pedido')sty='border:1.5px dashed var(--corc);color:#d6d2df;';" +
+      "else if(st2==='treino')sty='background:var(--bg4);color:#d6d2df;';" +
       "else if(st2)sty='border:1.5px dashed #f87171;color:#d6d2df;';" +
       "else sty='color:#a9a4b5;';" +
-      "var pon=(AGSEL===iso||st2==='confirmado')&&!cls?'rgba(255,255,255,.9)':cls?'var(--cor)':st2==='pedido'?'var(--corc)':'#f87171';" +
+      "var pon=(AGSEL===iso||st2==='confirmado')&&!cls?'rgba(255,255,255,.9)':cls?'var(--cor)':st2==='pedido'?'var(--corc)':st2==='treino'?'var(--corc)':'#f87171';" +
       "h+=\"<div data-agdia='\"+iso+\"'\"+(cls?\" class='\"+cls+\"'\":'')+\" style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:13px;cursor:pointer;font-size:13.5px;font-weight:700;\"+sty+\"'>\"+d2+" +
       "(st2||((AGSEL===iso||hoje2)&&pontos[iso])?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+pon+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
       "h+='</div>';el.innerHTML=h;" +
@@ -2350,10 +2369,27 @@
       "var dt9=new Date(AGSEL+'T12:00:00');" +
       "box.innerHTML=\"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;'>\"+" +
       "\"<span class='wpk' style='margin:0;'>\"+DSEMA[dt9.getDay()]+', '+(+pd[2])+' DE '+MESES[+pd[1]-1].toUpperCase()+\"</span>\"+" +
-      "(AGSEL===isoHj()?\"<span style='background:rgba(74,222,128,.14);color:#4ade80;border-radius:99px;padding:4px 12px;font-size:10.5px;font-weight:800;letter-spacing:.08em;'>HOJE</span>\":'')+'</div>'+(l.length?l.map(function(x){" +
+      "(AGSEL===isoHj()?\"<span style='background:rgba(74,222,128,.14);color:#4ade80;border-radius:99px;padding:4px 12px;font-size:10.5px;font-weight:800;letter-spacing:.08em;'>HOJE</span>\":'')+'</div>'+" +
+      /* v770: antes daqui vinham só as sessões marcadas. Agora entra a agenda
+       * INTEIRA do dia — o treino do plano (projetado da semana pra qualquer
+       * data), a sessão e o serviço, na ordem do relógio. Vale pra qualquer
+       * dia do calendário, não só pro card de hoje. */
+      "agItensDia(AGSEL).map(function(it){" +
+      "var ic9={ficha:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",wod:\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",cardio:\"<circle cx='12' cy='13' r='8'/><path d='M12 9v4l2.5 2.5M9 2h6'/>\"}[it.tp]||\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\";" +
+      "var cor9=it.k==='treino'?'var(--corc)':it.k==='servico'?'#fbbf24':'#4ade80';" +
+      "return \"<div style='display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:10px 12px;margin-bottom:6px;'>\"+" +
+      "\"<b style='font-size:13.5px;font-weight:900;color:\"+(it.h?cor9:'#6e6a78')+\";'>\"+(it.h||'livre')+'</b>'+" +
+      "\"<span style='min-width:0;'><span style='display:block;font-size:13.5px;font-weight:700;line-height:1.3;'>\"+String(it.tit).replace(/</g,'&lt;')+'</span>'+" +
+      "\"<span style='display:block;font-size:11px;color:#6e6a78;margin-top:1px;'>\"+it.sub+'</span></span>'+" +
+      "\"<span style='line-height:0;color:\"+cor9+\";'>\"+icx(ic9,17)+'</span></div>';}).join('')+" +
+      // a lista antiga fica só pro que ainda NÃO está confirmado (pedido ou
+      // recusado) — o confirmado já apareceu ali em cima, e repetir seria a
+      // mesma linha duas vezes na mesma tela
+      "(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
-      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "if(x.status==='confirmado')return '';" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):'')+((agItensDia(AGSEL).length||l.length)?'':\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
       "form.style.display=AGSEL>=isoHj()?'block':'none';" +
       "var apj9=document.getElementById('agPedeJa');if(apj9)apj9.style.display=form.style.display==='none'?'':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +

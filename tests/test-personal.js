@@ -15373,6 +15373,116 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
+  /* ================= v770 — a agenda unificada (plano + sessões + serviços) ==
+   * O Raphael pediu: a semana do aluno (A, B, C, corrida, circuito) tem de
+   * aparecer em DATAS por dois meses na agenda, junto das sessões com o
+   * professor e dos serviços comprados, tudo organizado por horário — no app
+   * do aluno e no painel. */
+  console.log("\n🗓️ v770 — agenda unificada:");
+  {
+    const ctxU = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxU.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pu = await ctxU.newPage();
+    pu.on("pageerror", (e) => erros.push("v770: " + e.message));
+    pu.on("dialog", (d) => d.accept());
+    await pu.goto(BASE + "/personal.html");
+    await pu.waitForFunction(() => window.__ptStudio && window.__renderPT);
+
+    const cen = await pu.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const dia = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return window.diaISO(d); };
+      st.alunos = [{ id: "u770", nome: "Agenda Cheia", ativo: true, desde: "2026-01-05", appTokenP: "tku770",
+        servPacotes: [{ id: "sv770", nome: "Massagem", total: 5, usadas: 0 }] }];
+      st.servicosPT = [{ id: "sv770", nome: "Massagem", valor: 120 }];
+      st.treinosV2 = { u770: {
+        fichas: [{ id: "f1", titulo: "A — Peito", itens: [{ e: "Supino reto com barra", s: 4, r: "10" }] }],
+        wods: [{ id: "w1", nome: "Circuito do sábado", tipo: "amrap", min: 12, movs: [{ n: "Burpee", q: "10" }] }],
+        cardio: [{ id: "c1", nome: "Corrida leve", mod: "corrida", tipo: "continuo", dist: 7 }],
+        plano: { dias: { "1": [{ tp: "wod", id: "w1", h: "07:30" }, { tp: "ficha", id: "f1", h: "18:30" }],
+                         "2": [{ tp: "ficha", id: "f1", h: "18:30" }] } } } };
+      st.sessoes = [
+        { id: "u1", alunoId: "u770", data: dia(3), hora: "17:00", feita: false },
+        { id: "u2", alunoId: "u770", data: dia(3), hora: "14:00", feita: false, svId: "sv770", sv: "Massagem" },
+      ];
+      st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st);
+      window.__renderPT();
+      // a segunda-feira mais distante dentro dos 2 meses
+      const d2 = new Date(); d2.setDate(d2.getDate() + 56);
+      while (d2.getDay() !== 1) d2.setDate(d2.getDate() + 1);
+      return { d3: dia(3), segLonge: window.diaISO(d2) };
+    });
+
+    const u = await pu.evaluate((c) => {
+      const st = window.MTStore.read("ptStudio", {});
+      return {
+        // o dia com sessão E serviço: quatro linhas, na ordem do relógio
+        dia3: window.__agendaDia(st, "u770", c.d3).map((x) => x.h + "|" + x.k),
+        // a segunda daqui a dois meses mostra os DOIS treinos do plano
+        longe: window.__agendaDia(st, "u770", c.segLonge).map((x) => x.h + "|" + x.tit),
+        // e a projeção de 60 dias não grava nada — é derivada
+        gravou: (st.sessoes || []).length,
+        prox: window.__agendaProx(st, "u770", 60).length,
+      };
+    }, cen);
+    ok(u.dia3.join(" ") === "14:00|servico 17:00|sessao 18:30|treino" || u.dia3.join(" ") === "07:30|treino 14:00|servico 17:00|sessao 18:30|treino",
+      "🗓️ v770: o dia junta treino do plano, sessão com o professor e serviço — na ordem do relógio (" + u.dia3.join(" ") + ")");
+    ok(u.longe.length === 2 && /07:30\|Circuito/.test(u.longe[0]) && /18:30\|A — Peito/.test(u.longe[1]),
+      "🗓️ v770: a segunda daqui a DOIS MESES já mostra os dois treinos da semana (" + u.longe.join(" · ") + ")");
+    ok(u.gravou === 2 && u.prox > 10,
+      "🗓️ v770: os 2 meses são DERIVADOS da semana — nada de gravar 60 sessões que envelhecem quando o professor muda o plano");
+
+    // o serviço dá baixa no pacote de massagem, nunca no de aulas
+    const bx = await pu.evaluate(() => {
+      document.body.insertAdjacentHTML("beforeend", '<button id="zz770" data-feita="u2"></button>');
+      document.getElementById("zz770").click();
+      const a = window.MTStore.read("ptStudio", {}).alunos[0];
+      return { massagem: a.servPacotes[0].usadas, aulas: (a.pacote || {}).usadas };
+    });
+    ok(bx.massagem === 1 && bx.aulas === undefined,
+      "🗓️ v770: marcar Feita num SERVIÇO consome o pacote do serviço, não o de aulas");
+
+    // o card na ficha do aluno mostra a mesma agenda
+    const cf = await pu.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const h = window.__agFicha.html(st, st.alunos[0]);
+      return { card: /Agenda do aluno/.test(h), sv: /Massagem/.test(h), tr: /Circuito do sábado/.test(h), mais: /data-agmais/.test(h) };
+    });
+    ok(cf.card && cf.sv && cf.tr && cf.mais,
+      "🗓️ v770: a ficha do aluno mostra a agenda dele — treino, sessão e serviço, com o botão pros 2 meses");
+
+    // e o app do aluno mostra o mesmo dia
+    const appU = await pu.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    });
+    const ctxAU = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pau = await ctxAU.newPage();
+    pau.on("pageerror", (e) => erros.push("v770 app: " + e.message));
+    await pau.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await pau.route("**/app-v770.html", (r) => r.fulfill({ contentType: "text/html", body: appU }));
+    await pau.goto(BASE + "/app-v770.html", { waitUntil: "domcontentloaded" });
+    await pau.waitForTimeout(900);
+    const ap = await pau.evaluate((c) => {
+      window.__trocaSec("agenda");
+      const itens = window.__agItens(c.d3).map((x) => x.h + "|" + x.k);
+      document.querySelectorAll("[data-agdia]").forEach((d) => { if (d.getAttribute("data-agdia") === c.d3) d.click(); });
+      return { itens, txt: document.getElementById("agDia").textContent.replace(/\s+/g, " "),
+               longe: window.__agItens(c.segLonge).length };
+    }, cen);
+    ok(ap.itens.indexOf("07:30|treino") > -1 && ap.itens.indexOf("17:00|sessao") > -1 && ap.itens.indexOf("18:30|treino") > -1,
+      "🗓️ v770: no APP o mesmo dia traz treino e sessão juntos, por horário (" + ap.itens.join(" ") + ")");
+    ok(/07:30/.test(ap.txt) && /Circuito do sábado/.test(ap.txt) && /18:30/.test(ap.txt),
+      "🗓️ v770: e tocar no dia do calendário mostra a agenda daquele dia, não só as sessões");
+    ok(ap.longe === 2,
+      "🗓️ v770: no app, um dia daqui a dois meses já vem com os treinos da semana — a projeção é local, sem inchar o pacote");
+    await ctxAU.close();
+    await ctxU.close();
+  }
+
   /* ================= v765 — o placar do app vira coisa do professor ========
    * Medido no banco em 2026-09-03: os 5 alunos com retorno estavam no nível 1,
    * o painel nunca lia esse campo, e NENHUM desafio tinha sido criado. */
