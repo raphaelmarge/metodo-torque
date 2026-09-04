@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v765** |
-| Estado do repo em | 2026-09-03 (commit `944b495`) |
+| App em | **mt-v766** |
+| Estado do repo em | 2026-09-03 (commit `e2d130c`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 226 |
+| Lançamentos no histórico | 227 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v765**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v766**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v766 | regera as demos com o codigo novo (a do aluno estava no mt-v754) |
 | mt-v765 | a gamificacao premiava um botao e ninguem olhava |
 | mt-v764 | pedir o GPS na hora certa (e religar quando o aluno volta pro app) |
 | mt-v763 | pedir o push no primeiro dia (e o chat volta a descer pra mensagem nova) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v754 | revisão por área — Configurações/Avaliação e o resto do app do aluno (69 itens) |
 | mt-v753 | teto de uso da IA por academia + prompt de corrida coerente |
 | mt-v752 | revisão por área — Montar treino e IA (pt-treinos, pt-ia, 27 itens) |
-| mt-v751 | revisão por área — Financeiro e Relatórios (pt-fin, pt-rel, 26 itens) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
