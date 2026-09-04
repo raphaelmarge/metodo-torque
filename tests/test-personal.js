@@ -15524,6 +15524,63 @@ async function abaPt(p, a) {
       "📆 v771: cada linha da gaveta abre o treino certo (" + v771.abre.join(" ") + ")");
     ok(v771.fechou, "📆 v771: tocar no dia aberto FECHA a gaveta — é retrátil, como o Raphael pediu");
 
+    /* ---------- v772: o sino de avisos ----------
+     * Medido no banco em 2026-09-04 antes de escolher as fontes: 12 apps
+     * publicados, 5 abertos, ZERO recados do professor (9 do aluno pra ele),
+     * 5 check-ins, 1 pedido de horário. Um sino que só lesse o chat nasceria
+     * vazio pra sempre — por isso ele lê o que de fato acontece: treino
+     * publicado, sessão marcada, questionário e check-in esperando. */
+    const sino = await pau.evaluate(() => {
+      const lst = window.__sino.lista();
+      return {
+        temBotao: !!document.getElementById("sinoBtn"),
+        badge: document.getElementById("sinoN").textContent,
+        tipos: lst.map((o) => o.k),
+        // o fixture não tem fichasEm (o professor não prescreveu): então NÃO
+        // pode existir aviso de treino novo — senão a republicação automática
+        // do painel viraria "seu treino foi atualizado" mentiroso
+        semTreino: !lst.some((o) => o.k === "treino"),
+        // sessão futura não fica presa no topo: ela entra na ordem de hoje
+        ordem: lst.map((o) => o.qo || o.q),
+      };
+    });
+    ok(sino.temBotao && sino.tipos.indexOf("sess") > -1,
+      "🔔 v772: o sino existe no topo do Início e lista a sessão marcada (" + sino.tipos.join(",") + ")");
+    ok(sino.semTreino,
+      "🔔 v772: sem prescrição nova (fichasEm vazio) NÃO existe aviso de treino — o stamp do pacote muda a cada republicação automática e viraria aviso falso");
+
+    const sinoAberto = await pau.evaluate(() => {
+      document.getElementById("sinoBtn").click();
+      const pn = document.getElementById("sinoPn");
+      const r = pn.getBoundingClientRect();
+      return {
+        colouNaTela: Math.round(r.left) === 0 && Math.round(r.top) === 0,
+        linhas: [...pn.querySelectorAll("[data-notir]")].map((x) => x.getAttribute("data-notir")),
+        zerou: window.__sino.novos() === 0,
+      };
+    });
+    ok(sinoAberto.colouNaTela,
+      "🔔 v772: o painel cola na TELA e não no cabeçalho — position:fixed dentro de elemento com transform ancora no elemento (a armadilha da v634)");
+    ok(sinoAberto.zerou && sinoAberto.linhas.length > 0,
+      "🔔 v772: abrir marca os avisos como vistos e o badge zera (" + sinoAberto.linhas.join(",") + ")");
+
+    const sinoVolta = await pau.evaluate(() => {
+      const c = JSON.parse(localStorage.getItem("ptchat") || "[]");
+      c.push({ de: "prof", txt: "Recado novo do professor", criado: new Date().toISOString() });
+      localStorage.setItem("ptchat", JSON.stringify(c));
+      window.__sino.pinta();
+      const n = window.__sino.novos();
+      // e tocar no aviso leva pra área certa, fechando o painel
+      window.__sino.abre();
+      document.querySelector("[data-notir='chat']").click();
+      return { novos: n, fechou: getComputedStyle(document.getElementById("sinoCx")).display === "none",
+        sec: document.querySelector("[data-sec='chat']:not([data-sec-off])") ? "chat" : "?" };
+    });
+    ok(sinoVolta.novos === 1,
+      "🔔 v772: recado novo do professor volta a acender o sino (o id do aviso é estável, então só o que é NOVO conta)");
+    ok(sinoVolta.fechou && sinoVolta.sec === "chat",
+      "🔔 v772: tocar no aviso fecha o painel e abre a área certa do app");
+
     await ctxAU.close();
     await ctxU.close();
   }

@@ -1798,6 +1798,47 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**O sino de avisos no app do aluno** (mt-v772): o Raphael circulou o canto de
+cima do Início e pediu um sino que abrisse "as notificações que chegaram no
+app". A pergunta que decidiu o desenho foi *o que, de fato, chega* — medido no
+banco em 2026-09-04, antes de escrever qualquer linha: **12 apps publicados, 5
+abertos, ZERO recados do professor** (9 do aluno pra ele), 5 check-ins, 1
+questionário respondido, 1 pedido de horário e **1 aluno com push**. Ou seja: um
+sino que lesse só o CHAT nasceria vazio pra sempre. O que acontece na vida do
+aluno é o professor **publicar treino** e **marcar sessão**.
+
+Então o sino lê CINCO sinais que já existiam, e nenhuma tabela nova foi criada:
+treino prescrito, recado do professor, questionário esperando, check-in da
+semana e sessão marcada (com o nome do serviço, quando é massagem/avaliação).
+A lista é **derivada**, a mesma regra da agenda da v770. Cada aviso tem um id
+**estável** e o que já foi visto fica em `ptnotifL` — por isso o badge conta só
+o que é novo de verdade e o histórico continua lá quando o aluno reabre.
+Pendência (questionário/check-in) some sozinha ao ser respondida, porque o id
+carrega o PERÍODO: `window.__qaChave` e `window.__ckChave` foram expostos pra
+isso — semana nova, aviso novo.
+
+⚠️ **"Seu treino foi atualizado" sai do `fichasEm`, nunca do `stamp` do pacote.**
+O `autoPublicaApps` republica sozinho, então pelo stamp o aluno receberia o
+aviso sem nada ter mudado no treino dele — a mesma lição da v747, quando a
+"idade da ficha" também teve de sair do `fichasEm`. O campo passou a viajar no
+pacote (`dadosAppAluno`), e o teste reprova se o aviso aparecer sem prescrição.
+⚠️ **O painel do sino nasce colado no `<body>`**: o cabeçalho vive dentro do
+`#blocoHoje`, e `position:fixed` dentro de elemento com `transform` ancora no
+ELEMENTO, não na tela — é a armadilha que custou caro na v634. O teste mede o
+retângulo (0,0) em vez de confiar na classe.
+⚠️ **A ORDEM da lista não é a data do aviso**: sessão marcada tem data FUTURA e,
+ordenando por ela, uma sessão de daqui a um mês ficaria grudada no topo por um
+mês inteiro. Ela entra na ordem de hoje (`qo`) e a data aparece no texto.
+⚠️ O badge era pintado no meio do arquivo, **antes** de o bloco do questionário
+existir — medido na demo: dizia **4** com 5 avisos na lista. Agora repinta no
+fim do boot, quando todas as fontes já existem.
+⚠️ A mensagem do chat é `m.texto`, **não** `m.txt` — com o nome errado o aviso
+sai com o título certo e a prévia VAZIA, que é pior do que não existir.
+⚠️ O sino **não é o push do celular**: o push é do sistema e quase ninguém tem
+ligado (1 aluno em 12). O sino é o que está DENTRO do app — e é justamente por
+isso que ele precisa existir.
+Ganchos: `window.__sino` (`lista`, `novos`, `abre`, `fecha`, `pinta`).
+
 **O Início dizia a mesma coisa três vezes** (mt-v771): o Raphael abriu o app no
 celular e mandou a foto — na mesma dobra estavam o **card grande do carrossel**
 ("1 DE 3 · ARRASTE", com o botão Começar treino), o card **SEU DIA · 2 TREINOS**

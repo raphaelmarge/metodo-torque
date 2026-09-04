@@ -166,6 +166,10 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { n: 3, foco: "volume máximo", ajuste: "+1 série no primeiro exercício de cada ficha, mantenha a carga" },
         { n: 4, foco: "deload", ajuste: "reduza 30% das séries e mantenha a carga — semana de recuperação" },
       ] } },
+      /* v772: o sino do app diz "seu treino foi atualizado" lendo o fichasEm —
+       * o carimbo de quando o professor PRESCREVEU. Sem ele a demo abriria com
+       * o sino mudo justamente na novidade que o Raphael vai mostrar. */
+      fichasEm: new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10),
       plano: { dias: {
         "1": [{ tp: "ficha", id: "dmf0", h: "07:00" }, { tp: "cardio", id: "dmc1", h: "19:00" }],
         "3": [{ tp: "cardio", id: "dmc2", h: "06:30" }, { tp: "ficha", id: "dmf1", h: "19:00" }],
