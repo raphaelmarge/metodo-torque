@@ -1798,6 +1798,64 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**A gamificação premiava um botão e ninguém olhava** (mt-v765): o Raphael
+perguntou como melhorar a área de gamificação. Medido no banco em 2026-09-03,
+antes de opinar: dos **12 apps publicados**, 5 alunos mandaram retorno — e os
+**CINCO estavam no nível 1**. Ninguém subiu de nível uma única vez. A metade
+social estava zerada: **0 posts** no feed, **0 reações**, **0 desafios criados**,
+**0 conquistas personalizadas**, `feedOn: false` nas duas academias. Quatro
+buracos, todos consertados aqui:
+
+1. **O primeiro prêmio demorava um mês.** `nvXpAte(n) = 50·(n−1)·n` punha o
+   nível 2 em **100 XP** = 10 treinos, mais de três semanas a 3×/semana — e os
+   alunos param na semana 1 ou 2 (medido: dos 5, três treinaram 1 a 3 dias e
+   sumiram). Virou **20·(n−1)·n**: nível 2 com 40 XP, dentro da primeira semana.
+   ⚠️ o comentário antigo do código dizia "nível 2 com uma semana de treino" e a
+   conta nunca bateu com a intenção — a curva estava errada desde sempre.
+2. **O XP só via UM botão.** Contava `ptfeitos`, `pthab`, `ptqa`/`ptckh`. O
+   aluno com 6 corridas e 10 exercícios com carga anotada ganhava **zero** por
+   isso. Agora corrida = 10 XP e **DIA** com carga anotada = 5 XP (por dia, não
+   por exercício: 12 séries do mesmo treino são um esforço só). `XPLEG` conta a
+   verdade nova.
+3. **A sequência castigava quem segue o plano.** As medalhas eram "3 dias
+   seguidos" e "7 dias seguidos" com `seqMax`, que conta **dias corridos de
+   calendário** — um aluno de segunda/quarta/sexta, que é o que o professor
+   prescreve com descanso no meio, **nunca** alcançava. Viraram "2 semanas
+   seguidas" e "4 semanas seguidas" sobre `streakSem` (semana batendo a META),
+   que é a promessa do plano. E o salto de "Primeiro treino" direto pra "25
+   treinos" ganhou degraus: **1 → 5 → 10 → 25 → 50 → 100**.
+4. **Ninguém estava olhando.** O app mandava `retorno.nivel` desde sempre e o
+   painel **nunca lia esse campo** — o professor não tinha como saber que o
+   aluno estava de sequência. Agora o pacote leva `xp`, `seqSem`, `medalhas` e
+   `medalhasTot`; o `sinoNuvem` (a busca em lote de 10 em 10 min) traz os quatro
+   junto do `feitos`; a ficha ganhou os KPIs **Nível no app** e **Semanas na
+   meta**; e o **Resolver hoje** ganhou o card `MANDAR PARABÉNS` pra quem
+   emendou 2+ semanas, com o texto pronto no WhatsApp. Em personal, o prêmio que
+   segura o aluno não é a medalha na tela dele — é o professor perceber.
+   ⚠️ `a.parabensSeq` guarda a sequência já comemorada: o card não volta todo
+   dia, e volta sozinho quando o número muda (ele emendou mais uma semana).
+   ⚠️ `medalhas` só entra no pacote quando o `CQGANHAS` já foi pintado — mandar
+   0 apagaria o número bom na nuvem, porque o `app_retorno_mescla` grava toda
+   chave que CHEGA.
+
+O social (item 4 da lista) entrou pelo lado do **atrito**: criar um desafio eram
+quatro campos e duas datas, e nenhum foi criado em nenhuma academia. O botão
+**Desafio deste mês** (`#dsMes`) preenche nome e as duas datas do mês inteiro, e
+salvar passou a **publicar os apps ali mesmo** — antes o alerta mandava o
+professor achar a tela de publicar três cliques adiante, e desafio que não chega
+no celular do aluno não existe.
+⚠️ o resultado da publicação vai no **`#dsPub`**, nunca no `#dsStatus`: aquela
+linha é o estado do desafio ("rolando até 30/09") e o professor precisa dela na
+tela. Sem conta na nuvem, o `#dsPub` diz o caminho em vez de estourar o alerta
+de login em cima de quem acabou de salvar.
+⚠️ Dois testes antigos tiveram de mudar por MUDANÇA DE REGRA, não por conserto:
+o "+10 XP" cravado virou conferência da regra inteira contra o que está no
+aparelho (mais forte, e não quebra quando outro bloco semeia uma corrida), e o
+`ptnivelok` passou a ser lido como marca do nível MAIS ALTO já visto — o próprio
+teste sobe e desce o XP ao semear e restaurar `ptcardio`, e é justamente essa
+marca que impede a festa de "SUBIU DE NÍVEL" de repetir.
+Ganchos: `window.__parabens.{msg,manda}`.
+
 **Pedir o GPS na hora certa** (mt-v764): o GPS era pedido **calado** — a
 janelinha do navegador pulava assim que o aluno entrava na área de corrida
 (`crAutoGps` chamava `crGpsLiga` direto), sem ninguém explicar pra quê. E aqui

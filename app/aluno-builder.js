@@ -97,7 +97,7 @@
     };
     var STUDIO_CURTO = nomeCurto(studio);
     // a legenda do XP num lugar só (faixa da Evolução e card do nível liam cópias)
-    var XPLEG = "treino = 10 XP · hábito = 2 XP · check-in ou questionário = 20 XP";
+    var XPLEG = "treino = 10 XP · corrida = 10 XP · dia com carga anotada = 5 XP · hábito = 2 XP · check-in = 20 XP";
     // dinheiro sempre com centavos (a Loja já saía "R$ 149,90" e o plano "R$ 149,9")
     var dinheiro = function (v) { return "R$ " + (+v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
     // link que vira href: só http(s), sem aspas — a mesma régua da playlist e do clube
@@ -1872,8 +1872,16 @@
       "var perf9=L('ptfotoperfil','')||null;" +
       "function mrc9(x){if(!x||!x.img)return '-';var im=String(x.img);return x.d+':'+im.length+':'+im.slice(-24);}" +
       "var marca9=[mrc9(pri),mrc9(ult),mrc9(parL[0]),mrc9(parL[1]),mrc9(parC[0]),mrc9(parC[1]),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
-      "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
+      /* v765: o placar existia e NINGUEM olhava. O app ja mandava o nivel e o
+       * painel nunca lia esse campo — medido na base, os 5 alunos com retorno
+       * tinham nivel gravado e nenhuma tela do professor mostrava. Agora vao
+       * junto o XP, a sequencia de SEMANAS batendo a meta e quantas medalhas
+       * ele tem, que e o que da pro professor mandar o parabens na hora certa.
+       * CQGANHAS e escrito pelo pintaConquistas; so entra no pacote quando ja
+       * foi pintado uma vez, porque mandar 0 apagaria o numero bom da nuvem. */
+      "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),xp:xpDados(),seqSem:streakSem(L('ptfeitos',{})),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "aceite:L('ptaceite',null)," +
+      "medalhas:(CQGANHAS.tot?CQGANHAS.n:undefined),medalhasTot:(CQGANHAS.tot||undefined)," +
       "notas:L('ptnotas',[])," +
       "indicas:L('ptindicas',[])," +
       "vol:L('ptvol',{})," +
@@ -2368,7 +2376,7 @@
       // sobreviver às repinturas; o clique repinta a grade
       // desenha a medalha (o mesmo traço serve a grade e a tela cheia)
       "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
-      "var cqAberto=false;var CQATUAL=[];" +
+      "var cqAberto=false;var CQATUAL=[];var CQGANHAS={n:0,tot:0};" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
       "if(!cqAberto){var g6=document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
@@ -2447,7 +2455,13 @@
       "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).length;" +
       "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
       "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
-      "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro treino',total,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'3 dias seguidos',seq,3],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'7 dias seguidos',seq,7],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'Semana com meta',semMeta,1],[\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'25 treinos',total,25],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'100 treinos',total,100],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pz,10],[\"<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>\",'Carga anotada',recs,1],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'10 semanas de meta',semMeta,10]];" +
+      /* v765: as medalhas de sequência eram "3 dias seguidos" e "7 dias
+       * seguidos", contando DIAS CORRIDOS de calendário — e castigavam
+       * justamente quem segue o plano: um aluno de segunda/quarta/sexta, que é
+       * o que o professor prescreve (com descanso no meio), nunca ia alcançar.
+       * Agora a régua é semana batendo a meta, que é a promessa do plano. */
+      "var seqSem=streakSem(f);" +
+      "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro treino',total,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'5 treinos',total,5],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'10 treinos',total,10],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'Semana com meta',semMeta,1],[\"<path d='M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z'/>\",'2 semanas seguidas',seqSem,2],[\"<circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1.5'/>\",'4 semanas seguidas',seqSem,4],[\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'25 treinos',total,25],[\"<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>\",'Carga anotada',recs,1],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pz,10],[\"<path d='m3 18 1.5-11 4.5 4 3-6 3 6 4.5-4L21 18z'/><path d='M3 21h18'/>\",'50 treinos',total,50],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'10 semanas de meta',semMeta,10],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'100 treinos',total,100]];" +
       // conquistas de CORRIDA: medidas pelo histórico real do cronômetro
       // (ptcardio, só modalidade corrida — bike e caminhada não valem aqui).
       // Só entram se a área Corrida e bike está ligada nas Configurações.
@@ -2487,6 +2501,7 @@
       "(tem?'':\"<div style='font-size:9.5px;color:#57525f;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</button>';}).join('');" +
       // a tela cheia lê daqui (o clique só manda o índice)
       "CQATUAL=BADGES.map(function(b,i5){return {p:b[0],n:b[1],v:b[2],m:b[3],emo:b[4]||'',cor:CQCOR[i5%CQCOR.length],d:(b[2]>=b[3]?cqData(b[1],b[3]):'')};});" +
+      "CQGANHAS={n:BADGES.filter(function(b){return b[2]>=b[3];}).length,tot:BADGES.length};" +
       // retrátil: com mais de 6 medalhas, encolhe e o botão diz quantas tem
       "var g5=document.getElementById('cqGrid'),vm5=document.getElementById('cqVerMais');" +
       "if(g5&&vm5){var enc5=!cqAberto&&BADGES.length>6;g5.classList.toggle('enc',enc5);" +
@@ -5984,13 +5999,25 @@
       "function xpDados(){var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
       /* v747: o check-in da semana (ptckh = uma chave por semana enviada)
        * entra na conta — o rótulo prometia 20 XP e só o questionário contava. */
-      "var nq=Object.keys(L('ptqa',{})).length+Object.keys(L('ptckh',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
+      "var nq=Object.keys(L('ptqa',{})).length+Object.keys(L('ptckh',{})).length;" +
+      /* v765: o placar premiava UM botão e ignorava o trabalho. Medido na base:
+       * um aluno com 6 corridas e 10 exercícios com carga anotada tinha ZERO XP
+       * por isso — só "Treinei hoje!" e hábito contavam. Agora a corrida vale 10
+       * e o DIA em que ele anotou carga vale 5 (por dia, nao por exercicio: 12
+       * séries do mesmo treino são um esforço só). */
+      "var ncr=(L('ptcardio',[])||[]).length;" +
+      "var dcd={};var dc9=L('ptdc',{});Object.keys(dc9).forEach(function(ex){(dc9[ex]||[]).forEach(function(x){if(x&&x.d)dcd[String(x.d).slice(0,10)]=1;});});" +
+      "return Object.keys(pf).length*10+nh*2+nq*20+ncr*10+Object.keys(dcd).length*5;}" +
       /* nível: o XP acumulado vira nível numa curva quadrática — chegar ao
-       * nível n custa 50·(n−1)·n XP. Os primeiros vêm rápido (nível 2 com uma
-       * semana de treino) e cada um seguinte custa mais, que é o padrão dos
-       * apps de hábito que seguram o usuário no longo prazo. */
-      "function nvXpAte(n){return 50*(n-1)*n;}" +
-      "function nivelDe(xp){var n=1;while(50*n*(n+1)<=xp)n++;return n;}" +
+       * nível n custa 20·(n−1)·n XP. Os primeiros vêm rápido e cada um seguinte
+       * custa mais, que é o padrão dos apps de hábito.
+       * ⚠️ v765: era 50·(n−1)·n — nível 2 custava 100 XP, ou seja DEZ treinos,
+       * mais de três semanas a 3× por semana. Medido na base em 2026-09-03: os
+       * CINCO alunos que usaram o app estavam no nível 1, e todos pararam antes
+       * de ganhar qualquer coisa. Agora o nível 2 sai com 40 XP — dois treinos
+       * e um punhado de hábitos, dentro da primeira semana. */
+      "function nvXpAte(n){return 20*(n-1)*n;}" +
+      "function nivelDe(xp){var n=1;while(20*n*(n+1)<=xp)n++;return n;}" +
       "var NV_TIT=[[25,'Hall da Fama'],[20,'Mito'],[15,'Lenda'],[12,'Imparável'],[10,'Elite'],[9,'Fera'],[8,'Máquina'],[7,'Casca-grossa'],[6,'Raiz'],[5,'Firme'],[4,'Constante'],[3,'No ritmo'],[2,'Aquecendo']];" +
       "function nvTitulo(n){for(var i=0;i<NV_TIT.length;i++)if(n>=NV_TIT[i][0])return NV_TIT[i][1];return 'Iniciante';}" +
       "function pintaNivel(){var xp=xpDados();var n=nivelDe(xp);var el=document.getElementById('nvNum');if(el)el.textContent=n;" +

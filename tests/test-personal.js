@@ -6303,6 +6303,33 @@ async function abaPt(p, a) {
     ok(/err&&err\.code===2\)\?'A localiza/.test(appHtml),
       "🛰️ v764: localização do APARELHO desligada tem recado próprio — não é 'procurando o sinal'");
   }
+
+  /* v765: o placar do app. Medido no banco em 2026-09-03: os CINCO alunos que
+   * usaram o app estavam no nível 1, um deles com 6 corridas e 10 exercícios
+   * com carga anotada — trabalho que não valia XP nenhum. */
+  {
+    const xp = appHtml.slice(appHtml.indexOf("function xpDados()"), appHtml.indexOf("function nvXpAte"));
+    ok(/ptcardio[^]{0,60}length/.test(xp) && /ncr\*10/.test(xp),
+      "🎮 v765: corrida virou XP — antes 6 corridas valiam zero no placar");
+    ok(/ptdc/.test(xp) && /dcd\)\.length\*5/.test(xp),
+      "🎮 v765: o DIA em que ele anotou carga vale XP (por dia, não por exercício)");
+    ok(/function nvXpAte\(n\)\{return 20\*\(n-1\)\*n;\}/.test(appHtml) &&
+       /function nivelDe\(xp\)\{var n=1;while\(20\*n\*\(n\+1\)<=xp\)n\+\+;return n;\}/.test(appHtml),
+      "🎮 v765: o nível 2 custa 40 XP, não 100 — o primeiro prêmio cabe na primeira semana");
+    const badges = appHtml.slice(appHtml.indexOf("var BADGES=["), appHtml.indexOf("var BADGES=[") + 4000);
+    ok(!/dias seguidos/.test(badges),
+      "🎮 v765: sumiram as medalhas de DIAS corridos — quem treina seg/qua/sex nunca alcançava");
+    ok(/'2 semanas seguidas',seqSem,2\]/.test(badges) && /'4 semanas seguidas',seqSem,4\]/.test(badges) &&
+       /var seqSem=streakSem\(f\)/.test(appHtml),
+      "🎮 v765: a sequência passou a ser SEMANA batendo a meta, que é a promessa do plano");
+    ok(/'5 treinos',total,5\]/.test(badges) && /'10 treinos',total,10\]/.test(badges) && /'50 treinos',total,50\]/.test(badges),
+      "🎮 v765: os degraus curtos entraram (1 → 5 → 10 → 25 → 50 → 100), no lugar do salto de 1 pra 25");
+    ok(/xp:xpDados\(\)/.test(appHtml) && /seqSem:streakSem\(L\('ptfeitos',\{\}\)\)/.test(appHtml) &&
+       /medalhas:\(CQGANHAS\.tot\?CQGANHAS\.n:undefined\)/.test(appHtml),
+      "🎮 v765: o placar viaja pro professor — e a contagem de medalhas só entra depois de pintada (0 apagaria o número bom)");
+    ok(/corrida = 10 XP/.test(appHtml) && /carga anotada = 5 XP/.test(appHtml),
+      "🎮 v765: a legenda do XP conta a verdade nova");
+  }
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
   // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
   // fixo saiu do app montado de propósito, era ele que fazia o atalho do
@@ -6797,7 +6824,7 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
   }
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
-  ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /data-cqok/.test(appHtml), "medalhas de sequência e volume no app");
+  ok(/4 semanas seguidas/.test(appHtml) && /100 treinos/.test(appHtml) && /data-cqok/.test(appHtml), "medalhas de sequência e volume no app");
   ok(/botChips/.test(appHtml) && />assistente</.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro personal");
   // v756: os asserts do robô moram num arquivo só (tests/_bot-builder.js) —
@@ -10988,7 +11015,28 @@ async function abaPt(p, a) {
     "🔢 v747: um toque a mais no botão cheio NÃO zera as séries; segurar tira uma (" + setMax.cheio + " → " + setMax.menos + ")");
   {
     const xp1 = parseInt(((await pApp.evaluate(() => document.getElementById("xpChip").textContent)).match(/\d+/) || ["0"])[0], 10);
-    ok(xp1 === xp0 + 10, "treino registrado rende +10 XP (" + xp0 + " → " + xp1 + ")");
+    /* v765: o XP deixou de contar só o botão "Treinei hoje!" — corrida e o DIA
+     * em que o aluno anotou carga entram também (medido na base: um aluno com
+     * 6 corridas e 10 exercícios com carga tinha zero XP por esse trabalho).
+     * Então o assert deixou de cravar "+10" e passou a conferir a REGRA
+     * inteira contra o que está guardado no aparelho — é mais forte, e não
+     * quebra de novo quando outra tela do teste semeia uma corrida. */
+    const contas = await pApp.evaluate(() => {
+      const L = (k, p) => { try { return JSON.parse(localStorage.getItem(k)) || p; } catch (e) { return p; } };
+      const hb = L("pthab", {}); let nh = 0;
+      Object.keys(hb).forEach((k) => { const d = hb[k]; if (d && typeof d === "object") Object.keys(d).forEach((j) => { if (d[j]) nh++; }); });
+      const dias = {}; const dc = L("ptdc", {});
+      Object.keys(dc).forEach((ex) => (dc[ex] || []).forEach((x) => { if (x && x.d) dias[String(x.d).slice(0, 10)] = 1; }));
+      return {
+        treinos: Object.keys(L("ptfeitos", {})).length, hab: nh,
+        quest: Object.keys(L("ptqa", {})).length + Object.keys(L("ptckh", {})).length,
+        corridas: (L("ptcardio", []) || []).length, diasCarga: Object.keys(dias).length,
+      };
+    });
+    const xpRegra = contas.treinos * 10 + contas.hab * 2 + contas.quest * 20 + contas.corridas * 10 + contas.diasCarga * 5;
+    ok(xp1 > xp0 && xp1 === xpRegra,
+      "🎮 v765: o XP subiu com o treino e bate com a regra — " + contas.treinos + " treinos, " +
+      contas.corridas + " corridas, " + contas.diasCarga + " dias com carga (" + xp0 + " → " + xp1 + ")");
 
     // 🆙 nível: XP acumulado vira nível (curva 50·(n−1)·n), com selo no topo,
     // card nas Conquistas e festa só quando SOBE
@@ -10997,10 +11045,16 @@ async function abaPt(p, a) {
       num: +document.getElementById("nvNum").textContent,
       visto: +JSON.parse(localStorage.getItem("ptnivelok") || "0"),
     }));
-    const esperado = (function (xp) { let n = 1; while (50 * n * (n + 1) <= xp) n++; return n; })(xp1);
+    // v765: a curva ficou alcançável — nível n custa 20·(n−1)·n, não 50·(n−1)·n
+    const esperado = (function (xp) { let n = 1; while (20 * n * (n + 1) <= xp) n++; return n; })(xp1);
     ok(/^Nv \d+$/.test(nv.chip) && nv.num === esperado,
       "o selo de nível no topo mostra o nível certo pro XP (" + xp1 + " XP → Nv " + esperado + ")");
-    ok(nv.visto === esperado, "o último nível visto fica anotado (ptnivelok) pra festa não repetir");
+    /* ptnivelok é marca do nível MAIS ALTO já visto — é o que impede a festa de
+     * repetir. Aqui ele pode estar acima do nível de agora de propósito: os
+     * blocos acima semeiam corridas (que passaram a valer XP na v765) e depois
+     * restauram o histórico, então o XP sobe e desce dentro da mesma página. */
+    ok(nv.visto >= esperado && nv.visto > 0,
+      "o último nível visto fica anotado (ptnivelok) pra festa não repetir — visto " + nv.visto + ", nível de agora " + esperado);
     const nvCard = await pApp.evaluate(() => {
       window.__trocaSec("evolucao");
       const c = document.getElementById("nvCard");
@@ -15254,6 +15308,97 @@ async function abaPt(p, a) {
       "🔤 v755: no app a letra da ficha segue a MESMA regra do painel — 'Treino de peito' não vira 'Tr'");
 
     await pg.close();
+  }
+
+  /* ================= v765 — o placar do app vira coisa do professor ========
+   * Medido no banco em 2026-09-03: os 5 alunos com retorno estavam no nível 1,
+   * o painel nunca lia esse campo, e NENHUM desafio tinha sido criado. */
+  console.log("\n🎮 v765 — gamificação:");
+  {
+    const ctxG = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxG.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pj = await ctxG.newPage();
+    pj.on("pageerror", (e) => erros.push("v765: " + e.message));
+    pj.on("dialog", (d) => d.accept());
+    await pj.goto(BASE + "/personal.html");
+    await pj.waitForFunction(() => window.__ptStudio && window.__renderPT);
+
+    const g1 = await pj.evaluate(() => {
+      window.__abriu = null; window.open = (u) => { window.__abriu = u; return null; };
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos = [{
+        id: "g765", nome: "Carla Firme", ativo: true, desde: "2026-01-05", zap: "31988887777",
+        appTokenP: "gtk765",
+        retorno: { nivel: 4, xp: 260, seqSem: 3, medalhas: 5, medalhasTot: 12, feitos: { "2026-09-01": 1 } },
+      }];
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st);
+      window.__renderPT();
+      const res = document.getElementById("dashResolver");
+      return { txt: res ? res.textContent : "", tem: !!document.querySelector("[data-parabens]") };
+    });
+    ok(g1.tem && /MANDAR PARAB/.test(g1.txt) && /Carla Firme/.test(g1.txt) && /3 semanas seguidas/.test(g1.txt),
+      "🎮 v765: quem emendou semanas na meta aparece no Resolver hoje pro professor mandar o parabéns");
+    ok(/N[íi]vel 4/.test(g1.txt) && /5 medalhas/.test(g1.txt),
+      "🎮 v765: o card mostra o nível e as medalhas — os números que o painel NUNCA lia");
+
+    const g2 = await pj.evaluate(() => {
+      document.querySelector("[data-parabens]").click();
+      const a = window.MTStore.read("ptStudio", {}).alunos[0];
+      return { marca: a.parabensSeq, zap: window.__abriu || "", some: !document.querySelector("[data-parabens]") };
+    });
+    ok(g2.marca === 3 && /wa\.me\/5531988887777/.test(g2.zap) && /semanas%20seguidas/.test(g2.zap),
+      "🎮 v765: o botão abre o WhatsApp com o texto pronto e guarda a sequência já comemorada");
+    ok(g2.some, "🎮 v765: comemorada uma vez, a MESMA sequência não volta a cobrar o professor todo dia");
+
+    const g3 = await pj.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos[0].retorno.seqSem = 4;         // emendou mais uma semana
+      S.write("ptStudio", st); window.__renderPT();
+      return !!document.querySelector("[data-parabens]");
+    });
+    ok(g3, "🎮 v765: quando ele emenda mais uma semana, o card volta (o número mudou)");
+
+    const g4 = await pj.evaluate(() => {
+      const h = window.__painelApp({ nivel: 6, xp: 640, seqSem: 2, medalhas: 7, medalhasTot: 18,
+        feitos: { "2026-09-01": 1, "2026-09-02": 1 } }, { nome: "Carla" });
+      const semPlacar = window.__painelApp({ feitos: { "2026-09-01": 1 } }, { nome: "Zé" });
+      return { com: h, sem: semPlacar };
+    });
+    ok(/N[íi]vel no app/.test(g4.com) && /Nv 6/.test(g4.com) && /640 XP/.test(g4.com) &&
+       /7 de 18 medalhas/.test(g4.com) && /Semanas na meta/.test(g4.com),
+      "🎮 v765: a ficha do aluno mostra o placar (nível, XP, medalhas e semanas na meta)");
+    ok(!/N[íi]vel no app/.test(g4.sem),
+      "🎮 v765: aluno que não mandou placar não ganha um 'nível 1' inventado");
+
+    const g5 = await pj.evaluate(() => {
+      document.getElementById("dsMes").click();
+      const hoje = window.MTStore.todayISO();
+      const ult = new Date(+hoje.slice(0, 4), +hoje.slice(5, 7), 0).getDate();
+      return {
+        nome: document.getElementById("dsNome").value,
+        ini: document.getElementById("dsIni").value,
+        fim: document.getElementById("dsFim").value,
+        esperadoIni: hoje.slice(0, 8) + "01",
+        esperadoFim: hoje.slice(0, 8) + String(ult).padStart(2, "0"),
+      };
+    });
+    ok(/^Desafio de [a-zç]+$/.test(g5.nome) && g5.ini === g5.esperadoIni && g5.fim === g5.esperadoFim,
+      "🎮 v765: 'Desafio deste mês' nasce pronto — nome e as duas datas do mês inteiro (" + g5.nome + ")");
+    ok(await pj.evaluate(() => {
+      const t = document.body.innerHTML;
+      return /publica os apps sozinho|republica os apps sozinho/.test(t);
+    }), "🎮 v765: e a tela promete publicar sozinha, em vez de mandar o professor procurar a tela de publicar");
+    ok(await pj.evaluate(async () => {
+      const t = await (await fetch("personal.html")).text();
+      // o resultado da publicação tem linha PRÓPRIA (#dsPub) — o #dsStatus
+      // continua sendo o estado do desafio, que o professor precisa na tela
+      return /publicaAppsPendentes\(false, false, "dsPub"\)/.test(t) && /id="dsPub"/.test(t);
+    }), "🎮 v765: salvar o desafio publica de verdade (o alerta que mandava procurar a tela saiu do caminho feliz)");
+    await ctxG.close();
   }
 
   /* ================= v756 — x-redund e x-org (uma página só, do zero) =======
