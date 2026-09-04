@@ -979,14 +979,12 @@
         return "<div id='blocoHoje' style='position:relative;'>" +
           "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + fichaCard + wodCard + crCard + "</div>" + heroTopo + "</div>";
       })() +
-      /* v768: a agenda do dia. O plano da semana passou a aceitar mais de um
-       * treino no mesmo dia (tem aluno que faz planilha de corrida E
-       * musculação), com horário opcional — e aí o card único de HOJE não dava
-       * conta: ele mostra UM treino. Este bloco lista o dia inteiro na ordem do
-       * relógio e cada linha abre o treino certo. Só aparece quando o dia tem
-       * DOIS ou mais: com um treino só, o card grande já é a resposta. */
-      "<div class='cardx' id='agHojeCard' style='display:none;'><h2>Seu dia</h2>" +
-      "<div id='agHojeLista'></div></div>" +
+      /* v771: o card "Seu dia" SAIU. Ele, o card grande do carrossel e os chips
+       * da semana diziam a mesma coisa em três desenhos, um embaixo do outro —
+       * o Raphael abriu no celular e chamou de redundante. Agora o dia inteiro
+       * é a GAVETA do próprio calendário (#semDia, logo abaixo dos chips): o
+       * aluno toca em qualquer dia da semana e vê o treino DAQUELE dia sem
+       * precisar do calendário do menu. */
       /* ---------- MINHA SEMANA: um card só ----------
        * Estavam separados o card do coach (com anel X/Y), os chips seg-dom e um
        * terceiro card com a barra "Meta da semana" + o Treinei hoje!. Os três
@@ -1004,9 +1002,13 @@
         "<button data-pconf='0' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>N\u00e3o vou conseguir</button></div></div>" : "") +
       "<div class='cardx' id='semBlock'><h2>Minha semana</h2>" +
       "<div style='background:var(--bg2);border-radius:22px;padding:18px;'>" +
-      "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
+      /* v771: os DIAS vêm primeiro — o Raphael pediu o calendário logo embaixo
+       * da foto do treino. O recado do coach desceu pra junto do botão, que é
+       * onde ele empurra a ação; em cima ele só afastava o calendário da foto. */
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
+      "<div id='semDia'></div>" +
       "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
+      "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
       /* v763 — O PEDIDO DE PUSH SAIU DOS AJUSTES. Medido em 2026-09-03: 12
@@ -2173,13 +2175,72 @@
       "cx.innerHTML=\"<div class='rpeok'>Anotado! Vai direto pro seu personal \\u2014 ele leva isso em conta no seu pr\\u00f3ximo treino.</div>\";});" +
       "window.__trNota={lista:function(){return L('ptnotas',[]);},box:notaBox};" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
+      /* ---------- v771: A GAVETA DO DIA DENTRO DO CALENDÁRIO ----------
+       * O Raphael abriu o Início no celular e disse que três blocos falavam a
+       * mesma coisa: o card grande do carrossel, o card "Seu dia" e os chips da
+       * semana. Ele escolheu o caminho certo — o calendário sobe pro topo e o
+       * "Seu dia" vira a GAVETA dele: toca num dia, abre o que tem naquele dia;
+       * toca de novo, fecha. É também o atalho que faltava, porque até aqui ver
+       * o treino de quinta exigia sair do Início e abrir o calendário do menu.
+       *
+       * SEMSEL guarda o dia aberto (null = fechado). Nasce em HOJE, que é o que
+       * o card "Seu dia" mostrava — ninguém perde informação na mudança. */
+      "var SEMSEL=isoHj();" +
+      "var SEMICO={ficha:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\"," +
+      "wod:\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\"," +
+      "cardio:\"<circle cx='12' cy='13' r='8'/><path d='M12 9v4l2.5 2.5M9 2h6'/>\"," +
+      "sessao:\"<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/>\"," +
+      "servico:\"<path d='M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z'/>\"};" +
+      "var SEMDS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];" +
+      "function pintaSemDia(){var box=document.getElementById('semDia');if(!box)return;" +
+      "if(!SEMSEL){box.innerHTML='';return;}" +
+      "var itens=agItensDia(SEMSEL);var hj9=SEMSEL===isoHj();" +
+      "var d9=new Date(SEMSEL+'T12:00:00');" +
+      "var rot=hj9?'Hoje':SEMDS[d9.getDay()].charAt(0).toUpperCase()+SEMDS[d9.getDay()].slice(1);" +
+      "box.innerHTML=\"<div style='margin-top:12px;'>\"+" +
+      "\"<div style='display:flex;align-items:baseline;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6e6a78;'>\"+" +
+      "\"<span>\"+rot+' '+d9.getDate()+'/'+('0'+(d9.getMonth()+1)).slice(-2)+'</span>'+" +
+      "(itens.length?\"<span style='color:var(--corc);'>\"+itens.length+' '+(itens.length>1?'itens':'item')+'</span>':'')+'</div>'+" +
+      "(itens.length?itens.map(function(it){" +
+      "var abre=it.k==='treino'&&it.i!=null;" +
+      "return '<'+(abre?'button':'div')+\" type='button'\"+(abre?\" data-semt='\"+it.tp+'|'+it.i+\"'\":'')+" +
+      "\" style='display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;background:var(--bg4);border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:10px 12px;margin-top:8px;font-family:inherit;color:inherit;\"+(abre?'cursor:pointer;':'')+\"'>\"+" +
+      "\"<b style='font-size:13px;font-weight:900;color:\"+(it.h?'var(--corc)':'#6e6a78')+\";'>\"+(it.h||'livre')+'</b>'+" +
+      "\"<span style='min-width:0;'><span style='display:block;font-size:13.5px;font-weight:700;line-height:1.3;'>\"+String(it.tit).replace(/</g,'&lt;')+'</span>'+" +
+      "\"<span style='display:block;font-size:11px;color:#6e6a78;margin-top:1px;'>\"+it.sub+'</span></span>'+" +
+      "\"<span style='line-height:0;color:#6e6a78;'>\"+icx(SEMICO[it.k==='treino'?it.tp:it.k]||'',17)+'</span>'+" +
+      "'</'+(abre?'button':'div')+'>';}).join('')" +
+      ":\"<div style='margin-top:8px;background:var(--bg4);border:1px dashed var(--bg10);border-radius:14px;padding:12px;font-size:13px;color:#8b8695;text-align:center;'>\"+" +
+      "(hj9?'Dia livre — nada marcado pra hoje.':'Nada marcado nesse dia.')+'</div>')+'</div>';}" +
+      "window.__semDia={ve:function(){return SEMSEL;},pinta:pintaSemDia,itens:function(){return SEMSEL?agItensDia(SEMSEL):[];}};" +
+      /* tocar num dia abre a gaveta; tocar no dia ABERTO fecha. O clique é
+       * delegado no document porque o innerHTML dos chips é refeito a cada
+       * pintura — listener preso no botão morreria na primeira repintura. */
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-semd]');if(!b)return;" +
+      "var iso=b.getAttribute('data-semd');SEMSEL=(SEMSEL===iso?null:iso);pintaSemana();});" +
+      /* a linha de treino abre a gaveta daquele treino na aba certa — o mesmo
+       * caminho que o card "Seu dia" fazia, agora valendo pra qualquer dia da
+       * semana (é o atalho que o Raphael pediu). */
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-semt]');if(!b)return;" +
+      "var pr=b.getAttribute('data-semt').split('|');var tp=pr[0],ix=pr[1];" +
+      "if(window.__trocaSec)window.__trocaSec('treino');" +
+      "if(window.__trSub)window.__trSub(tp==='wod'?'wod':tp==='cardio'?'cardio':'ficha');" +
+      "setTimeout(function(){var sel=tp==='wod'?'[data-wi=\"'+ix+'\"]':tp==='cardio'?'[data-cri=\"'+ix+'\"]':'[data-fi=\"'+ix+'\"]';" +
+      "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=isoLoc(d);var fez=!!f[iso];if(fez)naSem++;" +
-      "var hoje=iso===isoHj();html+=\"<div style='flex:1;min-width:0;'><div style='border-radius:9px;padding:7px 0 5px;text-align:center;\"+(fez?'background:linear-gradient(135deg,var(--cor),var(--corc));':'background:var(--bg4);border:1px solid var(--bg10);')+(hoje?'outline:2px solid var(--corc);outline-offset:1px;':'')+\"'>\"+" +
+      /* v771: o chip virou BOTÃO e ganhou pontinho quando o dia tem alguma
+       * coisa marcada — treino da semana, sessão com o professor ou serviço.
+       * Sem o pontinho o aluno não teria como saber em que dia vale tocar. */
+      "var temAg=0;try{temAg=agItensDia(iso).length;}catch(e9){}" +
+      "var sel=iso===SEMSEL;" +
+      "var hoje=iso===isoHj();html+=\"<button type='button' data-semd='\"+iso+\"' aria-pressed='\"+(sel?'true':'false')+\"' style='flex:1;min-width:0;background:none;border:none;padding:0;font-family:inherit;cursor:pointer;'><div style='border-radius:9px;padding:7px 0 5px;text-align:center;\"+(fez?'background:linear-gradient(135deg,var(--cor),var(--corc));':'background:var(--bg4);border:1px solid var(--bg10);')+(sel?'outline:2px solid var(--corc);outline-offset:1px;':hoje?'outline:1px solid var(--bg11);outline-offset:1px;':'')+\"'>\"+" +
       "\"<div style='font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:\"+(fez?'rgba(255,255,255,.85)':'#6e6a78')+\";'>\"+rot[i]+\"</div>\"+" +
-      "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div></div></div>\";}" +
-      "document.getElementById('diasSem').innerHTML=html;" +
+      "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div>\"+" +
+      "(temAg?\"<span style='display:block;width:5px;height:5px;border-radius:50%;margin:2px auto 0;background:\"+(fez?'rgba(255,255,255,.9)':'var(--corc)')+\";'></span>\":\"<span style='display:block;height:7px;'></span>\")+" +
+      "\"</div></button>\";}" +
+      "document.getElementById('diasSem').innerHTML=html;pintaSemDia();" +
       /* a linha de resumo substitui o anel 4/4 E a barra "Meta da semana":
        * os chips seg-dom acima já mostram quantos e QUAIS dias foram. */
       "var sq9=seqAtual(f);var sr9=document.getElementById('semResumo');" +
@@ -2315,11 +2376,14 @@
       "function agItensDia(iso){var out=[];" +
       "var d9=new Date(iso+'T12:00:00');" +
       "plnDia(d9.getDay()).forEach(function(p){" +
-      "out.push({k:'treino',tp:p.tp,h:p.h||'',tit:p.n||'Treino'," +
+      "out.push({k:'treino',tp:p.tp,i:p.i,h:p.h||'',tit:p.n||'Treino'," +
       "sub:p.tp==='wod'?'circuito':p.tp==='cardio'?'corrida e bike':'musculação'});});" +
-      "agDados().forEach(function(x){if(x.dia!==iso)return;" +
+      /* v771: a gaveta do calendário do Início chama isto ANTES deste bloco
+       * rodar (o pintaSemana é pintado cedo), e aí o SESS ainda não existe.
+       * O plano já vale — as sessões entram na repintura do boot. */
+      "try{agDados().forEach(function(x){if(x.dia!==iso)return;" +
       "out.push({k:x.sv?'servico':'sessao',h:x.hora||'',tit:x.sv||" + jsonApp("Sessão com " + STUDIO_CURTO) + "," +
-      "sub:x.sv?'serviço':'presencial',status:x.status});});" +
+      "sub:x.sv?'serviço':'presencial',status:x.status});});}catch(e8){}" +
       "return out.sort(function(a9,b9){if(a9.h===b9.h)return 0;if(!a9.h)return 1;if(!b9.h)return -1;return a9.h<b9.h?-1:1;});}" +
       "window.__agItens=agItensDia;" +
       "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
@@ -5961,29 +6025,12 @@
       "function plnPri(d){return plnDia(d)[0]||null;}" +
       "function plnHoje(){return plnDia(new Date().getDay());}" +
       "window.__plnDia=plnDia;window.__plnHoje=plnHoje;" +
-      /* A agenda do dia: só entra com DOIS ou mais treinos, senão repete o que
-       * o card grande já diz. Cada linha abre a área certa. */
-      "function pintaAgHoje(){var card=document.getElementById('agHojeCard');if(!card)return;" +
-      "var lst=plnHoje();if(lst.length<2){card.style.display='none';return;}" +
-      "var ICOTP={ficha:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\"," +
-      "wod:\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\"," +
-      "cardio:\"<circle cx='12' cy='13' r='8'/><path d='M12 9v4l2.5 2.5M9 2h6'/>\"};" +
-      "var feitoHj=!!L('ptfeitos',{})[isoHj()];" +
-      "document.getElementById('agHojeLista').innerHTML=lst.map(function(p,i){" +
-      "return \"<button type='button' data-aghoje='\"+i+\"' style='display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:16px;padding:12px 14px;margin-top:8px;font-family:inherit;color:inherit;cursor:pointer;'>\"+" +
-      "\"<b style='font-size:14px;font-weight:900;color:\"+(p.h?'var(--corc)':'#6e6a78')+\";'>\"+(p.h||'livre')+'</b>'+" +
-      "\"<span style='min-width:0;'><span style='display:block;font-size:14px;font-weight:700;line-height:1.3;'>\"+String(p.n||'Treino').replace(/</g,'&lt;')+'</span>'+" +
-      "\"<span style='display:block;font-size:11.5px;color:#6e6a78;margin-top:1px;'>\"+(p.tp==='wod'?'circuito':p.tp==='cardio'?'corrida e bike':'musculação')+'</span></span>'+" +
-      "\"<span style='line-height:0;color:#6e6a78;'>\"+icx(ICOTP[p.tp]||'',19)+'</span></button>';}).join('');" +
-      "var sub=card.querySelector('h2');if(sub)sub.textContent=feitoHj?'Seu dia \u2713':'Seu dia \u00b7 '+lst.length+' treinos';" +
-      "card.style.display='block';}" +
+      /* v771: o card "Seu dia" virou a gaveta do calendário do Início
+       * (pintaSemDia, lá em cima) — três blocos falavam a mesma coisa na mesma
+       * dobra. O gancho __agHoje continua existindo apontando pra gaveta, que é
+       * quem pinta o dia agora: quem chamava pintaAgHoje segue funcionando. */
+      "function pintaAgHoje(){try{pintaSemDia();}catch(e7){}}" +
       "window.__agHoje=pintaAgHoje;" +
-      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-aghoje]');if(!b)return;" +
-      "var p=plnHoje()[+b.getAttribute('data-aghoje')];if(!p)return;" +
-      "if(window.__trocaSec)window.__trocaSec('treino');" +
-      "if(window.__trSub)window.__trSub(p.tp==='wod'?'wod':p.tp==='cardio'?'cardio':'ficha');" +
-      "setTimeout(function(){var sel=p.tp==='wod'?'[data-wi=\"'+p.i+'\"]':p.tp==='cardio'?'[data-cri=\"'+p.i+'\"]':'[data-fi=\"'+p.i+'\"]';" +
-      "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
           // texto da faixa roxa dos Treinos, um por aba (o script só troca o texto)
           "var MESAPP=" + jsonApp(D.mesApp || {}) + ";" +
           "var TRHEAD=" + jsonApp((function () {
