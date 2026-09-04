@@ -2964,10 +2964,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
         <button class="btn" id="dsSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar desafio</button>
+        <button class="btn sec" id="dsMes" style="white-space:nowrap;">Desafio deste mês</button>
         <button class="btn sec" id="dsEncerrar" style="white-space:nowrap;">Encerrar desafio</button>
         <span id="dsStatus" class="muted" style="font-size: 12.5px;"></span>
+        <span id="dsPub" class="muted" style="font-size: 12.5px;"></span>
       </div>
-      <p class="muted" style="font-size: 12px; margin-top: 8px;">Depois de salvar, <b>publique os apps de novo</b> — o card do desafio entra no app de todo mundo.</p>
+      <p class="muted" style="font-size: 12px; margin-top: 8px;"><b>Desafio deste mês</b> preenche o mês inteiro pra você — é só dar um nome ao prêmio (ou deixar em branco) e salvar. Ao salvar, o painel já republica os apps sozinho: o card do desafio entra no celular de todo mundo.</p>
     </div>
     <div class="card" data-dssec="placar" hidden>
       <h2>Placar</h2>
@@ -6232,6 +6234,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           kpis.push(kpi("Treinos no mês", treinosMes, diasTreino.length + " no total"));
           kpis.push(kpi("Maior sequência", seqMax + " dia" + (seqMax > 1 ? "s" : ""), "treinos em dias seguidos"));
         }
+        /* v765: o placar que o app já jogava e o professor nunca via. Só
+         * aparece quando o app mandou os números — sem inventar nível 1 pra
+         * quem nem abriu o app. */
+        if (+ret.nivel > 0) {
+          kpis.push(kpi("Nível no app", "Nv " + (+ret.nivel),
+            (+ret.xp ? (+ret.xp) + " XP" : "") + (+ret.medalhas ? (+ret.xp ? " · " : "") + (+ret.medalhas) +
+              " de " + (+ret.medalhasTot || "?") + " medalhas" : "")));
+        }
+        if (+ret.seqSem > 0) {
+          kpis.push(kpi("Semanas na meta", (+ret.seqSem) + (+ret.seqSem > 1 ? " semanas" : " semana"),
+            "seguidas, batendo a meta de treinos"));
+        }
         if (ult30.length) kpis.push(kpi("Hábitos em dia", Math.round(100 * dias3 / base30) + "%", "dias com 3+ hábitos (dos últimos " + base30 + ")"));
         // check-ins de questionário (respostas que chegaram pela tabela app_quest)
         var cks = (Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
@@ -8782,6 +8796,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       : d.ini > hoje ? "começa em " + S.fmtData(d.ini)
       : "rolando até " + S.fmtData(d.fim);
   }
+  /* v765: criar um desafio eram quatro campos e duas datas — e, medido no
+   * banco em 2026-09-03, NENHUM desafio tinha sido criado em nenhuma academia.
+   * Aqui o mês inteiro nasce pronto e o professor só confere. */
+  $("dsMes").addEventListener("click", function () {
+    var hoje = S.todayISO();
+    var ano = +hoje.slice(0, 4), mes = +hoje.slice(5, 7);
+    var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var ult = new Date(ano, mes, 0).getDate();
+    $("dsNome").value = "Desafio de " + MES[mes - 1];
+    $("dsIni").value = hoje.slice(0, 8) + "01";
+    $("dsFim").value = hoje.slice(0, 8) + String(ult).padStart(2, "0");
+    if (!$("dsPremio").value.trim()) $("dsPremio").value = "";
+    $("dsPremio").focus();
+    $("dsPub").textContent = "pronto — confira o prêmio e toque em Salvar desafio";
+  });
   $("dsSalvar").addEventListener("click", function () {
     var nome = $("dsNome").value.trim();
     var ini = $("dsIni").value, fim = $("dsFim").value;
@@ -8794,7 +8823,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     save(st);
     renderDesafio();
     carregaRankingDesafio();
-    alert("Desafio salvo! " + MSG_PUBLICAR_TODOS);
+    /* v765: antes o alerta MANDAVA o professor achar a tela de publicar, três
+     * cliques adiante — e um desafio que não chega no celular do aluno não
+     * existe. Agora o painel publica aqui mesmo, e o resultado aparece na
+     * linha de status do próprio card. */
+    /* ⚠️ o resultado da publicação vai no #dsPub, NUNCA no #dsStatus: aquela
+     * linha é o estado do desafio ("rolando até 30/09") e o professor precisa
+     * dela na tela. Sem conta na nuvem não dá pra publicar — aí a linha diz o
+     * caminho, em vez de estourar o alerta de login em cima de quem salvou. */
+    var temNuvem = !!(S.cloud && S.cloud());
+    $("dsPub").textContent = temNuvem ? "desafio salvo — publicando nos apps…" : "desafio salvo. " + MSG_PUBLICAR_TODOS;
+    if (temNuvem) { try { publicaAppsPendentes(false, false, "dsPub"); } catch (e) { $("dsPub").textContent = "desafio salvo. " + MSG_PUBLICAR_TODOS; } }
   });
   $("dsEncerrar").addEventListener("click", function () {
     if (!confirm("Encerrar o desafio atual?")) return;
@@ -12311,6 +12350,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
   }, true);
   window.__donosClique = DONOS_CLIQUE; // testes
+  /* v765: o texto do parabéns num lugar só (o card do Início e a ficha usam
+   * o mesmo). Sem WhatsApp cadastrado, cai no chat do app — nunca some calado. */
+  function msgParabens(a, sem, nivel) {
+    return "Oi " + String(a.nome || "").split(" ")[0] + "! Passei o olho no seu app: " +
+      sem + " semana" + (sem > 1 ? "s" : "") + " seguidas batendo a meta de treinos" +
+      (nivel > 1 ? ", e você já está no nível " + nivel : "") +
+      ". Isso é constância de verdade — parabéns! Bora manter. 💪";
+  }
+  function mandaParabens(id) {
+    var st = load();
+    var a = (st.alunos || []).find(function (x) { return x.id === id; });
+    if (!a) return;
+    var ret = a.retorno || {};
+    var sem = +ret.seqSem || 0, nv = +ret.nivel || 1;
+    a.parabensSeq = sem;              // não volta a cobrar a MESMA sequência
+    S.write("ptStudio", st);
+    var txt = msgParabens(a, sem, nv);
+    if (a.zap) window.open("https://wa.me/55" + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(txt), "_blank");
+    else { try { vaiAba("chat"); abreChat(id); } catch (e) { alert(txt); } }
+    try { pintaResolver(load()); } catch (e) { /* fora do Início */ }
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest && e.target.closest("[data-parabens]");
+    if (b) mandaParabens(b.getAttribute("data-parabens"));
+  });
+  window.__parabens = { msg: msgParabens, manda: mandaParabens }; // testes
   // Pagar.me: gera o link de checkout seguro (cartão/Pix/boleto) pela função da nuvem
   function geraLinkPagamento(alunoId, valor, cb, origem) {
     cb = cb || function () {};
@@ -19662,7 +19727,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sinoNuvemEm = Date.now();
     var q;
     try {
-      q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,indicas:retorno->indicas,conf:retorno->conf").in("token", toks);
+      // v765: o placar do aluno (nível, XP, semanas seguidas, medalhas) vem
+      // junto — são quatro números, e é o que faz o professor VER o jogo que
+      // o app já jogava sozinho desde sempre
+      q = nuvem.client.from("app_aluno").select("token,feitos:retorno->feitos,indicas:retorno->indicas,conf:retorno->conf,nivel:retorno->nivel,xp:retorno->xp,seqSem:retorno->seqSem,medalhas:retorno->medalhas,medalhasTot:retorno->medalhasTot").in("token", toks);
     } catch (e) { return; }
     q.then(function (r) {
       if (!r || r.error || !Array.isArray(r.data)) return;
@@ -19681,10 +19749,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (l.conf && typeof l.conf === "object" && JSON.stringify(a.retorno.conf || {}) !== JSON.stringify(l.conf)) {
           a.retorno.conf = l.conf; mudou = true;
         }
+        ["nivel", "xp", "seqSem", "medalhas", "medalhasTot"].forEach(function (k) {
+          if (typeof l[k] === "number" && a.retorno[k] !== l[k]) { a.retorno[k] = l[k]; mudou = true; }
+        });
       });
       if (!mudou) return;
       S.write("ptStudio", st2);
       pintaSino(st2);
+      try { pintaResolver(st2); } catch (e) { /* o Início pode não estar na tela */ }
     }, function () { /* sem rede: fica a cópia local, sem erro na tela */ });
   }
   window.__sino = { eventos: sinoEventos, pinta: pintaSino, nuvem: sinoNuvem }; // testes
@@ -19891,6 +19963,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         pq: "Última avaliação física há " + S.plural(Math.floor(rv.dias / 30), "mês", "meses") +
           (reav.length > 1 ? " · e mais " + (reav.length - 1) : ""),
         acao: '<button type="button" class="btn" data-reaval="' + rv.a.id + '">Nova avaliação</button>',
+      });
+    }
+    /* v765: o placar do aluno existia e ninguém olhava — o app mandava o nível
+     * desde sempre e o painel nunca lia esse campo. Aqui ele vira AÇÃO: quem
+     * emendou 2 semanas ou mais batendo a meta aparece pro professor mandar o
+     * parabéns. Em personal, o prêmio que segura o aluno não é a medalha na
+     * tela dele — é o professor perceber. A marca a.parabensSeq guarda a
+     * sequência já comemorada, então o mesmo card não volta todo dia; quando
+     * ele emenda mais uma semana, volta (o número mudou). */
+    var vitorias = st.alunos.filter(function (a) {
+      if (a.ativo === false) return false;
+      var sq = +(((a.retorno || {}).seqSem) || 0);
+      return sq >= 2 && +(a.parabensSeq || 0) !== sq;
+    }).sort(function (x, y) { return (+((y.retorno || {}).seqSem) || 0) - (+((x.retorno || {}).seqSem) || 0); });
+    if (vitorias[0]) {
+      var vt = vitorias[0], vtSq = +((vt.retorno || {}).seqSem) || 0;
+      var vtMed = +((vt.retorno || {}).medalhas) || 0;
+      itens.push({
+        cor: "var(--pt-ok)", sel: "MANDAR PARABÉNS",
+        qu: esc(vt.nome) + " · " + S.plural(vtSq, "semana", "semanas") + " seguidas na meta",
+        pq: "Nível " + (+((vt.retorno || {}).nivel) || 1) + " no app" +
+          (vtMed ? " · " + S.plural(vtMed, "medalha", "medalhas") : "") +
+          (vitorias.length > 1 ? " · e mais " + S.plural(vitorias.length - 1, "aluno", "alunos") + " em sequência" : ""),
+        acao: '<button type="button" class="btn" data-parabens="' + vt.id + '">Mandar parabéns</button>',
       });
     }
     // 3) (v747) o card MENSAGENS PRONTAS saiu daqui: desde a v713 a fila de
