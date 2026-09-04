@@ -15581,6 +15581,69 @@ async function abaPt(p, a) {
     ok(sinoVolta.fechou && sinoVolta.sec === "chat",
       "🔔 v772: tocar no aviso fecha o painel e abre a área certa do app");
 
+    /* ---------- v773: vencimento da mensalidade no sino ----------
+     * O estado vem do painel com as MESMAS regras do Financeiro
+     * (idxDe.pagouMes + cobrancaVencida) — nunca uma conta paralela. E são
+     * três silêncios: cartão automático, mês já pago e o "Já paguei" do aluno.
+     * Cobrar quem não deve é o jeito mais rápido de o sino virar paisagem. */
+    const pag = await pu.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const hoje = new Date(), mesH = window.diaISO(hoje).slice(0, 7), diaH = hoje.getDate();
+      st.planosPT = [{ id: "plN", nome: "Mensal 3x", valor: 250, cobranca: "mensal" }];
+      st.alunos = [
+        { id: "n1", nome: "Vence em breve", ativo: true },
+        { id: "n2", nome: "Ja pagou", ativo: true },
+        { id: "n3", nome: "Cartao automatico", ativo: true, assinaturaRec: { id: "a1", desde: mesH + "-01", valor: 250 } },
+      ];
+      const dv = Math.min(28, diaH + 2);
+      st.contratosPT = ["n1", "n2", "n3"].map((id, i) => ({
+        id: "ct" + i, alunoId: id, planoId: "plN", diaVenc: dv, inicio: mesH + "-01", status: "ativo" }));
+      st.pagamentos = [{ id: "pgN", alunoId: "n2", valor: 250, data: mesH + "-01", mes: mesH, forma: "pix" }];
+      st.treinosV2 = {}; st.sessoes = [];
+      S.write("ptStudio", st);
+      const le = (id) => {
+        const h = window.__montaAppAluno(st.alunos.find((x) => x.id === id), new Date().toISOString());
+        const m = h.match(/var NOTPAG=(.*?);function notLidas/);
+        return m ? JSON.parse(m[1]) : null;
+      };
+      return { n1: le("n1"), n2: le("n2"), n3: le("n3"), dv: dv };
+    });
+    ok(pag.n1 && pag.n1.dia === pag.dv && !pag.n1.pago && !pag.n1.auto && /R\$/.test(pag.n1.vtxt),
+      "💳 v773: o pacote leva o estado da mensalidade — dia, valor já formatado e se o mês foi pago");
+    ok(pag.n2 && pag.n2.pago === true,
+      "💳 v773: quem já pagou o mês vai marcado como pago (a conta é a MESMA do Financeiro, idxDe.pagouMes)");
+    ok(pag.n3 && pag.n3.auto === true,
+      "💳 v773: quem tem cobrança automática no cartão vai marcado — o dinheiro sai sozinho e cobrar seria pedir em dobro");
+    ok(!/dinheiro\(NOTPAG/.test(await pu.evaluate(() => window.__montaAppAluno(window.MTStore.read("ptStudio", {}).alunos[0], "x"))),
+      "💳 v773: o valor sai FORMATADO do builder — `dinheiro` é função do builder e dentro do app viraria 'is not defined' (a armadilha do STUDIO_CURTO na v770)");
+
+    // e no app: vence em 2 dias acende; pago e automático ficam calados;
+    // e o "Já paguei" do aluno cala o aviso na hora, sem esperar republicação
+    const pagApp = {};
+    for (const id of ["n1", "n2", "n3"]) {
+      const htmlP = await pu.evaluate((i) => {
+        const st = window.MTStore.read("ptStudio", {});
+        return window.__montaAppAluno(st.alunos.find((x) => x.id === i), new Date().toISOString());
+      }, id);
+      const pp = await ctxAU.newPage();
+      await pp.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+      await pp.route("**/app-pag-" + id + ".html", (r) => r.fulfill({ contentType: "text/html", body: htmlP }));
+      await pp.goto(BASE + "/app-pag-" + id + ".html", { waitUntil: "domcontentloaded" });
+      await pp.waitForTimeout(500);
+      pagApp[id] = await pp.evaluate(() => {
+        const antes = window.__sino.lista().filter((o) => o.k === "pag");
+        localStorage.setItem("ptpaguei", JSON.stringify(new Date().toISOString().slice(0, 7)));
+        return { titulo: antes.length ? antes[0].t : "", depoisDoJaPaguei: window.__sino.lista().filter((o) => o.k === "pag").length };
+      });
+      await pp.close();
+    }
+    ok(/vence em 2 dias/.test(pagApp.n1.titulo),
+      "💳 v773: o aviso acende na semana do vencimento e diz quantos dias faltam (" + pagApp.n1.titulo + ")");
+    ok(pagApp.n2.titulo === "" && pagApp.n3.titulo === "",
+      "💳 v773: quem já pagou e quem tem cartão automático NÃO recebem cobrança nenhuma no sino");
+    ok(pagApp.n1.depoisDoJaPaguei === 0,
+      "💳 v773: tocar em 'Já paguei' cala o aviso do mês na hora — o pacote é uma foto do dia da publicação e pode não ter visto o pagamento de ontem");
+
     await ctxAU.close();
     await ctxU.close();
   }
