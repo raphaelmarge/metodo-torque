@@ -5540,35 +5540,85 @@
       "\"<div style='font-size:11px;color:#6e6a78;margin-top:8px;'>\"+(idd>0?('máxima estimada '+hrMax()+' bpm · última média em '+HRZN[hrZ(+f9[l6f[l6f.length-1]].m)]):'Diga sua idade no card da cinta pra ver as zonas de batimento')+\" · escala a partir de \"+piso+\" bpm</div>\");}" +
       "el.innerHTML=h;}" +
       "pintaEsforco();window.__pintaEsforco=pintaEsforco;" +
-      // ---------- Marcas (tela 32): corrida, força e circuitos ----------
+      /* ---------- Marcas (tela 32): corrida, força e circuitos ----------
+       * v767: o Raphael abriu e disse "bagunçado demais", com razão. Eram três
+       * cards com três desenhos diferentes: a linha era um flex de duas pontas,
+       * então o NOME quebrava em duas linhas de um lado enquanto o VALOR — que
+       * no circuito era a frase inteira "5 voltas + 2 — BATEU o resultado
+       * anterior!" em negrito de 15px — quebrava do outro; nenhum número
+       * alinhava com o de baixo; e o card Força não mostrava marca nenhuma, só
+       * um botão grande mandando o aluno pra outra aba.
+       *
+       * Agora a régua é UMA: cada linha é "o seu melhor", com o nome (que pode
+       * quebrar) à esquerda e o valor curto + a data empilhados à direita, numa
+       * GRADE — assim os números ficam na mesma coluna, um embaixo do outro. */
+      "function mkData(d){d=String(d||'');return d?d.slice(8,10)+'/'+d.slice(5,7):'';}" +
+      /* Uma linha, sempre a mesma forma: à esquerda o nome e, embaixo, o
+       * detalhe + a data em letra miúda; à direita UM número. A data estava do
+       * lado direito, empilhada embaixo do valor — e o nome, sozinho na sua
+       * linha, ficava desalinhado do número que ele explica. */
+      "function rowMk(m){var det=[m.sub||'',mkData(m.d)].filter(Boolean).join(' · ');" +
+      "return \"<div style='display:grid;grid-template-columns:minmax(0,1fr) auto\"+(m.rm!=null?' auto':'')+\";gap:14px;align-items:center;border-top:1px solid var(--bg5);padding:11px 2px;'>\"+" +
+      "\"<div style='min-width:0;'><div style='font-size:14px;line-height:1.3;'>\"+m.rot+" +
+      "(m.nova?\"<span style='background:rgba(251,191,36,.14);color:#fbbf24;border-radius:99px;padding:2px 8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;margin-left:7px;white-space:nowrap;'>NOVA</span>\":'')+'</div>'+" +
+      "(det?\"<div style='font-size:11.5px;color:#6e6a78;margin-top:2px;'>\"+det+'</div>':'')+'</div>'+" +
+      "\"<b style='font-size:17px;font-weight:900;white-space:nowrap;'>\"+m.val+'</b>'+" +
+      "(m.rm!=null?\"<button type='button' data-mkrm='\"+m.rm+\"' aria-label='Apagar esta marca' style='background:none;border:none;color:#8a8695;font-size:15px;cursor:pointer;font-family:inherit;padding:0 0 0 2px;'>✕</button>\":'')+'</div>';}" +
       "function mkCorrida(){var corr=L('ptcardio',[]).filter(function(x){return x.m==='corrida'&&+x.k>0.05;});var out=[];" +
       "if(!corr.length)return out;var mesK=isoHj().slice(0,7);" +
-      "function add(rot,val,d){if(val!=null)out.push({rot:rot,val:val,d:d,nova:String(d||'').slice(0,7)===mesK});}" +
+      "function add(rot,val,d,sub){if(val!=null)out.push({rot:rot,val:val,d:d,sub:sub||'',nova:String(d||'').slice(0,7)===mesK});}" +
       "var mxK=null;corr.forEach(function(x){if(!mxK||+x.k>+mxK.k)mxK=x;});add('Maior distância',String(mxK.k).replace('.',',')+' km',mxK.d);" +
       // v751: pace comparado em segundos por km — como texto, '10:30' ganhava de '6:15'
       "var mp=null,mpV=0;corr.forEach(function(x){if(+x.k>=3&&+x.s>0){var pv=(+x.s)/(+x.k);if(!mp||pv<mpV){mp=x;mpV=pv;}}});" +
-      "if(mp)add('Melhor pace médio (3 km+)',Math.floor(mpV/60)+':'+('0'+Math.round(mpV%60)).slice(-2),mp.d);" +
-      "[[5,'5 km'],[10,'10 km']].forEach(function(par){var mel=null;corr.forEach(function(x){if(+x.k>=par[0]*0.95&&+x.k<=par[0]*1.12){if(!mel||+x.s<+mel.s)mel=x;}});" +
+      // v767: o parêntese "(3 km+)" saiu do rótulo e virou a linha de baixo — em
+      // rótulo longo o nome quebrava e empurrava o número pra fora da coluna
+      "if(mp)add('Melhor pace',Math.floor(mpV/60)+':'+('0'+Math.round(mpV%60)).slice(-2)+'/km',mp.d,'corridas de 3 km ou mais');" +
+      "[[5,'Melhor 5 km'],[10,'Melhor 10 km']].forEach(function(par){var mel=null;corr.forEach(function(x){if(+x.k>=par[0]*0.95&&+x.k<=par[0]*1.12){if(!mel||+x.s<+mel.s)mel=x;}});" +
       "if(mel)add(par[1],Math.floor(mel.s/60)+':'+('0'+Math.round(mel.s%60)).slice(-2),mel.d);});" +
       "return out;}" +
+      /* v767: o circuito mostrava o ÚLTIMO resultado, num painel chamado
+       * "Marcas" onde todo o resto é o MELHOR — daí a sensação de bagunça. E o
+       * valor era a frase de parabéns guardada no registro. Agora sai o melhor
+       * de cada circuito, com o valor curto montado dos campos estruturados que
+       * já estavam gravados (tp, v, ex, du, cf) e nunca da prosa. */
+      "var CFTXT={rx:'RX',esc:'escalado',adp:'adaptado'};" +
+      "function mkWodMelhor(lst){var b=null;lst.forEach(function(x){if(!x||x.v==null||x.nf)return;if(!b){b=x;return;}" +
+      "if(x.tp==='fortime'?+x.v<+b.v:+x.v>+b.v)b=x;});return b;}" +
+      "function mkWodVal(x){if(x.tp==='amrap')return (x.v+(x.ex?'+'+x.ex:''))+' voltas';" +
+      "if(x.tp==='fortime')return wodFmt(+x.v);return x.v+' reps';}" +
+      "function mkWodSub(x){var p=[];if(x.tp==='amrap'&&x.du)p.push('em '+wodFmt(+x.du));" +
+      "if(x.tp!=='amrap'&&x.tp!=='fortime')p.push('na pior série');if(CFTXT[x.cf])p.push(CFTXT[x.cf]);return p.join(' · ');}" +
       "function pintaMarcas(){var el=document.getElementById('mkBox');if(!el)return;el.className='';var mesK=isoHj().slice(0,7);" +
       "var corr=mkCorrida();" +
+      // v767: a contagem da direita era <b> clarinho e brigava com o título do
+      // card; virou letra miúda cinza, que é o peso de um dado de apoio
       "function card(tit,sub,dir,corpo){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:10px;'>\"+" +
-      "\"<div style='display:flex;align-items:center;justify-content:space-between;'><span><b style='font-size:17px;font-weight:800;'>\"+tit+\"</b><span style='display:block;font-size:12px;color:#8a8695;margin-top:1px;'>\"+sub+\"</span></span><b style='font-size:13px;color:#d6d2df;'>\"+dir+\"</b></div>\"+corpo+'</div>';}" +
-      "function rowMk(m){return \"<div style='display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg5);padding:10px 2px;font-size:14px;margin-top:2px;'><span>\"+m.rot+" +
-      "(m.nova?\"<span style='background:rgba(251,191,36,.14);color:#fbbf24;border-radius:99px;padding:2px 9px;font-size:9.5px;font-weight:800;letter-spacing:.08em;margin-left:8px;'>NOVA</span>\":'')+\"</span>\"+" +
-      "\"<span style='display:flex;gap:10px;align-items:baseline;'><b style='font-size:15px;'>\"+m.val+\"</b><span style='font-size:11px;color:#6e6a78;'>\"+String(m.d||'').slice(8,10)+'/'+String(m.d||'').slice(5,7)+\"</span></span></div>\";}" +
+      "\"<div style='display:flex;align-items:flex-start;justify-content:space-between;gap:12px;'><span style='min-width:0;'><b style='font-size:17px;font-weight:800;'>\"+tit+\"</b><span style='display:block;font-size:12px;color:#8a8695;margin-top:1px;'>\"+sub+\"</span></span><span style='font-size:11.5px;font-weight:800;color:#6e6a78;white-space:nowrap;padding-top:4px;'>\"+dir+'</span></div>'+corpo+'</div>';}" +
       "var h='';" +
-      "h+=card('Corrida','entram sozinhas quando você corre no app',pl(corr.length,'marca','marcas'),corr.length?corr.map(rowMk).join(''):\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Corre com o app aberto que as marcas entram aqui.</div>\");" +
-      // v751: a lista de recordes de carga mora num lugar só (Cargas → Seus recordes); aqui só o atalho
+      "h+=card('Corrida','seu melhor em cada uma',pl(corr.length,'marca','marcas'),corr.length?corr.map(rowMk).join(''):\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Corre com o app aberto que as marcas entram aqui.</div>\");" +
+      /* v767: o card Força não mostrava marca NENHUMA — o corpo inteiro era um
+       * botão pra outra aba, num painel cuja razão de existir é mostrar marca.
+       * Agora as três maiores aparecem aqui, e o "ver todas" virou uma linha
+       * discreta (a lista completa continua morando em Cargas, um lugar só). */
       "var forca=maxPorExercicio();var fNov=forca.filter(recNovo).length;" +
-      "h+=card('Força',forca.length?(fNov?pl(fNov,'recorde novo','recordes novos')+' este mês':'suas maiores cargas anotadas'):'suas maiores cargas anotadas',pl(forca.length,'levantamento','levantamentos'),forca.length?\"<button type='button' data-evsub-bt='cargas' class='btnx' style='width:100%;margin-top:10px;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;'>Ver meus recordes em Cargas ›</button>\":\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Anota as cargas no treino que os recordes aparecem.</div>\");" +
+      "h+=card('Força',forca.length?(fNov?pl(fNov,'recorde novo','recordes novos')+' este mês':'suas maiores cargas anotadas'):'suas maiores cargas anotadas'," +
+      "forca.length?pl(forca.length,'exercício','exercícios'):''," +
+            // sem o selo NOVA aqui: quase toda carga anotada este mês é recorde, e
+      // três selos iguais em três linhas seguidas param de querer dizer algo —
+      // quem conta essa história é a linha do cabeçalho, uma vez só
+      "forca.length?forca.slice(0,3).map(function(r){return rowMk({rot:String(r.n).replace(/</g,'&lt;'),val:String(r.kg).replace('.',',')+' kg',d:r.d});}).join('')+" +
+      "(forca.length>3?\"<button type='button' data-evsub-bt='cargas' style='display:block;width:100%;margin-top:10px;background:none;border:none;color:#a9a4b5;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;padding:6px 0 0;text-align:center;'>Ver as \"+forca.length+' em Cargas \\u203a</button>':'')" +
+      ":\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Anota as cargas no treino que os recordes aparecem.</div>\");" +
       "var wr=L('ptwodres',{});var feitos=0;var bhs=[];(typeof WODS!=='undefined'?WODS:[]).forEach(function(w){var lst=wr[w.id]||[];if(!lst.length)return;feitos++;" +
-      "var ult=lst[lst.length-1];bhs.push({rot:String(w.n).replace(/</g,'&lt;'),val:String(ult.r||'').replace(/</g,'&lt;'),d:ult.d,nova:String(ult.d||'').slice(0,7)===mesK});});" +
-      "if(typeof WODS!=='undefined'&&WODS.length)h+=card('Circuitos',bhs.length?'seu último resultado em cada um':'os circuitos que o professor montou',feitos+' de '+WODS.length+' feitos',bhs.map(rowMk).join(''));" +
+      "var b9=mkWodMelhor(lst);if(!b9)return;" +
+      "bhs.push({rot:String(w.n).replace(/</g,'&lt;'),val:mkWodVal(b9),sub:mkWodSub(b9),d:b9.d,nova:String(b9.d||'').slice(0,7)===mesK});});" +
+      "if(typeof WODS!=='undefined'&&WODS.length)h+=card('Circuitos',bhs.length?'seu melhor em cada um':'os circuitos que o professor montou',feitos+' de '+WODS.length+' feitos'," +
+      "bhs.length?bhs.map(rowMk).join(''):\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Faz um circuito que o melhor resultado aparece aqui.</div>\");" +
       /* v751: era o unico fluxo do app em prompt() do navegador — sem corrigir,
        * sem apagar. Agora e um formulario dentro do card, com ✕ por linha. */
-      "var mm=L('ptmarcas',[]);if(mm.length)h+=card('Marcadas na mão','anotadas por você',pl(mm.length,'marca','marcas'),mm.map(function(m,i9){return {m:m,i:i9};}).reverse().map(function(o){var m=o.m;return rowMk({rot:String(m.n).replace(/</g,'&lt;'),val:String(m.v).replace(/</g,'&lt;'),d:m.d,nova:String(m.d||'').slice(0,7)===mesK}).replace('</span></div>',\"</span><button type='button' data-mkrm='\"+o.i+\"' aria-label='Apagar esta marca' style='background:none;border:none;color:#8a8695;font-size:15px;cursor:pointer;font-family:inherit;padding:0 0 0 8px;'>\u2715</button></div>\");}).join(''));" +
+            "var mm=L('ptmarcas',[]);if(mm.length)h+=card('Marcadas na mão','anotadas por você',pl(mm.length,'marca','marcas')," +
+      "mm.map(function(m,i9){return {m:m,i:i9};}).reverse().map(function(o){var m=o.m;" +
+      "return rowMk({rot:String(m.n).replace(/</g,'&lt;'),val:String(m.v).replace(/</g,'&lt;'),d:m.d,rm:o.i,nova:String(m.d||'').slice(0,7)===mesK});}).join(''));" +
       "var mkN={};mm.forEach(function(m){mkN[String(m.n)]=1;});" +
       "h+=\"<div id='mkForm' style='display:none;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:10px;'>\"+" +
       "\"<div class='wpk' style='margin:0 0 8px;'>Marcar na mão</div>\"+" +
