@@ -2178,6 +2178,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="sAluno" style="min-width: 180px;"></select>
         <button class="btn sec mini" type="button" id="sTurmaBt" aria-pressed="false" title="semi-personal: marque 2 ou 3 alunos no mesmo horário — cada um continua com presença e cobrança próprias">👥 Turma</button>
+        <select id="sTipo" style="width: auto;" title="o que é essa sessão — personal ou um serviço do seu catálogo"><option value="">Personal</option></select>
         <input id="sData" type="date" style="width: auto;">
         <input id="sHora" type="time" style="width: auto;">
         <button class="btn" id="sAdd">+ Agendar</button>
@@ -5566,7 +5567,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : '<div class="muted" style="font-size:13px;">Nenhuma ficha montada ainda.</div>') +
       '<div style="display:flex;gap:8px;margin-top:12px;">' +
       '<button type="button" class="btn mini" data-montatreino="' + a.id + '" style="flex:1;">' + (f0 ? "Abrir" : "Montar") + "</button>" +
-      '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div></div>';
+      '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div>' +
+      /* v770: a agenda do aluno em DATAS — o professor vê o mesmo que o aluno:
+       * o treino da semana projetado nos próximos dias, as sessões marcadas e
+       * os serviços comprados, tudo na ordem do relógio. Abre com 14 dias e o
+       * botão estende pros 2 meses (o app projeta os mesmos 60). */
+      agendaFichaHtml(st, a) + '</div>';
     // termo de responsabilidade: só aparece se o professor configurou um
     var termoLn = "";
     var tm = (st.config || {}).termo;
@@ -10503,9 +10509,121 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
 
+  /* v770: a agenda deixou de ser só "personal". A sessão pode ser um SERVIÇO do
+   * catálogo (massagem, avaliação, drenagem…), e aí ela aparece na agenda do
+   * professor e na do aluno com o nome do serviço — e ao ficar Feita dá baixa
+   * de uma unidade no pacote que o aluno comprou. */
+  function svEscolhido(st) {
+    var el = $("sTipo");
+    if (!el || !el.value) return null;
+    return (st.servicosPT || []).find(function (x) { return x.id === el.value; }) || null;
+  }
+  function pintaSvTipo(st) {
+    var el = $("sTipo");
+    if (!el) return;
+    var antes = el.value;
+    el.innerHTML = '<option value="">Personal</option>' +
+      (st.servicosPT || []).map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.nome) + "</option>"; }).join("");
+    if (antes) el.value = antes;
+    if (el.selectedIndex < 0) el.selectedIndex = 0;
+    // sem serviço cadastrado o seletor não tem escolha nenhuma — some da linha
+    el.style.display = (st.servicosPT || []).length ? "" : "none";
+  }
+  window.__svTipo = { pinta: pintaSvTipo, escolhido: svEscolhido }; // testes
+  /* v770: a AGENDA DE UM DIA, num lugar só. O Raphael pediu que a semana do
+   * aluno (A, B, C, corrida, circuito) apareça em DATAS na agenda, junto das
+   * sessões com o professor e dos serviços comprados — tudo organizado por
+   * horário, no painel e no app.
+   *
+   * O plano é DERIVADO da data, nunca gravado como 60 sessões: ele se repete
+   * toda semana, e gravar 2 meses de linhas viraria lixo velho no dia em que o
+   * professor mudasse a semana. Quem tem data de verdade são as sessões.
+   *
+   * Devolve {k, h, tit, sub, ...} ordenado pelo relógio — sem hora vai pro fim,
+   * a mesma regra do plnDoDia. */
+  function agendaDoDia(st, alunoId, iso) {
+    var itens = [];
+    var t = (st.treinosV2 || {})[alunoId];
+    if (t && t.plano) {
+      plnDoDia(t.plano.dias, diaDoPlano(iso)).forEach(function (p) {
+        var tit = "Treino";
+        if (p.tp === "wod") {
+          var w = (t.wods || []).find(function (x) { return x.id === p.id; });
+          tit = w ? (w.nome || "Circuito") : "Circuito";
+        } else if (p.tp === "cardio") {
+          var c = (t.cardio || []).find(function (x) { return x.id === p.id; });
+          tit = c ? (c.nome || "Corrida") : "Corrida e bike";
+        } else {
+          var f = (t.fichas || []).find(function (x) { return x.id === p.id; });
+          tit = f ? (f.titulo || "Ficha") : "Musculação";
+        }
+        itens.push({ k: "treino", tp: p.tp, h: plnHora(p), tit: tit,
+          sub: p.tp === "wod" ? "circuito" : p.tp === "cardio" ? "corrida e bike" : "musculação" });
+      });
+    }
+    (st.sessoes || []).forEach(function (x) {
+      if (x.alunoId !== alunoId || x.data !== iso) return;
+      itens.push({ k: x.sv ? "servico" : "sessao", h: x.hora || "", id: x.id,
+        tit: x.sv || "Sessão com o professor", sub: x.sv ? "serviço" : "presencial",
+        feita: !!x.feita, faltou: !!x.faltou, pedido: !!x.pedido });
+    });
+    return itens.sort(function (a, b) {
+      if (a.h === b.h) return 0;
+      if (!a.h) return 1;
+      if (!b.h) return -1;
+      return a.h < b.h ? -1 : 1;
+    });
+  }
+  /* Os próximos N dias com alguma coisa marcada — é o que vira a agenda de 2
+   * meses do aluno. Só devolve dia que TEM item; dia vazio não entra. */
+  function agendaProximos(st, alunoId, dias, deIso) {
+    var base = deIso || S.todayISO(), out = [];
+    for (var i = 0; i < (dias || 60); i++) {
+      var d = new Date(base + "T12:00:00");
+      d.setDate(d.getDate() + i);
+      var iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      var l = agendaDoDia(st, alunoId, iso);
+      if (l.length) out.push({ d: iso, itens: l });
+    }
+    return out;
+  }
+  window.__agendaDia = agendaDoDia;
+  window.__agendaProx = agendaProximos; // testes
+  var agFichaDias = 14;
+  function agendaFichaHtml(st, a, dias) {
+    var lista = agendaProximos(st, a.id, dias || agFichaDias);
+    var ICO = { treino: "var(--tk-roxoTx)", sessao: "var(--tk-ok)", servico: "var(--tk-aten)" };
+    var DS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+    return '<div class="pfbox" id="pfAgenda" style="grid-column:1/-1;"><h3>Agenda do aluno</h3>' +
+      '<div style="font-size:12.5px;color:var(--tk-tx4);margin:-4px 0 8px;">a semana dele em datas, as sessões marcadas e os serviços — na ordem do relógio</div>' +
+      (lista.length ? lista.map(function (d) {
+        var dt = new Date(d.d + "T12:00:00");
+        return '<div style="border-top:1px solid var(--tk-bd);padding:8px 0;">' +
+          '<div style="font-size:12px;font-weight:800;color:var(--tk-tx4);">' + DS[dt.getDay()] + " " + d.d.slice(8, 10) + "/" + d.d.slice(5, 7) + "</div>" +
+          d.itens.map(function (it) {
+            return '<div style="display:flex;gap:10px;align-items:baseline;margin-top:4px;font-size:13px;">' +
+              '<b style="width:46px;flex:none;color:' + (it.h ? ICO[it.k] : "var(--tk-tx5)") + ';">' + esc(it.h || "livre") + "</b>" +
+              '<span style="min-width:0;">' + esc(it.tit) +
+              '<span style="color:var(--tk-tx5);font-size:11.5px;"> · ' + esc(it.sub) + (it.feita ? " · feita" : it.faltou ? " · faltou" : "") + "</span></span></div>";
+          }).join("") + "</div>";
+      }).join("") + '<button type="button" class="btn sec mini" id="pfAgMais" data-agmais="' + a.id + '" style="margin-top:10px;">' +
+        (agFichaDias >= 60 ? "Mostrar só 14 dias" : "Ver os 2 meses") + "</button>"
+        : '<div class="muted" style="font-size:13px;">Nada nos próximos ' + agFichaDias + ' dias — monte a semana em Treinos → Semana do aluno ou marque uma sessão.</div>') +
+      "</div>";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest && e.target.closest("[data-agmais]");
+    if (!b) return;
+    agFichaDias = agFichaDias >= 60 ? 14 : 60;
+    var stA = load(), aA = (stA.alunos || []).find(function (x) { return x.id === b.getAttribute("data-agmais"); });
+    var cx = document.getElementById("pfAgenda");
+    if (aA && cx) cx.outerHTML = agendaFichaHtml(stA, aA);
+  });
+  window.__agFicha = { html: agendaFichaHtml, dias: function () { return agFichaDias; } }; // testes
   function renderAgenda(st) {
     pintaAgVis();
     pintaEncaixe(st);
+    pintaSvTipo(st);
     var elFx = $("agFixasLista");
     if (elFx) {
       var fxs = (st.agFixas || []).filter(function (f) { return f && !f.fim; });
@@ -10862,9 +10980,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
     }
     if (!confirmaAgendar(st, datas, hora)) return;
+    /* v770: a sessão pode ser um SERVIÇO do catálogo (massagem, avaliação…) e
+     * não só o personal. Guarda o id e o nome: o id liga no pacote que o aluno
+     * comprou (pra dar baixa quando ficar Feita) e o nome sobrevive mesmo que
+     * o serviço saia do catálogo depois. */
+    var svSel = svEscolhido(st);
     datas.forEach(function (dt) {
       ids.forEach(function (aid9) {
-        st.sessoes.push({ id: S.uid(), alunoId: aid9, data: dt, hora: hora, feita: false });
+        var sNova = { id: S.uid(), alunoId: aid9, data: dt, hora: hora, feita: false };
+        if (svSel) { sNova.svId = svSel.id; sNova.sv = svSel.nome; }
+        st.sessoes.push(sNova);
       });
     });
     ids.forEach(function (aid9) { marcaAppPendente(st, aid9); }); // a agenda nova entra no app na próxima publicação
@@ -11096,7 +11221,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (xf0) {
         xf0.feita = true; xf0.faltou = false;
         var alPc = st.alunos.find(function (x) { return x.id === xf0.alunoId; });
-        if (alPc && alPc.pacote && +alPc.pacote.total > 0) {
+        /* v770: sessão de SERVIÇO (massagem, avaliação…) dá baixa no pacote que
+         * o aluno comprou, e não no pacote de AULAS — são saldos diferentes e
+         * misturar os dois cobraria uma aula que não houve. Sem saldo, a sessão
+         * fica feita do mesmo jeito: quem resolve a cobrança é o professor. */
+        if (xf0.svId && alPc) {
+          var pcSv = (alPc.servPacotes || []).find(function (x) { return x.id === xf0.svId && (+x.total || 0) - (+x.usadas || 0) > 0; });
+          if (pcSv) pcSv.usadas = (+pcSv.usadas || 0) + 1;
+        }
+        if (!xf0.svId && alPc && alPc.pacote && +alPc.pacote.total > 0) {
           // desconta do pacote — e continua contando além do total (sessão excedente aparece na cobrança)
           alPc.pacote.usadas = (+alPc.pacote.usadas || 0) + 1;
           var restaAgora = +alPc.pacote.total - alPc.pacote.usadas;
@@ -20321,9 +20454,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var zapPersonal = (st.config || {}).zap || "";
     var metaSemana = +a.metaSemana || 3;
     var hojeISO = S.todayISO();
-    var sessApp = (st.sessoes || []).filter(function (x) { return x.alunoId === a.id && !x.feita && x.data >= hojeISO; })
-      .sort(function (x, y) { return (x.data + x.hora) < (y.data + y.hora) ? -1 : 1; }).slice(0, 5)
-      .map(function (x) { return { d: x.data, h: x.hora || "" }; });
+    /* v770: a agenda do aluno passou a cobrir DOIS MESES, e não as 5 próximas
+     * sessões. O plano da semana o app projeta sozinho (é o PLANO, 7 chaves);
+     * o que só o painel sabe são as sessões com data marcada — e elas viajam
+     * inteiras, com o nome do serviço quando é massagem/avaliação em vez de
+     * personal. Teto de 120 pra um estúdio com sessão fixa não inchar o pacote. */
+    var limiteAg = (function () { var d = new Date(); d.setDate(d.getDate() + 62); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
+    var sessApp = (st.sessoes || []).filter(function (x) { return x.alunoId === a.id && !x.feita && x.data >= hojeISO && x.data <= limiteAg; })
+      .sort(function (x, y) { return (x.data + (x.hora || "")) < (y.data + (y.hora || "")) ? -1 : 1; }).slice(0, 120)
+      .map(function (x) { var o = { d: x.data, h: x.hora || "" }; if (x.sv) o.sv = String(x.sv).slice(0, 30); return o; });
     var vidsApp = (st.videoteca || []).slice(0, 30).map(function (v) { return { t: v.titulo, c: v.categoria || "Geral", u: v.url }; });
     // questionário enviado direto pro app (desbloqueia na data marcada)
     var qa = (a.questApp && Array.isArray(a.questApp.ps) && a.questApp.ps.length) ? a.questApp : null;

@@ -1798,6 +1798,52 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**A agenda de dois meses, com serviço e treino no mesmo dia** (mt-v770): o
+Raphael pediu que o treino da semana (A, B, C, D, corrida ou circuito) apareça
+**nos dias certos por dois meses** na agenda do aluno E do professor, junto do
+que for presencial — sessão com o professor às 17h e uma **massagem** às 14h no
+mesmo dia, tudo em ordem de relógio.
+
+**A decisão que manda em tudo: a agenda é DERIVADA, não guardada.** Gravar 60
+linhas de "segunda tem circuito" viraria mentira no instante em que o professor
+mexesse na Semana do aluno — e mexer na semana é o normal. Então o plano
+semanal continua sendo a única fonte, e a agenda de qualquer dia é calculada na
+hora a partir dele. Dois meses não custam nada porque não existem em lugar
+nenhum: `agendaDoDia(st, alunoId, iso)` junta, pra UMA data, o que o plano diz
+daquele dia da semana + as sessões marcadas + os serviços, ordenados por hora;
+`agendaProximos(st, alunoId, dias, deIso)` percorre o intervalo e devolve só os
+dias que TÊM alguma coisa. No app o gêmeo é `agItensDia(iso)`, com a mesma
+regra e a mesma ordem — mexeu num, confira o outro.
+
+**Serviço virou tipo de sessão.** O `#sTipo` do card Agendar escolhe entre a
+aula de sempre e um item de `st.servicosPT` (massagem, avaliação, o que o
+professor cadastrou); a sessão passa a levar `svId`/`sv`. ⚠️ marcar **Feita**
+num serviço consome o pacote **daquele serviço** (`a.servPacotes`), nunca o
+pacote de aulas — a guarda é `if (!xf0.svId && …)` no caminho antigo, senão uma
+massagem gastaria uma aula.
+
+**No app** o pacote `sessApp` cresceu de 5 itens pra **62 dias** (teto 120) e
+passou a levar o `sv`. O calendário ganhou pontinho nos dias que têm treino do
+plano e, ao tocar num dia, lista tudo daquele dia — treino, sessão e serviço
+juntos. A ficha do aluno no painel ganhou o card **Agenda do aluno**, que abre
+em 14 dias e vira 60 no toque (`[data-agmais]`, `window.__agFicha`).
+
+⚠️ `STUDIO_CURTO` é constante do **builder**, não variável do app: usar o nome
+direto dentro da string gerada dá `STUDIO_CURTO is not defined` no celular do
+aluno. O jeito certo é interpolar na hora de montar (`jsonApp("Sessão com " +
+STUDIO_CURTO)`).
+⚠️ Data local sempre montada na mão (`d.getFullYear() + "-" + …`), **nunca**
+`toISOString()` — no Brasil ele volta o dia anterior depois das 21h.
+⚠️ Sessão já **confirmada** não aparece duas vezes: a lista velha de `.kv`
+pula quem já entrou pela agenda nova.
+
+**O que NÃO foi feito, de propósito**: mover ou trocar o treino de UM dia
+específico ("essa semana o circuito é na terça"). O plano é semanal e se
+repete; a agenda **mostra**, não edita aquele dia. Exceção por data exige um
+campo novo no `t.plano` e uma tela de edição — não foi fingido em lugar nenhum.
+Ganchos: `window.__agendaDia`, `__agendaProx`, `__agFicha`, `__svTipo`,
+`__agItens`.
+
 **A revisão do demo por agentes achou o que eu não tinha visto** (mt-v769):
 antes de mandar o link pro Raphael, cinco agentes independentes conferiram as
 quatro demos NO NAVEGADOR (frescor, agenda do dia, gamificação, Marcas e caça a
