@@ -20667,6 +20667,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         foto: a.fotoAluno || a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
+      /* v772: o sino do app avisa "seu treino foi atualizado" — e o carimbo
+       * certo é o da PRESCRIÇÃO (marcaTreinoMudou), nunca o stamp do pacote: o
+       * autoPublicaApps republica sozinho, e pelo stamp o aluno receberia o
+       * aviso sem nada ter mudado no treino dele. Mesma lição da v747, onde a
+       * "idade da ficha" também tinha de sair do fichasEm. */
+      fichasEm: (t2 || {}).fichasEm || "",
       cfg: {
         mural: (st.config || {}).mural || [],
         conquistas: (st.config || {}).conquistas || [],

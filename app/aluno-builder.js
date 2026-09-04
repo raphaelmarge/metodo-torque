@@ -956,6 +956,12 @@
           "<div style='min-width:0;flex:1;'>" +
           "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;color:rgba(255,255,255,.72);text-transform:uppercase;'>" + esc(studio).toUpperCase() + "</div>" +
           "<div id='heroSauda' style='font-size:19px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-top:3px;'>" + esc(a.nome.split(" ")[0]) + "</div></div>" +
+          /* v772: o sino. Fica à esquerda do avatar porque é o canto onde a mão
+           * do polegar chega e onde todo app põe aviso. O badge é o número de
+           * avisos NÃO vistos; sem nada novo, o sino fica limpo. */
+          "<button type='button' id='sinoBtn' aria-label='Meus avisos' style='pointer-events:auto;position:relative;flex:none;width:42px;height:42px;padding:0;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-family:inherit;cursor:pointer;'>" +
+          "<svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/><path d='M13.7 21a2 2 0 0 1-3.4 0'/></svg>" +
+          "<span id='sinoN' style='display:none;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#ef4444;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;border:2px solid rgba(0,0,0,.35);'></span></button>" +
           "<button type='button' id='avBtn2' aria-label='Trocar a sua foto' style='pointer-events:auto;flex:none;width:42px;height:42px;padding:0;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;color:#fff;font-family:inherit;cursor:pointer;overflow:hidden;'>" +
           "<img id='avImg2' alt='' style='width:100%;height:100%;object-fit:cover;border-radius:50%;" + (FOTOAL ? "" : "display:none;") + "'" + (FOTOAL ? " src='" + FOTOAL + "'" : "") + ">" +
           "<span id='avIni2'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></button></div>";
@@ -2276,6 +2282,7 @@
       "function semanaCK(){return semDe(new Date());}" +
       // o menu Questionários conta o check-in pendente da semana junto
       "window.__ckPend=function(){return L('ptck','')===semanaCK()?0:1;};" +
+      "window.__ckChave=function(){return semanaCK();};" +
       // check-in da semana já enviado? O card SOME até a semana virar (pedido
       // do Raphael) — a confirmação só aparece na hora do envio (fim())
       "if(L('ptck','')===semanaCK()){var ckc9=document.getElementById('ckCard');if(ckc9)ckc9.style.display='none';}" +
@@ -2386,6 +2393,112 @@
       "sub:x.sv?'serviço':'presencial',status:x.status});});}catch(e8){}" +
       "return out.sort(function(a9,b9){if(a9.h===b9.h)return 0;if(!a9.h)return 1;if(!b9.h)return -1;return a9.h<b9.h?-1:1;});}" +
       "window.__agItens=agItensDia;" +
+      /* ================= v772: O SINO DE AVISOS =========================
+       * O Raphael pediu um sino no topo do Início que abra "as notificações que
+       * chegaram no app". Medido no banco em 2026-09-04, antes de escolher as
+       * fontes: 12 apps publicados, 5 abertos, **0 recados do professor** (9 do
+       * aluno pra ele), 5 check-ins, 1 questionário respondido, 1 pedido de
+       * horário e 1 aluno com push. Ou seja: um sino que só lesse o CHAT
+       * nasceria vazio pra sempre. O que de fato acontece na vida do aluno é o
+       * professor PUBLICAR treino e MARCAR sessão — e é isso que o sino mostra.
+       *
+       * Nada de tabela nova: a lista é DERIVADA do que o app já tem (a mesma
+       * regra da agenda da v770). Cada aviso tem um id ESTÁVEL, e o que foi
+       * visto fica em ptnotifL — então o badge conta o que é novo de verdade e
+       * o histórico continua lá quando o aluno abre o sino de novo.
+       *
+       * ⚠️ Aviso de pendência (questionário/check-in) some sozinho quando o
+       * aluno responde, porque o id carrega o PERÍODO: semana nova, aviso novo.
+       * ⚠️ Não é o push do celular — o push é do sistema e nem sempre está
+       * ligado (1 aluno em 12). O sino é o que está DENTRO do app, e é por isso
+       * que ele existe: sem ele, recado publicado não tem onde aparecer. */
+      /* ⚠️ é o fichasEm (quando o professor PRESCREVEU), não o stamp do pacote:
+       * o painel republica sozinho pra atualizar o app, e pelo stamp o aluno
+       * receberia "seu treino foi atualizado" sem nada ter mudado. */
+      "var NOTSTAMP=" + jsonApp(String(D.fichasEm || "").slice(0, 19)) + ";" +
+      "var NOTPROF=" + jsonApp(STUDIO_CURTO) + ";" +
+      "function notLidas(){return L('ptnotifL',{});}" +
+      "function notQuando(iso){var d=new Date(String(iso).length<=10?iso+'T12:00:00':iso);" +
+      "if(isNaN(d))return '';var ag=new Date();var dif=Math.floor((ag-d)/864e5);" +
+      "var hh=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);" +
+      "if(dif<=0&&d.getDate()===ag.getDate())return 'hoje '+hh;" +
+      "if(dif===1||(dif<=1&&d<ag))return 'ontem '+hh;" +
+      /* dia da semana com lista PRÓPRIA: o DSEM_ do app é um var declarado mais
+       * pra frente no arquivo, e o sino é pintado no boot — ali ele ainda vale
+       * undefined e a sessão sumiria calada de dentro do try. */
+      "if(dif<0)return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()]+' '+d.getDate()+'/'+('0'+(d.getMonth()+1)).slice(-2);" +
+      "return d.getDate()+'/'+('0'+(d.getMonth()+1)).slice(-2);}" +
+      /* A lista. Cada fonte é um sinal que JÁ existe no app — nenhuma delas foi
+       * inventada e nenhuma consulta nova foi criada. */
+      "function notLista(){var out=[];" +
+      // 1) treino publicado: o stamp é a hora em que o professor gerou o pacote
+      "if(NOTSTAMP)out.push({id:'treino|'+NOTSTAMP,q:NOTSTAMP,k:'treino'," +
+      "t:'Seu treino foi atualizado',s:NOTPROF+' publicou a versão mais nova pra você',ir:'treino'});" +
+      // 2) recado do professor no chat (o que o aluno mandou não é aviso)
+      "L('ptchat',[]).forEach(function(m){if(!m||!m.de||m.de==='aluno'||m.de==='aluno-local'||m.de==='bot')return;" +
+      "out.push({id:'chat|'+(m.criado||''),q:m.criado||'',k:'chat'," +
+      // ⚠️ o campo é `texto` (é como app_chat e o botHist gravam) — `txt` deixa
+      // o aviso com o título certo e a prévia VAZIA, que é pior que não ter
+      "t:'Recado de '+NOTPROF,s:String(m.texto||m.txt||'').slice(0,90),ir:'chat'});});" +
+      // 3) e 4) o que está esperando resposta — some sozinho quando responde
+      "try{if(window.__qaPend&&window.__qaPend())out.push({id:'quest|'+(window.__qaChave?window.__qaChave():'')," +
+      "q:isoHj(),k:'quest',t:'Questionário pra responder',s:'leva 1 minuto — '+NOTPROF+' lê tudo',ir:'quest'});}catch(e1){}" +
+      "try{if(window.__ckPend&&window.__ckPend())out.push({id:'ckin|'+(window.__ckChave?window.__ckChave():'')," +
+      "q:isoHj(),k:'quest',t:'Check-in da semana',s:'como foi a sua semana? 3 perguntas',ir:'quest'});}catch(e2){}" +
+      // 5) sessão marcada com o professor (ou serviço) nos próximos dias
+      "try{var hj9=isoHj();(SESS||[]).forEach(function(x){if(!x||x.d<hj9)return;" +
+      "out.push({id:'sess|'+x.d+'|'+(x.h||''),q:x.d,k:'sess'," +
+      /* qo = a ordem na lista. A sessão é um aviso que CHEGOU (o professor
+       * marcou), mas a data dela é FUTURA — ordenando por ela, uma sessão de
+       * daqui a um mês ficaria grudada no topo por um mês inteiro. Então ela
+       * entra na ordem de hoje e a data aparece no texto. */
+      "t:(x.sv||'Sessão com '+NOTPROF)+' marcada',s:notQuando(x.d)+(x.h?' às '+x.h:' — horário a combinar'),ir:'agenda',qo:hj9});});}catch(e3){}" +
+      "var vi=notLidas();" +
+      "out.forEach(function(o){o.novo=!vi[o.id];});" +
+      "return out.sort(function(a9,b9){var x9=String(a9.qo||a9.q),y9=String(b9.qo||b9.q);return x9<y9?1:x9>y9?-1:0;}).slice(0,20);}" +
+      "function notNovos(){return notLista().filter(function(o){return o.novo;}).length;}" +
+      "function pintaSino(){var b=document.getElementById('sinoN');if(!b)return;" +
+      "var n=notNovos();b.style.display=n?'block':'none';b.textContent=n>9?'9+':n;}" +
+      /* O painel nasce colado no <body> de propósito: o cabeçalho vive dentro do
+       * #blocoHoje, e um position:fixed dentro de elemento com transform cola no
+       * ELEMENTO e não na tela — foi a armadilha que custou caro na v634. */
+      "var notCx=null;" +
+      "function notFecha(){if(notCx)notCx.style.display='none';}" +
+      "function notAbre(){var lst=notLista();" +
+      "if(!notCx){notCx=document.createElement('div');notCx.id='sinoCx';" +
+      "notCx.style.cssText='position:fixed;inset:0;z-index:80;display:none;';" +
+      "notCx.innerHTML=\"<div id='sinoFundo' style='position:absolute;inset:0;background:rgba(0,0,0,.55);'></div>\"+" +
+      "\"<div id='sinoPn' style='position:absolute;top:0;left:0;right:0;max-height:82vh;overflow:auto;background:var(--bg2);border-radius:0 0 24px 24px;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 18px;box-shadow:0 18px 44px rgba(0,0,0,.5);'></div>\";" +
+      "document.body.appendChild(notCx);" +
+      "notCx.querySelector('#sinoFundo').addEventListener('click',notFecha);}" +
+      "var ICN={treino:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\"," +
+      "chat:\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\"," +
+      "quest:\"<path d='M9 11l3 3L22 4'/><path d='M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'/>\"," +
+      "sess:\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\"};" +
+      "notCx.querySelector('#sinoPn').innerHTML=" +
+      "\"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;'>\"+" +
+      "\"<div style='font-size:17px;font-weight:800;'>Meus avisos</div>\"+" +
+      "\"<button type='button' id='sinoX' aria-label='Fechar' style='background:var(--bg4);border:1px solid var(--bd);color:#a9a4b5;border-radius:50%;width:32px;height:32px;font-size:15px;font-family:inherit;cursor:pointer;line-height:1;'>\\u00d7</button></div>\"+" +
+      "(lst.length?lst.map(function(o){" +
+      "return \"<button type='button' data-notir='\"+o.ir+\"' style='display:grid;grid-template-columns:34px minmax(0,1fr);gap:11px;align-items:start;width:100%;text-align:left;background:\"+(o.novo?'rgba(var(--cor-rgb),.10)':'var(--bg4)')+\";border:1px solid \"+(o.novo?'rgba(var(--cor-rgb),.35)':'rgba(255,255,255,.04)')+\";border-radius:14px;padding:11px 12px;margin-bottom:8px;font-family:inherit;color:inherit;cursor:pointer;'>\"+" +
+      "\"<span style='line-height:0;color:\"+(o.novo?'var(--corc)':'#6e6a78')+\";padding-top:1px;'>\"+icx(ICN[o.k]||'',20)+'</span>'+" +
+      "\"<span style='min-width:0;'><span style='display:block;font-size:13.5px;font-weight:800;line-height:1.3;'>\"+esc2(o.t)+" +
+      "(o.novo?\" <span style='color:var(--corc);font-size:10px;font-weight:800;letter-spacing:.06em;'>NOVO</span>\":'')+'</span>'+" +
+      "\"<span style='display:block;font-size:12px;color:#8b8695;margin-top:2px;line-height:1.35;'>\"+esc2(o.s)+'</span>'+" +
+      "\"<span style='display:block;font-size:10.5px;color:#6e6a78;margin-top:3px;'>\"+esc2(notQuando(o.q))+'</span></span></button>';}).join('')" +
+      ":\"<div style='text-align:center;padding:26px 10px;color:#8b8695;font-size:13.5px;line-height:1.5;'>Nada novo por aqui.<br><span style='font-size:12px;color:#6e6a78;'>Treino publicado, recado de \"+esc2(NOTPROF)+\", sessão marcada e questionário aparecem aqui.</span></div>\");" +
+      "notCx.style.display='block';" +
+      "notCx.querySelector('#sinoX').addEventListener('click',notFecha);" +
+      /* marcar como visto DEPOIS de pintar: o aluno precisa ver o que é novo
+       * nesta abertura. Guarda só os ids que existem hoje, pra a memória não
+       * crescer pra sempre com aviso que já saiu da lista. */
+      "var vi={};lst.forEach(function(o){vi[o.id]=1;});Sv('ptnotifL',vi);pintaSino();}" +
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#sinoBtn');" +
+      "if(b){if(navigator.vibrate)navigator.vibrate(8);notAbre();return;}" +
+      "var ir=e.target&&e.target.closest&&e.target.closest('[data-notir]');if(!ir)return;" +
+      "notFecha();if(window.__trocaSec)window.__trocaSec(ir.getAttribute('data-notir'));});" +
+      "window.__sino={lista:notLista,novos:notNovos,abre:notAbre,fecha:notFecha,pinta:pintaSino};" +
+      "try{pintaSino();}catch(e4){}" +
       "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
@@ -5909,6 +6022,9 @@
         "var chave=(QUESTAPP.env||'')+'|'+per;var T=QUESTAPP.ps.length;" +
         // o menu (tela 01) pergunta se tem questionário esperando — 1 ou 0
         "window.__qaPend=function(){if(hj<desde)return 0;return L('ptqa',{})[chave]?0:1;};" +
+        // v772: o sino precisa de um id ESTÁVEL por período — período novo é
+        // aviso novo, e responder faz o aviso sumir sozinho da lista
+        "window.__qaChave=function(){return chave;};" +
         /* R3: fluxo paginado (telas 02-06) — uma pergunta por tela, resposta
          * parcial guardada no aparelho (dá pra parar no meio e voltar), e o
          * envio final é o MESMO de antes: app_quest_responde com a mesma lista */
@@ -6262,6 +6378,11 @@
       "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
       // repinta a semana DEPOIS do herói: agora o coachDica já enxerga o plano
       "pintaHero();pintaXP();try{pintaSemana();pintaCqTiles();}catch(e0){}" +
+      /* ⚠️ v772: o sino é pintado no meio do arquivo, ANTES de o bloco do
+       * questionário existir — ali o __qaPend ainda não foi criado e o badge
+       * nascia contando a menos (medido na demo: 4 com 5 avisos na lista).
+       * Aqui, no fim do boot, todas as fontes já existem. */
+      "try{if(window.__sino)window.__sino.pinta();}catch(e0s){}" +
       "try{pintaAgHoje();}catch(e0b){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
