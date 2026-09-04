@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v768** |
-| Estado do repo em | 2026-09-04 (commit `4a63d24`) |
+| App em | **mt-v769** |
+| Estado do repo em | 2026-09-04 (commit `8c38f12`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 229 |
+| Lançamentos no histórico | 230 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v768**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v769**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v768** (2026-09-04).
+O motor (`app/aluno-builder.js`) encostou em **mt-v769** (2026-09-04).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v769 | cinco agentes conferiram o demo antes de mandar o link — e acharam |
 | mt-v768 | mais de um treino no mesmo dia, e o dia vira agenda |
 | mt-v767 | Evolucao > Marcas estava bagunçada |
 | mt-v766 | regera as demos com o codigo novo (a do aluno estava no mt-v754) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v757 | pt-push e pt-app-conta — publicar num caminho só, chat honesto |
 | mt-v756 | o apagão do estúdio de um professor — três travas |
 | mt-v755 | as sobras entre territórios da revisão (6 itens) |
-| mt-v754 | revisão por área — Configurações/Avaliação e o resto do app do aluno (69 itens) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
