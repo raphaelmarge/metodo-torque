@@ -2417,6 +2417,16 @@
        * receberia "seu treino foi atualizado" sem nada ter mudado. */
       "var NOTSTAMP=" + jsonApp(String(D.fichasEm || "").slice(0, 19)) + ";" +
       "var NOTPROF=" + jsonApp(STUDIO_CURTO) + ";" +
+      /* v773: o estado da mensalidade, calculado no painel com as MESMAS regras
+       * do Financeiro (idxDe.pagouMes e cobrancaVencida) — nunca uma conta
+       * paralela que pudesse divergir da tela do professor.
+       * ⚠️ o valor já sai FORMATADO daqui: `dinheiro` é função do BUILDER, não
+       * do app — usá-la dentro da string gerada dá "dinheiro is not defined" no
+       * celular do aluno. É a mesma armadilha do STUDIO_CURTO na v770. */
+      "var NOTPAG=" + jsonApp(D.pagApp ? {
+        dia: D.pagApp.dia, vtxt: dinheiro(D.pagApp.valor), pago: !!D.pagApp.pago,
+        mes: D.pagApp.mes, auto: !!D.pagApp.auto, venceu: !!D.pagApp.venceu,
+      } : null) + ";" +
       "function notLidas(){return L('ptnotifL',{});}" +
       "function notQuando(iso){var d=new Date(String(iso).length<=10?iso+'T12:00:00':iso);" +
       "if(isNaN(d))return '';var ag=new Date();var dif=Math.floor((ag-d)/864e5);" +
@@ -2453,6 +2463,24 @@
        * daqui a um mês ficaria grudada no topo por um mês inteiro. Então ela
        * entra na ordem de hoje e a data aparece no texto. */
       "t:(x.sv||'Sessão com '+NOTPROF)+' marcada',s:notQuando(x.d)+(x.h?' às '+x.h:' — horário a combinar'),ir:'agenda',qo:hj9});});}catch(e3){}" +
+      /* 6) v773: o vencimento da mensalidade. Três silêncios, todos de
+       * propósito — cobrar quem não deve é o jeito mais rápido de o aluno parar
+       * de abrir o sino:
+       *  - `auto` (cobrança automática no cartão): o dinheiro sai sozinho, não
+       *    há o que lembrar — é a mesma regra que tira esse aluno da lista de
+       *    cobrança do painel, pra não pedir pagamento em dobro (v745);
+       *  - `pago`: o painel já registrou o pagamento do mês;
+       *  - `ptpaguei`: o aluno tocou em "Já paguei". O pacote é uma FOTO do dia
+       *    em que foi publicado e pode não ter visto o pagamento de ontem —
+       *    então a palavra dele silencia o aviso do mês na hora.
+       * E o aviso só acende na semana do vencimento (5 dias antes): aceso o mês
+       * inteiro, viraria paisagem e ninguém mais leria. */
+      "try{if(NOTPAG&&NOTPAG.dia&&!NOTPAG.auto&&!NOTPAG.pago&&L('ptpaguei','')!==NOTPAG.mes){" +
+      "var diaP=new Date().getDate(),falta=NOTPAG.dia-diaP;" +
+      "var venc=NOTPAG.venceu||falta<0;" +
+      "if(venc||falta<=5)out.push({id:'pag|'+NOTPAG.mes+(venc?'|v':''),q:isoHj(),k:'pag'," +
+      "t:venc?'Mensalidade em aberto':falta===0?'Sua mensalidade vence hoje':falta===1?'Sua mensalidade vence amanhã':'Sua mensalidade vence em '+falta+' dias'," +
+      "s:NOTPAG.vtxt+' · todo dia '+NOTPAG.dia+' — o Pix e o \"Já paguei\" ficam em Meu plano',ir:'pagamento'});}}catch(e5){}" +
       "var vi=notLidas();" +
       "out.forEach(function(o){o.novo=!vi[o.id];});" +
       "return out.sort(function(a9,b9){var x9=String(a9.qo||a9.q),y9=String(b9.qo||b9.q);return x9<y9?1:x9>y9?-1:0;}).slice(0,20);}" +
@@ -2474,7 +2502,8 @@
       "var ICN={treino:\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\"," +
       "chat:\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\"," +
       "quest:\"<path d='M9 11l3 3L22 4'/><path d='M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'/>\"," +
-      "sess:\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\"};" +
+      "sess:\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\"," +
+      "pag:\"<rect x='2' y='6' width='20' height='13' rx='2'/><path d='M2 11h20'/>\"};" +
       "notCx.querySelector('#sinoPn').innerHTML=" +
       "\"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;'>\"+" +
       "\"<div style='font-size:17px;font-weight:800;'>Meus avisos</div>\"+" +

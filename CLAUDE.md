@@ -1798,6 +1798,39 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Vencimento da mensalidade no sino** (mt-v773): o Raphael pediu o vencimento
+junto dos outros avisos. O trabalho aqui não foi mostrar a data — foi **não
+cobrar quem não deve**, porque um sino que cutuca sem motivo é um sino que o
+aluno para de abrir.
+
+O painel passou a mandar `pagApp` no pacote com o estado do mês calculado pelas
+**mesmas funções do Financeiro** (`idxDe.pagouMes` e `cobrancaVencida`), nunca
+uma conta paralela que pudesse divergir da tela do professor. São **três
+silêncios**: (1) `auto` — quem tem cobrança automática no cartão
+(`assinaturaRec`/`assinaturaAs`) não recebe nada, porque o dinheiro sai sozinho
+e cobrar seria pedir pagamento em dobro, a mesma regra que tira esse aluno da
+lista de cobrança na v745; (2) `pago` — o mês já foi registrado; (3)
+`ptpaguei` — o aluno tocou em *Já paguei* (o botão que já existia em Meu plano).
+Esse terceiro importa porque **o pacote é uma FOTO do dia em que foi publicado**
+e pode não ter visto o pagamento de ontem: a palavra do aluno cala o aviso do
+mês na hora, sem esperar republicação.
+
+O aviso só acende na **semana do vencimento** (5 dias antes) — aceso o mês
+inteiro viraria paisagem — e diz quantos dias faltam ("vence em 2 dias", "vence
+amanhã", "vence hoje"); passado o prazo vira "Mensalidade em aberto", e o id
+muda (`pag|<mês>|v`), então o aluno é avisado outra vez quando o estado piora.
+Toque leva pra *Meu plano*, onde já moram o Pix, o link do cartão e o
+*Já paguei*. Plano por **sessão** (hora-aula) não tem mensalidade e fica fora.
+
+⚠️ **`dinheiro()` é função do BUILDER, não do app** — chamá-la dentro da string
+gerada dá `dinheiro is not defined` no celular do aluno. O valor sai formatado
+no pacote (`vtxt`). É a MESMA armadilha do `STUDIO_CURTO` na v770, e ela só
+apareceu porque o teste **monta o app e roda**, em vez de conferir o builder.
+⚠️ Escrever um teste com contrato começando em janeiro cria **8 meses de dívida**
+e o aluno de "vence em 2 dias" sai como "em aberto" — o que é a regra CERTA
+(`cobrancaVencida` conta os meses antigos). O cenário do teste começa no mês
+corrente de propósito.
+
 **O sino de avisos no app do aluno** (mt-v772): o Raphael circulou o canto de
 cima do Início e pediu um sino que abrisse "as notificações que chegaram no
 app". A pergunta que decidiu o desenho foi *o que, de fato, chega* — medido no

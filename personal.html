@@ -20673,6 +20673,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * aviso sem nada ter mudado no treino dele. Mesma lição da v747, onde a
        * "idade da ficha" também tinha de sair do fichasEm. */
       fichasEm: (t2 || {}).fichasEm || "",
+      /* v773: o sino do app avisa o vencimento da mensalidade — e pra não
+       * cutucar quem já pagou, o pacote leva o ESTADO do mês, calculado com as
+       * MESMAS regras do Financeiro (idxDe.pagouMes e cobrancaVencida), nunca
+       * uma conta paralela. `auto` desliga o aviso de quem tem cobrança
+       * automática no cartão: nesses o dinheiro sai sozinho e cobrar seria
+       * pedir pagamento em dobro — a mesma razão pela qual a lista de cobrança
+       * esconde o Recebi/Pix/Link desse aluno (v745). */
+      pagApp: (function () {
+        if (!ctApp || !plApp) return null;
+        if (plApp.cobranca === "sessao") return null; // hora-aula não tem mensalidade
+        var mesH = S.todayISO().slice(0, 7);
+        return {
+          dia: +ctApp.diaVenc || 0,
+          valor: +plApp.valor || 0,
+          pago: idxDe(st).pagouMes(a.id, mesH),
+          mes: mesH,
+          auto: !!(a.assinaturaRec || a.assinaturaAs),
+          venceu: !!cobrancaVencida(st, a),
+        };
+      })(),
       cfg: {
         mural: (st.config || {}).mural || [],
         conquistas: (st.config || {}).conquistas || [],
