@@ -1798,6 +1798,53 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**A revisão do demo por agentes achou o que eu não tinha visto** (mt-v769):
+antes de mandar o link pro Raphael, cinco agentes independentes conferiram as
+quatro demos NO NAVEGADOR (frescor, agenda do dia, gamificação, Marcas e caça a
+regressão), e cada achado passou por três céticos com lentes diferentes. O
+frescor e a caça a regressão vieram limpos — **0 erro de JS** nas duas demos,
+nas 12 áreas do app, nas 17 abas do painel, com os timers disparados na mão. O
+que sobreviveu aos céticos:
+
+1. **O app oferecia a CORRIDA ERRADA num dia com dois treinos** — o defeito da
+   própria v768, e o pior tipo: duas telas dizendo coisas diferentes. O card
+   extra do carrossel e a gaveta que cada aba abre olhavam o `plnPri` (o
+   PRIMEIRO treino do dia); num dia com ficha às 07:00 e corrida às 18:30 o
+   primeiro é a ficha, então o caminho de cardio caía no índice **0** — a
+   corrida de outro dia — enquanto o "Seu dia" apontava a certa. Agora o extra
+   some quando o tipo **já está no dia** (`tps3`) e cada aba abre a gaveta
+   **daquele tipo** que está no plano de hoje. Sem plano nenhum vale `ficha`,
+   que é o rodízio de sempre.
+2. **A legenda do XP estourava o cabeçalho roxo.** A da v765 quebrava em TRÊS
+   linhas na coluna de 248 px, com a palavra "XP" sozinha na última, empurrando
+   o "faltam N pro nível" — que é a linha que interessa. Encurtada pra 2 linhas
+   cheias. E ela mentia por omissão: dizia "corrida = 10 XP" quando `xpDados`
+   conta **qualquer** cardio (bike e caminhada valem igual) — virou "treino ou
+   cardio".
+3. **Nome sem espaço era escrito POR BAIXO do valor** em Marcas: 36 caracteres
+   cabem no `maxlength=40` do próprio campo, a coluna `minmax(0,1fr)` fechava em
+   76 px e o texto media 316 px, transbordando sem quebrar. `overflow-wrap:
+   anywhere` no nome e teto de 48% no valor — que também conserta o resultado
+   comprido espremendo o nome em três linhas.
+4. **A pílula "Marcas" ficava cortada na borda** num celular de 390 (a fita mede
+   442) e **continuava cortada depois de tocada**: toque de dedo não rola o
+   elemento pra dentro como o clique programático do teste faz. Agora a aba
+   ativa se centraliza sozinha na fita.
+5. **A demo do painel não demonstrava a Semana do aluno**: nenhum dos 24 alunos
+   tinha plano, então a tela nova abria com sete "descanso" pra todo mundo.
+   Agora os 24 nascem com a semana montada e **8 deles** com o caso da v768
+   (musculação de manhã + corrida à noite no mesmo dia).
+
+⚠️ A demo do aluno é um RETRATO: o dia duplo estava só na quarta, e quem
+abrisse numa sexta não veria a novidade. Agora os três dias de treino (seg,
+qua, sex) têm dois treinos — a agenda aparece em qualquer um deles.
+⚠️ Dois "achados" foram derrubados pelos céticos e vale registrar por quê:
+o card do Stories saindo com as frases cortadas é **artefato de FONTE do
+contêiner de teste** (sem Roboto/SF Pro, o `system-ui` cai no DejaVu Sans, ~20%
+mais largo), e o campo de hora em 12 h AM/PM é **falta de locale no contêiner**
+(com `LANG=pt_BR.UTF-8` ele vira 24 h). Nenhum dos dois acontece no celular do
+aluno.
+
 **Mais de um treino no mesmo dia, e o dia vira agenda** (mt-v768): o Raphael
 mandou o calendário de treinos de um app de corrida e pediu — tem aluno que faz
 **planilha de corrida E musculação ao mesmo tempo**, e a Semana do aluno só

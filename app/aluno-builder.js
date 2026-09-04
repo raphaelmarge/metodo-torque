@@ -97,7 +97,7 @@
     };
     var STUDIO_CURTO = nomeCurto(studio);
     // a legenda do XP num lugar só (faixa da Evolução e card do nível liam cópias)
-    var XPLEG = "treino = 10 XP · corrida = 10 XP · dia com carga anotada = 5 XP · hábito = 2 XP · check-in = 20 XP";
+    var XPLEG = "treino ou cardio = 10 XP · dia com carga = 5 XP · hábito = 2 XP · check-in = 20 XP";
     // dinheiro sempre com centavos (a Loja já saía "R$ 149,90" e o plano "R$ 149,9")
     var dinheiro = function (v) { return "R$ " + (+v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
     // link que vira href: só http(s), sem aspas — a mesma régua da playlist e do clube
@@ -5580,10 +5580,10 @@
        * linha, ficava desalinhado do número que ele explica. */
       "function rowMk(m){var det=[m.sub||'',mkData(m.d)].filter(Boolean).join(' · ');" +
       "return \"<div style='display:grid;grid-template-columns:minmax(0,1fr) auto\"+(m.rm!=null?' auto':'')+\";gap:14px;align-items:center;border-top:1px solid var(--bg5);padding:11px 2px;'>\"+" +
-      "\"<div style='min-width:0;'><div style='font-size:14px;line-height:1.3;'>\"+m.rot+" +
+      "\"<div style='min-width:0;overflow-wrap:anywhere;'><div style='font-size:14px;line-height:1.3;'>\"+m.rot+" +
       "(m.nova?\"<span style='background:rgba(251,191,36,.14);color:#fbbf24;border-radius:99px;padding:2px 8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;margin-left:7px;white-space:nowrap;'>NOVA</span>\":'')+'</div>'+" +
       "(det?\"<div style='font-size:11.5px;color:#6e6a78;margin-top:2px;'>\"+det+'</div>':'')+'</div>'+" +
-      "\"<b style='font-size:17px;font-weight:900;white-space:nowrap;'>\"+m.val+'</b>'+" +
+      "\"<b style='font-size:17px;font-weight:900;max-width:48%;overflow-wrap:anywhere;'>\"+m.val+'</b>'+" +
       "(m.rm!=null?\"<button type='button' data-mkrm='\"+m.rm+\"' aria-label='Apagar esta marca' style='background:none;border:none;color:#8a8695;font-size:15px;cursor:pointer;font-family:inherit;padding:0 0 0 2px;'>✕</button>\":'')+'</div>';}" +
       "function mkCorrida(){var corr=L('ptcardio',[]).filter(function(x){return x.m==='corrida'&&+x.k>0.05;});var out=[];" +
       "if(!corr.length)return out;var mesK=isoHj().slice(0,7);" +
@@ -6072,9 +6072,34 @@
       "(function(){" +
       "var sa=document.getElementById('heroSauda');if(sa){var hh=new Date().getHours();sa.textContent=(hh<12?'Bom dia':hh<18?'Boa tarde':'Boa noite')+', '+PRIMEIRO;}" +
       "var cr=document.getElementById('heroCarr');if(!cr)return;" +
-      "var pj3=plnPri(new Date().getDay());var tpHoje=pj3?pj3.tp:'ficha';" +
-      "var cw=document.getElementById('heroWod');if(cw&&tpHoje!=='wod')cw.style.display='';" +
-      "var cc=document.getElementById('heroCr');if(cc&&tpHoje!=='cardio')cc.style.display='';" +
+      /* v769: o extra some quando o tipo dele JÁ está no dia. Antes a regra
+       * olhava só o PRIMEIRO treino (plnPri): num dia com ficha às 07:00 e
+       * corrida às 18:30, o extra de corrida continuava aparecendo — e ele é
+       * montado com cardiosApp[0], a corrida de OUTRO dia. Dava pra ler, na
+       * mesma tela, o "Seu dia" com a corrida certa e o carrossel oferecendo a
+       * errada. Sem plano nenhum vale 'ficha', que é o rodízio de sempre. */
+      /* v769: o card extra continua sumindo quando o tipo dele é o do card
+       * grande (tpHoje) — essa regra sempre esteve certa. O que estava errado
+       * era o CONTEÚDO: o extra é montado com o índice 0 (o treino de outro
+       * dia), então num dia com ficha às 07:00 e corrida às 18:30 dava pra ler,
+       * na mesma tela, o "Seu dia" com a corrida certa e o carrossel oferecendo
+       * a errada. Agora, quando o dia TEM um treino daquele tipo, o extra é
+       * reapontado pra ele. Assim o carrossel mostra o dia inteiro. */
+      "var lst3=plnHoje();var tpHoje=lst3.length?lst3[0].tp:'ficha';" +
+      "var doDia3=function(t){var o=null;lst3.forEach(function(p){if(!o&&p.tp===t)o=p;});return o;};" +
+      "var cw=document.getElementById('heroWod');" +
+      "if(cw&&tpHoje!=='wod'){var pw3=doDia3('wod');" +
+      "if(pw3&&typeof WODS!=='undefined'&&WODS[pw3.i]){var w3=WODS[pw3.i];" +
+      "var tw3=cw.querySelector('.htit');if(tw3)tw3.textContent=w3.n||pw3.n||'Circuito';" +
+      "var sw3=cw.querySelector('.hsub');if(sw3)sw3.textContent=wodResumo(w3)+' \u00b7 '+pl((w3.ms||[]).length,'movimento','movimentos');}" +
+      "cw.style.display='';}" +
+      "var cc=document.getElementById('heroCr');" +
+      "if(cc&&tpHoje!=='cardio'){var pc3=doDia3('cardio');" +
+      "if(pc3&&typeof CARDIOS!=='undefined'&&CARDIOS[pc3.i]){var c3=CARDIOS[pc3.i];" +
+      "var tc3=cc.querySelector('.htit');if(tc3)tc3.textContent=c3.n||pc3.n||'Cardio';" +
+      "var sc3=cc.querySelector('.hsub');if(sc3){var a3=crAlvoTxt(c3);var b3=melhorPace(c3.m);sc3.textContent=a3+(b3?' \u00b7 seu melhor: '+b3:'');}" +
+      "var rc3=cc.querySelector('.htk');if(rc3){var rt3={corrida:'CORRIDA',caminhada:'CAMINHADA',bike:'BIKE'}[c3.m]||'CORRIDA E BIKE';rc3.textContent=rt3;rc3.setAttribute('data-hk',rt3);}}" +
+      "cc.style.display='';}" +
       "var cf=document.getElementById('heroFicha');" +
       "if(cf&&tpHoje!=='ficha'&&FICHAS_META.length){" +
       "var ti9=Object.keys(L('ptfeitos',{})).length%FICHAS_META.length;var fm9=FICHAS_META[ti9];" +
@@ -6216,7 +6241,10 @@
       "var atual='conq';function pintaEv(){document.querySelectorAll(\"[data-sec='evolucao'][data-evsub]\").forEach(function(el){" +
       "el.style.display=el.getAttribute('data-evsub')===atual?'':'none';});" +
       "document.querySelectorAll('[data-evsub-bt]').forEach(function(b){var on=b.getAttribute('data-evsub-bt')===atual;" +
-      "b.style.background=on?'var(--cor)':'var(--bg4)';b.style.color=on?'#fff':'#a9a4b5';b.style.borderColor=on?'var(--cor)':'var(--bg11)';});" +
+      "b.style.background=on?'var(--cor)':'var(--bg4)';b.style.color=on?'#fff':'#a9a4b5';b.style.borderColor=on?'var(--cor)':'var(--bg11)';" +
+      "if(on)try{var fx=b.parentElement;if(fx&&fx.scrollWidth>fx.clientWidth){" +
+      "var alvoX=b.offsetLeft-(fx.clientWidth-b.offsetWidth)/2;" +
+      "fx.scrollTo({left:Math.max(0,alvoX),behavior:'smooth'});}}catch(e8){}});" +
       // o cabeçalho e as páginas repintam com os dados mais frescos do aparelho
       "if(window.__evTopoPinta)window.__evTopoPinta(atual);" +
       "if(atual==='cargas'&&window.__pintaCargas)window.__pintaCargas();" +
@@ -6371,10 +6399,15 @@
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
       "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);if(window.__menuBadges)window.__menuBadges();};" +
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
-      "(function(){var pj9=plnPri(new Date().getDay());" +
+      /* v769: cada aba abre a gaveta do treino DAQUELE TIPO que está no plano de
+       * hoje. Lia o plnPri: num dia com ficha + corrida, o primeiro é a ficha,
+       * então a aba Corrida caía no índice 0 — a corrida de segunda — enquanto
+       * o card "Seu dia" apontava a certa. */
+      "(function(){var lst9=plnHoje();" +
       "[['data-wi','wod'],['data-cri','cardio']].forEach(function(par){" +
       "var gv9=document.querySelectorAll('['+par[0]+']');if(gv9.length<2)return;" +
-      "var alvo9=(pj9&&pj9.tp===par[1]&&typeof pj9.i==='number')?pj9.i:0;" +
+      "var pt9=null;lst9.forEach(function(p){if(!pt9&&p.tp===par[1])pt9=p;});" +
+      "var alvo9=(pt9&&typeof pt9.i==='number')?pt9.i:0;" +
       "for(var k9=0;k9<gv9.length;k9++)gv9[k9].open=(+gv9[k9].getAttribute(par[0])===alvo9);});})();" +
       "var trSub='ficha';" +
       "function trocaTrSub(s){trSub=s;" +

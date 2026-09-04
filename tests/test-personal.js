@@ -6329,8 +6329,8 @@ async function abaPt(p, a) {
     ok(/xp:xpDados\(\)/.test(appHtml) && /seqSem:streakSem\(L\('ptfeitos',\{\}\)\)/.test(appHtml) &&
        /medalhas:\(CQGANHAS\.tot\?CQGANHAS\.n:undefined\)/.test(appHtml),
       "🎮 v765: o placar viaja pro professor — e a contagem de medalhas só entra depois de pintada (0 apagaria o número bom)");
-    ok(/corrida = 10 XP/.test(appHtml) && /carga anotada = 5 XP/.test(appHtml),
-      "🎮 v765: a legenda do XP conta a verdade nova");
+    ok(/treino ou cardio = 10 XP/.test(appHtml) && /dia com carga = 5 XP/.test(appHtml) && !/corrida = 10 XP/.test(appHtml),
+      "🎮 v769: a legenda do XP conta a verdade nova, cabe no cabeçalho e não promete só 'corrida' (bike e caminhada valem igual)");
   }
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
   // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
@@ -11064,7 +11064,7 @@ async function abaPt(p, a) {
       const c = document.getElementById("nvCard");
       return c ? c.textContent.replace(/\s+/g, " ") : "";
     });
-    ok(/Nível \d+ — /.test(nvCard) && /faltam \d+ pro nível/.test(nvCard) && /treino = 10 XP/.test(nvCard),
+    ok(/Nível \d+ — /.test(nvCard) && /faltam \d+ pro nível/.test(nvCard) && /treino ou cardio = 10 XP/.test(nvCard),
       "o card Seu nível mostra título, quanto falta pro próximo e como se ganha XP");
     // subir de nível de verdade: injeta 30 treinos antigos (+300 XP, cruza o
     // limiar com folga) gravando pelo Sv() do próprio app — é ele que dispara
