@@ -12963,9 +12963,10 @@ async function abaPt(p, a) {
       const m = html.match(/var PLANO=(.+?);(?=var |function )/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       // v768: o leitor do dia virou plnPri (o primeiro treino do dia); a agenda
-      // com o dia inteiro é o card #agHojeCard
+      // com o dia inteiro é a gaveta do calendário (v771 — o card "Seu dia" saiu)
       out.heroLeDia = html.indexOf("plnPri(new Date().getDay())") > -1 && html.indexOf("Dia de recuperar") > -1;
-      out.agendaCard = /id='agHojeCard'/.test(html) && /function plnDia\(d\)/.test(html) && /data-aghoje=/.test(html);
+      out.agendaCard = /id='semDia'/.test(html) && /function plnDia\(d\)/.test(html) && /data-semt=/.test(html) &&
+        !/id='agHojeCard'/.test(html);
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela
       // cheia, com risquinhos por card ("1 de 3 · arraste") e um botão por tipo
       out.carrossel = /id='heroCarr'/.test(html) && /class='htdash'/.test(html) &&
@@ -12997,7 +12998,7 @@ async function abaPt(p, a) {
       Array.isArray(pln.planoApp["6"]) && pln.planoApp["6"][0].tp === "cardio",
       "📅 v768: o pacote leva a LISTA de cada dia resolvida (tipo + índice + nome + hora)");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
-    ok(pln.agendaCard, "📅 v768: o app ganhou a agenda do dia — a lista por horário, que o card único não dava conta de mostrar");
+    ok(pln.agendaCard, "📅 v768/v771: a agenda do dia é a GAVETA do calendário do Início (o card 'Seu dia' saiu — dizia o mesmo que o card grande e os chips)");
     ok(pln.carrossel, "🎠 R1: os treinos do dia viram carrossel — cards de circuito e corrida com botão pro fluxo certo");
     ok(pln.cardFicha, "🎠 o carrossel tem card de musculação também — em dia de circuito/corrida a ficha não sumia mais do Início");
   }
@@ -15479,6 +15480,50 @@ async function abaPt(p, a) {
       "🗓️ v770: e tocar no dia do calendário mostra a agenda daquele dia, não só as sessões");
     ok(ap.longe === 2,
       "🗓️ v770: no app, um dia daqui a dois meses já vem com os treinos da semana — a projeção é local, sem inchar o pacote");
+
+    /* ---------- v771: o Início parou de dizer a mesma coisa três vezes ------
+     * O Raphael abriu no celular: o card grande do carrossel, o card "Seu dia"
+     * e os chips da semana ocupavam a mesma dobra falando do mesmo dia. Agora o
+     * calendário sobe pra logo abaixo da foto e o "Seu dia" vira a GAVETA dele
+     * — e essa gaveta abre QUALQUER dia da semana, que é o atalho que faltava
+     * (até aqui ver o treino de quinta exigia abrir o calendário do menu). */
+    await pau.evaluate(() => window.__trocaSec("inicio"));
+    await pau.waitForTimeout(200);
+    const v771 = await pau.evaluate(() => {
+      const sb = document.getElementById("semBlock");
+      // a segunda-feira DESTA semana tem os dois treinos do plano
+      const hj = new Date(); const seg = new Date(hj);
+      seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+      const isoSeg = seg.getFullYear() + "-" + String(seg.getMonth() + 1).padStart(2, "0") + "-" + String(seg.getDate()).padStart(2, "0");
+      const chips = [...document.querySelectorAll("[data-semd]")];
+      const out = {
+        semSeuDia: !document.getElementById("agHojeCard"),
+        // o calendário é o PRIMEIRO filho útil do card, logo abaixo da foto
+        ordemDentro: [...sb.querySelectorAll("#diasSem,#semDia,#semResumo,#coachTxt,#btnFeito")].map((e) => e.id).join(">"),
+        // e o card da semana vem logo depois do carrossel (a "imagem")
+        depoisDaFoto: !!(document.getElementById("blocoHoje").compareDocumentPosition(sb) & Node.DOCUMENT_POSITION_FOLLOWING),
+        chips: chips.length,
+        // pontinho só em quem tem alguma coisa marcada (seg e ter, pelo plano)
+        comPonto: chips.filter((c) => c.querySelector("span[style*='border-radius:50%']")).length,
+      };
+      chips.find((c) => c.getAttribute("data-semd") === isoSeg).click();
+      out.gavetaSeg = document.getElementById("semDia").textContent.replace(/\s+/g, " ").trim();
+      out.abre = [...document.querySelectorAll("[data-semt]")].map((x) => x.getAttribute("data-semt"));
+      // tocar de novo no MESMO dia fecha a gaveta (é retrátil)
+      document.querySelector("[data-semd='" + isoSeg + "'][aria-pressed='true']").click();
+      out.fechou = document.getElementById("semDia").innerHTML === "" && window.__semDia.ve() === null;
+      return out;
+    });
+    ok(v771.semSeuDia && v771.depoisDaFoto && v771.ordemDentro === "diasSem>semDia>semResumo>coachTxt>btnFeito",
+      "📆 v771: o card 'Seu dia' saiu e o calendário subiu pra logo abaixo da foto (" + v771.ordemDentro + ")");
+    ok(v771.chips === 7 && v771.comPonto === 2,
+      "📆 v771: os 7 dias viraram botões e só quem tem treino/sessão ganha o pontinho (" + v771.comPonto + " de 7)");
+    ok(/07:30/.test(v771.gavetaSeg) && /Circuito do sábado/.test(v771.gavetaSeg) && /18:30/.test(v771.gavetaSeg),
+      "📆 v771: tocar num dia QUALQUER abre o treino daquele dia sem sair do Início (" + v771.gavetaSeg.slice(0, 60) + ")");
+    ok(v771.abre.join(" ") === "wod|0 ficha|0",
+      "📆 v771: cada linha da gaveta abre o treino certo (" + v771.abre.join(" ") + ")");
+    ok(v771.fechou, "📆 v771: tocar no dia aberto FECHA a gaveta — é retrátil, como o Raphael pediu");
+
     await ctxAU.close();
     await ctxU.close();
   }

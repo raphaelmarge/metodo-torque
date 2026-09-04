@@ -1798,6 +1798,39 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**O Início dizia a mesma coisa três vezes** (mt-v771): o Raphael abriu o app no
+celular e mandou a foto — na mesma dobra estavam o **card grande do carrossel**
+("1 DE 3 · ARRASTE", com o botão Começar treino), o card **SEU DIA · 2 TREINOS**
+e os chips de **MINHA SEMANA**. Os três falavam do mesmo dia. Ele escolheu o
+caminho certo: o **calendário sobe** pra logo abaixo da foto e o "Seu dia" vira
+a **gaveta dele**.
+
+O card `#agHojeCard` foi apagado. Dentro do `#semBlock` a ordem virou **chips →
+gaveta do dia (`#semDia`) → resumo → recado do coach → Treinei hoje!**: o recado
+desceu porque em cima ele só afastava o calendário da foto, e junto do botão é
+onde ele empurra a ação. Cada chip virou **botão** (`data-semd="<iso>"`) com
+**pontinho** quando o dia tem alguma coisa — sem o pontinho o aluno não teria
+como saber onde vale tocar. `SEMSEL` guarda o dia aberto (nasce em HOJE, que é
+o que o "Seu dia" mostrava — ninguém perde informação na troca); tocar no dia
+já aberto **fecha**, que é o "retrátil" que ele pediu.
+
+O ganho de verdade não é o espaço: **a gaveta abre QUALQUER dia da semana**.
+Até aqui, ver o treino de quinta exigia sair do Início e abrir o calendário do
+menu — agora é um toque na página inicial, e cada linha (`data-semt="tp|i"`)
+abre a gaveta daquele treino na aba certa. Quem pinta é `pintaSemDia()`, lendo o
+MESMO `agItensDia(iso)` da v770 — então treino do plano, sessão com o professor
+e serviço aparecem juntos, e o Início nunca conta história diferente do
+calendário.
+
+⚠️ `pintaSemana()` roda **antes** do bloco da agenda (o `var SESS=` vem depois
+no arquivo), então `agItensDia` ganhou `try/catch` em volta do `agDados()`: na
+primeira pintura valem só os treinos do plano e as sessões entram na repintura
+do boot. Sem isso o Início inteiro quebrava com `SESS is not defined`.
+⚠️ `pintaAgHoje` **continua existindo** apontando pra `pintaSemDia` — dois
+lugares do app chamam esse nome, e trocar os dois por engano deixaria o dia sem
+repintar depois de marcar treino.
+Ganchos: `window.__semDia` (`ve`, `pinta`, `itens`).
+
 **A agenda de dois meses, com serviço e treino no mesmo dia** (mt-v770): o
 Raphael pediu que o treino da semana (A, B, C, D, corrida ou circuito) apareça
 **nos dias certos por dois meses** na agenda do aluno E do professor, junto do
