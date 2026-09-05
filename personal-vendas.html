@@ -251,18 +251,121 @@
     .sec { padding-top: 48px; }
     .dep { padding: 20px 18px 18px; }
   }
+
+  /* Premium presentation; screenshots and editorial photos have separate sizing contracts. */
+  :root { color-scheme: dark; --violet: #b79aff; }
+  body { background: #09080d; }
+  .wrap { max-width: 1180px; padding-inline: clamp(18px,4vw,48px); }
+  .grid > *, .diagGrid > *, .honesto > * { min-width: 0; }
+  :focus-visible { outline: 3px solid #c4b5fd; outline-offset: 5px; }
+  .skipLink { position: fixed; top: -100px; z-index: 20; background: #38205f; padding: 16px; }
+  .skipLink:focus { top: 10px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 24px; }
+  .brand { font-weight: 900; font-size: 23px; letter-spacing: -.06em; text-decoration: none; }
+  .brand span { display: block; font-size: 10px; letter-spacing: .35em; color: var(--violet); margin-top: 3px; }
+  .navLinks { display: flex; align-items: center; gap: 22px; font-size: 14px; }
+  .navLinks a { text-decoration: none; }
+  .textControl { border: 1px solid #554467; border-radius: 999px; padding: 10px 14px; color: #d9cdef; background: #17111f; cursor: pointer; font: inherit; font-size: 13px; min-height: 44px; }
+  .hero { padding: 56px 0 60px; background: #09080d; }
+  .heroBg { opacity: .38; }
+  .hero h1 { font-size: clamp(44px,6.2vw,80px); line-height: 1.02; letter-spacing: -.055em; }
+  .hero h1 em { color: #ba9aff; text-shadow: 0 0 60px #8040cf66; }
+  .hero .grid { grid-template-columns: 1.1fr 1fr; gap: 40px; }
+  .hero .sub { font-size: 17px; }
+  .hero .selo { line-height: 1.6; border-color: #6a428b; }
+  .cta { box-shadow: inset 0 1px #ffffff30, 0 8px 32px #7133d538; }
+  .cta.ghost { background: #100c18a8; box-shadow: inset 0 1px #ffffff08; }
+  .heroVisual { text-align: center; }
+  .phoneStage { position: relative; padding: 28px 0 40px; perspective: 1200px; isolation: isolate; }
+  .phoneStage::before { content: ''; position: absolute; inset: 12% -5%; border-radius: 50%; background: radial-gradient(ellipse,#7c3aed55,transparent 67%); z-index: -1; }
+  .fone { max-width: 100%; border-color: #393040; box-shadow: 0 28px 70px #0009, 0 0 40px #8b5cf620, inset 0 1px #ffffff30; }
+  .fone img { display: block; width: 100%; height: auto; object-fit: contain; }
+  .tira { align-items: flex-start; aspect-ratio: 780 / 1688; }
+  .tira img { width: 100%; min-width: 100%; max-width: 100%; height: 100%; flex: 0 0 100%; object-fit: contain; object-position: top center; }
+  .hero .frontPhone { position: relative; width: 230px; margin-left: 36%; transform: rotateY(-12deg) rotate(7deg); animation: phoneFloat 7s ease-in-out infinite; }
+  .hero .backPhone { position: absolute; width: 190px; left: 5%; top: 54px; transform: rotateY(12deg) rotate(-12deg); opacity: .78; }
+  .floatNote { position: absolute; bottom: 28px; left: 0; padding: 18px 22px; text-align: left; border: 1px solid #aa7eed60; border-radius: 16px; background: #191123ed; box-shadow: 0 18px 45px #0009; }
+  .floatNote span { color: #b89cdc; font-size: 10px; letter-spacing: .14em; }
+  .floatNote b { display: block; font-size: 16px; margin-top: 6px; }
+  .phoneStage.flat .frontPhone { transform: none; animation: none; margin-inline: auto; }
+  .phoneStage.flat .backPhone, .phoneStage.flat .floatNote { visibility: hidden; }
+  .nums { background: linear-gradient(120deg,#1a1227,#0f0d14); }
+  .nums .linha { gap: 24px 36px; padding-block: 30px; }
+  .nums span { font-size: 12px; }
+  .sec { padding-top: 90px; }
+  .sec h2 { font-size: clamp(28px,3.4vw,42px); letter-spacing: -.035em; }
+  .sec p { font-size: 16px; }
+  .pwa,.emp,.dep,.mais,.faq details { background: linear-gradient(140deg,#20172c,#110e17); border-color: #6e4d8a45; box-shadow: inset 0 1px #ffffff06,0 16px 40px #0002; }
+  .versus { background: linear-gradient(120deg,#100c18,#161020); }
+  .preco-card { background: radial-gradient(ellipse at top,#42245f,#171020 65%); box-shadow: 0 0 80px #7c3aed20,0 25px 70px #0008,inset 0 1px #d7b8ff55; }
+  .tourNav button { width: 44px; height: 44px; }
+  .tourWrap { min-width: 0; max-width: 100%; }
+  .tourDica { font-size: 12px; }
+  .screenExpand { display: block; margin: 12px auto 0; }
+  .about { padding-bottom: 30px; scroll-margin-top: 20px; }
+  .aboutPhotos { position: relative; padding: 0 42px 74px 0; }
+  .aboutMain { border-radius: 24px; overflow: hidden; border: 1px solid #8c59bd55; transform: rotate(-3deg); box-shadow: 0 24px 60px #0008; }
+  .aboutMain img { width: 100%; aspect-ratio: 4/5; height: auto; object-fit: cover; object-position: 54% center; }
+  .aboutInset { position: absolute; bottom: 28px; right: 0; width: 57%; border: 5px solid #130e1b; border-radius: 20px; overflow: hidden; transform: rotate(5deg); box-shadow: 0 20px 40px #0009; }
+  .aboutInset img { width: 100%; aspect-ratio: 4/3; height: auto; object-fit: cover; }
+  .photoLabel { position: absolute; bottom: 0; left: 0; font-size: 12px; color: #aba0b7; }
+  .about .txt p + p { margin-top: 18px; }
+  .about .cta { margin-top: 24px; }
+  .faq { padding-inline: 18px; }
+  .screenDialog { position: fixed; margin: auto; max-width: calc(100vw - 24px); width: 520px; max-height: 94dvh; padding: 16px; border: 1px solid #775397; border-radius: 18px; background: #100c18; color: #fff; }
+  .screenDialog::backdrop { background: #000d; backdrop-filter: blur(8px); }
+  .screenDialog img { width: auto; height: auto; max-width: 100%; max-height: 74dvh; margin: 14px auto; object-fit: contain; }
+  .screenDialog p { font-size: 14px; line-height: 1.5; }
+  .screenDialog a { display: inline-block; margin-top: 14px; }
+  @keyframes phoneFloat { 50% { transform: translateY(-12px) rotateY(-8deg) rotate(5deg); } }
+  @keyframes arrive { from { opacity: .35; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  .revealIn { animation: arrive .7s ease-out both; }
+  body.motionPaused *, body.motionPaused *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  html:has(body.motionPaused) { scroll-behavior: auto; }
+  @media (max-width: 900px) {
+    .hero .grid { grid-template-columns: 1fr; }
+    .hero .sub { max-width: 600px; }
+    .heroVisual { width: min(440px,100%); margin: auto; }
+    .sec .grid,.diagGrid,.honesto { grid-template-columns: 1fr; }
+    .sec.inv .grid .txt { order: 0; }
+    .aboutPhotos { max-width: 500px; width: 100%; margin: auto; }
+  }
+  @media (max-width: 520px) {
+    .topbar { flex-wrap: wrap; padding-block: 18px; gap: 16px; }
+    .navLinks { gap: 14px; flex-wrap: wrap; }
+    .hero { padding-top: 28px; }
+    .hero h1 { font-size: clamp(42px,11vw,58px); }
+    .hero .frontPhone { width: 55%; }
+    .hero .backPhone { width: 46%; left: 3%; }
+    .floatNote { padding: 12px 14px; }
+    .floatNote b { font-size: 14px; }
+    .sec { padding-top: 60px; }
+    .ctaRow .cta { width: 100%; padding-inline: 16px; }
+    .pwa { padding: 24px 18px; }
+    .nums .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 14px; }
+    .nums b { font-size: 18px; }
+    .nums span { font-size: 12px; letter-spacing: 0; }
+    .preco-card { padding: 28px 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
 </style>
 </head>
 <body>
 
+<a class="skipLink" href="#conteudo">Pular para o conteúdo</a>
+<nav class="topbar wrap" aria-label="Navegação principal">
+  <a class="brand" href="#">TORQUE<span>PERSONAL</span></a>
+  <div class="navLinks"><a href="#sobre">Sobre</a><a href="#preco">Preço</a><button id="motionToggle" class="textControl" type="button" aria-pressed="false">Pausar animações</button></div>
+</nav>
 <header class="hero">
   <img class="heroBg" src="assets/vendas/lifestyle/studio.webp" alt="Academia boutique vazia, piso de borracha escuro e LED roxo no teto ao entardecer" width="1536" height="1024" fetchpriority="high">
   <div class="wrap">
     <div class="grid">
       <div>
         <div class="kicker">Aplicativo para personal trainer · TORQUE PERSONAL</div>
-        <h1>O melhor app para personal trainer. Tempo de <em>volta</em>.</h1>
-        <p class="sub">Não é a academia TORQUE FIT, nem torque da física. É o <b style="color:#fff">sistema para personal trainer</b>: aplicativo do aluno com a sua marca, fichas com vídeos, cobrança, consultoria online e captação. Você é uma empresa de uma pessoa só. A gente assume o resto.</p>
+        <h1>Seu método.<br>Em outra <em>dimensão.</em></h1>
+        <p class="sub">Seu nome no aplicativo. Seu aluno no centro. Treinos, cobrança e consultoria online em um <b style="color:#fff">sistema para personal trainer</b> que trabalha com você. Mais presença na aula. Menos trabalho depois dela.</p>
         <span class="selo">14 dias grátis, sem cartão · depois R$ 49/mês · sem fidelidade</span>
         <div class="ctaRow">
           <a class="cta" href="personal.html">Quero meu tempo de volta</a>
@@ -270,7 +373,14 @@
           <a class="cta ghost" href="demo-aluno.html">Ver o app do aluno ao vivo</a>
         </div>
       </div>
-      <div class="fone"><img src="assets/vendas/app-inicio-novo.webp" alt="Tela inicial do app do aluno, com o nome do studio, o treino do dia e a semana" width="780" height="1688"></div>
+      <div class="heroVisual">
+        <div class="phoneStage" id="phoneStage">
+          <div class="fone backPhone" aria-hidden="true"><img src="assets/vendas/painel-inicio.webp" alt="" width="780" height="1688"></div>
+      <div class="fone frontPhone"><img src="assets/vendas/app-inicio-novo.webp" alt="Tela inicial do app do aluno, com o nome do studio, o treino do dia e a semana" width="780" height="1688"></div>
+          <div class="floatNote"><span>SUA MARCA. SEU APP.</span><b>O próximo nível é seu.</b></div>
+        </div>
+        <button class="textControl" id="perspectiveToggle" type="button" aria-pressed="false">Ver tela sem perspectiva</button>
+      </div>
     </div>
   </div>
 </header>
@@ -289,7 +399,7 @@
   <p class="prova-linha wrap">14 dias grátis, sem cartão, pra você ver com os seus alunos. Sem fidelidade. Depois R$ 49/mês.</p>
 </div>
 
-<main>
+<main id="conteudo">
 
   <section class="sec" style="padding-top:36px;padding-bottom:8px;">
     <div class="wrap">
@@ -570,6 +680,25 @@
     </div>
   </section>
 
+
+  <section class="sec about" id="sobre" aria-labelledby="sobreTitulo">
+    <div class="wrap grid">
+      <div class="aboutPhotos">
+        <!-- Placeholder editorial SOBRE-01: substituir conforme docs/torque-personal-imagens.md. -->
+        <figure class="aboutMain"><img src="assets/vendas/lifestyle/personal-mulher.webp" width="1536" height="1024" loading="lazy" alt="Cena ilustrativa de personal acompanhando um aluno com tablet"></figure>
+        <!-- Placeholder editorial SOBRE-02: fotografia ilustrativa, não retrato da equipe. -->
+        <figure class="aboutInset"><img src="assets/vendas/lifestyle/celebracao.webp" width="1536" height="1024" loading="lazy" alt="Cena ilustrativa de personal e aluna celebrando o treino"></figure>
+        <span class="photoLabel">Imagens ilustrativas</span>
+      </div>
+      <div class="txt"><div class="kicker">Sobre o TORQUE PERSONAL</div>
+        <h2 id="sobreTitulo">Tecnologia nos bastidores.<br>Você, perto do aluno.</h2>
+        <p>O TORQUE PERSONAL faz parte da família TORQUE ON e usa o mesmo motor que roda a TORQUE FIT todos os dias. Da rotina da academia para a rotina de quem atende sozinho.</p>
+        <p>Organizar o treino, acompanhar a evolução e cuidar do negócio pode caber no mesmo lugar. A relação, o olhar e o método continuam sendo seus.</p>
+        <a class="cta ghost" href="demo-personal.html">Conheça o painel por dentro ↗</a>
+      </div>
+    </div>
+  </section>
+
   <section class="preco" id="preco">
     <div class="wrap">
       <div class="kicker">Preço simples</div>
@@ -699,15 +828,23 @@
         pintaCap(tira.children[a]);
       };
       tira.addEventListener("scroll", function () { requestAnimationFrame(pinta); });
-      document.getElementById(idAnt).addEventListener("click", function () { tira.scrollBy({ left: -tira.clientWidth, behavior: "smooth" }); });
-      document.getElementById(idProx).addEventListener("click", function () { tira.scrollBy({ left: tira.clientWidth, behavior: "smooth" }); });
+      document.getElementById(idAnt).addEventListener("click", function () { tira.scrollBy({ left: -tira.clientWidth, behavior: document.body.classList.contains("motionPaused") ? "instant" : "smooth" }); });
+      document.getElementById(idProx).addEventListener("click", function () { tira.scrollBy({ left: tira.clientWidth, behavior: document.body.classList.contains("motionPaused") ? "instant" : "smooth" }); });
       var mx = null, sl = 0;
       tira.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") return; mx = e.clientX; sl = tira.scrollLeft; tira.classList.add("pegando"); e.preventDefault(); });
       window.addEventListener("pointermove", function (e) { if (mx === null) return; tira.scrollLeft = sl - (e.clientX - mx); });
       window.addEventListener("pointerup", function () {
         if (mx === null) return; mx = null; tira.classList.remove("pegando");
-        tira.scrollTo({ left: atual() * tira.clientWidth, behavior: "smooth" });
+        tira.scrollTo({ left: atual() * tira.clientWidth, behavior: document.body.classList.contains("motionPaused") ? "instant" : "smooth" });
       });
+      tira.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        tira.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * tira.clientWidth, behavior: "instant" });
+      });
+      var activeIndex = 0;
+      tira.addEventListener("scroll", function () { activeIndex = atual(); });
+      new ResizeObserver(function () { tira.scrollTo({ left: activeIndex * tira.clientWidth, behavior: "instant" }); }).observe(tira);
       pinta();
     } catch (e) {}
   }
@@ -722,5 +859,54 @@
   });
 })();
 </script>
+
+<dialog class="screenDialog" id="screenDialog" aria-label="Tela inteira do aplicativo">
+  <form method="dialog"><button class="textControl">Fechar tela ×</button></form>
+  <img id="expandedScreen" alt=""><p id="expandedCaption"></p>
+  <a id="originalScreen" target="_blank" rel="noopener">Abrir imagem no tamanho original ↗</a>
+</dialog>
+<script>
+(function () {
+  var motion = document.getElementById('motionToggle');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  function setMotion(paused) {
+    document.body.classList.toggle('motionPaused', paused);
+    motion.setAttribute('aria-pressed', String(paused));
+    motion.textContent = paused ? 'Retomar animações' : 'Pausar animações';
+  }
+  setMotion(reduced.matches);
+  reduced.addEventListener('change', function (e) { setMotion(e.matches); });
+  motion.addEventListener('click', function () { setMotion(!document.body.classList.contains('motionPaused')); });
+  document.getElementById('perspectiveToggle').addEventListener('click', function () {
+    var flat = document.getElementById('phoneStage').classList.toggle('flat');
+    this.setAttribute('aria-pressed', String(flat));
+    this.textContent = flat ? 'Ver composição em perspectiva' : 'Ver tela sem perspectiva';
+  });
+  var dialog = document.getElementById('screenDialog');
+  document.querySelectorAll('.fone').forEach(function (phone) {
+    if (phone.classList.contains('backPhone') || phone.querySelector('video')) return;
+    var button = document.createElement('button');
+    button.type = 'button'; button.className = 'textControl screenExpand';
+    button.textContent = 'Ampliar a tela inteira';
+    (phone.classList.contains('frontPhone') ? document.getElementById('phoneStage') : phone).insertAdjacentElement('afterend', button);
+    button.addEventListener('click', function () {
+      var strip = phone.querySelector('.tira');
+      var img = strip ? strip.children[Math.max(0,Math.min(strip.children.length-1,Math.round(strip.scrollLeft/strip.clientWidth)))] : phone.querySelector('img');
+      document.getElementById('expandedScreen').src = img.src;
+      document.getElementById('expandedScreen').alt = img.alt;
+      document.getElementById('expandedCaption').textContent = img.alt;
+      document.getElementById('originalScreen').href = img.src;
+      dialog.showModal();
+    });
+  });
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { if (entry.isIntersecting) { entry.target.classList.add('revealIn'); observer.unobserve(entry.target); } });
+    }, { threshold: .08 });
+    document.querySelectorAll('.sec .txt,.emp,.preco-card,.aboutPhotos').forEach(function (el) { observer.observe(el); });
+  }
+})();
+</script>
+
 </body>
 </html>
