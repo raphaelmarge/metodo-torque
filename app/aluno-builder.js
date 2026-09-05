@@ -1053,17 +1053,26 @@
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
       // Progresso e retrospectiva saíram daqui (pedido do Raphael): moram na
       // aba Conquistas, e sem os dados de CORPO — peso e gordura ficam no Corpo
-      // recado do professor (tela 13): avatar com as iniciais do studio,
-      // kicker "Recado do <studio>" e o selo "fixado" — filete da cor na esquerda
+      /* Recado do professor. v774: estava com o desenho de antes do redesenho —
+       * cantos de 22px, filete grosso de 3px na esquerda e um rótulo em CAIXA
+       * ALTA com letter-spacing .18em que gritava mais alto que o próprio
+       * recado (o Raphael mandou a foto). Agora usa a MESMA linguagem dos
+       * avisos do sino e da gaveta do dia: tinta da marca sobre o fundo, borda
+       * fina inteira, raio 16, rótulo miúdo e discreto — o destaque vem do
+       * TEXTO, que é o que o professor escreveu. */
       (((st.config || {}).mural || []).length
-        ? "<div class='cardx'><div style='background:var(--bg2);border-radius:22px;padding:18px 20px;border-left:3px solid var(--cor);'>" +
-          "<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>" +
-          "<span aria-hidden='true' style='flex:none;width:34px;height:34px;border-radius:50%;background:rgba(var(--cor-rgb),.22);color:var(--corc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;overflow:hidden;'>" +
-          (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
-          "<div style='flex:1;font-size:10.5px;font-weight:800;letter-spacing:.18em;color:#8a8695;text-transform:uppercase;'>Recado do " + esc(STUDIO_CURTO) + "</div>" +
-          "<span style='font-size:11px;color:#6e6a78;'>fixado</span></div>" +
-          ((st.config || {}).mural || []).map(function (av) {
-            return "<div style='font-size:14.5px;line-height:1.55;padding:5px 0;'>" + esc(av) + "</div>";
+        ? "<div class='cardx'><div class='mural' style='background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.35);border-radius:16px;padding:14px 15px;'>" +
+          "<div style='display:flex;align-items:center;gap:9px;margin-bottom:9px;'>" +
+          // com logo, a marca do studio; sem logo, o ícone de recado — iniciais
+          // dentro de um círculo cinza eram o único lugar do app com esse desenho
+          "<span aria-hidden='true' style='flex:none;width:30px;height:30px;border-radius:9px;background:rgba(var(--cor-rgb),.20);color:var(--corc);display:flex;align-items:center;justify-content:center;overflow:hidden;'>" +
+          (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>"
+            : "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z'/><path d='M16 8.5a4 4 0 0 1 0 7'/></svg>") + "</span>" +
+          "<div style='flex:1;min-width:0;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#8b8695;text-transform:uppercase;'>Recado do " + esc(STUDIO_CURTO) + "</div>" +
+          "<span style='flex:none;font-size:10px;font-weight:700;color:#6e6a78;background:var(--bg4);border-radius:99px;padding:3px 9px;'>fixado</span></div>" +
+          ((st.config || {}).mural || []).map(function (av, iM) {
+            // vários recados: um traço fino separa, em vez de virarem um bloco só
+            return "<div style='font-size:14px;line-height:1.5;" + (iM ? "border-top:1px solid rgba(255,255,255,.06);margin-top:10px;padding-top:10px;" : "") + "'>" + esc(av) + "</div>";
           }).join("") + "</div></div>"
         : "") +
       // ---------- Comunidade: o feed da turma (o professor liga nas Configurações) ----------

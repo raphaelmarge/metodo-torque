@@ -15644,6 +15644,29 @@ async function abaPt(p, a) {
     ok(pagApp.n1.depoisDoJaPaguei === 0,
       "💳 v773: tocar em 'Já paguei' cala o aviso do mês na hora — o pacote é uma foto do dia da publicação e pode não ter visto o pagamento de ontem");
 
+    /* v774: o card "Recado do studio" tinha ficado com o desenho de antes —
+     * cantos de 22px, filete de 3px na esquerda e um rótulo em CAIXA ALTA com
+     * letter-spacing .18em que gritava mais que o próprio recado. */
+    const mural = await pu.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config.mural = ["Sábado o studio abre 8h em vez de 7h.", "Segundo recado."];
+      window.MTStore.write("ptStudio", st);
+      const h = window.__montaAppAluno(st.alunos[0], "x");
+      /* ⚠️ recortar por TAMANHO FIXO quebra sozinho: o ícone SVG do cabeçalho
+       * empurrou o rótulo pra fora de uma janela de 700 e o teste reprovou um
+       * card que estava certo. O corte vai até o fim do bloco (o próximo card),
+       * que é a fronteira de verdade — a mesma lição das âncoras da v583. */
+      const i = h.indexOf("class='mural'");
+      const f = i > -1 ? h.indexOf("class='cardx'", i) : -1;
+      return { tem: i > -1, trecho: i > -1 ? h.slice(i, f > i ? f : i + 2000) : "" };
+    });
+    ok(mural.tem && /border-radius:16px/.test(mural.trecho) && !/border-left:3px/.test(mural.trecho),
+      "📌 v774: o recado do studio usa a linguagem nova — raio 16 e borda fina inteira, não o filete grosso do desenho velho");
+    ok(/letter-spacing:\.08em/.test(mural.trecho) && !/letter-spacing:\.18em/.test(mural.trecho),
+      "📌 v774: o rótulo parou de gritar mais alto que o recado (letter-spacing .08em, o mesmo do resto do app)");
+    ok(/border-top:1px solid/.test(mural.trecho),
+      "📌 v774: dois recados ficam separados por um traço, em vez de virarem um bloco só");
+
     await ctxAU.close();
     await ctxU.close();
   }
