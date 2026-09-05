@@ -202,7 +202,7 @@
         ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida")) + imgA("a-treinei.jpg", "O botão Treinei hoje no card da semana")),
         det("Treinos — ficha, circuito e corrida", passos([
           "Em <b>Treinos</b>, cada ficha é uma gaveta (A, B, C…) — a do dia já abre aberta.",
-          // v776: é o botão da GAVETA (o do carrossel se chama "Começar treino") — o tour aponta pra este
+          // v775: é o botão da GAVETA (o do carrossel se chama "Começar treino") — o tour aponta pra este
           "Dentro da gaveta, <b>Começar essa ficha</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
           "Toque em <b>Mudar a carga</b> pra anotar o peso — é isso que desenha sua evolução.",
           "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
@@ -259,7 +259,7 @@
       ].join("");
       return "<div class='cardx' id='ajudaCard'><h2>Ajuda</h2>" +
         "<div class='vz' style='text-align:left;padding:2px 0 10px;'>Como usar cada parte do app, passo a passo. Dúvida que não está aqui? Chama seu personal no Chat.</div>" +
-        // v776: o tour do primeiro uso pode ser revisto daqui (quem pulou, ou o
+        // v775: o tour do primeiro uso pode ser revisto daqui (quem pulou, ou o
         // veterano que nunca viu). O clique é tratado no bloco do tour, delegado
         // no document — este HTML é só o botão.
         "<button type='button' class='btnx' id='tourRever' style='width:100%;margin-bottom:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);box-shadow:none;'>Ver o tour de novo (20 s)</button>" +
@@ -439,6 +439,10 @@
       // o topo é colorido nos dois temas, então os chips dele não mudam no claro
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
+      /* v775: o traço entre linhas (border-top com bg5 — recordes do mês, Marcas,
+       * voltas, 1RM…) não tinha remapeamento e saía quase preto sobre o card
+       * branco do modo claro; a regra de fundo acima não alcança borda. */
+      "html.claro [style*='border-top:1px solid var(--bg5)']{border-color:#e4e1eb!important}" +
       "html.claro [style*='background:var(--bg4)']{background:#f3f1f7!important}" +
       // v747: a regra larga (a mesma de cima SEM o "background:") casava as
       // linhas que só têm border-top com bg5 e pintava faixa cinza em voltas,
@@ -1036,7 +1040,7 @@
       "<div class='vz' id='notifTxt' style='text-align:left;padding:2px 0 10px;'>Posso te avisar no dia do treino e quando " + esc(STUDIO_CURTO) + " mandar recado. Só isso — nada de propaganda.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Quero receber</button>" +
       "<button class='btnx sec' id='btnNotifNao' style='width:100%;margin-top:8px;background:none;border:1px solid var(--bd);'>Agora não</button></div>" +
-      /* v776: "Seus recordes do mês" no Início — o AVANÇO dos últimos 30 dias em
+      /* v775: "Seus recordes do mês" no Início — o AVANÇO dos últimos 30 dias em
        * prosa (Supino reto: 80 → 85 kg). NÃO é o mural "Seus recordes" da aba
        * Cargas (#recBox, máximo de sempre) nem os tiles das Conquistas: é quanto
        * o aluno aguentou A MAIS neste período em relação a tudo que veio antes —
@@ -1886,7 +1890,7 @@
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "function Sv(k,v){var ok9=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){ok9=false;}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
-      // v776: carga nova repinta o card "Seus recordes do mês" do Início (typeof como o pintaAgHoje; pintaRecMes nunca chama Sv, então não vira laço)
+      // v775: carga nova repinta o card "Seus recordes do mês" do Início (typeof como o pintaAgHoje; pintaRecMes nunca chama Sv, então não vira laço)
       "if(k==='ptdc'){try{if(typeof pintaRecMes==='function')pintaRecMes();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
       "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}return ok9;}" +
@@ -2133,7 +2137,7 @@
       "function pushMostra(forca){" +
       "if(Notification.permission!=='default')return;" +
       "var onb=document.getElementById('onbCard');" +
-      /* v776: pushMostra(false) roda ANTES do boot do onboarding (que só põe o
+      /* v775: pushMostra(false) roda ANTES do boot do onboarding (que só põe o
        * display:block lá embaixo) — decidir pelo inline deixava os dois cards
        * nascerem juntos. Quem manda é o DADO: sem ptonb, as perguntinhas vêm
        * primeiro — e isso vale TAMBÉM pro pedido forçado dos 900 ms depois do
@@ -2330,7 +2334,7 @@
       "h+=\"<div id='spEscapa' style='display:\"+(p.txtEscapa?'flex':'none')+\";gap:8px;align-items:flex-start;margin-top:10px;background:var(--bg4);border:1px solid var(--bg10);border-radius:12px;padding:9px 11px;font-size:12.5px;font-weight:700;line-height:1.4;color:#cfcbdb;'>\"+" +
       "\"<span style='line-height:0;color:var(--corc);flex:none;margin-top:2px;'>\"+icx(ICO.cal,16)+\"</span><span style='min-width:0;'>\"+p.txtEscapa+'</span></div>';return h;}" +
       "window.__semProg={calc:semProgCalc,escapa:diaQueEscapa,html:semProgHtml,pinta:function(){pintaSemana();}};" +
-      /* v776: recordes do PERÍODO (o card "Seus recordes do mês" do Início).
+      /* v775: recordes do PERÍODO (o card "Seus recordes do mês" do Início).
        * Janela = últimos 30 dias inclusive hoje (hoje-29 .. hoje) — mês-calendário
        * nasceria vazio todo dia 1. A regra é a do recordesDe() do painel, com as
        * MESMAS bordas: entra na janela quem tem desde <= d <= hoje (data futura
@@ -2500,7 +2504,7 @@
       "document.getElementById('onbOk').addEventListener('click',function(){if(!sel.obj||!sel.dias){alert('Escolhe o objetivo e os dias — é rapidinho!');return;}" +
       "Sv('ptonb',{obj:sel.obj,dias:sel.dias,dor:(document.getElementById('onbDor').value||'').trim().slice(0,120),em:isoHj()});" +
       "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);" +
-      // v776: tour → perguntinhas → push. Quem marcou o primeiro treino ANTES de responder teve o push segurado pelo pushMostra; agora é a vez dele (o mesmo gancho de 900 ms da v763)
+      // v775: tour → perguntinhas → push. Quem marcou o primeiro treino ANTES de responder teve o push segurado pelo pushMostra; agora é a vez dele (o mesmo gancho de 900 ms da v763)
       "if(Object.keys(L('ptfeitos',{})).length&&window.__pushMostra)setTimeout(function(){try{window.__pushMostra(true);}catch(e9){}},900);});})();" +
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + jsonApp(sessApp) + ";" +
@@ -5422,7 +5426,7 @@
       // linhas de Ajustes que levam pra outra área (Meu plano, Meus questionários)
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-ajgo]');if(!b)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);if(window.__trocaSec)window.__trocaSec(b.getAttribute('data-ajgo'));" +
-      // v776: data-ajevsub troca a sub-aba da Evolução junto (o card "Seus recordes do mês" aponta pra Cargas); __evSub nasce no boot, antes de qualquer toque
+      // v775: data-ajevsub troca a sub-aba da Evolução junto (o card "Seus recordes do mês" aponta pra Cargas); __evSub nasce no boot, antes de qualquer toque
       "var evs=b.getAttribute('data-ajevsub');if(evs&&window.__evSub)window.__evSub(evs);" +
       "var go=b.getAttribute('data-ajgoto');if(go){var ge=document.getElementById(go);if(ge)setTimeout(function(){ge.scrollIntoView({behavior:'smooth',block:'start'});},80);}});" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
@@ -6894,7 +6898,7 @@
       "document.addEventListener('visibilitychange',function(){if(!document.hidden)saudePuxa();});" +
       "window.__saudeSync={puxa:saudePuxa,desde:function(){return L('ptsaudeSync','');}};})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
-      /* ===== v776: TOUR DO PRIMEIRO USO (coach-marks) =====
+      /* ===== v775: TOUR DO PRIMEIRO USO (coach-marks) =====
        * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
        * semana 1–2 — quem entra cai num monte de cards sem guia. Três passos
        * sobre a TELA DE VERDADE (véu com recorte no alvo + balão curto):

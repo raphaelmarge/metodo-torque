@@ -30,7 +30,7 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   const regua = fn("regua-diaria");
   t(/st\.config\.reguaOff\) return out/.test(regua) && /"regua-off"/.test(regua),
     "regua-diaria: obedece o interruptor config.reguaOff do painel (regra regua-off)");
-  /* v776: o resgate de quem sumiu ("Sentimos sua falta!") também sai do
+  /* v775: o resgate de quem sumiu ("Sentimos sua falta!") também sai do
    * servidor. A região SUMIU é JS puro de propósito e é avaliada AQUI, sem
    * Deno — alunos num blob de mentira dizem quem entra. */
   {

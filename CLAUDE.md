@@ -1798,6 +1798,142 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Quatro frentes pra segurar o aluno no app** (mt-v775): o Raphael perguntou "o que
+podemos fazer para melhorar o app" e mandou fazer tudo. Os números (v763/v765: 12
+apps publicados, 5 abertos, alunos parando na semana 1–2) apontavam pra RETENÇÃO,
+não pra feature nova — então as quatro frentes moram no Início e no treino, que é
+o que o aluno real usa. Cada uma foi especificada, atacada por três céticos
+(regras do repo, produto, regressão), implementada num worktree próprio e
+verificada por um revisor adversarial no navegador antes de entrar.
+
+1. **Tour do primeiro uso** (coach-marks): quem entrava caía num monte de cards
+   sem guia. Agora o primeiro uso ganha três coach-marks sobre a TELA de verdade
+   (véu com recorte no alvo + balão curto): chips da semana (`#diasSem`) →
+   **Treinei hoje!** (`#btnFeito`) → a gaveta da ficha em Treinos (`.guiabtn`,
+   "aqui você anota o quanto levantou"; **Bora treinar** fecha o tour E abre o
+   guiado — botão de ação que só fechasse um balão seria promessa vazia; sem
+   ficha vira "seu treino vai aparecer aqui" apontando o aviso `.vz` do
+   `#trFichasWrap`, com **Entendi** devolvendo pro Início). Regras: (a) o véu
+   **não bloqueia nada** — `pointer-events:none` no véu/anel, só o balão recebe
+   toque; o alvo é rolado pro terço de CIMA da tela e o balão vive numa faixa
+   fixa embaixo (ou em cima, quando cruza o anel — decidido pela INTERSEÇÃO
+   medida, não por limiar), então nunca cobre o alvo nem o botão do passo
+   seguinte, e as suítes que clicam no app recém-aberto seguem valendo; o anel
+   **não anima** (transition faz o teste ler o rect velho) mas **segue o alvo por
+   ~1,1 s** (`tourSegue`, rAF) porque os cards entram com `.sec-anim` e medir
+   uma vez deixava o anel 12 px fora do lugar; e fica **preso à tela** com margem
+   de 6 px. (b) `body.tour-on` esconde `#onbCard` e `#cardNotif` enquanto roda:
+   **tour → 3 perguntinhas → push** — e o `pushMostra` foi consertado na raiz:
+   ele rodava ANTES do boot que mostra o `onbCard` e decidia pelo inline, então
+   desde a v763 os dois cards nasciam JUNTOS; agora decide pelo dado (`ptonb`),
+   inclusive no pedido forçado dos 900 ms depois do primeiro Treinei hoje!, e o
+   `onbOk` chama `__pushMostra(true)` quando já havia treino marcado. (c) o DOM
+   nasce colado no `<body>` e SÓ na hora de abrir — sem `data-sec`, nunca é
+   escondido por `[data-sec-off]`. (d) `pttour = {em, como, passo}`
+   (`fim|pulou|fora|veterano`) — uma vez só; **click** fora do balão, Pular ou
+   Esc encerram (não `pointerdown`: no celular ele dispara no primeiro gesto de
+   ROLAR); a Ajuda tem **Ver o tour de novo** (`#tourRever`) e usa as MESMAS
+   palavras do tour (a Ajuda dizia "Começar treino", que é o botão do carrossel;
+   o da gaveta é "Começar essa ficha"). (e) **veterano** (já tem
+   `ptfeitos`/`ptdc`) não ganha tour — é o que deixa a demo do Alex sem tour a
+   cada abertura, sem editar a demo. (f) termo (`#termoOv`) na frente = espera;
+   alvo escondido = sai da lista já na abertura; seção mudada por fora = encerra
+   (`MutationObserver` em `data-sec-off`, em microtask — nunca escrever assert
+   síncrono sobre isso). ⚠️ App aberto por atalho (push/sino no Chat) sem o
+   Início visível aos 900 ms: não abre nessa sessão, não grava, tenta na próxima.
+   ⚠️ `NOTPROF` é a única constante de studio usada dentro do tour —
+   `STUDIO_CURTO`/`esc()` são do builder (v770/v773). ⚠️ `background:var(--bg2)`
+   no balão é INLINE de propósito: o modo claro só reescreve
+   `[style*='background:var(--bg2)']`. ⚠️ São ~10 KB dentro do app: o orçamento
+   do assert "app com foto" subiu de 285 pra 300 KB — quem mede imagem repetida é
+   o `copias === 1`. Ganchos: `window.__tour` (`abre`, `fim`, `vai`, `tenta`,
+   `on`, `pend`, `passo`, `passos`, `alvo`).
+
+2. **Progresso da semana visível**: "você está na semana 2 de 4" com barrinha,
+   quanto falta e o dia que costuma pular. Regra da v771: **nenhum card novo** —
+   a linha `#semResumo` do card Minha semana virou a FAIXA de progresso:
+   `<b>N de META</b> na semana` + "faltam N pra fechar a semana"/"semana
+   fechada", a barra (`#spBar`, role=progressbar, pela MESMA `naSemana()` do
+   btnFeito — que ganhou um `ref` opcional só pro teste), a sub-linha `#spSub`
+   (dias seguidos · **semanas seguidas na meta**, o `streakSem` das Conquistas,
+   só a partir de 2 · "semana S de 4 do plano", o `MESAPP[k].s` da faixa
+   `#trMes`) e o `#spEscapa`. Motor: `semProgCalc(f, ref)` + `semProgHtml(p)` +
+   `diaQueEscapa(f, ref)`. O "dia que costuma escapar" é conta **honesta**: só
+   as 8 semanas cheias anteriores (a em curso fica de fora, regra da v632), só
+   semanas em que ele treinou **e ficou abaixo da META** (quem trocou o dia e
+   bateu a meta não pulou nada), ≥ 3 semanas assim e o dia PLANEJADO perdido em
+   ≥ 60% delas; empate vai pro dia mais próximo de hoje; sem Semana do aluno →
+   nada aparece; o recado sai só no dia ("Quinta é o dia que mais escapa —
+   segura essa hoje?") ou na véspera, e some quando ele já treinou hoje ou já
+   fechou a semana. Os três fallbacks do `#coachTxt` perderam o "N de META" (o
+   número mora na faixa) e o "•" saiu da sub-linha (a 390 px ficava órfão).
+   ⚠️ mostrar `streakSem` no Início **reverte parte da v584** de propósito: a
+   v765 mediu que ninguém chegava nas Conquistas. ⚠️ a barra é da **META
+   combinada** (`metaSemana`), não dos dias do plano — trocar só a barra criaria
+   duas contas; quem quiser a barra do plano ajusta a META em `#pfMetaSem`.
+   ⚠️ "semana S de 4" é FOTO do dia da publicação, como o `#trMes`. ⚠️ a primeira
+   `pintaSemana()` roda ANTES de `var PLANO`/`var MESAPP` — daí os `typeof`; o
+   boot repinta. ⚠️ o app não sabe QUANDO o professor mudou a Semana do aluno
+   (não existe `planoEm`): por isso o recado é brando e exige 3 semanas. ⚠️ o
+   assert v747 que contava `function naSemana(f)` aceita o `ref` opcional.
+   Ganchos: `window.__semProg` (`calc`, `escapa`, `html`, `pinta`).
+
+3. **Seus recordes do mês** (`#recMesCard`, logo depois do pedido de push):
+   Evolução → Cargas mostra o máximo DE SEMPRE, mas "em 30 dias você aguentou
+   +5 kg no supino" não ficava óbvio em lugar nenhum. O card lista os **3
+   maiores avanços dos últimos 30 dias** em prosa ("Supino reto: 80 → 85 kg ·
+   +5 kg"), com a MESMA regra e as MESMAS bordas do `recordesDe(ret, desde, ate)`
+   do painel: máximo DENTRO da janela > máximo de ANTES, e o antes tem de
+   existir (> 0) — a primeira anotação é ponto de partida, não recorde. Janela
+   de **30 dias inclusive hoje**, não mês-calendário (card que nasce vazio todo
+   dia 1 desanima justo quando o aluno volta). ⚠️ É **diferente de propósito** do
+   selo NOVO do mural de Cargas (`recNovo` = mês-calendário) — não "conserte" um
+   pelo outro. Corrida ficou **de fora** (regra da superfície, v760). Sem avanço
+   o card é `display:none`; a repintura entra pelo `Sv` na chave `ptdc` (e
+   `pintaRecMes` nunca chama `Sv`, senão viraria laço). Tocar abre Evolução →
+   **Cargas**: o handler `[data-ajgo]` ganhou `data-ajevsub`. O nome QUEBRA
+   (`overflow-wrap:anywhere`) em vez de cortar. Chama-se "do **mês**" porque
+   "Seus recordes" já é o mural de Cargas. Classificado no `secDe` **por id**.
+   Prefixo `rcm*` porque `rm*` é a calculadora de 1RM. Junto: o traço
+   `border-top:1px solid var(--bg5)` (aqui, nas Marcas, voltas, 1RM…) não tinha
+   remapeamento no modo claro e saía quase preto sobre o card branco — uma regra
+   `html.claro [style*='border-top:1px solid var(--bg5)']` cobre os 13 lugares.
+   Ganchos: `window.__recordesMes.{lista, pinta, desde, fmt, dias}`.
+
+4. **Resgate de quem sumiu também no servidor**: o push "Sentimos sua falta!"
+   (5+ dias sem sessão FEITA e nada marcado, 1 por semana) só saía da
+   `rotinaDiariaPush` — quando o PROFESSOR abria o painel; aluno que some é
+   justamente o que ninguém está olhando. Agora a `regua-diaria` (**v5**
+   publicada e conferida pelo ping, regra `sumiu`) manda o MESMO aviso, com a
+   MESMA chave `sumiu|<aluno>|<semana>` e o MESMO texto, na região
+   `==== SUMIU ====` do index.ts — **JS puro de propósito**: `tests/test-infra.js`
+   recorta e avalia em node com um blob de mentira, e `tests/test-personal.js`
+   recorta chave, título, corpo, conta da semana e limiar dos DOIS arquivos e
+   exige igualdade. A conta é a oficial da v756 (sessões feitas);
+   `retorno.feitos` fica de fora de propósito. ⚠️ **Chave semanal furava o
+   dedupe**: `importaPushSrv` lia só 3 dias do `push_log_srv`; o cron mandava
+   na segunda e o painel aberto na quinta repetia o aviso. Virou **8 dias** (o
+   teste MEDE o `gte("em", …)` pelo `q.filtros` do mock). ⚠️ **O interruptor tem
+   NOMES diferentes nos dois lados**: no painel "Régua de cobrança" só cala a
+   cobrança (v755); no servidor `config.reguaOff` cala TUDO (v747), inclusive o
+   resgate — frente própria. ⚠️ Sem teto, herdado do painel: quem sumiu há meses
+   recebe toda semana; candidato a teto futuro (nos DOIS lados juntos).
+   Observado e NÃO mexido: `treinoDe` do servidor lê o dia do plano como objeto
+   (formato pré-v768) e degrada pro título genérico.
+
+⚠️ **Teste com data relativa é bomba-relógio**: o bloco v770/v771 da agenda
+ancorava as sessões em "hoje + 3" e o plano só tinha os dois treinos na segunda
+— passava só na sexta em que foi escrito e caiu no primeiro sábado. Todas as
+merges desde a v770 caíram numa sexta, por isso o CI nunca ficou vermelho.
+Agora `d3` é a segunda da semana que vem e o toque no calendário anda de mês
+quando ela cai no seguinte. A lição é a da v756 com outra cara: cenário que
+depende do dia da semana precisa ESCOLHER o dia, nunca somar N a hoje.
+⚠️ Quatro frentes em paralelo no MESMO contêiner: confira QUEM está servindo a
+porta (`ps aux | grep http.server`) antes de confiar num `curl 200` — uma frente
+testou os arquivos de OUTRA árvore na primeira rodada; o `run.sh` recusa porta
+ocupada justamente por isso, o servidor avulso não. E um `pkill -f` cujo padrão
+aparece na própria linha de comando mata o shell que o chamou.
+
 **O recado do studio estava com o desenho velho** (conserto na v774): o Raphael
 mandou a foto do card **Recado do studio** — ele tinha ficado para trás dos
 redesenhos. Três coisas o denunciavam: cantos de **22px** (o resto do app usa
@@ -2376,7 +2512,8 @@ por aluno) e `alunos` é lista.
   idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
   = trial) e **regua-diaria** (v721, 2026-09-01 — a régua de PUSH no servidor; v2
   publicada no mt-v736 com o NOME do treino no título, regra nome-treino no
-  ping, conferida no ar:
+  ping; **v5** no mt-v775 com o resgate de quem sumiu (regra `sumiu`, a MESMA
+  chave `sumiu|<aluno>|<semana>` do painel), conferida no ar:
   pg_cron 10:00 UTC chama a função com a MESMA senha da regua_config; ela lê o
   `mtapp:ptStudio` da tabela `dados` de cada academia com aluno inscrito na
   push_subs e manda treino do dia, véspera e aniversário no fuso do Brasil,

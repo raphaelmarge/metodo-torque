@@ -4431,7 +4431,7 @@ async function abaPt(p, a) {
     ok(/"regua-diaria"/.test(funR) && /"regua-teste"/.test(funR) && /"suporte"/.test(funR) &&
       /data-copia="regua-diaria"/.test(funR) && /data-copia="suporte"/.test(funR),
       "☁️ funcoes.html tem o card da regua-diaria — e regua-teste/suporte entraram no NOMES (o botão deles nunca carregava)");
-    /* v776: o resgate de quem sumiu roda também no servidor. Chave e texto têm
+    /* v775: o resgate de quem sumiu roda também no servidor. Chave e texto têm
      * de ser IDÊNTICOS nos dois lados — senão o dedupe (pushLog ↔ push_log_srv)
      * deixa de casar e o aluno recebe duas vezes. Recorta dos DOIS arquivos;
      * nada é copiado à mão pro assert. */
@@ -4487,7 +4487,7 @@ async function abaPt(p, a) {
   ok(psrv.importou, "☁️ o painel importa as chaves do push_log_srv pro pushLog local (dedupe servidor→cliente)");
   ok(psrv.semNuvem, "☁️ sem nuvem o callback dispara igual — a régua local nunca trava");
 
-  // ☁️ v776: a chave do resgate vale a semana → o painel importa 8 dias do push_log_srv (3 furavam)
+  // ☁️ v775: a chave do resgate vale a semana → o painel importa 8 dias do push_log_srv (3 furavam)
   const janelaSrv = await p.evaluate(async () => {
     const S = window.MTStore, cloudOrig = S.cloud;
     let corte = null;
@@ -4500,7 +4500,7 @@ async function abaPt(p, a) {
   ok(janelaSrv >= 7.9 && janelaSrv <= 8.1,
     "☁️ o painel importa 8 dias do push_log_srv (mediu " + janelaSrv.toFixed(2) + ") — a chave semanal sumiu|…|semana sobrevive ao intervalo entre duas aberturas");
 
-  // ☁️ v776: o painel manda "Sentimos sua falta!" com a chave semanal e não repete na mesma semana
+  // ☁️ v775: o painel manda "Sentimos sua falta!" com a chave semanal e não repete na mesma semana
   const rgSum = await p.evaluate(async () => {
     const S = window.MTStore;
     const snap = localStorage.getItem("mtapp:ptStudio");
@@ -6057,7 +6057,7 @@ async function abaPt(p, a) {
     // imagem repetida, que o `copias === 1` acima já pega): 250 → 285 KB em
     // v734, depois do lote v728–v734 (confirmação, recordes, volume, voz,
     // texto maior) — crescimento de código de verdade, não foto duplicada;
-    // 285 → 300 KB em v776 (o tour do primeiro uso: ~10 KB de CSS, copy e
+    // 285 → 300 KB em v775 (o tour do primeiro uso: ~10 KB de CSS, copy e
     // lógica dentro do app — o guarda da imagem repetida continua sendo o
     // `copias === 1`)
     ok(peso.kb < peso.fotoKb * 2 + 300, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
@@ -15458,12 +15458,12 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
-  /* ================= v776 — "Seus recordes do mês" no Início (avanço em prosa)
+  /* ================= v775 — "Seus recordes do mês" no Início (avanço em prosa)
    * A aba Cargas mostra o máximo DE SEMPRE de cada exercício, mas "em 30 dias
    * você aguentou +5 kg no supino" não ficava óbvio em lugar nenhum do Início.
    * O card lê o ptdc do aparelho com a MESMA regra do recordesDe do painel:
    * máximo na janela (30 dias) > máximo de ANTES, e o antes tem de existir. */
-  console.log("\n🏆 v776 — seus recordes do mês no Início:");
+  console.log("\n🏆 v775 — seus recordes do mês no Início:");
   {
     const ctxRM = await b.newContext({ viewport: { width: 1360, height: 900 } });
     await ctxRM.addInitScript(() => {
@@ -15471,7 +15471,7 @@ async function abaPt(p, a) {
       localStorage.setItem("mtapp:ptSemConta", "1");
     });
     const pRM = await ctxRM.newPage();
-    pRM.on("pageerror", (e) => erros.push("v776: " + e.message));
+    pRM.on("pageerror", (e) => erros.push("v775: " + e.message));
     pRM.on("dialog", (d) => d.accept());
     await pRM.goto(BASE + "/personal.html");
     await pRM.waitForFunction(() => window.__ptStudio && window.__renderPT);
@@ -15499,10 +15499,10 @@ async function abaPt(p, a) {
       }));
     });
     const paR = await ctxAR.newPage();
-    paR.on("pageerror", (e) => erros.push("v776 app: " + e.message));
+    paR.on("pageerror", (e) => erros.push("v775 app: " + e.message));
     await paR.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
-    await paR.route("**/app-v776.html", (r) => r.fulfill({ contentType: "text/html", body: appRM }));
-    await paR.goto(BASE + "/app-v776.html", { waitUntil: "domcontentloaded" });
+    await paR.route("**/app-v775.html", (r) => r.fulfill({ contentType: "text/html", body: appRM }));
+    await paR.goto(BASE + "/app-v775.html", { waitUntil: "domcontentloaded" });
     await paR.waitForTimeout(900);
 
     const rm = await paR.evaluate(() => {
@@ -15527,19 +15527,19 @@ async function abaPt(p, a) {
       };
     });
     ok(rm.visivel && rm.sec === "inicio" && rm.aposSemana && rm.aposNotif && /Seus recordes do mês/.test(rm.h2),
-      "🏆 v776: com avanço no ptdc o card 'Seus recordes do mês' aparece no INÍCIO, depois da Minha semana e do pedido de push (data-sec=" + rm.sec + ")");
+      "🏆 v775: com avanço no ptdc o card 'Seus recordes do mês' aparece no INÍCIO, depois da Minha semana e do pedido de push (data-sec=" + rm.sec + ")");
     ok(rm.nomesLista.join(",") === "Agachamento livre,Supino reto,Rosca direta,Desenvolvimento" && rm.ganhos.join(",") === "10,5,2.5,2",
-      "🏆 v776: a regra é a do recordesDe do painel — máximo na janela > máximo de antes, antes > 0, ordenado pelo ganho (" + rm.nomesLista.join(",") + ")");
+      "🏆 v775: a regra é a do recordesDe do painel — máximo na janela > máximo de antes, antes > 0, ordenado pelo ganho (" + rm.nomesLista.join(",") + ")");
     ok(!rm.nomesLista.includes("Remada curvada") && !rm.nomesLista.includes("Leg press") && !rm.nomesLista.includes("Elevação lateral"),
-      "🏆 v776: primeira anotação é ponto de partida, carga que CAIU não é recorde e data FUTURA fica fora da janela — os três ficam de fora");
+      "🏆 v775: primeira anotação é ponto de partida, carga que CAIU não é recorde e data FUTURA fica fora da janela — os três ficam de fora");
     ok(rm.linhas.length === 3 && !/Desenvolvimento/.test(rm.linhas.join(" ")),
-      "🏆 v776: o card mostra só os 3 maiores avanços (o 4º fica na aba Cargas)");
+      "🏆 v775: o card mostra só os 3 maiores avanços (o 4º fica na aba Cargas)");
     ok(/^Supino reto.*80 → 85 kg.*\+5 kg$/.test(rm.linhas[1]) && /^Rosca direta.*20 → 22,5 kg.*\+2,5 kg$/.test(rm.linhas[2]),
-      "🏆 v776: prosa 'de → pra' com vírgula decimal (" + rm.linhas[1] + ")");
+      "🏆 v775: prosa 'de → pra' com vírgula decimal (" + rm.linhas[1] + ")");
     ok(rm.sub === "4 avanços nos últimos 30 dias" && !rm.temEmoji,
-      "🏆 v776: o sub conta TODOS os avanços e a janela, sem prometer mais que o dado; ícone de traço, nenhum emoji (" + rm.sub + ")");
+      "🏆 v775: o sub conta TODOS os avanços e a janela, sem prometer mais que o dado; ícone de traço, nenhum emoji (" + rm.sub + ")");
     ok(rm.cabe && rm.nomeUmaLinha && rm.valorUmaLinha,
-      "🏆 v776: num celular de 390 nada vaza pra fora do card, cada nome e cada valor ficam numa linha (Range.getClientRects)");
+      "🏆 v775: num celular de 390 nada vaza pra fora do card, cada nome e cada valor ficam numa linha (Range.getClientRects)");
 
     // carga nova gravada pelo player repinta o card SEM chamar pinta() na mão — é o gancho dentro do Sv
     const rmSv = await paR.evaluate(() => {
@@ -15548,7 +15548,7 @@ async function abaPt(p, a) {
       return { supino: l.find((t) => /Supino/.test(t)) || "", primeiro: l[0] || "" };
     });
     ok(/80 → 92 kg/.test(rmSv.supino) && /\+12 kg/.test(rmSv.supino) && /^\s*Supino/.test(rmSv.primeiro),
-      "🏆 v776: anotar carga pelo player repinta o card na hora e reordena pelo ganho (" + rmSv.supino + ")");
+      "🏆 v775: anotar carga pelo player repinta o card na hora e reordena pelo ganho (" + rmSv.supino + ")");
 
     // tocar no card leva pra Evolução → Cargas (não pra Conquistas, que é a sub-aba padrão)
     const rmGo = await paR.evaluate(async () => {
@@ -15562,7 +15562,7 @@ async function abaPt(p, a) {
       };
     });
     ok(rmGo.sec === "evolucao" && rmGo.cargas && rmGo.conq && rmGo.inicioOff,
-      "🏆 v776: tocar no card abre Evolução já na sub-aba CARGAS (data-ajevsub)");
+      "🏆 v775: tocar no card abre Evolução já na sub-aba CARGAS (data-ajevsub)");
 
     // sem avanço nenhum o card SOME — nunca card vazio
     const rmVazio = await paR.evaluate(() => {
@@ -15573,18 +15573,18 @@ async function abaPt(p, a) {
         lista: window.__recordesMes.lista().length };
     });
     ok(rmVazio.display === "none" && rmVazio.linhas === 0 && rmVazio.lista === 0,
-      "🏆 v776: sem avanço na janela o card fica display:none — card vazio não existe");
+      "🏆 v775: sem avanço na janela o card fica display:none — card vazio não existe");
 
     // trava de escopo: nada de identificador do BUILDER dentro do pedaço do app (a armadilha 'is not defined' da v770/v773), e nada grava
     const bldRM = await paR.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
     const iRM = bldRM.indexOf('"function rcmDesde()'), fRM = bldRM.indexOf("window.__recordesMes=");
     const trechoRM = iRM > 0 && fRM > iRM ? bldRM.slice(iRM, fRM) : "";
     ok(trechoRM.length > 500 && !/\b(esc|dinheiro|jsonApp|ve)\(/.test(trechoRM) && !/STUDIO_CURTO|\bD\./.test(trechoRM) && /pl\(todos\.length/.test(trechoRM),
-      "🏆 v776: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
+      "🏆 v775: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
     ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);\}catch\(e\)\{\}\}/.test(bldRM) && !/\bSv\(/.test(trechoRM),
-      "🏆 v776: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
+      "🏆 v775: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
     ok(/if\(el\.id==='recMesCard'\)\{el\.setAttribute\('data-sec','inicio'\);return;\}/.test(bldRM) && !/aria-label/.test(bldRM.slice(bldRM.indexOf("id='recMesCard'"), bldRM.indexOf("id='recMesLs'"))),
-      "🏆 v776: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
+      "🏆 v775: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
 
     await ctxAR.close();
   }
@@ -15610,7 +15610,7 @@ async function abaPt(p, a) {
     const cen = await pu.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const dia = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return window.diaISO(d); };
-      /* v776: o dia das sessões é a SEGUNDA da semana que vem, não "hoje + 3".
+      /* v775: o dia das sessões é a SEGUNDA da semana que vem, não "hoje + 3".
        * O plano põe os DOIS treinos na segunda ("1"), e os asserts do app
        * (07:30 e 18:30 no mesmo dia) e do v771 ("2 de 7" pontinhos nesta
        * semana) só fechavam quando hoje+3 caía numa segunda FORA desta semana
@@ -15692,7 +15692,7 @@ async function abaPt(p, a) {
     const ap = await pau.evaluate((c) => {
       window.__trocaSec("agenda");
       const itens = window.__agItens(c.d3).map((x) => x.h + "|" + x.k);
-      // v776: o calendário é de UM mês (AGMES); a segunda que vem pode cair no mês seguinte — anda um mês antes de tocar
+      // v775: o calendário é de UM mês (AGMES); a segunda que vem pode cair no mês seguinte — anda um mês antes de tocar
       if (!document.querySelector("[data-agdia='" + c.d3 + "']")) document.getElementById("agProx").click();
       document.querySelectorAll("[data-agdia]").forEach((d) => { if (d.getAttribute("data-agdia") === c.d3) d.click(); });
       return { itens, txt: document.getElementById("agDia").textContent.replace(/\s+/g, " "),
@@ -15897,12 +15897,12 @@ async function abaPt(p, a) {
     await ctxU.close();
   }
 
-  /* ================= v776 — tour do primeiro uso no app do aluno ==========
+  /* ================= v775 — tour do primeiro uso no app do aluno ==========
    * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
    * semana 1–2, e ninguém guiava quem entrava. O tour mostra, na TELA de
    * verdade, os chips da semana, o Treinei hoje! e a gaveta da ficha. Mede o
    * que o aluno VÊ (rects, computed style, elementFromPoint), nunca a classe. */
-  console.log("\n🧭 v776 — tour do primeiro uso:");
+  console.log("\n🧭 v775 — tour do primeiro uso:");
   {
     const ctxTp = await b.newContext({ viewport: { width: 1360, height: 900 } });
     await ctxTp.addInitScript(() => {
@@ -15910,7 +15910,7 @@ async function abaPt(p, a) {
       localStorage.setItem("mtapp:ptSemConta", "1");
     });
     const ptp = await ctxTp.newPage();
-    ptp.on("pageerror", (e) => erros.push("v776 painel: " + e.message));
+    ptp.on("pageerror", (e) => erros.push("v775 painel: " + e.message));
     ptp.on("dialog", (d) => d.accept());
     await ptp.goto(BASE + "/personal.html");
     await ptp.waitForFunction(() => window.__ptStudio && window.__renderPT);
@@ -15939,11 +15939,11 @@ async function abaPt(p, a) {
       const c = await b.newContext({ viewport: { width: 390, height: 844 } });
       if (init) await c.addInitScript(init);
       const p = await c.newPage();
-      p.on("pageerror", (e) => erros.push("v776 app " + nome + ": " + e.message));
+      p.on("pageerror", (e) => erros.push("v775 app " + nome + ": " + e.message));
       p.on("dialog", (d) => d.accept());
       await p.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
-      await p.route("**/app-v776-" + nome + ".html", (r) => r.fulfill({ contentType: "text/html", body: html }));
-      await p.goto(BASE + "/app-v776-" + nome + ".html", { waitUntil: "domcontentloaded" });
+      await p.route("**/app-v775-" + nome + ".html", (r) => r.fulfill({ contentType: "text/html", body: html }));
+      await p.goto(BASE + "/app-v775-" + nome + ".html", { waitUntil: "domcontentloaded" });
       await p.waitForFunction(() => window.__tour);
       return { c, p };
     };
@@ -15979,14 +15979,14 @@ async function abaPt(p, a) {
       };
     });
     ok(t1.on && t1.passo === 0 && /1 de 3/.test(t1.k || "") && t1.anelNoAlvo,
-      "🧭 v776: no primeiro uso o tour abre sozinho e o anel envolve os chips da semana (#diasSem) — 1 de 3");
+      "🧭 v775: no primeiro uso o tour abre sozinho e o anel envolve os chips da semana (#diasSem) — 1 de 3");
     ok(t1.veuNaoBloqueia && t1.balaoRecebe && t1.alvoLivre && t1.alvo1Livre,
-      "🧭 v776: o véu NÃO bloqueia a página — pointer-events:none no véu e no anel; o centro dos chips E o do Treinei hoje! continuam sendo os próprios elementos (elementFromPoint)");
+      "🧭 v775: o véu NÃO bloqueia a página — pointer-events:none no véu e no anel; o centro dos chips E o do Treinei hoje! continuam sendo os próprios elementos (elementFromPoint)");
     ok(t1.colouNaTela && t1.semDataSec,
-      "🧭 v776: o overlay nasce colado no <body> em (0,0) e fora do classificador de seções (sem data-sec)");
-    ok(t1.balaoNaoCobreAlvo && t1.semTransicao, "🧭 v776: o balão fica numa faixa própria, nunca em cima do alvo — e o anel não anima (o recorte já nasce no lugar)");
+      "🧭 v775: o overlay nasce colado no <body> em (0,0) e fora do classificador de seções (sem data-sec)");
+    ok(t1.balaoNaoCobreAlvo && t1.semTransicao, "🧭 v775: o balão fica numa faixa própria, nunca em cima do alvo — e o anel não anima (o recorte já nasce no lugar)");
     ok(t1.onbEscondido && t1.notifEscondido && t1.tourOn && t1.cssPush,
-      "🧭 v776: enquanto o tour roda, as 3 perguntinhas e o card de push ficam escondidos — nunca dois pedidos na mesma tela");
+      "🧭 v775: enquanto o tour roda, as 3 perguntinhas e o card de push ficam escondidos — nunca dois pedidos na mesma tela");
 
     // ---- B) clique DE VERDADE no alvo com o tour aberto ----
     let cliqueFalhou = "";
@@ -15996,9 +15996,9 @@ async function abaPt(p, a) {
       como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como,
       marcou: !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[iso] }), hojeIso());
     ok(!cliqueFalhou && t2.marcou,
-      "🧭 v776: um clique de verdade (Playwright) no Treinei hoje! com o tour aberto passa e marca o dia — as suítes que clicam no app recém-aberto continuam valendo" + (cliqueFalhou ? " — " + cliqueFalhou.slice(0, 120) : ""));
+      "🧭 v775: um clique de verdade (Playwright) no Treinei hoje! com o tour aberto passa e marca o dia — as suítes que clicam no app recém-aberto continuam valendo" + (cliqueFalhou ? " — " + cliqueFalhou.slice(0, 120) : ""));
     ok(!t2.on && t2.como === "fora",
-      "🧭 v776: tocar fora do balão encerra o tour (pttour.como = fora) — pulável a qualquer momento");
+      "🧭 v775: tocar fora do balão encerra o tour (pttour.como = fora) — pulável a qualquer momento");
 
     // ---- C) uma vez só ----
     await pA.reload({ waitUntil: "domcontentloaded" });
@@ -16006,7 +16006,7 @@ async function abaPt(p, a) {
     await pA.waitForTimeout(1300);
     const t3 = await pA.evaluate(() => ({ on: window.__tour.on(), como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
     ok(!t3.on && t3.como === "fora",
-      "🧭 v776: na abertura seguinte o tour NÃO volta — uma vez só (pttour), e a marca não é sobrescrita");
+      "🧭 v775: na abertura seguinte o tour NÃO volta — uma vez só (pttour), e a marca não é sobrescrita");
 
     // ---- D) reabrir pela Ajuda e andar os 3 passos ----
     const t4 = await pA.evaluate(() => {
@@ -16021,8 +16021,8 @@ async function abaPt(p, a) {
       return out;
     });
     ok(t4.temBotao && /tour de novo/i.test(t4.txt) && t4.on && t4.passo === 0 && t4.noInicio,
-      "🧭 v776: a Ajuda tem 'Ver o tour de novo' — reabre do passo 1, voltando pro Início");
-    ok(t4.mesmaHistoria, "🧭 v776: Ajuda e tour contam a MESMA história (sequência, Treinei hoje!, Começar essa ficha, Mudar a carga)");
+      "🧭 v775: a Ajuda tem 'Ver o tour de novo' — reabre do passo 1, voltando pro Início");
+    ok(t4.mesmaHistoria, "🧭 v775: Ajuda e tour contam a MESMA história (sequência, Treinei hoje!, Começar essa ficha, Mudar a carga)");
 
     await pA.evaluate(() => document.getElementById("tourProx").click());
     await pA.waitForTimeout(100);
@@ -16034,7 +16034,7 @@ async function abaPt(p, a) {
         livre: !!c && !!c.closest("#btnFeito"), naoCobre: rBal.bottom <= rA.top || rBal.top >= rA.bottom };
     });
     ok(t5.on && t5.passo === 1 && /2 de 3/.test(t5.k) && t5.dentro && t5.livre && t5.naoCobre,
-      "🧭 v776: Próximo leva ao passo 2 e o anel envolve o Treinei hoje! — que segue clicável e fora do balão");
+      "🧭 v775: Próximo leva ao passo 2 e o anel envolve o Treinei hoje! — que segue clicável e fora do balão");
 
     await pA.evaluate(() => document.getElementById("tourProx").click());
     await pA.waitForTimeout(100);
@@ -16049,9 +16049,9 @@ async function abaPt(p, a) {
         pularSumiu: getComputedStyle(document.getElementById("tourPular")).display === "none" };
     });
     ok(t6.passo === 2 && /3 de 3/.test(t6.k) && t6.emTreino && /guiabtn/.test(t6.alvo) && t6.gavetaAberta && t6.dentro,
-      "🧭 v776: o passo 3 vai pra Treinos e aponta o 'Começar essa ficha' da gaveta aberta");
+      "🧭 v775: o passo 3 vai pra Treinos e aponta o 'Começar essa ficha' da gaveta aberta");
     ok(/Mudar a carga/.test(t6.txt) && t6.bt === "Bora treinar" && t6.pularSumiu,
-      "🧭 v776: o passo da carga diz onde anotar o peso (Mudar a carga) e fecha com 'Bora treinar'");
+      "🧭 v775: o passo da carga diz onde anotar o peso (Mudar a carga) e fecha com 'Bora treinar'");
     // os cards da seção ANIMAM ao entrar (.sec-anim, translateY 12px→0 em .5s + atraso por --ci): o anel tem de acompanhar o alvo até o fim
     await pA.waitForTimeout(700);
     const t6b = await pA.evaluate(() => {
@@ -16061,7 +16061,7 @@ async function abaPt(p, a) {
         naTela: rA.left >= 0 && rA.top >= 0 && rA.right <= innerWidth && rA.bottom <= innerHeight };
     });
     ok(t6b.dentro && t6b.folga && t6b.naTela,
-      "🧭 v776: o anel SEGUE o alvo enquanto a seção anima (medido 800 ms depois da troca: folga de 8 px em cima e embaixo, nada fora da tela)");
+      "🧭 v775: o anel SEGUE o alvo enquanto a seção anima (medido 800 ms depois da troca: folga de 8 px em cima e embaixo, nada fora da tela)");
 
     const t7 = await pA.evaluate(() => {
       document.getElementById("tourProx").click();
@@ -16081,11 +16081,11 @@ async function abaPt(p, a) {
       return out;
     });
     ok(!t7.on && t7.como === "fim" && t7.passo === 3 && t7.semClasse && t7.cxSumiu,
-      "🧭 v776: 'Bora treinar' fecha o tour (pttour.como = fim, 3 passos vistos) e o véu some");
+      "🧭 v775: 'Bora treinar' fecha o tour (pttour.como = fim, 3 passos vistos) e o véu some");
     ok(t7.guiaAbriu && t7.guiaFechou,
-      "🧭 v776: 'Bora treinar' FAZ o que promete — abre o treino guiado (e o ✕ dele fecha)");
+      "🧭 v775: 'Bora treinar' FAZ o que promete — abre o treino guiado (e o ✕ dele fecha)");
     ok(t7.ficouEmTreino && t7.onbVolta && t7.notifEspera,
-      "🧭 v776: com ficha o tour termina em Treinos; de volta ao Início as 3 perguntinhas reaparecem SOZINHAS — o push espera (tour → perguntinhas → push)");
+      "🧭 v775: com ficha o tour termina em Treinos; de volta ao Início as 3 perguntinhas reaparecem SOZINHAS — o push espera (tour → perguntinhas → push)");
     await cA.close();
 
     // ---- E) alvo escondido sai da lista; sem treino o último passo adapta ----
@@ -16112,13 +16112,13 @@ async function abaPt(p, a) {
       return out;
     });
     ok(t8.on && t8.passo === 0 && t8.n === 2 && /1 de 2/.test(t8.k) && t8.alvo0 === "btnFeito",
-      "🧭 v776: alvo escondido (#diasSem sem display) sai da lista sem erro — o tour vira '1 de 2' começando no Treinei hoje!");
+      "🧭 v775: alvo escondido (#diasSem sem display) sai da lista sem erro — o tour vira '1 de 2' começando no Treinei hoje!");
     ok(t8.passo2 === 1 && /2 de 2/.test(t8.k2 || "") && /vai aparecer aqui/.test(t8.txt || "") && /Mudar a carga/.test(t8.txt || "") && t8.alvo === "trFichasWrap" && t8.emTreino && t8.bt === "Entendi",
-      "🧭 v776: sem treino prescrito o último passo adapta — 'Seu treino vai aparecer aqui', apontando a área das fichas e ensinando onde a carga será anotada");
+      "🧭 v775: sem treino prescrito o último passo adapta — 'Seu treino vai aparecer aqui', apontando a área das fichas e ensinando onde a carga será anotada");
     ok(t8.alvoVz && t8.anelNaTela,
-      "🧭 v776: sem ficha o anel envolve o aviso DENTRO da área das fichas (com o recuo do card) e fica inteiro na tela — o wrap de ponta a ponta jogava as bordas pra fora e virava faixa");
+      "🧭 v775: sem ficha o anel envolve o aviso DENTRO da área das fichas (com o recuo do card) e fica inteiro na tela — o wrap de ponta a ponta jogava as bordas pra fora e virava faixa");
     ok(t8.fim && t8.voltouInicio && t8.gravou.como === "fim" && t8.gravou.passo === 2 && t8.robusto,
-      "🧭 v776: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
+      "🧭 v775: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
     // o aluno marca o treino ANTES de responder as perguntinhas: o pedido de push dos 900 ms tem de esperar — e vir logo depois do onbOk
     await pB.evaluate(() => { document.getElementById("diasSem").style.display = ""; });
     await pB.click("#btnFeito");
@@ -16139,9 +16139,9 @@ async function abaPt(p, a) {
     await pB.waitForTimeout(1200);
     const t8c = await pB.evaluate(() => { const cn = document.getElementById("cardNotif"); return { notifVeio: !!cn && getComputedStyle(cn).display !== "none" }; });
     ok(t8b.temPush && t8b.onbVisivel && t8b.notifEspera && t8b.notifEspera2 && t8b.onbSumiu && t8b.gravouOnb,
-      "🧭 v776: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
+      "🧭 v775: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
     ok(t8c.notifVeio,
-      "🧭 v776: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
+      "🧭 v775: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
     await cB.close();
 
     // ---- F) veterano (é também a regra que segura a demo) ----
@@ -16150,7 +16150,7 @@ async function abaPt(p, a) {
     const t9 = await pC.evaluate(() => ({ on: window.__tour.on(), cx: !!document.getElementById("tourCx"),
       como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
     ok(!t9.on && !t9.cx && t9.como === "veterano",
-      "🧭 v776: quem já marcou treino não ganha tour de botão que já usa (pttour.como = veterano) — é o que deixa a demo do Alex, com 14 meses de história, sem tour a cada abertura");
+      "🧭 v775: quem já marcou treino não ganha tour de botão que já usa (pttour.como = veterano) — é o que deixa a demo do Alex, com 14 meses de história, sem tour a cada abertura");
     await cC.close();
 
     // ---- G) termo de responsabilidade na frente: espera, e vem depois do toque ----
@@ -16166,9 +16166,9 @@ async function abaPt(p, a) {
     await pD.waitForTimeout(900);
     const t10c = await pD.evaluate(() => ({ termo: !!document.getElementById("termoOv"), on: window.__tour.on(), passo: window.__tour.passo(), aceite: !!localStorage.getItem("ptaceite") }));
     ok(t10a.termo && !t10a.on && t10a.pend && !t10a.gravou && !t10b.on && t10b.pend,
-      "🧭 v776: com o termo de responsabilidade na frente o tour NÃO abre por baixo — fica pendente, sem gravar nada, e tocar no texto do termo não gasta a chance");
+      "🧭 v775: com o termo de responsabilidade na frente o tour NÃO abre por baixo — fica pendente, sem gravar nada, e tocar no texto do termo não gasta a chance");
     ok(!cliqueTermo && t10c.aceite && !t10c.termo && t10c.on && t10c.passo === 0,
-      "🧭 v776: 'Li e aceito' fecha o termo e o tour vem logo depois, do passo 1" + (cliqueTermo ? " — " + cliqueTermo.slice(0, 120) : ""));
+      "🧭 v775: 'Li e aceito' fecha o termo e o tour vem logo depois, do passo 1" + (cliqueTermo ? " — " + cliqueTermo.slice(0, 120) : ""));
     await cD.close();
     await ctxTp.close();
   }

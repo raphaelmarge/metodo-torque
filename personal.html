@@ -9394,7 +9394,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * nada saía sem o painel aberto — e o professor achava que o aluno tinha
      * ficado sem lembrete. O que ainda depende do painel é a cobrança e os
      * lembretes de check-in/questionário. */
-    // v776: o resgate de quem sumiu também saiu do painel pro servidor
+    // v775: o resgate de quem sumiu também saiu do painel pro servidor
     txt += "Treino do dia, véspera, aniversário e o resgate de quem sumiu saem do servidor todo dia de manhã. ";
     txt += "Cobrança e lembretes de check-in/questionário saem enquanto o Personal está aberto (a cada 6 horas). ";
     if (rr) {
@@ -9501,7 +9501,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
       });
       // resgate de quem sumiu: 5+ dias sem treinar e nada marcado (no máx. 1 aviso por semana)
-      // v776: a MESMA regra roda no servidor (regua-diaria, região SUMIU) com a
+      // v775: a MESMA regra roda no servidor (regua-diaria, região SUMIU) com a
       // MESMA chave e o MESMO texto — mexeu aqui, mexe lá (o teste compara os dois).
       var ultFR = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || "";
@@ -9666,7 +9666,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try {
       var nuvem = S.cloud && S.cloud();
       if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return fim();
-      /* v776: 8 dias, não 3. A chave do resgate (sumiu|<aluno>|<semana>) vale a
+      /* v775: 8 dias, não 3. A chave do resgate (sumiu|<aluno>|<semana>) vale a
        * SEMANA inteira: o cron manda na segunda, o professor abre o painel na
        * quinta — com 3 dias a linha ficava de fora, o pushLog local não a via
        * e a régua local mandava o mesmo aviso de novo. As chaves de treino,

@@ -13,7 +13,7 @@
 //   cliente não repete o servidor → cada envio entra em push_log_srv, e o
 //   painel importa essas chaves pro pushLog local antes de rodar a régua dele.
 // As chaves são as MESMAS do painel: treino|<aluno>|<data>, vespera|...,
-// niver|<aluno>|<ano> e, desde a v776, sumiu|<aluno>|<semana> (o resgate de
+// niver|<aluno>|<ano> e, desde a v775, sumiu|<aluno>|<semana> (o resgate de
 // quem sumiu — antes só saía quando o PROFESSOR abria o painel; aluno que
 // some é justamente o que o professor não está olhando). A chave semanal
 // obrigou o painel a importar 8 dias do push_log_srv em vez de 3 (senão o
@@ -85,7 +85,7 @@ function treinoDe(st: any, alunoId: string, iso: string): string {
 }
 
 // ==== SUMIU ====
-// v776: resgate de quem sumiu — a MESMA regra do bloco "resgate de quem sumiu"
+// v775: resgate de quem sumiu — a MESMA regra do bloco "resgate de quem sumiu"
 // da rotinaDiariaPush do painel (personal.html): última sessão FEITA do aluno
 // há 5+ dias e nenhuma sessão futura pendente → "Sentimos sua falta!", no
 // máximo 1 por semana. Chave e texto têm de ser IDÊNTICOS aos do painel,
@@ -155,7 +155,7 @@ function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
         titulo: "Parabéns, " + String(a.nome || "").split(" ")[0] + "!",
         corpo: "Feliz aniversário! Que tal comemorar com um treino especial? Conta comigo sempre." });
     }
-    // v776: resgate de quem sumiu — regra, chave e texto moram na região SUMIU
+    // v775: resgate de quem sumiu — regra, chave e texto moram na região SUMIU
     const sm = sumiuDe(sessoes, a.id, hoje);
     if (sm) out.push({ academia_id: aid, token: String(a.appTokenP), chave: sm.chave, titulo: sm.titulo, corpo: sm.corpo });
   }
