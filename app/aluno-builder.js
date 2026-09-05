@@ -195,19 +195,20 @@
           "Ele funciona <b>sem internet</b>: o treino abre na academia mesmo sem sinal, e o que você marcar sobe quando a internet voltar.",
         ]) + figA(bA("Adicionar à Tela de Início") + "<span style='font-size:12px;color:#a9a4b5;'>no iPhone: Compartilhar → Adicionar à Tela de Início · no Android: menu do navegador → Instalar</span>") + imgA("a-menu.jpg", "O botão Menu na barra de baixo do app, marcado com a seta"), true),
         det("Início — sua semana", passos([
-          "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana.",
+          "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana — essa é a sua <b>sequência</b>.",
           "Terminou o treino? Toque em <b>Treinei hoje!</b> — é ele que conta sua sequência e suas medalhas.",
           "Os quatro botões de hábito (água, comida, sono, cardio) são um toque por dia — seu personal vê a média deles.",
           "O card do dia mostra o treino de HOJE, seguindo o plano da semana que seu personal montou.",
         ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida")) + imgA("a-treinei.jpg", "O botão Treinei hoje no card da semana")),
         det("Treinos — ficha, circuito e corrida", passos([
           "Em <b>Treinos</b>, cada ficha é uma gaveta (A, B, C…) — a do dia já abre aberta.",
-          "O botão <b>Começar treino</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
+          // v776: é o botão da GAVETA (o do carrossel se chama "Começar treino") — o tour aponta pra este
+          "Dentro da gaveta, <b>Começar essa ficha</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
           "Toque em <b>Mudar a carga</b> pra anotar o peso — é isso que desenha sua evolução.",
           "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
           "Na <b>corrida</b>, o app desenha o trajeto pelo GPS, fala os quilômetros e guarda pace e batimento.",
           "No fim do treino vem o <b>resumo</b>: dá pra escrever como foi (seu personal lê) e compartilhar o card do treino.",
-        ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga")) + imgA("a-ficha.jpg", "A gaveta da ficha do dia na área Treinos")),
+        ]) + figA(focoA(bA("Começar essa ficha", 1), "modo guiado") + bA("Mudar a carga")) + imgA("a-ficha.jpg", "A gaveta da ficha do dia na área Treinos")),
         det("Evolução — seu progresso", passos([
           "<b>Conquistas</b>: medalhas, sequência, o mapa do mês e a retrospectiva.",
           "<b>Corpo</b>: a curva do peso e as fotos de progresso (antes × depois).",
@@ -258,6 +259,10 @@
       ].join("");
       return "<div class='cardx' id='ajudaCard'><h2>Ajuda</h2>" +
         "<div class='vz' style='text-align:left;padding:2px 0 10px;'>Como usar cada parte do app, passo a passo. Dúvida que não está aqui? Chama seu personal no Chat.</div>" +
+        // v776: o tour do primeiro uso pode ser revisto daqui (quem pulou, ou o
+        // veterano que nunca viu). O clique é tratado no bloco do tour, delegado
+        // no document — este HTML é só o botão.
+        "<button type='button' class='btnx' id='tourRever' style='width:100%;margin-bottom:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);box-shadow:none;'>Ver o tour de novo (20 s)</button>" +
         TOPICOS + "</div>";
     })();
     /* Resumo do treino de cardio numa linha. O tipo 'misto' e o pedido do
@@ -2110,7 +2115,11 @@
       "function pushMostra(forca){" +
       "if(Notification.permission!=='default')return;" +
       "var onb=document.getElementById('onbCard');" +
-      "if(!forca&&onb&&onb.style.display!=='none')return;" +
+      /* v776: pushMostra(false) roda ANTES do boot do onboarding (que só põe o
+       * display:block lá embaixo) — decidir pelo inline deixava os dois cards
+       * nascerem juntos. Quem manda é o DADO: sem ptonb, as perguntinhas vêm
+       * primeiro e o push espera o primeiro Treinei hoje! (o gancho de 900 ms). */
+      "if(!forca&&onb&&(onb.style.display!=='none'||!L('ptonb',null)))return;" +
       "if(!forca){var ad=0;try{ad=+(localStorage.getItem('ptpushAdiado')||0);}catch(e){}" +
       "if(ad&&Date.now()-ad<3*864e5)return;}" +
       "card.style.display='block';}" +
@@ -6767,6 +6776,113 @@
       "document.addEventListener('visibilitychange',function(){if(!document.hidden)saudePuxa();});" +
       "window.__saudeSync={puxa:saudePuxa,desde:function(){return L('ptsaudeSync','');}};})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
+      /* ===== v776: TOUR DO PRIMEIRO USO (coach-marks) =====
+       * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
+       * semana 1–2 — quem entra cai num monte de cards sem guia. Três passos
+       * sobre a TELA DE VERDADE (véu com recorte no alvo + balão curto):
+       * chips da semana → Treinei hoje! → a gaveta da ficha (onde anota a carga).
+       * Regras: véu/anel com pointer-events:none (a página continua clicável e
+       * os testes que clicam no app recém-aberto seguem valendo); o alvo vai pro
+       * terço de CIMA e o balão fica embaixo (ou em cima, se cruzar o anel) —
+       * nunca sobre o alvo; DOM criado só na hora, colado no <body>
+       * (position:fixed dentro de transform ancora no elemento — v634/v772) e
+       * DEPOIS do classificador (sem data-sec, nunca é escondido); só CLICK fora
+       * do balão / Pular / Esc encerram (pointerdown mataria o tour no primeiro
+       * gesto de rolar); uma vez só (pttour); veterano (já tem ptfeitos/ptdc)
+       * não ganha tour — é isso que deixa a demo, com 14 meses de história, sem
+       * tour a cada abertura; termo de responsabilidade na frente = espera o
+       * toque nos botões dele; alvo escondido = passo fora da lista; seção
+       * trocada por fora = encerra; body.tour-on esconde #onbCard e #cardNotif
+       * (tour → perguntinhas → push). Ganchos: window.__tour. Só L/Sv/isoHj/
+       * NOTPROF daqui de dentro — nada do builder (esc, dinheiro, STUDIO_CURTO)
+       * existe no celular do aluno. */
+      "(function(){var TK='pttour';" +
+      "var tour={on:false,pend:false,i:0,vistos:0,passos:[],sec:'inicio',mudei:false,el:null,cx:null,anel:null,bal:null,mo:null};" +
+      "function tourPassos(){var temF=!!document.querySelector('#trFichasWrap .fichabox');return [" +
+      "{sec:'inicio',q:['#diasSem'],t:'Sua semana, dia a dia',x:'Cada dia que você treinar acende aqui — essa é a sua sequência na semana. Logo embaixo fica a conta: quantos treinos você já fez da meta da semana.'}," +
+      "{sec:'inicio',q:['#btnFeito'],t:'Terminou? Toque em Treinei hoje!',x:'É ele que conta a sua sequência e as suas medalhas. Um toque por dia, depois do treino.'}," +
+      "{sec:'treino',sub:'ficha',abreFicha:temF,acao:temF,q:temF?['#trFichasWrap .fichabox[open] .guiabtn','#trFichasWrap .fichabox[open]','#trFichasWrap .fichabox']:['#trFichasWrap']," +
+      "t:temF?'Aqui você anota o quanto levantou':'Seu treino vai aparecer aqui'," +
+      "x:temF?'Toque em Começar essa ficha: o app leva um exercício por vez e, em Mudar a carga, você anota o peso. É isso que desenha a sua evolução.':'Quando '+NOTPROF+' publicar, cada treino vira uma gaveta aqui. Dentro dela, Começar essa ficha leva um exercício por vez e, em Mudar a carga, você anota o peso — é isso que desenha a sua evolução.'," +
+      "bt:temF?'Bora treinar':'Entendi'}];}" +
+      "function tourVis(el){if(!el)return false;var r=el.getBoundingClientRect();return r.width>0&&r.height>0;}" +
+      "function tourAlvo(p){if(p.abreFicha){var fb=document.querySelector('#trFichasWrap .fichabox[open]')||document.querySelector('#trFichasWrap .fichabox');if(fb&&!fb.open)fb.open=true;}" +
+      "for(var i=0;i<p.q.length;i++){var el=document.querySelector(p.q[i]);if(tourVis(el))return el;}return null;}" +
+      "function tourMonta(){if(tour.cx)return;" +
+      "var st=document.createElement('style');st.id='tourCss';st.textContent=" +
+      "'#tourCx{position:fixed;inset:0;z-index:85;pointer-events:none;display:none}#tourCx.on{display:block}'+" +
+      "'#tourAnel{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.62),0 0 0 3px var(--corc);pointer-events:none}'+" +
+      "'#tourBalao{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom,0px));max-width:456px;margin:0 auto;border:1px solid rgba(var(--cor-rgb),.45);border-radius:16px;padding:14px 16px 12px;box-shadow:0 18px 44px rgba(0,0,0,.5);pointer-events:auto;color:#fff}'+" +
+      "'#tourBalao.topo{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}'+" +
+      "'#tourK{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--corc)}#tourT{font-size:16px;font-weight:800;margin-top:4px;line-height:1.3}#tourX{font-size:13.5px;line-height:1.5;color:#cfcbdb;margin-top:6px}'+" +
+      "'.tourbts{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px}'+" +
+      "'#tourPular{background:none;border:none;color:#a9a4b5;font-family:inherit;font-size:13px;font-weight:700;min-height:44px;padding:0 12px;cursor:pointer}'+" +
+      "'#tourProx{background:var(--cor);color:#fff;border:none;border-radius:99px;font-family:inherit;font-size:13.5px;font-weight:800;min-height:44px;padding:0 18px;cursor:pointer}'+" +
+      "'html.claro #tourBalao{color:#191622}html.claro #tourX{color:#4b4658}html.claro #tourPular{color:#6c6678}'+" +
+      "'body.tour-on #onbCard,body.tour-on #cardNotif{display:none!important}';" +
+      "document.head.appendChild(st);" +
+      "var cx=document.createElement('div');cx.id='tourCx';" +
+      // background:var(--bg2) INLINE de propósito: o modo claro só reescreve [style*='background:var(--bg2)'] (mesmo truque do #sinoPn)
+      "cx.innerHTML=\"<div id='tourAnel'></div><div id='tourBalao' role='dialog' aria-label='Tour do app' style='background:var(--bg2);'><div id='tourK'></div><div id='tourT'></div><div id='tourX'></div><div class='tourbts'><button type='button' id='tourPular'>Pular</button><button type='button' id='tourProx'>Próximo</button></div></div>\";" +
+      "document.body.appendChild(cx);tour.cx=cx;tour.anel=cx.querySelector('#tourAnel');tour.bal=cx.querySelector('#tourBalao');" +
+      // último passo com ficha: "Bora treinar" FAZ o que promete — fecha o tour e abre o guiado (o click no .guiabtn vem DEPOIS do tourFim, então o tourFora daquele click não faz nada)
+      "cx.querySelector('#tourProx').addEventListener('click',function(){if(navigator.vibrate)navigator.vibrate(8);var p=tour.passos[tour.i];" +
+      "if(tour.i+1>=tour.passos.length){var el=tour.el;tourFim('fim');if(p&&p.acao&&el&&el.classList.contains('guiabtn'))el.click();}else tourVai(tour.i+1);});" +
+      "cx.querySelector('#tourPular').addEventListener('click',function(){tourFim('pulou');});}" +
+      // o alvo vai pro terço de CIMA da tela: o balão mora embaixo e assim nunca cobre o alvo nem o botão do passo seguinte
+      "function tourRola(el){try{el.scrollIntoView({block:'start',behavior:'auto'});var r=el.getBoundingClientRect();window.scrollBy(0,r.top-Math.round(window.innerHeight*0.24));}catch(e){}}" +
+      // .topo decidido pela INTERSEÇÃO medida entre balão e anel, não por limiar
+      "function tourPos(){if(!tour.on||!tour.el)return;var r=tour.el.getBoundingClientRect();if(!(r.width>0&&r.height>0))return;var pd=8;" +
+      "var a=tour.anel.style;a.left=(r.left-pd)+'px';a.top=(r.top-pd)+'px';a.width=(r.width+2*pd)+'px';a.height=(r.height+2*pd)+'px';" +
+      "tour.bal.classList.remove('topo');var rb=tour.bal.getBoundingClientRect();" +
+      "if(rb.top<r.bottom+pd&&rb.bottom>r.top-pd)tour.bal.classList.add('topo');}" +
+      "function tourPinta(p){var n=tour.passos.length;tour.vistos=tour.i+1;tour.bal.querySelector('#tourK').textContent=(tour.i+1)+' de '+n;tour.bal.querySelector('#tourT').textContent=p.t;tour.bal.querySelector('#tourX').textContent=p.x;" +
+      "var ult=tour.i+1>=n;tour.bal.querySelector('#tourProx').textContent=p.bt||(ult?'Entendi':'Próximo');tour.bal.querySelector('#tourPular').style.display=ult?'none':'';}" +
+      "function tourVai(i){if(!tour.on)return;var p=tour.passos[i];if(!p){tourFim('fim');return;}tour.i=i;" +
+      "if(p.sec!==tour.sec){tour.sec=p.sec;tour.mudei=true;try{window.__trocaSec(p.sec);}catch(e){}}" +
+      "if(p.sub&&window.__trSub)try{window.__trSub(p.sub);}catch(e){}" +
+      "var el=tourAlvo(p);if(!el){if(i+1<tour.passos.length)tourVai(i+1);else tourFim('fim');return;}" +
+      "tour.el=el;tourRola(el);tourPinta(p);tourPos();try{requestAnimationFrame(tourPos);}catch(e){}}" +
+      "function tourFim(como){if(!tour.on)return;tour.on=false;tour.pend=false;" +
+      "if(tour.cx)tour.cx.classList.remove('on');document.body.classList.remove('tour-on');" +
+      "window.removeEventListener('scroll',tourPos);window.removeEventListener('resize',tourPos);" +
+      "if(tour.mo){try{tour.mo.disconnect();}catch(e){}tour.mo=null;}" +
+      "Sv(TK,{em:isoHj(),como:como,passo:tour.vistos});" +
+      // sem ficha pra começar, o tour devolve pro Início; com ficha, fica em Treinos (é onde o guiado abre)
+      "if(tour.mudei&&como!=='fora'&&!document.querySelector('#trFichasWrap .fichabox')){try{window.__trocaSec('inicio');}catch(e){}}" +
+      "tour.mudei=false;tour.el=null;if(navigator.vibrate)navigator.vibrate(8);}" +
+      "function tourAbre(forca){if(tour.on)return false;" +
+      "if(!forca){if(L(TK,null))return false;" +
+      // veterano: já marcou treino ou anotou carga — não ganha tour de botão que já usa (e é o que segura a demo)
+      "if(Object.keys(L('ptfeitos',{})).length||Object.keys(L('ptdc',{})).length){Sv(TK,{em:isoHj(),como:'veterano',passo:0});return false;}" +
+      "if(document.getElementById('termoOv'))return false;" +
+      // app aberto por atalho (push/sino caindo no Chat): sem o Início na tela, nem tenta — fica pra próxima abertura
+      "if(!document.querySelector(\"[data-sec='inicio']:not([data-sec-off])\"))return false;}" +
+      "else{try{window.__trocaSec('inicio');}catch(e){}}" +
+      // passo do Início com alvo escondido sai da lista JÁ AQUI — assim o "N de M" nasce certo
+      "tour.passos=tourPassos().filter(function(p){return p.sec!=='inicio'||!!tourAlvo(p);});if(!tour.passos.length)return false;" +
+      "tourMonta();tour.on=true;tour.pend=false;tour.sec='inicio';tour.mudei=false;tour.i=0;tour.vistos=0;" +
+      "tour.cx.classList.add('on');document.body.classList.add('tour-on');" +
+      "window.addEventListener('scroll',tourPos,{passive:true});window.addEventListener('resize',tourPos);" +
+      // seção trocada por fora (barra de baixo, __trocaSec) encerra — roda em microtask, nunca é síncrono
+      "try{tour.mo=new MutationObserver(function(){if(!tour.on)return;if(!document.querySelector(\"[data-sec='\"+tour.sec+\"']:not([data-sec-off])\"))tourFim('fora');});" +
+      "tour.mo.observe(document.body,{attributes:true,subtree:true,attributeFilter:['data-sec-off']});}catch(e){}" +
+      "tourVai(0);return tour.on;}" +
+      "function tourTenta(){if(tour.on||!tour.pend)return;if(L(TK,null)){tour.pend=false;return;}" +
+      "if(document.getElementById('termoOv'))return;" +
+      "tour.pend=false;tourAbre(false);}" +
+      // só CLICK, na captura: com o tour aberto, fora do balão encerra; pendente e com o termo na frente, o toque num BOTÃO do termo reagenda (tocar no texto pra rolar não gasta nada)
+      "function tourFora(e){var t9=e.target;var dentro=t9&&t9.closest&&t9.closest('#tourBalao');" +
+      "if(tour.on){if(!dentro)tourFim('fora');return;}" +
+      "if(tour.pend){var ov=document.getElementById('termoOv');" +
+      "if(ov){if(t9&&t9.closest&&t9.closest('#termoOv button'))setTimeout(function(){try{tourTenta();}catch(e9){}},600);}" +
+      "else tour.pend=false;}}" +
+      "document.addEventListener('click',tourFora,true);" +
+      "document.addEventListener('keydown',function(e){if(tour.on&&e.key==='Escape')tourFim('pulou');});" +
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#tourRever');if(!b)return;if(navigator.vibrate)navigator.vibrate(8);tourAbre(true);});" +
+      "window.__tour={abre:function(){return tourAbre(true);},fim:tourFim,vai:tourVai,tenta:tourTenta,on:function(){return tour.on;},pend:function(){return tour.pend;},passo:function(){return tour.i;},passos:function(){return tour.passos.slice();},alvo:function(){return tour.el;}};" +
+      "tour.pend=true;setTimeout(function(){try{tourTenta();}catch(e9){}},900);" +
+      "})();" +
       atualizador +
       "</" + "script>" +
       "<script>/* TORQUE camada visual: animações (aditiva — pode remover sem afetar a lógica) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;function cascata(els){if(RM)return;els.forEach(function(el,i){el.style.setProperty('--ci',Math.min(i,8));el.classList.remove('sec-anim');void el.offsetWidth;el.classList.add('sec-anim');});}var pend=null;var mo=new MutationObserver(function(ms){var vis=[];ms.forEach(function(m){var el=m.target;if(m.attributeName==='data-sec-off'&&!el.hasAttribute('data-sec-off')&&vis.indexOf(el)<0)vis.push(el);});if(vis.length){clearTimeout(pend);pend=setTimeout(function(){cascata(vis);},0);}});document.querySelectorAll('[data-sec]').forEach(function(el){mo.observe(el,{attributes:true,attributeFilter:['data-sec-off']});});cascata([].slice.call(document.querySelectorAll('[data-sec]:not([data-sec-off])')).slice(0,10));var xp=document.getElementById('xpNum');if(xp&&!RM){var alvo=parseInt(xp.textContent,10)||0;if(alvo>0){var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/900);xp.textContent=Math.round(alvo*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}}})();</" + "script>" +

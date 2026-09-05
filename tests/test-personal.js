@@ -15671,6 +15671,244 @@ async function abaPt(p, a) {
     await ctxU.close();
   }
 
+  /* ================= v776 — tour do primeiro uso no app do aluno ==========
+   * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
+   * semana 1–2, e ninguém guiava quem entrava. O tour mostra, na TELA de
+   * verdade, os chips da semana, o Treinei hoje! e a gaveta da ficha. Mede o
+   * que o aluno VÊ (rects, computed style, elementFromPoint), nunca a classe. */
+  console.log("\n🧭 v776 — tour do primeiro uso:");
+  {
+    const ctxTp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxTp.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const ptp = await ctxTp.newPage();
+    ptp.on("pageerror", (e) => erros.push("v776 painel: " + e.message));
+    ptp.on("dialog", (d) => d.accept());
+    await ptp.goto(BASE + "/personal.html");
+    await ptp.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    const apps = await ptp.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      // exercício REAL da semente do load(): o pacote casa it.exId em st.exercicios
+      const ex = (st.exercicios || []).find((e) => /supino reto com barra/i.test(e.nome)) || st.exercicios[0];
+      st.alunos = [
+        { id: "t776", nome: "Tour Novato", ativo: true, desde: "2026-01-05", appTokenP: "tkt776" },
+        { id: "t776b", nome: "Sem Treino", ativo: true, desde: "2026-01-05", appTokenP: "tkt776b" },
+      ];
+      st.treinosV2 = { t776: { fichas: [{ id: "f1", titulo: "A — Peito", itens: [{ exId: ex.id, series: 4, reps: "10", descanso: 60, obs: "" }] }] } };
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      st.config = st.config || {}; st.config.termo = null;
+      S.write("ptStudio", st); window.__renderPT();
+      const st2 = S.read("ptStudio", {});
+      const com = window.__montaAppAluno(st2.alunos[0], new Date().toISOString());
+      const sem = window.__montaAppAluno(st2.alunos[1], new Date().toISOString());
+      // terceiro pacote: o MESMO aluno com o termo de responsabilidade na frente
+      st2.config.termo = { t: "Declaro estar apto à prática de exercícios físicos.", v: "2026-09-01" };
+      S.write("ptStudio", st2);
+      const termo = window.__montaAppAluno(S.read("ptStudio", {}).alunos[0], new Date().toISOString());
+      return { com, sem, termo };
+    });
+    const abreApp = async (html, nome, init) => {
+      const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+      if (init) await c.addInitScript(init);
+      const p = await c.newPage();
+      p.on("pageerror", (e) => erros.push("v776 app " + nome + ": " + e.message));
+      p.on("dialog", (d) => d.accept());
+      await p.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+      await p.route("**/app-v776-" + nome + ".html", (r) => r.fulfill({ contentType: "text/html", body: html }));
+      await p.goto(BASE + "/app-v776-" + nome + ".html", { waitUntil: "domcontentloaded" });
+      await p.waitForFunction(() => window.__tour);
+      return { c, p };
+    };
+    const hojeIso = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+    // ---- A) aluno novo com ficha: o tour abre sozinho no passo 1 ----
+    const { c: cA, p: pA } = await abreApp(apps.com, "com");
+    await pA.waitForTimeout(1300);
+    const t1 = await pA.evaluate(() => {
+      const cx = document.getElementById("tourCx"), anel = document.getElementById("tourAnel"), bal = document.getElementById("tourBalao");
+      if (!cx || !anel || !bal) return { on: false };
+      const dentro = (a, r) => a.left <= r.left && a.top <= r.top && a.right >= r.right && a.bottom >= r.bottom;
+      const rA = anel.getBoundingClientRect(), rC = document.getElementById("diasSem").getBoundingClientRect(), rB = bal.getBoundingClientRect(), rX = cx.getBoundingClientRect();
+      const bf = document.getElementById("btnFeito").getBoundingClientRect();
+      const alvo = document.elementFromPoint(bf.left + bf.width / 2, bf.top + bf.height / 2);
+      const alvo1 = document.elementFromPoint(rC.left + rC.width / 2, rC.top + rC.height / 2);
+      const cn = document.getElementById("cardNotif");
+      return {
+        on: window.__tour.on(), passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        anelNoAlvo: dentro(rA, rC) && rA.width - rC.width < 40,
+        veuNaoBloqueia: getComputedStyle(cx).pointerEvents === "none" && getComputedStyle(anel).pointerEvents === "none",
+        balaoRecebe: getComputedStyle(bal).pointerEvents === "auto",
+        alvoLivre: !!alvo && (alvo.id === "btnFeito" || !!alvo.closest("#btnFeito")),
+        alvo1Livre: !!alvo1 && !!alvo1.closest("#diasSem"),
+        colouNaTela: cx.parentElement === document.body && Math.round(rX.left) === 0 && Math.round(rX.top) === 0,
+        balaoNaoCobreAlvo: rB.bottom <= rA.top || rB.top >= rA.bottom,
+        onbEscondido: getComputedStyle(document.getElementById("onbCard")).display === "none",
+        notifEscondido: !cn || getComputedStyle(cn).display === "none",
+        tourOn: document.body.classList.contains("tour-on"),
+        semDataSec: !cx.hasAttribute("data-sec"),
+        cssPush: /#cardNotif/.test(document.getElementById("tourCss").textContent),
+        semTransicao: getComputedStyle(anel).transitionDuration === "0s",
+      };
+    });
+    ok(t1.on && t1.passo === 0 && /1 de 3/.test(t1.k || "") && t1.anelNoAlvo,
+      "🧭 v776: no primeiro uso o tour abre sozinho e o anel envolve os chips da semana (#diasSem) — 1 de 3");
+    ok(t1.veuNaoBloqueia && t1.balaoRecebe && t1.alvoLivre && t1.alvo1Livre,
+      "🧭 v776: o véu NÃO bloqueia a página — pointer-events:none no véu e no anel; o centro dos chips E o do Treinei hoje! continuam sendo os próprios elementos (elementFromPoint)");
+    ok(t1.colouNaTela && t1.semDataSec,
+      "🧭 v776: o overlay nasce colado no <body> em (0,0) e fora do classificador de seções (sem data-sec)");
+    ok(t1.balaoNaoCobreAlvo && t1.semTransicao, "🧭 v776: o balão fica numa faixa própria, nunca em cima do alvo — e o anel não anima (o recorte já nasce no lugar)");
+    ok(t1.onbEscondido && t1.notifEscondido && t1.tourOn && t1.cssPush,
+      "🧭 v776: enquanto o tour roda, as 3 perguntinhas e o card de push ficam escondidos — nunca dois pedidos na mesma tela");
+
+    // ---- B) clique DE VERDADE no alvo com o tour aberto ----
+    let cliqueFalhou = "";
+    try { await pA.click("#btnFeito", { timeout: 4000 }); } catch (e) { cliqueFalhou = e.message; }
+    await pA.waitForTimeout(150);
+    const t2 = await pA.evaluate((iso) => ({ on: window.__tour.on(),
+      como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como,
+      marcou: !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[iso] }), hojeIso());
+    ok(!cliqueFalhou && t2.marcou,
+      "🧭 v776: um clique de verdade (Playwright) no Treinei hoje! com o tour aberto passa e marca o dia — as suítes que clicam no app recém-aberto continuam valendo" + (cliqueFalhou ? " — " + cliqueFalhou.slice(0, 120) : ""));
+    ok(!t2.on && t2.como === "fora",
+      "🧭 v776: tocar fora do balão encerra o tour (pttour.como = fora) — pulável a qualquer momento");
+
+    // ---- C) uma vez só ----
+    await pA.reload({ waitUntil: "domcontentloaded" });
+    await pA.waitForFunction(() => window.__tour);
+    await pA.waitForTimeout(1300);
+    const t3 = await pA.evaluate(() => ({ on: window.__tour.on(), como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
+    ok(!t3.on && t3.como === "fora",
+      "🧭 v776: na abertura seguinte o tour NÃO volta — uma vez só (pttour), e a marca não é sobrescrita");
+
+    // ---- D) reabrir pela Ajuda e andar os 3 passos ----
+    const t4 = await pA.evaluate(() => {
+      window.__trocaSec("ajuda");
+      const bt = document.querySelector("#ajudaCard #tourRever");
+      const out = { temBotao: !!bt, txt: bt ? bt.textContent : "" };
+      if (bt) bt.click();
+      out.on = window.__tour.on(); out.passo = window.__tour.passo();
+      out.noInicio = !!document.querySelector("[data-sec='inicio']:not([data-sec-off])");
+      const aj = document.getElementById("ajudaCard").textContent;
+      out.mesmaHistoria = /Treinei hoje!/.test(aj) && /sequência/.test(aj) && /Mudar a carga/.test(aj) && /Começar essa ficha/.test(aj) && !/Começar treino/.test(aj);
+      return out;
+    });
+    ok(t4.temBotao && /tour de novo/i.test(t4.txt) && t4.on && t4.passo === 0 && t4.noInicio,
+      "🧭 v776: a Ajuda tem 'Ver o tour de novo' — reabre do passo 1, voltando pro Início");
+    ok(t4.mesmaHistoria, "🧭 v776: Ajuda e tour contam a MESMA história (sequência, Treinei hoje!, Começar essa ficha, Mudar a carga)");
+
+    await pA.evaluate(() => document.getElementById("tourProx").click());
+    await pA.waitForTimeout(100);
+    const t5 = await pA.evaluate(() => {
+      const rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = document.getElementById("btnFeito").getBoundingClientRect(), rBal = document.getElementById("tourBalao").getBoundingClientRect();
+      const c = document.elementFromPoint(rB.left + rB.width / 2, rB.top + rB.height / 2);
+      return { on: window.__tour.on(), passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        livre: !!c && !!c.closest("#btnFeito"), naoCobre: rBal.bottom <= rA.top || rBal.top >= rA.bottom };
+    });
+    ok(t5.on && t5.passo === 1 && /2 de 3/.test(t5.k) && t5.dentro && t5.livre && t5.naoCobre,
+      "🧭 v776: Próximo leva ao passo 2 e o anel envolve o Treinei hoje! — que segue clicável e fora do balão");
+
+    await pA.evaluate(() => document.getElementById("tourProx").click());
+    await pA.waitForTimeout(100);
+    const t6 = await pA.evaluate(() => {
+      const el = window.__tour.alvo();
+      const rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = el.getBoundingClientRect();
+      return { passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        emTreino: !!document.querySelector("[data-sec='treino']:not([data-sec-off])") && !document.querySelector("[data-sec='inicio']:not([data-sec-off])"),
+        alvo: el.className || "", gavetaAberta: !!el.closest(".fichabox[open]"),
+        dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        txt: document.getElementById("tourX").textContent, bt: document.getElementById("tourProx").textContent,
+        pularSumiu: getComputedStyle(document.getElementById("tourPular")).display === "none" };
+    });
+    ok(t6.passo === 2 && /3 de 3/.test(t6.k) && t6.emTreino && /guiabtn/.test(t6.alvo) && t6.gavetaAberta && t6.dentro,
+      "🧭 v776: o passo 3 vai pra Treinos e aponta o 'Começar essa ficha' da gaveta aberta");
+    ok(/Mudar a carga/.test(t6.txt) && t6.bt === "Bora treinar" && t6.pularSumiu,
+      "🧭 v776: o passo da carga diz onde anotar o peso (Mudar a carga) e fecha com 'Bora treinar'");
+
+    const t7 = await pA.evaluate(() => {
+      document.getElementById("tourProx").click();
+      const pt = JSON.parse(localStorage.getItem("pttour") || "null") || {};
+      const gb = document.getElementById("guiaBox");
+      // o guiado abre por style.display='flex' (abreGuia) — medir o computed é medir o que o aluno vê
+      const out = { on: window.__tour.on(), como: pt.como, passo: pt.passo, semClasse: !document.body.classList.contains("tour-on"),
+        guiaAbriu: !!gb && getComputedStyle(gb).display !== "none",
+        cxSumiu: getComputedStyle(document.getElementById("tourCx")).display === "none" };
+      const fx = document.getElementById("gFechar"); if (fx) fx.click();
+      out.guiaFechou = !!gb && getComputedStyle(gb).display === "none";
+      out.ficouEmTreino = !!document.querySelector("[data-sec='treino']:not([data-sec-off])");
+      window.__trocaSec("inicio");
+      out.onbVolta = getComputedStyle(document.getElementById("onbCard")).display !== "none";
+      const cn = document.getElementById("cardNotif");
+      out.notifEspera = !cn || getComputedStyle(cn).display === "none";
+      return out;
+    });
+    ok(!t7.on && t7.como === "fim" && t7.passo === 3 && t7.semClasse && t7.cxSumiu,
+      "🧭 v776: 'Bora treinar' fecha o tour (pttour.como = fim, 3 passos vistos) e o véu some");
+    ok(t7.guiaAbriu && t7.guiaFechou,
+      "🧭 v776: 'Bora treinar' FAZ o que promete — abre o treino guiado (e o ✕ dele fecha)");
+    ok(t7.ficouEmTreino && t7.onbVolta && t7.notifEspera,
+      "🧭 v776: com ficha o tour termina em Treinos; de volta ao Início as 3 perguntinhas reaparecem SOZINHAS — o push espera (tour → perguntinhas → push)");
+    await cA.close();
+
+    // ---- E) alvo escondido sai da lista; sem treino o último passo adapta ----
+    const { c: cB, p: pB } = await abreApp(apps.sem, "sem");
+    await pB.evaluate(() => { document.getElementById("diasSem").style.display = "none"; });
+    await pB.waitForTimeout(1300);
+    const t8 = await pB.evaluate(() => {
+      const out = { on: window.__tour.on(), passo: window.__tour.passo(), n: window.__tour.passos().length, k: document.getElementById("tourK") ? document.getElementById("tourK").textContent : "",
+        alvo0: (window.__tour.alvo() || {}).id };
+      if (!out.on) return out;
+      document.getElementById("tourProx").click();
+      // título + texto: "Seu treino vai aparecer aqui" é o TÍTULO do passo, e o corpo diz onde a carga entra
+      out.passo2 = window.__tour.passo(); out.k2 = document.getElementById("tourK").textContent; out.txt = document.getElementById("tourT").textContent + " " + document.getElementById("tourX").textContent; out.bt = document.getElementById("tourProx").textContent;
+      out.alvo = (window.__tour.alvo() || {}).id;
+      out.emTreino = !!document.querySelector("[data-sec='treino']:not([data-sec-off])");
+      document.getElementById("tourProx").click();
+      out.fim = !window.__tour.on(); out.voltouInicio = !!document.querySelector("[data-sec='inicio']:not([data-sec-off])");
+      out.gravou = (JSON.parse(localStorage.getItem("pttour") || "null") || {});
+      // chamadas fora de hora não estouram (a suíte dispara callbacks de timer na mão)
+      try { window.__tour.tenta(); window.__tour.fim("x"); window.__tour.vai(9); out.robusto = true; } catch (e) { out.robusto = false; }
+      return out;
+    });
+    ok(t8.on && t8.passo === 0 && t8.n === 2 && /1 de 2/.test(t8.k) && t8.alvo0 === "btnFeito",
+      "🧭 v776: alvo escondido (#diasSem sem display) sai da lista sem erro — o tour vira '1 de 2' começando no Treinei hoje!");
+    ok(t8.passo2 === 1 && /2 de 2/.test(t8.k2 || "") && /vai aparecer aqui/.test(t8.txt || "") && /Mudar a carga/.test(t8.txt || "") && t8.alvo === "trFichasWrap" && t8.emTreino && t8.bt === "Entendi",
+      "🧭 v776: sem treino prescrito o último passo adapta — 'Seu treino vai aparecer aqui', apontando a área das fichas e ensinando onde a carga será anotada");
+    ok(t8.fim && t8.voltouInicio && t8.gravou.como === "fim" && t8.gravou.passo === 2 && t8.robusto,
+      "🧭 v776: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
+    await cB.close();
+
+    // ---- F) veterano (é também a regra que segura a demo) ----
+    const { c: cC, p: pC } = await abreApp(apps.com, "vet", () => { localStorage.setItem("ptfeitos", JSON.stringify({ "2026-01-05": 1 })); });
+    await pC.waitForTimeout(1300);
+    const t9 = await pC.evaluate(() => ({ on: window.__tour.on(), cx: !!document.getElementById("tourCx"),
+      como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
+    ok(!t9.on && !t9.cx && t9.como === "veterano",
+      "🧭 v776: quem já marcou treino não ganha tour de botão que já usa (pttour.como = veterano) — é o que deixa a demo do Alex, com 14 meses de história, sem tour a cada abertura");
+    await cC.close();
+
+    // ---- G) termo de responsabilidade na frente: espera, e vem depois do toque ----
+    const { c: cD, p: pD } = await abreApp(apps.termo, "termo");
+    await pD.waitForTimeout(1300);
+    const t10a = await pD.evaluate(() => ({ termo: !!document.getElementById("termoOv"), on: window.__tour.on(), pend: window.__tour.pend(), gravou: !!localStorage.getItem("pttour") }));
+    // rolar/tocar no TEXTO do termo não gasta nada
+    await pD.evaluate(() => { const tx = document.getElementById("termoOv").children[1]; tx.click(); tx.click(); tx.click(); });
+    await pD.waitForTimeout(700);
+    const t10b = await pD.evaluate(() => ({ on: window.__tour.on(), pend: window.__tour.pend() }));
+    let cliqueTermo = "";
+    try { await pD.click("#termoOv button:first-of-type", { timeout: 4000 }); } catch (e) { cliqueTermo = e.message; }
+    await pD.waitForTimeout(900);
+    const t10c = await pD.evaluate(() => ({ termo: !!document.getElementById("termoOv"), on: window.__tour.on(), passo: window.__tour.passo(), aceite: !!localStorage.getItem("ptaceite") }));
+    ok(t10a.termo && !t10a.on && t10a.pend && !t10a.gravou && !t10b.on && t10b.pend,
+      "🧭 v776: com o termo de responsabilidade na frente o tour NÃO abre por baixo — fica pendente, sem gravar nada, e tocar no texto do termo não gasta a chance");
+    ok(!cliqueTermo && t10c.aceite && !t10c.termo && t10c.on && t10c.passo === 0,
+      "🧭 v776: 'Li e aceito' fecha o termo e o tour vem logo depois, do passo 1" + (cliqueTermo ? " — " + cliqueTermo.slice(0, 120) : ""));
+    await cD.close();
+    await ctxTp.close();
+  }
+
   /* ================= v765 — o placar do app vira coisa do professor ========
    * Medido no banco em 2026-09-03: os 5 alunos com retorno estavam no nível 1,
    * o painel nunca lia esse campo, e NENHUM desafio tinha sido criado. */
