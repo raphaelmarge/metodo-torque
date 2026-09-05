@@ -311,7 +311,9 @@ async function abaNt(p, a) {
       pix: document.getElementById("pixPac") ? document.getElementById("pixPac").value : "",
     }));
     ok(fotoUi.temFoto && /br\.gov\.bcb\.pix/.test(fotoUi.pix), "no app aberto: input de foto e código Pix prontos");
-    // card de conquista pro Stories baixa a imagem
+    // Exercita o download: no Windows, canShare também existe no Chromium
+    // headless. O compartilhamento nativo é outra saída, não um download.
+    await pApp2.evaluate(() => Object.defineProperty(navigator, "canShare", { configurable: true, value: () => false }));
     const dlN = pApp2.waitForEvent("download", { timeout: 5000 }).catch(() => null);
     await pApp2.evaluate(() => document.getElementById("btnCardStories").click());
     const cardN = await dlN;

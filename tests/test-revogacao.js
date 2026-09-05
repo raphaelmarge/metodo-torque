@@ -203,7 +203,7 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       t(puladas.every((n) => dispensadas.indexOf(n) >= 0),
         "só as RPCs dispensadas conhecidas ficam de fora do porteiro");
     }
-    t(/language sql volatile\nset search_path = public/.test(sql),
+    t(/language sql volatile\r?\nset search_path = public/.test(sql),
       "a geradora do verify token fixa o search_path, como todas as outras");
     // redundância: sobrescrever ou apagar um registro do `dados` guarda o valor
     // anterior — foi a falta disso que tornou irrecuperável a base de um professor

@@ -912,6 +912,10 @@
   // nas páginas de programas e no modo TV, inicia a sincronização sozinho
   // telemetria: erros de JS vão para a nuvem (página Auditoria e Saúde)
   var errosEnviados = 0;
+  // URLs de diagnóstico não precisam de parâmetros (links do aluno contêm token).
+  function limpaDiagnostico(valor) {
+    return String(valor || "").replace(/(https?:\/\/[^\s?#)]+)[?#][^\s)]*/gi, "$1");
+  }
   function reportaErro(msg, pilha) {
     try {
       if (errosEnviados >= 5 || !sync.client || !sync.aid) return;
@@ -919,15 +923,15 @@
       sync.client.from("erros_js").insert({
         academia_id: sync.aid,
         pagina: location.pathname.split("/").pop() || "index",
-        msg: String(msg || "").slice(0, 300),
-        pilha: String(pilha || "").slice(0, 800),
+        msg: limpaDiagnostico(msg).slice(0, 300),
+        pilha: ((self.MT_VERSAO || "versão indisponível") + "\n" + limpaDiagnostico(pilha)).slice(0, 800),
         navegador: (navigator.userAgent || "").slice(0, 160),
         quem: sync.email || "",
       }).then(function () {}, function () {});
     } catch (e) {}
   }
   window.addEventListener("error", function (e) {
-    reportaErro(e.message, e.error && e.error.stack);
+    reportaErro(e.message, (e.error && e.error.stack) || (e.filename ? e.filename + ":" + (e.lineno || 0) + ":" + (e.colno || 0) : "Origem não fornecida pelo navegador"));
   });
   window.addEventListener("unhandledrejection", function (e) {
     var r = e.reason || {};

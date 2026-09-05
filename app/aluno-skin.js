@@ -194,6 +194,15 @@
    * mora em #heroCarr, os dias em #semBlock). O js fica vazio de propósito:
    * o builder continua embutindo a tag, e quem precisar de um ajuste de DOM
    * de verdade escreve aqui. */
+  css += ".cardx h2{font-size:13px;letter-spacing:.1em;color:#b9b3c6}.vz{font-size:14px;line-height:1.6}";
+  css += "#navApp .nitem span:last-child{font-size:12px!important;letter-spacing:.02em!important}#navApp .nitem{min-height:48px}";
+  css += "#htSub,#heroCarr .hsub{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:14px!important;line-height:1.5!important;overflow-wrap:anywhere}";
+  css += ".ggrupo,.gtecl,.gdica,.gprox,.guvrow,.grelo,#gProg,#gReloTot{font-size:14px;color:#b9b3c6}.gobs p{font-size:15px;line-height:1.6}.gobs em,.gultvez>span{font-size:12px;color:#b9b3c6}";
+  css += ".gsecrow{flex-wrap:wrap;gap:8px}.gsecrow button,.altbtn,.ntSalva{min-height:44px;font-size:14px}.gtit{font-size:clamp(26px,7vw,36px);line-height:1.08}.gtiles{gap:10px}.gtile{min-height:88px}";
+  css += ".ac-sync,.ac-resume,.ac-evolucao{font-size:14px;line-height:1.55;color:#c9c4d4}.ac-sync,.ac-resume{margin:16px 20px;padding:14px 16px;background:var(--bg4);border:1px solid var(--bg11);border-radius:16px}.ac-sync button{font:inherit;min-height:44px;border:0;background:none;color:var(--corc);text-decoration:underline}.ac-resume span{display:block;margin:6px 0 12px}.ac-resume b{font-size:18px;color:#fff}.ac-resume[hidden]{display:none!important}.ac-sync[data-estado=enviando]{border-color:var(--cor)}";
+  css += ".ac-feedback{background:var(--bg2);color:#fff;border:1px solid var(--bg11);border-radius:20px;padding:20px;width:min(440px,calc(100vw - 24px));max-height:85dvh;overflow:auto}.ac-feedback::backdrop{background:rgba(0,0,0,.7)}.ac-feedback h2{font-size:22px}.ac-feedback label{display:block;font-size:15px}.ac-feedback textarea{display:block;width:100%;font:inherit;font-size:16px;margin:12px 0}.ac-feedback button{display:block;width:100%;margin-top:12px}.ac-feedback p{font-size:14px;line-height:1.5}";
+  css += "html.claro .ggrupo,html.claro .gtecl,html.claro .gdica,html.claro .gprox,html.claro .guvrow,html.claro .grelo,html.claro #gProg,html.claro #gReloTot{color:#625b70}html.claro .ac-sync,html.claro .ac-resume,html.claro .ac-evolucao{color:#51495e}html.claro .ac-resume b{color:#211b2c}html.claro .ac-feedback{background:#fff;color:#211b2c}";
+  css += ":focus-visible{outline:3px solid var(--corc);outline-offset:3px}@media(min-width:1100px){body{max-width:600px!important}#navApp,#menuApp{max-width:600px!important}.cardx{margin-left:28px;margin-right:28px}}@media(prefers-reduced-motion:reduce){.ac-resume,.ac-feedback{animation:none;scroll-behavior:auto}}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

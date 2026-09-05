@@ -9,16 +9,21 @@ on:
 jobs:
   testes:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Instalar Playwright
         run: |
           npm init -y >/dev/null
           npm i playwright@1 >/dev/null
           npx playwright install --with-deps chromium
+          # Mesmos caminhos das suítes locais e do workflow testes.yml.
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          sudo ln -s "$CHROME" /opt/pw-browsers/chromium
       - name: Rodar as suítes
         run: bash tests/run.sh
