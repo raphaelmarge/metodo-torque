@@ -253,6 +253,18 @@ html.motion-off .about-scene { transform:none!important; }
   .dimension-ring::before,.about-note { animation:none!important; }
 }
 
+/* Team contact stays reachable without covering the mobile trial bar. */
+.whatsapp-contact{position:fixed;right:22px;bottom:22px;z-index:46;display:flex;align-items:center;gap:11px;min-height:56px;padding:11px 19px 11px 14px;border:1px solid #ffffff30;border-radius:999px;background:#087f5b;color:#fff;box-shadow:0 12px 35px #0006;transition:background .2s,transform .2s}
+.whatsapp-contact:hover{background:#066c4c;transform:translateY(-2px)}
+.whatsapp-contact svg{flex:none;width:27px;height:27px}
+.whatsapp-contact span{display:grid;gap:1px}
+.whatsapp-contact small{font-size:11px;line-height:1.3;font-weight:400}
+.whatsapp-contact strong{font-size:14px;line-height:1.4;font-weight:600}
+@media(max-width:760px){
+  .whatsapp-contact{right:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));padding-right:16px}
+  .motion-toggle{left:16px;right:auto;bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+  .motion-toggle.with-mobile-cta,.mobile-cta.is-shown ~ .whatsapp-contact{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 <noscript><style>.menu-toggle,#openVideo,.brand-controls,.student-slider-box{display:none!important}@media(max-width:760px){.main-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:6px 15px;padding:0;border:0;background:none;font-size:11px;box-shadow:none}.main-nav a{border:0;padding:5px 0}.header-inner{flex-wrap:wrap;height:auto;padding-block:14px}.main-nav{order:3;width:100%}.hero{padding-top:162px}}</style></noscript>
 </head>
@@ -422,6 +434,10 @@ html.motion-off .about-scene { transform:none!important; }
   <p class="screen-dialog-caption">Tela inteira, em proporção original e sem perspectiva. Dados de demonstração.</p>
 </dialog>
 
+<a class="whatsapp-contact" data-zap href="https://wa.me/5521994429198?text=Oi!%20Quero%20conhecer%20o%20TORQUE%20PERSONAL.%20Como%20funciona?" target="_blank" rel="noopener noreferrer" aria-label="Fale com a equipe pelo WhatsApp (abre em nova aba)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9H13a8.5 8.5 0 0 1 8 8v.5Z"/><path d="M8.5 7.5c0 4.4 3.6 8 8 8l1-2.5-3-1-1 1a6.5 6.5 0 0 1-2-2l1-1-1-3-3 1Z"/></svg>
+  <span><small>WhatsApp</small><strong>Fale com a equipe</strong></span>
+</a>
 <script>
 const ICON_PLAY="<svg class=\"icon \" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 5 11 7-11 7z\"/></svg>";
 const ICON_PAUSE="<svg class=\"icon \" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 5v14M15 5v14\"/></svg>";
