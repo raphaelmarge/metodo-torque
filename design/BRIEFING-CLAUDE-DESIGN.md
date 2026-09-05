@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v774** |
-| Estado do repo em | 2026-09-04 (commit `3a0055e`) |
+| App em | **mt-v776** |
+| Estado do repo em | 2026-09-05 (commit `17cca11`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 235 |
+| Lançamentos no histórico | 238 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v774**.
+vez em **(fora de um lote de versão)** (2026-09-02), e o app está em **mt-v776**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,13 +28,13 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v774** (2026-09-04).
+O motor (`app/aluno-builder.js`) encostou em **mt-v775** (2026-09-05).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
 
 Estes números aparecem **mais de uma vez** no histórico, com conteúdos
-diferentes: mt-v601, mt-v600, mt-v599, mt-v598.
+diferentes: mt-v775, mt-v601, mt-v600, mt-v599, mt-v598.
 
 Isso acontece quando duas conversas trabalham no mesmo repositório ao mesmo
 tempo — as duas numeram a partir do mesmo ponto e chegam ao mesmo número
@@ -48,6 +48,9 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v775 | quatro frentes pra segurar o aluno no app — tour do primeiro uso, progresso da semana, recordes do mês e resgate de quem sumiu no servidor |
+| mt-v776 | o pacote do aluno para de levar o app inteiro (502 KB por aluno que ninguem lia) |
+| mt-v775 | sobe a versão nos três lugares (versao.js, sw.js, app/app-sw.js) |
 | mt-v774 | o recado do studio na linguagem nova ([#769](https://github.com/raphaelmarge/metodo-torque/pull/769)) |
 | mt-v773 | vencimento da mensalidade no sino do app ([#768](https://github.com/raphaelmarge/metodo-torque/pull/768)) |
 | mt-v772 | sino de avisos no topo do app do aluno ([#767](https://github.com/raphaelmarge/metodo-torque/pull/767)) |
@@ -60,9 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v765 | a gamificacao premiava um botao e ninguem olhava |
 | mt-v764 | pedir o GPS na hora certa (e religar quando o aluno volta pro app) |
 | mt-v763 | pedir o push no primeiro dia (e o chat volta a descer pra mensagem nova) |
-| mt-v762 | o vitalício é grudado — nenhum caminho derruba mais |
-| mt-v761 | a trava do teste vencido e o acesso vitalício |
-| mt-v760 | o painel que avisa o dono, e a régua contra construir no escuro |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
