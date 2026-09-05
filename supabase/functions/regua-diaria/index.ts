@@ -13,12 +13,17 @@
 //   cliente não repete o servidor → cada envio entra em push_log_srv, e o
 //   painel importa essas chaves pro pushLog local antes de rodar a régua dele.
 // As chaves são as MESMAS do painel: treino|<aluno>|<data>, vespera|...,
-// niver|<aluno>|<ano>.
+// niver|<aluno>|<ano> e, desde a v776, sumiu|<aluno>|<semana> (o resgate de
+// quem sumiu — antes só saía quando o PROFESSOR abria o painel; aluno que
+// some é justamente o que o professor não está olhando). A chave semanal
+// obrigou o painel a importar 8 dias do push_log_srv em vez de 3 (senão o
+// aviso do cron de segunda saía de novo pelo painel aberto na quinta).
 //
 // A cobrança (venc-2, vencido) NÃO mora aqui de propósito: a regra dela usa
 // contrato/plano/dívida, que são contas do painel — duplicar essas contas em
 // dois lugares é como os números passam a divergir. O painel continua sendo o
 // dono da régua de cobrança.
+// Os marcos (marco25/50/100) e o fim do desafio também continuam só no painel.
 //
 // Ações (POST JSON):
 //   { acao: "ping" }             → { ok, vapid, regras } (diagnóstico, aberto)
@@ -79,6 +84,47 @@ function treinoDe(st: any, alunoId: string, iso: string): string {
   return (tt[1] || tt[0] || "").trim().slice(0, 40);
 }
 
+// ==== SUMIU ====
+// v776: resgate de quem sumiu — a MESMA regra do bloco "resgate de quem sumiu"
+// da rotinaDiariaPush do painel (personal.html): última sessão FEITA do aluno
+// há 5+ dias e nenhuma sessão futura pendente → "Sentimos sua falta!", no
+// máximo 1 por semana. Chave e texto têm de ser IDÊNTICOS aos do painel,
+// senão o dedupe dos dois sentidos (pushLog do blob ↔ push_log_srv) deixa de
+// casar e o aluno recebe duas vezes — tests/test-personal.js recorta os dois
+// arquivos e compara.
+// "Última sessão feita" é a conta OFICIAL de "sumindo" (v756): sessões com
+// feita truthy, maior data. NÃO olha retorno.feitos do app de propósito — é
+// outra conta (treino marcado pelo aluno sem o professor) e faria a lista de
+// Alunos dizer "sumindo" enquanto o push ficava calado, ou o contrário.
+// Limitação honesta: aluno que só treina pelo app, sem sessão marcada, recebe
+// o resgate mesmo treinando — igual ao painel hoje. E não há teto: quem ficou
+// ativo com app publicado e sumiu há meses recebe toda semana (também igual).
+// A comparação x.alunoId !== alunoId é estrita, como treino/vespera acima
+// (o idxDe do painel indexa por chave de objeto, coerçida) — ids são strings.
+// Região em JS PURO de propósito: tests/test-infra.js recorta e avalia em
+// node — não coloque tipo do TypeScript aqui.
+// @ts-ignore — parâmetros sem tipo de propósito (mesmo desenho do meta-webhook)
+function sumiuDe(sessoes, alunoId, hoje) {
+  var feitas = [], futura = false;
+  for (var i = 0; i < sessoes.length; i++) {
+    var x = sessoes[i];
+    if (!x || x.alunoId !== alunoId) continue;
+    if (x.feita) feitas.push(x.data);
+    if (x.data >= hoje && !x.feita && !x.faltou) futura = true;
+  }
+  var ult = feitas.sort().pop() || "";
+  if (!ult || futura) return null;
+  var dias = Math.floor((Date.parse(hoje + "T12:00:00Z") - Date.parse(ult + "T12:00:00Z")) / 864e5);
+  if (!(dias >= 5)) return null;
+  var semana = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+  return {
+    chave: "sumiu|" + alunoId + "|" + semana,
+    titulo: "Sentimos sua falta!",
+    corpo: "Já faz " + dias + " dias desde seu último treino — bora marcar o próximo? Me chama no chat do app.",
+  };
+}
+// ==== FIM SUMIU ====
+
 // os lembretes de UMA academia, a partir do blob do estúdio (mtapp:ptStudio).
 // As regras são as mesmas da rotinaDiariaPush do painel — de propósito.
 function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
@@ -109,6 +155,9 @@ function avisosDe(aid: string, st: any, hoje: string, amanha: string): Aviso[] {
         titulo: "Parabéns, " + String(a.nome || "").split(" ")[0] + "!",
         corpo: "Feliz aniversário! Que tal comemorar com um treino especial? Conta comigo sempre." });
     }
+    // v776: resgate de quem sumiu — regra, chave e texto moram na região SUMIU
+    const sm = sumiuDe(sessoes, a.id, hoje);
+    if (sm) out.push({ academia_id: aid, token: String(a.appTokenP), chave: sm.chave, titulo: sm.titulo, corpo: sm.corpo });
   }
   return out;
 }
@@ -122,7 +171,7 @@ Deno.serve(async (req: Request) => {
     return json({
       ok: true,
       vapid: !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY")),
-      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino", "dia-getday", "regua-off"],
+      regras: ["treino", "vespera", "niver", "log-srv", "fuso-br", "nome-treino", "dia-getday", "regua-off", "sumiu"],
     });
   }
 
