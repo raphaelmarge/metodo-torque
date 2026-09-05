@@ -56,7 +56,7 @@ let browser;
       assert(await page.locator('#screenDialog').isVisible());
       assert.equal(await page.locator('#screenDialogImage').getAttribute('src'), await page.locator('.tour-image').evaluate(img => img.src));
       await page.keyboard.press('Escape');
-      assert(await page.locator('.tour-inspect button').evaluate(el => el === document.activeElement));
+      await page.waitForFunction(() => !document.getElementById('screenDialog').open && document.querySelector('.tour-inspect button') === document.activeElement);
     }
     await page.locator('#tourNext').click();
     assert.equal(await page.locator('#tourNumber').innerText(), '01');
@@ -88,7 +88,8 @@ let browser;
     await page.waitForFunction(() => document.getElementById('productVideo').readyState >= 1);
     assert(await page.locator('#productVideo').evaluate(el => el.controls && !el.autoplay && el.videoWidth > 0));
     await page.keyboard.press('Escape');
-    assert(await page.locator('#productVideo').evaluate(el => el.paused));
+    // The native dialog close event is queued; wait for its pause/focus handler.
+    await page.waitForFunction(() => !document.getElementById('videoDialog').open && document.getElementById('productVideo').paused && document.getElementById('openVideo') === document.activeElement);
     assert(await page.locator('html').evaluate(el => el.classList.contains('motion-off')));
     if (screenshotDir) {
       await page.goto(base + '/personal-vendas.html');
