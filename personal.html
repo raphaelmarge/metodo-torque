@@ -19412,7 +19412,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var r=MT_ACOMP.resumo(st,a,hoje),f=alFicha(st,a),rev=a.acompRevistaEm||'';
       var notas=((a.retorno||a.demoRetorno||{}).notas||[]).filter(function(n){return n&&n.d>=r.inicio&&n.d<=hoje&&(a.acompNotasVistas||[]).indexOf(JSON.stringify([n.d,n.em||'',n.t]))<0;});
       var motivos=[];
-      if(f.velha)motivos.push(f.o==='Sem ficha'?'Sem ficha montada':'Ficha precisa de revisão');
+      var t=(st.treinosV2||{})[a.id]||{},temTreino=(t.fichas||[]).length||(t.wods||[]).length||(t.cardio||[]).length;
+      var em=prescricaoEm(t,a),vence=String(t.validade||''),vencida=vence?vence<hoje:!!(em&&(Date.parse(hoje+'T12:00:00')-Date.parse(em+'T12:00:00'))>=56*864e5);
+      if(!temTreino||vencida)motivos.push(!temTreino?'Sem treino prescrito':'Treino precisa de revisão');
       if(faltam[a.id])motivos.push('Questionário aguardando resposta');
       if(notas.length)motivos.push(notas.length+' relato(s) para revisar');
       if(!motivos.length)return;
@@ -19957,6 +19959,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
       if (!mudou) return;
       S.write("ptStudio", st2); // S.write: gravar sem redesenhar a tela inteira
+      acPendencias(st2); // relatos novos chegam ao acompanhamento na mesma leitura
       var el = $("dashResolver");
       var jaTem = el && el.querySelector("[data-dorcard]");
       if (relatosComDor(st2).length && !jaTem) { pintaResolver(st2); resolverChat(); }
