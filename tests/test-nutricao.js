@@ -565,11 +565,11 @@ async function abaNt(p, a) {
       await new Promise((res) => setTimeout(res, 300));
       window.MTStore.cloud = window.__cloudOrig;
       const dd = upsertRow && upsertRow.row.dados;
-      return { tb: upsertRow && upsertRow.tb, temHtml: !!(dd && dd.html && dd.html.length > 10000),
+      return { tb: upsertRow && upsertRow.tb, semHtml: !!(dd && dd.html === ""),
         tipo: dd && dd.dados && dd.dados.tipo, ver: dd && dd.ver, aviso: document.getElementById("qeAvisoN").textContent };
     });
-    ok(pubN.tb === "app_aluno" && pubN.temHtml && /Tudo pronto/.test(pubN.aviso), "gerar com a nuvem publica o app do paciente junto");
-    // fonte única (v661): o pacote leva {html, dados, ver} e dados.tipo = "nutri" —
+    ok(pubN.tb === "app_aluno" && pubN.semHtml && /Tudo pronto/.test(pubN.aviso), "gerar com a nuvem publica o app do paciente junto (sem o html — v776)");
+    // fonte única (v661): o pacote leva {html: "", dados, ver} e dados.tipo = "nutri" —
     // é por esse tipo que o /app/ manda pro nutri-builder em vez do builder do aluno
     ok(pubN.tipo === "nutri" && !!pubN.ver, "o pacote publicado leva os DADOS (tipo nutri) e a versão do site — app deixa de congelar");
   }

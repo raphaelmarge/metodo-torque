@@ -51,9 +51,11 @@
   function recado(txt) { document.getElementById("msg").textContent = txt; }
   function guardado(chave) { try { return localStorage.getItem(chave) || ""; } catch (e) { return ""; } }
 
-  /* Junta os dados do aluno com o código do site. Se o construtor não carregou
-   * (site fora do ar, cache velho), cai no HTML pronto que veio junto — é por
-   * isso que o pacote ainda traz os dois. */
+  /* Junta os dados do aluno com o código do site. Se o construtor não carregou,
+   * cai no pac.html — que o painel NÃO manda mais desde a v776 (vai vazio) e o
+   * portal (apps/app-aluno.html) ainda manda; é só por ele que o `|| ""` fica.
+   * Pro pacote do painel, construtor que faltou se resolve baixando de novo
+   * (abreOuRecupera, abaixo), não com cópia congelada. */
   function montaDoPacote(pac) {
     if (!pac || typeof pac !== "object") return "";
     // o D diz de quem é o app: dados.tipo === "nutri" vai pro builder do paciente
@@ -61,17 +63,82 @@
     // pacote de nutri pro MT_APP_ALUNO — os campos não batem e o app sairia vazio.
     var d = pac.dados || (pac.a || pac.tipo ? pac : null);
     if (d && d.tipo === "nutri") {
-      if (self.MT_APP_NUTRI) { try { return self.MT_APP_NUTRI.monta(d); } catch (e) {} }
+      if (self.MT_APP_NUTRI) { try { return self.MT_APP_NUTRI.monta(d); } catch (e) { anota("o construtor do paciente estourou: " + ((e && e.message) || e)); } }
       return pac.html || "";
     }
     if (self.MT_APP_ALUNO) {
       // formato normal: o registro é {html, dados, ver, stamp}
-      if (pac.dados) { try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) {} }
+      if (pac.dados) { try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) { anota("o construtor estourou: " + ((e && e.message) || e)); } }
       // e o registro que já veio SEM embrulho (pacote antigo, ou envelope que
       // entrega o D direto) também tem que montar
-      if (pac.a) { try { return self.MT_APP_ALUNO.monta(pac); } catch (e) {} }
+      if (pac.a) { try { return self.MT_APP_ALUNO.monta(pac); } catch (e) { anota("o construtor estourou: " + ((e && e.message) || e)); } }
     }
     return pac.html || "";
+  }
+  /* v776: o pacote do painel NÃO traz mais o html de reserva (eram ~500 KB por
+   * aluno que ninguém lia). O que ele cobria de verdade era UM cenário: a
+   * primeira abertura num 4G ruim, em que o <script> síncrono do construtor
+   * (700 KB, baixado ANTES de existir service worker) cai e a página segue sem
+   * MT_APP_ALUNO — enquanto o pacote, agora com 2 KB, chega. Nesse caso o certo
+   * é baixar o construtor de novo e, se nem assim vier, dizer que é a INTERNET
+   * (com Tentar de novo) — nunca "o sistema da sua academia não respondeu". */
+  // o que falta na página pra montar ESTE pacote: o skin (a cara do redesenho —
+  // o builder embute em tempo de monta, com guarda) e o construtor. O skin
+  // entra na lista mesmo com o construtor presente: montar sem ele abriria o
+  // app sem o desenho, e a segunda tentativa custa um arquivo de 13 KB.
+  function construtorQueFalta(pac) {
+    var d = pac && typeof pac === "object" ? (pac.dados || (pac.a || pac.tipo ? pac : null)) : null;
+    if (!d) return [];
+    var f = [];
+    if (d.tipo === "nutri") { if (!self.MT_NUTRI_SKIN) f.push("nutri-skin.js"); if (!self.MT_APP_NUTRI) f.push("nutri-builder.js"); }
+    else { if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
+    return f;
+  }
+  function construtorPresente(pac) {
+    var d = pac && typeof pac === "object" ? (pac.dados || (pac.a || pac.tipo ? pac : null)) : null;
+    return !!(d && (d.tipo === "nutri" ? self.MT_APP_NUTRI : self.MT_APP_ALUNO));
+  }
+  // baixa em sequência; conexão que aceita e não entrega bytes (4G travado)
+  // não pode deixar o aluno em "Abrindo seu app…" pra sempre — 15 s e desiste
+  var baixados = {}; // arquivo → true quando o onload disparou (baixou E rodou)
+  function baixaScripts(arqs, fim) {
+    if (!arqs.length) { fim(); return; }
+    var sc = document.createElement("script"), feito = false;
+    var pronto = function () { if (feito) return; feito = true; clearTimeout(tm); baixados[arqs[0]] = true; baixaScripts(arqs.slice(1), fim); };
+    var tm = setTimeout(function () { if (!feito) { feito = true; anota(arqs[0] + " não respondeu em 15 s"); fim(); } }, 15000);
+    sc.src = arqs[0];
+    sc.onload = pronto;
+    sc.onerror = function () { if (feito) return; feito = true; clearTimeout(tm); fim(); };
+    document.head.appendChild(sc);
+  }
+  function arqConstrutor(pac) {
+    var d = pac && typeof pac === "object" ? (pac.dados || (pac.a || pac.tipo ? pac : null)) : null;
+    return d && d.tipo === "nutri" ? "nutri-builder.js" : "aluno-builder.js";
+  }
+  function abreOuRecupera(pac, aoGuardar, senao) {
+    var falta = construtorQueFalta(pac);
+    if (!falta.length) {
+      var html = montaDoPacote(pac);
+      if (html) { aoGuardar(); abre(html); return; }
+      senao(); return;
+    }
+    anota("o código do app (" + falta.join(", ") + ") não veio na primeira tentativa — baixando de novo");
+    baixaScripts(falta, function () {
+      if (!construtorPresente(pac)) {
+        /* Duas coisas diferentes com a mesma cara: (1) o arquivo NÃO veio —
+         * é rede; (2) o arquivo veio, rodou (onload) e não definiu o global —
+         * é código quebrado ou uma resposta que não é JS (CDN devolvendo
+         * outra coisa com 200). Culpar a internet no caso 2 mandava o aluno
+         * trocar de wi-fi por um defeito que é nosso. */
+        if (baixados[arqConstrutor(pac)]) { anota("o construtor baixou mas não definiu o app — código quebrado ou resposta que não é JS"); senao(); return; }
+        anota("o código do app não baixou nem na segunda tentativa"); semResposta("rede"); return;
+      }
+      // sem só o skin, monta assim mesmo (o builder tem guarda)
+      var html2 = montaDoPacote(pac);
+      if (html2) { aoGuardar(); abre(html2); return; }
+      // veio o construtor e mesmo assim não montou? aí o defeito é do pacote, não da rede
+      senao();
+    });
   }
   // cópia local: abre offline e volta a funcionar sem internet
   function copiaLocal() {
@@ -168,7 +235,8 @@
    * ninguém olhava pro lugar certo. Agora cada motivo tem o seu recado, e os
    * detalhes técnicos ficam a um toque de distância. */
   var pista = "";
-  function anota(txt) { pista = String(txt || "").slice(0, 300); }
+  // v776: acumula (antes substituía, e o "construtor estourou" sumia atrás do recado genérico)
+  function anota(txt) { pista = ((pista ? pista + " · " : "") + String(txt || "").slice(0, 200)).slice(-500); }
   function semResposta(motivo) {
     var cop = copiaLocal();
     if (cop) { abre(cop); return; }   // tem cópia no aparelho: abre e pronto
@@ -210,11 +278,11 @@
       return r.json().catch(function () { anota("app_aluno_busca devolveu algo que não é JSON"); return { erro: 1 }; });
     }).then(function (d) {
       if (d && d.erro) { semResposta("servidor"); return; }
-      var html = montaDoPacote(d);
-      if (html) { guarda(d); abre(html); return; }
-      if (d && d.code) { anota("app_aluno_busca: " + d.code + " " + (d.message || "")); semResposta("servidor"); return; }
-      // JSON válido e vazio: o servidor está de pé, este token é que não tem app
-      semResposta(d === null || d === undefined ? "vazio" : "servidor");
+      abreOuRecupera(d, function () { guarda(d); }, function () {
+        if (d && d.code) { anota("app_aluno_busca: " + d.code + " " + (d.message || "")); semResposta("servidor"); return; }
+        // JSON válido e vazio: o servidor está de pé, este token é que não tem app
+        semResposta(d === null || d === undefined ? "vazio" : "servidor");
+      });
     }).catch(function (e) { anota("app_aluno_busca falhou: " + (e && e.message)); semResposta("rede"); });
   }
 
@@ -232,11 +300,10 @@
        * dados do aluno — e como o embrulho novo não levava o html de reserva,
        * a tela morria em "não respondeu". Era o defeito que o Raphael viu. */
       var pac = d.dados;
-      var html = montaDoPacote(pac);
-      if (!html) { anota("o pacote veio sem dados que montem o app"); semResposta("servidor"); return; }
-      guarda(pac && pac.dados ? pac : { dados: pac, stamp: (pac && pac.stamp) || "" });
-      try { localStorage.setItem("tq_app_visto", new Date().toISOString()); } catch (e) {}
-      abre(html);
+      abreOuRecupera(pac, function () {
+        guarda(pac && pac.dados ? pac : { dados: pac, stamp: (pac && pac.stamp) || "" });
+        try { localStorage.setItem("tq_app_visto", new Date().toISOString()); } catch (e) {}
+      }, function () { anota("o pacote veio sem dados que montem o app"); semResposta("servidor"); });
       return;
     }
     if (d && d.code) anota("app_aluno_estado: " + d.code + " " + (d.message || ""));
