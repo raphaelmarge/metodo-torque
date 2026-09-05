@@ -15374,6 +15374,137 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
+  /* ================= v776 — "Seus recordes do mês" no Início (avanço em prosa)
+   * A aba Cargas mostra o máximo DE SEMPRE de cada exercício, mas "em 30 dias
+   * você aguentou +5 kg no supino" não ficava óbvio em lugar nenhum do Início.
+   * O card lê o ptdc do aparelho com a MESMA regra do recordesDe do painel:
+   * máximo na janela (30 dias) > máximo de ANTES, e o antes tem de existir. */
+  console.log("\n🏆 v776 — seus recordes do mês no Início:");
+  {
+    const ctxRM = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxRM.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pRM = await ctxRM.newPage();
+    pRM.on("pageerror", (e) => erros.push("v776: " + e.message));
+    pRM.on("dialog", (d) => d.accept());
+    await pRM.goto(BASE + "/personal.html");
+    await pRM.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    const appRM = await pRM.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos = [{ id: "u776", nome: "Recorde Silva", ativo: true, desde: "2026-01-05", appTokenP: "tku776" }];
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st); window.__renderPT();
+      return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    });
+    await pRM.close();
+
+    const ctxAR = await b.newContext({ viewport: { width: 390, height: 844 } });
+    // o cenário entra ANTES do app abrir (o boot pinta o card); datas montadas na mão, nunca toISOString
+    await ctxAR.addInitScript(() => {
+      const iso = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+      localStorage.setItem("ptdc", JSON.stringify({
+        "Supino reto": [{ d: iso(45), kg: 80, r: 8 }, { d: iso(40), kg: 80, r: 10 }, { d: iso(10), kg: 85, r: 8 }],   // +5
+        "Agachamento livre": [{ d: iso(50), kg: 100, r: 8 }, { d: iso(5), kg: 110, r: 6 }],                           // +10 (primeiro)
+        "Remada curvada": [{ d: iso(3), kg: 60, r: 10 }],                                                               // só na janela: ponto de partida, NÃO entra
+        "Leg press": [{ d: iso(60), kg: 200, r: 10 }, { d: iso(2), kg: 180, r: 10 }],                                  // caiu: NÃO entra
+        "Rosca direta": [{ d: iso(70), kg: 20, r: 12 }, { d: iso(8), kg: 22.5, r: 10 }],                               // +2,5 (vírgula)
+        "Desenvolvimento": [{ d: iso(70), kg: 30, r: 10 }, { d: iso(20), kg: 32, r: 10 }],                             // +2 → 4º: fica FORA do card, dentro da lista
+        "Elevação lateral": [{ d: iso(70), kg: 8, r: 12 }, { d: iso(-3), kg: 14, r: 12 }],                             // data FUTURA (relógio torto): fora da janela, NÃO entra
+      }));
+    });
+    const paR = await ctxAR.newPage();
+    paR.on("pageerror", (e) => erros.push("v776 app: " + e.message));
+    await paR.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await paR.route("**/app-v776.html", (r) => r.fulfill({ contentType: "text/html", body: appRM }));
+    await paR.goto(BASE + "/app-v776.html", { waitUntil: "domcontentloaded" });
+    await paR.waitForTimeout(900);
+
+    const rm = await paR.evaluate(() => {
+      const card = document.getElementById("recMesCard");
+      const ls = [...document.querySelectorAll("#recMesLs [data-recl]")];
+      const lista = window.__recordesMes.lista();
+      const r = card.getBoundingClientRect();
+      const linhasDe = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getClientRects().length; };
+      return {
+        visivel: getComputedStyle(card).display !== "none",
+        sec: card.getAttribute("data-sec"),
+        h2: (card.querySelector("h2") || {}).textContent || "",
+        aposSemana: document.getElementById("semBlock").compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING ? true : false,
+        aposNotif: document.getElementById("cardNotif").nextElementSibling === card,
+        nomesLista: lista.map((x) => x.n), ganhos: lista.map((x) => x.g),
+        linhas: ls.map((l) => l.textContent.replace(/\s+/g, " ").trim()),
+        sub: document.getElementById("recMesSub").textContent,
+        temEmoji: /[\u{1F300}-\u{1FAFF}]/u.test(card.textContent),
+        cabe: r.right <= 390 && card.scrollWidth <= card.clientWidth && ls.every((l) => l.getBoundingClientRect().right <= 390),
+        nomeUmaLinha: [...card.querySelectorAll("[data-recn]")].every((n) => linhasDe(n) === 1),
+        valorUmaLinha: [...card.querySelectorAll("[data-recv]")].every((v) => linhasDe(v) === 1),
+      };
+    });
+    ok(rm.visivel && rm.sec === "inicio" && rm.aposSemana && rm.aposNotif && /Seus recordes do mês/.test(rm.h2),
+      "🏆 v776: com avanço no ptdc o card 'Seus recordes do mês' aparece no INÍCIO, depois da Minha semana e do pedido de push (data-sec=" + rm.sec + ")");
+    ok(rm.nomesLista.join(",") === "Agachamento livre,Supino reto,Rosca direta,Desenvolvimento" && rm.ganhos.join(",") === "10,5,2.5,2",
+      "🏆 v776: a regra é a do recordesDe do painel — máximo na janela > máximo de antes, antes > 0, ordenado pelo ganho (" + rm.nomesLista.join(",") + ")");
+    ok(!rm.nomesLista.includes("Remada curvada") && !rm.nomesLista.includes("Leg press") && !rm.nomesLista.includes("Elevação lateral"),
+      "🏆 v776: primeira anotação é ponto de partida, carga que CAIU não é recorde e data FUTURA fica fora da janela — os três ficam de fora");
+    ok(rm.linhas.length === 3 && !/Desenvolvimento/.test(rm.linhas.join(" ")),
+      "🏆 v776: o card mostra só os 3 maiores avanços (o 4º fica na aba Cargas)");
+    ok(/^Supino reto.*80 → 85 kg.*\+5 kg$/.test(rm.linhas[1]) && /^Rosca direta.*20 → 22,5 kg.*\+2,5 kg$/.test(rm.linhas[2]),
+      "🏆 v776: prosa 'de → pra' com vírgula decimal (" + rm.linhas[1] + ")");
+    ok(rm.sub === "4 avanços nos últimos 30 dias" && !rm.temEmoji,
+      "🏆 v776: o sub conta TODOS os avanços e a janela, sem prometer mais que o dado; ícone de traço, nenhum emoji (" + rm.sub + ")");
+    ok(rm.cabe && rm.nomeUmaLinha && rm.valorUmaLinha,
+      "🏆 v776: num celular de 390 nada vaza pra fora do card, cada nome e cada valor ficam numa linha (Range.getClientRects)");
+
+    // carga nova gravada pelo player repinta o card SEM chamar pinta() na mão — é o gancho dentro do Sv
+    const rmSv = await paR.evaluate(() => {
+      window.__gGrava("Supino reto", 92, 8, "");
+      const l = [...document.querySelectorAll("#recMesLs [data-recl]")].map((x) => x.textContent.replace(/\s+/g, " "));
+      return { supino: l.find((t) => /Supino/.test(t)) || "", primeiro: l[0] || "" };
+    });
+    ok(/80 → 92 kg/.test(rmSv.supino) && /\+12 kg/.test(rmSv.supino) && /^\s*Supino/.test(rmSv.primeiro),
+      "🏆 v776: anotar carga pelo player repinta o card na hora e reordena pelo ganho (" + rmSv.supino + ")");
+
+    // tocar no card leva pra Evolução → Cargas (não pra Conquistas, que é a sub-aba padrão)
+    const rmGo = await paR.evaluate(async () => {
+      document.getElementById("recMesBt").click();
+      await new Promise((r) => setTimeout(r, 250));
+      return {
+        sec: document.querySelector("[data-sec='evolucao']:not([data-sec-off])") ? "evolucao" : "?",
+        cargas: getComputedStyle(document.getElementById("evCargas")).display !== "none",
+        conq: [...document.querySelectorAll("[data-sec='evolucao'][data-evsub='conq']")].every((e) => getComputedStyle(e).display === "none"),
+        inicioOff: !!document.getElementById("recMesCard").getAttribute("data-sec-off"),
+      };
+    });
+    ok(rmGo.sec === "evolucao" && rmGo.cargas && rmGo.conq && rmGo.inicioOff,
+      "🏆 v776: tocar no card abre Evolução já na sub-aba CARGAS (data-ajevsub)");
+
+    // sem avanço nenhum o card SOME — nunca card vazio
+    const rmVazio = await paR.evaluate(() => {
+      window.__trocaSec("inicio");
+      localStorage.setItem("ptdc", JSON.stringify({ "Remada curvada": [{ d: new Date().getFullYear() + "-01-01", kg: 60 }] }));
+      window.__recordesMes.pinta();
+      return { display: getComputedStyle(document.getElementById("recMesCard")).display, linhas: document.querySelectorAll("#recMesLs [data-recl]").length,
+        lista: window.__recordesMes.lista().length };
+    });
+    ok(rmVazio.display === "none" && rmVazio.linhas === 0 && rmVazio.lista === 0,
+      "🏆 v776: sem avanço na janela o card fica display:none — card vazio não existe");
+
+    // trava de escopo: nada de identificador do BUILDER dentro do pedaço do app (a armadilha 'is not defined' da v770/v773), e nada grava
+    const bldRM = await paR.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    const iRM = bldRM.indexOf('"function rcmDesde()'), fRM = bldRM.indexOf("window.__recordesMes=");
+    const trechoRM = iRM > 0 && fRM > iRM ? bldRM.slice(iRM, fRM) : "";
+    ok(trechoRM.length > 500 && !/\b(esc|dinheiro|jsonApp|ve)\(/.test(trechoRM) && !/STUDIO_CURTO|\bD\./.test(trechoRM) && /pl\(todos\.length/.test(trechoRM),
+      "🏆 v776: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
+    ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);\}catch\(e\)\{\}\}/.test(bldRM) && !/\bSv\(/.test(trechoRM),
+      "🏆 v776: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
+    ok(/if\(el\.id==='recMesCard'\)\{el\.setAttribute\('data-sec','inicio'\);return;\}/.test(bldRM) && !/aria-label/.test(bldRM.slice(bldRM.indexOf("id='recMesCard'"), bldRM.indexOf("id='recMesLs'"))),
+      "🏆 v776: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
+
+    await ctxAR.close();
+  }
+
   /* ================= v770 — a agenda unificada (plano + sessões + serviços) ==
    * O Raphael pediu: a semana do aluno (A, B, C, corrida, circuito) tem de
    * aparecer em DATAS por dois meses na agenda, junto das sessões com o
@@ -15474,9 +15605,13 @@ async function abaPt(p, a) {
       return { itens, txt: document.getElementById("agDia").textContent.replace(/\s+/g, " "),
                longe: window.__agItens(c.segLonge).length };
     }, cen);
-    ok(ap.itens.indexOf("07:30|treino") > -1 && ap.itens.indexOf("17:00|sessao") > -1 && ap.itens.indexOf("18:30|treino") > -1,
+    // v776: hoje+3 pode cair na segunda (circuito 07:30 + ficha 18:30) OU na terça (só a ficha) — o
+    // assert do painel logo acima já aceitava as duas; este exigia o 07:30 e falhava de quinta a
+    // segunda, sem que nada tivesse quebrado
+    const segRM = new Date(cen.d3 + "T12:00:00").getDay() === 1;
+    ok((!segRM || ap.itens.indexOf("07:30|treino") > -1) && ap.itens.indexOf("17:00|sessao") > -1 && ap.itens.indexOf("18:30|treino") > -1,
       "🗓️ v770: no APP o mesmo dia traz treino e sessão juntos, por horário (" + ap.itens.join(" ") + ")");
-    ok(/07:30/.test(ap.txt) && /Circuito do sábado/.test(ap.txt) && /18:30/.test(ap.txt),
+    ok((segRM ? /07:30/.test(ap.txt) && /Circuito do sábado/.test(ap.txt) : /A — Peito/.test(ap.txt)) && /17:00/.test(ap.txt) && /18:30/.test(ap.txt),
       "🗓️ v770: e tocar no dia do calendário mostra a agenda daquele dia, não só as sessões");
     ok(ap.longe === 2,
       "🗓️ v770: no app, um dia daqui a dois meses já vem com os treinos da semana — a projeção é local, sem inchar o pacote");

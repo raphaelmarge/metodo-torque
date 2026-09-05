@@ -1031,6 +1031,21 @@
       "<div class='vz' id='notifTxt' style='text-align:left;padding:2px 0 10px;'>Posso te avisar no dia do treino e quando " + esc(STUDIO_CURTO) + " mandar recado. Só isso — nada de propaganda.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Quero receber</button>" +
       "<button class='btnx sec' id='btnNotifNao' style='width:100%;margin-top:8px;background:none;border:1px solid var(--bd);'>Agora não</button></div>" +
+      /* v776: "Seus recordes do mês" no Início — o AVANÇO dos últimos 30 dias em
+       * prosa (Supino reto: 80 → 85 kg). NÃO é o mural "Seus recordes" da aba
+       * Cargas (#recBox, máximo de sempre) nem os tiles das Conquistas: é quanto
+       * o aluno aguentou A MAIS neste período em relação a tudo que veio antes —
+       * a MESMA regra do recordesDe(ret, desde, ate) do painel, por exercício.
+       * Só aparece com pelo menos um avanço; sem dado fica display:none (card
+       * vazio não existe). Fica DEPOIS do #cardNotif de propósito: a v763 quer o
+       * pedido de push logo abaixo do "Treinei hoje!". Tudo aqui dentro é
+       * pintado em runtime por pintaRecMes(): carga é dado do APARELHO (ptdc),
+       * nada entra pelo objeto D. Toque leva pra Evolução → Cargas (data-ajevsub). */
+      "<div class='cardx' id='recMesCard' style='display:none;'><h2>" + appIco(APPIC.trofeu, 14) + "Seus recordes do mês</h2>" +
+      "<button type='button' id='recMesBt' data-ajgo='evolucao' data-ajevsub='cargas' data-ajgoto='evCargas' style='display:block;width:100%;text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px 16px 10px;font-family:inherit;color:inherit;cursor:pointer;'>" +
+      "<span id='recMesSub' style='display:block;font-size:11.5px;color:#8a8695;font-weight:700;margin-bottom:6px;'></span>" +
+      "<span id='recMesLs' style='display:block;'></span>" +
+      "<span style='display:block;font-size:11.5px;color:#6e6a78;font-weight:800;text-align:right;margin-top:8px;'>Ver todas as cargas ›</span></button></div>" +
       // depoimento (v694): só aparece quando o PROFESSOR pediu (D.pedeDepo) e
       // o aluno ainda não escreveu — a lógica de mostrar mora perto do TERMO
       "<div class='cardx' id='depoCard' style='display:none;'>" +
@@ -1865,6 +1880,8 @@
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "function Sv(k,v){var ok9=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){ok9=false;}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
+      // v776: carga nova repinta o card "Seus recordes do mês" do Início (typeof como o pintaAgHoje; pintaRecMes nunca chama Sv, então não vira laço)
+      "if(k==='ptdc'){try{if(typeof pintaRecMes==='function')pintaRecMes();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
       "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}return ok9;}" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
@@ -2242,6 +2259,36 @@
       "if(window.__trSub)window.__trSub(tp==='wod'?'wod':tp==='cardio'?'cardio':'ficha');" +
       "setTimeout(function(){var sel=tp==='wod'?'[data-wi=\"'+ix+'\"]':tp==='cardio'?'[data-cri=\"'+ix+'\"]':'[data-fi=\"'+ix+'\"]';" +
       "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
+      /* v776: recordes do PERÍODO (o card "Seus recordes do mês" do Início).
+       * Janela = últimos 30 dias inclusive hoje (hoje-29 .. hoje) — mês-calendário
+       * nasceria vazio todo dia 1. A regra é a do recordesDe() do painel, com as
+       * MESMAS bordas: entra na janela quem tem desde <= d <= hoje (data futura
+       * de relógio torto fica fora), conta como "antes" quem tem d < desde (data
+       * vazia cai em antes, como lá), e recorde é máximo na janela > máximo de
+       * antes com antes > 0 — a primeira anotação é ponto de partida, não
+       * recorde. Ordena pelo ganho. ⚠️ isto é DIFERENTE de propósito do selo NOVO
+       * do mural de Cargas (recNovo = mês-calendário): lá é "recorde de sempre
+       * batido este mês", aqui é avanço na janela. Prefixo rcm* pra não colidir
+       * (rm* já é a calculadora de 1RM). Nada aqui chama Sv — senão viraria laço
+       * com o gancho de repintura de dentro do Sv. */
+      "function rcmDesde(){var d=new Date();d.setDate(d.getDate()-29);return isoLoc(d);}" +
+      "function rcmFmt(v){return String(Math.round(v*100)/100).replace('.',',');}" +
+      "function recordesMes(){var dc=L('ptdc',{});var desde=rcmDesde(),ate=isoHj();var out=[];" +
+      "Object.keys(dc).forEach(function(n){var lst=Array.isArray(dc[n])?dc[n]:[];var mp=0,ma=0;" +
+      "lst.forEach(function(e){if(!e||e.kg==null||!isFinite(+e.kg))return;var d=String(e.d||'').slice(0,10);" +
+      "if(d>=desde&&d<=ate){if(+e.kg>mp)mp=+e.kg;}else if(d<desde){if(+e.kg>ma)ma=+e.kg;}});" +
+      "if(mp>ma&&ma>0)out.push({n:n,de:ma,pra:mp,g:Math.round((mp-ma)*100)/100,u:'kg'});});" +
+      "out.sort(function(x,y){return (y.pra-y.de)-(x.pra-x.de);});return out;}" +
+      "function pintaRecMes(){var card=document.getElementById('recMesCard');if(!card)return;var ls=document.getElementById('recMesLs'),sub=document.getElementById('recMesSub');" +
+      "var todos=recordesMes(),tres=todos.slice(0,3);" +
+      "if(!tres.length){card.style.display='none';if(ls)ls.innerHTML='';return;}" +
+      "card.style.display='';" +
+      "if(sub)sub.textContent=pl(todos.length,'avanço','avanços')+' nos últimos 30 dias';" +
+      "if(ls)ls.innerHTML=tres.map(function(r,i){var nm=String(r.n).replace(/</g,'&lt;');" +
+      "return \"<span data-recl='carga' style='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 0;\"+(i?'border-top:1px solid var(--bg5);':'')+\"font-size:14px;'>\"+" +
+      "\"<span style='display:flex;align-items:center;gap:8px;min-width:0;'><span style='color:var(--corc);line-height:0;flex:none;'>\"+icx(ICO.halter,16)+\"</span><span data-recn='1' style='min-width:0;overflow-wrap:anywhere;font-weight:700;line-height:1.3;'>\"+nm+'</span></span>'+" +
+      "\"<span style='text-align:right;white-space:nowrap;'><b data-recv='1' style='font-weight:900;'>\"+rcmFmt(r.de)+' → '+rcmFmt(r.pra)+' '+r.u+\"</b><span style='display:block;font-size:11.5px;font-weight:800;color:#4ade80;'>+\"+rcmFmt(r.g)+' '+r.u+'</span></span></span>';}).join('');}" +
+      "window.__recordesMes={lista:recordesMes,pinta:pintaRecMes,desde:rcmDesde,fmt:rcmFmt,dias:30};" +
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=isoLoc(d);var fez=!!f[iso];if(fez)naSem++;" +
@@ -5299,6 +5346,8 @@
       // linhas de Ajustes que levam pra outra área (Meu plano, Meus questionários)
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-ajgo]');if(!b)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);if(window.__trocaSec)window.__trocaSec(b.getAttribute('data-ajgo'));" +
+      // v776: data-ajevsub troca a sub-aba da Evolução junto (o card "Seus recordes do mês" aponta pra Cargas); __evSub nasce no boot, antes de qualquer toque
+      "var evs=b.getAttribute('data-ajevsub');if(evs&&window.__evSub)window.__evSub(evs);" +
       "var go=b.getAttribute('data-ajgoto');if(go){var ge=document.getElementById(go);if(ge)setTimeout(function(){ge.scrollIntoView({behavior:'smooth',block:'start'});},80);}});" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
       "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
@@ -6422,6 +6471,7 @@
        * Aqui, no fim do boot, todas as fontes já existem. */
       "try{if(window.__sino)window.__sino.pinta();}catch(e0s){}" +
       "try{pintaAgHoje();}catch(e0b){}" +
+      "try{pintaRecMes();}catch(e0r){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
@@ -6472,6 +6522,7 @@
       "if(el.id==='lojaCard'){el.setAttribute('data-sec','loja');return;}" +
       "if(el.id==='ajudaCard'){el.setAttribute('data-sec','ajuda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
+      "if(el.id==='recMesCard'){el.setAttribute('data-sec','inicio');return;}" +
       "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
