@@ -3418,6 +3418,7 @@ async function abaPt(p, a) {
         window.__syncInfoPT = infoOrig; S9.cloud = cloudOrig;
 
         // 9. o card dos avisos lê a inscrição que JÁ existe neste aparelho
+        window.Notification = { permission: "granted" };
         window.__pushProf.subAtual = () => Promise.resolve({ endpoint: "https://push/x" });
         out.pushAtivo = (await window.__pushProf.pinta()) === true && /Avisos ativados neste aparelho/.test(document.getElementById("pushProfBt").textContent);
         window.__pushProf.subAtual = () => Promise.resolve(null);
@@ -5617,19 +5618,28 @@ async function abaPt(p, a) {
     await pF.goto(BASE + "/app-teste-foto.html", { waitUntil: "domcontentloaded" });
     const fotoDe = (c) => "data:image/jpeg;base64," + c.repeat(200);
     const res = await pF.evaluate(async (px) => {
-      const esperar = () => new Promise((r) => setTimeout(r, 2100));
+      // Aguarda a confirmação real. O envio inicial do app pode renovar o
+      // debounce: 2100 ms fixos cortavam a segunda requisição no CI rápido.
+      const enviar = async () => {
+        const antes = localStorage.getItem("ptenvioUlt");
+        window.__devolveApp();
+        const limite = Date.now() + 10000;
+        while (localStorage.getItem("ptenvioUlt") === antes && Date.now() < limite)
+          await new Promise((r) => setTimeout(r, 50));
+        if (localStorage.getItem("ptenvioUlt") === antes) throw new Error("Retorno sem confirmação");
+      };
       localStorage.setItem("ptpeso", JSON.stringify({ "2026-08-01": 80 }));
       localStorage.setItem("ptfotos", JSON.stringify([{ d: "2026-01-10", img: px.a, tipo: "frente" },
         { d: "2026-08-10", img: px.b, tipo: "frente" }]));
       localStorage.setItem("ptfotoperfil", px.c);
       localStorage.removeItem("ptdevfoto");
-      window.__devolveApp(); await esperar();          // 1º: tem que levar a foto
-      window.__devolveApp(); await esperar();          // 2º: nada mudou → sem foto
+      await enviar();                                  // 1º: tem que levar a foto
+      await enviar();                                  // 2º: nada mudou → sem foto
       // o aluno tira uma foto nova: a marca muda e a imagem volta a subir
       const fs = JSON.parse(localStorage.getItem("ptfotos"));
       fs.push({ d: "2026-08-20", img: px.d, tipo: "frente" });
       localStorage.setItem("ptfotos", JSON.stringify(fs));
-      window.__devolveApp(); await esperar();
+      await enviar();
       return { marca: localStorage.getItem("ptdevfoto") };
     }, { a: fotoDe("A"), b: fotoDe("B"), c: fotoDe("C"), d: fotoDe("D") });
     const temFoto = (e) => !!(e && e.p_dados && e.p_dados.fotoAntes);
@@ -8329,6 +8339,8 @@ async function abaPt(p, a) {
       const alertOrig = window.alert; window.alert = () => {};
       document.getElementById("tEnvioStatus").textContent = "";
       document.querySelector("#plnStatus [data-pubagora]").click();
+      out.conferiu = !!document.getElementById("acPublicar");
+      document.getElementById("acPublicar").click();
       await new Promise((r) => setTimeout(r, 300));
       window.alert = alertOrig;
       out.foiPraFichas = !document.querySelector('[data-trsec="fichas"]').hidden && document.getElementById("tAluno").value === id;
@@ -8336,7 +8348,7 @@ async function abaPt(p, a) {
       return out;
     });
     ok(pub.frase && pub.semTextoVelho, "📤 v750: UMA frase pra 'salvou, agora publica' — os quatro textos com botões que não existem sumiram");
-    ok(pub.foiPraFichas && pub.tentouPublicar, "📤 v750: 'Publicar agora' leva pra Fichas com o aluno certo e clica no MESMO Salvar e publicar");
+    ok(pub.foiPraFichas && pub.conferiu && pub.tentouPublicar, "📤 v777: 'Publicar agora' confere a ficha do aluno certo e usa a mesma publicação");
 
     // gerador por regras × plano do mês × evoluir semana × modelo com vídeo × semana do aluno × datalist do WOD
     const regras = await p.evaluate(() => {
@@ -8945,6 +8957,9 @@ async function abaPt(p, a) {
   ok(cardioProf.abaVisivel && cardioProf.salvos === 2 && /Rodagem de terça/.test(cardioProf.lista) && /2× 1s forte/.test(cardioProf.lista),
     "aba Corrida e bike do professor prescreve contínuo e tiros (intervalado)");
   const pCr = await ctx.newPage();
+  // Esta aba exercita o navegador SEM cinta. O Chrome do Windows expõe
+  // Web Bluetooth mesmo em headless; a ausência deve ser explícita na fixture.
+  await pCr.addInitScript(() => Object.defineProperty(navigator, "bluetooth", { configurable: true, writable: true, value: undefined }));
   pCr.on("dialog", (d) => d.accept());
   await pCr.route("**/app-teste-cardio.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
   await pCr.goto(BASE + "/app-teste-cardio.html", { waitUntil: "domcontentloaded" });
@@ -15659,7 +15674,7 @@ async function abaPt(p, a) {
     const trechoRM = iRM > 0 && fRM > iRM ? bldRM.slice(iRM, fRM) : "";
     ok(trechoRM.length > 500 && !/\b(esc|dinheiro|jsonApp|ve)\(/.test(trechoRM) && !/STUDIO_CURTO|\bD\./.test(trechoRM) && /pl\(todos\.length/.test(trechoRM),
       "🏆 v775: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
-    ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);\}catch\(e\)\{\}\}/.test(bldRM) && !/\bSv\(/.test(trechoRM),
+    ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);/.test(bldRM) && !/\bSv\(/.test(trechoRM),
       "🏆 v775: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
     ok(/if\(el\.id==='recMesCard'\)\{el\.setAttribute\('data-sec','inicio'\);return;\}/.test(bldRM) && !/aria-label/.test(bldRM.slice(bldRM.indexOf("id='recMesCard'"), bldRM.indexOf("id='recMesLs'"))),
       "🏆 v775: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
