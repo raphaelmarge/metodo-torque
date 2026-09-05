@@ -1013,7 +1013,7 @@
        * onde ele empurra a ação; em cima ele só afastava o calendário da foto. */
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
       "<div id='semDia'></div>" +
-      "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
+      "<div id='semResumo' role='group' aria-label='Progresso da semana' style='display:block;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
       "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
@@ -1839,7 +1839,8 @@
       "var MES3=MESN.map(function(m){return m.slice(0,3);}),MESES=MESN.map(function(m){return m.charAt(0).toUpperCase()+m.slice(1);});" +
       "var DSEM=['domingo','segunda','ter\\u00e7a','quarta','quinta','sexta','s\\u00e1bado'],DSEMA=DSEM.map(function(d){return d.toUpperCase();});" +
       // treinos de segunda a domingo da semana corrente (f = ptfeitos)
-      "function naSemana(f){var n=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])n++;}return n;}" +
+      /* `ref` (Date) é opcional e só o teste da véspera usa — sem ele a conta é a de sempre, seg→dom de HOJE. */
+      "function naSemana(f,ref){var n=0;var seg=ref?new Date(ref.getTime()):new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])n++;}return n;}" +
       // canvas (Stories, mapa do cardio) não entende var(--x) — CV() lê o valor real
       "function CV(n){try{return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()||'#fff';}catch(e){return '#fff';}}" +
       // barra do navegador na cor do studio — nasce da paleta, não do HTML
@@ -2242,6 +2243,65 @@
       "if(window.__trSub)window.__trSub(tp==='wod'?'wod':tp==='cardio'?'cardio':'ficha');" +
       "setTimeout(function(){var sel=tp==='wod'?'[data-wi=\"'+ix+'\"]':tp==='cardio'?'[data-cri=\"'+ix+'\"]':'[data-fi=\"'+ix+'\"]';" +
       "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
+      /* ================= PROGRESSO DA SEMANA NO INÍCIO =================
+       * O Raphael pediu "você está na semana 2 de 4", uma barrinha, quanto
+       * falta pra bater a meta e o dia que costuma pular. Regra da v771: NÃO
+       * nasce outro card dizendo a mesma coisa — a linha #semResumo VIRA a
+       * faixa de progresso. Três leituras que já existiam, uma vez cada:
+       *   - dias treinados / META, pela MESMA naSemana() do btnFeito;
+       *   - a sequência de SEMANAS na meta (streakSem, a das Conquistas), só
+       *     a partir de 2 — reverte parte da v584 de propósito: a v765 mediu
+       *     que ninguém chegava nas Conquistas pra ver isso;
+       *   - a semana do plano do mês (MESAPP, o mesmo `s` da faixa #trMes —
+       *     é uma FOTO do dia da publicação, como o #trMes).
+       * E o "dia que costuma escapar" é conta HONESTA: só as 8 semanas cheias
+       * anteriores (a em curso fica de fora, regra da v632), só semanas em que
+       * ele treinou alguma coisa E ficou ABAIXO da meta (quem trocou o dia e
+       * bateu a meta não pulou nada — o dia que escapa é o que CUSTOU a meta),
+       * 3+ semanas assim e o dia PLANEJADO perdido em 60%+ delas. Empate vai
+       * pro dia mais próximo de hoje (é onde dá pra agir). Sem Semana do aluno
+       * não dá pra saber qual dia → nada aparece. O recado só sai no dia ou na
+       * véspera, nunca quando ele já treinou hoje ou já fechou a semana —
+       * cutucar quem já fez é como o app vira paisagem (lição do sino, v773).
+       * ⚠️ a primeira pintaSemana() (logo depois do check-in) roda ANTES de
+       * `var PLANO`/`var MESAPP` existirem — daí os typeof; o boot repinta.
+       * ⚠️ o app não sabe QUANDO o professor mudou a Semana do aluno (não há
+       * `planoEm` no pacote): o histórico é julgado contra o plano ATUAL — por
+       * isso o recado é brando e exige 3 semanas. */
+      "function diaQueEscapa(f,ref){var hj=ref||new Date();var plan=[];for(var k=0;k<7;k++){if(plnDia(k).length)plan.push(k);}" +
+      "if(!plan.length)return null;var d=new Date(semDe(hj)+'T12:00:00');var sem=[];" +
+      "for(var w=1;w<=8;w++){d.setDate(d.getDate()-7);var n=0;for(var i=0;i<7;i++){var dd=new Date(d);dd.setDate(dd.getDate()+i);if(f[isoLoc(dd)])n++;}if(n>0&&n<META)sem.push(isoLoc(d));}" +
+      "if(sem.length<3)return null;var kh=hj.getDay();var melhor=null;" +
+      "plan.forEach(function(k){var perd=0;sem.forEach(function(s0){var dd=new Date(s0+'T12:00:00');dd.setDate(dd.getDate()+((k+6)%7));if(!f[isoLoc(dd)])perd++;});" +
+      "var taxa=perd/sem.length,dist=(k-kh+7)%7;if(taxa>=0.6&&(!melhor||taxa>melhor.taxa||(taxa===melhor.taxa&&dist<melhor.dist)))melhor={k:k,nome:DSEM[k],taxa:taxa,perdidas:perd,semanas:sem.length,dist:dist};});return melhor;}" +
+      "function semProgCalc(f,ref){f=f||L('ptfeitos',{});var hj=ref||new Date();var naSem=naSemana(f,ref);" +
+      "var fechada=naSem>=META;var falta=Math.max(0,META-naSem);" +
+      "var mes=null;if(typeof MESAPP!=='undefined'&&MESAPP){var pj=plnPri(hj.getDay());var ks=[pj?(pj.tp==='wod'?'wod':pj.tp==='cardio'?'corrida':'musculacao'):null,'musculacao','wod','corrida'];" +
+      "for(var q=0;q<ks.length;q++){var mw=ks[q]&&MESAPP[ks[q]];if(mw&&mw.s>=1&&mw.s<=4){mes={k:ks[q],s:mw.s};break;}}}" +
+      "var esc9=diaQueEscapa(f,hj);var txt='',eh=false,ev=false;" +
+      "if(esc9&&!fechada){var kh=hj.getDay();if(esc9.k===kh&&!f[isoLoc(hj)]){eh=true;txt='<b>'+esc9.nome.charAt(0).toUpperCase()+esc9.nome.slice(1)+'</b> é o dia que mais escapa — segura essa hoje?';}" +
+      "else if(esc9.k===(kh+1)%7){ev=true;txt='Amanhã é <b>'+esc9.nome+'</b>, o dia que mais escapa — já separa o horário?';}}" +
+      "return {naSem:naSem,meta:META,falta:falta,fechada:fechada,seqDias:seqAtual(f),seqSem:streakSem(f),mes:mes,escapa:esc9,escapaHoje:eh,escapaVesp:ev,txtEscapa:txt};}" +
+      "function semProgHtml(p){var pct=Math.min(100,Math.round(100*p.naSem/Math.max(1,p.meta)));" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;'>\"+" +
+      "\"<span id='spN'><b>\"+p.naSem+' de '+p.meta+'</b> na semana</span>'+" +
+      "\"<span id='spFalta' style='font-size:12px;font-weight:800;color:\"+(p.fechada?'var(--corc)':'#6e6a78')+\";'>\"+(p.fechada?'semana fechada':(p.falta===1?'falta 1':'faltam '+p.falta)+' pra fechar a semana')+'</span></div>'+" +
+      "\"<div id='spBar' role='progressbar' aria-valuemin='0' aria-valuemax='\"+p.meta+\"' aria-valuenow='\"+Math.min(p.naSem,p.meta)+\"' aria-label='\"+p.naSem+' de '+p.meta+\" treinos na semana' style='height:8px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg10);overflow:hidden;margin-top:9px;'>\"+" +
+      "\"<div id='spFill' style='height:100%;width:\"+pct+\"%;border-radius:99px;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\";" +
+      /* as duas sequências (dias e semanas) convivem de propósito com ícone,
+       * cor e palavra diferentes — a lição da v584 era juntar duas coisas com
+       * a MESMA cara. Sem separador "•": a 390 px a linha quebra e um bullet
+       * solto liderava a linha de baixo; ícone + cor já separam os itens. */
+      "var sub=[];" +
+      "if(p.seqDias>0)sub.push(\"<span style='color:#fb923c;display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.chama,15)+p.seqDias+' dia'+(p.seqDias>1?'s':'')+' seguido'+(p.seqDias>1?'s':'')+'</span>');" +
+      "if(p.seqSem>=2)sub.push(\"<span style='color:var(--corc);display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.trofeu,15)+p.seqSem+' semanas seguidas na meta</span>');" +
+      "if(p.mes)sub.push(\"<span style='display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.cal,15)+'semana '+p.mes.s+' de 4 do plano</span>');" +
+      "h+=\"<div id='spSub' style='display:\"+(sub.length?'flex':'none')+\";align-items:center;gap:6px 14px;flex-wrap:wrap;margin-top:9px;font-size:12px;font-weight:700;color:#6e6a78;'>\"+sub.join('')+'</div>';" +
+      /* no #spEscapa o item do flex é o <span> com a frase INTEIRA (o <b> fica
+       * dentro dele) — texto corrido nunca é flex. */
+      "h+=\"<div id='spEscapa' style='display:\"+(p.txtEscapa?'flex':'none')+\";gap:8px;align-items:flex-start;margin-top:10px;background:var(--bg4);border:1px solid var(--bg10);border-radius:12px;padding:9px 11px;font-size:12.5px;font-weight:700;line-height:1.4;color:#cfcbdb;'>\"+" +
+      "\"<span style='line-height:0;color:var(--corc);flex:none;margin-top:2px;'>\"+icx(ICO.cal,16)+\"</span><span style='min-width:0;'>\"+p.txtEscapa+'</span></div>';return h;}" +
+      "window.__semProg={calc:semProgCalc,escapa:diaQueEscapa,html:semProgHtml,pinta:function(){pintaSemana();}};" +
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=isoLoc(d);var fez=!!f[iso];if(fez)naSem++;" +
@@ -2256,17 +2316,20 @@
       "(temAg?\"<span style='display:block;width:5px;height:5px;border-radius:50%;margin:2px auto 0;background:\"+(fez?'rgba(255,255,255,.9)':'var(--corc)')+\";'></span>\":\"<span style='display:block;height:7px;'></span>\")+" +
       "\"</div></button>\";}" +
       "document.getElementById('diasSem').innerHTML=html;pintaSemDia();" +
-      /* a linha de resumo substitui o anel 4/4 E a barra "Meta da semana":
-       * os chips seg-dom acima já mostram quantos e QUAIS dias foram. */
-      "var sq9=seqAtual(f);var sr9=document.getElementById('semResumo');" +
-      "if(sr9)sr9.innerHTML=\"<span>\"+naSem+' de '+META+' na semana</span>'+" +
-      "(sq9>0?\"<span style='color:#3c3846;'>\\u2022</span><span style='color:#fb923c;display:inline-flex;align-items:center;gap:5px;'>\"+icx(ICO.chama,17)+sq9+' dia'+(sq9>1?'s':'')+' seguido'+(sq9>1?'s':'')+'</span>':'');" +
+      /* a linha de resumo virou a FAIXA DE PROGRESSO da semana (barra, o que
+       * falta, sequência de semanas na meta, semana do plano e o dia que
+       * costuma escapar) — semProgCalc/semProgHtml, logo acima. Os chips
+       * seg-dom continuam sendo quem mostra QUAIS dias foram. */
+      "var sr9=document.getElementById('semResumo');" +
+      "if(sr9)sr9.innerHTML=semProgHtml(semProgCalc(f));" +
       // a dica do treino de HOJE (carga, circuito ou pace) vence o recado
-      // genérico da semana — é o que o desenho chama de recado do coach
+      // genérico da semana — é o que o desenho chama de recado do coach.
+      // O genérico perdeu o "N de META": esse número agora mora na faixa logo
+      // acima, com barra — repetir era a redundância que a v771 tirou.
       "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=(typeof coachDica==='function'?coachDica():null)||(naSem>=META?" +
-      "'Semana fechada: <b>'+naSem+' de '+META+'</b> treinos. Orgulho define — mantém o ritmo!':" +
-      "naSem>0?'Você já fez <b>'+naSem+' de '+META+'</b> treinos essa semana — hoje dá pra somar mais um.':" +
-      "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.');" +
+      "'Meta batida. Orgulho define — mantém o ritmo!':" +
+      "naSem>0?'Hoje dá pra somar mais um. Bora?':" +
+      "'Bora abrir a semana? O primeiro treino puxa os outros.');" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
       "var md9=document.getElementById('medalhas');" +

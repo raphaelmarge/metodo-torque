@@ -2536,7 +2536,8 @@ async function abaPt(p, a) {
       "📲 v747: check-in pelo WhatsApp espera o 'Enviei'; com nuvem diz 'vê no painel' em vez de 'já viu'");
     ok(/VALUE=DATE:/.test(bld) && !/UID:'\+Date\.now\(\)/.test(bld), "📅 v747: .ics com UID estável e sessão sem hora como dia inteiro");
     ok((bld.match(/"var MESN=/g) || []).length === 1 && !/var MES3B=/.test(bld) && !/var MES39=/.test(bld) && !/var MES3A=/.test(bld) && !/var MESES=\['Janeiro'/.test(bld) &&
-      /function naSemana\(f\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
+      // v775: naSemana ganhou um `ref` opcional (a faixa de progresso testa a véspera) — o helper continua sendo UM
+      /function naSemana\(f(,ref)?\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
       "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
     ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
     // v754: a chave passa pelo exKey (a mesma do GUIA); o teto e o fecha-por-ficha continuam
@@ -15760,6 +15761,193 @@ async function abaPt(p, a) {
       return /publicaAppsPendentes\(false, false, "dsPub"\)/.test(t) && /id="dsPub"/.test(t);
     }), "🎮 v765: salvar o desafio publica de verdade (o alerta que mandava procurar a tela saiu do caminho feliz)");
     await ctxG.close();
+  }
+
+  /* ================= v775 — progresso da semana no Início (barra + o que falta
+   * + o dia que costuma escapar) ==============================================
+   * O Raphael pediu "você está na semana 2 de 4" com uma barrinha, quanto falta
+   * pra bater a meta e que dia costuma pular. Regra da v771: NENHUM card novo —
+   * a linha #semResumo vira a faixa de progresso. O "dia que escapa" é conta
+   * HONESTA: só semanas com treino E abaixo da meta, 3+ delas, o dia planejado
+   * perdido em 60%+, e só no dia (ou na véspera). Quem bate a meta em outros
+   * dias NÃO é cutucado. Sem padrão, nada aparece. */
+  console.log("\n📊 v775 — progresso da semana no Início:");
+  {
+    const ctxSP = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxSP.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pSP = await ctxSP.newPage();
+    pSP.on("pageerror", (e) => erros.push("semProg painel: " + e.message));
+    pSP.on("dialog", (d) => d.accept());
+    await pSP.goto(BASE + "/personal.html");
+    await pSP.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    // o plano tem DOIS dias: o de hoje (que o aluno vive pulando) e outro (que
+    // ele sempre faz). O mês da IA foi gerado há 8 dias → semana 2 de 4.
+    const spHtml = await pSP.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const hj = new Date(), kHoje = String(hj.getDay()), kOutro = String((hj.getDay() + 3) % 7);
+      const d8 = new Date(); d8.setDate(d8.getDate() - 8);
+      // exercício REAL da semente (nome canônico desde a v752) — um id inventado vira "?" no app
+      const ex = (st.exercicios || []).find((e) => e.nome === "Supino reto com barra") || {};
+      const dias = {}; dias[kHoje] = [{ tp: "ficha", id: "f1", h: "18:00" }]; dias[kOutro] = [{ tp: "ficha", id: "f1", h: "07:00" }];
+      st.alunos = [
+        { id: "sp1", nome: "Semana Visivel", ativo: true, desde: "2026-01-05", appTokenP: "tksp1", metaSemana: 3 },
+        { id: "sp2", nome: "Sem Plano", ativo: true, desde: "2026-01-05", appTokenP: "tksp2", metaSemana: 3 },
+      ];
+      st.treinosV2 = { sp1: {
+        fichas: [{ id: "f1", titulo: "A — Peito", itens: [{ exId: ex.id || "x", series: 4, reps: "10", descanso: 60 }] }],
+        plano: { dias: dias },
+        mes: { musculacao: { geradoEm: window.diaISO(d8), semanas: [
+          { n: 1, foco: "Base", ajuste: "aprende o movimento" }, { n: 2, foco: "Volume", ajuste: "sobe 1 série" },
+          { n: 3, foco: "Carga", ajuste: "sobe 5%" }, { n: 4, foco: "Leve", ajuste: "tira 30%" } ] } },
+      } };
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st);
+      return { com: window.__montaAppAluno(st.alunos[0], new Date().toISOString()),
+               sem: window.__montaAppAluno(st.alunos[1], new Date().toISOString()) };
+    });
+    // histórico do aparelho: 6 semanas cheias com 2 de 3 (ABAIXO da meta) — o
+    // outro dia do plano e um dia solto, nunca o dia de hoje; a em curso nasce vazia
+    const ctxSPA = await b.newContext({ viewport: { width: 390, height: 844 } });
+    await ctxSPA.addInitScript(() => {
+      const hj = new Date(), k = hj.getDay();
+      const seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const f = {};
+      for (let w = 1; w <= 6; w++) [(k + 3) % 7, (k + 1) % 7].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * w + ((kd + 6) % 7)); f[iso(d)] = 1; });
+      localStorage.setItem("ptfeitos", JSON.stringify(f));
+    });
+    const pSPA = await ctxSPA.newPage();
+    pSPA.on("pageerror", (e) => erros.push("semProg app: " + e.message));
+    pSPA.on("dialog", (d) => d.accept());
+    await pSPA.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await pSPA.route("**/app-semprog.html", (r) => r.fulfill({ contentType: "text/html", body: spHtml.com }));
+    await pSPA.goto(BASE + "/app-semprog.html", { waitUntil: "domcontentloaded" });
+    await pSPA.waitForTimeout(900);
+    const sp1 = await pSPA.evaluate(() => {
+      window.__trocaSec("inicio");
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']");
+      const fill = document.getElementById("spFill"), esc = document.getElementById("spEscapa");
+      // sem o gancho (builder velho) o 1º assert falha limpo em vez de a suíte estourar
+      const c = (window.__semProg || { calc: function () { return {}; } }).calc();
+      const dia = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][new Date().getDay()];
+      return {
+        txt: sr.textContent.replace(/\s+/g, " ").trim(),
+        ordem: [...document.getElementById("semBlock").querySelectorAll("#diasSem,#semDia,#semResumo,#coachTxt,#btnFeito")].map((e) => e.id).join(">"),
+        bar: bar ? { max: bar.getAttribute("aria-valuemax"), now: bar.getAttribute("aria-valuenow"), min: bar.getAttribute("aria-valuemin") } : null,
+        fillW: fill ? fill.getBoundingClientRect().width : -1, barW: bar ? bar.getBoundingClientRect().width : -1,
+        seqSem: c.seqSem, mes: c.mes && c.mes.s, escapa: c.escapa && { k: c.escapa.k, semanas: c.escapa.semanas, taxa: c.escapa.taxa },
+        escVis: esc ? getComputedStyle(esc).display !== "none" : false,
+        escTxt: esc ? esc.textContent.replace(/\s+/g, " ").trim() : "",
+        diaCap: dia.charAt(0).toUpperCase() + dia.slice(1), kHoje: new Date().getDay(),
+        secInicio: !!sr.closest("[data-sec='inicio']:not([data-sec-off])"),
+        larguraOk: sr.getBoundingClientRect().right <= 390 && document.documentElement.scrollWidth <= 390,
+        coach: document.getElementById("coachTxt").textContent,
+      };
+    });
+    ok(/0 de 3 na semana/.test(sp1.txt) && /faltam 3 pra fechar a semana/.test(sp1.txt) && sp1.ordem === "diasSem>semDia>semResumo>coachTxt>btnFeito",
+      "📊 v775: a linha #semResumo virou a faixa de progresso — 'N de META na semana' continua lá e o que falta vem junto (" + sp1.txt.slice(0, 60) + ")");
+    ok(sp1.bar && sp1.bar.min === "0" && sp1.bar.max === "3" && sp1.bar.now === "0" && sp1.barW > 100 && sp1.fillW < 1,
+      "📊 v775: a barra existe com aria (progressbar 0/3) e nasce vazia quando a semana ainda não começou");
+    ok(sp1.seqSem === 0 && !/semanas seguidas/.test(sp1.txt),
+      "📊 v775: semanas abaixo da meta não viram 'semanas seguidas' — a sub-linha só fala disso a partir de 2");
+    ok(sp1.mes === 2 && /semana 2 de 4 do plano/.test(sp1.txt),
+      "📊 v775: com plano do mês da IA a faixa diz em que semana o aluno está (semana 2 de 4) — o mesmo `s` resolvido da faixa #trMes");
+    ok(sp1.escapa && sp1.escapa.k === sp1.kHoje && sp1.escapa.semanas === 6 && sp1.escapa.taxa === 1 && sp1.escVis &&
+       new RegExp(sp1.diaCap + " é o dia que mais escapa").test(sp1.escTxt) && sp1.escTxt.length < 90 && !/culpa|faltou|falhou/i.test(sp1.escTxt),
+      "📊 v775: o dia planejado que ficou de fora em 6 semanas abaixo da meta é apontado HOJE, curto e sem culpa (" + sp1.escTxt + ")");
+    ok(sp1.secInicio && sp1.larguraOk && !/\d de \d treinos/.test(sp1.coach),
+      "📊 v775: a faixa mora no Início (secDe pelo h2 'Minha semana'), não estoura os 390 px e o coach não repete o 'N de META' embaixo dela");
+    const sp2 = await pSPA.evaluate(() => {
+      document.getElementById("btnFeito").click();
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']");
+      return { txt: sr.textContent.replace(/\s+/g, " ").trim(), now: bar.getAttribute("aria-valuenow"),
+        razao: document.getElementById("spFill").getBoundingClientRect().width / bar.getBoundingClientRect().width,
+        escVis: getComputedStyle(document.getElementById("spEscapa")).display !== "none" };
+    });
+    ok(/1 de 3 na semana/.test(sp2.txt) && /faltam 2 pra fechar a semana/.test(sp2.txt) && sp2.now === "1" && sp2.razao > 0.28 && sp2.razao < 0.38,
+      "📊 v775: Treinei hoje! anda a barra na hora (1 de 3, um terço cheio, faltam 2)");
+    ok(!sp2.escVis, "📊 v775: treinou no dia que costuma escapar → o recado some — o app não cutuca quem já fez");
+    // agora o histórico vira 6 semanas COM a meta batida, em dias FORA do plano
+    // (ele trocou o dia, não pulou) e a semana em curso é completada
+    const sp3 = await pSPA.evaluate(() => {
+      const hj = new Date(), k = hj.getDay(), seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const f = {};
+      for (let w = 1; w <= 6; w++) [(k + 1) % 7, (k + 2) % 7, (k + 4) % 7].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * w + ((kd + 6) % 7)); f[iso(d)] = 1; });
+      const atual = JSON.parse(localStorage.getItem("ptfeitos") || "{}");
+      Object.keys(atual).forEach((x) => { if (x >= iso(seg)) f[x] = 1; });   // mantém o "treinei hoje" do sp2
+      for (let i = 0; i < 7; i++) {   // completa 3 na semana em curso (a conta olha os 7 dias seg-dom)
+        const n = [0, 1, 2, 3, 4, 5, 6].filter((j) => { const x = new Date(seg); x.setDate(x.getDate() + j); return f[iso(x)]; }).length;
+        if (n >= 3) break; const d = new Date(seg); d.setDate(d.getDate() + i); f[iso(d)] = 1;
+      }
+      localStorage.setItem("ptfeitos", JSON.stringify(f));
+      window.__semProg.pinta();
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']"), c = window.__semProg.calc();
+      return { txt: sr.textContent.replace(/\s+/g, " ").trim(), now: bar.getAttribute("aria-valuenow"),
+        razao: document.getElementById("spFill").getBoundingClientRect().width / bar.getBoundingClientRect().width,
+        seqSem: c.seqSem, escapa: c.escapa, bullets: /•/.test(document.getElementById("spSub").textContent),
+        coach: document.getElementById("coachTxt").textContent };
+    });
+    ok(/3 de 3 na semana/.test(sp3.txt) && /semana fechada/.test(sp3.txt) && sp3.now === "3" && sp3.razao > 0.97 && !/pra fechar/.test(sp3.txt),
+      "📊 v775: meta batida → 'semana fechada' e a barra cheia");
+    ok(sp3.seqSem === 7 && /7 semanas seguidas na meta/.test(sp3.txt) && !sp3.bullets,
+      "📊 v775: a sequência de semanas na meta aparece no Início (7 seguidas, a mesma conta do streakSem das Conquistas) — sem separador '•' que ficava órfão na quebra de linha");
+    ok(sp3.escapa === null && !/3 de 3 treinos/.test(sp3.coach),
+      "📊 v775: quem bate a meta em OUTROS dias não pulou nada → nenhum 'dia que escapa'; e o coach não repete o 3 de 3 embaixo da faixa");
+    const sp4 = await pSPA.evaluate(() => {
+      const hj = new Date(), k = hj.getDay();
+      const seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      // tipos de semana (todas com 2 treinos = abaixo da meta 3; plano = hoje e hoje+3):
+      // A = pulou HOJE; B = pulou o OUTRO; C = fez os dois; D = pulou os dois; M = 3 treinos fora do plano (meta batida)
+      const DIAS = { A: [(k + 3) % 7, (k + 1) % 7], B: [k, (k + 1) % 7], C: [k, (k + 3) % 7], D: [(k + 1) % 7, (k + 2) % 7], M: [(k + 1) % 7, (k + 2) % 7, (k + 4) % 7] };
+      const hist = (tipos) => { const f = {}; tipos.split("").forEach((t, i) => DIAS[t].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * (i + 1) + ((kd + 6) % 7)); f[iso(d)] = 1; })); return f; };
+      const E = window.__semProg.escapa;
+      const ontem = new Date(hj); ontem.setDate(ontem.getDate() - 1);
+      const cv = window.__semProg.calc(hist("AAAAAA"), ontem);
+      return { kHoje: k, kOutro: (k + 3) % 7,
+        poucas: E(hist("AA")), abaixo: E(hist("AACCC")), noLimiar: E(hist("AAACC")) && E(hist("AAACC")).k,
+        empate: E(hist("DDDCC")) && E(hist("DDDCC")).k, metaBatida: E(hist("MMMMM")), outro: E(hist("BBBBC")) && E(hist("BBBBC")).k,
+        vespera: cv.escapaVesp && /Amanhã é <b>/.test(cv.txtEscapa) && !cv.escapaHoje, txtV: cv.txtEscapa };
+    });
+    ok(sp4.poucas === null && sp4.abaixo === null && sp4.metaBatida === null,
+      "📊 v775: conta honesta: com 2 semanas de histórico, com o dia perdido em 40% delas, ou com a meta batida toda semana, NADA é dito");
+    ok(sp4.noLimiar === sp4.kHoje && sp4.outro === sp4.kOutro, "📊 v775: 3 de 5 semanas (60%) é o limiar — e o dia apontado é o PLANEJADO que ficou de fora");
+    ok(sp4.empate === sp4.kHoje, "📊 v775: empate entre dois dias do plano vai pro mais próximo de hoje — onde dá pra agir");
+    ok(sp4.vespera && /separa o horário/.test(sp4.txtV), "📊 v775: na véspera o recado muda pra 'Amanhã é <dia>' (" + sp4.txtV.replace(/<[^>]+>/g, "") + ")");
+    // aluno SEM Semana do aluno e sem plano do mês
+    const pSPB = await ctxSPA.newPage();
+    pSPB.on("pageerror", (e) => erros.push("semProg app sem plano: " + e.message));
+    await pSPB.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await pSPB.route("**/app-semprog-b.html", (r) => r.fulfill({ contentType: "text/html", body: spHtml.sem }));
+    await pSPB.goto(BASE + "/app-semprog-b.html", { waitUntil: "domcontentloaded" });
+    await pSPB.waitForTimeout(700);
+    const sp5 = await pSPB.evaluate(() => {
+      const c = window.__semProg.calc();
+      const sr = document.getElementById("semResumo").textContent.replace(/\s+/g, " ");
+      return { escapa: c.escapa, mes: c.mes, txt: sr, escVis: getComputedStyle(document.getElementById("spEscapa")).display !== "none",
+               temBarra: !!document.querySelector("#semResumo [role='progressbar']") };
+    });
+    ok(sp5.escapa === null && !sp5.escVis && sp5.mes === null && !/do plano/.test(sp5.txt) && sp5.temBarra && /de 3 na semana/.test(sp5.txt),
+      "📊 v775: sem Semana do aluno e sem plano do mês: barra e contagem ficam, 'dia que escapa' e 'semana X de 4' NÃO aparecem — número inventado não entra");
+    const claroSP = await pSPA.evaluate(() => {
+      document.documentElement.classList.add("claro");
+      return { tk: /var\(--tk-|var\(--pt-/.test(document.getElementById("semResumo").innerHTML),
+               corSub: getComputedStyle(document.getElementById("spSub")).color };
+    });
+    ok(!claroSP.tk && claroSP.corSub === "rgb(119, 113, 138)",
+      "📊 v775: nenhum token do painel dentro do app, e no modo claro o cinza da faixa vira o do tema (#77718a)");
+    const bldSP = await pSP.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    ok(/window\.__semProg=\{/.test(bldSP) && /function diaQueEscapa\(/.test(bldSP) && /function semProgCalc\(/.test(bldSP) && /typeof MESAPP!=='undefined'/.test(bldSP) &&
+       /var naSem=naSemana\(f,ref\)/.test(bldSP) && !/Você já fez <b>/.test(bldSP) && !/Semana fechada: <b>/.test(bldSP),
+      "📊 v775: o builder expõe window.__semProg, guarda o typeof MESAPP (a 1ª pintura roda antes do pacote do mês), reusa naSemana() e os fallbacks do coach perderam o número");
+    await pSPB.close(); await pSPA.close(); await ctxSPA.close(); await ctxSP.close();
   }
 
   /* ================= v756 — x-redund e x-org (uma página só, do zero) =======
