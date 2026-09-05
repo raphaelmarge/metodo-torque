@@ -5975,8 +5975,11 @@ async function abaPt(p, a) {
     // a folga é o orçamento do CÓDIGO do app (o que este assert vigia é a
     // imagem repetida, que o `copias === 1` acima já pega): 250 → 285 KB em
     // v734, depois do lote v728–v734 (confirmação, recordes, volume, voz,
-    // texto maior) — crescimento de código de verdade, não foto duplicada
-    ok(peso.kb < peso.fotoKb * 2 + 285, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // texto maior) — crescimento de código de verdade, não foto duplicada;
+    // 285 → 300 KB em v776 (o tour do primeiro uso: ~10 KB de CSS, copy e
+    // lógica dentro do app — o guarda da imagem repetida continua sendo o
+    // `copias === 1`)
+    ok(peso.kb < peso.fotoKb * 2 + 300, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
     // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
     // foto era jogada fora duas vezes (no corte e de novo na tela)
     const corte = await p.evaluate(async () => {
@@ -15826,6 +15829,16 @@ async function abaPt(p, a) {
       "🧭 v776: o passo 3 vai pra Treinos e aponta o 'Começar essa ficha' da gaveta aberta");
     ok(/Mudar a carga/.test(t6.txt) && t6.bt === "Bora treinar" && t6.pularSumiu,
       "🧭 v776: o passo da carga diz onde anotar o peso (Mudar a carga) e fecha com 'Bora treinar'");
+    // os cards da seção ANIMAM ao entrar (.sec-anim, translateY 12px→0 em .5s + atraso por --ci): o anel tem de acompanhar o alvo até o fim
+    await pA.waitForTimeout(700);
+    const t6b = await pA.evaluate(() => {
+      const el = window.__tour.alvo(), rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = el.getBoundingClientRect();
+      return { dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        folga: Math.abs((rA.top + 8) - rB.top) < 2 && Math.abs((rA.bottom - 8) - rB.bottom) < 2,
+        naTela: rA.left >= 0 && rA.top >= 0 && rA.right <= innerWidth && rA.bottom <= innerHeight };
+    });
+    ok(t6b.dentro && t6b.folga && t6b.naTela,
+      "🧭 v776: o anel SEGUE o alvo enquanto a seção anima (medido 800 ms depois da troca: folga de 8 px em cima e embaixo, nada fora da tela)");
 
     const t7 = await pA.evaluate(() => {
       document.getElementById("tourProx").click();
@@ -15863,7 +15876,10 @@ async function abaPt(p, a) {
       document.getElementById("tourProx").click();
       // título + texto: "Seu treino vai aparecer aqui" é o TÍTULO do passo, e o corpo diz onde a carga entra
       out.passo2 = window.__tour.passo(); out.k2 = document.getElementById("tourK").textContent; out.txt = document.getElementById("tourT").textContent + " " + document.getElementById("tourX").textContent; out.bt = document.getElementById("tourProx").textContent;
-      out.alvo = (window.__tour.alvo() || {}).id;
+      const al = window.__tour.alvo(); out.alvo = al && al.closest("#trFichasWrap") ? "trFichasWrap" : (al || {}).id;
+      out.alvoVz = !!(al && al.classList.contains("vz"));
+      const rA8 = document.getElementById("tourAnel").getBoundingClientRect();
+      out.anelNaTela = rA8.left >= 4 && rA8.right <= innerWidth - 4 && rA8.width > 200;
       out.emTreino = !!document.querySelector("[data-sec='treino']:not([data-sec-off])");
       document.getElementById("tourProx").click();
       out.fim = !window.__tour.on(); out.voltouInicio = !!document.querySelector("[data-sec='inicio']:not([data-sec-off])");
@@ -15876,8 +15892,33 @@ async function abaPt(p, a) {
       "🧭 v776: alvo escondido (#diasSem sem display) sai da lista sem erro — o tour vira '1 de 2' começando no Treinei hoje!");
     ok(t8.passo2 === 1 && /2 de 2/.test(t8.k2 || "") && /vai aparecer aqui/.test(t8.txt || "") && /Mudar a carga/.test(t8.txt || "") && t8.alvo === "trFichasWrap" && t8.emTreino && t8.bt === "Entendi",
       "🧭 v776: sem treino prescrito o último passo adapta — 'Seu treino vai aparecer aqui', apontando a área das fichas e ensinando onde a carga será anotada");
+    ok(t8.alvoVz && t8.anelNaTela,
+      "🧭 v776: sem ficha o anel envolve o aviso DENTRO da área das fichas (com o recuo do card) e fica inteiro na tela — o wrap de ponta a ponta jogava as bordas pra fora e virava faixa");
     ok(t8.fim && t8.voltouInicio && t8.gravou.como === "fim" && t8.gravou.passo === 2 && t8.robusto,
       "🧭 v776: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
+    // o aluno marca o treino ANTES de responder as perguntinhas: o pedido de push dos 900 ms tem de esperar — e vir logo depois do onbOk
+    await pB.evaluate(() => { document.getElementById("diasSem").style.display = ""; });
+    await pB.click("#btnFeito");
+    await pB.waitForTimeout(1200);
+    const t8b = await pB.evaluate(() => {
+      const cn = document.getElementById("cardNotif");
+      const out = { temPush: !!window.__pushMostra && !!cn && window.Notification && Notification.permission === "default",
+        onbVisivel: getComputedStyle(document.getElementById("onbCard")).display !== "none",
+        notifEspera: !cn || getComputedStyle(cn).display === "none" };
+      if (window.__pushMostra) window.__pushMostra(true); // forçado na mão, na cara das perguntinhas: continua esperando
+      out.notifEspera2 = !cn || getComputedStyle(cn).display === "none";
+      document.querySelector("[data-onb='obj']").click(); document.querySelector("[data-onb='dias']").click();
+      document.getElementById("onbOk").click();
+      out.onbSumiu = getComputedStyle(document.getElementById("onbCard")).display === "none";
+      out.gravouOnb = !!JSON.parse(localStorage.getItem("ptonb") || "null");
+      return out;
+    });
+    await pB.waitForTimeout(1200);
+    const t8c = await pB.evaluate(() => { const cn = document.getElementById("cardNotif"); return { notifVeio: !!cn && getComputedStyle(cn).display !== "none" }; });
+    ok(t8b.temPush && t8b.onbVisivel && t8b.notifEspera && t8b.notifEspera2 && t8b.onbSumiu && t8b.gravouOnb,
+      "🧭 v776: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
+    ok(t8c.notifVeio,
+      "🧭 v776: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
     await cB.close();
 
     // ---- F) veterano (é também a regra que segura a demo) ----

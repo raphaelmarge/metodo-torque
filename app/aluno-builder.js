@@ -2118,8 +2118,10 @@
       /* v776: pushMostra(false) roda ANTES do boot do onboarding (que só põe o
        * display:block lá embaixo) — decidir pelo inline deixava os dois cards
        * nascerem juntos. Quem manda é o DADO: sem ptonb, as perguntinhas vêm
-       * primeiro e o push espera o primeiro Treinei hoje! (o gancho de 900 ms). */
-      "if(!forca&&onb&&(onb.style.display!=='none'||!L('ptonb',null)))return;" +
+       * primeiro — e isso vale TAMBÉM pro pedido forçado dos 900 ms depois do
+       * Treinei hoje! (quem marcava treino antes de responder via os dois
+       * cards juntos). Quem responde as perguntinhas chama de novo (onbOk). */
+      "if(onb&&(!L('ptonb',null)||(!forca&&onb.style.display!=='none')))return;" +
       "if(!forca){var ad=0;try{ad=+(localStorage.getItem('ptpushAdiado')||0);}catch(e){}" +
       "if(ad&&Date.now()-ad<3*864e5)return;}" +
       "card.style.display='block';}" +
@@ -2387,7 +2389,9 @@
       "card.querySelectorAll(\"[data-onb='\"+b.dataset.onb+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';x.style.borderColor=on?'var(--corc)':'var(--bg11)';});});" +
       "document.getElementById('onbOk').addEventListener('click',function(){if(!sel.obj||!sel.dias){alert('Escolhe o objetivo e os dias — é rapidinho!');return;}" +
       "Sv('ptonb',{obj:sel.obj,dias:sel.dias,dor:(document.getElementById('onbDor').value||'').trim().slice(0,120),em:isoHj()});" +
-      "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);});})();" +
+      "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);" +
+      // v776: tour → perguntinhas → push. Quem marcou o primeiro treino ANTES de responder teve o push segurado pelo pushMostra; agora é a vez dele (o mesmo gancho de 900 ms da v763)
+      "if(Object.keys(L('ptfeitos',{})).length&&window.__pushMostra)setTimeout(function(){try{window.__pushMostra(true);}catch(e9){}},900);});})();" +
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + jsonApp(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
@@ -6801,7 +6805,7 @@
       "function tourPassos(){var temF=!!document.querySelector('#trFichasWrap .fichabox');return [" +
       "{sec:'inicio',q:['#diasSem'],t:'Sua semana, dia a dia',x:'Cada dia que você treinar acende aqui — essa é a sua sequência na semana. Logo embaixo fica a conta: quantos treinos você já fez da meta da semana.'}," +
       "{sec:'inicio',q:['#btnFeito'],t:'Terminou? Toque em Treinei hoje!',x:'É ele que conta a sua sequência e as suas medalhas. Um toque por dia, depois do treino.'}," +
-      "{sec:'treino',sub:'ficha',abreFicha:temF,acao:temF,q:temF?['#trFichasWrap .fichabox[open] .guiabtn','#trFichasWrap .fichabox[open]','#trFichasWrap .fichabox']:['#trFichasWrap']," +
+      "{sec:'treino',sub:'ficha',abreFicha:temF,acao:temF,q:temF?['#trFichasWrap .fichabox[open] .guiabtn','#trFichasWrap .fichabox[open]','#trFichasWrap .fichabox']:['#trFichasWrap .vz','#trFichasWrap']," +
       "t:temF?'Aqui você anota o quanto levantou':'Seu treino vai aparecer aqui'," +
       "x:temF?'Toque em Começar essa ficha: o app leva um exercício por vez e, em Mudar a carga, você anota o peso. É isso que desenha a sua evolução.':'Quando '+NOTPROF+' publicar, cada treino vira uma gaveta aqui. Dentro dela, Começar essa ficha leva um exercício por vez e, em Mudar a carga, você anota o peso — é isso que desenha a sua evolução.'," +
       "bt:temF?'Bora treinar':'Entendi'}];}" +
@@ -6831,18 +6835,22 @@
       "cx.querySelector('#tourPular').addEventListener('click',function(){tourFim('pulou');});}" +
       // o alvo vai pro terço de CIMA da tela: o balão mora embaixo e assim nunca cobre o alvo nem o botão do passo seguinte
       "function tourRola(el){try{el.scrollIntoView({block:'start',behavior:'auto'});var r=el.getBoundingClientRect();window.scrollBy(0,r.top-Math.round(window.innerHeight*0.24));}catch(e){}}" +
-      // .topo decidido pela INTERSEÇÃO medida entre balão e anel, não por limiar
-      "function tourPos(){if(!tour.on||!tour.el)return;var r=tour.el.getBoundingClientRect();if(!(r.width>0&&r.height>0))return;var pd=8;" +
-      "var a=tour.anel.style;a.left=(r.left-pd)+'px';a.top=(r.top-pd)+'px';a.width=(r.width+2*pd)+'px';a.height=(r.height+2*pd)+'px';" +
+      // .topo decidido pela INTERSEÇÃO medida entre balão e anel, não por limiar.
+      // O anel fica PRESO à tela (margem de 6): alvo de ponta a ponta (#trFichasWrap sem ficha) jogava as bordas laterais pra fora e o recorte virava uma faixa
+      "function tourPos(){if(!tour.on||!tour.el)return;var r=tour.el.getBoundingClientRect();if(!(r.width>0&&r.height>0))return;var pd=8,mg=6;" +
+      "var l=Math.max(r.left-pd,mg),t=Math.max(r.top-pd,mg),rr=Math.min(r.right+pd,window.innerWidth-mg),bb=Math.min(r.bottom+pd,window.innerHeight-mg);" +
+      "var a=tour.anel.style;a.left=l+'px';a.top=t+'px';a.width=Math.max(rr-l,0)+'px';a.height=Math.max(bb-t,0)+'px';" +
       "tour.bal.classList.remove('topo');var rb=tour.bal.getBoundingClientRect();" +
-      "if(rb.top<r.bottom+pd&&rb.bottom>r.top-pd)tour.bal.classList.add('topo');}" +
+      "if(rb.top<bb&&rb.bottom>t)tour.bal.classList.add('topo');}" +
+      // ao entrar numa seção os cards ANIMAM (.sec-anim: translateY 12px→0 em .5s, mais o atraso por --ci): medir o alvo uma vez deixava o anel 12 px fora do lugar por meio segundo. Segue o alvo por ~1,1 s
+      "function tourSegue(){tour.seq=(tour.seq||0)+1;var sq=tour.seq,t0=Date.now();(function seg(){if(!tour.on||tour.seq!==sq)return;tourPos();if(Date.now()-t0<1100){try{requestAnimationFrame(seg);}catch(e){}}})();}" +
       "function tourPinta(p){var n=tour.passos.length;tour.vistos=tour.i+1;tour.bal.querySelector('#tourK').textContent=(tour.i+1)+' de '+n;tour.bal.querySelector('#tourT').textContent=p.t;tour.bal.querySelector('#tourX').textContent=p.x;" +
       "var ult=tour.i+1>=n;tour.bal.querySelector('#tourProx').textContent=p.bt||(ult?'Entendi':'Próximo');tour.bal.querySelector('#tourPular').style.display=ult?'none':'';}" +
       "function tourVai(i){if(!tour.on)return;var p=tour.passos[i];if(!p){tourFim('fim');return;}tour.i=i;" +
       "if(p.sec!==tour.sec){tour.sec=p.sec;tour.mudei=true;try{window.__trocaSec(p.sec);}catch(e){}}" +
       "if(p.sub&&window.__trSub)try{window.__trSub(p.sub);}catch(e){}" +
       "var el=tourAlvo(p);if(!el){if(i+1<tour.passos.length)tourVai(i+1);else tourFim('fim');return;}" +
-      "tour.el=el;tourRola(el);tourPinta(p);tourPos();try{requestAnimationFrame(tourPos);}catch(e){}}" +
+      "tour.el=el;tourRola(el);tourPinta(p);tourSegue();}" +
       "function tourFim(como){if(!tour.on)return;tour.on=false;tour.pend=false;" +
       "if(tour.cx)tour.cx.classList.remove('on');document.body.classList.remove('tour-on');" +
       "window.removeEventListener('scroll',tourPos);window.removeEventListener('resize',tourPos);" +
