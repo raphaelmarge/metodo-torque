@@ -272,8 +272,9 @@
           if (!c.id) c.id = "dm" + (SEQ++);
           if (!c.criado) c.criado = new Date().toISOString();
           if (!c.academia_id) c.academia_id = AID;
-          // o pacote do app tem ~180 KB de HTML: guardar 24 deles encheria a
-          // memória do navegador à toa — o demo só precisa saber que existe
+          // até a v775 o pacote levava o app inteiro (~500 KB de HTML); desde a
+          // v776 vai vazio, mas linha velha ainda pode chegar cheia — o demo só
+          // precisa saber que existe, então descarta de qualquer jeito
           if (c.dados && c.dados.html) c.dados = { ver: c.dados.ver, stamp: c.dados.stamp };
           if (c.dados && c.dados.ver) c.ver = c.dados.ver;
           return c;

@@ -14,7 +14,7 @@
  * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
  * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
  * este número bate com o do assets/versao.js e o do sw.js. */
-var VERSION = "mt-v775";
+var VERSION = "mt-v776";
 var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
@@ -31,6 +31,7 @@ var ESQUELETO = [
   "./",
   "index.html",
   "aluno-builder.js",
+  "aluno-skin.js",     // v776: faltava — o app abria offline sem a cara do redesenho
   "nutri-builder.js",
   "nutri-skin.js",
   "manifest.webmanifest",
@@ -82,8 +83,12 @@ self.addEventListener("fetch", function (e) {
 
   e.respondWith(
     fetch(req).then(function (r) {
-      if (r && r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); }
-      return r;
+      if (r && r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); return r; }
+      /* v776: resposta que veio mas NÃO é ok (503 do CDN, portal cativo
+       * devolvendo HTML com 200 pra um .js não passa aqui — mas 4xx/5xx sim)
+       * era entregue ao <script> como se fosse o arquivo. Com cópia boa no
+       * cache, a cópia vale mais que o erro. Sem cópia, o erro segue. */
+      return caches.match(req).then(function (c) { return c || r; });
     }).catch(function () {
       return caches.match(req).then(function (c) {
         if (c) return c;

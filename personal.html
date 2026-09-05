@@ -9783,15 +9783,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var btn = $("btnPubPendentes");
     if (!silencioso && btn) btn.disabled = true;
-    var total = pend.length, feitos = 0, falhas = 0;
+    var total = pend.length, feitos = 0, falhas = 0, pulados = [], ultimoErro = "";
     var stampP = new Date().toISOString();
     var fila = pend.slice();
     (function lote() {
       if (!fila.length) {
         if (!silencioso && btn) btn.disabled = false;
         if (silencioso) { render(); return; }
+        // v776: aluno pulado pelo teste de fumaça aparece pelo NOME, com o motivo —
+        // "3 falharam" sem dizer quem era exatamente o silêncio que escondia o defeito
+        var detalhe = pulados.length
+          ? " Não montou: " + pulados.map(function (p) { return p.nome || "(sem nome)"; }).join(", ") + " — " + pulados[0].erro
+          : (ultimoErro ? " (" + ultimoErro + ")" : "");
         if (alvo) alvo.textContent = falhas
-          ? S.plural(feitos, "app atualizado", "apps atualizados") + ", " + falhas + " falharam — clique de novo pra tentar os que faltaram."
+          ? S.plural(feitos, "app atualizado", "apps atualizados") + ", " + falhas + " falharam — clique de novo pra tentar os que faltaram." + detalhe
           : S.plural(feitos, "app atualizado", "apps atualizados") + " na nuvem — os alunos já veem a novidade!";
         render();
         return;
@@ -9799,9 +9804,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var grupo = fila.splice(0, 5);
       if (!silencioso && alvo) alvo.textContent = "Publicando apps… " + (feitos + falhas + grupo.length) + " de " + total;
       publicaPacotes(nuvem, grupo, stampP).then(function (r) {
-        if (r.erro) { falhas += grupo.length; }
+        // v776: quem o teste de fumaça pulou conta como falha COM nome e motivo
+        (r.pulados || []).forEach(function (p) { pulados.push(p); });
+        if (r.erro) { falhas += grupo.length; if (!ultimoErro) ultimoErro = r.erro; }
         else {
-          feitos += grupo.length;
+          feitos += grupo.length - (r.pulados || []).length;
+          falhas += (r.pulados || []).length;
           // atualização automática não incomoda o aluno com notificação:
           // ele não fez nada, e o app se atualiza sozinho na próxima abertura
           if (!silencioso) grupo.forEach(function (a) {
@@ -9883,7 +9891,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * uma foto congelada: não recebe conserto, não recebe tela nova, nada. E o
    * painel não tinha como saber: o professor descobria pelo aluno reclamando.
    * Esta conferência pergunta à nuvem a versão de cada pacote publicado (só
-   * token + ver, nunca o HTML de 200 KB) e avisa na cara quando algum aluno
+   * token + ver, nunca o app inteiro) e avisa na cara quando algum aluno
    * está congelado, com o botão que republica todos de uma vez. */
   var congeladosTokens = null; // null = ainda não conferiu nesta sessão
   function alunosCongelados(st) {
@@ -20653,8 +20661,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var atualizador = "";
     if (nuvemCfg.url && nuvemCfg.anonKey && a.appTokenP) {
       // app aberto há tempo: confere se o professor mudou algo (stamp) OU se saiu
-      // versão nova do código (ver). Recarregar traz o código do site na hora;
-      // no arquivo baixado (sem loader) usa o HTML pronto que veio no pacote.
+      // versão nova do código (ver). Recarregar traz o código do site na hora.
+      // O document.write(d.html) embaixo só valeria pra um pacote SEM `dados` e
+      // COM html — formato que o painel não gera desde a v467 e que, desde a
+      // v776, nem o html leva. É ramo morto mantido por segurança: com d.dados
+      // presente ele recarrega, e com html "" o `if` é falso de propósito.
       atualizador = "var STAMP=" + jsonApp(stamp) + ",VER=" + jsonApp(self.MT_VERSAO || "") + ";" +
         "try{if(navigator.onLine){fetch(" + jsonApp(nuvemCfg.url + "/rest/v1/rpc/app_aluno_busca") + ",{method:'POST'," +
         "headers:{apikey:" + jsonApp(nuvemCfg.anonKey) + ",Authorization:'Bearer '+" + jsonApp(nuvemCfg.anonKey) + ",'Content-Type':'application/json'}," +
@@ -20755,10 +20766,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__dadosApp = dadosAppAluno; // testes
   // junta os dois: dados deste aluno + código do site
   function montaAppAluno(a, stamp) { return self.MT_APP_ALUNO.monta(dadosAppAluno(a, stamp)); }
-  /* O que vai pra nuvem em app_aluno.dados. O que importa é o `dados`: com ele
-   * o /app/ monta o app com o código do site, sempre o mais novo. O `html`
-   * ainda vai junto só pra não quebrar quem estiver com a página /app/ velha
-   * guardada no aparelho — sai numa próxima versão. */
+  /* O que vai pra nuvem em app_aluno.dados: só o `dados` importa — com ele o
+   * /app/ monta o app com o código do site, sempre o mais novo. Até a v775 o
+   * `html` (o app inteiro, ~500 KB, 270x o dados) ia junto "de reserva" pra
+   * quem tivesse a página /app/ velha; o /app/ jogava fora assim que via o
+   * dados. Eram ~12 MB subindo por rodada de publicação sem ninguém ler. A
+   * partir da v776 vai vazio — a chave fica, porque leitor antigo faz
+   * `pac.html || ""`, e o portal (apps/app-aluno.html) AINDA grava só
+   * {html, stamp}, então o fallback do /app/ continua existindo pra ele. */
   /* Regra do banco de GIFs (assets/cloud-config.js). Sai daqui pro pacote do
    * aluno como UM objeto pequeno; o app usa isso pra montar o endereço do GIF
    * de qualquer um dos 1619 exercícios sem carregar lista nenhuma. */
@@ -20772,7 +20787,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   function pacoteApp(a, stamp) {
     var D = dadosAppAluno(a, stamp);
-    return { html: self.MT_APP_ALUNO.monta(D), dados: D, ver: self.MT_VERSAO || "", stamp: stamp };
+    /* Teste de fumaça (v776): monta com o D REAL e joga o resultado fora. Era o
+     * que o html fazia sem querer — um D que estoura o builder nunca subia,
+     * porque a exceção interrompia o upsert. Continua não subindo, só que agora
+     * o recado diz de quem é o defeito. O test-app-sintaxe.js usa um D sintético;
+     * este é o único ponto em que o D de verdade passa pelo builder antes da nuvem. */
+    try { self.MT_APP_ALUNO.monta(D); }
+    catch (e) { throw new Error("O app de " + (a.nome || "este aluno") + " não montou (" + ((e && e.message) || e) + ") — o pacote NÃO subiu."); }
+    return { html: "", dados: D, ver: self.MT_VERSAO || "", stamp: stamp };
   }
   /* v755: UM caminho pro "publica o pacote e carimba". O par upsert em
    * app_aluno + a2.appPubEm/appVer estava copiado em SETE lugares e ja
@@ -20781,19 +20803,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * nunca rejeita, porque quase todo chamador roda dentro de um botao. */
   function publicaPacotes(nuvem, alunos, stamp) {
     stamp = stamp || new Date().toISOString();
-    var linhas = alunos.map(function (a) {
-      return { token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp };
+    /* v776: o teste de fumaça do pacoteApp pode estourar. Aluno por aluno: quem
+     * estoura é PULADO (nome + motivo em `pulados`) e os outros do grupo sobem
+     * normalmente — um D ruim não pode segurar a publicação de quatro alunos
+     * sãos. Só vira {erro} quando ninguém sobrou, e sempre resolve (o contrato
+     * acima) em vez de exceção solta dentro do botão. */
+    var linhas = [], pulados = [], sobem = [];
+    alunos.forEach(function (a) {
+      try {
+        linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
+        sobem.push(a);
+      } catch (e) { pulados.push({ id: a.id, nome: a.nome || "", erro: (e && e.message) || "o app não montou" }); }
     });
+    if (!linhas.length) return Promise.resolve({ erro: pulados.length ? pulados[0].erro : "nenhum aluno pra publicar", stamp: stamp, pulados: pulados });
     return Promise.resolve(nuvem.client.from("app_aluno").upsert(linhas)).then(function (r) {
-      if (r && r.error) return { erro: (r.error.message || "erro na nuvem"), stamp: stamp };
+      if (r && r.error) return { erro: (r.error.message || "erro na nuvem"), stamp: stamp, pulados: pulados };
       var st2 = load();
-      alunos.forEach(function (a) {
+      sobem.forEach(function (a) {
         var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
         if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; }
       });
       S.write("ptStudio", st2);
-      return { ok: true, stamp: stamp, linhas: linhas };
-    }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp }; });
+      return { ok: true, stamp: stamp, linhas: linhas, pulados: pulados };
+    }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp, pulados: pulados }; });
   }
   window.__publicaPacotes = publicaPacotes; // testes
   // v755: um recado so pro aluno com acesso cortado (publicar, mandar app, criar acesso)

@@ -6447,10 +6447,30 @@ async function abaPt(p, a) {
       al.appTokenP = al.appTokenP || "tok-fonte-unica";
       window.MTStore.write("ptStudio", st);
       const pacote = window.__pacoteApp(al, "2026-01-01T00:00:00Z");
-      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, temHtml: !!pacote.html, nome: al.nome.split(" ")[0] };
+      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, temHtml: !!pacote.html, temChave: "html" in pacote, nome: al.nome.split(" ")[0] };
     });
-    ok(pac.temHtml && pac.ver && pac.dados && !/<!DOCTYPE/i.test(JSON.stringify(pac.dados)),
-      "pacote publicado leva os dados do aluno (e o html só como rede de segurança)");
+    // v776: o html (~500 KB, 270x o dados) parou de subir — a chave fica, vazia,
+    // porque leitor antigo faz `pac.html || ""`
+    ok(!pac.temHtml && pac.temChave && pac.ver && pac.dados && !/<!DOCTYPE/i.test(JSON.stringify(pac.dados)),
+      "pacote publicado leva os DADOS do aluno e NÃO leva mais o html (chave presente, vazia)");
+    // e o monta(D) continua rodando como teste de fumaça: D que estoura o builder não sobe
+    const fumaca = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      const orig = self.MT_APP_ALUNO.monta;
+      self.MT_APP_ALUNO.monta = () => { throw new Error("boom de teste"); };
+      let msg = "";
+      try { window.__pacoteApp(al, "2026-01-01T00:00:00Z"); } catch (e) { msg = e.message; }
+      let chamouUpsert = false;
+      const nuvemFalsa = { aid: "a1", client: { from: () => ({ upsert: () => { chamouUpsert = true; return Promise.resolve({}); } }) } };
+      const r = await window.__publicaPacotes(nuvemFalsa, [al], "2026-01-01T00:00:00Z");
+      self.MT_APP_ALUNO.monta = orig;
+      return { msg, erro: r && r.erro, chamouUpsert };
+    });
+    ok(/não montou/.test(fumaca.msg) && /boom de teste/.test(fumaca.msg) && /NÃO subiu/.test(fumaca.msg),
+      "D que estoura o builder é barrado ANTES da nuvem, com recado que diz de quem é o defeito");
+    ok(/não montou/.test(fumaca.erro || "") && !fumaca.chamouUpsert,
+      "publicaPacotes devolve {erro} nesse caso (nunca rejeita) e não chama o upsert");
 
     const pLoader = await ctx.newPage();
     const errosL = [];
@@ -6479,6 +6499,44 @@ async function abaPt(p, a) {
       "o aparelho guarda os DADOS (não o html), então na próxima vez o código vem novo do site");
     ok(errosL.length === 0, "abrir pelo /app/ não gera erro de JS" + (errosL.length ? " — " + errosL[0] : ""));
     await pLoader.close();
+  }
+  // v776: o pacote não traz mais o html de reserva — então o loader precisa
+  // segurar sozinho o cenário que o html cobria: o construtor (700 KB, <script>
+  // síncrono, baixado ANTES do service worker) cai na primeira abertura.
+  {
+    const pac = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      const pacote = window.__pacoteApp(al, "2026-01-01T00:00:00Z");
+      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, nome: al.nome.split(" ")[0] };
+    });
+    const envelope = (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, dados: { html: "", dados: pac.dados, ver: pac.ver, stamp: pac.stamp } }) });
+    // (1) cai na primeira, vem na segunda: o app abre
+    const pR = await ctx.newPage();
+    let pedidos = 0;
+    await pR.route("**/app/aluno-builder.js", (r) => { pedidos++; if (pedidos === 1) r.abort(); else r.continue(); });
+    await pR.route("**/rest/v1/rpc/app_aluno_estado", envelope);
+    await pR.goto(BASE + "/app/?t=tok-recupera");
+    await pR.waitForTimeout(1500);
+    const rec = await pR.evaluate(() => ({ nav: !!document.getElementById("navApp"), titulo: (document.querySelector(".topo h1") || {}).textContent || "" }));
+    ok(pedidos >= 2 && rec.nav && rec.titulo === pac.nome,
+      "construtor que caiu na primeira abertura é baixado de novo e o app abre (" + pedidos + " pedidos)");
+    await pR.close();
+    // (2) cai sempre: o recado é de INTERNET, com Tentar de novo — nunca "não respondeu"
+    const pF = await ctx.newPage();
+    await pF.route("**/app/aluno-builder.js", (r) => r.abort());
+    await pF.route("**/rest/v1/rpc/app_aluno_estado", envelope);
+    await pF.goto(BASE + "/app/?t=tok-sem-construtor");
+    await pF.waitForTimeout(1200);
+    // o texto sai da CAIXA da mensagem, não do body: o body inclui o <script>
+    // inline do loader, e a fonte dele contém a frase "não respondeu"
+    const falhou = await pF.evaluate(() => ({ texto: (document.querySelector(".box") || document.body).textContent, tentar: !!document.getElementById("tentar"), guardou: !!localStorage.getItem("tq_app_pacote") }));
+    const semConstrutorOk = /Sem internet/.test(falhou.texto) && !/não respondeu/.test(falhou.texto) && falhou.tentar;
+    ok(semConstrutorOk,
+      "sem o construtor de jeito nenhum, o app diz que é a internet (e oferece Tentar de novo), não culpa o servidor" +
+      (semConstrutorOk ? "" : " — a tela dizia: " + falhou.texto.replace(/\s+/g, " ").slice(0, 160)));
+    ok(!falhou.guardou, "e não guarda pacote no aparelho sem ter montado o app");
+    await pF.close();
   }
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
@@ -6583,11 +6641,11 @@ async function abaPt(p, a) {
       });
       const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
       S.cloud = window.__cloudOrig;
-      return { r: r, token: publicado && publicado[0].token, temHtml: !!(publicado && String(publicado[0].dados.html).length > 5000),
+      return { r: r, token: publicado && publicado[0].token, temDados: !!(publicado && publicado[0].dados.dados && publicado[0].dados.ver), semHtml: !!(publicado && publicado[0].dados.html === ""),
         pubEm: !!(S.read("ptStudio", {}).alunos.find((x) => x.id === a.id) || {}).appPubEm,
         botaoFichas: !!document.getElementById("tEnviaApp"), botaoAuto: !!document.getElementById("taEnviaApp") };
     });
-    ok(envio.r.ok && envio.token && envio.temHtml, "dá pra publicar o app de UM aluno (o app inteiro vai pra nuvem)");
+    ok(envio.r.ok && envio.token && envio.temDados && envio.semHtml, "dá pra publicar o app de UM aluno (os DADOS vão pra nuvem, sem o html — v776)");
     ok(envio.pubEm, "publicar marca a data no aluno (ele sai da fila de 'apps atualizados')");
     ok(envio.botaoFichas && envio.botaoAuto, "o botão 'Enviar pro app do aluno' está nas duas abas onde a ficha é montada");
     /* Quem recebeu o acesso do professor já entra com e-mail e senha — o card
@@ -7305,12 +7363,12 @@ async function abaPt(p, a) {
       window.MTStore.cloud = window.__cloudOrigQ;
       return {
         tb: upsertRow && upsertRow.tb,
-        temHtml: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.html && upsertRow.row.dados.html.length > 10000),
+        temDados: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.dados && upsertRow.row.dados.ver),
         token: upsertRow && upsertRow.row.token,
         aviso: document.getElementById("qeAviso").textContent,
       };
     });
-    ok(pub.tb === "app_aluno" && pub.temHtml && pub.token, "gerar o link com a nuvem publica o app do aluno (token passa a existir)");
+    ok(pub.tb === "app_aluno" && pub.temDados && pub.token, "gerar o link com a nuvem publica o app do aluno (token passa a existir)");
     ok(/Tudo pronto/.test(pub.aviso), "aviso confirma que as respostas vão chegar");
   }
   // o aluno abre o link e responde
@@ -7399,12 +7457,16 @@ async function abaPt(p, a) {
       return {
         qa: a.questApp, futIso,
         tb: upsert && upsert.tb,
-        html: (upsert && upsert.row.dados && upsert.row.dados.html) || "",
+        temDados: !!(upsert && upsert.row.dados && upsert.row.dados.dados),
+        // v776: o pacote não leva html; o app que a página abaixo navega é montado
+        // do D QUE SUBIU (upsert.row.dados.dados) — prova que a nuvem recebeu o
+        // questionário, não só que o aluno local tem ele
+        html: upsert && upsert.row.dados && upsert.row.dados.dados ? self.MT_APP_ALUNO.monta(upsert.row.dados.dados) : "",
         aviso: document.getElementById("qeAppAviso").textContent,
       };
     });
     ok(envio.qa && envio.qa.desde === envio.futIso && envio.qa.repete === true && envio.qa.ps.length === 2, "📲 mandar pro app salva o questionário no aluno com data e repetição semanal");
-    ok(envio.tb === "app_aluno" && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado já com o questionário embutido");
+    ok(envio.tb === "app_aluno" && envio.temDados && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado (dados na nuvem) e o app montado pelo site leva o questionário embutido");
     ok(/libera dia/.test(envio.aviso) && /toda semana/.test(envio.aviso), "aviso confirma data de liberação e repetição");
     // no app, antes da data: card TRANCADO 🔒
     const pTrava = await ctx.newPage();
