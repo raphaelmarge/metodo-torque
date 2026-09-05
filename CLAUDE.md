@@ -1798,6 +1798,25 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**O recado do studio estava com o desenho velho** (conserto na v774): o Raphael
+mandou a foto do card **Recado do studio** — ele tinha ficado para trás dos
+redesenhos. Três coisas o denunciavam: cantos de **22px** (o resto do app usa
+14–16), um **filete de 3px** na borda esquerda que nenhum outro card tem, e um
+rótulo em CAIXA ALTA com `letter-spacing:.18em` — tão espalhado que "RECADO DO
+STUDIO TORQUE" gritava mais alto que o recado em si, que é o conteúdo.
+
+Agora ele usa a MESMA linguagem dos avisos do sino (v772) e da gaveta do dia
+(v771): tinta da marca sobre o fundo, **borda fina inteira**, raio 16, rótulo
+miúdo em `.08em`. O destaque passou a vir do TEXTO. As iniciais do studio dentro
+de um círculo cinza (o único lugar do app com esse desenho) viraram o ícone de
+recado num quadradinho de raio 9 — quem tem logo continua vendo a logo. E dois
+recados agora são separados por um traço fino, em vez de virarem um bloco só.
+
+⚠️ O assert nasceu recortando o HTML por **tamanho fixo** (700 caracteres) e
+reprovou um card que estava CERTO: o ícone SVG do cabeçalho empurrou o rótulo
+pra fora da janela. O corte passou a ir até o fim do bloco (o próximo card), que
+é a fronteira de verdade — a mesma lição das âncoras da v583 e da v641.
+
 **Vencimento da mensalidade no sino** (mt-v773): o Raphael pediu o vencimento
 junto dos outros avisos. O trabalho aqui não foi mostrar a data — foi **não
 cobrar quem não deve**, porque um sino que cutuca sem motivo é um sino que o
