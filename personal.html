@@ -9394,7 +9394,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * nada saía sem o painel aberto — e o professor achava que o aluno tinha
      * ficado sem lembrete. O que ainda depende do painel é a cobrança e os
      * lembretes de check-in/questionário. */
-    txt += "Treino do dia, véspera e aniversário saem do servidor todo dia de manhã. ";
+    // v776: o resgate de quem sumiu também saiu do painel pro servidor
+    txt += "Treino do dia, véspera, aniversário e o resgate de quem sumiu saem do servidor todo dia de manhã. ";
     txt += "Cobrança e lembretes de check-in/questionário saem enquanto o Personal está aberto (a cada 6 horas). ";
     if (rr) {
       txt += "Última rodada aqui: " + S.fmtData(rr.slice(0, 10)) + " às " + rr.slice(11, 16) + ".";
@@ -9500,6 +9501,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
       });
       // resgate de quem sumiu: 5+ dias sem treinar e nada marcado (no máx. 1 aviso por semana)
+      // v776: a MESMA regra roda no servidor (regua-diaria, região SUMIU) com a
+      // MESMA chave e o MESMO texto — mexeu aqui, mexe lá (o teste compara os dois).
       var ultFR = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || "";
       var temFuturaR = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
@@ -9663,7 +9666,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try {
       var nuvem = S.cloud && S.cloud();
       if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return fim();
-      var corte = new Date(Date.now() - 3 * 864e5).toISOString();
+      /* v776: 8 dias, não 3. A chave do resgate (sumiu|<aluno>|<semana>) vale a
+       * SEMANA inteira: o cron manda na segunda, o professor abre o painel na
+       * quinta — com 3 dias a linha ficava de fora, o pushLog local não a via
+       * e a régua local mandava o mesmo aviso de novo. As chaves de treino,
+       * véspera e aniversário nunca sofreram porque os dois lados disparam no
+       * mesmo dia. (A faxina do servidor é 45 dias; as linhas existem.) A
+       * sumiu| é a ÚNICA chave com período maior que o dia — quem criar outra
+       * (mensal, p.ex.) tem de crescer esta janela junto. A poda do pushLog
+       * (~120 chaves) pode até apagar a sumiu| importada: não fura, porque toda
+       * rodada real da régua é precedida desta importação, que a repõe. */
+      var corte = new Date(Date.now() - 8 * 864e5).toISOString();
       nuvem.client.from("push_log_srv").select("chave").eq("academia_id", nuvem.aid).gte("em", corte)
         .then(function (r) {
           var linhas = (r && r.data) || [];

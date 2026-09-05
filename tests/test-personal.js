@@ -4430,6 +4430,34 @@ async function abaPt(p, a) {
     ok(/"regua-diaria"/.test(funR) && /"regua-teste"/.test(funR) && /"suporte"/.test(funR) &&
       /data-copia="regua-diaria"/.test(funR) && /data-copia="suporte"/.test(funR),
       "☁️ funcoes.html tem o card da regua-diaria — e regua-teste/suporte entraram no NOMES (o botão deles nunca carregava)");
+    /* v776: o resgate de quem sumiu roda também no servidor. Chave e texto têm
+     * de ser IDÊNTICOS nos dois lados — senão o dedupe (pushLog ↔ push_log_srv)
+     * deixa de casar e o aluno recebe duas vezes. Recorta dos DOIS arquivos;
+     * nada é copiado à mão pro assert. */
+    const fontePainelR = fsR.readFileSync(pathR.join(__dirname, "..", "personal.html"), "utf8");
+    const iniP = fontePainelR.indexOf("// resgate de quem sumiu: 5+ dias"), fimP = fontePainelR.indexOf("// régua de cobrança (desligável");
+    const iniS = fnSrc.indexOf("// ==== SUMIU ===="), fimS = fnSrc.indexOf("// ==== FIM SUMIU ====");
+    const blocoPainel = iniP >= 0 && fimP > iniP ? fontePainelR.slice(iniP, fimP) : "";
+    const blocoSrv = iniS >= 0 && fimS > iniS ? fnSrc.slice(iniS, fimS) : "";
+    ok(blocoPainel.length > 200 && blocoSrv.length > 200, "☁️ os dois blocos do resgate existem (painel: rotinaDiariaPush; servidor: região SUMIU)");
+    // cada leitor devolve só os LITERAIS, sem o nome da variável (diasR × dias, a.id × alunoId)
+    const chaveDe = (s) => ((s.match(/"(sumiu\|)"\s*\+\s*(?:a\.id|alunoId)\s*\+\s*"(\|)"\s*\+\s*semana\w*/) || []).slice(1).join("")) || null;
+    const tituloDe = (s) => (s.match(/"(Sentimos sua falta!)"/) || [])[1] || null;
+    const corpoDe = (s) => ((s.match(/"(Já faz )"\s*\+\s*dias\w*\s*\+\s*"( dias desde seu último treino[^"]*)"/) || []).slice(1).join("")) || null;
+    const semanaDe = (s) => (s.match(/Math\.floor\(Date\.parse\(hoje \+ "T12:00:00Z"\) \/ 6048e5\)/) || [])[0] || null;
+    const limiarDe = (s) => (s.match(/dias\w*\s*>=\s*(\d+)/) || [])[1] || null;
+    // só CÓDIGO: o comentário da região explica por que NÃO olha retorno.feitos, e a palavra não pode reprovar o próprio aviso
+    const semComent = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+    ok(chaveDe(blocoPainel) === "sumiu||" && chaveDe(blocoSrv) === chaveDe(blocoPainel),
+      "☁️ a chave do resgate é a MESMA nos dois lados: sumiu|<aluno>|<semana>");
+    ok(!!tituloDe(blocoPainel) && tituloDe(blocoSrv) === tituloDe(blocoPainel) &&
+      !!corpoDe(blocoPainel) && corpoDe(blocoSrv) === corpoDe(blocoPainel),
+      "☁️ título e corpo do resgate são os MESMOS nos dois lados (" + tituloDe(blocoPainel) + ")");
+    ok(!!semanaDe(blocoPainel) && semanaDe(blocoSrv) === semanaDe(blocoPainel) && limiarDe(blocoPainel) === "5" && limiarDe(blocoSrv) === "5",
+      "☁️ a conta da semana e o limiar de 5 dias são os MESMOS nos dois lados");
+    ok(/x\.data >= hoje && !x\.feita && !x\.faltou/.test(blocoPainel) && /x\.data >= hoje && !x\.feita && !x\.faltou/.test(blocoSrv) &&
+      !/\bretorno\b/.test(semComent(blocoSrv)),
+      "☁️ 'nada marcado' é a mesma condição nos dois lados, e o código do servidor não mistura retorno.feitos do app (a conta oficial de sumindo é UMA: sessões)");
   }
   const psrv = await p.evaluate(async () => {
     const S = window.MTStore;
@@ -4457,6 +4485,58 @@ async function abaPt(p, a) {
   });
   ok(psrv.importou, "☁️ o painel importa as chaves do push_log_srv pro pushLog local (dedupe servidor→cliente)");
   ok(psrv.semNuvem, "☁️ sem nuvem o callback dispara igual — a régua local nunca trava");
+
+  // ☁️ v776: a chave do resgate vale a semana → o painel importa 8 dias do push_log_srv (3 furavam)
+  const janelaSrv = await p.evaluate(async () => {
+    const S = window.MTStore, cloudOrig = S.cloud;
+    let corte = null;
+    try {
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", tabelas: (q) => { if (q.tabela === "push_log_srv") corte = q.filtros.em; return []; } });
+      await new Promise((res) => window.__pushSrv(res));
+    } finally { S.cloud = cloudOrig; }
+    return corte ? (Date.now() - Date.parse(corte)) / 864e5 : -1;
+  });
+  ok(janelaSrv >= 7.9 && janelaSrv <= 8.1,
+    "☁️ o painel importa 8 dias do push_log_srv (mediu " + janelaSrv.toFixed(2) + ") — a chave semanal sumiu|…|semana sobrevive ao intervalo entre duas aberturas");
+
+  // ☁️ v776: o painel manda "Sentimos sua falta!" com a chave semanal e não repete na mesma semana
+  const rgSum = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const snap = localStorage.getItem("mtapp:ptStudio");
+    const st = JSON.parse(snap);
+    const hoje = S.todayISO();
+    const d6 = new Date(hoje + "T12:00"); d6.setDate(d6.getDate() - 6);
+    // aluno isolado: sumido há 6 dias, nada marcado, com app publicado (desde/zap porque o S.write do manda roda o render inteiro)
+    st.alunos.push({ id: "rg-sum", nome: "Sumido Teste", ativo: true, desde: hoje, zap: "", appTokenP: "tok-rg-sum" });
+    st.sessoes.push({ id: "ses-rg-sum", alunoId: "rg-sum", data: S.todayISO(d6), hora: "07:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const cloudOrig = S.cloud, mtOrig = window.MT_CLOUD, fetchOrig = window.fetch;
+    const pushes = [];
+    const out = {};
+    try {
+      window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } });
+      // resposta completa: qualquer fetch do render que caia aqui nesses 300 ms lê json()/text() sem estourar
+      window.fetch = async (url, opts) => { try { if (opts && opts.body) pushes.push(JSON.parse(opts.body)); } catch (e) {} return { ok: true, status: 200, json: async () => ({ ok: true }), text: async () => "" }; };
+      const meu = () => pushes.find((x) => x.token === "tok-rg-sum" && x.titulo === "Sentimos sua falta!");
+      window.__reguaPT();
+      await new Promise((res) => setTimeout(res, 150));
+      const semana = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+      out.mandou = !!meu(); out.corpo = (meu() || {}).corpo || "";
+      out.chaveNoLog = !!(S.read("ptStudio", {}).pushLog || {})["sumiu|rg-sum|" + semana];
+      pushes.length = 0;
+      window.__reguaPT();                       // 2ª rodada na mesma semana
+      await new Promise((res) => setTimeout(res, 150));
+      out.repetiu = !!meu();
+    } finally {
+      window.fetch = fetchOrig; S.cloud = cloudOrig; window.MT_CLOUD = mtOrig;
+      localStorage.setItem("mtapp:ptStudio", snap);   // devolve alunos, sessões e pushLog
+    }
+    return out;
+  });
+  ok(rgSum.mandou && /^Já faz 6 dias desde seu último treino/.test(rgSum.corpo) && rgSum.chaveNoLog,
+    "☁️ 6 dias sem sessão feita e nada marcado → o painel manda o resgate e grava sumiu|<aluno>|<semana> no pushLog");
+  ok(!rgSum.repetiu, "☁️ na mesma semana a chave já está no log — o resgate não sai de novo");
 
   // 🔔 v722: "Enquanto você esteve fora" — o card do Início junta o que
   // aconteceu (pagamentos, treinos pelo app, indicações, alunos novos),
