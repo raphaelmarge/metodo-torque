@@ -1858,6 +1858,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
    * encolhido o icone volta, porque la ele e a unica pista do que e cada botao. */
   body:not(.menu-fino) .abas-pt button.pouco .mi, nav button.pouco .mi { display: none; }
 </style>
+<link href="assets/personal-usabilidade.css" rel="stylesheet">
 </head>
 <body>
 
@@ -2424,6 +2425,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div class="tdacoes">
         <button type="button" class="dbt sec" id="tdIA"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5 13.6 9l5.4 1.6-5.4 1.6L12 17.6l-1.6-5.4L5 10.6 10.4 9z'/><path d='M18.5 16.5l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z'/></svg> Gerar com IA</button>
+        <button type="button" class="dbt" id="tdPrevia">Prévia e alterações</button>
         <button type="button" class="dbt" id="tdPublica"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Salvar e publicar</button>
       </div>
       <!-- As ferramentas da ficha moram AQUI, no mesmo cabecalho. Antes elas
@@ -3884,6 +3886,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <!-- construtor do app do aluno: uma fonte só, usada aqui e em /app/ -->
+<script src="assets/acompanhamento.js"></script>
 <script src="app/aluno-skin.js"></script>
 <script src="app/aluno-builder.js"></script>
 <script>
@@ -5616,6 +5619,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("") + "</div>";
     }
     el.innerHTML = estHtml + kpis + col + termoLn;
+    acPintaResumo(st, a);
     pfResumoNuvem(a);
   }
   // ações da esteira que não têm botão próprio no painel: cada uma REUSA o
@@ -5694,6 +5698,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           if (a2) { a2.retorno = retLeve; S.write("ptStudio", st2); }
           if (!ainda()) return;
           // v748: o tile de treinos segue a MESMA conta (treinosMesDe) com o retorno fresco
+          if (a2) acPintaResumo(st2, a2);
           if (a2) { var tm2 = treinosMesDe(st2, a2); poeKpi("pfKpiTr", tm2.n, "de " + tm2.meta, tm2.sub, tm2.cor); }
           var pesos = Object.keys(ret.peso || {}).sort();
           if (pesos.length) {
@@ -12893,6 +12898,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tddir"><div class="tdficha">' +
         /* o NOME da ficha ja esta na tampa da gaveta, logo acima — repetir
          * aqui era a segunda duplicata da tela. Fica so o tamanho dela. */
+        '<div class="ac-actions"><button type="button" class="btn sec mini" data-ac-lote="' + f.id + '">Editar séries em lote</button></div>' +
         '<div class="tdfcab"><div class="tds" data-fmin="' + f.id + '">' +
         (f.itens.length ? "~" + min + " min de treino" : "Ficha vazia") + "</div>" +
         '<button class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">✕ apagar ficha</button></div>' +
@@ -12931,6 +12937,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
              * no app do aluno. YouTube/Vimeo viram player embutido; .mp4/GIF
              * também funcionam (é o mesmo vidHtml do app). */
             '<label class="tdeobs">Seu vídeo neste exercício (opcional)<input data-tfld="' + chave + ':video" value="' + esc(String(it.video || "")) + '" placeholder="link do YouTube/Vimeo ou .mp4 — vence o vídeo padrão"></label>' +
+            '<label class="tdeobs">Alternativas aprovadas por você (separe com ponto e vírgula)<input data-tfld="' + chave + ':alternativas" value="' + esc((it.alternativas || []).join('; ')) + '" placeholder="ex.: Supino com halteres; Flexão de braços" maxlength="250"></label>' +
             "</div></div>";
         }).join("") : "") +
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
@@ -13079,6 +13086,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       else if (campo === "reps") itF.reps = String(vF).trim() || itF.reps || "12";
       else if (campo === "descanso") itF.descanso = Math.max(0, parseInt(vF, 10) || 0);
       else if (campo === "obs") { if (String(vF).trim()) itF.obs = String(vF).trim().slice(0, 120); else delete itF.obs; }
+      else if (campo === "alternativas") { itF.alternativas = String(vF).split(";").map(function(n){return n.trim().slice(0,100);}).filter(Boolean).filter(function(n,i,a){return a.indexOf(n)===i;}).slice(0,2); }
       else if (campo === "tec") {
         if (!vF || !TECS_PT.some(function (x) { return x[0] === vF; })) delete itF.tec; else itF.tec = vF;
       } else if (campo === "video") {
@@ -13300,7 +13308,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("tdPublica").addEventListener("click", function () {
     // e o MESMO botao de sempre — nada de outra rota pra nuvem
     if (!$("tAluno").value) { alert("Escolha o aluno primeiro."); return; }
-    $("tEnviaApp").click();
+    acPrevia($("tAluno").value, true);
   });
   if ($("tAluno")) $("tAluno").addEventListener("change", pintaTdTopo);
   mostraTrAba("fichas");
@@ -15929,6 +15937,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var nova = { id: S.uid(), titulo: f.titulo, itens: (f.itens || []).map(function (it) {
           var item = { exId: exercicioPorNome(st, it.nome).id, series: it.series, reps: it.reps, descanso: it.descanso == null ? 60 : it.descanso, obs: it.obs || "" };
           if (it.tec) item.tec = it.tec;
+          if (Array.isArray(it.alternativas)) item.alternativas = it.alternativas.slice();
           if (it.video) item.video = it.video; // v750: o vídeo do professor viaja no modelo
           return item;
         }) };
@@ -15969,7 +15978,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
         var item = { nome: (ex && ex.nome) || "", series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "" };
         if (it.tec) item.tec = it.tec;
-        if (it.video) item.video = it.video; // v750: sem isto o modelo perdia o vídeo por exercício (v730)
+        if (Array.isArray(it.alternativas)) item.alternativas = it.alternativas.slice();
+          if (it.video) item.video = it.video; // v750: sem isto o modelo perdia o vídeo por exercício (v730)
         return item;
       }).filter(function (it) { return it.nome; }) };
       if (f.p2) m.p2 = JSON.parse(JSON.stringify(f.p2));
@@ -19356,6 +19366,99 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       rot: "vs " + MESN[dAnt.getMonth()] + " até o dia " + (+diaAtual || 1) };
   }
   window.__compMesAnterior = compMesAnterior; // testes
+  // Acompanhamento: reaproveita o store, os vínculos e os caminhos de publicação.
+  var acDialog=null,acEdicao={},acQuestCache=null,acQuestVoo=false;
+  function acModal(titulo,html){if(acDialog)acDialog.remove();var d=document.createElement('dialog');d.className='ac-dialog';d.id='acDialog';d.setAttribute('aria-labelledby','acTitulo');d.innerHTML='<h2 id="acTitulo">'+esc(titulo)+'</h2>'+html+'<div class="ac-actions"><button type="button" class="btn sec" data-ac-fecha>Fechar</button></div>';document.body.appendChild(d);d.querySelector('[data-ac-fecha]').onclick=function(){d.close();};d.addEventListener('close',function(){d.remove();if(acDialog===d)acDialog=null;});acDialog=d;d.showModal();return d;}
+  function acResumoHtml(st,a) {
+    var r=MT_ACOMP.resumo(st,a,S.todayISO());
+    return '<section class="ac-box" id="acResumo"><h3>Acompanhamento da semana</h3><p><b>'+r.realizados+' dias com treino registrado</b> · meta '+r.meta+' dias'+(r.planejados?' · '+r.planejados+' dias planejados':'')+'</p><div class="ac-week">'+r.dias.map(function(x,i){
+      return '<span class="'+(x.feito?'done':'')+'">'+['SEG','TER','QUA','QUI','SEX','SÁB','DOM'][i]+'<br>'+(x.feito?'✓ feito':x.planejado?'previsto':'livre')+'</span>';
+    }).join('')+'</div><p>Os registros mostram dias com atividade; não comprovam a execução completa de cada ficha.</p><p>'+(r.rpe!==null?'Esforço médio: '+r.rpe+' de 3 (leve a pesado). ':'')+(r.notas.length?r.notas.length+' relato(s) nesta semana.':'Sem relatos nesta semana.')+'</p>'+acMetricas(st,a)+'<div class="ac-actions"><button class="btn" data-ac-resumo="'+esc(a.id)+'">Revisar semana</button><button class="btn sec" data-montatreino="'+esc(a.id)+'">Ajustar treino</button></div></section>';
+  }
+  function acPintaResumo(st,a){var ant=$('acResumo');if(ant)ant.remove();var el=$('pfResumo');if(el)el.insertAdjacentHTML('afterbegin',acResumoHtml(st,a));}
+  // Só acusa questionário pendente depois de consultar a tabela de respostas.
+  // Falha, resultado truncado ou cache de outro aluno = estado desconhecido.
+  function acPerguntas(st) {
+    var hoje=S.todayISO(), ativos=(st.alunos||[]).filter(function(a){return a.ativo!==false&&!a.appRevogadoEm&&a.appTokenP&&a.questApp&&Array.isArray(a.questApp.ps)&&a.questApp.ps.length;});
+    var key=JSON.stringify([hoje,ativos.map(function(a){return [a.id,a.appTokenP,a.questApp];})]);
+    if(acQuestCache&&acQuestCache.key===key&&Date.now()-acQuestCache.em<60000)return acQuestCache.faltam;
+    var nuvem=S.cloud&&S.cloud();
+    if(!nuvem||!ativos.length||acQuestVoo)return {};
+    acQuestVoo=true;
+    var periodos={};
+    ativos.forEach(function(a){
+      var q=a.questApp,desde=/^\d{4}-\d{2}-\d{2}$/.test(q.desde||'')?q.desde:hoje,d=new Date(desde+'T12:00:00');
+      if(q.repete&&hoje>=desde)d.setDate(d.getDate()+7*Math.floor((Date.parse(hoje+'T12:00:00')-d.getTime())/6048e5));
+      periodos[a.id]=S.todayISO(d);
+    });
+    var desde=Object.values(periodos).sort()[0];
+    Promise.resolve().then(function(){
+      return nuvem.client.from('app_quest').select('token,questionario,criado').in('token',ativos.map(function(a){return a.appTokenP;})).gte('criado',new Date(desde+'T00:00:00').toISOString()).order('criado',{ascending:false}).limit(1000);
+    }).then(function(r){
+      var faltam={};
+      if(r&&!r.error&&Array.isArray(r.data)&&r.data.length<1000)ativos.forEach(function(a){
+        var per=periodos[a.id];
+        if(per<=hoje&&!r.data.some(function(x){return x.token===a.appTokenP&&x.questionario===a.questApp.nome&&diaLocalDe(x.criado)>=per;}))faltam[a.id]=true;
+      });
+      acQuestCache={key:key,em:Date.now(),faltam:faltam};
+    }).catch(function(){acQuestCache={key:key,em:Date.now(),faltam:{}};}).then(function(){acQuestVoo=false;acPendencias(load());});
+    return {};
+  }
+  function acPendencias(st) {
+    var box=$('bRadarP');if(!box)return;
+    var anterior=$('acPendencias');if(anterior)anterior.remove();
+    var hoje=S.todayISO(),rows=[],faltam=acPerguntas(st);
+    (st.alunos||[]).filter(function(a){return a.ativo!==false&&!a.appRevogadoEm;}).forEach(function(a){
+      var r=MT_ACOMP.resumo(st,a,hoje),f=alFicha(st,a),rev=a.acompRevistaEm||'';
+      var notas=((a.retorno||a.demoRetorno||{}).notas||[]).filter(function(n){return n&&n.d>=r.inicio&&n.d<=hoje&&(a.acompNotasVistas||[]).indexOf(JSON.stringify([n.d,n.em||'',n.t]))<0;});
+      var motivos=[];
+      if(f.velha)motivos.push(f.o==='Sem ficha'?'Sem ficha montada':'Ficha precisa de revisão');
+      if(faltam[a.id])motivos.push('Questionário aguardando resposta');
+      if(notas.length)motivos.push(notas.length+' relato(s) para revisar');
+      if(!motivos.length)return;
+      rows.push('<div class="ac-row"><div><b>'+esc(a.nome)+'</b><small>'+esc(motivos.join(' · '))+'</small></div><button class="btn sec mini" data-ac-resumo="'+esc(a.id)+'">Revisar aluno</button></div>');
+    });
+    if(rows.length)box.insertAdjacentHTML('afterbegin','<div id="acPendencias">'+rows.join('')+'</div>');
+    var h=$('dashRadar')&&$('dashRadar').querySelector('h2');if(h)h.firstChild.textContent='Precisa da sua atenção';
+  }
+  function acMetricas(st,a) {
+    var r=MT_ACOMP.resumo(st,a,S.todayISO()),u=(a.retorno||a.demoRetorno||{}).uso||{},n={inicios:0,conclusoes:0,falhasSync:0},tem=false;
+    Object.keys(u).forEach(function(k){if(k<r.inicio||k>S.todayISO())return;tem=true;Object.keys(n).forEach(function(t){n[t]+=Math.max(0,+u[k][t]||0);});});
+    return (tem?'<p class="ac-metrics">Uso informado pelo app nesta semana: '+n.inicios+' início(s), '+n.conclusoes+' encerramento(s), '+n.falhasSync+' tentativa(s) de envio sem confirmação. Contagens do aparelho sincronizado; encerrar não comprova todas as séries.</p>':'')+(a.acompTempoEdicao!=null?'<p class="ac-metrics">Tempo ativo estimado na última edição: '+Math.max(1,Math.round(a.acompTempoEdicao/60))+' min.</p>':'');
+  }
+  function acRevisar(id){var st=load(),a=st.alunos.find(function(x){return x.id===id;});if(!a)return;var r=MT_ACOMP.resumo(st,a,S.todayISO()),rev=(a.acompRevisoes||[]).find(function(x){return x.semana===r.inicio;});var d=acModal('Resumo semanal · '+a.nome,'<p>Revise os registros e escreva sua orientação. O texto fica no acompanhamento deste aluno.</p><label for="acTexto">Resumo e orientação</label><textarea id="acTexto" rows="12"></textarea><div class="ac-status" id="acStatus" role="status"></div><div class="ac-actions"><button class="btn" id="acGuardar">Salvar revisão</button><button class="btn sec" id="acTreino">Abrir treino</button></div>');d.querySelector('#acTexto').value=rev?rev.texto:MT_ACOMP.texto(st,a,S.todayISO());d.querySelector('#acGuardar').onclick=function(){var tx=d.querySelector('#acTexto').value.trim().slice(0,6000);if(!tx)return;var s=load(),al=s.alunos.find(function(x){return x.id===id;});if(!al)return;al.acompRevisoes=(al.acompRevisoes||[]).filter(function(x){return x.semana!==r.inicio;});al.acompRevisoes.push({semana:r.inicio,texto:tx,em:new Date().toISOString()});al.acompRevisoes=al.acompRevisoes.slice(-12);al.acompRevistaEm=new Date().toISOString();al.acompNotasVistas=r.notas.map(function(n){return JSON.stringify([n.d,n.em||'',n.t]);});var ok=S.write('ptStudio',s);d.querySelector('#acStatus').textContent=ok===false?'Não foi possível salvar neste aparelho. Tente liberar espaço.':'Revisão salva. Você pode voltar e editar.';if(ok!==false)acPendencias(s);};d.querySelector('#acTreino').onclick=function(){d.close();vaiMontarTreino(id);};}
+  function acPrescricao(D) {
+    var out = '<h3>Prescrição que o aluno recebe</h3>';
+    if (D.fichaVenceApp) out += '<p>Validade: ' + esc(S.fmtData(D.fichaVenceApp)) + '</p>';
+    out += '<details open><summary>Semana programada</summary><ul>' + PLN_DIAS.map(function(d) {
+      var v = (D.planoApp || {})[d[0]], itens = Array.isArray(v) ? v : v ? [v] : [];
+      return '<li>' + d[1] + ': ' + (itens.length ? itens.map(function(x) { return esc((x.h ? x.h + ' · ' : '') + x.n); }).join(' + ') : 'livre') + '</li>';
+    }).join('') + '</ul></details>';
+    (D.fichasApp || []).forEach(function(f) {
+      out += '<details open><summary>' + esc(f.titulo) + '</summary><ol>' + (f.itens || []).map(function(it) {
+        return '<li>' + esc(MT_ACOMP.itemTexto(Object.assign({}, it, {alternativas:it.altsAprovadas ? it.alts : undefined}))) + '</li>';
+      }).join('') + '</ol>' + (f.p2 ? '<p><b>'+esc(f.p2.n)+'</b></p><ul>'+f.p2.l.map(function(x){return '<li>'+esc([x.t,x.v,x.o].filter(Boolean).join(' · '))+'</li>';}).join('')+'</ul>' : '') + '</details>';
+    });
+    (D.wodsApp || []).forEach(function(w) {
+      out += '<details open><summary>Circuito · ' + esc(w.nome) + '</summary><p>' + esc([w.resumo,w.aq,w.obs].filter(Boolean).join(' · ')) + '</p><ol>' + (w.movs || []).map(function(m) { return '<li>' + esc([m.q,m.n].filter(Boolean).join(' ')) + '</li>'; }).join('') + '</ol></details>';
+    });
+    (D.cardiosApp || []).forEach(function(c) {
+      out += '<details open><summary>Corrida e bike · ' + esc(c.nome) + '</summary><p>' + esc([c.mod,cbResumo(c),c.obs].filter(Boolean).join(' · ')) + '</p></details>';
+    });
+    return out;
+  }
+  function acPrevia(id,publicar){var st=load(),a=st.alunos.find(function(x){return x.id===id;});if(!a){alert('Escolha um aluno.');return;}var snap=MT_ACOMP.snapshot(st,id),mud=MT_ACOMP.diferencas(a.acompPublicado,snap),d=acModal('Conferir prescrição · '+a.nome,'<p>Revise o que mudou e a ficha que será entregue ao aluno.</p><h3>Alterações</h3><ul>'+mud.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+acPrescricao(dadosAppAluno(a,new Date().toISOString()))+'<div class="ac-actions">'+(publicar?'<button class="btn" id="acPublicar">Publicar esta prescrição</button>':'')+'<button class="btn sec" id="acVoltarFicha">Voltar e ajustar</button></div><p class="ac-status">'+(a.appPubEm?'Última publicação: '+esc(a.appPubEm.slice(0,10)):'Ainda sem publicação registrada.')+'</p>');if(publicar)d.querySelector('#acPublicar').onclick=function(){var atual=load();if(JSON.stringify(MT_ACOMP.snapshot(atual,id))!==JSON.stringify(snap)) {d.close();acPrevia(id,true);return;}if($('tAluno').value!==id){d.close();return;}d.close();$('tEnviaApp').click();};d.querySelector('#acVoltarFicha').onclick=function(){d.close();vaiMontarTreino(id);};}
+  function acLote(fid){var id=$('tAluno').value,st=load(),f=treinoDe(st,id).fichas.find(function(x){return x.id===fid;});if(!f)return;var base=JSON.stringify(f),d=acModal('Editar séries em lote · '+f.titulo,'<p>Selecione os exercícios. Campos vazios mantêm os valores atuais.</p>'+f.itens.map(function(it,i){return '<label><input type="checkbox" data-ac-index="'+i+'" checked>'+esc((exPorId(st,it.exId)||{}).nome||'Exercício')+'</label>';}).join('')+'<div class="ac-fields"><label>Séries<input id="acSeries" inputmode="numeric" placeholder="Manter"></label><label>Repetições<input id="acReps" placeholder="Manter" maxlength="40"></label><label>Descanso (s)<input id="acDescanso" inputmode="numeric" placeholder="Manter"></label></div><div id="acLoteStatus" role="status" class="ac-status"></div><button class="btn" id="acAplicar">Aplicar aos selecionados</button>');d.querySelector('#acAplicar').onclick=function(){var s=load(),ff=treinoDe(s,id).fichas.find(function(x){return x.id===fid;});if(!ff||JSON.stringify(ff)!==base){d.querySelector('#acLoteStatus').textContent='A ficha mudou. Feche e abra a edição novamente.';return;}try{var ids=Array.from(d.querySelectorAll('[data-ac-index]:checked')).map(function(el){return +el.dataset.acIndex;});if(!MT_ACOMP.lote(ff,ids,{series:d.querySelector('#acSeries').value,reps:d.querySelector('#acReps').value,descanso:d.querySelector('#acDescanso').value})){d.querySelector('#acLoteStatus').textContent='Selecione exercícios e preencha pelo menos um campo.';return;}marcaTreinoMudou(s,id);if(S.write('ptStudio',s)===false)throw Error('Não foi possível salvar.');d.close();renderFichas();}catch(e){d.querySelector('#acLoteStatus').textContent=e.message;}};}
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-ac-resumo],[data-ac-lote]');if(!b)return;if(b.hasAttribute('data-ac-resumo'))acRevisar(b.dataset.acResumo);else acLote(b.dataset.acLote);});
+  // Intervalos entre interações, com corte de ociosidade, aproximam o tempo ativo.
+  ['input','change','click'].forEach(function(tipo){$('vTreinos').addEventListener(tipo,function(){
+    var id=$('tAluno').value;if(!id||document.hidden)return;
+    var agora=Date.now(),x=acEdicao[id]||{ultimo:agora,ms:0},delta=agora-x.ultimo;
+    if(delta<30000)x.ms+=Math.max(0,delta);x.ultimo=agora;acEdicao[id]=x;
+  });});
+  $('tdPrevia').addEventListener('click',function(){acPrevia($('tAluno').value,false);});
+  window.__acompPT={revisar:acRevisar,previa:acPrevia,lote:acLote,pendencias:acPendencias};
+
   function renderDashPT(st) {
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
@@ -19489,6 +19592,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (radar.length > nSumindo ? S.plural(radar.length - nSumindo, "pendência", "pendências") : "") + "</span>" : "");
     $("bRadarP").innerHTML = radar.length ? radar.join("")
       : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
+    acPendencias(st);
     // carteira: MRR, ticket, contratos
     /* ---- Relatórios -> Do dia a dia (v713): os cards do MÊS seguem as
      * setas de período da v712 (relMesSel), não o mês corrente — retroagir
@@ -20531,7 +20635,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: descansoDe(it), obs: it.obs || "", tec: it.tec || "",
-          grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
+          grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
       }) };
     }) : null;
     /* Plano do mês: o pacote leva a semana JÁ RESOLVIDA (1 a 4) com o foco e o
@@ -20808,11 +20912,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * normalmente — um D ruim não pode segurar a publicação de quatro alunos
      * sãos. Só vira {erro} quando ninguém sobrou, e sempre resolve (o contrato
      * acima) em vez de exceção solta dentro do botão. */
-    var linhas = [], pulados = [], sobem = [];
+    var linhas = [], pulados = [], sobem = [], referencias = {}, antesPublicar = load();
     alunos.forEach(function (a) {
       try {
         linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
         sobem.push(a);
+        referencias[a.id] = MT_ACOMP.snapshot(antesPublicar, a.id);
       } catch (e) { pulados.push({ id: a.id, nome: a.nome || "", erro: (e && e.message) || "o app não montou" }); }
     });
     if (!linhas.length) return Promise.resolve({ erro: pulados.length ? pulados[0].erro : "nenhum aluno pra publicar", stamp: stamp, pulados: pulados });
@@ -20821,7 +20926,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var st2 = load();
       sobem.forEach(function (a) {
         var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; }
+        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; a2.acompPublicado = referencias[a.id];
+          if(acEdicao[a.id]) { a2.acompTempoEdicao = Math.round(acEdicao[a.id].ms/1000); delete acEdicao[a.id]; } }
       });
       S.write("ptStudio", st2);
       return { ok: true, stamp: stamp, linhas: linhas, pulados: pulados };

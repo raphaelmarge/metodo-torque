@@ -1082,6 +1082,7 @@ async function abaPt(p, a) {
       const orig = document.getElementById("tEnviaApp").click;
       document.getElementById("tEnviaApp").click = function () { n++; };
       document.getElementById("tdPublica").click();
+      document.getElementById("acPublicar").click();
       document.getElementById("tEnviaApp").click = orig;
       return n;
     });
@@ -1151,8 +1152,8 @@ async function abaPt(p, a) {
     "✏️ séries, repetições, descanso e observação viram campos e salvam na hora (5 × 8 · 100 s · pegada fechada)");
   ok(/5 × 8 · 100 s/.test(aposEd.tela) && /pegada fechada/.test(aposEd.tela),
     "✏️ o resumo da linha fechada mostra tudo numa frase só");
-  ok(aposEd.aberto && aposEd.campos === 6,
-    "✏️ o editor NÃO fecha a cada campo mexido (os 6 campos continuam à mão)");
+  ok(aposEd.aberto && aposEd.campos === 7,
+    "✏️ o editor NÃO fecha a cada campo mexido (os 7 campos, incluindo alternativas, continuam à mão)");
   const aposObs = aposEd;
   // 🏋️ tipo de série NO MESMO exercício (drop-set, up set…): escolhido na
   // cascata de montar e trocável direto na linha, sem prompt

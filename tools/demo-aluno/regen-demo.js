@@ -22,7 +22,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
   const br = await chromium.launch({ executablePath: fs.existsSync(EXEC) ? EXEC : undefined, args: ["--no-sandbox"] });
   const p = await (await br.newContext()).newPage();
   p.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
-  await p.goto("http://127.0.0.1:8765/personal.html");
+  await p.goto((process.env.BASE_URL || "http://127.0.0.1:8765") + "/personal.html");
   await p.waitForTimeout(800);
   const html = await p.evaluate((CAPAS) => {
     const S = window.MTStore;

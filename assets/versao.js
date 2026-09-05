@@ -6,5 +6,5 @@
  * uma versão velha e ninguém enxerga.
  */
 (function (raiz) {
-  raiz.MT_VERSAO = "mt-v776";
+  raiz.MT_VERSAO = "mt-v777";
 })(typeof self !== "undefined" ? self : this);

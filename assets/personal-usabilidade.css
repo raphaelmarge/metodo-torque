@@ -1,0 +1,19 @@
+/* Acabamento do acompanhamento: mesmo tema, leitura e ações consistentes. */
+.ac-box{padding:20px;border:1px solid var(--linha);border-radius:16px;background:var(--card);margin:18px 0;line-height:1.55}
+.ac-box h3,.ac-dialog h2{font-size:20px;letter-spacing:-.02em;margin:0 0 12px}
+.ac-box p,.ac-box label,.ac-dialog p,.ac-dialog label,.ac-row{font-size:14px;color:var(--texto);line-height:1.55}
+.ac-row{padding:12px 0;border-bottom:1px solid var(--linha);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ac-row>div{flex:1;min-width:180px}.ac-row small{display:block;font-size:13px;color:var(--tk-tx3)}
+.ac-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.ac-actions .btn{min-height:44px;white-space:nowrap;flex:1 1 auto}
+.ac-dialog{width:min(780px,calc(100vw - 24px));max-height:90dvh;padding:24px;border:1px solid var(--linha);border-radius:20px;background:var(--card);color:var(--texto);overflow:auto}
+.ac-dialog::backdrop{background:rgba(0,0,0,.72)}.ac-dialog textarea{width:100%;font:inherit;font-size:16px;line-height:1.6;min-height:180px}
+.ac-dialog input:not([type=checkbox]){min-height:44px;width:100%;font-size:16px}.ac-dialog input[type=checkbox]{width:22px;height:22px;min-height:22px;flex:none}
+.ac-dialog label{display:flex;gap:10px;align-items:center;padding:8px 0}.ac-dialog .ac-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.ac-fields label{display:block}
+.ac-dialog li{font-size:14px;line-height:1.65;margin-bottom:8px;overflow-wrap:anywhere}.ac-dialog details{margin:12px 0}.ac-dialog summary{font-size:16px;min-height:44px;cursor:pointer}
+.ac-status{font-size:14px;color:var(--tk-tx3);margin:12px 0}.ac-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:14px 0}.ac-week span{text-align:center;padding:10px 4px;border:1px solid var(--linha);border-radius:10px;font-size:13px}.ac-week .done{border-color:var(--tk-ok)}
+#vTreinos .tdsub,#vTreinos .tds,#vTreinos .tdnota,.pfbox>div,.dfi{font-size:14px;line-height:1.5}
+.tdedit label,.tdadd label{font-size:14px}.tdedit input,.tdadd input{font-size:16px;min-height:44px}.tdac button{min-width:44px;min-height:44px}
+.ac-box :focus-visible,.ac-dialog :focus-visible{outline:3px solid var(--roxo);outline-offset:3px}
+@media(max-width:600px){.ac-dialog{padding:18px}.ac-dialog .ac-fields{grid-template-columns:1fr}.ac-actions>.btn{flex:1 1 130px}.ac-week{gap:3px}.ac-week span{font-size:12px}.ac-box{padding:16px}.tdtop{flex-wrap:wrap}}
+
+#tdPrevia{white-space:nowrap;min-width:max-content}.ac-dialog .ac-metrics{font-size:13px;color:var(--pt-txt-4)}
