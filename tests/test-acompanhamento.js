@@ -61,6 +61,13 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   await p.fill('#acSeries','4');await p.click('#acAplicar');
   ok(await p.evaluate(id=>window.MTStore.read('ptStudio',{}).treinosV2[id].fichas[0].itens.every(x=>x.series===4),id),'edição em lote persiste a ficha real do painel');
   const D=await p.evaluate(id=>window.__dadosApp(window.MTStore.read('ptStudio',{}).alunos.find(a=>a.id===id),new Date().toISOString()),id);
+  const modalidades=await p.evaluate(()=>{
+    const st={alunos:[{id:'so-corrida',nome:'Somente corrida'}],sessoes:[],treinosV2:{'so-corrida':{cardio:[{nome:'Rodagem'}]}}};
+    window.__acompPT.pendencias(st);const semAlerta=!document.querySelector('#acPendencias');
+    st.treinosV2['so-corrida'].cardio=[];window.__acompPT.pendencias(st);
+    return {semAlerta,semTreino:document.querySelector('#acPendencias').textContent};
+  });
+  ok(modalidades.semAlerta && modalidades.semTreino.includes('Sem treino prescrito'),'central reconhece prescrição só de corrida e distingue treino ausente');
   await ctx.close();
 
   global.self=global;global.MT_CLOUD={url:'https://torque-test.invalid',anonKey:'teste'};

@@ -2486,7 +2486,7 @@ async function abaPt(p, a) {
 
     /* ---- v743: app do aluno — retorno do aluno novo, corrida e treino guiado (lido no builder servido) ---- */
     const bld = await p.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
-    ok(/DEV_KS=\['ptpeso'[^\]]*'ptconf'\]/.test(bld) && /if\(!temAlgo\)return;/.test(bld),
+    ok(/DEV_KS=\['ptpeso'[^\]]*'ptconf'[^\]]*\]/.test(bld) && /if\(!temAlgo\)return;/.test(bld),
       "📤 v743: a trava do 'celular limpo' olha TODAS as chaves do retorno (termo, presença, depoimento, corrida…)");
     ok(/crFim'\)\.click\(\);if\(!cr\.resumo\)fechaCrFull\(\);/.test(bld), "🏃 v743: Terminei! da tela cheia não esconde o resumo da corrida");
     ok(/havKm\(ur9,pt\)>=0\.005/.test(bld) && /cr\.rota\.length>12000/.test(bld) && !/cr\.rota\.length>600\)cr\.rota\.shift/.test(bld),
@@ -6073,7 +6073,9 @@ async function abaPt(p, a) {
     // 285 → 300 KB em v775 (o tour do primeiro uso: ~10 KB de CSS, copy e
     // lógica dentro do app — o guarda da imagem repetida continua sendo o
     // `copias === 1`)
-    ok(peso.kb < peso.fotoKb * 2 + 300, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // v777: +25 KB para retomada, estado de envio, relatos e legibilidade.
+    // A imagem continua sendo exatamente UMA cópia, protegida acima.
+    ok(peso.kb < peso.fotoKb * 2 + 325, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
     // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
     // foto era jogada fora duas vezes (no corte e de novo na tela)
     const corte = await p.evaluate(async () => {
