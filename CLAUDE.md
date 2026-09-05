@@ -1857,7 +1857,8 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
-**Quatro frentes pra segurar o aluno no app** (mt-v775): o Raphael perguntou "o que
+**Quatro frentes pra segurar o aluno no app** (mt-v775, no ar junto com a
+v776 — as duas saíram no mesmo PR): o Raphael perguntou "o que
 podemos fazer para melhorar o app" e mandou fazer tudo. Os números (v763/v765: 12
 apps publicados, 5 abertos, alunos parando na semana 1–2) apontavam pra RETENÇÃO,
 não pra feature nova — então as quatro frentes moram no Início e no treino, que é
