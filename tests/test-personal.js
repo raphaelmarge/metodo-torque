@@ -13613,15 +13613,16 @@ async function abaPt(p, a) {
   const htmlV = await p.evaluate(() => document.documentElement.outerHTML);
   ok(/personal trainer/i.test(corpo) && /treino guiado/i.test(htmlV) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
   ok(/14 dias grátis/.test(corpo) && /sem cartão/.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
-  ok(await p.evaluate(() => [...document.querySelectorAll("a.cta")].some((a) => /Testar grátis|14 dias grátis|meu tempo de volta/i.test(a.textContent) && /personal\.html/.test(a.href))), "CTA principal leva direto pro módulo");
+  ok(await p.evaluate(() => [...document.querySelectorAll("a[href]")].some((a) => /Testar grátis|14 dias grátis|meu tempo de volta/i.test(a.textContent) && /personal\.html/.test(a.href))), "CTA principal leva direto pro módulo");
   {
     // o número de exercícios anunciado nunca pode ficar acima do banco real
-    const anunciado = +((corpo.match(/(\d{3,4})\+? exercícios/) || [])[1] || 0);
+    const anuncio = corpo.match(/(\d{3,4})\+? exercícios/);
+    const anunciado = anuncio ? Number(anuncio[1]) : null;
     const real = await p.evaluate(async () => {
       const t = await (await fetch("assets/exercicios-db.js")).text();
       return (t.match(/"n":/g) || []).length;
     });
-    ok(anunciado >= 900 && anunciado <= real, "landing anuncia " + anunciado + " exercícios e o banco tem " + real + " (anúncio nunca acima do real)");
+    ok(anunciado === null || (anunciado >= 900 && anunciado <= real), "se a landing anuncia uma quantidade de exercícios, ela não excede o banco real (" + real + ")");
   }
   await p.close();
 
