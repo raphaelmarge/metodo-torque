@@ -2770,21 +2770,33 @@ async function abaPt(p, a) {
         RC.pinta();
         out.chatZera = !document.querySelector('#abas [data-a="chat"] .cnt') && !el.querySelector("#dVaiChat") && !!el.querySelector("[data-vazio]");
         // freio: com a cópia fresca não consulta; com forca consulta; a consulta pede só o que está sem ler
-        let leu = 0, filtros = [];
+        let leu = 0, leuAgenda = 0, filtros = [];
         const cloudOrig = S.cloud;
         // v756: mockNuvem — escrita e leitura de QUALQUER tabela já vêm resolvidas,
         // então um publicar de app pendente de outro bloco não estoura aqui
         S.cloud = () => window.mockNuvem({ aid: "a1", tabelas: {
           app_chat: (q) => { leu++; Object.keys(q.filtros).forEach((c) => filtros.push(c + "=" + q.filtros[c])); return [{ token: "tok-v7c", de: "aluno", lida: false }]; },
+          // v776: o pintaBadges (timer de 90 s) lê app_chat E app_agenda no mesmo
+          // Promise.all; se o tique cair dentro desta janela ele soma uma leitura
+          // de app_chat que NÃO é do resolverChat (vermelho visto na CI do #770,
+          // verde na máquina). O desconto é a leitura de app_agenda com as
+          // colunas "id,token" — só ele pede assim (a lista de pedidos da
+          // Agenda pede id,token,dia,hora,obs e também roda ao repintar).
+          app_agenda: (q) => { if (q.colunas === "id,token") leuAgenda++; return []; },
         } });
         RC.cache.porAluno = {}; RC.cache.em = Date.now();
         RC.le(); RC.le();
-        const leuComCache = leu;
+        const leuComCache = leu - leuAgenda;
         RC.le(true);
+        // e dispara o pintaBadges de propósito DENTRO da janela: a corrida que
+        // só acontecia na CI passa a acontecer sempre — e o desconto tem de segurar
+        window.__badgesRun && window.__badgesRun();
         await new Promise((r) => setTimeout(r, 60));
+        const leuSo = leu - leuAgenda;
         S.cloud = cloudOrig;
-        out.freio = leuComCache === 0 && leu === 1 && filtros.includes("de=aluno") && filtros.includes("lida=false") &&
+        out.freio = leuComCache === 0 && leuSo === 1 && filtros.includes("de=aluno") && filtros.includes("lida=false") &&
           el.querySelectorAll("#dVaiChat").length === 1;
+        out.freioDet = "cache=" + leuComCache + " forca=" + leuSo + " badges=" + leuAgenda;
         RC.cache.porAluno = null; RC.cache.em = 0;
         window.__dashPT.resolver(S.read("ptStudio", {}));
         const c9 = document.querySelector('#abas [data-a="chat"] .cnt'); if (c9) c9.remove();
@@ -2841,7 +2853,7 @@ async function abaPt(p, a) {
     ok(v747.imp, "📥 v747: importar tira o +55, ignora CPF e separador solto no nome");
     ok(v747.cabDia, "📆 v747: o cabeçalho de Seu dia hoje zera quando as sessões do dia somem");
     ok(v747.vazioGrid && v747.chatCard && v747.chatZera, "💬 v747: o card SEM RESPOSTA entra no estado vazio, não duplica e o .cnt da aba Chat some ao zerar");
-    ok(v747.freio, "☁️ v747: resolverChat usa a cópia de 10 min, só lê com forca e pede só de=aluno/lida=false");
+    ok(v747.freio, "☁️ v747: resolverChat usa a cópia de 10 min, só lê com forca e pede só de=aluno/lida=false (" + v747.freioDet + ")");
     ok(v747.sino && v747.vistoFuturo, "🔔 v747: o sino só lista baixa automática e aluno de outro caminho, agrupa treinos e guarda o visto pela data do evento futuro");
     ok(v747.monta, "🖱️ v747: vaiMontarTreino leva o aluno pros dois selects (Fichas e IA)");
 
