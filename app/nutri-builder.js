@@ -7,8 +7,8 @@
  * junta os dois — um conserto de código chega em TODOS os pacientes sozinho.
  *
  * REGRA DE OURO: NADA de dado de paciente aqui dentro. Tudo entra pelo objeto D.
- * O html do pacote é só rede de segurança pra quem estiver com a página /app/
- * velha guardada. Mexeu no formato do D? Confira dadosAppPaciente no nutricao.html
+ * O pacote NÃO leva mais html (v776): quem monta é sempre o /app/ com este arquivo.
+ * Mexeu no formato do D? Confira dadosAppPaciente no nutricao.html
  * e o teste de sintaxe (tests/test-app-sintaxe.js, bloco do Nutri).
  */
 (function (raiz) {

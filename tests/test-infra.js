@@ -30,6 +30,47 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   const regua = fn("regua-diaria");
   t(/st\.config\.reguaOff\) return out/.test(regua) && /"regua-off"/.test(regua),
     "regua-diaria: obedece o interruptor config.reguaOff do painel (regra regua-off)");
+  /* v775: o resgate de quem sumiu ("Sentimos sua falta!") também sai do
+   * servidor. A região SUMIU é JS puro de propósito e é avaliada AQUI, sem
+   * Deno — alunos num blob de mentira dizem quem entra. */
+  {
+    const ini = regua.indexOf("// ==== SUMIU ===="), fim = regua.indexOf("// ==== FIM SUMIU ====");
+    t(ini >= 0 && fim > ini, "regua-diaria: a região SUMIU existe (os marcadores são o contrato deste teste)");
+    t(/"regua-off", "sumiu"\]/.test(regua) && /const sm = sumiuDe\(sessoes, a\.id, hoje\);/.test(regua) &&
+      /token: String\(a\.appTokenP\), chave: sm\.chave, titulo: sm\.titulo, corpo: sm\.corpo/.test(regua),
+      "regua-diaria: regra 'sumiu' no ping e avisosDe empurra o aviso da região com o token do aluno");
+    const { sumiuDe } = new Function(regua.slice(ini, fim) + "\nreturn { sumiuDe };")();
+    const hoje = "2026-09-10";
+    // datas ancoradas em UTC de propósito (a regra usa "T12:00:00Z"); nada de hora local aqui
+    const iso = (n) => { const d = new Date(Date.UTC(2026, 8, 10 + n)); return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0"); };
+    const sess = [
+      { alunoId: "a6", data: iso(-6), hora: "07:00", feita: true },                                   // sumido há 6 dias, nada marcado
+      { alunoId: "af", data: iso(-9), feita: true }, { alunoId: "af", data: iso(2), hora: "18:00" },   // sumido, mas tem sessão futura
+      { alunoId: "a1", data: iso(-1), feita: true },                                                  // treinou ontem
+      { alunoId: "a5", data: iso(-5), feita: true },                                                  // exatamente 5 dias (limiar)
+      { alunoId: "a4", data: iso(-4), feita: true },                                                  // 4 dias: ainda não
+      { alunoId: "ax", data: iso(-20), faltou: true },                                                // nunca FEZ sessão (só faltou)
+      { alunoId: "afp", data: iso(-8), feita: true }, { alunoId: "afp", data: iso(-2), faltou: true }, // falta PASSADA não é "marcado"
+      { alunoId: "ah", data: iso(-7), feita: true }, { alunoId: "ah", data: hoje, hora: "09:00" },    // sessão de HOJE pendente cala
+      { alunoId: "asd", data: iso(-9), feita: true }, { alunoId: "asd", feita: true },                // feita SEM data: mesma conta do painel (nada sai)
+    ];
+    const semana = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+    const r6 = sumiuDe(sess, "a6", hoje);
+    t(!!r6 && r6.chave === "sumiu|a6|" + semana && r6.titulo === "Sentimos sua falta!" &&
+      r6.corpo === "Já faz 6 dias desde seu último treino — bora marcar o próximo? Me chama no chat do app.",
+      "sumiuDe: 6 dias sem sessão feita e nada marcado → sumiu|<aluno>|<semana>, título e corpo do painel");
+    t(sumiuDe(sess, "af", hoje) === null && sumiuDe(sess, "ah", hoje) === null,
+      "sumiuDe: sessão futura (ou a de hoje ainda pendente) cala o resgate");
+    t(sumiuDe(sess, "a1", hoje) === null && sumiuDe(sess, "a4", hoje) === null, "sumiuDe: treinou ontem / há 4 dias → nada");
+    t(!!sumiuDe(sess, "a5", hoje), "sumiuDe: 5 dias é o limiar (>= 5, como o painel)");
+    t(sumiuDe(sess, "ax", hoje) === null && sumiuDe([], "zz", hoje) === null,
+      "sumiuDe: quem nunca FEZ sessão é aluno novo, não aluno sumido (mesma regra do diasSemTreinar)");
+    const rp = sumiuDe(sess, "afp", hoje);
+    t(!!rp && /^Já faz 8 dias/.test(rp.corpo), "sumiuDe: falta passada não conta como marcado nem zera a contagem");
+    t(sumiuDe(sess, "asd", hoje) === null,
+      "sumiuDe: sessão feita sem data → nada, como o painel (undefined ordena por último no sort; a conta é a MESMA, não 'parecida')");
+    t(sumiuDe(sess, "a6", "2026-09-17").chave !== r6.chave, "sumiuDe: semana seguinte, chave nova — 1 aviso por semana, não 1 na vida");
+  }
   const email = fn("envia-email");
   t(/rest\/v1\/membros\?select=academia_id/.test(email) && /"membro"/.test(email),
     "envia-email: só membro de academia envia (regra membro)");

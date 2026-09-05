@@ -24,7 +24,8 @@ dedupe por nome (case-insensitive) validado por script node.
 **Fonte única do app do aluno** (a partir da v467): o código do app mora em
 `app/aluno-builder.js` (`MT_APP_ALUNO.monta(D)`) e é servido pelo site, igual pra
 todos os alunos. O painel só monta o pacote de DADOS daquele aluno
-(`dadosAppAluno` → ~4 KB, contra 180 KB de HTML) e grava em `app_aluno.dados` no
+(`dadosAppAluno` → poucos KB, contra ~500 KB do app renderizado, que desde a v776
+não viaja mais) e grava em `app_aluno.dados` no
 formato `{html, dados, ver, stamp}`. Quem abre `/app/?t=…` junta os dois — então
 uma correção de código chega em TODOS os alunos sozinha, sem ninguém republicar.
 O VISUAL do redesenho mora em `app/aluno-skin.js` (`MT_APP_SKIN`, embutido pelo
@@ -32,9 +33,10 @@ builder no HTML publicado, com guarda — sem skin, nada muda); aparência se me
 lá, nunca reescrevendo o builder.
 Regras: nada de dado de aluno dentro do aluno-builder.js (tudo entra pelo objeto
 `D`); a cor chega por variáveis CSS no `:root`; canvas usa `CV('cor')` porque não
-entende `var()`. O `html` do pacote é só rede de segurança pra quem estiver com a
-página `/app/` velha guardada — sai numa versão futura. `app/app-sw.js` guarda o
-esqueleto (rede primeiro, cache de reserva) pro app abrir sem internet.
+entende `var()`. O `html` do pacote vai **vazio** desde a v776 (a chave fica, pra
+leitor antigo que faz `pac.html || ""`); o `monta(D)` continua rodando no painel
+como teste de fumaça. `app/app-sw.js` guarda o esqueleto (rede primeiro, cache de
+reserva) pro app abrir sem internet.
 
 **Foto do aluno** (a partir da v506): dois campos na ficha, sem briga entre
 eles — `a.foto` é a que o PERSONAL põe pelo painel, `a.fotoAluno` é a que o
@@ -344,6 +346,63 @@ meio da anamnese) e o `ping` da chat-envia passou a devolver
 velha demais pra obedecer a leitura, o painel **avisa dentro da gaveta**
 (`#brAviso`) em vez de deixar o treino sair errado sem explicação.
 Ganchos: `window.__catalogoIA`, `__exCitados`, `__brief.confere`.
+
+**O pacote do aluno parou de levar o app inteiro** (v776): `pacoteApp` gravava
+`{html, dados, ver, stamp}` em `app_aluno.dados` — e o `html` era o app
+renderizado: **502 KB por aluno, 272× o `dados`** (medido com o builder da v774),
+~12 MB numa rodada de publicação dos 24. Era a "rede de segurança" da v467 pra
+quem tivesse a página `/app/` velha; o `/app/index.html` já jogava fora assim
+que via `dados`. Agora vai `html: ""` — a chave fica só pra o formato não mudar
+de cara e o teste conferir que está vazia (leitor faz `pac.html || ""`, e
+`undefined || ""` daria no mesmo). O **portal** `apps/app-aluno.html` ainda
+grava só `{html, stamp}`, por isso o fallback do `/app/` continua. Nutri idem
+(`pacoteAppN`). Nenhum SQL: nada lê `->'html'` (varrido). Linhas velhas trocam
+pela republicação automática — a subida de versão deixa todo mundo pendente.
+
+Três coisas que a rodada de leitores e céticos pegou e que o plano cru não cobria:
+1. **O `monta(D)` era um teste de fumaça sem querer**: um D que estoura o builder
+   nunca subia, porque a exceção interrompia o upsert. Ficou de propósito, com
+   try/catch e recado ("O app de X não montou (…) — o pacote NÃO subiu"), e
+   `publicaPacotes` devolve `{erro}` nesse caso, como o contrato dela promete.
+   É o único ponto em que o D **de verdade** passa pelo builder antes da nuvem —
+   o `test-app-sintaxe.js` usa um D sintético.
+2. **O cenário que o html cobria de verdade**: primeira abertura num 4G ruim —
+   o `<script>` síncrono de 700 KB do builder (baixado ANTES de existir service
+   worker) cai, e o pacote (poucos KB) chega. Antes abria o app congelado; sem
+   tratamento viraria "o sistema da sua academia não respondeu" — culpa no
+   servidor, errado. Agora `abreOuRecupera` baixa o construtor de novo e, se
+   nem assim vier, diz **"Sem internet agora"** com Tentar de novo; não guarda
+   pacote sem montar. Dois testes dirigem isso com `route` abortando o builder.
+3. **`test-personal.js` servia o html do pacote como PÁGINA**
+   (`/app-quest-travado.html`): com `""` a página em branco derrubava a suíte
+   inteira. Passou a montar pelo `__montaAppAluno`.
+
+A revisão adversarial do diff (cinco lentes, dois céticos por achado) pegou mais
+seis coisas, todas consertadas no mesmo lote: (a) no **Nutri** o teste de fumaça
+lançava DENTRO de quatro chamadores sem try/catch — o recado nunca chegava à tela
+(botão preso em "⏳ Enviando…"); cada um agora responde pelo próprio canal
+(`cb({erro})`, `alert`, `avisoQ`, e a automática pula o paciente e segue);
+(b) no **lote do Personal** um aluno cujo D estoura derrubava os outros quatro
+do grupo e o `r.erro` era descartado — `publicaPacotes` agora pula aluno por
+aluno (`pulados` com nome e motivo), sobe os sãos, e o `publicaAppsPendentes`
+escreve "Não montou: Fulano — <motivo>"; (c) o `app/app-sw.js` entregava um
+**503 do CDN** ao `<script>` mesmo com cópia boa no cache — resposta não-ok
+passa a preferir o cache; (d) `aluno-skin.js` **não estava no precache** (o app
+abria offline sem a cara do redesenho — defeito antigo); (e) skin que faltou
+passa a ser baixado antes de montar, e o retry tem **15 s** de teto (4G que
+aceita a conexão e não entrega bytes deixava "Abrindo seu app…" pra sempre);
+(f) `anota()` acumula em vez de substituir — o "construtor estourou" sumia
+atrás do recado genérico no *Ver detalhes*.
+
+⚠️ Colateral bom: `app_aluno_busca` devolve o jsonb inteiro pro `atualizador`
+embutido no app — deixa de baixar ~500 KB a cada conferência de versão.
+⚠️ Duas asserções 🗓️ v770 do `test-personal.js` estão vermelhas **por
+calendário**, não por defeito: o cenário põe o circuito das 07:30 em
+`dias["1"]` (segunda) e espera esse treino em `d3` = hoje + 3 — só passa às
+sextas. Provado num worktree limpo do v775. Conserto separado: pôr o treino no
+dia da semana de `d3`.
+⚠️ `nativo/www` é gitignored e regerado por `nativo/copia-www.js` (o
+`test-lojas` roda ele; o workflow de loja também) — nada a fazer lá.
 
 **O mapa da corrida não aparecia** (conserto na v641): o Raphael disse que na
 área de corrida o mapa não vinha, mas **a bolinha azul vinha**. Isso já entrega o
@@ -1798,6 +1857,143 @@ apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configuraç�
 (`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
 Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
+**Quatro frentes pra segurar o aluno no app** (mt-v775, no ar junto com a
+v776 — as duas saíram no mesmo PR): o Raphael perguntou "o que
+podemos fazer para melhorar o app" e mandou fazer tudo. Os números (v763/v765: 12
+apps publicados, 5 abertos, alunos parando na semana 1–2) apontavam pra RETENÇÃO,
+não pra feature nova — então as quatro frentes moram no Início e no treino, que é
+o que o aluno real usa. Cada uma foi especificada, atacada por três céticos
+(regras do repo, produto, regressão), implementada num worktree próprio e
+verificada por um revisor adversarial no navegador antes de entrar.
+
+1. **Tour do primeiro uso** (coach-marks): quem entrava caía num monte de cards
+   sem guia. Agora o primeiro uso ganha três coach-marks sobre a TELA de verdade
+   (véu com recorte no alvo + balão curto): chips da semana (`#diasSem`) →
+   **Treinei hoje!** (`#btnFeito`) → a gaveta da ficha em Treinos (`.guiabtn`,
+   "aqui você anota o quanto levantou"; **Bora treinar** fecha o tour E abre o
+   guiado — botão de ação que só fechasse um balão seria promessa vazia; sem
+   ficha vira "seu treino vai aparecer aqui" apontando o aviso `.vz` do
+   `#trFichasWrap`, com **Entendi** devolvendo pro Início). Regras: (a) o véu
+   **não bloqueia nada** — `pointer-events:none` no véu/anel, só o balão recebe
+   toque; o alvo é rolado pro terço de CIMA da tela e o balão vive numa faixa
+   fixa embaixo (ou em cima, quando cruza o anel — decidido pela INTERSEÇÃO
+   medida, não por limiar), então nunca cobre o alvo nem o botão do passo
+   seguinte, e as suítes que clicam no app recém-aberto seguem valendo; o anel
+   **não anima** (transition faz o teste ler o rect velho) mas **segue o alvo por
+   ~1,1 s** (`tourSegue`, rAF) porque os cards entram com `.sec-anim` e medir
+   uma vez deixava o anel 12 px fora do lugar; e fica **preso à tela** com margem
+   de 6 px. (b) `body.tour-on` esconde `#onbCard` e `#cardNotif` enquanto roda:
+   **tour → 3 perguntinhas → push** — e o `pushMostra` foi consertado na raiz:
+   ele rodava ANTES do boot que mostra o `onbCard` e decidia pelo inline, então
+   desde a v763 os dois cards nasciam JUNTOS; agora decide pelo dado (`ptonb`),
+   inclusive no pedido forçado dos 900 ms depois do primeiro Treinei hoje!, e o
+   `onbOk` chama `__pushMostra(true)` quando já havia treino marcado. (c) o DOM
+   nasce colado no `<body>` e SÓ na hora de abrir — sem `data-sec`, nunca é
+   escondido por `[data-sec-off]`. (d) `pttour = {em, como, passo}`
+   (`fim|pulou|fora|veterano`) — uma vez só; **click** fora do balão, Pular ou
+   Esc encerram (não `pointerdown`: no celular ele dispara no primeiro gesto de
+   ROLAR); a Ajuda tem **Ver o tour de novo** (`#tourRever`) e usa as MESMAS
+   palavras do tour (a Ajuda dizia "Começar treino", que é o botão do carrossel;
+   o da gaveta é "Começar essa ficha"). (e) **veterano** (já tem
+   `ptfeitos`/`ptdc`) não ganha tour — é o que deixa a demo do Alex sem tour a
+   cada abertura, sem editar a demo. (f) termo (`#termoOv`) na frente = espera;
+   alvo escondido = sai da lista já na abertura; seção mudada por fora = encerra
+   (`MutationObserver` em `data-sec-off`, em microtask — nunca escrever assert
+   síncrono sobre isso). ⚠️ App aberto por atalho (push/sino no Chat) sem o
+   Início visível aos 900 ms: não abre nessa sessão, não grava, tenta na próxima.
+   ⚠️ `NOTPROF` é a única constante de studio usada dentro do tour —
+   `STUDIO_CURTO`/`esc()` são do builder (v770/v773). ⚠️ `background:var(--bg2)`
+   no balão é INLINE de propósito: o modo claro só reescreve
+   `[style*='background:var(--bg2)']`. ⚠️ São ~10 KB dentro do app: o orçamento
+   do assert "app com foto" subiu de 285 pra 300 KB — quem mede imagem repetida é
+   o `copias === 1`. Ganchos: `window.__tour` (`abre`, `fim`, `vai`, `tenta`,
+   `on`, `pend`, `passo`, `passos`, `alvo`).
+
+2. **Progresso da semana visível**: "você está na semana 2 de 4" com barrinha,
+   quanto falta e o dia que costuma pular. Regra da v771: **nenhum card novo** —
+   a linha `#semResumo` do card Minha semana virou a FAIXA de progresso:
+   `<b>N de META</b> na semana` + "faltam N pra fechar a semana"/"semana
+   fechada", a barra (`#spBar`, role=progressbar, pela MESMA `naSemana()` do
+   btnFeito — que ganhou um `ref` opcional só pro teste), a sub-linha `#spSub`
+   (dias seguidos · **semanas seguidas na meta**, o `streakSem` das Conquistas,
+   só a partir de 2 · "semana S de 4 do plano", o `MESAPP[k].s` da faixa
+   `#trMes`) e o `#spEscapa`. Motor: `semProgCalc(f, ref)` + `semProgHtml(p)` +
+   `diaQueEscapa(f, ref)`. O "dia que costuma escapar" é conta **honesta**: só
+   as 8 semanas cheias anteriores (a em curso fica de fora, regra da v632), só
+   semanas em que ele treinou **e ficou abaixo da META** (quem trocou o dia e
+   bateu a meta não pulou nada), ≥ 3 semanas assim e o dia PLANEJADO perdido em
+   ≥ 60% delas; empate vai pro dia mais próximo de hoje; sem Semana do aluno →
+   nada aparece; o recado sai só no dia ("Quinta é o dia que mais escapa —
+   segura essa hoje?") ou na véspera, e some quando ele já treinou hoje ou já
+   fechou a semana. Os três fallbacks do `#coachTxt` perderam o "N de META" (o
+   número mora na faixa) e o "•" saiu da sub-linha (a 390 px ficava órfão).
+   ⚠️ mostrar `streakSem` no Início **reverte parte da v584** de propósito: a
+   v765 mediu que ninguém chegava nas Conquistas. ⚠️ a barra é da **META
+   combinada** (`metaSemana`), não dos dias do plano — trocar só a barra criaria
+   duas contas; quem quiser a barra do plano ajusta a META em `#pfMetaSem`.
+   ⚠️ "semana S de 4" é FOTO do dia da publicação, como o `#trMes`. ⚠️ a primeira
+   `pintaSemana()` roda ANTES de `var PLANO`/`var MESAPP` — daí os `typeof`; o
+   boot repinta. ⚠️ o app não sabe QUANDO o professor mudou a Semana do aluno
+   (não existe `planoEm`): por isso o recado é brando e exige 3 semanas. ⚠️ o
+   assert v747 que contava `function naSemana(f)` aceita o `ref` opcional.
+   Ganchos: `window.__semProg` (`calc`, `escapa`, `html`, `pinta`).
+
+3. **Seus recordes do mês** (`#recMesCard`, logo depois do pedido de push):
+   Evolução → Cargas mostra o máximo DE SEMPRE, mas "em 30 dias você aguentou
+   +5 kg no supino" não ficava óbvio em lugar nenhum. O card lista os **3
+   maiores avanços dos últimos 30 dias** em prosa ("Supino reto: 80 → 85 kg ·
+   +5 kg"), com a MESMA regra e as MESMAS bordas do `recordesDe(ret, desde, ate)`
+   do painel: máximo DENTRO da janela > máximo de ANTES, e o antes tem de
+   existir (> 0) — a primeira anotação é ponto de partida, não recorde. Janela
+   de **30 dias inclusive hoje**, não mês-calendário (card que nasce vazio todo
+   dia 1 desanima justo quando o aluno volta). ⚠️ É **diferente de propósito** do
+   selo NOVO do mural de Cargas (`recNovo` = mês-calendário) — não "conserte" um
+   pelo outro. Corrida ficou **de fora** (regra da superfície, v760). Sem avanço
+   o card é `display:none`; a repintura entra pelo `Sv` na chave `ptdc` (e
+   `pintaRecMes` nunca chama `Sv`, senão viraria laço). Tocar abre Evolução →
+   **Cargas**: o handler `[data-ajgo]` ganhou `data-ajevsub`. O nome QUEBRA
+   (`overflow-wrap:anywhere`) em vez de cortar. Chama-se "do **mês**" porque
+   "Seus recordes" já é o mural de Cargas. Classificado no `secDe` **por id**.
+   Prefixo `rcm*` porque `rm*` é a calculadora de 1RM. Junto: o traço
+   `border-top:1px solid var(--bg5)` (aqui, nas Marcas, voltas, 1RM…) não tinha
+   remapeamento no modo claro e saía quase preto sobre o card branco — uma regra
+   `html.claro [style*='border-top:1px solid var(--bg5)']` cobre os 13 lugares.
+   Ganchos: `window.__recordesMes.{lista, pinta, desde, fmt, dias}`.
+
+4. **Resgate de quem sumiu também no servidor**: o push "Sentimos sua falta!"
+   (5+ dias sem sessão FEITA e nada marcado, 1 por semana) só saía da
+   `rotinaDiariaPush` — quando o PROFESSOR abria o painel; aluno que some é
+   justamente o que ninguém está olhando. Agora a `regua-diaria` (**v5**
+   publicada e conferida pelo ping, regra `sumiu`) manda o MESMO aviso, com a
+   MESMA chave `sumiu|<aluno>|<semana>` e o MESMO texto, na região
+   `==== SUMIU ====` do index.ts — **JS puro de propósito**: `tests/test-infra.js`
+   recorta e avalia em node com um blob de mentira, e `tests/test-personal.js`
+   recorta chave, título, corpo, conta da semana e limiar dos DOIS arquivos e
+   exige igualdade. A conta é a oficial da v756 (sessões feitas);
+   `retorno.feitos` fica de fora de propósito. ⚠️ **Chave semanal furava o
+   dedupe**: `importaPushSrv` lia só 3 dias do `push_log_srv`; o cron mandava
+   na segunda e o painel aberto na quinta repetia o aviso. Virou **8 dias** (o
+   teste MEDE o `gte("em", …)` pelo `q.filtros` do mock). ⚠️ **O interruptor tem
+   NOMES diferentes nos dois lados**: no painel "Régua de cobrança" só cala a
+   cobrança (v755); no servidor `config.reguaOff` cala TUDO (v747), inclusive o
+   resgate — frente própria. ⚠️ Sem teto, herdado do painel: quem sumiu há meses
+   recebe toda semana; candidato a teto futuro (nos DOIS lados juntos).
+   Observado e NÃO mexido: `treinoDe` do servidor lê o dia do plano como objeto
+   (formato pré-v768) e degrada pro título genérico.
+
+⚠️ **Teste com data relativa é bomba-relógio**: o bloco v770/v771 da agenda
+ancorava as sessões em "hoje + 3" e o plano só tinha os dois treinos na segunda
+— passava só na sexta em que foi escrito e caiu no primeiro sábado. Todas as
+merges desde a v770 caíram numa sexta, por isso o CI nunca ficou vermelho.
+Agora `d3` é a segunda da semana que vem e o toque no calendário anda de mês
+quando ela cai no seguinte. A lição é a da v756 com outra cara: cenário que
+depende do dia da semana precisa ESCOLHER o dia, nunca somar N a hoje.
+⚠️ Quatro frentes em paralelo no MESMO contêiner: confira QUEM está servindo a
+porta (`ps aux | grep http.server`) antes de confiar num `curl 200` — uma frente
+testou os arquivos de OUTRA árvore na primeira rodada; o `run.sh` recusa porta
+ocupada justamente por isso, o servidor avulso não. E um `pkill -f` cujo padrão
+aparece na própria linha de comando mata o shell que o chamou.
+
 **O recado do studio estava com o desenho velho** (conserto na v774): o Raphael
 mandou a foto do card **Recado do studio** — ele tinha ficado para trás dos
 redesenhos. Três coisas o denunciavam: cantos de **22px** (o resto do app usa
@@ -2376,7 +2572,8 @@ por aluno) e `alunos` é lista.
   idempotência por `regua_log`, e-mails dia 1/3/7/12 pra `assinatura_status`
   = trial) e **regua-diaria** (v721, 2026-09-01 — a régua de PUSH no servidor; v2
   publicada no mt-v736 com o NOME do treino no título, regra nome-treino no
-  ping, conferida no ar:
+  ping; **v5** no mt-v775 com o resgate de quem sumiu (regra `sumiu`, a MESMA
+  chave `sumiu|<aluno>|<semana>` do painel), conferida no ar:
   pg_cron 10:00 UTC chama a função com a MESMA senha da regua_config; ela lê o
   `mtapp:ptStudio` da tabela `dados` de cada academia com aluno inscrito na
   push_subs e manda treino do dia, véspera e aniversário no fuso do Brasil,
@@ -2454,12 +2651,13 @@ ninguém atropelar ninguém — valem pros dois:
 
 1. Trabalhe no branch `claude/material-app-site-conversion-4uy622` (ou outro `claude/...`).
 2. Rode TODAS as suítes (acima).
-3. **Suba a versão em +1** (`mt-vNNN`) a cada mudança de produto, nos **DOIS**
-   lugares: `assets/versao.js` e o `var VERSION` cravado no `sw.js`. O navegador
-   só troca o service worker quando os BYTES do `sw.js` mudam — com a versão só
-   no arquivo importado, o `sw.js` ficou idêntico do v491 ao v509 e o iPhone
-   congelou no código guardado (o Safari não confere arquivo importado).
-   `tests/test-versao.js` falha se os dois números não baterem.
+3. **Suba a versão em +1** (`mt-vNNN`) a cada mudança de produto, nos **TRÊS**
+   lugares: `assets/versao.js`, o `var VERSION` cravado no `sw.js` e o `var
+   VERSION` cravado no `app/app-sw.js` (v747 — o SW de `/app/` repetia a
+   armadilha). O navegador só troca o service worker quando os BYTES do arquivo
+   mudam — com a versão só no arquivo importado, o `sw.js` ficou idêntico do
+   v491 ao v509 e o iPhone congelou no código guardado (o Safari não confere
+   arquivo importado). `tests/test-versao.js` falha se os três não baterem.
 4. Commit → push → **PR pra main → merge imediato** (o Raphael quer cada lote no
    ar na hora, sem esperar aprovação) → recomeça o branch a partir de origin/main.
 5. Avise o Raphael em pt-BR simples, com prints quando fizer sentido.

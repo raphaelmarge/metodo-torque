@@ -2536,7 +2536,8 @@ async function abaPt(p, a) {
       "📲 v747: check-in pelo WhatsApp espera o 'Enviei'; com nuvem diz 'vê no painel' em vez de 'já viu'");
     ok(/VALUE=DATE:/.test(bld) && !/UID:'\+Date\.now\(\)/.test(bld), "📅 v747: .ics com UID estável e sessão sem hora como dia inteiro");
     ok((bld.match(/"var MESN=/g) || []).length === 1 && !/var MES3B=/.test(bld) && !/var MES39=/.test(bld) && !/var MES3A=/.test(bld) && !/var MESES=\['Janeiro'/.test(bld) &&
-      /function naSemana\(f\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
+      // v775: naSemana ganhou um `ref` opcional (a faixa de progresso testa a véspera) — o helper continua sendo UM
+      /function naSemana\(f(,ref)?\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
       "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
     ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
     // v754: a chave passa pelo exKey (a mesma do GUIA); o teto e o fecha-por-ficha continuam
@@ -4430,6 +4431,34 @@ async function abaPt(p, a) {
     ok(/"regua-diaria"/.test(funR) && /"regua-teste"/.test(funR) && /"suporte"/.test(funR) &&
       /data-copia="regua-diaria"/.test(funR) && /data-copia="suporte"/.test(funR),
       "☁️ funcoes.html tem o card da regua-diaria — e regua-teste/suporte entraram no NOMES (o botão deles nunca carregava)");
+    /* v775: o resgate de quem sumiu roda também no servidor. Chave e texto têm
+     * de ser IDÊNTICOS nos dois lados — senão o dedupe (pushLog ↔ push_log_srv)
+     * deixa de casar e o aluno recebe duas vezes. Recorta dos DOIS arquivos;
+     * nada é copiado à mão pro assert. */
+    const fontePainelR = fsR.readFileSync(pathR.join(__dirname, "..", "personal.html"), "utf8");
+    const iniP = fontePainelR.indexOf("// resgate de quem sumiu: 5+ dias"), fimP = fontePainelR.indexOf("// régua de cobrança (desligável");
+    const iniS = fnSrc.indexOf("// ==== SUMIU ===="), fimS = fnSrc.indexOf("// ==== FIM SUMIU ====");
+    const blocoPainel = iniP >= 0 && fimP > iniP ? fontePainelR.slice(iniP, fimP) : "";
+    const blocoSrv = iniS >= 0 && fimS > iniS ? fnSrc.slice(iniS, fimS) : "";
+    ok(blocoPainel.length > 200 && blocoSrv.length > 200, "☁️ os dois blocos do resgate existem (painel: rotinaDiariaPush; servidor: região SUMIU)");
+    // cada leitor devolve só os LITERAIS, sem o nome da variável (diasR × dias, a.id × alunoId)
+    const chaveDe = (s) => ((s.match(/"(sumiu\|)"\s*\+\s*(?:a\.id|alunoId)\s*\+\s*"(\|)"\s*\+\s*semana\w*/) || []).slice(1).join("")) || null;
+    const tituloDe = (s) => (s.match(/"(Sentimos sua falta!)"/) || [])[1] || null;
+    const corpoDe = (s) => ((s.match(/"(Já faz )"\s*\+\s*dias\w*\s*\+\s*"( dias desde seu último treino[^"]*)"/) || []).slice(1).join("")) || null;
+    const semanaDe = (s) => (s.match(/Math\.floor\(Date\.parse\(hoje \+ "T12:00:00Z"\) \/ 6048e5\)/) || [])[0] || null;
+    const limiarDe = (s) => (s.match(/dias\w*\s*>=\s*(\d+)/) || [])[1] || null;
+    // só CÓDIGO: o comentário da região explica por que NÃO olha retorno.feitos, e a palavra não pode reprovar o próprio aviso
+    const semComent = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+    ok(chaveDe(blocoPainel) === "sumiu||" && chaveDe(blocoSrv) === chaveDe(blocoPainel),
+      "☁️ a chave do resgate é a MESMA nos dois lados: sumiu|<aluno>|<semana>");
+    ok(!!tituloDe(blocoPainel) && tituloDe(blocoSrv) === tituloDe(blocoPainel) &&
+      !!corpoDe(blocoPainel) && corpoDe(blocoSrv) === corpoDe(blocoPainel),
+      "☁️ título e corpo do resgate são os MESMOS nos dois lados (" + tituloDe(blocoPainel) + ")");
+    ok(!!semanaDe(blocoPainel) && semanaDe(blocoSrv) === semanaDe(blocoPainel) && limiarDe(blocoPainel) === "5" && limiarDe(blocoSrv) === "5",
+      "☁️ a conta da semana e o limiar de 5 dias são os MESMOS nos dois lados");
+    ok(/x\.data >= hoje && !x\.feita && !x\.faltou/.test(blocoPainel) && /x\.data >= hoje && !x\.feita && !x\.faltou/.test(blocoSrv) &&
+      !/\bretorno\b/.test(semComent(blocoSrv)),
+      "☁️ 'nada marcado' é a mesma condição nos dois lados, e o código do servidor não mistura retorno.feitos do app (a conta oficial de sumindo é UMA: sessões)");
   }
   const psrv = await p.evaluate(async () => {
     const S = window.MTStore;
@@ -4457,6 +4486,58 @@ async function abaPt(p, a) {
   });
   ok(psrv.importou, "☁️ o painel importa as chaves do push_log_srv pro pushLog local (dedupe servidor→cliente)");
   ok(psrv.semNuvem, "☁️ sem nuvem o callback dispara igual — a régua local nunca trava");
+
+  // ☁️ v775: a chave do resgate vale a semana → o painel importa 8 dias do push_log_srv (3 furavam)
+  const janelaSrv = await p.evaluate(async () => {
+    const S = window.MTStore, cloudOrig = S.cloud;
+    let corte = null;
+    try {
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", tabelas: (q) => { if (q.tabela === "push_log_srv") corte = q.filtros.em; return []; } });
+      await new Promise((res) => window.__pushSrv(res));
+    } finally { S.cloud = cloudOrig; }
+    return corte ? (Date.now() - Date.parse(corte)) / 864e5 : -1;
+  });
+  ok(janelaSrv >= 7.9 && janelaSrv <= 8.1,
+    "☁️ o painel importa 8 dias do push_log_srv (mediu " + janelaSrv.toFixed(2) + ") — a chave semanal sumiu|…|semana sobrevive ao intervalo entre duas aberturas");
+
+  // ☁️ v775: o painel manda "Sentimos sua falta!" com a chave semanal e não repete na mesma semana
+  const rgSum = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const snap = localStorage.getItem("mtapp:ptStudio");
+    const st = JSON.parse(snap);
+    const hoje = S.todayISO();
+    const d6 = new Date(hoje + "T12:00"); d6.setDate(d6.getDate() - 6);
+    // aluno isolado: sumido há 6 dias, nada marcado, com app publicado (desde/zap porque o S.write do manda roda o render inteiro)
+    st.alunos.push({ id: "rg-sum", nome: "Sumido Teste", ativo: true, desde: hoje, zap: "", appTokenP: "tok-rg-sum" });
+    st.sessoes.push({ id: "ses-rg-sum", alunoId: "rg-sum", data: S.todayISO(d6), hora: "07:00", feita: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const cloudOrig = S.cloud, mtOrig = window.MT_CLOUD, fetchOrig = window.fetch;
+    const pushes = [];
+    const out = {};
+    try {
+      window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+      S.cloud = () => window.mockNuvem({ aid: "acad-1", auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } });
+      // resposta completa: qualquer fetch do render que caia aqui nesses 300 ms lê json()/text() sem estourar
+      window.fetch = async (url, opts) => { try { if (opts && opts.body) pushes.push(JSON.parse(opts.body)); } catch (e) {} return { ok: true, status: 200, json: async () => ({ ok: true }), text: async () => "" }; };
+      const meu = () => pushes.find((x) => x.token === "tok-rg-sum" && x.titulo === "Sentimos sua falta!");
+      window.__reguaPT();
+      await new Promise((res) => setTimeout(res, 150));
+      const semana = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+      out.mandou = !!meu(); out.corpo = (meu() || {}).corpo || "";
+      out.chaveNoLog = !!(S.read("ptStudio", {}).pushLog || {})["sumiu|rg-sum|" + semana];
+      pushes.length = 0;
+      window.__reguaPT();                       // 2ª rodada na mesma semana
+      await new Promise((res) => setTimeout(res, 150));
+      out.repetiu = !!meu();
+    } finally {
+      window.fetch = fetchOrig; S.cloud = cloudOrig; window.MT_CLOUD = mtOrig;
+      localStorage.setItem("mtapp:ptStudio", snap);   // devolve alunos, sessões e pushLog
+    }
+    return out;
+  });
+  ok(rgSum.mandou && /^Já faz 6 dias desde seu último treino/.test(rgSum.corpo) && rgSum.chaveNoLog,
+    "☁️ 6 dias sem sessão feita e nada marcado → o painel manda o resgate e grava sumiu|<aluno>|<semana> no pushLog");
+  ok(!rgSum.repetiu, "☁️ na mesma semana a chave já está no log — o resgate não sai de novo");
 
   // 🔔 v722: "Enquanto você esteve fora" — o card do Início junta o que
   // aconteceu (pagamentos, treinos pelo app, indicações, alunos novos),
@@ -5975,8 +6056,11 @@ async function abaPt(p, a) {
     // a folga é o orçamento do CÓDIGO do app (o que este assert vigia é a
     // imagem repetida, que o `copias === 1` acima já pega): 250 → 285 KB em
     // v734, depois do lote v728–v734 (confirmação, recordes, volume, voz,
-    // texto maior) — crescimento de código de verdade, não foto duplicada
-    ok(peso.kb < peso.fotoKb * 2 + 285, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // texto maior) — crescimento de código de verdade, não foto duplicada;
+    // 285 → 300 KB em v775 (o tour do primeiro uso: ~10 KB de CSS, copy e
+    // lógica dentro do app — o guarda da imagem repetida continua sendo o
+    // `copias === 1`)
+    ok(peso.kb < peso.fotoKb * 2 + 300, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
     // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
     // foto era jogada fora duas vezes (no corte e de novo na tela)
     const corte = await p.evaluate(async () => {
@@ -6363,10 +6447,30 @@ async function abaPt(p, a) {
       al.appTokenP = al.appTokenP || "tok-fonte-unica";
       window.MTStore.write("ptStudio", st);
       const pacote = window.__pacoteApp(al, "2026-01-01T00:00:00Z");
-      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, temHtml: !!pacote.html, nome: al.nome.split(" ")[0] };
+      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, temHtml: !!pacote.html, temChave: "html" in pacote, nome: al.nome.split(" ")[0] };
     });
-    ok(pac.temHtml && pac.ver && pac.dados && !/<!DOCTYPE/i.test(JSON.stringify(pac.dados)),
-      "pacote publicado leva os dados do aluno (e o html só como rede de segurança)");
+    // v776: o html (~500 KB, 270x o dados) parou de subir — a chave fica, vazia,
+    // porque leitor antigo faz `pac.html || ""`
+    ok(!pac.temHtml && pac.temChave && pac.ver && pac.dados && !/<!DOCTYPE/i.test(JSON.stringify(pac.dados)),
+      "pacote publicado leva os DADOS do aluno e NÃO leva mais o html (chave presente, vazia)");
+    // e o monta(D) continua rodando como teste de fumaça: D que estoura o builder não sobe
+    const fumaca = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      const orig = self.MT_APP_ALUNO.monta;
+      self.MT_APP_ALUNO.monta = () => { throw new Error("boom de teste"); };
+      let msg = "";
+      try { window.__pacoteApp(al, "2026-01-01T00:00:00Z"); } catch (e) { msg = e.message; }
+      let chamouUpsert = false;
+      const nuvemFalsa = { aid: "a1", client: { from: () => ({ upsert: () => { chamouUpsert = true; return Promise.resolve({}); } }) } };
+      const r = await window.__publicaPacotes(nuvemFalsa, [al], "2026-01-01T00:00:00Z");
+      self.MT_APP_ALUNO.monta = orig;
+      return { msg, erro: r && r.erro, chamouUpsert };
+    });
+    ok(/não montou/.test(fumaca.msg) && /boom de teste/.test(fumaca.msg) && /NÃO subiu/.test(fumaca.msg),
+      "D que estoura o builder é barrado ANTES da nuvem, com recado que diz de quem é o defeito");
+    ok(/não montou/.test(fumaca.erro || "") && !fumaca.chamouUpsert,
+      "publicaPacotes devolve {erro} nesse caso (nunca rejeita) e não chama o upsert");
 
     const pLoader = await ctx.newPage();
     const errosL = [];
@@ -6395,6 +6499,44 @@ async function abaPt(p, a) {
       "o aparelho guarda os DADOS (não o html), então na próxima vez o código vem novo do site");
     ok(errosL.length === 0, "abrir pelo /app/ não gera erro de JS" + (errosL.length ? " — " + errosL[0] : ""));
     await pLoader.close();
+  }
+  // v776: o pacote não traz mais o html de reserva — então o loader precisa
+  // segurar sozinho o cenário que o html cobria: o construtor (700 KB, <script>
+  // síncrono, baixado ANTES do service worker) cai na primeira abertura.
+  {
+    const pac = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      const pacote = window.__pacoteApp(al, "2026-01-01T00:00:00Z");
+      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, nome: al.nome.split(" ")[0] };
+    });
+    const envelope = (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, dados: { html: "", dados: pac.dados, ver: pac.ver, stamp: pac.stamp } }) });
+    // (1) cai na primeira, vem na segunda: o app abre
+    const pR = await ctx.newPage();
+    let pedidos = 0;
+    await pR.route("**/app/aluno-builder.js", (r) => { pedidos++; if (pedidos === 1) r.abort(); else r.continue(); });
+    await pR.route("**/rest/v1/rpc/app_aluno_estado", envelope);
+    await pR.goto(BASE + "/app/?t=tok-recupera");
+    await pR.waitForTimeout(1500);
+    const rec = await pR.evaluate(() => ({ nav: !!document.getElementById("navApp"), titulo: (document.querySelector(".topo h1") || {}).textContent || "" }));
+    ok(pedidos >= 2 && rec.nav && rec.titulo === pac.nome,
+      "construtor que caiu na primeira abertura é baixado de novo e o app abre (" + pedidos + " pedidos)");
+    await pR.close();
+    // (2) cai sempre: o recado é de INTERNET, com Tentar de novo — nunca "não respondeu"
+    const pF = await ctx.newPage();
+    await pF.route("**/app/aluno-builder.js", (r) => r.abort());
+    await pF.route("**/rest/v1/rpc/app_aluno_estado", envelope);
+    await pF.goto(BASE + "/app/?t=tok-sem-construtor");
+    await pF.waitForTimeout(1200);
+    // o texto sai da CAIXA da mensagem, não do body: o body inclui o <script>
+    // inline do loader, e a fonte dele contém a frase "não respondeu"
+    const falhou = await pF.evaluate(() => ({ texto: (document.querySelector(".box") || document.body).textContent, tentar: !!document.getElementById("tentar"), guardou: !!localStorage.getItem("tq_app_pacote") }));
+    const semConstrutorOk = /Sem internet/.test(falhou.texto) && !/não respondeu/.test(falhou.texto) && falhou.tentar;
+    ok(semConstrutorOk,
+      "sem o construtor de jeito nenhum, o app diz que é a internet (e oferece Tentar de novo), não culpa o servidor" +
+      (semConstrutorOk ? "" : " — a tela dizia: " + falhou.texto.replace(/\s+/g, " ").slice(0, 160)));
+    ok(!falhou.guardou, "e não guarda pacote no aparelho sem ter montado o app");
+    await pF.close();
   }
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
@@ -6499,11 +6641,11 @@ async function abaPt(p, a) {
       });
       const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
       S.cloud = window.__cloudOrig;
-      return { r: r, token: publicado && publicado[0].token, temHtml: !!(publicado && String(publicado[0].dados.html).length > 5000),
+      return { r: r, token: publicado && publicado[0].token, temDados: !!(publicado && publicado[0].dados.dados && publicado[0].dados.ver), semHtml: !!(publicado && publicado[0].dados.html === ""),
         pubEm: !!(S.read("ptStudio", {}).alunos.find((x) => x.id === a.id) || {}).appPubEm,
         botaoFichas: !!document.getElementById("tEnviaApp"), botaoAuto: !!document.getElementById("taEnviaApp") };
     });
-    ok(envio.r.ok && envio.token && envio.temHtml, "dá pra publicar o app de UM aluno (o app inteiro vai pra nuvem)");
+    ok(envio.r.ok && envio.token && envio.temDados && envio.semHtml, "dá pra publicar o app de UM aluno (os DADOS vão pra nuvem, sem o html — v776)");
     ok(envio.pubEm, "publicar marca a data no aluno (ele sai da fila de 'apps atualizados')");
     ok(envio.botaoFichas && envio.botaoAuto, "o botão 'Enviar pro app do aluno' está nas duas abas onde a ficha é montada");
     /* Quem recebeu o acesso do professor já entra com e-mail e senha — o card
@@ -7221,12 +7363,12 @@ async function abaPt(p, a) {
       window.MTStore.cloud = window.__cloudOrigQ;
       return {
         tb: upsertRow && upsertRow.tb,
-        temHtml: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.html && upsertRow.row.dados.html.length > 10000),
+        temDados: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.dados && upsertRow.row.dados.ver),
         token: upsertRow && upsertRow.row.token,
         aviso: document.getElementById("qeAviso").textContent,
       };
     });
-    ok(pub.tb === "app_aluno" && pub.temHtml && pub.token, "gerar o link com a nuvem publica o app do aluno (token passa a existir)");
+    ok(pub.tb === "app_aluno" && pub.temDados && pub.token, "gerar o link com a nuvem publica o app do aluno (token passa a existir)");
     ok(/Tudo pronto/.test(pub.aviso), "aviso confirma que as respostas vão chegar");
   }
   // o aluno abre o link e responde
@@ -7315,12 +7457,16 @@ async function abaPt(p, a) {
       return {
         qa: a.questApp, futIso,
         tb: upsert && upsert.tb,
-        html: (upsert && upsert.row.dados && upsert.row.dados.html) || "",
+        temDados: !!(upsert && upsert.row.dados && upsert.row.dados.dados),
+        // v776: o pacote não leva html; o app que a página abaixo navega é montado
+        // do D QUE SUBIU (upsert.row.dados.dados) — prova que a nuvem recebeu o
+        // questionário, não só que o aluno local tem ele
+        html: upsert && upsert.row.dados && upsert.row.dados.dados ? self.MT_APP_ALUNO.monta(upsert.row.dados.dados) : "",
         aviso: document.getElementById("qeAppAviso").textContent,
       };
     });
     ok(envio.qa && envio.qa.desde === envio.futIso && envio.qa.repete === true && envio.qa.ps.length === 2, "📲 mandar pro app salva o questionário no aluno com data e repetição semanal");
-    ok(envio.tb === "app_aluno" && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado já com o questionário embutido");
+    ok(envio.tb === "app_aluno" && envio.temDados && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado (dados na nuvem) e o app montado pelo site leva o questionário embutido");
     ok(/libera dia/.test(envio.aviso) && /toda semana/.test(envio.aviso), "aviso confirma data de liberação e repetição");
     // no app, antes da data: card TRANCADO 🔒
     const pTrava = await ctx.newPage();
@@ -15374,6 +15520,137 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
+  /* ================= v775 — "Seus recordes do mês" no Início (avanço em prosa)
+   * A aba Cargas mostra o máximo DE SEMPRE de cada exercício, mas "em 30 dias
+   * você aguentou +5 kg no supino" não ficava óbvio em lugar nenhum do Início.
+   * O card lê o ptdc do aparelho com a MESMA regra do recordesDe do painel:
+   * máximo na janela (30 dias) > máximo de ANTES, e o antes tem de existir. */
+  console.log("\n🏆 v775 — seus recordes do mês no Início:");
+  {
+    const ctxRM = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxRM.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pRM = await ctxRM.newPage();
+    pRM.on("pageerror", (e) => erros.push("v775: " + e.message));
+    pRM.on("dialog", (d) => d.accept());
+    await pRM.goto(BASE + "/personal.html");
+    await pRM.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    const appRM = await pRM.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos = [{ id: "u776", nome: "Recorde Silva", ativo: true, desde: "2026-01-05", appTokenP: "tku776" }];
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st); window.__renderPT();
+      return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    });
+    await pRM.close();
+
+    const ctxAR = await b.newContext({ viewport: { width: 390, height: 844 } });
+    // o cenário entra ANTES do app abrir (o boot pinta o card); datas montadas na mão, nunca toISOString
+    await ctxAR.addInitScript(() => {
+      const iso = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+      localStorage.setItem("ptdc", JSON.stringify({
+        "Supino reto": [{ d: iso(45), kg: 80, r: 8 }, { d: iso(40), kg: 80, r: 10 }, { d: iso(10), kg: 85, r: 8 }],   // +5
+        "Agachamento livre": [{ d: iso(50), kg: 100, r: 8 }, { d: iso(5), kg: 110, r: 6 }],                           // +10 (primeiro)
+        "Remada curvada": [{ d: iso(3), kg: 60, r: 10 }],                                                               // só na janela: ponto de partida, NÃO entra
+        "Leg press": [{ d: iso(60), kg: 200, r: 10 }, { d: iso(2), kg: 180, r: 10 }],                                  // caiu: NÃO entra
+        "Rosca direta": [{ d: iso(70), kg: 20, r: 12 }, { d: iso(8), kg: 22.5, r: 10 }],                               // +2,5 (vírgula)
+        "Desenvolvimento": [{ d: iso(70), kg: 30, r: 10 }, { d: iso(20), kg: 32, r: 10 }],                             // +2 → 4º: fica FORA do card, dentro da lista
+        "Elevação lateral": [{ d: iso(70), kg: 8, r: 12 }, { d: iso(-3), kg: 14, r: 12 }],                             // data FUTURA (relógio torto): fora da janela, NÃO entra
+      }));
+    });
+    const paR = await ctxAR.newPage();
+    paR.on("pageerror", (e) => erros.push("v775 app: " + e.message));
+    await paR.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await paR.route("**/app-v775.html", (r) => r.fulfill({ contentType: "text/html", body: appRM }));
+    await paR.goto(BASE + "/app-v775.html", { waitUntil: "domcontentloaded" });
+    await paR.waitForTimeout(900);
+
+    const rm = await paR.evaluate(() => {
+      const card = document.getElementById("recMesCard");
+      const ls = [...document.querySelectorAll("#recMesLs [data-recl]")];
+      const lista = window.__recordesMes.lista();
+      const r = card.getBoundingClientRect();
+      const linhasDe = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getClientRects().length; };
+      return {
+        visivel: getComputedStyle(card).display !== "none",
+        sec: card.getAttribute("data-sec"),
+        h2: (card.querySelector("h2") || {}).textContent || "",
+        aposSemana: document.getElementById("semBlock").compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING ? true : false,
+        aposNotif: document.getElementById("cardNotif").nextElementSibling === card,
+        nomesLista: lista.map((x) => x.n), ganhos: lista.map((x) => x.g),
+        linhas: ls.map((l) => l.textContent.replace(/\s+/g, " ").trim()),
+        sub: document.getElementById("recMesSub").textContent,
+        temEmoji: /[\u{1F300}-\u{1FAFF}]/u.test(card.textContent),
+        cabe: r.right <= 390 && card.scrollWidth <= card.clientWidth && ls.every((l) => l.getBoundingClientRect().right <= 390),
+        nomeUmaLinha: [...card.querySelectorAll("[data-recn]")].every((n) => linhasDe(n) === 1),
+        valorUmaLinha: [...card.querySelectorAll("[data-recv]")].every((v) => linhasDe(v) === 1),
+      };
+    });
+    ok(rm.visivel && rm.sec === "inicio" && rm.aposSemana && rm.aposNotif && /Seus recordes do mês/.test(rm.h2),
+      "🏆 v775: com avanço no ptdc o card 'Seus recordes do mês' aparece no INÍCIO, depois da Minha semana e do pedido de push (data-sec=" + rm.sec + ")");
+    ok(rm.nomesLista.join(",") === "Agachamento livre,Supino reto,Rosca direta,Desenvolvimento" && rm.ganhos.join(",") === "10,5,2.5,2",
+      "🏆 v775: a regra é a do recordesDe do painel — máximo na janela > máximo de antes, antes > 0, ordenado pelo ganho (" + rm.nomesLista.join(",") + ")");
+    ok(!rm.nomesLista.includes("Remada curvada") && !rm.nomesLista.includes("Leg press") && !rm.nomesLista.includes("Elevação lateral"),
+      "🏆 v775: primeira anotação é ponto de partida, carga que CAIU não é recorde e data FUTURA fica fora da janela — os três ficam de fora");
+    ok(rm.linhas.length === 3 && !/Desenvolvimento/.test(rm.linhas.join(" ")),
+      "🏆 v775: o card mostra só os 3 maiores avanços (o 4º fica na aba Cargas)");
+    ok(/^Supino reto.*80 → 85 kg.*\+5 kg$/.test(rm.linhas[1]) && /^Rosca direta.*20 → 22,5 kg.*\+2,5 kg$/.test(rm.linhas[2]),
+      "🏆 v775: prosa 'de → pra' com vírgula decimal (" + rm.linhas[1] + ")");
+    ok(rm.sub === "4 avanços nos últimos 30 dias" && !rm.temEmoji,
+      "🏆 v775: o sub conta TODOS os avanços e a janela, sem prometer mais que o dado; ícone de traço, nenhum emoji (" + rm.sub + ")");
+    ok(rm.cabe && rm.nomeUmaLinha && rm.valorUmaLinha,
+      "🏆 v775: num celular de 390 nada vaza pra fora do card, cada nome e cada valor ficam numa linha (Range.getClientRects)");
+
+    // carga nova gravada pelo player repinta o card SEM chamar pinta() na mão — é o gancho dentro do Sv
+    const rmSv = await paR.evaluate(() => {
+      window.__gGrava("Supino reto", 92, 8, "");
+      const l = [...document.querySelectorAll("#recMesLs [data-recl]")].map((x) => x.textContent.replace(/\s+/g, " "));
+      return { supino: l.find((t) => /Supino/.test(t)) || "", primeiro: l[0] || "" };
+    });
+    ok(/80 → 92 kg/.test(rmSv.supino) && /\+12 kg/.test(rmSv.supino) && /^\s*Supino/.test(rmSv.primeiro),
+      "🏆 v775: anotar carga pelo player repinta o card na hora e reordena pelo ganho (" + rmSv.supino + ")");
+
+    // tocar no card leva pra Evolução → Cargas (não pra Conquistas, que é a sub-aba padrão)
+    const rmGo = await paR.evaluate(async () => {
+      document.getElementById("recMesBt").click();
+      await new Promise((r) => setTimeout(r, 250));
+      return {
+        sec: document.querySelector("[data-sec='evolucao']:not([data-sec-off])") ? "evolucao" : "?",
+        cargas: getComputedStyle(document.getElementById("evCargas")).display !== "none",
+        conq: [...document.querySelectorAll("[data-sec='evolucao'][data-evsub='conq']")].every((e) => getComputedStyle(e).display === "none"),
+        inicioOff: !!document.getElementById("recMesCard").getAttribute("data-sec-off"),
+      };
+    });
+    ok(rmGo.sec === "evolucao" && rmGo.cargas && rmGo.conq && rmGo.inicioOff,
+      "🏆 v775: tocar no card abre Evolução já na sub-aba CARGAS (data-ajevsub)");
+
+    // sem avanço nenhum o card SOME — nunca card vazio
+    const rmVazio = await paR.evaluate(() => {
+      window.__trocaSec("inicio");
+      localStorage.setItem("ptdc", JSON.stringify({ "Remada curvada": [{ d: new Date().getFullYear() + "-01-01", kg: 60 }] }));
+      window.__recordesMes.pinta();
+      return { display: getComputedStyle(document.getElementById("recMesCard")).display, linhas: document.querySelectorAll("#recMesLs [data-recl]").length,
+        lista: window.__recordesMes.lista().length };
+    });
+    ok(rmVazio.display === "none" && rmVazio.linhas === 0 && rmVazio.lista === 0,
+      "🏆 v775: sem avanço na janela o card fica display:none — card vazio não existe");
+
+    // trava de escopo: nada de identificador do BUILDER dentro do pedaço do app (a armadilha 'is not defined' da v770/v773), e nada grava
+    const bldRM = await paR.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    const iRM = bldRM.indexOf('"function rcmDesde()'), fRM = bldRM.indexOf("window.__recordesMes=");
+    const trechoRM = iRM > 0 && fRM > iRM ? bldRM.slice(iRM, fRM) : "";
+    ok(trechoRM.length > 500 && !/\b(esc|dinheiro|jsonApp|ve)\(/.test(trechoRM) && !/STUDIO_CURTO|\bD\./.test(trechoRM) && /pl\(todos\.length/.test(trechoRM),
+      "🏆 v775: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
+    ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);\}catch\(e\)\{\}\}/.test(bldRM) && !/\bSv\(/.test(trechoRM),
+      "🏆 v775: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
+    ok(/if\(el\.id==='recMesCard'\)\{el\.setAttribute\('data-sec','inicio'\);return;\}/.test(bldRM) && !/aria-label/.test(bldRM.slice(bldRM.indexOf("id='recMesCard'"), bldRM.indexOf("id='recMesLs'"))),
+      "🏆 v775: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
+
+    await ctxAR.close();
+  }
+
   /* ================= v770 — a agenda unificada (plano + sessões + serviços) ==
    * O Raphael pediu: a semana do aluno (A, B, C, corrida, circuito) tem de
    * aparecer em DATAS por dois meses na agenda, junto das sessões com o
@@ -15395,6 +15672,13 @@ async function abaPt(p, a) {
     const cen = await pu.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const dia = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return window.diaISO(d); };
+      /* v775: o dia das sessões é a SEGUNDA da semana que vem, não "hoje + 3".
+       * O plano põe os DOIS treinos na segunda ("1"), e os asserts do app
+       * (07:30 e 18:30 no mesmo dia) e do v771 ("2 de 7" pontinhos nesta
+       * semana) só fechavam quando hoje+3 caía numa segunda FORA desta semana
+       * — ou seja, só na sexta-feira em que o bloco foi escrito (2026-09-04).
+       * Num sábado, hoje+3 é terça: só o 18:30 existe e o assert do app caía. */
+      const d3 = (() => { const d = new Date(); d.setDate(d.getDate() + (((8 - d.getDay()) % 7) || 7)); return window.diaISO(d); })();
       st.alunos = [{ id: "u770", nome: "Agenda Cheia", ativo: true, desde: "2026-01-05", appTokenP: "tku770",
         servPacotes: [{ id: "sv770", nome: "Massagem", total: 5, usadas: 0 }] }];
       st.servicosPT = [{ id: "sv770", nome: "Massagem", valor: 120 }];
@@ -15405,8 +15689,8 @@ async function abaPt(p, a) {
         plano: { dias: { "1": [{ tp: "wod", id: "w1", h: "07:30" }, { tp: "ficha", id: "f1", h: "18:30" }],
                          "2": [{ tp: "ficha", id: "f1", h: "18:30" }] } } } };
       st.sessoes = [
-        { id: "u1", alunoId: "u770", data: dia(3), hora: "17:00", feita: false },
-        { id: "u2", alunoId: "u770", data: dia(3), hora: "14:00", feita: false, svId: "sv770", sv: "Massagem" },
+        { id: "u1", alunoId: "u770", data: d3, hora: "17:00", feita: false },
+        { id: "u2", alunoId: "u770", data: d3, hora: "14:00", feita: false, svId: "sv770", sv: "Massagem" },
       ];
       st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
       S.write("ptStudio", st);
@@ -15414,7 +15698,7 @@ async function abaPt(p, a) {
       // a segunda-feira mais distante dentro dos 2 meses
       const d2 = new Date(); d2.setDate(d2.getDate() + 56);
       while (d2.getDay() !== 1) d2.setDate(d2.getDate() + 1);
-      return { d3: dia(3), segLonge: window.diaISO(d2) };
+      return { d3: d3, segLonge: window.diaISO(d2) };
     });
 
     const u = await pu.evaluate((c) => {
@@ -15470,10 +15754,14 @@ async function abaPt(p, a) {
     const ap = await pau.evaluate((c) => {
       window.__trocaSec("agenda");
       const itens = window.__agItens(c.d3).map((x) => x.h + "|" + x.k);
+      // v775: o calendário é de UM mês (AGMES); a segunda que vem pode cair no mês seguinte — anda um mês antes de tocar
+      if (!document.querySelector("[data-agdia='" + c.d3 + "']")) document.getElementById("agProx").click();
       document.querySelectorAll("[data-agdia]").forEach((d) => { if (d.getAttribute("data-agdia") === c.d3) d.click(); });
       return { itens, txt: document.getElementById("agDia").textContent.replace(/\s+/g, " "),
                longe: window.__agItens(c.segLonge).length };
     }, cen);
+    // (o cenário crava d3 numa segunda — ver o comentário do `d3` lá em cima —, então o circuito
+    // das 07:30 SEMPRE existe nesse dia e o assert pode exigir os três horários)
     ok(ap.itens.indexOf("07:30|treino") > -1 && ap.itens.indexOf("17:00|sessao") > -1 && ap.itens.indexOf("18:30|treino") > -1,
       "🗓️ v770: no APP o mesmo dia traz treino e sessão juntos, por horário (" + ap.itens.join(" ") + ")");
     ok(/07:30/.test(ap.txt) && /Circuito do sábado/.test(ap.txt) && /18:30/.test(ap.txt),
@@ -15671,6 +15959,282 @@ async function abaPt(p, a) {
     await ctxU.close();
   }
 
+  /* ================= v775 — tour do primeiro uso no app do aluno ==========
+   * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
+   * semana 1–2, e ninguém guiava quem entrava. O tour mostra, na TELA de
+   * verdade, os chips da semana, o Treinei hoje! e a gaveta da ficha. Mede o
+   * que o aluno VÊ (rects, computed style, elementFromPoint), nunca a classe. */
+  console.log("\n🧭 v775 — tour do primeiro uso:");
+  {
+    const ctxTp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxTp.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const ptp = await ctxTp.newPage();
+    ptp.on("pageerror", (e) => erros.push("v775 painel: " + e.message));
+    ptp.on("dialog", (d) => d.accept());
+    await ptp.goto(BASE + "/personal.html");
+    await ptp.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    const apps = await ptp.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      // exercício REAL da semente do load(): o pacote casa it.exId em st.exercicios
+      const ex = (st.exercicios || []).find((e) => /supino reto com barra/i.test(e.nome)) || st.exercicios[0];
+      st.alunos = [
+        { id: "t776", nome: "Tour Novato", ativo: true, desde: "2026-01-05", appTokenP: "tkt776" },
+        { id: "t776b", nome: "Sem Treino", ativo: true, desde: "2026-01-05", appTokenP: "tkt776b" },
+      ];
+      st.treinosV2 = { t776: { fichas: [{ id: "f1", titulo: "A — Peito", itens: [{ exId: ex.id, series: 4, reps: "10", descanso: 60, obs: "" }] }] } };
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      st.config = st.config || {}; st.config.termo = null;
+      S.write("ptStudio", st); window.__renderPT();
+      const st2 = S.read("ptStudio", {});
+      const com = window.__montaAppAluno(st2.alunos[0], new Date().toISOString());
+      const sem = window.__montaAppAluno(st2.alunos[1], new Date().toISOString());
+      // terceiro pacote: o MESMO aluno com o termo de responsabilidade na frente
+      st2.config.termo = { t: "Declaro estar apto à prática de exercícios físicos.", v: "2026-09-01" };
+      S.write("ptStudio", st2);
+      const termo = window.__montaAppAluno(S.read("ptStudio", {}).alunos[0], new Date().toISOString());
+      return { com, sem, termo };
+    });
+    const abreApp = async (html, nome, init) => {
+      const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+      if (init) await c.addInitScript(init);
+      const p = await c.newPage();
+      p.on("pageerror", (e) => erros.push("v775 app " + nome + ": " + e.message));
+      p.on("dialog", (d) => d.accept());
+      await p.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+      await p.route("**/app-v775-" + nome + ".html", (r) => r.fulfill({ contentType: "text/html", body: html }));
+      await p.goto(BASE + "/app-v775-" + nome + ".html", { waitUntil: "domcontentloaded" });
+      await p.waitForFunction(() => window.__tour);
+      return { c, p };
+    };
+    const hojeIso = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+    // ---- A) aluno novo com ficha: o tour abre sozinho no passo 1 ----
+    const { c: cA, p: pA } = await abreApp(apps.com, "com");
+    await pA.waitForTimeout(1300);
+    const t1 = await pA.evaluate(() => {
+      const cx = document.getElementById("tourCx"), anel = document.getElementById("tourAnel"), bal = document.getElementById("tourBalao");
+      if (!cx || !anel || !bal) return { on: false };
+      const dentro = (a, r) => a.left <= r.left && a.top <= r.top && a.right >= r.right && a.bottom >= r.bottom;
+      const rA = anel.getBoundingClientRect(), rC = document.getElementById("diasSem").getBoundingClientRect(), rB = bal.getBoundingClientRect(), rX = cx.getBoundingClientRect();
+      const bf = document.getElementById("btnFeito").getBoundingClientRect();
+      const alvo = document.elementFromPoint(bf.left + bf.width / 2, bf.top + bf.height / 2);
+      const alvo1 = document.elementFromPoint(rC.left + rC.width / 2, rC.top + rC.height / 2);
+      const cn = document.getElementById("cardNotif");
+      return {
+        on: window.__tour.on(), passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        anelNoAlvo: dentro(rA, rC) && rA.width - rC.width < 40,
+        veuNaoBloqueia: getComputedStyle(cx).pointerEvents === "none" && getComputedStyle(anel).pointerEvents === "none",
+        balaoRecebe: getComputedStyle(bal).pointerEvents === "auto",
+        alvoLivre: !!alvo && (alvo.id === "btnFeito" || !!alvo.closest("#btnFeito")),
+        alvo1Livre: !!alvo1 && !!alvo1.closest("#diasSem"),
+        colouNaTela: cx.parentElement === document.body && Math.round(rX.left) === 0 && Math.round(rX.top) === 0,
+        balaoNaoCobreAlvo: rB.bottom <= rA.top || rB.top >= rA.bottom,
+        onbEscondido: getComputedStyle(document.getElementById("onbCard")).display === "none",
+        notifEscondido: !cn || getComputedStyle(cn).display === "none",
+        tourOn: document.body.classList.contains("tour-on"),
+        semDataSec: !cx.hasAttribute("data-sec"),
+        cssPush: /#cardNotif/.test(document.getElementById("tourCss").textContent),
+        semTransicao: getComputedStyle(anel).transitionDuration === "0s",
+      };
+    });
+    ok(t1.on && t1.passo === 0 && /1 de 3/.test(t1.k || "") && t1.anelNoAlvo,
+      "🧭 v775: no primeiro uso o tour abre sozinho e o anel envolve os chips da semana (#diasSem) — 1 de 3");
+    ok(t1.veuNaoBloqueia && t1.balaoRecebe && t1.alvoLivre && t1.alvo1Livre,
+      "🧭 v775: o véu NÃO bloqueia a página — pointer-events:none no véu e no anel; o centro dos chips E o do Treinei hoje! continuam sendo os próprios elementos (elementFromPoint)");
+    ok(t1.colouNaTela && t1.semDataSec,
+      "🧭 v775: o overlay nasce colado no <body> em (0,0) e fora do classificador de seções (sem data-sec)");
+    ok(t1.balaoNaoCobreAlvo && t1.semTransicao, "🧭 v775: o balão fica numa faixa própria, nunca em cima do alvo — e o anel não anima (o recorte já nasce no lugar)");
+    ok(t1.onbEscondido && t1.notifEscondido && t1.tourOn && t1.cssPush,
+      "🧭 v775: enquanto o tour roda, as 3 perguntinhas e o card de push ficam escondidos — nunca dois pedidos na mesma tela");
+
+    // ---- B) clique DE VERDADE no alvo com o tour aberto ----
+    let cliqueFalhou = "";
+    try { await pA.click("#btnFeito", { timeout: 4000 }); } catch (e) { cliqueFalhou = e.message; }
+    await pA.waitForTimeout(150);
+    const t2 = await pA.evaluate((iso) => ({ on: window.__tour.on(),
+      como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como,
+      marcou: !!JSON.parse(localStorage.getItem("ptfeitos") || "{}")[iso] }), hojeIso());
+    ok(!cliqueFalhou && t2.marcou,
+      "🧭 v775: um clique de verdade (Playwright) no Treinei hoje! com o tour aberto passa e marca o dia — as suítes que clicam no app recém-aberto continuam valendo" + (cliqueFalhou ? " — " + cliqueFalhou.slice(0, 120) : ""));
+    ok(!t2.on && t2.como === "fora",
+      "🧭 v775: tocar fora do balão encerra o tour (pttour.como = fora) — pulável a qualquer momento");
+
+    // ---- C) uma vez só ----
+    await pA.reload({ waitUntil: "domcontentloaded" });
+    await pA.waitForFunction(() => window.__tour);
+    await pA.waitForTimeout(1300);
+    const t3 = await pA.evaluate(() => ({ on: window.__tour.on(), como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
+    ok(!t3.on && t3.como === "fora",
+      "🧭 v775: na abertura seguinte o tour NÃO volta — uma vez só (pttour), e a marca não é sobrescrita");
+
+    // ---- D) reabrir pela Ajuda e andar os 3 passos ----
+    const t4 = await pA.evaluate(() => {
+      window.__trocaSec("ajuda");
+      const bt = document.querySelector("#ajudaCard #tourRever");
+      const out = { temBotao: !!bt, txt: bt ? bt.textContent : "" };
+      if (bt) bt.click();
+      out.on = window.__tour.on(); out.passo = window.__tour.passo();
+      out.noInicio = !!document.querySelector("[data-sec='inicio']:not([data-sec-off])");
+      const aj = document.getElementById("ajudaCard").textContent;
+      out.mesmaHistoria = /Treinei hoje!/.test(aj) && /sequência/.test(aj) && /Mudar a carga/.test(aj) && /Começar essa ficha/.test(aj) && !/Começar treino/.test(aj);
+      return out;
+    });
+    ok(t4.temBotao && /tour de novo/i.test(t4.txt) && t4.on && t4.passo === 0 && t4.noInicio,
+      "🧭 v775: a Ajuda tem 'Ver o tour de novo' — reabre do passo 1, voltando pro Início");
+    ok(t4.mesmaHistoria, "🧭 v775: Ajuda e tour contam a MESMA história (sequência, Treinei hoje!, Começar essa ficha, Mudar a carga)");
+
+    await pA.evaluate(() => document.getElementById("tourProx").click());
+    await pA.waitForTimeout(100);
+    const t5 = await pA.evaluate(() => {
+      const rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = document.getElementById("btnFeito").getBoundingClientRect(), rBal = document.getElementById("tourBalao").getBoundingClientRect();
+      const c = document.elementFromPoint(rB.left + rB.width / 2, rB.top + rB.height / 2);
+      return { on: window.__tour.on(), passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        livre: !!c && !!c.closest("#btnFeito"), naoCobre: rBal.bottom <= rA.top || rBal.top >= rA.bottom };
+    });
+    ok(t5.on && t5.passo === 1 && /2 de 3/.test(t5.k) && t5.dentro && t5.livre && t5.naoCobre,
+      "🧭 v775: Próximo leva ao passo 2 e o anel envolve o Treinei hoje! — que segue clicável e fora do balão");
+
+    await pA.evaluate(() => document.getElementById("tourProx").click());
+    await pA.waitForTimeout(100);
+    const t6 = await pA.evaluate(() => {
+      const el = window.__tour.alvo();
+      const rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = el.getBoundingClientRect();
+      return { passo: window.__tour.passo(), k: document.getElementById("tourK").textContent,
+        emTreino: !!document.querySelector("[data-sec='treino']:not([data-sec-off])") && !document.querySelector("[data-sec='inicio']:not([data-sec-off])"),
+        alvo: el.className || "", gavetaAberta: !!el.closest(".fichabox[open]"),
+        dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        txt: document.getElementById("tourX").textContent, bt: document.getElementById("tourProx").textContent,
+        pularSumiu: getComputedStyle(document.getElementById("tourPular")).display === "none" };
+    });
+    ok(t6.passo === 2 && /3 de 3/.test(t6.k) && t6.emTreino && /guiabtn/.test(t6.alvo) && t6.gavetaAberta && t6.dentro,
+      "🧭 v775: o passo 3 vai pra Treinos e aponta o 'Começar essa ficha' da gaveta aberta");
+    ok(/Mudar a carga/.test(t6.txt) && t6.bt === "Bora treinar" && t6.pularSumiu,
+      "🧭 v775: o passo da carga diz onde anotar o peso (Mudar a carga) e fecha com 'Bora treinar'");
+    // os cards da seção ANIMAM ao entrar (.sec-anim, translateY 12px→0 em .5s + atraso por --ci): o anel tem de acompanhar o alvo até o fim
+    await pA.waitForTimeout(700);
+    const t6b = await pA.evaluate(() => {
+      const el = window.__tour.alvo(), rA = document.getElementById("tourAnel").getBoundingClientRect(), rB = el.getBoundingClientRect();
+      return { dentro: rA.left <= rB.left && rA.top <= rB.top && rA.right >= rB.right && rA.bottom >= rB.bottom,
+        folga: Math.abs((rA.top + 8) - rB.top) < 2 && Math.abs((rA.bottom - 8) - rB.bottom) < 2,
+        naTela: rA.left >= 0 && rA.top >= 0 && rA.right <= innerWidth && rA.bottom <= innerHeight };
+    });
+    ok(t6b.dentro && t6b.folga && t6b.naTela,
+      "🧭 v775: o anel SEGUE o alvo enquanto a seção anima (medido 800 ms depois da troca: folga de 8 px em cima e embaixo, nada fora da tela)");
+
+    const t7 = await pA.evaluate(() => {
+      document.getElementById("tourProx").click();
+      const pt = JSON.parse(localStorage.getItem("pttour") || "null") || {};
+      const gb = document.getElementById("guiaBox");
+      // o guiado abre por style.display='flex' (abreGuia) — medir o computed é medir o que o aluno vê
+      const out = { on: window.__tour.on(), como: pt.como, passo: pt.passo, semClasse: !document.body.classList.contains("tour-on"),
+        guiaAbriu: !!gb && getComputedStyle(gb).display !== "none",
+        cxSumiu: getComputedStyle(document.getElementById("tourCx")).display === "none" };
+      const fx = document.getElementById("gFechar"); if (fx) fx.click();
+      out.guiaFechou = !!gb && getComputedStyle(gb).display === "none";
+      out.ficouEmTreino = !!document.querySelector("[data-sec='treino']:not([data-sec-off])");
+      window.__trocaSec("inicio");
+      out.onbVolta = getComputedStyle(document.getElementById("onbCard")).display !== "none";
+      const cn = document.getElementById("cardNotif");
+      out.notifEspera = !cn || getComputedStyle(cn).display === "none";
+      return out;
+    });
+    ok(!t7.on && t7.como === "fim" && t7.passo === 3 && t7.semClasse && t7.cxSumiu,
+      "🧭 v775: 'Bora treinar' fecha o tour (pttour.como = fim, 3 passos vistos) e o véu some");
+    ok(t7.guiaAbriu && t7.guiaFechou,
+      "🧭 v775: 'Bora treinar' FAZ o que promete — abre o treino guiado (e o ✕ dele fecha)");
+    ok(t7.ficouEmTreino && t7.onbVolta && t7.notifEspera,
+      "🧭 v775: com ficha o tour termina em Treinos; de volta ao Início as 3 perguntinhas reaparecem SOZINHAS — o push espera (tour → perguntinhas → push)");
+    await cA.close();
+
+    // ---- E) alvo escondido sai da lista; sem treino o último passo adapta ----
+    const { c: cB, p: pB } = await abreApp(apps.sem, "sem");
+    await pB.evaluate(() => { document.getElementById("diasSem").style.display = "none"; });
+    await pB.waitForTimeout(1300);
+    const t8 = await pB.evaluate(() => {
+      const out = { on: window.__tour.on(), passo: window.__tour.passo(), n: window.__tour.passos().length, k: document.getElementById("tourK") ? document.getElementById("tourK").textContent : "",
+        alvo0: (window.__tour.alvo() || {}).id };
+      if (!out.on) return out;
+      document.getElementById("tourProx").click();
+      // título + texto: "Seu treino vai aparecer aqui" é o TÍTULO do passo, e o corpo diz onde a carga entra
+      out.passo2 = window.__tour.passo(); out.k2 = document.getElementById("tourK").textContent; out.txt = document.getElementById("tourT").textContent + " " + document.getElementById("tourX").textContent; out.bt = document.getElementById("tourProx").textContent;
+      const al = window.__tour.alvo(); out.alvo = al && al.closest("#trFichasWrap") ? "trFichasWrap" : (al || {}).id;
+      out.alvoVz = !!(al && al.classList.contains("vz"));
+      const rA8 = document.getElementById("tourAnel").getBoundingClientRect();
+      out.anelNaTela = rA8.left >= 4 && rA8.right <= innerWidth - 4 && rA8.width > 200;
+      out.emTreino = !!document.querySelector("[data-sec='treino']:not([data-sec-off])");
+      document.getElementById("tourProx").click();
+      out.fim = !window.__tour.on(); out.voltouInicio = !!document.querySelector("[data-sec='inicio']:not([data-sec-off])");
+      out.gravou = (JSON.parse(localStorage.getItem("pttour") || "null") || {});
+      // chamadas fora de hora não estouram (a suíte dispara callbacks de timer na mão)
+      try { window.__tour.tenta(); window.__tour.fim("x"); window.__tour.vai(9); out.robusto = true; } catch (e) { out.robusto = false; }
+      return out;
+    });
+    ok(t8.on && t8.passo === 0 && t8.n === 2 && /1 de 2/.test(t8.k) && t8.alvo0 === "btnFeito",
+      "🧭 v775: alvo escondido (#diasSem sem display) sai da lista sem erro — o tour vira '1 de 2' começando no Treinei hoje!");
+    ok(t8.passo2 === 1 && /2 de 2/.test(t8.k2 || "") && /vai aparecer aqui/.test(t8.txt || "") && /Mudar a carga/.test(t8.txt || "") && t8.alvo === "trFichasWrap" && t8.emTreino && t8.bt === "Entendi",
+      "🧭 v775: sem treino prescrito o último passo adapta — 'Seu treino vai aparecer aqui', apontando a área das fichas e ensinando onde a carga será anotada");
+    ok(t8.alvoVz && t8.anelNaTela,
+      "🧭 v775: sem ficha o anel envolve o aviso DENTRO da área das fichas (com o recuo do card) e fica inteiro na tela — o wrap de ponta a ponta jogava as bordas pra fora e virava faixa");
+    ok(t8.fim && t8.voltouInicio && t8.gravou.como === "fim" && t8.gravou.passo === 2 && t8.robusto,
+      "🧭 v775: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
+    // o aluno marca o treino ANTES de responder as perguntinhas: o pedido de push dos 900 ms tem de esperar — e vir logo depois do onbOk
+    await pB.evaluate(() => { document.getElementById("diasSem").style.display = ""; });
+    await pB.click("#btnFeito");
+    await pB.waitForTimeout(1200);
+    const t8b = await pB.evaluate(() => {
+      const cn = document.getElementById("cardNotif");
+      const out = { temPush: !!window.__pushMostra && !!cn && window.Notification && Notification.permission === "default",
+        onbVisivel: getComputedStyle(document.getElementById("onbCard")).display !== "none",
+        notifEspera: !cn || getComputedStyle(cn).display === "none" };
+      if (window.__pushMostra) window.__pushMostra(true); // forçado na mão, na cara das perguntinhas: continua esperando
+      out.notifEspera2 = !cn || getComputedStyle(cn).display === "none";
+      document.querySelector("[data-onb='obj']").click(); document.querySelector("[data-onb='dias']").click();
+      document.getElementById("onbOk").click();
+      out.onbSumiu = getComputedStyle(document.getElementById("onbCard")).display === "none";
+      out.gravouOnb = !!JSON.parse(localStorage.getItem("ptonb") || "null");
+      return out;
+    });
+    await pB.waitForTimeout(1200);
+    const t8c = await pB.evaluate(() => { const cn = document.getElementById("cardNotif"); return { notifVeio: !!cn && getComputedStyle(cn).display !== "none" }; });
+    ok(t8b.temPush && t8b.onbVisivel && t8b.notifEspera && t8b.notifEspera2 && t8b.onbSumiu && t8b.gravouOnb,
+      "🧭 v775: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
+    ok(t8c.notifVeio,
+      "🧭 v775: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
+    await cB.close();
+
+    // ---- F) veterano (é também a regra que segura a demo) ----
+    const { c: cC, p: pC } = await abreApp(apps.com, "vet", () => { localStorage.setItem("ptfeitos", JSON.stringify({ "2026-01-05": 1 })); });
+    await pC.waitForTimeout(1300);
+    const t9 = await pC.evaluate(() => ({ on: window.__tour.on(), cx: !!document.getElementById("tourCx"),
+      como: (JSON.parse(localStorage.getItem("pttour") || "null") || {}).como }));
+    ok(!t9.on && !t9.cx && t9.como === "veterano",
+      "🧭 v775: quem já marcou treino não ganha tour de botão que já usa (pttour.como = veterano) — é o que deixa a demo do Alex, com 14 meses de história, sem tour a cada abertura");
+    await cC.close();
+
+    // ---- G) termo de responsabilidade na frente: espera, e vem depois do toque ----
+    const { c: cD, p: pD } = await abreApp(apps.termo, "termo");
+    await pD.waitForTimeout(1300);
+    const t10a = await pD.evaluate(() => ({ termo: !!document.getElementById("termoOv"), on: window.__tour.on(), pend: window.__tour.pend(), gravou: !!localStorage.getItem("pttour") }));
+    // rolar/tocar no TEXTO do termo não gasta nada
+    await pD.evaluate(() => { const tx = document.getElementById("termoOv").children[1]; tx.click(); tx.click(); tx.click(); });
+    await pD.waitForTimeout(700);
+    const t10b = await pD.evaluate(() => ({ on: window.__tour.on(), pend: window.__tour.pend() }));
+    let cliqueTermo = "";
+    try { await pD.click("#termoOv button:first-of-type", { timeout: 4000 }); } catch (e) { cliqueTermo = e.message; }
+    await pD.waitForTimeout(900);
+    const t10c = await pD.evaluate(() => ({ termo: !!document.getElementById("termoOv"), on: window.__tour.on(), passo: window.__tour.passo(), aceite: !!localStorage.getItem("ptaceite") }));
+    ok(t10a.termo && !t10a.on && t10a.pend && !t10a.gravou && !t10b.on && t10b.pend,
+      "🧭 v775: com o termo de responsabilidade na frente o tour NÃO abre por baixo — fica pendente, sem gravar nada, e tocar no texto do termo não gasta a chance");
+    ok(!cliqueTermo && t10c.aceite && !t10c.termo && t10c.on && t10c.passo === 0,
+      "🧭 v775: 'Li e aceito' fecha o termo e o tour vem logo depois, do passo 1" + (cliqueTermo ? " — " + cliqueTermo.slice(0, 120) : ""));
+    await cD.close();
+    await ctxTp.close();
+  }
+
   /* ================= v765 — o placar do app vira coisa do professor ========
    * Medido no banco em 2026-09-03: os 5 alunos com retorno estavam no nível 1,
    * o painel nunca lia esse campo, e NENHUM desafio tinha sido criado. */
@@ -15760,6 +16324,193 @@ async function abaPt(p, a) {
       return /publicaAppsPendentes\(false, false, "dsPub"\)/.test(t) && /id="dsPub"/.test(t);
     }), "🎮 v765: salvar o desafio publica de verdade (o alerta que mandava procurar a tela saiu do caminho feliz)");
     await ctxG.close();
+  }
+
+  /* ================= v775 — progresso da semana no Início (barra + o que falta
+   * + o dia que costuma escapar) ==============================================
+   * O Raphael pediu "você está na semana 2 de 4" com uma barrinha, quanto falta
+   * pra bater a meta e que dia costuma pular. Regra da v771: NENHUM card novo —
+   * a linha #semResumo vira a faixa de progresso. O "dia que escapa" é conta
+   * HONESTA: só semanas com treino E abaixo da meta, 3+ delas, o dia planejado
+   * perdido em 60%+, e só no dia (ou na véspera). Quem bate a meta em outros
+   * dias NÃO é cutucado. Sem padrão, nada aparece. */
+  console.log("\n📊 v775 — progresso da semana no Início:");
+  {
+    const ctxSP = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxSP.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pSP = await ctxSP.newPage();
+    pSP.on("pageerror", (e) => erros.push("semProg painel: " + e.message));
+    pSP.on("dialog", (d) => d.accept());
+    await pSP.goto(BASE + "/personal.html");
+    await pSP.waitForFunction(() => window.__ptStudio && window.__renderPT);
+    // o plano tem DOIS dias: o de hoje (que o aluno vive pulando) e outro (que
+    // ele sempre faz). O mês da IA foi gerado há 8 dias → semana 2 de 4.
+    const spHtml = await pSP.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const hj = new Date(), kHoje = String(hj.getDay()), kOutro = String((hj.getDay() + 3) % 7);
+      const d8 = new Date(); d8.setDate(d8.getDate() - 8);
+      // exercício REAL da semente (nome canônico desde a v752) — um id inventado vira "?" no app
+      const ex = (st.exercicios || []).find((e) => e.nome === "Supino reto com barra") || {};
+      const dias = {}; dias[kHoje] = [{ tp: "ficha", id: "f1", h: "18:00" }]; dias[kOutro] = [{ tp: "ficha", id: "f1", h: "07:00" }];
+      st.alunos = [
+        { id: "sp1", nome: "Semana Visivel", ativo: true, desde: "2026-01-05", appTokenP: "tksp1", metaSemana: 3 },
+        { id: "sp2", nome: "Sem Plano", ativo: true, desde: "2026-01-05", appTokenP: "tksp2", metaSemana: 3 },
+      ];
+      st.treinosV2 = { sp1: {
+        fichas: [{ id: "f1", titulo: "A — Peito", itens: [{ exId: ex.id || "x", series: 4, reps: "10", descanso: 60 }] }],
+        plano: { dias: dias },
+        mes: { musculacao: { geradoEm: window.diaISO(d8), semanas: [
+          { n: 1, foco: "Base", ajuste: "aprende o movimento" }, { n: 2, foco: "Volume", ajuste: "sobe 1 série" },
+          { n: 3, foco: "Carga", ajuste: "sobe 5%" }, { n: 4, foco: "Leve", ajuste: "tira 30%" } ] } },
+      } };
+      st.sessoes = []; st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
+      S.write("ptStudio", st);
+      return { com: window.__montaAppAluno(st.alunos[0], new Date().toISOString()),
+               sem: window.__montaAppAluno(st.alunos[1], new Date().toISOString()) };
+    });
+    // histórico do aparelho: 6 semanas cheias com 2 de 3 (ABAIXO da meta) — o
+    // outro dia do plano e um dia solto, nunca o dia de hoje; a em curso nasce vazia
+    const ctxSPA = await b.newContext({ viewport: { width: 390, height: 844 } });
+    await ctxSPA.addInitScript(() => {
+      const hj = new Date(), k = hj.getDay();
+      const seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const f = {};
+      for (let w = 1; w <= 6; w++) [(k + 3) % 7, (k + 1) % 7].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * w + ((kd + 6) % 7)); f[iso(d)] = 1; });
+      localStorage.setItem("ptfeitos", JSON.stringify(f));
+    });
+    const pSPA = await ctxSPA.newPage();
+    pSPA.on("pageerror", (e) => erros.push("semProg app: " + e.message));
+    pSPA.on("dialog", (d) => d.accept());
+    await pSPA.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await pSPA.route("**/app-semprog.html", (r) => r.fulfill({ contentType: "text/html", body: spHtml.com }));
+    await pSPA.goto(BASE + "/app-semprog.html", { waitUntil: "domcontentloaded" });
+    await pSPA.waitForTimeout(900);
+    const sp1 = await pSPA.evaluate(() => {
+      window.__trocaSec("inicio");
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']");
+      const fill = document.getElementById("spFill"), esc = document.getElementById("spEscapa");
+      // sem o gancho (builder velho) o 1º assert falha limpo em vez de a suíte estourar
+      const c = (window.__semProg || { calc: function () { return {}; } }).calc();
+      const dia = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][new Date().getDay()];
+      return {
+        txt: sr.textContent.replace(/\s+/g, " ").trim(),
+        ordem: [...document.getElementById("semBlock").querySelectorAll("#diasSem,#semDia,#semResumo,#coachTxt,#btnFeito")].map((e) => e.id).join(">"),
+        bar: bar ? { max: bar.getAttribute("aria-valuemax"), now: bar.getAttribute("aria-valuenow"), min: bar.getAttribute("aria-valuemin") } : null,
+        fillW: fill ? fill.getBoundingClientRect().width : -1, barW: bar ? bar.getBoundingClientRect().width : -1,
+        seqSem: c.seqSem, mes: c.mes && c.mes.s, escapa: c.escapa && { k: c.escapa.k, semanas: c.escapa.semanas, taxa: c.escapa.taxa },
+        escVis: esc ? getComputedStyle(esc).display !== "none" : false,
+        escTxt: esc ? esc.textContent.replace(/\s+/g, " ").trim() : "",
+        diaCap: dia.charAt(0).toUpperCase() + dia.slice(1), kHoje: new Date().getDay(),
+        secInicio: !!sr.closest("[data-sec='inicio']:not([data-sec-off])"),
+        larguraOk: sr.getBoundingClientRect().right <= 390 && document.documentElement.scrollWidth <= 390,
+        coach: document.getElementById("coachTxt").textContent,
+      };
+    });
+    ok(/0 de 3 na semana/.test(sp1.txt) && /faltam 3 pra fechar a semana/.test(sp1.txt) && sp1.ordem === "diasSem>semDia>semResumo>coachTxt>btnFeito",
+      "📊 v775: a linha #semResumo virou a faixa de progresso — 'N de META na semana' continua lá e o que falta vem junto (" + sp1.txt.slice(0, 60) + ")");
+    ok(sp1.bar && sp1.bar.min === "0" && sp1.bar.max === "3" && sp1.bar.now === "0" && sp1.barW > 100 && sp1.fillW < 1,
+      "📊 v775: a barra existe com aria (progressbar 0/3) e nasce vazia quando a semana ainda não começou");
+    ok(sp1.seqSem === 0 && !/semanas seguidas/.test(sp1.txt),
+      "📊 v775: semanas abaixo da meta não viram 'semanas seguidas' — a sub-linha só fala disso a partir de 2");
+    ok(sp1.mes === 2 && /semana 2 de 4 do plano/.test(sp1.txt),
+      "📊 v775: com plano do mês da IA a faixa diz em que semana o aluno está (semana 2 de 4) — o mesmo `s` resolvido da faixa #trMes");
+    ok(sp1.escapa && sp1.escapa.k === sp1.kHoje && sp1.escapa.semanas === 6 && sp1.escapa.taxa === 1 && sp1.escVis &&
+       new RegExp(sp1.diaCap + " é o dia que mais escapa").test(sp1.escTxt) && sp1.escTxt.length < 90 && !/culpa|faltou|falhou/i.test(sp1.escTxt),
+      "📊 v775: o dia planejado que ficou de fora em 6 semanas abaixo da meta é apontado HOJE, curto e sem culpa (" + sp1.escTxt + ")");
+    ok(sp1.secInicio && sp1.larguraOk && !/\d de \d treinos/.test(sp1.coach),
+      "📊 v775: a faixa mora no Início (secDe pelo h2 'Minha semana'), não estoura os 390 px e o coach não repete o 'N de META' embaixo dela");
+    const sp2 = await pSPA.evaluate(() => {
+      document.getElementById("btnFeito").click();
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']");
+      return { txt: sr.textContent.replace(/\s+/g, " ").trim(), now: bar.getAttribute("aria-valuenow"),
+        razao: document.getElementById("spFill").getBoundingClientRect().width / bar.getBoundingClientRect().width,
+        escVis: getComputedStyle(document.getElementById("spEscapa")).display !== "none" };
+    });
+    ok(/1 de 3 na semana/.test(sp2.txt) && /faltam 2 pra fechar a semana/.test(sp2.txt) && sp2.now === "1" && sp2.razao > 0.28 && sp2.razao < 0.38,
+      "📊 v775: Treinei hoje! anda a barra na hora (1 de 3, um terço cheio, faltam 2)");
+    ok(!sp2.escVis, "📊 v775: treinou no dia que costuma escapar → o recado some — o app não cutuca quem já fez");
+    // agora o histórico vira 6 semanas COM a meta batida, em dias FORA do plano
+    // (ele trocou o dia, não pulou) e a semana em curso é completada
+    const sp3 = await pSPA.evaluate(() => {
+      const hj = new Date(), k = hj.getDay(), seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const f = {};
+      for (let w = 1; w <= 6; w++) [(k + 1) % 7, (k + 2) % 7, (k + 4) % 7].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * w + ((kd + 6) % 7)); f[iso(d)] = 1; });
+      const atual = JSON.parse(localStorage.getItem("ptfeitos") || "{}");
+      Object.keys(atual).forEach((x) => { if (x >= iso(seg)) f[x] = 1; });   // mantém o "treinei hoje" do sp2
+      for (let i = 0; i < 7; i++) {   // completa 3 na semana em curso (a conta olha os 7 dias seg-dom)
+        const n = [0, 1, 2, 3, 4, 5, 6].filter((j) => { const x = new Date(seg); x.setDate(x.getDate() + j); return f[iso(x)]; }).length;
+        if (n >= 3) break; const d = new Date(seg); d.setDate(d.getDate() + i); f[iso(d)] = 1;
+      }
+      localStorage.setItem("ptfeitos", JSON.stringify(f));
+      window.__semProg.pinta();
+      const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']"), c = window.__semProg.calc();
+      return { txt: sr.textContent.replace(/\s+/g, " ").trim(), now: bar.getAttribute("aria-valuenow"),
+        razao: document.getElementById("spFill").getBoundingClientRect().width / bar.getBoundingClientRect().width,
+        seqSem: c.seqSem, escapa: c.escapa, bullets: /•/.test(document.getElementById("spSub").textContent),
+        coach: document.getElementById("coachTxt").textContent };
+    });
+    ok(/3 de 3 na semana/.test(sp3.txt) && /semana fechada/.test(sp3.txt) && sp3.now === "3" && sp3.razao > 0.97 && !/pra fechar/.test(sp3.txt),
+      "📊 v775: meta batida → 'semana fechada' e a barra cheia");
+    ok(sp3.seqSem === 7 && /7 semanas seguidas na meta/.test(sp3.txt) && !sp3.bullets,
+      "📊 v775: a sequência de semanas na meta aparece no Início (7 seguidas, a mesma conta do streakSem das Conquistas) — sem separador '•' que ficava órfão na quebra de linha");
+    ok(sp3.escapa === null && !/3 de 3 treinos/.test(sp3.coach),
+      "📊 v775: quem bate a meta em OUTROS dias não pulou nada → nenhum 'dia que escapa'; e o coach não repete o 3 de 3 embaixo da faixa");
+    const sp4 = await pSPA.evaluate(() => {
+      const hj = new Date(), k = hj.getDay();
+      const seg = new Date(hj); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7)); seg.setHours(12, 0, 0, 0);
+      const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      // tipos de semana (todas com 2 treinos = abaixo da meta 3; plano = hoje e hoje+3):
+      // A = pulou HOJE; B = pulou o OUTRO; C = fez os dois; D = pulou os dois; M = 3 treinos fora do plano (meta batida)
+      const DIAS = { A: [(k + 3) % 7, (k + 1) % 7], B: [k, (k + 1) % 7], C: [k, (k + 3) % 7], D: [(k + 1) % 7, (k + 2) % 7], M: [(k + 1) % 7, (k + 2) % 7, (k + 4) % 7] };
+      const hist = (tipos) => { const f = {}; tipos.split("").forEach((t, i) => DIAS[t].forEach((kd) => {
+        const d = new Date(seg); d.setDate(d.getDate() - 7 * (i + 1) + ((kd + 6) % 7)); f[iso(d)] = 1; })); return f; };
+      const E = window.__semProg.escapa;
+      const ontem = new Date(hj); ontem.setDate(ontem.getDate() - 1);
+      const cv = window.__semProg.calc(hist("AAAAAA"), ontem);
+      return { kHoje: k, kOutro: (k + 3) % 7,
+        poucas: E(hist("AA")), abaixo: E(hist("AACCC")), noLimiar: E(hist("AAACC")) && E(hist("AAACC")).k,
+        empate: E(hist("DDDCC")) && E(hist("DDDCC")).k, metaBatida: E(hist("MMMMM")), outro: E(hist("BBBBC")) && E(hist("BBBBC")).k,
+        vespera: cv.escapaVesp && /Amanhã é <b>/.test(cv.txtEscapa) && !cv.escapaHoje, txtV: cv.txtEscapa };
+    });
+    ok(sp4.poucas === null && sp4.abaixo === null && sp4.metaBatida === null,
+      "📊 v775: conta honesta: com 2 semanas de histórico, com o dia perdido em 40% delas, ou com a meta batida toda semana, NADA é dito");
+    ok(sp4.noLimiar === sp4.kHoje && sp4.outro === sp4.kOutro, "📊 v775: 3 de 5 semanas (60%) é o limiar — e o dia apontado é o PLANEJADO que ficou de fora");
+    ok(sp4.empate === sp4.kHoje, "📊 v775: empate entre dois dias do plano vai pro mais próximo de hoje — onde dá pra agir");
+    ok(sp4.vespera && /separa o horário/.test(sp4.txtV), "📊 v775: na véspera o recado muda pra 'Amanhã é <dia>' (" + sp4.txtV.replace(/<[^>]+>/g, "") + ")");
+    // aluno SEM Semana do aluno e sem plano do mês
+    const pSPB = await ctxSPA.newPage();
+    pSPB.on("pageerror", (e) => erros.push("semProg app sem plano: " + e.message));
+    await pSPB.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
+    await pSPB.route("**/app-semprog-b.html", (r) => r.fulfill({ contentType: "text/html", body: spHtml.sem }));
+    await pSPB.goto(BASE + "/app-semprog-b.html", { waitUntil: "domcontentloaded" });
+    await pSPB.waitForTimeout(700);
+    const sp5 = await pSPB.evaluate(() => {
+      const c = window.__semProg.calc();
+      const sr = document.getElementById("semResumo").textContent.replace(/\s+/g, " ");
+      return { escapa: c.escapa, mes: c.mes, txt: sr, escVis: getComputedStyle(document.getElementById("spEscapa")).display !== "none",
+               temBarra: !!document.querySelector("#semResumo [role='progressbar']") };
+    });
+    ok(sp5.escapa === null && !sp5.escVis && sp5.mes === null && !/do plano/.test(sp5.txt) && sp5.temBarra && /de 3 na semana/.test(sp5.txt),
+      "📊 v775: sem Semana do aluno e sem plano do mês: barra e contagem ficam, 'dia que escapa' e 'semana X de 4' NÃO aparecem — número inventado não entra");
+    const claroSP = await pSPA.evaluate(() => {
+      document.documentElement.classList.add("claro");
+      return { tk: /var\(--tk-|var\(--pt-/.test(document.getElementById("semResumo").innerHTML),
+               corSub: getComputedStyle(document.getElementById("spSub")).color };
+    });
+    ok(!claroSP.tk && claroSP.corSub === "rgb(119, 113, 138)",
+      "📊 v775: nenhum token do painel dentro do app, e no modo claro o cinza da faixa vira o do tema (#77718a)");
+    const bldSP = await pSP.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
+    ok(/window\.__semProg=\{/.test(bldSP) && /function diaQueEscapa\(/.test(bldSP) && /function semProgCalc\(/.test(bldSP) && /typeof MESAPP!=='undefined'/.test(bldSP) &&
+       /var naSem=naSemana\(f,ref\)/.test(bldSP) && !/Você já fez <b>/.test(bldSP) && !/Semana fechada: <b>/.test(bldSP),
+      "📊 v775: o builder expõe window.__semProg, guarda o typeof MESAPP (a 1ª pintura roda antes do pacote do mês), reusa naSemana() e os fallbacks do coach perderam o número");
+    await pSPB.close(); await pSPA.close(); await ctxSPA.close(); await ctxSP.close();
   }
 
   /* ================= v756 — x-redund e x-org (uma página só, do zero) =======

@@ -1,10 +1,11 @@
-/* A versão precisa estar CRAVADA no sw.js, e igual à do assets/versao.js.
+/* A versão precisa estar CRAVADA no sw.js E no app/app-sw.js, igual à do
+ * assets/versao.js — três lugares (v747 trouxe o terceiro).
  *
  * O navegador só troca o service worker quando os BYTES do sw.js mudam. Enquanto
  * a versão morou só no arquivo importado, o sw.js ficou idêntico do mt-v491 ao
  * mt-v509 e o iPhone nunca trocou o service worker — o app do aluno congelou no
  * código guardado no aparelho. Este teste é o que impede a volta disso: se
- * alguém subir a versão só num dos dois arquivos, a suíte falha.
+ * alguém subir a versão só num dos três arquivos, a suíte falha.
  *
  * Roda em node puro, sem navegador. */
 const fs = require("fs");

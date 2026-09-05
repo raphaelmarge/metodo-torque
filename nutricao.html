@@ -3498,10 +3498,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     };
   }
   function montaAppNutri(p, stamp) { return self.MT_APP_NUTRI.monta(dadosAppPaciente(p, stamp)); }
-  // o formato gravado em app_aluno.dados — o mesmo pacoteApp do Personal (v467)
+  // o formato gravado em app_aluno.dados — o mesmo pacoteApp do Personal (v467).
+  // v776: sem o html (o /app/ monta pelos dados; ver o comentário no personal.html).
+  // O monta(D) fica como teste de fumaça: paciente cujo D estoura o builder não sobe.
   function pacoteAppN(p, stamp) {
     var D = dadosAppPaciente(p, stamp);
-    return { html: self.MT_APP_NUTRI.monta(D), dados: D, ver: self.MT_VERSAO, stamp: stamp };
+    try { self.MT_APP_NUTRI.monta(D); }
+    catch (e) { throw new Error("O app de " + (p.nome || "este paciente") + " não montou (" + ((e && e.message) || e) + ") — o pacote NÃO subiu."); }
+    return { html: "", dados: D, ver: self.MT_VERSAO, stamp: stamp };
   }
   window.__dadosAppPaciente = dadosAppPaciente; window.__pacoteAppN = pacoteAppN; // testes
   window.__montaAppNutri = montaAppNutri; // testes
@@ -3543,7 +3547,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
     var stamp = new Date().toISOString();
     var senha = senhaAleatoria();
-    nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pacoteAppN(p, stamp), atualizado: stamp }])
+    // v776: o teste de fumaça do pacoteAppN pode estourar — vira cb({erro}), não exceção solta
+    var pk; try { pk = pacoteAppN(p, stamp); } catch (e) { cb({ erro: (e && e.message) || "o app não montou" }); return; }
+    nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }])
       .then(function (r) {
         if (r && r.error) { cb({ erro: "Não deu pra publicar o app na nuvem: " + r.error.message }); return; }
         nuvem.client.rpc("aluno_define_login", { t: p.appTokenN, p_login: email, p_senha: senha }).then(function (r2) {
@@ -3617,7 +3623,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         alert("Pra entregar o app você precisa da sua conta na nuvem — é grátis e leva um minuto.\n\nEntre pelo card Sua ilha, no menu. É a conta que gera o link do paciente e faz a dieta nova chegar sozinha no celular dele.");
         return;
       }
-      nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pacoteAppN(p, stamp), atualizado: stamp }])
+      var pk; try { pk = pacoteAppN(p, stamp); } catch (e) { alert("O app NÃO foi publicado: " + ((e && e.message) || "o app não montou")); return; } // v776
+      nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }])
         .then(function (r) {
           if (r.error) { alert("O app NÃO foi publicado: " + r.error.message + "\n\nO link do paciente só funciona depois de publicar com internet."); return; }
           var stM = load();
@@ -3668,9 +3675,15 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var lote = st2.pacientes.filter(function (p) { return velhos[p.appTokenN]; }).slice(0, 5);
       if (!lote.length) return;
       var stamp = new Date().toISOString();
-      var linhas = lote.map(function (p) {
-        return { token: p.appTokenN, academia_id: nuvem.aid, dados: pacoteAppN(p, stamp), atualizado: stamp };
+      // v776: paciente cujo D estoura o builder é pulado (fica "velho" e o
+      // painel avisa em outro lugar); os outros do lote sobem normalmente
+      var linhas = [], sobem = [];
+      lote.forEach(function (p) {
+        try { linhas.push({ token: p.appTokenN, academia_id: nuvem.aid, dados: pacoteAppN(p, stamp), atualizado: stamp }); sobem.push(p); }
+        catch (e) { try { console.warn("app do paciente não montou:", p.nome, e && e.message); } catch (e2) {} }
       });
+      lote = sobem;
+      if (!linhas.length) return;
       nuvem.client.from("app_aluno").upsert(linhas).then(function (r2) {
         if (r2 && r2.error) return; // sem rede: tenta na próxima abertura do painel
         var st3 = load();
@@ -4033,7 +4046,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     } else {
       avisoQ.textContent = "⏳ Preparando o app do paciente na nuvem…";
       var stampQ = new Date().toISOString();
-      nuvemQ.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: pacoteAppN(p, stampQ), atualizado: stampQ }])
+      var pkQ; try { pkQ = pacoteAppN(p, stampQ); } catch (e) { avisoQ.textContent = "Não deu pra publicar o app do paciente (" + ((e && e.message) || "o app não montou") + ")."; return; } // v776
+      nuvemQ.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: pkQ, atualizado: stampQ }])
         .then(function (r) {
           if (r && r.error) { avisoQ.textContent = "Não deu pra publicar o app do paciente (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
           avisoQ.textContent = "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";

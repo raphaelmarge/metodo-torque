@@ -195,19 +195,20 @@
           "Ele funciona <b>sem internet</b>: o treino abre na academia mesmo sem sinal, e o que você marcar sobe quando a internet voltar.",
         ]) + figA(bA("Adicionar à Tela de Início") + "<span style='font-size:12px;color:#a9a4b5;'>no iPhone: Compartilhar → Adicionar à Tela de Início · no Android: menu do navegador → Instalar</span>") + imgA("a-menu.jpg", "O botão Menu na barra de baixo do app, marcado com a seta"), true),
         det("Início — sua semana", passos([
-          "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana.",
+          "Os chips <b>seg–dom</b> mostram os dias que você já treinou na semana — essa é a sua <b>sequência</b>.",
           "Terminou o treino? Toque em <b>Treinei hoje!</b> — é ele que conta sua sequência e suas medalhas.",
           "Os quatro botões de hábito (água, comida, sono, cardio) são um toque por dia — seu personal vê a média deles.",
           "O card do dia mostra o treino de HOJE, seguindo o plano da semana que seu personal montou.",
         ]) + figA(focoA(bA("Treinei hoje!", 1), "conta a sequência") + bA("💧 Água") + bA("🍎 Comida")) + imgA("a-treinei.jpg", "O botão Treinei hoje no card da semana")),
         det("Treinos — ficha, circuito e corrida", passos([
           "Em <b>Treinos</b>, cada ficha é uma gaveta (A, B, C…) — a do dia já abre aberta.",
-          "O botão <b>Começar treino</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
+          // v775: é o botão da GAVETA (o do carrossel se chama "Começar treino") — o tour aponta pra este
+          "Dentro da gaveta, <b>Começar essa ficha</b> abre o modo guiado: um exercício por vez, com séries, descanso cronometrado e a carga da última vez.",
           "Toque em <b>Mudar a carga</b> pra anotar o peso — é isso que desenha sua evolução.",
           "Tem <b>parte 2</b> (A2)? Ela aparece dentro da gaveta da ficha, com as linhas pra marcar.",
           "Na <b>corrida</b>, o app desenha o trajeto pelo GPS, fala os quilômetros e guarda pace e batimento.",
           "No fim do treino vem o <b>resumo</b>: dá pra escrever como foi (seu personal lê) e compartilhar o card do treino.",
-        ]) + figA(focoA(bA("Começar treino", 1), "modo guiado") + bA("Mudar a carga")) + imgA("a-ficha.jpg", "A gaveta da ficha do dia na área Treinos")),
+        ]) + figA(focoA(bA("Começar essa ficha", 1), "modo guiado") + bA("Mudar a carga")) + imgA("a-ficha.jpg", "A gaveta da ficha do dia na área Treinos")),
         det("Evolução — seu progresso", passos([
           "<b>Conquistas</b>: medalhas, sequência, o mapa do mês e a retrospectiva.",
           "<b>Corpo</b>: a curva do peso e as fotos de progresso (antes × depois).",
@@ -258,6 +259,10 @@
       ].join("");
       return "<div class='cardx' id='ajudaCard'><h2>Ajuda</h2>" +
         "<div class='vz' style='text-align:left;padding:2px 0 10px;'>Como usar cada parte do app, passo a passo. Dúvida que não está aqui? Chama seu personal no Chat.</div>" +
+        // v775: o tour do primeiro uso pode ser revisto daqui (quem pulou, ou o
+        // veterano que nunca viu). O clique é tratado no bloco do tour, delegado
+        // no document — este HTML é só o botão.
+        "<button type='button' class='btnx' id='tourRever' style='width:100%;margin-bottom:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);box-shadow:none;'>Ver o tour de novo (20 s)</button>" +
         TOPICOS + "</div>";
     })();
     /* Resumo do treino de cardio numa linha. O tipo 'misto' e o pedido do
@@ -434,6 +439,10 @@
       // o topo é colorido nos dois temas, então os chips dele não mudam no claro
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
+      /* v775: o traço entre linhas (border-top com bg5 — recordes do mês, Marcas,
+       * voltas, 1RM…) não tinha remapeamento e saía quase preto sobre o card
+       * branco do modo claro; a regra de fundo acima não alcança borda. */
+      "html.claro [style*='border-top:1px solid var(--bg5)']{border-color:#e4e1eb!important}" +
       "html.claro [style*='background:var(--bg4)']{background:#f3f1f7!important}" +
       // v747: a regra larga (a mesma de cima SEM o "background:") casava as
       // linhas que só têm border-top com bg5 e pintava faixa cinza em voltas,
@@ -1013,7 +1022,7 @@
        * onde ele empurra a ação; em cima ele só afastava o calendário da foto. */
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
       "<div id='semDia'></div>" +
-      "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
+      "<div id='semResumo' role='group' aria-label='Progresso da semana' style='display:block;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
       "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
@@ -1031,6 +1040,21 @@
       "<div class='vz' id='notifTxt' style='text-align:left;padding:2px 0 10px;'>Posso te avisar no dia do treino e quando " + esc(STUDIO_CURTO) + " mandar recado. Só isso — nada de propaganda.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Quero receber</button>" +
       "<button class='btnx sec' id='btnNotifNao' style='width:100%;margin-top:8px;background:none;border:1px solid var(--bd);'>Agora não</button></div>" +
+      /* v775: "Seus recordes do mês" no Início — o AVANÇO dos últimos 30 dias em
+       * prosa (Supino reto: 80 → 85 kg). NÃO é o mural "Seus recordes" da aba
+       * Cargas (#recBox, máximo de sempre) nem os tiles das Conquistas: é quanto
+       * o aluno aguentou A MAIS neste período em relação a tudo que veio antes —
+       * a MESMA regra do recordesDe(ret, desde, ate) do painel, por exercício.
+       * Só aparece com pelo menos um avanço; sem dado fica display:none (card
+       * vazio não existe). Fica DEPOIS do #cardNotif de propósito: a v763 quer o
+       * pedido de push logo abaixo do "Treinei hoje!". Tudo aqui dentro é
+       * pintado em runtime por pintaRecMes(): carga é dado do APARELHO (ptdc),
+       * nada entra pelo objeto D. Toque leva pra Evolução → Cargas (data-ajevsub). */
+      "<div class='cardx' id='recMesCard' style='display:none;'><h2>" + appIco(APPIC.trofeu, 14) + "Seus recordes do mês</h2>" +
+      "<button type='button' id='recMesBt' data-ajgo='evolucao' data-ajevsub='cargas' data-ajgoto='evCargas' style='display:block;width:100%;text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px 16px 10px;font-family:inherit;color:inherit;cursor:pointer;'>" +
+      "<span id='recMesSub' style='display:block;font-size:11.5px;color:#8a8695;font-weight:700;margin-bottom:6px;'></span>" +
+      "<span id='recMesLs' style='display:block;'></span>" +
+      "<span style='display:block;font-size:11.5px;color:#6e6a78;font-weight:800;text-align:right;margin-top:8px;'>Ver todas as cargas ›</span></button></div>" +
       // depoimento (v694): só aparece quando o PROFESSOR pediu (D.pedeDepo) e
       // o aluno ainda não escreveu — a lógica de mostrar mora perto do TERMO
       "<div class='cardx' id='depoCard' style='display:none;'>" +
@@ -1839,7 +1863,8 @@
       "var MES3=MESN.map(function(m){return m.slice(0,3);}),MESES=MESN.map(function(m){return m.charAt(0).toUpperCase()+m.slice(1);});" +
       "var DSEM=['domingo','segunda','ter\\u00e7a','quarta','quinta','sexta','s\\u00e1bado'],DSEMA=DSEM.map(function(d){return d.toUpperCase();});" +
       // treinos de segunda a domingo da semana corrente (f = ptfeitos)
-      "function naSemana(f){var n=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])n++;}return n;}" +
+      /* `ref` (Date) é opcional e só o teste da véspera usa — sem ele a conta é a de sempre, seg→dom de HOJE. */
+      "function naSemana(f,ref){var n=0;var seg=ref?new Date(ref.getTime()):new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[isoLoc(d)])n++;}return n;}" +
       // canvas (Stories, mapa do cardio) não entende var(--x) — CV() lê o valor real
       "function CV(n){try{return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()||'#fff';}catch(e){return '#fff';}}" +
       // barra do navegador na cor do studio — nasce da paleta, não do HTML
@@ -1865,6 +1890,8 @@
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "function Sv(k,v){var ok9=true;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){ok9=false;}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil'||k==='ptaceite'||k==='ptnotas'||k==='ptdepo'||k==='ptindicas'||k==='ptconf')devolveApp();" +
+      // v775: carga nova repinta o card "Seus recordes do mês" do Início (typeof como o pintaAgHoje; pintaRecMes nunca chama Sv, então não vira laço)
+      "if(k==='ptdc'){try{if(typeof pintaRecMes==='function')pintaRecMes();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
       "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}return ok9;}" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
@@ -2110,7 +2137,13 @@
       "function pushMostra(forca){" +
       "if(Notification.permission!=='default')return;" +
       "var onb=document.getElementById('onbCard');" +
-      "if(!forca&&onb&&onb.style.display!=='none')return;" +
+      /* v775: pushMostra(false) roda ANTES do boot do onboarding (que só põe o
+       * display:block lá embaixo) — decidir pelo inline deixava os dois cards
+       * nascerem juntos. Quem manda é o DADO: sem ptonb, as perguntinhas vêm
+       * primeiro — e isso vale TAMBÉM pro pedido forçado dos 900 ms depois do
+       * Treinei hoje! (quem marcava treino antes de responder via os dois
+       * cards juntos). Quem responde as perguntinhas chama de novo (onbOk). */
+      "if(onb&&(!L('ptonb',null)||(!forca&&onb.style.display!=='none')))return;" +
       "if(!forca){var ad=0;try{ad=+(localStorage.getItem('ptpushAdiado')||0);}catch(e){}" +
       "if(ad&&Date.now()-ad<3*864e5)return;}" +
       "card.style.display='block';}" +
@@ -2242,6 +2275,95 @@
       "if(window.__trSub)window.__trSub(tp==='wod'?'wod':tp==='cardio'?'cardio':'ficha');" +
       "setTimeout(function(){var sel=tp==='wod'?'[data-wi=\"'+ix+'\"]':tp==='cardio'?'[data-cri=\"'+ix+'\"]':'[data-fi=\"'+ix+'\"]';" +
       "var g=document.querySelector(sel);if(g){g.open=true;g.scrollIntoView({behavior:'smooth',block:'center'});}},120);});" +
+      /* ================= PROGRESSO DA SEMANA NO INÍCIO =================
+       * O Raphael pediu "você está na semana 2 de 4", uma barrinha, quanto
+       * falta pra bater a meta e o dia que costuma pular. Regra da v771: NÃO
+       * nasce outro card dizendo a mesma coisa — a linha #semResumo VIRA a
+       * faixa de progresso. Três leituras que já existiam, uma vez cada:
+       *   - dias treinados / META, pela MESMA naSemana() do btnFeito;
+       *   - a sequência de SEMANAS na meta (streakSem, a das Conquistas), só
+       *     a partir de 2 — reverte parte da v584 de propósito: a v765 mediu
+       *     que ninguém chegava nas Conquistas pra ver isso;
+       *   - a semana do plano do mês (MESAPP, o mesmo `s` da faixa #trMes —
+       *     é uma FOTO do dia da publicação, como o #trMes).
+       * E o "dia que costuma escapar" é conta HONESTA: só as 8 semanas cheias
+       * anteriores (a em curso fica de fora, regra da v632), só semanas em que
+       * ele treinou alguma coisa E ficou ABAIXO da meta (quem trocou o dia e
+       * bateu a meta não pulou nada — o dia que escapa é o que CUSTOU a meta),
+       * 3+ semanas assim e o dia PLANEJADO perdido em 60%+ delas. Empate vai
+       * pro dia mais próximo de hoje (é onde dá pra agir). Sem Semana do aluno
+       * não dá pra saber qual dia → nada aparece. O recado só sai no dia ou na
+       * véspera, nunca quando ele já treinou hoje ou já fechou a semana —
+       * cutucar quem já fez é como o app vira paisagem (lição do sino, v773).
+       * ⚠️ a primeira pintaSemana() (logo depois do check-in) roda ANTES de
+       * `var PLANO`/`var MESAPP` existirem — daí os typeof; o boot repinta.
+       * ⚠️ o app não sabe QUANDO o professor mudou a Semana do aluno (não há
+       * `planoEm` no pacote): o histórico é julgado contra o plano ATUAL — por
+       * isso o recado é brando e exige 3 semanas. */
+      "function diaQueEscapa(f,ref){var hj=ref||new Date();var plan=[];for(var k=0;k<7;k++){if(plnDia(k).length)plan.push(k);}" +
+      "if(!plan.length)return null;var d=new Date(semDe(hj)+'T12:00:00');var sem=[];" +
+      "for(var w=1;w<=8;w++){d.setDate(d.getDate()-7);var n=0;for(var i=0;i<7;i++){var dd=new Date(d);dd.setDate(dd.getDate()+i);if(f[isoLoc(dd)])n++;}if(n>0&&n<META)sem.push(isoLoc(d));}" +
+      "if(sem.length<3)return null;var kh=hj.getDay();var melhor=null;" +
+      "plan.forEach(function(k){var perd=0;sem.forEach(function(s0){var dd=new Date(s0+'T12:00:00');dd.setDate(dd.getDate()+((k+6)%7));if(!f[isoLoc(dd)])perd++;});" +
+      "var taxa=perd/sem.length,dist=(k-kh+7)%7;if(taxa>=0.6&&(!melhor||taxa>melhor.taxa||(taxa===melhor.taxa&&dist<melhor.dist)))melhor={k:k,nome:DSEM[k],taxa:taxa,perdidas:perd,semanas:sem.length,dist:dist};});return melhor;}" +
+      "function semProgCalc(f,ref){f=f||L('ptfeitos',{});var hj=ref||new Date();var naSem=naSemana(f,ref);" +
+      "var fechada=naSem>=META;var falta=Math.max(0,META-naSem);" +
+      "var mes=null;if(typeof MESAPP!=='undefined'&&MESAPP){var pj=plnPri(hj.getDay());var ks=[pj?(pj.tp==='wod'?'wod':pj.tp==='cardio'?'corrida':'musculacao'):null,'musculacao','wod','corrida'];" +
+      "for(var q=0;q<ks.length;q++){var mw=ks[q]&&MESAPP[ks[q]];if(mw&&mw.s>=1&&mw.s<=4){mes={k:ks[q],s:mw.s};break;}}}" +
+      "var esc9=diaQueEscapa(f,hj);var txt='',eh=false,ev=false;" +
+      "if(esc9&&!fechada){var kh=hj.getDay();if(esc9.k===kh&&!f[isoLoc(hj)]){eh=true;txt='<b>'+esc9.nome.charAt(0).toUpperCase()+esc9.nome.slice(1)+'</b> é o dia que mais escapa — segura essa hoje?';}" +
+      "else if(esc9.k===(kh+1)%7){ev=true;txt='Amanhã é <b>'+esc9.nome+'</b>, o dia que mais escapa — já separa o horário?';}}" +
+      "return {naSem:naSem,meta:META,falta:falta,fechada:fechada,seqDias:seqAtual(f),seqSem:streakSem(f),mes:mes,escapa:esc9,escapaHoje:eh,escapaVesp:ev,txtEscapa:txt};}" +
+      "function semProgHtml(p){var pct=Math.min(100,Math.round(100*p.naSem/Math.max(1,p.meta)));" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;'>\"+" +
+      "\"<span id='spN'><b>\"+p.naSem+' de '+p.meta+'</b> na semana</span>'+" +
+      "\"<span id='spFalta' style='font-size:12px;font-weight:800;color:\"+(p.fechada?'var(--corc)':'#6e6a78')+\";'>\"+(p.fechada?'semana fechada':(p.falta===1?'falta 1':'faltam '+p.falta)+' pra fechar a semana')+'</span></div>'+" +
+      "\"<div id='spBar' role='progressbar' aria-valuemin='0' aria-valuemax='\"+p.meta+\"' aria-valuenow='\"+Math.min(p.naSem,p.meta)+\"' aria-label='\"+p.naSem+' de '+p.meta+\" treinos na semana' style='height:8px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg10);overflow:hidden;margin-top:9px;'>\"+" +
+      "\"<div id='spFill' style='height:100%;width:\"+pct+\"%;border-radius:99px;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\";" +
+      /* as duas sequências (dias e semanas) convivem de propósito com ícone,
+       * cor e palavra diferentes — a lição da v584 era juntar duas coisas com
+       * a MESMA cara. Sem separador "•": a 390 px a linha quebra e um bullet
+       * solto liderava a linha de baixo; ícone + cor já separam os itens. */
+      "var sub=[];" +
+      "if(p.seqDias>0)sub.push(\"<span style='color:#fb923c;display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.chama,15)+p.seqDias+' dia'+(p.seqDias>1?'s':'')+' seguido'+(p.seqDias>1?'s':'')+'</span>');" +
+      "if(p.seqSem>=2)sub.push(\"<span style='color:var(--corc);display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.trofeu,15)+p.seqSem+' semanas seguidas na meta</span>');" +
+      "if(p.mes)sub.push(\"<span style='display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.cal,15)+'semana '+p.mes.s+' de 4 do plano</span>');" +
+      "h+=\"<div id='spSub' style='display:\"+(sub.length?'flex':'none')+\";align-items:center;gap:6px 14px;flex-wrap:wrap;margin-top:9px;font-size:12px;font-weight:700;color:#6e6a78;'>\"+sub.join('')+'</div>';" +
+      /* no #spEscapa o item do flex é o <span> com a frase INTEIRA (o <b> fica
+       * dentro dele) — texto corrido nunca é flex. */
+      "h+=\"<div id='spEscapa' style='display:\"+(p.txtEscapa?'flex':'none')+\";gap:8px;align-items:flex-start;margin-top:10px;background:var(--bg4);border:1px solid var(--bg10);border-radius:12px;padding:9px 11px;font-size:12.5px;font-weight:700;line-height:1.4;color:#cfcbdb;'>\"+" +
+      "\"<span style='line-height:0;color:var(--corc);flex:none;margin-top:2px;'>\"+icx(ICO.cal,16)+\"</span><span style='min-width:0;'>\"+p.txtEscapa+'</span></div>';return h;}" +
+      "window.__semProg={calc:semProgCalc,escapa:diaQueEscapa,html:semProgHtml,pinta:function(){pintaSemana();}};" +
+      /* v775: recordes do PERÍODO (o card "Seus recordes do mês" do Início).
+       * Janela = últimos 30 dias inclusive hoje (hoje-29 .. hoje) — mês-calendário
+       * nasceria vazio todo dia 1. A regra é a do recordesDe() do painel, com as
+       * MESMAS bordas: entra na janela quem tem desde <= d <= hoje (data futura
+       * de relógio torto fica fora), conta como "antes" quem tem d < desde (data
+       * vazia cai em antes, como lá), e recorde é máximo na janela > máximo de
+       * antes com antes > 0 — a primeira anotação é ponto de partida, não
+       * recorde. Ordena pelo ganho. ⚠️ isto é DIFERENTE de propósito do selo NOVO
+       * do mural de Cargas (recNovo = mês-calendário): lá é "recorde de sempre
+       * batido este mês", aqui é avanço na janela. Prefixo rcm* pra não colidir
+       * (rm* já é a calculadora de 1RM). Nada aqui chama Sv — senão viraria laço
+       * com o gancho de repintura de dentro do Sv. */
+      "function rcmDesde(){var d=new Date();d.setDate(d.getDate()-29);return isoLoc(d);}" +
+      "function rcmFmt(v){return String(Math.round(v*100)/100).replace('.',',');}" +
+      "function recordesMes(){var dc=L('ptdc',{});var desde=rcmDesde(),ate=isoHj();var out=[];" +
+      "Object.keys(dc).forEach(function(n){var lst=Array.isArray(dc[n])?dc[n]:[];var mp=0,ma=0;" +
+      "lst.forEach(function(e){if(!e||e.kg==null||!isFinite(+e.kg))return;var d=String(e.d||'').slice(0,10);" +
+      "if(d>=desde&&d<=ate){if(+e.kg>mp)mp=+e.kg;}else if(d<desde){if(+e.kg>ma)ma=+e.kg;}});" +
+      "if(mp>ma&&ma>0)out.push({n:n,de:ma,pra:mp,g:Math.round((mp-ma)*100)/100,u:'kg'});});" +
+      "out.sort(function(x,y){return (y.pra-y.de)-(x.pra-x.de);});return out;}" +
+      "function pintaRecMes(){var card=document.getElementById('recMesCard');if(!card)return;var ls=document.getElementById('recMesLs'),sub=document.getElementById('recMesSub');" +
+      "var todos=recordesMes(),tres=todos.slice(0,3);" +
+      "if(!tres.length){card.style.display='none';if(ls)ls.innerHTML='';return;}" +
+      "card.style.display='';" +
+      "if(sub)sub.textContent=pl(todos.length,'avanço','avanços')+' nos últimos 30 dias';" +
+      "if(ls)ls.innerHTML=tres.map(function(r,i){var nm=String(r.n).replace(/</g,'&lt;');" +
+      "return \"<span data-recl='carga' style='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 0;\"+(i?'border-top:1px solid var(--bg5);':'')+\"font-size:14px;'>\"+" +
+      "\"<span style='display:flex;align-items:center;gap:8px;min-width:0;'><span style='color:var(--corc);line-height:0;flex:none;'>\"+icx(ICO.halter,16)+\"</span><span data-recn='1' style='min-width:0;overflow-wrap:anywhere;font-weight:700;line-height:1.3;'>\"+nm+'</span></span>'+" +
+      "\"<span style='text-align:right;white-space:nowrap;'><b data-recv='1' style='font-weight:900;'>\"+rcmFmt(r.de)+' → '+rcmFmt(r.pra)+' '+r.u+\"</b><span style='display:block;font-size:11.5px;font-weight:800;color:#4ade80;'>+\"+rcmFmt(r.g)+' '+r.u+'</span></span></span>';}).join('');}" +
+      "window.__recordesMes={lista:recordesMes,pinta:pintaRecMes,desde:rcmDesde,fmt:rcmFmt,dias:30};" +
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=isoLoc(d);var fez=!!f[iso];if(fez)naSem++;" +
@@ -2256,17 +2378,20 @@
       "(temAg?\"<span style='display:block;width:5px;height:5px;border-radius:50%;margin:2px auto 0;background:\"+(fez?'rgba(255,255,255,.9)':'var(--corc)')+\";'></span>\":\"<span style='display:block;height:7px;'></span>\")+" +
       "\"</div></button>\";}" +
       "document.getElementById('diasSem').innerHTML=html;pintaSemDia();" +
-      /* a linha de resumo substitui o anel 4/4 E a barra "Meta da semana":
-       * os chips seg-dom acima já mostram quantos e QUAIS dias foram. */
-      "var sq9=seqAtual(f);var sr9=document.getElementById('semResumo');" +
-      "if(sr9)sr9.innerHTML=\"<span>\"+naSem+' de '+META+' na semana</span>'+" +
-      "(sq9>0?\"<span style='color:#3c3846;'>\\u2022</span><span style='color:#fb923c;display:inline-flex;align-items:center;gap:5px;'>\"+icx(ICO.chama,17)+sq9+' dia'+(sq9>1?'s':'')+' seguido'+(sq9>1?'s':'')+'</span>':'');" +
+      /* a linha de resumo virou a FAIXA DE PROGRESSO da semana (barra, o que
+       * falta, sequência de semanas na meta, semana do plano e o dia que
+       * costuma escapar) — semProgCalc/semProgHtml, logo acima. Os chips
+       * seg-dom continuam sendo quem mostra QUAIS dias foram. */
+      "var sr9=document.getElementById('semResumo');" +
+      "if(sr9)sr9.innerHTML=semProgHtml(semProgCalc(f));" +
       // a dica do treino de HOJE (carga, circuito ou pace) vence o recado
-      // genérico da semana — é o que o desenho chama de recado do coach
+      // genérico da semana — é o que o desenho chama de recado do coach.
+      // O genérico perdeu o "N de META": esse número agora mora na faixa logo
+      // acima, com barra — repetir era a redundância que a v771 tirou.
       "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=(typeof coachDica==='function'?coachDica():null)||(naSem>=META?" +
-      "'Semana fechada: <b>'+naSem+' de '+META+'</b> treinos. Orgulho define — mantém o ritmo!':" +
-      "naSem>0?'Você já fez <b>'+naSem+' de '+META+'</b> treinos essa semana — hoje dá pra somar mais um.':" +
-      "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.');" +
+      "'Meta batida. Orgulho define — mantém o ritmo!':" +
+      "naSem>0?'Hoje dá pra somar mais um. Bora?':" +
+      "'Bora abrir a semana? O primeiro treino puxa os outros.');" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
       "var md9=document.getElementById('medalhas');" +
@@ -2378,7 +2503,9 @@
       "card.querySelectorAll(\"[data-onb='\"+b.dataset.onb+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';x.style.borderColor=on?'var(--corc)':'var(--bg11)';});});" +
       "document.getElementById('onbOk').addEventListener('click',function(){if(!sel.obj||!sel.dias){alert('Escolhe o objetivo e os dias — é rapidinho!');return;}" +
       "Sv('ptonb',{obj:sel.obj,dias:sel.dias,dor:(document.getElementById('onbDor').value||'').trim().slice(0,120),em:isoHj()});" +
-      "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);});})();" +
+      "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);" +
+      // v775: tour → perguntinhas → push. Quem marcou o primeiro treino ANTES de responder teve o push segurado pelo pushMostra; agora é a vez dele (o mesmo gancho de 900 ms da v763)
+      "if(Object.keys(L('ptfeitos',{})).length&&window.__pushMostra)setTimeout(function(){try{window.__pushMostra(true);}catch(e9){}},900);});})();" +
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + jsonApp(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
@@ -5299,6 +5426,8 @@
       // linhas de Ajustes que levam pra outra área (Meu plano, Meus questionários)
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-ajgo]');if(!b)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);if(window.__trocaSec)window.__trocaSec(b.getAttribute('data-ajgo'));" +
+      // v775: data-ajevsub troca a sub-aba da Evolução junto (o card "Seus recordes do mês" aponta pra Cargas); __evSub nasce no boot, antes de qualquer toque
+      "var evs=b.getAttribute('data-ajevsub');if(evs&&window.__evSub)window.__evSub(evs);" +
       "var go=b.getAttribute('data-ajgoto');if(go){var ge=document.getElementById(go);if(ge)setTimeout(function(){ge.scrollIntoView({behavior:'smooth',block:'start'});},80);}});" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
       "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
@@ -6422,6 +6551,7 @@
        * Aqui, no fim do boot, todas as fontes já existem. */
       "try{if(window.__sino)window.__sino.pinta();}catch(e0s){}" +
       "try{pintaAgHoje();}catch(e0b){}" +
+      "try{pintaRecMes();}catch(e0r){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
@@ -6472,6 +6602,7 @@
       "if(el.id==='lojaCard'){el.setAttribute('data-sec','loja');return;}" +
       "if(el.id==='ajudaCard'){el.setAttribute('data-sec','ajuda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
+      "if(el.id==='recMesCard'){el.setAttribute('data-sec','inicio');return;}" +
       "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
@@ -6767,6 +6898,117 @@
       "document.addEventListener('visibilitychange',function(){if(!document.hidden)saudePuxa();});" +
       "window.__saudeSync={puxa:saudePuxa,desde:function(){return L('ptsaudeSync','');}};})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
+      /* ===== v775: TOUR DO PRIMEIRO USO (coach-marks) =====
+       * Medido em 2026-09-03: 12 apps publicados, 5 abertos, alunos parando na
+       * semana 1–2 — quem entra cai num monte de cards sem guia. Três passos
+       * sobre a TELA DE VERDADE (véu com recorte no alvo + balão curto):
+       * chips da semana → Treinei hoje! → a gaveta da ficha (onde anota a carga).
+       * Regras: véu/anel com pointer-events:none (a página continua clicável e
+       * os testes que clicam no app recém-aberto seguem valendo); o alvo vai pro
+       * terço de CIMA e o balão fica embaixo (ou em cima, se cruzar o anel) —
+       * nunca sobre o alvo; DOM criado só na hora, colado no <body>
+       * (position:fixed dentro de transform ancora no elemento — v634/v772) e
+       * DEPOIS do classificador (sem data-sec, nunca é escondido); só CLICK fora
+       * do balão / Pular / Esc encerram (pointerdown mataria o tour no primeiro
+       * gesto de rolar); uma vez só (pttour); veterano (já tem ptfeitos/ptdc)
+       * não ganha tour — é isso que deixa a demo, com 14 meses de história, sem
+       * tour a cada abertura; termo de responsabilidade na frente = espera o
+       * toque nos botões dele; alvo escondido = passo fora da lista; seção
+       * trocada por fora = encerra; body.tour-on esconde #onbCard e #cardNotif
+       * (tour → perguntinhas → push). Ganchos: window.__tour. Só L/Sv/isoHj/
+       * NOTPROF daqui de dentro — nada do builder (esc, dinheiro, STUDIO_CURTO)
+       * existe no celular do aluno. */
+      "(function(){var TK='pttour';" +
+      "var tour={on:false,pend:false,i:0,vistos:0,passos:[],sec:'inicio',mudei:false,el:null,cx:null,anel:null,bal:null,mo:null};" +
+      "function tourPassos(){var temF=!!document.querySelector('#trFichasWrap .fichabox');return [" +
+      "{sec:'inicio',q:['#diasSem'],t:'Sua semana, dia a dia',x:'Cada dia que você treinar acende aqui — essa é a sua sequência na semana. Logo embaixo fica a conta: quantos treinos você já fez da meta da semana.'}," +
+      "{sec:'inicio',q:['#btnFeito'],t:'Terminou? Toque em Treinei hoje!',x:'É ele que conta a sua sequência e as suas medalhas. Um toque por dia, depois do treino.'}," +
+      "{sec:'treino',sub:'ficha',abreFicha:temF,acao:temF,q:temF?['#trFichasWrap .fichabox[open] .guiabtn','#trFichasWrap .fichabox[open]','#trFichasWrap .fichabox']:['#trFichasWrap .vz','#trFichasWrap']," +
+      "t:temF?'Aqui você anota o quanto levantou':'Seu treino vai aparecer aqui'," +
+      "x:temF?'Toque em Começar essa ficha: o app leva um exercício por vez e, em Mudar a carga, você anota o peso. É isso que desenha a sua evolução.':'Quando '+NOTPROF+' publicar, cada treino vira uma gaveta aqui. Dentro dela, Começar essa ficha leva um exercício por vez e, em Mudar a carga, você anota o peso — é isso que desenha a sua evolução.'," +
+      "bt:temF?'Bora treinar':'Entendi'}];}" +
+      "function tourVis(el){if(!el)return false;var r=el.getBoundingClientRect();return r.width>0&&r.height>0;}" +
+      "function tourAlvo(p){if(p.abreFicha){var fb=document.querySelector('#trFichasWrap .fichabox[open]')||document.querySelector('#trFichasWrap .fichabox');if(fb&&!fb.open)fb.open=true;}" +
+      "for(var i=0;i<p.q.length;i++){var el=document.querySelector(p.q[i]);if(tourVis(el))return el;}return null;}" +
+      "function tourMonta(){if(tour.cx)return;" +
+      "var st=document.createElement('style');st.id='tourCss';st.textContent=" +
+      "'#tourCx{position:fixed;inset:0;z-index:85;pointer-events:none;display:none}#tourCx.on{display:block}'+" +
+      "'#tourAnel{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.62),0 0 0 3px var(--corc);pointer-events:none}'+" +
+      "'#tourBalao{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom,0px));max-width:456px;margin:0 auto;border:1px solid rgba(var(--cor-rgb),.45);border-radius:16px;padding:14px 16px 12px;box-shadow:0 18px 44px rgba(0,0,0,.5);pointer-events:auto;color:#fff}'+" +
+      "'#tourBalao.topo{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}'+" +
+      "'#tourK{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--corc)}#tourT{font-size:16px;font-weight:800;margin-top:4px;line-height:1.3}#tourX{font-size:13.5px;line-height:1.5;color:#cfcbdb;margin-top:6px}'+" +
+      "'.tourbts{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px}'+" +
+      "'#tourPular{background:none;border:none;color:#a9a4b5;font-family:inherit;font-size:13px;font-weight:700;min-height:44px;padding:0 12px;cursor:pointer}'+" +
+      "'#tourProx{background:var(--cor);color:#fff;border:none;border-radius:99px;font-family:inherit;font-size:13.5px;font-weight:800;min-height:44px;padding:0 18px;cursor:pointer}'+" +
+      "'html.claro #tourBalao{color:#191622}html.claro #tourX{color:#4b4658}html.claro #tourPular{color:#6c6678}'+" +
+      "'body.tour-on #onbCard,body.tour-on #cardNotif{display:none!important}';" +
+      "document.head.appendChild(st);" +
+      "var cx=document.createElement('div');cx.id='tourCx';" +
+      // background:var(--bg2) INLINE de propósito: o modo claro só reescreve [style*='background:var(--bg2)'] (mesmo truque do #sinoPn)
+      "cx.innerHTML=\"<div id='tourAnel'></div><div id='tourBalao' role='dialog' aria-label='Tour do app' style='background:var(--bg2);'><div id='tourK'></div><div id='tourT'></div><div id='tourX'></div><div class='tourbts'><button type='button' id='tourPular'>Pular</button><button type='button' id='tourProx'>Próximo</button></div></div>\";" +
+      "document.body.appendChild(cx);tour.cx=cx;tour.anel=cx.querySelector('#tourAnel');tour.bal=cx.querySelector('#tourBalao');" +
+      // último passo com ficha: "Bora treinar" FAZ o que promete — fecha o tour e abre o guiado (o click no .guiabtn vem DEPOIS do tourFim, então o tourFora daquele click não faz nada)
+      "cx.querySelector('#tourProx').addEventListener('click',function(){if(navigator.vibrate)navigator.vibrate(8);var p=tour.passos[tour.i];" +
+      "if(tour.i+1>=tour.passos.length){var el=tour.el;tourFim('fim');if(p&&p.acao&&el&&el.classList.contains('guiabtn'))el.click();}else tourVai(tour.i+1);});" +
+      "cx.querySelector('#tourPular').addEventListener('click',function(){tourFim('pulou');});}" +
+      // o alvo vai pro terço de CIMA da tela: o balão mora embaixo e assim nunca cobre o alvo nem o botão do passo seguinte
+      "function tourRola(el){try{el.scrollIntoView({block:'start',behavior:'auto'});var r=el.getBoundingClientRect();window.scrollBy(0,r.top-Math.round(window.innerHeight*0.24));}catch(e){}}" +
+      // .topo decidido pela INTERSEÇÃO medida entre balão e anel, não por limiar.
+      // O anel fica PRESO à tela (margem de 6): alvo de ponta a ponta (#trFichasWrap sem ficha) jogava as bordas laterais pra fora e o recorte virava uma faixa
+      "function tourPos(){if(!tour.on||!tour.el)return;var r=tour.el.getBoundingClientRect();if(!(r.width>0&&r.height>0))return;var pd=8,mg=6;" +
+      "var l=Math.max(r.left-pd,mg),t=Math.max(r.top-pd,mg),rr=Math.min(r.right+pd,window.innerWidth-mg),bb=Math.min(r.bottom+pd,window.innerHeight-mg);" +
+      "var a=tour.anel.style;a.left=l+'px';a.top=t+'px';a.width=Math.max(rr-l,0)+'px';a.height=Math.max(bb-t,0)+'px';" +
+      "tour.bal.classList.remove('topo');var rb=tour.bal.getBoundingClientRect();" +
+      "if(rb.top<bb&&rb.bottom>t)tour.bal.classList.add('topo');}" +
+      // ao entrar numa seção os cards ANIMAM (.sec-anim: translateY 12px→0 em .5s, mais o atraso por --ci): medir o alvo uma vez deixava o anel 12 px fora do lugar por meio segundo. Segue o alvo por ~1,1 s
+      "function tourSegue(){tour.seq=(tour.seq||0)+1;var sq=tour.seq,t0=Date.now();(function seg(){if(!tour.on||tour.seq!==sq)return;tourPos();if(Date.now()-t0<1100){try{requestAnimationFrame(seg);}catch(e){}}})();}" +
+      "function tourPinta(p){var n=tour.passos.length;tour.vistos=tour.i+1;tour.bal.querySelector('#tourK').textContent=(tour.i+1)+' de '+n;tour.bal.querySelector('#tourT').textContent=p.t;tour.bal.querySelector('#tourX').textContent=p.x;" +
+      "var ult=tour.i+1>=n;tour.bal.querySelector('#tourProx').textContent=p.bt||(ult?'Entendi':'Próximo');tour.bal.querySelector('#tourPular').style.display=ult?'none':'';}" +
+      "function tourVai(i){if(!tour.on)return;var p=tour.passos[i];if(!p){tourFim('fim');return;}tour.i=i;" +
+      "if(p.sec!==tour.sec){tour.sec=p.sec;tour.mudei=true;try{window.__trocaSec(p.sec);}catch(e){}}" +
+      "if(p.sub&&window.__trSub)try{window.__trSub(p.sub);}catch(e){}" +
+      "var el=tourAlvo(p);if(!el){if(i+1<tour.passos.length)tourVai(i+1);else tourFim('fim');return;}" +
+      "tour.el=el;tourRola(el);tourPinta(p);tourSegue();}" +
+      "function tourFim(como){if(!tour.on)return;tour.on=false;tour.pend=false;" +
+      "if(tour.cx)tour.cx.classList.remove('on');document.body.classList.remove('tour-on');" +
+      "window.removeEventListener('scroll',tourPos);window.removeEventListener('resize',tourPos);" +
+      "if(tour.mo){try{tour.mo.disconnect();}catch(e){}tour.mo=null;}" +
+      "Sv(TK,{em:isoHj(),como:como,passo:tour.vistos});" +
+      // sem ficha pra começar, o tour devolve pro Início; com ficha, fica em Treinos (é onde o guiado abre)
+      "if(tour.mudei&&como!=='fora'&&!document.querySelector('#trFichasWrap .fichabox')){try{window.__trocaSec('inicio');}catch(e){}}" +
+      "tour.mudei=false;tour.el=null;if(navigator.vibrate)navigator.vibrate(8);}" +
+      "function tourAbre(forca){if(tour.on)return false;" +
+      "if(!forca){if(L(TK,null))return false;" +
+      // veterano: já marcou treino ou anotou carga — não ganha tour de botão que já usa (e é o que segura a demo)
+      "if(Object.keys(L('ptfeitos',{})).length||Object.keys(L('ptdc',{})).length){Sv(TK,{em:isoHj(),como:'veterano',passo:0});return false;}" +
+      "if(document.getElementById('termoOv'))return false;" +
+      // app aberto por atalho (push/sino caindo no Chat): sem o Início na tela, nem tenta — fica pra próxima abertura
+      "if(!document.querySelector(\"[data-sec='inicio']:not([data-sec-off])\"))return false;}" +
+      "else{try{window.__trocaSec('inicio');}catch(e){}}" +
+      // passo do Início com alvo escondido sai da lista JÁ AQUI — assim o "N de M" nasce certo
+      "tour.passos=tourPassos().filter(function(p){return p.sec!=='inicio'||!!tourAlvo(p);});if(!tour.passos.length)return false;" +
+      "tourMonta();tour.on=true;tour.pend=false;tour.sec='inicio';tour.mudei=false;tour.i=0;tour.vistos=0;" +
+      "tour.cx.classList.add('on');document.body.classList.add('tour-on');" +
+      "window.addEventListener('scroll',tourPos,{passive:true});window.addEventListener('resize',tourPos);" +
+      // seção trocada por fora (barra de baixo, __trocaSec) encerra — roda em microtask, nunca é síncrono
+      "try{tour.mo=new MutationObserver(function(){if(!tour.on)return;if(!document.querySelector(\"[data-sec='\"+tour.sec+\"']:not([data-sec-off])\"))tourFim('fora');});" +
+      "tour.mo.observe(document.body,{attributes:true,subtree:true,attributeFilter:['data-sec-off']});}catch(e){}" +
+      "tourVai(0);return tour.on;}" +
+      "function tourTenta(){if(tour.on||!tour.pend)return;if(L(TK,null)){tour.pend=false;return;}" +
+      "if(document.getElementById('termoOv'))return;" +
+      "tour.pend=false;tourAbre(false);}" +
+      // só CLICK, na captura: com o tour aberto, fora do balão encerra; pendente e com o termo na frente, o toque num BOTÃO do termo reagenda (tocar no texto pra rolar não gasta nada)
+      "function tourFora(e){var t9=e.target;var dentro=t9&&t9.closest&&t9.closest('#tourBalao');" +
+      "if(tour.on){if(!dentro)tourFim('fora');return;}" +
+      "if(tour.pend){var ov=document.getElementById('termoOv');" +
+      "if(ov){if(t9&&t9.closest&&t9.closest('#termoOv button'))setTimeout(function(){try{tourTenta();}catch(e9){}},600);}" +
+      "else tour.pend=false;}}" +
+      "document.addEventListener('click',tourFora,true);" +
+      "document.addEventListener('keydown',function(e){if(tour.on&&e.key==='Escape')tourFim('pulou');});" +
+      "document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#tourRever');if(!b)return;if(navigator.vibrate)navigator.vibrate(8);tourAbre(true);});" +
+      "window.__tour={abre:function(){return tourAbre(true);},fim:tourFim,vai:tourVai,tenta:tourTenta,on:function(){return tour.on;},pend:function(){return tour.pend;},passo:function(){return tour.i;},passos:function(){return tour.passos.slice();},alvo:function(){return tour.el;}};" +
+      "tour.pend=true;setTimeout(function(){try{tourTenta();}catch(e9){}},900);" +
+      "})();" +
       atualizador +
       "</" + "script>" +
       "<script>/* TORQUE camada visual: animações (aditiva — pode remover sem afetar a lógica) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;function cascata(els){if(RM)return;els.forEach(function(el,i){el.style.setProperty('--ci',Math.min(i,8));el.classList.remove('sec-anim');void el.offsetWidth;el.classList.add('sec-anim');});}var pend=null;var mo=new MutationObserver(function(ms){var vis=[];ms.forEach(function(m){var el=m.target;if(m.attributeName==='data-sec-off'&&!el.hasAttribute('data-sec-off')&&vis.indexOf(el)<0)vis.push(el);});if(vis.length){clearTimeout(pend);pend=setTimeout(function(){cascata(vis);},0);}});document.querySelectorAll('[data-sec]').forEach(function(el){mo.observe(el,{attributes:true,attributeFilter:['data-sec-off']});});cascata([].slice.call(document.querySelectorAll('[data-sec]:not([data-sec-off])')).slice(0,10));var xp=document.getElementById('xpNum');if(xp&&!RM){var alvo=parseInt(xp.textContent,10)||0;if(alvo>0){var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/900);xp.textContent=Math.round(alvo*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}}})();</" + "script>" +
