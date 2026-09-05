@@ -15475,6 +15475,13 @@ async function abaPt(p, a) {
     const cen = await pu.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
       const dia = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return window.diaISO(d); };
+      /* v776: o dia das sessões é a SEGUNDA da semana que vem, não "hoje + 3".
+       * O plano põe os DOIS treinos na segunda ("1"), e os asserts do app
+       * (07:30 e 18:30 no mesmo dia) e do v771 ("2 de 7" pontinhos nesta
+       * semana) só fechavam quando hoje+3 caía numa segunda FORA desta semana
+       * — ou seja, só na sexta-feira em que o bloco foi escrito (2026-09-04).
+       * Num sábado, hoje+3 é terça: só o 18:30 existe e o assert do app caía. */
+      const d3 = (() => { const d = new Date(); d.setDate(d.getDate() + (((8 - d.getDay()) % 7) || 7)); return window.diaISO(d); })();
       st.alunos = [{ id: "u770", nome: "Agenda Cheia", ativo: true, desde: "2026-01-05", appTokenP: "tku770",
         servPacotes: [{ id: "sv770", nome: "Massagem", total: 5, usadas: 0 }] }];
       st.servicosPT = [{ id: "sv770", nome: "Massagem", valor: 120 }];
@@ -15485,8 +15492,8 @@ async function abaPt(p, a) {
         plano: { dias: { "1": [{ tp: "wod", id: "w1", h: "07:30" }, { tp: "ficha", id: "f1", h: "18:30" }],
                          "2": [{ tp: "ficha", id: "f1", h: "18:30" }] } } } };
       st.sessoes = [
-        { id: "u1", alunoId: "u770", data: dia(3), hora: "17:00", feita: false },
-        { id: "u2", alunoId: "u770", data: dia(3), hora: "14:00", feita: false, svId: "sv770", sv: "Massagem" },
+        { id: "u1", alunoId: "u770", data: d3, hora: "17:00", feita: false },
+        { id: "u2", alunoId: "u770", data: d3, hora: "14:00", feita: false, svId: "sv770", sv: "Massagem" },
       ];
       st.pagamentos = []; st.contratosPT = []; st.planosPT = [];
       S.write("ptStudio", st);
@@ -15494,7 +15501,7 @@ async function abaPt(p, a) {
       // a segunda-feira mais distante dentro dos 2 meses
       const d2 = new Date(); d2.setDate(d2.getDate() + 56);
       while (d2.getDay() !== 1) d2.setDate(d2.getDate() + 1);
-      return { d3: dia(3), segLonge: window.diaISO(d2) };
+      return { d3: d3, segLonge: window.diaISO(d2) };
     });
 
     const u = await pu.evaluate((c) => {
@@ -15550,6 +15557,8 @@ async function abaPt(p, a) {
     const ap = await pau.evaluate((c) => {
       window.__trocaSec("agenda");
       const itens = window.__agItens(c.d3).map((x) => x.h + "|" + x.k);
+      // v776: o calendário é de UM mês (AGMES); a segunda que vem pode cair no mês seguinte — anda um mês antes de tocar
+      if (!document.querySelector("[data-agdia='" + c.d3 + "']")) document.getElementById("agProx").click();
       document.querySelectorAll("[data-agdia]").forEach((d) => { if (d.getAttribute("data-agdia") === c.d3) d.click(); });
       return { itens, txt: document.getElementById("agDia").textContent.replace(/\s+/g, " "),
                longe: window.__agItens(c.segLonge).length };
