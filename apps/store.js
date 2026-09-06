@@ -497,7 +497,20 @@
    * timer de 1,2 s empurrava esse vazio pra nuvem ANTES de a primeira puxada
    * voltar, e a nuvem cheia era substituída pelo nada. A trava nuvemTemMais
    * protege o caminho de BAIXAR; esta protege o de ENVIAR. */
-  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null, reconciliou: false };
+  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null, reconciliou: false, ciclo: 0 };
+  // Captura antes de a tela de login gravar o perfil de quem acabou de entrar.
+  var identidadeLocal = null;
+  try { identidadeLocal = JSON.parse(localStorage.getItem("mtsync:identidade")); } catch (e) {}
+  if (!identidadeLocal) {
+    try { var pfSync = JSON.parse(localStorage.getItem("mtapp:perfil")); if (pfSync && pfSync.nuvem) identidadeLocal = { email: pfSync.email || "" }; } catch (e) {}
+  }
+
+  function paraSync() {
+    (sync.emEnvio || []).forEach(function (k) { sync.sujas[k] = true; });
+    sync.emEnvio = null;
+    sync.ciclo++; sync.client = null; sync.email = ""; sync.reconciliou = false;
+    sync.marca = ""; clearTimeout(sync.timer); avisaStatus();
+  }
 
   function sincronizavel(chaveFull) {
     if (SYNC_IGNORA[chaveFull]) return false;
@@ -513,13 +526,15 @@
   }
 
   function enviaSujas() {
-    if (!sync.client) return;
+    if (!sync.client || sync.emEnvio) return;
+    var ciclo = sync.ciclo;
     // regra de ferro: só envia depois da primeira puxada da sessão. A fila
     // fica guardada e sobe assim que a puxada reconciliar (o puxa chama
     // enviaSujas no fim) — aparelho zerado nunca mais apaga a nuvem no boot.
     if (!sync.reconciliou) { avisaStatus(); return; }
     var chaves = Object.keys(sync.sujas);
     if (!chaves.length) return;
+    sync.emEnvio = chaves;
     sync.sujas = {};
     var m = tsMap();
     var linhas = chaves.map(function (k) {
@@ -538,6 +553,8 @@
     var q = sync.client.from("dados").upsert(linhas);
     if (q && typeof q.select === "function") { try { q = q.select("chave,atualizado"); } catch (e) {} }
     q.then(function (r) {
+      if (ciclo !== sync.ciclo || !sync.client) return;
+      sync.emEnvio = null;
       if (r.error) {
         // devolve à fila para tentar de novo no próximo ciclo
         chaves.forEach(function (k) { sync.sujas[k] = true; });
@@ -549,12 +566,35 @@
         avisaStatus();
       }
     }, function () {
+      if (ciclo !== sync.ciclo || !sync.client) return;
+      sync.emEnvio = null;
       chaves.forEach(function (k) { sync.sujas[k] = true; });
     });
   }
 
   function puxa() {
     if (!sync.client) return Promise.resolve();
+    var ciclo = sync.ciclo;
+    // A sessão pode continuar válida depois que o dono remove o membro.
+    // Revalida o vínculo a cada reconexão/ciclo antes de ler ou enviar a fila.
+    if (sync.user_id) {
+      return sync.client.from("membros").select("academia_id,papel").eq("user_id", sync.user_id).eq("academia_id", sync.aid).then(function (r) {
+        if (ciclo !== sync.ciclo || !sync.client) return;
+        if (r.error) return; // indisponibilidade não significa acesso revogado
+        var m = r.data && r.data.find(function (x) { return x.academia_id === sync.aid; });
+        if (!m || m.papel !== sync.papel) {
+          paraSync();
+          try { self.dispatchEvent(new CustomEvent("mt:sessao-caiu")); } catch (e) {}
+          return;
+        }
+        return puxaDados(ciclo);
+      }, function () {});
+    }
+    return puxaDados(ciclo);
+  }
+
+  function puxaDados(ciclo) {
+    if (!sync.client || ciclo !== sync.ciclo) return Promise.resolve();
     // 1ª puxada da sessão: completa (semeia o aparelho e acha chaves só-locais).
     // Depois: só o que mudou desde a marca d'água — corta o tráfego dos ciclos de 30 s.
     if (sync.marcaAid !== sync.aid) { sync.marca = ""; sync.marcaAid = sync.aid; sync.reconciliou = false; }
@@ -562,6 +602,7 @@
     var consulta = sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid);
     if (!primeira) consulta = consulta.gt("atualizado", sync.marca);
     return consulta.then(function (r) {
+      if (ciclo !== sync.ciclo || !sync.client) return;
       if (r.error || !r.data) return;
       var m = tsMap();
       var mudou = [];
@@ -671,11 +712,13 @@
   /* Sessão derrubada pela nuvem: o painel não pode seguir dizendo "conectado
    * como fulano" com o crachá morto — senão o botão que aparece é Sair, e não
    * Entrar, que é o que a pessoa precisa. */
-  self.addEventListener("mt:sessao-caiu", function () { sync.email = ""; });
+  self.addEventListener("mt:sessao-caiu", paraSync);
 
   function iniciaSync() {
     var cfg = self.MT_CLOUD;
-    if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client) return;
+    if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client || sync.iniciando) return;
+    sync.iniciando = true;
+    var cicloInicio = sync.ciclo;
     /* UM cliente por página, sempre. Antes o store criava o dele sem publicar
      * em window.MT_supabase, então o modulo-conta criava um SEGUNDO. Dois
      * clientes com o mesmo login = dois relógios renovando o mesmo crachá: um
@@ -684,39 +727,63 @@
      * tempo e depois dá erro" na origem. */
     var client = window.MT_supabase || window.supabase.createClient(cfg.url, cfg.anonKey);
     window.MT_supabase = client;
+    observaSync(client);
     client.auth.getSession().then(function (r) {
+      if (cicloInicio !== sync.ciclo) return;
       var sess = r.data && r.data.session;
-      if (!sess) return; // sem login, sem sync
+      if (!sess || !sess.user || !sess.user.id) return; // sem identidade, sem sync
+      if (identidadeLocal && ((identidadeLocal.user_id && identidadeLocal.user_id !== sess.user.id) ||
+          (!identidadeLocal.user_id && identidadeLocal.email && identidadeLocal.email.toLowerCase() !== String(sess.user.email || "").toLowerCase()))) {
+        paraSync();
+        try { self.dispatchEvent(new CustomEvent("mt:conta-divergente")); } catch (e) {}
+        return; // nunca envie dados locais de outra pessoa à conta recém-aberta
+      }
       sync.email = (sess.user && sess.user.email) || "";
 
-      // resolve a academia do usuário (cache local para funcionar offline)
+      // O cache permite trabalhar offline, mas nunca autoriza a sincronização.
       var acad = null;
       try { acad = JSON.parse(localStorage.getItem("mtapp:academia")); } catch (e) {}
-      var resolve = acad && acad.id
-        ? Promise.resolve(acad.id)
-        : client.from("membros").select("academia_id, papel, nome, academias(nome, codigo_equipe)").then(function (rm) {
-            var m = rm.data && rm.data[0];
+      var resolve = client.from("membros").select("academia_id, papel, nome, academias(nome, codigo_equipe)").eq("user_id", sess.user.id).then(function (rm) {
+            if (cicloInicio !== sync.ciclo) return null;
+            if (rm.error) return null;
+            var membros = rm.data || [];
+            var m = membros.find(function (x) { return acad && x.academia_id === acad.id; }) || membros[0];
             if (!m) return null;
+            if (identidadeLocal && identidadeLocal.academia_id && identidadeLocal.academia_id !== m.academia_id) {
+              try { self.dispatchEvent(new CustomEvent("mt:conta-divergente")); } catch (e) {}
+              return null;
+            }
             try {
+              sync.papel = m.papel;
               localStorage.setItem("mtapp:academia", JSON.stringify({
-                id: m.academia_id, papel: m.papel,
+                id: m.academia_id, user_id: sess.user.id, papel: m.papel,
                 nome: (m.academias && m.academias.nome) || "",
                 codigo_equipe: m.papel === "dono" && m.academias ? m.academias.codigo_equipe : "",
               }));
+              identidadeLocal = { user_id: sess.user.id, academia_id: m.academia_id, email: sync.email };
+              localStorage.setItem("mtsync:identidade", JSON.stringify(identidadeLocal));
             } catch (e) {}
             return m.academia_id;
           }, function () { return null; });
 
-      resolve.then(function (aid) {
-        if (!aid) return; // sem academia vinculada ainda
+      return resolve.then(function (aid) {
+        if (cicloInicio !== sync.ciclo) return;
+        if (!aid) { sync.email = ""; avisaStatus(); return; }
         sync.client = client;
         sync.aid = aid;
-        depoisDeLigar();
+        sync.user_id = sess.user.id;
+        sync.ciclo++;
+        puxa();
       });
-      return;
+    }, function () {}).finally(function () { sync.iniciando = false; });
+  }
 
-      function depoisDeLigar() {
-      puxa();
+  function observaSync(client) {
+      if (sync.ouvindo) return;
+      sync.ouvindo = true;
+      if (typeof client.auth.onAuthStateChange === "function") client.auth.onAuthStateChange(function (evento) {
+        if (evento === "SIGNED_OUT") paraSync();
+      });
       // aplica alterações vindas de iframes/outras abas deste aparelho
       window.addEventListener("storage", function (e) {
         if (!e.key || !sincronizavel(e.key)) return;
@@ -734,14 +801,14 @@
       });
       // só a janela principal fica puxando da nuvem (evita tráfego repetido)
       if (window === window.top) {
-        setInterval(puxa, 30000);
-        window.addEventListener("focus", puxa);
+        function retoma() { if (sync.client) puxa(); else iniciaSync(); }
+        setInterval(retoma, 30000);
+        window.addEventListener("focus", retoma);
+        window.addEventListener("online", retoma);
         document.addEventListener("visibilitychange", function () {
-          if (!document.hidden) puxa();
+          if (!document.hidden) retoma();
         });
       }
-      }
-    }, function () {});
   }
 
   // ---------- clientes ativos (contrato especial/VIP não conta) ----------
