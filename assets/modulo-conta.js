@@ -8,6 +8,7 @@ self.MT_moduloConta = function (cfg) {
   var NUVEM = self.MT_CLOUD && self.MT_CLOUD.url && self.MT_CLOUD.anonKey;
   var S = window.MTStore;
   var aba = "entrar";
+  var recuperando = /(?:^|[&#])type=recovery(?:&|$)/.test(location.hash || "");
   var sb = null;
   function $(id) { return document.getElementById(id); }
   var inputCss = "width:100%;margin-bottom:8px;padding:13px;border-radius:11px;border:1px solid #3a3446;background:rgba(0,0,0,.28);color:#fff;font-family:inherit;font-size:14px;box-sizing:border-box;";
@@ -28,8 +29,10 @@ self.MT_moduloConta = function (cfg) {
     '<input id="mgNome" placeholder="' + (cfg.nomeCampo || "Nome") + '" hidden autocomplete="organization" style="' + inputCss + '">' +
     '<input id="mgEmail" type="email" placeholder="Seu e-mail" required autocomplete="username" style="' + inputCss + '">' +
     '<input id="mgSenha" type="password" placeholder="Senha (mínimo 6 caracteres)" required minlength="6" autocomplete="current-password" style="' + inputCss + '">' +
+    '<input id="mgSenha2" type="password" placeholder="Repita a nova senha" aria-label="Repita a nova senha" hidden autocomplete="new-password" style="' + inputCss + '">' +
     '<p id="mgErro" hidden style="font-size:13px;margin:6px 0;line-height:1.5;"></p>' +
     '<button id="mgBtn" style="width:100%;padding:14px;border:none;border-radius:11px;background:' + cfg.grad + ';color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;">Entrar →</button></form>' +
+    '<button type="button" id="mgEsqueci" style="background:none;border:none;color:#c4b5fd;min-height:44px;font-size:14px;cursor:pointer;width:100%;font-family:inherit;">Esqueci minha senha</button>' +
     '<button type="button" id="mgLocal" style="background:none;border:none;color:#8a8695;font-size:12.5px;margin-top:14px;cursor:pointer;width:100%;font-family:inherit;">→ Experimentar sem conta (dados só neste aparelho)</button>' +
     '<p id="mgRodape" style="font-size:12px;color:#8a8695;margin:12px 0 0;line-height:1.5;text-align:center;">Criar a conta é grátis e leva 1 minuto — <a href="torqueon.html" style="color:' + cfg.corTag + ';font-weight:700;">conheça o TORQUE ON</a>.</p></div>';
   document.body.appendChild(div);
@@ -43,16 +46,37 @@ self.MT_moduloConta = function (cfg) {
   function erro(m, ok) { var el = $("mgErro"); el.innerHTML = m; el.style.color = ok ? "#86efac" : "#fca5a5"; el.hidden = false; }
   function aplica() {
     var criar = aba === "criar";
+    var nova = aba === "novaSenha", recuperar = aba === "recuperar";
     $("mgAbaEntrar").style.cssText += ";background:" + (criar ? "none" : cfg.grad) + ";border:1px solid " + (criar ? cfg.borda : cfg.corTag) + ";";
     $("mgAbaCriar").style.cssText += ";background:" + (criar ? cfg.grad : "none") + ";border:1px solid " + (criar ? cfg.corTag : cfg.borda) + ";";
     $("mgNome").hidden = !criar;
     $("mgNome").required = criar;
-    $("mgSenha").setAttribute("autocomplete", criar ? "new-password" : "current-password");
-    $("mgBtn").textContent = criar ? "Criar minha conta →" : "Entrar →";
+    $("mgEmail").hidden = nova;
+    $("mgEmail").required = !nova;
+    $("mgSenha").hidden = recuperar;
+    $("mgSenha").required = !recuperar;
+    $("mgSenha").minLength = nova ? 10 : 6;
+    $("mgSenha").placeholder = nova ? "Nova senha (mínimo 10 caracteres)" : "Senha (mínimo 6 caracteres)";
+    $("mgSenha").setAttribute("autocomplete", criar || nova ? "new-password" : "current-password");
+    $("mgSenha2").hidden = !nova;
+    $("mgSenha2").required = nova;
+    $("mgEsqueci").hidden = criar || nova || recuperar;
+    $("mgLocal").hidden = nova || recuperar;
+    $("mgBtn").textContent = nova ? "Salvar nova senha" : recuperar ? "Enviar link de recuperação" : criar ? "Criar minha conta →" : "Entrar →";
     $("mgErro").hidden = true;
   }
   $("mgAbaEntrar").addEventListener("click", function () { aba = "entrar"; aplica(); });
   $("mgAbaCriar").addEventListener("click", function () { aba = "criar"; aplica(); });
+  $("mgEsqueci").addEventListener("click", function () { aba = "recuperar"; aplica(); $("mgEmail").focus(); });
+  self.addEventListener("mt:sessao-caiu", function () {
+    if (!NUVEM || recuperando) return;
+    aba = "entrar"; aplica(); div.hidden = false;
+    erro("Sua sessão terminou. Entre novamente para sincronizar. O trabalho salvo neste aparelho foi preservado.");
+  });
+  self.addEventListener("mt:conta-divergente", function () {
+    aba = "entrar"; aplica(); div.hidden = false; $("mgLocal").hidden = true;
+    erro("Este aparelho contém dados de outra conta. Entre na conta anterior para sincronizá-los ou use outro perfil do navegador para a nova conta.");
+  });
 
   /* v756: o estúdio guardado aqui é MESMO o do demo? O demo-personal.html
    * semeia 24 alunos com token dtk1…dtk24 — se TODO aluno tem esse token, é
@@ -109,11 +133,31 @@ self.MT_moduloConta = function (cfg) {
     if (cfg.depois) cfg.depois();
   }
   function vincula(user, silencioso) {
-    return sb.from("membros").select("academia_id, papel, nome, academias(nome)").then(function (r) {
-      var m = r.data && r.data[0];
+    var identidade = null, anterior = null;
+    try {
+      identidade = JSON.parse(localStorage.getItem("mtsync:identidade"));
+      anterior = JSON.parse(localStorage.getItem("mtapp:academia"));
+      if (!identidade) { var perfilAnterior = JSON.parse(localStorage.getItem("mtapp:perfil")); if (perfilAnterior && perfilAnterior.nuvem) identidade = { email: perfilAnterior.email }; }
+    } catch (e) {}
+    function compativel(aid) {
+      if (identidade && ((identidade.user_id && identidade.user_id !== user.id) ||
+          (!identidade.user_id && identidade.email && identidade.email.toLowerCase() !== String(user.email || "").toLowerCase()) ||
+          (aid && identidade.academia_id && identidade.academia_id !== aid))) {
+        div.hidden = false; $("mgLocal").hidden = true;
+        erro("Este aparelho contém dados de outra conta. Entre na conta anterior ou use outro perfil do navegador para a nova conta.");
+        return false;
+      }
+      return true;
+    }
+    if (!compativel()) return Promise.resolve();
+    return sb.from("membros").select("academia_id, papel, nome, academias(nome)").eq("user_id", user.id).then(function (r) {
+      if (r.error) { div.hidden = false; erro("Não foi possível verificar seu acesso. Tente novamente quando a conexão voltar."); return; }
+      var membros = r.data || [];
+      var m = membros.find(function (x) { return anterior && anterior.id === x.academia_id; }) || membros[0];
       if (m) {
+        if (!compativel(m.academia_id)) return;
         try {
-          localStorage.setItem("mtapp:academia", JSON.stringify({ id: m.academia_id, papel: m.papel, nome: (m.academias && m.academias.nome) || "", codigo_equipe: "" }));
+          localStorage.setItem("mtapp:academia", JSON.stringify({ id: m.academia_id, user_id: user.id, papel: m.papel, nome: (m.academias && m.academias.nome) || "", codigo_equipe: "" }));
           localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: (user.user_metadata || {}).nome || m.nome || (user.email || "").split("@")[0], email: user.email || "", nuvem: true }));
         } catch (e) {}
         depois();
@@ -135,6 +179,23 @@ self.MT_moduloConta = function (cfg) {
     $("mgBtn").disabled = true;
     var fim = function () { $("mgBtn").disabled = false; };
     var email = $("mgEmail").value.trim(), senha = $("mgSenha").value;
+    if (aba === "recuperar") {
+      sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname }).then(function (r) {
+        if (r.error) { erro("Não foi possível enviar o link agora. Aguarde um pouco e tente novamente."); return; }
+        erro("Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha. Confira também o spam.", true);
+      }, function () { erro("Sem conexão. Tente novamente quando a internet voltar."); }).finally(fim);
+      return;
+    }
+    if (aba === "novaSenha") {
+      if (senha.length < 10 || senha !== $("mgSenha2").value) { fim(); erro("Use pelo menos 10 caracteres e repita a mesma senha nos dois campos."); return; }
+      sb.auth.updateUser({ password: senha }).then(function (r) {
+        if (r.error) { erro("Não foi possível trocar a senha. O link pode ter expirado; solicite outro em Esqueci minha senha."); return; }
+        recuperando = false; $("mgSenha").value = ""; $("mgSenha2").value = "";
+        aba = "entrar"; aplica(); erro("Senha atualizada. Entre com a nova senha.", true);
+        return sb.auth.signOut({ scope: "global" }).catch(function () {});
+      }, function () { erro("Sem conexão. Sua senha não foi alterada; tente novamente."); }).finally(fim);
+      return;
+    }
     if (aba === "criar") {
       var nome = $("mgNome").value.trim();
       sb.auth.signUp({ email: email, password: senha, options: { data: { nome: nome } } }).then(function (r) {
@@ -151,14 +212,14 @@ self.MT_moduloConta = function (cfg) {
         // projeto com confirmação de e-mail ligada: avisa e volta pra aba Entrar
         aba = "entrar"; aplica();
         erro("Conta criada! Confirme no e-mail que acabamos de te enviar e depois entre aqui com a sua senha.", true);
-      });
+      }, function () { fim(); erro("Sem conexão para criar a conta. Tente novamente."); });
       return;
     }
     sb.auth.signInWithPassword({ email: email, password: senha }).then(function (r) {
       fim();
       if (r.error) { erro("Login ou senha incorretos. Se você ainda não tem conta, toque em <b>Criar conta</b> aqui em cima."); return; }
       vincula(r.data.user);
-    });
+    }, function () { fim(); erro("Sem conexão para entrar. Tente novamente."); });
   });
   $("mgLocal").addEventListener("click", function () {
     try { localStorage.setItem(cfg.flag, "1"); } catch (e) {}
@@ -213,12 +274,27 @@ self.MT_moduloConta = function (cfg) {
   if (NUVEM) {
     sb = window.MT_supabase || window.supabase.createClient(self.MT_CLOUD.url, self.MT_CLOUD.anonKey);
     window.MT_supabase = sb;
+    // O callback só muda a tela: chamar auth de dentro dele pode bloquear a sessão.
+    if (typeof sb.auth.onAuthStateChange === "function") sb.auth.onAuthStateChange(function (evento) {
+      if (evento === "PASSWORD_RECOVERY") {
+        recuperando = true; aba = "novaSenha"; aplica(); div.hidden = false;
+        $("mgSenha").focus();
+      }
+    });
     sb.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;
+      if (recuperando) {
+        aba = sess ? "novaSenha" : "recuperar"; aplica(); div.hidden = false;
+        if (!sess) erro("O link de recuperação expirou ou é inválido. Solicite um novo link.");
+        return;
+      }
       if (sess && sess.user) { vincula(sess.user, true); return; }
       var pulou = false;
       try { pulou = !!localStorage.getItem(cfg.flag); } catch (e) {}
       if (!pulou) { aplica(); div.hidden = false; }
+    }, function () {
+      aplica(); div.hidden = false;
+      erro("Não foi possível verificar sua sessão. Confira a conexão e tente entrar novamente.");
     });
   }
   return api;

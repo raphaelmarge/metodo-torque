@@ -3660,3 +3660,54 @@ revoke execute on function public.academias_protege_vitalicio() from public, ano
 grant execute on function public.push_avisa_prof(uuid,text,text) to service_role;
 alter function public.blob_qtd(jsonb) set search_path = public;
 revoke execute on function public.blob_qtd(jsonb) from public, anon, authenticated;
+
+-- Limite de tentativas de login do aluno. Não guarda e-mail nem senha.
+create schema if not exists torque_private;
+revoke all on schema torque_private from public, anon, authenticated;
+create table if not exists torque_private.aluno_login_limite (
+  chave text primary key,
+  inicio timestamptz not null,
+  tentativas integer not null check (tentativas > 0)
+);
+alter table torque_private.aluno_login_limite enable row level security;
+revoke all on torque_private.aluno_login_limite from public, anon, authenticated;
+create index if not exists aluno_login_limite_inicio on torque_private.aluno_login_limite(inicio);
+
+create or replace function public.aluno_login(p_login text, p_senha text)
+returns json language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v record;
+  v_login text := lower(trim(coalesce(p_login, '')));
+  v_chave text;
+  v_tentativas integer;
+  v_agora timestamptz := clock_timestamp();
+  v_hash text;
+  v_ok boolean;
+begin
+  if length(v_login) = 0 or length(v_login) > 320 or octet_length(coalesce(p_senha,'')) > 1024 then
+    return json_build_object('erro', 'Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal.');
+  end if;
+  v_chave := encode(digest(v_login, 'sha256'), 'hex');
+  delete from torque_private.aluno_login_limite where inicio < v_agora - interval '15 minutes';
+  -- O conflito trava a linha: chamadas simultâneas também respeitam o limite.
+  insert into torque_private.aluno_login_limite as l(chave,inicio,tentativas)
+    values(v_chave,v_agora,1)
+    on conflict(chave) do update set tentativas=least(l.tentativas+1,11)
+    returning tentativas into v_tentativas;
+  if v_tentativas > 10 then
+    return json_build_object('erro','Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.','aguarde_segundos',900);
+  end if;
+  select token,senha into v from public.app_aluno
+    where lower(login)=v_login and login<>'' and revogado_em is null;
+  -- Uma comparação bcrypt também para login inexistente; mesma resposta de erro.
+  v_hash := coalesce(nullif(v.senha,''),'$2a$06$YWfGhHHVrrPgPdAzjyZrEOeZTFRH0FqAkT.ExTx/4D/zZGceZBtEC');
+  v_ok := crypt(coalesce(p_senha,''),v_hash)=v_hash;
+  if v.token is null or coalesce(v.senha,'')='' or not v_ok then
+    return json_build_object('erro', 'Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal.');
+  end if;
+  delete from torque_private.aluno_login_limite where chave=v_chave;
+  return json_build_object('ok',true,'token',v.token);
+end;
+$$;
+revoke execute on function public.aluno_login(text,text) from public;
+grant execute on function public.aluno_login(text,text) to anon,authenticated;
