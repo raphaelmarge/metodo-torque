@@ -12905,9 +12905,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
          * numa fileira de caixinhas sem nome — num celular de 390 ela quebrava
          * com o "s" sozinho numa linha e o obs pela metade fora da tela. */
         '<div class="tdadd">' +
-        '<label>Séries<input data-exser="' + f.id + '" type="number" min="1" value="3" aria-label="séries"></label>' +
-        '<label>Repetições<input data-exrep="' + f.id + '" value="12" placeholder="12 ou 30s" aria-label="repetições"></label>' +
-        '<label>Descanso (s)<input data-exdes="' + f.id + '" type="number" min="0" step="5" value="60" aria-label="descanso em segundos"></label>' +
+        MT_PRESCRICAO.novo(f.id) +
         '<label class="tdaw">Observação (opcional)<input data-exobs="' + f.id + '" placeholder="ex.: pegada fechada, desce devagar"></label>' +
         '<div class="tdaac">' +
         '<button class="btn sec mini" data-exfavsel="' + f.id + '" title="marcar/desmarcar o exercício escolhido como favorito">☆ favorito</button>' +
@@ -17121,25 +17119,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var sel = document.querySelector('[data-exsel="' + add + '"]');
       var nomeSel = (sel.value || "").trim();
       if (!nomeSel) { alert("Escolha o exercício nas listas (tipo de treino → grupamento → exercício)."); return; }
+      var prescricaoNova = MT_PRESCRICAO.lerNovo(add);
+      if (!prescricaoNova) return;
       // resolve pelo nome exato: seu personalizado primeiro, senão o catálogo (cria a cópia na hora)
       var achadoSel = (st.exercicios || []).find(function (x) { return x.nome.toLowerCase() === nomeSel.toLowerCase(); });
       var catSel = achadoSel ? null : (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nomeSel.toLowerCase(); });
       if (!achadoSel && !catSel) { alert('Não achei "' + nomeSel + '" — escolha um exercício da lista.'); return; }
       var exIdSel = achadoSel ? achadoSel.id : exercicioPorNome(st, catSel.n).id;
       var f = t.fichas.find(function (x) { return x.id === add; });
-      f.itens.push({
+      if (!f) return;
+      f.itens.push(Object.assign(prescricaoNova, {
         exId: exIdSel,
-        series: Math.max(1, Math.min(30, parseInt(document.querySelector('[data-exser="' + add + '"]').value, 10) || 3)),
-        reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
-        descanso: Math.max(0, Math.min(1800, parseInt(document.querySelector('[data-exdes="' + add + '"]').value, 10) || 0)),
         obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
         tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
-      });
+      }));
       exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
-      // o tipo de série volta pro normal depois de adicionar: série especial é
-      // exceção, e deixar engatilhado marcaria os próximos exercícios sem querer
-      var selTec = document.querySelector('[data-extec="' + add + '"]');
-      if (selTec) selTec.value = "";
     }
     if (rmF) {
       if (!confirm("Remover esta ficha inteira?")) return;
@@ -17164,7 +17158,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (fd && idn < fd.itens.length - 1) { var tm2 = fd.itens[idn + 1]; fd.itens[idn + 1] = fd.itens[idn]; fd.itens[idn] = tm2; }
     }
     marcaTreinoMudou(st, alunoId);
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) {
+      if (add) document.querySelector('[data-exprescricao="' + add + '"] .sp-status').textContent = 'Não foi possível salvar. Confira o espaço do dispositivo e tente novamente.';
+      return;
+    }
+    if (add) document.body.classList.remove('tela-escolher');
     renderFichas();
   });
   $("tZap").addEventListener("click", function () {

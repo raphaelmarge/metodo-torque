@@ -63,6 +63,92 @@
     var det = bad.closest('details'); if (det) det.open = true;
     bad.focus(); bad.reportValidity(); return false;
   }
+  // O rascunho vive no formulário da ficha, sem gravar exercício antes de Adicionar.
+  // Trocar o modo preserva os dois preenchimentos até a confirmação da inclusão.
+  function novo(fid) {
+    var k = esc(fid);
+    return '<div class="sp-composer tdaw" data-exprescricao="' + k + '"><div class="sp-modes" role="group" aria-label="Como prescrever as séries">' +
+      '<button type="button" class="btn sec" data-exmode="uniform" aria-pressed="true">Todas iguais</button><button type="button" class="btn sec" data-exmode="individual" aria-pressed="false">Por série</button></div>' +
+      '<div class="sp-uniform" data-exuniform>' + input('Séries', 'data-exser="' + k + '"', 3, 'series') + input('Repetições', 'data-exrep="' + k + '"', '12', 'reps') +
+      input('Carga (kg)', 'data-excarga="' + k + '"', '', 'carga') + input('Descanso (s)', 'data-exdes="' + k + '"', 60, 'descanso') + '</div>' +
+      '<div data-exindividual hidden><p class="sp-help">Defina cada série na ordem em que o aluno vai executar.</p><div class="sp-rows"></div><button type="button" class="btn sec sp-add" data-exseriesadd>+ Adicionar série</button></div><p class="sp-status" role="status"></p></div>';
+  }
+  function camposNovos(box) {
+    var ind = !box.querySelector('[data-exindividual]').hidden;
+    return Array.from(box.querySelectorAll(ind ? '[data-exseriesfld]' : '[data-exuniform] input'));
+  }
+  function campoNovo(el) {
+    if (el.hasAttribute('data-exseriesfld')) return el.getAttribute('data-exseriesfld').split(':')[1];
+    return el.hasAttribute('data-exser') ? 'series' : el.hasAttribute('data-exrep') ? 'reps' : el.hasAttribute('data-excarga') ? 'carga' : 'descanso';
+  }
+  function validaNovo(box, reportar) {
+    var primeiro;
+    camposNovos(box).forEach(function(el) { var v = valor(el, campoNovo(el)); if (!v.ok && !primeiro) primeiro = el; });
+    box.querySelector('.sp-status').textContent = primeiro ? primeiro.validationMessage : '';
+    if (primeiro && reportar) { primeiro.focus(); primeiro.reportValidity(); }
+    return !primeiro;
+  }
+  function linhasNovas(box) {
+    return Array.from(box.querySelectorAll('.sp-row')).map(function(row) {
+      var s = {};
+      row.querySelectorAll('input').forEach(function(el) { s[campoNovo(el)] = el.value; });
+      return s;
+    });
+  }
+  function pintaNovas(box, s) {
+    box.querySelector('.sp-rows').innerHTML = s.map(function(x, i) {
+      var attr = 'data-exseriesfld="' + i + ':';
+      return '<div class="sp-row"><b class="sp-number">' + (i + 1) + '<span>ª série</span></b>' + input('Reps ou tempo', attr + 'reps"', x.reps, 'reps') + input('Carga (kg)', attr + 'carga"', x.carga, 'carga') + input('Descanso (s)', attr + 'descanso"', x.descanso, 'descanso') +
+        '<button type="button" class="sp-remove" data-exseriesremove="' + i + '" aria-label="Remover série ' + (i + 1) + '"' + (s.length === 1 ? ' disabled' : '') + '>×</button></div>';
+    }).join('');
+    box.querySelector('[data-exseriesadd]').disabled = s.length >= 30;
+  }
+  function lerNovo(fid) {
+    var box = C.box.querySelector('[data-exprescricao="' + fid + '"]');
+    if (!box || !validaNovo(box, true)) return null;
+    var it = {};
+    if (box.querySelector('[data-exindividual]').hidden) {
+      camposNovos(box).forEach(function(el) { var field = campoNovo(el); it[field] = valor(el, field).value; });
+    } else {
+      it.seriesDetalhadas = linhasNovas(box).map(function(s) { return {reps:s.reps.trim(), carga:s.carga === '' ? null : Number(s.carga), descanso:Number(s.descanso)}; });
+      it.series = it.seriesDetalhadas.length;
+      it.reps = it.seriesDetalhadas[0].reps; it.descanso = it.seriesDetalhadas[0].descanso;
+    }
+    return it;
+  }
+  function initNovo() {
+    C.box.addEventListener('input', function(e) {
+      var box = e.target.closest('[data-exprescricao]');
+      if (box && e.target.matches('input')) validaNovo(box, false);
+    });
+    C.box.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-exmode],[data-exseriesadd],[data-exseriesremove]');
+      if (!btn) return;
+      var box = btn.closest('[data-exprescricao]'), ind = box.querySelector('[data-exindividual]'), s;
+      if (btn.hasAttribute('data-exmode')) {
+        var mode = btn.getAttribute('data-exmode');
+        if (mode === 'individual' && !ind.querySelector('.sp-row')) {
+          if (!validaNovo(box, true)) return;
+          var it = lerNovo(box.getAttribute('data-exprescricao'));
+          pintaNovas(box, series(it));
+        }
+        ind.hidden = mode !== 'individual'; box.querySelector('[data-exuniform]').hidden = mode !== 'uniform';
+        box.querySelectorAll('[data-exmode]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-exmode') === mode)); });
+        validaNovo(box, false); return;
+      }
+      s = linhasNovas(box);
+      if (btn.hasAttribute('data-exseriesremove')) {
+        if (s.length <= 1) return;
+        var index = Number(btn.getAttribute('data-exseriesremove'));
+        s.splice(index, 1); pintaNovas(box, s); validaNovo(box, false);
+        box.querySelector('[data-exseriesfld="' + Math.min(index, s.length - 1) + ':reps"]').focus();
+      } else {
+        if (s.length >= 30 || !validaNovo(box, true)) return;
+        s.push(Object.assign({}, s[s.length - 1])); pintaNovas(box, s);
+        box.querySelector('[data-exseriesfld="' + (s.length - 1) + ':reps"]').focus();
+      }
+    });
+  }
   function dialog(id, title, content) {
     var prev = document.getElementById(id); if (prev) prev.remove();
     var d = document.createElement('dialog'); d.id = id; d.className = 'ac-dialog sp-dialog';
@@ -89,6 +175,7 @@
   }
   function init(context) {
     C = context;
+    initNovo();
     function field(e) {
       var attr = e.target.getAttribute && e.target.getAttribute('data-serfld'); if (!attr) return;
       var p = attr.split(':'), key = p.slice(0,2).join(':'), x = localiza(key), v = valor(e.target, p[3]);
@@ -118,5 +205,5 @@
       if (!valida()) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
   }
-  root.MT_PRESCRICAO = { editor: editor, init: init, resumo: resumo, individual: individual, series: series, valida: valida, valor: valor };
+  root.MT_PRESCRICAO = { editor: editor, novo: novo, lerNovo: lerNovo, init: init, resumo: resumo, individual: individual, series: series, valida: valida, valor: valor };
 })(typeof window !== 'undefined' ? window : globalThis);

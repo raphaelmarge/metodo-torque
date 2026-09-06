@@ -35,3 +35,11 @@
 .tdex .tdedit.sp-editor .sp-row label:nth-of-type(3){grid-column:1 / -1}
 html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo);color:#fff}
 @media(max-width:600px){.sp-row{padding:10px 8px}.tdex .tdedit.sp-editor{padding:10px 4px}.sp-modes .btn{padding:10px 8px;font-size:14px}.sp-dialog .sp-uniform{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* A mesma prescrição já está disponível antes de incluir o exercício na ficha. */
+.sp-composer{min-width:0}.sp-composer [hidden]{display:none!important}
+.tdadd .sp-composer label{font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.5;color:var(--texto);grid-column:auto}
+.tdadd .sp-composer input{font-size:16px;min-height:44px;min-width:0;padding-inline:8px}
+.tdadd .sp-composer .sp-row label:nth-of-type(3){grid-column:1 / -1}
+.sp-composer [aria-invalid=true]{outline:2px solid #d95757;outline-offset:1px}
+.sp-composer :focus-visible{outline:3px solid var(--roxo);outline-offset:2px}
