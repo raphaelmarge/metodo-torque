@@ -2166,49 +2166,56 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quem pediu pela sua página. Confirme pelo WhatsApp e marque como atendido — o interessado vira aluno em + Novo aluno.</p>
       <div id="aexpLista"></div>
     </div>
-    <div class="card" style="margin-bottom: 14px;" data-agsec="agendar" hidden>
-      <h2>Agendar sessão</h2>
-      <div class="linha-flex" style="margin-top: 8px;">
-        <select id="sAluno" style="min-width: 180px;"></select>
-        <button class="btn sec mini" type="button" id="sTurmaBt" aria-pressed="false" title="semi-personal: marque 2 ou 3 alunos no mesmo horário — cada um continua com presença e cobrança próprias">👥 Turma</button>
-        <select id="sTipo" style="width: auto;" title="o que é essa sessão — personal ou um serviço do seu catálogo"><option value="">Personal</option></select>
-        <input id="sData" type="date" style="width: auto;">
-        <input id="sHora" type="time" style="width: auto;">
-        <button class="btn" id="sAdd">+ Agendar</button>
-      </div>
-      <div id="sEditAviso" class="dnota lado" hidden style="margin-top: 8px;">Remarcando a sessão de <b></b> — o Agendar troca a data/hora dela e avisa o aluno. <button class="btn sec mini" type="button" id="sEditCancela">Deixar como está</button></div>
-      <div id="agFixasLista" style="margin-top: 10px;"></div>
-      <div id="sTurmaBox" hidden style="margin-top: 8px;">
-        <div class="muted" style="font-size: 12.5px; margin-bottom: 6px;">Quem entra nessa turma? Toque nos nomes (cada aluno ganha a própria sessão — presença e cobrança seguem individuais):</div>
-        <div id="sTurmaChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
-      </div>
-      <div class="muted" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; flex-wrap: wrap;">
-        <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0;"><input type="checkbox" id="sRep" style="width: auto; margin: 0;"> <svg class='mi' viewBox='0 0 24 24' width='13' height='13' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 12a8 8 0 0 1-13.6 5.7M4 12a8 8 0 0 1 13.6-5.7'/><path d='M17.6 2.9v3.4H21M6.4 21.1v-3.4H3'/></svg> repetir até</label>
-        <input id="sRepAte" type="date" style="width: auto;" title="deixe vazio pra repetir SEM FIM — vira sessão fixa e a agenda rola sozinha">
-        <span>nos dias:</span>
-        <span id="sRepDias" style="display: inline-flex; gap: 4px;">
-          <label style="margin:0;"><input type="checkbox" class="srd" value="1" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="2" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">T</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="3" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">Q</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="4" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">Q</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="5" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="6" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
-          <label style="margin:0;"><input type="checkbox" class="srd" value="0" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">D</span></label>
-        </span>
-        <span>(sem dia marcado, repete o dia da data escolhida — ex.: marque S-Q-S pra agendar seg/qua/sex de uma vez)</span>
-      </div>
-      <details style="margin-top: 10px;">
-        <summary class="muted" style="cursor: pointer; font-size: 12.5px;">Bloqueios de agenda (férias, feriados, compromissos)</summary>
-        <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-          <label style="margin:0;font-size:12px;">De<input id="blDe" type="date" style="display:block;margin-top:3px;"></label>
-          <label style="margin:0;font-size:12px;">Até<input id="blAte" type="date" style="display:block;margin-top:3px;"></label>
-          <input id="blMotivo" placeholder="Motivo (ex.: férias)" style="width: 160px; align-self: flex-end;">
-          <button class="btn sec mini" id="blAdd" style="align-self: flex-end;">+ Bloquear</button>
+    <div class="card agp-compose" data-agsec="agendar" hidden>
+      <div class="agp-heading"><h2>Agendar sessão</h2><button class="btn sec mini" type="button" id="agVoltarAgenda">Voltar à agenda</button></div>
+      <div id="sEditAviso" class="dnota lado" hidden>Remarcando a sessão de <b></b> — salvar altera a data e o horário e avisa o aluno. <button class="btn sec mini" type="button" id="sEditCancela">Deixar como está</button></div>
+      <div class="agp-fields">
+        <div class="agp-student agp-full">
+          <label class="agp-field" for="sAluno"><span>Aluno</span><select id="sAluno" style="min-width:0;"></select></label>
+          <button class="btn sec mini" type="button" id="sTurmaBt" aria-pressed="false" aria-controls="sTurmaBox" title="semi-personal: marque 2 ou 3 alunos no mesmo horário — cada um continua com presença e cobrança próprias">👥 Turma</button>
         </div>
-        <div id="blLista" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
-        <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Dia bloqueado fica riscado no calendário e o sistema avisa se você tentar agendar nele.</p>
-      </details>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque <b>Feita</b> quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão. Aluno que não veio? Marque <b>Faltou</b>: entra na assiduidade e a sessão sai da lista.</p>
+        <div id="sTurmaBox" class="agp-full" hidden>
+          <p class="agp-help">Escolha os alunos da turma. Presença e cobrança continuam individuais.</p>
+          <div id="sTurmaChips"></div>
+        </div>
+        <label class="agp-field agp-full" for="sTipo"><span>Tipo de sessão</span><select id="sTipo"><option value="">Personal</option></select></label>
+        <label class="agp-field" for="sData"><span>Data</span><input id="sData" type="date"></label>
+        <label class="agp-field" for="sHora"><span>Horário</span><input id="sHora" type="time"></label>
+      </div>
+      <div class="agp-repeat">
+        <label class="agp-repeat-toggle" for="sRep"><input type="checkbox" id="sRep" aria-controls="agRepFields"><span>Repetir semanalmente</span></label>
+        <div id="agRepFields" hidden>
+          <label class="agp-field" for="sRepAte"><span>Repetir até (opcional)</span><input id="sRepAte" type="date" aria-describedby="agRepAjuda"></label>
+          <fieldset id="sRepDias" aria-describedby="agRepAjuda"><legend>Dias da semana</legend>
+            <label><input type="checkbox" class="srd" value="1" aria-label="Segunda-feira"><span>Seg</span></label>
+            <label><input type="checkbox" class="srd" value="2" aria-label="Terça-feira"><span>Ter</span></label>
+            <label><input type="checkbox" class="srd" value="3" aria-label="Quarta-feira"><span>Qua</span></label>
+            <label><input type="checkbox" class="srd" value="4" aria-label="Quinta-feira"><span>Qui</span></label>
+            <label><input type="checkbox" class="srd" value="5" aria-label="Sexta-feira"><span>Sex</span></label>
+            <label><input type="checkbox" class="srd" value="6" aria-label="Sábado"><span>Sáb</span></label>
+            <label><input type="checkbox" class="srd" value="0" aria-label="Domingo"><span>Dom</span></label>
+          </fieldset>
+          <p class="agp-help" id="agRepAjuda">Sem data final, a sessão fica fixa. Sem dias marcados, repete no dia da data escolhida.</p>
+        </div>
+      </div>
+      <button class="btn agp-submit" type="button" id="sAdd">Agendar sessão</button>
+      <div id="agFixasLista"></div>
+      <div class="agp-management">
+        <button class="agp-action" type="button" id="agGerenciarSessoes"><span class="agp-action-title">Cancelar ou remarcar sessão</span><small>Escolha uma sessão na agenda</small><span class="agp-action-arrow" aria-hidden="true">→</span></button>
+        <details id="agBloqueios" class="agp-block">
+          <summary class="agp-action"><span class="agp-action-title">Bloquear período</span><small>Férias, feriados ou compromissos</small><span class="agp-action-arrow" aria-hidden="true">⌄</span></summary>
+          <div class="agp-block-body">
+            <div class="agp-block-fields">
+              <label class="agp-field" for="blDe"><span>Data inicial</span><input id="blDe" type="date"></label>
+              <label class="agp-field" for="blAte"><span>Data final (opcional)</span><input id="blAte" type="date"></label>
+              <label class="agp-field agp-full" for="blMotivo"><span>Motivo (opcional)</span><input id="blMotivo" placeholder="Ex.: férias"></label>
+              <button class="btn sec agp-full" type="button" id="blAdd">Bloquear período</button>
+            </div>
+            <div id="blLista"></div>
+            <p class="agp-help">O sistema avisa ao tentar agendar nessas datas. Sessões já marcadas são mantidas.</p>
+          </div>
+        </details>
+      </div>
     </div>
     <!-- tela 2c do canvas: a semana em grade, com o estado de cada sessao na celula -->
     <div class="altopo" data-agsec="sessoes">
@@ -10063,6 +10070,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
   // ---------- agenda ----------
+  function pintaAgendamento() {
+    $("agRepFields").hidden = !$("sRep").checked;
+    $("sRep").disabled = !!agEditId;
+    $("sAdd").textContent = agEditId ? "Salvar remarcação" : "Agendar sessão";
+  }
+  $("sRep").addEventListener("change", pintaAgendamento);
+  function encerraRemarcacao() {
+    agEditId = null;
+    $("sEditAviso").hidden = true;
+    pintaAgendamento();
+  }
+  function voltaAgendaDoFormulario() {
+    var iso = $("sData").value || S.todayISO();
+    encerraRemarcacao(); // sair do formulário não altera a sessão original
+    agDiaSel = iso;
+    agSemOff = Math.floor((Date.parse(iso + "T12:00") - Date.parse(S.todayISO() + "T12:00")) / 6048e5);
+    if (window.__agAba) window.__agAba("sessoes");
+    if (window.__agDia) window.__agDia(iso);
+  }
+  $("agVoltarAgenda").addEventListener("click", voltaAgendaDoFormulario);
+  $("agGerenciarSessoes").addEventListener("click", voltaAgendaDoFormulario);
   function bloqueioDe(st, iso) {
     return (st.bloqueios || []).find(function (b) { return iso >= b.de && iso <= b.ate; }) || null;
   }
@@ -10166,7 +10194,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
           '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>' +
           (x.data >= S.todayISO() ? '<button class="btn sec mini" data-sremarca="' + x.id + '" title="muda a data/hora desta sessão (o aluno é avisado)">Remarcar</button>' : "")) +
-        '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>';
+        '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelar sessão</button>';
   }
   window.__sesAcoes = sesAcoesHtml; window.__agEstado = agEstado; // testes
   /* ---------- v716: encaixe — sessão CANCELADA vira vaga oferecida ----------
@@ -10662,6 +10690,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__agFicha = { html: agendaFichaHtml, dias: function () { return agFichaDias; } }; // testes
   function renderAgenda(st) {
+    pintaAgendamento();
     pintaAgVis();
     pintaEncaixe(st);
     pintaSvTipo(st);
@@ -10737,9 +10766,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     cal += "</div>";
     $("calAgenda").innerHTML = cal;
     $("blLista").innerHTML = (st.bloqueios || []).length ? st.bloqueios.map(function (b) {
-      return '<div class="sessao-pt"><b>' + S.fmtData(b.de) + (b.ate !== b.de ? " a " + S.fmtData(b.ate) : "") + "</b><span>" + esc(b.motivo) + "</span>" +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-blrm="' + b.id + '" aria-label="excluir o bloqueio">✕</button></div>';
-    }).join("") : "Nenhum bloqueio.";
+      return '<div class="sessao-pt agp-block-item"><div><b>' + S.fmtData(b.de) + (b.ate !== b.de ? " a " + S.fmtData(b.ate) : "") + "</b><span>" + esc(b.motivo) + "</span></div>" +
+        '<button class="btn sec mini" type="button" data-blrm="' + b.id + '" aria-label="Desbloquear período de ' + esc(S.fmtData(b.de)) + '">Desbloquear</button></div>';
+    }).join("") : '<p class="agp-help">Nenhum período bloqueado.</p>';
     // detalhe do dia escolhido + sessões antigas sem marcação
     function linhaSes(x, comData) {
       return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
@@ -10966,11 +10995,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v748: Remarcar em andamento — edita a sessão (mesmo id/fixaId), não cria outra
     if (agEditId) {
       var xe = st.sessoes.find(function (x) { return x.id === agEditId; });
-      agEditId = null; $("sEditAviso").hidden = true;
-      if (!xe) { alert("Essa sessão não existe mais — agende de novo."); return; }
+      if (!xe) { encerraRemarcacao(); alert("Essa sessão não existe mais — agende de novo."); return; }
       if (!confirmaAgendar(st, datas, hora, xe.id)) return;
       xe.data = datas[0]; xe.hora = hora;
       avisaSessaoMudou(st, xe, "remarcou");
+      encerraRemarcacao();
       save(st);
       alert("Sessão remarcada pra " + S.fmtData(xe.data) + (hora ? " às " + hora : "") + " — o aluno foi avisado.");
       return;
@@ -11210,6 +11239,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if ($("sTurmaBox") && !$("sTurmaBox").hidden) $("sTurmaBt").click();
       $("sAluno").value = xr.alunoId; $("sData").value = xr.data; $("sHora").value = xr.hora || "";
       $("sRep").checked = false; $("sRepAte").value = "";
+      pintaAgendamento();
       var avR = $("sEditAviso");
       if (avR) { avR.hidden = false; avR.querySelector("b").textContent = String(alR.nome || "").split(" ")[0] + " em " + S.fmtData(xr.data) + (xr.hora ? " às " + xr.hora : ""); }
       vaiAba("agenda");
@@ -11326,8 +11356,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
   $("bHojeP").addEventListener("click", trataCliqueSessao);
-  $("sEditCancela").addEventListener("click", function () { agEditId = null; $("sEditAviso").hidden = true; });
-  window.__agRemarca = { id: function () { return agEditId; }, limpa: function () { agEditId = null; $("sEditAviso").hidden = true; } }; // testes
+  $("sEditCancela").addEventListener("click", encerraRemarcacao);
+  window.__agRemarca = { id: function () { return agEditId; }, limpa: encerraRemarcacao }; // testes
   /* v704: a visão SEMANA também marca sessão agora — e o Feita da linha
    * "próxima" do celular, que existia desde a v625, não tinha NENHUM listener
    * cobrindo o #agDia (o do #vAgenda só trata navegação). Os listeners ficam
@@ -13244,6 +13274,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sel.parentNode.insertBefore(wrap, sel);
     var inp = document.createElement("input");
     inp.id = id + "Busca";
+    var rotulo = sel.closest("label");
+    if (rotulo && rotulo.htmlFor === id) rotulo.htmlFor = inp.id;
     inp.placeholder = placeholder || "Digite o nome do aluno…";
     inp.autocomplete = "off";
     inp.style.cssText = "width:100%;";
