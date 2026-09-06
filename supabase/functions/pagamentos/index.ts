@@ -107,7 +107,8 @@ async function configDe(userId: string): Promise<Cfg | null> {
   if (!url || !key || !userId) return null;
   const heads = { apikey: key, Authorization: "Bearer " + key };
   try {
-    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&order=criado.asc&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
+    // As cobranças e assinaturas dos alunos usam a credencial financeira do dono.
+    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&papel=eq.dono&order=criado.asc&limit=1&user_id=eq." + encodeURIComponent(userId), { headers: heads });
     const membros = rm.ok ? await rm.json() : [];
     const aid = membros?.[0]?.academia_id;
     if (!aid) return null;

@@ -265,6 +265,13 @@ html.motion-off .about-scene { transform:none!important; }
   .motion-toggle{left:16px;right:auto;bottom:calc(18px + env(safe-area-inset-bottom,0px))}
   .motion-toggle.with-mobile-cta,.mobile-cta.is-shown ~ .whatsapp-contact{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
 }
+/* Oferta, controles e avisos legíveis também nas telas menores. */
+.fineprint,.hero .fineprint,.price-card .fineprint,.final-cta .fineprint,.brand-controls .fineprint,.price-subnote,.tour-note,.screen-dialog-caption,.footer-bottom,.mobile-cta small{font-size:.8125rem;line-height:1.7;color:#c5bbd4}
+.hero .eyebrow,.intro .eyebrow,.eyebrow,.hero-trust,.hero-foot,.hero-foot .scroll-cue,.intro-bottom,.price-badge,.price-card-head span:first-child,.price-after,.slider-caption,.about-photo-disclaimer{font-size:.75rem;line-height:1.6}
+.pill,.inspect-screen,.video-trigger,.motion-toggle,.brand-controls label,.student-slider-box label,.footer-links,.price-features,.main-nav{font-size:.875rem}
+.hero .button,.header-actions>.button,.mobile-cta .button{font-size:.875rem;min-height:44px}
+.hero-trust,.hero-foot,.price-card-head{flex-wrap:wrap}.brand-controls label{letter-spacing:.06em}.footer-links a{min-height:44px;display:inline-flex;align-items:center}
+@media(max-width:380px){.mobile-cta{gap:8px}.mobile-cta .button{padding-left:12px;gap:6px}.hero .eyebrow{letter-spacing:.08em}}
 </style>
 <noscript><style>.menu-toggle,#openVideo,.brand-controls,.student-slider-box{display:none!important}@media(max-width:760px){.main-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:6px 15px;padding:0;border:0;background:none;font-size:11px;box-shadow:none}.main-nav a{border:0;padding:5px 0}.header-inner{flex-wrap:wrap;height:auto;padding-block:14px}.main-nav{order:3;width:100%}.hero{padding-top:162px}}</style></noscript>
 </head>

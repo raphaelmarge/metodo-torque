@@ -205,6 +205,8 @@
   css += ":focus-visible{outline:3px solid var(--corc);outline-offset:3px}@media(min-width:1100px){body{max-width:600px!important}#navApp,#menuApp{max-width:600px!important}.cardx{margin-left:28px;margin-right:28px}}@media(prefers-reduced-motion:reduce){.ac-resume,.ac-feedback{animation:none;scroll-behavior:auto}}";
   // v778: recordes recolhidos por padrão; summary mantém teclado e leitor de tela nativos.
   css += ".rec-detalhes>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;cursor:pointer;list-style:none;font-size:14px;font-weight:800}.rec-detalhes>summary::-webkit-details-marker{display:none}.rec-detalhes>summary::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 3px 4px 0;flex:none}.rec-detalhes[open]>summary::after{transform:rotate(225deg);margin-bottom:-4px}.rec-lista{padding-bottom:8px}";
+  // O descanso participa do layout: o cartão pode rolar sem cobrir os botões.
+  css += ".gwrap.resta{min-height:0}.gwrap.resta .gcard{min-height:0}#gResta{position:static;order:20;flex:none;margin:12px -18px -8px;margin-top:auto;padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px))}#gResta>div:first-child{flex-wrap:wrap;column-gap:8px!important;row-gap:6px!important}#gResta .grk,#gResta .gbiglab{font-size:12px;letter-spacing:.04em}#gResta .gbiglab{max-width:100%;overflow-wrap:anywhere}#gResta>div:first-child>span:empty{display:none}#gResta #gMais15{margin-left:auto}#gResta #gPular{flex:1 1 100%;min-width:0;white-space:normal;line-height:1.35;padding:10px 14px}#gResta #gPular.prin{padding:10px 14px}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

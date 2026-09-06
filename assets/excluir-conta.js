@@ -28,7 +28,7 @@
       var fora = [];
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (k && k.indexOf("mtapp:") === 0) fora.push(k);
+        if (k && /^(mtapp:|mtpf:|mtsync:)/.test(k)) fora.push(k);
       }
       fora.forEach(function (k) {
         localStorage.removeItem(k);
@@ -54,7 +54,7 @@
     var naNuvem = !!op.sb;
 
     var aviso = naNuvem
-      ? "Isto apaga a sua conta e TODOS os dados dela: alunos, treinos, avaliações, pagamentos, dietas e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe.\n\nNão dá pra desfazer. Tem certeza?"
+      ? "Isto exclui seu acesso. Se você for o único dono, também apaga os dados da conta: alunos, treinos, avaliações, pagamentos, dietas e conversas. Se houver outro dono, ou você for colaborador, os dados e os acessos dos alunos continuam com a equipe.\n\nNão dá pra desfazer. Tem certeza?"
       : "Isto apaga todos os dados guardados neste aparelho: alunos, treinos, avaliações e pagamentos.\n\nNão dá pra desfazer. Tem certeza?";
     if (!raiz.confirm(aviso)) return Promise.resolve({ cancelado: true });
 
@@ -75,15 +75,13 @@
     }
 
     diz("Apagando a sua conta…");
-    /* Primeiro corta o acesso de TODOS os alunos: a academia só é apagada quando
-     * você é o único dono, então sem esta faxina os apps continuariam abrindo
-     * numa ilha que tem outro dono. Se a RPC ainda não existe no banco, segue
-     * em frente — o cascade da academia resolve o caso simples. */
-    return op.sb.rpc("app_aluno_faxina", { p_tokens: [] }).catch(function () { return null; }).then(function () {
-      return op.sb.rpc("excluir_minha_conta");
-    }).then(function (r) {
+    // O servidor decide, em uma transação, quais academias pertencem só a
+    // este dono. Revogar alunos antes apagava acessos da equipe restante.
+    return op.sb.rpc("excluir_minha_conta").then(function (r) {
       if (r.error) throw new Error(r.error.message || "não consegui apagar a conta agora");
-      // o usuário já não existe: a sessão morre junto, então nem adianta signOut
+      try { raiz.dispatchEvent(new Event("mt:sessao-caiu")); } catch (e) {}
+      // Limpa também a sessão local; o servidor já removeu a associação.
+      try { if (op.sb.auth) op.sb.auth.signOut({ scope: "local" }).catch(function () {}); } catch (e) {}
       E.limpaAparelho();
       return { ok: true };
     });
