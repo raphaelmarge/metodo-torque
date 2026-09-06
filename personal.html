@@ -12845,6 +12845,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var n = t && t.fichas ? t.fichas.length : 0;
     nm.textContent = a.nome + " · " + (n ? S.plural(n, "ficha", "fichas") : "ficha nova");
   }
+  var p2Abertas = {}, opcoesFichaAbertas = {};
+  function detalheFichaChave(aluno, ficha) { return JSON.stringify([aluno, ficha]); }
+  function guardaDetalheFicha(d) {
+    if (!d || !d.hasAttribute) return;
+    var tipo = d.hasAttribute("data-p2det") ? "data-p2det" : d.hasAttribute("data-fopcoes") ? "data-fopcoes" : "";
+    if (tipo) (tipo === "data-p2det" ? p2Abertas : opcoesFichaAbertas)[detalheFichaChave(d.getAttribute("data-treino-aluno"), d.getAttribute(tipo))] = d.open;
+  }
   function renderFichas() {
     var el = $("fichasBox");
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
@@ -12852,6 +12859,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#fichasBox details[data-fdet]").forEach(function (d) {
       fichasAbertas[d.getAttribute("data-fdet")] = d.open;
     });
+    document.querySelectorAll("#fichasBox [data-p2det], #fichasBox [data-fopcoes]").forEach(guardaDetalheFicha);
     var alunoId = $("tAluno").value;
     if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; $("tValidade").value = ""; pintaMesPlano(null); pintaTdTopo(); return; }
     var st = load();
@@ -12868,15 +12876,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var letraF = letraFicha(f, fi);
       var p2 = f.p2 || {};
       var p2l = p2.l || [];
+      var chaveDetalhe = detalheFichaChave(alunoId, f.id);
+      var p2Aberta = Object.prototype.hasOwnProperty.call(p2Abertas, chaveDetalhe) ? p2Abertas[chaveDetalhe] : p2l.length > 0;
+      var tituloFicha = String(f.titulo || ""), prefixoFicha = tituloFicha.match(/^\s*([A-Za-z]\d?)\s*[—–-]\s*(.+)$/);
+      if (prefixoFicha && prefixoFicha[1].toUpperCase() === letraF) tituloFicha = prefixoFicha[2];
       // ~N min: series x (descanso + 40s de execucao). E estimativa, e o title diz isso.
       var min = minutosFicha(f);
-      return '<details data-fdet="' + f.id + '"' + (fichasAbertas[f.id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
-        '<summary style="padding:14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
-        '<span class="tdl" style="width:28px;height:28px;flex:none;border-radius:9px;background:var(--roxo);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:900;">' + esc(letraF) + "</span>" +
-        '<b style="font-size:14.5px;">' + esc(f.titulo) + "</b>" +
-        '<span class="muted" style="font-size:12px;">' + S.plural(f.itens.length, "exercício", "exercícios") + "</span>" +
-        '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
-        '<div style="padding:0 14px 14px;">' +
+      return '<details class="td-sheet" data-fdet="' + f.id + '"' + (fichasAbertas[f.id] ? " open" : "") + '>' +
+        '<summary class="td-sheet-head">' +
+        '<span class="tdl">' + esc(letraF) + "</span>" +
+        '<b class="td-sheet-title">' + esc(tituloFicha) + "</b>" +
+        '<span class="td-sheet-count">' + S.plural(f.itens.length, "exercício", "exercícios") + "</span>" +
+        '<span class="fseta" aria-hidden="true">▾</span></summary>' +
+        '<div class="td-sheet-body">' +
         '<div class="tdcols">' +
         /* ---------- coluna da esquerda: escolher exercicio ---------- */
         '<div class="tdesq" data-esq="' + f.id + '">' +
@@ -12916,19 +12928,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tddir"><div class="tdficha">' +
         /* o NOME da ficha ja esta na tampa da gaveta, logo acima — repetir
          * aqui era a segunda duplicata da tela. Fica so o tamanho dela. */
-        '<div class="ac-actions"><button type="button" class="btn sec mini" data-ac-lote="' + f.id + '">Editar séries em lote</button></div>' +
         '<div class="tdfcab"><div class="tds" data-fmin="' + f.id + '">' +
         (f.itens.length ? "~" + min + " min de treino" : "Ficha vazia") + "</div>" +
-        '<button class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">✕ apagar ficha</button></div>' +
+        '<details class="td-ficha-options" data-fopcoes="' + f.id + '" data-treino-aluno="' + esc(alunoId) + '"' + (opcoesFichaAbertas[chaveDetalhe] ? " open" : "") + '><summary>Opções da ficha</summary><div class="td-ficha-options-body">' +
+        '<button type="button" class="btn sec mini" data-ac-lote="' + f.id + '">Editar séries em lote</button>' +
+        (f.capa ? '<img class="td-ficha-photo" src="' + f.capa + '" alt="capa da ficha">' : "") +
+        '<button type="button" class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' +
+        (f.capa ? "Trocar foto" : "Foto do treino") + "</button>" +
+        '<button type="button" class="btn sec mini" data-fcapag="' + f.id + '" title="escolher do seu banco de imagens">Galeria</button>' +
+        (f.capa ? '<button type="button" class="btn sec mini" data-fcapax="' + f.id + '" title="tirar a foto desta ficha">Remover foto</button>' : "") +
+        '<button type="button" class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">Apagar ficha</button></div></details></div>' +
         /* UMA forma de editar (conserto da v633). Antes a mesma linha tinha
          * quatro linguagens ao mesmo tempo: um "≡" que PARECIA arrastar e não
          * arrastava, um <select> de tipo de série colado no nome, três textos
          * que abriam prompt() do navegador e as setas. O Raphael abriu no
          * celular e disse "extremamente confuso" — com razão.
          *
-         * Agora: tocar na linha ABRE o editor do exercício, com todos os
-         * campos de verdade num lugar só. Fora dele sobram apenas as três
-         * ações de posição (↑ ↓ ✕), que são coisa diferente de editar. */
+         * Tocar na linha abre o editor e mostra as ações de posição. */
         (f.itens.length ? f.itens.map(function (it, i) {
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
           var chave = f.id + ":" + i;
@@ -12936,37 +12952,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var resumo = resumoItem(it);
           return '<div class="tdex' + (aberto ? " aberto" : "") + '" data-tdex="' + chave + '">' +
             '<button type="button" class="tdexbt" data-exab="' + chave + '" aria-expanded="' + (aberto ? "true" : "false") + '">' +
+            '<span class="td-order" aria-hidden="true">' + (i + 1) + "</span>" +
             '<span class="tdnm">' + esc(ex.nome) + "</span>" +
             // o "tem video" e FATO do exercicio, entao vive na linha dos fatos —
             // colado no nome ele caia sozinho numa segunda linha e parecia parte do nome
             '<span class="tdsub">' + resumo +
-            (videoDoEx(ex) || it.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + "</span></button>" +
+            (videoDoEx(ex) || it.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + '</span><span class="td-edit-label">' + (aberto ? "Concluir edição" : "Editar séries") + "</span></button>" +
+            MT_PRESCRICAO.editor(it, chave, aberto, opcoesTec) +
             '<span class="tdac">' +
-            (i > 0 ? '<button data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">↑</button>' : "") +
-            (i < f.itens.length - 1 ? '<button data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">↓</button>' : "") +
-            '<button data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">✕</button></span>' +
-            MT_PRESCRICAO.editor(it, chave, aberto, opcoesTec) + "</div>";
+            (i > 0 ? '<button type="button" data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">Subir</button>' : "") +
+            (i < f.itens.length - 1 ? '<button type="button" data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">Descer</button>' : "") +
+            '<button type="button" data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">Remover</button></span></div>';
         }).join("") : "") +
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
          * tela cheia. No computador o escolher ja esta ao lado, entao o botao
          * some e fica so a frase. */
         '<button type="button" class="btn tdaddbt" data-exadd="' + f.id + '">+ Adicionar exercício</button>' +
-        '<div class="tdvazio">' + (f.itens.length ? "Toque em <b>+ Adicionar exercício</b> pra somar mais um" : "Ficha vazia — comece pelo <b>+ Adicionar exercício</b>") + "</div>" +
-        // capa da ficha: aparece no card "treino de hoje" do app do aluno
-        '<div class="linha-flex" style="gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">' +
-        (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:52px;height:65px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
-        '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' +
-        (f.capa ? "Trocar foto" : "📷 Foto do treino") + "</button>" +
-        '<button class="btn sec mini" data-fcapag="' + f.id + '" title="escolher do seu banco de imagens">🖼 Galeria</button>' +
-        (f.capa ? '<button class="btn sec mini" data-fcapax="' + f.id + '" title="tirar a foto desta ficha">✕ foto</button>' : "") +
-        "</div></div>" +
+        (f.itens.length ? "" : '<div class="tdvazio">Ficha vazia — comece pelo <b>+ Adicionar exercício</b></div>') + "</div>" +
         /* Parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de
          * tempo/distancia. Nao e outra ficha — nao rouba a letra seguinte, nao
          * entra na Semana do aluno sozinha e viaja grudada na ficha. */
-        '<div class="tdp2"><div class="tdp2cab"><span class="tdb">' + esc(letraF + "2") + "</span>" +
-        '<div style="min-width:0;"><div style="font-size:13.5px;font-weight:800;">' + esc(p2.n || "Cardio e alongamento") + "</div>" +
-        '<div style="font-size:11.5px;color:var(--tk-tx5);font-weight:600;">parte 2 do dia — cardio ou alongamento depois da ficha</div></div>' +
-        '<button class="btn sec mini" data-p2nome="' + f.id + '" style="margin-left:auto;" title="mudar o nome da parte 2">✎ nome</button></div>' +
+        '<details class="tdp2 td-p2-details" data-p2det="' + f.id + '" data-treino-aluno="' + esc(alunoId) + '"' + (p2Aberta ? " open" : "") + '><summary class="td-p2-head">' +
+        '<span class="td-p2-title">' + esc(p2.n || "Cardio e alongamento") + "</span>" +
+        (p2l.length ? '<span class="td-p2-count">' + S.plural(p2l.length, "atividade", "atividades") + "</span>" : "") + '</summary>' +
+        '<div class="td-p2-body"><div class="tdp2cab"><span class="muted">Depois do treino principal</span>' +
+        '<button type="button" class="btn sec mini" data-p2nome="' + f.id + '" title="mudar o nome da parte 2">Renomear</button></div>' +
         (p2l.length ? p2l.map(function (ln, li) {
           return '<div class="sessao-pt"><b>' + esc(ln.t) + "</b>" +
             '<span class="muted">' + esc(ln.v || "") + (ln.o ? " · " + esc(ln.o) : "") + "</span>" +
@@ -12976,7 +12986,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<label class="tdaw">O quê<input data-p2t="' + f.id + '" list="p2sugestoes" placeholder="ex.: Esteira, alongamento de posterior"></label>' +
         '<label>Quanto<input data-p2v="' + f.id + '" placeholder="ex.: 12 min"></label>' +
         '<label>Observação<input data-p2o="' + f.id + '" placeholder="opcional"></label>' +
-        '<div class="tdaac"><button class="btn" data-addp2="' + f.id + '">+ Adicionar na parte 2</button></div></div></div>' +
+        '<div class="tdaac"><button class="btn" data-addp2="' + f.id + '">+ Adicionar na parte 2</button></div></div></div></details>' +
         '<div class="tdnota">' + esc(notaPublica(st, alunoId)) + "</div>" +
         "</div></div></div></details>";
     }).join("");
@@ -13168,7 +13178,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var estava = !!exAberto[chAb];
       exAberto = {};                       // um editor por vez: dois abertos viram parede
       if (!estava) exAberto[chAb] = 1;
-      renderFichas();
+      // Abre só o editor: o rascunho de Adicionar exercício continua no DOM.
+      document.querySelectorAll("#fichasBox [data-tdex]").forEach(function (linha) {
+        var abertoAgora = !estava && linha.getAttribute("data-tdex") === chAb;
+        linha.classList.toggle("aberto", abertoAgora);
+        var botao = linha.querySelector("[data-exab]"), editor = linha.querySelector(".sp-editor"), rotulo = linha.querySelector(".td-edit-label");
+        if (botao) botao.setAttribute("aria-expanded", String(abertoAgora));
+        if (editor) editor.hidden = !abertoAgora;
+        if (rotulo) rotulo.textContent = abertoAgora ? "Concluir edição" : "Editar séries";
+      });
       // devolve o foco pro primeiro campo do que acabou de abrir
       if (!estava) {
         var pri = document.querySelector('[data-tfld="' + chAb + ':series"], [data-serfld="' + chAb + ':0:reps"]');
@@ -13310,6 +13328,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("fichasBox").addEventListener("toggle", function (e) {
     var d = e.target;
     if (d && d.hasAttribute && d.hasAttribute("data-fdet")) fichasAbertas[d.getAttribute("data-fdet")] = d.open;
+    guardaDetalheFicha(d);
   }, true);
   // sub-links da parte de treino: cada bloco vive na sua própria tela
   var trAbaAtual = "fichas";
@@ -17143,19 +17162,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rmI) {
       var pi = rmI.split(":");
       var fi = t.fichas.find(function (x) { return x.id === pi[0]; });
-      if (fi) fi.itens.splice(+pi[1], 1);
+      if (fi) { fi.itens.splice(+pi[1], 1); exAberto = {}; }
     }
     if (sob) {
       var ps = sob.split(":");
       var fs = t.fichas.find(function (x) { return x.id === ps[0]; });
       var idx = +ps[1];
-      if (fs && idx > 0) { var tmp = fs.itens[idx - 1]; fs.itens[idx - 1] = fs.itens[idx]; fs.itens[idx] = tmp; }
+      if (fs && idx > 0) { var tmp = fs.itens[idx - 1]; fs.itens[idx - 1] = fs.itens[idx]; fs.itens[idx] = tmp; exAberto = {}; exAberto[ps[0] + ":" + (idx - 1)] = 1; }
     }
     if (des) {
       var pd = des.split(":");
       var fd = t.fichas.find(function (x) { return x.id === pd[0]; });
       var idn = +pd[1];
-      if (fd && idn < fd.itens.length - 1) { var tm2 = fd.itens[idn + 1]; fd.itens[idn + 1] = fd.itens[idn]; fd.itens[idn] = tm2; }
+      if (fd && idn < fd.itens.length - 1) { var tm2 = fd.itens[idn + 1]; fd.itens[idn + 1] = fd.itens[idn]; fd.itens[idn] = tm2; exAberto = {}; exAberto[pd[0] + ":" + (idn + 1)] = 1; }
     }
     marcaTreinoMudou(st, alunoId);
     if (S.write("ptStudio", st) === false) {
