@@ -295,12 +295,10 @@ async function abaPt(p, a) {
   ok(/Hoje/.test(ses), "lista agrupada por dia (cabeçalho Hoje)");
 
   // 🔁 recorrência semanal: 4 sessões de uma vez a partir de amanhã
-  await p.evaluate(() => {
-    document.getElementById("sData").value = diaISO(new Date(Date.now() + 864e5));
-    document.getElementById("sRepAte").value = diaISO(new Date(Date.now() + 22 * 864e5));
-    document.getElementById("sRep").checked = true;
-  });
   await p.evaluate(() => window.__agAba("agendar"));
+  await p.fill("#sData", await p.evaluate(() => diaISO(new Date(Date.now() + 864e5))));
+  await p.check("#sRep");
+  await p.fill("#sRepAte", await p.evaluate(() => diaISO(new Date(Date.now() + 22 * 864e5))));
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "08:00");
   await p.click("#sAdd");
@@ -311,8 +309,8 @@ async function abaPt(p, a) {
   ok(await p.evaluate(() => /08:00/.test(document.getElementById("listaSessoes").textContent)), "detalhe do dia lista horário e aluno da sessão");
 
   // choque de horário: agendar amanhã às 08:00 de novo pede confirmação
+  await p.uncheck("#sRep");
   await p.evaluate(() => {
-    document.getElementById("sRep").checked = false;
     window.confirm = (m) => { window.__choqueMsg = m; return false; };
   });
   await p.click("#sAdd");
@@ -336,13 +334,11 @@ async function abaPt(p, a) {
   ok(faltouSt.faltas === 1 && /FALTOU/.test(faltouSt.tela), "botão Faltou marca a falta explícita do aluno");
 
   // vários dias da semana de uma vez (seg/qua/sex): 3 dias × 2 semanas = 6 sessões
-  await p.evaluate(() => {
-    document.getElementById("sData").value = diaISO(new Date(Date.now() + 864e5));
-    document.getElementById("sRepAte").value = diaISO(new Date(Date.now() + 14 * 864e5));
-    document.getElementById("sRep").checked = true;
-    document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = ["1", "3", "5"].includes(c.value); });
-  });
   await p.evaluate(() => window.__agAba("agendar"));
+  await p.fill("#sData", await p.evaluate(() => diaISO(new Date(Date.now() + 864e5))));
+  await p.check("#sRep");
+  await p.fill("#sRepAte", await p.evaluate(() => diaISO(new Date(Date.now() + 14 * 864e5))));
+  for (const dia of ["1", "3", "5"]) await p.locator('#sRepDias label:has(.srd[value="' + dia + '"])').click();
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "09:15");
   await p.click("#sAdd");
@@ -351,10 +347,8 @@ async function abaPt(p, a) {
     return { n: ses.length, dows: [...new Set(ses.map((x) => new Date(x.data + "T12:00").getDay()))].sort().join(",") };
   });
   ok(multi.n === 6 && multi.dows === "1,3,5", "marcar S-Q-S agenda seg/qua/sex de uma vez (6 sessões em 2 semanas)");
-  await p.evaluate(() => {
-    document.getElementById("sRep").checked = false;
-    document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = false; });
-  });
+  for (const dia of ["1", "3", "5"]) await p.locator('#sRepDias label:has(.srd[value="' + dia + '"])').click();
+  await p.uncheck("#sRep");
 
   // pagamento: registra e some da pendência
   await abaPt(p, "pagamentos");
@@ -3022,6 +3016,26 @@ async function abaPt(p, a) {
       const okS = window.__confirmaAgendar(le(), [iso(5)], "10:00", "v748x");
       window.confirm = cOrig;
       out.choque = okC === false && perguntou === 1 && okS === true;
+      // Remarcar: recusar o conflito mantém a edição; a segunda tentativa altera o mesmo registro.
+      const stRm = le();
+      stRm.sessoes.push({ id: "v787-rm", alunoId: "v748a", data: iso(5), hora: "09:30", feita: false, fixaId: "fixa-preservada" });
+      grava(stRm);
+      window.__agAba("sessoes"); window.__agVis.troca("mes"); window.__agDia(iso(5));
+      document.querySelector('#listaSessoes [data-smais="v787-rm"]').click();
+      document.querySelector('#listaSessoes [data-sremarca="v787-rm"]').click();
+      const antesRm = le().sessoes;
+      document.getElementById("sHora").value = "10:00";
+      let choqueRm = ""; window.confirm = (m) => { choqueRm = m; return false; };
+      document.getElementById("sAdd").click();
+      out.remarcaRecusa = /mesmo horário/.test(choqueRm) && window.__agRemarca.id() === "v787-rm" &&
+        !document.getElementById("sEditAviso").hidden && document.getElementById("sAdd").textContent === "Salvar remarcação" &&
+        JSON.stringify(le().sessoes) === JSON.stringify(antesRm);
+      document.getElementById("sHora").value = "10:30";
+      window.confirm = () => true; document.getElementById("sAdd").click(); window.confirm = cOrig;
+      const depoisRm = le().sessoes, sessaoRm = depoisRm.find((x) => x.id === "v787-rm");
+      out.remarcaCorrige = depoisRm.length === antesRm.length && depoisRm.filter((x) => x.id === "v787-rm").length === 1 &&
+        !!sessaoRm && sessaoRm.data === iso(5) && sessaoRm.hora === "10:30" && sessaoRm.fixaId === "fixa-preservada" &&
+        window.__agRemarca.id() === null && document.getElementById("sAdd").textContent === "Agendar sessão";
       // A16. o badge da Agenda acompanha a faixa de pedidos na hora; hora fora de HH:MM vira "a combinar"
       window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
         app_agenda: [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }],
@@ -3074,6 +3088,8 @@ async function abaPt(p, a) {
     ok(/if \(!forca && !agNaTela && agPedCache && Date\.now\(\) - agPedEm < 60000\) return;/.test(htmlV748), "🐢 v748: fora da Agenda, o save() reaproveita os pedidos lidos há menos de 60 s em vez de ir à nuvem");
     ok(v748.ics, "📆 v748: o .ics leva DTSTAMP e sessão sem hora vira evento de dia inteiro");
     ok(v748.choque && /if \(!confirmaAgendar\(st, datasF, hora\)\) return;/.test(htmlV748), "⚠️ v748: a fixa passa pelos mesmos avisos de bloqueio e choque do agendamento normal");
+    ok(v748.remarcaRecusa, "🔁 remarcação: recusar conflito preserva o modo de edição, o aviso e a sessão original");
+    ok(v748.remarcaCorrige, "🔁 remarcação: corrigir e salvar depois da recusa altera a mesma sessão, sem duplicar nem perder fixaId");
     ok(v748.hora, "⏰ v748: a hora digitada é normalizada pra HH:MM (7:30, 7h05) e o resto é recusado");
     ok(v748.badgeAg, "🔔 v748: confirmar/recusar pedido atualiza o badge da Agenda na hora");
     ok(JSON.stringify(mes1a.kpis) === JSON.stringify(["Alunos ativos", "Sessões hoje", "Recebido neste mês", "A receber · acumulado"]),
@@ -3645,8 +3661,8 @@ async function abaPt(p, a) {
   await abaPt(p, "agenda");
   await p.evaluate(() => window.__agAba("agendar"));
   const hojeISO = await p.evaluate(() => diaISO(new Date(Date.now() + 12 * 3600e3)));
+  if (!await p.locator("#agBloqueios").evaluate((el) => el.open)) await p.locator("#agBloqueios > summary").click();
   await p.evaluate(() => {
-    document.querySelector("#vAgenda details").open = true;
     document.getElementById("blDe").value = document.getElementById("sData").value || diaISO(new Date());
     document.getElementById("blMotivo").value = "féria-teste";
     document.getElementById("blDe").value = diaISO(new Date());
@@ -3658,8 +3674,8 @@ async function abaPt(p, a) {
     const cel = document.querySelector('#calAgenda .cal-dia[data-caldia="' + iso + '"]');
     return !!cel && cel.classList.contains("bloq");
   }), "dia bloqueado fica riscado no calendário");
-  await p.evaluate(() => document.querySelector("#blLista [data-blrm]").click());
-  ok(await p.evaluate(() => /Nenhum bloqueio/.test(document.getElementById("blLista").textContent)), "remover bloqueio limpa a lista");
+  await p.click("#blLista [data-blrm]");
+  ok(await p.evaluate(() => /Nenhum período bloqueado/.test(document.getElementById("blLista").textContent)), "remover bloqueio limpa a lista");
 
   // pacote de sessões: vende no perfil, registra pagamento e desconta na sessão feita
   const joaoId2 = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);

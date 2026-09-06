@@ -51,6 +51,20 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Agendamento do personal (mt-v787)
+
+O formulário em `#vAgenda .agp-compose` usa campos rotulados e ações explícitas
+para gerenciar sessões e bloquear períodos. A repetição semanal só abre seus
+campos quando marcada. O acabamento em `assets/personal-usabilidade.css` limita
+a largura dos controles nativos de data/hora e empilha as datas de bloqueio no
+celular. Bloquear mantém as sessões existentes e pede confirmação ao agendar
+naquelas datas. Cancelar continua sendo uma ação da sessão escolhida.
+
+`pintaAgendamento` sincroniza repetição e o botão de salvar. Uma remarcação deve
+manter `agEditId` se o personal recusar a confirmação de conflito; limpar antes
+disso faz a próxima tentativa criar uma sessão duplicada. Sair do formulário
+encerra a edição sem alterar a sessão original.
+
 ### Início do personal (mt-v786)
 
 O Início é um resumo: quatro indicadores com as mesmas fontes da Agenda e do
