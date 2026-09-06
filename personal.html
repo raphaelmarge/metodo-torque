@@ -3889,6 +3889,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/acompanhamento.js"></script>
 <script src="app/aluno-skin.js"></script>
 <script src="app/aluno-builder.js"></script>
+<script src="assets/prescricao-series.js"></script>
 <script>
 (function () {
   "use strict";
@@ -6325,8 +6326,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dcH = (ret.cargas && typeof ret.cargas === "object" && !Array.isArray(ret.cargas)) ? ret.cargas : {};
         Object.keys(dcH).forEach(function (ex9) {
           (Array.isArray(dcH[ex9]) ? dcH[ex9] : []).forEach(function (r9) {
-            if (r9 && typeof r9 === "object" && dataRe(String(r9.d || "")) && isFinite(+r9.kg) && +r9.kg >= 0 && +r9.kg < 2000)
-              diaH(r9.d).cg.push({ ex: ex9, kg: +r9.kg, r: r9.r });
+            if (!r9 || typeof r9 !== "object" || !dataRe(String(r9.d || ""))) return;
+            var porSerie = r9.g === 2 && Number.isInteger(+r9.serie) && +r9.serie >= 1 && +r9.serie <= 30;
+            var kgValido = r9.kg != null && String(r9.kg).trim() !== "" && isFinite(+r9.kg) && +r9.kg >= 0 && +r9.kg < 2000;
+            if (kgValido || (porSerie && r9.feito === true))
+              diaH(r9.d).cg.push({ ex: ex9, kg: kgValido ? +r9.kg : null, r: r9.r, g: porSerie ? 2 : undefined, serie: porSerie ? +r9.serie : undefined, feito: r9.feito === true });
           });
         });
         (Array.isArray(ret.cardio) ? ret.cardio : []).forEach(function (x9) {
@@ -6357,7 +6361,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var doMes = temPer
             ? todosDias.filter(function (k9) { return k9 >= pfHistDe && k9 <= pfHistAte; }).reverse()
             : todosDias.filter(function (k9) { return k9.slice(0, 7) === mesH; }).reverse();
-          var treinosH = doMes.filter(function (k9) { return porDia[k9].fez || porDia[k9].cg.length || porDia[k9].cr.length || porDia[k9].wod.length; }).length;
+          var treinosH = doMes.filter(function (k9) { return porDia[k9].fez || porDia[k9].cg.some(function(c){return c.g !== 2 || c.feito === true;}) || porDia[k9].cr.length || porDia[k9].wod.length; }).length;
           var temAntes = todosDias[0] < mesH + "-01";
           var brData = function (k9) { return k9.slice(8, 10) + "/" + k9.slice(5, 7) + "/" + k9.slice(2, 4); };
           html += "<div class='pfappk'>Histórico de treino</div>" +
@@ -6379,7 +6383,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             var d9 = porDia[k9];
             var dt9 = new Date(k9 + "T12:00:00");
             var chips = [];
-            if (d9.fez || d9.cg.length) chips.push("Treinou");
+            if (d9.fez || d9.cg.some(function(c){return c.g !== 2 || c.feito === true;})) chips.push("Treinou");
             d9.cr.forEach(function (c9) { chips.push((+c9.k ? String((+c9.k).toFixed(1)).replace(".", ",") + " km" : "cardio")); });
             if (d9.wod.length) chips.push("circuito");
             if (d9.rpe) chips.push(RPETX[d9.rpe]);
@@ -6388,8 +6392,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             var mio9 = "";
             if (d9.cg.length) {
               mio9 += "<div class='pfdrot'>Cargas anotadas</div>" + d9.cg.map(function (c9) {
-                return "<div class='pfdl'>" + esc(String(c9.ex).slice(0, 48)) + " — <b>" + num(c9.kg) + " kg</b>" +
-                  (c9.r ? " × " + esc(String(c9.r).slice(0, 6)) : "") + "</div>";
+                return "<div class='pfdl'>" + esc(String(c9.ex).slice(0, 48)) + (c9.g === 2 ? " · " + c9.serie + "ª série" : "") + " — " +
+                  (c9.kg == null ? "carga não registrada" : "<b>" + num(c9.kg) + " kg</b>") +
+                  (c9.r ? (c9.kg == null ? " · " : " × ") + esc(String(c9.r).slice(0, 6)) + (c9.kg == null ? " reps" : "") : "") +
+                  (c9.g === 2 && !c9.feito ? " · ainda não concluída" : "") + "</div>";
               }).join("");
             }
             d9.cr.forEach(function (c9) {
@@ -6541,7 +6547,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dc = ret.cargas || {};
         var exs = Object.keys(dc).map(function (k) {
           var lst = (Array.isArray(dc[k]) ? dc[k] : []).filter(function (r2) {
-            return r2 && typeof r2 === "object" && isFinite(+r2.kg) && +r2.kg >= 0 && +r2.kg < 2000;
+            return r2 && typeof r2 === "object" && (r2.g !== 2 || r2.feito === true) && r2.kg != null && String(r2.kg).trim() !== "" && isFinite(+r2.kg) && +r2.kg >= 0 && +r2.kg < 2000;
           });
           return { ex: k, lst: lst };
         }).filter(function (x) { return x.lst.length; });
@@ -7463,7 +7469,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     Object.keys(cg).forEach(function (ex) {
       var maxPer = 0, maxAntes = 0;
       (Array.isArray(cg[ex]) ? cg[ex] : []).forEach(function (e) {
-        if (!e || e.kg == null || !isFinite(+e.kg)) return;
+        if (!e || (e.g === 2 && e.feito !== true) || e.kg == null || !isFinite(+e.kg)) return;
         var d = String(e.d || "").slice(0, 10);
         if (d >= desde && d <= ate) { if (+e.kg > maxPer) maxPer = +e.kg; }
         else if (d < desde) { if (+e.kg > maxAntes) maxAntes = +e.kg; }
@@ -9854,6 +9860,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = $(idBotao);
     if (!b) return;
     b.addEventListener("click", function () {
+      if (idSeletor === "tAluno" && !MT_PRESCRICAO.valida()) return;
       var id = $(idSeletor).value;
       if (!id) { alert("Escolha o aluno primeiro."); return; }
       b.disabled = true;
@@ -12651,6 +12658,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var p2l = (f.p2 && f.p2.l) || [];
       return f.titulo + "\n" + f.itens.map(function (it) {
         var ex = exPorId(st, it.exId) || { nome: "?" };
+        if ((Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length) || it.carga != null) {
+          return "• " + MT_ACOMP.itemTexto(Object.assign({}, it, { nome: ex.nome, tec: tecNome(it.tec), video: "", alternativas: undefined }))
+            .replace(" · 1ª série:", "\n  1ª série:").replace(/; (?=\d+ª série:)/g, "\n  ");
+        }
         return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.descanso ? " · descanso " + it.descanso + "s" : "") +
           (tecNome(it.tec) ? " · " + tecNome(it.tec) : "") + (it.obs ? " (" + it.obs + ")" : "");
       }).join("\n") +
@@ -12931,18 +12942,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (i > 0 ? '<button data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">↑</button>' : "") +
             (i < f.itens.length - 1 ? '<button data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">↓</button>' : "") +
             '<button data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">✕</button></span>' +
-            '<div class="tdedit"' + (aberto ? "" : " hidden") + '>' +
-            '<label>Séries<input type="number" min="1" inputmode="numeric" data-tfld="' + chave + ':series" value="' + esc(String(it.series || 3)) + '"></label>' +
-            '<label>Repetições<input data-tfld="' + chave + ':reps" value="' + esc(String(it.reps == null ? "" : it.reps)) + '" placeholder="12 ou 30s"></label>' +
-            '<label>Descanso (s)<input type="number" min="0" inputmode="numeric" data-tfld="' + chave + ':descanso" value="' + descansoDe(it) + '"></label>' +
-            '<label>Tipo de série<select data-tfld="' + chave + ':tec">' + opcoesTec(it.tec) + "</select></label>" +
-            '<label class="tdeobs">Observação pro aluno<input data-tfld="' + chave + ':obs" value="' + esc(String(it.obs || "")) + '" placeholder="ex.: pegada fechada, desce devagar"></label>' +
-            /* v730: o vídeo do PROFESSOR neste exercício — vence o da biblioteca
-             * no app do aluno. YouTube/Vimeo viram player embutido; .mp4/GIF
-             * também funcionam (é o mesmo vidHtml do app). */
-            '<label class="tdeobs">Seu vídeo neste exercício (opcional)<input data-tfld="' + chave + ':video" value="' + esc(String(it.video || "")) + '" placeholder="link do YouTube/Vimeo ou .mp4 — vence o vídeo padrão"></label>' +
-            '<label class="tdeobs">Alternativas aprovadas por você (separe com ponto e vírgula)<input data-tfld="' + chave + ':alternativas" value="' + esc((it.alternativas || []).join('; ')) + '" placeholder="ex.: Supino com halteres; Flexão de braços" maxlength="250"></label>' +
-            "</div></div>";
+            MT_PRESCRICAO.editor(it, chave, aberto, opcoesTec) + "</div>";
         }).join("") : "") +
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
          * tela cheia. No computador o escolher ja esta ao lado, entao o botao
@@ -12989,11 +12989,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var CHIPS_TETO = 5, CHIPS_PASSO = 60;
   // ~N min: series x (descanso + 40s de execucao). E estimativa, e o title diz isso.
   function minutosFicha(f) {
-    var seg = (f.itens || []).reduce(function (t2, it) { return t2 + (+it.series || 1) * (descansoDe(it) + 40); }, 0);
+    var seg = (f.itens || []).reduce(function (t2, it) { return t2 + MT_PRESCRICAO.series(it).reduce(function(total, serie) { return total + serie.descanso + 40; }, 0); }, 0);
     return Math.max(1, Math.round(seg / 60));
   }
   function resumoItem(it) {
-    return it.series + " × " + esc(String(it.reps)) + " · " + descansoDe(it) + " s" +
+    return esc(MT_PRESCRICAO.resumo(it)) +
       (it.tec ? " · " + esc(tecNome(it.tec)) : "") +
       (it.obs ? " · " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "");
   }
@@ -13060,6 +13060,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaEstrelaCascata(fid);
   }
   window.__cascataPT = populaCascata; // testes
+  MT_PRESCRICAO.init({
+    box: $("fichasBox"), load: load, aluno: function() { return $("tAluno").value; },
+    treino: treinoDe, ex: exPorId, marcar: marcaTreinoMudou,
+    write: function(st) { return S.write("ptStudio", st); }, render: renderFichas,
+    abrir: function(key) { exAberto = {}; exAberto[key] = 1; },
+    atualizar: function(x, key) {
+      var row = document.querySelector('[data-tdex="' + key + '"]'), ex = exPorId(x.st, x.it.exId) || {};
+      if (row) row.querySelector('.tdsub').innerHTML = resumoItem(x.it) + (videoDoEx(ex) || x.it.video ? ' · ▸ vídeo' : '');
+      var min = document.querySelector('[data-fmin="' + x.f.id + '"]');
+      if (min) min.textContent = '~' + minutosFicha(x.f) + ' min de treino';
+    }
+  });
   // a estrela ao lado do seletor mostra o estado do exercício escolhido
   function pintaEstrelaCascata(fid) {
     var exSel = document.querySelector('[data-exsel="' + fid + '"]');
@@ -13086,9 +13098,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var itF = fF && fF.itens[+pf[1]];
       if (!itF) return;
       var campo = pf[2], vF = e.target.value;
-      if (campo === "series") itF.series = Math.max(1, parseInt(vF, 10) || 0) || +itF.series || 3;
-      else if (campo === "reps") itF.reps = String(vF).trim() || itF.reps || "12";
-      else if (campo === "descanso") itF.descanso = Math.max(0, parseInt(vF, 10) || 0);
+      if (["series", "reps", "descanso", "carga"].indexOf(campo) >= 0) {
+        var validado = MT_PRESCRICAO.valor(e.target, campo);
+        var statusSerie = e.target.closest('.sp-editor').querySelector('.sp-status');
+        statusSerie.textContent = validado.mensagem;
+        if (!validado.ok) return;
+        itF[campo] = validado.value;
+      }
       else if (campo === "obs") { if (String(vF).trim()) itF.obs = String(vF).trim().slice(0, 120); else delete itF.obs; }
       else if (campo === "alternativas") { itF.alternativas = String(vF).split(";").map(function(n){return n.trim().slice(0,100);}).filter(Boolean).filter(function(n,i,a){return a.indexOf(n)===i;}).slice(0,2); }
       else if (campo === "tec") {
@@ -13099,7 +13115,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (/^https?:\/\//i.test(uV)) itF.video = uV; else delete itF.video;
       } else return;
       marcaTreinoMudou(stF, $("tAluno").value);
-      S.write("ptStudio", stF);
+      if (S.write("ptStudio", stF) === false) {
+        e.target.setCustomValidity('Não foi possível salvar. Tente novamente.');
+        e.target.setAttribute('aria-invalid', 'true');
+        e.target.closest('.sp-editor').querySelector('.sp-status').textContent = 'Não foi possível salvar. Tente novamente.';
+        return;
+      }
+      e.target.setCustomValidity(''); e.target.setAttribute('aria-invalid', 'false');
+      e.target.closest('.sp-editor').querySelector('.sp-status').textContent = '';
       /* v750: NÃO reconstrói a lista aqui. O change dispara no blur — com Tab de
        * Séries pra Repetições, o renderFichas destruía o campo de destino e o
        * foco ia pro body (no celular o teclado fechava a cada campo). Agora só
@@ -13112,7 +13135,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var exF = exPorId(stF, itF.exId) || {};
         if (subF) subF.innerHTML = resumoItem(itF) + (videoDoEx(exF) || itF.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "");
         // devolve ao campo o valor normalizado (série vazia volta pra 3, descanso negativo pra 0)
-        var norm = { series: itF.series, reps: itF.reps, descanso: descansoDe(itF), obs: itF.obs || "", tec: itF.tec || "", video: itF.video || "" };
+        var norm = { series: itF.series, reps: itF.reps, carga: itF.carga == null ? "" : itF.carga, descanso: descansoDe(itF), obs: itF.obs || "", tec: itF.tec || "", video: itF.video || "" };
         if (norm[campo] != null && String(e.target.value) !== String(norm[campo])) e.target.value = norm[campo];
       }
       var minF = document.querySelector('[data-fmin="' + pf[0] + '"]');
@@ -13126,6 +13149,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // busca dos chips (tela 2d): repinta a lista conforme digita
   $("fichasBox").addEventListener("input", function (e) {
+    var uniformField = e.target.getAttribute && e.target.getAttribute("data-tfld");
+    if (uniformField && /:(series|reps|descanso|carga)$/.test(uniformField)) e.target.dispatchEvent(new Event('change', {bubbles:true}));
     var fb = e.target.getAttribute && e.target.getAttribute("data-exbusca");
     if (fb) { chipsAbertos[fb] = 0; populaCascata(fb); }
   });
@@ -13143,7 +13168,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       renderFichas();
       // devolve o foco pro primeiro campo do que acabou de abrir
       if (!estava) {
-        var pri = document.querySelector('[data-tfld="' + chAb + ':series"]');
+        var pri = document.querySelector('[data-tfld="' + chAb + ':series"], [data-serfld="' + chAb + ':0:reps"]');
         if (pri && pri.focus) pri.focus();
       }
       return;
@@ -15940,6 +15965,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       meu.fichas.forEach(function (f) {
         var nova = { id: S.uid(), titulo: f.titulo, itens: (f.itens || []).map(function (it) {
           var item = { exId: exercicioPorNome(st, it.nome).id, series: it.series, reps: it.reps, descanso: it.descanso == null ? 60 : it.descanso, obs: it.obs || "" };
+          if (it.carga !== undefined) item.carga = it.carga;
+          if (Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length) {
+            item.seriesDetalhadas = JSON.parse(JSON.stringify(it.seriesDetalhadas));
+            item.series = item.seriesDetalhadas.length;
+          }
           if (it.tec) item.tec = it.tec;
           if (Array.isArray(it.alternativas)) item.alternativas = it.alternativas.slice();
           if (it.video) item.video = it.video; // v750: o vídeo do professor viaja no modelo
@@ -15981,6 +16011,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var m = { titulo: f.titulo, itens: (f.itens || []).map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
         var item = { nome: (ex && ex.nome) || "", series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "" };
+        if (it.carga !== undefined) item.carga = it.carga;
+        if (Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length) {
+          item.seriesDetalhadas = JSON.parse(JSON.stringify(it.seriesDetalhadas));
+          item.series = item.seriesDetalhadas.length;
+        }
         if (it.tec) item.tec = it.tec;
         if (Array.isArray(it.alternativas)) item.alternativas = it.alternativas.slice();
           if (it.video) item.video = it.video; // v750: sem isto o modelo perdia o vídeo por exercício (v730)
@@ -16167,23 +16202,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (t.geradaIA || (t.mes && t.mes.musculacao)) {
       return { erro: "Esta ficha veio da IA e o Plano do mês dela já traz a progressão semana a semana — siga o card 📅 e, na semana 4, use Renovar o mês com IA." };
     }
+    var personalizados = 0, uniformes = 0, evoluidos = 0;
+    t.fichas.forEach(function (f) { (f.itens || []).forEach(function (it) {
+      if (Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length) personalizados++;
+      else uniformes++;
+    }); });
+    if (personalizados && !uniformes) return { erro: "Todos os exercícios têm séries individuais. Edite cada exercício para revisar a progressão sem perder a prescrição de cada série." };
     var obj = TA_OBJ[t.objetivo] || TA_OBJ.hipertrofia;
     t.fichas.forEach(function (f) {
       f.itens.forEach(function (it) {
+        if (Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length) return;
+        var antes = JSON.stringify([it.reps, it.series]);
         var mTempo = String(it.reps).match(/^(\d+)\s*s$/i);
-        if (mTempo) { it.reps = Math.min(60, +mTempo[1] + 5) + "s"; return; }
+        if (mTempo) { it.reps = Math.min(60, +mTempo[1] + 5) + "s"; if (JSON.stringify([it.reps, it.series]) !== antes) evoluidos++; return; }
         // v750: só número puro evolui — "8-12" e "até a falha" ficam como o professor escreveu
         if (!/^\d+$/.test(String(it.reps).trim())) return;
         var r = parseInt(it.reps, 10);
         if (!isFinite(r)) return;
         if (r < obj.teto) it.reps = String(r + 1);
         else { it.reps = String(obj.piso); it.series = Math.min(5, (+it.series || 3) + 1); }
+        if (JSON.stringify([it.reps, it.series]) !== antes) evoluidos++;
       });
     });
+    if (!evoluidos) return { erro: (personalizados ? "As séries individuais foram preservadas. " : "") + "Nenhum exercício tem progressão automática disponível. Revise a prescrição de cada exercício." };
     t.semana = (t.semana || 1) + 1;
     marcaTreinoMudou(st, alunoId);
     S.write("ptStudio", st);
-    return { ok: true, semana: t.semana };
+    return { ok: true, semana: t.semana, evoluidos: evoluidos, preservados: personalizados };
   }
   $("taGerar").addEventListener("click", function () {
     var id = $("taAluno").value;
@@ -16205,7 +16250,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!id) { alert("Escolha o aluno."); return; }
     var r = evoluiTreino(id);
     if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = "Ficha evoluída pra SEMANA " + r.semana + " (progressão dupla: reps sobem até o teto, aí voltam e ganha 1 série). Republique o app do aluno!";
+    $("taStatus").textContent = S.plural(r.evoluidos, "exercício evoluído", "exercícios evoluídos") + " pra SEMANA " + r.semana + "." +
+      (r.preservados ? " " + S.plural(r.preservados, "exercício com séries individuais foi preservado", "exercícios com séries individuais foram preservados") + "; revise a progressão de cada um." : "") + " Revise e republique o app do aluno!";
     $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
   });
@@ -16290,7 +16336,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var out = [];
     var dc = (ret.cargas && typeof ret.cargas === "object" && !Array.isArray(ret.cargas)) ? ret.cargas : {};
     var cargas = Object.keys(dc).map(function (ex) {
-      var l = Array.isArray(dc[ex]) ? dc[ex] : [];
+      var l = (Array.isArray(dc[ex]) ? dc[ex] : []).filter(function(x){ return x && typeof x === "object" && (x.g !== 2 || x.feito === true) && x.kg != null && String(x.kg).trim() !== "" && isFinite(+x.kg) && +x.kg > 0 && +x.kg < 2000; });
       var ult = l[l.length - 1]; if (!ult || !(+ult.kg > 0)) return null;
       var rec = 0; l.forEach(function (x) { if (+x.kg > rec) rec = +x.kg; });
       return ex + " " + String(+ult.kg).replace(".", ",") + " kg" + (+ult.r > 0 ? "×" + ult.r : "") +
@@ -17078,12 +17124,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var f = t.fichas.find(function (x) { return x.id === add; });
       f.itens.push({
         exId: exIdSel,
-        series: +document.querySelector('[data-exser="' + add + '"]').value || 3,
+        series: Math.max(1, Math.min(30, parseInt(document.querySelector('[data-exser="' + add + '"]').value, 10) || 3)),
         reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
-        descanso: Math.max(0, +document.querySelector('[data-exdes="' + add + '"]').value || 0) || 60,
+        descanso: Math.max(0, Math.min(1800, parseInt(document.querySelector('[data-exdes="' + add + '"]').value, 10) || 0)),
         obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
         tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
       });
+      exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
       // o tipo de série volta pro normal depois de adicionar: série especial é
       // exceção, e deixar engatilhado marcaria os próximos exercícios sem querer
       var selTec = document.querySelector('[data-extec="' + add + '"]');
@@ -19453,8 +19500,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     return out;
   }
-  function acPrevia(id,publicar){var st=load(),a=st.alunos.find(function(x){return x.id===id;});if(!a){alert('Escolha um aluno.');return;}var snap=MT_ACOMP.snapshot(st,id),mud=MT_ACOMP.diferencas(a.acompPublicado,snap),d=acModal('Conferir prescrição · '+a.nome,'<p>Revise o que mudou e a ficha que será entregue ao aluno.</p><h3>Alterações</h3><ul>'+mud.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+acPrescricao(dadosAppAluno(a,new Date().toISOString()))+'<div class="ac-actions">'+(publicar?'<button class="btn" id="acPublicar">Publicar esta prescrição</button>':'')+'<button class="btn sec" id="acVoltarFicha">Voltar e ajustar</button></div><p class="ac-status">'+(a.appPubEm?'Última publicação: '+esc(a.appPubEm.slice(0,10)):'Ainda sem publicação registrada.')+'</p>');if(publicar)d.querySelector('#acPublicar').onclick=function(){var atual=load();if(JSON.stringify(MT_ACOMP.snapshot(atual,id))!==JSON.stringify(snap)) {d.close();acPrevia(id,true);return;}if($('tAluno').value!==id){d.close();return;}d.close();$('tEnviaApp').click();};d.querySelector('#acVoltarFicha').onclick=function(){d.close();vaiMontarTreino(id);};}
-  function acLote(fid){var id=$('tAluno').value,st=load(),f=treinoDe(st,id).fichas.find(function(x){return x.id===fid;});if(!f)return;var base=JSON.stringify(f),d=acModal('Editar séries em lote · '+f.titulo,'<p>Selecione os exercícios. Campos vazios mantêm os valores atuais.</p>'+f.itens.map(function(it,i){return '<label><input type="checkbox" data-ac-index="'+i+'" checked>'+esc((exPorId(st,it.exId)||{}).nome||'Exercício')+'</label>';}).join('')+'<div class="ac-fields"><label>Séries<input id="acSeries" inputmode="numeric" placeholder="Manter"></label><label>Repetições<input id="acReps" placeholder="Manter" maxlength="40"></label><label>Descanso (s)<input id="acDescanso" inputmode="numeric" placeholder="Manter"></label></div><div id="acLoteStatus" role="status" class="ac-status"></div><button class="btn" id="acAplicar">Aplicar aos selecionados</button>');d.querySelector('#acAplicar').onclick=function(){var s=load(),ff=treinoDe(s,id).fichas.find(function(x){return x.id===fid;});if(!ff||JSON.stringify(ff)!==base){d.querySelector('#acLoteStatus').textContent='A ficha mudou. Feche e abra a edição novamente.';return;}try{var ids=Array.from(d.querySelectorAll('[data-ac-index]:checked')).map(function(el){return +el.dataset.acIndex;});if(!MT_ACOMP.lote(ff,ids,{series:d.querySelector('#acSeries').value,reps:d.querySelector('#acReps').value,descanso:d.querySelector('#acDescanso').value})){d.querySelector('#acLoteStatus').textContent='Selecione exercícios e preencha pelo menos um campo.';return;}marcaTreinoMudou(s,id);if(S.write('ptStudio',s)===false)throw Error('Não foi possível salvar.');d.close();renderFichas();}catch(e){d.querySelector('#acLoteStatus').textContent=e.message;}};}
+  function acPrevia(id,publicar){if(!MT_PRESCRICAO.valida())return;var st=load(),a=st.alunos.find(function(x){return x.id===id;});if(!a){alert('Escolha um aluno.');return;}var snap=MT_ACOMP.snapshot(st,id),mud=MT_ACOMP.diferencas(a.acompPublicado,snap),d=acModal('Conferir prescrição · '+a.nome,'<p>Revise o que mudou e a ficha que será entregue ao aluno.</p><h3>Alterações</h3><ul>'+mud.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+acPrescricao(dadosAppAluno(a,new Date().toISOString()))+'<div class="ac-actions">'+(publicar?'<button class="btn" id="acPublicar">Publicar esta prescrição</button>':'')+'<button class="btn sec" id="acVoltarFicha">Voltar e ajustar</button></div><p class="ac-status">'+(a.appPubEm?'Última publicação: '+esc(a.appPubEm.slice(0,10)):'Ainda sem publicação registrada.')+'</p>');if(publicar)d.querySelector('#acPublicar').onclick=function(){var atual=load();if(JSON.stringify(MT_ACOMP.snapshot(atual,id))!==JSON.stringify(snap)) {d.close();acPrevia(id,true);return;}if($('tAluno').value!==id){d.close();return;}d.close();$('tEnviaApp').click();};d.querySelector('#acVoltarFicha').onclick=function(){d.close();vaiMontarTreino(id);};}
+  function acLote(fid){if(!MT_PRESCRICAO.valida())return;var id=$('tAluno').value,st=load(),f=treinoDe(st,id).fichas.find(function(x){return x.id===fid;});if(!f)return;var base=JSON.stringify(f),d=acModal('Editar séries em lote · '+f.titulo,'<p>Campos vazios mantêm os valores atuais. Exercícios com séries individuais são preservados; ajuste cada um no editor.</p>'+f.itens.map(function(it,i){var individual=MT_PRESCRICAO.individual(it);return '<label><input type="checkbox" data-ac-index="'+i+'" '+(individual?'disabled':'checked')+'>'+esc((exPorId(st,it.exId)||{}).nome||'Exercício')+(individual?' · por série (preservado)':'')+'</label>';}).join('')+'<div class="ac-fields"><label>Séries<input id="acSeries" inputmode="numeric" placeholder="Manter"></label><label>Repetições<input id="acReps" placeholder="Manter" maxlength="40"></label><label>Descanso (s)<input id="acDescanso" inputmode="numeric" placeholder="Manter"></label></div><div id="acLoteStatus" role="status" class="ac-status"></div><button class="btn" id="acAplicar">Aplicar aos selecionados</button>');d.querySelector('#acAplicar').onclick=function(){var s=load(),ff=treinoDe(s,id).fichas.find(function(x){return x.id===fid;});if(!ff||JSON.stringify(ff)!==base){d.querySelector('#acLoteStatus').textContent='A ficha mudou. Feche e abra a edição novamente.';return;}try{var ids=Array.from(d.querySelectorAll('[data-ac-index]:checked')).map(function(el){return +el.dataset.acIndex;});if(!MT_ACOMP.lote(ff,ids,{series:d.querySelector('#acSeries').value,reps:d.querySelector('#acReps').value,descanso:d.querySelector('#acDescanso').value})){d.querySelector('#acLoteStatus').textContent='Selecione exercícios e preencha pelo menos um campo.';return;}marcaTreinoMudou(s,id);if(S.write('ptStudio',s)===false)throw Error('Não foi possível salvar.');d.close();renderFichas();}catch(e){d.querySelector('#acLoteStatus').textContent=e.message;}};}
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-ac-resumo],[data-ac-lote]');if(!b)return;if(b.hasAttribute('data-ac-resumo'))acRevisar(b.dataset.acResumo);else acLote(b.dataset.acLote);});
   // Intervalos entre interações, com corte de ociosidade, aproximam o tempo ativo.
   ['input','change','click'].forEach(function(tipo){$('vTreinos').addEventListener(tipo,function(){
@@ -20641,7 +20688,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : null;
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: descansoDe(it), obs: it.obs || "", tec: it.tec || "",
+        var linhas = MT_APP_ALUNO.normalizaSeries(it);
+        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
+          carga: MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga,
+          seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? linhas : undefined, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
       }) };
     }) : null;
@@ -20666,6 +20716,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
         return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
+          carga: it.carga == null ? null : it.carga,
+          seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? MT_APP_ALUNO.normalizaSeries(it) : undefined,
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
           v: it.video || "" };
       }) };
