@@ -51,6 +51,20 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Início do personal (mt-v786)
+
+O Início é um resumo: quatro indicadores com as mesmas fontes da Agenda e do
+Financeiro, atalhos e uma única próxima sessão. Sessões anteriores sem registro
+aparecem como contagem com acesso à Agenda. A fila do WhatsApp, o acompanhamento
+e as novidades começam recolhidos; seus contadores e ações continuam funcionando
+quando chegam dados da nuvem. O Resolver hoje prioriza dor e limita a quantidade
+inicial de avisos, com acesso aos demais. Não reintroduzir listas completas de
+agenda, projeções financeiras ou instruções longas na visão inicial.
+
+O acabamento fica em `assets/personal-usabilidade.css`, sob `#vDash`. Manter os
+IDs dos corpos (`bHojeP`, `bRadarP`, `bZapP`), os hooks de teste e o processamento
+de relatórios dentro de `renderDashPT`: essa função também atualiza outras abas.
+
 ### Mapa vigente do canvas do painel do personal (mt-v785)
 
 O checklist do canvas tem 16 códigos. A anotação histórica da v615 dizia
