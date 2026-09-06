@@ -4,8 +4,8 @@
 
 | | |
 |---|---|
-| App em | **mt-v784** |
-| Estado do repo em | 2026-09-06 (commit `cf50cb8`) |
+| App em | **mt-v785** |
+| Estado do repo em | 2026-09-06 (commit `6bd3809`) |
 | Repositório | `raphaelmarge/metodo-torque` |
 | Lançamentos no histórico | 238 |
 
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-06), e o app está em **mt-v784**.
+vez em **(fora de um lote de versão)** (2026-09-06), e o app está em **mt-v785**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -101,10 +101,13 @@ motivos:
 - `!important` só onde o alvo tem estilo inline no HTML montado — senão o inline
   vence.
 
+## Fechado na direção final
+
+- **Tela do "treino feito"** — fechada na mt-v785. O teste agora percorre o
+  treino inteiro, alcança o recibo e mede os dois celulares de referência
+  (390×844 e 375×667), incluindo rolagem, ações e ausência de vazamento lateral.
+
 ## O que ainda está aberto
 
-- **Tela do "treino feito"** — a única das telas "direção final" que não foi
-  conferida contra o app. Ela só aparece ao concluir um treino inteiro, e não
-  existe caminho de teste que chegue lá sem simular o fluxo todo.
 - **Paridade NUTRI × PERSONAL** — o app do paciente já tem XP, semana, medalhas
   e Comunidade; falta o painel (cadastro com anamnese, sub-abas, perfil).
