@@ -337,7 +337,10 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
         tela: document.documentElement.clientWidth, telaH: window.innerHeight,
         voltar: !!e.querySelector("[data-exfechar]"),
         nav: !document.getElementById("navPt") || getComputedStyle(document.getElementById("navPt")).display === "none",
-        campos: e.querySelectorAll(".tdadd input").length };
+        campos: ["data-exser", "data-exrep", "data-excarga", "data-exdes", "data-exobs"].every(attr => {
+          const input = e.querySelector(".tdadd [" + attr + "]");
+          return input && input.getClientRects().length > 0;
+        }) };
     });
     /* ⚠️ o .card do apps.css tem `animation … both`, que deixa um transform
      * IDENTIDADE computado — e transform, mesmo identidade, cria bloco de
@@ -346,7 +349,7 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     t(cheia.pos === "fixed" && cheia.larg === cheia.tela,
       "o + Adicionar abre uma tela CHEIA de verdade (" + cheia.larg + "px de " + cheia.tela + "px, position: " + cheia.pos + ")");
     t(cheia.voltar && cheia.nav, "a tela cheia tem o ‹ Voltar e esconde a barra de baixo");
-    t(cheia.campos === 4, "e traz os campos do exercício num lugar só (séries, repetições, descanso, obs)");
+    t(cheia.campos, "e traz os campos do exercício num lugar só (séries, repetições, carga, descanso, obs)");
     // voltar fecha
     await p.evaluate(() => { const b2 = document.querySelector("[data-exfechar]"); if (b2) b2.click(); });
     await p.waitForTimeout(400);
