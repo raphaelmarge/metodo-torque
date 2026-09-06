@@ -38,6 +38,18 @@ leitor antigo que faz `pac.html || ""`); o `monta(D)` continua rodando no painel
 como teste de fumaça. `app/app-sw.js` guarda o esqueleto (rede primeiro, cache de
 reserva) pro app abrir sem internet.
 
+**Prescrição por série** (v779): `assets/prescricao-series.js` monta o editor
+do personal. Itens podem ter `seriesDetalhadas: [{reps, carga, descanso}]`;
+`carga:null` significa não definida e descanso zero é válido. A fonte de
+normalização é `MT_APP_ALUNO.normalizaSeries`, que também expande fichas antigas
+com `series/reps/descanso` ou `s/r/d`. Modelos e os dois formatos do pacote
+preservam essas linhas. Edição em lote e progressão automática preservam os
+exercícios individuais; voltar a todas iguais exige conferir o novo padrão.
+Execuções usam o retorno existente `ptdc → retorno.cargas`: `g:2`, `i` por
+ficha/exercício/série, `serie` a partir de 1, `feito`, `kg` e `r` realizados.
+Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
+para os valores realizados. Histórico legado continua legível.
+
 **Foto do aluno** (a partir da v506): dois campos na ficha, sem briga entre
 eles — `a.foto` é a que o PERSONAL põe pelo painel, `a.fotoAluno` é a que o
 ALUNO põe tocando no avatar do topo do app. Onde a foto aparece, vale
