@@ -1370,6 +1370,7 @@ async function abaPt(p, a) {
   ok(aposCat.entrou && aposCat.comDica && aposCat.naFicha, "exercício do catálogo entra na ficha e vira item da biblioteca com dica");
 
   // botão ↓ desce o exercício na ficha (e ↑ volta)
+  if (await p.getAttribute('[data-exab="' + fichaId + ':0"]', 'aria-expanded') !== 'true') await p.click('[data-exab="' + fichaId + ':0"]');
   await p.click('[data-desce="' + fichaId + ':0"]');
   await p.waitForTimeout(150);
   const ordemDesce = await p.evaluate((sup) => {
@@ -1377,6 +1378,7 @@ async function abaPt(p, a) {
     return st.treinosV2[st.alunos[0].id].fichas[0].itens[1].exId === sup;
   }, supinoId);
   ok(ordemDesce, "botão ↓ desce o exercício na ficha");
+  if (await p.getAttribute('[data-exab="' + fichaId + ':1"]', 'aria-expanded') !== 'true') await p.click('[data-exab="' + fichaId + ':1"]');
   await p.click('[data-sobe="' + fichaId + ':1"]');
   await p.waitForTimeout(150);
 
@@ -1482,12 +1484,12 @@ async function abaPt(p, a) {
   // fichas recolhíveis: nascem fechadas, toque abre/fecha, várias abertas juntas
   const fechadas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(fechadas.length === 3 && fechadas.every((o) => !o), "fichas nascem recolhidas (sem abrir tudo de uma vez)");
-  await p.click("#fichasBox details:nth-of-type(1) summary");
-  await p.click("#fichasBox details:nth-of-type(2) summary");
-  await p.click("#fichasBox details:nth-of-type(3) summary");
+  await p.click("#fichasBox > details[data-fdet]:nth-of-type(1) > summary");
+  await p.click("#fichasBox > details[data-fdet]:nth-of-type(2) > summary");
+  await p.click("#fichasBox > details[data-fdet]:nth-of-type(3) > summary");
   const abertas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(abertas.length === 3 && abertas.every((o) => o), "toque abre — dá pra deixar as três abertas juntas");
-  await p.click("#fichasBox details:nth-of-type(2) summary");
+  await p.click("#fichasBox > details[data-fdet]:nth-of-type(2) > summary");
   const mista = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(mista[0] && !mista[1] && mista[2], "toque de novo fecha só aquela ficha");
   await p.evaluate(() => document.getElementById("tAluno").dispatchEvent(new Event("change", { bubbles: true })));
