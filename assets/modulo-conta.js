@@ -243,6 +243,7 @@ self.MT_moduloConta = function (cfg) {
   var api = {
     abre: function (qualAba) { if (!NUVEM) { alert("A nuvem não está configurada neste site."); return; } aba = qualAba === "criar" ? "criar" : "entrar"; aplica(); div.hidden = false; },
     criaColaborador: function () {
+      if (!confirm("O colaborador terá acesso aos dados da equipe, inclusive financeiros. As telas ocultas não tornam esses dados privados.\n\nEsta pessoa está autorizada a receber esses dados?")) return;
       var nome = prompt("Nome do colaborador:"); if (!nome) return;
       var email = prompt("E-mail do colaborador (será o login):"); if (!email) return;
       var chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789", senha = "";

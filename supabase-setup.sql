@@ -3711,3 +3711,20 @@ end;
 $$;
 revoke execute on function public.aluno_login(text,text) from public;
 grant execute on function public.aluno_login(text,text) to anon,authenticated;
+
+-- A política não pode consultar membros diretamente dentro da própria RLS.
+create schema if not exists torque_private;
+revoke all on schema torque_private from public, anon;
+grant usage on schema torque_private to authenticated;
+create or replace function torque_private.academias_do_dono()
+returns setof uuid language sql stable security definer set search_path = '' as $$
+  select m.academia_id from public.membros m
+  where m.user_id = (select auth.uid()) and m.papel = 'dono'
+$$;
+revoke all on function torque_private.academias_do_dono() from public, anon;
+grant execute on function torque_private.academias_do_dono() to authenticated;
+drop policy if exists membros_dono_remove on public.membros;
+create policy membros_dono_remove on public.membros
+for delete to authenticated using (
+  papel <> 'dono' and academia_id in (select torque_private.academias_do_dono())
+);
