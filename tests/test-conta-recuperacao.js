@@ -11,7 +11,7 @@ async function setup(opts={}){
     signOut:async body=>{calls.push({op:'signOut',body});return{}},
     signInWithPassword:async()=>{if(opts.offline)throw Error('offline');return {data:{user:{id:'user-test',email:'teste@example.invalid'}}}},
     signUp:async()=>{if(opts.offline)throw Error('offline');return {data:{}}}},
-    from:table=>({select(){return this},eq(key,value){calls.push({op:'filter',table,key,value});return this},then(ok,bad){return Promise.resolve(opts.memberError?{error:{message:'offline'}}:{data:[{academia_id:'academy-test',papel:'funcionario',nome:'Fictício',academias:{nome:'Teste'}}]}).then(ok,bad)}}),
+    from:table=>({select(){return this},eq(key,value){calls.push({op:'filter',table,key,value});return this},then(ok,bad){return Promise.resolve(opts.memberError?{error:{message:'offline'}}:{data:opts.members||[{academia_id:'academy-test',papel:'funcionario',nome:'Fictício',academias:{nome:'Teste'}}]}).then(ok,bad)}}),
     rpc:async name=>{calls.push({op:'rpc',name});return{data:{}}}};
   const ctx={self:null,window:null,location:{origin:'https://teste.invalid',pathname:'/personal.html',hash:opts.hash||''},document:{createElement:()=>el('gateModulo'),body:{appendChild(){}},getElementById:el},
     localStorage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)},MT_CLOUD:{url:'https://isolado.invalid',anonKey:'fake-public'},MT_supabase:sb,console,addEventListener(){}};
@@ -29,6 +29,7 @@ let n=0;async function test(name,fn){await fn();n++;console.log('  ✅ '+name)}
   await test('Entrada lê o papel somente do usuário autenticado',async()=>{const x=await setup();await x.submit();assert.ok(x.calls.some(c=>c.op==='filter'&&c.key==='user_id'&&c.value==='user-test'));const a=JSON.parse(x.memory.get('mtapp:academia'));assert.equal(a.papel,'funcionario');assert.equal(a.user_id,'user-test')});
   await test('Erro ao consultar vínculo não cria uma academia vazia',async()=>{const x=await setup({memberError:true});await x.submit();assert.ok(!x.calls.some(c=>c.op==='rpc'));assert.match(x.el('mgErro').innerHTML,/verificar seu acesso/)});
   await test('Entrar em outra conta não substitui o perfil nem abre dados anteriores',async()=>{const x=await setup({local:{'mtsync:identidade':{user_id:'outra-pessoa'},'mtapp:perfil':{nome:'Anterior',email:'anterior@example.invalid',nuvem:true}}});await x.submit();assert.equal(x.calls.length,0);assert.equal(JSON.parse(x.memory.get('mtapp:perfil')).nome,'Anterior');assert.equal(x.el('gateModulo').hidden,false);assert.match(x.el('mgErro').innerHTML,/outra conta/)});
+  await test('Vínculo revogado não cria outra academia para receber os dados antigos',async()=>{const x=await setup({members:[],local:{'mtsync:identidade':{user_id:'user-test',academia_id:'academy-test'}}});await x.submit();assert.ok(!x.calls.some(c=>c.op==='rpc'));assert.equal(x.el('gateModulo').hidden,false);assert.match(x.el('mgErro').innerHTML,/vínculo/)});
   await test('Entrada e cadastro recuperam botão após falha de rede',async()=>{const x=await setup({offline:true});await x.submit();assert.equal(x.el('mgBtn').disabled,false);await x.click('mgAbaCriar');await x.submit();assert.equal(x.el('mgBtn').disabled,false)});
   console.log(n+' cenários de autenticação passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1});
