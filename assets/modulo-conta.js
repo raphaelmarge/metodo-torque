@@ -18,7 +18,7 @@ self.MT_moduloConta = function (cfg) {
   div.hidden = true;
   div.style.cssText = "position:fixed;inset:0;z-index:60;background:" + cfg.fundo + ";display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   div.innerHTML =
-    '<div style="width:100%;max-width:400px;background:' + cfg.cardBg + ";border:1px solid " + cfg.borda + ';border-radius:18px;padding:28px 24px;color:#fff;box-shadow:0 24px 70px -24px rgba(0,0,0,.7);">' +
+    '<div role="dialog" aria-modal="true" aria-label="Acesso à conta" style="width:100%;max-width:400px;max-height:calc(100dvh - 40px);overflow:auto;box-sizing:border-box;background:' + cfg.cardBg + ";border:1px solid " + cfg.borda + ';border-radius:18px;padding:28px 24px;color:#fff;box-shadow:0 24px 70px -24px rgba(0,0,0,.7);">' +
     '<div style="text-align:center;margin-bottom:16px;"><span style="font-size:11px;letter-spacing:.22em;color:' + cfg.corTag + ';font-weight:700;">TORQUE ON</span>' +
     '<h2 style="font-size:24px;margin:4px 0 0;font-weight:800;color:#fff;">TORQUE <span style="color:' + cfg.corTag + ';">' + cfg.marca + "</span></h2>" +
     '<p style="color:#9b96a8;font-size:13px;margin-top:6px;line-height:1.5;">' + cfg.sub + "</p></div>" +
@@ -26,9 +26,9 @@ self.MT_moduloConta = function (cfg) {
     '<button type="button" id="mgAbaEntrar" style="flex:1;padding:10px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;">Entrar</button>' +
     '<button type="button" id="mgAbaCriar" style="flex:1;padding:10px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;">Criar conta</button></div>' +
     '<form id="mgForm">' +
-    '<input id="mgNome" placeholder="' + (cfg.nomeCampo || "Nome") + '" hidden autocomplete="organization" style="' + inputCss + '">' +
-    '<input id="mgEmail" type="email" placeholder="Seu e-mail" required autocomplete="username" style="' + inputCss + '">' +
-    '<input id="mgSenha" type="password" placeholder="Senha (mínimo 6 caracteres)" required minlength="6" autocomplete="current-password" style="' + inputCss + '">' +
+    '<input id="mgNome" aria-label="Nome" placeholder="' + (cfg.nomeCampo || "Nome") + '" hidden autocomplete="organization" style="' + inputCss + '">' +
+    '<input id="mgEmail" aria-label="Seu e-mail" type="email" placeholder="Seu e-mail" required autocomplete="username" style="' + inputCss + '">' +
+    '<input id="mgSenha" aria-label="Senha" type="password" placeholder="Senha (mínimo 6 caracteres)" required minlength="6" autocomplete="current-password" style="' + inputCss + '">' +
     '<input id="mgSenha2" type="password" placeholder="Repita a nova senha" aria-label="Repita a nova senha" hidden autocomplete="new-password" style="' + inputCss + '">' +
     '<p id="mgErro" hidden style="font-size:13px;margin:6px 0;line-height:1.5;"></p>' +
     '<button id="mgBtn" style="width:100%;padding:14px;border:none;border-radius:11px;background:' + cfg.grad + ';color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;">Entrar →</button></form>' +
