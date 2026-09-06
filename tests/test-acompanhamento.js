@@ -1,4 +1,4 @@
-/* Regressões v777: dados semanais, prescrição, retomada e confirmação de envio.
+/* Regressões v785: dados semanais, prescrição, retomada, recibo final e envio.
  * Tudo usa alunos sintéticos e intercepta a nuvem, sem dados de produção. */
 process.env.TZ = 'America/Sao_Paulo';
 const assert = require('assert/strict');
@@ -120,7 +120,36 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#acRetomar button');
   ok(await pa.isVisible('#gFecharTreino') && await pa.locator('#gSerie').count()===0,'última série retoma na confirmação, sem série extra');
   await pa.click('#gFecharTreino');
+  await pa.waitForSelector('#gFim');
   ok(await pa.evaluate(()=>!window.__acSessao.ler()),'concluir limpa a retomada');
+  const fimVisual=await pa.evaluate(()=>{
+    const box=document.getElementById('guiaBox'),card=document.getElementById('gCard'),btn=document.getElementById('gFim');
+    const rb=btn.getBoundingClientRect(),cb=getComputedStyle(btn);
+    return {festa:box.classList.contains('festa'),recibo:card.classList.contains('recibo'),
+      titulo:/Treino concluído|Meta da semana batida/.test(document.getElementById('gMiolo').textContent),
+      tiles:card.querySelectorAll('.wtile2').length,rpes:card.querySelectorAll('[data-rpe]').length,
+      rpeGrade:getComputedStyle(card.querySelector('.rperow')).display,
+      botaoAlto:rb.height,botaoDentro:rb.top>=0&&rb.bottom<=innerHeight+1,botaoCor:cb.backgroundColor,
+      semX:box.scrollWidth<=box.clientWidth+1&&card.scrollWidth<=card.clientWidth+1,
+      rolagem:getComputedStyle(card).overflowY,fundo:getComputedStyle(box).backgroundImage};
+  });
+  ok(fimVisual.festa&&fimVisual.recibo&&fimVisual.titulo&&fimVisual.tiles>=2&&fimVisual.rpes===3,
+    'recibo final reúne celebração, resumo, esforço e fechamento');
+  ok(fimVisual.rpeGrade==='grid'&&fimVisual.botaoAlto>=58&&fimVisual.botaoDentro&&fimVisual.botaoCor==='rgb(255, 255, 255)',
+    'ações finais mantêm três alvos iguais e Fechar destacado no alcance do polegar');
+  ok(fimVisual.semX&&fimVisual.rolagem==='auto'&&fimVisual.fundo.includes('radial-gradient'),
+    'tela 390×844 preserva marca, rolagem e não cria vazamento horizontal');
+  await pa.setViewportSize({width:375,height:667});
+  const fimBaixo=await pa.evaluate(()=>{
+    const box=document.getElementById('guiaBox'),card=document.getElementById('gCard'),btn=document.getElementById('gFim');
+    const r=btn.getBoundingClientRect();
+    return {fecharVisivel:r.top>=0&&r.bottom<=innerHeight+1,rolavel:card.scrollHeight>card.clientHeight,
+      semX:box.scrollWidth<=box.clientWidth+1&&card.scrollWidth<=card.clientWidth+1};
+  });
+  ok(fimBaixo.fecharVisivel&&fimBaixo.rolavel&&fimBaixo.semX,
+    'tela 375×667 mantém Fechar visível e o recibo inteiro alcançável por rolagem');
+  await pa.click('#gFim');ok(!await pa.isVisible('#guiaBox'),'Fechar encerra o resumo do treino');
+  await pa.setViewportSize({width:390,height:844});
   D.fichasApp[0].itens[0].descanso=0;D.guiaFichasP[0].it[0].d=0;
   await ca.route(BASE+'/acomp-zero.html',route=>route.fulfill({contentType:'text/html',body:global.MT_APP_ALUNO.monta(D)}));
   await pa.goto(BASE+'/acomp-zero.html');await pa.waitForFunction(()=>window.__acSessao);
