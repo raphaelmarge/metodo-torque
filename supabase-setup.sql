@@ -3487,3 +3487,176 @@ begin
 end;
 $$;
 grant execute on function public.hq_vitalicio(uuid, boolean) to authenticated;
+
+-- Revisão web: integrações exclusivas do dono e funções internas sem acesso público.
+CREATE OR REPLACE FUNCTION public.zap_config_apaga()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  delete from public.zap_config where academia_id in (select academia_id from public.membros where user_id = auth.uid() and papel = 'dono');
+  return jsonb_build_object('ok', true);
+end
+$function$;
+revoke execute on function public.zap_config_apaga() from public, anon;
+grant execute on function public.zap_config_apaga() to authenticated;
+
+CREATE OR REPLACE FUNCTION public.zap_config_salva(p_phone_id text, p_token text, p_template text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare aid uuid;
+begin
+  select academia_id into aid from public.membros where user_id = auth.uid() and papel = 'dono' order by criado limit 1;
+  if aid is null then
+    return jsonb_build_object('erro', 'Somente o dono pode configurar esta integração.');
+  end if;
+  insert into public.zap_config (academia_id, phone_id, token, template, atualizado)
+  values (aid, coalesce(p_phone_id, ''), coalesce(p_token, ''), coalesce(p_template, ''), now())
+  on conflict (academia_id) do update
+    set phone_id = excluded.phone_id,
+        token = case when coalesce(excluded.token, '') = '' then zap_config.token else excluded.token end,
+        template = excluded.template,
+        atualizado = now();
+  return jsonb_build_object('ok', true);
+end
+$function$;
+revoke execute on function public.zap_config_salva(text,text,text) from public, anon;
+grant execute on function public.zap_config_salva(text,text,text) to authenticated;
+
+CREATE OR REPLACE FUNCTION public.pag_config_ve()
+ RETURNS json
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select coalesce(
+    (select json_build_object('ok', true, 'provedor', p.provedor, 'tem_chave', true, 'comissao', p.comissao_pct,
+                              'webhook_token', coalesce(p.webhook_token, ''), 'academia_id', p.academia_id)
+       from pag_config p
+      where p.academia_id in (select academia_id from membros where user_id = auth.uid() and papel = 'dono')
+      limit 1),
+    json_build_object('ok', true, 'tem_chave', false))
+$function$;
+revoke execute on function public.pag_config_ve() from public, anon;
+grant execute on function public.pag_config_ve() to authenticated;
+
+CREATE OR REPLACE FUNCTION public.pag_config_apaga()
+ RETURNS json
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from membros where user_id = auth.uid() and papel = 'dono' order by criado limit 1;
+  if v_acad is null then return json_build_object('erro', 'somente o dono pode configurar esta integração'); end if;
+  delete from pag_config where academia_id = v_acad;
+  return json_build_object('ok', true);
+end $function$;
+revoke execute on function public.pag_config_apaga() from public, anon;
+grant execute on function public.pag_config_apaga() to authenticated;
+
+CREATE OR REPLACE FUNCTION public.pag_config_salva(p_provedor text, p_chave text)
+ RETURNS json
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from membros where user_id = auth.uid() and papel = 'dono' order by criado limit 1;
+  if v_acad is null then return json_build_object('erro', 'somente o dono pode configurar esta integração'); end if;
+  if p_provedor not in ('mercadopago', 'asaas', 'pagarme') then
+    return json_build_object('erro', 'provedor desconhecido');
+  end if;
+  if coalesce(trim(p_chave), '') = '' then
+    update pag_config set provedor = p_provedor, atualizado = now() where academia_id = v_acad;
+    if not found then return json_build_object('erro', 'cole a chave do gateway'); end if;
+    return json_build_object('ok', true);
+  end if;
+  insert into pag_config (academia_id, provedor, chave, webhook_token)
+    values (v_acad, p_provedor, trim(p_chave), public.pag_token_novo())
+    on conflict (academia_id) do update
+      set provedor = excluded.provedor, chave = excluded.chave, atualizado = now(),
+          webhook_token = case when coalesce(pag_config.webhook_token, '') = ''
+                               then public.pag_token_novo() else pag_config.webhook_token end,
+          asaas_webhook_id = case when pag_config.chave is distinct from excluded.chave
+                                  then '' else pag_config.asaas_webhook_id end;
+  return json_build_object('ok', true);
+end $function$;
+revoke execute on function public.pag_config_salva(text,text) from public, anon;
+grant execute on function public.pag_config_salva(text,text) to authenticated;
+
+CREATE OR REPLACE FUNCTION public.zap_config_ve()
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select coalesce(
+    (select jsonb_build_object(
+              'phone_id', z.phone_id,
+              'template', z.template,
+              'tem_token', length(coalesce(z.token, '')) > 0,
+              'verify_token', coalesce(z.verify_token, ''),
+              'ig_id', coalesce(z.ig_id, ''),
+              'tem_app_secret', length(coalesce(z.app_secret, '')) > 0,
+              'tem_ig_token', length(coalesce(z.ig_token, '')) > 0,
+              'atualizado', z.atualizado)
+       from public.zap_config z
+      where z.academia_id in (select academia_id from public.membros where user_id = auth.uid() and papel = 'dono')
+      limit 1),
+    jsonb_build_object('phone_id', '', 'template', '', 'tem_token', false,
+                       'verify_token', '', 'ig_id', '', 'tem_app_secret', false, 'tem_ig_token', false));
+$function$;
+revoke execute on function public.zap_config_ve() from public, anon;
+grant execute on function public.zap_config_ve() to authenticated;
+
+CREATE OR REPLACE FUNCTION public.zap_config_salva2(p_phone_id text, p_token text, p_template text, p_app_secret text, p_ig_id text, p_ig_token text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare aid uuid; vt text;
+begin
+  select academia_id into aid from public.membros where user_id = auth.uid() and papel = 'dono' order by criado limit 1;
+  if aid is null then
+    return jsonb_build_object('erro', 'Somente o dono pode configurar esta integração.');
+  end if;
+  insert into public.zap_config (academia_id, phone_id, token, template, app_secret, ig_id, ig_token, verify_token, atualizado)
+  values (aid, coalesce(p_phone_id, ''), coalesce(p_token, ''), coalesce(p_template, ''),
+          coalesce(p_app_secret, ''), coalesce(p_ig_id, ''), coalesce(p_ig_token, ''),
+          public.zap_verify_novo(), now())
+  on conflict (academia_id) do update
+    set phone_id   = excluded.phone_id,
+        token      = case when coalesce(excluded.token, '')      = '' then zap_config.token      else excluded.token      end,
+        app_secret = case when coalesce(excluded.app_secret, '') = '' then zap_config.app_secret else excluded.app_secret end,
+        ig_token   = case when coalesce(excluded.ig_token, '')   = '' then zap_config.ig_token   else excluded.ig_token   end,
+        ig_id      = case when coalesce(excluded.ig_id, '')     = '' then zap_config.ig_id     else excluded.ig_id     end,
+        template   = excluded.template,
+        verify_token = case when coalesce(zap_config.verify_token, '') = ''
+                            then public.zap_verify_novo() else zap_config.verify_token end,
+        atualizado = now();
+  select z.verify_token into vt from public.zap_config z where z.academia_id = aid;
+  return jsonb_build_object('ok', true, 'verify_token', vt);
+end
+$function$;
+revoke execute on function public.zap_config_salva2(text,text,text,text,text,text) from public, anon;
+grant execute on function public.zap_config_salva2(text,text,text,text,text,text) to authenticated;
+
+revoke execute on function public.dados_guarda_hist() from public, anon, authenticated;
+revoke execute on function public.app_aluno_guarda_hist() from public, anon, authenticated;
+revoke execute on function public.dados_carimba() from public, anon, authenticated;
+revoke execute on function public.push_avisa_prof(uuid,text,text) from public, anon, authenticated;
+revoke execute on function public.push_prof_chat() from public, anon, authenticated;
+revoke execute on function public.push_prof_agenda() from public, anon, authenticated;
+revoke execute on function public.academias_protege_vitalicio() from public, anon, authenticated;
+grant execute on function public.push_avisa_prof(uuid,text,text) to service_role;
+alter function public.blob_qtd(jsonb) set search_path = public;
+revoke execute on function public.blob_qtd(jsonb) from public, anon, authenticated;

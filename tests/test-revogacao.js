@@ -161,8 +161,8 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
     const fonte = fs.readFileSync(path.join(__dirname, "..", "assets", "excluir-conta.js"), "utf8");
     t(/Seus alunos continuam com o app funcionando/.test(fonte),
       "sem estar logado, o aviso diz na cara que os alunos continuam com acesso");
-    t(/app_aluno_faxina/.test(fonte),
-      "com a conta na nuvem, a exclusão corta o acesso de todos os alunos antes de apagar");
+    t(!/rpc\("app_aluno_faxina"/.test(fonte) && /rpc\("excluir_minha_conta"/.test(fonte),
+      "a exclusão deixa o servidor decidir o escopo, sem revogar alunos da equipe restante");
   }
 
   console.log("Guardas do SQL:");
