@@ -781,8 +781,12 @@
   function observaSync(client) {
       if (sync.ouvindo) return;
       sync.ouvindo = true;
-      if (typeof client.auth.onAuthStateChange === "function") client.auth.onAuthStateChange(function (evento) {
+      if (typeof client.auth.onAuthStateChange === "function") client.auth.onAuthStateChange(function (evento, sessao) {
         if (evento === "SIGNED_OUT") paraSync();
+        if (sync.client && sessao && sessao.user && sync.user_id && sessao.user.id !== sync.user_id) {
+          paraSync();
+          try { self.dispatchEvent(new CustomEvent("mt:conta-divergente")); } catch (e) {}
+        }
       });
       // aplica alterações vindas de iframes/outras abas deste aparelho
       window.addEventListener("storage", function (e) {

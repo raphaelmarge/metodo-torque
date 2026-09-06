@@ -31,7 +31,8 @@ async function setup(opts = {}) {
   const start = async () => { ctx.MTStore.iniciaSync(); await flush(); };
   const emit = async type => { ctx.dispatchEvent({type}); await flush(); };
   const logout = async () => { authListener('SIGNED_OUT'); await flush(); };
-  return { ctx, calls, memory, state, start, emit, logout, flush };
+  const changeAccount = async () => { authListener('SIGNED_IN',{user:{id:'user-b',email:'b@example.invalid'}}); await flush(); };
+  return { ctx, calls, memory, state, start, emit, logout, flush, changeAccount };
 }
 let count = 0;
 async function test(name, fn) { await fn(); count++; console.log('  ✅ ' + name); }
@@ -66,6 +67,11 @@ async function test(name, fn) { await fn(); count++; console.log('  ✅ ' + name
     const pending = deferred(), x = await setup({pullPromise:pending.promise}); await x.start(); await x.logout();
     pending.resolve({data:[{chave:'mtapp:ptStudio',valor:{alunos:[{id:'atrasado'}]},atualizado:'2026-09-06T13:00:00+00:00'}]}); await x.flush();
     assert.equal(x.memory.has('mtapp:ptStudio'),false); assert.equal(x.ctx.MTStore.cloud(),null);
+  });
+  await test('Troca de login em outra aba interrompe a sincronização imediatamente', async () => {
+    const x = await setup(); await x.start(); let blocked=false;
+    x.ctx.addEventListener('mt:conta-divergente',()=>blocked=true); await x.changeAccount();
+    assert.equal(x.ctx.MTStore.cloud(),null); assert.equal(blocked,true);
   });
   await test('Sessão expirada conserva na fila o envio que estava em andamento', async () => {
     const pending = deferred(), x = await setup({sendPromise:pending.promise}); await x.start();
