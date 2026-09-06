@@ -3,11 +3,13 @@
  */
 const assert = require('assert/strict');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { comMockNuvem } = require('./_nuvem.js');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
 let browser;
 
 (async () => {
   browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  comMockNuvem(browser);
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'pt-BR', timezoneId: 'America/Sao_Paulo', serviceWorkers: 'block' });
   await context.route('**://*.supabase.co/**', route => route.abort());
   const page = await context.newPage(), errors = [];
@@ -21,7 +23,8 @@ let browser;
   async function render(sessions) {
     await page.evaluate(sessions => {
       const S = window.MTStore, st = S.read('ptStudio', {});
-      S.cloud = () => null;
+      if (!window.__dashCloudOriginal) window.__dashCloudOriginal = S.cloud;
+      S.cloud = () => window.mockNuvem({ aid: 'dashboard-test' });
       st.alunos = [
         { id: 'dash-ana', nome: 'Ana Primeiro', ativo: true },
         { id: 'dash-bruno', nome: 'Bruno Seguinte', ativo: true },
@@ -88,6 +91,7 @@ let browser;
   await page.locator('#dMarcaSes span').click();
   assert.equal(await page.locator('#vAgenda').isVisible(), true);
   assert.equal(await page.locator('[data-agsec="agendar"]').isVisible(), true);
+  await page.evaluate(() => { window.MTStore.cloud = window.__dashCloudOriginal; });
   assert.deepEqual(errors, []);
   console.log('OK: Agendar abre o formulário diretamente, sem erros JavaScript');
 })().catch(error => { console.error(error); process.exitCode = 1; })
