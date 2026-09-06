@@ -3656,7 +3656,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
-      <button class="btn sec" id="btnContaEquipe" hidden title="cria um login pro seu professor auxiliar — ele entra no painel sem ver Financeiro, Relatórios, Configurações, Personalização, Minha página, Sua ilha e Assessoria (e tem um Sair no pé do menu)">+ Login de colaborador</button>
+      <button class="btn sec" id="btnContaEquipe" hidden title="Cria um login para alguém autorizado a acessar os dados da equipe, inclusive financeiros. Algumas telas ficam ocultas para organizar o trabalho.">+ Login de colaborador</button>
+      <p id="contaEquipeAviso" class="muted" hidden style="font-size:13px;line-height:1.5;">O colaborador recebe os dados da equipe, inclusive financeiros. Convide somente quem tem autorização para esse acesso. Ocultar as telas de dinheiro não torna esses dados privados.</p>
       <button class="btn sec" id="btnContaSenha" hidden>Trocar minha senha</button>
       <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
     </div>
@@ -4598,7 +4599,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='supOk' hidden style='margin-top:12px;border:1px solid var(--tk-bd2);border-radius:12px;padding:14px;background:var(--tk-sup2);'>" +
       "<b style='display:block;font-size:13px;'>Chamado aberto! Guarde o protocolo:</b>" +
       "<div id='supProto' style='font-size:24px;font-weight:900;letter-spacing:.04em;color:var(--pt-roxo-claro);margin-top:4px;font-variant-numeric:tabular-nums;'></div>" +
-      "<span class='muted' style='font-size:12px;'>Ele também fica guardado na lista abaixo — a resposta chega no seu e-mail.</span></div></div>" +
+      "<span id='supEntrega' class='muted' style='font-size:13px;'>Acompanhe o chamado e a resposta na lista abaixo.</span></div></div>" +
       "<div class='card'><h2>Meus chamados</h2><div id='supLista' class='muted' style='margin-top:8px;font-size:13px;'>Carregando…</div></div>";
   }
   var SUP_TIPOS = { bug: "Problema", alteracao: "Alteração", critica: "Crítica", sugestao: "Sugestão" };
@@ -4610,6 +4611,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nuvem.client.from("suporte_chamados").select("protocolo,tipo,status,resposta,criado_em")
       .eq("academia_id", nuvem.aid).order("criado_em", { ascending: false }).limit(20)
       .then(function (r) {
+        if (!r || r.error) { el.textContent = "Não deu pra carregar seus chamados agora. Tente novamente quando a conexão voltar."; return; }
         var lst = (r && r.data) || [];
         if (!lst.length) { el.textContent = "Nenhum chamado aberto ainda."; return; }
         el.innerHTML = lst.map(function (c) {
@@ -4644,6 +4646,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       st9.textContent = "";
       $("supMsg").value = "";
       $("supProto").textContent = r.protocolo;
+      $("supEntrega").textContent = r.emailEnviado === false
+        ? "Chamado registrado. O aviso por e-mail não foi enviado; acompanhe o andamento e a resposta na lista abaixo."
+        : "Chamado registrado. Acompanhe o andamento e a resposta na lista abaixo.";
       $("supOk").hidden = false;
       carregaChamados();
     });
@@ -21782,6 +21787,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var u = S.usuario ? S.usuario() : {};
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
+    $("contaEquipeAviso").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
     $("btnContaSenha").hidden = !u.logado;
     // os mesmos botões dentro de Configurações → Cobrança e conta: é onde a
@@ -22180,7 +22186,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     /* v756: a nota prometia menos do que o modo faz. Somem SETE telas —
      * Financeiro, Relatórios, Configurações, Personalização, Minha página,
      * Sua ilha e Assessoria —, não só as três que o texto citava. */
-    nota9.textContent = aux ? "modo colaborador — dinheiro, configurações e a conta ficam com o dono do studio" : "";
+    nota9.textContent = aux ? "modo colaborador — algumas telas ficam ocultas; os dados da equipe continuam compartilhados" : "";
     nota9.style.display = aux ? "" : "none";
     /* v756: as DUAS telas que têm "Sair da conta" (Sua ilha e Configurações →
      * Cobrança e conta) estão nessa lista — ou seja, o colaborador entrava e
