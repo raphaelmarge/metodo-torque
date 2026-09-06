@@ -9,6 +9,12 @@ self.MT_moduloConta = function (cfg) {
   var S = window.MTStore;
   var aba = "entrar";
   var recuperando = /(?:^|[&#])type=recovery(?:&|$)/.test(location.hash || "");
+  var contaConhecida = false;
+  try {
+    var perfilConta = JSON.parse(localStorage.getItem("mtapp:perfil"));
+    var identidadeConta = JSON.parse(localStorage.getItem("mtsync:identidade"));
+    contaConhecida = !!((perfilConta && perfilConta.nuvem) || (identidadeConta && identidadeConta.user_id));
+  } catch (e) {}
   var sb = null;
   function $(id) { return document.getElementById(id); }
   var inputCss = "width:100%;margin-bottom:8px;padding:13px;border-radius:11px;border:1px solid #3a3446;background:rgba(0,0,0,.28);color:#fff;font-family:inherit;font-size:14px;box-sizing:border-box;";
@@ -69,7 +75,8 @@ self.MT_moduloConta = function (cfg) {
   $("mgAbaCriar").addEventListener("click", function () { aba = "criar"; aplica(); });
   $("mgEsqueci").addEventListener("click", function () { aba = "recuperar"; aplica(); $("mgEmail").focus(); });
   self.addEventListener("mt:sessao-caiu", function () {
-    if (!NUVEM || recuperando) return;
+    // Uma função indisponível no demo não encerra uma sessão que nunca existiu.
+    if (!NUVEM || recuperando || !contaConhecida) return;
     aba = "entrar"; aplica(); div.hidden = false;
     erro("Sua sessão terminou. Entre novamente para sincronizar. O trabalho salvo neste aparelho foi preservado.");
   });
@@ -133,6 +140,7 @@ self.MT_moduloConta = function (cfg) {
     if (cfg.depois) cfg.depois();
   }
   function vincula(user, silencioso) {
+    contaConhecida = true;
     var identidade = null, anterior = null;
     try {
       identidade = JSON.parse(localStorage.getItem("mtsync:identidade"));
