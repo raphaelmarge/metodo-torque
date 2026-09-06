@@ -6,13 +6,14 @@ const deferred = () => { let resolve; const promise = new Promise(r => resolve =
 async function setup(opts = {}) {
   const memory = new Map(Object.entries(opts.local || {}).map(([k,v]) => [k, JSON.stringify(v)])), events = {}, calls = [];
   let authListener;
-  const state = { session: opts.session === null ? null : { user: { id: 'user-a', email: 'a@example.invalid' } }, offline: !!opts.offline };
+  const state = { session: opts.session === null ? null : { user: { id: 'user-a', email: 'a@example.invalid' } }, offline: !!opts.offline,
+    memberError: opts.memberError, members: opts.members || [{ academia_id: 'academy-a', papel: 'funcionario', academias: { nome: 'Equipe fictícia' } }] };
   const client = { auth: { getSession: async () => { if (state.offline) throw Error('offline'); return { data: { session: state.session } }; }, onAuthStateChange: fn => authListener = fn },
     from(table) {
       const call = { table, filters: [] }; calls.push(call);
       const query = { select() { return this; }, eq(k,v) { call.filters.push([k,v]); return this; }, gt() { return this; },
         upsert(rows) { call.rows = rows; return this; },
-        then(ok,bad) { const result = table === 'membros' ? opts.membersPromise || Promise.resolve(opts.memberError ? { error: { message: 'denied' } } : { data: opts.members || [{ academia_id: 'academy-a', papel: 'funcionario', academias: { nome: 'Equipe fictícia' } }] })
+        then(ok,bad) { const result = table === 'membros' ? opts.membersPromise || Promise.resolve(state.memberError ? { error: { message: 'denied' } } : { data: state.members })
           : call.rows ? opts.sendPromise || Promise.resolve({ data: call.rows.map(x => ({ chave: x.chave, atualizado: '2026-09-06T13:00:00+00:00' })) })
           : opts.pullPromise || Promise.resolve({ data: opts.rows || [] });
           return result.then(ok,bad); }
@@ -75,6 +76,19 @@ async function test(name, fn) { await fn(); count++; console.log('  ✅ ' + name
   await test('Primeira abertura offline retoma ao voltar a conexão', async () => {
     const x = await setup({offline:true}); await x.start(); assert.equal(x.ctx.MTStore.cloud(),null);
     x.state.offline = false; await x.emit('online'); assert.equal(x.ctx.MTStore.cloud().aid,'academy-a');
+  });
+  await test('Membro removido com sessão válida para antes de consultar dados de novo', async () => {
+    const x = await setup(); await x.start(); const antes=x.calls.filter(c=>c.table==='dados').length;
+    x.state.members=[]; await x.emit('focus'); assert.equal(x.ctx.MTStore.cloud(),null);
+    assert.equal(x.calls.filter(c=>c.table==='dados').length,antes);
+  });
+  await test('Mudança de papel interrompe a sessão anterior e pede nova validação', async () => {
+    const x = await setup(); await x.start(); x.state.members=[{academia_id:'academy-a',papel:'dono'}];
+    await x.emit('online'); assert.equal(x.ctx.MTStore.cloud(),null);
+  });
+  await test('Indisponibilidade da consulta não é tratada como revogação', async () => {
+    const x = await setup(); await x.start(); x.state.memberError=true;
+    await x.emit('online'); assert.ok(x.ctx.MTStore.cloud());
   });
   await test('Reconexão da mesma conta espera a nuvem antes de enviar pendências', async () => {
     const pull = deferred(), x = await setup({pullPromise:pull.promise}); await x.start();

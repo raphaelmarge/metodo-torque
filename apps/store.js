@@ -575,6 +575,26 @@
   function puxa() {
     if (!sync.client) return Promise.resolve();
     var ciclo = sync.ciclo;
+    // A sessão pode continuar válida depois que o dono remove o membro.
+    // Revalida o vínculo a cada reconexão/ciclo antes de ler ou enviar a fila.
+    if (sync.user_id) {
+      return sync.client.from("membros").select("academia_id,papel").eq("user_id", sync.user_id).eq("academia_id", sync.aid).then(function (r) {
+        if (ciclo !== sync.ciclo || !sync.client) return;
+        if (r.error) return; // indisponibilidade não significa acesso revogado
+        var m = r.data && r.data.find(function (x) { return x.academia_id === sync.aid; });
+        if (!m || m.papel !== sync.papel) {
+          paraSync();
+          try { self.dispatchEvent(new CustomEvent("mt:sessao-caiu")); } catch (e) {}
+          return;
+        }
+        return puxaDados(ciclo);
+      }, function () {});
+    }
+    return puxaDados(ciclo);
+  }
+
+  function puxaDados(ciclo) {
+    if (!sync.client || ciclo !== sync.ciclo) return Promise.resolve();
     // 1ª puxada da sessão: completa (semeia o aparelho e acha chaves só-locais).
     // Depois: só o que mudou desde a marca d'água — corta o tráfego dos ciclos de 30 s.
     if (sync.marcaAid !== sync.aid) { sync.marca = ""; sync.marcaAid = sync.aid; sync.reconciliou = false; }
@@ -734,6 +754,7 @@
               return null;
             }
             try {
+              sync.papel = m.papel;
               localStorage.setItem("mtapp:academia", JSON.stringify({
                 id: m.academia_id, user_id: sess.user.id, papel: m.papel,
                 nome: (m.academias && m.academias.nome) || "",
@@ -750,6 +771,7 @@
         if (!aid) { sync.email = ""; avisaStatus(); return; }
         sync.client = client;
         sync.aid = aid;
+        sync.user_id = sess.user.id;
         sync.ciclo++;
         puxa();
       });

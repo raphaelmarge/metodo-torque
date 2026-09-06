@@ -163,6 +163,11 @@ self.MT_moduloConta = function (cfg) {
         depois();
         return;
       }
+      if (identidade && identidade.academia_id) {
+        div.hidden = false;
+        erro("Seu vínculo com a equipe não está disponível. Fale com o dono do studio para verificar o acesso. Os dados deste aparelho foram preservados.");
+        return;
+      }
       // conta sem ilha ainda: cria a ilha deste produto com o nome do studio/consultório
       var nomeIlha = (cfg.nomeIlha && cfg.nomeIlha()) || cfg.marca + " de " + (user.email || "conta").split("@")[0];
       return sb.rpc("criar_academia", { p_nome_academia: nomeIlha, p_nome_membro: "" }).then(function (rr) {
