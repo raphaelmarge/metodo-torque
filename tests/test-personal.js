@@ -10382,7 +10382,10 @@ async function abaPt(p, a) {
         },
         signInWithPassword: () => Promise.resolve({ data: {}, error: { message: "nope" } }),
       },
-      from: () => ({ select: () => Promise.resolve({ data: temIlha ? [{ academia_id: "acad-gate", papel: "dono", nome: "Raphael", academias: { nome: "Studio Gate" } }] : [] }) }),
+      from: () => ({ select: () => ({ eq: (key, id) => {
+        if (key !== "user_id" || id !== "u1") throw Error("A consulta deve usar a identidade autenticada");
+        return Promise.resolve({ data: temIlha ? [{ academia_id: "acad-gate", papel: "dono", nome: "Raphael", academias: { nome: "Studio Gate" } }] : [] });
+      } }) }),
       rpc: (nome, args) => {
         (window.__rpcs = window.__rpcs || []).push([nome, args]);
         if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
@@ -13771,12 +13774,12 @@ async function abaPt(p, a) {
         return o;
       };
       window.MT_supabase = {
-        auth: { getSession: async () => ({ data: { session: { user: { email: "r@t.br" } } } }) },
+        auth: { getSession: async () => ({ data: { session: { user: { id: "user-sync-ficticio", email: "r@t.br" } } } }) },
         rpc: () => Promise.resolve({ data: null }),
         from: (tabela) => ({
           select: () => consulta(tabela === "dados"
             ? { data: [{ chave: "mtapp:ptStudio", valor: nuvemVal, atualizado: "2099-01-01T00:00:00.000Z" }] }
-            : { data: [] }),
+            : { data: tabela === "membros" ? [{ academia_id: "acad-1", papel: "dono" }] : [] }),
           upsert: (linhas) => { upserts.push(...(Array.isArray(linhas) ? linhas : [linhas])); return Promise.resolve({}); },
           insert: () => Promise.resolve({}),
         }),
