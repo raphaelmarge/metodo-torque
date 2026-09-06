@@ -14031,6 +14031,12 @@ async function abaPt(p, a) {
     const pA = await ctxA.newPage();
     const externas = [];
     pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
+    // As três capas próprias são exibidas no sábado. No domingo a bike sem
+    // foto própria usa corretamente a capa geral, então só há duas distintas.
+    const sabadoCapas = new Date();
+    sabadoCapas.setDate(sabadoCapas.getDate() - ((sabadoCapas.getDay() + 1) % 7));
+    sabadoCapas.setHours(12, 0, 0, 0);
+    await pA.clock.setFixedTime(sabadoCapas);
     await pA.goto(BASE + "/demo-aluno.html");
     await pA.waitForTimeout(1200);
     /* 🎠 as três fotos do demo (leg press, corrida e circuito) precisam aparecer:
@@ -14045,6 +14051,7 @@ async function abaPt(p, a) {
       "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
+    await pA.clock.setFixedTime(new Date());
 
     // 🛍 v705: a demo mostra a loja com FOTO de produto e o cupom com LINK do
     // parceiro — sem isso quem assiste não via as duas caras do recurso
