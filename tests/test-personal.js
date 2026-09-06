@@ -14031,6 +14031,12 @@ async function abaPt(p, a) {
     const pA = await ctxA.newPage();
     const externas = [];
     pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
+    // As três capas próprias são exibidas no sábado. No domingo a bike sem
+    // foto própria usa corretamente a capa geral, então só há duas distintas.
+    const sabadoCapas = new Date();
+    sabadoCapas.setDate(sabadoCapas.getDate() - ((sabadoCapas.getDay() + 1) % 7));
+    sabadoCapas.setHours(12, 0, 0, 0);
+    await pA.clock.setFixedTime(sabadoCapas);
     await pA.goto(BASE + "/demo-aluno.html");
     await pA.waitForTimeout(1200);
     /* 🎠 as três fotos do demo (leg press, corrida e circuito) precisam aparecer:
@@ -14045,6 +14051,7 @@ async function abaPt(p, a) {
       "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
+    await pA.clock.setFixedTime(new Date());
 
     // 🛍 v705: a demo mostra a loja com FOTO de produto e o cupom com LINK do
     // parceiro — sem isso quem assiste não via as duas caras do recurso
@@ -15551,12 +15558,8 @@ async function abaPt(p, a) {
     await pg.close();
   }
 
-  /* ================= v775 — "Seus recordes do mês" no Início (avanço em prosa)
-   * A aba Cargas mostra o máximo DE SEMPRE de cada exercício, mas "em 30 dias
-   * você aguentou +5 kg no supino" não ficava óbvio em lugar nenhum do Início.
-   * O card lê o ptdc do aparelho com a MESMA regra do recordesDe do painel:
-   * máximo na janela (30 dias) > máximo de ANTES, e o antes tem de existir. */
-  console.log("\n🏆 v775 — seus recordes do mês no Início:");
+  // v778: início sem recordes; o histórico continua em Evolução → Cargas.
+  console.log("\n🏆 v778 — início sem recordes:");
   {
     const ctxRM = await b.newContext({ viewport: { width: 1360, height: 900 } });
     await ctxRM.addInitScript(() => {
@@ -15598,87 +15601,35 @@ async function abaPt(p, a) {
     await paR.goto(BASE + "/app-v775.html", { waitUntil: "domcontentloaded" });
     await paR.waitForTimeout(900);
 
-    const rm = await paR.evaluate(() => {
-      const card = document.getElementById("recMesCard");
-      const ls = [...document.querySelectorAll("#recMesLs [data-recl]")];
-      const lista = window.__recordesMes.lista();
-      const r = card.getBoundingClientRect();
-      const linhasDe = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getClientRects().length; };
-      return {
-        visivel: getComputedStyle(card).display !== "none",
-        sec: card.getAttribute("data-sec"),
-        h2: (card.querySelector("h2") || {}).textContent || "",
-        aposSemana: document.getElementById("semBlock").compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING ? true : false,
-        aposNotif: document.getElementById("cardNotif").nextElementSibling === card,
-        nomesLista: lista.map((x) => x.n), ganhos: lista.map((x) => x.g),
-        linhas: ls.map((l) => l.textContent.replace(/\s+/g, " ").trim()),
-        sub: document.getElementById("recMesSub").textContent,
-        temEmoji: /[\u{1F300}-\u{1FAFF}]/u.test(card.textContent),
-        cabe: r.right <= 390 && card.scrollWidth <= card.clientWidth && ls.every((l) => l.getBoundingClientRect().right <= 390),
-        nomeUmaLinha: [...card.querySelectorAll("[data-recn]")].every((n) => linhasDe(n) === 1),
-        valorUmaLinha: [...card.querySelectorAll("[data-recv]")].every((v) => linhasDe(v) === 1),
-      };
-    });
-    ok(rm.visivel && rm.sec === "inicio" && rm.aposSemana && rm.aposNotif && /Seus recordes do mês/.test(rm.h2),
-      "🏆 v775: com avanço no ptdc o card 'Seus recordes do mês' aparece no INÍCIO, depois da Minha semana e do pedido de push (data-sec=" + rm.sec + ")");
-    ok(rm.nomesLista.join(",") === "Agachamento livre,Supino reto,Rosca direta,Desenvolvimento" && rm.ganhos.join(",") === "10,5,2.5,2",
-      "🏆 v775: a regra é a do recordesDe do painel — máximo na janela > máximo de antes, antes > 0, ordenado pelo ganho (" + rm.nomesLista.join(",") + ")");
-    ok(!rm.nomesLista.includes("Remada curvada") && !rm.nomesLista.includes("Leg press") && !rm.nomesLista.includes("Elevação lateral"),
-      "🏆 v775: primeira anotação é ponto de partida, carga que CAIU não é recorde e data FUTURA fica fora da janela — os três ficam de fora");
-    ok(rm.linhas.length === 3 && !/Desenvolvimento/.test(rm.linhas.join(" ")),
-      "🏆 v775: o card mostra só os 3 maiores avanços (o 4º fica na aba Cargas)");
-    ok(/^Supino reto.*80 → 85 kg.*\+5 kg$/.test(rm.linhas[1]) && /^Rosca direta.*20 → 22,5 kg.*\+2,5 kg$/.test(rm.linhas[2]),
-      "🏆 v775: prosa 'de → pra' com vírgula decimal (" + rm.linhas[1] + ")");
-    ok(rm.sub === "4 avanços nos últimos 30 dias" && !rm.temEmoji,
-      "🏆 v775: o sub conta TODOS os avanços e a janela, sem prometer mais que o dado; ícone de traço, nenhum emoji (" + rm.sub + ")");
-    ok(rm.cabe && rm.nomeUmaLinha && rm.valorUmaLinha,
-      "🏆 v775: num celular de 390 nada vaza pra fora do card, cada nome e cada valor ficam numa linha (Range.getClientRects)");
-
-    // carga nova gravada pelo player repinta o card SEM chamar pinta() na mão — é o gancho dentro do Sv
-    const rmSv = await paR.evaluate(() => {
+    ok(await paR.locator('#recMesCard').count() === 0,
+      "🏆 v778: o início não contém o bloco de recordes mesmo com histórico de avanços");
+    const atualizado = await paR.evaluate(() => {
       window.__gGrava("Supino reto", 92, 8, "");
-      const l = [...document.querySelectorAll("#recMesLs [data-recl]")].map((x) => x.textContent.replace(/\s+/g, " "));
-      return { supino: l.find((t) => /Supino/.test(t)) || "", primeiro: l[0] || "" };
+      return { semCard: !document.getElementById("recMesCard"),
+        salvo: JSON.parse(localStorage.getItem("ptdc"))["Supino reto"].some((x) => x.kg === 92),
+        resumo: document.getElementById("acEvolucao").textContent };
     });
-    ok(/80 → 92 kg/.test(rmSv.supino) && /\+12 kg/.test(rmSv.supino) && /^\s*Supino/.test(rmSv.primeiro),
-      "🏆 v775: anotar carga pelo player repinta o card na hora e reordena pelo ganho (" + rmSv.supino + ")");
+    ok(atualizado.semCard && atualizado.salvo && /92/.test(atualizado.resumo),
+      "🏆 v778: registrar nova carga mantém o início limpo e atualiza a evolução");
+    await paR.evaluate(() => { window.__trocaSec("evolucao"); window.__evSub("cargas"); });
+    ok(await paR.locator('#recBox').isVisible() && /Seus recordes/.test(await paR.locator('#recBox').innerText()),
+      "🏆 v778: os recordes continuam acessíveis em Evolução → Cargas");
+    const detalhes = paR.locator('#recBox details');
+    const listaRecordes = paR.locator('#recBox .rec-lista');
+    ok(await detalhes.getAttribute('open') === null && !(await listaRecordes.isVisible()),
+      "🏆 v778: recordes começam recolhidos na aba Cargas");
+    await paR.locator('#recBox summary').click();
+    ok(await listaRecordes.isVisible(), "🏆 v778: tocar em Seus recordes expande a lista");
+    await paR.evaluate(() => window.__recordes());
+    ok(await listaRecordes.isVisible(), "🏆 v778: atualizar as cargas preserva a lista aberta");
+    await paR.locator('#recBox summary').focus();
+    await paR.keyboard.press('Enter');
+    ok(!(await listaRecordes.isVisible()), "🏆 v778: o teclado também recolhe a lista");
+    await paR.evaluate(() => window.__trocaSec("inicio"));
+    ok(!(await paR.locator('#recBox').isVisible()) && await paR.locator('#recMesCard').count() === 0,
+      "🏆 v778: voltar ao início não exibe recordes nem deixa um card vazio");
 
-    // tocar no card leva pra Evolução → Cargas (não pra Conquistas, que é a sub-aba padrão)
-    const rmGo = await paR.evaluate(async () => {
-      document.getElementById("recMesBt").click();
-      await new Promise((r) => setTimeout(r, 250));
-      return {
-        sec: document.querySelector("[data-sec='evolucao']:not([data-sec-off])") ? "evolucao" : "?",
-        cargas: getComputedStyle(document.getElementById("evCargas")).display !== "none",
-        conq: [...document.querySelectorAll("[data-sec='evolucao'][data-evsub='conq']")].every((e) => getComputedStyle(e).display === "none"),
-        inicioOff: !!document.getElementById("recMesCard").getAttribute("data-sec-off"),
-      };
-    });
-    ok(rmGo.sec === "evolucao" && rmGo.cargas && rmGo.conq && rmGo.inicioOff,
-      "🏆 v775: tocar no card abre Evolução já na sub-aba CARGAS (data-ajevsub)");
-
-    // sem avanço nenhum o card SOME — nunca card vazio
-    const rmVazio = await paR.evaluate(() => {
-      window.__trocaSec("inicio");
-      localStorage.setItem("ptdc", JSON.stringify({ "Remada curvada": [{ d: new Date().getFullYear() + "-01-01", kg: 60 }] }));
-      window.__recordesMes.pinta();
-      return { display: getComputedStyle(document.getElementById("recMesCard")).display, linhas: document.querySelectorAll("#recMesLs [data-recl]").length,
-        lista: window.__recordesMes.lista().length };
-    });
-    ok(rmVazio.display === "none" && rmVazio.linhas === 0 && rmVazio.lista === 0,
-      "🏆 v775: sem avanço na janela o card fica display:none — card vazio não existe");
-
-    // trava de escopo: nada de identificador do BUILDER dentro do pedaço do app (a armadilha 'is not defined' da v770/v773), e nada grava
-    const bldRM = await paR.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
-    const iRM = bldRM.indexOf('"function rcmDesde()'), fRM = bldRM.indexOf("window.__recordesMes=");
-    const trechoRM = iRM > 0 && fRM > iRM ? bldRM.slice(iRM, fRM) : "";
-    ok(trechoRM.length > 500 && !/\b(esc|dinheiro|jsonApp|ve)\(/.test(trechoRM) && !/STUDIO_CURTO|\bD\./.test(trechoRM) && /pl\(todos\.length/.test(trechoRM),
-      "🏆 v775: o trecho do app não usa nada do builder (esc/dinheiro/jsonApp/STUDIO_CURTO/D) — só o que existe no celular");
-    ok(/if\(k==='ptdc'\)\{try\{if\(typeof pintaRecMes==='function'\)pintaRecMes\(\);/.test(bldRM) && !/\bSv\(/.test(trechoRM),
-      "🏆 v775: o gancho de repintura mora no Sv (ptdc) e o trecho do card nunca chama Sv — sem laço");
-    ok(/if\(el\.id==='recMesCard'\)\{el\.setAttribute\('data-sec','inicio'\);return;\}/.test(bldRM) && !/aria-label/.test(bldRM.slice(bldRM.indexOf("id='recMesCard'"), bldRM.indexOf("id='recMesLs'"))),
-      "🏆 v775: classificado por id no secDe e o botão não leva aria-label (o leitor de tela lê os recordes de dentro)");
-
+    await ctxRM.close();
     await ctxAR.close();
   }
 
