@@ -205,6 +205,8 @@
   css += ":focus-visible{outline:3px solid var(--corc);outline-offset:3px}@media(min-width:1100px){body{max-width:600px!important}#navApp,#menuApp{max-width:600px!important}.cardx{margin-left:28px;margin-right:28px}}@media(prefers-reduced-motion:reduce){.ac-resume,.ac-feedback{animation:none;scroll-behavior:auto}}";
   // v778: recordes recolhidos por padrão; summary mantém teclado e leitor de tela nativos.
   css += ".rec-detalhes>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;cursor:pointer;list-style:none;font-size:14px;font-weight:800}.rec-detalhes>summary::-webkit-details-marker{display:none}.rec-detalhes>summary::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 3px 4px 0;flex:none}.rec-detalhes[open]>summary::after{transform:rotate(225deg);margin-bottom:-4px}.rec-lista{padding-bottom:8px}";
+  // Prescrição variável mantém o exercício em um só cartão; os detalhes abrem na ficha.
+  css += ".presc-resumo{flex:0 1 42%;font-size:14px;font-weight:800;line-height:1.45;text-align:right;overflow-wrap:anywhere}.presc-series{padding:0;margin:4px 0 16px;list-style:none}.presc-series li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--bg11);font-size:14px}.presc-series li span{text-align:right;overflow-wrap:anywhere}.presc-series li b{flex:none}.gpresc-carga{font-size:14px;line-height:1.5;padding:10px 0;color:var(--cor-cl1)}.gtile b{overflow-wrap:anywhere}.gtile:first-child b{font-size:clamp(22px,8vw,38px);line-height:1.2}.gcgult{line-height:1.5}.gwval input{font-size:clamp(24px,8vw,38px)}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

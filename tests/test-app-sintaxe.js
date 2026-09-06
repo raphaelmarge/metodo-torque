@@ -303,19 +303,21 @@ console.log("v751 — regras estáticas:");
   ok(/return isoLoc\(d\);\}/.test(seg) && !/toISOString/.test(seg), "👥 a segunda-feira do ranking é em data LOCAL");
   ok(/if\(carregando\)\{pendente=true;return;\}/.test(html) && /\{carrega\(\);rankSemana\(\);\}\},45000\)/.test(html),
     "👥 carga no meio de outra vira pendência e o placar da semana atualiza com o timer");
-  const gs = html.slice(html.indexOf("if(e.target.id==='gSerie')"), html.indexOf("if(e.target.id==='gSerie')") + 120);
-  ok(/gSerie'\)\{gSalvaSeSujo\(\)/.test(gs), "🏋️ 'Série feita' salva a carga pendente antes de repintar");
+  const gs = html.slice(html.indexOf("if(e.target.id==='gSerie')"), html.indexOf("if(e.target.id==='gSerie')") + 500);
+  ok(/if\(gSalvaSeSujo\(\)===false\)return/.test(gs) && gs.indexOf("SR.marca(it,gv.s)") > gs.indexOf("gSalvaSeSujo()") && gs.indexOf("gv.s++") > gs.indexOf("SR.marca(it,gv.s)"), "🏋️ 'Série feita' salva a execução pendente e só avança depois de persistir a série concluída");
   const gp = html.slice(html.indexOf("if(e.target.id==='gPularEx')"), html.indexOf("if(e.target.id==='gPularEx')") + 160);
   const gvx = html.slice(html.indexOf("if(e.target.id==='gVoltaEx')"), html.indexOf("if(e.target.id==='gVoltaEx')") + 220);
   ok(/gv\.timer=null;gDescTick=null/.test(gp) && /gv\.timer=null;gDescTick=null/.test(gvx), "🏋️ pular/voltar exercício mata o tick do descanso");
-  ok(!/id='gSug'/.test(html) && /id='gSugNota'/.test(html), "🏋️ dentro de 'Carga de hoje' a sugestão é lembrete, não botão que troca o campo");
-  ok(/gGrava\(itS\.e,\+e\.target\.dataset\.kg,0,/.test(html), "🏋️ aceitar a sugestão grava só a carga (sem as reps prescritas)");
+  const formSerie = html.slice(html.indexOf("function gCargaHtml(it"), html.indexOf("function ligaStepper(it"));
+  ok(/reg=SR\.registro\(it,si,gv\.f,ei\)/.test(formSerie) && /var v=reg&&reg\.kg!=null\?reg\.kg:'',r=reg&&reg\.r!=null\?reg\.r:''/.test(formSerie), "🏋️ execução nasce apenas do registro daquela série; sem confirmação, carga e reps ficam vazias");
+  const sugestaoSerie = html.slice(html.indexOf("if(e.target.id==='gSugT')"), html.indexOf("if(e.target.id==='gMudaCarga')"));
+  ok(!/gGrava\(/.test(sugestaoSerie) && /gMudaCarga'\)\.click\(\)/.test(sugestaoSerie) && /confirme após realizar/.test(sugestaoSerie), "🏋️ aceitar a sugestão abre um rascunho; não cria carga nem repetições realizadas");
   ok(/var sug=gPasso\(kg\)/.test(html) && !/var sug=kg<20\?1:2\.5/.test(html), "🏋️ o toast de progressão usa o MESMO degrau (gPasso) do botão de sugestão");
-  ok(/vol9\+=kg9\*r9\*sf9/.test(html), "🏋️ o volume do recibo usa as séries FEITAS, não as prescritas");
+  ok(/var vol9=SR\.volume\(gv\.f,hjR\)/.test(html) && /r\.feito && r\.serie <= it\.s/.test(html) && /r\.kg != null/.test(html) && /r\.r != null/.test(html) && /total \+= \+r\.kg \* \+r\.r/.test(html) && !/vol9\+=kg9\*r9\*sf9/.test(html), "🏋️ volume soma kg × reps reais das séries concluídas, sem preencher campos ausentes nem multiplicar a última carga");
   const sb = html.slice(html.indexOf("closest('.setbtn')"), html.indexOf("closest('.setbtn')") + 900);
   ok(/GUIA\.some\(function\(f9\)/.test(sb), "🏋️ o 'Treinei hoje' automático fecha com UMA ficha inteira, não com a união A+B+C");
-  ok(/function exKey\(/.test(html) && /st\[exKey\(b\.dataset\.ex\)\]/.test(html) && /data-ex='Farmer&#39;s walk'/.test(html) && /"e":"Farmers walk"/.test(html),
-    "🏋️ o ptsets usa a chave canônica (sem apóstrofo), a mesma que o GUIA usa");
+  ok(/function exKey\(/.test(html) && /return b\.dataset\.setkey\|\|exKey\(b\.dataset\.ex\)/.test(html) && /setValor\(st,setChave\(b\),b\.dataset\.ex\)/.test(html) && /data-ex='Farmer&#39;s walk'/.test(html) && /"e":"Farmers walk"/.test(html),
+    "🏋️ nomes únicos preservam a chave canônica e os contadores leem a chave de cada slot repetido");
   ok((html.match(/function avMg\(/g) || []).length === 1 && /var mg=avMg\(u\)/.test(html) && /var mgP=avMg\(p\)/.test(html) && (html.match(/epley\(/g) || []).length >= 3,
     "📉 massa de gordura (avMg) e 1RM (epley) numa régua só, usada pelo gráfico, pelo laudo, pela calculadora e pelo destaque");
   ok(/volume_por_treino:L\('ptvol'/.test(html) && /fotos_progresso:L\('ptfotos'/.test(html) && /tudo_no_aparelho/.test(html),
