@@ -1124,12 +1124,13 @@ async function abaPt(p, a) {
     const linha = document.querySelector(".tdex");
     const antes = { editorFechado: !!linha.querySelector(".tdedit[hidden]"),
       handleFalso: !!linha.querySelector(".tdh"), promptAntigo: !!linha.querySelector("[data-tsr],[data-tdesc],[data-tobs]") };
-    linha.querySelector("[data-exab]").click();
+    if (antes.editorFechado) linha.querySelector("[data-exab]").click();
+    antes.editorPronto = !!document.querySelector('.tdex.aberto .sp-editor:not([hidden]) [data-tfld$=":series"]');
     return antes;
   });
   await p.waitForTimeout(200);
-  ok(editor.editorFechado && !editor.handleFalso && !editor.promptAntigo,
-    "✏️ a linha nasce fechada, sem o puxador falso e sem os textos que abriam prompt");
+  ok(editor.editorPronto && !editor.handleFalso && !editor.promptAntigo,
+    "✏️ o exercício fica pronto para editar, sem puxador falso nem textos que abriam prompt");
   // mexer num campo salva na hora — e o editor CONTINUA aberto
   const mexe = async (campo, valor) => p.evaluate(([c, v]) => {
     const el = document.querySelector('[data-tfld$=":' + c + '"]');
@@ -1152,8 +1153,8 @@ async function abaPt(p, a) {
     "✏️ séries, repetições, descanso e observação viram campos e salvam na hora (5 × 8 · 100 s · pegada fechada)");
   ok(/5 × 8 · 100 s/.test(aposEd.tela) && /pegada fechada/.test(aposEd.tela),
     "✏️ o resumo da linha fechada mostra tudo numa frase só");
-  ok(aposEd.aberto && aposEd.campos === 7,
-    "✏️ o editor NÃO fecha a cada campo mexido (os 7 campos, incluindo alternativas, continuam à mão)");
+    ok(aposEd.aberto && aposEd.campos === 8,
+      "✏️ o editor NÃO fecha a cada campo mexido (8 campos, incluindo carga e orientações recolhidas)");
   const aposObs = aposEd;
   // 🏋️ tipo de série NO MESMO exercício (drop-set, up set…): escolhido na
   // cascata de montar e trocável direto na linha, sem prompt
@@ -1479,19 +1480,19 @@ async function abaPt(p, a) {
   });
   ok(gtFichas === 3, "template ABC montou as 3 fichas no treino de disparo (sem aluno)");
   // fichas recolhíveis: nascem fechadas, toque abre/fecha, várias abertas juntas
-  const fechadas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  const fechadas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(fechadas.length === 3 && fechadas.every((o) => !o), "fichas nascem recolhidas (sem abrir tudo de uma vez)");
   await p.click("#fichasBox details:nth-of-type(1) summary");
   await p.click("#fichasBox details:nth-of-type(2) summary");
   await p.click("#fichasBox details:nth-of-type(3) summary");
-  const abertas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  const abertas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(abertas.length === 3 && abertas.every((o) => o), "toque abre — dá pra deixar as três abertas juntas");
   await p.click("#fichasBox details:nth-of-type(2) summary");
-  const mista = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  const mista = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(mista[0] && !mista[1] && mista[2], "toque de novo fecha só aquela ficha");
   await p.evaluate(() => document.getElementById("tAluno").dispatchEvent(new Event("change", { bubbles: true })));
   await p.waitForTimeout(150);
-  const preservado = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  const preservado = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details[data-fdet]")).map((d) => d.open));
   ok(preservado[0] && !preservado[1] && preservado[2], "re-render preserva quais fichas estavam abertas");
   // busca de aluno com digitação (combobox por cima do select)
   await p.evaluate(() => window.__trAba("fichas"));
@@ -2541,8 +2542,8 @@ async function abaPt(p, a) {
       /function naSemana\(f(,ref)?\)/.test(bld) && (bld.match(/=naSemana\(f\)/g) || []).length === 2,
       "📆 v747: nomes de mês/dia declarados uma vez e a conta da semana num helper (naSemana)");
     ok(!/dp:dp/.test(bld) && !/var dp=ks\.length/.test(bld), "🧹 v747: retroDados não calcula mais a variação de peso que ninguém mostrava");
-    // v754: a chave passa pelo exKey (a mesma do GUIA); o teto e o fecha-por-ficha continuam
-    ok(/var kx=exKey\(b\.dataset\.ex\);var n=Math\.min\(max,\(st\[kx\]\|\|0\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld) && /var kl=exKey\(b\.dataset\.ex\)/.test(bld),
+    // v779: setChave mantém exKey para únicos e separa slots de exercícios repetidos.
+    ok(/var kx=setChave\(b\);var n=Math\.min\(max,setValor\(st,kx,b\.dataset\.ex\)\+1\)/.test(bld) && !/if\(n>max\)n=0/.test(bld) && /b\.closest\('\.fichabox'\)/.test(bld) && /todos9\.every/.test(bld) && /var kl=setChave\(b\)/.test(bld),
       "✅ v747: séries travam no máximo e o 'Treinei hoje' automático olha a FICHA que o aluno está fazendo, não a união de todas");
     ok(/k\.slice\(0,10\)<lim\)delete f\[k\]/.test(bld) && /if\(k!==s0\)\{delete a0\[k\]/.test(bld), "🧽 v747: ptconf podado em 60 dias e rascunho de check-in de semana velha apagado");
     ok(/eh9\(msg\)/.test(bld), "🔒 v747: a observação do aluno entra escapada na caixinha verde do fim do circuito");
@@ -11163,7 +11164,7 @@ async function abaPt(p, a) {
     const kgEl = Array.from(document.querySelectorAll(".exkg")).find((x) => x.dataset.exn === nome);
     const res = { linha: el.textContent, kg: kgEl ? kgEl.textContent : "" };
     // limpa de novo: o fluxo do player mais pra frente salva ESSE exercício e
-    // conta os registros g:1 do dia — o daqui não pode sobrar
+    // confere os registros individuais do dia — o daqui não pode sobrar
     const h2 = JSON.parse(localStorage.getItem("ptdc") || "{}");
     delete h2[nome];
     localStorage.setItem("ptdc", JSON.stringify(h2));
@@ -11403,6 +11404,8 @@ async function abaPt(p, a) {
       if (!document.getElementById("gKg")) return null;
       const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
       const nome = document.getElementById("gEx").textContent;
+      const slot = window.__gvDe().regi;
+      const atualAntes = (antes[nome] || []).find((x) => x.g === 2 && x.i === slot && x.d === diaISO());
       // a carga entra arrastando a régua (o traço do meio é o valor escolhido)
       window.__roda = async (id, valor) => {
         const rd = document.getElementById(id);
@@ -11422,15 +11425,17 @@ async function abaPt(p, a) {
       await new Promise((r) => setTimeout(r, 150));
       const depois = JSON.parse(localStorage.getItem("ptdc") || "{}");
       return { nome: nome, antes: (antes[nome] || []).length, semSalvar: (semSalvar[nome] || []).length,
+        semSalvarIgual: JSON.stringify(semSalvar) === JSON.stringify(antes), slot: slot, tinhaSlot: !!atualAntes,
+        registro: (depois[nome] || []).find((x) => x.g === 2 && x.i === slot && x.d === diaISO()),
         depois: (depois[nome] || []), lab: document.getElementById("gCgLab").textContent,
         hist: document.getElementById("gHist").textContent,
         kgNaTela: document.getElementById("gKg").value, repsNaTela: document.getElementById("gReps").value };
     });
-    ok(carga && carga.depois.length > carga.antes,
-      "no fim do exercício dá pra anotar a carga arrastando a régua, sem teclado");
+    ok(carga && carga.depois.length === carga.antes + (carga.tinhaSlot ? 0 : 1) && carga.registro && carga.registro.kg === 40 && carga.registro.r === 12,
+      "no fim do exercício a régua salva 40 kg × 12 reps no registro da série, sem duplicar um slot existente");
     ok(carga && carga.kgNaTela === "40" && carga.repsNaTela === "12",
       "arrastar a régua escreve o valor do traço do meio no campo (" + (carga && carga.kgNaTela) + " kg × " + (carga && carga.repsNaTela) + ")");
-    ok(carga && carga.semSalvar === carga.antes,
+    ok(carga && carga.semSalvar === carga.antes && carga.semSalvarIgual,
       "mexer na régua e NÃO salvar não grava nada (o registro é do que o aluno confirmou)");
     /* O descanso continuava correndo por baixo do registro da carga: quando
      * zerava, o player trocava de exercício e o formulário sumia embaixo do
@@ -11472,20 +11477,22 @@ async function abaPt(p, a) {
     });
     ok(arrasto.aindaTem && arrasto.mesmoEx,
       "arrastar a RÉGUA pro lado não conta como swipe: o formulário fica e o exercício não muda");
-    const reg = carga && carga.depois[carga.depois.length - 1];
-    ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 1,
-      "o registro guarda carga, repetições e a marca de que veio do treino guiado");
+    const reg = carga && carga.registro;
+    ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 2 && reg.serie === +carga.slot.split(":")[2] + 1 && reg.feito === true,
+      "o registro guarda carga, repetições, número da série e conclusão no treino guiado");
     ok(carga && /Anotado/.test(carga.lab) && /recorde/.test(carga.hist),
       "o app confirma 'Anotado' dentro do card e a linha de histórico atualiza na hora");
-    // salvar de novo o mesmo exercício no mesmo dia ATUALIZA, não duplica
+    // salvar de novo a mesma série no mesmo dia ATUALIZA, não duplica
     const denovo = await pApp.evaluate(async () => {
       const nome = document.getElementById("gEx").textContent;
+      const slot = window.__gvDe().regi;
       await window.__roda("gWKg", 45);
       document.getElementById("gSalvar").click();
       await new Promise((r) => setTimeout(r, 120));
-      return (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.g === 1).length;
+      return (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.g === 2 && x.i === slot && x.d === diaISO());
     });
-    ok(denovo === 1, "salvar de novo no mesmo dia corrige o registro em vez de criar outro (" + denovo + ")");
+    ok(denovo.length === 1 && denovo[0].kg === 45 && denovo[0].r === 12 && denovo[0].feito === true,
+      "salvar de novo a mesma série corrige a carga para 45 kg e conserva as 12 reps, sem criar outro registro");
 
     // fim: recibo com o que foi feito e repescagem de quem ficou sem carga
     const fim = await pApp.evaluate(async () => {
@@ -11559,30 +11566,32 @@ async function abaPt(p, a) {
       out.semeou = window.__gvDe().s === 1 && /Série 2 de/.test(document.getElementById("gGrupo").textContent);
       document.getElementById("gFechar").click(); await dorme(100);
       if (stAntes == null) localStorage.removeItem(stK); else localStorage.setItem(stK, stAntes);
-      // (b) aceitar a sugestão grava SÓ a carga e não deixa gv.sujo pendurado
+      // (b) aceitar a sugestão abre a anotação, sem gravar execução antecipadamente
       const dcAntes = localStorage.getItem("ptdc"); const dc = JSON.parse(dcAntes || "{}");
       const d7 = window.diaISO(new Date(Date.now() - 7 * 864e5));   // v756: dia LOCAL, como o app conta
       dc[nome] = [{ d: "2026-01-05", kg: 20, r: alvo }, { d: d7, kg: 20, r: alvo }];
       localStorage.setItem("ptdc", JSON.stringify(dc));
       const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
-      // (b0) em 'Mudar a carga' a sugestão é LEMBRETE (não botão) e as reps nascem com as confirmadas na última vez
+      // (b0) o histórico anterior é um lembrete; a execução desta série começa vazia
       document.getElementById("gMudaCarga").click(); await dorme(100);
       const rp0 = document.getElementById("gReps");
-      out.semBotaoSug = !document.getElementById("gSug") && !!document.getElementById("gSugNota") && !!rp0 && rp0.value === String(alvo);
+      out.semBotaoSug = !document.getElementById("gSug") && !!rp0 && rp0.value === "" && /Nessa série na última vez: 20 kg/.test(document.getElementById("gMiolo2").textContent);
       document.getElementById("gMudaCarga").click(); await dorme(100);
       const bt = document.getElementById("gSugT"); out.temSugT = !!bt;
       if (bt) bt.click(); await dorme(150);
-      const reg = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
-      out.sugKg = reg && reg.kg; out.sugSemR = !!reg && !("r" in reg); out.sujo = window.__gvDe().sujo;
+      out.sugKg = +document.getElementById("gKg").value.replace(",", ".");
+      out.sugSemRegistro = JSON.stringify(JSON.parse(localStorage.getItem("ptdc") || "{}")) === JSON.stringify(dc);
+      out.sujo = window.__gvDe().sujo;
       // (c) depois de aceitar: reps vazias (nenhuma confirmada hoje) com o alvo de placeholder
-      document.getElementById("gMudaCarga").click(); await dorme(100);
       const rp = document.getElementById("gReps");
       out.repsVazio = !!rp && rp.value === "" && rp.placeholder === String(alvo);
       // (d) 'Série feita' guarda a carga digitada no formulário aberto
       const kgI = document.getElementById("gKg"); kgI.value = "33"; kgI.dispatchEvent(new Event("input"));
+      const repsReais = Math.max(1, alvo - 1); rp.value = String(repsReais); rp.dispatchEvent(new Event("input"));
+      const slot = window.__gvDe().regi, serieNumero = window.__gvDe().s + 1;
       document.getElementById("gSerie").click(); await dorme(250);
-      const reg2 = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.d === hj).pop();
-      out.serieSalvou = !!reg2 && reg2.kg === 33;
+      const reg2 = (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).find((x) => x.d === hj && x.g === 2 && x.i === slot);
+      out.serieSalvou = !!reg2 && reg2.kg === 33 && reg2.r === repsReais && reg2.serie === serieNumero && reg2.feito === true;
       // (e) pular exercício no meio do descanso mata o tick antigo
       out.tickVivo = window.__gDescVivo();
       document.getElementById("gPularEx").click(); await dorme(120);
@@ -11596,11 +11605,11 @@ async function abaPt(p, a) {
     ok(!!g751, "o app de teste tem ficha com exercício de 2+ séries e reps prescritas (base dos asserts v751)");
     if (g751) {
       ok(g751.temIni && g751.semeou, "🏋️ v751: 'Iniciar exercício' já nasce na série seguinte à marcada na ficha (Série 2 de N)");
-      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemR && g751.sujo === false,
-        "🏋️ v751: aceitar a sugestão grava só a CARGA (22,5), sem repetições que o aluno ainda não fez, e nada fica pendurado");
+      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemRegistro && g751.sujo === false,
+        "🏋️ v751: aceitar a sugestão preenche 22,5 kg para confirmar, sem criar registro ou repetições realizadas");
       ok(g751.repsVazio && g751.semBotaoSug,
-        "🏋️ v751: em 'Carga de hoje' as reps nascem vazias com o alvo de placeholder, e a sugestão é lembrete, não botão");
-      ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva a carga digitada em 'Mudar a carga' (33 kg) em vez de jogar fora");
+        "🏋️ v751: a anotação desta série começa com reps vazias e alvo no placeholder, mantendo a sessão anterior como lembrete");
+      ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva 33 kg e as repetições digitadas como execução concluída desta série");
       ok(g751.tickVivo && g751.tickMorto, "🏋️ v751: pular exercício no descanso mata o tick antigo (nada de 'Descanso acabou' fantasma ao voltar do 2º plano)");
     }
   }
