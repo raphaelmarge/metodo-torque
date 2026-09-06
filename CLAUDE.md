@@ -50,6 +50,40 @@ ficha/exercício/série, `serie` a partir de 1, `feito`, `kg` e `r` realizados.
 Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
+
+### Mapa vigente do canvas do painel do personal (mt-v785)
+
+O checklist do canvas tem 16 códigos. A anotação histórica da v615 dizia
+"faltam 10", mas os códigos que ela própria enumerava somavam **12**. Hoje o
+estado correto é **15 telas entregues e 1 variação descartada por decisão de
+produto** — nenhuma das telas 2c–2e, 3a–3d ou 4a–4e está pendente.
+
+| ID | O que representa hoje | Situação |
+|---|---|---|
+| 1a | Início e menu do professor | Entregue na v614; direção escolhida |
+| 1b | Segunda variação do Início | Descartada pelo Raphael, não é pendência |
+| 2a | Lista de alunos | Entregue na v615 |
+| 2b | Ficha e resumo do aluno | Entregue na v615 |
+| 2c | Agenda semanal | Entregue nas v616–v617 |
+| 2d | Montar treino | Entregue nas v616–v617 |
+| 2e | Financeiro | Entregue nas v616–v617 |
+| 3a | Avaliações e evolução | Entregue na v618 |
+| 3b | Questionários | Entregue na v618; desdobramento adaptativo exige app + banco e ficou explicitamente fora |
+| 3c | Chat | Entregue na v618; "digitando…" e reações exigem presença/dados e ficaram explicitamente fora |
+| 3d | Modo claro do painel | Entregue na v620 |
+| 4a | Configurações | Entregue na v619 |
+| 4b | Personalização | Entregue na v619 |
+| 4c | Relatórios | Entregue na v619 |
+| 4d | Comunidade | Entregue na v619 |
+| 4e | Minha página | Entregue na v619; visitas/pedidos reais dependem de telemetria e não são inventados |
+
+A tela **"Treino feito" não pertence a esse canvas**: é a tela 48 da direção
+final do app do aluno. Na mt-v785 ela ganhou acabamento próprio no
+`app/aluno-skin.js` (fundo da marca em camadas, tiles legíveis, esforço em
+grade, campos com contraste, botão Fechar branco e rolagem segura) sem alterar a
+lógica do player. `test-acompanhamento.js` agora conclui um treino de verdade,
+confere o recibo em 390×844 e 375×667, fecha a tela e protege o fluxo completo.
+
 **Foto do aluno** (a partir da v506): dois campos na ficha, sem briga entre
 eles — `a.foto` é a que o PERSONAL põe pelo painel, `a.fotoAluno` é a que o
 ALUNO põe tocando no avatar do topo do app. Onde a foto aparece, vale
@@ -705,8 +739,9 @@ as **4 ações do dia** (Montar treino, chat, financeiro, agenda) e a próxima
 sessão; aba nova **Resumo** (primeira, `data-pfa="resumo"`) com 4 números
 (treinos no mês, peso, batimento, check-in), a Semana do aluno em 7 chips e a
 Ficha atual. O `←` antigo sumiu: quem herdou o id `pfFechar` (e o listener) é o
-"‹ Alunos". Ganchos: `window.__alBusca`. **Faltam 10 telas** (2c-2e, 3a-3d,
-4a-4e).
+"‹ Alunos". Ganchos: `window.__alBusca`. **Registro histórico da v615:** a frase
+dizia "10 telas", mas a enumeração continha **12** (2c–2e, 3a–3d e 4a–4e).
+Todas foram entregues nas v616–v620; consulte o mapa vigente acima.
 
 **Painel repaginado: Início e menu** (a partir da v614): primeiro lote do
 canvas *Painel do professor* (16 telas, handoff em `design_handoff_painel_personal`).
@@ -729,7 +764,9 @@ com atalho diz pra onde foram. ⚠️ Ao semear dados em teste use
 `localStorage.setItem` direto: `MTStore.write` dispara a sincronização e, com
 mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
-**Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
+**Registro histórico da v614:** naquele ponto ainda faltavam as outras 12
+telas (2a–2e, 3a–3d e 4a–4e); o conjunto foi entregue nas v615–v620 e não é
+backlog atual.
 
 **Seis defeitos de COMPUTADOR do handoff** (a partir da v628): dois agentes
 compararam o desenho de desktop (telas 01, 03 e 04) com o implementado a
