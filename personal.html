@@ -2014,27 +2014,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </div>
 
   <!-- DASHBOARD (estilo Resumo Gerencial da academia) -->
-  <section id="vDash">
-    <!-- Início na tela 1a do canvas ("Painel do professor"): faixa roxa com a
-         próxima sessão, três cards Resolver hoje, e embaixo duas colunas — a
-         linha do tempo do dia à esquerda, o mês e o Radar de retenção à direita.
-         Aniversários, movimentação, indicadores, fechamento e alertas saíram
-         daqui pra Relatórios: não mudam decisão HOJE. -->
+  <section id="vDash" class="dh-home">
+    <!-- Resumo do dia; listas completas continuam na agenda e nos detalhes. -->
     <div id="dia1Card" hidden></div>
     <div id="dashTopo"></div>
-    <div id="dashResolver"></div>
-    <div id="dashSino" hidden></div>
-    <div class="dcols">
-      <div class="card" id="dashDia"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
-      <div class="dcol2">
-        <div id="dashMes"></div>
-        <div class="card" id="dashRadar"><h2>Radar de retenção</h2><div id="bRadarP" class="muted">Todo mundo em movimento.</div></div>
-      </div>
+    <div id="dashMes"></div>
+    <div class="dh-main">
+      <div class="dh-next" id="dashDia"><div class="dh-section-head"><h2>Próxima sessão</h2><button type="button" class="btn sec mini" id="dVerSemana">Ver agenda</button></div><div id="bHojeP" class="dh-next-body">Nenhuma sessão agendada.</div></div>
+      <div id="dashResolver"></div>
     </div>
-    <div class="card" style="margin-bottom: 14px;"><h2>WhatsApp de hoje</h2><div id="bZapP" class="muted">Nenhuma mensagem pendente.</div></div>
-    <div class="dnota lado">
-      <span>Aniversários, fechamento do mês, indicadores completos e alertas do studio agora moram em <b>Relatórios</b> — saíram do Início porque não pedem ação hoje.</span>
-      <button type="button" class="btn sec" id="dVerRel">Ver relatórios</button>
+    <div class="dh-secondary">
+      <details class="dh-disclosure" id="dashRadar"><summary class="dh-disclosure-head"><span class="dh-disclosure-title">Acompanhamento dos alunos</span><span class="dh-disclosure-count" id="dRadarCount">0 pendências</span></summary><div id="bRadarP" class="dh-disclosure-body"></div></details>
+      <details class="dh-disclosure" id="dashZap"><summary class="dh-disclosure-head"><span class="dh-disclosure-title">WhatsApp de hoje</span><span class="dh-disclosure-count" id="dZapCount">0 mensagens</span></summary><div id="bZapP" class="dh-disclosure-body">Nenhuma mensagem pendente.</div></details>
+      <details class="dh-disclosure" id="dashSino" hidden><summary class="dh-disclosure-head"><span class="dh-disclosure-title">Enquanto você esteve fora</span><span class="dh-disclosure-count" id="dSinoCount">0 novidades</span></summary><div id="bSinoP" class="dh-disclosure-body"></div></details>
     </div>
   </section>
 
@@ -10152,7 +10144,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * computador e dia-por-vez do celular) não tinha como marcar nada. O miolo
    * dos botões virou UM lugar só, usado pelas três visões: mexeu na regra,
    * as três mudam juntas. Quem trata o clique é o MESMO trataCliqueSessao. */
-  function sesAcoesHtml(x) {
+  function sesAcoesHtml(x, st) {
+    var cobrarFalta = "";
+    if (x.faltou && !x.feita) {
+      st = st || load();
+      var alunoF = (st.alunos || []).find(function (a) { return a.id === x.alunoId; });
+      if (alunoF && alunoF.zap) cobrarFalta = '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+        String(alunoF.zap).replace(/\D/g, "") + '?text=' + encodeURIComponent(zapTexto(zapModelos(st).falta, { nome: String(alunoF.nome || "").split(" ")[0] })) + '">Cobrar aula</a>';
+    }
     return x.feita
       ? '<button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê na hora de montar o próximo treino">Anotar</button>' +
         '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
@@ -10163,7 +10162,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * botão nenhum — a única saída era cancelar e agendar de novo. */
       : (x.faltou ?
           '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-          '<button class="btn sec mini" data-desfalta="' + x.id + '" title="tira a falta — a sessão volta pra não marcada">Desfazer Faltou</button>' :
+          '<button class="btn sec mini" data-desfalta="' + x.id + '" title="tira a falta — a sessão volta pra não marcada">Desfazer Faltou</button>' + cobrarFalta :
           '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
           '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>' +
           (x.data >= S.todayISO() ? '<button class="btn sec mini" data-sremarca="' + x.id + '" title="muda a data/hora desta sessão (o aluno é avisado)">Remarcar</button>' : "")) +
@@ -10285,7 +10284,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var menu = x.pedido ? "" :
         '<button type="button" class="aglb agmenu" data-smais="' + x.id + '" aria-label="ações da sessão" title="ações da sessão">⋮</button>';
       var painel = x.pedido ? "" :
-        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div>";
+        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x, st) + "</div>";
       if (x.feita) {
         return '<div class="agl feita"><span class="aglh">' + esc(hora) + "</span>" +
           '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
@@ -10475,7 +10474,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
           return '<button type="button" class="agc ' + es.cls + (agora ? " agora" : "") + '" data-smais="' + x.id + '" title="ações da sessão">' +
             '<div class="agnm">' + esc(nome) + '</div><div class="ages">' + esc(es.txt) + "</div></button>" +
-            '<div class="ses-acoes agcac" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div>";
+            '<div class="ses-acoes agcac" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x, st) + "</div>";
         }).join("") + "</div>";
       });
     });
@@ -10754,7 +10753,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // sessão já feita: em vez de apagar (que deixava o pacote/pagamento sem
         // estorno), o miolo traz o "Desfazer", que reverte E devolve (v704: o
         // miolo virou sesAcoesHtml, compartilhado com a visão Semana)
-        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x) + "</div></div>";
+        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' + sesAcoesHtml(x, st) + "</div></div>";
     }
     function cabDia(txt) {
       return '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' + txt + "</div>";
@@ -19494,7 +19493,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       rows.push('<div class="ac-row"><div><b>'+esc(a.nome)+'</b><small>'+esc(motivos.join(' · '))+'</small></div><button class="btn sec mini" data-ac-resumo="'+esc(a.id)+'">Revisar aluno</button></div>');
     });
     if(rows.length)box.insertAdjacentHTML('afterbegin','<div id="acPendencias">'+rows.join('')+'</div>');
-    var h=$('dashRadar')&&$('dashRadar').querySelector('h2');if(h)h.firstChild.textContent='Precisa da sua atenção';
+    var n=box.querySelectorAll('.drad,.ac-row').length,contador=$('dRadarCount'),vazio=box.querySelector('[data-dh-radar-vazio]');
+    if(contador)contador.textContent=S.plural(n,'pendência','pendências');
+    if(vazio)vazio.hidden=n>0;
+    if(!n&&!vazio)box.insertAdjacentHTML('beforeend','<p class="muted" data-dh-radar-vazio>Nenhuma pendência de acompanhamento.</p>');
   }
   function acMetricas(st,a) {
     var r=MT_ACOMP.resumo(st,a,S.todayISO()),u=(a.retorno||a.demoRetorno||{}).uso||{},n={inicios:0,conclusoes:0,falhasSync:0},tem=false;
@@ -19534,6 +19536,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $('tdPrevia').addEventListener('click',function(){acPrevia($('tAluno').value,false);});
   window.__acompPT={revisar:acRevisar,previa:acPrevia,lote:acLote,pendencias:acPendencias};
 
+  function resumoAgendaDash(st) {
+    var hoje = S.todayISO(), agora = new Date(), minAgora = agora.getHours() * 60 + agora.getMinutes();
+    function minutos(x) {
+      var h = String(x.hora || "").match(/^(\d{1,2}):(\d{2})$/);
+      return h && +h[1] < 24 && +h[2] < 60 ? +h[1] * 60 + +h[2] : null;
+    }
+    var pendentes = (st.sessoes || []).filter(function (x) { return !x.feita && !x.faltou && /^\d{4}-\d{2}-\d{2}$/.test(x.data || ""); });
+    var proxima = pendentes.filter(function (x) {
+      var min = minutos(x);
+      return min !== null && (x.data > hoje || (x.data === hoje && min - minAgora > -60)) &&
+        (st.alunos || []).some(function (a) { return a.id === x.alunoId; });
+    }).sort(function (a, b) { return a.data === b.data ? minutos(a) - minutos(b) : a.data < b.data ? -1 : 1; })[0] || null;
+    var antigas = pendentes.filter(function (x) {
+      var min = minutos(x);
+      return x.data < hoje || (x.data === hoje && min !== null && min - minAgora <= -60);
+    }).length;
+    return { proxima: proxima, antigas: antigas };
+  }
   function renderDashPT(st) {
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
@@ -19546,48 +19566,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var d = dadosDoMes(st, mes);
     var ativos = d.ativos;
-    // ---- Seu dia hoje: as sessões de agora, com Feita/Faltou direto no Início ----
-    var nomeHj = {};
-    st.alunos.forEach(function (a) { nomeHj[a.id] = a.nome; });
-    var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; })
-      .sort(function (a, b) { return (a.hora || "99") < (b.hora || "99") ? -1 : 1; });
-    /* Linha do tempo do dia (tela 1a): feita fica esmaecida, quem faltou tem a
-     * hora em vermelho e a ação de cobrar a aula, e a PRÓXIMA ganha a faixa
-     * roxa. Cada linha carrega a ação — a regra 1 do handoff: todo aviso tem
-     * botão, nada de "vá procurar onde resolver". */
-    var proxId = (sesHoje.filter(function (x) { return !x.feita && !x.faltou && x.hora; })
-      .filter(function (x) { return faltaPra(x.hora).min > -60; })[0] || {}).id;
-    var cab = $("dashDia") && $("dashDia").querySelector("h2");
-    if (cab && sesHoje.length) {
-      var hs = sesHoje.map(function (x) { return x.hora; }).filter(Boolean).sort();
-      /* o desenho (tela 02) troca a faixa de horario pela CONTA do dia —
-       * "4 de 6 feitas" diz o que falta, o intervalo so diz que existe. */
-      var feitasN = sesHoje.filter(function (x) { return x.feita; }).length;
-      cab.innerHTML = "Seu dia hoje " +
-        '<span class="ddsub">' + feitasN + " de " + sesHoje.length + " feitas" +
-        (hs.length ? '<b class="ddhora"> · ' + hs[0] + " às " + hs[hs.length - 1] + "</b>" : "") + "</span>" +
-        '<button type="button" class="btn sec mini" id="dVerSemana">Ver semana</button>';
-    } else if (cab) {
-      /* v747: sem sessão o cabeçalho ficava com a conta VELHA ("0 de 2 feitas ·
-       * 20:43 às 20:43") enquanto o corpo dizia "Nenhuma sessão marcada" —
-       * acontecia ao desmarcar a última do dia ou quando a página virava o dia. */
-      cab.innerHTML = "Seu dia hoje " + '<button type="button" class="btn sec mini" id="dVerSemana">Ver semana</button>';
-    }
-    $("bHojeP").innerHTML = sesHoje.length ? sesHoje.map(function (x) {
-      var cls = x.feita ? " feita" : x.faltou ? " faltou" : (x.id === proxId ? " prox" : "");
-      var aP = st.alunos.find(function (y) { return y.id === x.alunoId; }) || {};
-      return '<div class="dlinha' + cls + '"><div class="dhh">' + (x.hora || "—") + "</div>" +
-        '<div style="min-width:0;">' +
-        '<button class="dnm" data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;font-family:inherit;cursor:pointer;text-align:left;">' +
-        esc(nomeHj[x.alunoId] || "?") + "</button>" +
-        '<div class="dfi">' + (x.faltou ? "Faltou" : treinoDoDiaTxt(st, x.alunoId, true)) + "</div></div>" +
-        '<div class="dac">' +
-        (x.feita ? '<span class="dok">✓ Feita</span><button class="btn sec mini" data-snota="' + x.id + '" title="anota como foi a sessão — vai pro diário da ficha e a IA lê">Anotar</button>'
-          : x.faltou ? (aP.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-              String(aP.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(zapTexto(zapModelos(st).falta, { nome: String(aP.nome || "").split(" ")[0] })) + '">Cobrar aula</a>' : '<span class="tag erro">FALTOU</span>')
-          : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-            '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</div></div>";
-    }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
+    // A Home mostra só a próxima sessão. Pendências antigas ficam na agenda.
+    var agendaDash = resumoAgendaDash(st), prox = agendaDash.proxima;
+    $("bHojeP").innerHTML = prox ? (function () {
+      var aP = st.alunos.find(function (a) { return a.id === prox.alunoId; }) || {};
+      var hojeP = prox.data === hoje;
+      var rotData = (hojeP ? "Hoje · " : "") + S.fmtData(prox.data);
+      var treinoP = hojeP ? treinoDoDiaTxt(st, prox.alunoId, true) : "";
+      return '<div class="dh-session"><time class="dh-session-time" datetime="' + esc(prox.data + "T" + prox.hora) + '">' + esc(prox.hora) + '</time>' +
+        '<div class="dh-session-info"><div class="dh-session-date">' + esc(rotData) + '</div>' +
+        '<button type="button" class="dh-session-name" data-vernome="' + esc(prox.alunoId) + '" title="ver o treino e falar com o aluno">' + esc(aP.nome || "Aluno") + '</button>' +
+        (treinoP ? '<div class="dh-session-training">' + treinoP + '</div>' : "") + '</div>' +
+        '<div class="dh-session-actions"><button type="button" class="btn sec" data-abreperfil="' + esc(prox.alunoId) + '">Abrir ficha</button>' +
+        (hojeP ? '<button type="button" class="btn" data-feita="' + esc(prox.id) + '">Feita</button><button type="button" class="btn sec" data-faltou="' + esc(prox.id) + '">Faltou</button>' : "") + '</div></div>';
+    })() : '<p class="muted">Nenhuma próxima sessão agendada.</p>';
+    if (agendaDash.antigas) $("bHojeP").insertAdjacentHTML("beforeend", '<div class="dh-pending"><span>' +
+      S.plural(agendaDash.antigas, "sessão anterior sem registro", "sessões anteriores sem registro") +
+      '</span><button type="button" class="btn sec mini" data-dh-nav="agenda">Conferir na agenda</button></div>');
     // ---- WhatsApp de hoje: mensagens prontas, cada uma sai com um toque ----
     var filaZ = filaZapDe(st);
     zapFilaCache = filaZ; // o botão Foto precisa achar o texto e a imagem do item
@@ -19596,6 +19591,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var zapOfi = zapApiOn(st); // com a API da Meta ligada, o Enviar manda direto
     // v759: token da Meta morto — a fila volta pro manual e DIZ por quê
     var zapParou = !!(zapApiCfg(st).ligado && zapApiCfg(st).falhou);
+    if ($("dZapCount")) $("dZapCount").textContent = (st.config || {}).zapFilaOff ? "Fila desligada" : S.plural(filaZ.length, "mensagem", "mensagens");
     $("bZapP").innerHTML = (st.config || {}).zapFilaOff
       ? "Fila desligada — dá pra ligar de volta nas Configurações."
       : filaZ.length ? filaZ.map(function (z) {
@@ -19660,13 +19656,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (nuvemR && bd.pedidos) radar.push('<div class="drad"><div class="dav2">' + "\u23F1" + '</div><div style="min-width:0;">' +
       '<div class="dnm">' + S.plural(bd.pedidos, "pedido de horário", "pedidos de horário") + '</div><div class="dfi">esperando você</div></div>' +
       '<div class="dac"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></div></div>');
-    var cabR = $("dashRadar") && $("dashRadar").querySelector("h2");
-    if (cabR) cabR.innerHTML = "Radar de retenção" + (radar.length ?
-      '<span style="float:right;font-size:12px;font-weight:800;color:var(--tk-aten);text-transform:none;letter-spacing:0;">' +
-      (nSumindo ? nSumindo + " sumindo" : "") + (nSumindo && radar.length > nSumindo ? " · " : "") +
-      (radar.length > nSumindo ? S.plural(radar.length - nSumindo, "pendência", "pendências") : "") + "</span>" : "");
     $("bRadarP").innerHTML = radar.length ? radar.join("")
-      : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
+      : '<p class="muted" data-dh-radar-vazio>Nenhuma pendência de acompanhamento.</p>';
     acPendencias(st);
     // carteira: MRR, ticket, contratos
     /* ---- Relatórios -> Do dia a dia (v713): os cards do MÊS seguem as
@@ -19956,7 +19947,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var vazio = grade.querySelector("[data-vazio]");
     if (!total) {
       if (!grade.children.length) pintaResolver(load()); // tirou o chat e não sobrou nada: volta o ✓
-      else { var tt0 = el.querySelector(".dtit span"); if (tt0 && !vazio) tt0.textContent = S.plural(grade.children.length, "coisa", "coisas"); }
+      else atualizaResolverResumo();
       return;
     }
     if (vazio) vazio.remove();
@@ -19967,13 +19958,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var d = document.createElement("div");
     d.className = "dcard";
     d.setAttribute("data-chatcard", "1");
+    d.setAttribute("data-chat-total", String(total));
     d.innerHTML = '<div class="dsel" style="color:var(--pt-roxo-claro);"><i></i>SEM RESPOSTA</div>' +
       '<div><div class="dqu">' + S.plural(total, "mensagem no chat", "mensagens no chat") + "</div>" +
       '<div class="dpq">' + esc(nomes) + (toks.length > 3 ? " e mais " + (toks.length - 3) : "") + "</div></div>" +
       '<div class="dacs"><button type="button" class="btn ' + (grade.children.length ? "sec" : "") + '" id="dVaiChat">Abrir chat</button></div>';
     grade.appendChild(d);
-    var t = el.querySelector(".dtit span");
-    if (t) t.textContent = S.plural(grade.children.length, "coisa", "coisas");
+    atualizaResolverResumo();
   }
   function resolverChat(forca) {
     var nuvem = S.cloud && S.cloud();
@@ -20104,20 +20095,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .sort(function (x, y) { return x.d < y.d ? 1 : -1; });
   }
   function pintaSino(st) {
-    var el = $("dashSino"); if (!el) return;
+    var el = $("dashSino"), corpo = $("bSinoP"); if (!el || !corpo) return;
     var ev = sinoEventos(st);
-    if (!ev.length) { el.innerHTML = ""; el.hidden = true; return; }
+    if ($("dSinoCount")) $("dSinoCount").textContent = S.plural(ev.length, "novidade", "novidades");
+    if (!ev.length) { corpo.innerHTML = ""; el.hidden = true; return; }
     var vis = ev.slice(0, 10);
     el.hidden = false;
-    el.innerHTML = '<div class="card" style="margin-bottom:14px;">' +
-      '<h2>🔔 Enquanto você esteve fora <span class="muted" style="font-weight:600;font-size:12px;">' +
-      S.plural(ev.length, "novidade", "novidades") + "</span></h2>" +
+    corpo.innerHTML =
       vis.map(function (e) {
         return '<div class="sessao-pt"><span>' + e.t + "</span>" +
           '<span class="muted" style="margin-left:auto;font-size:12px;white-space:nowrap;">' + S.fmtData(e.d) + "</span></div>";
       }).join("") +
       (ev.length > 10 ? '<div class="muted" style="font-size:12px;margin-top:4px;">e mais ' + (ev.length - 10) + "</div>" : "") +
-      '<div style="margin-top:10px;"><button type="button" class="btn sec mini" data-sinook="1">✓ Visto — limpar</button></div></div>';
+      '<div><button type="button" class="btn sec mini" data-sinook="1">✓ Visto — limpar</button></div>';
   }
   $("dashSino").addEventListener("click", function (e) {
     if (!e.target.closest("[data-sinook]")) return;
@@ -20234,44 +20224,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var dt = new Date(hoje + "T12:00");
     var dia = DSEM[dt.getDay()].charAt(0).toUpperCase() + DSEM[dt.getDay()].slice(1) + ", " + dt.getDate() + " de " + MES[dt.getMonth()];
-    var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; });
-    var feitasHj = sesHoje.filter(function (x) { return x.feita; }).length;
-    /* o painel guarda o nome do STUDIO, não o do professor — "Bom treino,
-     * Studio TORQUE" soaria errado, então a saudação vai sem nome. */
-    var sub = S.plural(sesHoje.length, "sessão hoje", "sessões hoje") +
-      (sesHoje.length ? " · " + feitasHj + " já " + (feitasHj === 1 ? "feita" : "feitas") : "") +
-      " · " + S.fmtBRL(d.fat) + " no mês";
-    // a próxima sessão do dia: a primeira ainda não marcada que não passou
-    var prox = sesHoje.filter(function (x) { return !x.feita && !x.faltou && x.hora; })
-      .sort(function (a, b) { return a.hora < b.hora ? -1 : 1; })
-      .filter(function (x) { return faltaPra(x.hora).min > -60; })[0] || null;
-    /* o desenho (tela 1a) saúda pelo primeiro nome. O onboarding pergunta
-     * "como você se chama?" e guarda em config.nome — o mesmo nome que o
-     * cabeçalho usa em "Studio Léo". Sem nome, a saudação vai sozinha. */
-    var proNome = primeiroNomeProf(); // v755: um helper só (nunca "Bom treino, Studio")
-    var aP = prox ? st.alunos.find(function (x) { return x.id === prox.alunoId; }) : null;
-    var fp = prox ? faltaPra(prox.hora) : null;
-    el.className = "dtopo";
-    el.innerHTML = '<div class="dlin">' +
-      '<div style="min-width:0;">' +
-      '<div class="ddata">' + esc(dia) + "</div>" +
-      "<h2>Bom treino" + (proNome ? ", " + esc(proNome) : "") + "</h2>" +
-      '<div class="dsub">' + sub + "</div></div>" +
-      '<div class="dacoes">' +
-      '<button type="button" class="dbt" id="dNovoAluno" title="Novo aluno" aria-label="Novo aluno"><span class="dmais">+</span><span class="drot">Novo aluno</span></button>' +
-      '<button type="button" class="dbt sec" id="dMarcaSes">Marcar sessão</button>' +
-      "</div></div>" +
-      (aP ? '<div class="dagora">' +
-        '<div class="dq"><div class="dk">' + esc(fp.txt) + '</div><div class="dh">' + esc(prox.hora) + "</div></div>" +
-        '<div class="dav">' + esc(String(aP.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
-        '<div style="min-width:0;"><div class="dnome">' + esc(aP.nome) + '</div><div class="dfic">' + treinoDoDiaTxt(st, aP.id) + "</div></div>" +
-        '<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<button type="button" class="dbt" data-abreperfil="' + aP.id + '" style="height:40px;">Abrir ficha</button>' +
-        '<button type="button" class="dbt sec" data-feita="' + prox.id + '" style="height:40px;">Feita</button>' +
-        "</div></div>" : "");
+    var proNome = primeiroNomeProf();
+    function atalho(id, nome, desenho, financeiro) {
+      return '<button type="button" class="dh-shortcut" id="' + id + '"' + (financeiro ? ' data-dh-financeiro' : '') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + desenho + '</svg><span>' + nome + '</span></button>';
+    }
+    el.className = "dh-header";
+    el.innerHTML = '<div class="dh-heading"><div class="dh-date">' + esc(dia) + '</div>' +
+      '<h2 class="dh-greeting">Bom treino' + (proNome ? ", " + esc(proNome) : "") + '</h2></div>' +
+      '<nav class="dh-shortcuts" aria-label="Ações rápidas">' +
+      atalho("dNovoAluno", "Novo aluno", '<circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M19 8v6m-3-3h6"/>') +
+      atalho("dMarcaSes", "Agendar", '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-9 3v4m-2-2h4"/>') +
+      atalho("dMontarTreino", "Montar treino", '<path d="M6 3v18M3 8v8m15-13v18m3-13v8M6 12h12"/>') +
+      atalho("dVerRel", "Relatórios", '<path d="M4 3v18h17M9 16v-5m5 5V6m5 10v-8"/>', true) + '</nav>';
+    reaplicaPapelDash();
   }
-  /* Resolver hoje: as 3 pendências que valem um toque agora. A ordem é por
-   * urgência de dinheiro → risco de perder o aluno → conversa parada. Cada card
+  /* Resolver hoje: prioridades com ação, começando pelos relatos de dor. Cada card
    * usa a MESMA regra da tela dona do assunto (atraso usa dividaDe/atrasoTol,
    * igual à lista "Quem ainda não pagou"), senão o Início contaria diferente. */
   var ZAPSVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z"></path></svg>';
@@ -20297,6 +20264,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     out.sort(function (x, y) { return x.d < y.d ? 1 : -1; });
     return out;
+  }
+  var dashResolverExpandido = false, dashPapelAux = null;
+  function atualizaResolverResumo() {
+    var el = $("dashResolver"), grade = el && el.querySelector(".dgrid");
+    if (!grade) return;
+    var cards = Array.prototype.slice.call(grade.querySelectorAll(".dcard:not([data-vazio])"));
+    var visiveis = cards.filter(function (c) { return !c.hasAttribute("data-dh-role-hidden"); });
+    cards.forEach(function (c) {
+      c.hidden = c.hasAttribute("data-dh-role-hidden") || (!dashResolverExpandido && visiveis.indexOf(c) >= 2 && !c.hasAttribute("data-dorcard"));
+    });
+    var vazio = grade.querySelector("[data-vazio]");
+    if (visiveis.length && vazio) vazio.remove();
+    if (!visiveis.length && !vazio) grade.insertAdjacentHTML("beforeend", '<div class="dcard" data-vazio><div class="dsel" aria-hidden="true"></div><div><div class="dqu">Tudo em dia por aqui ✓</div><div class="dpq">Nenhuma pendência local para resolver.</div></div></div>');
+    var chat = grade.querySelector("[data-chatcard]"), nChat = chat && chat.hidden ? +chat.getAttribute("data-chat-total") || 0 : 0;
+    var contador = el.querySelector(".dtit span");
+    if (contador) contador.textContent = (visiveis.length ? S.plural(visiveis.length, "prioridade", "prioridades") : "nada pendente") +
+      (nChat ? " · " + S.plural(nChat, "mensagem no chat", "mensagens no chat") : "");
+    var mais = $("dResolverMais");
+    if (!mais) {
+      mais = document.createElement("button"); mais.id = "dResolverMais"; mais.type = "button"; mais.className = "dh-more";
+      el.appendChild(mais);
+    }
+    mais.hidden = visiveis.length <= 2;
+    mais.setAttribute("aria-expanded", String(dashResolverExpandido));
+    mais.textContent = dashResolverExpandido ? "Ver menos" : "Ver mais (" + Math.max(0, visiveis.length - 2) + ")";
+  }
+  function reaplicaPapelDash(aux) {
+    if (typeof aux === "boolean") dashPapelAux = aux;
+    else aux = typeof dashPapelAux === "boolean" ? dashPapelAux : !!(S.usuario && (S.usuario() || {}).papel === "funcionario");
+    var mes = $("dashMes"); if (mes) mes.style.display = "";
+    document.querySelectorAll("#vDash [data-dh-financeiro]").forEach(function (el) {
+      el.hidden = aux;
+      if (aux) el.setAttribute("data-dh-role-hidden", ""); else el.removeAttribute("data-dh-role-hidden");
+    });
+    atualizaResolverResumo();
   }
   function pintaResolver(st) {
     var el = $("dashResolver"); if (!el) return;
@@ -20335,7 +20337,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (atrasados[0]) {
       var v = atrasados[0];
       itens.push({
-        cor: "var(--pt-erro)", sel: "COBRANÇA VENCIDA",
+        cor: "var(--pt-erro)", sel: "COBRANÇA VENCIDA", financeiro: true,
         qu: esc(v.a.nome) + " · " + S.fmtBRL(v.dv.total),
         pq: (v.dv.meses > 1 ? S.plural(v.dv.meses, "mês em aberto", "meses em aberto") + " · vence dia " + v.ct.diaVenc
             : "Venceu dia " + v.ct.diaVenc + " — " + S.plural(diaHoje - v.ct.diaVenc, "dia atrás", "dias atrás")) +
@@ -20429,83 +20431,65 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * chat (antes ele desistia justamente aqui, e a tela garantia "sem
        * mensagem esperando resposta" com duas mensagens sem ler). O texto
        * não promete mais o que o painel ainda não conferiu na nuvem. */
-      el.className = "dres";
+      el.className = "dres dh-resolver";
       el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>nada pendente</span></div>' +
-        '<div class="dgrid"><div class="dcard" data-vazio><div class="dqu">Tudo em dia por aqui ✓</div>' +
-        '<div class="dpq">Sem cobrança vencida, ficha velha, dor relatada ou reavaliação atrasada.</div></div></div>';
+        '<div class="dgrid"><div class="dcard" data-vazio><div class="dsel" aria-hidden="true"></div><div><div class="dqu">Tudo em dia por aqui ✓</div>' +
+        '<div class="dpq">Nenhuma pendência local para resolver.</div></div></div></div>';
+      reaplicaPapelDash();
+      pintaChatPend();
       return;
     }
-    el.className = "dres";
+    el.className = "dres dh-resolver";
     el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>' +
       S.plural(itens.length, "coisa", "coisas") + "</span></div>" +
       '<div class="dgrid">' + itens.map(function (it, i) {
         /* so o PRIMEIRO card leva o botao cheio de roxo — e a hierarquia do
          * desenho (tela 02): o mais urgente puxa o olho, o resto e secundario */
         if (i > 0) it.acao = it.acao.replace('class="btn"', 'class="btn sec"');
-        return '<div class="dcard"' + (it.dor ? " data-dorcard" : "") + '><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
+        return '<div class="dcard"' + (it.dor ? " data-dorcard" : "") + (it.financeiro ? " data-dh-financeiro" : "") + '><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
           '<div><div class="dqu">' + it.qu + '</div><div class="dpq">' + it.pq + "</div></div>" +
           '<div class="dacs">' + it.acao + "</div></div>";
       }).join("") + "</div>";
+    reaplicaPapelDash();
+    pintaChatPend();
   }
-  /* O mês, na coluna da direita da tela 1a: faturamento contra a meta com a
-   * projeção pelo ritmo de agora, e quatro números que o professor olha de
-   * relance — a receber, sessões, alunos ativos e presença. */
+  /* Visão geral: atividade de hoje e valores financeiros com período explícito. */
   function pintaMesDash(st, d) {
     var el = $("dashMes"); if (!el) return;
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
-    var diaAtual = +hoje.slice(8, 10) || 1;
-    var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
-    var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    var metas = (st.config || {}).metasPT || {};
-    var meta = +metas.fat || 0;
-    var proj = Math.round(d.fat / diaAtual * diasNoMes);
-    var pct = meta ? Math.min(100, Math.round(d.fat / meta * 100)) : 0;
-    // mês passado, pra dizer se está melhor ou pior (v747: compMesAnterior, a
-    // mesma conta do Financeiro — até o mesmo dia, nunca mês parcial × cheio)
-    var cmp = compMesAnterior(st, mes, diaAtual, d.fat);
-    var fatAnt = cmp.fatAte, vs = cmp.vs;
-    // a receber e o que já venceu (v747: "vencido" pela função-fonte
-    // cobrancaVencida — o mês anterior em aberto conta desde o dia 1)
-    /* v756: a conta era desta tela e SÓ dela — `if (!ct) return` deixava de
-     * fora quem não tem contrato cadastrado, então o Início dizia R$ 1.200 e o
-     * Financeiro R$ 1.800 no mesmo dia. Agora as duas telas (e o Relatório)
-     * leem o mesmo aReceberDe. */
+    // As contas financeiras continuam nas mesmas funções do Financeiro.
     var rec = aReceberDe(st);
     var aReceber = rec.acumulado, vencidos = rec.vencido;
-    var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
-    var marcadas = sesMes.filter(function (x) { return x.feita || x.faltou; }).length;
-    var pres = marcadas ? Math.round(d.feitas / marcadas * 100) : 0;
+    var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; });
+    var feitasHoje = sesHoje.filter(function (x) { return x.feita; }).length;
     var novosMes = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === mes; }).length;
-    function kpi(rot, val, sub, cor) {
-      return '<div><div class="dk">' + rot + '</div><div class="dv">' + val + "</div>" +
-        '<div class="ds"' + (cor ? ' style="color:' + cor + ';"' : "") + ">" + sub + "</div></div>";
+    function kpi(rot, val, sub, aba, financeiro) {
+      return '<button type="button" class="dh-kpi" data-dh-nav="' + aba + '"' + (financeiro ? ' data-dh-financeiro' : '') + '>' +
+        '<span class="dh-kpi-label">' + rot + '</span><strong class="dh-kpi-value">' + val + '</strong>' +
+        '<span class="dh-kpi-note">' + sub + '</span></button>';
     }
-    el.className = "card dmes";
-    el.innerHTML = '<div class="dtop"><b>' + MES[+mes.slice(5, 7) - 1].replace(/^./, function (c) { return c.toUpperCase(); }) +
-      '</b><span>até hoje</span>' +
-      (fatAnt ? '<span style="margin-left:auto;font-weight:800;color:' + (vs >= 0 ? "var(--tk-ok)" : "var(--tk-erro)") + ';" title="' + esc(cmp.rot) + '">' +
-        (vs >= 0 ? "+" : "") + vs + "% vs " + cmp.nome + '<small style="font-weight:600;"> até dia ' + diaAtual + "</small></span>" : "") + "</div>" +
-      '<div style="display:flex;align-items:baseline;gap:9px;">' +
-      '<div class="dfat">' + S.fmtBRL(d.fat) + "</div>" +
-      (meta ? '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">de ' + S.fmtBRL(meta) + "</div>" : "") + "</div>" +
-      (meta ? '<div class="dbarra"><i style="width:' + pct + '%;"></i></div>' : '<div style="height:10px;"></div>') +
-      '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">No ritmo de agora fecha em <b style="color:var(--tk-roxoTx2);">' +
-      S.fmtBRL(proj) + "</b>" + (meta ? "" : ' <button type="button" class="btn sec mini" id="dVerRel2" style="height:26px;margin-left:10px;vertical-align:1px;">definir meta</button>') + "</div>" +
-      '<div class="dkpis">' +
-      kpi("A RECEBER", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "nada vencido", vencidos ? "var(--tk-erro)" : "") +
-      kpi("SESSÕES", d.feitas, metas.ses ? "meta " + metas.ses : S.plural(sesMes.length, "marcada", "marcadas") + " no mês") +
-      kpi("ALUNOS ATIVOS", d.ativos.length, novosMes ? "+" + novosMes + " no mês" : "sem entrada este mês", novosMes ? "var(--tk-ok)" : "") +
-      kpi("PRESENÇA", marcadas ? pres + "%" : "—", marcadas ? S.plural(d.faltas, "falta", "faltas") : "sem sessão marcada") +
-      "</div>";
+    el.className = "dh-kpis";
+    el.innerHTML = kpi("Alunos ativos", d.ativos.length, novosMes ? "+" + novosMes + " neste mês" : "Sua carteira atual", "alunos") +
+      kpi("Sessões hoje", sesHoje.length, S.plural(feitasHoje, "feita", "feitas"), "agenda") +
+      kpi("Recebido neste mês", S.fmtBRL(d.fat), "Pagamentos registrados", "pagamentos", true) +
+      kpi("A receber · acumulado", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "Nenhum valor vencido", "pagamentos", true);
+    reaplicaPapelDash();
   }
   // um clique só pra tudo do topo: trocar de modo e os atalhos
   document.addEventListener("click", function (e) {
-    if (e.target.id === "dVerRel" || e.target.id === "dVerRel2") { vaiAba("relatorios"); if (window.__relAba) window.__relAba("geral"); return; }
-    if (e.target.id === "dVerSemana") { vaiAba("agenda"); return; }
-    if (e.target.id === "dNovoAluno") { vaiAba("alunos"); var nb = $("btnNovoAluno"); if (nb) nb.click(); return; }
-    if (e.target.id === "dMarcaSes") { vaiAba("agenda"); return; }
-    if (e.target.id === "dVaiChat") { vaiAba("chat"); return; }
+    var atalho = e.target.closest && e.target.closest("#dVerRel,#dVerRel2,#dVerSemana,#dNovoAluno,#dMarcaSes,#dMontarTreino,#dVaiChat,#dResolverMais,[data-dh-nav]");
+    if (atalho) {
+      var idAtalho = atalho.id, destino = atalho.getAttribute("data-dh-nav");
+      if (destino) { vaiAba(destino); return; }
+      if (idAtalho === "dVerRel" || idAtalho === "dVerRel2") { vaiAba("relatorios"); if (window.__relAba) window.__relAba("geral"); return; }
+      if (idAtalho === "dVerSemana") { vaiAba("agenda"); return; }
+      if (idAtalho === "dNovoAluno") { vaiAba("alunos"); var nb = $("btnNovoAluno"); if (nb) nb.click(); return; }
+      if (idAtalho === "dMarcaSes") { vaiAba("agenda"); var ag = $("agMarcar"); if (ag) ag.click(); return; }
+      if (idAtalho === "dMontarTreino") { vaiAba("treinos"); return; }
+      if (idAtalho === "dVaiChat") { vaiAba("chat"); return; }
+      if (idAtalho === "dResolverMais") { dashResolverExpandido = !dashResolverExpandido; atualizaResolverResumo(); return; }
+    }
     var mt = e.target.closest && e.target.closest("[data-montatreino]");
     if (mt) { vaiMontarTreino(mt.getAttribute("data-montatreino")); return; } // v747: o mesmo caminho da ficha
     // v729: "Nova avaliação" do Resolver hoje — Avaliações com o aluno escolhido
@@ -20526,7 +20510,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
   });
-  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra, dor: relatosComDor }; // testes
+  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra, dor: relatosComDor, agenda: resumoAgendaDash }; // testes
   // v695: quanto vale a hora, pra teste — a mesma conta do card Indicadores
   window.__horaPT = function (mes9) {
     var st = load();
@@ -22189,8 +22173,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var b9 = document.querySelector('#abas [data-a="' + aba9 + '"]');
       if (b9) b9.style.display = aux ? "none" : "";
     });
-    var dm9 = $("dashMes");
-    if (dm9) dm9.style.display = aux ? "none" : "";
+    reaplicaPapelDash(aux);
     var nota9 = $("papelNota");
     if (!nota9) {
       nota9 = document.createElement("div");

@@ -2314,22 +2314,27 @@ async function abaPt(p, a) {
   {
     const stAntesC = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
     const hoje = diaISO(new Date());
-    await p.evaluate((hoje) => {
+    const horaSc1 = await p.evaluate((hoje) => {
       const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       const j = st.alunos.find((a) => a.nome === "João Cliente");
       j.zap = j.zap || "31999990000";
-      st.sessoes.push({ id: "sc1", alunoId: j.id, data: hoje, hora: "07:30", feita: false });
+      const proxima = new Date(Date.now() + 15 * 60000);
+      const hora = diaISO(proxima) === hoje
+        ? String(proxima.getHours()).padStart(2, "0") + ":" + String(proxima.getMinutes()).padStart(2, "0") : "23:59";
+      st.sessoes = st.sessoes.filter((x) => x.data !== hoje);
+      st.sessoes.push({ id: "sc1", alunoId: j.id, data: hoje, hora, feita: false });
       const d6 = new Date(); d6.setDate(d6.getDate() - 6);
       st.alunos.push({ id: "axPar", nome: "Parado Silva", ativo: true, zap: "31988887777" });
       st.sessoes.push({ id: "sc2", alunoId: "axPar", data: diaISO(d6), feita: true });
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      return hora;
     }, hoje);
     await p.reload();
     await p.waitForTimeout(700);
 
-    // card Seu dia hoje no Início
+    // O Início mostra a próxima sessão; a agenda completa fica na Agenda.
     const hojeCard = await p.evaluate(() => document.getElementById("bHojeP").innerHTML);
-    ok(/07:30/.test(hojeCard) && /João Cliente/.test(hojeCard) && /data-feita="sc1"/.test(hojeCard), "card Seu dia hoje lista a sessão com botão Feita");
+    ok(hojeCard.includes(horaSc1) && /João Cliente/.test(hojeCard) && /data-feita="sc1"/.test(hojeCard), "próxima sessão mostra o horário correto, o aluno e o botão Feita");
 
     // toque no nome → treino do dia + atalhos
     await p.evaluate(() => document.querySelector("#bHojeP [data-vernome]").click());
@@ -2348,11 +2353,8 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.find((x) => x.id === "sc1").feita === true),
       "marcar Feita direto do card do Início funciona");
 
-    /* ---- Início repaginado (canvas "Painel do professor", tela 1a) ----
-     * O que o desenho promete: faixa roxa com a PRÓXIMA sessão e as duas ações,
-     * três cards "Resolver hoje" que já carregam o botão, linha do tempo com a
-     * próxima destacada, e o mês na coluna da direita. Os cards que não mudam
-     * decisão hoje saíram pra Relatórios. */
+    /* Início compacto: atalhos, visão geral e uma próxima sessão.
+     * A lista completa permanece na Agenda; os KPIs usam as contas canônicas. */
     const ini1a = await p.evaluate(() => {
       // uma sessão daqui a ~90 min, pra existir "próxima" (as do bloco acima já
       // foram marcadas). Se a hora virar o dia, cai pro fim da noite mesmo.
@@ -2367,38 +2369,43 @@ async function abaPt(p, a) {
       window.__dashPT.render(st2);
       const topo = document.getElementById("dashTopo");
       const dia = document.getElementById("bHojeP");
-      const prox = dia.querySelector(".dlinha.prox");
+      const prox = dia.querySelector(".dh-session");
       return {
-        temTopo: !!topo && /dtopo/.test(topo.className),
+        temTopo: !!topo && topo.classList.contains("dh-header"),
         saudacao: (topo.querySelector("h2") || {}).textContent || "",
-        sub: (topo.querySelector(".dsub") || {}).textContent || "",
-        agora: !!topo.querySelector(".dagora"),
-        kicker: (topo.querySelector(".dagora .dk") || {}).textContent || "",
-        acoesTopo: [...topo.querySelectorAll(".dacoes button")].map((b) => b.textContent.trim()),
-        abrirFicha: !!topo.querySelector(".dagora [data-abreperfil]"),
-        feitaNoTopo: !!topo.querySelector(".dagora [data-feita]"),
-        linhas: dia.querySelectorAll(".dlinha").length,
-        proxNome: prox ? (prox.querySelector(".dnm") || {}).textContent : "",
-        feitasEsmaecidas: dia.querySelectorAll(".dlinha.feita").length,
+        data: (topo.querySelector(".dh-date") || {}).textContent || "",
+        agora: !!prox,
+        horario: (dia.querySelector("time") || {}).textContent || "",
+        dataHora: dia.querySelector("time") && dia.querySelector("time").getAttribute("datetime"),
+        esperado: diaISO(new Date()) + "T" + hh,
+        acoesTopo: [...topo.querySelectorAll(".dh-shortcut")].map((b) => b.textContent.trim()),
+        abrirFicha: !!dia.querySelector("[data-abreperfil]"),
+        feitaNoTopo: !!dia.querySelector('[data-feita="sc-prox"]'),
+        linhas: dia.querySelectorAll(".dh-session").length,
+        proxNome: prox ? (prox.querySelector(".dh-session-name") || {}).textContent : "",
+        semTimeline: !document.querySelector("#vDash .dlinha"),
         verSemana: !!document.getElementById("dVerSemana"),
       };
     });
-    ok(ini1a.temTopo && /Bom treino/.test(ini1a.saudacao) && /sess/.test(ini1a.sub),
-      "🎨 1a: o Início abre com a faixa roxa do dia (" + ini1a.saudacao.trim() + ")");
-    ok(ini1a.agora && ini1a.abrirFicha && ini1a.feitaNoTopo && /AGORA|MAIS TARDE|EM |ACONTECENDO/.test(ini1a.kicker),
-      "🎨 1a: a próxima sessão vem na faixa com Abrir ficha e Feita (" + ini1a.kicker + ")");
-    ok(ini1a.acoesTopo.length === 2 && /Novo aluno/.test(ini1a.acoesTopo[0]) && /Marcar sessão/.test(ini1a.acoesTopo[1]),
-      "🎨 1a: as duas ações do topo são Novo aluno e Marcar sessão (a 1b foi descartada, não há Turno|Placar)");
-    ok(ini1a.linhas >= 2 && !!ini1a.proxNome && ini1a.feitasEsmaecidas >= 1 && ini1a.verSemana,
-      "🎨 1a: a linha do tempo destaca a próxima e esmaece as feitas (" + ini1a.linhas + " linhas)");
-    // o mês, na coluna da direita
+    ok(ini1a.temTopo && /Bom treino/.test(ini1a.saudacao) && !!ini1a.data,
+      "🎨 Início compacto: saudação e data no cabeçalho (" + ini1a.saudacao.trim() + ")");
+    ok(ini1a.agora && ini1a.abrirFicha && ini1a.feitaNoTopo && ini1a.dataHora === ini1a.esperado,
+      "🎨 Início compacto: próxima sessão conserva data/hora, Abrir ficha e Feita (" + ini1a.horario + ")");
+    ok(JSON.stringify(ini1a.acoesTopo) === JSON.stringify(["Novo aluno", "Agendar", "Montar treino", "Relatórios"]),
+      "🎨 Início compacto: quatro atalhos para cadastro, agenda, prescrição e relatórios");
+    ok(ini1a.linhas === 1 && !!ini1a.proxNome && ini1a.semTimeline && ini1a.verSemana,
+      "🎨 Início compacto: uma próxima sessão e atalho para a agenda completa");
     const mes1a = await p.evaluate(() => {
       const el = document.getElementById("dashMes");
-      return { cls: el.className, txt: el.textContent,
-        kpis: [...el.querySelectorAll(".dkpis .dk")].map((x) => x.textContent) };
+      const S = window.MTStore, st = S.read("ptStudio", {}), hoje = S.todayISO();
+      const d = window.__dashDados(hoje.slice(0, 7));
+      return { cls: el.className,
+        kpis: [...el.querySelectorAll(".dh-kpi-label")].map((x) => x.textContent),
+        valores: [...el.querySelectorAll(".dh-kpi-value")].map((x) => x.textContent),
+        esperado: [String(d.ativos.length), String(st.sessoes.filter((x) => x.data === hoje).length), S.fmtBRL(d.fat), S.fmtBRL(window.__aReceberDe(st).acumulado)] };
     });
-    ok(/dmes/.test(mes1a.cls) && /No ritmo de agora fecha em/.test(mes1a.txt),
-      "🎨 1a: a coluna da direita traz o mês com a projeção pelo ritmo de agora");
+    ok(/dh-kpis/.test(mes1a.cls) && JSON.stringify(mes1a.valores) === JSON.stringify(mes1a.esperado),
+      "🎨 Início compacto: visão geral usa os totais canônicos de alunos, sessões e financeiro");
 
     /* ---- v741: os botões do redesenho RESPONDEM (antes só existiam) ----
      * data-abreperfil / data-feita / data-pgm / data-app nasceram em telas
@@ -2409,12 +2416,12 @@ async function abaPt(p, a) {
       const out = {};
       const st0 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
       const alvo = st0.alunos[0];
-      // Abrir ficha da faixa roxa
+      // Abrir ficha da próxima sessão
       document.getElementById("pfTitulo").textContent = "";
-      document.querySelector("#dashTopo .dagora [data-abreperfil]").click();
+      document.querySelector("#bHojeP [data-abreperfil]").click();
       out.fichaAbriu = document.getElementById("pfTitulo").textContent === alvo.nome;
-      // Feita da faixa roxa
-      document.querySelector('#dashTopo .dagora [data-feita="sc-prox"]').click();
+      // Feita da próxima sessão
+      document.querySelector('#bHojeP [data-feita="sc-prox"]').click();
       await new Promise((r) => setTimeout(r, 150));
       out.feitaMarcou = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.find((x) => x.id === "sc-prox").feita === true;
       // Cobrar / Mandar link (data-pgm) fora dos containers antigos: o handler
@@ -2446,7 +2453,7 @@ async function abaPt(p, a) {
       out.chatAbriu = document.getElementById("vChat").classList.contains("chat-aberto");
       return out;
     });
-    ok(v741.fichaAbriu && v741.feitaMarcou, "🖱️ v741: Abrir ficha e Feita da faixa roxa do Início respondem ao clique");
+    ok(v741.fichaAbriu && v741.feitaMarcou, "🖱️ v741: Abrir ficha e Feita da próxima sessão respondem ao clique");
     ok(v741.pgmRodou && v741.appRodou, "🖱️ v741: Cobrar/Mandar link e Mandar app respondem fora dos containers antigos");
     ok(v741.valorSemContrato, "🖱️ v741: Cobrar de quem não tem contrato no mês cobra o valor do cadastro, não R$ 0");
     ok(v741.montaAluno && v741.chatAbriu, "🖱️ v741: Montar treino e Chat da ficha levam o aluno junto (select certo, aba Fichas)");
@@ -2742,19 +2749,23 @@ async function abaPt(p, a) {
         out.imp = n["Maria Silva"] === "31999998888" && n["João Pedro"] === "31988887777" && n["Pedro Souza"] === "" &&
           n["Ana"] === "3199991111" && n["Beatriz"] === "31966665555";
       }
-      // 7) Seu dia hoje: o cabeçalho zera junto com o corpo
+      // 7) Próxima sessão: retirar a última sessão limpa o corpo e mantém a porta da Agenda.
       {
         // o estado real da suíte (o render do Início lê muitos campos), só com as sessões de hoje trocadas
         const st = JSON.parse(guardado);
-        st.sessoes = (st.sessoes || []).filter((x) => x.data !== hoje);
+        st.sessoes = [];
         st.alunos.push({ id: "v7d", nome: "Dia Teste", ativo: true });
-        st.sessoes.push({ id: "s7d", alunoId: "v7d", data: hoje, hora: "20:43" });
+        const agora = new Date();
+        const hora = String(agora.getHours()).padStart(2, "0") + ":" + String(agora.getMinutes()).padStart(2, "0");
+        st.sessoes.push({ id: "s7d", alunoId: "v7d", data: hoje, hora });
         window.__dashPT.render(st);
-        const com = document.querySelector("#dashDia h2").textContent;
+        const com = !!document.querySelector('#bHojeP [data-feita="s7d"]');
         st.sessoes = st.sessoes.filter((x) => x.id !== "s7d");
         window.__dashPT.render(st);
-        const sem = document.querySelector("#dashDia h2").textContent;
-        out.cabDia = /0 de 1 feitas/.test(com) && !/feitas/.test(sem) && /Ver semana/.test(sem);
+        const sem = document.getElementById("bHojeP").textContent;
+        out.cabDia = com && /Nenhuma próxima sessão/.test(sem) && !/Dia Teste/.test(sem) &&
+          document.querySelectorAll("#dashDia #dVerSemana").length === 1 &&
+          /Próxima sessão/.test(document.querySelector("#dashDia h2").textContent);
       }
       // 8) Resolver hoje: estado vazio tem .dgrid; o card do chat troca o ✓, não duplica e apaga o .cnt
       {
@@ -2855,7 +2866,7 @@ async function abaPt(p, a) {
     ok(v747.chipLetra, "🔤 v747: o chip da Semana usa letraFicha — a mesma letra que o app mostra");
     ok(v747.servicoNaoQuita, "💆 v747: venda de serviço (desc) não vira 'Pago dia N' na coluna Plano");
     ok(v747.imp, "📥 v747: importar tira o +55, ignora CPF e separador solto no nome");
-    ok(v747.cabDia, "📆 v747: o cabeçalho de Seu dia hoje zera quando as sessões do dia somem");
+    ok(v747.cabDia, "📆 v747: retirar a última sessão limpa o resumo sem perder o atalho para Agenda");
     ok(v747.vazioGrid && v747.chatCard && v747.chatZera, "💬 v747: o card SEM RESPOSTA entra no estado vazio, não duplica e o .cnt da aba Chat some ao zerar");
     ok(v747.freio, "☁️ v747: resolverChat usa a cópia de 10 min, só lê com forca e pede só de=aluno/lida=false (" + v747.freioDet + ")");
     ok(v747.sino && v747.vistoFuturo, "🔔 v747: o sino só lista baixa automática e aluno de outro caminho, agrupa treinos e guarda o visto pela data do evento futuro");
@@ -3065,8 +3076,8 @@ async function abaPt(p, a) {
     ok(v748.choque && /if \(!confirmaAgendar\(st, datasF, hora\)\) return;/.test(htmlV748), "⚠️ v748: a fixa passa pelos mesmos avisos de bloqueio e choque do agendamento normal");
     ok(v748.hora, "⏰ v748: a hora digitada é normalizada pra HH:MM (7:30, 7h05) e o resto é recusado");
     ok(v748.badgeAg, "🔔 v748: confirmar/recusar pedido atualiza o badge da Agenda na hora");
-    ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
-      "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
+    ok(JSON.stringify(mes1a.kpis) === JSON.stringify(["Alunos ativos", "Sessões hoje", "Recebido neste mês", "A receber · acumulado"]),
+      "🎨 Início compacto: rótulos distinguem hoje, mês e valores acumulados");
     // os cards que saíram do Início foram pra Relatórios → Do dia a dia
     const mudou = await p.evaluate(() => {
       const noDash = (id) => !!document.querySelector("#vDash #" + id);
@@ -3075,13 +3086,13 @@ async function abaPt(p, a) {
         saiuDoDash: !noDash("bNiverP") && !noDash("mtFatP") && !noDash("relAlertas"),
         chegouNoRel: noRel("bNiverP") && noRel("mtFatP") && noRel("relAlertas"),
         temSubAba: !!document.querySelector('#relAbas [data-rela="geral"]'),
-        nota: (document.querySelector("#vDash .dnota") || {}).textContent || "",
+        nota: (document.querySelector("#vDash #dVerRel") || {}).textContent || "",
       };
     });
     ok(mudou.saiuDoDash && mudou.chegouNoRel && mudou.temSubAba,
       "🎨 1a: aniversários, metas, indicadores e alertas saíram do Início e moram em Relatórios → Do dia a dia");
     ok(/Relatórios/.test(mudou.nota),
-      "🎨 1a: o Início explica pra onde os cards foram, com atalho");
+      "🎨 Início compacto: o atalho Relatórios mantém os indicadores detalhados acessíveis");
     // barra lateral: as 6 do dia a dia em cima, o resto sob MENOS USADO
     const menu1a = await p.evaluate(() => {
       const bs = [...document.querySelectorAll("#abas button[data-a]")];
@@ -4341,8 +4352,11 @@ async function abaPt(p, a) {
     st.alunos.push({ id: "bm-a", nome: "Botao Msg", ativo: true, zap: "31966660001", desde: "2026-01-01" });
     st.sessoes.push({ id: "bm-s1", alunoId: "bm-a", data: hoje, hora: "06:00", faltou: true });
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
-    window.__relPT(); // repinta o Início (Seu dia hoje) com o modelo custom
-    const hojeHtml = document.getElementById("bHojeP").innerHTML;
+    window.__agAba("sessoes"); window.__agDia(hoje);
+    document.querySelector('#listaSessoes [data-smais="bm-s1"]').click();
+    const faltaAcoes = document.querySelector('#listaSessoes [data-sacoes="bm-s1"]');
+    const faltaHtml = faltaAcoes.innerHTML;
+    const faltaVisivel = !faltaAcoes.hidden;
     window.__encaixe.abre(hoje, "19:00", "Teste");
     const encHtml = document.getElementById("agEncaixe").innerHTML;
     window.__encaixe.fecha();
@@ -4355,11 +4369,11 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
     window.__relPT();
     return {
-      falta: /FALTACUSTOM%20Botao/.test(hojeHtml),
+      falta: faltaVisivel && /FALTACUSTOM%20Botao/.test(faltaHtml),
       encaixe: /VAGACUSTOM/.test(encHtml) && /19%3A00|19:00/.test(encHtml),
     };
   });
-  ok(bmsg.falta, "✍️ o Cobrar aula da falta usa o modelo editável (texto custom no link)");
+  ok(bmsg.falta, "✍️ Agenda: Cobrar aula aparece nas ações da falta e usa o modelo editável");
   ok(bmsg.encaixe, "✍️ o Oferecer a vaga usa o modelo editável, com {dia} e {hora}");
   // a lista de Configurações mostra as mensagens de botão (com Editar, sem liga/desliga)
   await abaPt(p, "config");
@@ -4419,16 +4433,27 @@ async function abaPt(p, a) {
     out.escondidas = esc9.every((a) => document.querySelector('#abas [data-a="' + a + '"]').style.display === "none");
     out.ficam = ["dash", "alunos", "agenda", "treinos", "chat", "avaliacoes"].every(
       (a) => document.querySelector('#abas [data-a="' + a + '"]').style.display !== "none");
-    out.mesSome = document.getElementById("dashMes").style.display === "none";
+    const finOculto = () => {
+      const els = [...document.querySelectorAll('#vDash [data-dh-financeiro]')];
+      return els.length >= 3 && els.every((el) => el.hidden || el.style.display === "none");
+    };
+    out.mesSome = finOculto();
+    window.__dashPT.render(window.MTStore.read("ptStudio", {}));
+    out.aposRender = finOculto();
+    out.operacional = document.getElementById("dashMes").style.display !== "none" &&
+      [...document.querySelectorAll('#dashMes .dh-kpi:not([data-dh-financeiro])')].length === 2 &&
+      [...document.querySelectorAll('#dashMes .dh-kpi:not([data-dh-financeiro])')].every((el) => !el.hidden && el.style.display !== "none");
     out.nota = /modo colaborador/.test((document.getElementById("papelNota") || {}).textContent || "");
     window.__papelPT.aplica("dono");
     out.volta = document.querySelector('#abas [data-a="pagamentos"]').style.display !== "none" &&
       document.getElementById("papelNota").style.display === "none" &&
-      document.getElementById("dashMes").style.display !== "none";
+      document.getElementById("dashMes").style.display !== "none" &&
+      [...document.querySelectorAll('#vDash [data-dh-financeiro]')].every((el) => !el.hidden && el.style.display !== "none");
     return out;
   });
   ok(aux.escondidas && aux.ficam, "👥 colaborador: Financeiro/Relatórios/Config/adm somem, o dia a dia fica");
-  ok(aux.mesSome && aux.nota, "👥 o card do mês (dinheiro) some do Início e o menu diz que é modo colaborador");
+  ok(aux.mesSome && aux.aposRender && aux.operacional && aux.nota,
+    "👥 colaborador: valores financeiros e Relatórios ficam ocultos após repintar; alunos/sessões continuam disponíveis");
   ok(aux.volta, "👥 papel dono devolve tudo");
 
   // ☁️ v721: a régua diária também roda no SERVIDOR — a função existe com as
