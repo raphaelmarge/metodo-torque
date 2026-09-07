@@ -239,6 +239,8 @@
 
   css += "/* v801: o Início mantém só a ação principal do treino. */#htFicha{display:none!important}";
 
+  css += "/* v802: nível e progresso sem a explicação dos pontos no cabeçalho. */#evTopoNv #evXp+div:not(#evFalta){display:none!important}";
+
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

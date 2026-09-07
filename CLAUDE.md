@@ -113,7 +113,10 @@ Rascunhos acompanham o checkpoint por ficha/exercício/série; trocar o seletor
 não os descarta. Editar ou desfazer uma série recalcula o volume já registrado.
 
 Evolução abre em Resumo, com o nível e XP visíveis no cabeçalho e as medalhas
-em primeiro lugar (mt-v798). A prévia mantém seis medalhas; Ver todas expande e
+em primeiro lugar (mt-v798). Desde a v802, a explicação dos pontos por treino,
+carga, hábito e check-in fica oculta nesse cabeçalho; total de XP, nível e
+progresso para o próximo nível permanecem visíveis. A prévia mantém seis medalhas;
+Ver todas expande e
 Mostrar menos volta às seis e ao topo. Não esconder nível ou toda a grade em
 acordeão. Constância e semanas vêm depois. Desde a v800, Calendário mensal e
 Histórico anual são seções separadas e sempre abertas, sem alternância Mês/Ano.

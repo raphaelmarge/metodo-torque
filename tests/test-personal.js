@@ -6550,7 +6550,7 @@ async function novaExecucaoAluno(p) {
        /medalhas:\(CQGANHAS\.tot\?CQGANHAS\.n:undefined\)/.test(appHtml),
       "🎮 v765: o placar viaja pro professor — e a contagem de medalhas só entra depois de pintada (0 apagaria o número bom)");
     ok(/treino ou cardio = 10 XP/.test(appHtml) && /dia com carga = 5 XP/.test(appHtml) && !/corrida = 10 XP/.test(appHtml),
-      "🎮 v769: a legenda do XP conta a verdade nova, cabe no cabeçalho e não promete só 'corrida' (bike e caminhada valem igual)");
+      "🎮 v769: a explicação legada do XP mantém os valores corretos e inclui bike e caminhada, além da corrida");
   }
   ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && /menuApp/.test(appHtml), "app tem barra de abas fixa embaixo + gaveta do menu ☰ (estilo app nativo)");
   // v701: o manifest do app é o DINÂMICO (data:, com o ?t= no start_url) — o
