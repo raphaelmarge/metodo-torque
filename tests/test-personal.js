@@ -8985,25 +8985,32 @@ async function novaExecucaoAluno(p) {
     const pz = {}; pz[mp + "-01"] = 90; pz[mp + "-28"] = 88;
     localStorage.setItem("ptpeso", JSON.stringify(pz));
     localStorage.removeItem("ptretroV");
+    window.__trocaSec("evolucao");
+    window.__evSub("conq");
     window.__retro();
     const card = document.getElementById("retroCard");
-    out.retroVis = card.style.display;
+    out.retroOculta = getComputedStyle(card).display === "none" && card.getBoundingClientRect().height === 0;
     out.retroTxt = card.textContent;
-    document.getElementById("retroFecha").click();
-    out.retroFechada = card.style.display === "none" && JSON.parse(localStorage.getItem("ptretroV")) === mp;
+    window.__retro();
+    window.__evSub("corpo");
+    window.__evSub("conq");
+    const stories = document.getElementById("btnCardStories");
+    out.retroPermaneceOculta = getComputedStyle(card).display === "none" && card.getBoundingClientRect().height === 0 && localStorage.getItem("ptretroV") === null;
+    out.storiesDisponivel = getComputedStyle(stories).display !== "none" && stories.getBoundingClientRect().height > 0;
     // devolve o estado como estava (bloco autocontido)
     Object.keys(snap).forEach((k) => { if (snap[k] == null) localStorage.removeItem(k); else localStorage.setItem(k, snap[k]); });
     window.__retro();
+    window.__trocaSec("util");
     return out;
   });
   ok(lote7app.livre && /últimos treinos livres/.test(lote7app.hist),
     "Tabata avulso do Utilidades vira treino livre com histórico (e sobe pro placar do professor)");
   ok(lote7app.lem === 120, "lembrete de água guarda o intervalo escolhido");
-  ok(lote7app.retroVis === "block" && /Seu mês de/.test(lote7app.retroTxt) && /Supino reto/.test(lote7app.retroTxt),
-    "retrospectiva do mês monta sozinha com treinos e recorde de carga");
+  ok(lote7app.retroOculta && /Seu mês de/.test(lote7app.retroTxt) && /Supino reto/.test(lote7app.retroTxt),
+    "card mensal fica visualmente oculto e preserva os dados legados de treinos e recorde de carga");
   ok(!/Peso no mês/.test(lote7app.retroTxt),
     "a retrospectiva não fala de peso — dado de corpo mora na aba Corpo");
-  ok(lote7app.retroFechada, "fechar a retrospectiva guarda o mês visto");
+  ok(lote7app.retroPermaneceOculta && lote7app.storiesDisponivel, "repintar e navegar não reexibem nem dispensam o card mensal, e compartilhar progresso continua disponível");
   // --- lote timers+retenção (professor): modelos de WOD, saúde da cobrança, pacote com zap ---
   const stSnap7 = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   await abaPt(p, "treinos");
