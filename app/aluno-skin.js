@@ -227,6 +227,10 @@
   css += "#guiaBox .gserie-fechamento>.gserie-rulers{margin-top:12px;padding-bottom:0}#guiaBox .gserie-fechamento>.gserie-rulers>span{display:block;font-size:12px;font-weight:650;color:var(--gmuted)}#guiaBox .gserie-fechamento>.gserie-rulers>.gwrail{margin-bottom:12px}#guiaBox .gserie-fechamento .gserie-actions{display:flex;flex-direction:column;align-items:stretch;gap:2px;margin-top:12px}#guiaBox .gserie-fechamento #gSalvar{width:100%;min-height:46px;padding:12px;border:0;border-radius:12px;background:var(--cor);color:#fff;font-size:14px;font-weight:750;text-align:center}#guiaBox .gserie-fechamento #gDesfazSerie{align-self:center}#guiaBox .gserie-fechamento .gserie-help{text-align:center}";
   css += ".ac-sync[hidden]{display:none!important}";
 
+  css += "/* v798: nível no cabeçalho e prévia permanente das medalhas. */#evTopo #evRing{width:64px!important;height:64px!important}#evTopo #evRing>div{width:56px!important;height:56px!important}#evTopo #evNvNum{font-size:22px!important}#evReconhecimentos>h2{font-size:17px;line-height:1.3;margin:0 0 14px}#evResumo>#evResumoTitulo{border-top:1px solid var(--bg7);padding-top:20px}#evResumo #cqVerMais{margin-bottom:20px}html.claro #evResumo>#evResumoTitulo{border-color:#ddd8e5}";
+
+  css += "#evTopo{--ev-ring-color:var(--corc);--ev-ring-track:var(--bg7)}#evTopo #evRing>div{background:var(--bg2)!important}html.claro #evTopo{--ev-ring-color:var(--cor);--ev-ring-track:#ddd8e5}html.claro #evTopo #evRing>div{background:#fff!important}html.claro #evTopo :is(#evNvNum,#evXp){color:#241f31!important}";
+
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

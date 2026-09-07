@@ -110,8 +110,11 @@ Os históricos distinguem séries concluídas, rascunhos e registros legados.
 Rascunhos acompanham o checkpoint por ficha/exercício/série; trocar o seletor
 não os descarta. Editar ou desfazer uma série recalcula o volume já registrado.
 
-Evolução abre em Resumo, com frequência e semanas cumpridas. Calendário e
-medalhas/nível ficam recolhidos, mantendo navegação, compartilhamento e histórico.
+Evolução abre em Resumo, com o nível e XP visíveis no cabeçalho e as medalhas
+em primeiro lugar (mt-v798). A prévia mantém seis medalhas; Ver todas expande e
+Mostrar menos volta às seis e ao topo. Não esconder nível ou toda a grade em
+acordeão. Constância, semanas e calendário vêm depois; o calendário continua
+recolhido, mantendo navegação, compartilhamento e histórico.
 Cargas oferece busca geral e períodos de 30/90 dias ou todo o histórico.
 Sessões agrupam data e ficha quando essa identificação existe; o gráfico agrega
 por dia. Recordes continuam recolhidos apenas em Cargas. Outras modalidades,

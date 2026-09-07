@@ -316,9 +316,11 @@
     var calendario = detalhes('evCalendario', 'Calendário de treinos');
     calendario.appendChild(porId('mapaAno'));
     calendario.addEventListener('toggle', function () { if (calendario.open && window.__mapaMes) window.__mapaMes.pinta(); });
-    var reconhecimentos = detalhes('evReconhecimentos', 'Medalhas e nível');
-    ['evTopoNv', 'cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
-    [tiles, porId('cqGraf'), calendario, reconhecimentos, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
+    var reconhecimentos = document.createElement('section'), titulo = document.createElement('h2');
+    reconhecimentos.id = 'evReconhecimentos'; reconhecimentos.setAttribute('aria-labelledby', 'evMedalhasTitulo');
+    titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Suas medalhas'; reconhecimentos.appendChild(titulo);
+    ['cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
+    [reconhecimentos, h, tiles, porId('cqGraf'), calendario, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
     window.__evResumoContagem = function () {
       if (box.style.display !== 'none' && !box.hasAttribute('data-sec-off') && window.__evTopoPinta) window.__evTopoPinta('conq');
     };
@@ -3242,7 +3244,7 @@
       "var cqAberto=false;var CQATUAL=[];var CQGANHAS={n:0,tot:0};" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
-      "if(!cqAberto){var g6=document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
+      "if(!cqAberto){var g6=document.getElementById('evTopo')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
       /* ---------- conquista em tela cheia (estilo Nike Run) ----------
        * Tocou numa medalha: abre por cima, a medalha gigante gira com o
        * movimento do celular e o brilho anda junto. O <div> é criado na hora
@@ -3369,6 +3371,7 @@
       "var g5=document.getElementById('cqGrid'),vm5=document.getElementById('cqVerMais');" +
       "if(g5&&vm5){var enc5=!cqAberto&&BADGES.length>6;g5.classList.toggle('enc',enc5);" +
       "vm5.style.display=BADGES.length>6?'':'none';" +
+      "vm5.setAttribute('aria-controls','cqGrid');vm5.setAttribute('aria-expanded',String(cqAberto));" +
       "vm5.textContent=cqAberto?'Mostrar menos':'Ver todas as '+BADGES.length+' conquistas';}" +
       // tela 31: MINHAS SEMANAS — número verde quando bateu a meta da semana
       // (o aria-label mantém o nome antigo 'Treinos por semana' pros leitores)
@@ -6521,7 +6524,7 @@
       "pintaMarcas();window.__pintaMarcas=pintaMarcas;" +
       // cabeçalho da Evolução por aba (corpo = delta do peso; cargas/marcas = novidades do mês)
       "window.__evTopoPinta=function(aba){var nv9=document.getElementById('evTopoNv'),alt=document.getElementById('evTopoAlt');if(!nv9||!alt)return;" +
-      "nv9.style.display=aba==='conq'?'flex':'none';alt.style.display='block';" +
+      "nv9.style.display=aba==='conq'?'flex':'none';alt.style.display=aba==='conq'?'none':'block';" +
       "var K=document.getElementById('evAltK'),N=document.getElementById('evAltN'),S=document.getElementById('evAltS');var mesK=isoHj().slice(0,7);" +
       "if(aba==='conq'){var pr=semProgCalc(L('ptfeitos',{}));K.textContent='Evolução';N.textContent=pr.naSem+' de '+pr.meta;S.textContent='treinos nesta semana';return;}" +
       "var MESL9=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];var mesNome=MESL9[+mesK.slice(5,7)-1];" +
@@ -6978,7 +6981,7 @@
       "document.getElementById('evNvNum').textContent=nv;" +
       "document.getElementById('evXp').textContent=xp+' XP';" +
       "document.getElementById('evFalta').textContent='faltam '+Math.max(0,alvo-xp)+' pro nível '+(nv+1);" +
-      "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
+      "document.getElementById('evRing').style.background='conic-gradient(var(--ev-ring-color,#fff) 0 '+pct+'%,var(--ev-ring-track,rgba(255,255,255,.25)) '+pct+'% 100%)';}}" +
       // repinta a semana DEPOIS do herói: agora o coachDica já enxerga o plano
       "pintaHero();pintaXP();try{pintaSemana();pintaCqTiles();}catch(e0){}" +
       /* ⚠️ v772: o sino é pintado no meio do arquivo, ANTES de o bloco do
