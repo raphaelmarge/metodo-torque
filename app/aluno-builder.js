@@ -343,7 +343,7 @@
       menu.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); fechar.click(); } });
     }
     var semana = porId('semBlock'), habitos = porId('habWrap');
-    if (semana && habitos) semana.before(habitos);
+    if (semana && habitos) semana.after(habitos);
     function recolhe(el, titulo) {
       if (!el || el.querySelector(':scope > .al-disclosure')) return;
       var d = document.createElement('details'), s = document.createElement('summary');
@@ -365,8 +365,9 @@
     var retomar = porId('acRetomar'), fichas = porId('trFichasWrap');
     if (retomar && fichas) { retomar.setAttribute('data-sec', 'treino'); retomar.setAttribute('data-sec-off', '1'); fichas.parentNode.insertBefore(retomar, fichas); }
     var pend = document.createElement('section'); pend.id = 'inicioPendencias'; pend.className = 'cardx al-pendencias'; pend.setAttribute('data-sec', 'inicio');
-    if (semana) semana.after(pend);
-    var confirma = porId('sconfIni'); if (confirma && semana) semana.after(confirma);
+    var depoisDoDia = habitos || semana;
+    if (depoisDoDia) depoisDoDia.after(pend);
+    var confirma = porId('sconfIni'); if (confirma && depoisDoDia) depoisDoDia.after(confirma);
     function linha(titulo, sub, sec, ico) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'al-atalho'; b.setAttribute('data-ajgo', sec);
       b.innerHTML = '<span class="al-atalho-ico" aria-hidden="true">' + icx(ico, 21) + '</span><span><b></b><small></small></span><span aria-hidden="true">›</span>';
