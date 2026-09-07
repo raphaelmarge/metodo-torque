@@ -4,8 +4,8 @@
 
 | | |
 |---|---|
-| App em | **mt-v792** |
-| Estado do repo em | 2026-09-07 (commit `7d65948`) |
+| App em | **mt-v793** |
+| Estado do repo em | 2026-09-07 (commit `3c7bec5`) |
 | Repositório | `raphaelmarge/metodo-torque` |
 | Lançamentos no histórico | 238 |
 
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-06), e o app está em **mt-v792**.
+vez em **(fora de um lote de versão)** (2026-09-07), e o app está em **mt-v793**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **(fora de um lote de versão)** (2026-09-06).
+O motor (`app/aluno-builder.js`) encostou em **(fora de um lote de versão)** (2026-09-07).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
