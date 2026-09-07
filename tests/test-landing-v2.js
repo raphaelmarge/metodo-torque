@@ -38,6 +38,19 @@ async function mobileCtaState(page, visible) {
   assert(await page.locator('#mobileCta a').evaluateAll((links, visible) => links.length > 0 && links.every(link => link.getAttribute('tabindex') === (visible ? '0' : '-1')), visible));
 }
 
+async function landingBrand(page) {
+  return page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const tokens = ['--bg', '--bg-deep', '--surface', '--surface-2', '--text', '--muted', '--violet', '--violet-bright', '--violet-electric', '--green', '--red'];
+    return {
+      palette: Object.fromEntries(tokens.map(token => [token, root.getPropertyValue(token)])),
+      logo: getComputedStyle(document.querySelector('.topbar .brand strong')).color,
+      headline: getComputedStyle(document.querySelector('.hero-title .violet')).color,
+      background: getComputedStyle(document.body).backgroundColor
+    };
+  });
+}
+
 (async () => {
   browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] });
   const errors = [];
@@ -152,14 +165,14 @@ async function mobileCtaState(page, visible) {
     await page.locator('#studioName').fill('');
     assert.equal(await page.locator('#studioPreview').textContent(), 'Seu nome');
     if (width <= 860) await mobileCtaState(page, false);
-    const rootStyle = await page.locator('html').getAttribute('style');
+    const originalBrand = await landingBrand(page);
     const oldBrandColor = await page.locator('.brand-preview').evaluate(el => getComputedStyle(el).getPropertyValue('--brand-color').trim());
     await page.locator('.swatch[aria-label="Verde"]').click();
     assert.equal(await page.locator('.swatch[aria-pressed="true"]').count(), 1);
     assert.equal(await page.locator('.swatch[aria-label="Verde"]').getAttribute('aria-pressed'), 'true');
     const newBrandColor = await page.locator('.brand-preview').evaluate(el => getComputedStyle(el).getPropertyValue('--brand-color').trim());
     assert(newBrandColor && newBrandColor !== oldBrandColor, 'a cor muda na prévia');
-    assert.equal(await page.locator('html').getAttribute('style'), rootStyle, 'a prévia não altera a marca da landing');
+    assert.deepEqual(await landingBrand(page), originalBrand, 'a prévia não altera as cores, a marca ou o fundo da landing');
 
     assert.equal(await page.locator('#studentRange').getAttribute('min'), '5');
     assert.equal(await page.locator('#studentRange').getAttribute('max'), '200');
