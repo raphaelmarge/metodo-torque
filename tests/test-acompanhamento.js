@@ -103,6 +103,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   ok(saved.s===1 && saved.desc>Date.now(),'série e prazo do descanso salvos');
   ok(await pa.evaluate(()=>{const k='ptguiaSessao',raw=localStorage.getItem(k),x=JSON.parse(raw);x.token='outro';localStorage.setItem(k,JSON.stringify(x));const bloqueou=!window.__acSessao.ler();localStorage.setItem(k,raw);return bloqueou;}),'retomada não atravessa o acesso de outro aluno');
   await pa.reload();await pa.waitForFunction(()=>window.__acSessao);
+  await pa.click('#navApp [data-msec="treino"]');
   ok(await pa.isVisible('#acRetomar'),'app oferece continuar depois de recarregar');
   await pa.click('#acRetomar button');
   ok(await pa.evaluate(()=>window.__gvDe().s===1 && window.__gvDe().timer!==null),'retomada mantém série e descanso');
@@ -117,7 +118,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   await pa.waitForFunction(()=>!window.__acSync.pendente(),null,{timeout:10000});
   ok((await pa.textContent('#acSync')).includes('enviados ao personal') && posted.some(x=>x.p_dados.notas.length),'confirmação do servidor quita a pendência e inclui o relato');
   await pa.click('#gSerie');await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#gSerie');
-  await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#acRetomar button');
+  await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#navApp [data-msec="treino"]');await pa.click('#acRetomar button');
   ok(await pa.isVisible('#gFecharTreino') && await pa.locator('#gSerie').count()===0,'última série retoma na confirmação, sem série extra');
   await pa.click('#gFecharTreino');
   await pa.waitForSelector('#gFim');
@@ -150,6 +151,12 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
     'tela 375×667 mantém Fechar visível e o recibo inteiro alcançável por rolagem');
   await pa.click('#gFim');ok(!await pa.isVisible('#guiaBox'),'Fechar encerra o resumo do treino');
   await pa.setViewportSize({width:390,height:844});
+  // O descanso zero começa uma execução nova; a anterior foi concluída e
+  // agora o player preserva corretamente seus slots g2 no mesmo dia.
+  await pa.evaluate(()=>{
+    ['ptdc','ptfeitos','ptguiaSessao'].concat(Object.keys(localStorage).filter(k=>k.startsWith('ptsets_')))
+      .forEach(k=>localStorage.removeItem(k));
+  });
   D.fichasApp[0].itens[0].descanso=0;D.guiaFichasP[0].it[0].d=0;
   await ca.route(BASE+'/acomp-zero.html',route=>route.fulfill({contentType:'text/html',body:global.MT_APP_ALUNO.monta(D)}));
   await pa.goto(BASE+'/acomp-zero.html');await pa.waitForFunction(()=>window.__acSessao);

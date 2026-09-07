@@ -304,7 +304,7 @@ console.log("v751 — regras estáticas:");
   ok(/if\(carregando\)\{pendente=true;return;\}/.test(html) && /\{carrega\(\);rankSemana\(\);\}\},45000\)/.test(html),
     "👥 carga no meio de outra vira pendência e o placar da semana atualiza com o timer");
   const gs = html.slice(html.indexOf("if(e.target.id==='gSerie')"), html.indexOf("if(e.target.id==='gSerie')") + 500);
-  ok(/if\(gSalvaSeSujo\(\)===false\)return/.test(gs) && gs.indexOf("SR.marca(it,gv.s)") > gs.indexOf("gSalvaSeSujo()") && gs.indexOf("gv.s++") > gs.indexOf("SR.marca(it,gv.s)"), "🏋️ 'Série feita' salva a execução pendente e só avança depois de persistir a série concluída");
+  ok(/GP\.conclui\(false\)/.test(gs) && /data-gserie/.test(html) && /gSemRegistro/.test(html), "🏋️ player inclui seleção por série e conclusão com ou sem anotação; persistência é validada em test-aluno-player-experiencia");
   const gp = html.slice(html.indexOf("if(e.target.id==='gPularEx')"), html.indexOf("if(e.target.id==='gPularEx')") + 160);
   const gvx = html.slice(html.indexOf("if(e.target.id==='gVoltaEx')"), html.indexOf("if(e.target.id==='gVoltaEx')") + 220);
   ok(/gv\.timer=null;gDescTick=null/.test(gp) && /gv\.timer=null;gDescTick=null/.test(gvx), "🏋️ pular/voltar exercício mata o tick do descanso");
