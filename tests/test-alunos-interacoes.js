@@ -222,10 +222,15 @@ function truth(value, message) { assert.ok(value, message); console.log('OK: ' +
   truth(await page.locator('#vAlunos').isVisible(), 'Chat com acesso revogado mantém o professor na lista');
   equal(await page.locator('#chatTitulo').innerText(), 'João Àvila de Albuquerque e Vasconcelos', 'atalho bloqueado não troca o destinatário atual');
   truth(dialogs.length === 2 && /app com acesso ativo/.test(dialogs[1]), 'atalho de aluno revogado explica que o acesso precisa estar ativo');
+  await page.locator('#listaAlunos [data-abreperfil="qa-novo"]').click();
+  await page.locator('#pfIrChat').click();
+  truth(await page.locator('#vPerfil').isVisible(), 'Chat do perfil sem acesso mantém o perfil aberto');
+  equal(await page.locator('#chatTitulo').innerText(), 'João Àvila de Albuquerque e Vasconcelos', 'Chat bloqueado do perfil não apresenta uma conversa anterior como destino');
+  truth(dialogs.length === 3 && /app com acesso ativo/.test(dialogs[2]), 'Chat do perfil usa o mesmo aviso de acesso ativo');
   equal(await state(), initial, 'atalhos de conversa não alteram os dados do aluno');
   equal(await page.evaluate(() => window.__alTestWrites.filter(w => w.tabela === 'app_chat' && w.acao === 'insert')), [], 'nenhuma mensagem é enviada durante a navegação');
   await page.evaluate(() => { window.MTStore.cloud = window.__alTestCloud; });
-  equal(dialogs.length, 2, 'somente os avisos de permissão e acesso revogado foram exibidos');
+  equal(dialogs.length, 3, 'somente os avisos de permissão e acesso revogado foram exibidos');
   equal(errors, [], 'nenhum erro JavaScript nos novos caminhos');
   equal(network, [], 'nenhuma requisição real ao Supabase');
   console.log(checks + ' verificações passaram.');

@@ -2441,13 +2441,26 @@ async function abaPt(p, a) {
       document.getElementById("tmp741").remove();
       // valor de cobrança de quem não tem contrato no mês: o do cadastro, não 0
       out.valorSemContrato = window.__valorCobranca(st0, { id: "zz-nao-existe", valor: 180 }) === 180;
-      // Montar treino e Chat do cabeçalho da ficha levam o aluno junto
-      document.querySelector("#listaAlunos [data-abreperfil]") && document.querySelector("#listaAlunos [data-abreperfil]").click();
-      document.getElementById("pfMontaTreino").click();
-      out.montaAluno = document.getElementById("tAluno").value === alvo.id &&
-        !!document.querySelector('#vTreinos [data-tra="fichas"].ativa');
-      document.getElementById("pfIrChat").click();
-      out.chatAbriu = document.getElementById("vChat").classList.contains("chat-aberto");
+      // Este caminho testa uma conversa válida: app com acesso ativo e nuvem simulada.
+      // Sem isso, a guarda nova deve bloquear em vez de abrir a conversa anterior.
+      const chatGuardado = localStorage.getItem("mtapp:ptStudio");
+      const chatSt = JSON.parse(chatGuardado), chatAl = chatSt.alunos.find((a) => a.id === alvo.id);
+      chatAl.appTokenP = "token-fixture-v741"; delete chatAl.appRevogadoEm;
+      chatAl.appVer = window.MT_VERSAO; chatAl.appPubEm = new Date().toISOString();
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(chatSt));
+      window.MTStore.cloud = () => window.mockNuvem({ aid: "fixture-v741" });
+      try {
+        window.__alFiltro("ativos");
+        document.querySelector('#listaAlunos [data-abreperfil="' + alvo.id + '"]').click();
+        document.getElementById("pfMontaTreino").click();
+        out.montaAluno = document.getElementById("tAluno").value === alvo.id && document.getElementById("taAluno").value === alvo.id &&
+          !!document.querySelector('#vTreinos [data-tra="fichas"].ativa');
+        document.getElementById("pfIrChat").click();
+        out.chatAbriu = document.getElementById("vChat").classList.contains("chat-aberto") &&
+          document.getElementById("chatTitulo").textContent === alvo.nome;
+      } finally {
+        localStorage.setItem("mtapp:ptStudio", chatGuardado); window.MTStore.cloud = cloudOrig;
+      }
       return out;
     });
     ok(v741.fichaAbriu && v741.feitaMarcou, "🖱️ v741: Abrir ficha e Feita da próxima sessão respondem ao clique");
@@ -2719,7 +2732,10 @@ async function abaPt(p, a) {
         localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
         window.__alFiltro("ativos");
         const row = document.querySelector("#listaAlunos .alrow");
-        out.fichaVelha = !!row && /vencida/.test(row.textContent) && /Montar ficha/.test(row.textContent) && /Push-pull/.test(row.textContent) && !/Push · pull/.test(row.textContent);
+        out.fichaVelha = !!row && /vencida/.test(row.textContent) && /Push-pull/.test(row.textContent) && !/Push · pull/.test(row.textContent);
+        row.querySelector('[data-alquick="v7f"]').click();
+        const revisar = document.querySelector('#ali-panel-v7f .ali-next [data-alacao="treino"][data-aluno="v7f"]');
+        out.fichaVelha = out.fichaVelha && !!revisar && /Revisar treino/.test(revisar.textContent);
         window.__dashPT.resolver(S.read("ptStudio", {}));
         out.fichaVencendo = /FICHA VENCENDO/.test(document.getElementById("dashResolver").textContent);
         // a letra do chip da Semana é a MESMA do app (letraFicha): posição, não 1º caractere

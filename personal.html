@@ -5837,7 +5837,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * gravava o aluno no select da aba de IA (#taAluno) e abria Fichas com o
      * aluno de antes — dava pra publicar ficha no aluno errado. Agora fazem o
      * mesmo que #chatFicha e o data-altreino da lista. */
-    if (id === "pfIrChat") { vaiAba("chat"); if (perfilId) abreChat(perfilId); return; }
+    if (id === "pfIrChat") { if (perfilId) alExecutaAcao(perfilId, "chat"); return; }
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
     if (id === "pfIrAgenda") { vaiAba("agenda"); return; }
     if (id === "pfMontaTreino" && perfilId) { vaiMontarTreino(perfilId); return; }
