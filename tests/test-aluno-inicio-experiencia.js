@@ -62,7 +62,8 @@ async function escolheIndicador(page,indice){
     await habito.click();
     ok(await habito.getAttribute('aria-pressed')==='false'&&await p.evaluate(()=>Object.values(JSON.parse(localStorage.getItem('pthab')||'{}')).every(d=>!d[0])),'tocar novamente desmarca o hábito persistido');
     await p.click('#semBlock summary');ok(await p.locator('#btnFeito').isVisible(),'registro manual e acompanhamento da semana continuam acessíveis');
-    await p.click('#htFicha');ok(await p.locator('#trFichasWrap').isVisible(),'Ver ficha consulta a prescrição');
+    ok(!await p.locator('#htFicha').isVisible(),'hero não exibe a ação secundária Ver ficha');
+    await p.click('#navApp [data-msec="treino"]');ok(await p.locator('#trFichasWrap').isVisible(),'Treinos permite consultar a prescrição pela navegação principal');
     ok(!await p.locator('#guiaBox').isVisible(),'consultar ficha não inicia sessão');
     await p.evaluate(()=>window.__trocaSec('inicio'));await p.click('#htVer');
     ok(await p.locator('#guiaBox').isVisible(),'Começar treino abre o player diretamente');
@@ -93,6 +94,7 @@ async function escolheIndicador(page,indice){
     const semana=itens=>Object.fromEntries([0,1,2,3,4,5,6].map(d=>[d,itens]));
     await variante({...basePlano,planoApp:semana([{tp:'cardio',i:0,n:'Corrida teste'},{tp:'ficha',i:1,n:'B — Costas'}])},async page=>{
       const cards=await cardsVisiveis(page);
+      ok(!await page.locator('#htFicha').isVisible(),'hero de corrida não reexibe a ação secundária Ver programação');
       ok(cards.length===2&&cards[1].titulo.includes('Costas'),'carrossel mostra a ficha B do plano e não inclui circuito fora do dia: '+JSON.stringify(cards.map(c=>[c.id,c.titulo])));
       const card=await escolheIndicador(page,1);await card.locator('button.btnx').first().click();
       ok(await page.evaluate(()=>window.__acSessao.ler().f===1),'botão da ficha extra abre exatamente o treino anunciado');

@@ -11284,10 +11284,11 @@ async function novaExecucaoAluno(p) {
   }
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
-  ok(await pApp.evaluate(() => {
-    document.getElementById("htFicha").click();
+  const heroSemConsultaSecundaria = !await pApp.locator("#htFicha").isVisible();
+  await pApp.click('#navApp [data-msec="treino"]');
+  ok(heroSemConsultaSecundaria && await pApp.evaluate(() => {
     return !document.querySelector("[data-sec='treino']").hasAttribute("data-sec-off");
-  }), "botão 'Ver ficha' do hero consulta a aba Treino");
+  }), "hero não exibe Ver ficha e a navegação Treinos continua dando acesso à prescrição");
   // com o menu de abas, cada grupo de cards vive numa seção — troca antes de interagir
   await pApp.evaluate(() => window.__trocaSec("treino"));
   // sem o diário manual, a carga entra pelo caminho do player (gGrava) e a

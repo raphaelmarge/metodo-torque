@@ -96,7 +96,9 @@ retomada e rascunhos entre fichas mantêm os contratos da v793.
 ### Experiência do app do aluno (mt-v793)
 
 O Início mantém a foto de capa do personal, prioriza a sessão em andamento e
-abre a musculação diretamente no player. Ver ficha consulta a prescrição.
+abre a musculação diretamente no player. Desde a v801, o link secundário
+Ver ficha/Ver programação saiu do destaque do Início; a prescrição continua
+acessível pela aba Treinos.
 Registro manual e detalhes da semana ficam em disclosures com os mesmos
 controles e IDs; desde a v795 os hábitos ficam visíveis no Início. O calendário
 abre o dia por toque; pendências de chat,
