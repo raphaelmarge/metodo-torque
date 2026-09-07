@@ -561,3 +561,137 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
   #vPerfil .pfp-question .qschip{grid-column:1;grid-row:3;max-width:none;text-align:left;font-size:12px}
   #vPerfil .pfp-question .qsvsub{grid-column:1;grid-row:auto}
 }
+
+/* Ferramentas de treino. O editor de musculação mantém seu acabamento próprio. */
+#vTreinos .trx-mobile-nav{display:none}
+#vTreinos #trAbas{display:flex;flex-wrap:wrap;gap:0 18px;margin:0 0 24px!important;padding:0;border-bottom:1px solid var(--linha);overflow:visible}
+#vTreinos #trAbas button{min-width:0;min-height:48px;flex:0 1 auto;white-space:normal;padding:12px 0;font-size:13px;line-height:1.4}
+#vTreinos #trAbas svg{display:none}
+#vTreinos>.trx-section{padding:0;margin:0!important;border:0;border-radius:0;background:transparent;box-shadow:none;animation:none;transform:none;min-width:0}
+#vTreinos .trx-section [hidden]{display:none!important}
+#vTreinos .trx-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 22px;min-width:0}
+#vTreinos .trx-heading>div{min-width:0;flex:1}
+#vTreinos .trx-heading h2{font-size:24px;line-height:1.25;letter-spacing:-.02em;text-transform:none;margin:0 0 8px;color:var(--texto)}
+#vTreinos .trx-heading h3,#vTreinos .trx-editor-body>h3{font-size:19px;line-height:1.35;letter-spacing:-.015em;text-transform:none;margin:0 0 8px;color:var(--texto)}
+#vTreinos .trx-heading p,#vTreinos .trx-help{font-size:14px;line-height:1.55;color:var(--tk-tx3);margin:0 0 12px;max-width:72ch}
+#vTreinos .trx-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;align-items:start;margin:0 0 20px;min-width:0}
+#vTreinos .trx-field{display:flex;flex-direction:column;gap:7px;min-width:0;max-width:100%;margin:0 0 18px;font-size:13px;font-weight:600;line-height:1.5;text-transform:none;letter-spacing:0;color:var(--texto)}
+#vTreinos .trx-fields>.trx-field{margin:0}
+#vTreinos .trx-field small{display:block;font-size:12px;font-weight:400;line-height:1.5;color:var(--tk-tx3)}
+#vTreinos .trx-field :is(input,textarea,select:not([data-busca])){width:100%;min-width:0;max-width:100%;min-height:48px;margin:0;font-family:inherit;font-size:16px;line-height:1.4;box-sizing:border-box}
+#vTreinos .trx-field textarea{min-height:92px;resize:vertical}
+#vTreinos .trx-field>span:has(>select[data-busca]){display:flex!important;width:100%;min-width:0!important;max-width:100%;margin:0}
+#vTreinos .trx-field [data-busca]{min-height:0}
+#vTreinos .trx-wide{grid-column:1/-1}
+#vTreinos .trx-student{max-width:540px;margin-bottom:24px}
+#vTreinos .trx-section .btn{font-size:14px;line-height:1.4;min-height:44px;min-width:44px;height:auto;padding:10px 14px;white-space:normal;max-width:100%;margin:0}
+#vTreinos .trx-section .btn.sec{background:var(--tk-sup);color:var(--texto);border-color:var(--linha)}
+#vTreinos .trx-section .btn[aria-pressed=true]{background:var(--roxo);color:#fff}
+#vTreinos .trx-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}
+#vTreinos .trx-actions:empty,#vTreinos .trx-actions:not(:has(>.btn:not([hidden]))){display:none}
+#vTreinos .trx-actions .btn{flex:0 1 auto}
+#vTreinos .trx-note{margin:16px 0;padding:14px 0 14px 14px;border:0;border-left:3px solid var(--roxo);border-radius:0;background:transparent;color:var(--texto);font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+#vTreinos .trx-status{margin:12px 0;font-size:14px;line-height:1.6;color:var(--texto);overflow-wrap:anywhere}
+#vTreinos .trx-status:empty,#vTreinos .trx-note:empty{display:none}
+#vTreinos .trx-context{margin:-6px 0 24px;padding:0 0 20px;border-bottom:1px solid var(--linha);font-size:14px;line-height:1.6;color:var(--tk-tx3);overflow-wrap:anywhere}
+#vTreinos .trx-context:empty{display:none}
+#vTreinos .trx-context p{margin:6px 0}
+#vTreinos .trx-context strong,#vTreinos .trx-context b{color:var(--texto)}
+#vTreinos .trx-publish{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:26px 0 0;padding:18px 0;border-top:1px solid var(--linha)}
+#vTreinos .trx-publish>span{font-size:13px;line-height:1.5;color:var(--tk-tx3);max-width:55ch}
+#vTreinos .trx-publish>.btn{flex:none}
+#vTreinos .trx-editor,#vTreinos .trx-details{min-width:0;margin:20px 0;padding:0;border:0;border-top:1px solid var(--linha);border-bottom:1px solid var(--linha);border-radius:0;background:transparent}
+#vTreinos .trx-editor+.trx-editor{margin-top:-21px}
+#vTreinos :is(.trx-editor,.trx-details)>summary{display:flex;align-items:center;gap:12px;min-height:58px;padding:14px 0;list-style:none;font-size:15px;line-height:1.45;font-weight:650;cursor:pointer;color:var(--texto)}
+#vTreinos :is(.trx-editor,.trx-details)>summary::after{content:'+';margin-left:auto;flex:none;font-size:22px;font-weight:400;color:var(--tk-roxoTx)}
+#vTreinos :is(.trx-editor,.trx-details)[open]>summary::after{content:'−'}
+#vTreinos :is(.trx-editor,.trx-details)>summary::-webkit-details-marker{display:none}
+#vTreinos .trx-editor-body{padding:4px 0 22px;min-width:0}
+#vTreinos .trx-details>.trx-fields{padding:4px 0 0}
+#vTreinos .trx-detail-meta{font-size:12px;font-weight:400;line-height:1.5;color:var(--tk-tx3)}
+#vTreinos .trx-heading h2>.trx-detail-meta{display:block;margin-top:7px}
+#vTreinos .trx-list{margin:18px 0 0;min-width:0;font-size:14px;line-height:1.55;color:var(--texto)}
+#vTreinos :is(#wpLista,#cbLista,#gtLista,#grLista,#vtpLista)>div{margin:0!important;padding:16px 0!important;border:0!important;border-bottom:1px solid var(--linha)!important;border-radius:0!important;background:transparent!important;min-width:0}
+#vTreinos .trx-list .linha-flex{gap:10px;min-width:0;flex-wrap:wrap}
+#vTreinos .trx-list :is(b,strong){overflow-wrap:anywhere}
+#vTreinos .trx-list details>summary{cursor:pointer;min-height:44px;align-content:center;font-size:13px;color:var(--tk-tx3)}
+#vTreinos .trx-list details .btn{margin:6px 6px 0 0}
+#vTreinos .trx-list .trx-row-more{flex-basis:100%;width:100%;margin:0;border:0}
+#vTreinos .trx-list .trx-row-more>.trx-actions{margin:4px 0 0}
+#vTreinos .trx-list .trx-row-more .btn{margin:0}
+#vTreinos .trx-pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+#vTreinos .trx-pick label{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:8px 0;font-size:14px;line-height:1.4}
+#vTreinos .trx-pick input[type=checkbox]{width:20px;height:20px;min-width:20px;flex:none}
+#vTreinos .trx-more{width:100%;margin:18px 0!important}
+#vTreinos .trx-steps{list-style:none;display:flex;gap:24px;margin:0 0 26px;padding:0 0 18px;border-bottom:1px solid var(--linha);color:var(--tk-tx3)}
+#vTreinos .trx-steps li{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;line-height:1.4}
+#vTreinos .trx-steps span{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--tk-sup);color:var(--tk-roxoTx);flex:none}
+#vTreinos #taBrief>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px}
+#vTreinos #taBrief>summary::after{grid-column:2;grid-row:1/span 2}
+#vTreinos #taBriefChip{grid-column:1}
+#vTreinos .trp-review{margin:26px 0;padding:22px 0;border-top:2px solid var(--roxo);border-bottom:1px solid var(--linha)}
+#vTreinos .trp-review .trx-heading{margin-bottom:14px}
+#vTreinos .trp-review-notes{font-size:14px;line-height:1.6;color:var(--tk-tx3)}
+#vTreinos .trp-review-notes:empty{display:none}
+#vTreinos .trp-preview-block{margin:0;padding:0;border:0;border-bottom:1px solid var(--linha);border-radius:0;background:transparent}
+#vTreinos .trp-preview-block>summary{display:grid;grid-template-columns:minmax(0,1fr) 24px;gap:4px 8px;list-style:none;cursor:pointer;min-height:56px;padding:14px 0;font-size:16px;font-weight:600;line-height:1.5;color:var(--texto)}
+#vTreinos .trp-preview-block>summary::-webkit-details-marker{display:none}
+#vTreinos .trp-preview-block>summary>strong{grid-column:1;grid-row:1}
+#vTreinos .trp-preview-block>summary>.trp-preview-meta{grid-column:1;grid-row:2;font-weight:400}
+#vTreinos .trp-preview-block>summary::after{content:'+';grid-column:2;grid-row:1/span 2;align-self:center;text-align:right;font-size:22px;font-weight:400;color:var(--tk-roxoTx)}
+#vTreinos .trp-preview-block[open]>summary::after{content:'−'}
+#vTreinos .trp-preview-body{padding:0 0 18px;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+#vTreinos .trp-preview-line{padding:10px 0;border-bottom:1px solid var(--linha)}
+#vTreinos .trp-preview-line:last-child{border:0}
+#vTreinos .trp-preview-line>strong{display:block}
+#vTreinos .trp-preview-line>.trp-preview-meta{display:block;margin-top:4px}
+#vTreinos .trp-preview-meta{font-size:13px;color:var(--tk-tx3);line-height:1.6}
+#vTreinos .trp-preview textarea{width:100%;min-height:80px;min-width:0;font-size:16px}
+#vTreinos .trp-preview input{max-width:100%;min-width:0;font-size:16px}
+#vTreinos #wpMovLinhas .wp-mov{display:grid;grid-template-columns:130px minmax(0,1fr) 44px;align-items:end;gap:10px!important;padding:12px 0;margin:0!important;border-bottom:1px solid var(--linha)}
+#vTreinos #wpMovLinhas label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;font-weight:600;line-height:1.5;margin:0;color:var(--texto)}
+#vTreinos #wpMovLinhas input{display:block;width:100%!important;min-width:0!important;min-height:48px;margin:0;font-size:16px}
+#vTreinos #wpMovLinhas .wpx{align-self:end;margin-bottom:2px;padding:8px;width:44px}
+#vTreinos #wpMovAdd{margin:14px 0!important}
+#vTreinos #plnDias>div{padding:18px 0!important;min-width:0}
+#vTreinos #plnDias select{max-width:100%!important;min-height:48px;font-size:16px}
+#vTreinos .trp-plan-time{display:flex;flex-direction:column;gap:4px;align-self:end;font-size:12px;font-weight:600;line-height:1.5;margin:0}
+#vTreinos .trp-plan-time input{min-width:0;width:140px!important;max-width:100%;min-height:48px;font-size:16px}
+#vTreinos .trp-day-copy{margin:8px 0 0}
+#vTreinos .trp-day-copy>summary{font-size:13px;min-height:44px;align-content:center;cursor:pointer;color:var(--tk-tx3)}
+#vTreinos .trp-day-copy .btn{margin:6px 6px 0 0}
+#vTreinos .trx-section :focus-visible,#vTreinos .trx-mobile-nav :focus-visible,#vTreinos #trAbas :focus-visible{outline:3px solid var(--tk-roxoTx);outline-offset:3px}
+@media(max-width:900px){
+  #vTreinos #trAbas{display:none}
+  #vTreinos .trx-mobile-nav{display:flex;align-items:center;gap:12px;padding:0 0 24px;margin:0 0 24px;border-bottom:1px solid var(--linha)}
+  #vTreinos .trx-mobile-nav label{font-size:12px;font-weight:600;line-height:1.4;letter-spacing:0;color:var(--tk-tx3);flex:none;white-space:nowrap;margin:0}
+  #vTreinos .trx-mobile-nav select{min-width:0;width:0;flex:1;min-height:48px;font-size:16px;font-weight:600;margin:0}
+  #vTreinos .trx-heading{flex-wrap:wrap;gap:12px;margin-bottom:20px}
+  #vTreinos .trx-heading h2{font-size:22px}
+  #vTreinos .trx-heading>.btn{flex:0 1 auto}
+  #vTreinos .trx-fields{gap:16px 12px}
+  #vTreinos :is(#taEquipCampo,.trx-field:has(>#wpTipo),.trx-field:has(>#cbTipo)){grid-column:1/-1}
+  #vTreinos [data-trsec="grupo"]>.trx-fields{grid-template-columns:1fr}
+  #vTreinos .trx-filters{grid-template-columns:1fr}
+  #vTreinos .trx-field:has(>#vtpUrl){grid-column:1/-1}
+  #vTreinos .trx-field{font-size:12px}
+  #vTreinos .trx-section .btn{padding:10px 12px}
+  #vTreinos .trx-actions .btn{flex:1 1 135px}
+  #vTreinos .trx-publish{flex-direction:column;align-items:stretch;gap:12px}
+  #vTreinos .trx-pick{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #vTreinos .trx-steps{gap:12px;justify-content:space-between;margin-bottom:22px}
+  #vTreinos .trx-steps li{font-size:12px;gap:6px}
+  #vTreinos .trx-steps span{width:23px;height:23px}
+  #vTreinos .trx-list .btn{font-size:13px}
+  #vTreinos #wpMovLinhas .wp-mov{grid-template-columns:minmax(0,1fr) 44px;gap:8px!important;padding:14px 0}
+  #vTreinos .trp-movement-qty{grid-column:1;grid-row:1}
+  #vTreinos .trp-movement-qty input{max-width:160px}
+  #vTreinos .trp-movement-ex{grid-column:1/-1;grid-row:2}
+  #vTreinos #wpMovLinhas .wpx{grid-column:2;grid-row:1}
+  #vTreinos #plnDias>div{grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+  #vTreinos #plnDias>div>div:first-child{padding-top:0!important;font-size:16px!important}
+  #vTreinos #plnDias>div>div:last-child>div:has([data-plnsel]){display:grid!important;grid-template-columns:minmax(0,1fr) 44px;gap:8px!important;margin-bottom:14px!important;align-items:end!important}
+  #vTreinos #plnDias [data-plnsel]{width:100%;min-width:0!important;grid-column:1/-1}
+  #vTreinos .trp-plan-time{grid-column:1}
+  #vTreinos #plnDias [data-plnrm]{grid-column:2;align-self:end}
+}

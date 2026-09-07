@@ -51,6 +51,31 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Ferramentas de Treinos no personal (mt-v790)
+
+As sete áreas além de Musculação usam `.trx-section` e o acabamento isolado
+em `assets/personal-usabilidade.css`. `trArea` navega no celular e acompanha
+os botões `data-tra` do computador, pela mesma `mostraTrAba`. O HTML e o
+editor de séries da área `fichas` continuam preservados.
+
+A interface de IA gera uma proposta em memória, mostra a revisão e só aplica
+quando o personal confirma. Geração, aplicação e publicação são ações
+distintas. A proposta pertence ao aluno, modalidade e parâmetros capturados
+na geração; uma resposta antiga não pode preencher outra seleção. Aplicar
+preserva as demais modalidades e recusa um rascunho cujo treino de origem
+mudou. Os hooks antigos dos geradores mantêm compatibilidade com os testes.
+Dias e tempo solicitados orientam a proposta sem alterar a anamnese.
+
+WOD, cardio e Semana guardam rascunhos por aluno. Salvar não publica; os
+atalhos locais abrem a mesma prévia de publicação já usada em Musculação.
+Grupos exibem destinatários, permitem editar membros e preservam os planos
+de outras modalidades. Catálogo tem paginação e Conteúdos tem edição,
+filtros e publicação das mudanças para os alunos.
+
+O demo intercepta somente a operação de IA autorizada pelo simulador e
+identifica a proposta como simulada. Manter a trava dupla do demo e nunca
+usar dados, tokens ou chamadas reais nos testes.
+
 ### Ficha do aluno no personal (mt-v789)
 
 O perfil tem cabeçalho compacto e oito áreas com destinos próprios. O seletor
