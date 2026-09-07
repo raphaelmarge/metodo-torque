@@ -13818,7 +13818,7 @@ async function novaExecucaoAluno(p) {
   const corpo = await p.evaluate(() => document.body.textContent);
   const htmlV = await p.evaluate(() => document.documentElement.outerHTML);
   ok(/personal trainer/i.test(corpo) && /treino guiado/i.test(htmlV) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
-  ok(/14 dias grátis/.test(corpo) && /sem cartão/.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
+  ok(/14 dias grátis/i.test(corpo) && /sem cartão/i.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
   ok(await p.evaluate(() => [...document.querySelectorAll("a[href]")].some((a) => /Testar grátis|14 dias grátis|meu tempo de volta/i.test(a.textContent) && /personal\.html/.test(a.href))), "CTA principal leva direto pro módulo");
   {
     // o número de exercícios anunciado nunca pode ficar acima do banco real
