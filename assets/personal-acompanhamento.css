@@ -1,0 +1,69 @@
+/* Avaliações, Questionários e Desafio: formulários legíveis e conteúdo progressivo. */
+:is(#vAvaliacoes,#vQuest,#vDesafio){min-width:0;color:var(--texto)}
+:is(#vAvaliacoes,#vQuest,#vDesafio) [hidden]{display:none!important}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-heading{padding:4px 0 20px;margin-bottom:20px;border-bottom:1px solid var(--linha)}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-heading h1{font-size:28px;line-height:1.2;letter-spacing:-.6px;text-transform:none;font-style:normal;margin:0 0 8px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-heading p{margin:0;font-size:15px;color:var(--tk-tx3);line-height:1.6}
+:is(#vAvaliacoes,#vQuest,#vDesafio)>.card{border:0!important;border-left:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:20px 0!important;margin:0!important;border-bottom:1px solid var(--linha)!important;animation:none!important;transform:none!important}
+:is(#vAvaliacoes,#vQuest,#vDesafio) h2{font-size:21px;letter-spacing:-.3px;font-style:normal;text-transform:none;margin:0 0 12px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .abas{display:flex;gap:4px;border-bottom:1px solid var(--linha);border-radius:0;background:none;padding:0 0 12px;flex-wrap:wrap}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .abas button{min-height:44px;border-radius:7px;white-space:normal;font-size:14px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-area{display:none;min-width:0;max-width:100%;width:100%;box-sizing:border-box;padding:0;text-indent:0;transform:none;font-style:normal;letter-spacing:0;text-transform:none;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-fields,:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:16px 14px;margin:14px 0;min-width:0}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field{display:flex;flex-direction:column;gap:7px;margin:0;font-size:13px;font-weight:600;line-height:1.45;min-width:0;color:var(--texto);letter-spacing:0;text-transform:none}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-check{display:flex;gap:10px;align-items:center;min-height:46px;min-width:0;margin:0;line-height:1.5;font-size:14px;letter-spacing:0;text-transform:none;white-space:normal}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field>span:has(input){min-width:0!important;max-width:100%;width:100%}
+:is(#vAvaliacoes,#vQuest,#vDesafio) input:not([type=checkbox]):not([type=file]),:is(#vAvaliacoes,#vQuest,#vDesafio) select:not([data-busca]),:is(#vAvaliacoes,#vQuest,#vDesafio) textarea{min-width:0!important;max-width:100%;width:100%!important;min-height:46px;font-size:16px!important;margin:0!important;border-radius:7px;box-sizing:border-box}
+:is(#vAvaliacoes,#vQuest,#vDesafio) select:not([multiple]):not([data-busca]):not([hidden]){appearance:none;-webkit-appearance:none;background-color:var(--card);color:var(--texto);padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) input[type=checkbox]{width:20px!important;min-width:20px!important;max-width:20px!important;height:20px!important;flex:none}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .btn,:is(#vAvaliacoes,#vQuest,#vDesafio) .dbt{min-height:44px;white-space:normal;font-style:normal;text-transform:none;letter-spacing:0;font-size:14px;padding:10px 14px;border-radius:7px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details,#listaAvaliacoes details[data-avdet]{border:0!important;border-bottom:1px solid var(--linha)!important;border-radius:0!important;background:transparent!important;margin:12px 0!important;padding:0!important;box-shadow:none}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>summary,#listaAvaliacoes details[data-avdet]>summary{position:relative;list-style:none;cursor:pointer;min-height:52px;align-content:center;padding:14px 30px 14px 0!important;font-size:16px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>summary::-webkit-details-marker,#listaAvaliacoes details[data-avdet]>summary::-webkit-details-marker{display:none}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>summary::after,#listaAvaliacoes details[data-avdet]>summary::after{content:'+';position:absolute;right:4px;top:13px;font-size:23px;font-weight:400;color:var(--tk-roxoTx)}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details[open]>summary::after,#listaAvaliacoes details[data-avdet][open]>summary::after{content:'−'}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>summary small{display:block;font-size:12px;font-weight:400;color:var(--tk-tx3)}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>p{font-size:14px;line-height:1.6;color:var(--tk-tx3)}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-details>div:last-child{margin-bottom:16px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-help{font-size:14px;line-height:1.6;color:var(--tk-tx3);margin:10px 0 14px}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-help:empty{display:none}
+:is(#vAvaliacoes,#vQuest,#vDesafio) .altopo{background:none;border:0;border-radius:0;padding:12px 0;gap:12px;flex-wrap:wrap}
+#vAvaliacoes #dbCampos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#vAvaliacoes #dbCampos label{min-width:0;line-height:1.6;font-size:13px!important;color:var(--texto)!important}
+#vAvaliacoes #listaAvaliacoes .fseta{display:none}
+#vAvaliacoes #listaAvaliacoes details>div{padding:0 0 12px!important}
+#vAvaliacoes #listaAvaliacoes .sessao-pt{border-radius:0;box-shadow:none;background:transparent;border:0;border-bottom:1px solid var(--linha);padding:14px 0;gap:10px;flex-wrap:wrap}
+#vQuest .qspanel{border:0;background:transparent;border-radius:0;box-shadow:none;gap:24px;padding:0;grid-template-columns:minmax(230px,1fr) minmax(0,1.7fr)}
+#vQuest .qslista{border:0;background:none;border-radius:0;padding:0}
+#vQuest .qsit{border:0;border-bottom:1px solid var(--linha);background:transparent;border-radius:0;min-height:64px;padding:12px 8px;box-shadow:none}
+#vQuest .qsit.on{background:var(--pt-sel);border-left:3px solid var(--roxo)}
+#vQuest .qsnm{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+#vQuest .qsav{border-radius:50%;background:var(--tk-sup);color:var(--tk-tx3);box-shadow:none}
+#vQuest .acx-row{gap:10px!important;overflow-wrap:anywhere}
+#vQuest #qqPerguntas label{min-height:44px;display:flex!important;align-items:center;gap:8px;margin:0!important}
+#vQuest #qsDet .card,#vQuest #qsDet .qsbox{background:none;border:0;border-radius:0;padding:14px 0;box-shadow:none}
+#vQuest #qeSaida{padding:16px 0;border-top:1px solid var(--linha)}
+#vDesafio [data-dsrank]>div:first-child{flex-wrap:wrap;line-height:1.5}
+#vDesafio #dsStatus{font-size:14px!important;font-weight:600}
+#vDesafio #dsPub{display:block;flex-basis:100%;font-size:14px!important;line-height:1.5}
+#vDesafio #fdmLiga{width:46px!important;min-width:46px!important;max-width:46px!important;height:26px!important}
+#vDesafio .fdpost{border:0;border-bottom:1px solid var(--linha);border-radius:0;background:transparent;padding:18px 0;margin:0;box-shadow:none}
+#vDesafio .fdcab{gap:10px;flex-wrap:wrap}
+#vDesafio .fdpost img{max-width:100%!important;border-radius:7px!important}
+:is(#vAvaliacoes,#vQuest,#vDesafio) :focus-visible{outline:3px solid var(--tk-roxoTx);outline-offset:3px}
+@media(max-width:800px){
+ :is(#vAvaliacoes,#vQuest,#vDesafio)>.abas{display:none}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-area{display:block;font-size:13px;font-weight:600;margin:0 0 18px}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-area>select{display:block;margin-top:8px!important}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-fields,:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar>.acx-field:first-child,:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar>.acx-help{grid-column:1/-1}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#avAluno),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qeAluno),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qeQuest),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qpTipo),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#dsNome),#vDesafio .acx-field:has(#dsPremio){grid-column:1/-1}
+ #vAvaliacoes #dbCampos{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #vQuest .qspanel{display:block}
+ #vQuest .qslista{max-height:360px;overflow:auto;border-bottom:1px solid var(--linha);margin-bottom:20px}
+ #vQuest .acx-row>.btn{flex:1 1 120px}
+ #vQuest #qeApp{grid-column:1/-1}
+ #vDesafio [data-dssec="feed"] .linha-flex>.acx-check{flex:1 1 180px}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .linha-flex{flex-wrap:wrap!important}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-heading h1{font-size:25px}
+}

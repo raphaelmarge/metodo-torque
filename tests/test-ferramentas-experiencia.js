@@ -1,0 +1,115 @@
+/* Ferramentas do PERSONAL: navegação, rascunhos, falhas locais e ajuda. */
+const assert = require('assert/strict');
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { comMockNuvem } = require('./_nuvem.js');
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
+let browser, checks = 0;
+const eq = (a,b,n) => { assert.deepEqual(a,b,n); checks++; console.log('OK: '+n); };
+const ok = (v,n) => { assert.ok(v,n); checks++; console.log('OK: '+n); };
+(async () => {
+  browser = comMockNuvem(await chromium.launch({ executablePath:process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium', args:['--no-sandbox'] }));
+  const context = await browser.newContext({ viewport:{width:390,height:844},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block' });
+  const network=[], errors=[];
+  await context.route('**://*.supabase.co/**', r => { network.push(r.request().url()); return r.abort(); });
+  const p = await context.newPage(); p.on('pageerror', e=>errors.push(e.message));
+  p.on('dialog', async d => d.type()==='confirm' ? d.accept() : d.dismiss());
+  await p.clock.setFixedTime(new Date('2026-09-07T09:00:00-03:00'));
+  await p.goto(BASE+'/demo-personal.html'); await p.locator('#btnDemo').click(); await p.waitForURL(/personal\.html/);
+  await p.waitForFunction(()=>window.MT_FERRAMENTAS?.ready() && window.mockNuvem && window.__demoNuvem);
+  await p.evaluate(()=>{window.__toolsCloud=MTStore.cloud;});
+  const nav = async a => p.evaluate(a=>document.querySelector('#abas [data-a="'+a+'"]').click(),a);
+  const open = async id => {
+    const ancestors=p.locator('#'+id).locator('xpath=ancestor::details');
+    for(let i=0;i<await ancestors.count();i++) if(!await ancestors.nth(i).evaluate(e=>e.open)) await ancestors.nth(i).locator(':scope > summary').click();
+  };
+  const core = ()=>p.evaluate(()=>{const s=MTStore.read('ptStudio',{});const alunos=s.alunos.map(a=>{const c=Object.assign({},a);delete c.appEditEm;return c;});return JSON.stringify([alunos,s.treinosV2,s.sessoes,s.pagamentos,s.avaliacoes]);});
+  const initial=await core();
+  for(const width of [360,1280]) {
+    await p.setViewportSize({width,height:900});
+    for(const [area,id,values] of [['pers','persArea',['marca','fotos','beneficios']],['sitepro','spArea',['texto','contato','visual','secoes','previa']],['conta','ilhaArea',['contato','acesso','backup']]]) {
+      await nav(area);
+      for(const v of values) {
+        await p.locator('#'+id).selectOption(v);
+        eq(await p.evaluate(id=>{const el=document.getElementById(id);return [...el.closest('.ptf-tools').querySelectorAll('.ptf-pane')].filter(e=>!e.hidden).map(e=>e.dataset.ptfPane);},id),[v],area+' abre somente '+v+' em '+width+'px');
+      }
+    }
+  }
+  eq(await core(),initial,'Navegar por ferramentas preserva alunos, treinos, sessões e valores');
+  eq(await p.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return ids.filter((id,i)=>ids.indexOf(id)!==i);}),[],'Nenhum ID duplicado após reorganizar os controles');
+  await p.setViewportSize({width:390,height:844});
+  await nav('config'); await p.locator('#cfgArea').selectOption('conta'); await open('cfgAtraso');
+  await p.locator('#cfgAtraso').fill('6');
+  await p.locator('#cfgArea').selectOption('app'); await open('cfgPlaylist'); await p.locator('#cfgPlaylist').fill('link incompleto');
+  await nav('pers'); await nav('config');
+  eq(await p.locator('#cfgAtraso').inputValue(),'6','Configurações preservam tolerância ao sair e voltar');
+  eq(await p.locator('#cfgPlaylist').inputValue(),'link incompleto','Playlist digitada não desaparece na navegação');
+  const cfgBefore=await p.evaluate(()=>JSON.stringify(MTStore.read('ptStudio',{}).config));
+  await p.locator('#cfgSalva').click();
+  eq(await p.evaluate(()=>JSON.stringify(MTStore.read('ptStudio',{}).config)),cfgBefore,'Playlist inválida bloqueia gravação sem apagar o valor anterior');
+  ok(await p.locator('#cfgPlaylist').isVisible(),'Erro abre a seção e o campo que precisam de correção');
+  await p.locator('#cfgPlaylist').fill('https://www.youtube.com/playlist?list=exemplo');
+  await p.evaluate(()=>{window.__toolsWrite=MTStore.write;MTStore.write=()=>false;}); await p.locator('#cfgSalva').click();
+  ok(/Não foi possível salvar/.test(await p.locator('#cfgStatus').textContent()),'Falha local não informa configurações salvas');
+  await p.evaluate(()=>MTStore.write=window.__toolsWrite); await p.locator('#cfgSalva').click();
+  eq(await p.evaluate(()=>MTStore.read('ptStudio',{}).config.atrasoDias),6,'Salvar conserva a regra e grava o valor explícito');
+  await p.locator('#cfgFeed').uncheck(); await p.locator('#cfgArea').selectOption('resumo');
+  await p.locator('[data-cfgtg="feedOn"]').uncheck(); await p.locator('[data-cfgtg="feedOn"]').check();
+  await nav('pers'); await nav('config');
+  eq(await p.locator('#cfgFeed').isChecked(),true,'Interruptor salvo no Resumo substitui o rascunho antigo do mesmo campo');
+  await p.locator('#cfgBusca').fill('versão'); await p.locator('#cfgBuscaResultados button').filter({hasText:'Versão'}).click();
+  ok(await p.locator('#cfgAtualiza').isVisible(),'Busca abre a gaveta da configuração encontrada');
+  await p.locator('#cfgBusca').fill('pix'); await p.locator('#cfgBuscaResultados button').filter({hasText:'Pix, contato'}).click();
+  ok(await p.locator('#cfgPixChave').isVisible(),'Busca de Pix abre Sua ilha no destino correto');
+  await nav('sitepro'); await p.locator('#spArea').selectOption('texto'); await p.locator('#spHeadline').fill('Minha nova apresentação');
+  await p.locator('#spArea').selectOption('contato'); await p.locator('#spInsta').fill('meu_perfil'); await nav('imagens'); await nav('sitepro');
+  eq(await p.locator('#spHeadline').inputValue(),'Minha nova apresentação','Página mantém rascunho ao sair e voltar');
+  eq(await p.locator('#spInsta').inputValue(),'meu_perfil','Rascunho inclui áreas recolhidas da página');
+  await p.evaluate(()=>{window.__toolsWrite=MTStore.write;MTStore.write=()=>false;}); await p.locator('#spSalvar').click();
+  ok(/Não foi possível salvar/.test(await p.locator('#spStatus').textContent()),'Página não promete salvar quando armazenamento falha');
+  eq(await p.locator('#spHeadline').inputValue(),'Minha nova apresentação','Falha local conserva o texto da página');
+  await p.evaluate(()=>MTStore.write=window.__toolsWrite); await p.locator('#spSalvar').click();
+  eq(await p.locator('#spArea').inputValue(),'previa','Salvar a página abre a prévia para revisão');
+  eq(await p.evaluate(()=>MTStore.read('ptStudio',{}).config.sitePro.headline),'Minha nova apresentação','Prévia usa a apresentação salva');
+  await p.locator('#spArea').selectOption('visual'); await p.locator('#spLogoBtn').isVisible();
+  await p.locator('#spArea').selectOption('texto'); await p.locator('#spHeadline').fill('Rascunho a descartar'); await open('spDescartar'); await p.locator('#spDescartar').click();
+  eq(await p.locator('#spHeadline').inputValue(),'Minha nova apresentação','Descartar recarrega somente o que foi salvo');
+  await p.evaluate(()=>{MTStore.cloud=()=>window.mockNuvem({aid:'ferramentas-test'});});
+  await p.locator('#spSlug').fill('pagina-de-teste'); await p.locator('#spPublicar').click();
+  await p.waitForFunction(()=>!document.getElementById('spPublicar').disabled);
+  ok((await p.locator('#spEndereco').textContent()).includes('pagina-de-teste'),'Publicação simulada atualiza imediatamente o endereço no topo');
+  await p.evaluate(()=>{
+    const s=MTStore.read('ptStudio',{}); s.config.sitePro.capaId='img-em-uso'; s.zapAutos=[{id:'auto-imagem',nome:'Boas-vindas',imgId:'img-automacao'}]; MTStore.write('ptStudio',s);
+    const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jV1sAAAAASUVORK5CYII=';
+    MTStore.write('ptImagens',[{id:'img-em-uso',n:'Árvore',d:png,em:'2026-09-07'},{id:'img-automacao',n:'Bicicleta',d:png,em:'2026-09-06'}]);
+  });
+  await nav('imagens'); await p.locator('#imgBusca').fill('arvore');
+  eq(await p.locator('#imgGaleria .ptf-image').count(),1,'Busca da galeria ignora acentos');
+  await p.locator('[data-imgrm="img-em-uso"]').click();
+  ok(/Minha página/.test(await p.locator('#imgStatus').textContent()),'Galeria identifica uso da foto na página');
+  eq(await p.evaluate(()=>MTStore.read('ptImagens',[]).length),2,'Foto em uso não é removida');
+  await p.locator('#imgBusca').fill(''); await p.locator('[data-imgrm="img-automacao"]').click();
+  ok(/Boas-vindas/.test(await p.locator('#imgStatus').textContent()),'Galeria identifica a automação que usa a foto');
+  await p.locator('#imgOrdem').selectOption('nome');
+  eq(await p.locator('.ptf-image-name').allTextContents(),['Árvore','Bicicleta'],'Ordenação da galeria não altera os dados');
+  const imageData=await p.evaluate(()=>{MTStore.cloud=()=>null;const c=document.createElement('canvas');c.width=c.height=4;return c.toDataURL('image/png').split(',')[1];});
+  await p.locator('#imgFile').setInputFiles(Array.from({length:11},(_,i)=>({name:'foto-'+i+'.png',mimeType:'image/png',buffer:Buffer.from(imageData,'base64')})));
+  await p.waitForFunction(()=>document.getElementById('imgAdd').disabled===false);
+  eq(await p.evaluate(()=>MTStore.read('ptImagens',[]).length),12,'Lote adiciona as dez fotos permitidas sem perder as imagens anteriores');
+  ok(/foto-10.png.*próximo lote/.test(await p.locator('#imgStatus').textContent()),'Foto excedente é identificada e orienta o próximo envio');
+  await nav('ajuda'); await p.locator('#ajBusca').fill('senha');
+  ok(await p.locator('#vAjuda .ajgrid [data-ajtopico]:visible').count()>0,'Busca da ajuda encontra conteúdo dentro dos passos');
+  await p.locator('#ajBusca').fill('termoimpossivelxyz'); ok(await p.locator('#ajBuscaVazia').isVisible(),'Ajuda mostra vazio útil para busca sem resultado');
+  await p.evaluate(()=>{MTStore.cloud=()=>window.mockNuvem({aid:'ferramentas-test'});window.__toolsChama=MT_FUNCAO.chama;MT_FUNCAO.chama=()=>new Promise(r=>window.__toolsResolve=r);});
+  await p.locator('[data-ajtopico="_chamado"]').click(); await p.locator('#supEmail').fill('teste@example.com'); await p.locator('#supMsg').fill('Texto do chamado ainda em rascunho');
+  await p.locator('[data-ajvolta]').click(); await p.locator('[data-ajtopico="_chamado"]').click();
+  eq(await p.locator('#supMsg').inputValue(),'Texto do chamado ainda em rascunho','Sair do suporte preserva chamado ainda não enviado');
+  await p.locator('#supEnvia').click(); await p.locator('#supMsg').fill('Novo texto enquanto a resposta não chegou');
+  await p.locator('[data-ajvolta]').click(); await p.evaluate(async()=>{window.__toolsResolve({ok:true,protocolo:'TESTE-791'});await Promise.resolve();await Promise.resolve();});
+  await p.locator('[data-ajtopico="_chamado"]').click();
+  eq(await p.locator('#supMsg').inputValue(),'Novo texto enquanto a resposta não chegou','Resposta atrasada não apaga novo texto de suporte');
+  eq(await p.locator('#supProto').textContent(),'TESTE-791','Protocolo é preservado ao voltar ao suporte');
+  await p.evaluate(()=>{MTStore.cloud=window.__toolsCloud;MT_FUNCAO.chama=window.__toolsChama;});
+  eq(await core(),initial,'Ferramentas preservam dados de alunos e fontes de cálculo');
+  eq(errors,[],'Nenhum erro de JavaScript nos fluxos revisados'); eq(network,[],'Testes não fazem chamadas reais ao Supabase');
+  console.log('\n'+checks+' verificações passaram.');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});

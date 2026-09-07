@@ -1,0 +1,93 @@
+/* Gestão do Personal: escopo restrito a Financeiro, Relatórios e ao menu. */
+:is(#vPagamentos,#vRelatorios){--fg-gap:22px}
+:is(#vPagamentos,#vRelatorios) .card,:is(#vPagamentos,#vRelatorios) .pfbox{background:transparent;border:0;border-radius:0;box-shadow:none;padding:22px 0;margin:0 0 18px!important;border-bottom:1px solid var(--linha);min-width:0}
+:is(#vPagamentos,#vRelatorios) h2{font-size:20px;line-height:1.35;letter-spacing:-.02em;text-transform:none}
+:is(#vPagamentos,#vRelatorios) h3{font-size:16px;text-transform:none;letter-spacing:0}
+:is(#vPagamentos,#vRelatorios) :is(.muted,.alsub,.dfi){font-size:13px;line-height:1.55}
+:is(#vPagamentos,#vRelatorios) .btn{font-size:14px;line-height:1.4;min-height:44px;min-width:44px;padding:10px 14px;white-space:normal;height:auto}
+:is(#vPagamentos,#vRelatorios) :is(input,select,textarea){max-width:100%;box-sizing:border-box;font-size:16px;min-height:48px;min-width:0}
+:is(#vPagamentos,#vRelatorios) select:not([multiple]):not([data-busca]){appearance:none;-webkit-appearance:none;background-color:var(--card);color:var(--texto);padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+:is(#vPagamentos,#vRelatorios) input[type=checkbox]{min-height:20px;width:20px;height:20px;flex:none}
+:is(#vPagamentos,#vRelatorios) .fg-heading{margin:4px 0 24px}
+:is(#vPagamentos,#vRelatorios) .fg-heading h2{font-size:26px;margin:0 0 8px}
+:is(#vPagamentos,#vRelatorios) .fg-heading p{font-size:14px;color:var(--cinza);line-height:1.6;margin:0;max-width:65ch}
+:is(#vPagamentos,#vRelatorios) .fg-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 14px;align-items:end;margin:16px 0}
+:is(#vPagamentos,#vRelatorios) .fg-fields>.btn{align-self:end;margin:0}
+:is(#vPagamentos,#vRelatorios) .fg-field{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:13px;line-height:1.4;font-weight:600;letter-spacing:0;color:var(--texto);margin:0;white-space:normal}
+:is(#vPagamentos,#vRelatorios) .fg-field>input,:is(#vPagamentos,#vRelatorios) .fg-field>select,:is(#vPagamentos,#vRelatorios) .fg-field>[data-busca-wrap]{width:100%!important;min-width:0!important;max-width:100%;margin:0}
+#vPagamentos select[data-busca]{width:2px!important;height:2px!important;min-height:2px!important;min-width:0!important}
+:is(#vPagamentos,#vRelatorios) .fg-field:has(>input[hidden]),:is(#vPagamentos,#vRelatorios) .fg-field:has(>select[hidden]:not([data-busca])){display:none}
+:is(#vPagamentos,#vRelatorios) .fg-fields .fg-wide{grid-column:1/-1}
+:is(#vPagamentos,#vRelatorios) .fg-fold{margin:18px 0;padding:0;border:0;border-top:1px solid var(--linha);border-bottom:1px solid var(--linha);background:transparent;border-radius:0}
+:is(#vPagamentos,#vRelatorios) .fg-fold>summary{display:flex;align-items:center;gap:10px;min-height:56px;font-weight:650;font-size:16px;line-height:1.5;list-style:none;cursor:pointer;padding:14px 0}
+:is(#vPagamentos,#vRelatorios) .fg-fold>summary::-webkit-details-marker{display:none}
+:is(#vPagamentos,#vRelatorios) .fg-fold>summary::after{content:'+';font-size:23px;font-weight:400;color:var(--tk-roxoTx);margin-left:auto;flex:none}
+:is(#vPagamentos,#vRelatorios) .fg-fold[open]>summary::after{content:'−'}
+:is(#vPagamentos,#vRelatorios) .fg-fold>.card{border:0;margin:0!important;padding:4px 0 20px}
+:is(#vPagamentos,#vRelatorios) .fg-status{font-size:13px;line-height:1.6;color:var(--cinza);margin:12px 0;overflow-wrap:anywhere}
+:is(#vPagamentos,#vRelatorios) .fg-status:empty{display:none}
+:is(#vPagamentos,#vRelatorios) .fg-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+:is(#vPagamentos,#vRelatorios) .fg-toolbar .fg-field{flex:1 1 170px}
+:is(#vPagamentos,#vRelatorios) .fg-toolbar .btn{flex:none}
+:is(#vPagamentos,#vRelatorios) .fg-more{width:100%;margin-top:18px}
+:is(#vPagamentos,#vRelatorios) .sessao-pt{background:transparent;border:0;border-radius:0;border-bottom:1px solid var(--linha);padding:16px 0;gap:10px;flex-wrap:wrap;min-width:0}
+:is(#vPagamentos,#vRelatorios) .sessao-pt>:is(b,span){overflow-wrap:anywhere;min-width:0}
+:is(#vPagamentos,#vRelatorios) .fg-filters-empty{font-size:14px;color:var(--cinza);padding:16px 0}
+#vPagamentos .pgatr{border:0;background:transparent;border-radius:0;margin:0}
+#vPagamentos .pgatrcab{padding:14px 0;flex-wrap:wrap;background:transparent}
+#vPagamentos .pgatrlin{padding:16px 0;border-color:var(--linha);gap:12px}
+#vPagamentos .pgatrlin .alnm{font-size:16px}
+#vPagamentos .pgatrlin .alsub{font-size:13px}
+#vPagamentos .pgatrlin .alav{display:none}
+#vPagamentos #pgVerMais{display:none!important}
+#vPagamentos .fg-analysis .dcols{display:grid!important;grid-template-columns:1fr 1fr;margin:0!important}
+#vPagamentos .fg-analysis .dcol2{display:grid!important}
+#vPagamentos .fg-analysis :is(#pg6meses,#pgComo,#pgHoje){display:block!important}
+#vPagamentos .fg-analysis .pfbox{padding:14px 0}
+#vPagamentos #dpLista>div{flex-wrap:wrap;gap:12px!important;padding:16px 0!important}
+#vPagamentos #dpLista>div>span:first-child{flex:1 1 200px}
+#vPagamentos #dpLista>div>span:last-child{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+:is(#pgAbas,#relAbas){display:flex;gap:8px;flex-wrap:wrap;overflow:visible}
+:is(#pgAbas,#relAbas)>button{height:auto;min-height:44px;font-size:14px;white-space:normal}
+.fg-area{display:none}
+#vRelatorios #relPerBar{flex-wrap:wrap;gap:10px;align-items:end;padding:0 0 18px;border-bottom:1px solid var(--linha)}
+#vRelatorios #relMesRot{display:none}
+#vRelatorios #relMesAnt{order:1}
+#vRelatorios #relPerBar>.fg-field{order:2;flex:1;min-width:0;max-width:280px}
+#vRelatorios #relMesProx{order:3}
+#vRelatorios #relMesHoje{order:4}
+#vRelatorios #relMesInput{width:100%;max-width:100%}
+#vRelatorios #relPerNota{order:5;flex-basis:100%;margin:0!important}
+#vRelatorios #relVendasLista>div:not(:first-child){flex-wrap:wrap;gap:10px!important;padding:14px 0!important;border-bottom:1px solid var(--linha)}
+#vRelatorios #relVendasLista>div>span:first-child{white-space:normal!important;overflow:visible!important;flex-basis:100%!important}
+#vRelatorios .relporta{border:0;border-top:1px solid var(--linha);border-radius:0;background:transparent;padding:16px 0}
+:is(#vPagamentos,#vRelatorios) :focus-visible,#abas .fg-menu-search :focus-visible{outline:3px solid var(--tk-roxoTx);outline-offset:3px}
+#abas .fg-menu-search{padding:0 14px 12px;margin:0}
+#abas .fg-menu-search label{display:block;font-size:12px;line-height:1.4;color:var(--cinza);margin:0 0 6px;font-weight:600;letter-spacing:0}
+#abas #menuBuscaPt{width:100%;min-width:0;min-height:44px;font-size:16px;margin:0}
+#abas [data-menu-filtrado]{display:none!important}
+#abas .fg-menu-empty{margin:0;padding:8px 16px;font-size:13px;line-height:1.5;color:var(--cinza)}
+#abas .fg-menu-close{display:none}
+#abas .menu-cab b{white-space:nowrap;font-size:14px;letter-spacing:.02em}
+#abas .fg-menu-group{margin:14px 16px 6px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--cinza)}
+@media(min-width:1100px){body.menu-fino #abas :is(.fg-menu-search,.fg-menu-empty,.fg-menu-group){display:none}}
+@media(max-width:1099px){#abas .fg-menu-close{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;font-size:20px;padding:8px;margin-left:auto;flex:none}}
+@media(max-width:900px){
+  .fg-area{display:flex;gap:12px;align-items:center;margin:0 0 22px;padding:0 0 20px;border-bottom:1px solid var(--linha)}
+  .fg-area label{flex:none;font-size:12px;color:var(--cinza);margin:0;letter-spacing:0}
+  .fg-area select{flex:1;min-width:0;width:0;font-size:16px;min-height:48px;margin:0}
+  :is(#pgAbas,#relAbas){display:none}
+  :is(#vPagamentos,#vRelatorios) .fg-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  :is(#vPagamentos,#vRelatorios) .fg-fields>.fg-field:first-child{grid-column:1/-1}
+  :is(#vPagamentos,#vRelatorios) .fg-fields>.btn{grid-column:1/-1}
+  :is(#vPagamentos,#vRelatorios) .fg-toolbar .fg-field{flex-basis:calc(50% - 10px)}
+  :is(#vPagamentos,#vRelatorios) .fg-toolbar>.fg-field:first-child{flex-basis:100%}
+  #vPagamentos .altopo #pgLancar{width:auto;height:auto;font-size:14px;padding:10px 14px;min-height:44px;flex:none;margin-left:0!important}
+  #vPagamentos .altopo #pgLancar::after{content:none}
+  #vPagamentos .altopo{flex-wrap:wrap}
+  #vPagamentos .altopo>div{flex-basis:100%}
+  #vPagamentos .fg-analysis .dcols{grid-template-columns:1fr}
+  #vPagamentos #pgHero{border-radius:16px}
+  #vPagamentos #dpResumo>div{grid-template-columns:repeat(2,minmax(0,1fr))!important;text-align:left!important}
+  #vPagamentos #dpResumo>div>div:last-child{grid-column:1/-1}
+}

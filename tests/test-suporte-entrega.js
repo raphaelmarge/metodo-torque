@@ -20,10 +20,10 @@ function server(opts={}) {
   return {calls,saved,run:async()=>{const r=await handler(new Request('https://isolado.invalid/',{method:'POST',headers:{Authorization:'Bearer sessao-ficticia','Content-Type':'application/json'},body:JSON.stringify({acao:'abrir',aid:'22222222-2222-4222-8222-222222222222',tipo:'bug',msg:'Chamado inteiramente fictício.',email:'pessoa@example.invalid'})}));return {status:r.status,body:await r.json()}}};
 }
 function screen(opts={}) {
-  const nodes={};const el=id=>nodes[id]||(nodes[id]={value:'',textContent:'',innerHTML:'',hidden:true,disabled:false});
+  const nodes={};const el=id=>nodes[id]||(nodes[id]={value:'',textContent:'',innerHTML:'',hidden:true,disabled:false,checkValidity(){return id!=='supEmail'||!this.value||/^[^\s@]+@[^\s@]+$/.test(this.value)},focus(){this.focused=true}});
   el('supMsg').value='Descrição do problema fictício';el('supTipo').value='bug';el('supEmail').value='pessoa@example.invalid';
   const q={select(){return this},eq(){return this},order(){return this},limit(){return this},then(ok,bad){return Promise.resolve(opts.listError?{error:{message:'offline'}}:{data:[]}).then(ok,bad)}};
-  const ctx={$:el,esc:x=>x,S:{cloud:()=>({aid:'ficticio',client:{from:()=>q}})},MT_FUNCAO:{chama:async()=>{if(opts.offline)throw Error('offline');return{ok:true,protocolo:'TQ-TEST-ABCD',emailEnviado:!opts.mailFail}}}};
+  const ctx={$:el,esc:x=>x,document:{contains:x=>Object.values(nodes).includes(x)},S:{cloud:()=>({aid:'ficticio',client:{from:()=>q}})},MT_FUNCAO:{chama:async()=>{if(opts.offline)throw Error('offline');return{ok:true,protocolo:'TQ-TEST-ABCD',emailEnviado:!opts.mailFail}}}};
   vm.runInNewContext(ui,ctx);return {ctx,el};
 }
 let n=0;async function test(name,fn){await fn();n++;console.log('  ✅ '+name)}

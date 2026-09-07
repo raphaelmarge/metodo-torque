@@ -53,6 +53,9 @@ const REGUA = function () {
     const vis = (e) => {
       const s = getComputedStyle(e);
       if (s.display === "none" || s.visibility === "hidden" || +s.opacity === 0) return false;
+      // Texto recortado por inteiro para leitores de tela não participa da
+      // geometria visível. Exigimos o recorte calculado, sem liberar uma classe.
+      if (s.position === 'absolute' && s.overflow === 'hidden' && s.clip === 'rect(0px, 0px, 0px, 0px)') return false;
       const b = e.getBoundingClientRect();
       return b.width > 0 || b.height > 0;
     };
@@ -178,17 +181,17 @@ const ABAS = [
   ["agenda", "Agenda"],
   ["pagamentos", "Financeiro", "pga", ["receb", "planos", "contratos", "serv", "desp"]],
   ["treinos", "Treinos", "tra", ["fichas", "wod", "cardio", "plano", "auto", "ex", "videos", "grupo"]],
-  ["chat", "Chat"],
+  ["chat", "Chat", "cha", ["conversas", "robo"]],
   ["avaliacoes", "Avaliações", "ava", ["historico", "avaliar"]],
   ["quest", "Questionários", "qta", ["semana", "enviar", "montar", "resp"]],
   ["desafio", "Desafio", "dsa", ["config", "placar", "feed"]],
   ["relatorios", "Relatórios", "rela", ["geral", "alunos", "fin", "agenda", "vendas"]],
   ["assessoria", "Assessoria"],
-  ["sitepro", "Minha página"],
+  ["sitepro", "Minha página", "spa", ["texto", "contato", "visual", "secoes", "previa"]],
   ["config", "Configurações", "cfga", ["resumo", "zap", "app", "conta"]],
-  ["pers", "Personalização"],
+  ["pers", "Personalização", "persa", ["marca", "fotos", "beneficios"]],
   ["imagens", "Imagens"],
-  ["conta", "Sua ilha"],
+  ["conta", "Sua ilha", "ilhaa", ["contato", "acesso", "backup"]],
   ["ajuda", "Ajuda", "ajtopico", ["agenda"]], // v706: a Central de ajuda também tem que ser legível no celular
 ];
 const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino"];
@@ -221,6 +224,12 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     await p.waitForTimeout(1100);
   }
   async function sub(attr, v) {
+    const novosSelects = { pga: 'pgArea', rela: 'relArea', cfga: 'cfgArea', ava: 'avArea', qta: 'qtArea', dsa: 'dsArea', spa: 'spArea', persa: 'persArea', ilhaa: 'ilhaArea' };
+    if (novosSelects[attr] && await p.locator('#' + novosSelects[attr]).isVisible()) {
+      await p.locator('#' + novosSelects[attr]).selectOption(v);
+      await p.waitForTimeout(950);
+      return true;
+    }
     if (attr === "tra" && await p.locator("#trArea").isVisible()) {
       await p.locator("#trArea").selectOption(v);
       await p.waitForTimeout(950);

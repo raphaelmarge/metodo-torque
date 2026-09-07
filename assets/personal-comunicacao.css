@@ -1,0 +1,80 @@
+/* Comunicação do PERSONAL. Não alcança outros módulos ou áreas do painel. */
+#vChat,#vAssessoria{min-width:0}
+#vChat .pc-field,#vAssessoria .pc-field{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:700;color:var(--texto)}
+#vChat .pc-field input,#vChat .pc-field select,#vAssessoria .pc-field input,#vAssessoria .pc-field select{width:100%;min-width:0;min-height:46px;box-sizing:border-box;background:var(--card);color:var(--texto);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;font-weight:500}
+#vChat select:not([multiple]):not([data-busca]):not([hidden]),#vAssessoria select:not([multiple]):not([data-busca]):not([hidden]){appearance:none;-webkit-appearance:none;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+#vAssessoria .pc-heading{margin:0 0 22px}
+#vAssessoria .pc-heading h2{margin:0 0 8px}
+#vAssessoria .pc-heading p{max-width:680px;margin:0;line-height:1.6}
+#vAssessoria .pc-toolbar{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;align-items:end;gap:12px;margin:20px 0 12px}
+#vAssessoria .pc-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#vAssessoria .pc-kpi{padding:16px 0;border-bottom:1px solid var(--linha);min-width:0}
+#vAssessoria .pc-kpi strong{display:block;font-size:25px;line-height:1.2;color:var(--texto)}
+#vAssessoria .pc-kpi span{font-size:12px;color:var(--cinza)}
+#vAssessoria .pc-status{min-height:20px;font-size:12px;color:var(--cinza);line-height:1.5}
+#vAssessoria .pc-ass-card{padding:19px 0;border-top:1px solid var(--linha);color:var(--texto)}
+#vAssessoria .pc-ass-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+#vAssessoria .pc-ass-title{border:0;background:none;color:var(--texto);padding:0;text-align:left;font-family:inherit;font-size:16px;font-weight:800;line-height:1.4;overflow-wrap:anywhere;cursor:pointer}
+#vAssessoria .pc-ass-main{flex:1 1 240px;min-width:0}
+#vAssessoria .pc-ass-meta{font-size:12px;line-height:1.6;color:var(--cinza);margin-top:6px}
+#vAssessoria .pc-ass-state{display:inline-block;font-size:12px;font-weight:700;line-height:1.5;margin-top:6px;color:var(--roxo)}
+#vAssessoria .pc-ass-card[data-asestado=atencao] .pc-ass-state{color:var(--tk-erro)}
+#vAssessoria .pc-ass-card[data-asestado=meta] .pc-ass-state{color:var(--tk-ok)}
+#vAssessoria .pc-ass-card[data-asestado=semregistro] .pc-ass-state,#vAssessoria .pc-ass-card[data-asestado=semacesso] .pc-ass-state{color:var(--cinza)}
+#vAssessoria .pc-ass-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+#vAssessoria .pc-ass-actions .btn{min-height:40px;margin:0}
+#vAssessoria .pc-ass-checks{margin-top:14px;font-size:13px}
+#vAssessoria .pc-ass-checks summary{cursor:pointer;min-height:40px;display:flex;align-items:center;gap:8px;justify-content:space-between;font-weight:700;list-style:none}
+#vAssessoria .pc-ass-checks summary::-webkit-details-marker{display:none}
+#vAssessoria .pc-ass-checks summary::after{content:'+';color:var(--roxo)}
+#vAssessoria .pc-ass-checks[open] summary::after{content:'−'}
+#vAssessoria .pc-ass-check{padding:12px 0;border-top:1px solid var(--linha);line-height:1.6}
+#vAssessoria .pc-ass-check p{margin:6px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}
+#vAssessoria .pc-empty,#vChat .pc-empty{padding:24px 16px;line-height:1.65;color:var(--cinza)}
+#vChat .chpanel{grid-template-columns:minmax(250px,32%) minmax(0,1fr);align-items:start}
+#vChat .chlado,#vChat .chconv{min-width:0}
+#vChat .chbusca{display:grid;gap:12px;padding:14px 16px}
+#vChat .pc-chat-status{display:flex;align-items:center;gap:8px;justify-content:space-between;color:var(--cinza);font-size:11px}
+#vChat .pc-chat-status .btn{min-height:34px;margin:0}
+#vChat #chatAlunos .qsit{min-width:0;text-align:left;width:100%;border-radius:0;box-shadow:none}
+#vChat #chatAlunos .qsnm{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+#vChat .pc-draft{color:var(--roxo);font-weight:700;font-size:11px}
+#vChat .chconv{display:flex;flex-direction:column;overflow:hidden}
+#vChat .chtopo{align-items:center}
+#vChat #chatTitulo{overflow-wrap:anywhere;line-height:1.4}
+#vChat .pc-chat-sync{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 16px;font-size:12px;color:var(--cinza)}
+#vChat .pc-chat-sync:has(#chatLeituraStatus:empty):has(#chatTenta[hidden]){display:none}
+#vChat #chatMsgs{min-height:230px;max-height:55vh;overflow-y:auto;overscroll-behavior:contain}
+#vChat .cht{white-space:pre-wrap;overflow-wrap:anywhere}
+#vChat #chatTexto{flex:1 1 0;min-width:0;min-height:74px!important;height:auto!important;max-height:200px;resize:vertical;box-sizing:border-box;border:1px solid var(--linha);border-radius:12px;background:var(--card);color:var(--texto);font:inherit;font-size:14px!important;line-height:1.5;padding:10px 12px!important}
+#vChat #chatEnvio .linha-flex{align-items:flex-end;flex-wrap:nowrap}
+#vChat #chatEnviar{flex:none;min-height:44px}
+#vChat .pc-chat-hint{display:flex;justify-content:space-between;gap:12px;color:var(--cinza);font-size:10.5px;margin-top:7px}
+#vChat .pc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#vChat #chatEnvioErro{line-height:1.5}
+#vChat #chAbas{display:flex;gap:8px;flex-wrap:wrap}
+#vChat [data-chsec=robo]{min-width:0}
+#vChat #botOpsP{box-sizing:border-box;line-height:1.6;min-height:160px}
+@media(max-width:760px){
+ #vAssessoria .pc-toolbar{grid-template-columns:minmax(0,1fr);gap:12px}
+ #vAssessoria .pc-toolbar>.btn{justify-self:start;min-height:40px}
+ #vAssessoria .pc-kpis{gap:8px}
+ #vAssessoria .pc-kpi{padding:10px 0}
+ #vAssessoria .pc-kpi strong{font-size:22px}
+ #vAssessoria .pc-kpi span{font-size:11px;line-height:1.4;display:block}
+ #vAssessoria .pc-ass-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #vAssessoria .pc-ass-actions>.btn{min-width:0;white-space:normal;font-size:12px}
+ #vChat .chpanel,#vChat.chat-aberto .chpanel{display:grid;grid-template-columns:minmax(0,1fr);margin:0}
+ #vChat:not(.chat-aberto) .chconv{display:none}
+ #vChat.chat-aberto #chAbas{display:none}
+ #vChat.chat-aberto .chconv{border:1px solid var(--linha);border-radius:14px;min-height:0}
+ #vChat.chat-aberto .chtopo{padding:12px;gap:8px}
+ #vChat.chat-aberto .chtopo>div:nth-of-type(1){flex:1 1 0;min-width:0}
+ #vChat.chat-aberto .chtopo>div:last-child{margin:0;padding:8px 0 0;border:0;min-width:0;min-height:0;background:none}
+ #vChat.chat-aberto #chatMsgs{min-height:220px;max-height:45vh;padding:14px 12px;justify-content:flex-start}
+ #vChat.chat-aberto #chatEnvio{padding:12px}
+ #vChat.chat-aberto .chrapidas{flex-wrap:wrap;overflow:visible;gap:6px}
+ #vChat.chat-aberto .chrb{height:auto;min-height:34px;padding:6px 8px;white-space:normal}
+ #vChat .pc-chat-hint>span:first-child{max-width:210px;line-height:1.5}
+ #vChat .pc-chat-sync{padding:0 12px}
+}
