@@ -218,7 +218,10 @@ async function abaPt(p, a) {
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
   // na tela 2a a pendência aparece na coluna PLANO ("Vence dia 5" / "Venceu 05/08")
   ok(/Vence(?:u)? \d{2}\/\d{2}/.test(lista), "etiqueta de pendência antes do pagamento (Vence/Venceu dd/mm)");
-  ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-acesso]')), "aluno sem acesso do app tem o botão 📧 Enviar acesso direto na lista");
+  await p.locator('#listaAlunos .alrow').filter({ hasText: 'João Cliente' }).locator('[data-alquick]').click();
+  await p.locator('#listaAlunos [data-mais]').click();
+  ok(await p.locator('#listaAlunos [data-acesso]').isVisible(), "aluno sem acesso do app tem Enviar acesso no painel de ações da lista");
+  await p.locator('#listaAlunos .alrow').filter({ hasText: 'João Cliente' }).locator('[data-alquick]').click();
 
   // agenda: sessão hoje + marcar feita (agora com sub-abas Sessões/Agendar)
   await abaPt(p, "agenda");
@@ -13588,13 +13591,14 @@ async function abaPt(p, a) {
 
   // aluno "Encerrar" some da lista
   await abaPt(p, "alunos");
-  // as ações agora vivem no menu retrátil ⋮ — lista limpa, sem fileira de botões
+  // O painel só entra no DOM quando o professor abre Ações.
   ok(await p.evaluate(() => {
-    const acoes = document.querySelector("#listaAlunos [data-acoes]");
-    return !!document.querySelector("#listaAlunos [data-mais]") && acoes && acoes.hidden;
-  }), "lista de alunos limpa: ações escondidas atrás do botão ⋮");
-  await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
-  ok(await p.evaluate(() => !document.querySelector("#listaAlunos [data-acoes]").hidden), "toque no ⋮ abre as ações do aluno");
+    return !!document.querySelector("#listaAlunos [data-alquick]") && !document.querySelector("#listaAlunos .ali-panel");
+  }), "lista de alunos limpa: botão Ações visível sem renderizar todos os painéis");
+  await p.locator('#listaAlunos [data-alquick]').first().click();
+  ok(await p.evaluate(() => document.querySelector("#listaAlunos [data-acoes]").hidden), "ações administrativas começam recolhidas no painel");
+  await p.locator('#listaAlunos [data-mais]').click();
+  ok(await p.locator('#listaAlunos [data-acoes]').isVisible(), "Mais opções abre as ações administrativas do aluno");
   // 🔎 filtro do topo: todos × pagos no mês × sem pagamento
   {
     const filtro = await p.evaluate(() => {
@@ -13624,8 +13628,8 @@ async function abaPt(p, a) {
       return { todos, devendo, busca, voltou };
     });
     ok(/Paula Pagou/.test(filtro.todos.txt) && /Davi Devendo/.test(filtro.todos.txt), "🔎 filtro 'Ativos' mostra a lista inteira");
-    ok(filtro.todos.rot.join(" ") === "Ativos Sumindo Devendo 1 Encerrados",
-      "só o filtro com pendência mostra o número (" + filtro.todos.rot.join(" · ") + ")");
+    ok(filtro.todos.rot.join(" ") === "Ativos 2 Sumindo 0 Devendo 1 Encerrados 0",
+      "filtros mostram a quantidade de alunos em cada estado (" + filtro.todos.rot.join(" · ") + ")");
     ok(/2 ativos/.test(filtro.todos.resumo), "o cabeçalho diz o tamanho da carteira");
     ok(/Davi Devendo/.test(filtro.devendo) && !/Paula Pagou/.test(filtro.devendo), "filtro 'Devendo' deixa só quem falta pagar");
     ok(/Paula Pagou/.test(filtro.busca) && !/Davi Devendo/.test(filtro.busca), "a busca por nome filtra a lista");
@@ -13645,7 +13649,7 @@ async function abaPt(p, a) {
     ok(l2a.colunas.slice(0, 5).join(",") === "Aluno,Plano,Mês,Ficha,Próxima",
       "🎨 2a: a lista virou tabela com plano, treinos do mês, ficha e próxima sessão");
     ok(l2a.temAvatar && l2a.barra, "🎨 2a: cada linha tem as iniciais do aluno e a barra do mês");
-    ok(!!l2a.acao, "🎨 2a: toda linha carrega a ação que resolve o estado dela (" + l2a.acao.trim() + ")");
+    ok(l2a.acao.trim() === "Ações", "🎨 2a: toda linha oferece o botão Ações para abrir os atalhos do aluno");
     // com todo mundo pago, o filtro 'Sem pagamento' comemora em vez de ficar vazio
     const zerado = await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -13666,7 +13670,8 @@ async function abaPt(p, a) {
     window.MTStore.write("ptStudio", st);
     window.__alFiltro("ativos");
   });
-  await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
+  await p.locator('#listaAlunos [data-alquick]').first().click();
+  await p.locator('#listaAlunos [data-mais]').click();
   await p.click("#listaAlunos [data-rm]");
   lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/primeiro aluno/.test(lista), "encerrar aluno esvazia a lista (histórico preservado)");
