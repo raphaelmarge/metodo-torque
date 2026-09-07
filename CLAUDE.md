@@ -51,6 +51,29 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Experiência do app do aluno (mt-v793)
+
+O Início mantém a foto de capa do personal, prioriza a sessão em andamento e
+abre a musculação diretamente no player. Ver ficha consulta a prescrição.
+Hábitos, registro manual e detalhes da semana ficam em disclosures com os
+mesmos controles e IDs. O calendário abre o dia por toque; pendências de chat,
+questionários e a próxima sessão usam as fontes existentes e respeitam o menu.
+
+O player mostra a meta de cada série no seletor, sem repetir o número da série
+em outro bloco. Registro e conclusão compartilham uma ação; concluir sem anotar
+permanece explícito. Metas nunca preenchem valores realizados automaticamente.
+Os históricos distinguem séries concluídas, rascunhos e registros legados.
+Rascunhos acompanham o checkpoint por ficha/exercício/série; trocar o seletor
+não os descarta. Editar ou desfazer uma série recalcula o volume já registrado.
+
+Evolução abre em Resumo, com frequência e semanas cumpridas. Calendário e
+medalhas/nível ficam recolhidos, mantendo navegação, compartilhamento e histórico.
+Cargas oferece busca geral e períodos de 30/90 dias ou todo o histórico.
+Sessões agrupam data e ficha quando essa identificação existe; o gráfico agrega
+por dia. Recordes continuam recolhidos apenas em Cargas. Outras modalidades,
+metas, ferramentas, envio, acesso e dados do personal mantêm seus contratos.
+O acabamento visual continua exclusivamente em `app/aluno-skin.js`.
+
 ### Menu e campos de data no celular (mt-v792)
 
 O menu conserva seus botões e grupos dentro de `#menuItensPt`, que rola

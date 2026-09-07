@@ -236,10 +236,16 @@ const prescricao = [
   await pa.waitForSelector('#gSerie', { state: 'visible' });
   const repsTela = () => pa.locator('.gtile').first().textContent();
   ok(/5/.test(await repsTela()) && /1/.test(await pa.textContent('#gGrupo')), 'player começa com o alvo da primeira série');
+  const salvaAnotacao = async page => {
+    const detalhes = page.locator('#gSalvar').locator('xpath=ancestor::details');
+    for (let i = 0; i < await detalhes.count(); i++) {
+      if (!await detalhes.nth(i).evaluate(e => e.open)) await detalhes.nth(i).locator(':scope > summary').click();
+    }
+    await page.click('#gSalvar');
+  };
   const realizado = async (kg, reps) => {
-    if (!await pa.isVisible('#gKg')) await pa.click('#gMudaCarga');
     await pa.fill('#gKg', String(kg)); await pa.fill('#gReps', String(reps));
-    await pa.click('#gSalvar');
+    await salvaAnotacao(pa);
   };
   const volume = () => pa.evaluate(() => {
     const d = new Date(), dia = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -254,6 +260,7 @@ const prescricao = [
     'primeira série salva checkpoint e usa seus 90 segundos de descanso');
   ok(await volume() === 100, 'primeira série concluída contabiliza 20 kg × 5 reps');
   await pa.reload();
+  await pa.click('#navApp [data-msec="treino"]');
   await pa.waitForSelector('#acRetomar button');
   await pa.click('#acRetomar button');
   ok(await pa.evaluate(() => window.__gvDe().s === 1 && window.__gvDe().timer !== null), 'retomada restaura a segunda série e o descanso em andamento');
@@ -290,11 +297,11 @@ const prescricao = [
   const pb = await cb.newPage(); pb.on('pageerror', e => errors.push(e.message));
   await pb.goto(BASE + '/series-duplicadas.html');
   await pb.evaluate(() => document.querySelector('.guiabtn').click());
-  await pb.click('#gMudaCarga'); await pb.fill('#gKg', '20'); await pb.fill('#gReps', '5'); await pb.click('#gSalvar'); await pb.click('#gSerie');
+  await pb.fill('#gKg', '20'); await pb.fill('#gReps', '5'); await salvaAnotacao(pb); await pb.click('#gSerie');
   igual(await pb.locator('.setbtn').allTextContents(), ['1/3 séries ✓', '0/3 séries ✓'], 'nomes repetidos têm contadores independentes');
   await pb.evaluate(() => window.__zeraDescanso()); await pb.click('#gSerie'); await pb.evaluate(() => window.__pintaUlt());
   ok(!(await pb.locator('.exult,.exkg').allTextContents()).join(' ').includes('null'), 'concluir sem anotar carga não mostra null kg');
-  await pb.evaluate(() => window.__zeraDescanso()); await pb.click('#gMudaCarga'); await pb.fill('#gKg', 'abc'); await pb.fill('#gReps', '9'); await pb.click('#gSalvar');
+  await pb.evaluate(() => window.__zeraDescanso()); await pb.fill('#gKg', 'abc'); await pb.fill('#gReps', '9'); await salvaAnotacao(pb);
   ok(await pb.evaluate(() => !Object.values(JSON.parse(localStorage.getItem('ptdc'))).flat().some(x => x.i === '0:0:2')), 'carga inválida não é convertida silenciosamente em ausência ou zero');
   await pb.click('#gFechar');
   ok(await pb.isVisible('#guiaBox') && await pb.inputValue('#gKg') === 'abc', 'fechar com valores inválidos mantém o formulário para correção');
@@ -302,10 +309,10 @@ const prescricao = [
   ok(await pb.evaluate(() => window.__gvDe().e === 0) && await pb.inputValue('#gReps') === '9', 'avançar com valores inválidos preserva as repetições preenchidas');
   await pb.fill('#gKg', ''); await pb.fill('#gReps', ''); await pb.click('#gFechar');
   ok(!await pb.isVisible('#guiaBox'), 'limpar os campos opcionais permite sair');
-  await pb.click('#acRetomar button'); await pb.click('#gSerie'); await pb.evaluate(() => window.__zeraDescanso());
+  await pb.click('#navApp [data-msec="treino"]');await pb.click('#acRetomar button'); await pb.click('#gSerie'); await pb.evaluate(() => window.__zeraDescanso());
   igual(await pb.locator('.setbtn').allTextContents(), ['3/3 séries ✓', '0/3 séries ✓'], 'concluir o primeiro slot não completa a segunda ocorrência');
   ok(await pb.evaluate(() => !Object.keys(JSON.parse(localStorage.getItem('ptfeitos') || '{}')).length), 'ficha incompleta não ganha conclusão por nomes repetidos');
-  await pb.click('#gMudaCarga'); await pb.fill('#gKg', '30'); await pb.fill('#gReps', '6'); await pb.click('#gSalvar'); await pb.click('#gSerie');
+  await pb.fill('#gKg', '30'); await pb.fill('#gReps', '6'); await salvaAnotacao(pb); await pb.click('#gSerie');
   igual(await pb.locator('.setbtn').allTextContents(), ['3/3 séries ✓', '1/3 séries ✓'], 'segunda ocorrência avança apenas no seu slot');
   ok(await pb.evaluate(() => { const d = new Date(); const dia = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); return window.__seriesAluno.volume(0, dia) === 280; }), 'volume dos dois slots soma 20×5 e 30×6 sem duplicar');
   ok(errors.length === 0, 'nenhum erro de JavaScript nos casos adicionais');

@@ -52,6 +52,18 @@ async function abreDetalhes(p, selector) {
   }
 }
 
+// Cada cenário de execução começa sem slots concluídos pelos cenários anteriores.
+// O histórico legado e os dias treinados permanecem, para progressão e conquistas.
+async function novaExecucaoAluno(p) {
+  await p.evaluate(() => {
+    const d = new Date(), hoje = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const dc = JSON.parse(localStorage.getItem('ptdc') || '{}');
+    Object.keys(dc).forEach(n => { dc[n] = dc[n].filter(r => !(r.g === 2 && r.d === hoje)); });
+    localStorage.setItem('ptdc', JSON.stringify(dc));
+    localStorage.removeItem('ptsets_' + hoje);localStorage.removeItem('ptguiaSessao');
+  });
+}
+
 
 
 
@@ -6171,23 +6183,20 @@ async function abreDetalhes(p, selector) {
       window.MTStore.write("ptStudio", st);
       const html = window.__montaAppAluno(al, new Date().toISOString());
       const copias = (html.match(/data:image\/jpeg;base64/g) || []).length;
+      delete st.config.capaTreino;
+      window.MTStore.write("ptStudio", st);
+      const semFoto = window.__montaAppAluno(al, new Date().toISOString());
       // devolve tudo como estava
       st.treinosV2[al.id].fichas = JSON.parse(guardaFichas);
       delete st.config.capaTreino;
       window.MTStore.write("ptStudio", st);
-      return { copias, kb: Math.round(html.length / 1024), fotoKb: Math.round(foto.length / 1024) };
+      return { copias, kb: Math.round(html.length / 1024), fotoBytes: foto.length, deltaFoto: html.length - semFoto.length };
     });
     ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
-    // a folga é o orçamento do CÓDIGO do app (o que este assert vigia é a
-    // imagem repetida, que o `copias === 1` acima já pega): 250 → 285 KB em
-    // v734, depois do lote v728–v734 (confirmação, recordes, volume, voz,
-    // texto maior) — crescimento de código de verdade, não foto duplicada;
-    // 285 → 300 KB em v775 (o tour do primeiro uso: ~10 KB de CSS, copy e
-    // lógica dentro do app — o guarda da imagem repetida continua sendo o
-    // `copias === 1`)
-    // v777: +25 KB para retomada, estado de envio, relatos e legibilidade.
-    // A imagem continua sendo exatamente UMA cópia, protegida acima.
-    ok(peso.kb < peso.fotoKb * 2 + 325, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // Compara o mesmo pacote com/sem foto: protege o custo incremental da
+    // imagem sem confundi-lo com crescimento legítimo de código e estilos.
+    ok(Math.abs(peso.deltaFoto - peso.fotoBytes) < 2048,
+      "foto acrescenta somente seu próprio tamanho ao app de " + peso.kb + " KB, mesmo com seis fichas");
     // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
     // foto era jogada fora duas vezes (no corte e de novo na tela)
     const corte = await p.evaluate(async () => {
@@ -9676,6 +9685,8 @@ async function abreDetalhes(p, selector) {
   ok(cqCorrida.primeira && cqCorrida.cinco && cqCorrida.pace, "correr 5,2 km com pace 5:46 conquista as medalhas de corrida");
   /* Tocar numa conquista abre a tela cheia (estilo Nike Run): medalha grande
    * que gira com o movimento do celular (ou com o dedo) e o brilho anda junto. */
+  await pCr.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('conq'); });
+  await abreDetalhes(pCr, '#cqGrid');
   const cqTela = await pCr.evaluate(async () => {
     window.__evSub("conq");
     document.querySelector("#cqGrid [data-cqok='1']").click();
@@ -11267,9 +11278,9 @@ async function abreDetalhes(p, selector) {
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
   ok(await pApp.evaluate(() => {
-    document.getElementById("htVer").click();
+    document.getElementById("htFicha").click();
     return !document.querySelector("[data-sec='treino']").hasAttribute("data-sec-off");
-  }), "botão 'Ver treino ➜' do hero pula pra aba Treino");
+  }), "botão 'Ver ficha' do hero consulta a aba Treino");
   // com o menu de abas, cada grupo de cards vive numa seção — troca antes de interagir
   await pApp.evaluate(() => window.__trocaSec("treino"));
   // sem o diário manual, a carga entra pelo caminho do player (gGrava) e a
@@ -11394,6 +11405,7 @@ async function abreDetalhes(p, selector) {
   const tmr = await pApp.evaluate(() => document.getElementById("tmrBar").textContent);
   ok(/Descanso/.test(tmr), "cronômetro de descanso liga");
   // treino guiado: abre, conduz série → descanso automático → pular → concluir
+  await novaExecucaoAluno(pApp);
   await pApp.evaluate(() => document.querySelector(".guiabtn").click());
   let guiP = await pApp.evaluate(() => ({
     aberto: document.getElementById("guiaBox").style.display,
@@ -11407,7 +11419,7 @@ async function abreDetalhes(p, selector) {
   await pApp.click("#gPular");
   guiP = await pApp.evaluate(() => ({
     botao: document.getElementById("gSerie").style.display,
-    feitas: document.querySelectorAll("#gMiolo .gsets i.ok").length,
+    feitas: document.querySelectorAll("#gMiolo [data-gserie].ok").length,
   }));
   ok(guiP.botao === "block" && guiP.feitas === 1, "pular descanso volta pro botão de série, com 1 série marcada nos blocos");
   await pApp.evaluate(() => { for (let i = 0; i < 12; i++) document.getElementById("gPularEx").click(); });
@@ -11421,6 +11433,7 @@ async function abreDetalhes(p, selector) {
    * de cada exercício o registro da carga por stepper (sem teclado obrigatório). */
   {
     console.log("Treino guiado estilo story:");
+    await novaExecucaoAluno(pApp);
     await pApp.evaluate(() => document.querySelector(".guiabtn").click());
     await pApp.waitForTimeout(300);
     const st1 = await pApp.evaluate(() => {
@@ -11429,7 +11442,7 @@ async function abreDetalhes(p, selector) {
         display: document.getElementById("guiaBox").style.display,
         prog: document.getElementById("gProg").textContent,
         segmentos: document.querySelectorAll("#gBarra i").length,
-        blocos: document.querySelectorAll("#gMiolo .gsets i").length,
+        blocos: document.querySelectorAll("#gMiolo [data-gserie]").length,
         temCard: !!document.getElementById("gCard"),
         relo: document.getElementById("gRelo").textContent,
         reloLab: document.getElementById("gReloLab").textContent,
@@ -11519,12 +11532,14 @@ async function abreDetalhes(p, selector) {
     const carga = await pApp.evaluate(async () => {
       const bt = () => document.getElementById("gPular");
       for (let i = 0; i < 12; i++) {
-        if (document.getElementById("gKg")) break;
+        if (window.__gvDe().pend || window.__gvDe().fim) break;
         if (bt() && bt().style.display === "block") { await new Promise((r) => setTimeout(r, 760)); bt().click(); }
         else if (document.getElementById("gSerie")) document.getElementById("gSerie").click();
         await new Promise((r) => setTimeout(r, 220));
       }
       if (!document.getElementById("gKg")) return null;
+      const ajuste = document.getElementById('gWKg').closest('details');
+      if (ajuste && !ajuste.open) ajuste.querySelector('summary').click();
       const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
       const nome = document.getElementById("gEx").textContent;
       const slot = window.__gvDe().regi;
@@ -11627,7 +11642,7 @@ async function abreDetalhes(p, selector) {
       }
       return { ex: document.getElementById("gEx").textContent,
         recibo: document.getElementById("gMiolo").textContent,
-        faltam: document.querySelectorAll("[data-gfalta]").length,
+        faltam: Array.from(document.querySelectorAll("[data-grever]")).filter((b) => /carga não anotada/.test(b.textContent)).length,
         rpe: document.querySelectorAll("#gMiolo [data-rpe]").length,
         temFechar: !!document.getElementById("gFim") };
     });
@@ -11638,7 +11653,8 @@ async function abreDetalhes(p, selector) {
     ok(fim.rpe === 3 && /Como foi o treino de hoje\?/.test(fim.recibo),
       "o recibo pergunta como foi o treino ali mesmo (leve/na medida/pesado), sem voltar pra primeira tela");
     const repesca = await pApp.evaluate(async () => {
-      document.querySelector("[data-gfalta]").click();
+      document.querySelector("#gRevisaoSeries summary").click();
+      Array.from(document.querySelectorAll("[data-grever]")).find((b) => /carga não anotada/.test(b.textContent)).click();
       await new Promise((r) => setTimeout(r, 150));
       return { temRegua: !!document.getElementById("gWKg"), volta: !!document.getElementById("gVoltaFim") };
     });
@@ -11648,20 +11664,23 @@ async function abreDetalhes(p, selector) {
     const alvoCerto = await pApp.evaluate(async () => {
       document.getElementById("gVoltaFim").click();   // volta pro resumo pra ter os chips de novo
       await new Promise((r) => setTimeout(r, 150));
-      const chip = document.querySelector("[data-gfalta]");
+      document.querySelector("#gRevisaoSeries summary").click();
+      const chip = Array.from(document.querySelectorAll("[data-grever]")).find((b) => +b.dataset.ge !== window.__gvDe().e && /carga não anotada/.test(b.textContent));
       if (!chip) return { nome: "", mexeu: [] };
-      const nome = chip.textContent.replace(/\s*›\s*$/, "").trim();
+      const nome = window.GUIA[window.__gvDe().f].it[+chip.dataset.ge].e;
+      const slot = window.__gvDe().f + ":" + chip.dataset.ge + ":" + chip.dataset.grever;
       const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
       chip.click();
       await new Promise((r) => setTimeout(r, 120));
+      document.querySelector(".gserie-ajustes summary").click();
       await window.__roda("gWKg", 30);                  // mexe e NÃO salva
       document.getElementById("gVoltaFim").click();     // sai pelo caminho que grava o pendente
       await new Promise((r) => setTimeout(r, 150));
       const dep = JSON.parse(localStorage.getItem("ptdc") || "{}");
-      const outros = Object.keys(dep).filter((k) => (dep[k] || []).length !== ((antes[k] || []).length));
-      return { nome: nome, mexeu: outros };
+      const outros = Object.keys(dep).filter((k) => JSON.stringify(dep[k] || []) !== JSON.stringify(antes[k] || []));
+      return { nome: nome, mexeu: outros, registro: (dep[nome] || []).find((r) => r.d === diaISO() && r.g === 2 && r.i === slot) };
     });
-    ok(alvoCerto.mexeu.length === 0 || (alvoCerto.mexeu.length === 1 && alvoCerto.mexeu[0] === alvoCerto.nome),
+    ok(alvoCerto.nome && alvoCerto.mexeu.length === 1 && alvoCerto.mexeu[0] === alvoCerto.nome && alvoCerto.registro && alvoCerto.registro.kg === 30,
       "o que a repescagem grava vai pro exercício DELA, nunca pro último aberto (" + alvoCerto.mexeu.join(", ") + ")");
     await pApp.evaluate(() => { const v = document.getElementById("gVoltaFim"); if (v) v.click(); });
     await pApp.waitForTimeout(150);
@@ -11672,6 +11691,7 @@ async function abreDetalhes(p, selector) {
   }
   {
     console.log("v751 — treino guiado:");
+    await novaExecucaoAluno(pApp);
     const g751 = await pApp.evaluate(async () => {
       const out = {};
       const d0 = new Date(); const hj = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
@@ -11696,18 +11716,16 @@ async function abreDetalhes(p, selector) {
       localStorage.setItem("ptdc", JSON.stringify(dc));
       const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
       // (b0) o histórico anterior é um lembrete; a execução desta série começa vazia
-      document.getElementById("gMudaCarga").click(); await dorme(100);
       const rp0 = document.getElementById("gReps");
-      out.semBotaoSug = !document.getElementById("gSug") && !!rp0 && rp0.value === "" && /Nessa série na última vez: 20 kg/.test(document.getElementById("gMiolo2").textContent);
-      document.getElementById("gMudaCarga").click(); await dorme(100);
+      out.semBotaoSug = !document.getElementById("gSug") && !!rp0 && rp0.value === "" && /Usar última carga: 20 kg/.test(document.getElementById("gMiolo2").textContent);
       const bt = document.getElementById("gSugT"); out.temSugT = !!bt;
       if (bt) bt.click(); await dorme(150);
       out.sugKg = +document.getElementById("gKg").value.replace(",", ".");
       out.sugSemRegistro = JSON.stringify(JSON.parse(localStorage.getItem("ptdc") || "{}")) === JSON.stringify(dc);
       out.sujo = window.__gvDe().sujo;
-      // (c) depois de aceitar: reps vazias (nenhuma confirmada hoje) com o alvo de placeholder
+      // (c) aceitar mantém reps vazias e guarda a sugestão apenas como rascunho
       const rp = document.getElementById("gReps");
-      out.repsVazio = !!rp && rp.value === "" && rp.placeholder === String(alvo);
+      out.repsVazio = !!rp && rp.value === "" && rp.placeholder === '—' && new RegExp(alvo + ' reps').test(document.querySelector('[data-gserie][aria-pressed="true"]').textContent);
       // (d) 'Série feita' guarda a carga digitada no formulário aberto
       const kgI = document.getElementById("gKg"); kgI.value = "33"; kgI.dispatchEvent(new Event("input"));
       const repsReais = Math.max(1, alvo - 1); rp.value = String(repsReais); rp.dispatchEvent(new Event("input"));
@@ -11728,10 +11746,10 @@ async function abreDetalhes(p, selector) {
     ok(!!g751, "o app de teste tem ficha com exercício de 2+ séries e reps prescritas (base dos asserts v751)");
     if (g751) {
       ok(g751.temIni && g751.semeou, "🏋️ v751: 'Iniciar exercício' já nasce na série seguinte à marcada na ficha (Série 2 de N)");
-      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemRegistro && g751.sujo === false,
-        "🏋️ v751: aceitar a sugestão preenche 22,5 kg para confirmar, sem criar registro ou repetições realizadas");
+      ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemRegistro && g751.sujo === true,
+        "🏋️ v751: aceitar a sugestão mantém 22,5 kg como rascunho para confirmar, sem criar registro ou repetições realizadas");
       ok(g751.repsVazio && g751.semBotaoSug,
-        "🏋️ v751: a anotação desta série começa com reps vazias e alvo no placeholder, mantendo a sessão anterior como lembrete");
+        "🏋️ v751: a anotação desta série começa com reps vazias e alvo no seletor da série, mantendo a sessão anterior como lembrete");
       ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva 33 kg e as repetições digitadas como execução concluída desta série");
       ok(g751.tickVivo && g751.tickMorto, "🏋️ v751: pular exercício no descanso mata o tick antigo (nada de 'Descanso acabou' fantasma ao voltar do 2º plano)");
     }
@@ -11820,6 +11838,7 @@ async function abreDetalhes(p, selector) {
   ok(/1 treino/.test(medal) && /faltam 4/.test(medal), "contador de medalhas (faltam 4 pra 🥉)");
   // clicar manualmente no mesmo dia não duplica
   await pApp.evaluate(() => window.__trocaSec("inicio"));
+  await abreDetalhes(pApp, '#btnFeito');
   await pApp.click("#btnFeito");
   const feitos = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos")));
   ok(Object.keys(feitos).length === 1, "mesmo dia não duplica o registro");
@@ -12022,6 +12041,8 @@ async function abreDetalhes(p, selector) {
   // --- leva 2: aquecimento, raio-X, mapa do ano, meta de peso, Já paguei, wake lock ---
   ok(/Aquecimento do dia/.test(appHtml2) && /Raio-X do treino/.test(appHtml2) && /wakeLock/.test(appHtml2) && /mapaAno/.test(appHtml2),
     "app traz aquecimento automático, raio-X por grupo, wake lock e mapa de calor do mês");
+  await pApp.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('conq'); });
+  await abreDetalhes(pApp, '#mapaAno');
   const leva2 = await pApp.evaluate(async () => {
     window.__trocaSec("evolucao");
     const pz = {};
@@ -12059,6 +12080,8 @@ async function abreDetalhes(p, selector) {
   ok(leva2.mapaCabe, "o mês cabe na largura da tela (sem estourar o card)");
 
   // --- 🎯 meta de carga (v675): definir, progresso pelo recorde real, bater e comemorar 1 vez ---
+  await pApp.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('cargas'); });
+  await abreDetalhes(pApp, '#mcDef');
   const metaCg = await pApp.evaluate(async () => {
     const dc = JSON.parse(localStorage.getItem("ptdc") || "{}");
     dc["Supino reto"] = [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-20", kg: 70, r: 8 }];
@@ -12094,6 +12117,8 @@ async function abreDetalhes(p, selector) {
   ok(!posTermo.ov && !!posTermo.v, "📜 aceitou uma vez = a tela do termo não reaparece (só se o professor mudar o texto)");
 
   // --- a FITA DO ANO voltou (pedido do Raphael): Mês | Ano no mesmo card ---
+  await pApp.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('conq'); });
+  await abreDetalhes(pApp, '#mapaAno');
   const mapAno = await pApp.evaluate(async () => {
     const abre = async () => {
       window.__trocaSec("evolucao");
@@ -12540,8 +12565,9 @@ async function abreDetalhes(p, selector) {
     out.corpo = getComputedStyle(document.body).backgroundColor;
     out.txt = getComputedStyle(document.body).color;
     out.card = card ? getComputedStyle(card).backgroundColor : "";
-    // no visual minimalista o .cardx é transparente — quem vira branco são as superfícies internas
-    const sup = document.querySelector("[style*='background:var(--bg2)']");
+    // Calendários e resumos são transparentes; o campo de busca é uma superfície
+    // real do tema, sem depender da ordem dos antigos estilos inline.
+    const sup = document.getElementById("cgBusca");
     out.superficie = sup ? getComputedStyle(sup).backgroundColor : "";
     out.salvo = JSON.parse(localStorage.getItem("pttema"));
     // o dia de hoje no calendário: tinha texto branco sem fundo e sumia no claro
@@ -14186,6 +14212,10 @@ async function abreDetalhes(p, selector) {
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
     await pA.clock.setFixedTime(new Date());
+    // O sábado é exclusivo da prova das capas. Questionários verificam a data
+    // de liberação ao inicializar: começa o restante do demo já no dia atual.
+    await pA.reload({ waitUntil: "domcontentloaded" });
+    await pA.waitForTimeout(1200);
 
     // 🛍 v705: a demo mostra a loja com FOTO de produto e o cupom com LINK do
     // parceiro — sem isso quem assiste não via as duas caras do recurso
@@ -16151,7 +16181,7 @@ async function abreDetalhes(p, selector) {
         anelNoAlvo: dentro(rA, rC) && rA.width - rC.width < 40,
         veuNaoBloqueia: getComputedStyle(cx).pointerEvents === "none" && getComputedStyle(anel).pointerEvents === "none",
         balaoRecebe: getComputedStyle(bal).pointerEvents === "auto",
-        alvoLivre: !!alvo && (alvo.id === "btnFeito" || !!alvo.closest("#btnFeito")),
+        manualRecolhido: !document.getElementById('btnFeito').closest('details').open,
         alvo1Livre: !!alvo1 && !!alvo1.closest("#diasSem"),
         colouNaTela: cx.parentElement === document.body && Math.round(rX.left) === 0 && Math.round(rX.top) === 0,
         balaoNaoCobreAlvo: rB.bottom <= rA.top || rB.top >= rA.bottom,
@@ -16165,8 +16195,8 @@ async function abreDetalhes(p, selector) {
     });
     ok(t1.on && t1.passo === 0 && /1 de 3/.test(t1.k || "") && t1.anelNoAlvo,
       "🧭 v775: no primeiro uso o tour abre sozinho e o anel envolve os chips da semana (#diasSem) — 1 de 3");
-    ok(t1.veuNaoBloqueia && t1.balaoRecebe && t1.alvoLivre && t1.alvo1Livre,
-      "🧭 v775: o véu NÃO bloqueia a página — pointer-events:none no véu e no anel; o centro dos chips E o do Treinei hoje! continuam sendo os próprios elementos (elementFromPoint)");
+    ok(t1.veuNaoBloqueia && t1.balaoRecebe && t1.manualRecolhido && t1.alvo1Livre,
+      "🧭 v793: o véu não bloqueia os chips e o primeiro passo mantém o registro manual recolhido");
     ok(t1.colouNaTela && t1.semDataSec,
       "🧭 v775: o overlay nasce colado no <body> em (0,0) e fora do classificador de seções (sem data-sec)");
     ok(t1.balaoNaoCobreAlvo && t1.semTransicao, "🧭 v775: o balão fica numa faixa própria, nunca em cima do alvo — e o anel não anima (o recorte já nasce no lugar)");
@@ -16174,6 +16204,9 @@ async function abreDetalhes(p, selector) {
       "🧭 v775: enquanto o tour roda, as 3 perguntinhas e o card de push ficam escondidos — nunca dois pedidos na mesma tela");
 
     // ---- B) clique DE VERDADE no alvo com o tour aberto ----
+    await pA.click('#tourProx');
+    ok(await pA.evaluate(() => window.__tour.passo() === 1 && document.getElementById('btnFeito').closest('details').open),
+      '🧭 v793: selecionar o segundo passo abre o registro manual, sem abrir antes da hora');
     let cliqueFalhou = "";
     try { await pA.click("#btnFeito", { timeout: 4000 }); } catch (e) { cliqueFalhou = e.message; }
     await pA.waitForTimeout(150);
@@ -16306,6 +16339,7 @@ async function abreDetalhes(p, selector) {
       "🧭 v775: sem treino pra começar, 'Entendi' devolve o aluno pro Início (2 passos vistos); tenta/fim/vai fora de hora não estouram");
     // o aluno marca o treino ANTES de responder as perguntinhas: o pedido de push dos 900 ms tem de esperar — e vir logo depois do onbOk
     await pB.evaluate(() => { document.getElementById("diasSem").style.display = ""; });
+    await abreDetalhes(pB, '#btnFeito');
     await pB.click("#btnFeito");
     await pB.waitForTimeout(1200);
     const t8b = await pB.evaluate(() => {
@@ -16513,6 +16547,7 @@ async function abreDetalhes(p, selector) {
     await pSPA.route("**/app-semprog.html", (r) => r.fulfill({ contentType: "text/html", body: spHtml.com }));
     await pSPA.goto(BASE + "/app-semprog.html", { waitUntil: "domcontentloaded" });
     await pSPA.waitForTimeout(900);
+    await abreDetalhes(pSPA, '#semResumo');
     const sp1 = await pSPA.evaluate(() => {
       window.__trocaSec("inicio");
       const sr = document.getElementById("semResumo"), bar = sr.querySelector("[role='progressbar']");
