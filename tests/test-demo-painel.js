@@ -205,6 +205,26 @@ function t(cond, nome) {
 
   console.log("Nada sai deste navegador:");
   {
+    const propostas = await p.evaluate(async () => {
+      const antes = localStorage.getItem("mtapp:ptStudio"), saidas = [];
+      for (const tipo of ["musculacao", "wod", "corrida"]) {
+        const r = await window.MT_FUNCAO.chama(null, "chat-envia", { acao: "ia_treino", tipo, dados: "Exemplo de demonstração" });
+        const plano = r.texto ? JSON.parse(r.texto) : {};
+        const chave = tipo === "musculacao" ? "fichas" : tipo === "wod" ? "wods" : "cardio";
+        saidas.push({ tipo, ok: r.ok, simulado: r.simulado, resumo: plano.resumo, quantidade: (plano[chave] || []).length,
+          itens: tipo !== "musculacao" || plano.fichas.every(f => f.itens.length && f.itens.every(it => !!it.nome)) });
+      }
+      const outros = await Promise.all([
+        window.MT_FUNCAO.chama(null, "chat-envia", { acao: "envia" }),
+        window.MT_FUNCAO.chama(null, "pagarme", { acao: "ia_treino" }),
+        window.MT_FUNCAO.chama(null, "chat-envia", { acao: "ia_treino", tipo: "inexistente" }),
+      ]);
+      return { saidas, intacto: antes === localStorage.getItem("mtapp:ptStudio"), outros: outros.map(r => !r.ok && !!r.erro) };
+    });
+    t(propostas.saidas.every(r => r.ok && r.quantidade > 0 && r.itens), "demo fornece propostas válidas de musculação, circuito e corrida com exemplos existentes");
+    t(propostas.saidas.every(r => r.simulado && /Demonstração: proposta simulada/.test(r.resumo) && /Nenhuma IA foi consultada/.test(r.resumo)), "as três propostas identificam explicitamente a simulação, sem alegar geração real de IA");
+    t(propostas.intacto, "consultar uma proposta simulada não altera o treino salvo");
+    t(propostas.outros.every(Boolean), "simular treino não libera chat, pagamento ou modalidade desconhecida");
     const fn = await p.evaluate(() => window.MT_FUNCAO.chama(null, "whatsapp", {}, "Mandar o zap")
       .then((r) => ({ erro: String(r && r.erro || ""), ok: !!(r && r.ok) })));
     t(!fn.ok && /demo/i.test(fn.erro), "Edge Function não roda no demo — devolve recado honesto");

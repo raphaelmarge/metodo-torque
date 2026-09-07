@@ -374,11 +374,50 @@
 
   raiz.MTStore.cloud = function () { return { client: CLIENTE, aid: AID }; };
 
+  // A proposta usa os próprios treinos de exemplo; não interpreta a anamnese
+  // nem chama um modelo. Apenas permite conhecer a revisão antes de aplicar.
+  function propostaTreinoDemo(corpo) {
+    var st;
+    try { st = JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}"); }
+    catch (e) { st = {}; }
+    var tipo = corpo.tipo || "musculacao";
+    if (["musculacao", "wod", "corrida"].indexOf(tipo) < 0) return { erro: "Esse tipo de treino não está disponível na demonstração." };
+    var chave = tipo === "wod" ? "wods" : tipo === "corrida" ? "cardio" : "fichas";
+    var texto = String(corpo.dados || ""), treinos = st.treinosV2 || {};
+    var aluno = (st.alunos || []).find(function (a) { return a.nome && texto.indexOf(a.nome) >= 0; });
+    var modelo = aluno && treinos[aluno.id];
+    if (!modelo || !Array.isArray(modelo[chave]) || !modelo[chave].length) {
+      modelo = Object.keys(treinos).map(function (id) { return treinos[id]; }).find(function (t) {
+        return t && Array.isArray(t[chave]) && t[chave].length;
+      });
+    }
+    if (!modelo) return { erro: "Não há um treino de exemplo desse tipo. Reabra a demonstração para restaurar os exemplos." };
+    var plano = { resumo: "Demonstração: proposta simulada a partir dos treinos de exemplo. Nenhuma IA foi consultada. Revise a seleção antes de aplicar.", simulado: true };
+    if (tipo === "musculacao") {
+      plano.fichas = modelo.fichas.slice(0, 3).map(function (f) {
+        return { titulo: f.titulo || "Treino de exemplo", itens: (f.itens || []).slice(0, 8).map(function (it) {
+          var ex = (st.exercicios || []).find(function (x) { return x.id === it.exId; });
+          if (!ex || !ex.nome) return null;
+          var item = { nome: ex.nome, series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "", tec: it.tec || "" };
+          if (it.carga !== undefined) item.carga = it.carga;
+          if (Array.isArray(it.seriesDetalhadas)) item.seriesDetalhadas = JSON.parse(JSON.stringify(it.seriesDetalhadas));
+          return item;
+        }).filter(Boolean) };
+      }).filter(function (f) { return f.itens.length; });
+      if (!plano.fichas.length) return { erro: "Os exercícios de exemplo não estão disponíveis. Reabra a demonstração para restaurá-los." };
+    } else {
+      plano[chave] = JSON.parse(JSON.stringify(modelo[chave].slice(0, 3)));
+      plano[chave].forEach(function (t) { delete t.id; });
+    }
+    return { ok: true, simulado: true, texto: JSON.stringify(plano) };
+  }
+
   /* Edge Function no demo, não. São elas que mandam WhatsApp de verdade, geram
    * link de cobrança e chamam a IA — nada disso pode sair de uma página pública
    * de demonstração. O recado diz a verdade em vez de dar erro de rede. */
   if (raiz.MT_FUNCAO && typeof raiz.MT_FUNCAO.chama === "function") {
     raiz.MT_FUNCAO.chama = function (client, nome, corpo, oQue) {
+      if (nome === "chat-envia" && corpo && corpo.acao === "ia_treino") return Promise.resolve(propostaTreinoDemo(corpo));
       return Promise.resolve({
         erro: (oQue || "Isso") + " não roda no demo — aqui é uma demonstração, " +
           "sem conta e sem internet. No sistema de verdade funciona normalmente.",

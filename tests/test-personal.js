@@ -32,7 +32,7 @@ async function abaPt(p, a) {
 }
 
 // Percorre os disclosures pela mesma interação visível que o professor usa.
-async function abreDetalhesDoPerfil(p, selector) {
+async function abreDetalhes(p, selector) {
   const ancestrais = p.locator(selector).locator("xpath=ancestor::details");
   for (let i = 0; i < await ancestrais.count(); i++) {
     const detalhe = ancestrais.nth(i);
@@ -398,7 +398,7 @@ async function abreDetalhesDoPerfil(p, selector) {
   const joaoId = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId);
   ok(await p.evaluate(() => !!document.getElementById("pfCtPlano") && !!document.getElementById("pfCtAdd")), "perfil sem contrato mostra o form de fechar contrato");
-  await abreDetalhesDoPerfil(p, "#pfCtPlano");
+  await abreDetalhes(p, "#pfCtPlano");
   await p.selectOption("#pfCtPlano", { index: 1 });
   await p.fill("#pfCtDia", String(diaVenc));
   await p.click("#pfCtAdd");
@@ -1391,6 +1391,7 @@ async function abreDetalhesDoPerfil(p, selector) {
 
   // videoteca do studio
   await p.evaluate(() => window.__trAba("videos"));
+  await abreDetalhes(p, "#vtpTitulo");
   await p.fill("#vtpTitulo", "Mobilidade de quadril");
   await p.fill("#vtpCat", "Mobilidade");
   await p.fill("#vtpUrl", "https://youtube.com/watch?v=mob1");
@@ -1409,6 +1410,7 @@ async function abreDetalhesDoPerfil(p, selector) {
   ok(/João Cliente/.test(pick) && /Bia Grupo/.test(pick), "criador de grupo lista os alunos ativos");
   await p.evaluate(() => window.__trAba("grupo"));
   // o seletor agora abre num quadrado com busca: filtra "bia" e marca
+  await abreDetalhes(p, "#grQuemCab");
   await p.click("#grQuemCab");
   await p.fill("#grQuemBusca", "bia");
   ok(await p.evaluate(() => {
@@ -1458,6 +1460,7 @@ async function abreDetalhesDoPerfil(p, selector) {
   // treino de DISPARO (pré-montado, sem aluno): monta com template e dispara pro grupo
   /* v755: o nome saía num prompt() do navegador — agora é campo de verdade,
    * do lado do botão (a mesma linguagem do "Nome do grupo" logo abaixo). */
+  await abreDetalhes(p, "#gtNome");
   const gtSemNome = await p.evaluate(() => {
     let avisou = "";
     const al = window.alert; window.alert = (m) => { avisou = String(m); };
@@ -3781,7 +3784,7 @@ async function abreDetalhesDoPerfil(p, selector) {
 
   // renovação de contrato com 1 toque
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId2);
-  await abreDetalhesDoPerfil(p, "[data-pfctrenova]");
+  await abreDetalhes(p, "[data-pfctrenova]");
   await p.click("[data-pfctrenova]");
   await p.waitForTimeout(250);
   ok(await p.evaluate(() => {
@@ -8673,8 +8676,13 @@ async function abreDetalhesDoPerfil(p, selector) {
       const confOrig = window.confirm; window.confirm = () => true;
       // o teste antigo do Renovar deixa uma chamada da IA pendurada pra sempre (promise que nunca resolve) — o botão ficou disabled
       document.getElementById("taIA").disabled = false;
+      const salvoAntes = JSON.stringify(S.read("ptStudio", {}).treinosV2[id]);
       document.getElementById("taIA").click();
       await new Promise((r) => setTimeout(r, 400));
+      out.semAplicar = JSON.stringify(S.read("ptStudio", {}).treinosV2[id]) === salvoAntes;
+      out.revisao = !document.getElementById("taRevisao").hidden;
+      out.avisos = document.getElementById("taRevisaoAvisos").textContent;
+      document.getElementById("taAplicar").click();
       window.confirm = confOrig;
       window.MT_FUNCAO.chama = cham; S.cloud = orig;
       out.status = document.getElementById("taStatus").textContent;
@@ -8704,10 +8712,11 @@ async function abreDetalhesDoPerfil(p, selector) {
     });
     ok(iaClique.fichas === 8 && iaClique.itens === 16 && iaClique.series === 8,
       "🧠 v750: os tetos subiram (8 fichas, 16 exercícios, 8 séries) — a IA que obedece o professor não é cortada em 6/10/6");
-    ok(/O painel limitou/.test(iaClique.status) && /1 ficha além das 8/.test(iaClique.status) && /4 exercícios além dos 16/.test(iaClique.status) && /16 exercícios com mais de 8 séries/.test(iaClique.status),
-      "🧠 v750: o que passou do teto é CONTADO e aparece no status, em vez de sumir calado");
-    ok(iaClique.mesSaiu && /não devolveu o Plano do mês/.test(iaClique.status),
-      "🧠 v750: resposta sem 'mes' apaga o plano do mês velho e o status diz que ele não veio");
+    ok(iaClique.semAplicar && iaClique.revisao, "🧠 v790: gerar abre revisão e conserva a prescrição até aplicar");
+    ok(/Limites aplicados/.test(iaClique.avisos) && /1 ficha além das 8/.test(iaClique.avisos) && /4 exercícios além dos 16/.test(iaClique.avisos) && /16 exercícios com mais de 8 séries/.test(iaClique.avisos),
+      "🧠 v750: o que passou do teto é CONTADO e aparece na revisão, em vez de sumir calado");
+    ok(iaClique.mesSaiu && /sem a progressão de 4 semanas/.test(iaClique.avisos) && /plano do mês anterior/.test(iaClique.avisos),
+      "🧠 v750: resposta sem 'mes' avisa na revisão e só ao aplicar apaga o plano do mês velho");
     ok(iaClique.iaParamsTipo, "🧠 v750: a geração grava iaParams.musculacao (por tipo)");
     ok(iaClique.avisoVisivel && /Plano do mês/.test(iaClique.avisoTexto),
       "🧠 v750: 'Gerar com IA' confere a chat-envia publicada sem precisar abrir a gaveta, e a falta de 'mes' aparece no aviso (a gaveta abre sozinha)");
@@ -15859,6 +15868,10 @@ async function abreDetalhesDoPerfil(p, selector) {
       const hj = new Date(); const seg = new Date(hj);
       seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
       const isoSeg = seg.getFullYear() + "-" + String(seg.getMonth() + 1).padStart(2, "0") + "-" + String(seg.getDate()).padStart(2, "0");
+      // O dia de hoje pode vir aberto. Na segunda-feira o primeiro clique
+      // abaixo precisa ABRIR a gaveta, não fechar o estado inicial automático.
+      const diaJaAberto = document.querySelector("[data-semd][aria-pressed='true']");
+      if (diaJaAberto) diaJaAberto.click();
       const chips = [...document.querySelectorAll("[data-semd]")];
       const out = {
         semSeuDia: !document.getElementById("agHojeCard"),

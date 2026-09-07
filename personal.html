@@ -2419,6 +2419,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- TREINOS -->
   <section id="vTreinos" hidden>
+    <div class="trx-mobile-nav"><label for="trArea">Área de treinos</label><select id="trArea"><optgroup label="Prescrição"><option value="fichas">Musculação · fichas do aluno</option><option value="auto">Criar treino com IA</option><option value="wod">Circuito (WOD)</option><option value="cardio">Corrida e bike</option><option value="plano">Semana do aluno</option><option value="grupo">Treinos em grupo</option></optgroup><optgroup label="Biblioteca"><option value="ex">Exercícios</option><option value="videos">Conteúdos</option></optgroup></select></div>
     <div class="abas" id="trAbas" style="margin: 0 0 14px;">
       <button data-tra="fichas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Fichas do aluno</button>
       <button data-tra="auto"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Automático e IA</button>
@@ -2477,204 +2478,175 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Abra uma ficha pra escolher os exercícios — a busca fica dentro dela. No app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos (“Ficha pronta”) criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;" data-trsec="wod" hidden>
-      <h2>Circuito (WOD)</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Monte o circuito com o cronômetro certo — o aluno recebe no app com tudo configurado, só apertar Começar. O resultado (tempo ou voltas) volta pro painel dele.</p>
-      <div class="linha-flex" style="margin: 0 0 10px;"><select id="wpAluno" style="min-width: 200px;"></select></div>
-      <div id="wpLista" class="muted">Escolha o aluno pra ver os circuitos dele.</div>
-      <div style="margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--linha); border-radius: 12px;">
-        <b style="font-size: 13px;" id="wpFormTit">Novo circuito</b>
-        <label style="font-size: 12px; display: block; margin: 8px 0 0;">Começar de um modelo pronto (opcional)
-          <select id="wpModelo" style="display:block; width: 100%; max-width: 420px; margin-top: 3px;"><option value="">— montar do zero —</option></select></label>
-        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
-          <label style="font-size: 12px; margin: 0;">Nome<input id="wpNome" placeholder="ex.: WOD do sábado" style="display:block; width: 180px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;">Tipo<select id="wpTipo" style="display:block; width: 130px; margin-top: 3px;"><option value="fortime">For Time</option><option value="amrap">AMRAP</option><option value="emom">EMOM</option><option value="tabata">Tabata</option></select></label>
-          <label style="font-size: 12px; margin: 0;" data-wpcfg="fortime">Limite (min, 0 = livre)<input id="wpCap" inputmode="numeric" value="12" style="display:block; width: 130px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-wpcfg="amrap,emom" hidden>Minutos<input id="wpMin" inputmode="numeric" value="10" style="display:block; width: 90px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Rounds<input id="wpRounds" inputmode="numeric" value="8" style="display:block; width: 80px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Trabalho (s)<input id="wpWork" inputmode="numeric" value="20" style="display:block; width: 90px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Descanso (s)<input id="wpRest" inputmode="numeric" value="10" style="display:block; width: 90px; margin-top: 3px;"></label>
-        </div>
-        <div style="font-size: 12px; margin: 12px 0 4px;">Movimentos do circuito — igual à ficha: quantidade + exercício (busca no banco)</div>
-        <div id="wpMovLinhas"></div>
-        <button class="btn sec mini" id="wpMovAdd">+ movimento</button>
-        <datalist id="wpExs"></datalist>
-        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Aquecimento (opcional)
-          <textarea id="wpAq" rows="2" placeholder="ex.: 2 min de corda + mobilidade de ombro" style="width: 100%; margin-top: 3px;"></textarea></label>
-        <label style="font-size: 12px; display: block; margin: 8px 0 0;">Escalas / observações (opcional)<input id="wpObs" placeholder="ex.: escala o peso se precisar" style="width: 100%; margin-top: 3px;"></label>
-        <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
-          <button class="btn" id="wpSalva">Salvar circuito</button>
-          <button class="btn sec" id="wpLimpa" hidden>Cancelar edição</button>
-          <span id="wpStatus" class="muted" style="font-size: 12.5px;"></span>
-        </div>
-      </div>
-      <button class="btn sec" id="btnWodProf" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.5v4l2.5 2M10 2.5h4'/></svg> Cronômetro tela cheia (pra conduzir a sessão)</button>
-    </div>
-
-    <div class="card" style="margin-bottom: 14px;" data-trsec="cardio" hidden>
-      <h2>Corrida e bike</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Prescreva o treino de corrida, caminhada ou bike — o aluno recebe no app com um cronômetro próprio que marca <b>pace (min/km)</b>, distância (GPS ou manual) e tiros com bipe. O resultado volta pro painel dele.</p>
-      <div class="linha-flex" style="margin: 0 0 10px;"><select id="cbAluno" style="min-width: 200px;"></select></div>
-      <div id="cbLista" class="muted">Escolha o aluno pra ver os treinos de corrida e bike dele.</div>
-      <div style="margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--linha); border-radius: 12px;">
-        <b style="font-size: 13px;" id="cbFormTit">Novo treino</b>
-        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
-          <label style="font-size: 12px; margin: 0;">Nome<input id="cbNome" placeholder="ex.: Rodagem leve de terça" style="display:block; width: 200px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;">Modalidade<select id="cbMod" style="display:block; width: 130px; margin-top: 3px;"><option value="corrida">Corrida</option><option value="caminhada">Caminhada</option><option value="bike">Bike</option></select></label>
-          <label style="font-size: 12px; margin: 0;">Tipo<select id="cbTipo" style="display:block; width: 190px; margin-top: 3px;"><option value="continuo">Contínuo</option><option value="intervalado">Tiros (intervalado)</option><option value="misto">Contínuo + tiros</option></select></label>
-        </div>
-        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Distância (km, 0 = livre)<input id="cbDist" inputmode="decimal" value="5" style="display:block; width: 150px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Tempo alvo (min, 0 = livre)<input id="cbTempo" inputmode="numeric" value="0" style="display:block; width: 160px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Pace alvo (min/km, opcional)<input id="cbPace" placeholder="ex.: 6:30" style="display:block; width: 170px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Tiros<input id="cbReps" inputmode="numeric" value="8" style="display:block; width: 80px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Forte (s)<input id="cbTiro" inputmode="numeric" value="60" style="display:block; width: 90px; margin-top: 3px;"></label>
-          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Leve/descanso (s)<input id="cbDesc" inputmode="numeric" value="90" style="display:block; width: 130px; margin-top: 3px;"></label>
-        </div>
-        <div id="cbDica" class="muted" hidden style="font-size: 12px; margin-top: 8px;"></div>
-        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Observações (opcional)<input id="cbObs" placeholder="ex.: ritmo conversável, alongar depois" style="width: 100%; margin-top: 3px;"></label>
-        <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
-          <button class="btn" id="cbSalva">Salvar treino</button>
-          <button class="btn sec" id="cbLimpa" hidden>Cancelar edição</button>
-          <span id="cbStatus" class="muted" style="font-size: 12.5px;"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom: 14px;" data-trsec="plano" hidden>
-      <h2>Semana do aluno (planejamento)</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Monte a semana do aluno: cada dia aceita <b>quantos treinos você quiser</b> — ficha, circuito e corrida juntos, pra quem faz planilha de corrida e musculação ao mesmo tempo. O <b>horário é opcional</b>; com ele, o dia vira uma agenda no celular do aluno, na ordem certa. O padrão vale pro <b>mês inteiro</b> (e pros seguintes) até você mudar; dia sem treino aparece como descanso.</p>
-      <div class="linha-flex" style="margin: 0 0 10px;"><select id="plnAluno" style="min-width: 200px;"></select></div>
-      <div id="plnDias" class="muted">Escolha o aluno pra montar a semana dele.</div>
-      <div class="linha-flex" style="gap: 10px; margin-top: 12px;">
-        <button class="btn" id="plnSalva">Salvar planejamento</button>
-        <button class="btn sec" id="plnLimpa">Limpar dias</button>
-      </div>
-      <p id="plnStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Os treinos das abas Fichas, Circuito (WOD) e Corrida e bike aparecem aqui pra escolher. Depois de salvar, toque em <b>Salvar e publicar</b> (aba Fichas) pra chegar no celular.</p>
-    </div>
-
-    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="auto">
-      <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Treino automático</h2>
-      <p class="muted" style="margin: 4px 0 10px;">O sistema lê a anamnese do aluno (nível, dias por semana, lesões, o que ele não gosta) e monta as fichas sozinho com o catálogo TORQUE. O <b>Gerar com IA</b> vai além: a IA da nuvem analisa a anamnese inteira (PAR-Q, saúde, hábitos) e prescreve um treino sob medida. Você revisa, ajusta e envia — a decisão final é sempre sua.</p>
-      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
-        <select id="taAluno" style="min-width: 180px;"></select>
-        <select id="taTipo" style="width: auto;" title="pra qual aba vai o treino gerado — a IA prescreve no formato certo e ele cai no lugar certo">
-          <option value="musculacao">Musculação (fichas)</option>
-          <option value="wod">Circuito (WOD)</option>
-          <option value="corrida">Corrida</option>
-        </select>
-        <select id="taObjetivo" style="width: auto;">
-          <option value="hipertrofia">Hipertrofia</option>
-          <option value="forca">Força</option>
-          <option value="emagrecimento">Emagrecimento</option>
-          <option value="condicionamento">Condicionamento geral</option>
-        </select>
-        <select id="taProva" style="width: auto;" hidden>
-          <option value="comecar a correr">Começar a correr</option>
-          <option value="5 km">Correr 5 km</option>
-          <option value="10 km">Correr 10 km</option>
-          <option value="melhorar o pace">Melhorar o pace</option>
-          <option value="emagrecimento">Emagrecimento</option>
-        </select>
-        <select id="taEquip" style="width: auto;">
-          <option value="academia">Academia completa</option>
-          <option value="casa">Halteres e elásticos (casa)</option>
-          <option value="corpo">Só o peso do corpo</option>
-        </select>
-        <button class="btn" id="taGerar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Gerar fichas</button>
-        <button class="btn sec" id="taIA" title="a IA lê a anamnese completa e prescreve o treino (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
-        <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Evoluir semana</button>
-      </div>
-      <details id="taBrief" style="margin-top: 12px; border: 1px solid var(--linha); border-radius: 12px;">
-        <summary style="padding: 11px 14px; cursor: pointer; font-weight: 700; font-size: 13.5px;">
-          ✍️ Sua leitura deste aluno <span class="muted" style="font-weight: 400; font-size: 12.5px;">— a IA obedece isso antes dos números</span>
-          <span id="taBriefChip" class="muted" style="font-size: 12px; margin-left: 6px;"></span>
-        </summary>
-        <div style="padding: 0 14px 14px;">
-          <p class="muted" style="margin: 0 0 10px; font-size: 12.5px;">Fica guardado neste aluno — escreva uma vez e vá ajustando. Deixe em branco o que não se aplica.</p>
-          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Como você quer este treino montado
-            <textarea id="brDesejo" rows="3" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea><span id="brDesejoCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
-          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">O que o aluno pede
-            <textarea id="brQuer" rows="3" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea><span id="brQuerCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
-          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: var(--pt-atencao);">(a IA nunca desrespeita)</b>
-            <textarea id="brAdapta" rows="3" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea><span id="brAdaptaCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
-          <label style="display: block; font-size: 12.5px;">Sua leitura do momento dele
-            <textarea id="brLeitura" rows="3" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea><span id="brLeituraCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
-          <p id="brAviso" hidden style="margin: 10px 0 0; font-size: 12.5px; background: var(--pt-caixa); border: 1px solid var(--pt-borda-forte); border-radius: 10px; padding: 10px 12px;"></p>
-          <p id="brStatus" class="muted" style="margin: 8px 0 0; font-size: 12px;"></p>
+    <section class="card trx-section" data-trsec="wod" hidden>
+      <div class="trx-heading"><div><h2>Circuito (WOD)</h2><p>Organize movimentos e tempo para o aluno executar no app.</p></div><button class="btn sec" id="btnWodProf">Abrir cronômetro</button></div>
+      <label class="trx-field trx-student" for="wpAluno">Aluno<select id="wpAluno"></select></label>
+      <div id="wpLista" class="trx-list">Escolha o aluno para ver os circuitos.</div>
+      <details id="wpEditor" class="trx-editor">
+        <summary><span id="wpFormTit">Novo circuito</span></summary>
+        <div class="trx-editor-body">
+          <label class="trx-field" for="wpModelo">Começar com um modelo<select id="wpModelo"><option value="">Montar do zero</option></select></label>
+          <div class="trx-fields">
+            <label class="trx-field trx-wide" for="wpNome">Nome do circuito<input id="wpNome" placeholder="Ex.: circuito de sexta"></label>
+            <label class="trx-field" for="wpTipo">Formato<select id="wpTipo"><option value="fortime">For Time · completar</option><option value="amrap">AMRAP · somar voltas</option><option value="emom">EMOM · a cada minuto</option><option value="tabata">Tabata · trabalho e pausa</option></select></label>
+            <label class="trx-field" for="wpCap" data-wpcfg="fortime">Tempo limite (min)<input id="wpCap" inputmode="numeric" value="12"><small>0 = sem limite</small></label>
+            <label class="trx-field" for="wpMin" data-wpcfg="amrap,emom" hidden>Duração (min)<input id="wpMin" inputmode="numeric" value="10"></label>
+            <label class="trx-field" for="wpRounds" data-wpcfg="tabata" hidden>Rodadas<input id="wpRounds" inputmode="numeric" value="8"></label>
+            <label class="trx-field" for="wpWork" data-wpcfg="tabata" hidden>Trabalho (s)<input id="wpWork" inputmode="numeric" value="20"></label>
+            <label class="trx-field" for="wpRest" data-wpcfg="tabata" hidden>Pausa (s)<input id="wpRest" inputmode="numeric" value="10"></label>
+          </div>
+          <p id="wpResumo" class="trx-note" aria-live="polite"></p>
+          <h3>Movimentos</h3><p class="trx-help">Informe a quantidade e escolha o exercício.</p>
+          <div id="wpMovLinhas"></div><button class="btn sec" id="wpMovAdd">Adicionar movimento</button><datalist id="wpExs"></datalist>
+          <details class="trx-details"><summary>Aquecimento e orientações</summary><div class="trx-fields">
+            <label class="trx-field trx-wide" for="wpAq">Aquecimento<textarea id="wpAq" rows="2" placeholder="Como começar a sessão"></textarea></label>
+            <label class="trx-field trx-wide" for="wpObs">Adaptações e observações<input id="wpObs" placeholder="Ajustes para este aluno"></label>
+          </div></details>
+          <div class="trx-actions"><button class="btn" id="wpSalva">Salvar circuito</button><button class="btn sec" id="wpLimpa" hidden>Cancelar edição</button></div>
         </div>
       </details>
-      <button class="btn" id="taEnviaApp" style="margin-top: 10px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
-      <!-- caixa PRÓPRIA: dividindo a de cima, o recado da IA e o do envio se
-           confundiam e um erro antigo parecia ser do botão recém-clicado -->
-      <p id="taEnvioStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-      <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div>
+      <p id="wpStatus" class="trx-status" role="status"></p>
+      <div class="trx-publish"><span>Salve as alterações antes de publicar.</span><button class="btn sec" id="wpPublica">Publicar no app</button></div>
+    </section>
 
-    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="grupo">
-      <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg> Enviar treino em grupo</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Funciona como uma lista de transmissão: <b>1)</b> monte um treino de disparo (pré-montado, sem estar preso a nenhum aluno), <b>2)</b> crie o grupo, <b>3)</b> dispare — todo mundo do grupo recebe o mesmo treino e os apps publicados atualizam sozinhos.</p>
-      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
-        <input id="gtNome" placeholder="Nome do treino de disparo (ex.: Hipertrofia ABC agosto)" style="width: 260px;">
-        <button class="btn sec" id="gtNovo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Montar treino de disparo</button>
-      </div>
-      <div id="gtLista" class="muted" style="margin-top: 8px; font-size: 13.5px;">Nenhum treino de disparo ainda.</div>
-      <hr style="border: none; border-top: 1px solid var(--linha); margin: 14px 0;">
-      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
-        <input id="grNome" placeholder="Nome do grupo (ex.: Turma 6h)" style="width: 200px;">
-        <button class="btn sec" id="grAdd">+ Criar grupo</button>
-      </div>
-      <div id="grAlunosPick" class="muted" style="margin-top: 6px; font-size: 13px;"></div>
-      <div id="grLista" class="muted" style="margin-top: 10px; font-size: 13.5px;">Nenhum grupo ainda.</div>
-      <hr style="border: none; border-top: 1px solid var(--linha); margin: 14px 0;">
-      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
-        <select id="geOrigem" style="min-width: 200px;"></select>
-        <span class="muted" style="align-self: center;">→</span>
-        <select id="geGrupo" style="min-width: 170px;"></select>
-        <button class="btn" id="geEnviar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar treino pro grupo</button>
-        <button class="btn sec" id="btnPubPendentes" hidden title="Republica de uma vez o app de todo aluno com algo editado desde a última publicação — ou com o app numa versão antiga do sistema"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Publicar apps atualizados</button>
-      </div>
-      <div id="avisoCongelados" hidden style="margin: 10px 0 0; padding: 10px 13px; border: 1px solid rgba(245, 158, 11, .45); border-radius: 12px; background: rgba(245, 158, 11, .10); font-size: 13px;"></div>
-      <p id="geStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div>
-
-    <div class="card" data-trsec="ex">
-      <h2>Exercícios <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Catálogo TORQUE e os seus exercícios numa lista só, separada por <b>zona do corpo</b> e <b>tipo de movimento</b>. Toque em <b>Abrir</b> pra personalizar vídeo e dica — o personalizado ganha a etiqueta SEU e vale na frente do catálogo.<br>Marque a <b>★</b> nos que você mais passa: eles sobem pro topo desta lista, ganham um grupo próprio na hora de montar a ficha e a IA passa a preferi-los.</p>
-      <div class="linha-flex" style="margin: 8px 0 10px;">
-        <input id="catBusca" placeholder="Buscar (ex.: agachamento, kettlebell…)" style="flex: 2; min-width: 170px;">
-        <select id="catGrupo" style="flex: 1; min-width: 140px;"><option value="">Todas as zonas</option></select>
-        <select id="catMov" style="flex: 1; min-width: 150px;"><option value="">Todos os movimentos</option></select>
-        <button class="btn sec" id="catFav" aria-pressed="false" title="mostrar só os seus favoritos">★ Favoritos</button>
-      </div>
-      <div id="exLista"></div>
-      <div style="border-top: 1px solid var(--linha); margin-top: 14px; padding-top: 12px;">
-        <h2 style="font-size: 14px;">Cadastrar um exercício seu</h2>
-        <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Pra algo que não existe no catálogo (ex.: um circuito próprio do studio).</p>
-        <div class="linha-flex" style="margin: 8px 0 10px;">
-          <input id="exNome" list="dlExCat" placeholder="Nome do exercício *" style="flex: 2; min-width: 170px;">
-          <datalist id="dlExCat"></datalist>
-          <input id="exGrupo" placeholder="Zona (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
-          <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
-          <input id="exVideo" placeholder="Link do vídeo (YouTube)" style="flex: 2; min-width: 170px;">
-          <button class="btn" id="exAdd">+ Adicionar</button>
+    <section class="card trx-section" data-trsec="cardio" hidden>
+      <div class="trx-heading"><div><h2>Corrida e bike</h2><p>Defina a modalidade, o alvo e os intervalos de cada sessão.</p></div></div>
+      <label class="trx-field trx-student" for="cbAluno">Aluno<select id="cbAluno"></select></label>
+      <div id="cbLista" class="trx-list">Escolha o aluno para ver os treinos.</div>
+      <details id="cbEditor" class="trx-editor">
+        <summary><span id="cbFormTit">Novo treino</span></summary>
+        <div class="trx-editor-body"><div class="trx-fields">
+          <label class="trx-field trx-wide" for="cbNome">Nome do treino<input id="cbNome" placeholder="Ex.: corrida de terça"></label>
+          <label class="trx-field" for="cbMod">Modalidade<select id="cbMod"><option value="corrida">Corrida</option><option value="caminhada">Caminhada</option><option value="bike">Bike</option></select></label>
+          <label class="trx-field" for="cbTipo">Formato<select id="cbTipo"><option value="continuo">Contínuo</option><option value="intervalado">Intervalos de esforço e pausa</option><option value="misto">Contínuo + intervalos</option></select></label>
+          <label class="trx-field" for="cbDist" data-cbcfg="continuo">Distância (km)<input id="cbDist" inputmode="decimal" value="5"><small>0 = distância livre</small></label>
+          <label class="trx-field" for="cbTempo" data-cbcfg="continuo">Tempo alvo (min)<input id="cbTempo" inputmode="numeric" value="0"><small>0 = tempo livre</small></label>
+          <label class="trx-field" for="cbPace" data-cbcfg="continuo">Pace alvo (min/km)<input id="cbPace" placeholder="Opcional · ex.: 6:30"></label>
+          <label class="trx-field" for="cbReps" data-cbcfg="intervalado" hidden>Intervalos<input id="cbReps" inputmode="numeric" value="8"></label>
+          <label class="trx-field" for="cbTiro" data-cbcfg="intervalado" hidden>Esforço (s)<input id="cbTiro" inputmode="numeric" value="60"></label>
+          <label class="trx-field" for="cbDesc" data-cbcfg="intervalado" hidden>Recuperação (s)<input id="cbDesc" inputmode="numeric" value="90"></label>
         </div>
-      </div>
-    </div>
+        <p id="cbResumo" class="trx-note" aria-live="polite"></p><p id="cbDica" class="trx-help" hidden></p>
+        <label class="trx-field" for="cbObs">Orientações para o aluno<input id="cbObs" placeholder="Ritmo, percurso ou adaptação"></label>
+        <div class="trx-actions"><button class="btn" id="cbSalva">Salvar treino</button><button class="btn sec" id="cbLimpa" hidden>Cancelar edição</button></div></div>
+      </details>
+      <p id="cbStatus" class="trx-status" role="status"></p>
+      <div class="trx-publish"><span>Salve as alterações antes de publicar.</span><button class="btn sec" id="cbPublica">Publicar no app</button></div>
+    </section>
 
-    <div class="card" style="margin-top: 14px;" data-trsec="videos">
-      <h2>Conteúdos extras (videoteca do seu studio)</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Alongamento, mobilidade, aquecimento, dicas — aparecem no app de TODOS os seus alunos, agrupados por categoria. Valor percebido da assinatura.</p>
-      <div class="linha-flex" style="margin-bottom: 10px;">
-        <input id="vtpTitulo" placeholder="Título (ex.: Mobilidade de quadril 10min)" style="flex: 2; min-width: 200px;">
-        <input id="vtpCat" placeholder="Categoria" list="vtpCats" style="flex: 1; min-width: 130px;">
-        <datalist id="vtpCats"><option>Mobilidade</option><option>Alongamento</option><option>Aquecimento</option><option>Dicas</option></datalist>
-        <input id="vtpUrl" placeholder="Link do YouTube" style="flex: 2; min-width: 200px;">
-        <button class="btn" id="vtpAdd">+ Adicionar</button>
+    <section class="card trx-section" data-trsec="plano" hidden>
+      <div class="trx-heading"><div><h2>Semana do aluno</h2><p>Distribua fichas, circuitos e cardio. Um dia pode ter mais de um treino.</p></div></div>
+      <label class="trx-field trx-student" for="plnAluno">Aluno<select id="plnAluno"></select></label>
+      <p id="plnResumo" class="trx-note" aria-live="polite"></p>
+      <div id="plnDias" class="trx-week">Escolha o aluno para organizar a semana.</div>
+      <div class="trx-actions"><button class="btn" id="plnSalva">Salvar planejamento</button><button class="btn sec" id="plnLimpa">Limpar dias</button></div>
+      <p id="plnStatus" class="trx-status" role="status"></p>
+      <div class="trx-publish"><span>O padrão semanal se repete até você alterá-lo.</span><button class="btn sec" id="plnPublica">Publicar no app</button></div>
+    </section>
+
+    <section class="card trx-section trx-ai" data-trsec="auto" hidden>
+      <div class="trx-heading"><div><h2>Criar treino com IA</h2><p>Configure a proposta, confira o resultado e aplique ao aluno.</p></div></div>
+      <ol class="trx-steps" aria-label="Etapas da criação"><li><span>1</span> Configurar</li><li><span>2</span> Revisar</li><li><span>3</span> Aplicar</li></ol>
+      <label class="trx-field trx-student" for="taAluno">Para qual aluno?<select id="taAluno"></select></label>
+      <div id="taContexto" class="trx-context"></div>
+      <div class="trx-fields">
+        <label class="trx-field" for="taTipo">Modalidade<select id="taTipo"><option value="musculacao">Musculação</option><option value="wod">Circuito (WOD)</option><option value="corrida">Corrida</option></select></label>
+        <label class="trx-field" id="taObjetivoCampo" for="taObjetivo">Objetivo<select id="taObjetivo"><option value="hipertrofia">Hipertrofia</option><option value="forca">Força</option><option value="emagrecimento">Emagrecimento</option><option value="condicionamento">Condicionamento geral</option></select></label>
+        <label class="trx-field" id="taProvaCampo" for="taProva" hidden>Objetivo da corrida<select id="taProva" hidden><option value="comecar a correr">Começar a correr</option><option value="5 km">Correr 5 km</option><option value="10 km">Correr 10 km</option><option value="melhorar o pace">Melhorar o pace</option><option value="emagrecimento">Emagrecimento</option></select></label>
+        <label class="trx-field" id="taEquipCampo" for="taEquip">Equipamentos<select id="taEquip"><option value="academia">Academia completa</option><option value="casa">Halteres e elásticos</option><option value="corpo">Peso do corpo</option></select></label>
+        <label class="trx-field" for="taDias">Dias por semana<select id="taDias"><option value="">Do cadastro</option><option value="1">1 dia</option><option value="2">2 dias</option><option value="3">3 dias</option><option value="4">4 dias</option><option value="5">5 dias</option><option value="6">6 dias</option><option value="7">7 dias</option></select></label>
+        <label class="trx-field" for="taDuracao">Tempo por sessão (min)<input id="taDuracao" type="number" min="10" max="180" step="5" placeholder="Opcional"></label>
       </div>
-      <div id="vtpLista" class="muted">Nenhum conteúdo ainda.</div>
-    </div>
+      <label class="trx-field trx-prompt" for="brDesejo">Como você quer este treino?<textarea id="brDesejo" rows="3" placeholder="Ex.: organizar em ABCD, priorizar costas e variar as repetições de cada série"></textarea><small id="brDesejoCnt"></small></label>
+      <details id="taBrief" class="trx-details">
+        <summary><span>Preferências e limitações</span><span id="taBriefChip" class="trx-detail-meta"></span></summary>
+        <div class="trx-fields">
+          <label class="trx-field trx-wide" for="brQuer">O que o aluno pede<textarea id="brQuer" rows="2" placeholder="Preferências e objetivos relatados pelo aluno"></textarea><small id="brQuerCnt"></small></label>
+          <label class="trx-field trx-wide" for="brAdapta">Adaptações e limitações<textarea id="brAdapta" rows="2" placeholder="Movimentos a evitar e adaptações que você definiu"></textarea><small id="brAdaptaCnt"></small></label>
+          <label class="trx-field trx-wide" for="brLeitura">Sua leitura do momento<textarea id="brLeitura" rows="2" placeholder="Evolução recente e o que precisa mudar"></textarea><small id="brLeituraCnt"></small></label>
+        </div>
+        <p id="brAviso" class="trx-note" hidden></p>
+      </details>
+      <p id="brStatus" class="trx-status" role="status"></p>
+      <div class="trx-actions"><button class="btn" id="taIA">Gerar proposta com IA</button><button class="btn sec" id="taCancelarGeracao" hidden>Cancelar geração</button></div>
+      <p class="trx-help">As orientações ficam salvas neste aluno. A proposta só substitui o treino depois da sua revisão e aplicação.</p>
+      <details id="taAlternativas" class="trx-details">
+        <summary>Outras opções de criação</summary>
+        <p class="trx-help">O catálogo usa as regras do sistema. Evoluir semana ajusta a progressão disponível do treino atual.</p>
+        <div class="trx-actions"><button class="btn sec" id="taGerar">Gerar pelo catálogo</button><button class="btn sec" id="taEvoluir">Revisar progressão da semana</button></div>
+      </details>
+      <p id="taStatus" class="trx-status" role="status" aria-live="polite"></p>
+      <section id="taRevisao" class="trp-review" hidden>
+        <div class="trx-heading"><div><h3 id="taRevisaoTitulo">Revisar proposta</h3><p id="taRevisaoMeta"></p></div></div>
+        <div id="taRevisaoAvisos" class="trp-review-notes"></div>
+        <div id="taPrevia" class="trp-preview"></div>
+        <div class="trx-actions"><button class="btn" id="taAplicar">Aplicar ao aluno</button><button class="btn sec" id="taDescartar">Descartar rascunho</button></div>
+      </section>
+      <div class="trx-actions"><button class="btn sec" id="taAbrirTreino" hidden>Ajustar treino aplicado</button><button class="btn" id="taEnviaApp" hidden>Publicar no app do aluno</button></div>
+      <p id="taEnvioStatus" class="trx-status" role="status"></p>
+    </section>
+
+    <section class="card trx-section" data-trsec="grupo" hidden>
+      <div class="trx-heading"><div><h2>Treinos em grupo</h2><p>Escolha um treino e confira quem vai receber.</p></div></div>
+      <div class="trx-fields">
+        <label class="trx-field" for="geOrigem">Treino de origem<select id="geOrigem"></select></label>
+        <label class="trx-field" for="geGrupo">Grupo de alunos<select id="geGrupo"></select></label>
+      </div>
+      <div id="geResumo" class="trx-note"></div>
+      <div class="trx-actions"><button class="btn" id="geEnviar">Revisar e enviar ao grupo</button><button class="btn sec" id="btnPubPendentes" hidden>Publicar apps atualizados</button></div>
+      <div id="avisoCongelados" class="trx-note" hidden></div><p id="geStatus" class="trx-status" role="status"></p>
+      <details class="trx-editor" id="gtGerenciar"><summary>Treinos para compartilhar</summary><div class="trx-editor-body">
+        <p class="trx-help">Crie um treino independente para reutilizar com seus grupos.</p>
+        <label class="trx-field" for="gtNome">Nome do treino<input id="gtNome" placeholder="Ex.: Hipertrofia ABC"></label>
+        <button class="btn sec" id="gtNovo">Montar treino para compartilhar</button>
+        <div id="gtLista" class="trx-list">Nenhum treino para compartilhar ainda.</div>
+      </div></details>
+      <details class="trx-editor" id="grGerenciar"><summary>Gerenciar grupos</summary><div class="trx-editor-body">
+        <label class="trx-field" for="grNome">Nome do grupo<input id="grNome" placeholder="Ex.: Turma das 6h"></label>
+        <div id="grAlunosPick" class="trx-pick"></div>
+        <div class="trx-actions"><button class="btn sec" id="grAdd">Criar grupo</button><button class="btn sec" id="grCancelaEdicao" hidden>Cancelar edição</button></div>
+        <div id="grLista" class="trx-list">Nenhum grupo ainda.</div>
+      </div></details>
+    </section>
+
+    <section class="card trx-section" data-trsec="ex" hidden>
+      <div class="trx-heading"><div><h2>Exercícios <span id="catN" class="trx-detail-meta"></span></h2><p>Encontre movimentos, salve favoritos e personalize as orientações.</p></div></div>
+      <label class="trx-field" for="catBusca">Buscar exercício<input id="catBusca" type="search" placeholder="Nome, equipamento ou movimento"></label>
+      <div class="trx-fields trx-filters">
+        <label class="trx-field" for="catGrupo">Grupo muscular<select id="catGrupo"><option value="">Todos os grupos</option></select></label>
+        <label class="trx-field" for="catMov">Movimento<select id="catMov"><option value="">Todos os movimentos</option></select></label>
+      </div>
+      <button class="btn sec" id="catFav" aria-pressed="false">★ Favoritos</button>
+      <div id="exLista" class="trx-list"></div>
+      <button class="btn sec trx-more" id="catMais" hidden>Mostrar mais exercícios</button>
+      <details class="trx-editor" id="catNovoEx"><summary>Cadastrar exercício próprio</summary><div class="trx-editor-body">
+        <div class="trx-fields">
+          <label class="trx-field trx-wide" for="exNome">Nome do exercício<input id="exNome" list="dlExCat" placeholder="Nome completo"></label><datalist id="dlExCat"></datalist>
+          <label class="trx-field" for="exGrupo">Grupo muscular<input id="exGrupo" list="exGrupos" placeholder="Ex.: Peito"></label>
+          <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
+          <label class="trx-field" for="exVideo">Vídeo do YouTube<input id="exVideo" type="url" placeholder="https://…"></label>
+        </div><button class="btn" id="exAdd">Adicionar exercício</button>
+      </div></details>
+    </section>
+
+    <section class="card trx-section" data-trsec="videos" hidden>
+      <div class="trx-heading"><div><h2>Conteúdos para os alunos</h2><p>Organize vídeos de mobilidade, aquecimento e orientações do studio.</p></div></div>
+      <details class="trx-editor" id="vtpEditor"><summary>Adicionar ou editar conteúdo</summary><div class="trx-editor-body">
+        <div class="trx-fields">
+          <label class="trx-field trx-wide" for="vtpTitulo">Título<input id="vtpTitulo" placeholder="Ex.: Mobilidade de quadril"></label>
+          <label class="trx-field" for="vtpCat">Categoria<input id="vtpCat" list="vtpCats" placeholder="Ex.: Mobilidade"></label>
+          <datalist id="vtpCats"><option>Mobilidade</option><option>Alongamento</option><option>Aquecimento</option><option>Dicas</option></datalist>
+          <label class="trx-field" for="vtpUrl">Vídeo do YouTube<input id="vtpUrl" type="url" placeholder="https://…"></label>
+        </div>
+        <div class="trx-actions"><button class="btn" id="vtpAdd">Adicionar conteúdo</button><button class="btn sec" id="vtpCancelaEdicao" hidden>Cancelar edição</button></div>
+      </div></details>
+      <div class="trx-fields trx-filters">
+        <label class="trx-field" for="vtpBusca">Buscar conteúdo<input id="vtpBusca" type="search" placeholder="Título do vídeo"></label>
+        <label class="trx-field" for="vtpFiltroCat">Categoria<select id="vtpFiltroCat"><option value="">Todas as categorias</option></select></label>
+      </div>
+      <div id="vtpLista" class="trx-list">Nenhum conteúdo ainda.</div><p id="vtpStatus" class="trx-status" role="status"></p>
+      <div class="trx-publish"><span>Estes conteúdos são compartilhados com seus alunos.</span><button class="btn" id="vtpPublica">Publicar para alunos</button></div>
+    </section>
   </section>
 
   <dialog id="dlgPix">
@@ -9120,6 +9092,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var n = document.querySelectorAll("#grAlunosPick .grCheck:checked").length;
     var el = $("grQuemN");
     if (el) el.textContent = n ? "· " + n + " selecionado(s)" : "";
+    var cab = $("grQuemCab"); if (cab && cab.firstChild) cab.firstChild.nodeValue = grEditando ? "Membros deste grupo " : "Quem entra no grupo novo ";
   }
   $("grAlunosPick").addEventListener("click", function (e) {
     var cab = e.target.closest && e.target.closest("#grQuemCab");
@@ -9146,7 +9119,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("grAlunosPick").addEventListener("change", function (e) {
     if (e.target.classList && e.target.classList.contains("grCheck")) pintaGrQuemN();
   });
+  var grEditando = null;
+  function geDestinatarios(st, origem, grupo) {
+    var ids = grupo === "__todos" ? st.alunos.map(function (a) { return a.id; })
+      : (((st.gruposPT || []).find(function (g) { return g.id === grupo; }) || {}).alunoIds || []);
+    return st.alunos.filter(function (a) { return a.ativo !== false && a.id !== origem && ids.indexOf(a.id) >= 0; });
+  }
+  function pintaGeResumo() {
+    var el = $("geResumo"); if (!el) return;
+    var st = load(), origem = $("geOrigem").value, grupo = $("geGrupo").value;
+    var fichas = (((st.treinosV2 || {})[origem] || {}).fichas || []), alunos = geDestinatarios(st, origem, grupo);
+    el.textContent = !origem || !grupo ? "Escolha o treino e quem vai receber."
+      : fichas.length + " ficha(s) para " + alunos.length + " aluno(s) ativo(s): " + alunos.map(function (a) { return a.nome; }).join(", ") + ". As fichas atuais serão substituídas; outras modalidades são preservadas.";
+  }
+  function encerraEdicaoGrupo() {
+    grEditando = null; $("grNome").value = ""; $("grAdd").textContent = "+ Criar grupo";
+    if ($("grCancelaEdicao")) $("grCancelaEdicao").hidden = true;
+    document.querySelectorAll(".grCheck").forEach(function (c) { c.checked = false; }); pintaGrQuemN();
+  }
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#grCancelaEdicao")) encerraEdicaoGrupo(); });
+  ["geOrigem", "geGrupo"].forEach(function (id) { $(id).addEventListener("change", pintaGeResumo); });
   function renderGrupos() {
+    var origemAntes = $("geOrigem").value, grupoAntes = $("geGrupo").value;
     var st = load();
     st.gruposPT = st.gruposPT || [];
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
@@ -9157,9 +9151,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return a ? a.nome.split(" ")[0] : null;
       }).filter(Boolean);
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
-        "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nomes.join(", ") + ")</span>" +
+        "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + esc(nomes.join(", ")) + ")</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-grrm="' + g.id + '" aria-label="excluir a turma">✕</button></div>';
+        '<button class="btn sec mini" data-gredit="' + g.id + '">Editar membros</button><button class="btn sec mini" data-grrm="' + g.id + '" aria-label="excluir a turma">Excluir</button></div>';
     }).join("") : "Nenhum grupo ainda.";
     st.treinosGrupo = st.treinosGrupo || [];
     $("gtLista").innerHTML = st.treinosGrupo.length ? st.treinosGrupo.map(function (g) {
@@ -9188,6 +9182,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("geGrupo").innerHTML = '<option value="">Pro grupo…</option>' +
       st.gruposPT.map(function (g) { return '<option value="' + g.id + '">' + esc(g.nome) + "</option>"; }).join("") +
       '<option value="__todos">Todos os alunos ativos</option>';
+    $("geOrigem").value = origemAntes; $("geGrupo").value = grupoAntes; pintaGeResumo();
   }
   $("gtNovo").addEventListener("click", function () {
     // v755: campo de verdade no lugar do prompt() do navegador — a mesma
@@ -9214,6 +9209,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rm = e.target.getAttribute && e.target.getAttribute("data-gtrm");
     if (ed) {
       $("tAluno").value = ed; sincronizaBusca("tAluno");
+      mostraTrAba("fichas");
       renderFichas();
       $("fichasBox").scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -9231,17 +9227,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ids.length) { alert("Marque pelo menos um aluno."); return; }
     var st = load();
     st.gruposPT = st.gruposPT || [];
-    st.gruposPT.push({ id: S.uid(), nome: nome, alunoIds: ids });
-    save(st);
-    $("grNome").value = "";
-    document.querySelectorAll(".grCheck:checked").forEach(function (c) { c.checked = false; });
+    var grupoAtual = grEditando && st.gruposPT.find(function (g) { return g.id === grEditando; });
+    if (grEditando && !grupoAtual) { alert("Este grupo foi removido. Cancele a edição e crie um novo."); return; }
+    if (grupoAtual) {
+      var inativos = grupoAtual.alunoIds.filter(function (aid) { return st.alunos.some(function (a) { return a.id === aid && a.ativo === false; }); });
+      grupoAtual.nome = nome; grupoAtual.alunoIds = ids.concat(inativos);
+    }
+    else st.gruposPT.push({ id: S.uid(), nome: nome, alunoIds: ids });
+    if (S.write("ptStudio", st) === false) return;
+    encerraEdicaoGrupo();
     renderGrupos();
   });
   $("grLista").addEventListener("click", function (e) {
+    var editar = e.target.closest && e.target.closest("[data-gredit]");
+    if (editar) {
+      var g = (load().gruposPT || []).find(function (x) { return x.id === editar.getAttribute("data-gredit"); });
+      if (!g) return;
+      grEditando = g.id; $("grNome").value = g.nome; $("grAdd").textContent = "Salvar grupo";
+      if ($("grCancelaEdicao")) $("grCancelaEdicao").hidden = false;
+      document.querySelectorAll(".grCheck").forEach(function (c) { c.checked = g.alunoIds.indexOf(c.value) >= 0; });
+      if ($("grGerenciar")) $("grGerenciar").open = true;
+      var corpo = $("grAlunosPick").querySelector(".msel-corpo"); if (corpo) corpo.hidden = false;
+      pintaGrQuemN(); $("grNome").focus(); return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-grrm");
     if (!id || !confirm("Excluir este grupo? (os alunos continuam cadastrados)")) return;
     var st = load();
     st.gruposPT = (st.gruposPT || []).filter(function (g) { return g.id !== id; });
+    if (grEditando === id) encerraEdicaoGrupo();
     save(st); renderGrupos();
   });
   function enviaTreinoGrupo(origemId, grupoId) {
@@ -9251,7 +9264,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ids = grupoId === "__todos"
       ? st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) { return a.id; })
       : ((st.gruposPT || []).find(function (g) { return g.id === grupoId; }) || {}).alunoIds || [];
-    ids = ids.filter(function (id) { return id !== origemId; });
+    ids = geDestinatarios(st, origemId, grupoId).map(function (a) { return a.id; });
     if (!ids.length) return { erro: "O grupo está vazio." };
     st.treinosV2 = st.treinosV2 || {};
     /* v746: copia SÓ as fichas. Antes ia a entrada inteira do treinosV2 —
@@ -9264,16 +9277,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       remapeiaPlano(t, t.fichas || [], fichasCopia);
       t.fichas = JSON.parse(JSON.stringify(fichasCopia));
       if (fonte.objetivo) t.objetivo = fonte.objetivo;
-      delete t.mes; // a progressão do mês era do aluno de origem
+      esqueceMesIA(t, "musculacao"); // só a modalidade substituída perde a progressão
       st.treinosV2[id] = t;
     });
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) return { erro: "Não foi possível salvar. As fichas anteriores foram mantidas." };
     return { ok: true, ids: ids };
   }
+  var geEnvioEmCurso = false;
   $("geEnviar").addEventListener("click", function () {
+    if (geEnvioEmCurso) return;
     var origem = $("geOrigem").value, grupo = $("geGrupo").value;
     if (!origem || !grupo) { alert("Escolha de quem copiar o treino e pra qual grupo enviar."); return; }
-    if (!confirm("As FICHAS deste treino vão substituir as fichas de cada aluno do grupo (circuitos, corridas e a Semana de cada um ficam). Continuar?")) return;
+    var destinos = geDestinatarios(load(), origem, grupo);
+    if (!destinos.length) { $("geStatus").textContent = "Este grupo não tem alunos ativos para receber."; return; }
+    if (!confirm("Substituir as fichas de " + destinos.length + " aluno(s)?\n" + destinos.map(function (a) { return a.nome; }).join(", ") + "\nCircuitos, corridas e seus planos mensais serão preservados. A semana será ajustada às novas fichas.")) return;
     var r = enviaTreinoGrupo(origem, grupo);
     if (r.erro) { alert(r.erro); return; }
     $("geStatus").textContent = "✓ Fichas copiadas pra " + r.ids.length + " aluno(s). Atualizando os apps…";
@@ -9291,7 +9308,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     // v755: mesmo caminho de publicar de todo mundo (upsert + carimbo)
+    geEnvioEmCurso = true; $("geEnviar").disabled = true;
     publicaPacotes(nuvem, comToken).then(function (res) {
+      geEnvioEmCurso = false; $("geEnviar").disabled = false;
       if (!res.erro) {
         comToken.forEach(function (a) {
           pushAluno(a.appTokenP, "Treino novo no app!", "Seu personal mandou treino novo — abre o app pra conferir.");
@@ -9301,7 +9320,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? "✓ Treino copiado pra " + r.ids.length + " aluno(s), mas os apps NÃO atualizaram na nuvem (" + res.erro + ")."
         : "Treino enviado pra " + S.plural(r.ids.length, "aluno", "alunos") + " — " + S.plural(comToken.length, "app atualizado", "apps atualizados") + " na nuvem!";
       render();
-    });
+    }, function () { geEnvioEmCurso = false; $("geEnviar").disabled = false; $("geStatus").textContent = "As fichas foram copiadas, mas a publicação falhou. Use Publicar apps atualizados para tentar novamente."; });
   });
   window.__gruposPT = { render: renderGrupos, envia: enviaTreinoGrupo }; // testes
 
@@ -12891,6 +12910,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       else if ($("taObjetivo")) $("taObjetivo").value = par.objetivo;
     }
     if (par.equip != null && $("taEquip")) $("taEquip").value = par.equip;
+    if ($("taDias")) $("taDias").value = par.dias || "";
+    if ($("taDuracao")) $("taDuracao").value = par.duracao || "";
     $("taIA").click();
   });
   window.__renovaMes = true; // marca de recurso pros testes
@@ -13440,9 +13461,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // sub-links da parte de treino: cada bloco vive na sua própria tela
   var trAbaAtual = "fichas";
   function mostraTrAba(aba) {
+    if (["fichas", "auto", "grupo", "wod", "cardio", "plano", "ex", "videos"].indexOf(aba) < 0) aba = "fichas";
+    var alunosDasAreas = { fichas: "tAluno", auto: "taAluno", wod: "wpAluno", cardio: "cbAluno", plano: "plnAluno" };
+    var origemAluno = $(alunosDasAreas[trAbaAtual]), destinoAluno = $(alunosDasAreas[aba]);
+    // Aproveita o aluno em foco ao abrir uma área ainda sem seleção.
+    // Seleções e rascunhos já existentes em cada área continuam intactos.
+    if (aba !== "fichas" && destinoAluno && !destinoAluno.value && origemAluno && origemAluno.value) {
+      var alunoEmFoco = (load().alunos || []).some(function (a) { return a.id === origemAluno.value && a.ativo !== false; });
+      if (alunoEmFoco && Array.from(destinoAluno.options).some(function (o) { return o.value === origemAluno.value; })) {
+        destinoAluno.value = origemAluno.value;
+        destinoAluno.dispatchEvent(new Event("change", { bubbles: true }));
+        sincronizaBusca(destinoAluno.id);
+      }
+    }
     trAbaAtual = aba;
+    if ($("trArea")) $("trArea").value = aba;
     document.querySelectorAll("#vTreinos [data-trsec]").forEach(function (c) { c.hidden = c.getAttribute("data-trsec") !== aba; });
-    document.querySelectorAll("#trAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-tra") === aba); });
+    document.querySelectorAll("#trAbas button").forEach(function (b) { var ativo = b.getAttribute("data-tra") === aba; b.classList.toggle("ativa", ativo); b.setAttribute("aria-pressed", String(ativo)); });
     if (aba === "wod") { wpCarregaExs(); if (!document.querySelector("#wpMovLinhas .wp-mov")) wpMontaLinhas(); }
     if (aba === "plano" && window.__planoPT) window.__planoPT.render(); // opções sempre frescas
   }
@@ -13450,6 +13485,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = e.target.closest && e.target.closest("button[data-tra]");
     if (b) mostraTrAba(b.getAttribute("data-tra"));
   });
+  if ($("trArea")) $("trArea").addEventListener("change", function () { mostraTrAba(this.value); });
   window.__trAba = mostraTrAba; // testes
   // as duas acoes do cabecalho da tela 2d
   $("tdIA").addEventListener("click", function () {
@@ -13472,6 +13508,79 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   mostraTrAba("fichas");
 
   // ---------- circuito (WOD): prescrição pro app do aluno ----------
+  var trFormAlunos = { wp: "", cb: "" }, trFormRasc = { wp: {}, cb: {} };
+  var trFormCampos = {
+    wp: { Nome: "", Modelo: "", Tipo: "fortime", Cap: "12", Min: "10", Rounds: "8", Work: "20", Rest: "10", Aq: "", Obs: "" },
+    cb: { Nome: "", Mod: "corrida", Tipo: "continuo", Dist: "5", Tempo: "0", Pace: "", Reps: "8", Tiro: "60", Desc: "90", Obs: "" }
+  };
+  function trFormAcaoLimpar(p) {
+    var edit = p === "wp" ? wpEditando : cbEditando;
+    $(p + "Limpa").hidden = false;
+    $(p + "Limpa").textContent = edit ? "Cancelar edição" : "Limpar rascunho";
+  }
+  function trFormLimpa(p) {
+    var alunoId = trFormAlunos[p] || $(p + "Aluno").value;
+    if (alunoId) delete trFormRasc[p][alunoId];
+    Object.keys(trFormCampos[p]).forEach(function (k) { $(p + k).value = trFormCampos[p][k]; });
+    if (p === "wp") { wpEditando = null; wpMontaLinhas(); wpMostraCfg(); }
+    else { cbEditando = null; cbMostraCfg(); }
+    $(p + "FormTit").textContent = p === "wp" ? "Novo circuito" : "Novo treino";
+    $(p + "Status").textContent = "Rascunho limpo.";
+    trFormAcaoLimpar(p);
+  }
+  function trFormTroca(p, alunoId) {
+    if (trFormAlunos[p] === alunoId) { trFormAcaoLimpar(p); return; }
+    if (trFormAlunos[p]) {
+      var r = { edit: p === "wp" ? wpEditando : cbEditando, campos: {}, aberto: !!($(p + "Editor") && $(p + "Editor").open) };
+      Object.keys(trFormCampos[p]).forEach(function (k) { r.campos[k] = $(p + k).value; });
+      if (p === "wp") r.movs = Array.from(document.querySelectorAll("#wpMovLinhas .wp-mov")).map(function (l) { return { q: l.querySelector(".wpq").value, n: l.querySelector(".wpe").value }; });
+      var temRascunho = r.edit || Object.keys(trFormCampos[p]).some(function (k) { return r.campos[k] !== trFormCampos[p][k]; }) ||
+        (r.movs || []).some(function (m) { return m.q.trim() || m.n.trim(); });
+      if (temRascunho) trFormRasc[p][trFormAlunos[p]] = r;
+      else delete trFormRasc[p][trFormAlunos[p]];
+    }
+    trFormAlunos[p] = alunoId;
+    var novo = trFormRasc[p][alunoId], campos = novo ? novo.campos : trFormCampos[p];
+    Object.keys(trFormCampos[p]).forEach(function (k) { $(p + k).value = campos[k] == null ? trFormCampos[p][k] : campos[k]; });
+    if (p === "wp") { wpEditando = novo && novo.edit || null; wpMontaLinhas(novo && novo.movs); wpMostraCfg(); }
+    else { cbEditando = novo && novo.edit || null; cbMostraCfg(); }
+    var edit = p === "wp" ? wpEditando : cbEditando;
+    $(p + "FormTit").textContent = edit ? "Editando: " + $(p + "Nome").value : p === "wp" ? "Novo circuito" : "Novo treino";
+    trFormAcaoLimpar(p);
+    if ($(p + "Editor")) $(p + "Editor").open = !!(novo && novo.aberto);
+    $(p + "Status").textContent = novo ? "Rascunho deste aluno restaurado. Salve para aplicar." : "";
+  }
+  function trCampoNumero(id, min, max, inteiro, status) {
+    var txt = $(id).value.trim().replace(",", "."), n = Number(txt);
+    if (!txt || !isFinite(n) || n < min || (max != null && n > max) || (inteiro && !Number.isSafeInteger(n))) {
+      $(status).textContent = "Confira o campo destacado: use " + (inteiro ? "um número inteiro " : "um número ") + (max == null ? "maior ou igual a " + min : "de " + min + " a " + max) + ".";
+      $(id).focus(); return false;
+    }
+    return true;
+  }
+  function trRetiraDoPlano(t, tipo, id) {
+    if (!t || !t.plano || !t.plano.dias) return;
+    Object.keys(t.plano.dias).forEach(function (k) {
+      var l = plnDoDia(t.plano.dias, k).filter(function (x) { return x.tp !== tipo || x.id !== id; });
+      if (l.length) t.plano.dias[k] = l; else delete t.plano.dias[k];
+    });
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("#wpPublica,#cbPublica,#plnPublica");
+    if (!b) return;
+    var p = b.id.replace("Publica", ""), id = $(p + "Aluno").value;
+    if (!id) { alert("Escolha o aluno primeiro."); return; }
+    if (p !== "pln" && $(p + "Nome").value.trim()) { $(p + "Status").textContent = "Salve ou cancele o formulário aberto antes de publicar. Assim a prévia mostrará a prescrição final."; return; }
+    if (p === "pln" && plnRasc) {
+      var treinoSalvo = (load().treinosV2 || {})[id] || {};
+      var salvo = (treinoSalvo.plano || {}).dias || {}, base = {};
+      PLN_DIAS.forEach(function (d) { base[String(d[0])] = plnDoDia(salvo, d[0]).map(function (x) { return { tp: x.tp, id: x.id, h: plnHora(x) }; }); });
+      if (JSON.stringify(base) !== JSON.stringify(plnRasc)) { $("plnStatus").textContent = "Salve o planejamento antes de publicar. Suas alterações ainda estão no rascunho."; return; }
+    }
+    if (!MT_PRESCRICAO.valida()) return;
+    $("tAluno").value = id; $("tAluno").dispatchEvent(new Event("change", { bubbles: true }));
+    acPrevia(id, true);
+  });
   var WOD_TIPOS = { fortime: "For Time", amrap: "AMRAP", emom: "EMOM", tabata: "Tabata" };
   function wodResumo(w) {
     if (w.tipo === "fortime") return "For Time" + (+w.cap ? " · limite " + w.cap + " min" : " · sem limite");
@@ -13503,8 +13612,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var d = document.createElement("div");
     d.className = "linha-flex wp-mov";
     d.style.cssText = "gap:8px;margin-bottom:6px;flex-wrap:nowrap;";
-    d.innerHTML = '<input class="wpq" placeholder="10 · 200m · 30s" value="' + esc(q || "") + '" style="width:110px;flex:none;">' +
-      '<input class="wpe" list="wpExs" placeholder="Exercício (digita que ele busca)" value="' + esc(n || "") + '" style="flex:1;min-width:120px;">' +
+    d.innerHTML = '<label class="trp-movement-qty">Quantidade<input class="wpq" placeholder="10 · 200m · 30s" value="' + esc(q || "") + '"></label>' +
+      '<label class="trp-movement-ex">Exercício<input class="wpe" list="wpExs" placeholder="Buscar exercício" value="' + esc(n || "") + '"></label>' +
       '<button class="btn sec mini wpx" title="tirar este movimento" style="flex:none;">✕</button>';
     return d;
   }
@@ -13513,7 +13622,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML = "";
     (movs && movs.length ? movs : [{}, {}, {}]).forEach(function (m) { box.appendChild(wpLinha(m.q, m.n)); });
   }
-  $("wpMovAdd").addEventListener("click", function () { $("wpMovLinhas").appendChild(wpLinha("", "")); });
+  $("wpMovAdd").addEventListener("click", function () {
+    if (document.querySelectorAll("#wpMovLinhas .wp-mov").length >= 20) { $("wpStatus").textContent = "Cada circuito aceita até 20 movimentos. Edite ou remova uma linha para continuar."; return; }
+    $("wpMovLinhas").appendChild(wpLinha("", ""));
+  });
   $("wpMovLinhas").addEventListener("click", function (e) {
     if (e.target.classList && e.target.classList.contains("wpx")) {
       var linhas = document.querySelectorAll("#wpMovLinhas .wp-mov");
@@ -13524,20 +13636,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderWods() {
     var el = $("wpLista");
     var alunoId = $("wpAluno").value;
+    trFormTroca("wp", alunoId);
     if (!alunoId) { el.innerHTML = "Escolha o aluno pra ver os circuitos dele."; return; }
     var st = load();
     var t = (st.treinosV2 || {})[alunoId];
     var wods = (t && t.wods) || [];
-    el.innerHTML = wods.length ? wods.map(function (w) {
+    el.innerHTML = wods.length ? wods.map(function (w, indice) {
       return '<div class="sessao-pt"><b>' + esc(w.nome) + "</b><span class='tag roxo'>" + esc(wodResumo(w)) + "</span>" +
+        (indice >= 10 ? '<span class="muted">Fora do limite de 10 circuitos enviados ao app</span>' : '') +
         '<span class="muted" style="font-size:12px;">' + w.mov.length + " movimento(s)</span>" +
-        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        '<span class="trx-actions"><button class="btn sec mini" data-wped="' + w.id + '">Editar</button><details class="trx-details trx-row-more"><summary>Mais opções</summary><div class="trx-actions">' +
         (w.capa ? '<img src="' + w.capa + '" alt="capa do circuito" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
         '<button class="btn sec mini" data-wcapa="' + w.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (w.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
-        '<button class="btn sec mini" data-wcapag="' + w.id + '" title="escolher do seu banco de imagens">🖼</button>' +
-        (w.capa ? '<button class="btn sec mini" data-wcapax="' + w.id + '" title="tirar a foto deste circuito">✕ foto</button>' : "") +
-        '<button class="btn sec mini" data-wped="' + w.id + '">Editar</button>' +
-        '<button class="btn sec mini" data-wprm="' + w.id + '" aria-label="excluir o circuito">✕</button></span></div>';
+        '<button class="btn sec mini" data-wcapag="' + w.id + '" title="escolher do seu banco de imagens">Galeria</button>' +
+        (w.capa ? '<button class="btn sec mini" data-wcapax="' + w.id + '" title="tirar a foto deste circuito">Remover foto</button>' : "") +
+        '<button class="btn sec mini" data-wprm="' + w.id + '" aria-label="excluir o circuito">Excluir circuito</button></div></details></span></div>';
     }).join("") : "Nenhum circuito ainda — monte o primeiro abaixo e salve.";
   }
   function wpMostraCfg() {
@@ -13545,7 +13658,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("[data-wpcfg]").forEach(function (l) {
       l.hidden = l.getAttribute("data-wpcfg").split(",").indexOf(tipo) === -1;
     });
+    if ($("wpResumo")) $("wpResumo").textContent = ({ fortime: "Complete os movimentos no menor tempo. Limite: " + (+$("wpCap").value || "livre") + (+$("wpCap").value ? " min." : "."),
+      amrap: "Repita os movimentos por " + $("wpMin").value + " min e registre as voltas.",
+      emom: "Comece um movimento a cada minuto, por " + $("wpMin").value + " min.",
+      tabata: $("wpRounds").value + " rounds de " + $("wpWork").value + "s trabalhando e " + $("wpRest").value + "s descansando · " + Math.round((+$("wpRounds").value * (+$("wpWork").value + +$("wpRest").value)) / 60 * 10) / 10 + " min no total."
+    })[tipo] || "";
   }
+  ["wpCap", "wpMin", "wpRounds", "wpWork", "wpRest"].forEach(function (id) { $(id).addEventListener("input", wpMostraCfg); });
   $("wpTipo").addEventListener("change", wpMostraCfg);
   // biblioteca de WODs prontos: escolher um modelo preenche o formulário inteiro
   var WP_MODELOS = [
@@ -13593,6 +13712,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     sel.addEventListener("change", function () {
       if (this.value === "") return;
+      if (($("wpNome").value.trim() || Array.from(document.querySelectorAll("#wpMovLinhas .wpe")).some(function (x) { return x.value.trim(); })) && !confirm("Carregar este modelo no formulário? O rascunho atual será substituído; o circuito salvo permanece até você salvar.")) { this.value = ""; return; }
       var m = WP_MODELOS[+this.value];
       $("wpNome").value = m.nome;
       $("wpTipo").value = m.tipo;
@@ -13619,14 +13739,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var n = l.querySelector(".wpe").value.trim();
       if (n) movs.push({ q: q, n: n });
     });
-    movs = movs.slice(0, 20);
+    if (movs.length > 20) { $("wpStatus").textContent = "Há " + movs.length + " movimentos. O limite é 20; nenhum foi descartado. Ajuste antes de salvar."; return; }
     var mov = movs.map(function (m) { return (m.q ? m.q + " " : "") + m.n; });
     if (!nome || !mov.length) { alert("Dê um nome e preencha pelo menos 1 movimento."); return; }
+    var tipoVal = $("wpTipo").value;
+    var camposVal = tipoVal === "fortime" ? [["wpCap", 0, null]] : tipoVal === "tabata" ? [["wpRounds", 1, null], ["wpWork", 1, null], ["wpRest", 1, null]] : [["wpMin", 1, null]];
+    if (!camposVal.every(function (c) { return trCampoNumero(c[0], c[1], c[2], true, "wpStatus"); })) return;
     var st = load();
     st.treinosV2 = st.treinosV2 || {};
     var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
     t.wods = t.wods || [];
     var w = wpEditando ? t.wods.find(function (x) { return x.id === wpEditando; }) : null;
+    if (wpEditando && !w) { $("wpStatus").textContent = "Este circuito foi removido ou substituído. Seu rascunho foi mantido; cancele a edição para começar outro."; return; }
+    if (!w && t.wods.length >= 10) { $("wpStatus").textContent = "O app recebe até 10 circuitos. Edite ou remova um existente para adicionar outro; seu rascunho foi mantido."; return; }
     if (!w) { w = { id: S.uid() }; t.wods.push(w); }
     w.nome = nome;
     w.tipo = $("wpTipo").value;
@@ -13640,22 +13765,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     w.aq = $("wpAq").value.trim();
     w.obs = $("wpObs").value.trim();
     marcaTreinoMudou(st, alunoId); // o circuito entra no app na próxima publicação
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("wpStatus").textContent = "Não foi possível salvar. Seu rascunho foi mantido."; return; }
+    renderPubPendentes(st);
     wpEditando = null;
     $("wpFormTit").textContent = "Novo circuito";
-    $("wpLimpa").hidden = true;
+    trFormAcaoLimpar("wp");
     $("wpNome").value = ""; $("wpAq").value = ""; $("wpObs").value = "";
     wpMontaLinhas();
     $("wpStatus").innerHTML = msgPublicar($("wpAluno").value, "✓ salvo!");
-    setTimeout(function () { $("wpStatus").textContent = ""; }, 8000);
     renderWods();
   });
   $("wpLimpa").addEventListener("click", function () {
-    wpEditando = null;
-    $("wpFormTit").textContent = "Novo circuito";
-    this.hidden = true;
-    $("wpNome").value = ""; $("wpAq").value = ""; $("wpObs").value = "";
-    wpMontaLinhas();
+    trFormLimpa("wp");
   });
   $("wpLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-wped");
@@ -13674,8 +13795,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rm) {
       if (!confirm("Excluir este circuito?")) return;
       t.wods = t.wods.filter(function (x) { return x.id !== rm; });
+      trRetiraDoPlano(t, "wod", rm);
       marcaTreinoMudou(st, $("wpAluno").value);
       save(st);
+      if (wpEditando === rm) $("wpLimpa").click();
       renderWods();
       return;
     }
@@ -13683,7 +13806,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!w) return;
     wpEditando = w.id;
     $("wpFormTit").textContent = "Editando: " + w.nome;
-    $("wpLimpa").hidden = false;
+    trFormAcaoLimpar("wp");
     $("wpNome").value = w.nome; $("wpTipo").value = w.tipo;
     $("wpCap").value = w.cap; $("wpMin").value = w.min;
     $("wpRounds").value = w.rounds; $("wpWork").value = w.work; $("wpRest").value = w.rest;
@@ -13691,6 +13814,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     wpMontaLinhas(w.movs && w.movs.length ? w.movs : w.mov.map(function (l) { return { q: "", n: l }; }));
     $("wpAq").value = w.aq || ""; $("wpObs").value = w.obs || "";
     wpMostraCfg();
+    if ($("wpEditor")) $("wpEditor").open = true;
+    $("wpNome").focus();
   });
   window.__wodsPT = renderWods; // testes
 
@@ -13723,24 +13848,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       d.hidden = tipo !== "misto";
       d.textContent = "No app o aluno faz a parte contínua primeiro e os tiros depois — nessa ordem, guiado por voz.";
     }
+    if ($("cbResumo")) {
+      var resumo = cbResumo({ tipo: tipo, dist: +String($("cbDist").value).replace(",", "."), tempo: +$("cbTempo").value, pace: $("cbPace").value, reps: +$("cbReps").value, tiro: +$("cbTiro").value, desc: +$("cbDesc").value });
+      var minutos = Math.round(+$("cbReps").value * (+$("cbTiro").value + +$("cbDesc").value) / 60 * 10) / 10;
+      $("cbResumo").textContent = (CB_MODS[$("cbMod").value] || "Treino") + " · " + resumo + (tipo !== "continuo" ? " · bloco de tiros: " + minutos + " min" : "");
+    }
   }
+  ["cbMod", "cbDist", "cbTempo", "cbPace", "cbReps", "cbTiro", "cbDesc"].forEach(function (id) { $(id).addEventListener("input", cbMostraCfg); $(id).addEventListener("change", cbMostraCfg); });
   $("cbTipo").addEventListener("change", cbMostraCfg);
   function renderCardios() {
     var alunoId = $("cbAluno").value;
+    trFormTroca("cb", alunoId);
     var st = load();
     var lista = alunoId ? (((st.treinosV2 || {})[alunoId] || {}).cardio || []) : [];
     $("cbLista").innerHTML = !alunoId ? "Escolha o aluno pra ver os treinos de corrida e bike dele." :
-      lista.length ? lista.map(function (c) {
+      lista.length ? lista.map(function (c, indice) {
         return '<div class="sessao-pt"><b>' + esc(c.nome) + "</b>" +
+          (indice >= 10 ? '<span class="muted">Fora do limite de 10 treinos enviados ao app</span>' : '') +
           '<span class="tag ok">' + (CB_MODS[c.mod] || c.mod) + "</span>" +
           '<span class="muted">' + esc(cbResumo(c)) + "</span>" +
-          '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+          '<span class="trx-actions"><button class="btn sec mini" data-cbed="' + c.id + '">Editar</button><details class="trx-details trx-row-more"><summary>Mais opções</summary><div class="trx-actions">' +
           (c.capa ? '<img src="' + c.capa + '" alt="capa do treino" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
           '<button class="btn sec mini" data-ccapa="' + c.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (c.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
-          '<button class="btn sec mini" data-ccapag="' + c.id + '" title="escolher do seu banco de imagens">🖼</button>' +
-          (c.capa ? '<button class="btn sec mini" data-ccapax="' + c.id + '" title="tirar a foto deste treino">✕ foto</button>' : "") +
-          '<button class="btn sec mini" data-cbed="' + c.id + '">editar</button>' +
-          '<button class="btn sec mini" data-cbrm="' + c.id + '">remover</button></span></div>';
+          '<button class="btn sec mini" data-ccapag="' + c.id + '" title="escolher do seu banco de imagens">Galeria</button>' +
+          (c.capa ? '<button class="btn sec mini" data-ccapax="' + c.id + '" title="tirar a foto deste treino">Remover foto</button>' : "") +
+          '<button class="btn sec mini" data-cbrm="' + c.id + '">Excluir treino</button></div></details></span></div>';
       }).join("") : "Nenhum treino de corrida/bike ainda — monte o primeiro abaixo.";
   }
   $("cbAluno").addEventListener("change", renderCardios);
@@ -13749,11 +13881,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!alunoId) { alert("Escolha o aluno."); return; }
     var nome = $("cbNome").value.trim();
     if (!nome) { alert("Dê um nome pro treino (ex.: Rodagem leve)."); return; }
+    var tipoValid = $("cbTipo").value, valida = [];
+    if (tipoValid !== "intervalado") valida = [["cbDist", 0, null, false], ["cbTempo", 0, null, true]];
+    if (tipoValid !== "continuo") valida = valida.concat([["cbReps", 1, null, true], ["cbTiro", 1, null, true], ["cbDesc", 1, null, true]]);
+    if (!valida.every(function (c) { return trCampoNumero(c[0], c[1], c[2], c[3], "cbStatus"); })) return;
+    var paceValid = $("cbPace").value.trim();
+    if (tipoValid !== "intervalado" && paceValid && !/^\d{1,2}:[0-5]\d$/.test(paceValid)) { $("cbStatus").textContent = "Use o pace no formato minutos:segundos, por exemplo 6:30."; $("cbPace").focus(); return; }
     var st = load();
     st.treinosV2 = st.treinosV2 || {};
     var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
     t.cardio = t.cardio || [];
     var c = cbEditando ? t.cardio.find(function (x) { return x.id === cbEditando; }) : null;
+    if (cbEditando && !c) { $("cbStatus").textContent = "Este treino foi removido ou substituído. Seu rascunho foi mantido; cancele a edição para começar outro."; return; }
+    if (!c && t.cardio.length >= 10) { $("cbStatus").textContent = "O app recebe até 10 treinos de corrida e bike. Edite ou remova um existente para adicionar outro; seu rascunho foi mantido."; return; }
     if (!c) { c = { id: S.uid() }; t.cardio.push(c); }
     c.nome = nome;
     c.mod = $("cbMod").value;
@@ -13773,20 +13913,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return; // nada foi gravado: o st só vira disco no save() lá embaixo
     }
     marcaTreinoMudou(st, alunoId); // o treino entra no app na próxima publicação
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("cbStatus").textContent = "Não foi possível salvar. Seu rascunho foi mantido."; return; }
+    renderPubPendentes(st);
     cbEditando = null;
     $("cbFormTit").textContent = "Novo treino";
-    $("cbLimpa").hidden = true;
+    trFormAcaoLimpar("cb");
     $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
     $("cbStatus").innerHTML = msgPublicar($("cbAluno").value, "Salvo!");
     renderCardios();
   });
   $("cbLimpa").addEventListener("click", function () {
-    cbEditando = null;
-    $("cbFormTit").textContent = "Novo treino";
-    $("cbLimpa").hidden = true;
-    $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
-    $("cbStatus").textContent = "";
+    trFormLimpa("cb");
   });
   $("cbLista").addEventListener("click", function (e) {
     var ed = e.target.closest("[data-cbed]");
@@ -13806,9 +13943,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rm) {
       if (!confirm("Remover esse treino de cardio?")) return;
       t.cardio = t.cardio.filter(function (x) { return x.id !== rm.getAttribute("data-cbrm"); });
+      trRetiraDoPlano(t, "cardio", rm.getAttribute("data-cbrm"));
       st.treinosV2[alunoId].cardio = t.cardio;
       marcaTreinoMudou(st, alunoId);
       save(st);
+      if (cbEditando === rm.getAttribute("data-cbrm")) $("cbLimpa").click();
       renderCardios();
       return;
     }
@@ -13816,14 +13955,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!c) return;
     cbEditando = c.id;
     $("cbFormTit").textContent = "Editando: " + c.nome;
-    $("cbLimpa").hidden = false;
+    trFormAcaoLimpar("cb");
     $("cbNome").value = c.nome; $("cbMod").value = c.mod || "corrida"; $("cbTipo").value = c.tipo || "continuo";
     $("cbDist").value = c.dist || 0; $("cbTempo").value = c.tempo || 0; $("cbPace").value = c.pace || "";
     $("cbReps").value = c.reps || 8; $("cbTiro").value = c.tiro || 60; $("cbDesc").value = c.desc || 90;
     $("cbObs").value = c.obs || "";
     cbMostraCfg();
+    if ($("cbEditor")) $("cbEditor").open = true;
+    $("cbNome").focus();
   });
   window.__cardiosPT = renderCardios; // testes
+  ["wp", "cb"].forEach(trFormAcaoLimpar);
 
   /* ---------- Semana do aluno (planejamento treino ↔ dia) ----------
    * Amarra cada dia da semana a UM treino do aluno (ficha, WOD ou cardio).
@@ -13857,7 +13999,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * salvar. Com lista por dia, somar ou tirar uma linha obriga a repintar — e
    * repintar lendo do estado salvo jogaria fora o que o professor acabou de
    * mexer. O select e a hora escrevem direto no rascunho; o + e o ✕ repintam. */
-  var plnRasc = null, plnRascAluno = "";
+  var plnRasc = null, plnRascAluno = "", plnRascunhos = {};
+  function plnGuardaRasc() { if (plnRasc && plnRascAluno) plnRascunhos[plnRascAluno] = JSON.parse(JSON.stringify(plnRasc)); }
+  function plnExiste(t, x) {
+    var lista = x.tp === "ficha" ? t.fichas : x.tp === "wod" ? (t.wods || []).slice(0, 10) : x.tp === "cardio" ? (t.cardio || []).slice(0, 10) : [];
+    return (lista || []).some(function (v) { return v.id === x.id; });
+  }
+  function pintaPlnResumo() {
+    var el = $("plnResumo"); if (!el || !plnRasc) return;
+    var dias = Object.keys(plnRasc).filter(function (k) { return plnRasc[k].some(function (x) { return x.tp && x.id; }); });
+    var n = dias.reduce(function (s, k) { return s + plnRasc[k].filter(function (x) { return x.tp && x.id; }).length; }, 0);
+    el.textContent = dias.length + " dias · " + n + " treinos. Alterações ficam neste rascunho até Salvar planejamento.";
+  }
   function plnCarregaRasc(alunoId) {
     var st = load();
     var t = (st.treinosV2 || {})[alunoId] || {};
@@ -13874,8 +14027,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var box = $("plnDias");
     if (!box) return;
     var alunoId = $("plnAluno").value;
-    if (!alunoId) { plnRasc = null; box.textContent = "Escolha o aluno pra montar a semana dele."; return; }
-    if (!plnRasc || plnRascAluno !== alunoId) plnCarregaRasc(alunoId);
+    if (!alunoId) { plnGuardaRasc(); plnRasc = null; plnRascAluno = ""; box.textContent = "Escolha o aluno pra montar a semana dele."; if ($("plnResumo")) $("plnResumo").textContent = ""; return; }
+    if (!plnRasc || plnRascAluno !== alunoId) {
+      plnGuardaRasc();
+      if (plnRascunhos[alunoId]) { plnRasc = JSON.parse(JSON.stringify(plnRascunhos[alunoId])); plnRascAluno = alunoId; }
+      else plnCarregaRasc(alunoId);
+      $("plnStatus").textContent = "";
+    }
     var st = load();
     var t = (st.treinosV2 || {})[alunoId] || {};
     var grupo = function (rot, lista, tp, nomeDe) {
@@ -13899,11 +14057,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "<div style='font-weight:700;font-size:13px;padding-top:9px;'>" + d[1] + "</div>" +
           "<div>" + (lst.length ? lst.map(function (it, i) {
             return "<div style='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;'>" +
-              "<select data-plnsel='" + k + ":" + i + "' style='flex:1;min-width:170px;max-width:320px;'>" + ops + "</select>" +
-              "<input type='time' data-plnh='" + k + ":" + i + "' value='" + esc(it.h || "") + "' title='horário (opcional)' style='width:112px;flex:none;'>" +
+              "<select aria-label='Treino de " + d[1] + "' data-plnsel='" + k + ":" + i + "' style='flex:1;min-width:170px;max-width:320px;'>" + (it.tp && it.id && !plnExiste(t, it) ? "<option value='" + esc(it.tp + ":" + it.id) + "'>Treino indisponível — substitua ou remova</option>" : "") + ops + "</select>" +
+              "<label class='trp-plan-time'>Horário (opcional)<input type='time' data-plnh='" + k + ":" + i + "' value='" + esc(it.h || "") + "'></label>" +
               "<button type='button' class='btn sec mini' data-plnrm='" + k + ":" + i + "' aria-label='Tirar este treino do dia'>✕</button></div>";
           }).join("") : "<div class='muted' style='font-size:12.5px;padding:9px 0 4px;'>descanso</div>") +
-          "<button type='button' class='btn sec mini' data-plnadd='" + k + "' style='margin-top:2px;'>+ Treino neste dia</button></div></div>";
+          "<button type='button' class='btn sec mini' data-plnadd='" + k + "' style='margin-top:2px;'>+ Treino neste dia</button>" + (lst.length ? "<details class='trx-details trp-day-copy'><summary>Copiar este dia</summary><div class='trx-actions'>" + PLN_DIAS.filter(function (outro) { return String(outro[0]) !== k; }).map(function (outro) { return "<button type='button' class='btn sec mini' data-plncopia='" + k + ":" + outro[0] + "'>Para " + outro[1] + "</button>"; }).join("") + "</div></details>" : "") + "</div></div>";
       }).join("");
     // pinta os valores salvos depois do innerHTML (antes disso o value não pega)
     box.querySelectorAll("[data-plnsel]").forEach(function (sel) {
@@ -13911,12 +14069,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var it = (plnRasc[r[0]] || [])[+r[1]];
       if (it && it.tp && it.id) sel.value = it.tp + ":" + it.id;
     });
+    pintaPlnResumo();
   }
   function plnItem(alvo) {
     var r = String(alvo || "").split(":");
     return { k: r[0], i: +r[1], lst: plnRasc ? (plnRasc[r[0]] || []) : [] };
   }
-  if ($("plnAluno")) $("plnAluno").addEventListener("change", function () { plnRasc = null; renderPlanoSem(); });
+  if ($("plnAluno")) $("plnAluno").addEventListener("change", renderPlanoSem);
   if ($("plnDias")) {
     $("plnDias").addEventListener("change", function (e) {
       if (!plnRasc || !e.target) return;
@@ -13924,6 +14083,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (sel) {
         var o = plnItem(sel.getAttribute("data-plnsel")), v = String(sel.value).split(":");
         if (o.lst[o.i]) { o.lst[o.i].tp = v.length === 2 ? v[0] : ""; o.lst[o.i].id = v.length === 2 ? v[1] : ""; }
+        pintaPlnResumo();
         return;
       }
       var hr = e.target.closest("[data-plnh]");
@@ -13935,6 +14095,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (add) { var ka = add.getAttribute("data-plnadd"); (plnRasc[ka] = plnRasc[ka] || []).push({ tp: "", id: "", h: "" }); renderPlanoSem(); return; }
       var rm = e.target.closest("[data-plnrm]");
       if (rm) { var o2 = plnItem(rm.getAttribute("data-plnrm")); o2.lst.splice(o2.i, 1); renderPlanoSem(); }
+      var copia = e.target.closest("[data-plncopia]");
+      if (copia) {
+        var par = copia.getAttribute("data-plncopia").split(":");
+        if ((plnRasc[par[1]] || []).length && !confirm("Substituir os treinos do dia de destino neste rascunho?")) return;
+        plnRasc[par[1]] = JSON.parse(JSON.stringify(plnRasc[par[0]] || [])); renderPlanoSem();
+      }
     });
   }
   if ($("plnSalva")) $("plnSalva").addEventListener("click", function () {
@@ -13943,6 +14109,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!plnRasc) plnCarregaRasc(alunoId);
     var st = load();
     var t = treinoDe(st, alunoId);
+    var invalidos = Object.keys(plnRasc).some(function (k) { return plnRasc[k].some(function (x) { return x.tp && x.id && !plnExiste(t, x); }); });
+    if (invalidos) { $("plnStatus").textContent = "Há um treino indisponível na semana. Substitua ou remova a linha indicada antes de salvar."; return; }
     var dias = {}, total = 0;
     PLN_DIAS.forEach(function (d) {
       var k = String(d[0]);
@@ -13954,7 +14122,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (total) t.plano = { dias: dias };
     else delete t.plano;
     marcaTreinoMudou(st, alunoId);
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("plnStatus").textContent = "Não foi possível salvar. O planejamento anterior e seu rascunho foram mantidos."; return; }
+    renderPubPendentes(st);
+    delete plnRascunhos[alunoId];
     plnRasc = null;
     renderPlanoSem();
     $("plnStatus").innerHTML = total
@@ -13963,6 +14133,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   if ($("plnLimpa")) $("plnLimpa").addEventListener("click", function () {
     if (!plnRasc) return;
+    if (!confirm("Limpar todos os dias deste rascunho? O planejamento publicado só muda depois de salvar e publicar. Ao salvar uma semana vazia, o app volta ao rodízio automático de fichas.")) return;
     Object.keys(plnRasc).forEach(function (k) { plnRasc[k] = []; });
     renderPlanoSem();
   });
@@ -16238,12 +16409,109 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     [/ombro|manguito|luxa/i, /desenvolvimento|militar|acima da cabeça|overhead|arnold|elevação lateral|parada de mão|handstand|snatch|arranco/i],
     [/lombar|coluna|hérnia|hernia|disco/i, /terra\b|stiff|bom dia|remada curvada|good morning|superman|hiperextens/i],
   ];
-  function geraTreinoAuto(alunoId, objetivo, equip) {
+  // A geração trabalha numa cópia. Só a aplicação revisada altera o treino salvo.
+  function copiaPrescricao(v) { return JSON.parse(JSON.stringify(v)); }
+  function campoPrescricao(tipo) { return tipo === "wod" ? "wods" : tipo === "corrida" ? "cardio" : "fichas"; }
+  function assinaturaPrescricao(st, id, tipo) {
+    var t = (st.treinosV2 || {})[id] || {};
+    var a = (st.alunos || []).find(function (x) { return x.id === id; }) || {};
+    return JSON.stringify({ contexto: { anamnese: a.anamnese || {}, briefIA: a.briefIA || {}, obs: a.obs || "",
+      metaSemana: a.metaSemana, sexo: a.sexo, nasc: a.nasc, altura: a.altura,
+      avaliacoes: (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; }) },
+      itens: t[campoPrescricao(tipo)] || [], plano: t.plano || null,
+      mes: (t.mes || {})[tipo] || null, params: iaParamsDe(t, tipo) || null,
+      geradaAuto: tipo === "musculacao" ? t.geradaAuto : null,
+      geradaIA: tipo === "musculacao" ? t.geradaIA : null,
+      objetivo: tipo === "musculacao" ? t.objetivo : null,
+      semana: tipo === "musculacao" ? t.semana : null });
+  }
+  function finalizaPrescricao(st, id, tipo, r, op, base, origem, params) {
+    r.tipo = tipo;
+    if (op && op.preview) {
+      var t = (st.treinosV2 || {})[id] || {}, usados = {};
+      (t.fichas || []).forEach(function (f) { (f.itens || []).forEach(function (it) { usados[it.exId] = true; }); });
+      r.rascunho = { id: S.uid(), alunoId: id, tipo: tipo, origem: origem, base: base,
+        treino: copiaPrescricao(t), exercicios: copiaPrescricao((st.exercicios || []).filter(function (ex) { return usados[ex.id]; })),
+        params: copiaPrescricao(params || {}), resultado: copiaPrescricao(r), aplicado: false, cancelado: false };
+      return r;
+    }
+    marcaTreinoMudou(st, id);
+    try { if (S.write("ptStudio", st) === false) return { erro: "Não foi possível salvar o treino. Tente novamente." }; }
+    catch (e) { return { erro: "Não foi possível salvar o treino. Tente novamente." }; }
+    return r;
+  }
+  // Circuitos e corridas também têm referências na Semana do aluno.
+  function remapeiaPlanoGerado(t, velhas, novas, tipo) {
+    if (tipo === "musculacao") return remapeiaPlano(t, velhas, novas);
+    var tp = tipo === "wod" ? "wod" : "cardio", dias = (t.plano || {}).dias, removidos = 0;
+    if (!dias) return 0;
+    Object.keys(dias).forEach(function (dia) {
+      var fica = plnDoDia(dias, dia).filter(function (it) {
+        if (it.tp !== tp || novas.some(function (n) { return n.id === it.id; })) return true;
+        var i = velhas.findIndex(function (v) { return v.id === it.id; });
+        var alvo = i < 0 ? null : novas.find(function (n) { return chaveEx(n.nome) === chaveEx(velhas[i].nome); }) || novas[i];
+        if (alvo) { it.id = alvo.id; return true; }
+        removidos++; return false;
+      });
+      if (fica.length) dias[dia] = fica; else delete dias[dia];
+    });
+    return removidos;
+  }
+  function aplicaRascunhoPrescricao(d) {
+    if (!d || d.cancelado) return { erro: "Este rascunho foi descartado. Gere uma nova proposta." };
+    if (d.aplicado) return { erro: "Este rascunho já foi aplicado." };
+    var st = load(), a = (st.alunos || []).find(function (x) { return x.id === d.alunoId; });
+    if (!a || a.ativo === false) return { erro: "O aluno não está mais ativo. O treino não foi alterado." };
+    if (assinaturaPrescricao(st, d.alunoId, d.tipo) !== d.base) {
+      return { erro: "O treino, a semana ou os dados que orientam a prescrição deste aluno mudaram desde a geração. Gere outra proposta para revisar a versão atual." };
+    }
+    var novo = copiaPrescricao(d.treino), t = treinoDe(st, d.alunoId), campo = campoPrescricao(d.tipo);
+    if (d.tipo === "musculacao") {
+      var nomeMudou = (d.exercicios || []).some(function (ex) {
+        var salvo = (st.exercicios || []).find(function (x) { return x.id === ex.id; });
+        return salvo && chaveEx(salvo.nome) !== chaveEx(ex.nome);
+      });
+      if (nomeMudou) return { erro: "Um exercício desta proposta foi renomeado na biblioteca. Gere outra proposta para revisar os nomes atuais antes de aplicar." };
+      var mapa = {};
+      (d.exercicios || []).forEach(function (ex) {
+        var existe = (st.exercicios || []).find(function (x) { return x.id === ex.id; }) ||
+          (st.exercicios || []).find(function (x) { return chaveEx(x.nome) === chaveEx(ex.nome); });
+        if (!existe) { existe = copiaPrescricao(ex); st.exercicios.push(existe); }
+        mapa[ex.id] = existe.id;
+      });
+      (novo.fichas || []).forEach(function (f) { (f.itens || []).forEach(function (it) { if (mapa[it.exId]) it.exId = mapa[it.exId]; }); });
+      ["geradaAuto", "geradaIA", "objetivo", "semana"].forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(novo, k)) t[k] = novo[k]; else delete t[k];
+      });
+    }
+    // Reencaixa no estado mais recente, conservando outros tipos e horários.
+    var orfaos = remapeiaPlanoGerado(t, t[campo] || [], novo[campo] || [], d.tipo);
+    t[campo] = novo[campo] || [];
+    if (orfaos) t.planoAviso = orfaos;
+    if (d.origem !== "evolucao") {
+      var mesNovo = (novo.mes || {})[d.tipo];
+      if (mesNovo) { t.mes = t.mes || {}; t.mes[d.tipo] = mesNovo; }
+      else if (t.mes) { delete t.mes[d.tipo]; if (!Object.keys(t.mes).length) delete t.mes; }
+      if (d.origem === "ia") guardaIaParams(t, d.tipo, d.params);
+      else esqueceMesIA(t, d.tipo);
+    }
+    marcaTreinoMudou(st, d.alunoId);
+    try { if (S.write("ptStudio", st) === false) return { erro: "Não foi possível salvar. Seu rascunho continua disponível para tentar novamente." }; }
+    catch (e) { return { erro: "Não foi possível salvar. Seu rascunho continua disponível para tentar novamente." }; }
+    d.aplicado = true;
+    return Object.assign({}, d.resultado, { ok: true, aplicado: true, alunoId: d.alunoId, planoAviso: orfaos });
+  }
+  function geraTreinoAuto(alunoId, objetivo, equip, op) {
+    op = op || {};
     var st = load();
+    var base = assinaturaPrescricao(st, alunoId, "musculacao");
+    if (op.preview) st = copiaPrescricao(st);
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return { erro: "Escolha o aluno." };
     var an = a.anamnese || {};
-    var dias = Math.min(5, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
+    if (+op.dias > 5) return { erro: "O gerador por catálogo monta até 5 dias por semana. Para 6 ou 7 dias, use Gerar com IA." };
+    if (+op.duracao) return { erro: "A duração desejada é usada pela IA. Para gerar pelo catálogo, deixe a duração em branco ou use Gerar com IA." };
+    var dias = Math.min(5, Math.max(1, parseInt(op.dias, 10) || parseInt(an.dias, 10) || a.metaSemana || 3));
     var obj = TA_OBJ[objetivo] || TA_OBJ.hipertrofia;
     var nivel = an.nivel || "iniciante";
     var series = nivel === "iniciante" ? Math.max(2, obj.s - 1) : obj.s;
@@ -16298,12 +16566,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     t.objetivo = objetivo;
     t.semana = 1;
     esqueceMesIA(t, "musculacao"); // v750: as fichas não são mais as da IA — o Plano do mês dela sai junto
-    marcaTreinoMudou(st, alunoId);
-    S.write("ptStudio", st);
     var avisos = [];
     if (vetos.length) avisos.push("lesões da anamnese respeitadas");
     if (naoGosta.length) avisos.push("preferências respeitadas");
-    return { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos, planoAviso: orfAuto || 0 };
+    return finalizaPrescricao(st, alunoId, "musculacao", { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos, planoAviso: orfAuto || 0 }, op, base, "catalogo", { objetivo: objetivo, equip: equip, dias: op.dias || "", duracao: "" });
   }
   /* v750: o Plano do mês da IA é amarrado às fichas que ELA montou. Quando o
    * treino daquele tipo é trocado por outro caminho (gerador por regras, ficha
@@ -16321,8 +16587,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__esqueceMesIA = esqueceMesIA; // testes
   // progressão dupla: sobe rep até o teto; no teto, volta pro piso e ganha 1 série (máx. 5)
-  function evoluiTreino(alunoId) {
+  function evoluiTreino(alunoId, op) {
+    op = op || {};
     var st = load();
+    var base = assinaturaPrescricao(st, alunoId, "musculacao");
+    if (op.preview) st = copiaPrescricao(st);
     var t = (st.treinosV2 || {})[alunoId];
     if (!t || !(t.fichas || []).length) return { erro: "Esse aluno ainda não tem ficha montada." };
     /* v750: ficha da IA já TEM progressão — o Plano do mês diz o que muda a
@@ -16355,34 +16624,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     if (!evoluidos) return { erro: (personalizados ? "As séries individuais foram preservadas. " : "") + "Nenhum exercício tem progressão automática disponível. Revise a prescrição de cada exercício." };
     t.semana = (t.semana || 1) + 1;
-    marcaTreinoMudou(st, alunoId);
-    S.write("ptStudio", st);
-    return { ok: true, semana: t.semana, evoluidos: evoluidos, preservados: personalizados };
+    return finalizaPrescricao(st, alunoId, "musculacao", { ok: true, semana: t.semana, evoluidos: evoluidos, preservados: personalizados }, op, base, "evolucao");
   }
   $("taGerar").addEventListener("click", function () {
-    var id = $("taAluno").value;
-    if (!id) { alert("Escolha o aluno."); return; }
-    var st = load();
-    var t = (st.treinosV2 || {})[id];
-    if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelas fichas geradas automaticamente?")) return;
-    var r = geraTreinoAuto(id, $("taObjetivo").value, $("taEquip").value);
-    if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = (r.planoAviso ? "⚠️ " + S.plural(r.planoAviso, "dia da Semana do aluno ficou sem ficha", "dias da Semana do aluno ficaram sem ficha") + " — confira em Semana do aluno. " : "") +
-      S.plural(r.fichas, "ficha gerada", "fichas geradas") + " com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
-      (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
-    $("tAluno").value = id; sincronizaBusca("tAluno");
-    renderFichas();
-    renderBiblioteca();
+    iniciaPropostaTreino("catalogo");
   });
   $("taEvoluir").addEventListener("click", function () {
-    var id = $("taAluno").value;
-    if (!id) { alert("Escolha o aluno."); return; }
-    var r = evoluiTreino(id);
-    if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = S.plural(r.evoluidos, "exercício evoluído", "exercícios evoluídos") + " pra SEMANA " + r.semana + "." +
-      (r.preservados ? " " + S.plural(r.preservados, "exercício com séries individuais foi preservado", "exercícios com séries individuais foram preservados") + "; revise a progressão de cada um." : "") + " Revise e republique o app do aluno!";
-    $("tAluno").value = id; sincronizaBusca("tAluno");
-    renderFichas();
+    iniciaPropostaTreino("evolucao");
   });
   window.__treinoAuto = { gera: geraTreinoAuto, evolui: evoluiTreino }; // testes
 
@@ -16727,8 +16975,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var ENVELOPE_IA = 60000; // o que a chat-envia aceita em "dados"
   function cabecalhoIA(st, a, rotDias, plural) {
     var an = a.anamnese || {};
-    var parqSim = [];
-    for (var q = 1; q <= 7; q++) if (an["parq" + q]) parqSim.push(PARQ_RESUMO[q - 1]);
+    var parqSim = [], parqRegistradas = 0;
+    for (var q = 1; q <= 7; q++) {
+      if (typeof an["parq" + q] === "boolean") parqRegistradas++;
+      if (an["parq" + q]) parqSim.push(PARQ_RESUMO[q - 1]);
+    }
+    var parqEstado = parqSim.length ? parqSim.join("; ") : parqRegistradas === 7
+      ? "nenhuma resposta SIM nas 7 respostas registradas"
+      : parqRegistradas ? "incompleto — " + parqRegistradas + " de 7 respostas registradas, sem SIM nessas respostas"
+      : "não respondido — nenhuma resposta registrada";
     var dias = Math.min(6, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
     var id = idadeDe(a.nasc);
     var idade = id ? id + " anos" : "";
@@ -16742,7 +16997,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
       ],
       anamnese: [
-        "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
+        "PAR-Q (respostas SIM): " + parqEstado,
         "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
         "DOENÇAS CRÔNICAS: " + (an.doencas || "não informado") + " | MEDICAMENTOS: " + (an.meds || "não informado"),
         "SONO: " + (an.sono || "?") + " | ESTRESSE: " + (an.estresse || "?") + " | FUMA: " + (an.fuma || "?") + " | ÁLCOOL: " + (an.alcool || "?"),
@@ -16866,10 +17121,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // (tipo válido, números com teto, movimentos com quantidade + nome)
   function peneiraWodsIA(plano) {
     var wods = [];
-    ((plano && plano.wods) || []).slice(0, 6).forEach(function (w) {
+    (plano && Array.isArray(plano.wods) ? plano.wods : []).slice(0, 6).forEach(function (w) {
+      if (!w || typeof w !== "object") return;
       var tipoW = WOD_TIPOS[w.tipo] ? String(w.tipo) : "fortime";
       var movs = [];
-      (w.movs || []).slice(0, 20).forEach(function (m) {
+      (Array.isArray(w.movs) ? w.movs : []).slice(0, 20).forEach(function (m) {
         var n = String((m && m.n) || "").trim().slice(0, 60);
         if (n) movs.push({ q: String((m && m.q) || "").trim().slice(0, 12), n: n });
       });
@@ -16894,7 +17150,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // treinos de corrida vindos da IA → t.cardio, no formato exato da aba Corrida e bike
   function peneiraCardiosIA(plano) {
     var lista = [];
-    ((plano && plano.cardio) || []).slice(0, 7).forEach(function (c) {
+    (plano && Array.isArray(plano.cardio) ? plano.cardio : []).slice(0, 7).forEach(function (c) {
+      if (!c || typeof c !== "object") return;
       lista.push({
         id: S.uid(),
         nome: String(c.nome || "Treino de corrida").slice(0, 60),
@@ -16967,23 +17224,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (f < 0) return null;
     try { return JSON.parse(s.slice(i, f + 1)); } catch (e) { return null; }
   }
-  function geraTreinoIA(alunoId, objetivo, equip, cb, tipo) {
+  function geraTreinoIA(alunoId, objetivo, equip, cb, tipo, op) {
+    op = op || {};
     cb = cb || function () {};
     tipo = tipo === "wod" || tipo === "corrida" ? tipo : "musculacao";
     var st = load();
+    var base = assinaturaPrescricao(st, alunoId, tipo);
+    var params = { tipo: tipo, objetivo: objetivo, equip: equip, em: S.todayISO(),
+      dias: +op.dias >= 1 && +op.dias <= 7 ? Math.floor(+op.dias) : "",
+      duracao: +op.duracao >= 10 && +op.duracao <= 180 ? Math.round(+op.duracao) : "" };
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) { cb({ erro: "Escolha o aluno." }); return; }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (Sua ilha) pra usar a IA de treino — sem nuvem, use o Gerar fichas." }); return; }
     var dados = tipo === "corrida" ? montaDadosCorridaIA(st, a, objetivo) : montaDadosIA(st, a, objetivo, equip, tipo);
+    if (params.dias || params.duracao) {
+      var configuracao = "CONFIGURAÇÃO DESTA PROPOSTA (sem alterar a anamnese):" +
+        (params.dias ? "\nO personal pediu " + params.dias + " dias de treino por semana nesta proposta; esta escolha substitui a frequência padrão do cadastro." : "") +
+        (params.duracao ? "\nDuração desejada: até " + params.duracao + " minutos por sessão, incluindo aquecimento e descansos." : "") + "\n\n";
+      dados = configuracao + dados.slice(0, ENVELOPE_IA - configuracao.length);
+    }
     /* MT_FUNCAO renova o crachá do login antes de chamar e tenta de novo se o
      * Supabase recusar — era isso que fazia a IA "funcionar por um tempo e
      * depois dar erro": o token vence em ~1 hora e o painel fica aberto. */
     // o "tipo" diz pra chat-envia QUAL formato prescrever (fichas × wods ×
     // cardio) — é ele que faz o treino cair na aba certa, nunca na errada
-    self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ia_treino", tipo: tipo, dados: dados }, "A IA de treino")
+    var chamadaIA;
+    try { chamadaIA = self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ia_treino", tipo: tipo, dados: dados }, "A IA de treino"); }
+    catch (eChamada) { cb({ erro: "Não foi possível iniciar a geração. Recarregue a página e tente novamente; o treino salvo continua igual." }); return; }
+    Promise.resolve(chamadaIA)
       .then(function (d) {
+      if (op.cancelado && op.cancelado()) { cb({ cancelado: true }); return; }
       // versão antiga da chat-envia não conhece ia_treino e responde isto:
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
         cb({ erro: foraDoAr("A IA de treino", "chat-envia antiga: nao conhece a acao ia_treino (respondeu 'conversa_id obrigatorio')") }); return;
@@ -17003,30 +17275,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (tipo === "wod") {
         var wodsIA = peneiraWodsIA(plano);
         if (!wodsIA.length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
-        var stW = load();
+        var stW = op.preview ? copiaPrescricao(st) : load();
         var tW = treinoDe(stW, alunoId);
+        var orfW = op.preview ? remapeiaPlanoGerado(tW, tW.wods || [], wodsIA, "wod") : 0;
         tW.wods = wodsIA;
         // v750: sem "mes" na resposta, o plano do mês ANTERIOR não fica colado nos circuitos novos
         var mW = peneiraMesIA(plano); if (mW) { tW.mes = tW.mes || {}; tW.mes.wod = mW; } else esqueceMesIA(tW, "wod");
-        marcaTreinoMudou(stW, alunoId);
-        S.write("ptStudio", stW);
-        cb({ ok: true, tipo: "wod", wods: wodsIA.length, mes: !!mW, resumo: String(plano.resumo || "").slice(0, 400) });
+        cb(finalizaPrescricao(stW, alunoId, "wod", { ok: true, tipo: "wod", wods: wodsIA.length, planoAviso: orfW,
+          mes: !!mW, simulado: !!d.simulado, resumo: String(plano.resumo || "").slice(0, 400) }, op, base, "ia", params));
         return;
       }
       if (tipo === "corrida") {
         var cardIA = peneiraCardiosIA(plano);
         if (!cardIA.length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
-        var stC = load();
+        var stC = op.preview ? copiaPrescricao(st) : load();
         var tC = treinoDe(stC, alunoId);
+        var orfC = op.preview ? remapeiaPlanoGerado(tC, tC.cardio || [], cardIA, "corrida") : 0;
         tC.cardio = cardIA;
         var mC = peneiraMesIA(plano); if (mC) { tC.mes = tC.mes || {}; tC.mes.corrida = mC; } else esqueceMesIA(tC, "corrida"); // v750
-        marcaTreinoMudou(stC, alunoId);
-        S.write("ptStudio", stC);
-        cb({ ok: true, tipo: "corrida", cardios: cardIA.length, mes: !!mC, resumo: String(plano.resumo || "").slice(0, 400) });
+        cb(finalizaPrescricao(stC, alunoId, "corrida", { ok: true, tipo: "corrida", cardios: cardIA.length, planoAviso: orfC,
+          mes: !!mC, simulado: !!d.simulado, resumo: String(plano.resumo || "").slice(0, 400) }, op, base, "ia", params));
         return;
       }
-      if (!plano || !(plano.fichas || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
-      var st2 = load();
+      if (!plano || !Array.isArray(plano.fichas) || !plano.fichas.length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
+      var st2 = op.preview ? copiaPrescricao(st) : load();
       var t = treinoDe(st2, alunoId);
       var fichas = [], total = 0, ignorados = 0, nomesFora = [];
       /* v750: a BRIEF_REGRA diz à IA que a estrutura pedida pelo professor
@@ -17035,10 +17307,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * 8 séries) e o que ainda passar deles é CONTADO e mostrado. */
       var IA_TETO = { fichas: 8, itens: 16, series: 8 };
       var cortes = { fichas: Math.max(0, plano.fichas.length - IA_TETO.fichas), itens: 0, series: 0 };
+      var cortesDetalhadas = 0;
       plano.fichas.slice(0, IA_TETO.fichas).forEach(function (f) {
+        if (!f || typeof f !== "object") return;
         var itens = [];
-        cortes.itens += Math.max(0, (f.itens || []).length - IA_TETO.itens);
-        (f.itens || []).slice(0, IA_TETO.itens).forEach(function (it) {
+        var recebidos = Array.isArray(f.itens) ? f.itens : [];
+        cortes.itens += Math.max(0, recebidos.length - IA_TETO.itens);
+        recebidos.slice(0, IA_TETO.itens).forEach(function (it) {
+          if (!it || typeof it !== "object") return;
           var nome = String(it.nome || "").trim();
           if (!nome) return;
           // a IA só pode usar exercício que existe (catálogo ou biblioteca) — nada inventado
@@ -17056,15 +17332,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
           if (!existe) { ignorados++; if (nomesFora.indexOf(nome) < 0) nomesFora.push(nome); return; }
           var ex = exercicioPorNome(st2, nome);
-          if (parseInt(it.series, 10) > IA_TETO.series) cortes.series++;
-          itens.push({
+          var detalhadas = Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length;
+          if (!detalhadas && parseInt(it.series, 10) > IA_TETO.series) cortes.series++;
+          var itemIA = {
             exId: ex.id,
             series: Math.min(IA_TETO.series, Math.max(1, parseInt(it.series, 10) || 3)),
             reps: String(it.reps || "10").slice(0, 8),
             descanso: Math.min(300, Math.max(15, parseInt(it.descanso, 10) || 60)),
             obs: String(it.obs || "").slice(0, 120),
             tec: TECS_PT.some(function (x) { return x[0] === it.tec; }) ? it.tec : "",
-          });
+          };
+          if (it.carga != null) itemIA.carga = MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga;
+          if (detalhadas) {
+            if (it.seriesDetalhadas.length > 30) cortesDetalhadas++;
+            itemIA.seriesDetalhadas = MT_APP_ALUNO.normalizaSeries(it);
+            itemIA.series = itemIA.seriesDetalhadas.length;
+            itemIA.reps = itemIA.seriesDetalhadas[0].reps;
+            itemIA.descanso = itemIA.seriesDetalhadas[0].descanso;
+          }
+          itens.push(itemIA);
           total++;
         });
         if (itens.length) fichas.push({ id: S.uid(), titulo: String(f.titulo || "Treino").slice(0, 60), itens: itens });
@@ -17080,100 +17366,225 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // v750: resposta sem "mes" apaga o plano do mês ANTERIOR — senão o card
       // seguia contando a progressão de fichas que não existem mais
       var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; } else { if (t.mes) delete t.mes.musculacao; if (t.mes && !Object.keys(t.mes).length) delete t.mes; }
-      marcaTreinoMudou(st2, alunoId);
-      S.write("ptStudio", st2);
       var cortesTxt = [];
       if (cortes.fichas) cortesTxt.push(S.plural(cortes.fichas, "ficha além das " + IA_TETO.fichas, "fichas além das " + IA_TETO.fichas));
       if (cortes.itens) cortesTxt.push(S.plural(cortes.itens, "exercício além dos " + IA_TETO.itens + " por ficha", "exercícios além dos " + IA_TETO.itens + " por ficha"));
       if (cortes.series) cortesTxt.push(S.plural(cortes.series, "exercício com mais de " + IA_TETO.series + " séries (ficou em " + IA_TETO.series + ")", "exercícios com mais de " + IA_TETO.series + " séries (ficaram em " + IA_TETO.series + ")"));
-      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, planoAviso: orfIA || 0,
-        nomesFora: nomesFora.slice(0, 8), mes: !!mF, cortes: cortes, cortesTxt: cortesTxt, resumo: String(plano.resumo || "").slice(0, 400) });
-    }, function (e) {
+      if (cortesDetalhadas) cortesTxt.push(S.plural(cortesDetalhadas, "exercício limitado a 30 séries individuais", "exercícios limitados a 30 séries individuais"));
+      cb(finalizaPrescricao(st2, alunoId, "musculacao", { ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, planoAviso: orfIA || 0,
+        nomesFora: nomesFora.slice(0, 8), mes: !!mF, cortes: cortes, cortesTxt: cortesTxt, simulado: !!d.simulado,
+        resumo: String(plano.resumo || "").slice(0, 400) }, op, base, "ia", params));
+    }).catch(function (e) {
+      if (op.cancelado && op.cancelado()) { cb({ cancelado: true }); return; }
       // v759: "Failed to fetch" é internet oscilando na maioria das vezes — e
       // acontece no MEIO do trabalho do professor. Ele não tem como publicar
       // função nenhuma; o detalhe vai pro console e a tela fala português.
       cb({ erro: foraDoAr("A IA de treino", "falha na chamada: " + ((e && e.message) || "sem conexao")) });
     });
   }
-  window.__iaTreino = geraTreinoIA; // testes
-  window.__iaParse = parseFichasIA; // testes
-  // o tipo escolhido troca os campos que fazem sentido (corrida não tem
-  // equipamento; o gerador por regras e o Evoluir semana são de musculação)
-  if ($("taTipo")) $("taTipo").addEventListener("change", function () {
-    var tp = this.value;
-    $("taObjetivo").hidden = tp === "corrida";
-    $("taProva").hidden = tp !== "corrida";
-    $("taEquip").hidden = tp === "corrida";
-    $("taGerar").hidden = tp !== "musculacao";
-    $("taEvoluir").hidden = tp !== "musculacao";
-  });
-  $("taIA").addEventListener("click", function () {
-    var id = $("taAluno").value;
-    if (!id) { alert("Escolha o aluno."); return; }
-    var tipoIA = ($("taTipo") && $("taTipo").value) || "musculacao";
-    var st = load();
-    var t = (st.treinosV2 || {})[id];
-    var jaTem = t ? (tipoIA === "wod" ? (t.wods || []).length : tipoIA === "corrida" ? (t.cardio || []).length : (t.fichas || []).length) : 0;
-    var rotJa = tipoIA === "wod" ? (jaTem === 1 ? "circuito" : "circuitos") : tipoIA === "corrida" ? (jaTem === 1 ? "treino de corrida" : "treinos de corrida") : (jaTem === 1 ? "ficha" : "fichas");
-    if (jaTem && !confirm("Este aluno já tem " + jaTem + " " + rotJa + ". Substituir pelo que a IA prescrever?")) return;
-    // v750: confere a chat-envia publicada TAMBÉM aqui — o aviso de versão
-    // antiga só aparecia pra quem abrisse a gaveta "Sua leitura"
-    confereIaPublicada();
-    $("taStatus").textContent = "A IA está lendo a anamnese e prescrevendo o treino… (leva uns 30 segundos)";
-    $("taIA").disabled = true;
-    // v750: sem "mes" na resposta o professor fica sabendo — antes r.mes era devolvido e nunca lido
-    var semMes = function (r) { return r.mes ? "" : " ⚠️ A IA não devolveu o Plano do mês (progressão das 4 semanas) — o treino entra igual; se quiser a progressão, é só gerar de novo."; };
-    geraTreinoIA(id, tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, $("taEquip").value, function (r) {
-      $("taIA").disabled = false;
+  var taRascunho = null, taGeracaoSeq = 0, taGerando = false, taAplicado = null;
+  function taTipoNome(tipo) { return tipo === "wod" ? "Circuito" : tipo === "corrida" ? "Corrida" : "Musculação"; }
+  function taQuantidade(t, tipo) {
+    var n = ((t || {})[campoPrescricao(tipo)] || []).length;
+    return tipo === "wod" ? S.plural(n, "circuito", "circuitos") : tipo === "corrida" ? S.plural(n, "treino de corrida", "treinos de corrida") : S.plural(n, "ficha", "fichas");
+  }
+  function taEstadoGeracao(gerando) {
+    taGerando = gerando;
+    ["taIA", "taGerar", "taEvoluir"].forEach(function (id) { if ($(id)) $(id).disabled = gerando; });
+    if ($("taCancelarGeracao")) $("taCancelarGeracao").hidden = !gerando;
+    if ($("taStatus")) $("taStatus").setAttribute("aria-busy", gerando ? "true" : "false");
+  }
+  function limpaPropostaTreino(msg) {
+    taGeracaoSeq++;
+    if (taRascunho && !taRascunho.aplicado) taRascunho.cancelado = true;
+    taRascunho = null; taAplicado = null;
+    taEstadoGeracao(false);
+    ["taRevisao", "taEnviaApp", "taAbrirTreino"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
+    if ($("taEnvioStatus")) $("taEnvioStatus").textContent = "";
+    if (msg && $("taStatus")) $("taStatus").textContent = msg;
+  }
+  function atualizaContextoIA() {
+    var box = $("taContexto"); if (!box) return;
+    var a = (load().alunos || []).find(function (x) { return x.id === $("taAluno").value; });
+    if (!a) { box.textContent = "Escolha o aluno para ver as informações que orientam a proposta."; return; }
+    var an = a.anamnese || {}, partes = [];
+    partes.push(an.nivel ? "Nível: " + an.nivel : "Nível não informado");
+    var dias = parseInt(an.dias, 10) || +a.metaSemana;
+    partes.push(dias ? "Cadastro: " + S.plural(dias, "dia por semana", "dias por semana") : "Frequência não informada");
+    partes.push(an.lesoes ? "Limitações informadas: " + an.lesoes : "Limitações não informadas");
+    var respostas = 0, sim = 0;
+    for (var q = 1; q <= 7; q++) { if (typeof an["parq" + q] === "boolean") respostas++; if (an["parq" + q] === true) sim++; }
+    partes.push(sim ? "PAR-Q: " + S.plural(sim, "resposta SIM", "respostas SIM") : respostas === 7 ? "PAR-Q: 7 respostas registradas, sem SIM" : respostas ? "PAR-Q incompleto" : "PAR-Q não informado");
+    box.textContent = partes.join(" · ");
+  }
+  function previaPrescricaoHtml(d) {
+    var t = d.treino || {}, mapa = {};
+    (d.exercicios || []).forEach(function (ex) { mapa[ex.id] = ex; });
+    function bloco(titulo, meta, corpo, aberto) {
+      return '<details class="trp-preview-block"' + (aberto ? " open" : "") + '><summary><strong>' + esc(titulo) +
+        '</strong><span class="trp-preview-meta">' + esc(meta) + '</span></summary><div class="trp-preview-body">' + corpo + "</div></details>";
+    }
+    function linha(titulo, texto) { return '<div class="trp-preview-line"><strong>' + esc(titulo) + '</strong><span class="trp-preview-meta">' + esc(texto) + "</span></div>"; }
+    var html = "";
+    if (d.tipo === "musculacao") html = (t.fichas || []).map(function (f, fi) {
+      var corpo = (f.itens || []).map(function (it, i) {
+        var ex = mapa[it.exId] || { nome: "Exercício removido" };
+        var desc = MT_ACOMP.itemTexto(Object.assign({}, it, { nome: ex.nome, tec: tecNome(it.tec) }));
+        return linha((i + 1) + ". " + ex.nome, desc.slice(ex.nome.length).replace(/^ · /, ""));
+      }).join("");
+      if (f.p2 && (f.p2.l || []).length) corpo += linha(f.p2.n || "Cardio e alongamento", f.p2.l.map(function (x) { return x.t + (x.v ? " · " + x.v : "") + (x.o ? " · " + x.o : ""); }).join("; "));
+      return bloco(f.titulo, S.plural((f.itens || []).length, "exercício", "exercícios"), corpo, fi === 0);
+    }).join("");
+    else if (d.tipo === "wod") html = (t.wods || []).map(function (w, i) {
+      var meta = WOD_TIPOS[w.tipo] || w.tipo;
+      if (w.tipo === "fortime" && w.cap) meta += " · limite de " + w.cap + " min";
+      if (w.tipo === "amrap" || w.tipo === "emom") meta += " · " + w.min + " min";
+      if (w.tipo === "tabata") meta += " · " + w.rounds + " rodadas · " + w.work + "s de trabalho / " + w.rest + "s de descanso";
+      var corpo = w.aq ? linha("Aquecimento", w.aq) : "";
+      corpo += (w.movs || []).map(function (m, n) { return linha((n + 1) + ". " + m.n, m.q || "Quantidade não informada"); }).join("");
+      if (w.obs) corpo += linha("Orientação", w.obs);
+      return bloco(w.nome, meta, corpo, i === 0);
+    }).join("");
+    else html = (t.cardio || []).map(function (c, i) {
+      var meta = ({ corrida: "Corrida", caminhada: "Caminhada", bike: "Bike" })[c.mod] || c.mod;
+      meta += " · " + ({ continuo: "Contínuo", intervalado: "Intervalado", misto: "Contínuo + tiros" })[c.tipo];
+      var corpo = "", alvo = [];
+      if (c.tipo !== "intervalado") {
+        if (c.dist) alvo.push(String(c.dist).replace(".", ",") + " km");
+        if (c.tempo) alvo.push(c.tempo + " min");
+        if (c.pace) alvo.push("pace " + c.pace + " min/km");
+        corpo += linha("Parte contínua", alvo.join(" · ") || "Sem distância ou tempo definidos");
+      }
+      if (c.tipo !== "continuo") corpo += linha("Tiros", c.reps + " repetições · " + c.tiro + "s forte / " + c.desc + "s leve ou descanso");
+      if (c.obs) corpo += linha("Orientação", c.obs);
+      return bloco(c.nome, meta, corpo, i === 0);
+    }).join("");
+    var mes = (t.mes || {})[d.tipo];
+    if (mes && (mes.semanas || []).length) html += bloco("Plano do mês", "4 semanas", mes.semanas.map(function (s) { return linha("Semana " + s.n + (s.foco ? " · " + s.foco : ""), s.ajuste); }).join(""), false);
+    return html;
+  }
+  function mostraPropostaTreino(r) {
+    var d = r.rascunho, a = (load().alunos || []).find(function (x) { return x.id === d.alunoId; });
+    if (!a || a.ativo === false) { $("taStatus").textContent = "O aluno não está mais ativo. Nenhum treino foi alterado."; return; }
+    taRascunho = d;
+    var atual = (load().treinosV2 || {})[d.alunoId] || {};
+    var origem = r.simulado ? "Exemplo de demonstração" : d.origem === "ia" ? "Proposta da IA" : d.origem === "evolucao" ? "Progressão da semana " + r.semana : "Proposta do catálogo";
+    $("taRevisaoTitulo").textContent = "Revise antes de aplicar";
+    $("taRevisaoMeta").textContent = a.nome + " · " + taTipoNome(d.tipo) + " · " + origem + ". " +
+      "Salvo: " + taQuantidade(atual, d.tipo) + ". Proposta: " + taQuantidade(d.treino, d.tipo) + "." +
+      (d.params.dias ? " " + S.plural(d.params.dias, "dia solicitado por semana", "dias solicitados por semana") + "." : "") +
+      (d.params.duracao ? " Duração desejada: " + d.params.duracao + " min." : "");
+    $("taPrevia").innerHTML = previaPrescricaoHtml(d);
+    var avisos = [];
+    if (r.resumo) avisos.push(r.resumo);
+    if (r.ignorados) avisos.push(S.plural(r.ignorados, "exercício ficou de fora", "exercícios ficaram de fora") + " por não corresponder ao catálogo" + ((r.nomesFora || []).length ? ": " + r.nomesFora.join(", ") : "") + ".");
+    if ((r.cortesTxt || []).length) avisos.push("Limites aplicados: " + r.cortesTxt.join("; ") + ".");
+    if (d.origem === "ia" && !r.mes) avisos.push("A resposta veio sem a progressão de 4 semanas. Ao aplicar, o plano do mês anterior desta modalidade será removido.");
+    if (r.planoAviso) avisos.push(S.plural(r.planoAviso, "vínculo da Semana do aluno ficará sem treino", "vínculos da Semana do aluno ficarão sem treino") + ". Revise a semana depois de aplicar.");
+    if (r.preservados) avisos.push(S.plural(r.preservados, "exercício com séries individuais foi preservado", "exercícios com séries individuais foram preservados") + "; revise a progressão de cada um.");
+    if (r.evoluidos) avisos.push(S.plural(r.evoluidos, "exercício terá progressão", "exercícios terão progressão") + ".");
+    $("taRevisaoAvisos").innerHTML = avisos.map(function (txt) { return "<p>" + esc(txt) + "</p>"; }).join("");
+    $("taRevisaoAvisos").hidden = !avisos.length;
+    $("taAplicar").hidden = false; $("taAplicar").disabled = false;
+    $("taDescartar").hidden = false;
+    $("taRevisao").hidden = false;
+    $("taStatus").textContent = "Proposta pronta para revisão. O treino salvo continua igual.";
+    $("taRevisao").scrollIntoView({ block: "nearest" });
+  }
+  function iniciaPropostaTreino(origem) {
+    var id = $("taAluno").value, tipo = $("taTipo").value || "musculacao";
+    if (!id) { $("taStatus").textContent = "Escolha o aluno."; $("taAluno").focus(); return; }
+    if (origem !== "ia" && tipo !== "musculacao") return;
+    if ($("taDuracao") && !$("taDuracao").checkValidity()) { $("taDuracao").reportValidity(); return; }
+    salvaBrief(); // inclui a última edição também ao gerar pelo teclado ou com preenchimento automático
+    var objetivo = tipo === "corrida" ? $("taProva").value : $("taObjetivo").value, equip = $("taEquip").value;
+    var op = { preview: true, dias: $("taDias") ? $("taDias").value : "", duracao: $("taDuracao") ? $("taDuracao").value : "" };
+    limpaPropostaTreino();
+    var seq = taGeracaoSeq;
+    function vigente() { return seq === taGeracaoSeq && $("taAluno").value === id && $("taTipo").value === tipo; }
+    function recebe(r) {
+      if (seq !== taGeracaoSeq) return;
+      if (!vigente() || r.cancelado) { limpaPropostaTreino("O aluno ou a configuração mudou. A resposta foi ignorada e o treino salvo continua igual."); return; }
+      taEstadoGeracao(false);
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
-      // guarda COM QUAIS parâmetros este treino foi gerado — é o que o botão
-      // "Renovar o mês" reusa na semana 4, sem o professor preencher de novo
-      // (v750: por TIPO — o objetivo da corrida não serve pra musculação)
-      (function () {
-        var stOk = load();
-        var tOk = treinoDe(stOk, id);
-        guardaIaParams(tOk, tipoIA, { tipo: tipoIA, objetivo: tipoIA === "corrida" ? $("taProva").value : $("taObjetivo").value, equip: $("taEquip").value, em: S.todayISO() });
-        S.write("ptStudio", stOk);
-      })();
-      if (r.tipo === "wod") {
-        // o circuito caiu na aba certa — leva o professor até ele já carregado
-        var msgW = S.plural(r.wods, "circuito prescrito", "circuitos prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + semMes(r) + " Revise, ajuste e envie!";
-        $("taStatus").textContent = msgW;
-        $("wpAluno").value = id;
-        mostraTrAba("wod");
-        renderWods();
-        if ($("wpStatus")) $("wpStatus").textContent = msgW;
-        return;
-      }
-      if (r.tipo === "corrida") {
-        var msgC = S.plural(r.cardios, "treino de corrida prescrito", "treinos de corrida prescritos") + " pela IA." + (r.resumo ? " " + r.resumo : "") + semMes(r) + " Revise, monte a semana em Semana do aluno e envie!";
-        $("taStatus").textContent = msgC;
-        $("cbAluno").value = id;
-        mostraTrAba("cardio");
-        renderCardios();
-        if ($("cbStatus")) $("cbStatus").textContent = msgC;
-        return;
-      }
-      /* O que a IA prescreveu e o painel descartou aparece. Antes o número
-       * `ignorados` era calculado e NUNCA mostrado: se o professor pedia um
-       * exercício, a IA obedecia e o nome não batia com o banco, o exercício
-       * sumia em silêncio e a tela ainda dizia que tinha dado tudo certo. */
-      $("taStatus").textContent = S.plural(r.fichas, "ficha prescrita", "fichas prescritas") + " pela IA, com " + r.exercicios + " exercícios." +
-        (r.ignorados
-          ? " ⚠️ " + S.plural(r.ignorados, "exercício ficou de fora", "exercícios ficaram de fora") +
-            " porque não existe no banco com esse nome" +
-            ((r.nomesFora || []).length ? " (" + r.nomesFora.join(", ") + ")" : "") +
-            " — cadastre na biblioteca ou escreva o nome do banco na sua leitura."
-          : "") +
-        // v750: o que o painel LIMITOU também aparece (a IA obedeceu o professor e o painel cortava calado)
-        ((r.cortesTxt || []).length ? " ⚠️ O painel limitou: " + r.cortesTxt.join("; ") + "." : "") +
-        semMes(r) +
-        (r.resumo ? " " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
-      $("tAluno").value = id; sincronizaBusca("tAluno");
-      renderFichas();
-      renderBiblioteca();
-    }, tipoIA);
+      mostraPropostaTreino(r);
+    }
+    if (origem === "catalogo") { recebe(geraTreinoAuto(id, objetivo, equip, op)); return; }
+    if (origem === "evolucao") { recebe(evoluiTreino(id, op)); return; }
+    confereIaPublicada();
+    taEstadoGeracao(true);
+    $("taStatus").textContent = "Preparando a proposta. Você poderá revisar antes de aplicar; a geração pode levar cerca de um minuto.";
+    op.cancelado = function () { return !vigente(); };
+    geraTreinoIA(id, objetivo, equip, recebe, tipo, op);
+  }
+  window.__iaRevisao = { aplica: aplicaRascunhoPrescricao, estado: function () {
+    return { gerando: taGerando, rascunho: taRascunho ? copiaPrescricao(taRascunho) : null, aplicado: taAplicado ? copiaPrescricao(taAplicado) : null };
+  }, descarta: function () { limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual."); } };
+  window.__iaTreino = geraTreinoIA; // testes e integrações legadas; a UI usa preview:true
+  window.__iaParse = parseFichasIA; // testes
+  // O tipo troca campos e qualquer mudança invalida uma proposta ainda não aplicada.
+  if ($("taTipo")) $("taTipo").addEventListener("change", function () {
+    var corrida = this.value === "corrida";
+    $("taObjetivo").hidden = corrida;
+    $("taProva").hidden = !corrida;
+    $("taEquip").hidden = corrida;
+    if ($("taObjetivoCampo")) $("taObjetivoCampo").hidden = corrida;
+    if ($("taProvaCampo")) $("taProvaCampo").hidden = !corrida;
+    if ($("taEquipCampo")) $("taEquipCampo").hidden = corrida;
+    $("taGerar").hidden = this.value !== "musculacao";
+    $("taEvoluir").hidden = this.value !== "musculacao";
   });
+  $("taIA").addEventListener("click", function () { iniciaPropostaTreino("ia"); });
+  function mudouConfiguracaoIA() {
+    var havia = taRascunho || taGerando || taAplicado;
+    limpaPropostaTreino(havia ? "A configuração mudou. Gere uma nova proposta para revisar. O treino salvo continua igual." : "");
+    atualizaContextoIA();
+  }
+  ["taAluno", "taTipo", "taObjetivo", "taProva", "taEquip", "taDias"].forEach(function (id) {
+    if ($(id)) $(id).addEventListener("change", mudouConfiguracaoIA);
+  });
+  ["taDuracao", "brDesejo", "brQuer", "brAdapta", "brLeitura"].forEach(function (id) {
+    if ($(id)) $(id).addEventListener("input", mudouConfiguracaoIA);
+  });
+  if ($("taCancelarGeracao")) $("taCancelarGeracao").addEventListener("click", function () {
+    limpaPropostaTreino("Espera cancelada. A resposta será ignorada e o treino salvo continua igual.");
+  });
+  if ($("taDescartar")) $("taDescartar").addEventListener("click", function () {
+    limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual.");
+  });
+  if ($("taAplicar")) $("taAplicar").addEventListener("click", function () {
+    var d = taRascunho;
+    if (!d || d.aplicado) return;
+    if ($("taAluno").value !== d.alunoId || $("taTipo").value !== d.tipo) {
+      limpaPropostaTreino("O aluno ou a modalidade mudou. Gere outra proposta antes de aplicar."); return;
+    }
+    var st = load(), a = (st.alunos || []).find(function (x) { return x.id === d.alunoId; });
+    if (!a) { $("taStatus").textContent = "O aluno não está mais disponível."; return; }
+    var atual = (st.treinosV2 || {})[d.alunoId] || {}, existentes = (atual[campoPrescricao(d.tipo)] || []).length;
+    if (existentes && !confirm((d.origem === "evolucao" ? "Aplicar a progressão revisada" : "Substituir " + taQuantidade(atual, d.tipo) + " pela proposta revisada") + " de " + a.nome + "? O app só será atualizado quando você publicar.")) return;
+    this.disabled = true;
+    var r = aplicaRascunhoPrescricao(d);
+    if (r.erro) { this.disabled = false; $("taStatus").textContent = r.erro; return; }
+    taAplicado = { alunoId: d.alunoId, tipo: d.tipo };
+    $("taRevisaoTitulo").textContent = "Treino aplicado";
+    $("taStatus").textContent = "Proposta aplicada a " + a.nome + ". Você pode ajustar o treino e publicar quando estiver pronto." +
+      (r.planoAviso ? " Confira os vínculos da Semana do aluno antes de publicar." : "");
+    $("taAplicar").hidden = true;
+    $("taDescartar").hidden = true;
+    $("taAbrirTreino").hidden = false;
+    $("taEnviaApp").hidden = false;
+    $("taEnviaApp").disabled = false;
+  });
+  if ($("taAbrirTreino")) $("taAbrirTreino").addEventListener("click", function () {
+    var alvo = taAplicado; if (!alvo) return;
+    var tipo = alvo.tipo, sid = tipo === "wod" ? "wpAluno" : tipo === "corrida" ? "cbAluno" : "tAluno";
+    $(sid).value = alvo.alunoId;
+    sincronizaBusca(sid);
+    $(sid).dispatchEvent(new Event("change", { bubbles: true }));
+    mostraTrAba(tipo === "wod" ? "wod" : tipo === "corrida" ? "cardio" : "fichas");
+    if (tipo === "wod") renderWods(); else if (tipo === "corrida") renderCardios(); else { renderFichas(); renderBiblioteca(); }
+  });
+  atualizaContextoIA();
   $("fichasBox").addEventListener("click", function (e) {
     // estrela ao lado do seletor: favorita o exercício escolhido sem sair da ficha
     var fvs = e.target.getAttribute && e.target.getAttribute("data-exfavsel");
@@ -17427,17 +17838,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     return itens;
   }
+  var catLimite = 40, catFiltroAnterior = "";
+  function exAlunosAfetados(st, exId) {
+    var ids = [], fichas = 0;
+    Object.keys(st.treinosV2 || {}).forEach(function (aid) {
+      var n = (st.treinosV2[aid].fichas || []).filter(function (f) { return (f.itens || []).some(function (it) { return it.exId === exId; }); }).length;
+      if (n) { fichas += n; if (st.alunos.some(function (a) { return a.id === aid; })) ids.push(aid); }
+    });
+    return { ids: ids, fichas: fichas };
+  }
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#catMais")) { catLimite += 40; renderBiblioteca(); } });
   function renderBiblioteca() {
     var st = load();
-    var busca = ($("catBusca").value || "").trim().toLowerCase();
+    var busca = alTextoBusca($("catBusca").value || "").trim();
     var zona = $("catGrupo").value;
     var mov = $("catMov").value;
     var soFav = $("catFav").getAttribute("aria-pressed") === "true";
+    var filtroAgora = JSON.stringify([busca, zona, mov, soFav]);
+    if (catFiltroAnterior !== filtroAgora) { catLimite = 40; catFiltroAnterior = filtroAgora; }
     var itens = listaUnificada(st).filter(function (x) {
       if (soFav && !x.fav) return false;
       if (zona && x.grupo !== zona) return false;
       if (mov && x.mov !== mov) return false;
-      if (busca && (x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).toLowerCase().indexOf(busca) === -1) return false;
+      if (busca && alTextoBusca(x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).indexOf(busca) === -1) return false;
       return true;
     });
     // favoritos no topo, depois os SEUS, depois o catálogo por zona
@@ -17447,7 +17870,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (a.grupo !== b.grupo) return a.grupo < b.grupo ? -1 : 1;
       return a.nome < b.nome ? -1 : 1;
     });
-    var corte = itens.slice(0, 40);
+    var corte = itens.slice(0, catLimite);
     var html = "", zonaAtual = null;
     corte.forEach(function (x) {
       var rotulo = x.fav && !soFav ? "★ Seus favoritos" : x.seu ? "Seus exercícios" : x.grupo;
@@ -17470,7 +17893,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "</span></div>";
     });
     $("exLista").innerHTML = (html || '<div class="muted">Nada com esses filtros — tente outra busca.</div>') +
-      (itens.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 40 de ' + itens.length + " — refine a busca ou os filtros pra ver o resto.</div>" : "");
+      (itens.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando ' + corte.length + ' de ' + itens.length + ".</div>" : "");
+    if ($("catMais")) { $("catMais").hidden = itens.length <= corte.length; $("catMais").textContent = "Mostrar mais " + Math.min(40, itens.length - corte.length); }
   }
   function renderCatalogo() { renderBiblioteca(); } // nome antigo — chamadas espalhadas continuam valendo
   // filtros: zonas (grupos reais do banco) e tipos de movimento
@@ -17500,6 +17924,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nome = $("exNome").value.trim();
     if (!nome) { alert("Escreva o nome do exercício."); return; }
     var st = load();
+    if ((st.exercicios || []).some(function (x) { return alTextoBusca(x.nome).trim() === alTextoBusca(nome).trim(); })) { alert("Você já tem um exercício com esse nome. Busque por ele e toque em Abrir para editar."); return; }
     st.exercicios.push({ id: S.uid(), nome: nome, grupo: $("exGrupo").value.trim(), video: $("exVideo").value.trim(), descricao: "" });
     $("exNome").value = ""; $("exVideo").value = "";
     S.write("ptStudio", st);
@@ -17530,21 +17955,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // mostra o vídeo que o aluno está vendo (inclusive o padrão do catálogo),
       // senão apagar o campo não tem como significar "não quero vídeo aqui"
       $("dxVideo").value = ex.semVideo ? "" : videoDoEx(ex); $("dxDesc").value = ex.descricao || "";
+      $("dxVideo").setCustomValidity("");
       $("dlgEx").showModal();
     }
     if (rm) {
-      if (!confirm("Remover este exercício da biblioteca? (Ele some das fichas que o usam.)")) return;
       var st2 = load();
+      var impacto = exAlunosAfetados(st2, rm);
+      if (!confirm("Remover este exercício? Ele será retirado de " + impacto.fichas + " ficha(s) em uso por " + impacto.ids.length + " aluno(s). Depois será necessário publicar as alterações.")) return;
       st2.exercicios = st2.exercicios.filter(function (x) { return x.id !== rm; });
       Object.keys(st2.treinosV2 || {}).forEach(function (aid) {
         (st2.treinosV2[aid].fichas || []).forEach(function (f) {
           f.itens = f.itens.filter(function (it) { return it.exId !== rm; });
         });
       });
+      impacto.ids.forEach(function (aid) { marcaTreinoMudou(st2, aid); });
       S.write("ptStudio", st2);
       renderBiblioteca(); renderFichas();
     }
   });
+  $("dlgEx").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var url = $("dxVideo").value.trim();
+    if (url && !/^https?:\/\//i.test(url)) { e.preventDefault(); $("dxVideo").setCustomValidity("Use um link completo começando com https://."); $("dxVideo").reportValidity(); }
+  });
+  $("dxVideo").addEventListener("input", function () { this.setCustomValidity(""); });
   $("dlgEx").addEventListener("close", function () {
     if ($("dlgEx").returnValue !== "ok" || !exEditando) return;
     var st = load();
@@ -17564,38 +17998,81 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ex.video = vidNovo;
     ex.semVideo = !vidNovo && tinhaVideo;
     ex.descricao = $("dxDesc").value.trim();
+    exAlunosAfetados(st, exEditando).ids.forEach(function (aid) { marcaAppPendente(st, aid); });
     S.write("ptStudio", st);
     renderBiblioteca(); renderFichas();
   });
+  var vtpEditando = null;
+  function vtpCancela() {
+    vtpEditando = null; $("vtpTitulo").value = ""; $("vtpUrl").value = "";
+    $("vtpAdd").textContent = "+ Adicionar"; if ($("vtpCancelaEdicao")) $("vtpCancelaEdicao").hidden = true;
+  }
+  function vtpMarcaMudou(st) { st.config = st.config || {}; st.config.appEditGeralEm = new Date().toISOString(); }
+  document.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("#vtpCancelaEdicao")) vtpCancela();
+    if (e.target.closest && e.target.closest("#vtpPublica")) publicaAppsPendentes(false, false, "vtpStatus");
+  });
+  document.addEventListener("input", function (e) { if (e.target.id === "vtpBusca") renderVideotecaPT(); });
+  document.addEventListener("change", function (e) { if (e.target.id === "vtpFiltroCat") renderVideotecaPT(); });
   function renderVideotecaPT() {
     var st = load();
     var el = $("vtpLista");
-    if (!st.videoteca.length) { el.innerHTML = "Nenhum conteúdo ainda."; return; }
+    var filtro = $("vtpFiltroCat"), categoria = filtro ? filtro.value : "", q = alTextoBusca($("vtpBusca") ? $("vtpBusca").value : "").trim();
+    if (filtro) {
+      var cats = Array.from(new Set(st.videoteca.map(function (v) { return v.categoria || "Geral"; }))).sort();
+      filtro.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join("");
+      filtro.value = categoria; if (!filtro.value) categoria = "";
+    }
+    if (!st.videoteca.length) { el.innerHTML = "Nenhum conteúdo ainda. Adicione o primeiro para publicar nos apps."; return; }
     var porCat = {};
-    st.videoteca.forEach(function (v) { (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v); });
+    st.videoteca.forEach(function (v) {
+      if (categoria && (v.categoria || "Geral") !== categoria) return;
+      if (q && alTextoBusca(v.titulo + " " + (v.categoria || "Geral")).indexOf(q) < 0) return;
+      (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v);
+    });
     el.innerHTML = Object.keys(porCat).sort().map(function (c) {
       return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:10px 0 4px;text-transform:uppercase;'>" + esc(c) + "</div>" +
         porCat[c].map(function (v) {
           return '<div class="sessao-pt"><a href="' + esc(v.url) + '" target="_blank" rel="noopener" style="font-weight:700;">▶ ' + esc(v.titulo) + "</a>" +
-            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-vtprm="' + v.id + '" aria-label="excluir o conteúdo">✕</button></div>';
+            (st.videoteca.indexOf(v) >= 30 ? '<span class="muted">Fora do limite de 30 enviados ao app</span>' : '') +
+            '<span class="trx-actions" style="margin-left:auto;"><button class="btn sec mini" data-vtpedit="' + v.id + '">Editar</button><button class="btn sec mini" data-vtprm="' + v.id + '" aria-label="excluir o conteúdo">Excluir</button></span></div>';
         }).join("");
-    }).join("");
+    }).join("") || "Nenhum conteúdo com esses filtros.";
   }
   $("vtpAdd").addEventListener("click", function () {
     var t = $("vtpTitulo").value.trim(), u = $("vtpUrl").value.trim();
     if (!t || !/^https?:\/\//.test(u)) { alert("Preencha o título e um link começando com https://"); return; }
     var st = load();
-    st.videoteca.push({ id: S.uid(), titulo: t, categoria: $("vtpCat").value.trim() || "Geral", url: u });
-    $("vtpTitulo").value = ""; $("vtpUrl").value = "";
-    S.write("ptStudio", st);
+    var atual = vtpEditando && st.videoteca.find(function (v) { return v.id === vtpEditando; });
+    if (vtpEditando && !atual) { $("vtpStatus").textContent = "Este conteúdo foi removido. Cancele a edição para criar outro."; return; }
+    if (!atual && st.videoteca.length >= 30) { $("vtpStatus").textContent = "O app recebe até 30 conteúdos. Edite ou remova um existente para adicionar outro. Nenhum conteúdo foi apagado."; return; }
+    if (!atual) { atual = { id: S.uid() }; st.videoteca.push(atual); }
+    atual.titulo = t; atual.categoria = $("vtpCat").value.trim() || "Geral"; atual.url = u;
+    vtpMarcaMudou(st);
+    if (S.write("ptStudio", st) === false) { $("vtpStatus").textContent = "Não foi possível salvar. Seu rascunho foi mantido."; return; }
+    vtpCancela();
+    $("vtpStatus").textContent = "Conteúdo salvo. Publique as alterações para atualizar os apps dos alunos.";
+    renderPubPendentes(st);
     renderVideotecaPT();
   });
   $("vtpLista").addEventListener("click", function (e) {
+    var editar = e.target.closest && e.target.closest("[data-vtpedit]");
+    if (editar) {
+      var v = load().videoteca.find(function (x) { return x.id === editar.getAttribute("data-vtpedit"); }); if (!v) return;
+      vtpEditando = v.id; $("vtpTitulo").value = v.titulo; $("vtpCat").value = v.categoria || "Geral"; $("vtpUrl").value = v.url;
+      $("vtpAdd").textContent = "Salvar alterações"; $("vtpCancelaEdicao").hidden = false;
+      if ($("vtpEditor")) $("vtpEditor").open = true; $("vtpTitulo").focus(); return;
+    }
     var rm = e.target.getAttribute && e.target.getAttribute("data-vtprm");
     if (!rm) return;
+    if (!confirm("Excluir este conteúdo? A remoção chegará aos alunos depois de publicar as alterações.")) return;
     var st = load();
     st.videoteca = st.videoteca.filter(function (v) { return v.id !== rm; });
-    S.write("ptStudio", st);
+    vtpMarcaMudou(st);
+    if (S.write("ptStudio", st) === false) return;
+    if (vtpEditando === rm) vtpCancela();
+    $("vtpStatus").textContent = "Conteúdo excluído. Publique as alterações para atualizar os apps.";
+    renderPubPendentes(st);
     renderVideotecaPT();
   });
 

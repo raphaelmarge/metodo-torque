@@ -221,6 +221,11 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     await p.waitForTimeout(1100);
   }
   async function sub(attr, v) {
+    if (attr === "tra" && await p.locator("#trArea").isVisible()) {
+      await p.locator("#trArea").selectOption(v);
+      await p.waitForTimeout(950);
+      return true;
+    }
     // No perfil móvel o seletor substitui a faixa de abas do desktop.
     // Percorrer o controle visível evita pular as áreas por botões ocultos.
     if (attr === "pfa" && await p.locator("#pfArea").isVisible()) {
