@@ -31,6 +31,15 @@ async function abaPt(p, a) {
   await p.click('#abas [data-a="' + a + '"]');
 }
 
+// Percorre os disclosures pela mesma interação visível que o professor usa.
+async function abreDetalhesDoPerfil(p, selector) {
+  const ancestrais = p.locator(selector).locator("xpath=ancestor::details");
+  for (let i = 0; i < await ancestrais.count(); i++) {
+    const detalhe = ancestrais.nth(i);
+    if (!await detalhe.evaluate(el => el.open)) await detalhe.locator(":scope > summary").click();
+  }
+}
+
 
 
 
@@ -389,6 +398,7 @@ async function abaPt(p, a) {
   const joaoId = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId);
   ok(await p.evaluate(() => !!document.getElementById("pfCtPlano") && !!document.getElementById("pfCtAdd")), "perfil sem contrato mostra o form de fechar contrato");
+  await abreDetalhesDoPerfil(p, "#pfCtPlano");
   await p.selectOption("#pfCtPlano", { index: 1 });
   await p.fill("#pfCtDia", String(diaVenc));
   await p.click("#pfCtAdd");
@@ -2452,6 +2462,7 @@ async function abaPt(p, a) {
       try {
         window.__alFiltro("ativos");
         document.querySelector('#listaAlunos [data-abreperfil="' + alvo.id + '"]').click();
+        window.__pfAba("treino");
         document.getElementById("pfMontaTreino").click();
         out.montaAluno = document.getElementById("tAluno").value === alvo.id && document.getElementById("taAluno").value === alvo.id &&
           !!document.querySelector('#vTreinos [data-tra="fichas"].ativa');
@@ -2740,7 +2751,7 @@ async function abaPt(p, a) {
         out.fichaVencendo = /FICHA VENCENDO/.test(document.getElementById("dashResolver").textContent);
         // a letra do chip da Semana é a MESMA do app (letraFicha): posição, não 1º caractere
         window.__perfilPT("v7f");
-        const chips = [...document.querySelectorAll("#pfResumo .pfsem .c.tem")].map((c) => c.textContent.trim());
+        const chips = [...document.querySelectorAll("#pfPlanoResumo .pfsem .c.tem")].map((c) => c.textContent.trim());
         out.chipLetra = chips.join(",") === "A,B";
       }
       // 5) alPlano: venda de serviço (desc) não vira "Pago dia N"
@@ -3770,6 +3781,7 @@ async function abaPt(p, a) {
 
   // renovação de contrato com 1 toque
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId2);
+  await abreDetalhesDoPerfil(p, "[data-pfctrenova]");
   await p.click("[data-pfctrenova]");
   await p.waitForTimeout(250);
   ok(await p.evaluate(() => {
@@ -4036,7 +4048,7 @@ async function abaPt(p, a) {
   ok(dor.abre, "🩹 a ação do card abre a ficha do aluno");
   ok(dor.antigos === 0, "🩹 relato de mais de 7 dias não alarma mais");
 
-  // 🧭 v690: esteira do aluno novo — checklist no topo do Resumo da ficha
+  // 🧭 v690: primeiros passos do aluno novo — checklist recolhido no Resumo da ficha
   const est = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const hoje = diaISO(new Date());
@@ -4054,7 +4066,8 @@ async function abaPt(p, a) {
       temMontar: el ? !!el.querySelector("[data-montatreino]") : false,
       temApp: el ? !!el.querySelector("[data-app]") : false,
       temAnam: el ? !!el.querySelector('[data-est="anam"]') : false,
-      titulo: el ? el.querySelector("h3").textContent : "",
+      titulo: el ? el.querySelector("summary").textContent : "",
+      pendentes: el ? parseInt(el.querySelector("summary > span:last-child").textContent, 10) : 0,
     };
     // aluno de 2020 com 8 sessões feitas NÃO é novo: a esteira some mesmo faltando passo
     window.__pfResumo(velho);
@@ -4067,7 +4080,7 @@ async function abaPt(p, a) {
     window.__pfResumo(st2.alunos.find((a) => a.nome === "João Cliente"));
     return out;
   });
-  ok(est.tem && est.linhas >= 5 && est.feitos === 0 && /0 de \d/.test(est.titulo),
+  ok(est.tem && est.linhas >= 5 && est.feitos === 0 && est.pendentes === est.linhas - est.feitos && /Primeiros passos/.test(est.titulo),
     "🧭 aluno novo cru mostra a esteira completa, nada riscado (" + est.titulo + ")");
   ok(est.temMontar && est.temApp && est.temAnam,
     "🧭 cada passo pendente tem a ação DENTRO da linha (montar, mandar app, pedir anamnese)");
@@ -6872,8 +6885,11 @@ async function abaPt(p, a) {
         window.alert = (m) => { recado = String(m); };
         const criaOrig = document.createElement.bind(document);
         document.createElement = (t) => { const el = criaOrig(t); if (t === "a") { const c = el.click.bind(el); el.click = () => { if (el.download) baixou = true; return c(); }; } return el; };
-        const b = document.querySelector('[data-app="' + st.alunos[0].id + '"]');
-        if (b) b.click();
+        window.__perfilPT(st.alunos[0].id);
+        window.__pfAba("app");
+        const b = document.getElementById("pfApp");
+        if (!b || b.offsetParent === null) throw new Error("Publicar app precisa estar visível na aba App e acesso");
+        b.click();
         await new Promise((r) => setTimeout(r, 400));
         window.alert = alertOrig;
         document.createElement = criaOrig;
@@ -7292,27 +7308,29 @@ async function abaPt(p, a) {
     const b2b = await p.evaluate(() => {
       const topo = document.querySelector(".pftopo");
       return {
-        roxo: !!topo,
+        compacto: !!topo,
         volta: (document.getElementById("pfFechar") || {}).textContent || "",
         sub: (document.getElementById("pfDesde") || {}).textContent || "",
+        objetivo: window.MTStore.read("ptStudio", {}).alunos[0].objetivo || "Objetivo ainda não informado",
         chips: [...document.querySelectorAll("#pfChips span")].map((x) => x.textContent),
         acoes: [...document.querySelectorAll(".pfacoes button")].map((x) => x.id),
+        montaEmTreino: document.getElementById("pfMontaTreino").closest("[data-pfsec]").getAttribute("data-pfsec") === "treino",
         prox: (document.getElementById("pfProxima") || {}).textContent || "",
         kpis: [...document.querySelectorAll("#pfResumo .pfkpi .k")].map((x) => x.textContent),
-        semana: document.querySelectorAll("#pfResumo .pfsem .c").length,
-        ficha: /Ficha atual/.test((document.getElementById("pfResumo") || {}).textContent || ""),
+        semana: document.querySelectorAll("#pfPlanoResumo .pfsem .c").length,
+        ficha: !!document.querySelector('[data-pfsec="treino"] #pfFicha'),
       };
     });
-    ok(b2b.roxo && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
-      "🎨 2b: a ficha abre com o cabeçalho roxo, o voltar e os dois selos do aluno");
-    ok(/·/.test(b2b.sub), "🎨 2b: a linha de baixo do nome junta objetivo, tempo de casa, plano e situação");
-    ok(b2b.acoes.length === 4 && b2b.acoes[0] === "pfMontaTreino",
-      "🎨 2b: as quatro ações do dia ficam no cabeçalho (montar treino, chat, financeiro, agenda)");
-    ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o cabeçalho diz quando é a próxima sessão");
+    ok(b2b.compacto && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
+      "🎨 2b: a ficha abre com cabeçalho compacto, voltar e os dois estados do aluno");
+    ok(b2b.sub === b2b.objetivo, "🎨 2b: a linha abaixo do nome mostra o objetivo cadastrado");
+    ok(b2b.acoes.join(",") === "pfIrChat,pfIrAgenda" && b2b.montaEmTreino,
+      "🎨 2b: cabeçalho oferece Chat e Agendar; Montar treino pertence à área Treino");
+    ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o Resumo diz quando é a próxima sessão");
     ok(b2b.kpis.length === 4 && /TREINOS NO MÊS/.test(b2b.kpis[0]) && /CHECK-IN/.test(b2b.kpis[3]),
       "🎨 2b: o Resumo abre com os quatro números do aluno");
     ok(b2b.semana === 7 && b2b.ficha,
-      "🎨 2b: o Resumo traz a Semana do aluno (7 dias) e a ficha atual");
+      "🎨 2b: a área Treino reúne a Semana do aluno (7 dias) e suas fichas");
     ok(abas.depois.cadastro && !abas.depois.app && abas.depois.ativa === "cadastro", "clicar em 👤 Cadastro troca a seção e marca a aba ativa");
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -13426,7 +13444,7 @@ async function abaPt(p, a) {
       return !!b && /Ativar mensalidade no cartão/.test(b.textContent);
     }, null, { timeout: 5000 }).then(() => true).catch(() => false);
     ok(temBtCartao, "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão (v749: depois do ping confirmar a chave global)");
-    await p.click("#pfAcoesBtn"); // as ações do perfil agora moram no menu retrátil ⚡
+    await p.click('#pfAbas [data-pfa="fin"]'); // assinatura pertence à área Financeiro
     await p.click("#pfAssinar");
     await p.waitForFunction(() => document.getElementById("dlgCartaoRec") && document.getElementById("dlgCartaoRec").open);
     const dlgInfo = await p.evaluate(() => ({
@@ -16647,16 +16665,16 @@ async function abaPt(p, a) {
     ok(cen.sitMensal.tipo === "mensal" && cen.sitMensal.curto === "devendo",
       "🧾 v756: mensalista continua lido pelo mês (devendo/em dia)");
 
-    // o cabeçalho da ficha e a aba Financeiro da MESMA ficha não podem discordar
+    // A situação compacta e o detalhamento financeiro da MESMA ficha não podem discordar.
     const fichaH = await pr.evaluate(() => {
       window.__perfilPT("v756h");
-      const topo = (document.getElementById("pfDesde") || {}).textContent || "";
+      const situacao = (document.getElementById("pfFinSituacao") || {}).textContent || "";
       window.__pfAba("fin");
       const fin = (document.querySelector('#vPerfil [data-pfsec="fin"]') || {}).textContent || "";
-      return { topo, fin };
+      return { situacao, fin };
     });
-    ok(/devendo 2 sess/.test(fichaH.topo),
-      "🧾 v756: o cabeçalho da ficha do hora-aula diz 'devendo 2 sessões' — antes dizia 'em dia'");
+    ok(/devendo 2 sess/.test(fichaH.situacao),
+      "🧾 v756: a situação financeira do hora-aula diz 'devendo 2 sessões' — antes dizia 'em dia'");
     ok(/carteira de sess/i.test(fichaH.fin) && !/em aberto/.test(fichaH.fin),
       "🧾 v756: e o card de situação fala de carteira, não de 'setembro em aberto'");
 

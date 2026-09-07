@@ -51,6 +51,25 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Ficha do aluno no personal (mt-v789)
+
+O perfil tem cabeçalho compacto e oito áreas com destinos próprios. O seletor
+`pfArea` no celular acompanha os botões `data-pfa` do computador. Trocar de área
+não reconstrói os formulários nem descarta dados ainda não salvos. Os IDs dos
+campos e os hooks de teste continuam sendo os mesmos.
+
+O Resumo reúne próxima sessão, indicadores e acompanhamento curto. Plano da
+semana e ficha ficam em Treino; agenda individual e diário em Frequência.
+Publicação e acesso ficam em App e acesso; Pix e cobrança recorrente em
+Financeiro; anamnese em Cadastro. O menu Compartilhar concentra relatórios,
+divulgação e contato. Nunca duplicar os nós dos controles ao reorganizá-los.
+
+Históricos, gráficos e formulários extensos usam detalhes retráteis. Preservar
+as fontes de cálculo e a diferença entre treino registrado pelo aluno e sessão
+feita com o personal. `pfKpiCk` continua ancorando a consulta do Resumo; respostas
+da nuvem só podem preencher o perfil que originou a consulta. O acabamento
+visual fica sob `#vPerfil` em `assets/personal-usabilidade.css`.
+
 ### Interações da lista de alunos (mt-v788)
 
 Cada linha tem um botão Ações explícito. `alAberto` guarda o aluno em foco e
