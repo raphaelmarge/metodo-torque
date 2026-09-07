@@ -3168,7 +3168,7 @@ async function abreDetalhes(p, selector) {
     const menu1a = await p.evaluate(() => {
       const bs = [...document.querySelectorAll("#abas button[data-a]")];
       const grupos = [];
-      [...document.querySelector("#abas").children].forEach((el) => {
+      [...document.querySelector("#menuItensPt").children].forEach((el) => {
         if (el.classList.contains("fg-menu-group")) { grupos.push({ nome: el.textContent.trim(), abas: [] }); return; }
         if (!el.dataset || !el.dataset.a) return;
         if (grupos.length) grupos[grupos.length - 1].abas.push(el.dataset.a);

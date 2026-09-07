@@ -51,6 +51,19 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Menu e campos de data no celular (mt-v792)
+
+O menu conserva seus botões e grupos dentro de `#menuItensPt`, que rola
+independentemente do cabeçalho, busca e tema. Não deixar o flex encolher os
+itens: todos precisam ter pelo menos 48px, inclusive os antigos `.pouco` e
+o menu compacto do desktop. Em tela de toque, o foco inicial vai para Fechar
+para evitar que o teclado ocupe o menu sem o usuário pedir uma busca.
+
+Nas avaliações, questionários e desafios, datas ocupam uma linha própria
+no celular. O seletor nativo do iPhone pode exigir mais largura que meia
+coluna; conter também a largura lógica do controle, preservando o picker.
+Peso e altura continuam pareados; sexo fica abaixo. Cálculos e dados não mudam.
+
 ### Revisão geral das ferramentas do Personal (mt-v791)
 
 As áreas restantes do painel usam camadas isoladas: `personal-gestao` para
