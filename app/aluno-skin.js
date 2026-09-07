@@ -231,6 +231,8 @@
 
   css += "#evTopo{--ev-ring-color:var(--corc);--ev-ring-track:var(--bg7)}#evTopo #evRing>div{background:var(--bg2)!important}html.claro #evTopo{--ev-ring-color:var(--cor);--ev-ring-track:#ddd8e5}html.claro #evTopo #evRing>div{background:#fff!important}html.claro #evTopo :is(#evNvNum,#evXp){color:#241f31!important}";
 
+  css += "/* v799: retrospectiva mensal retirada da Evolução. */#retroCard{display:none!important}";
+
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };

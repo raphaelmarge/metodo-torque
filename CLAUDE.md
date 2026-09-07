@@ -115,6 +115,8 @@ em primeiro lugar (mt-v798). A prévia mantém seis medalhas; Ver todas expande 
 Mostrar menos volta às seis e ao topo. Não esconder nível ou toda a grade em
 acordeão. Constância, semanas e calendário vêm depois; o calendário continua
 recolhido, mantendo navegação, compartilhamento e histórico.
+O card automático "Seu mês de…" saiu da Evolução na v799; o botão geral para
+gerar um card e os registros usados pelos demais indicadores permanecem.
 Cargas oferece busca geral e períodos de 30/90 dias ou todo o histórico.
 Sessões agrupam data e ficha quando essa identificação existe; o gráfico agrega
 por dia. Recordes continuam recolhidos apenas em Cargas. Outras modalidades,
