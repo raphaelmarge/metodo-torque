@@ -377,3 +377,185 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
   #vAlunos .ali-shortcuts .btn{min-height:46px}
 }
 @media(prefers-reduced-motion:reduce){#vAlunos .alrow{transition:none}}
+
+/* Perfil do aluno: identidade curta, áreas próprias e detalhes sob demanda. */
+#vPerfil{min-width:0;color:var(--texto)}
+#vPerfil [hidden]{display:none!important}
+#vPerfil .pftopo.pfp-header{display:block;position:relative;margin:0;padding:0 0 20px;border:0;border-bottom:1px solid var(--linha);border-radius:0;background:transparent;color:var(--texto);box-shadow:none}
+#vPerfil .pfp-header .pfvolta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:0}
+#vPerfil .pfp-header .pfvolta button{position:static;min-height:44px;height:auto;width:auto;margin:0;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:var(--tk-tx2);font-family:inherit;font-size:13px;font-weight:600;line-height:1.4;cursor:pointer}
+#vPerfil .pfp-header .pfvolta #pfFechar{margin-right:auto;padding-left:0;color:var(--tk-roxoTx)}
+#vPerfil #pfAcoesBtn{position:static;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-height:44px;height:auto;padding:10px 12px;font-size:13px;font-weight:600;color:var(--tk-tx2);background:var(--tk-sup);border:1px solid var(--linha);border-radius:8px}
+#vPerfil #pfAcoesBtn::after{content:none}
+#vPerfil #pfAcoesBtn .pf-ac-rot,#vPerfil #pfAcoesBtn .fseta{display:inline;font-size:inherit}
+#vPerfil #pfTopo.pfp-identity{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px 16px;align-items:center}
+#vPerfil .pfp-identity #pfFotoBtn{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:center;width:52px;height:52px;overflow:hidden;padding:0;border:0;border-radius:14px;background:var(--tk-roxoFraco)!important;color:var(--tk-roxoTx)!important;font-family:inherit;font-size:18px;font-weight:800}
+#vPerfil #pfFotoImg{width:100%;height:100%;object-fit:cover}
+#vPerfil .pfp-identity .pfid{grid-column:2;grid-row:1;min-width:0;width:auto}
+#vPerfil .pfp-identity #pfTitulo{font-size:25px;line-height:1.25;font-weight:750;letter-spacing:-.03em;white-space:normal;overflow-wrap:anywhere;overflow:visible;text-overflow:clip;color:var(--texto)}
+#vPerfil .pfp-identity #pfDesde{display:block;margin-top:5px;font-size:13px!important;font-weight:400;line-height:1.5;color:var(--tk-tx3)!important}
+#vPerfil .pfp-identity .pfchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+#vPerfil .pfp-identity .pfchips span{padding:0;border:0;border-radius:0;background:transparent;font-size:12px;font-weight:500;line-height:1.5;color:var(--tk-tx3);white-space:normal}
+#vPerfil .pfp-identity .pfchips span+span::before{content:'·';margin-right:6px}
+#vPerfil .pfp-identity .pfacoes{grid-column:3;grid-row:1;display:flex;gap:8px;align-items:center}
+#vPerfil .pfp-identity .pfacoes .dbt{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-width:90px;min-height:44px;height:auto;padding:11px 18px;border-radius:9px;border:1px solid var(--linha);background:var(--tk-sup);color:var(--texto);font-size:14px;font-weight:650}
+#vPerfil .pfp-identity .pfacoes #pfIrAgenda{background:var(--roxo);border-color:var(--roxo);color:#fff}
+#vPerfil #pfAcoes.pfp-share{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 0!important;padding:14px 0 0;border-top:1px solid var(--linha);background:transparent}
+#vPerfil #pfAcoes .btn{min-height:44px;white-space:normal;background:var(--tk-sup);border:1px solid var(--linha);color:var(--texto);font-size:13px}
+#vPerfil #pfAcoes .whats{color:var(--tk-ok)}
+#vPerfil .pfp-mobile-nav{display:none}
+#vPerfil #pfAbas.pfp-tabs{display:flex;flex-wrap:wrap;overflow:visible;gap:0 20px;margin:0 0 24px;padding:0;border:0;border-bottom:1px solid var(--linha);background:transparent}
+#vPerfil #pfAbas button{flex:0 1 auto;min-width:0;min-height:52px;height:auto;margin:0;padding:12px 0;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--tk-tx3);font-size:13px;line-height:1.4;font-weight:600;white-space:normal}
+#vPerfil #pfAbas button svg{display:none}
+#vPerfil #pfAbas button.ativa{border-bottom-color:var(--roxo);color:var(--texto);background:transparent}
+#vPerfil .pfp-section{min-width:0;margin:0 0 24px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;animation:none;transform:none}
+#vPerfil .pfp-section>h2,#vPerfil .pfp-section-head>h2{font-size:20px!important;line-height:1.35;letter-spacing:-.02em!important;text-transform:none!important;color:var(--texto)!important;font-weight:700;margin:0 0 12px}
+#vPerfil .pfp-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+#vPerfil .pfp-section-head>h2{margin:0}
+#vPerfil .pfp-section>p{font-size:14px!important;line-height:1.55;color:var(--tk-tx3);margin:4px 0 18px!important}
+#vPerfil .pfp-section .btn{min-height:44px;height:auto;font-size:14px;line-height:1.4;white-space:normal}
+#vPerfil .pfp-group{min-width:0;margin:24px 0;padding:0;border:0;border-radius:0;background:transparent}
+#vPerfil .pfp-group>h3{font-size:16px;line-height:1.4;color:var(--texto);margin:0 0 12px;font-weight:700}
+#vPerfil .pfp-group>legend{float:left;width:100%;padding:0;margin:0 0 14px;font-size:16px;line-height:1.4;font-weight:700;color:var(--texto)}
+#vPerfil .pfp-group>legend+.pfp-fields{clear:both}
+#vPerfil .pfp-header-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:4px}
+#vPerfil .pfp-field{display:block;margin:0;font-size:13px;line-height:1.5;font-weight:600;color:var(--tk-tx2)}
+#vPerfil .pfp-field>textarea{display:block;width:100%;margin-top:6px}
+#vPerfil .pfp-field:has(>input[type=checkbox]){display:flex;align-items:flex-start;gap:8px;padding:9px 0;font-size:14px;font-weight:400}
+#vPerfil .pfp-field>input[type=checkbox]{margin:1px 0 0}
+#vPerfil .pfp-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}
+#vPerfil .pfp-disclosure #pfParqBadge{font-size:12px;font-weight:500;max-width:60%;line-height:1.5}
+#vPerfil .dbt{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 14px;border:1px solid var(--linha);border-radius:9px;background:var(--roxo);color:#fff;font-family:inherit;font-size:14px;font-weight:650;line-height:1.4;cursor:pointer}
+#vPerfil .dbt.sec{background:var(--tk-sup);color:var(--texto)}
+#vPerfil #pfIrFin{padding:10px 0;border:0;border-radius:0;background:transparent;color:var(--tk-roxoTx)}
+#vPerfil .pfp-group+.pfp-group{padding-top:20px;border-top:1px solid var(--linha)}
+#vPerfil .pfp-disclosure{min-width:0;margin:16px 0;padding:0;border:0;border-top:1px solid var(--linha);border-bottom:1px solid var(--linha);border-radius:0;background:transparent;box-shadow:none}
+#vPerfil .pfp-disclosure+.pfp-disclosure{margin-top:-17px}
+#vPerfil .pfp-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:14px 0;cursor:pointer;list-style:none;color:var(--texto);font-size:15px;font-weight:650;line-height:1.45}
+#vPerfil .pfp-disclosure>summary::-webkit-details-marker{display:none}
+#vPerfil .pfp-disclosure>summary::after{content:'+';flex:none;align-self:center;font-size:22px;font-weight:400;color:var(--tk-roxoTx)}
+#vPerfil .pfp-disclosure[open]>summary::after{content:'−'}
+#vPerfil .pfp-detail-body{min-width:0;padding:0 0 20px;font-size:14px;line-height:1.55}
+#vPerfil .pfp-detail-body>h3{font-size:16px;color:var(--texto);margin:18px 0 10px}
+#vPerfil .pfp-fields{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px!important;align-items:start!important}
+#vPerfil .pfp-fields .pfp-field,#vPerfil .pfp-fields label{display:block;min-width:0!important;width:auto!important;margin:0!important;font-size:13px!important;font-weight:600;line-height:1.5;color:var(--tk-tx2)}
+#vPerfil .pfp-fields .pfp-full{grid-column:1/-1}
+#vPerfil .pfp-fields input,#vPerfil .pfp-fields select,#vPerfil .pfp-fields textarea{display:block;width:100%!important;max-width:100%;min-width:0!important;box-sizing:border-box;margin-top:6px!important}
+#vPerfil input:not([type=checkbox]):not([type=radio]):not([type=file]),#vPerfil select,#vPerfil textarea{min-width:0;max-width:100%;min-height:46px;box-sizing:border-box;font-size:16px;line-height:1.4;border-radius:9px;padding:11px 12px}
+#vPerfil input[type=date],#vPerfil input[type=time]{display:block;width:100%;min-width:0;max-width:100%;overflow:hidden}
+#vPerfil input[type=date]::-webkit-date-and-time-value,#vPerfil input[type=time]::-webkit-date-and-time-value{text-align:left}
+#vPerfil textarea{resize:vertical;min-height:100px}
+#vPerfil input[type=checkbox],#vPerfil input[type=radio]{flex:none;width:20px;height:20px;min-height:20px;vertical-align:middle;margin-right:6px}
+#vPerfil .pfp-diary{display:grid!important;grid-template-columns:minmax(0,1fr) 200px;gap:12px!important;align-items:start!important}
+#vPerfil .pfp-diary label{font-size:13px;line-height:1.5;font-weight:600;margin:0;color:var(--tk-tx2)}
+#vPerfil .pfp-diary textarea,#vPerfil .pfp-diary input{width:100%;margin-top:6px}
+#vPerfil #pfDiarioAdd{justify-self:start;min-width:150px}
+#vPerfil #pfDiarioLista{font-size:14px!important;line-height:1.6!important}
+#vPerfil .pfp-access-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+#vPerfil .pfp-access-actions .btn{flex:0 1 auto;width:auto!important;min-width:150px}
+#vPerfil #pfAcessoStatus{font-size:14px;line-height:1.55;color:var(--tk-tx3)}
+#vPerfil #pfTermoLocal{font-size:13px;line-height:1.55;color:var(--tk-tx3)}
+#vPerfil #pfProxima.pfp-next{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 14px;margin:0 0 24px;padding:18px 0;border:0;border-bottom:1px solid var(--linha);border-radius:0;background:transparent;color:var(--texto)}
+#vPerfil .pfp-next>div{grid-column:1;grid-row:1;min-width:0}
+#vPerfil .pfp-next .pfpk{display:block;color:var(--tk-tx3);font-size:12px;line-height:1.5;letter-spacing:0;text-transform:none;font-weight:600}
+#vPerfil .pfp-next .pfph{display:block;color:var(--texto);font-size:25px;line-height:1.2;letter-spacing:-.02em;font-weight:750;padding:0;border:0;font-variant-numeric:tabular-nums}
+#vPerfil .pfp-next .pfpt{display:flex;flex-direction:column;gap:3px;min-width:0}
+#vPerfil .pfp-next .pfpt b{color:var(--texto);font-size:14px;font-weight:650}
+#vPerfil .pfp-next .pfpt i{color:var(--tk-tx3);font-size:13px;line-height:1.4;font-style:normal;font-weight:400}
+#vPerfil .pfp-next .pfpk::after,#vPerfil .pfp-next .pfph::after,#vPerfil .pfp-next .pfpt b::after{content:none}
+#vPerfil .pfp-next .pfpb{grid-column:2;grid-row:1;display:inline-flex;justify-content:center;align-items:center;width:auto;min-height:44px;height:auto;padding:10px 14px;border:1px solid var(--linha);border-radius:9px;background:var(--tk-sup);color:var(--tk-roxoTx);font-size:14px;font-weight:650}
+#vPerfil .pfkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:12px 0 24px}
+#vPerfil .pfkpi{min-width:0;padding:14px 18px 14px 0;border:0;border-bottom:1px solid var(--linha);border-radius:0;background:transparent;box-shadow:none}
+#vPerfil .pfkpi .k{font-size:11px;font-weight:650;letter-spacing:.05em;line-height:1.4;color:var(--tk-tx3)}
+#vPerfil .pfkpi .v{font-size:27px;line-height:1.2;font-weight:750;letter-spacing:-.02em;margin-top:7px;color:var(--texto)}
+#vPerfil .pfkpi .v small{font-size:13px;font-weight:500;letter-spacing:0;color:var(--tk-tx3)}
+#vPerfil .pfkpi .s{font-size:12px;line-height:1.5;margin-top:5px;overflow-wrap:anywhere}
+#vPerfil .pfbox,#vPerfil .ac-box{min-width:0;margin:18px 0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+#vPerfil .pfbox>h3,#vPerfil .ac-box>h3{font-size:18px;line-height:1.35;letter-spacing:-.015em;margin:0 0 12px}
+#vPerfil .pfcols{display:block;min-width:0}
+#vPerfil #acResumo{margin:0 0 24px;padding:0}
+#vPerfil #acResumo>p{font-size:14px;line-height:1.55;margin:8px 0;color:var(--tk-tx3)}
+#vPerfil #acResumo>p b{color:var(--texto);font-weight:650}
+#vPerfil .ac-week{gap:6px;margin:14px 0}
+#vPerfil .ac-week span{min-width:0;padding:9px 2px;border:0;border-radius:8px;background:var(--tk-sup);font-size:12px;line-height:1.7;color:var(--tk-tx3)}
+#vPerfil .ac-week span.done{background:var(--tk-roxoFraco);color:var(--tk-roxoTx)}
+#vPerfil .ac-actions{margin:12px 0;gap:8px}
+#vPerfil .ac-actions .btn{flex:0 1 auto;min-height:44px}
+#vPerfil .pfp-summary-actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;padding-top:16px;border-top:1px solid var(--linha)}
+#vPerfil #pfPlanoResumo .pfsem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+#vPerfil #pfPlanoResumo .pfsem .c{height:auto;min-height:36px;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:8px}
+#vPerfil #pfPlanoResumo .pfsem .d{font-size:11px;line-height:1.5;margin-bottom:5px}
+#vPerfil #pfFicha{font-size:14px!important;line-height:1.65!important}
+#vPerfil .pfp-workout summary>span:first-child{flex:1;min-width:0}
+#vPerfil .pfp-workout summary>span:last-of-type{font-size:12px;font-weight:500;color:var(--tk-tx3);max-width:90px}
+#vPerfil .pfp-workout li{padding:10px 0;border-bottom:1px solid var(--linha);font-size:14px;line-height:1.65}
+#vPerfil .pfp-workout ol,#vPerfil .pfp-workout ul{padding-left:22px;margin:0}
+#vPerfil #pfRevoga{color:var(--pt-erro)}
+#vPerfil #pfAgenda{padding:0;border:0;border-radius:0;background:transparent}
+#vPerfil #pfFin{font-size:14px!important;line-height:1.6!important}
+#vPerfil .pfp-fin-status{padding:0 0 18px;border-bottom:1px solid var(--linha);margin-bottom:18px}
+#vPerfil #pfAssinaturaBox{font-size:14px!important;line-height:1.55;margin:16px 0!important}
+#vPerfil #pfQuestBox{font-size:14px!important;line-height:1.55}
+#vPerfil .qsgrid{display:block;margin:14px 0}
+#vPerfil details.qscard.pfp-question{padding:0;border:0;border-top:1px solid var(--linha);border-radius:0;background:transparent;box-shadow:none;margin:0}
+#vPerfil details.qscard.pfp-question:last-child{border-bottom:1px solid var(--linha)}
+#vPerfil .pfp-question>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 14px;position:relative;min-height:86px;padding:16px 30px 16px 0;list-style:none;cursor:pointer}
+#vPerfil .pfp-question>summary::-webkit-details-marker{display:none}
+#vPerfil .pfp-question>summary::after{content:'+';position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:22px;font-weight:400;color:var(--tk-roxoTx)}
+#vPerfil .pfp-question[open]>summary::after{content:'−'}
+#vPerfil .pfp-question .qstop{display:contents}
+#vPerfil .pfp-question .qsrot{grid-column:1;grid-row:1;font-size:12px;font-weight:650;letter-spacing:.06em;line-height:1.5;color:var(--tk-tx3)}
+#vPerfil .pfp-question .qschip{grid-column:2;grid-row:1 / span 2;align-self:center;max-width:150px;font-size:12px;line-height:1.4;white-space:normal;text-align:right;background:transparent;padding:0}
+#vPerfil .pfp-question .qsval{grid-column:1;grid-row:2;margin:0;font-size:21px;line-height:1.3;letter-spacing:-.02em;font-weight:700;color:var(--texto);overflow-wrap:anywhere}
+#vPerfil .pfp-question .qsvsub{grid-column:1/-1;font-size:12px;line-height:1.5;margin:0;color:var(--tk-tx3)}
+#vPerfil .pfp-question .qspe{font-size:12px;line-height:1.7;color:var(--tk-tx3)}
+#vPerfil .pfp-question .pfp-detail-body{padding:4px 0 20px}
+#vPerfil #pfLaudo,#vPerfil #pfPeso{font-size:14px!important;line-height:1.55}
+#vPerfil .tabrola{max-width:100%;overflow:auto}
+#vPerfil .pfp-section :focus-visible,#vPerfil .pfp-header :focus-visible,#vPerfil .pfp-mobile-nav :focus-visible,#vPerfil #pfAbas :focus-visible{outline:3px solid var(--tk-roxoTx);outline-offset:3px}
+@media(max-width:900px){
+  #vPerfil .pftopo.pfp-header{margin:0;padding:0 0 18px;gap:0}
+  #vPerfil .pfp-header .pfvolta{margin-bottom:14px;gap:4px;padding:0}
+  #vPerfil .pfp-header .pfvolta button,#vPerfil #pfAcoesBtn{font-size:12px;padding:9px 8px;min-height:44px}
+  #vPerfil #pfTopo.pfp-identity{grid-template-columns:46px minmax(0,1fr);gap:12px}
+  #vPerfil .pfp-identity #pfFotoBtn{width:46px;height:46px;border-radius:12px;font-size:16px}
+  #vPerfil .pfp-identity #pfTitulo{font-size:23px}
+  #vPerfil .pfp-identity #pfDesde{font-size:13px!important;line-height:1.45}
+  #vPerfil .pfp-identity .pfchips{margin-top:5px;gap:4px}
+  #vPerfil .pfp-identity .pfchips span{font-size:11px}
+  #vPerfil .pfp-identity .pfacoes{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;margin-top:2px}
+  #vPerfil .pfp-identity .pfacoes .dbt{width:100%;min-width:0;height:auto;min-height:44px;font-size:14px;padding:10px 14px}
+  #vPerfil #pfAcoes.pfp-share{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #vPerfil #pfAbas.pfp-tabs{display:none}
+  #vPerfil .pfp-mobile-nav{display:flex;align-items:center;gap:12px;padding:16px 0 22px}
+  #vPerfil .pfp-mobile-nav>label{font-size:12px;font-weight:600;line-height:1.45;color:var(--tk-tx3);flex:0 1 74px;margin:0}
+  #vPerfil .pfp-mobile-nav>select{flex:1;width:0;min-width:0;min-height:48px;margin:0;font-size:16px;font-weight:600;color:var(--texto)}
+  #vPerfil .pfp-section>h2,#vPerfil .pfp-section-head>h2{font-size:19px!important}
+  #vPerfil .pfp-section-head{gap:10px;margin-bottom:14px}
+  #vPerfil .pfp-section-head>.btn{padding:10px 12px;font-size:13px}
+  #vPerfil .pfp-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px!important}
+  #vPerfil .pfp-fields label:has(#pfNome),#vPerfil .pfp-fields label:has(#pfEmail),#vPerfil .pfp-fields label:has(#pfEmergencia),#vPerfil .pfp-fields label:has(#pfObjetivo),#vPerfil .pfp-fields label:has(#pfEnd){grid-column:1/-1}
+  #vPerfil .pfp-diary{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+  #vPerfil .pfp-diary label,#vPerfil .pfp-diary #pfDiarioAdd{grid-column:1;width:100%}
+  #vPerfil #pfDiarioAdd{width:100%;justify-self:stretch}
+  #vPerfil .pfp-access-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #vPerfil .pfp-access-actions .btn{min-width:0;width:100%!important;padding:10px;font-size:13px}
+  #vPerfil #pfProxima.pfp-next{grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;margin:0 0 20px;padding:0 0 18px}
+  #vPerfil .pfp-next .pfpk{grid-column:1;grid-row:1;font-size:11px}
+  #vPerfil .pfp-next .pfph{grid-column:1;grid-row:2;font-size:25px}
+  #vPerfil .pfp-next .pfpt{grid-column:2;grid-row:1/span 2}
+  #vPerfil .pfp-next .pfpb{grid-column:2;grid-row:1;padding:10px;font-size:12px;max-width:110px}
+  #vPerfil .pfkpis{grid-template-columns:repeat(2,minmax(0,1fr));margin:8px 0 20px}
+  #vPerfil .pfkpi{padding:14px 12px 14px 0}
+  #vPerfil .pfkpi .v{font-size:25px}
+  #vPerfil .pfkpi .k{font-size:10px;letter-spacing:.03em}
+  #vPerfil .pfkpi .s{font-size:12px}
+  #vPerfil .ac-week{gap:3px}
+  #vPerfil .ac-week span{font-size:10px;padding:8px 1px}
+  #vPerfil .ac-actions .btn{flex:1 1 130px}
+  #vPerfil .pfp-question>summary{grid-template-columns:minmax(0,1fr);gap:5px;min-height:92px;padding-right:26px}
+  #vPerfil .pfp-question .qsrot{grid-column:1;grid-row:1;font-size:12px}
+  #vPerfil .pfp-question .qsval{grid-column:1;grid-row:2;font-size:20px}
+  #vPerfil .pfp-question .qschip{grid-column:1;grid-row:3;max-width:none;text-align:left;font-size:12px}
+  #vPerfil .pfp-question .qsvsub{grid-column:1;grid-row:auto}
+}

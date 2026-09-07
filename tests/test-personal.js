@@ -2452,6 +2452,7 @@ async function abaPt(p, a) {
       try {
         window.__alFiltro("ativos");
         document.querySelector('#listaAlunos [data-abreperfil="' + alvo.id + '"]').click();
+        window.__pfAba("treino");
         document.getElementById("pfMontaTreino").click();
         out.montaAluno = document.getElementById("tAluno").value === alvo.id && document.getElementById("taAluno").value === alvo.id &&
           !!document.querySelector('#vTreinos [data-tra="fichas"].ativa');
@@ -2740,7 +2741,7 @@ async function abaPt(p, a) {
         out.fichaVencendo = /FICHA VENCENDO/.test(document.getElementById("dashResolver").textContent);
         // a letra do chip da Semana é a MESMA do app (letraFicha): posição, não 1º caractere
         window.__perfilPT("v7f");
-        const chips = [...document.querySelectorAll("#pfResumo .pfsem .c.tem")].map((c) => c.textContent.trim());
+        const chips = [...document.querySelectorAll("#pfPlanoResumo .pfsem .c.tem")].map((c) => c.textContent.trim());
         out.chipLetra = chips.join(",") === "A,B";
       }
       // 5) alPlano: venda de serviço (desc) não vira "Pago dia N"
@@ -7292,27 +7293,29 @@ async function abaPt(p, a) {
     const b2b = await p.evaluate(() => {
       const topo = document.querySelector(".pftopo");
       return {
-        roxo: !!topo,
+        compacto: !!topo,
         volta: (document.getElementById("pfFechar") || {}).textContent || "",
         sub: (document.getElementById("pfDesde") || {}).textContent || "",
+        objetivo: window.MTStore.read("ptStudio", {}).alunos[0].objetivo || "Objetivo ainda não informado",
         chips: [...document.querySelectorAll("#pfChips span")].map((x) => x.textContent),
         acoes: [...document.querySelectorAll(".pfacoes button")].map((x) => x.id),
+        montaEmTreino: document.getElementById("pfMontaTreino").closest("[data-pfsec]").getAttribute("data-pfsec") === "treino",
         prox: (document.getElementById("pfProxima") || {}).textContent || "",
         kpis: [...document.querySelectorAll("#pfResumo .pfkpi .k")].map((x) => x.textContent),
-        semana: document.querySelectorAll("#pfResumo .pfsem .c").length,
-        ficha: /Ficha atual/.test((document.getElementById("pfResumo") || {}).textContent || ""),
+        semana: document.querySelectorAll("#pfPlanoResumo .pfsem .c").length,
+        ficha: !!document.querySelector('[data-pfsec="treino"] #pfFicha'),
       };
     });
-    ok(b2b.roxo && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
-      "🎨 2b: a ficha abre com o cabeçalho roxo, o voltar e os dois selos do aluno");
-    ok(/·/.test(b2b.sub), "🎨 2b: a linha de baixo do nome junta objetivo, tempo de casa, plano e situação");
-    ok(b2b.acoes.length === 4 && b2b.acoes[0] === "pfMontaTreino",
-      "🎨 2b: as quatro ações do dia ficam no cabeçalho (montar treino, chat, financeiro, agenda)");
-    ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o cabeçalho diz quando é a próxima sessão");
+    ok(b2b.compacto && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
+      "🎨 2b: a ficha abre com cabeçalho compacto, voltar e os dois estados do aluno");
+    ok(b2b.sub === b2b.objetivo, "🎨 2b: a linha abaixo do nome mostra o objetivo cadastrado");
+    ok(b2b.acoes.join(",") === "pfIrChat,pfIrAgenda" && b2b.montaEmTreino,
+      "🎨 2b: cabeçalho oferece Chat e Agendar; Montar treino pertence à área Treino");
+    ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o Resumo diz quando é a próxima sessão");
     ok(b2b.kpis.length === 4 && /TREINOS NO MÊS/.test(b2b.kpis[0]) && /CHECK-IN/.test(b2b.kpis[3]),
       "🎨 2b: o Resumo abre com os quatro números do aluno");
     ok(b2b.semana === 7 && b2b.ficha,
-      "🎨 2b: o Resumo traz a Semana do aluno (7 dias) e a ficha atual");
+      "🎨 2b: a área Treino reúne a Semana do aluno (7 dias) e suas fichas");
     ok(abas.depois.cadastro && !abas.depois.app && abas.depois.ativa === "cadastro", "clicar em 👤 Cadastro troca a seção e marca a aba ativa");
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -13426,7 +13429,7 @@ async function abaPt(p, a) {
       return !!b && /Ativar mensalidade no cartão/.test(b.textContent);
     }, null, { timeout: 5000 }).then(() => true).catch(() => false);
     ok(temBtCartao, "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão (v749: depois do ping confirmar a chave global)");
-    await p.click("#pfAcoesBtn"); // as ações do perfil agora moram no menu retrátil ⚡
+    await p.click('#pfAbas [data-pfa="fin"]'); // assinatura pertence à área Financeiro
     await p.click("#pfAssinar");
     await p.waitForFunction(() => document.getElementById("dlgCartaoRec") && document.getElementById("dlgCartaoRec").open);
     const dlgInfo = await p.evaluate(() => ({
@@ -16647,16 +16650,16 @@ async function abaPt(p, a) {
     ok(cen.sitMensal.tipo === "mensal" && cen.sitMensal.curto === "devendo",
       "🧾 v756: mensalista continua lido pelo mês (devendo/em dia)");
 
-    // o cabeçalho da ficha e a aba Financeiro da MESMA ficha não podem discordar
+    // A situação compacta e o detalhamento financeiro da MESMA ficha não podem discordar.
     const fichaH = await pr.evaluate(() => {
       window.__perfilPT("v756h");
-      const topo = (document.getElementById("pfDesde") || {}).textContent || "";
+      const situacao = (document.getElementById("pfFinSituacao") || {}).textContent || "";
       window.__pfAba("fin");
       const fin = (document.querySelector('#vPerfil [data-pfsec="fin"]') || {}).textContent || "";
-      return { topo, fin };
+      return { situacao, fin };
     });
-    ok(/devendo 2 sess/.test(fichaH.topo),
-      "🧾 v756: o cabeçalho da ficha do hora-aula diz 'devendo 2 sessões' — antes dizia 'em dia'");
+    ok(/devendo 2 sess/.test(fichaH.situacao),
+      "🧾 v756: a situação financeira do hora-aula diz 'devendo 2 sessões' — antes dizia 'em dia'");
     ok(/carteira de sess/i.test(fichaH.fin) && !/em aberto/.test(fichaH.fin),
       "🧾 v756: e o card de situação fala de carteira, não de 'setembro em aberto'");
 

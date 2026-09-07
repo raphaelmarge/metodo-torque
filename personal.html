@@ -1988,7 +1988,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <path d="M14.5 7 9.5 12l5 5"/><path d="M19 4.5v15"/></svg>
       </button>
     </div>
-    
+
     <button data-a="dash" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/></svg>Início</button>
     <button data-a="alunos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg>Alunos</button>
     <button data-a="agenda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg>Agenda</button>
@@ -3693,51 +3693,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     </div>
   </div>
 <section id="vPerfil" hidden>
-  <!-- tela 2b do canvas: cabeçalho roxo com quem é o aluno, as 4 ações do dia
-       e a próxima sessão; as abas vêm logo abaixo -->
-  <div class="pftopo">
-    <div class="pfvolta">
-      <button type="button" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista">&lsaquo; Alunos</button>
-      <button type="button" id="pfEditar">Editar cadastro</button>
+  <header class="pftopo pfp-header">
+    <div class="pfvolta"><button type="button" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista">&lsaquo; Alunos</button><div class="pfp-header-tools"><button type="button" id="pfEditar">Editar cadastro</button><button class="btn mini" id="pfAcoesBtn" aria-expanded="false" title="Compartilhar com o aluno" aria-controls="pfAcoes"><span class="pf-ac-rot">Compartilhar</span> <span class="fseta" aria-hidden="true">▾</span></button></div></div>
+    <div id="pfTopo" class="pfp-identity"><button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar">
+        <img id="pfFotoImg" alt="" hidden><span id="pfIniciais">?</span>
+      </button><input type="file" id="pfFotoInput" accept="image/*" hidden>
+      <div class="pfid"><h2 id="pfTitulo">Perfil</h2><span id="pfDesde" class="muted"></span><div class="pfchips" id="pfChips"></div></div>
+      <div class="pfacoes pfp-actions"><button type="button" class="dbt sec" id="pfIrChat" title="abrir o chat com o aluno" aria-label="abrir o chat com o aluno">Chat</button><button type="button" class="dbt sec" id="pfIrAgenda" title="marcar sessão" aria-label="marcar sessão">Agendar</button></div>
     </div>
-    <div id="pfTopo">
-      
-      <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
-        <img id="pfFotoImg" alt="" hidden style="width: 100%; height: 100%; object-fit: cover;"><span id="pfIniciais">?</span>
-      </button>
-      <input type="file" id="pfFotoInput" accept="image/*" hidden>
-      <div class="pfid">
-        <h2 id="pfTitulo">Perfil</h2>
-        <span id="pfDesde" class="muted" style="font-size: 12px; display: block;"></span>
-        <div class="pfchips" id="pfChips"></div>
-      </div>
-      <div class="pfacoes">
-        <button type="button" class="dbt" id="pfMontaTreino">Montar treino</button>
-        <button type="button" class="dbt sec pfic" id="pfIrChat" title="abrir o chat com o aluno" aria-label="abrir o chat com o aluno">&#9993;</button>
-        <button type="button" class="dbt sec pfic" id="pfIrFin" title="financeiro do aluno" aria-label="financeiro do aluno">$</button>
-        <button type="button" class="dbt sec pfic" id="pfIrAgenda" title="marcar sessão" aria-label="marcar sessão">&#128197;</button>
-      </div>
-      <button class="btn mini" id="pfAcoesBtn" aria-expanded="false" title="Ações do aluno" style="flex: none;">⚡<span class="pf-ac-rot"> Ações</span> <span class="fseta" style="display: inline-block; transition: transform .15s;">▾</span></button>
-    </div>
-    <div id="pfAcoes" hidden style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <button class="btn mini" id="pfAcesso" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
-      <button class="btn sec mini" id="pfRevoga" title="o app dele para de abrir e o login por e-mail para de funcionar" style="width: 100%; border-color: var(--pt-erro-borda); color: var(--tk-erro2);">Tirar o acesso</button>
-      <button class="btn sec mini" id="pfReliga" hidden title="devolve o acesso e publica o app de novo" style="width: 100%;">Devolver o acesso</button>
-      <button class="btn sec mini" id="pfApp" title="publica o app na nuvem e manda o link pro aluno" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
-      <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
-      <button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp" style="width: 100%;">📄 Relatório do mês</button>
-      <button class="btn sec mini" id="pfPedeAnamnese" title="manda o link da anamnese pro aluno preencher no celular dele — as respostas voltam pra cá" style="width: 100%;">📋 Pedir anamnese</button>
-      <button class="btn sec mini" id="pfCardIG" title="gera uma imagem pronta pra postar no Instagram com o resultado do mês do aluno (com a sua cor e o seu logo)" style="width: 100%;">🖼 Card pra postar</button>
-      <button class="btn sec mini" id="pfPedeDepo" title="o app do aluno mostra o convite no Início; o que ele escrever aparece em Minha página → Depoimentos pra você aprovar" style="width: 100%;">💬 Pedir depoimento</button>
-      <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
-      <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
-    </div>
-    <div id="pfProxima" class="pfprox"></div>
-  </div>
-
-  <div class="abas" id="pfAbas">
+    <div id="pfAcoes" class="pfp-share" hidden><button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp">📄 Relatório do mês</button>
+<button class="btn sec mini" id="pfCardIG" title="gera uma imagem pronta pra postar no Instagram com o resultado do mês do aluno (com a sua cor e o seu logo)">🖼 Card pra postar</button>
+<button class="btn sec mini" id="pfPedeDepo" title="o app do aluno mostra o convite no Início; o que ele escrever aparece em Minha página → Depoimentos pra você aprovar">💬 Pedir depoimento</button>
+<a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener">WhatsApp</a></div>
+  </header>
+  <div class="pfp-mobile-nav"><label for="pfArea">Área da ficha</label><select id="pfArea"><optgroup label="Acompanhamento"><option value="resumo">Resumo</option><option value="treino">Treino</option><option value="freq">Frequência</option><option value="aval">Avaliações</option><option value="quest">Questionários e hábitos</option></optgroup><optgroup label="Gestão"><option value="cadastro">Cadastro</option><option value="app">App e acesso</option><option value="fin">Financeiro</option></optgroup></select></div>
+  <div class="abas pfp-tabs" id="pfAbas">
     <button data-pfa="resumo" class="ativa">Resumo</button>
-    <button data-pfa="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App do aluno</button>
+    <button data-pfa="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App e acesso</button>
     <button data-pfa="cadastro"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='8' r='3.6'/><path d='M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5'/></svg> Cadastro</button>
     <button data-pfa="fin"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
     <button data-pfa="freq"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Frequência</button>
@@ -3745,134 +3717,109 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <button data-pfa="aval"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Avaliações</button>
     <button data-pfa="treino"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Treino</button>
   </div>
-
-  <div class="card" data-pfsec="resumo" hidden>
+  <section class="card pfp-section" data-pfsec="resumo" hidden>
+    <div id="pfProxima" class="pfprox pfp-next"></div>
     <div id="pfResumo"></div>
-  </div>
+    <div class="pfp-summary-actions"><button type="button" class="dbt sec" id="pfIrFin" title="financeiro do aluno" aria-label="financeiro do aluno">Financeiro do aluno</button></div>
+  </section>
+  <section class="card pfp-section" data-pfsec="cadastro" hidden>
+    <div class="pfp-section-head"><h2>Cadastro</h2></div>
+    <fieldset class="pfp-group"><legend>Identificação e contato</legend><div class="pfp-fields"><label class="pfp-field" for="pfNome">Nome<input id="pfNome"></label>
+<label class="pfp-field" for="pfZap">WhatsApp<input id="pfZap" inputmode="numeric"></label>
+<label class="pfp-field" for="pfEmail">E-mail<input id="pfEmail" type="email"></label>
+<label class="pfp-field" for="pfNasc">Nascimento<input id="pfNasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="bday"></label>
+<label class="pfp-field" for="pfSexo">Sexo<select id="pfSexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
+<label class="pfp-field" for="pfProfissao">Profissão<input id="pfProfissao"></label></div></fieldset>
+    <fieldset class="pfp-group"><legend>Objetivo e rotina</legend><div class="pfp-fields"><label class="pfp-field" for="pfObjetivo">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia"></label>
+<label class="pfp-field" for="pfAltura">Altura (cm)<input id="pfAltura" inputmode="numeric"></label>
+<label class="pfp-field" for="pfMetaSem" title="a meta e o streak do app do aluno usam esse número">Meta de treinos/semana<input id="pfMetaSem" type="number" min="1" max="7"></label></div></fieldset>
+    <section class="pfp-group"><label class="pfp-field" for="pfEmergencia">Contato de emergência<input id="pfEmergencia" placeholder="nome e telefone"></label></section><details class="pfp-disclosure" id="pfDocumentos"><summary>Documentos e endereço</summary><div class="pfp-detail-body"><div class="pfp-fields"><label class="pfp-field" for="pfCpf">CPF<input id="pfCpf" inputmode="numeric"></label>
+<label class="pfp-field" for="pfCep">CEP<input id="pfCep" inputmode="numeric"></label>
+<label class="pfp-field" for="pfEnd">Endereço<input id="pfEnd" placeholder="rua, nº, bairro — cidade/UF"></label>
+</div></div></details>
+    <div class="pfp-billing-fields"><details class="pfp-disclosure" id="pfCobrancaPreferencias"><summary>Preferências de cobrança</summary><div class="pfp-detail-body"><div class="pfp-fields"><label class="pfp-field" for="pfValor">Valor (R$)<input id="pfValor" inputmode="decimal"></label>
+<label class="pfp-field" for="pfModo">Cobrança<select id="pfModo"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
+<label class="pfp-field" for="pfPagto">Pagamento preferido<select id="pfPagto"><option value="">—</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="recorrente">Link recorrente</option></select></label></div></div></details></div>
+    <label class="pfp-field pfp-full" for="pfObs">Observações gerais<textarea id="pfObs" rows="3"></textarea></label>
+    <div class="pfp-form-actions"><button class="btn mini" id="pfSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar dados</button><span id="pfSalvo" role="status" class="muted"></span></div>
+    <div id="pfAnImport" hidden class="dnota"></div>
+    <details class="pfp-disclosure" id="pfAnamnese"><summary><span>Anamnese e saúde</span><span id="pfParqBadge"></span></summary><div class="pfp-detail-body"><div class="pfp-form-actions"><button class="btn sec mini" id="pfPedeAnamnese" title="manda o link da anamnese pro aluno preencher no celular dele — as respostas voltam pra cá">📋 Pedir anamnese</button></div>
 
-  <div class="card" data-pfsec="cadastro">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Cadastro completo</h2>
-    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
-      <label style="font-size: 12px; margin: 0;">Nome<input id="pfNome" style="display:block; width: 200px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pfZap" inputmode="numeric" style="display:block; width: 140px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">E-mail<input id="pfEmail" type="email" style="display:block; width: 200px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Nascimento<input id="pfNasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="bday" style="display:block; width: 150px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Sexo<select id="pfSexo" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pfAltura" inputmode="numeric" style="display:block; width: 90px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Profissão<input id="pfProfissao" style="display:block; width: 160px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Contato de emergência<input id="pfEmergencia" placeholder="nome e telefone" style="display:block; width: 210px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">CPF<input id="pfCpf" inputmode="numeric" style="display:block; width: 150px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">CEP<input id="pfCep" inputmode="numeric" style="display:block; width: 110px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Endereço<input id="pfEnd" placeholder="rua, nº, bairro — cidade/UF" style="display:block; width: 280px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Valor (R$)<input id="pfValor" inputmode="decimal" style="display:block; width: 90px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Cobrança<select id="pfModo" style="display:block; width: 120px; margin-top: 3px;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="recorrente">Link recorrente</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia" style="display:block; width: 170px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;" title="a meta e o streak do app do aluno usam esse número">Meta de treinos/semana<input id="pfMetaSem" type="number" min="1" max="7" style="display:block; width: 90px; margin-top: 3px;"></label>
-    </div>
-    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observações gerais
-      <textarea id="pfObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
-    <button class="btn mini" id="pfSalvar" style="margin-top: 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar dados</button>
-    <span id="pfSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
-  </div>
 
-  <div class="card" data-pfsec="cadastro">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Anamnese completa</h2>
-    <span id="pfParqBadge" style="font-size: 12.5px; font-weight: 800;"></span>
-    <div id="pfAnImport" hidden class="dnota" style="margin-top: 10px;"></div>
-
-    <p style="font-weight: 700; font-size: 13px; margin: 12px 0 4px;">PAR-Q — Questionário de prontidão (marque o que for SIM)</p>
-    <div style="display: grid; gap: 5px; font-size: 13px;">
-      <label style="margin:0;"><input type="checkbox" id="parq1"> Algum médico já disse que você tem problema cardíaco?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq2"> Sente dor no peito quando faz atividade física?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq3"> No último mês, sentiu dor no peito mesmo em repouso?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq4"> Perde o equilíbrio por tontura ou já perdeu a consciência?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq5"> Tem problema ósseo ou articular que pode piorar com exercício?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq6"> Toma remédio pra pressão ou pro coração?</label>
-      <label style="margin:0;"><input type="checkbox" id="parq7"> Conhece alguma outra razão pra não fazer atividade física?</label>
+    <p>PAR-Q — Questionário de prontidão (marque o que for SIM)</p>
+    <div>
+      <label class="pfp-field" for="parq1"><input type="checkbox" id="parq1"> Algum médico já disse que você tem problema cardíaco?</label>
+      <label class="pfp-field" for="parq2"><input type="checkbox" id="parq2"> Sente dor no peito quando faz atividade física?</label>
+      <label class="pfp-field" for="parq3"><input type="checkbox" id="parq3"> No último mês, sentiu dor no peito mesmo em repouso?</label>
+      <label class="pfp-field" for="parq4"><input type="checkbox" id="parq4"> Perde o equilíbrio por tontura ou já perdeu a consciência?</label>
+      <label class="pfp-field" for="parq5"><input type="checkbox" id="parq5"> Tem problema ósseo ou articular que pode piorar com exercício?</label>
+      <label class="pfp-field" for="parq6"><input type="checkbox" id="parq6"> Toma remédio pra pressão ou pro coração?</label>
+      <label class="pfp-field" for="parq7"><input type="checkbox" id="parq7"> Conhece alguma outra razão pra não fazer atividade física?</label>
     </div>
 
-    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Histórico de saúde</p>
-    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <label style="font-size: 12px; margin: 0;">Lesões e cirurgias anteriores<input id="anLesoes" placeholder="ex.: LCA em 2020, ombro D" style="display:block; width: 250px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Doenças crônicas<input id="anDoencas" placeholder="diabetes, hipertensão, asma…" style="display:block; width: 230px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Medicamentos em uso<input id="anMeds" style="display:block; width: 220px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Histórico familiar relevante<input id="anFamiliar" placeholder="cardiopatia, diabetes…" style="display:block; width: 220px; margin-top: 3px;"></label>
+    <p>Histórico de saúde</p>
+    <div class="pfp-fields">
+      <label class="pfp-field" for="anLesoes">Lesões e cirurgias anteriores<input id="anLesoes" placeholder="ex.: LCA em 2020, ombro D"></label>
+      <label class="pfp-field" for="anDoencas">Doenças crônicas<input id="anDoencas" placeholder="diabetes, hipertensão, asma…"></label>
+      <label class="pfp-field" for="anMeds">Medicamentos em uso<input id="anMeds"></label>
+      <label class="pfp-field" for="anFamiliar">Histórico familiar relevante<input id="anFamiliar" placeholder="cardiopatia, diabetes…"></label>
     </div>
 
-    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Hábitos de vida</p>
-    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <label style="font-size: 12px; margin: 0;">Sono<select id="anSono" style="display:block; width: 130px; margin-top: 3px;"><option value="">—</option><option>menos de 5h</option><option>5–6h</option><option>7–8h</option><option>mais de 8h</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Estresse<select id="anEstresse" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option>baixo</option><option>médio</option><option>alto</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Fuma?<select id="anFuma" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option>não</option><option>sim</option><option>parou</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Álcool<select id="anAlcool" style="display:block; width: 120px; margin-top: 3px;"><option value="">—</option><option>não bebe</option><option>social</option><option>frequente</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Alimentação (resumo)<input id="anAlimentacao" placeholder="ex.: pula café, janta tarde" style="display:block; width: 220px; margin-top: 3px;"></label>
+    <p>Hábitos de vida</p>
+    <div class="pfp-fields">
+      <label class="pfp-field" for="anSono">Sono<select id="anSono"><option value="">—</option><option>menos de 5h</option><option>5–6h</option><option>7–8h</option><option>mais de 8h</option></select></label>
+      <label class="pfp-field" for="anEstresse">Estresse<select id="anEstresse"><option value="">—</option><option>baixo</option><option>médio</option><option>alto</option></select></label>
+      <label class="pfp-field" for="anFuma">Fuma?<select id="anFuma"><option value="">—</option><option>não</option><option>sim</option><option>parou</option></select></label>
+      <label class="pfp-field" for="anAlcool">Álcool<select id="anAlcool"><option value="">—</option><option>não bebe</option><option>social</option><option>frequente</option></select></label>
+      <label class="pfp-field" for="anAlimentacao">Alimentação (resumo)<input id="anAlimentacao" placeholder="ex.: pula café, janta tarde"></label>
     </div>
 
-    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Histórico de treino</p>
-    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <label style="font-size: 12px; margin: 0;">Nível<select id="anNivel" style="display:block; width: 140px; margin-top: 3px;"><option value="">—</option><option>iniciante</option><option>intermediário</option><option>avançado</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Tempo de treino (anos)<input id="anTempo" inputmode="decimal" style="display:block; width: 100px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Dias disponíveis/semana<select id="anDias" style="display:block; width: 100px; margin-top: 3px;"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Gosta de<input id="anGosta" placeholder="musculação, corrida…" style="display:block; width: 190px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Não gosta de<input id="anNaoGosta" placeholder="esteira, agachamento…" style="display:block; width: 190px; margin-top: 3px;"></label>
+    <p>Histórico de treino</p>
+    <div class="pfp-fields">
+      <label class="pfp-field" for="anNivel">Nível<select id="anNivel"><option value="">—</option><option>iniciante</option><option>intermediário</option><option>avançado</option></select></label>
+      <label class="pfp-field" for="anTempo">Tempo de treino (anos)<input id="anTempo" inputmode="decimal"></label>
+      <label class="pfp-field" for="anDias">Dias disponíveis/semana<select id="anDias"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+      <label class="pfp-field" for="anGosta">Gosta de<input id="anGosta" placeholder="musculação, corrida…"></label>
+      <label class="pfp-field" for="anNaoGosta">Não gosta de<input id="anNaoGosta" placeholder="esteira, agachamento…"></label>
     </div>
 
-    <button class="btn mini" id="pfAnSalvar" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar anamnese</button>
-    <span id="pfAnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
-  </div>
-
-  <div class="card" data-pfsec="app">
-    <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Direto do app do aluno</h2>
-    <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">O que o aluno registra no app dele (peso na balança, cargas, treinos e fotos) aparece aqui sozinho quando os dois estão com internet.</p>
-    <div id="pfAppDados" class="muted" style="font-size: 13px;">Carregando…</div>
-  </div>
-
-  <div class="card" data-pfsec="quest">
-    <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas dos questionários</h2>
-    <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">Cada pergunta que o aluno responde no app vira uma métrica aqui — com o valor de hoje, a tendência e o histórico. Mande questionários pela aba <b>Questionários</b> do menu.</p>
-    <div id="pfQuestBox" class="muted" style="font-size: 13px;">Carregando…</div>
-  </div>
-
-  <div class="card" data-pfsec="fin">
-    <h2>Financeiro</h2>
-    <div id="pfFin" style="font-size: 13.5px; line-height: 1.7; margin-top: 6px;"></div>
-  </div>
-
-  <div class="card" data-pfsec="freq">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Frequência de treino</h2>
-    <div id="pfFreq" style="margin-top: 6px;"></div>
-  </div>
-
-  <div class="card" data-pfsec="aval" style="margin-bottom: 14px;">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Laudo da última avaliação</h2>
-    <div id="pfLaudo" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
-  </div>
-  <div class="card" data-pfsec="aval">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase; margin: 0;">Avaliações físicas — relatório e evolução</h2>
-      <button class="btn mini" id="pfRelPdf" style="margin-left: auto;" title="tabela de peso, % de gordura, cintura, quadril, braço e RCQ de todas as medições, mais as suas últimas anotações — pronto pra imprimir ou salvar em PDF"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Medidas e anotações (PDF)</button>
-    </div>
-    <div id="pfPeso" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
-  </div>
-
-  <div class="card" data-pfsec="freq">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Diário de sessões</h2>
-    <!-- v750: flex-wrap + largura do campo de data limitada — sem isso, num
-         celular de 390px a linha (texto 200px + data + botão) empurrava a
-         página pra 401px e ela rolava de lado -->
-    <div class="linha-flex" style="gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1 1 200px; min-width: 0;">
-      <input id="pfDiarioData" type="date" style="width: auto; max-width: 100%; min-width: 0; flex: 0 1 auto;" title="de que sessão é a anotação (vem a última sessão feita)">
-      <button class="btn mini" id="pfDiarioAdd">+ Anotar</button>
-    </div>
-    <div id="pfDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;">Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.</div>
-  </div>
-
-  <div class="card" data-pfsec="treino">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Ficha atual</h2>
-    <div id="pfFicha" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 6px;"></div>
-  </div>
+    <button class="btn mini" id="pfAnSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar anamnese</button>
+    <span id="pfAnSalvo" class="muted"></span></div></details>
+  </section>
+  <section class="card pfp-section" data-pfsec="app" hidden>
+    <div class="pfp-section-head"><h2>App e acesso</h2></div><p id="pfAcessoStatus" class="muted"></p>
+    <div class="pfp-access-actions"><button class="btn mini" id="pfAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
+<button class="btn sec mini" id="pfApp" title="publica o app na nuvem e manda o link pro aluno"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Publicar app</button>
+<button class="btn sec mini" id="pfRevoga" title="o app dele para de abrir e o login por e-mail para de funcionar">Tirar o acesso</button>
+<button class="btn sec mini" id="pfReliga" hidden title="devolve o acesso e publica o app de novo">Devolver o acesso</button></div>
+    <div id="pfTermoLocal"></div>
+    <section class="pfp-group"><h3>Registros do aluno</h3><p class="muted">Peso, cargas e treinos registrados no app são atualizados quando há conexão.</p><div id="pfAppDados" class="muted">Carregando…</div></section>
+  </section>
+  <section class="card pfp-section" data-pfsec="quest" hidden>
+    <div class="pfp-section-head"><h2>Questionários e hábitos</h2><button type="button" class="btn mini" id="pfEnviarQuest">Enviar questionário</button></div>
+    <p class="muted">Abra uma pergunta para ver o histórico e como a tendência foi calculada.</p><div id="pfQuestBox" class="muted">Carregando…</div>
+  </section>
+  <section class="card pfp-section" data-pfsec="fin" hidden>
+    <div class="pfp-section-head"><h2>Financeiro</h2><button class="btn mini" id="pfPix">Gerar Pix</button></div>
+    <div id="pfFin"></div><section class="pfp-group"><h3>Cobrança recorrente</h3><div id="pfAssinaturaBox"></div></section>
+  </section>
+  <section class="card pfp-section" data-pfsec="freq" hidden>
+    <div class="pfp-section-head"><h2>Frequência</h2></div><div id="pfAgendaLocal"></div>
+    <details class="pfp-disclosure" id="pfFrequenciaHist"><summary>Sessões realizadas por mês</summary><div class="pfp-detail-body" id="pfFreq"></div></details>
+    <section class="pfp-group"><h3>Diário de sessões</h3><div class="pfp-fields pfp-diary">
+      <label class="pfp-field pfp-full" for="pfDiarioTxt">Anotação da sessão<textarea id="pfDiarioTxt" rows="3" placeholder="Evolução, desconforto relatado ou ajuste para o próximo treino"></textarea></label>
+      <label class="pfp-field" for="pfDiarioData">Data da sessão<input id="pfDiarioData" type="date"></label><button type="button" class="btn mini" id="pfDiarioAdd">Salvar anotação</button>
+    </div><div id="pfDiarioLista" class="muted"></div></section>
+  </section>
+  <section class="card pfp-section" data-pfsec="aval" hidden>
+    <div class="pfp-section-head"><h2>Avaliações</h2><button type="button" class="btn mini" id="pfNovaAval">Registrar avaliação</button></div>
+    <section class="pfp-group"><h3>Última avaliação</h3><div id="pfLaudo" class="muted"></div></section>
+    <details class="pfp-disclosure" id="pfAvalHistorico"><summary>Medidas, gráficos e histórico</summary><div class="pfp-detail-body"><div class="pfp-form-actions"><button class="btn mini" id="pfRelPdf" title="tabela de peso, % de gordura, cintura, quadril, braço e RCQ de todas as medições, mais as suas últimas anotações — pronto pra imprimir ou salvar em PDF"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Medidas e anotações (PDF)</button></div><div id="pfPeso" class="muted"></div></div></details>
+  </section>
+  <section class="card pfp-section" data-pfsec="treino" hidden>
+    <div class="pfp-section-head"><h2>Treino</h2><button type="button" class="dbt" id="pfMontaTreino">Editar treino</button></div>
+    <div id="pfPlanoResumo"></div><section class="pfp-group"><h3>Fichas cadastradas</h3><div id="pfFicha" class="muted"></div></section>
+  </section>
 </section>
 </main>
 
@@ -5465,9 +5412,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   // abas do perfil (pra tela não ficar tumultuada — pedido do Raphael)
   function mostraPfAba(aba) {
+    if (["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino"].indexOf(aba) < 0) aba = "resumo";
+    var permiteFin = alFinanceiroPermitido();
+    if (aba === "fin" && !permiteFin) { alert("O financeiro fica com o dono do studio (modo colaborador)."); aba = "resumo"; }
     document.querySelectorAll("#vPerfil [data-pfsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pfsec") !== aba; });
-    document.querySelectorAll("#pfAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pfa") === aba); });
+    document.querySelectorAll("#pfAbas button").forEach(function (b) {
+      var chave = b.getAttribute("data-pfa"); b.classList.toggle("ativa", chave === aba); b.setAttribute("aria-pressed", String(chave === aba));
+      if (chave === "fin") b.hidden = !permiteFin;
+    });
+    $("pfArea").value = aba;
+    var opFin = $("pfArea").querySelector('option[value="fin"]'); opFin.disabled = !permiteFin; opFin.hidden = !permiteFin;
+    $("pfIrFin").hidden = !permiteFin;
+    document.querySelectorAll("#vPerfil .pfp-billing-fields").forEach(function (el) { el.hidden = !permiteFin; });
   }
+  $("pfArea").addEventListener("change", function () { mostraPfAba(this.value); });
   $("pfAbas").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-pfa]");
     if (b) mostraPfAba(b.getAttribute("data-pfa"));
@@ -5480,39 +5438,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * quatro números que o professor olha antes de atender, a Semana do aluno e
    * a ficha atual. Tudo já existia espalhado — aqui vira a primeira tela. */
   function pintaPfTopo(st, a) {
-    var idade = a.nasc ? idadeDe(a.nasc) : 0;
-    var pl = alPlano(st, a);
-    /* v756: era `alEstado === "devendo" ? "devendo" : "em dia"`, e o alEstado
-     * deixa o hora-aula de fora de propósito — então o cabeçalho dizia "em dia"
-     * enquanto a aba Financeiro logo abaixo dizia "DEVENDO R$ 240". Agora a
-     * leitura é a mesma nas duas (situacaoFinDe), e ela sabe quem paga por aula. */
-    var sit = situacaoFinDe(st, a);
-    var linha = [a.objetivo || "", a.desde ? S.plural(Math.max(1, Math.round((new Date(S.todayISO()) - new Date(a.desde)) / 2629800000)), "mês", "meses") : "",
-      pl.o, sit.curto, idade ? idade + " anos" : ""].filter(Boolean);
-    $("pfDesde").textContent = linha.join(" · ") + (a.appRevogadoEm ? " · acesso ao app cortado" : "");
-    var nMes = treinosMesDe(st, a).n; // v748: a MESMA conta do tile do Resumo
-    var chips = $("pfChips");
-    if (chips) {
-      chips.innerHTML =
-        ("<span>" + { sem: "Sem app ainda", cortado: "App cortado", ativo: "App ativo", gerado: "App gerado" }[estadoAppDe(a)] + "</span>") +
-        "<span>" + S.plural(nMes, "treino no mês", "treinos no mês") + "</span>";
-    }
-    var px = alProxima(st, a);
-    var fi = alFicha(st, a);
-    var pr = $("pfProxima");
-    /* Tela 18 do handoff: no celular a proxima sessao SAI de dentro do roxo e
-     * vira um card com hora grande e o botao "Abrir". No computador as mesmas
-     * pecas ficam numa linha so, como sempre — quem decide e o CSS. */
-    if (pr) {
-      var pp = String(px.txt || "").split(" ");
-      var quando = pp[0] || "", hora = /^\d{1,2}:\d{2}$/.test(pp[pp.length - 1] || "") ? pp[pp.length - 1] : "";
-      pr.innerHTML = '<span class="pfpk">' + esc(quando) + "</span>" +
-        (hora ? '<span class="pfph">' + esc(hora) + "</span>" : "") +
-        '<span class="pfpt"><b>Próxima sessão</b>' +
-        (fi.o !== "Sem ficha" ? '<i>' + fi.o + "</i>" : '<i>sem ficha montada</i>') + "</span>" +
-        '<button type="button" class="btn mini pfpb" data-montatreino="' + a.id + '">Abrir</button>';
-      pr.classList.toggle("semses", !hora && /sem sess/i.test(px.txt || ""));
-    }
+    $("pfDesde").textContent = a.objetivo || "Objetivo ainda não informado";
+    $("pfChips").innerHTML = '<span>' + (a.ativo === false ? 'Aluno encerrado' : 'Aluno ativo') + '</span><span>' +
+      { sem: "Sem app ainda", cortado: "Acesso suspenso", ativo: "App ativo", gerado: "App gerado" }[estadoAppDe(a)] + '</span>';
+    $("pfAcessoStatus").textContent = a.appRevogadoEm ? "O acesso deste aluno está suspenso. Devolva o acesso para ele voltar a usar o app." :
+      a.appTokenP ? "O app deste aluno está criado. Publique as atualizações ou envie novamente as instruções de acesso." : "Crie e envie o acesso para o aluno começar a usar o app.";
+    var px = alProxima(st, a), temSessao = px.txt !== "Sem sessão marcada";
+    $("pfProxima").innerHTML = '<div><span class="pfpk">Próxima sessão</span><strong class="pfph">' + esc(temSessao ? px.txt : "Sem sessão marcada") + '</strong></div>' +
+      '<button type="button" class="btn sec mini pfpb" ' + (temSessao ? 'data-pfagenda' : 'data-pfagendar') + '>' + (temSessao ? 'Ver agenda' : 'Agendar sessão') + '</button>';
+    $("pfProxima").classList.toggle("semses", !temSessao);
   }
   /* v748: "Treinos no mês" era DUAS contas na mesma ficha — o Resumo contava
    * as sessões marcadas Feita na agenda e media contra a meta do APP (que
@@ -5621,28 +5555,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("+") || "—";
       cels += '<div><div class="d">' + DS[k] + '</div><div class="c' + (lst.length ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
     }
-    var fi = alFicha(st, a);
-    var f0 = (t.fichas || [])[0];
-    var col = '<div class="pfcols">' +
-      '<div class="pfbox"><h3>Semana do aluno</h3><div class="pfsem">' + cels + "</div>" +
-      '<div style="font-size:12.5px;color:var(--tk-tx4);margin-top:11px;">' +
-      (Object.keys(dias).length ? "O app dele abre no treino do dia sozinho."
-        : "Sem dias definidos — o app usa o rodízio das fichas. Defina em Treinos → Semana do aluno.") + "</div>" +
-      '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '" style="margin-top:10px;">Editar a semana</button></div>' +
-      '<div class="pfbox"><h3>Ficha atual</h3>' +
-      (f0 ? '<div style="font-size:14.5px;font-weight:800;">' + esc(f0.titulo || "Ficha A") + "</div>" +
-        '<div style="font-size:12.5px;color:var(--tk-tx4);margin-top:3px;">' + S.plural((f0.itens || []).length, "exercício", "exercícios") +
-        (f0.p2 && f0.p2.n ? " · " + esc(f0.p2.n) : "") + "</div>" +
-        '<div style="font-size:12.5px;font-weight:700;margin-top:10px;color:' + fi.cor + ';">' + fi.sub + "</div>"
-        : '<div class="muted" style="font-size:13px;">Nenhuma ficha montada ainda.</div>') +
-      '<div style="display:flex;gap:8px;margin-top:12px;">' +
-      '<button type="button" class="btn mini" data-montatreino="' + a.id + '" style="flex:1;">' + (f0 ? "Abrir" : "Montar") + "</button>" +
-      '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div>' +
-      /* v770: a agenda do aluno em DATAS — o professor vê o mesmo que o aluno:
-       * o treino da semana projetado nos próximos dias, as sessões marcadas e
-       * os serviços comprados, tudo na ordem do relógio. Abre com 14 dias e o
-       * botão estende pros 2 meses (o app projeta os mesmos 60). */
-      agendaFichaHtml(st, a) + '</div>';
+    var col = '<section class="pfbox pfp-group"><h3>Semana do aluno</h3><div class="pfsem">' + cels + '</div><p class="muted">' +
+      (Object.keys(dias).length ? "Programação que aparece no app do aluno." : "Sem dias definidos. O app usa o rodízio das fichas.") + '</p>' +
+      '<button type="button" class="btn sec mini" data-pfsemana="' + esc(a.id) + '">Editar a semana</button></section>';
     // termo de responsabilidade: só aparece se o professor configurou um
     var termoLn = "";
     var tm = (st.config || {}).termo;
@@ -5674,8 +5589,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     passos.push({ n: "Primeira sessão concluída", ok: sesFeitas > 0, bt: "Ver agenda", d: "ses" });
     var faltam = passos.filter(function (x) { return !x.ok; }).length;
     if (faltam && !(diasDesde > 45 && sesFeitas >= 8)) {
-      estHtml = '<div class="pfbox" id="pfEsteira"><h3>Primeiros passos · ' +
-        (passos.length - faltam) + " de " + passos.length + "</h3>" +
+      estHtml = '<details class="pfp-disclosure" id="pfEsteira"><summary><span>Primeiros passos</span><span>' +
+        faltam + ' pendente' + (faltam > 1 ? 's' : '') + '</span></summary><div class="pfp-detail-body">' +
         passos.map(function (x) {
           return '<div class="estln' + (x.ok ? " feito" : "") + '"><span class="ic">' + (x.ok ? "✓" : "") + "</span>" +
             '<span class="n">' + x.n + "</span>" +
@@ -5683,9 +5598,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               : x.d === "app" ? '<button type="button" class="btn sec mini" data-app="' + a.id + '">Mandar app</button>'
               : '<button type="button" class="btn sec mini" data-est="' + x.d + '">' + x.bt + "</button>") : "") +
             "</div>";
-        }).join("") + "</div>";
+        }).join("") + "</div></details>";
     }
-    el.innerHTML = estHtml + kpis + col + termoLn;
+    el.innerHTML = kpis + estHtml;
+    $("pfPlanoResumo").innerHTML = col;
+    $("pfAgendaLocal").innerHTML = '<details class="pfp-disclosure" id="pfAgendaDetalhe"><summary>Agenda do aluno</summary><div class="pfp-detail-body">' + agendaFichaHtml(st, a) + '</div></details>';
+    $("pfTermoLocal").innerHTML = termoLn;
     acPintaResumo(st, a);
     pfResumoNuvem(a);
   }
@@ -5695,8 +5613,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = e.target.closest("[data-est]"); if (!b) return;
     var k = b.dataset.est;
     if (k === "anam") { var pa = $("pfPedeAnamnese"); if (pa) pa.click(); }
-    else if (k === "aval") { var ba = document.querySelector('#pfAbas [data-pfa="aval"]'); if (ba) ba.click(); }
-    else if (k === "ses") { var ag = document.querySelector('#abas [data-a="agenda"]'); if (ag) ag.click(); }
+    else if (k === "aval") { abreAvaliacaoDoPerfil(); }
+    else if (k === "ses") { abreAgendaDoPerfil(); }
   });
   // troca o numero de UM tile ja pintado (sem repintar o resumo inteiro, que
   // chamaria a nuvem de novo e viraria laco)
@@ -5827,7 +5745,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var OBJ_APP_ROT = { emagrecer: "Emagrecer", musculo: "Ganhar músculo", saude: "Saúde e disposição", performance: "Performance" };
   // as 4 ações do dia no cabeçalho da ficha (tela 2b)
   document.addEventListener("click", function (e) {
-    var id = e.target && e.target.id;
+    var origem = e.target.closest && e.target.closest("button,a");
+    var id = origem && origem.id;
     if (id === "pfEditar") { mostraPfAba("cadastro"); return; }
     // v748: atalho dos relatos (aba Questionários e hábitos → histórico da aba App)
     var vai9 = e.target.closest && e.target.closest("[data-pfvai]");
@@ -5839,8 +5758,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * mesmo que #chatFicha e o data-altreino da lista. */
     if (id === "pfIrChat") { if (perfilId) alExecutaAcao(perfilId, "chat"); return; }
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
-    if (id === "pfIrAgenda") { vaiAba("agenda"); return; }
+    if (id === "pfIrAgenda") { if (perfilId) alExecutaAcao(perfilId, "agendar"); return; }
     if (id === "pfMontaTreino" && perfilId) { vaiMontarTreino(perfilId); return; }
+    if (id === "pfNovaAval") { abreAvaliacaoDoPerfil(); return; }
+    if (id === "pfEnviarQuest") { abreQuestionarioDoPerfil(); return; }
+    if (origem && origem.hasAttribute("data-pfagenda")) { abreAgendaDoPerfil(); return; }
+    if (origem && origem.hasAttribute("data-pfagendar")) { if (perfilId) alExecutaAcao(perfilId, "agendar"); return; }
+    if (origem && origem.hasAttribute("data-pfsemana")) {
+      var alunoSem = origem.getAttribute("data-pfsemana"); vaiMontarTreino(alunoSem);
+      $("plnAluno").value = alunoSem; $("plnAluno").dispatchEvent(new Event("change", { bubbles: true }));
+      if (window.__trAba) window.__trAba("plano"); return;
+    }
   });
   /* v747: UM caminho pra "montar treino deste aluno" — o botão da ficha, o
    * data-montatreino da lista e do Resolver hoje chamam isto. Antes o delegado
@@ -5867,10 +5795,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return (pl ? +pl.valor : +a.valor) || 0;
   }
   window.__valorCobranca = valorCobranca; // testes
+  function abreAgendaDoPerfil() {
+    mostraPfAba("freq");
+    if ($("pfAgendaDetalhe")) $("pfAgendaDetalhe").open = true;
+    var agenda = $("pfAgenda");
+    if (agenda) { agenda.setAttribute("tabindex", "-1"); agenda.focus({ preventScroll: true }); agenda.scrollIntoView({ block: "start" }); }
+  }
+  function abreAvaliacaoDoPerfil() {
+    if (!perfilId) return;
+    var trocou = $("avAluno").value !== perfilId;
+    vaiAba("avaliacoes");
+    if (window.__avAba) window.__avAba("avaliar");
+    if (trocou) limpaMedidasAvaliacao();
+    $("avAluno").value = perfilId;
+    if (trocou) $("avAluno").dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function abreQuestionarioDoPerfil() {
+    if (!perfilId) return;
+    var trocou = $("qeAluno").value !== perfilId, questAntes = $("qeQuest").value;
+    vaiAba("quest");
+    if (window.__qtAba) window.__qtAba("enviar");
+    if (trocou) {
+      $("qeSaida").hidden = true; $("qeLink").value = ""; $("qeZap").removeAttribute("href");
+      $("qeData").value = S.todayISO(); $("qeSemanal").checked = false; $("qeQuest").value = "";
+      ["qeAviso", "qeAppAviso"].forEach(function (id) { $(id).hidden = true; $(id).textContent = ""; });
+    } else $("qeQuest").value = questAntes;
+    $("qeAluno").value = perfilId; $("qeAluno").dispatchEvent(new Event("change", { bubbles: true }));
+  }
   function abrePerfil(id) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
+    if (perfilId !== id) {
+      agFichaDias = 14;
+      document.querySelectorAll("#vPerfil details").forEach(function (d) { d.open = false; });
+    }
     perfilId = id;
     pfRetCache = { tok: "", em: 0, p: null }; // v748: cada abertura busca o retorno UMA vez (e sempre fresco)
     mostraPfAba("resumo");
@@ -6051,7 +6010,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div class='muted' style='font-size:11.5px;margin-top:5px;'>Cada aula marcada como Feita na agenda desconta " +
         S.fmtBRL(cart.valorSessao) + " daqui. Crédito que sobrar continua valendo no mês seguinte — e crédito não expira.</div>";
     }
-    $("pfFin").innerHTML = situacao + cartBloco + ctBloco + pcBloco + histBloco;
+    $("pfFin").innerHTML = '<div class="pfp-fin-status"><p id="pfFinSituacao"><b>Situação acumulada: ' + esc(sitF.curto) + '</b></p>' +
+      (sitF.tipo === "mensal" && !sitF.ok ? '<p class="muted">Cobranças vencidas no histórico.</p>' : '') + situacao + '</div>' +
+      (cartBloco ? '<section class="pfp-group">' + cartBloco + '</section>' : '') +
+      '<details class="pfp-disclosure" id="pfContrato"><summary>Contrato e plano</summary><div class="pfp-detail-body">' + ctBloco.replace(rotSec("Contrato"), "") + '</div></details>' +
+      '<section class="pfp-group">' + pcBloco + '</section>' +
+      '<details class="pfp-disclosure" id="pfPagamentosHistorico"><summary>Histórico de pagamentos · ' + pgs.length + '</summary><div class="pfp-detail-body">' + histBloco.replace(rotSec("Últimos pagamentos"), "") + '</div></details>';
     // frequência: sessões feitas por mês
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
@@ -6120,8 +6084,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ficha atual
     var t2 = (st.treinosV2 || {})[id];
     $("pfFicha").innerHTML = (t2 && t2.fichas && t2.fichas.length)
-      ? t2.fichas.map(function (f) { return "<b>" + esc(f.titulo) + "</b> — " + f.itens.length + " exercício(s)"; }).join("<br>")
-      : "Sem ficha montada — monte na aba Treinos.";
+      ? t2.fichas.map(function (f) {
+          return '<details class="pfp-disclosure pfp-workout"><summary><span>' + esc(f.titulo || "Ficha") + '</span><span>' +
+            S.plural((f.itens || []).length, "exercício", "exercícios") + '</span></summary><div class="pfp-detail-body"><ol>' +
+            (f.itens || []).map(function (it) {
+              var ex = exPorId(st, it.exId) || { nome: it.nome || "Exercício removido" };
+              return '<li>' + esc(MT_ACOMP.itemTexto(Object.assign({}, it, { nome: ex.nome, tec: tecNome(it.tec), video: "" }))) + '</li>';
+            }).join('') + '</ol>' +
+            (f.p2 && f.p2.n ? '<h4>' + esc(f.p2.n) + '</h4><ul>' + (f.p2.l || []).map(function (l) { return '<li>' + esc([l.t, l.v, l.o].filter(Boolean).join(' · ')) + '</li>'; }).join('') + '</ul>' : '') +
+            '</div></details>';
+        }).join("")
+      : "Sem ficha montada. Use Editar treino para começar.";
     // ações
     var wa = $("pfWhats");
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
@@ -6373,7 +6346,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           kpis.push(kpi("Batimento médio", medFc + " bpm",
             (zMed >= 0 ? "<b style='color:" + FCZC[zMed] + ";'>" + FCZN[zMed] + "</b> · " : "") + "máximo " + mxFc + " bpm"));
         }
-        if (kpis.length) html += "<div class='pfkpis'>" + kpis.join("") + "</div>";
+        if (kpis.length) html += "<details class='pfp-disclosure' id='pfAppIndicadores'><summary>Indicadores do app · " + kpis.length + "</summary><div class='pfp-detail-body'><div class='pfkpis'>" + kpis.join("") + "</div></div></details>";
         /* ==== HISTÓRICO DE TREINO POR MÊS (v710) ====
          * O professor não tinha como ver o passado do aluno organizado: era um
          * empilhado de listas. Agora tudo que o app devolve vira um DIÁRIO —
@@ -6682,7 +6655,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var restoGraf = html.slice(marcaGraf);
         if (restoGraf) {
           html = html.slice(0, marcaGraf) +
-            "<details class='pfgraf'><summary>Gráficos e evolução completa</summary>" + restoGraf + "</details>";
+            "<details class='pfgraf pfp-disclosure'><summary>Gráficos e evolução completa</summary><div class='pfp-detail-body'>" + restoGraf + "</div></details>";
         }
         return html;
   }
@@ -6931,14 +6904,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 }
                 rodape = "resposta mais comum: <b>" + esc(top) + "</b> (" + cont[top] + " de " + m.serie.length + " semana(s))";
               }
-              return "<div class='qscard'>" +
+              return "<details class='qscard pfp-question'><summary class='pfp-question-summary'>" +
                 "<div class='qstop'><span class='qsrot' title='" + esc(m.pergunta || m.sigla) + "'>" +
-                  esc(String(m.curto || m.pergunta || m.sigla).slice(0, 34)) + "</span>" + chip + "</div>" +
+                  esc(String(m.curto || m.pergunta || m.sigla)) + "</span>" + chip + "</div>" +
                 "<div class='qsval'>" + grande + "</div>" +
-                "<div class='qsvsub'>" + sob + "</div>" +
-                corp +
+                "<div class='qsvsub'>" + sob + "</div></summary><div class='pfp-detail-body'>" +
+                '<p><b>' + esc(m.pergunta || m.sigla) + '</b></p><p>Última resposta: ' + esc(ult.txt || (ult.pts == null ? "—" : num(ult.pts))) + '</p>' + corp +
                 "<div class='qspe'>" + rodape + "</div>" +
-                "</div>";
+                "</div></details>";
             }).join("") + "</div>";
         }
 
@@ -6962,7 +6935,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var cbase = Math.min(0, cmin), ctopo = Math.max(0, cmax);
           var cfx = (ctopo - cbase) || 1;
           var CW = 340, CH = 66, CP = 4, BW = Math.max(6, Math.floor((CW - 2 * CP) / cds.length) - 3);
-          html += titulo("Placar de cada semana") +
+          html += "<details class='pfp-disclosure' id='pfQuestPlacar'><summary>Placar de cada semana</summary><div class='pfp-detail-body'>" +
             "<div class='qssub'>Soma dos pontos de <b>" + esc(formAlvo) + "</b> — barra alta e verde = semana boa; baixa e vermelha = semana fraca." +
             (varios ? " (os outros formulários ficam na lista aqui embaixo)" : "") + "</div>" +
             "<svg viewBox='0 0 " + CW + " " + (CH + 18) + "' class='qsbarras' role='img' aria-label='Pontuação semana a semana dos check-ins'>" +
@@ -6977,7 +6950,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 "' style='fill:" + cor + "'><title>" + fmtD(cds[i].d) + ": " + num(v) + " ponto(s)</title></rect>";
             }).join("") +
             "<text x='" + CP + "' y='" + (CH + 14) + "' class='qseixo'>" + fmtD(cds[0].d) + "</text>" +
-            "<text x='" + (CW - CP) + "' y='" + (CH + 14) + "' class='qseixo' text-anchor='end'>" + fmtD(cds[cds.length - 1].d) + "</text></svg>";
+            "<text x='" + (CW - CP) + "' y='" + (CH + 14) + "' class='qseixo' text-anchor='end'>" + fmtD(cds[cds.length - 1].d) + "</text></svg></div></details>";
         }
 
         // a lista crua fica atrás de uma porta: ela é a prova, não o resumo
@@ -7032,7 +7005,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           });
           var semanas = Object.keys(porSem).sort().slice(-12);
           if (semanas.length) {
-            html += titulo("Hábitos do dia a dia") +
+            html += "<details class='pfp-disclosure' id='pfQuestHabitos'><summary>Hábitos do dia a dia · 4 hábitos</summary><div class='pfp-detail-body'>" +
               "<div class='qssub'>Quantos dias por semana ele marca cada botão do app. A semana em curso fica " +
               "de fora da conta — meia semana contra semanas cheias faria todo aluno parecer que piorou.</div>" +
               "<div class='qsgrid'>" +
@@ -7050,17 +7023,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 var chip = "<span class='qschip' style='color:" + cor + ";'>" + seta + " " + est +
                   (dif != null && Math.abs(dif) >= 0.05 ? " " + num(Math.abs(dif)) : "") + "</span>";
                 var melhor = Math.max.apply(null, vals);
-                return "<div class='qscard'>" +
+                return "<details class='qscard pfp-question'><summary class='pfp-question-summary'>" +
                   "<div class='qstop'><span class='qsrot'>" + esc(nome) + "</span>" + chip + "</div>" +
                   "<div class='qsval'>" + num(mRec) + "</div>" +
-                  "<div class='qsvsub'>dias por semana · " + esc(HAB_SUB[i]) + "</div>" +
+                  "<div class='qsvsub'>dias por semana · " + esc(HAB_SUB[i]) + "</div></summary><div class='pfp-detail-body'>" +
                   (serie.length > 1 ? grafico(serie, cor, { min: 0, max: 7, dono: "0 a 7" }, mAnt,
                     mAnt == null ? "" : "antes " + num(mAnt)) : "") +
                   "<div class='qspe'>" +
                   (mAnt != null ? "no mês anterior: <b>" + num(mAnt) + "</b> · " : "") +
                   "melhor semana: <b>" + melhor + " de 7</b> · " +
-                  S.plural(semanas.length, "semana cheia", "semanas cheias") + " de histórico</div></div>";
-              }).join("") + "</div>";
+                  S.plural(semanas.length, "semana cheia", "semanas cheias") + " de histórico</div></div></details>";
+              }).join("") + "</div></div></details>";
           }
         }
       }
@@ -7093,8 +7066,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try { html = htmlCheckinsApp(ret); } catch (e) { html = ""; }
     cx.innerHTML = html || (aviso || "Este aluno ainda não respondeu nenhum questionário nem marcou hábito no app. Mande um questionário pela aba Questionários (menu ☰) — as respostas caem aqui viradas em métricas.");
   }
+  var pfAppConsultaSeq = 0;
   function pintaAppDados(a) {
     var box = $("pfAppDados");
+    var consultaSeq = ++pfAppConsultaSeq;
+    function aindaNesteAluno() { return perfilId === a.id && consultaSeq === pfAppConsultaSeq; }
     pfHistOff = 0; pfAppUlt = null; pfHistDe = ""; pfHistAte = ""; // outro aluno = histórico volta pro mês atual
     // modo demonstração: retorno fake gravado direto no aluno (sem nuvem)
     if (a.demoRetorno) {
@@ -7128,6 +7104,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       buscaRetornoApp(nuvem, a.appTokenP), // v748: a mesma consulta do Resumo, uma vez só
       qCk,
     ]).then(function (rs) {
+        if (!aindaNesteAluno()) return;
         var r = rs[0];
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
         var rowsQ = (rs[1] && !rs[1].error && rs[1].data) || [];
@@ -7183,7 +7160,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return;
         }
         box.innerHTML = html || "O aluno ainda não registrou nada no app. Assim que registrar peso, carga, treino ou foto, aparece aqui.";
-      }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
+      }, function () { if (aindaNesteAluno()) box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
   }
   function alExecutaAcao(id, acao) {
     var st = load(), a = st.alunos.find(function (x) { return x.id === id; });
@@ -7214,8 +7191,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       abrePerfil(id); mostraPfAba("fin"); return;
     }
     if (acao === "agenda") {
-      abrePerfil(id);
-      var agenda = $("pfAgenda"); if (agenda) { agenda.setAttribute("tabindex", "-1"); agenda.focus({ preventScroll: true }); agenda.scrollIntoView({ block: "start" }); }
+      abrePerfil(id); abreAgendaDoPerfil();
     }
   }
   $("listaAlunos").addEventListener("click", function (e) {
@@ -7996,6 +7972,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     b.disabled = true; b.textContent = "Enviando…";
     criaAcessoAluno(perfilId, function (r) {
       b.disabled = false; b.innerHTML = mi("envelope") + " Enviar acesso do app";
+      if (perfilId !== a.id) return; // o resultado de A não muda a ficha de B
       var box = $("pfAppDados");
       if (box) box.innerHTML = msgAcesso(r, a) + "<hr style='border:none;border-top:1px solid var(--linha);margin:10px 0;'>" + box.innerHTML;
       // o recado mora na aba "App do aluno": clicando de outra aba, ele caía num
@@ -17886,6 +17863,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     lista.forEach(function (n, i) { nomes[n] = vals[i]; });
     return { metodo: metodo, dobras: nomes, soma: Math.round(S3 * 10) / 10, densidade: Math.round(D * 10000) / 10000, gordura: pct };
   }
+  function limpaMedidasAvaliacao() {
+    ["avPeso", "avAltura", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
+     "ccAntebraco", "ccCoxa", "ccPanturrilha", "biaAgua", "biaProteina", "biaMineral",
+     "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
+     "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) { $(id).value = ""; delete $(id).dataset.origem; } });
+    Array.prototype.forEach.call(document.querySelectorAll(".dbIn"), function (i) { i.value = ""; });
+    $("avData").value = S.todayISO();
+  }
   $("dbMetodo").addEventListener("change", renderDobrasCampos);
   $("avAluno").addEventListener("change", function () {
     var aAlt = alunoAv();
@@ -18510,13 +18495,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var U = self.MT_AVAL_UI;
     el.innerHTML =
-      "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'>" +
+      "<div class='muted pfp-laudo-source'>" +
       S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura (" + fonteGorduraDe(ult, l) + ")" : " · valores medidos na bioimpedância") + "</div>" + // v752: diz de onde veio o %
+      "<details class='pfp-disclosure' id='pfComposicaoIndicadores'><summary>Indicadores de composição corporal</summary><div class='pfp-detail-body'>" +
       (U ? U.cardsLaudo(l) : "") +
       (U && l.gordura != null && l.massaGordura != null
-        ? "<div style='margin-top:12px;background:rgba(124,58,237,.05);border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" + U.blocoGordura(l) + "</div>"
-        : "") +
-      "<div class='linha-flex' style='margin-top:12px;'>" +
+        ? "<div class='pfp-group'>" + U.blocoGordura(l) + "</div>"
+        : "") + "</div></details>" +
+      "<div class='pfp-form-actions'>" +
       // v752: dois papéis no mesmo card — cada botão diz o que traz (este é a composição corporal; o outro, as medidas + anotações)
       "<button class='btn' id='pfLaudoAbrir'>Laudo de composição corporal</button>" +
       "<span class='muted' style='font-size:12px;'>água, proteína, massa magra, TMB e histórico — pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";
@@ -18740,14 +18726,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (Object.keys(bia).length) reg.bia = bia;
     st.avaliacoes.push(reg);
     marcaAppPendente(st, reg.alunoId); // a evolução entra no app na próxima publicação
-    ["avPeso", "avAltura", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
-     "ccAntebraco", "ccCoxa", "ccPanturrilha", "biaAgua", "biaProteina", "biaMineral",
-     "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
-     "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) { $(id).value = ""; delete $(id).dataset.origem; } });
-    Array.prototype.forEach.call(document.querySelectorAll(".dbIn"), function (i) { i.value = ""; });
     // v752: a data volta pra hoje — quem registrou uma InBody retroativa e
     // emendou a de hoje pra outro aluno gravava as duas na data antiga
-    $("avData").value = S.todayISO();
+    limpaMedidasAvaliacao();
     save(st);
     // o resultado científico na cara: % calculado + atalho pro laudo no perfil.
     // Sem % com fita preenchida, diz o MOTIVO (quadril de mulher, altura, pescoço)
@@ -19574,9 +19555,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function acModal(titulo,html){if(acDialog)acDialog.remove();var d=document.createElement('dialog');d.className='ac-dialog';d.id='acDialog';d.setAttribute('aria-labelledby','acTitulo');d.innerHTML='<h2 id="acTitulo">'+esc(titulo)+'</h2>'+html+'<div class="ac-actions"><button type="button" class="btn sec" data-ac-fecha>Fechar</button></div>';document.body.appendChild(d);d.querySelector('[data-ac-fecha]').onclick=function(){d.close();};d.addEventListener('close',function(){d.remove();if(acDialog===d)acDialog=null;});acDialog=d;d.showModal();return d;}
   function acResumoHtml(st,a) {
     var r=MT_ACOMP.resumo(st,a,S.todayISO());
-    return '<section class="ac-box" id="acResumo"><h3>Acompanhamento da semana</h3><p><b>'+r.realizados+' dias com treino registrado</b> · meta '+r.meta+' dias'+(r.planejados?' · '+r.planejados+' dias planejados':'')+'</p><div class="ac-week">'+r.dias.map(function(x,i){
+    return '<section class="ac-box pfp-week" id="acResumo"><h3>Acompanhamento da semana</h3><p><b>'+r.realizados+' dias com treino registrado</b> · meta '+r.meta+' dias</p><div class="ac-week">'+r.dias.map(function(x,i){
       return '<span class="'+(x.feito?'done':'')+'">'+['SEG','TER','QUA','QUI','SEX','SÁB','DOM'][i]+'<br>'+(x.feito?'✓ feito':x.planejado?'previsto':'livre')+'</span>';
-    }).join('')+'</div><p>Os registros mostram dias com atividade; não comprovam a execução completa de cada ficha.</p><p>'+(r.rpe!==null?'Esforço médio: '+r.rpe+' de 3 (leve a pesado). ':'')+(r.notas.length?r.notas.length+' relato(s) nesta semana.':'Sem relatos nesta semana.')+'</p>'+acMetricas(st,a)+'<div class="ac-actions"><button class="btn" data-ac-resumo="'+esc(a.id)+'">Revisar semana</button><button class="btn sec" data-montatreino="'+esc(a.id)+'">Ajustar treino</button></div></section>';
+    }).join('')+'</div><div class="ac-actions"><button class="btn" data-ac-resumo="'+esc(a.id)+'">Revisar semana</button><button class="btn sec" data-montatreino="'+esc(a.id)+'">Ajustar treino</button></div><details class="pfp-disclosure"><summary>Detalhes da semana</summary><div class="pfp-detail-body"><p>'+r.planejados+' dias planejados. Os registros mostram dias com atividade; não comprovam a execução completa de cada ficha.</p><p>'+(r.rpe!==null?'Esforço médio: '+r.rpe+' de 3 (leve a pesado). ':'')+(r.notas.length?r.notas.length+' relato(s) nesta semana.':'Sem relatos nesta semana.')+'</p>'+acMetricas(st,a)+'</div></details></section>';
   }
   function acPintaResumo(st,a){var ant=$('acResumo');if(ant)ant.remove();var el=$('pfResumo');if(el)el.insertAdjacentHTML('afterbegin',acResumoHtml(st,a));}
   // Só acusa questionário pendente depois de consultar a tabela de respostas.
