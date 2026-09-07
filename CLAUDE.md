@@ -52,6 +52,15 @@ anteriores podem preencher o formulário como sugestão; só a confirmação do
 aluno em Série feita transforma esses valores em execução. Abrir, trocar ou
 fechar o player não confirma sugestões intocadas. Histórico legado permanece legível.
 
+### Marcação ao terminar as séries (mt-v796)
+
+Ao terminar as séries de um exercício, as réguas de repetições e carga e o
+botão de salvar ficam visíveis, fora de Mais opções. O registro apresentado é
+o da série selecionada, com repetições antes de carga. Isso vale também para
+o último exercício e a revisão final; editar corrige o mesmo registro, sem
+concluir outra série ou duplicar volume. A confirmação e o descanso mantêm
+as regras da v794.
+
 ### Carrossel do dia e hábitos visíveis (mt-v795)
 
 Por pedido do Raphael, o Início volta a trocar os cartões de treino ao arrastar
