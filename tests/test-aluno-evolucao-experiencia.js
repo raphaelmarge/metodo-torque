@@ -32,6 +32,8 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
  await page.evaluate(()=>{window.__trocaSec('evolucao');window.__evSub('conq');});
  eq(await page.locator('#evAbas [data-evsub-bt=conq]').textContent(),'Resumo','Resumo mantém a rota conq existente');
  ok(await page.locator('#evTopoNv').isVisible()&&await page.locator('#evXp').isVisible()&&await page.locator('#evNvNum').isVisible(),'Nível e XP aparecem imediatamente no cabeçalho do Resumo');
+ const legendaXp=page.locator('#evTopoNv').getByText(/treino ou cardio = 10 XP/);
+ ok(await legendaXp.count()===1&&await legendaXp.evaluate(e=>getComputedStyle(e).display==='none'&&e.getBoundingClientRect().height===0),'Explicação de como ganhar XP permanece no código, mas não aparece nem ocupa espaço no cabeçalho');
  ok(!await page.locator('#evTopoAlt').isVisible(),'Cabeçalho alternativo não disputa espaço com o nível no Resumo');
  eq(await page.locator('#evNvNum').textContent(),await page.locator('#nvNum').textContent(),'Nível destacado conserva o valor canônico');
  ok(await page.locator('#cqTiles').isVisible()&&await page.locator('#cqGraf').isVisible(),'Constância e semanas continuam acessíveis depois das medalhas');
@@ -79,6 +81,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
  eq(await page.evaluate(()=>{Storage.prototype.setItem=window.__evoSetItem;return window.__evoMapWrites;}),0,'Nenhuma navegação escreve ptmapv, nem mesmo o mesmo valor legado');
  eq(await fontesResumo(),resumoInicial,'Consultar ambos os calendários não modifica os dados de evolução');
  await page.waitForFunction(()=>document.getElementById('evXp').textContent===document.getElementById('xpNum').textContent+' XP');eq(await page.locator('#evXp').textContent(),(await page.locator('#xpNum').textContent())+' XP','XP visível conserva o valor canônico após a animação');
+ ok(await page.locator('#evFalta').isVisible()&&await page.locator('#evFalta').evaluate(e=>/^faltam \d+ pro nível \d+$/.test(e.textContent)&&document.getElementById('nvCard').textContent.includes(e.textContent)),'Progresso até o próximo nível permanece visível e igual ao cálculo existente');
  await page.locator('#cqVerMais').click();ok(await page.locator('#cqGrid>button').nth(6).isVisible(),'Ver todas alcança as medalhas além das seis iniciais');
  eq(await page.locator('#cqVerMais').getAttribute('aria-expanded'),'true','Expansão das medalhas atualiza o estado acessível');
  eq(await page.locator('#cqGrid>button:visible').count(),medalhasIniciais.length,'Expandir revela todas as medalhas existentes');
@@ -145,7 +148,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
   await page.setViewportSize({width,height:844});if(await page.locator('#cqVerMais').getAttribute('aria-expanded')==='true')await page.locator('#cqVerMais').click();
   await page.evaluate(claro=>{document.documentElement.classList.toggle('claro',claro);scrollTo(0,0);},claro);await page.waitForTimeout(550);
   ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Resumo sem overflow em '+width+'px '+(claro?'claro':'escuro'));
-  ok(await page.locator('#evTopoNv').isVisible()&&await page.locator('#cqGrid>button:visible').count()===6,'Nível e seis medalhas visíveis em '+width+'px '+(claro?'claro':'escuro'));
+  ok(await page.locator('#evTopoNv').isVisible()&&await page.locator('#evXp').isVisible()&&await page.locator('#evFalta').isVisible()&&!await legendaXp.isVisible()&&await page.locator('#cqGrid>button:visible').count()===6,'Nível, XP, progresso e seis medalhas visíveis, sem explicação de pontos, em '+width+'px '+(claro?'claro':'escuro'));
   if(process.env.EVO_CAPTURE_DIR)await page.screenshot({path:path.join(process.env.EVO_CAPTURE_DIR,'resumo-'+width+'-'+(claro?'claro':'escuro')+'.png')});
   ok(await page.locator('#mapaAno').isVisible()&&await page.locator('#mapaAnoRol').isVisible(),'Mês e ano permanecem abertos em '+width+'px '+(claro?'claro':'escuro'));
   ok(await page.locator('#mapaAno button').evaluateAll(bs=>bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'Calendário tem alvos de toque de44px em '+width+'px');
