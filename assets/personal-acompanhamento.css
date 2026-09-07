@@ -14,6 +14,9 @@
 :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-check{display:flex;gap:10px;align-items:center;min-height:46px;min-width:0;margin:0;line-height:1.5;font-size:14px;letter-spacing:0;text-transform:none;white-space:normal}
 :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field>span:has(input){min-width:0!important;max-width:100%;width:100%}
 :is(#vAvaliacoes,#vQuest,#vDesafio) input:not([type=checkbox]):not([type=file]),:is(#vAvaliacoes,#vQuest,#vDesafio) select:not([data-busca]),:is(#vAvaliacoes,#vQuest,#vDesafio) textarea{min-width:0!important;max-width:100%;width:100%!important;min-height:46px;font-size:16px!important;margin:0!important;border-radius:7px;box-sizing:border-box}
+:is(#vAvaliacoes,#vQuest,#vDesafio) input[type=date]{display:block;inline-size:100%!important;min-inline-size:0!important;max-inline-size:100%;min-width:0!important;box-sizing:border-box}
+:is(#vAvaliacoes,#vQuest,#vDesafio) input[type=date]::-webkit-date-and-time-value{min-width:0;min-height:1.5em;text-align:left}
+:is(#vAvaliacoes,#vQuest,#vDesafio) input[type=date]::-webkit-datetime-edit{min-width:0;padding:0}
 :is(#vAvaliacoes,#vQuest,#vDesafio) select:not([multiple]):not([data-busca]):not([hidden]){appearance:none;-webkit-appearance:none;background-color:var(--card);color:var(--texto);padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 :is(#vAvaliacoes,#vQuest,#vDesafio) input[type=checkbox]{width:20px!important;min-width:20px!important;max-width:20px!important;height:20px!important;flex:none}
 :is(#vAvaliacoes,#vQuest,#vDesafio) .btn,:is(#vAvaliacoes,#vQuest,#vDesafio) .dbt{min-height:44px;white-space:normal;font-style:normal;text-transform:none;letter-spacing:0;font-size:14px;padding:10px 14px;border-radius:7px}
@@ -56,6 +59,7 @@
  :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-area{display:block;font-size:13px;font-weight:600;margin:0 0 18px}
  :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-area>select{display:block;margin-top:8px!important}
  :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-fields,:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+ :is(#vAvaliacoes,#vQuest,#vDesafio) label:has(>input[type=date]),#vAvaliacoes .acx-field:has(#avSexo){grid-column:1/-1;min-width:0;max-width:100%}
  :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar>.acx-field:first-child,:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-toolbar>.acx-help{grid-column:1/-1}
  :is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#avAluno),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qeAluno),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qeQuest),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#qpTipo),:is(#vAvaliacoes,#vQuest,#vDesafio) .acx-field:has(#dsNome),#vDesafio .acx-field:has(#dsPremio){grid-column:1/-1}
  #vAvaliacoes #dbCampos{grid-template-columns:repeat(2,minmax(0,1fr))}

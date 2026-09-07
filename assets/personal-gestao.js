@@ -53,26 +53,29 @@
     ];
     menu.querySelectorAll('.navgrupo').forEach(function (n) { n.remove(); });
     var cab = menu.querySelector('.menu-cab'), close = el('button', 'fg-menu-close', '×'); close.type = 'button'; close.id = 'fecharMenuPt'; close.setAttribute('aria-label','Fechar menu'); cab.appendChild(close);
-    var search = el('div','fg-menu-search','<label for="menuBuscaPt">Encontrar uma área</label><input type="search" id="menuBuscaPt" placeholder="Ex.: cobrança, fotos, suporte">'); cab.after(search);
+    var search = el('div','fg-menu-search','<label for="menuBuscaPt">Encontrar uma área</label><input type="search" id="menuBuscaPt" placeholder="Buscar no menu">'); cab.after(search);
     var empty = el('p','fg-menu-empty','Nenhuma área encontrada. Tente outro termo.'); empty.hidden = true; search.after(empty);
     var last = empty, captions = [], buttons = [];
     groups.forEach(function (g) {
       var caption = el('div','fg-menu-group',esc(g[0])); last.after(caption); last = caption; var set = [];
       g[1].forEach(function (key) { var b = menu.querySelector('[data-a="' + key + '"]'); if (!b) return; last.after(b); last = b; set.push(b); buttons.push(b); }); captions.push([caption,set]);
     });
+    // Só a lista rola: cabeçalho, busca e tema nunca disputam altura com os links.
+    var items = el('div','fg-menu-items'); items.id = 'menuItensPt'; search.after(items); items.appendChild(empty);
+    captions.forEach(function (g) { items.appendChild(g[0]); g[1].forEach(function (b) { items.appendChild(b); }); });
     var aliases = { pagamentos:'cobranca cobrancas mensalidades despesas caixa dinheiro planos contratos servicos', relatorios:'receita resultado indicadores metas', config:'integracao pix conta whatsapp preferencia', pers:'cor logo tema beneficio app', imagens:'foto fotos imagem imagens galeria capa', sitepro:'site endereco link pagina', conta:'nuvem backup acesso sincronizacao', ajuda:'suporte duvida tutorial chamado', quest:'perguntas check-in habitos formularios', assessoria:'online frequencia acompanhamento' };
     function filter() {
       var q = norm($('menuBuscaPt').value), count = 0;
       buttons.forEach(function (b) { var match = !q || norm((b.title || b.textContent) + ' ' + (aliases[b.dataset.a] || '')).indexOf(q) >= 0; b.toggleAttribute('data-menu-filtrado', !match); if (match && !b.hidden && getComputedStyle(b).display !== 'none') count++; });
       captions.forEach(function (g) { g[0].hidden = !g[1].some(function (b) { return !b.hasAttribute('data-menu-filtrado') && !b.hidden && getComputedStyle(b).display !== 'none'; }); }); empty.hidden = !q || count > 0;
     }
-    $('menuBuscaPt').addEventListener('input', filter);
+    $('menuBuscaPt').addEventListener('input', function () { filter(); items.scrollTop = 0; });
     function closeMenu() { document.body.classList.remove('menu-aberto'); $('btnMenuPt').focus(); }
     close.addEventListener('click', closeMenu);
     var wasOpen = false;
     new MutationObserver(function () {
       var open = document.body.classList.contains('menu-aberto'); $('btnMenuPt').setAttribute('aria-expanded', String(open));
-      if (open && !wasOpen) { $('menuBuscaPt').value = ''; filter(); if (matchMedia('(max-width:1099px)').matches) $('menuBuscaPt').focus(); }
+      if (open && !wasOpen) { $('menuBuscaPt').value = ''; filter(); items.scrollTop = 0; if (matchMedia('(max-width:1099px)').matches) (matchMedia('(pointer:coarse)').matches ? close : $('menuBuscaPt')).focus({preventScroll:true}); }
       wasOpen = open;
     }).observe(document.body,{attributes:true,attributeFilter:['class']});
     menu.addEventListener('keydown', function (e) {
