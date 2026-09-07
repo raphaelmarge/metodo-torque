@@ -237,6 +237,8 @@
 
   css += "#evResumo .map-ano-total{display:block;font-size:17px;font-weight:800;line-height:1.35}#evResumo .map-ano-ajuda{display:block;font-size:12px;color:var(--al-muted);line-height:1.5;margin-top:3px}";
 
+  css += "/* v801: o Início mantém só a ação principal do treino. */#htFicha{display:none!important}";
+
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
