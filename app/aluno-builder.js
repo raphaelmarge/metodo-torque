@@ -336,7 +336,8 @@
       fechar.onclick = function () { porId('navMenuApp').click(); porId('navMenuApp').focus(); }; menuTopo.appendChild(fechar);
       menu.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); fechar.click(); } });
     }
-    var semana = porId('semBlock'), carr = porId('heroCarr');
+    var semana = porId('semBlock'), habitos = porId('habWrap');
+    if (semana && habitos) semana.before(habitos);
     function recolhe(el, titulo) {
       if (!el || el.querySelector(':scope > .al-disclosure')) return;
       var d = document.createElement('details'), s = document.createElement('summary');
@@ -345,7 +346,6 @@
       while (el.firstChild) d.appendChild(el.firstChild);
       d.insertBefore(s, d.firstChild); el.appendChild(d);
     }
-    recolhe(porId('habWrap'), 'Hábitos de hoje');
     var indica = porId('indicaNm'); if (indica) recolhe(indica.closest('.cardx'), 'Convidar um amigo');
     if (semana) {
       var h = semana.querySelector('h2'), cont = document.createElement('span');
@@ -387,21 +387,6 @@
     }
     if (porId('menuApp')) new MutationObserver(pintaPendencias).observe(porId('menuApp'), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style'] });
     if (confirma) new MutationObserver(pintaPendencias).observe(confirma, { attributes: true, attributeFilter: ['style'] });
-    // Nomes explícitos complementam o gesto de arrastar, inclusive no teclado.
-    if (carr) {
-      var tabs = document.createElement('div'); tabs.id = 'inicioModalidades'; tabs.setAttribute('aria-label', 'Escolher treino');
-      var cards = [].filter.call(carr.children, function (el) { return el.style.display !== 'none'; });
-      cards.forEach(function (el, i) {
-        var b = document.createElement('button'); b.type = 'button'; b.className = 'al-modalidade';
-        var tipo = el.id === 'heroTreino' ? 'hoje' : el.id === 'heroFicha' ? 'ficha' : el.id === 'heroWod' ? 'wod' : 'cardio';
-        b.textContent = { hoje: 'Hoje', ficha: 'Musculação', wod: 'Circuito', cardio: 'Corrida e bike' }[tipo];
-        b.setAttribute('aria-controls', el.id); b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
-        b.onclick = function () { carr.scrollTo({ left: el.offsetLeft, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
-        tabs.appendChild(b);
-      });
-      if (cards.length > 1) carr.parentNode.appendChild(tabs);
-      carr.addEventListener('scroll', function () { var ix = Math.round(carr.scrollLeft / Math.max(1, carr.clientWidth)); [].forEach.call(tabs.children, function (b, i) { b.setAttribute('aria-pressed', String(ix === i)); }); }, { passive: true });
-    }
     // Cabeçalho de sessão é recalculado pelos mesmos checkpoints do player.
     var pintando = false;
     window.__inicioAtualiza = function () {
@@ -421,6 +406,112 @@
     }, true);
     var sp = porId('semResumo'); if (sp) new MutationObserver(function () { var c = porId('semContagem'), p = semProgCalc(L('ptfeitos', {})); if (c) c.textContent = p.naSem + ' de ' + p.meta + ' treinos'; }).observe(sp, { childList: true });
     window.__inicioAtualiza();
+  }
+  // Usa o scroll-snap existente; cada cartão corresponde a um item, não a uma modalidade.
+  function runtimeCarrossel() {
+    var cr = document.getElementById('heroCarr'); if (!cr) return function () {};
+    var principal = document.getElementById('heroTreino');
+    var bases = { ficha: document.getElementById('heroFicha'), wod: document.getElementById('heroWod'), cardio: document.getElementById('heroCr') };
+    var modelos = {}, cards = [], assinatura = '', escolhido = '', reposicionando = false;
+    Object.keys(bases).forEach(function (tp) { if (bases[tp]) modelos[tp] = bases[tp].cloneNode(true); });
+    var dots = document.createElement('div'); dots.id = 'inicioIndicadores'; dots.setAttribute('role', 'group'); dots.setAttribute('aria-label', 'Escolher treino'); cr.after(dots);
+    cr.setAttribute('role', 'region'); cr.setAttribute('aria-roledescription', 'carrossel');
+    function chave(p) { return p.tp + ':' + p.i; }
+    function posicao(c) { return c.offsetLeft - (cards[0] ? cards[0].offsetLeft : 0); }
+    function marca(ix) {
+      if (!cards[ix]) return; escolhido = cards[ix].dataset.carrChave;
+      [].forEach.call(dots.children, function (b, i) { b.setAttribute('aria-pressed', String(i === ix)); });
+    }
+    function vai(ix, foco, imediato) {
+      if (!cards[ix]) return; marca(ix);
+      cr.scrollTo({ left: posicao(cards[ix]), behavior: imediato || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      if (foco && dots.children[ix]) dots.children[ix].focus({ preventScroll: true });
+    }
+    cr.addEventListener('scroll', function () {
+      if (reposicionando || !cr.clientWidth || !cards.length) return;
+      var ix = 0, menor = Infinity; cards.forEach(function (c, i) { var d = Math.abs(posicao(c) - cr.scrollLeft); if (d < menor) { menor = d; ix = i; } }); marca(ix);
+    }, { passive: true });
+    dots.addEventListener('click', function (e) { var b = e.target.closest('.al-carr-dot'); if (b) vai(+b.dataset.carrPos, false, false); });
+    dots.addEventListener('keydown', function (e) {
+      var b = e.target.closest('.al-carr-dot'); if (!b) return;
+      var ix = +b.dataset.carrPos;
+      if (e.key === 'ArrowRight') ix = Math.min(cards.length - 1, ix + 1);
+      else if (e.key === 'ArrowLeft') ix = Math.max(0, ix - 1);
+      else if (e.key === 'Home') ix = 0;
+      else if (e.key === 'End') ix = cards.length - 1;
+      else return;
+      e.preventDefault(); vai(ix, true, false);
+    });
+    cr.addEventListener('click', function (e) { var b = e.target.closest('[data-carrver]'); if (b) inicioAbre(b.dataset.carrver, false, +b.dataset.carrI); });
+    window.addEventListener('resize', function () { var ix = cards.findIndex(function (c) { return c.dataset.carrChave === escolhido; }); if (ix >= 0) vai(ix, false, true); });
+    function pintaExtra(c, p) {
+      var tp = p.tp, o = tp === 'ficha' ? FICHAS_META[p.i] : tp === 'wod' ? WODS[p.i] : CARDIOS[p.i];
+      var titulo, sub, rotulo, foto, linhas = [], textoBotao = 'Começar treino';
+      if (tp === 'ficha') {
+        var partes = String(o.t).split('—'); titulo = partes.length > 1 ? 'Treino ' + partes[0].trim() + ' ' + partes.slice(1).join('—').trim() : o.t;
+        sub = pl(o.n, 'exercício', 'exercícios') + (o.m ? ' · ~' + o.m + ' min' : '');
+        var dias = fichaFezHa(o); if (dias) sub += dias === 1 ? ' · você fez esse treino ontem' : ' · você fez esse treino há ' + dias + ' dias';
+        rotulo = 'MUSCULAÇÃO'; foto = capaFM(o.c) || CAPA_GERAL; linhas = o.e || [];
+      } else if (tp === 'wod') {
+        titulo = o.n || p.n || 'Circuito'; sub = wodResumo(o) + ' · ' + pl((o.ms || []).length, 'movimento', 'movimentos');
+        rotulo = 'CIRCUITO'; foto = capaFM(o.cp) || CAPA_GERAL; textoBotao = 'Começar circuito';
+        linhas = (o.ms || []).slice(0, 7).map(function (m) { return ((m.q ? m.q + ' ' : '') + m.n).trim(); });
+      } else {
+        titulo = o.n || p.n || 'Cardio'; sub = crAlvoTxt(o); var pace = melhorPace(o.m); if (pace) sub += ' · seu melhor: ' + pace;
+        rotulo = { corrida: 'CORRIDA', caminhada: 'CAMINHADA', bike: 'BIKE' }[o.m] || 'CORRIDA E BIKE';
+        foto = capaFM(o.cp) || CAPA_GERAL; textoBotao = { corrida: 'Começar corrida', caminhada: 'Começar caminhada', bike: 'Começar pedal' }[o.m] || 'Começar cardio';
+      }
+      var rodape = c.querySelector('.htit').parentElement;
+      // Reconstrói só a decoração: nunca conserva a foto/movimentos do índice zero.
+      [].slice.call(c.children).forEach(function (el) { if (el !== rodape) el.remove(); });
+      var fundo = document.createElement('div'); fundo.style.cssText = 'position:absolute;inset:0;background:linear-gradient(160deg,var(--cor),var(--cor2) 52%,var(--bg0) 100%);'; c.insertBefore(fundo, rodape);
+      var fantasma = document.createElement('div'); fantasma.style.cssText = 'position:absolute;left:20px;top:112px;right:40px;';
+      linhas.forEach(function (texto) { var linha = document.createElement('div'); linha.className = 'hgline'; linha.textContent = texto; fantasma.appendChild(linha); });
+      if (tp === 'cardio') fantasma.innerHTML = '<svg viewBox="0 0 200 200" aria-hidden="true" style="width:78%;opacity:.5;stroke:rgba(255,255,255,.55)" fill="none" stroke-width="10" stroke-linecap="round"><path d="M30 172 C 18 120, 82 132, 92 92 S 152 64, 152 32 S 102 12, 112 48"/></svg>';
+      if (c.id === 'heroFicha') fantasma.id = 'hfGhost'; c.insertBefore(fantasma, rodape);
+      var img = document.createElement('img'); img.alt = ''; img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+      if (c.id === 'heroFicha') img.id = 'hfFoto'; if (foto) img.src = foto; else img.style.display = 'none'; c.insertBefore(img, rodape); c.classList.toggle('comfoto', !!foto);
+      var veu = document.createElement('div'); veu.style.cssText = 'position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.55) 0%,rgba(13,12,16,.08) 34%,rgba(13,12,16,.88) 74%,var(--bg0) 100%);pointer-events:none;'; c.insertBefore(veu, rodape);
+      c.querySelector('.htit').textContent = titulo; c.querySelector('.hsub').textContent = sub;
+      c.querySelector('.htk').textContent = (PLANO ? 'HOJE' + (p.h ? ' · ' + p.h : '') : 'DISPONÍVEL') + ' · ' + rotulo;
+      var botao = c.querySelector('[data-carrver]'); botao.textContent = textoBotao; botao.dataset.carrI = p.i;
+      c.dataset.carrChave = chave(p); c.dataset.tipo = tp; c.dataset.indice = p.i; c.style.display = '';
+    }
+    function pinta() {
+      var lista = inicioPlano(), mainKey = principal && principal.style.display !== 'none' ? principal.dataset.tipo + ':' + principal.dataset.indice : '';
+      if (!PLANO) {
+        lista = [];
+        if (FICHAS_META.length) lista.push({ tp: 'ficha', i: Object.keys(L('ptfeitos', {})).length % FICHAS_META.length });
+        if (bases.wod && typeof WODS !== 'undefined' && WODS.length) lista.push({ tp: 'wod', i: 0 });
+        if (bases.cardio && typeof CARDIOS !== 'undefined' && CARDIOS.length) lista.push({ tp: 'cardio', i: 0 });
+      }
+      var sig = JSON.stringify([mainKey, lista]);
+      if (sig !== assinatura) {
+        assinatura = sig; reposicionando = true;
+        var focoAnterior = dots.contains(document.activeElement), usados = {}, extras = [], retirouPrincipal = false;
+        [].forEach.call(cr.querySelectorAll('[data-carr-clone]'), function (c) { c.remove(); });
+        Object.keys(bases).forEach(function (tp) { if (bases[tp]) bases[tp].style.display = 'none'; });
+        lista.forEach(function (p, i) {
+          if (!retirouPrincipal && chave(p) === mainKey) { retirouPrincipal = true; return; }
+          if (!modelos[p.tp]) return;
+          var c = usados[p.tp] ? modelos[p.tp].cloneNode(true) : bases[p.tp]; usados[p.tp] = true;
+          if (c !== bases[p.tp]) { c.id = 'heroDia-' + p.tp + '-' + i; c.dataset.carrClone = '1'; [].forEach.call(c.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); }); }
+          pintaExtra(c, p); cr.appendChild(c); extras.push(c);
+        });
+        cards = mainKey ? [principal].concat(extras) : extras;
+        if (principal) principal.dataset.carrChave = mainKey;
+        dots.replaceChildren();
+        cards.forEach(function (c, i) {
+          c.setAttribute('role', 'group'); c.setAttribute('aria-roledescription', 'slide'); c.setAttribute('aria-label', 'Treino ' + (i + 1) + ' de ' + cards.length);
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'al-carr-dot'; b.dataset.carrPos = i; b.setAttribute('aria-controls', c.id); dots.appendChild(b);
+        });
+        dots.hidden = cards.length < 2;
+        var ix = cards.findIndex(function (c) { return c.dataset.carrChave === escolhido; }); if (ix < 0) ix = 0;
+        vai(ix, focoAnterior, true); reposicionando = false;
+      }
+      cards.forEach(function (c, i) { dots.children[i].setAttribute('aria-label', 'Treino ' + (i + 1) + ' de ' + cards.length + ': ' + c.querySelector('.htit').textContent); });
+    }
+    return pinta;
   }
   // datas: as mesmas contas do MTStore, copiadas aqui pra este arquivo rodar
   // sozinho (o /app/ do aluno não carrega o store do painel)
@@ -6775,11 +6866,11 @@
       "var fm=(typeof FICHAS_META!=='undefined'&&FICHAS_META.length)?FICHAS_META[((tot%FICHAS_META.length)+FICHAS_META.length)%FICHAS_META.length]:null;" +
       "return fm&&fm.t?String(fm.t).slice(0,80):'';}catch(e){return '';}}" +
       "window.__treinoHoje=treinoHojeTitulo;" +
-      "function inicioPlano(){return plnHoje().filter(function(p){return p.tp==='wod'?!!document.getElementById('cardWod'):p.tp==='cardio'?!!document.getElementById('cardCardio'):p.tp==='ficha'&&!!FICHAS_META[p.i];});}" +
-      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
+      "function inicioPlano(){return plnHoje().filter(function(p){return p.tp==='wod'?!!document.getElementById('cardWod')&&typeof WODS!=='undefined'&&!!WODS[p.i]:p.tp==='cardio'?!!document.getElementById('cardCardio')&&typeof CARDIOS!=='undefined'&&!!CARDIOS[p.i]:p.tp==='ficha'&&!!FICHAS_META[p.i];});}" +
+      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO)){if(el)el.style.display='none';if(typeof inicioCarrossel==='function')inicioCarrossel();return;}el.style.display='';" +
       "var i=-1,fm=null,rt='',tit='',sub='',cImg='',btn='Começar treino',gLin=null,gSvg='';" +
       "var hjD=new Date();var dataHj=DSEM_[hjD.getDay()]+', '+hjD.getDate()+' DE '+MESL_[hjD.getMonth()];" +
-      "var pj=inicioPlano()[0]||null;if(!pj&&plnHoje().length&&FICHAS_META.length)pj={tp:'ficha',i:Object.keys(L('ptfeitos',{})).length%FICHAS_META.length};" +
+      "var pj=inicioPlano()[0]||null;" +
       "if(PLANO){" +
       "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
       // circuito do plano: o card ganha o resumo do quadro, a contagem de
@@ -6806,7 +6897,7 @@
       "var dd9=fichaFezHa(fm);if(dd9===1)sub+=' · você fez esse treino ontem';else if(dd9)sub+=' · você fez esse treino há '+dd9+' dias';" +
       "cImg=capaFM(fm.c)||CAPA_GERAL;}" +
       "var retomada=typeof acSessao==='function'?acSessao():null;if(retomada&&FICHAS_META[retomada.f]){i=retomada.f;fm=FICHAS_META[i];rt='TREINO EM ANDAMENTO';tit=fm.t;sub='Exercício '+(retomada.e+1)+' de '+GUIA[i].it.length+' · '+SR.feitas(i,retomada.e)+' séries concluídas';cImg=capaFM(fm.c)||CAPA_GERAL;btn='Continuar treino';gLin=null;gSvg='';}" +
-      "el.dataset.ficha=i;el.dataset.tipo=retomada?'ficha':pj?pj.tp:PLANO?'descanso':'ficha';" +
+      "el.dataset.ficha=i;el.dataset.tipo=retomada?'ficha':pj?pj.tp:PLANO?'descanso':'ficha';el.dataset.indice=retomada?retomada.f:pj?pj.i:i;if(pj&&pj.h&&!retomada)rt+=' · '+pj.h;" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=sub;" +
       "var hb0=document.getElementById('htVer');if(hb0)hb0.textContent=btn;var vb0=document.getElementById('htFicha');if(vb0)vb0.textContent=el.dataset.tipo==='ficha'?'Ver ficha':'Ver programação';" +
@@ -6821,71 +6912,18 @@
       "el.classList.toggle('comfoto',!!cImg);}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('#trFichasWrap .fichabox');" +
-      "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
+      "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);if(typeof inicioCarrossel==='function')inicioCarrossel();}" +
       // Abrir o player e consultar a ficha têm ações diferentes; ambas usam o plano canônico.
-      "function inicioAbre(tipo,ver){var hero=document.getElementById('heroTreino'),x=acSessao(),p=inicioPlano()[0]||null,ix=-1;" +
-      "if(!tipo){tipo=hero?hero.dataset.tipo:'ficha';ix=hero?+hero.dataset.ficha:-1;}else{var ps=inicioPlano().filter(function(a){return a.tp===tipo;})[0];ix=ps?ps.i:tipo==='ficha'&&FICHAS_META.length?Object.keys(L('ptfeitos',{})).length%FICHAS_META.length:0;}" +
+      "function inicioAbre(tipo,ver,indice){var hero=document.getElementById('heroTreino'),x=acSessao(),p=inicioPlano()[0]||null,ix=-1,exato=typeof indice==='number'&&Number.isInteger(indice)&&indice>=0;" +
+      "if(!tipo){tipo=hero?hero.dataset.tipo:'ficha';ix=hero?+hero.dataset.indice:-1;}else if(exato){ix=indice;}else{var ps=inicioPlano().filter(function(a){return a.tp===tipo;})[0];ix=ps?ps.i:tipo==='ficha'&&FICHAS_META.length?Object.keys(L('ptfeitos',{})).length%FICHAS_META.length:0;}" +
       "if((tipo==='wod'&&!document.getElementById('cardWod'))||(tipo==='cardio'&&!document.getElementById('cardCardio')))tipo='ficha';" +
-      "if(tipo==='ficha'&&!ver){if(x){abreGuia(x.f);return;}if(ix>=0&&GUIA[ix]&&GUIA[ix].it.length){abreGuia(ix);return;}}" +
+      "if(tipo==='ficha'&&!ver){if(x&&(!exato||x.f===ix)){abreGuia(x.f);return;}if(ix>=0&&GUIA[ix]&&GUIA[ix].it.length){abreGuia(ix);return;}}" +
       "if(window.__trocaSec)window.__trocaSec('treino');if(window.__trSub)window.__trSub(tipo==='wod'?'wod':tipo==='cardio'?'cardio':'ficha');" +
       "if(ix<0&&p)ix=p.i;var sel=tipo==='wod'?'data-wi':tipo==='cardio'?'data-cri':'data-fi';var item=document.querySelector('['+sel+'=\"'+ix+'\"]');if(item){item.open=true;item.scrollIntoView({behavior:'smooth',block:'start'});}}" +
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){inicioAbre(null,false);});var hficha=document.getElementById('htFicha');if(hficha)hficha.onclick=function(){inicioAbre(null,true);};" +
-      // carrossel de treinos do dia (telas final-44/45/46): cada card mostra os
-      // próprios risquinhos ("2 de 3 · arraste →") e o botão leva pro fluxo certo
-      "(function(){" +
+      // Carrossel do dia: indicadores e destinos acompanham cada item canônico.
       "var sa=document.getElementById('heroSauda');if(sa){var hh=new Date().getHours();sa.textContent=(hh<12?'Bom dia':hh<18?'Boa tarde':'Boa noite')+', '+PRIMEIRO;}" +
-      "var cr=document.getElementById('heroCarr');if(!cr)return;" +
-      /* v769: o extra some quando o tipo dele JÁ está no dia. Antes a regra
-       * olhava só o PRIMEIRO treino (plnPri): num dia com ficha às 07:00 e
-       * corrida às 18:30, o extra de corrida continuava aparecendo — e ele é
-       * montado com cardiosApp[0], a corrida de OUTRO dia. Dava pra ler, na
-       * mesma tela, o "Seu dia" com a corrida certa e o carrossel oferecendo a
-       * errada. Sem plano nenhum vale 'ficha', que é o rodízio de sempre. */
-      /* v769: o card extra continua sumindo quando o tipo dele é o do card
-       * grande (tpHoje) — essa regra sempre esteve certa. O que estava errado
-       * era o CONTEÚDO: o extra é montado com o índice 0 (o treino de outro
-       * dia), então num dia com ficha às 07:00 e corrida às 18:30 dava pra ler,
-       * na mesma tela, o "Seu dia" com a corrida certa e o carrossel oferecendo
-       * a errada. Agora, quando o dia TEM um treino daquele tipo, o extra é
-       * reapontado pra ele. Assim o carrossel mostra o dia inteiro. */
-      "var lst3=inicioPlano();var tpHoje=lst3.length?lst3[0].tp:'ficha';" +
-      "var doDia3=function(t){var o=null;lst3.forEach(function(p){if(!o&&p.tp===t)o=p;});return o;};" +
-      "var cw=document.getElementById('heroWod');" +
-      "if(cw&&tpHoje!=='wod'){var pw3=doDia3('wod');" +
-      "if(pw3&&typeof WODS!=='undefined'&&WODS[pw3.i]){var w3=WODS[pw3.i];" +
-      "var tw3=cw.querySelector('.htit');if(tw3)tw3.textContent=w3.n||pw3.n||'Circuito';" +
-      "var sw3=cw.querySelector('.hsub');if(sw3)sw3.textContent=wodResumo(w3)+' \u00b7 '+pl((w3.ms||[]).length,'movimento','movimentos');}" +
-      "cw.style.display='';}" +
-      "var cc=document.getElementById('heroCr');" +
-      "if(cc&&tpHoje!=='cardio'){var pc3=doDia3('cardio');" +
-      "if(pc3&&typeof CARDIOS!=='undefined'&&CARDIOS[pc3.i]){var c3=CARDIOS[pc3.i];" +
-      "var tc3=cc.querySelector('.htit');if(tc3)tc3.textContent=c3.n||pc3.n||'Cardio';" +
-      "var sc3=cc.querySelector('.hsub');if(sc3){var a3=crAlvoTxt(c3);var b3=melhorPace(c3.m);sc3.textContent=a3+(b3?' \u00b7 seu melhor: '+b3:'');}" +
-      "var rc3=cc.querySelector('.htk');if(rc3){var rt3={corrida:'CORRIDA',caminhada:'CAMINHADA',bike:'BIKE'}[c3.m]||'CORRIDA E BIKE';rc3.textContent=rt3;rc3.setAttribute('data-hk',rt3);}}" +
-      "cc.style.display='';}" +
-      "var cf=document.getElementById('heroFicha');" +
-      "if(cf&&tpHoje!=='ficha'&&FICHAS_META.length){" +
-      "var fichaDia=doDia3('ficha');var ti9=fichaDia&&FICHAS_META[fichaDia.i]?fichaDia.i:Object.keys(L('ptfeitos',{})).length%FICHAS_META.length;var fm9=FICHAS_META[ti9];" +
-      "var pr9=String(fm9.t).split('\u2014');" +
-      "document.getElementById('hfTit').textContent=pr9.length>1?('Treino '+pr9[0].trim()+' '+pr9.slice(1).join('\u2014').trim()):fm9.t;" +
-      "var s9=pl(fm9.n,'exerc\u00edcio','exerc\u00edcios')+(fm9.m?' \u00b7 ~'+fm9.m+' min':'');" +
-      "var d9=fichaFezHa(fm9);if(d9===1)s9+=' \u00b7 voc\u00ea fez esse treino ontem';else if(d9)s9+=' \u00b7 voc\u00ea fez esse treino h\u00e1 '+d9+' dias';" +
-      "document.getElementById('hfSub').textContent=s9;" +
-      "var im9=capaFM(fm9.c)||CAPA_GERAL;var hi9=document.getElementById('hfFoto');" +
-      "if(im9&&hi9){hi9.src=im9;hi9.style.display='block';}" +
-      "var hg9=document.getElementById('hfGhost'),ge9=fm9.e||[];" +
-      "if(hg9){hg9.innerHTML=ge9.map(function(){return \"<div class='hgline'></div>\";}).join('');" +
-      "for(var q9=0;q9<hg9.children.length;q9++)hg9.children[q9].textContent=ge9[q9]||'';}" +
-      "cf.style.display='';}" +
-      "var cards=Array.prototype.filter.call(cr.children,function(x){return x.style.display!=='none';});" +
-      "cards.forEach(function(c,ci){var k9=c.querySelector('[data-hk]');" +
-      "if(k9)k9.textContent=(ci===0?'HOJE \u00b7 ':'TAMB\u00c9M \u00b7 ')+k9.getAttribute('data-hk');});" +
-      "cards.forEach(function(c,ci){var d=c.querySelector('.htdash');if(!d)return;" +
-      "if(cards.length<2){d.style.display='none';return;}" +
-      "d.innerHTML=cards.map(function(x,xi){return \"<span style='\"+(xi===ci?'width:26px;background:#fff;':'width:6px;background:rgba(255,255,255,.42);')+\"'></span>\";}).join('')+" +
-      "\"<span class='htn'>\"+(ci+1)+' de '+cards.length+' · arraste →</span>';});" +
-      "document.addEventListener('click',function(e){var b=e.target.closest('[data-carrver]');if(!b)return;" +
-      "inicioAbre(b.getAttribute('data-carrver'),false);});})();" +
+      "var inicioCarrossel=(" + runtimeCarrossel.toString() + ")();" +
       // pintaProgresso saiu com o card Progresso do Início: agora quem mostra
       // treinos do mês é o pintaCqTiles, na aba Conquistas
       // XP calculado dos DADOS (nunca do #xpNum — o count-up anima o texto)
