@@ -309,18 +309,21 @@
     if (!box || porId('evReconhecimentos')) return;
     box.id = 'evResumo'; box.classList.add('ev793-resumo');
     var h = box.querySelector('h2'); if (h) { h.textContent = 'Sua constância'; h.id = 'evResumoTitulo'; }
-    function detalhes(id, titulo) {
-      var d = document.createElement('details'), s = document.createElement('summary');
-      d.id = id; d.className = 'ev793-details'; s.textContent = titulo; d.appendChild(s); return d;
+    function secao(id, titulo) {
+      var d = document.createElement('section'), s = document.createElement('h2');
+      d.id = id; s.id = id + 'Titulo'; s.textContent = titulo;
+      d.setAttribute('aria-labelledby', s.id); d.appendChild(s); return d;
     }
-    var calendario = detalhes('evCalendario', 'Calendário de treinos');
+    var calendario = secao('evCalendario', 'Calendário mensal');
     calendario.appendChild(porId('mapaAno'));
-    calendario.addEventListener('toggle', function () { if (calendario.open && window.__mapaMes) window.__mapaMes.pinta(); });
+    var anual = secao('evCalendarioAno', 'Histórico anual'), mapaAnual = document.createElement('div');
+    mapaAnual.id = 'mapaHistoricoAno'; anual.appendChild(mapaAnual);
     var reconhecimentos = document.createElement('section'), titulo = document.createElement('h2');
     reconhecimentos.id = 'evReconhecimentos'; reconhecimentos.setAttribute('aria-labelledby', 'evMedalhasTitulo');
     titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Suas medalhas'; reconhecimentos.appendChild(titulo);
     ['cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
-    [reconhecimentos, h, tiles, porId('cqGraf'), calendario, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
+    [reconhecimentos, h, tiles, porId('cqGraf'), calendario, anual, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
+    if (window.__mapaMes) window.__mapaMes.pinta();
     window.__evResumoContagem = function () {
       if (box.style.display !== 'none' && !box.hasAttribute('data-sec-off') && window.__evTopoPinta) window.__evTopoPinta('conq');
     };
@@ -3397,14 +3400,10 @@
       "return n>=20?3:(n>=10?2:1);}" +
       "function treinosDoMes(f,y,m){var n=0;for(var k in f){if(!Object.prototype.hasOwnProperty.call(f,k))continue;" +
       "if(+k.slice(0,4)===y&&+k.slice(5,7)===m+1)n++;}return n;}" +
-      /* A FITA DO ANO voltou (pedido do Raphael): o calendario do mes ficou,
-       * mas quem quiser ver o ano inteiro toca em "Ano". A fita agora rola de
-       * lado com quadradinho de 13px em vez de 4px espremidos na largura da
-       * tela, entao da' pra enxergar dia por dia. A escolha fica guardada em
-       * ptmapv, pra nao ter que trocar toda vez que abre. */
-      "var mapVis=L('ptmapv','mes')==='ano'?'ano':'mes';" +
+      // Mês e ano ficam abertos juntos. mapVis serve somente aos hooks legados;
+      // ptmapv armazenado continua intacto e não controla mais a interface.
+      "var mapVis='mes';" +
       "function mapCor(fo,fut){return fo===3?'var(--cor)':(fo===2?'rgba(var(--cor-rgb),.62)':(fo===1?'rgba(var(--cor-rgb),.3)':(fut?'transparent':'var(--bg8)')));}" +
-      "function mapPil(id,rot,on){return \"<button type='button' id='\"+id+\"' style='padding:0 11px;height:30px;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;border:1px solid \"+(on?'transparent':'var(--bg11)')+\";background:\"+(on?'var(--cor)':'var(--bg4)')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+rot+'</button>';}" +
       "function mapSeta(id,rot,lab,off){return \"<button type='button' id='\"+id+\"' aria-label='\"+lab+\"'\"+(off?\" disabled style='opacity:.35;\":\" style='\")+\"width:30px;height:30px;border-radius:10px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\"+rot+'</button>';}" +
       // 52 semanas em colunas de 7 dias, a mais nova na direita (estilo GitHub)
       "function mapaAnoHtml(f){var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
@@ -3425,20 +3424,16 @@
       "return {tot:tot,html:\"<div id='mapaAnoRol' style='direction:rtl;overflow-x:auto;overflow-y:hidden;margin-top:12px;padding:3px 3px 0;-webkit-overflow-scrolling:touch;'>\"+" +
       "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;'>\"+cols+'</div>'+" +
       "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;margin-top:5px;'>\"+labs+'</div></div>'};}" +
-      "function pintaMapaAno(){var el=document.getElementById('mapaAno');if(!el)return;var f=L('ptfeitos',{});" +
+      "function pintaMapaMes(f){var el=document.getElementById('mapaAno');if(!el)return;f=f||L('ptfeitos',{});" +
       "el.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
-      "var hoje=new Date();var ano=mapVis==='ano';var corpo='',tit='',sub='';" +
-      "if(ano){var ra=mapaAnoHtml(f);corpo=ra.html;" +
-      "tit=ra.tot+(ra.tot===1?' treino':' treinos')+' em 12 meses';" +
-      "sub=ra.tot?'cada quadradinho \\u00e9 um dia \\u00b7 arraste pro lado':'nenhum treino marcado ainda';}" +
-      "else{var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
+      "var hoje=new Date(),corpo='',tit='',sub='';var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
       "var y=base.getFullYear(),m=base.getMonth();" +
       "var nMes=treinosDoMes(f,y,m);" +
       // recorde: o melhor mês ANTES deste, pra não competir consigo mesmo
       "var rec=0,mesesV={};for(var k9 in f){if(!Object.prototype.hasOwnProperty.call(f,k9))continue;" +
       "var ch=k9.slice(0,7);if(ch>=(y+'-'+('0'+(m+1)).slice(-2)))continue;mesesV[ch]=(mesesV[ch]||0)+1;}" +
       "for(var c9 in mesesV)if(mesesV[c9]>rec)rec=mesesV[c9];" +
-      "tit=nMes+(nMes===1?' treino':' treinos')+' em '+MESN[m];" +
+      "tit=nMes+(nMes===1?' treino':' treinos')+' em '+MESN[m]+' de '+y;" +
       "sub=nMes===0?'nenhum treino marcado ainda':(rec&&nMes>rec?('seu melhor m\\u00eas at\\u00e9 agora \\u00b7 o recorde era '+rec):(rec?('seu recorde \\u00e9 '+rec+' num m\\u00eas'):'primeiro m\\u00eas de treinos'));" +
       // a semana começa na segunda, igual aos chips do Início
       "var pri=new Date(y,m,1);var vazias=(pri.getDay()+6)%7;var ult=new Date(y,m+1,0).getDate();" +
@@ -3451,25 +3446,28 @@
       "var DSEM3=['S','T','Q','Q','S','S','D'];" +
       "corpo=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.06em;color:#6e6a78;text-align:center;'>\"+" +
       "DSEM3.map(function(x9){return '<div>'+x9+'</div>';}).join('')+'</div>'+" +
-      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:5px;'>\"+cels+'</div>';}" +
-      "el.innerHTML=\"<div style='display:flex;align-items:flex-start;gap:8px;'>\"+" +
+      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:5px;'>\"+cels+'</div>';" +
+      "el.innerHTML=\"<div class='ev800-map-head' style='display:flex;align-items:flex-start;gap:8px;'>\"+" +
       "\"<span style='flex:1;min-width:0;'><b style='display:block;font-size:17px;font-weight:900;letter-spacing:-.02em;'>\"+tit+'</b>'+" +
       "\"<span style='display:block;font-size:12px;color:#8a8695;margin-top:2px;'>\"+sub+'</span></span>'+" +
-      "\"<span style='flex:none;display:flex;gap:5px;align-items:center;'>\"+" +
-      "mapPil('mapVm','M\\u00eas',!ano)+mapPil('mapVa','Ano',ano)+" +
-      "(ano?'':(mapSeta('mapAnt','\\u2039','M\\u00eas anterior',false)+mapSeta('mapProx','\\u203a','Pr\\u00f3ximo m\\u00eas',mapMes<=0)))+" +
-      "'</span></div>'+corpo+" +
-      "\"<div style='display:flex;align-items:center;gap:7px;font-size:10.5px;color:#6e6a78;margin-top:11px;'><span>menos</span>\"+" +
+      "\"<span class='ev800-map-nav' style='flex:none;display:flex;gap:5px;align-items:center;'>\"+" +
+      "mapSeta('mapAnt','\\u2039','M\\u00eas anterior',false)+mapSeta('mapProx','\\u203a','Pr\\u00f3ximo m\\u00eas',mapMes<=0)+" +
+      "'</span></div>'+corpo+mapLegenda();" +
+      "var ba=document.getElementById('mapAnt');if(ba)ba.addEventListener('click',function(){mapMes++;pintaMapaMes();});" +
+      "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaMes();}});}" +
+      "function mapLegenda(){return " +
+      "\"<div class='ev800-map-legenda' style='display:flex;align-items:center;gap:7px;font-size:10.5px;color:#6e6a78;margin-top:11px;'><span>menos</span>\"+" +
       "[['var(--bg8)'],['rgba(var(--cor-rgb),.3)'],['rgba(var(--cor-rgb),.62)'],['var(--cor)']].map(function(c8){" +
       "return \"<i style='width:13px;height:13px;border-radius:4px;background:\"+c8[0]+\";'></i>\";}).join('')+'<span>mais</span>'+" +
-      "\"<span style='margin-left:auto;'>quanto mais forte a cor, mais treino</span></div>\";" +
-      "function mapVai(v){if(mapVis===v)return;mapVis=v;Sv('ptmapv',v);pintaMapaAno();}" +
-      "var bm=document.getElementById('mapVm');if(bm)bm.addEventListener('click',function(){mapVai('mes');});" +
-      "var by=document.getElementById('mapVa');if(by)by.addEventListener('click',function(){mapVai('ano');});" +
-      "var ba=document.getElementById('mapAnt');if(ba)ba.addEventListener('click',function(){mapMes++;pintaMapaAno();});" +
-      "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaAno();}});}" +
+      "\"<span style='margin-left:auto;'>quanto mais forte a cor, mais treino</span></div>\";}" +
+      "function pintaHistoricoAno(f){var el=document.getElementById('mapaHistoricoAno');if(!el)return;var ra=mapaAnoHtml(f);" +
+      "var atual=el.querySelector('#mapaAnoRol');if(!atual){el.innerHTML=\"<div class='ev800-map-head'><span><b class='map-ano-total'></b><span class='map-ano-ajuda'></span></span></div>\"+ra.html+mapLegenda();}" +
+      "else{var novo=document.createElement('div');novo.innerHTML=ra.html;var pos=atual.scrollLeft;atual.innerHTML=novo.firstElementChild.innerHTML;if(atual.clientWidth)atual.scrollLeft=pos;}" +
+      "el.querySelector('.map-ano-total').textContent=ra.tot+(ra.tot===1?' treino':' treinos')+' nas últimas 52 semanas';" +
+      "el.querySelector('.map-ano-ajuda').textContent=ra.tot?'Cada quadradinho é um dia · arraste para os lados':'Nenhum treino marcado ainda';}" +
+      "function pintaMapaAno(){var f=L('ptfeitos',{});pintaMapaMes(f);pintaHistoricoAno(f);}" +
       "window.__mapaMes={forca:forcaDoDia,mes:function(){return mapMes;},pinta:pintaMapaAno," +
-      "vis:function(){return mapVis;},ve:function(v){mapVis=v==='ano'?'ano':'mes';Sv('ptmapv',mapVis);pintaMapaAno();}};" +
+      "vis:function(){return mapVis;},ve:function(v){mapVis=v==='ano'?'ano':'mes';pintaMapaAno();}};" +
       // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
       "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
       "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +

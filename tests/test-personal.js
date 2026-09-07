@@ -12057,7 +12057,6 @@ async function novaExecucaoAluno(p) {
   ok(/Aquecimento do dia/.test(appHtml2) && /Raio-X do treino/.test(appHtml2) && /wakeLock/.test(appHtml2) && /mapaAno/.test(appHtml2),
     "app traz aquecimento automático, raio-X por grupo, wake lock e mapa de calor do mês");
   await pApp.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('conq'); });
-  await abreDetalhes(pApp, '#mapaAno');
   const leva2 = await pApp.evaluate(async () => {
     window.__trocaSec("evolucao");
     const pz = {};
@@ -12131,27 +12130,26 @@ async function novaExecucaoAluno(p) {
   const posTermo = await pApp.evaluate(() => ({ ov: !!document.getElementById("termoOv"), v: window.__termo && window.__termo.v }));
   ok(!posTermo.ov && !!posTermo.v, "📜 aceitou uma vez = a tela do termo não reaparece (só se o professor mudar o texto)");
 
-  // --- a FITA DO ANO voltou (pedido do Raphael): Mês | Ano no mesmo card ---
+  // --- calendário mensal e histórico anual visíveis em seções separadas ---
   await pApp.evaluate(() => { window.__trocaSec('evolucao'); window.__evSub('conq'); });
-  await abreDetalhes(pApp, '#mapaAno');
   const mapAno = await pApp.evaluate(async () => {
     const abre = async () => {
       window.__trocaSec("evolucao");
       if (window.__evSub) window.__evSub("conq");
       await new Promise((r) => setTimeout(r, 200));
     };
+    const preferenciaAnterior = localStorage.getItem("ptmapv");
+    localStorage.setItem("ptmapv", JSON.stringify("ano"));
+    const fontes = ["ptfeitos", "ptdc", "pthab", "ptpeso", "ptrpe"];
+    const dadosAntes = fontes.map(k => localStorage.getItem(k));
     await abre();
-    const bt = document.getElementById("mapVa");
-    if (!bt) return null;
-    bt.click();
-    await new Promise((r) => setTimeout(r, 200));
     const mapa = document.getElementById("mapaAno");
+    const anual = document.getElementById("mapaHistoricoAno");
     const rol = document.getElementById("mapaAnoRol");
     const quad = rol ? rol.querySelectorAll("div[title]").length : 0;
-    const txtAno = mapa.textContent;
-    const guardou = JSON.parse(localStorage.getItem("ptmapv") || '""');
+    const txtAno = anual.textContent;
     // a fita rola por dentro; o CARD nunca pode estourar a largura da tela
-    const cardCabe = mapa.scrollWidth <= mapa.clientWidth + 1;
+    const cardCabe = mapa.scrollWidth <= mapa.clientWidth + 1 && anual.scrollWidth <= anual.clientWidth + 1;
     const fitaRola = rol.scrollWidth > rol.clientWidth;
     // "abre mostrando hoje": a ÚLTIMA coluna (a semana atual) tem que estar
     // dentro da janela que o aluno enxerga, sem ele arrastar nada
@@ -12168,26 +12166,40 @@ async function novaExecucaoAluno(p) {
     window.__mapaMes.pinta();
     await abre();
     const aindaEmHoje = pontaVisivel();
-    document.getElementById("mapVm").click();
+    rol.scrollLeft = -120;
+    const posAno = rol.scrollLeft, htmlAno = rol.innerHTML, mesAntes = window.__mapaMes.mes();
+    document.getElementById("mapAnt").click();
     await new Promise((r) => setTimeout(r, 200));
+    const mudouMes = window.__mapaMes.mes() === mesAntes + 1;
+    const anualPreservado = document.getElementById("mapaAnoRol") === rol && rol.scrollLeft === posAno && rol.innerHTML === htmlAno;
+    document.getElementById("mapProx").click();
+    const ambasVisiveis = ["evCalendario", "evCalendarioAno"].every(id => {
+      const e = document.getElementById(id);
+      return e.tagName === "SECTION" && !e.closest("details") && !e.querySelector("summary") && e.getBoundingClientRect().height > 0;
+    });
+    const legadoIntacto = localStorage.getItem("ptmapv") === JSON.stringify("ano");
+    const dadosIntactos = fontes.every((k, i) => localStorage.getItem(k) === dadosAntes[i]);
+    if (preferenciaAnterior === null) localStorage.removeItem("ptmapv");
+    else localStorage.setItem("ptmapv", preferenciaAnterior);
     return {
-      quad, txtAno, guardou, cardCabe, fitaRola, abreEmHoje, aindaEmHoje,
-      voltouMes: /treinos? em \w+/.test(mapa.textContent) && !document.getElementById("mapaAnoRol"),
+      quad, txtAno, cardCabe, fitaRola, abreEmHoje, aindaEmHoje, ambasVisiveis, legadoIntacto, dadosIntactos,
+      anualPreservado, mudouMes, voltouMes: window.__mapaMes.mes() === mesAntes && /treinos? em \w+/.test(mapa.textContent),
+      tituloComAno: mapa.textContent.includes(String(new Date().getFullYear())),
       celsMes: mapa.querySelectorAll("div[style*='aspect-ratio']").length,
     };
   });
   ok(!!mapAno && mapAno.quad === 364,
-    "aba Ano traz de volta os pontinhos do ano todo (52 semanas x 7 dias = 364)");
-  ok(!!mapAno && /treinos? em 12 meses/.test(mapAno.txtAno),
-    "o cabeçalho da fita conta os treinos dos 12 meses");
+    "histórico anual mantém os pontinhos do ano todo (52 semanas x 7 dias = 364)");
+  ok(!!mapAno && /treinos? nas últimas 52 semanas/.test(mapAno.txtAno),
+    "o cabeçalho da fita conta os treinos das últimas52 semanas");
   ok(!!mapAno && mapAno.cardCabe && mapAno.fitaRola,
     "a fita rola de lado por dentro do card, sem estourar a largura da tela");
   ok(!!mapAno && mapAno.abreEmHoje && mapAno.aindaEmHoje,
     "a fita abre mostrando HOJE — inclusive quando o app repintou com a aba escondida");
-  ok(!!mapAno && mapAno.guardou === "ano",
-    "a escolha Mês/Ano fica guardada no aparelho (ptmapv)");
-  ok(!!mapAno && mapAno.voltouMes && mapAno.celsMes >= 28 && mapAno.celsMes <= 31,
-    "voltar pra Mês traz o calendário de novo");
+  ok(!!mapAno && mapAno.ambasVisiveis && mapAno.legadoIntacto && mapAno.dadosIntactos,
+    "mês e ano ficam abertos juntos, sem modificar a preferência legada ptmapv nem os dados de evolução");
+  ok(!!mapAno && mapAno.mudouMes && mapAno.voltouMes && mapAno.tituloComAno && mapAno.anualPreservado && mapAno.celsMes >= 28 && mapAno.celsMes <= 31,
+    "navegar os meses preserva o histórico anual e sua posição, com ano explícito e todos os dias do mês");
 
   // --- o Ranking da turma saiu das Conquistas (pedido do Raphael) ---
   ok(!/cqRank/.test(appHtml2) && !/Ranking da turma/.test(appHtml2),

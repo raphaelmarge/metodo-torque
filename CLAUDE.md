@@ -113,8 +113,9 @@ não os descarta. Editar ou desfazer uma série recalcula o volume já registrad
 Evolução abre em Resumo, com o nível e XP visíveis no cabeçalho e as medalhas
 em primeiro lugar (mt-v798). A prévia mantém seis medalhas; Ver todas expande e
 Mostrar menos volta às seis e ao topo. Não esconder nível ou toda a grade em
-acordeão. Constância, semanas e calendário vêm depois; o calendário continua
-recolhido, mantendo navegação, compartilhamento e histórico.
+acordeão. Constância e semanas vêm depois. Desde a v800, Calendário mensal e
+Histórico anual são seções separadas e sempre abertas, sem alternância Mês/Ano.
+As setas mudam somente o mensal; a fita de 52 semanas conserva a rolagem.
 O card automático "Seu mês de…" saiu da Evolução na v799; o botão geral para
 gerar um card e os registros usados pelos demais indicadores permanecem.
 Cargas oferece busca geral e períodos de 30/90 dias ou todo o histórico.

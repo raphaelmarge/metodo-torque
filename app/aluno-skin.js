@@ -233,6 +233,10 @@
 
   css += "/* v799: retrospectiva mensal retirada da Evolução. */#retroCard{display:none!important}";
 
+  css += "/* v800: calendários mensal e anual abertos em seções independentes. */#evResumo :is(#evCalendario,#evCalendarioAno){min-width:0;border:0;border-top:1px solid var(--bg7);border-radius:0;background:none;padding:20px 0 0;margin-top:4px}#evResumo :is(#evCalendario,#evCalendarioAno)>h2{font-size:17px;line-height:1.3;margin:0 0 4px}#evResumo #mapaHistoricoAno{min-width:0;max-width:100%;margin:0!important;padding:14px 0 20px!important;background:none!important;border:0!important;border-radius:0!important}#evResumo #mapaAno{padding-bottom:20px!important}#evResumo :is(#mapaAno,#mapaHistoricoAno) div.ev800-map-head{flex-wrap:nowrap!important;gap:12px!important}#evResumo #mapaAno div.ev800-map-head>span:first-child{flex-basis:auto!important}#evResumo .ev800-map-nav{flex:none;display:flex;gap:6px}#evResumo .ev800-map-nav button{min-width:44px!important;min-height:44px!important}#evResumo .ev800-map-legenda{flex-wrap:wrap;row-gap:6px}#evResumo .ev800-map-legenda>span:last-child{flex-basis:100%;margin-left:0!important;line-height:1.4}#evResumo #mapaAnoRol{max-width:100%;overscroll-behavior-x:contain}html.claro #evResumo :is(#evCalendario,#evCalendarioAno){border-color:#ddd8e5}";
+
+  css += "#evResumo .map-ano-total{display:block;font-size:17px;font-weight:800;line-height:1.35}#evResumo .map-ano-ajuda{display:block;font-size:12px;color:var(--al-muted);line-height:1.5;margin-top:3px}";
+
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
