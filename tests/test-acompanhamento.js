@@ -116,7 +116,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   ok(await pa.evaluate(()=>JSON.parse(localStorage.getItem('ptnotas')).length===1),'falha no servidor mantém os registros locais');
   fail=false;await pa.evaluate(()=>document.querySelector('#acSync button').click());
   await pa.waitForFunction(()=>!window.__acSync.pendente(),null,{timeout:10000});
-  ok((await pa.textContent('#acSync')).includes('enviados ao personal') && posted.some(x=>x.p_dados.notas.length),'confirmação do servidor quita a pendência e inclui o relato');
+  ok(await pa.evaluate(()=>!!JSON.parse(localStorage.getItem('ptenvioUlt')) && document.getElementById('acSync').hidden && document.querySelector('#acSync span').textContent==='') && posted.some(x=>x.p_dados.notas.length),'confirmação do servidor quita a pendência e envia o relato sem deixar aviso no Início');
   await pa.click('#gSerie');await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#gSerie');
   await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#navApp [data-msec="treino"]');await pa.click('#acRetomar button');
   ok(await pa.isVisible('#gFecharTreino') && await pa.locator('#gSerie').count()===0,'última série retoma na confirmação, sem série extra');
