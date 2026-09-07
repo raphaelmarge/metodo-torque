@@ -208,17 +208,18 @@
     }
     function form(it, si, ei, reg, a, v, r, u) {
       var id = SR.slot(gv.f, ei, si), draft = gv.rascunhos && gv.rascunhos[id], done = feita(it, si, ei);
-      var sug = {};
+      var sug = {}, fechamento = !!gv.fim || (done && conta(it, ei) >= it.s);
       if (draft) { v = draft.kg; r = draft.reps; sug = Object.assign({}, draft.sugeridos || {}); }
       else if (!reg && !done) { var proposto = sugestao(it, si, ei, a, u); v = proposto.kg; r = proposto.reps; sug = { kg: v !== '', reps: r !== '' }; }
       gv.formSerie.sugeridos = sug;
-      return '<div class="gcg gserie-form"><div class="gserie-context"><span id="gCgLab" role="status">' + (done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
+      var reguas = '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div>';
+      return '<div class="gcg gserie-form' + (fechamento ? ' gserie-fechamento' : '') + '"><div class="gserie-context"><span id="gCgLab" role="status">' + (fechamento ? (done && si === it.s - 1 ? 'Repetições e carga da última série' : 'Revise o que você realizou') : done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
         '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série"></label>' +
         '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos"></label></div>' +
-        '<details class="gserie-ajustes"><summary>Mais opções</summary>' +
+        (fechamento ? reguas : '') + '<details class="gserie-ajustes"><summary>Mais opções</summary>' +
         (u ? '<button type="button" id="gUsarUltima" class="gserie-ultima">Usar última carga: ' + gnum(u.kg) + ' kg <small>' + u.d.slice(8, 10) + '/' + u.d.slice(5, 7) + (u.r ? ' · ' + u.r + ' reps realizadas' : '') + '</small></button>' : '') +
-        '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div><button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
-        '<div class="gserie-actions">' + (gv.fim ? '<button type="button" class="gsalvar" id="gSalvar">Salvar alteração do registro</button>' : '') + (done && !gv.fim ? '<button type="button" id="gDesfazSerie">Desfazer conclusão</button>' : '') + '</div>' +
+        (fechamento ? '' : reguas) + '<button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim && !fechamento ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
+        '<div class="gserie-actions">' + (gv.fim || fechamento ? '<button type="button" class="gsalvar" id="gSalvar">' + (fechamento ? 'Salvar repetições e carga' : 'Salvar alteração do registro') + '</button>' : '') + (done && !gv.fim ? '<button type="button" id="gDesfazSerie">Desfazer conclusão</button>' : '') + '</div>' +
         '<small class="gserie-help">' + (done || gv.fim ? 'Salve a alteração para atualizar o registro.' : 'Toque em Série feita para confirmar estes valores.') + '</small></div>';
     }
     function pintaForm(it) {
