@@ -47,8 +47,27 @@ preservam essas linhas. Edição em lote e progressão automática preservam os
 exercícios individuais; voltar a todas iguais exige conferir o novo padrão.
 Execuções usam o retorno existente `ptdc → retorno.cargas`: `g:2`, `i` por
 ficha/exercício/série, `serie` a partir de 1, `feito`, `kg` e `r` realizados.
-Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
-para os valores realizados. Histórico legado continua legível.
+Série apenas anotada não é recorde nem volume. Desde a v794, metas e cargas
+anteriores podem preencher o formulário como sugestão; só a confirmação do
+aluno em Série feita transforma esses valores em execução. Abrir, trocar ou
+fechar o player não confirma sugestões intocadas. Histórico legado permanece legível.
+
+### Registro prático de séries (mt-v794)
+
+Por pedido do Raphael, repetições aparecem antes da carga e a próxima série
+já oferece os valores para conferir: repetições numéricas da sua prescrição,
+carga prescrita (inclusive zero), ou a carga já concluída nesse exercício,
+ou a carga histórica pertinente. Se o aluno ajusta uma carga que se repete na
+prescrição, o ajuste acompanha as próximas séries; uma carga diferente prescrita
+para a próxima série é respeitada. Sem referência de carga, o campo fica vazio;
+faixas e instruções como "até a falha" continuam visíveis sem inventar reps.
+Série feita confirma os valores visíveis e inicia o descanso em um toque.
+
+Registros e rascunhos específicos têm prioridade sobre sugestões, inclusive
+campos vazios e zero. Concluir sem anotar ignora sugestões intocadas; não
+descarta edição manual. A sugestão nunca entra em histórico, volume ou recordes
+apenas por abrir, fechar, navegar ou decorrer o descanso. Edição, desfazer,
+retomada e rascunhos entre fichas mantêm os contratos da v793.
 
 
 ### Experiência do app do aluno (mt-v793)
@@ -61,7 +80,8 @@ questionários e a próxima sessão usam as fontes existentes e respeitam o menu
 
 O player mostra a meta de cada série no seletor, sem repetir o número da série
 em outro bloco. Registro e conclusão compartilham uma ação; concluir sem anotar
-permanece explícito. Metas nunca preenchem valores realizados automaticamente.
+permanece explícito. A v794 acrescenta sugestões confirmadas em um toque,
+sem registrar metas como realizadas por apenas visualizar o formulário.
 Os históricos distinguem séries concluídas, rascunhos e registros legados.
 Rascunhos acompanham o checkpoint por ficha/exercício/série; trocar o seletor
 não os descarta. Editar ou desfazer uma série recalcula o volume já registrado.

@@ -83,7 +83,7 @@
     }
     return { alvo: alvo, slot: slot, indice: indice, registro: registro, anterior: anterior, marca: marca, volume: volume, feitas: feitas };
   }
-  // A série selecionada é independente da próxima pendente. Nenhum alvo vira execução.
+  // A série selecionada é independente da próxima pendente. Sugestão só vira execução ao confirmar.
   function runtimePlayer() {
     function feita(it, si, ei) {
       ei = ei == null ? gv.e : ei;
@@ -110,10 +110,31 @@
       var kg = gEl('gKg'), rp = gEl('gReps');
       if (!kg || !gv.regi) return;
       if (!gv.rascunhos) gv.rascunhos = {};
-      if (gv.sujo) gv.rascunhos[gv.regi] = { kg: kg.value, reps: rp ? rp.value : '' };
+      if (gv.sujo) gv.rascunhos[gv.regi] = { kg: kg.value, reps: rp ? rp.value : '', sugeridos: Object.assign({}, (gv.formSerie && gv.formSerie.sugeridos) || {}) };
     }
-    function limpa() { if (gv.rascunhos && gv.regi) delete gv.rascunhos[gv.regi]; }
-    function entrada() { gv.sujo = true; guarda(); acCheckpoint(); }
+    function limpa(confirmou) {
+      var sug = (gv.formSerie && gv.formSerie.sugeridos) || {};
+      if (confirmou !== false && gv.formSerie) gv.formSerie.sugeridos = {};
+      if (gv.rascunhos && gv.regi && (confirmou !== false || (!sug.kg && !sug.reps))) delete gv.rascunhos[gv.regi];
+    }
+    function entrada(campo) {
+      var id = typeof campo === 'string' ? campo : campo && campo.target && campo.target.id;
+      var sug = gv.formSerie && gv.formSerie.sugeridos;
+      if (sug && id === 'gKg') sug.kg = false;
+      if (sug && id === 'gReps') sug.reps = false;
+      gv.sujo = true; guarda(); acCheckpoint();
+    }
+    function valores(d) { var sug = d.sugeridos || {}; return { kg: sug.kg ? '' : d.kg, reps: sug.reps ? '' : d.reps }; }
+    function salvaDraft(ex, d, id) { var v = valores(d); return gGrava(ex, v.kg, v.reps, id); }
+    function confirma() {
+      var kg = gEl('gKg'), rp = gEl('gReps');
+      if (!kg || !gv.reg) return false;
+      if (!gGrava(gv.reg, kg.value, rp ? rp.value : '', gv.regi)) {
+        var lab = gEl('gCgLab'); if (lab) { lab.textContent = 'Confira as repetições e a carga para confirmar.'; lab.setAttribute('role', 'alert'); }
+        return false;
+      }
+      gv.sujo = false; limpa(); return true;
+    }
     function antesAbrir(fi, ei) {
       var x = acSessao();
       if (!x || (x.f === fi && ei == null)) return null;
@@ -122,7 +143,7 @@
         var id = ids[i], p = id.split(':').map(Number), d = x.rascunhos[id], it = GUIA[p[0]] && GUIA[p[0]].it[p[1]];
         if (!it || p[0] !== x.f) continue;
         gv.f = x.f; gv.baseFeitas = x.baseFeitas || {};
-        var ok = gGrava(it.e, d.kg, d.reps, id);
+        var ok = salvaDraft(it.e, d, id);
         gv.f = fiAtual; gv.baseFeitas = baseAtual;
         if (!ok) return { f: x.f, e: p[1], si: p[2] };
       }
@@ -133,14 +154,14 @@
       for (var i = 0; i < ids.length; i++) {
         var id = ids[i], p = id.split(':').map(Number), d = gv.rascunhos[id], it = GUIA[p[0]] && GUIA[p[0]].it[p[1]];
         if (!it || p[0] !== gv.f) continue;
-        if (!gGrava(it.e, d.kg, d.reps, id)) {
+        if (!salvaDraft(it.e, d, id)) {
           gv.e = p[1]; gv.sel = p[2]; gv.s = proxima(it); gv.fim = false;
           gv.descAte = 0; gv.pend = false; clearInterval(gv.timer); gv.timer = null; gDescTick = null;
-          if (!gEl('gSerie')) gEl('gPe').innerHTML = '<button class="prin" id="gSerie">Salvar e concluir série</button>';
+          if (!gEl('gSerie')) gEl('gPe').innerHTML = '<button class="prin" id="gSerie">Série feita ✓</button>';
           pintaGuia(); gEl('gCgLab').textContent = 'Confira este preenchimento antes de terminar. Seu rascunho foi mantido.';
           return false;
         }
-        delete gv.rascunhos[id];
+        if (!d.sugeridos || (!d.sugeridos.kg && !d.sugeridos.reps)) delete gv.rascunhos[id];
       }
       return true;
     }
@@ -175,21 +196,35 @@
       return '<div class="gsets gseries-nav" role="group" aria-label="Escolher série">' + h + '</div>';
     }
     function atributo(v) { return esc2(v).replace(/'/g, '&#39;').replace(/"/g, '&quot;'); }
+    function sugestao(it, si, ei, a, u) {
+      var r = /^\d+$/.test(a.reps) && +a.reps >= 1 && +a.reps <= 1000 ? String(+a.reps) : '';
+      var kg = a.carga, pref = gv.f + ':' + ei + ':', leg = gv.f + ':' + ei;
+      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
+      var hoje = feitasHoje.filter(function (x) { return x.g === 2 && x.serie === si; }).pop() || feitasHoje[feitasHoje.length - 1];
+      var mesmaCarga = hoje && (hoje.g === 2 ? SR.alvo(it, hoje.serie - 1).carga === a.carga : !it.seriesDetalhadas);
+      if (hoje && (kg == null || mesmaCarga)) kg = +hoje.kg;
+      else if (kg == null && u) kg = +u.kg;
+      return { kg: kg == null ? '' : kg, reps: r };
+    }
     function form(it, si, ei, reg, a, v, r, u) {
       var id = SR.slot(gv.f, ei, si), draft = gv.rascunhos && gv.rascunhos[id], done = feita(it, si, ei);
-      if (draft) { v = draft.kg; r = draft.reps; }
-      return '<div class="gcg gserie-form"><div class="gserie-context"><span id="gCgLab" role="status">' + (done ? 'Série concluída · editar registro' : 'Registre o que realizou') + '</span><span>' + (a.carga != null ? 'Prescrito: ' + (a.carga === 0 ? 'sem carga externa' : gnum(a.carga) + ' kg') + ' · ' : '') + a.descanso + ' s de descanso</span></div>' +
-        '<div class="gserie-fields"><label for="gKg">Carga realizada <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga realizada nesta série em quilos"></label>' +
-        '<label for="gReps">Repetições feitas<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições realizadas nesta série"></label></div>' +
+      var sug = {};
+      if (draft) { v = draft.kg; r = draft.reps; sug = Object.assign({}, draft.sugeridos || {}); }
+      else if (!reg && !done) { var proposto = sugestao(it, si, ei, a, u); v = proposto.kg; r = proposto.reps; sug = { kg: v !== '', reps: r !== '' }; }
+      gv.formSerie.sugeridos = sug;
+      return '<div class="gcg gserie-form"><div class="gserie-context"><span id="gCgLab" role="status">' + (done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
+        '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série"></label>' +
+        '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos"></label></div>' +
+        '<details class="gserie-ajustes"><summary>Mais opções</summary>' +
         (u ? '<button type="button" id="gUsarUltima" class="gserie-ultima">Usar última carga: ' + gnum(u.kg) + ' kg <small>' + u.d.slice(8, 10) + '/' + u.d.slice(5, 7) + (u.r ? ' · ' + u.r + ' reps realizadas' : '') + '</small></button>' : '') +
-        '<details class="gserie-ajustes"><summary>Mais opções</summary><div class="gserie-rulers"><span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '<span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '</div><button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
+        '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div><button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
         '<div class="gserie-actions">' + (gv.fim ? '<button type="button" class="gsalvar" id="gSalvar">Salvar alteração do registro</button>' : '') + (done && !gv.fim ? '<button type="button" id="gDesfazSerie">Desfazer conclusão</button>' : '') + '</div>' +
-        '<small class="gserie-help">Campos vazios ficam sem registro. A meta aparece no seletor de séries.</small></div>';
+        '<small class="gserie-help">' + (done || gv.fim ? 'Salve a alteração para atualizar o registro.' : 'Toque em Série feita para confirmar estes valores.') + '</small></div>';
     }
     function pintaForm(it) {
       gEl('gMiolo2').innerHTML = gCargaHtml(it); ligaStepper(it);
       var done = feita(it, SR.indice(it)), b = gEl('gSerie');
-      if (b) b.textContent = done ? 'Salvar alteração da série' : 'Salvar e concluir série';
+      if (b) b.textContent = done ? 'Salvar alteração da série' : 'Série feita ✓';
       var sem = gEl('gSemRegistro');
       if (!sem && b) { sem = document.createElement('button'); sem.type = 'button'; sem.id = 'gSemRegistro'; sem.className = 'gserie-semregistro'; b.insertAdjacentElement('afterend', sem); }
       if (sem) { sem.textContent = 'Concluir sem anotar'; sem.hidden = done; }
@@ -208,12 +243,14 @@
     function conclui(semAnotar) {
       var it = GUIA[gv.f].it[gv.e], si = SR.indice(it), antes = conta(it), done = feita(it, si);
       if (semAnotar) {
-        guarda(); var draft = gv.rascunhos && gv.rascunhos[gv.regi], r = SR.registro(it, si);
-        if (draft ? (draft.kg.trim() || draft.reps.trim()) : (r && (r.kg != null || r.r))) {
+        guarda(); var draft = gv.rascunhos && gv.rascunhos[gv.regi], r = SR.registro(it, si), manuais = draft && valores(draft);
+        if (draft ? (String(manuais.kg).trim() || String(manuais.reps).trim()) : (r && (r.kg != null || r.r))) {
           var lab = gEl('gCgLab'); if (lab) lab.textContent = 'Há um preenchimento nesta série. Salve ou limpe os campos para concluir sem anotar.'; return;
         }
+        if ((r || draft) && !gGrava(it.e, '', '', gv.regi)) return;
+        gv.sujo = false; limpa();
       }
-      if (gSalvaSeSujo() === false) return;
+      else if (!confirma()) return;
       if (done) { var lab = gEl('gCgLab'); if (lab) lab.textContent = 'Alteração salva nesta série ✓'; acCheckpoint(); return; }
       var anteriores = L('ptdc', {});
       if (!SR.marca(it, si)) return;
@@ -244,7 +281,7 @@
       if (e.target.id === 'gDesfazSerie') { desfaz(); return true; }
       if (e.target.closest && e.target.closest('#gUsarUltima')) {
         var fs = gv.formSerie, it = GUIA[fs.fi].it[fs.ei], u = SR.anterior(it, fs.si);
-        if (u) { gEl('gKg').value = gnum(u.kg); entrada(); gEl('gCgLab').textContent = 'Última carga preenchida. Confirme depois de realizar.'; }
+        if (u) { gEl('gKg').value = gnum(u.kg); entrada('gKg'); gEl('gCgLab').textContent = 'Última carga preenchida. Confirme depois de realizar.'; }
         return true;
       }
       return false;
@@ -255,14 +292,14 @@
         for (var si = 0; si < it.s; si++) {
           var r = SR.registro(it, si, gv.f, ei), done = feita(it, si, ei), cheia = !!(done && r && r.kg != null && r.r > 0);
           if (done) concluidas++; if (cheia) completas++;
-          var texto = r && r.kg != null ? gnum(r.kg) + ' kg' : 'carga não anotada';
-          texto += ' · ' + (r && r.r > 0 ? r.r + ' reps' : 'reps não anotadas');
+          var texto = r && r.r > 0 ? r.r + ' reps' : 'reps não anotadas';
+          texto += ' · ' + (r && r.kg != null ? gnum(r.kg) + ' kg' : 'carga não anotada');
           linhas += '<button type="button" data-grever="' + si + '" data-ge="' + ei + '">' + esc2(it.e) + ' · ' + (si + 1) + 'ª série<br><small>' + (done ? 'Concluída' : 'Não concluída') + ' · ' + texto + '</small></button>';
         }
       });
       return '<details class="gserie-review" id="gRevisaoSeries"><summary><strong>' + concluidas + ' séries concluídas · ' + completas + ' com carga e repetições</strong><br>Revisar registros por série</summary>' + linhas + '</details>';
     }
-    return { feita: feita, conta: conta, proxima: proxima, inicia: inicia, guarda: guarda, limpa: limpa, entrada: entrada, botoes: botoes, form: form, pintaForm: pintaForm, conclui: conclui, clique: clique, revisao: revisao, atualizaVolume: atualizaVolume, salvaPendentes: salvaPendentes, antesAbrir: antesAbrir };
+    return { feita: feita, conta: conta, proxima: proxima, inicia: inicia, guarda: guarda, limpa: limpa, entrada: entrada, botoes: botoes, form: form, pintaForm: pintaForm, conclui: conclui, clique: clique, revisao: revisao, atualizaVolume: atualizaVolume, salvaPendentes: salvaPendentes, antesAbrir: antesAbrir, salvaDraft: salvaDraft };
   }
   // Resumo da evolução: move os controles existentes e conserva seus eventos.
   function runtimeResumo() {
@@ -5124,7 +5161,7 @@
       // o gv.e, e sem isso a carga ia parar no exercício errado
       "function gSalvaSeSujo(){if(!gv.sujo)return true;" +
       "var c=gEl('gKg'),r=gEl('gReps');if(!c||!gv.reg)return;" +
-      "GP.guarda();var ok=gGrava(gv.reg,c.value,r?r.value:'',gv.regi);if(ok){gv.sujo=false;GP.limpa();}else{var lab=gEl('gCgLab');if(lab){lab.textContent='Confira os valores antes de sair. Seu preenchimento foi mantido.';lab.setAttribute('role','alert');}}return ok;}" +
+      "GP.guarda();var ok=GP.salvaDraft(gv.reg,gv.rascunhos[gv.regi]||{kg:c.value,reps:r?r.value:''},gv.regi);if(ok){gv.sujo=false;GP.limpa(false);}else{var lab=gEl('gCgLab');if(lab){lab.textContent='Confira os valores antes de sair. Seu preenchimento foi mantido.';lab.setAttribute('role','alert');}}return ok;}" +
       // ---------- abrir / fechar ----------
       "function abreGuia(fi,ei){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
@@ -5350,28 +5387,28 @@
       "function ligaRegua(id,cfg,campo,formata){var rd=gEl(id);if(!rd)return;var t=null,ultimo=null;" +
       // encostar na régua já conta como 'estou anotando': é o que segura o
       // cronômetro de trocar de exercício embaixo do dedo do aluno
-      "rd.addEventListener('touchstart',function(){gv.mexe=true;},{passive:true});" +
-      "rd.addEventListener('pointerdown',function(){gv.mexe=true;});" +
+      "rd.addEventListener('touchstart',function(){rd._interacao=true;gv.mexe=true;},{passive:true});" +
+      "rd.addEventListener('pointerdown',function(){rd._interacao=true;gv.mexe=true;});" +
+      "rd.addEventListener('wheel',function(){rd._interacao=true;gv.mexe=true;},{passive:true});" +
       "campo.addEventListener('focus',function(){gv.mexe=true;});" +
-      "function poe(v,semRolar){if(!campo.isConnected)return;var s=formata(v);if(campo.value!==s){campo.value=s;GP.entrada();}" +
+      "function poe(v,semRolar){if(!campo.isConnected)return;var s=formata(v);if(campo.value!==s){campo.value=s;GP.entrada(campo.id);}" +
       "if(!semRolar){rd._progPx=gIdx(cfg,v)*cfg.px;rd.scrollLeft=rd._progPx;}}" +
       // scroll que parou exatamente onde o CÓDIGO mandou é programático: não é o aluno
-      "rd.addEventListener('scroll',function(){if(rd._progPx!=null&&Math.abs(rd.scrollLeft-rd._progPx)<1)return;if(t)clearTimeout(t);" +
+      "rd.addEventListener('scroll',function(){if(!rd._interacao||(rd._progPx!=null&&Math.abs(rd.scrollLeft-rd._progPx)<1))return;if(t)clearTimeout(t);" +
       "gv.mexe=true;t=setTimeout(function(){var i=Math.round(rd.scrollLeft/cfg.px);" +
       "var v=Math.round((cfg.min+i*cfg.p)*100)/100;if(v===ultimo)return;ultimo=v;" +
       "poe(v,true);if(navigator.vibrate)navigator.vibrate(6);},60);});" +
-      "campo.addEventListener('change',function(){var v=Number(String(campo.value).replace(',','.'));if(!isFinite(v)){gv.sujo=true;return;}" +
+      "campo.addEventListener('change',function(){if(String(campo.value).trim()===''){gv.sujo=true;return;}var v=Number(String(campo.value).replace(',','.'));if(!isFinite(v)){gv.sujo=true;return;}" +
       "ultimo=v;poe(v);});" +
       "return poe;}" +
-      /* v751: as repeticoes nascem com o que o aluno CONFIRMOU na ultima sessao;
-       * a prescrita fica de placeholder. Pre-preencher o alvo fazia 'bateu as
-       * reps' ser verdade por padrao e a sugestao subir sessao sim, sessao nao. */
+      // v794: metas/histórico podem preencher sugestões; a origem por campo
+      // impede que sair ou terminar o descanso transforme sugestão em execução.
       "function gCargaHtml(it,si,ei){si=si==null?SR.indice(it):si;ei=ei==null?gv.e:ei;gv.formSerie={fi:gv.f,ei:ei,si:si};" +
       "var u=SR.anterior(it,si),reg=SR.registro(it,si,gv.f,ei),a=SR.alvo(it,si);var v=reg&&reg.kg!=null?reg.kg:'',r=reg&&reg.r!=null?reg.r:'';" +
       "return GP.form(it,si,ei,reg,a,v,r,u);}" +
       "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;var fs=gv.formSerie;gv.regi=fs?SR.slot(fs.fi,fs.ei,fs.si):(slot||'');" +
-      "ligaRegua('gWKg',GW.kg,kg,function(v){return v?gnum(v):'';});" +
-      "ligaRegua('gWRep',GW.rep,rp,function(v){return v?String(Math.round(v)):'';});" +
+      "ligaRegua('gWKg',GW.kg,kg,function(v){return gnum(v);});" +
+      "ligaRegua('gWRep',GW.rep,rp,function(v){return String(Math.round(v));});" +
       // a régua nasce no valor de hoje (última carga daquele exercício): no caso
       // comum o aluno repete a carga e não precisa arrastar nada
       "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
@@ -5386,7 +5423,7 @@
       "var h2=gEl('gHist');if(h2)h2.textContent=gHistTxt(it.e);" +
       "if(navigator.vibrate)navigator.vibrate(60);" +
       "setTimeout(function(){if(gEl('gCgLab')===lab){lab.textContent='Registro desta série';lab.style.color='';}},1600);};" +
-      "gEl('gSemCarga').onclick=function(){if(!gGrava(it.e,0,rp.value.trim()?Number(rp.value):0,gv.regi))return;gv.sujo=false;GP.limpa();gv.cargas[it.e]=0;kg.value='0';acCheckpoint();" +
+      "gEl('gSemCarga').onclick=function(){kg.value='0';GP.entrada('gKg');if(!GP.salvaDraft(it.e,gv.rascunhos[gv.regi],gv.regi))return;gv.sujo=false;GP.limpa(false);gv.cargas[it.e]=0;acCheckpoint();" +
       "var lab=gEl('gCgLab');if(lab){lab.textContent='Sem carga ✓';lab.style.color='#16a34a';}};}" +
       /* 📊 v732: o tile "kg no total" já existia — agora o volume ganha
        * MEMÓRIA (ptvol, um número por dia, teto 120 dias) e o recibo compara:
@@ -5517,7 +5554,7 @@
        * de 8, e gv.sujo pendurado regravava tudo no fim. */
       "if(e.target.id==='gSugT'){if(gv.fim)return;var itS=GUIA[gv.f].it[gv.e];" +
       "gv.cargas[itS.e]=+e.target.dataset.kg;" +
-      "gEl('gMudaCarga').click();var kSug=gEl('gKg');if(kSug){kSug.value=gnum(+e.target.dataset.kg);GP.entrada();}var lSug=gEl('gCgLab');if(lSug)lSug.textContent='Sugestão · confirme após realizar';return;}" +
+      "gEl('gMudaCarga').click();var kSug=gEl('gKg');if(kSug){kSug.value=gnum(+e.target.dataset.kg);GP.entrada('gKg');}var lSug=gEl('gCgLab');if(lSug)lSug.textContent='Sugestão · confirme após realizar';return;}" +
       "if(e.target.id==='gMudaCarga'){if(gv.fim)return;var kM=gEl('gKg');if(kM){kM.focus();kM.scrollIntoView({block:'nearest'});}return;}" +
       "if(e.target.id==='gVoltaEx'){if(gv.fim||gv.e<=0)return;" +
       // v751: gv.timer/gDescTick zerados — o visibilitychange chamava o tick velho e bipava 'Descanso acabou' em cima do exercício novo
