@@ -10276,13 +10276,14 @@ async function abreDetalhes(p, selector) {
         endereco: (document.getElementById("spEndereco") || {}).textContent || "",
         copiar: !!document.getElementById("spCopiar") && document.getElementById("spCopiar").hidden,
         numeros: (document.getElementById("spNumeros") || {}).textContent || "",
+        publicada: !!((((window.MTStore.read('ptStudio', {}).config || {}).sitePro) || {}).slugPub),
       };
     });
     ok(/página de vendas/i.test(b4e.kicker), "🎨 4e: o topo é o endereço da página de vendas");
     ok(/endereço|publicada|torqueon/.test(b4e.endereco), "🎨 4e: e diz o link, ou o que falta pra ele existir (" + b4e.endereco + ")");
     ok(b4e.copiar, "🎨 4e: sem página publicada, Copiar link não aparece");
-    ok(/não conta visitas nem pedidos/.test(b4e.numeros),
-      "🎨 4e: o painel diz que ainda NÃO conta visitas nem pedidos, em vez de mostrar número inventado");
+    ok(/Os pedidos de aula chegam ao seu WhatsApp/.test(b4e.numeros) && !/\d/.test(b4e.numeros) && /A página está no ar/.test(b4e.numeros) === b4e.publicada,
+      "🎨 Minha página: orienta os pedidos pelo WhatsApp, não inventa métricas e só informa publicação quando existe endereço publicado");
   }
   await abreDetalhes(p, "#spSlug");
   await p.fill("#spSlug", "Studio Teste!");
