@@ -65,6 +65,8 @@ O menu agrupa ferramentas e pesquisa nomes/sinônimos sem liberar áreas ocultas
 pelo papel do usuário. Os seletores móveis seguem os mesmos botões/roteadores
 das sub-abas. Campos avançados ficam em `details`; testes devem abrir seus
 ancestrais pela interação de `summary` antes de preencher.
+Seletores visíveis usam aparência explícita, cor, fundo e seta: no WebKit,
+a aparência nativa podia pintar branco sobre texto claro no tema escuro.
 
 Financeiro filtra o histórico completo e exporta o resultado consultado,
 incluindo registros além da primeira página. Filtros de cobranças, contratos,

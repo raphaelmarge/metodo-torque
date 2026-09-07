@@ -2,6 +2,7 @@
 #vChat,#vAssessoria{min-width:0}
 #vChat .pc-field,#vAssessoria .pc-field{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:700;color:var(--texto)}
 #vChat .pc-field input,#vChat .pc-field select,#vAssessoria .pc-field input,#vAssessoria .pc-field select{width:100%;min-width:0;min-height:46px;box-sizing:border-box;background:var(--card);color:var(--texto);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;font-weight:500}
+#vChat select:not([multiple]):not([data-busca]):not([hidden]),#vAssessoria select:not([multiple]):not([data-busca]):not([hidden]){appearance:none;-webkit-appearance:none;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 #vAssessoria .pc-heading{margin:0 0 22px}
 #vAssessoria .pc-heading h2{margin:0 0 8px}
 #vAssessoria .pc-heading p{max-width:680px;margin:0;line-height:1.6}
@@ -13,7 +14,7 @@
 #vAssessoria .pc-status{min-height:20px;font-size:12px;color:var(--cinza);line-height:1.5}
 #vAssessoria .pc-ass-card{padding:19px 0;border-top:1px solid var(--linha);color:var(--texto)}
 #vAssessoria .pc-ass-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
-#vAssessoria .pc-ass-title{border:0;background:none;color:var(--texto);padding:0;text-align:left;font-size:16px;font-weight:800;line-height:1.4;overflow-wrap:anywhere;cursor:pointer}
+#vAssessoria .pc-ass-title{border:0;background:none;color:var(--texto);padding:0;text-align:left;font-family:inherit;font-size:16px;font-weight:800;line-height:1.4;overflow-wrap:anywhere;cursor:pointer}
 #vAssessoria .pc-ass-main{flex:1 1 240px;min-width:0}
 #vAssessoria .pc-ass-meta{font-size:12px;line-height:1.6;color:var(--cinza);margin-top:6px}
 #vAssessoria .pc-ass-state{display:inline-block;font-size:12px;font-weight:700;line-height:1.5;margin-top:6px;color:var(--roxo)}

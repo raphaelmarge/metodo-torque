@@ -9,6 +9,17 @@
 .ptf-field { display:flex; flex-direction:column; gap:6px; font-size:13px; font-weight:700; min-width:0; }
 .ptf-field :is(input,select,textarea) { width:100%; max-width:100%; box-sizing:border-box; margin:0!important; }
 .ptf-navigation select { min-height:48px; }
+/* O menu nativo do WebKit pode pintar fundo branco sobre a cor clara do tema. */
+:is(#vConfig,#vPers,#vSitePro,#vImagens,#cardConta,#vAjuda,#dlgAuto) select:not([hidden]):not([multiple]):not([data-busca]) {
+  appearance:none; -webkit-appearance:none;
+  background-color:var(--card); color:var(--texto); -webkit-text-fill-color:var(--texto);
+  padding-right:36px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center; background-size:12px 8px;
+}
+:is(#vPers,#vSitePro) :is(#cfgCor,#cfgFundo,#spCor,#spFundo) {
+  background-color:var(--card)!important; color:var(--texto); -webkit-text-fill-color:var(--texto);
+}
 .ptf-intro { line-height:1.55; font-size:13px; margin:0 0 16px; }
 .ptf-disclosure { border:0; border-bottom:1px solid var(--ptf-line); background:transparent; margin:0!important; border-radius:0; }
 .ptf-disclosure > summary { list-style:none; display:flex; align-items:center; justify-content:space-between; gap:14px; cursor:pointer; min-height:58px; padding:14px 0; color:var(--tk-tx,#f5f3fa); font-size:15px; font-weight:750; }

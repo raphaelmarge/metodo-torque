@@ -6,6 +6,7 @@
 :is(#vPagamentos,#vRelatorios) :is(.muted,.alsub,.dfi){font-size:13px;line-height:1.55}
 :is(#vPagamentos,#vRelatorios) .btn{font-size:14px;line-height:1.4;min-height:44px;min-width:44px;padding:10px 14px;white-space:normal;height:auto}
 :is(#vPagamentos,#vRelatorios) :is(input,select,textarea){max-width:100%;box-sizing:border-box;font-size:16px;min-height:48px;min-width:0}
+:is(#vPagamentos,#vRelatorios) select:not([multiple]):not([data-busca]){appearance:none;-webkit-appearance:none;background-color:var(--card);color:var(--texto);padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%238a8793' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 :is(#vPagamentos,#vRelatorios) input[type=checkbox]{min-height:20px;width:20px;height:20px;flex:none}
 :is(#vPagamentos,#vRelatorios) .fg-heading{margin:4px 0 24px}
 :is(#vPagamentos,#vRelatorios) .fg-heading h2{font-size:26px;margin:0 0 8px}
