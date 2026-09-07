@@ -14199,28 +14199,36 @@ async function novaExecucaoAluno(p) {
     const pA = await ctxA.newPage();
     const externas = [];
     pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
-    // As três capas próprias são exibidas no sábado. No domingo a bike sem
-    // foto própria usa corretamente a capa geral, então só há duas distintas.
+    // As capas seguem o plano: sábado tem circuito, segunda tem ficha e corrida.
     const sabadoCapas = new Date();
     sabadoCapas.setDate(sabadoCapas.getDate() - ((sabadoCapas.getDay() + 1) % 7));
     sabadoCapas.setHours(12, 0, 0, 0);
     await pA.clock.setFixedTime(sabadoCapas);
     await pA.goto(BASE + "/demo-aluno.html");
     await pA.waitForTimeout(1200);
-    /* 🎠 as três fotos do demo (leg press, corrida e circuito) precisam aparecer:
-     * com só circuito e corrida no carrossel, a foto de musculação nunca subia. */
-    const capasDemo = await pA.evaluate(() => {
+    /* As três fotos continuam acessíveis, cada uma no seu dia; os extras fora
+     * do plano não podem voltar apenas para mostrar todas no mesmo carrossel. */
+    const leCapasDia = () => pA.evaluate(() => {
       const vis = [].slice.call(document.querySelectorAll("#heroCarr > *")).filter((c) => c.style.display !== "none");
       const fotos = vis.map((c) => { const i = c.querySelector("img[src^='data:image/jpeg']"); return i ? i.src.slice(-80) : ""; });
-      return { cards: vis.length, distintas: new Set(fotos.filter(Boolean)).size,
+      return { cards: vis.length, fotos,
+        previstos: plnDia(new Date().getDay()).length,
         kickers: vis.map((c) => ((c.querySelector(".htk") || {}).textContent || "")) };
     });
-    ok(capasDemo.cards === 3 && capasDemo.distintas === 3,
-      "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
-    ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
-      "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
+    const capasSabado = await leCapasDia();
+    const segundaCapas = new Date(sabadoCapas); segundaCapas.setDate(segundaCapas.getDate() - 5);
+    await pA.clock.setFixedTime(segundaCapas); await pA.reload(); await pA.waitForTimeout(1200);
+    const capasSegunda = await leCapasDia();
+    const capasDemo = { cards: capasSabado.cards + capasSegunda.cards,
+      distintas: new Set(capasSabado.fotos.concat(capasSegunda.fotos).filter(Boolean)).size };
+    ok(capasSabado.cards === 1 && capasSabado.cards === capasSabado.previstos && capasSegunda.cards === 2 &&
+      capasSegunda.cards === capasSegunda.previstos && capasDemo.distintas === 3,
+      "🎠 o demo mostra só os treinos de cada dia e preserva suas 3 fotos próprias (" + capasDemo.cards + " cards entre segunda e sábado, " + capasDemo.distintas + " fotos distintas)");
+    ok(/^HOJE · CIRCUITO · 09:00$/.test(capasSabado.kickers[0]) && /^SEGUNDA, .* · 07:00$/.test(capasSegunda.kickers[0]) &&
+      /^HOJE · 19:00 · CORRIDA$/.test(capasSegunda.kickers[1]),
+      "os cards identificam o dia e o horário prescritos, sem sugerir modalidades extras fora do plano");
     await pA.clock.setFixedTime(new Date());
-    // O sábado é exclusivo da prova das capas. Questionários verificam a data
+    // As datas fixas são exclusivas da prova das capas. Questionários verificam a data
     // de liberação ao inicializar: começa o restante do demo já no dia atual.
     await pA.reload({ waitUntil: "domcontentloaded" });
     await pA.waitForTimeout(1200);

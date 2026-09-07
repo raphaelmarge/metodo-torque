@@ -52,6 +52,20 @@ anteriores podem preencher o formulário como sugestão; só a confirmação do
 aluno em Série feita transforma esses valores em execução. Abrir, trocar ou
 fechar o player não confirma sugestões intocadas. Histórico legado permanece legível.
 
+### Carrossel do dia e hábitos visíveis (mt-v795)
+
+Por pedido do Raphael, o Início volta a trocar os cartões de treino ao arrastar
+para os lados, com indicadores discretos e sem abas textuais de modalidades.
+Com plano semanal, o carrossel representa os itens daquele dia, inclusive dois
+treinos da mesma modalidade, usando o título, a foto e o destino de cada item.
+Sem plano, mantém as modalidades disponíveis e o rodízio de fichas.
+Uma sessão em andamento conserva sua retomada e não duplica o mesmo treino.
+
+Os quatro quadrados de hábitos (água, alimentação, sono e cardio) ficam visíveis
+antes de Minha semana. Mantêm os controles, as marcações, o histórico e o envio
+existentes; não podem voltar a ficar escondidos em uma seção recolhida.
+A foto do Início e o registro prático de séries da v794 permanecem.
+
 ### Registro prático de séries (mt-v794)
 
 Por pedido do Raphael, repetições aparecem antes da carga e a próxima série
@@ -74,8 +88,9 @@ retomada e rascunhos entre fichas mantêm os contratos da v793.
 
 O Início mantém a foto de capa do personal, prioriza a sessão em andamento e
 abre a musculação diretamente no player. Ver ficha consulta a prescrição.
-Hábitos, registro manual e detalhes da semana ficam em disclosures com os
-mesmos controles e IDs. O calendário abre o dia por toque; pendências de chat,
+Registro manual e detalhes da semana ficam em disclosures com os mesmos
+controles e IDs; desde a v795 os hábitos ficam visíveis no Início. O calendário
+abre o dia por toque; pendências de chat,
 questionários e a próxima sessão usam as fontes existentes e respeitam o menu.
 
 O player mostra a meta de cada série no seletor, sem repetir o número da série
