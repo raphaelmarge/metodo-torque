@@ -2140,15 +2140,29 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <!-- no desenho a busca e os filtros dividem UMA linha; no celular voltam
          a empilhar, porque la nao cabem lado a lado -->
-    <div class="alfind">
-    <div class="albusca"><svg class='mi albup' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='m16 16 4.5 4.5'/></svg><input id="alBusca" placeholder="Buscar por nome ou telefone" autocomplete="off"></div>
+    <div class="ali-toolbar">
+    <div class="albusca"><svg class='mi albup' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='m16 16 4.5 4.5'/></svg><input id="alBusca" aria-label="Buscar alunos por nome ou telefone" placeholder="Buscar por nome ou telefone" autocomplete="off"><button class="btn sec mini" type="button" id="alLimparBusca" hidden>Limpar</button></div>
+    <button type="button" class="btn sec" id="alFiltrosBt" aria-expanded="false" aria-controls="alFiltrosPainel">Filtros</button>
+    <label class="ali-sort" for="alOrdem">Ordenar<select id="alOrdem"><option value="nome">Nome</option><option value="prioridades">Prioridades</option><option value="proxima">Próxima sessão</option></select></label>
+    </div>
+    <div class="ali-filters" id="alFiltrosPainel" hidden>
+    <span class="ali-filter-title">Situação</span>
     <div class="abas" id="alFiltro">
       <button data-alf="ativos" class="ativa">Ativos</button>
       <button data-alf="sumindo">Sumindo</button>
       <button data-alf="devendo">Devendo</button>
       <button data-alf="encerrados">Encerrados</button>
     </div>
+    <span class="ali-filter-title">Na rotina</span>
+    <div id="alContextos" class="ali-contexts" role="group" aria-label="Contexto dos alunos">
+      <button type="button" class="btn sec mini" data-alctx="" aria-pressed="true">Todos</button>
+      <button type="button" class="btn sec mini" data-alctx="hoje" aria-pressed="false">Hoje</button>
+      <button type="button" class="btn sec mini" data-alctx="treino" aria-pressed="false">Treino a revisar</button>
+      <button type="button" class="btn sec mini" data-alctx="sem-sessao" aria-pressed="false">Sem sessão</button>
     </div>
+    <button type="button" class="btn sec mini" id="alLimparFiltros">Limpar filtros</button>
+    </div>
+    <p class="ali-result" id="alResultados" role="status" aria-live="polite"></p>
     <div class="altab">
       <div class="alcab"><span>Aluno</span><span>Plano</span><span>Mês</span><span>Ficha</span><span>Próxima</span><span></span></div>
       <div id="listaAlunos"></div>
@@ -4962,54 +4976,103 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : S.plural(sem, "semana", "semanas") + (vencida ? " · vencida" : ""),
       cor: vencida ? "var(--tk-erro)" : "var(--tk-tx5)", velha: vencida };
   }
-  var alMostra = 60;      // quantos cards a lista desenha por vez (o resto entra no "Ver mais")
+  var alMostra = 60, alAberto = "", alAdminAberto = false, alContexto = "", alOrdem = "nome";
+  function alTextoBusca(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+  function alFinanceiroPermitido() {
+    var nav = document.querySelector('#abas [data-a="pagamentos"]');
+    return !(nav && nav.style.display === "none") && !(S.usuario && (S.usuario() || {}).papel === "funcionario");
+  }
+  function alBotaoAcao(acao, id, texto, cls) {
+    return '<button type="button" class="btn ' + (cls || 'sec mini') + '" data-alacao="' + acao + '" data-aluno="' + esc(id) + '">' + texto + '</button>';
+  }
+  function alProximoPasso(a, m, permiteFin) {
+    if (a.ativo === false) return { acao: "agenda", titulo: "Aluno encerrado", motivo: "Consulte o histórico e a agenda antes de retomar o acompanhamento.", botao: "Ver agenda", peso: 9 };
+    if (m.fi.velha) return { acao: "treino", titulo: m.fi.o === "Sem ficha" ? "Montar o treino" : "Revisar o treino", motivo: m.fi.o === "Sem ficha" ? "Este aluno ainda não tem ficha de musculação." : "A prescrição atual precisa de revisão.", botao: m.fi.o === "Sem ficha" ? "Montar treino" : "Revisar treino", peso: 0 };
+    if (m.sumindo) return { acao: "agendar", titulo: "Retomar o acompanhamento", motivo: "Está sem atividade recente e sem sessão marcada.", botao: "Agendar sessão", peso: 1 };
+    if (m.prox && m.prox.data === S.todayISO()) return { acao: "agenda", titulo: "Conferir a sessão de hoje", motivo: "Há uma sessão de hoje ainda sem presença registrada.", botao: "Ver agenda", peso: 2 };
+    if (m.est === "devendo" && permiteFin) return { acao: "financeiro", titulo: "Conferir o financeiro", motivo: "Existe cobrança vencida. Confira o histórico antes de entrar em contato.", botao: "Ver financeiro", peso: 3 };
+    if (!m.prox) return { acao: "agendar", titulo: "Combinar a próxima sessão", motivo: "Não há sessão pendente de hoje em diante.", botao: "Agendar sessão", peso: 4 };
+    return { acao: "treino", titulo: "Acompanhar o treino", motivo: "Há um treino cadastrado e uma sessão marcada.", botao: "Ver treino", peso: 5 };
+  }
+  function alPainelHtml(a, m) {
+    var passo = m.passo;
+    return '<section class="ali-panel" id="ali-panel-' + esc(a.id) + '" aria-label="Ações de ' + esc(a.nome) + '">' +
+      '<div class="ali-next"><div><strong>' + passo.titulo + '</strong><p>' + passo.motivo + '</p></div>' + alBotaoAcao(passo.acao, a.id, passo.botao, "mini") + '</div>' +
+      '<nav class="ali-shortcuts" aria-label="Atalhos de ' + esc(a.nome) + '">' + alBotaoAcao("treino", a.id, "Treino") + alBotaoAcao("agendar", a.id, "Agendar") +
+      alBotaoAcao("chat", a.id, "Chat") + (alFinanceiroPermitido() ? alBotaoAcao("financeiro", a.id, "Financeiro") : "") + '</nav>' +
+      '<div class="ali-footer"><button type="button" class="btn sec mini al-mais" data-mais="' + esc(a.id) + '" aria-expanded="' + alAdminAberto + '" aria-controls="ali-admin-' + esc(a.id) + '">Mais opções</button>' +
+      '<div class="al-acoes" id="ali-admin-' + esc(a.id) + '" data-acoes="' + esc(a.id) + '"' + (alAdminAberto ? '' : ' hidden') + '>' +
+      (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">WhatsApp</a>' : '') +
+      '<button class="btn mini" data-app="' + esc(a.id) + '">Publicar app</button>' +
+      (a.acessoEm ? '' : '<button class="btn mini" data-acesso="' + esc(a.id) + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
+      (a.ativo === false ? '' : '<button class="btn sec mini" data-rm="' + esc(a.id) + '">Encerrar</button>') + '</div></div></section>';
+  }
   function renderAlunos(st) {
     var hoje = S.todayISO();
     var todos = st.alunos.slice();
-    var porEstado = {}, estadoDe = {}; // v747: o estado é calculado UMA vez por aluno
+    var porEstado = {}, estadoDe = {}, metadados = Object.create(null), idxAl = idxDe(st), permiteFin = alFinanceiroPermitido();
     todos.forEach(function (a) {
       var e = alEstado(st, a);
       estadoDe[a.id] = e;
       (porEstado[e] = porEstado[e] || []).push(a);
+      var sessoes = idxAl.sessDe(a.id), prox = null;
+      sessoes.forEach(function (x) {
+        if (!(x.data >= hoje) || x.feita || x.faltou) return;
+        if (!prox || x.data + (x.hora || "") < prox.data + (prox.hora || "")) prox = x;
+      });
+      var m = { est: e, fi: alFicha(st, a), sumindo: e === "sumindo" || (e === "devendo" && estaSumindo(st, a)), prox: prox,
+        hoje: sessoes.some(function (x) { return x.data === hoje; }), nome: alTextoBusca(a.nome), telefone: String(a.zap || "").replace(/\D/g, "") };
+      m.passo = alProximoPasso(a, m, permiteFin); m.proxChave = prox ? prox.data + (prox.hora || "") : "9999";
+      metadados[a.id] = m;
     });
     /* v756: "sumindo" é contado pela régua PRÓPRIA (estaSumindo), não pelo
      * rótulo do alEstado — lá o "devendo" vence, então quem devia E tinha
      * sumido não entrava no "M sumindo" do cabeçalho, mas entrava no Radar do
      * Início. O filtro Sumindo passa a mostrar essa mesma lista, senão a conta
      * do chip diria um número e a lista mostraria outro. */
-    var sumindoTodos = todos.filter(function (a) { return estaSumindo(st, a); });
+    var sumindoTodos = todos.filter(function (a) { return metadados[a.id].sumindo; });
     var qtd = { ativos: (porEstado.ativos || []).length + (porEstado.sumindo || []).length + (porEstado.devendo || []).length,
       sumindo: sumindoTodos.length, devendo: (porEstado.devendo || []).length,
       encerrados: (porEstado.encerrados || []).length };
     var rot = { ativos: "Ativos", sumindo: "Sumindo", devendo: "Devendo", encerrados: "Encerrados" };
-    document.querySelectorAll("#alFiltro button").forEach(function (b) {
-      var k = b.getAttribute("data-alf");
-      // o contador só aparece quando há o que resolver — "Sumindo 0" é ruído
-      b.innerHTML = rot[k] + (qtd[k] && k !== "ativos" ? ' <span class="alsel" style="background:rgba(251,146,60,.18);color:var(--tk-aten);">' + qtd[k] + "</span>" : "");
-      b.classList.toggle("ativa", k === alFiltro);
-    });
     var el = $("alResumo");
     if (el) el.innerHTML = qtd.ativos + (qtd.ativos === 1 ? " ativo" : " ativos") +
       (qtd.sumindo ? ' · <span style="color:var(--tk-aten);">' + qtd.sumindo + " sumindo</span>" : "");
-    var lista = alFiltro === "ativos"
-      ? todos.filter(function (a) { return a.ativo !== false; })
-      : alFiltro === "sumindo" ? sumindoTodos
-      : (porEstado[alFiltro] || []);
-    if (alBusca) {
-      var q = alBusca.toLowerCase();
-      lista = lista.filter(function (a) {
-        return String(a.nome || "").toLowerCase().indexOf(q) > -1 ||
-          String(a.zap || "").replace(/\D/g, "").indexOf(q.replace(/\D/g, "")) > -1 && q.replace(/\D/g, "");
-      });
-    }
-    lista.sort(function (a, b) { return String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"); });
+    var q = alTextoBusca(alBusca), numero = String(alBusca).replace(/\D/g, "");
+    function busca(a) { var m = metadados[a.id]; return !q || m.nome.indexOf(q) > -1 || (!!numero && m.telefone.indexOf(numero) > -1); }
+    function status(a, k) { var m = metadados[a.id]; return k === "ativos" ? a.ativo !== false : k === "sumindo" ? m.sumindo : m.est === k; }
+    function contexto(a, k) { var m = metadados[a.id]; return !k || (k === "hoje" ? m.hoje : k === "treino" ? a.ativo !== false && m.fi.velha : !m.prox); }
+    var buscados = todos.filter(busca);
+    document.querySelectorAll("#alFiltro button").forEach(function (b) {
+      var k = b.getAttribute("data-alf"), n = buscados.filter(function (a) { return status(a, k) && contexto(a, alContexto); }).length;
+      b.textContent = rot[k] + " " + n; b.classList.toggle("ativa", k === alFiltro); b.setAttribute("aria-pressed", String(k === alFiltro));
+    });
+    var base = buscados.filter(function (a) { return status(a, alFiltro); });
+    var ctxRot = { "": "Todos", hoje: "Hoje", treino: "Treino a revisar", "sem-sessao": "Sem sessão" };
+    document.querySelectorAll("#alContextos [data-alctx]").forEach(function (b) {
+      var k = b.getAttribute("data-alctx"), n = base.filter(function (a) { return contexto(a, k); }).length;
+      b.textContent = ctxRot[k] + " " + n; b.setAttribute("aria-pressed", String(k === alContexto));
+    });
+    var lista = base.filter(function (a) { return contexto(a, alContexto); });
+    lista.sort(function (a, b) {
+      var ma = metadados[a.id], mb = metadados[b.id];
+      if (alOrdem === "prioridades" && ma.passo.peso !== mb.passo.peso) return ma.passo.peso - mb.passo.peso;
+      if (alOrdem === "proxima" && ma.proxChave !== mb.proxChave) return ma.proxChave < mb.proxChave ? -1 : 1;
+      return ma.nome.localeCompare(mb.nome, "pt-BR");
+    });
+    if (alAberto && !lista.some(function (a) { return a.id === alAberto; })) { alAberto = ""; alAdminAberto = false; }
     // com muitos alunos a lista sai em partes: 1000 linhas de uma vez travam a tela
     var totalFiltrado = lista.length;
     if (totalFiltrado > alMostra) lista = lista.slice(0, alMostra);
+    $("alResultados").textContent = S.plural(totalFiltrado, "aluno encontrado", "alunos encontrados") + " · " + rot[alFiltro] +
+      (alContexto ? " · " + ctxRot[alContexto] : "") + (lista.length < totalFiltrado ? " · mostrando " + lista.length : "");
+    $("alLimparBusca").hidden = !alBusca;
+    var filtrosN = (alFiltro !== "ativos" ? 1 : 0) + (alContexto ? 1 : 0);
+    $("alFiltrosBt").textContent = "Filtros" + (filtrosN ? " (" + filtrosN + ")" : "");
     $("listaAlunos").innerHTML = lista.length ? lista.map(function (a) {
       var est = estadoDe[a.id] || alEstado(st, a);
       var pl = alPlano(st, a);
-      var fi = alFicha(st, a);
+      var m = metadados[a.id], fi = m.fi;
       var px = alProxima(st, a);
       var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
       // v747: a meta da barra é a do ALUNO (metaMesDe), a mesma do Resumo da ficha
@@ -5018,20 +5081,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var corM = nMes >= metaM * .75 ? "var(--tk-ok)" : nMes >= metaM * .4 ? "var(--tk-aten)" : "var(--tk-erro)";
       var divTot = est === "devendo" ? Math.round((dividaDe(st, a) || {}).total || 0) : 0; // uma vez por linha
       var desde = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2629800000)) : 0;
-      /* a ação da linha é a que resolve o estado dela: quem deve, cobra; quem
-       * está com a ficha velha, remonta; quem sumiu, chama. É a regra 1 do
-       * handoff (todo aviso tem botão) aplicada à lista. */
-      var acao = est === "devendo"
-        ? '<button type="button" class="btn mini" data-pgm="' + a.id + '" data-v="' + valorCobranca(st, a) + '" data-origem="mensal">Cobrar</button>'
-        : fi.velha && a.ativo !== false
-        ? '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '">Montar ficha</button>'
-        : est === "sumindo"
-        ? (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
-            "?text=" + encodeURIComponent(zapTexto(zapModelos(st).chamar, { nome: String(a.nome).split(" ")[0] })) + '">Chamar</a>'
-          : '<button type="button" class="btn sec mini" data-perfil="' + a.id + '">Ver</button>')
-        : (a.zap ? '<a class="btn sec mini al-ic" target="_blank" rel="noopener" title="falar no WhatsApp"' +
-            ' aria-label="falar no WhatsApp com ' + esc(a.nome) + '" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">' +
-            "<svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg></a>" : "");
       /* A tela 17 do handoff (Alunos no celular) pede: avatar, nome com o selo
        * de estado colado e a proxima sessao no canto; embaixo UMA linha com
        * ficha, treinos do mes e situacao. O desktop continua com as 6 colunas
@@ -5043,11 +5092,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? '<span class="alsel" style="background:var(--pt-atencao-selo);color:var(--pt-atencao);">SUMINDO</span>' : "";
       var subMovel = [fi.o !== "Sem ficha" ? fi.o : "sem ficha",
         S.plural(nMes, "treino no mês", "treinos no mês"), esc(pl.st)].filter(Boolean).join(" · ");
-      return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : est === "sumindo" ? " sumindo" : "") + '">' +
+      return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : est === "sumindo" ? " sumindo" : "") + (alAberto === a.id ? " aberta" : "") + '" data-alrow="' + esc(a.id) + '">' +
         '<div class="alq"><div class="alav">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
         '<div class="alqc"><div class="alnmrow">' +
         '<button class="alnm" data-abreperfil="' + a.id + '">' + esc(a.nome) + "</button>" + selo +
-        '<span class="alhora"' + (px.cor ? ' style="color:' + px.cor + ';"' : "") + ">" + esc(px.curto || "") + "</span></div>" +
+        '<button type="button" class="alhora ali-agenda" data-alacao="' + (m.prox ? "agenda" : "agendar") + '" data-aluno="' + esc(a.id) + '" aria-label="' + (m.prox ? "Ver agenda de " : "Agendar para ") + esc(a.nome) + '">' + esc(m.prox ? px.curto : "Agendar") + "</button></div>" +
         '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
         (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div>" +
         '<div class="almob"' + (fi.velha ? ' style="color:var(--pt-atencao);"' : "") + ">" + subMovel + "</div></div></div>" +
@@ -5061,22 +5110,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div><div class="alp1">' + S.plural(nMes, "treino", "treinos") + '</div>' +
         '<div class="albar"><i style="width:' + Math.max(4, pctM) + "%;background:" + corM + ';"></i></div></div>' +
         '<div><div class="alp1">' + fi.o + '</div><div class="alp2" style="color:' + fi.cor + ';">' + fi.sub + "</div></div>" +
-        '<div class="alp1" style="color:' + (px.cor || "var(--tk-tx2)") + ';">' + px.txt + "</div></div>" +
-        '<div class="alac">' + acao +
-        '<button type="button" class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações">···</button></div>' +
-        /* v747: o "Perfil" saiu do menu ··· — o NOME da linha já abre a ficha
-         * (data-abreperfil), e eram três caminhos pra mesma coisa. */
-        '<div class="al-acoes" data-acoes="' + a.id + '" hidden style="grid-column:1/-1;">' +
-        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
-        '<button class="btn mini" data-app="' + a.id + '">Publicar app</button>' +
-        (a.acessoEm ? "" : '<button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
-        (a.ativo === false ? "" : '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button>') + "</div></div>";
+        '<div>' + alBotaoAcao(m.prox ? "agenda" : "agendar", a.id, m.prox ? esc(px.txt) + " · Ver agenda" : "Agendar", "sec mini ali-agenda") + "</div></div>" +
+        '<div class="alac"><button type="button" class="btn sec mini ali-toggle" data-alquick="' + esc(a.id) + '" aria-expanded="' + (alAberto === a.id) + '" aria-controls="ali-panel-' + esc(a.id) + '">Ações</button></div>' +
+        (alAberto === a.id ? alPainelHtml(a, m) : "") + "</div>";
     }).join("") + (totalFiltrado > lista.length
       ? '<div class="linha-flex" style="justify-content:center;padding:12px;">' +
         '<button class="btn sec mini" id="alMais">Ver mais ' + Math.min(60, totalFiltrado - lista.length) +
         " (mostrando " + lista.length + " de " + totalFiltrado + ")</button></div>"
       : "") : '<div class="vazio" style="padding:26px 18px;">' + (
-        alBusca ? "Ninguém com esse nome ou telefone."
+        alContexto ? "Nenhum aluno combina com estes filtros."
+        : alBusca ? "Ninguém com esse nome ou telefone."
         : alFiltro === "sumindo" ? "Ninguém sumido — todo mundo treinando. 🎉"
         : alFiltro === "devendo" ? "Todo mundo em dia este mês! 🎉"
         : alFiltro === "encerrados" ? "Nenhum aluno encerrado."
@@ -5098,11 +5141,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     alMostra = 60;
     renderAlunos(load());
   });
+  $("alLimparBusca").addEventListener("click", function () {
+    alBusca = ""; $("alBusca").value = ""; alMostra = 60; renderAlunos(load()); $("alBusca").focus();
+  });
+  $("alFiltrosBt").addEventListener("click", function () {
+    $("alFiltrosPainel").hidden = !$("alFiltrosPainel").hidden;
+    this.setAttribute("aria-expanded", String(!$("alFiltrosPainel").hidden));
+  });
+  $("alContextos").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-alctx]"); if (!b) return;
+    alContexto = b.getAttribute("data-alctx"); alMostra = 60; renderAlunos(load());
+  });
+  $("alOrdem").addEventListener("change", function () { alOrdem = this.value; alMostra = 60; renderAlunos(load()); });
+  $("alLimparFiltros").addEventListener("click", function () {
+    alFiltro = "ativos"; alContexto = ""; alMostra = 60; renderAlunos(load());
+  });
   window.__alFiltro = function (f) { // testes
     alFiltro = ["ativos", "sumindo", "devendo", "encerrados"].indexOf(f) > -1 ? f : "ativos";
-    alBusca = ""; renderAlunos(load());
+    alBusca = ""; alContexto = ""; $("alBusca").value = ""; alMostra = 60; renderAlunos(load());
   };
-  window.__alBusca = function (q) { alBusca = q || ""; renderAlunos(load()); }; // testes
+  window.__alBusca = function (q) { alBusca = q || ""; $("alBusca").value = alBusca; alMostra = 60; renderAlunos(load()); }; // testes
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
   var naAlunoId = null;
   $("btnNovoAluno").addEventListener("click", function () {
@@ -5779,7 +5837,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * gravava o aluno no select da aba de IA (#taAluno) e abria Fichas com o
      * aluno de antes — dava pra publicar ficha no aluno errado. Agora fazem o
      * mesmo que #chatFicha e o data-altreino da lista. */
-    if (id === "pfIrChat") { vaiAba("chat"); if (perfilId) abreChat(perfilId); return; }
+    if (id === "pfIrChat") { if (perfilId) alExecutaAcao(perfilId, "chat"); return; }
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
     if (id === "pfIrAgenda") { vaiAba("agenda"); return; }
     if (id === "pfMontaTreino" && perfilId) { vaiMontarTreino(perfilId); return; }
@@ -7127,14 +7185,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         box.innerHTML = html || "O aluno ainda não registrou nada no app. Assim que registrar peso, carga, treino ou foto, aparece aqui.";
       }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
   }
+  function alExecutaAcao(id, acao) {
+    var st = load(), a = st.alunos.find(function (x) { return x.id === id; });
+    if (!a) { renderAlunos(st); return; }
+    if (a.ativo === false && (acao === "treino" || acao === "agendar")) {
+      alert("Este aluno está encerrado. Consulte o perfil antes de retomar o acompanhamento."); abrePerfil(id); return;
+    }
+    if (acao === "treino") { vaiMontarTreino(id); return; }
+    if (acao === "agendar") {
+      vaiAba("agenda"); renderAgenda(st); encerraRemarcacao();
+      if (!$("sTurmaBox").hidden) $("sTurmaBt").click();
+      $("sRep").checked = false; $("sRepAte").value = "";
+      document.querySelectorAll("#sRepDias .srd, #sTurmaChips .stc").forEach(function (c) { c.checked = false; });
+      $("sData").value = S.todayISO(); $("sHora").value = ""; $("sTipo").value = "";
+      $("sAluno").value = id; $("sAluno").dispatchEvent(new Event("change", { bubbles: true }));
+      pintaAgendamento(); if (window.__agAba) window.__agAba("agendar");
+      document.querySelector('#vAgenda [data-agsec="agendar"]').scrollIntoView({ block: "start" });
+      return;
+    }
+    if (acao === "chat") {
+      if (!a.appTokenP || a.appRevogadoEm) { alert("O chat deste aluno precisa de um app com acesso ativo. Confira o acesso no perfil."); return; }
+      var nuvemChat = S.cloud && S.cloud();
+      if (!nuvemChat || !nuvemChat.client) { alert("Conecte sua conta para abrir o chat interno. Você também pode falar pelo WhatsApp em Mais opções."); return; }
+      vaiAba("chat"); abreChat(id); return;
+    }
+    if (acao === "financeiro") {
+      if (!alFinanceiroPermitido()) { alert("O financeiro fica com o dono do studio (modo colaborador)."); return; }
+      abrePerfil(id); mostraPfAba("fin"); return;
+    }
+    if (acao === "agenda") {
+      abrePerfil(id);
+      var agenda = $("pfAgenda"); if (agenda) { agenda.setAttribute("tabindex", "-1"); agenda.focus({ preventScroll: true }); agenda.scrollIntoView({ block: "start" }); }
+    }
+  }
   $("listaAlunos").addEventListener("click", function (e) {
-    // menu retrátil ⋮: abre as ações do aluno (e fecha o dos outros)
+    var quick = e.target.closest && e.target.closest("[data-alquick]");
+    if (quick) {
+      var idQuick = quick.getAttribute("data-alquick");
+      alAberto = alAberto === idQuick ? "" : idQuick; alAdminAberto = false;
+      renderAlunos(load());
+      var foco = Array.prototype.find.call($("listaAlunos").querySelectorAll("[data-alquick]"), function (b) { return b.getAttribute("data-alquick") === idQuick; });
+      if (foco) foco.focus({ preventScroll: true });
+      if (alAberto && foco) foco.closest(".alrow").scrollIntoView({ block: "nearest" });
+      return;
+    }
+    var acao = e.target.closest && e.target.closest("[data-alacao]");
+    if (acao) { alExecutaAcao(acao.getAttribute("data-aluno"), acao.getAttribute("data-alacao")); return; }
+    // As opções administrativas permanecem dentro do aluno em foco.
     var mais = e.target.closest && e.target.closest("[data-mais]");
     if (mais) {
       var alvo = document.querySelector('#listaAlunos [data-acoes="' + mais.getAttribute("data-mais") + '"]');
       var estava = alvo && !alvo.hidden;
       document.querySelectorAll("#listaAlunos [data-acoes]").forEach(function (d) { d.hidden = true; });
       if (alvo && !estava) alvo.hidden = false;
+      alAdminAberto = !!(alvo && !estava); mais.setAttribute("aria-expanded", String(alAdminAberto));
       return;
     }
     /* O NOME do aluno tambem abre a ficha. Ele e o alvo mais obvio da linha e,
@@ -7142,19 +7246,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * (v615) so tinha dono no bloco de pacotes de servico, noutro pedaco do
      * painel — entao clicar no nome nao respondia, e o unico caminho pra ficha
      * era abrir o menu "···" e escolher Perfil. */
-    /* Regra 7 do handoff (tela 17): no celular a linha do aluno so mostra os
-     * botoes quando ELA esta aberta — 24 alunos com dois botoes cada viram um
-     * paredao de acoes disputando o polegar. Tocar na linha abre; tocar de
-     * novo, ou em outra, fecha. No computador nada disso vale. */
-    var linha = e.target.closest && e.target.closest(".alrow");
-    if (linha && !e.target.closest("button, a") && window.matchMedia("(max-width: 900px)").matches) {
-      var estava = linha.classList.contains("aberta");
-      document.querySelectorAll("#listaAlunos .alrow.aberta").forEach(function (x) { x.classList.remove("aberta"); });
-      if (!estava) linha.classList.add("aberta");
-      return;
-    }
     var pf = e.target.closest && e.target.closest("[data-perfil],[data-abreperfil]");
     if (pf) abrePerfil(pf.getAttribute("data-perfil") || pf.getAttribute("data-abreperfil"));
+  });
+  $("listaAlunos").addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || !alAberto) return;
+    e.preventDefault(); var id = alAberto; alAberto = ""; alAdminAberto = false; renderAlunos(load());
+    var b = Array.prototype.find.call($("listaAlunos").querySelectorAll("[data-alquick]"), function (x) { return x.getAttribute("data-alquick") === id; });
+    if (b) b.focus({ preventScroll: true });
   });
   function pintaParqBadge(an) {
     var temSim = false;
@@ -21605,7 +21704,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     $("chatBusca").hidden = false;
     $("chatAv").hidden = !chatAluno;
-    var ativos = st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP; });
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP && !a.appRevogadoEm; });
     if (!ativos.length) {
       el.innerHTML = '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Gere o App dos alunos primeiro — o chat vive dentro dele.</div>';
       return;
@@ -21648,16 +21747,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * chamava abreChat e ele reconstruía tudo por innerHTML, jogava a rolagem
    * pro fim (quem estava lendo mensagem antiga era puxado a cada 25 s) e
    * rodava o update de lidas + uma segunda consulta mesmo sem novidade. */
-  var chatPintado = { id: "", marca: "" };
+  var chatPintado = { id: "", marca: "" }, chatRascunhos = Object.create(null), chatConsultaSeq = 0;
+  function guardaRascunhoChat() { if (chatAluno) chatRascunhos[chatAluno] = $("chatTexto").value; }
+  $("chatTexto").addEventListener("input", guardaRascunhoChat);
   function abreChat(id) {
-    chatAluno = id;
     /* tela 22 do handoff: no celular a conversa e uma TELA CHEIA — a lista de
      * conversas sai da frente. Quem decide e o CSS; aqui so marcamos o estado. */
-    if ($("vChat")) $("vChat").classList.add("chat-aberto");
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     var nuvem = S.cloud && S.cloud();
-    if (!a || !nuvem) return;
+    if (!a || !a.appTokenP || a.appRevogadoEm || !nuvem || !nuvem.client) return;
+    if (chatAluno !== id) {
+      guardaRascunhoChat(); $("chatTexto").value = chatRascunhos[id] || "";
+      $("chatEnvioErro").hidden = true; chatPintado = { id: "", marca: "" };
+      $("chatMsgs").innerHTML = '<p class="muted">Carregando a conversa…</p>';
+    }
+    chatAluno = id;
+    var consultaSeq = ++chatConsultaSeq;
+    if ($("vChat")) $("vChat").classList.add("chat-aberto");
     $("chatTitulo").textContent = a.nome;
     $("chatAv").textContent = String(a.nome || "?").trim().slice(0, 2).toUpperCase();
     $("chatAv").hidden = false;
@@ -21683,6 +21790,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * novas e vira a lista pra ficar em ordem de leitura. */
     nuvem.client.from("app_chat").select("de,texto,criado,lida").eq("token", a.appTokenP)
       .order("criado", { ascending: false }).limit(80).then(function (r) {
+        if (chatAluno !== id || consultaSeq !== chatConsultaSeq) return;
         var msgs = (r.data || []).slice().reverse();
         var caixaCh = $("chatMsgs");
         var marca = msgs.length + "|" + String((msgs[msgs.length - 1] || {}).criado || "");
@@ -21731,6 +21839,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     chatBuscaTmr = setTimeout(renderChatPT, 300);
   });
   if ($("chatVolta")) $("chatVolta").addEventListener("click", function () {
+    guardaRascunhoChat(); $("chatTexto").value = ""; chatConsultaSeq++;
     chatAluno = null;
     chatPintado = { id: "", marca: "" }; // v755
     if ($("vChat")) $("vChat").classList.remove("chat-aberto");
@@ -21759,7 +21868,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (d) abreChat(d.getAttribute("data-chat"));
   });
   $("chatEnviar").addEventListener("click", function () {
-    var texto = $("chatTexto").value.trim();
+    var rascunhoEnviado = $("chatTexto").value, texto = rascunhoEnviado.trim();
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === chatAluno; });
     var nuvem = S.cloud && S.cloud();
@@ -21775,18 +21884,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     btEnv.disabled = true;
     var falhou = function () {
       btEnv.disabled = false;
-      $("chatTexto").value = texto;
-      $("chatEnvioErro").hidden = false;
-      $("chatEnvioErro").textContent = "Não deu pra enviar — confere a internet e tenta de novo.";
+      if (chatRascunhos[a.id] == null) chatRascunhos[a.id] = texto;
+      if (chatAluno === a.id) {
+        if (!$("chatTexto").value) $("chatTexto").value = texto;
+        $("chatEnvioErro").hidden = false;
+        $("chatEnvioErro").textContent = "Não deu pra enviar — confere a internet e tenta de novo.";
+      }
     };
     $("chatEnvioErro").hidden = true;
     Promise.resolve(nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto.slice(0, 1000), lida: false }))
       .then(function (r) {
         btEnv.disabled = false;
         if (r && r.error) { falhou(); return; }
-        $("chatTexto").value = "";
+        if (chatRascunhos[a.id] === rascunhoEnviado) chatRascunhos[a.id] = "";
+        if (chatAluno === a.id && $("chatTexto").value === rascunhoEnviado) $("chatTexto").value = "";
         pushAluno(a.appTokenP, "Mensagem do seu personal", texto.slice(0, 120));
-        abreChat(chatAluno);
+        if (chatAluno) abreChat(chatAluno);
       }, falhou);
   });
   $("chatTexto") && $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviar").click(); });

@@ -51,6 +51,26 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Interações da lista de alunos (mt-v788)
+
+Cada linha tem um botão Ações explícito. `alAberto` guarda o aluno em foco e
+`alPainelHtml` só gera o painel desse aluno, preservando o limite de 60 linhas
+por lote. A sugestão de próximo passo usa a ficha, sessões e situação financeira
+existentes; não há IA externa nem envio automático. As opções administrativas
+continuam no menu Mais opções dentro do painel.
+
+Busca ignora acentos e pontuação de telefone. Situação e contexto são filtros
+combinados; os contadores usam a mesma base da lista. `alProxima` e a regra de
+Sumindo continuam canônicas. Ordenação usa metadados calculados uma vez por
+aluno em cada renderização. O CSS fica sob `#vAlunos` em
+`assets/personal-usabilidade.css`.
+
+`alExecutaAcao` abre treino, agenda, chat ou financeiro do aluno selecionado.
+Agendar limpa o rascunho anterior de remarcação/turma/repetição sem salvar
+sessões. Financeiro respeita o modo colaborador. O chat guarda rascunhos por
+aluno em memória e ignora respostas antigas ao trocar de conversa; retorno de
+envio não deve apagar um texto novo nem o rascunho de outro aluno.
+
 ### Agendamento do personal (mt-v787)
 
 O formulário em `#vAgenda .agp-compose` usa campos rotulados e ações explícitas
