@@ -53,7 +53,7 @@ async function escolheIndicador(page,indice){
     await p.goto(BASE+'/inicio-experiencia.html');await p.waitForFunction(()=>window.__inicioAtualiza);
     ok(await p.locator('#htFoto').evaluate(e=>e.complete&&e.naturalWidth>0),'foto escolhida pelo personal continua carregando');
     ok(await p.locator('#habBox').isVisible()&&await p.locator('#habBox [data-hab]').count()===4,'os quatro hábitos estão visíveis no Início sem abrir uma seção');
-    ok(await p.evaluate(()=>!!(document.getElementById('habWrap').compareDocumentPosition(document.getElementById('semBlock'))&Node.DOCUMENT_POSITION_FOLLOWING)),'hábitos vêm antes do calendário da semana');
+    ok(await p.evaluate(()=>{const semana=document.getElementById('semBlock'),habitos=document.getElementById('habWrap');return semana.nextElementSibling===habitos&&semana.getBoundingClientRect().bottom<=habitos.getBoundingClientRect().top+1;}),'Minha semana fica acima de Hoje eu já, sem outro card entre datas e hábitos');
     const habito=p.locator('#habBox [data-hab="0"]');
     await habito.click();
     ok(await habito.getAttribute('aria-pressed')==='true'&&await p.evaluate(()=>Object.values(JSON.parse(localStorage.getItem('pthab')||'{}')).some(d=>d[0]===true)),'tocar Água confirma o hábito e grava o registro do dia');

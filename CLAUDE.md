@@ -71,7 +71,8 @@ Sem plano, mantém as modalidades disponíveis e o rodízio de fichas.
 Uma sessão em andamento conserva sua retomada e não duplica o mesmo treino.
 
 Os quatro quadrados de hábitos (água, alimentação, sono e cardio) ficam visíveis
-antes de Minha semana. Mantêm os controles, as marcações, o histórico e o envio
+logo depois de Minha semana desde a v803, por pedido do Raphael de colocar as
+datas acima das marcações. Mantêm os controles, as marcações, o histórico e o envio
 existentes; não podem voltar a ficar escondidos em uma seção recolhida.
 A foto do Início e o registro prático de séries da v794 permanecem.
 
