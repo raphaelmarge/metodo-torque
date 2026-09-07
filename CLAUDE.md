@@ -51,6 +51,33 @@ Série apenas anotada não é recorde nem volume; não copiar o alvo prescrito
 para os valores realizados. Histórico legado continua legível.
 
 
+### Revisão geral das ferramentas do Personal (mt-v791)
+
+As áreas restantes do painel usam camadas isoladas: `personal-gestao` para
+Financeiro/Relatórios/menu; `personal-acompanhamento.css` para Avaliações,
+Questionários e Desafio; `personal-comunicacao.css` para Chat/Assessoria;
+`personal-ferramentas` para Configurações, Personalização, Minha página,
+Imagens, Sua ilha e Ajuda. Os arquivos JS de gestão/ferramentas reagrupam os
+nós existentes depois do carregamento, sem clonar IDs. Todos entram no precache.
+Início, Alunos, Agenda, Perfil e Treinos mantêm as melhorias anteriores.
+
+O menu agrupa ferramentas e pesquisa nomes/sinônimos sem liberar áreas ocultas
+pelo papel do usuário. Os seletores móveis seguem os mesmos botões/roteadores
+das sub-abas. Campos avançados ficam em `details`; testes devem abrir seus
+ancestrais pela interação de `summary` antes de preencher.
+
+Financeiro filtra o histórico completo e exporta o resultado consultado,
+incluindo registros além da primeira página. Filtros de cobranças, contratos,
+planos, serviços e despesas são consultas: os totais do mês continuam gerais.
+Usar um plano como modelo prepara um novo cadastro e preserva contratos/preços
+existentes. O seletor de mês dos Relatórios usa o mesmo `relMesOff` das setas.
+
+Avaliações não reutiliza medidas ao trocar de aluno. Questionários, Chat e
+Assessoria descartam retornos atrasados e distinguem falha de leitura de lista
+vazia. Rascunhos de configuração, página, desafio e mensagens sobrevivem à
+navegação, com ações de salvar/descartar explícitas. Não alterar cálculos,
+políticas de acesso ou payloads remotos ao ajustar estas camadas visuais.
+
 ### Ferramentas de Treinos no personal (mt-v790)
 
 As sete áreas além de Musculação usam `.trx-section` e o acabamento isolado

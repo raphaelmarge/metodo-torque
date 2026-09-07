@@ -25,6 +25,10 @@ function ok(cond, nome) {
 
 // abre o menu lateral e clica na aba (menu vira gaveta com hambúrguer)
 async function abaPt(p, a) {
+  // Chamadas com a sessão fictícia podem deixar o aviso aberto. Fechá-lo pela
+  // própria ação visível permite navegar; a recuperação é testada separadamente.
+  const avisoSessao = p.locator('#faixaSessao');
+  if (await avisoSessao.isVisible()) await avisoSessao.getByRole('button', { name: 'Agora não', exact: true }).click();
   // no computador o menu já fica à vista; no celular é preciso abrir a gaveta
   const menu = p.locator("#btnMenuPt");
   if (await menu.isVisible()) await menu.click();
@@ -33,6 +37,14 @@ async function abaPt(p, a) {
 
 // Percorre os disclosures pela mesma interação visível que o professor usa.
 async function abreDetalhes(p, selector) {
+  // Personalização, página de vendas e Sua ilha distribuem controles em áreas.
+  // Escolha o destino visível antes de expandir seus detalhes.
+  const pane = await p.locator(selector).evaluate(el => {
+    const area = el.closest('.ptf-pane');
+    const select = area && area.parentElement.querySelector('.ptf-navigation select');
+    return area && area.hidden && select ? { select: select.id, value: area.dataset.ptfPane } : null;
+  });
+  if (pane) await p.locator('#' + pane.select).selectOption(pane.value);
   const ancestrais = p.locator(selector).locator("xpath=ancestor::details");
   for (let i = 0; i < await ancestrais.count(); i++) {
     const detalhe = ancestrais.nth(i);
@@ -383,6 +395,7 @@ async function abreDetalhes(p, selector) {
   ok(await p.evaluate(() =>
     !document.querySelector('[data-pgsec="planos"]').hidden &&
     document.querySelector('[data-pgsec="receb"]').hidden), "sub-aba Planos mostra só os planos");
+  await abreDetalhes(p, "#plNome");
   await p.fill("#plNome", "Mensal 3x");
   await p.fill("#plValor", "450");
   await p.selectOption("#plCiclo", "1");
@@ -429,6 +442,7 @@ async function abreDetalhes(p, selector) {
   await abaPt(p, "conta");
   ok(await p.evaluate(() => !document.getElementById("cardConta").hidden), "card da ilha aparece na aba Sua ilha");
   ok(await p.evaluate(() => document.getElementById("vAlunos").hidden), "a aba Sua ilha não mistura com a lista de alunos");
+  await abreDetalhes(p, "#cfgPixChave");
   await p.fill("#cfgPixChave", "raphael@torquefit.com.br");
   await p.fill("#cfgPixNome", "Raphael Margé");
   await p.fill("#cfgPixCidade", "Belo Horizonte");
@@ -501,6 +515,7 @@ async function abreDetalhes(p, selector) {
   ok(/wa\.me/.test(pix.zap) && /000201/.test(decodeURIComponent(pix.zap)), "mensagem do WhatsApp leva o copia-e-cola");
   await p.evaluate(() => document.getElementById("dlgPix").close());
 
+  await abreDetalhes(p, "#pAluno");
   await p.selectOption("#pAluno", { index: 1 });
   await p.fill("#pValor", "400");
   await p.click("#pAdd");
@@ -1672,6 +1687,7 @@ async function abreDetalhes(p, selector) {
   await p.selectOption("#avAluno", { index: 1 });
   ok(await p.evaluate(() => document.getElementById("avAltura").value === "175"),
     "escolher o aluno preenche a altura com a do cadastro");
+  await abreDetalhes(p, "#dbMetodo");
   await p.selectOption("#dbMetodo", "p3");
   const campos = await p.evaluate(() => Array.from(document.querySelectorAll("#dbCampos label")).map((l) => l.textContent));
   ok(/Peitoral/.test(campos[0]) && /Abdominal/.test(campos[1]) && /Coxa/.test(campos[2]), "Pollock 3 do aluno homem pede peitoral/abdominal/coxa (sexo vem do cadastro)");
@@ -1692,6 +1708,7 @@ async function abreDetalhes(p, selector) {
     "o resultado aparece na hora, com a fonte do cálculo e o atalho pro laudo");
   // Guedes com as mesmas medidas → 16,8%
   await p.selectOption("#avAluno", { index: 1 });
+  await abreDetalhes(p, "#dbMetodo");
   await p.selectOption("#dbMetodo", "guedes");
   await p.evaluate(() => {
     const ins = document.querySelectorAll(".dbIn");
@@ -1717,6 +1734,7 @@ async function abreDetalhes(p, selector) {
 
   // fita métrica no MESMO formulário (175 cm do cadastro; pescoço 38, cintura 85, quadril 95 → 16,9% e RCQ 0,89)
   await p.selectOption("#avAluno", { index: 1 });
+  await abreDetalhes(p, "#ccPescoco");
   await p.fill("#ccPescoco", "38");
   await p.fill("#avCintura", "85");
   await p.fill("#avQuadril", "95");
@@ -1756,6 +1774,7 @@ async function abreDetalhes(p, selector) {
   await p.evaluate(() => { document.getElementById("avBiaBox").open = true; });
   await p.selectOption("#avAluno", { index: 1 });
   await p.fill("#avPeso", "90");
+  await abreDetalhes(p, "#avGord");
   await p.fill("#avGord", "25");
   await p.click("#avAdd");
   await p.evaluate(() => {
@@ -1766,6 +1785,7 @@ async function abreDetalhes(p, selector) {
   });
   await p.selectOption("#avAluno", { index: 1 });
   await p.fill("#avPeso", "84");
+  await abreDetalhes(p, "#avGord");
   await p.fill("#avGord", "19.5");
   await p.click("#avAdd");
   const avs = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
@@ -2205,6 +2225,7 @@ async function abreDetalhes(p, selector) {
   ok(/350/.test(resumo2), "falta receber recalcula com a aluna nova (R$ 350)");
   // CSV de receita por aluno
   const dlRel = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+  await abreDetalhes(p, "#relCSV");
   await p.click("#relCSV");
   const arqRel = await dlRel;
   ok(!!arqRel && /receita-por-aluno/.test(arqRel.suggestedFilename()), "CSV de receita por aluno baixa");
@@ -2258,6 +2279,7 @@ async function abreDetalhes(p, selector) {
   await abaPt(p, "relatorios");
   await p.evaluate(() => window.__relAba && window.__relAba("geral"));
   await p.waitForTimeout(200);
+  await abreDetalhes(p, "#mtFatP");
   await p.fill("#mtFatP", "1000");
   await p.click("#mtSalvarP");
   ok(await p.evaluate(() => /meta R\$\s?1\.000/.test(document.getElementById("mtPainelP").textContent) && /projeção/.test(document.getElementById("mtPainelP").textContent)),
@@ -3142,25 +3164,22 @@ async function abreDetalhes(p, selector) {
       "🎨 1a: aniversários, metas, indicadores e alertas saíram do Início e moram em Relatórios → Do dia a dia");
     ok(/Relatórios/.test(mudou.nota),
       "🎨 Início compacto: o atalho Relatórios mantém os indicadores detalhados acessíveis");
-    // barra lateral: as 6 do dia a dia em cima, o resto sob MENOS USADO
+    // As mesmas áreas agora estão organizadas em cinco grupos de trabalho.
     const menu1a = await p.evaluate(() => {
       const bs = [...document.querySelectorAll("#abas button[data-a]")];
-      const grupo = document.querySelector("#abas .navgrupo");
-      const antes = [], depois = [];
-      let passou = false;
+      const grupos = [];
       [...document.querySelector("#abas").children].forEach((el) => {
-        if (el.classList.contains("navgrupo")) { passou = true; return; }
+        if (el.classList.contains("fg-menu-group")) { grupos.push({ nome: el.textContent.trim(), abas: [] }); return; }
         if (!el.dataset || !el.dataset.a) return;
-        (passou ? depois : antes).push(el.dataset.a);
+        if (grupos.length) grupos[grupos.length - 1].abas.push(el.dataset.a);
       });
-      return { total: bs.length, grupo: grupo ? grupo.textContent : "", antes, depois,
+      return { total: bs.length, unicas: new Set(bs.map(b => b.dataset.a)).size, grupos,
         contadores: [...document.querySelectorAll("#abas .cnt")].map((c) => c.parentElement.dataset.a) };
     });
-    // v706: a aba Ajuda entrou no grupo de baixo — 16 viraram 17 (10 → 11)
-    ok(menu1a.total === 17 && /Menos usado/i.test(menu1a.grupo),
-      "🎨 menu: as 17 abas continuam todas lá, cortadas em dois grupos");
-    ok(menu1a.antes.join(",") === "dash,alunos,agenda,pagamentos,treinos,chat" && menu1a.depois.length === 11,
-      "🎨 menu: as 6 do dia a dia em cima (" + menu1a.antes.join(", ") + ")");
+    ok(menu1a.total === 17 && menu1a.unicas === 17 && menu1a.grupos.map(g => g.nome).join('|') === 'Rotina|Acompanhamento|Gestão|Sua marca|Preferências',
+      "🎨 menu: as 17 áreas únicas continuam acessíveis em cinco grupos nomeados");
+    ok(menu1a.grupos.map(g => g.abas.join(',')).join('|') === 'dash,alunos,agenda,treinos,chat|avaliacoes,quest,assessoria,desafio|pagamentos,relatorios|sitepro,pers,imagens|config,conta,ajuda',
+      "🎨 menu: cada grupo mantém suas áreas e a rotina fica primeiro");
     ok(menu1a.contadores.indexOf("alunos") > -1,
       "🎨 menu: as abas do dia a dia mostram o contador do que está esperando");
 
@@ -4923,10 +4942,13 @@ async function abreDetalhes(p, selector) {
   ok(play.botoes, "🎵 o app ganha o botão na faixa Meu treino e a pílula música no player guiado");
   ok(play.semLink, "🎵 sem link configurado, nenhum botão aparece");
   const playCfg = await p.evaluate(async () => {
+    const anterior = (window.MTStore.read("ptStudio", {}).config || {}).playlistUrl;
     document.getElementById("cfgPlaylist").value = "minha playlist sem link";
     document.getElementById("cfgSalva").click();
     await new Promise((r) => setTimeout(r, 300));
     const v1 = (window.MTStore.read("ptStudio", {}).config || {}).playlistUrl;
+    const erro = document.getElementById("cfgStatus").textContent;
+    const rascunho = document.getElementById("cfgPlaylist").value;
     document.getElementById("cfgPlaylist").value = "https://music.youtube.com/x";
     document.getElementById("cfgSalva").click();
     await new Promise((r) => setTimeout(r, 300));
@@ -4934,10 +4956,11 @@ async function abreDetalhes(p, selector) {
     document.getElementById("cfgPlaylist").value = "";
     document.getElementById("cfgSalva").click();
     await new Promise((r) => setTimeout(r, 300));
-    return { v1, v2 };
+    const v3 = (window.MTStore.read("ptStudio", {}).config || {}).playlistUrl;
+    return { anterior, v1, v2, v3, erro, rascunho };
   });
-  ok(playCfg.v1 === "" && playCfg.v2 === "https://music.youtube.com/x",
-    "🎵 texto sem http não é guardado — só link de verdade vira botão");
+  ok(playCfg.v1 === playCfg.anterior && /precisa começar/.test(playCfg.erro) && playCfg.rascunho === 'minha playlist sem link' && playCfg.v2 === "https://music.youtube.com/x" && playCfg.v3 === '',
+    "🎵 link inválido conserva o salvo e o rascunho com aviso; corrigir salva e apagar remove a playlist");
 
   // 📅 v723: sessão FIXA sem data de fim — a agenda cria as próximas semanas
   // sozinha, cancelada não volta, e o Encerrar limpa só as futuras
@@ -6972,8 +6995,10 @@ async function abreDetalhes(p, selector) {
       ok(barras.length >= 4 && frouxas.length === 0,
         "no celular toda barra de sub-abas preenche a linha inteira" +
         (frouxas.length ? " — sobra em " + frouxas.map((f) => f.id + " (" + f.sobraMax + "px)").join(", ") : ""));
-      const ds = barras.find((b) => b.id === "dsAbas");
-      ok(ds && ds.n === 3 && ds.linhas === 1, "as 3 abas do Desafio cabem numa linha só (era 2+1)");
+      await abaPt(p, 'desafio');
+      await p.selectOption('#dsArea', 'config');
+      const ds = await p.locator('#dsArea').evaluate(el => ({ opcoes: [...el.options].map(o => o.value), largura: el.getBoundingClientRect().width, sincronizado: document.querySelector('#dsAbas .ativa').dataset.dsa === el.value }));
+      ok(ds.largura >= 180 && ds.opcoes.join(',') === 'config,placar,feed' && ds.sincronizado, "o seletor móvel do Desafio oferece as três áreas e mantém a aba sincronizada");
       // e o formulário do desafio para de cortar o prêmio no meio da palavra
       const form = await p.evaluate(() => {
         // a seção precisa estar à mostra, senão as medidas voltam zeradas
@@ -7435,10 +7460,12 @@ async function abreDetalhes(p, selector) {
       "🎨 3b: dor ALTA e disposição BAIXA pedem atenção — o sentido da pergunta é respeitado");
   }
   await p.evaluate(() => window.__qtAba("montar"));
+  await abreDetalhes(p, "#qpSigla");
   await p.fill("#qpSigla", "motex");
   await p.fill("#qpTitulo", "Motivação");
   await p.fill("#qpTexto", "Qual foi sua motivação pra treinar nos últimos 7 dias?");
   await p.click("#qpAdd");
+  await abreDetalhes(p, "#qpSigla");
   await p.fill("#qpSigla", "AEROB");
   await p.fill("#qpTitulo", "Aeróbico");
   await p.selectOption("#qpTipo", "linear");
@@ -7446,6 +7473,7 @@ async function abreDetalhes(p, selector) {
   await p.click("#qpAdd");
   const qpTxt = await p.evaluate(() => document.getElementById("qpLista").textContent);
   ok(/MOTEX/.test(qpTxt) && /AEROB/.test(qpTxt), "perguntas salvas com sigla em maiúsculas (MOTEX, AEROB)");
+  await abreDetalhes(p, "#qqNome");
   await p.fill("#qqNome", "Check-in semanal");
   await p.evaluate(() => document.querySelectorAll(".qqCheck").forEach((c) => { c.checked = true; }));
   await p.click("#qqAdd");
@@ -10186,7 +10214,7 @@ async function abreDetalhes(p, selector) {
       };
     });
     ok(/Resumo/.test(b4a.aba), "🎨 4a: Configurações abre no Resumo");
-    ok(/ligado|Falta ligar/i.test(b4a.titulo), "🎨 4a: o título conta o estado em uma frase (" + b4a.titulo + ")");
+    ok(b4a.titulo === 'Conexões e preferências', "🎨 Configurações: título descreve a área sem afirmar que serviços opcionais estão ligados");
     ok(/aparelho|Nuvem/.test(b4a.nuvem), "🎨 4a: o selo diz se está sincronizado com a nuvem");
     ok(b4a.cards.length === 3 && /Receber dos alunos/.test(b4a.cards[0]) && /WhatsApp/.test(b4a.cards[1]) && /App dos alunos/.test(b4a.cards[2]),
       "🎨 4a: um card por grupo, cada um dizendo o próprio estado");
@@ -10256,9 +10284,11 @@ async function abreDetalhes(p, selector) {
     ok(/não conta visitas nem pedidos/.test(b4e.numeros),
       "🎨 4e: o painel diz que ainda NÃO conta visitas nem pedidos, em vez de mostrar número inventado");
   }
+  await abreDetalhes(p, "#spSlug");
   await p.fill("#spSlug", "Studio Teste!");
   await p.fill("#spHeadline", "Treine de verdade");
   await p.fill("#spBio", "Sou o professor <b>Teste</b> & cia");
+  await abreDetalhes(p, "#spInsta");
   await p.fill("#spInsta", "@studioteste");
   await p.fill("#spThreads", "@studioteste");
   await p.fill("#spYoutube", "studioteste");
@@ -14883,6 +14913,7 @@ async function abreDetalhes(p, selector) {
     pX.on("dialog", (d) => (d.type() === "prompt" ? d.accept(digitado) : confirmar ? d.accept() : d.dismiss()));
 
     // cancelar no meio não pode apagar nada
+    await abreDetalhes(pX, "#cfgExcluir");
     await pX.click("#cfgExcluir");
     await pX.waitForTimeout(200);
     ok(await pX.evaluate(() => !!localStorage.getItem("mtapp:ptStudio")),
@@ -14890,6 +14921,7 @@ async function abreDetalhes(p, selector) {
 
     // digitar errado também não
     confirmar = true; digitado = "excluir tudo";
+    await abreDetalhes(pX, "#cfgExcluir");
     await pX.click("#cfgExcluir");
     await pX.waitForTimeout(300);
     ok(await pX.evaluate(() => !!localStorage.getItem("mtapp:ptStudio")),
@@ -14897,6 +14929,7 @@ async function abreDetalhes(p, selector) {
 
     // confirmando as duas etapas, apaga
     digitado = "EXCLUIR";
+    await abreDetalhes(pX, "#cfgExcluir");
     await pX.click("#cfgExcluir");
     await pX.waitForTimeout(600);
     const depois = await pX.evaluate(() => ({

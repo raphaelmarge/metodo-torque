@@ -1859,6 +1859,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   body:not(.menu-fino) .abas-pt button.pouco .mi, nav button.pouco .mi { display: none; }
 </style>
 <link href="assets/personal-usabilidade.css" rel="stylesheet">
+<link href="assets/personal-gestao.css" rel="stylesheet">
+<link href="assets/personal-acompanhamento.css" rel="stylesheet">
+<link href="assets/personal-ferramentas.css" rel="stylesheet">
+<link href="assets/personal-comunicacao.css" rel="stylesheet">
+<script defer src="assets/personal-gestao.js"></script>
+<script defer src="assets/personal-ferramentas.js"></script>
 </head>
 <body>
 
@@ -2683,13 +2689,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- AVALIAÇÕES -->
   <section id="vAvaliacoes" hidden>
+    <header class="acx-heading"><h1>Avaliações</h1><p>Registre as medidas e acompanhe a evolução de cada aluno.</p></header>
+    <label class="acx-area" for="avArea">Área de avaliações<select id="avArea"><option value="avaliar">Nova avaliação</option><option value="historico">Histórico e evolução</option></select></label>
     <div class="abas" id="avAbas" style="margin: 0 0 14px;">
       <button data-ava="avaliar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg> Avaliar</button>
       <button data-ava="historico"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Histórico e evolução</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Nova avaliação física</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). O sexo dá pra escolher aqui mesmo (salva no cadastro); a idade vem da data de nascimento; a altura preenche sozinha com a do cadastro — medir de novo aqui atualiza lá.</p>
+      <p class="acx-help">Escolha o aluno e preencha apenas o que foi medido. Sexo e altura atualizam o cadastro; a idade vem da data de nascimento.</p>
+      <details class="acx-details"><summary>Como o resultado é calculado</summary><p>O percentual medido na balança tem prioridade sobre dobras cutâneas (densidade e equação de Siri), que têm prioridade sobre a fita (Marinha americana). A origem aparece no laudo.</p></details>
       <div class="linha-flex" style="flex-wrap: wrap;">
         <select id="avAluno" style="min-width: 180px;"></select>
         <input id="avData" type="date" style="width: auto;">
@@ -2699,7 +2708,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div id="avAlunoAviso" class="muted" style="margin-top: 6px; font-size: 12.5px;"></div>
 
-      <div class="muted" style="margin: 16px 0 4px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Dobras cutâneas (adipômetro, mm) — opcional</div>
+      <details id="avDobrasBox" class="acx-details"><summary>Dobras cutâneas <small>Opcional · adipômetro, mm</small></summary>
       <p class="muted" style="margin: 0 0 8px; font-size: 12px;">Escolha o protocolo e meça. Preencheu as dobras (e não digitou um % já medido)? O % de gordura sai por elas.</p>
       <div class="linha-flex">
         <select id="dbMetodo" style="width: auto;">
@@ -2709,8 +2718,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </select>
       </div>
       <div id="dbCampos" class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;"></div>
+      </details>
 
-      <div class="muted" style="margin: 16px 0 4px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Fita métrica (cm) — opcional</div>
+      <details id="avFitaBox" class="acx-details"><summary>Fita métrica <small>Opcional · circunferências, cm</small></summary>
       <p class="muted" style="margin: 0 0 8px; font-size: 12px;">Pescoço + cintura (e, pra mulher, também o quadril) destravam o % de gordura pela Marinha americana — precisa da altura no cadastro. Cintura + quadril dão a relação cintura-quadril com o risco.</p>
       <div class="linha-flex" style="flex-wrap: wrap;">
         <input id="ccPescoco" type="number" step="0.1" min="0" placeholder="Pescoço cm" style="width: 110px;">
@@ -2723,8 +2733,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="ccCoxa" type="number" step="0.1" min="0" placeholder="Coxa cm" style="width: 95px;">
         <input id="ccPanturrilha" type="number" step="0.1" min="0" placeholder="Panturrilha cm" style="width: 125px;">
       </div>
-      <details id="avBiaBox" style="margin-top: 16px; border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px;">
-        <summary style="cursor: pointer; font-weight: 700; font-size: 13.5px;">Já tem o % medido? Balança de bioimpedância (InBody, Omron, Tanita…) — opcional</summary>
+      </details>
+      <details id="avBiaBox" class="acx-details">
+        <summary>Bioimpedância <small>Opcional · valores medidos no aparelho</small></summary>
         <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Digite o que o aparelho mostrou. Números medidos entram no lugar dos calculados e o laudo passa a dizer <b>medido</b>. O que você deixar em branco o sistema calcula.</p>
         <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
           <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura medido" style="width: 145px;">
@@ -2840,11 +2851,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <select id="avCmpAluno" style="min-width: 220px;"><option value="">— aluno —</option></select>
     </div>
     <div id="avCmp" data-avsec="historico" hidden></div>
-    <div class="card" data-avsec="historico" hidden><h2>Todas as medições</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
+    <div class="card" data-avsec="historico" hidden><h2>Todas as medições</h2>
+      <div class="acx-toolbar"><label class="acx-field" for="avHistBusca">Buscar aluno<input id="avHistBusca" type="search" placeholder="Nome do aluno"></label><label class="acx-field" for="avHistDe">De<input id="avHistDe" type="date"></label><label class="acx-field" for="avHistAte">Até<input id="avHistAte" type="date"></label><button type="button" class="btn sec" id="avHistLimpar">Limpar filtros</button></div>
+      <p id="avHistResultado" class="acx-help" role="status"></p><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
 
   <!-- QUESTIONÁRIOS (check-ins personalizados, estilo LiveClin) -->
   <section id="vQuest" hidden>
+    <header class="acx-heading"><h1>Questionários</h1><p>Acompanhe as respostas e prepare os próximos check-ins.</p></header>
+    <label class="acx-area" for="qtArea">Área de questionários<select id="qtArea"><option value="semana">A semana</option><option value="enviar">Enviar ao aluno</option><option value="montar">Perguntas e questionários</option><option value="resp">Respostas recebidas</option></select></label>
     <div class="abas" id="qtAbas" style="margin: 0 0 14px;">
       <button data-qta="semana" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 10h17M8 3v4M16 3v4'/><path d='m8.5 15 2 2 4-4'/></svg> A semana</button>
       <button data-qta="enviar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro aluno</button>
@@ -2862,12 +2877,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button type="button" class="dbt" id="qsMontar">Montar pergunta</button>
       </div>
     </div>
+    <div class="acx-toolbar" data-qtsec="semana"><label class="acx-field" for="qsBusca">Buscar aluno<input id="qsBusca" type="search" placeholder="Nome do aluno"></label><label class="acx-field" for="qsFiltro">Situação<select id="qsFiltro"><option value="todos">Todos</option><option value="atencao">Pede atenção</option><option value="bem">Tudo bem</option><option value="faltam">Não responderam</option></select></label><p id="qsResultados" class="acx-help" role="status"></p></div>
     <div class="qspanel" data-qtsec="semana">
       <div class="qslista" id="qsLista"></div>
       <div id="qsDet"></div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Minhas perguntas</h2>
+      <label class="acx-field" for="qpBusca">Buscar pergunta<input id="qpBusca" type="search" placeholder="Sigla, título ou pergunta"></label>
+      <p id="qpResultado" class="acx-help" role="status"></p>
+      <details id="qpNovoBox" class="acx-details"><summary>Nova pergunta</summary>
       <p class="muted" style="margin: 4px 0 10px;">Crie perguntas com escala de emojis (com pontuação), escala de 0 a 10 ou resposta livre — e monte questionários pra mandar pros alunos.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
         <input id="qpSigla" placeholder="Sigla (ex.: MOTEX)" maxlength="5" style="width: 130px; text-transform: uppercase;">
@@ -2891,16 +2910,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </div>
       </div>
       <button class="btn" id="qpAdd" style="margin-top: 10px;">+ Salvar pergunta</button>
+      </details>
       <div id="qpLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhuma pergunta ainda.</div>
     </div>
 
     <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Questionários</h2>
+      <details id="qqNovoBox" class="acx-details"><summary>Novo questionário</summary>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <input id="qqNome" placeholder="Nome (ex.: Check-in semanal)" style="width: 240px;">
         <button class="btn" id="qqAdd">+ Criar questionário</button>
       </div>
       <div id="qqPerguntas" class="muted" style="margin-top: 8px; font-size: 13px;"></div>
+      </details>
       <div id="qqLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhum questionário ainda.</div>
     </div>
 
@@ -2911,9 +2933,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <select id="qeQuest" style="min-width: 190px;"></select>
         <button class="btn" id="qeGerar">Gerar link</button>
       </div>
-      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: center;">
-        <label class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 6px;">Libera em <input type="date" id="qeData" style="width: 150px;"></label>
-        <label class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="qeSemanal"> repete toda semana</label>
+      <div class="acx-fields">
+        <label class="acx-field" for="qeData">Disponível a partir de<input type="date" id="qeData"></label>
+        <label class="acx-check"><input type="checkbox" id="qeSemanal"> Repetir toda semana</label>
         <button class="btn sec" id="qeApp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Mandar pro app do aluno</button>
       </div>
       <p id="qeAppAviso" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
@@ -2930,19 +2952,22 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" data-qtsec="resp" hidden>
       <h2>Respostas recebidas</h2>
+      <div class="acx-toolbar"><label class="acx-field" for="qrBusca">Buscar respostas<input id="qrBusca" type="search" placeholder="Aluno ou questionário"></label><button type="button" class="btn sec" id="qrAtualizar">Atualizar respostas</button></div><p id="qrResultado" class="acx-help" role="status"></p>
       <div id="qRespostas" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
   </section>
 
   <!-- DESAFIO EM GRUPO (estilo GymRats) -->
   <section id="vDesafio" hidden>
+    <header class="acx-heading"><h1>Desafio da turma</h1><p>Organize o período, acompanhe o placar e modere a comunidade.</p></header>
+    <label class="acx-area" for="dsArea">Área do desafio<select id="dsArea"><option value="config">Configurar desafio</option><option value="placar">Placar</option><option value="feed">Comunidade</option></select></label>
     <div class="abas" id="dsAbas" style="margin: 0 0 14px;">
       <button data-dsa="config" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg> Desafio</button>
       <button data-dsa="placar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Placar</button>
       <button data-dsa="feed"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/></svg> Comunidade</button>
     </div>
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-dssec="config">
-      <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg> Desafio do studio (estilo GymRats)</h2>
+      <h2>Configurar desafio</h2>
       <p class="muted" style="margin: 4px 0 10px;">Crie um desafio com período e prêmio: cada "Treinei hoje!" que o aluno marcar no app conta ponto, e o placar aparece pra turma toda — no seu módulo e no app de cada aluno.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
         <input id="dsNome" placeholder="Nome (ex.: 30 dias TORQUE)" style="width: 220px;">
@@ -2953,6 +2978,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
         <button class="btn" id="dsSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar desafio</button>
         <button class="btn sec" id="dsMes" style="white-space:nowrap;">Desafio deste mês</button>
+        <button class="btn sec" id="dsDescartar" type="button" hidden>Descartar alterações</button>
         <button class="btn sec" id="dsEncerrar" style="white-space:nowrap;">Encerrar desafio</button>
         <span id="dsStatus" class="muted" style="font-size: 12.5px;"></span>
         <span id="dsPub" class="muted" style="font-size: 12.5px;"></span>
@@ -2961,6 +2987,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" data-dssec="placar" hidden>
       <h2>Placar</h2>
+      <div class="acx-toolbar"><label class="acx-field" for="dsBusca">Buscar participante<input id="dsBusca" type="search" placeholder="Nome no placar"></label><button type="button" class="btn sec" id="dsAtualizar">Atualizar placar</button></div><p id="dsResultado" class="acx-help" role="status"></p>
       <div id="dsRanking" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
     <!-- tela 4d do canvas: a moderacao mora no proprio post -->
@@ -2978,7 +3005,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div id="fdmAviso" class="muted" style="font-size: 12.5px; margin-bottom: 10px;"></div>
       <div class="linha-flex" style="margin-bottom: 10px;">
         <button class="btn sec" id="fdmRecarrega">Atualizar</button>
-        <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 0;"><input type="checkbox" id="fdmOcultos" style="width: 16px; height: 16px;"> mostrar os escondidos</label>
+        <label class="acx-check"><input type="checkbox" id="fdmOcultos"> Mostrar posts escondidos</label>
       </div>
       <div id="fdmLista" class="muted">Carregando…</div>
       <div class="dnota" style="margin-top:14px;">Você modera daqui: <b>esconder</b> um post (some do app de todo mundo na hora), <b>apagar</b> de vez, ou desligar o feed pra turma inteira no interruptor lá em cima.</div>
@@ -3199,7 +3226,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="cqPersMeta" type="number" min="1" max="5000" placeholder="Meta (treinos)" style="width: 130px;">
         <button class="btn" id="cqPersAdd">Adicionar</button>
       </div>
-      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Criou ou tirou alguma? Toque em <b>Publicar apps atualizados</b> (Treinos → Em grupo) pros alunos verem.</p>
+      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Criou ou removeu uma conquista? Use <b>Publicar</b> no topo da Personalização para atualizar os alunos.</p>
     </div>
   </section>
 
@@ -3547,10 +3574,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </section>
 
   <section id="vAssessoria" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="pc-heading">
       <h2>Acompanhamento a distância</h2>
-      <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem sumir fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
+      <p class="muted">Veja quem precisa de atenção e acompanhe os registros recentes do app.</p>
     </div>
+    <div id="assessoriaResumo" class="pc-kpis" hidden></div>
+    <div class="pc-toolbar" id="assessoriaFiltros">
+      <label class="pc-field" for="assessoriaBusca">Buscar aluno<input type="search" id="assessoriaBusca" placeholder="Nome ou telefone" autocomplete="off"></label>
+      <label class="pc-field" for="assessoriaFiltro">Mostrar<select id="assessoriaFiltro"><option value="todos">Todos os alunos</option><option value="atencao">Precisam de atenção</option><option value="meta">Meta alcançada</option><option value="semregistro">Sem registros</option><option value="semacesso">Sem acesso ao app</option></select></label>
+      <button type="button" class="btn sec" id="assessoriaAtualiza">Atualizar registros</button>
+    </div>
+    <p id="assessoriaStatus" class="pc-status" role="status" aria-live="polite"></p>
     <div id="assessoriaLista" class="muted"><div class="card">Carregando…</div></div>
   </section>
 
@@ -3564,7 +3598,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="chpanel" data-chsec="conversas">
       <div class="chlado">
         <div class="chcab"><b>Conversas</b><span class="qsn" id="chNovas" hidden>0</span></div>
-        <div class="chbusca"><input id="chatBusca" placeholder="Buscar aluno" autocomplete="off"></div>
+        <div class="chbusca"><label class="pc-field" for="chatBusca">Buscar conversa<input id="chatBusca" type="search" placeholder="Nome ou telefone" autocomplete="off"></label>
+          <label class="pc-field" for="chatFiltro">Mostrar<select id="chatFiltro"><option value="todas">Todas as conversas</option><option value="novas">Não lidas</option><option value="rascunhos">Com rascunho</option></select></label>
+          <div class="pc-chat-status"><span id="chatListaStatus" role="status" aria-live="polite"></span><button type="button" class="btn sec mini" id="chatAtualiza" aria-label="Atualizar conversas">Atualizar</button></div>
+        </div>
         <div id="chatAlunos"></div>
       </div>
       <div class="chconv">
@@ -3581,13 +3618,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <button type="button" class="btn sec" id="chatFicha" hidden>Abrir ficha</button>
           </div>
         </div>
+        <div class="pc-chat-sync"><span id="chatLeituraStatus" role="status" aria-live="polite"></span><button type="button" class="btn sec mini" id="chatTenta" hidden>Tentar novamente</button></div>
         <div id="chatMsgs"></div>
         <div id="chatEnvio" hidden>
           <div class="chrapidas" id="chatRapidas"></div>
           <div class="linha-flex" style="gap:8px;">
-            <input id="chatTexto" placeholder="Escrever pro aluno…" style="flex: 1; min-width: 150px;">
+            <label class="pc-sr" for="chatTexto">Mensagem para o aluno selecionado</label>
+            <textarea id="chatTexto" rows="2" maxlength="1000" placeholder="Escrever pro aluno…"></textarea>
             <button class="btn" id="chatEnviar" aria-label="enviar a mensagem">Enviar</button>
           </div>
+          <div class="pc-chat-hint"><span>Enter envia · Shift + Enter cria uma linha</span><span id="chatContagem">0/1000</span></div>
           <!-- v755: envio que falhou tem de aparecer; antes o texto sumia calado -->
           <p id="chatEnvioErro" hidden style="margin: 6px 0 0; font-size: 12.5px; color: var(--tk-erro);"></p>
         </div>
@@ -3601,7 +3641,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="botOiP" style="width: 100%; margin: 4px 0 10px;"></label>
       <label style="font-size: 12.5px;">Opções do menu — uma por linha, no formato <b>Rótulo | Resposta</b> (escreva <b>humano</b> na resposta pra encaminhar pra você)
         <textarea id="botOpsP" rows="5" style="width: 100%; margin: 4px 0 10px; font-family: inherit; font-size: 13px; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;"></textarea></label>
-      <div class="linha-flex"><button class="btn" id="botSalvaP">Salvar robô</button><span id="botOkP" class="muted"></span></div>
+      <div class="linha-flex"><button class="btn" id="botSalvaP">Salvar robô</button><button class="btn sec" id="botCancelaP" hidden>Descartar alterações</button><span id="botOkP" class="muted" role="status"></span></div>
       <!-- v756: chamava-se "Automações", o MESMO nome do card de Configurações →
            WhatsApp, que é outra coisa (a fila de mensagens prontas). Quem criava
            uma "automação" de aluno sumido lá procurava aqui e achava outro
@@ -3951,6 +3991,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     idxInvalida();
     var gravou = S.write("ptStudio", st);
     if (!gravou || !ouvinteRender) render();
+    return gravou;
   }
   window.__renderPT = function () { idxInvalida(); render(); }; // testes (v749): repinta tudo sem recarregar
 
@@ -4506,6 +4547,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ] },
   ];
   var ajAberto = null; // id do tópico aberto (null = índice; "_chamado" = suporte)
+  var ajBuscaTermo = "", ajSuporteEl = null, ajSuporteConta = "";
+  function filtraAjuda() {
+    var busca = alTextoBusca(ajBuscaTermo), encontrados = 0;
+    document.querySelectorAll("#vAjuda .ajgrid [data-ajtopico]").forEach(function (bt) {
+      var tp = AJUDA_PT.find(function (x) { return x.id === bt.getAttribute("data-ajtopico"); });
+      var conteudo = tp ? [tp.t, tp.d].concat(tp.subs.map(function (s) { return s.t + " " + s.p.join(" "); })).join(" ").replace(/<[^>]*>/g, " ") : "";
+      bt.hidden = !!busca && !alTextoBusca(conteudo).includes(busca);
+      if (!bt.hidden) encontrados++;
+    });
+    if ($("ajBuscaVazia")) $("ajBuscaVazia").hidden = encontrados > 0;
+    if ($("ajBuscaTotal")) $("ajBuscaTotal").textContent = encontrados + (encontrados === 1 ? " tópico encontrado" : " tópicos encontrados");
+  }
   /* ==== CHAMADO DE SUPORTE (v708) ====
    * Abre um chamado com PROTOCOLO gerado no servidor (função `suporte`): o
    * registro fica na tabela suporte_chamados (rastreável — o professor lê os
@@ -4560,11 +4613,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function enviaChamado() {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) return;
+    if (!nuvem || !$("supMsg") || $("supEnvia").disabled) return;
     var msg = ($("supMsg").value || "").trim();
     var st9 = $("supStatus");
     if (msg.length < 10) { st9.textContent = "Escreva um pouco mais (pelo menos 10 letras) pra gente entender."; return; }
+    if ($("supEmail").value.trim() && !$("supEmail").checkValidity()) { st9.textContent = "Confira o e-mail para receber a resposta."; $("supEmail").focus(); return; }
     var bt = $("supEnvia");
+    var campoMsg = $("supMsg"), proto = $("supProto"), entrega = $("supEntrega"), caixaOk = $("supOk");
+    var textoEnviado = campoMsg.value;
     bt.disabled = true; st9.textContent = "Abrindo o chamado…";
     MT_FUNCAO.chama(nuvem.client, "suporte", {
       acao: "abrir", aid: nuvem.aid, tipo: $("supTipo").value,
@@ -4576,13 +4632,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       bt.disabled = false;
       if (!r || !r.ok || !r.protocolo) { st9.textContent = (r && r.erro) || "Não deu pra abrir agora — tente de novo."; return; }
       st9.textContent = "";
-      $("supMsg").value = "";
-      $("supProto").textContent = r.protocolo;
-      $("supEntrega").textContent = r.emailEnviado === false
+      if (campoMsg.value === textoEnviado) campoMsg.value = "";
+      proto.textContent = r.protocolo;
+      entrega.textContent = r.emailEnviado === false
         ? "Chamado registrado. O aviso por e-mail não foi enviado; acompanhe o andamento e a resposta na lista abaixo."
         : "Chamado registrado. Acompanhe o andamento e a resposta na lista abaixo.";
-      $("supOk").hidden = false;
-      carregaChamados();
+      caixaOk.hidden = false;
+      if (document.contains(caixaOk)) carregaChamados();
     });
   }
   window.__ajudaSup = { envia: enviaChamado, lista: carregaChamados }; // testes
@@ -4590,25 +4646,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var el = $("vAjuda");
     var mio = "";
     if (ajAberto === "_chamado") {
-      mio = "<button type='button' class='btn sec mini' data-ajvolta style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
-        "<div class='altopo'><div><div class='alk'>Suporte</div><div class='alh'>Falar com a gente</div></div></div>" +
-        renderAjudaChamado();
-      el.innerHTML = mio;
+      var nuvemSuporte = S.cloud && S.cloud(), contaSuporte = nuvemSuporte ? nuvemSuporte.aid : "local";
+      if (!ajSuporteEl || ajSuporteConta !== contaSuporte) {
+        ajSuporteConta = contaSuporte; ajSuporteEl = document.createElement("div");
+        ajSuporteEl.innerHTML = "<button type='button' class='btn sec mini' data-ajvolta style='margin-bottom:12px;'>‹ Todos os tópicos</button>" +
+          "<div class='altopo'><div><div class='alk'>Suporte</div><div class='alh'>Falar com a gente</div></div></div>" + renderAjudaChamado();
+      }
+      el.replaceChildren(ajSuporteEl);
       carregaChamados();
       // preenche o e-mail com o do login, sem travar o render
       var nv9 = S.cloud && S.cloud();
+      var inp = $("supEmail");
       if (nv9 && nv9.client.auth && nv9.client.auth.getSession) {
         nv9.client.auth.getSession().then(function (s) {
           var em9 = s && s.data && s.data.session && s.data.session.user && s.data.session.user.email;
-          var inp = $("supEmail");
           if (em9 && inp && !inp.value) inp.value = em9;
-        });
+        }).catch(function () {});
       }
       return;
     }
     if (!ajAberto) {
       mio = "<div class='altopo'><div><div class='alk'>Central de ajuda</div><div class='alh'>Como usar cada área</div></div></div>" +
         "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Toque num tópico pra ver o passo a passo — com figuras mostrando onde tocar.</p>" +
+        "<div class='ptf-help-search'><label class='ptf-field' for='ajBusca'>O que você quer fazer?<input id='ajBusca' type='search' placeholder='Ex.: cobrar, publicar treino, senha' value='" + esc(ajBuscaTermo) + "'></label><p id='ajBuscaTotal' class='muted' role='status' style='font-size:12px;margin:8px 0;'></p></div>" +
         // o chamado é a porta mais importante da Ajuda: fica em cima, destacado
         "<button type='button' class='ajcard ajsup' data-ajtopico='_chamado' style='width:100%;margin-bottom:12px;border-color:var(--pt-roxo);'>" +
         "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 6.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z'/><path d='m4.5 7 7.5 6 7.5-6'/></svg></span>" +
@@ -4617,7 +4677,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return "<button type='button' class='ajcard' data-ajtopico='" + tp.id + "'>" +
             "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + tp.ic + "</svg></span>" +
             "<span style='flex:1;min-width:0;'><b>" + tp.t + "</b><i>" + tp.d + "</i></span></button>";
-        }).join("") + "</div>";
+        }).join("") + "</div><p id='ajBuscaVazia' class='muted ptf-help-empty' hidden>Nenhum tópico encontrado. Tente outra palavra ou abra um chamado no suporte.</p>";
     } else {
       var tp2 = AJUDA_PT.filter(function (x) { return x.id === ajAberto; })[0];
       if (!tp2) { ajAberto = null; return renderAjuda(); }
@@ -4630,7 +4690,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("");
     }
     el.innerHTML = mio;
+    if (!ajAberto) filtraAjuda();
   }
+  $("vAjuda").addEventListener("input", function (e) { if (e.target.id === "ajBusca") { ajBuscaTermo = e.target.value; filtraAjuda(); } });
   $("vAjuda").addEventListener("click", function (e) {
     if (e.target.closest && e.target.closest("#supEnvia")) { enviaChamado(); return; }
     var c = e.target.closest && e.target.closest("[data-ajtopico]");
@@ -8399,6 +8461,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__buscaPT = pintaBuscaAluno; // testes
 
   // ---------- questionários personalizados (check-ins estilo LiveClin) ----------
+  function acxTexto(v) { return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+  function acxFiltra(boxId, buscaId, seletor, resultadoId) {
+    var termo = acxTexto($(buscaId).value), itens = $(boxId).querySelectorAll(seletor), visiveis = 0;
+    Array.prototype.forEach.call(itens, function (item) {
+      item.hidden = acxTexto(item.getAttribute("data-acx-busca") || item.textContent).indexOf(termo) < 0;
+      if (!item.hidden) visiveis++;
+    });
+    if (resultadoId) $(resultadoId).textContent = itens.length ? visiveis + " de " + itens.length + " resultado(s)" + (!visiveis ? " — tente outro nome ou limpe a busca." : "") : "";
+    return visiveis;
+  }
+  var qeOperacao = 0;
+  function limpaSaidaQuest() {
+    qeOperacao++;
+    $("qeSaida").hidden = true; $("qeLink").value = ""; $("qeZap").removeAttribute("href");
+    ["qeAviso", "qeAppAviso"].forEach(function (id) { $(id).textContent = ""; $(id).hidden = true; });
+  }
+  ["qeAluno", "qeQuest", "qeData", "qeSemanal"].forEach(function (id) { $(id).addEventListener("change", limpaSaidaQuest); });
   function questSt(st) {
     st.questPerguntas = st.questPerguntas || [];
     st.questionarios = st.questionarios || [];
@@ -8406,29 +8485,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderQuest() {
     var st = questSt(load());
+    var alunoAntes = $("qeAluno").value, questAntes = $("qeQuest").value;
+    var marcadas = Array.from(document.querySelectorAll(".qqCheck:checked")).map(function (c) { return c.value; });
     $("qpLista").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
       var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
-      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
+      return '<div class="linha-flex acx-row" data-qp-row data-acx-busca="' + esc(p.sigla + " " + p.titulo + " " + p.texto) + '" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
         (p.menosMelhor ? ' <span style="background:var(--pt-erro-selo);color:var(--tk-erro);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-qpinv="' + p.id + '" title="trocar o sentido da nota">' + (p.menosMelhor ? "maior é melhor" : "menor é melhor") + "</button>" +
-        '<button class="btn sec mini" data-qprm="' + p.id + '" aria-label="excluir a pergunta ' + esc(p.sigla) + '">✕</button></div>';
+        '<button class="btn sec mini" data-qprm="' + p.id + '" aria-label="excluir a pergunta ' + esc(p.sigla) + '">Excluir</button></div>';
     }).join("") : "Nenhuma pergunta ainda — crie a primeira acima.";
     $("qqPerguntas").innerHTML = st.questPerguntas.length
       ? "Marque as perguntas do questionário novo:<br>" + st.questPerguntas.map(function (p) {
-          return '<label style="margin:4px 12px 0 0; display:inline-block;"><input type="checkbox" class="qqCheck" value="' + p.id + '"> ' + esc(p.sigla) + " · " + esc(p.titulo) + "</label>";
+          return '<label style="margin:4px 12px 0 0; display:inline-block;"><input type="checkbox" class="qqCheck" value="' + p.id + '"' + (marcadas.indexOf(p.id) >= 0 ? " checked" : "") + '> ' + esc(p.sigla) + " · " + esc(p.titulo) + "</label>";
         }).join("")
       : "";
     $("qqLista").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tk-bd4);">' +
         "<b>" + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-qqrm="' + q.id + '" aria-label="excluir o questionário">✕</button></div>';
+        '<button class="btn sec mini" data-qqrm="' + q.id + '" aria-label="excluir o questionário">Excluir</button></div>';
     }).join("") : "Nenhum questionário ainda.";
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("qeAluno").innerHTML = '<option value="">Aluno…</option>' + ativos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
     $("qeQuest").innerHTML = '<option value="">Questionário…</option>' + st.questionarios.map(function (q) { return '<option value="' + q.id + '">' + esc(q.nome) + "</option>"; }).join("");
+    $("qeAluno").value = ativos.some(function (a) { return a.id === alunoAntes; }) ? alunoAntes : "";
+    $("qeQuest").value = st.questionarios.some(function (q) { return q.id === questAntes; }) ? questAntes : "";
+    if ($("qeAluno").value !== alunoAntes || $("qeQuest").value !== questAntes) limpaSaidaQuest();
+    sincronizaBusca("qeAluno");
+    acxFiltra("qpLista", "qpBusca", "[data-qp-row]", "qpResultado");
     if (!$("qeData").value) $("qeData").value = S.todayISO();
   }
   $("qpTipo").addEventListener("change", function () {
@@ -8485,6 +8571,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.questionarios.push({ id: S.uid(), nome: nome, perguntas: ids });
     save(st);
     $("qqNome").value = "";
+    document.querySelectorAll(".qqCheck").forEach(function (c) { c.checked = false; });
     renderQuest();
   });
   $("qqLista").addEventListener("click", function (e) {
@@ -8510,6 +8597,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
     var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
     if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
+    limpaSaidaQuest(); var opQuest = qeOperacao;
     var payload = montaPayloadQuest(st, q);
     // v755: questionário que ficou sem pergunta (a última foi excluída) era
     // "enviado" com sucesso e descartado em silêncio pelo pacote
@@ -8532,6 +8620,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       avisoQ.textContent = "Preparando o app do aluno na nuvem…";
       // v755: o mesmo publicaPacotes de todo mundo (upsert + carimbo num lugar só)
       publicaPacotes(nuvemQ, [a]).then(function (r) {
+        if (opQuest !== qeOperacao || $("qeAluno").value !== a.id || $("qeQuest").value !== q.id) return;
         avisoQ.textContent = r.erro
           ? "Não deu pra publicar o app do aluno (" + r.erro + ") — gere o link de novo antes de mandar."
           : "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
@@ -8551,6 +8640,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
     var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
     if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
+    limpaSaidaQuest(); var opQuest = qeOperacao;
     var payload = montaPayloadQuest(st, q);
     // v755: sem pergunta, o pacote descarta o questionário e o professor fica
     // esperando resposta de uma coisa que o aluno nunca viu
@@ -8574,6 +8664,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     aviso.textContent = "Publicando o app do aluno com o questionário…";
     // v755: publicaPacotes é o caminho único (upsert + carimbo appPubEm/appVer)
     publicaPacotes(nuvem, [a]).then(function (r) {
+      if (opQuest !== qeOperacao || $("qeAluno").value !== a.id || $("qeQuest").value !== q.id) return;
       if (r.erro) { aviso.textContent = "Não deu pra publicar o app (" + r.erro + ") — tenta de novo."; return; }
       aviso.textContent = "✓ Enviado! O questionário " +
         (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
@@ -8606,14 +8697,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var d = row.dados || {};
           var pts = d.pontuacao;
           var corP = pts == null ? "var(--tk-tx3)" : pts > 0 ? "var(--tk-ok)" : pts < 0 ? "var(--tk-erro)" : "var(--tk-aten2)";
-          return '<div style="padding:10px 0;border-top:1px solid var(--tk-bd4);">' +
+          return '<details class="acx-details" data-qr-row data-acx-busca="' + esc((nomePorToken[row.token] || "Aluno") + " " + (row.questionario || "Check-in")) + '"><summary>' +
             "<b>" + esc(nomePorToken[row.token] || "Aluno") + "</b> · " + esc(row.questionario || "Check-in") +
             ' <span class="muted" style="font-size:12px;">' + S.fmtData(diaLocalDe(row.criado)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
-            '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
+            '</summary><div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
               return esc(x.pergunta || x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
-            }).join(" · ") + "</div></div>";
+            }).join(" · ") + "</div></details>";
         }).join("");
+        acxFiltra("qRespostas", "qrBusca", "[data-qr-row]", "qrResultado");
       }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
   }
   window.__questPT = { render: renderQuest, payload: montaPayloadQuest, respostas: carregaRespostasQuest }; // testes
@@ -8625,6 +8717,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    */
   var qsSel = null;      // aluno aberto na direita
   var qsCache = null;    // {alunos:[...], semIni, semFim}
+  function filtraQuestSemana() {
+    var termo = acxTexto($("qsBusca").value), filtro = $("qsFiltro").value, visiveis = [];
+    document.querySelectorAll("#qsLista [data-qsit]").forEach(function (b) {
+      b.hidden = (filtro !== "todos" && b.getAttribute("data-qsgrupo") !== filtro) || acxTexto(b.getAttribute("data-acx-busca")).indexOf(termo) < 0;
+      if (!b.hidden) visiveis.push(b);
+    });
+    document.querySelectorAll("#qsLista [data-qscab]").forEach(function (cab) {
+      var qtd = visiveis.filter(function (b) { return b.getAttribute("data-qsgrupo") === cab.getAttribute("data-qscab"); }).length;
+      cab.hidden = !qtd; var n = cab.querySelector(".qsn"); if (n) n.textContent = qtd;
+    });
+    $("qsResultados").textContent = qsCache ? visiveis.length + " de " + qsCache.todos.length + " alunos" + (!visiveis.length ? " — nenhum resultado para estes filtros." : "") : "";
+    if (!visiveis.some(function (b) { return b.getAttribute("data-qsit") === qsSel; })) qsSel = visiveis.length ? visiveis[0].getAttribute("data-qsit") : null;
+    visiveis.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-qsit") === qsSel); });
+    pintaQuestDet();
+  }
   function qsSemana() {
     var hoje = S.todayISO();
     var seg = new Date(hoje + "T12:00:00");
@@ -8751,10 +8858,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var bt = $("qsCobrar");
       if (bt) { bt.hidden = !faltam.length; bt.textContent = "Cobrar " + (faltam.length === 1 ? "quem falta" : "os " + faltam.length); }
       function grupo(rot, arr, cls) {
-        return '<div class="qsgrupo">' + esc(rot) + (arr.length ? '<span class="qsn ' + cls + '">' + arr.length + "</span>" : "") + "</div>" +
+        var chave = cls === "erro" ? "atencao" : cls === "ok" ? "bem" : "faltam";
+        return '<div class="qsgrupo" data-qscab="' + chave + '">' + esc(rot) + (arr.length ? '<span class="qsn ' + cls + '">' + arr.length + "</span>" : "") + "</div>" +
           arr.map(function (r) {
             var nomeC = String(r.a.nome || "?");
-            return '<button type="button" class="qsit' + (qsSel === r.a.id ? " on" : "") + '" data-qsit="' + r.a.id + '">' +
+            return '<button type="button" class="qsit' + (qsSel === r.a.id ? " on" : "") + '" data-qsit="' + r.a.id + '" data-qsgrupo="' + chave + '" data-acx-busca="' + esc(nomeC) + '">' +
               '<span class="qsav">' + esc(nomeC.trim().slice(0, 2).toUpperCase()) + "</span>" +
               '<span style="min-width:0;"><span class="qsnm">' + esc(nomeC) + "</span>" +
               (r.motivos.length ? '<span class="qssub alerta">' + esc(r.motivos.slice(0, 2).join(" · ")) + "</span>" : "") + "</span>" +
@@ -8763,7 +8871,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       lista.innerHTML = grupo("Pede atenção", atencao, "erro") + grupo("Tudo bem", bem, "ok") + grupo("Não responderam", faltam, "");
       if (!qsSel || !todos.some(function (r) { return r.a.id === qsSel; })) qsSel = (atencao[0] || bem[0] || faltam[0] || {}).a && (atencao[0] || bem[0] || faltam[0]).a.id;
-      pintaQuestDet();
+      filtraQuestSemana();
     }, function () {
       lista.innerHTML = "";
       det.innerHTML = '<div class="dnota">Sem conexão com a nuvem agora — tente de novo daqui a pouco.</div>';
@@ -8858,13 +8966,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
 
   // ---------- desafio em grupo (estilo GymRats) ----------
+  var dsEditando = false, dsRankingSeq = 0;
+  function marcaRascunhoDesafio() { dsEditando = true; $("dsDescartar").hidden = false; $("dsPub").textContent = "Alterações ainda não salvas. Salvar atualiza os apps publicados."; }
+  ["dsNome", "dsIni", "dsFim", "dsPremio"].forEach(function (id) { $(id).addEventListener("input", marcaRascunhoDesafio); });
+  $("dsDescartar").addEventListener("click", function () { dsEditando = false; $("dsPub").textContent = "Alterações descartadas."; renderDesafio(); });
   function renderDesafio() {
     var st = load();
     var d = st.desafio || {};
-    if (document.activeElement !== $("dsNome")) $("dsNome").value = d.nome || "";
-    if (document.activeElement !== $("dsIni")) $("dsIni").value = d.ini || "";
-    if (document.activeElement !== $("dsFim")) $("dsFim").value = d.fim || "";
-    if (document.activeElement !== $("dsPremio")) $("dsPremio").value = d.premio || "";
+    if (!dsEditando) {
+      $("dsNome").value = d.nome || ""; $("dsIni").value = d.ini || "";
+      $("dsFim").value = d.fim || ""; $("dsPremio").value = d.premio || "";
+    }
+    $("dsDescartar").hidden = !dsEditando;
+    $("dsEncerrar").hidden = !d.nome;
     var hoje = S.todayISO();
     $("dsStatus").textContent = !d.nome ? "sem desafio ativo"
       : d.fim < hoje ? "⏹ encerrado em " + S.fmtData(d.fim)
@@ -8885,6 +8999,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!$("dsPremio").value.trim()) $("dsPremio").value = "";
     $("dsPremio").focus();
     $("dsPub").textContent = "pronto — confira o prêmio e toque em Salvar desafio";
+    dsEditando = true; $("dsDescartar").hidden = false;
   });
   $("dsSalvar").addEventListener("click", function () {
     var nome = $("dsNome").value.trim();
@@ -8895,6 +9010,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.desafio = { nome: nome, ini: ini, fim: fim, premio: $("dsPremio").value.trim() };
     st.config = st.config || {};
     st.config.appEditGeralEm = new Date().toISOString(); // desafio entra no app de todo mundo
+    dsEditando = false;
     save(st);
     renderDesafio();
     carregaRankingDesafio();
@@ -8914,6 +9030,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!confirm("Encerrar o desafio atual?")) return;
     var st = load();
     st.desafio = null;
+    dsEditando = false; dsRankingSeq++;
     st.config = st.config || {};
     st.config.appEditGeralEm = new Date().toISOString();
     save(st);
@@ -8925,15 +9042,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var max = Math.max.apply(null, ranking.map(function (r) { return +r.dias; })) || 1;
     el.innerHTML = ranking.map(function (r, i) {
       var pct = Math.round(100 * (+r.dias) / max);
-      return "<div style='padding:8px 0;border-top:1px solid var(--tk-bd4);'>" +
+      return "<div data-dsrank data-acx-busca='" + esc(r.nome || "Aluno") + "' style='padding:8px 0;border-top:1px solid var(--tk-bd4);'>" +
         "<div style='display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
         "<span>" + (med[i] || (i + 1) + "º") + " <b>" + esc(r.nome || "Aluno") + "</b></span>" +
         "<span><b>" + r.dias + "</b> treino(s)" + (r.ultimo ? " <span class='muted' style='font-size:11.5px;'>último " + r.ultimo.slice(8, 10) + "/" + r.ultimo.slice(5, 7) + "</span>" : "") + "</span></div>" +
         "<div style='height:8px;background:#14121a;border-radius:99px;margin-top:5px;overflow:hidden;'>" +
         "<div style='height:100%;width:" + pct + "%;background:linear-gradient(90deg,#7c3aed,var(--tk-roxoTx2));'></div></div></div>";
     }).join("") + (premio ? "<div class='muted' style='margin-top:10px;font-size:12.5px;'>Prêmio: <b>" + esc(premio) + "</b></div>" : "");
+    if (el === $("dsRanking")) acxFiltra("dsRanking", "dsBusca", "[data-dsrank]", "dsResultado");
   }
   function carregaRankingDesafio() {
+    var seq = ++dsRankingSeq;
+    $("dsResultado").textContent = "";
     var box = $("dsRanking");
     var st = load();
     var d = st.desafio;
@@ -8944,12 +9064,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.textContent = "Carregando placar…";
     nuvem.client.rpc("app_desafio_ranking", { t: comToken.appTokenP, p_ini: d.ini, p_fim: d.fim })
       .then(function (r) {
+        if (seq !== dsRankingSeq || JSON.stringify(load().desafio || null) !== JSON.stringify(d)) return;
         var dd = r && r.data;
         if (r && r.error) { box.textContent = erroDeSql(r.error) ? foraDoAr("O desafio da turma", "SQL faltando: " + (r.error.code || r.error.message)) : "Não deu pra carregar agora — confira a internet e tente de novo."; return; }
         var ranking = (dd && dd.ranking) || [];
         if (!ranking.length) { box.textContent = "Ninguém pontuou ainda — cada 'Treinei hoje!' no app conta."; return; }
         pintaRankingDesafio(box, ranking, d.premio);
-      }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+      }, function () { if (seq === dsRankingSeq) box.textContent = "Sem conexão com a nuvem agora."; });
   }
   window.__desafioPT = { render: renderDesafio, ranking: carregaRankingDesafio, pinta: pintaRankingDesafio }; // testes
 
@@ -11827,10 +11948,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderServicos() {
     var st = load();
     var svs = st.servicosPT || [];
-    $("svLista").innerHTML = svs.length ? svs.map(function (s) {
+    var servicosFiltrados = svs.filter(function (s) { return !fgValor("fgServicoBusca") || fgTexto(s.nome).indexOf(fgTexto(fgValor("fgServicoBusca"))) >= 0; });
+    $("svLista").innerHTML = servicosFiltrados.length ? servicosFiltrados.map(function (s) {
       return '<div class="sessao-pt"><b>' + esc(s.nome) + '</b><span style="margin-left:auto;">' + S.fmtBRL(+s.valor) + "</span>" +
-        '<button class="btn sec mini" data-svrm="' + esc(s.id) + '" aria-label="Tirar este serviço">✕</button></div>';
-    }).join("") : "Nenhum serviço cadastrado ainda — comece pelo formulário acima.";
+        '<button class="btn sec mini" data-svrm="' + esc(s.id) + '" aria-label="Tirar este serviço">Excluir</button></div>';
+    }).join("") : "Nenhum serviço encontrado. Ajuste a busca ou cadastre um serviço.";
     // preserva o que o professor já escolheu/digitou (o re-render roda a cada Usar 1)
     var vServAntes = $("svVServ").value, vAlunoAntes = $("svVAluno").value, vTotalAntes = $("svVTotal").value;
     $("svVServ").innerHTML = svs.map(function (s) {
@@ -11880,6 +12002,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("svLista").addEventListener("click", function (e) {
     var bt = e.target.closest("[data-svrm]");
     if (!bt) return;
+    if (!confirm("Excluir este serviço do catálogo? As vendas e os pacotes já adquiridos serão preservados.")) return;
     var st = load();
     st.servicosPT = (st.servicosPT || []).filter(function (x) { return x.id !== bt.getAttribute("data-svrm"); });
     save(st);
@@ -12371,15 +12494,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("") : '<div class="muted" style="font-size:13px;padding:10px 0;">Nenhum pagamento registrado hoje.</div>');
     }
   }
-  function renderPagamentos(st) {
+  var fgHistLimite = 30;
+  function fgTexto(v) { return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+  function fgValor(id) { return $(id) ? $(id).value : ""; }
+  function fgHistorico(st) {
+    var nomes = {}; (st.alunos || []).forEach(function (a) { nomes[a.id] = a.nome; });
+    var q = fgTexto(fgValor("fgHistBusca")), mes = fgValor("fgHistMes"), forma = fgTexto(fgValor("fgHistForma"));
+    return (st.pagamentos || []).map(function (p, i) { return { p: p, i: i }; }).filter(function (x) {
+      var p = x.p, f = fgTexto(formaFamilia(p.forma));
+      return (!q || fgTexto((nomes[p.alunoId] || "Avulso") + " " + (p.desc || "") + " " + (p.forma || "")).indexOf(q) >= 0) &&
+        (!mes || String(p.data || "").slice(0, 7) === mes) && (!forma || (forma === "outro" ? ["pix", "dinheiro", "cartao", "transferencia"].indexOf(f) < 0 : f === forma));
+    }).sort(function (a, b) { return String(b.p.data || "").localeCompare(String(a.p.data || "")) || b.i - a.i; }).map(function (x) { return x.p; });
+  }
+  function renderHistoricoPagamentos(st) {
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
-    var lista = st.pagamentos.slice().reverse().slice(0, 30);
+    var todas = fgHistorico(st), lista = todas.slice(0, fgHistLimite);
     $("listaPagamentos").innerHTML = lista.length ? lista.map(function (p) {
-      return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "?") + "</span>" +
+      return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "Avulso") + "</span>" +
         '<span class="muted">' + esc((p.desc ? p.desc + " · " : "") + (p.forma || "")) + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b>" +
-        '<button class="btn sec mini" data-recibo="' + p.id + '" title="recibo pra imprimir ou salvar em PDF">recibo</button></div>';
-    }).join("") : "Nenhum pagamento registrado.";
+        '<button class="btn sec mini" data-recibo="' + esc(p.id) + '" title="recibo pra imprimir ou salvar em PDF">Ver recibo</button></div>';
+    }).join("") : "Nenhum recebimento encontrado. Ajuste os filtros ou registre um pagamento.";
+    if ($("fgHistResumo")) $("fgHistResumo").textContent = lista.length + " de " + todas.length + " recebimentos · " + S.fmtBRL(todas.reduce(function (s, p) { return s + (+p.valor || 0); }, 0)) + " nos resultados. Os totais do mês permanecem gerais.";
+    if ($("fgHistMais")) $("fgHistMais").hidden = lista.length >= todas.length;
+    if ($("fgHistCSV")) $("fgHistCSV").disabled = !todas.length;
+  }
+  function renderPagamentos(st) {
+    renderHistoricoPagamentos(st);
     $("reguaOn").checked = !((st.config || {}).reguaOff);
     pintaReguaStatus(st, 0);
     var diaHoje = +S.todayISO().slice(8, 10);
@@ -12751,8 +12892,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!$("pAluno").value || !(vPg > 0)) { alert("Escolha o aluno e um valor maior que zero."); return; }
     var st = load();
     st.pagamentos.push({ id: S.uid(), alunoId: $("pAluno").value, valor: vPg, forma: $("pForma").value, data: S.todayISO() });
+    if (save(st) === false) { alert("Não foi possível salvar o recebimento neste aparelho. O valor continua no formulário para tentar novamente."); return; }
     $("pValor").value = "";
-    save(st);
   });
 
   // ---------- treinos por seleção (biblioteca + fichas) ----------
@@ -14189,17 +14330,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var mes = S.todayISO().slice(0, 7);
     var baixas = st.pagamentos.filter(function (x) { return x.eventoId && (x.data || "").slice(0, 7) === mes; }).length;
     var assinas = ativos.filter(function (a) { return a.assinaturaAs || a.assinaturaRec; }).length;
-    // o cabecalho conta a mesma verdade dos cards, numa frase
-    var desligados = [];
-    if (!pagApi.ligado && !cfg.pixChave) desligados.push("o recebimento");
-    /* v759: o WhatsApp oficial saiu desta conta. Ele é o caminho de quem tem
-     * app próprio na Meta (CNPJ, cartão internacional, número dedicado) — não é
-     * uma pendência do professor que manda pelo celular, que é a maioria. */
-    if (!cfg.feedOn) desligados.push("a Comunidade");
     var tit = $("cfgTitulo");
-    if (tit) tit.textContent = !desligados.length ? "Tudo ligado"
-      : desligados.length === 1 ? "Tudo ligado, menos " + desligados[0]
-      : "Falta ligar " + desligados.slice(0, -1).join(", ") + " e " + desligados[desligados.length - 1];
+    if (tit) tit.textContent = "Conexões e preferências";
     var nv = $("cfgNuvem");
     if (nv) {
       nv.textContent = cfgNuvemTexto(nuvem);
@@ -14234,8 +14366,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       html += '<div class="rel3" style="margin:-6px 0 12px;">' +
         '<div class="pfbox pq"><div class="tdrot">Baixa automática</div><div class="cfgv on">Ligada · ' +
         S.plural(baixas, "baixa", "baixas") + " em " + MES_LONGO[+mes.slice(5, 7) - 1] + "</div></div>" +
-        '<div class="pfbox pq"><div class="tdrot">Assinaturas</div><div class="cfgv">' +
-        S.plural(assinas, "ativa", "ativas") + " · mensal</div></div>" +
+        '<div class="pfbox pq"><div class="tdrot">Links de assinatura</div><div class="cfgv">' +
+        S.plural(assinas, "cadastrado", "cadastrados") + "</div></div>" +
         // v756: a comissão vem da nuvem (pag_config.comissao_pct). Sem leitura
         // ainda, a tela diz que está conferindo — nunca crava 0%.
         '<div class="pfbox pq"><div class="tdrot">Comissão da plataforma</div><div class="cfgv">' +
@@ -14252,10 +14384,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     html += cfgCard({
       icone: "✆", on: !!zapApi.ligado && !zapMorreu,
       titulo: "WhatsApp oficial",
-      selo: zapMorreu ? "parou " + zapHoraFalha(zapApi) : zapApi.ligado ? "seu número" : "desligado (tudo certo)",
+      selo: zapMorreu ? "parou " + zapHoraFalha(zapApi) : zapApi.ligado ? "seu número" : "opcional · desligado",
       sub: zapMorreu ? "⚠️ A senha da Meta venceu. Sua fila voltou pro modo com um toque e nenhuma mensagem se perdeu."
         : zapApi.ligado ? "Mensagem sai e chega no seu número."
-        : "Suas mensagens saem do seu WhatsApp com um toque na fila do Início. Nada está quebrado aqui.",
+        : "Você pode enviar pelo seu WhatsApp usando a fila do Início.",
       acao: '<button type="button" class="btn sec" data-cfgir="zap">' + (zapApi.ligado ? "Ajustar" : "Ver como é") + "</button>",
     });
     // 3) app dos alunos + os interruptores
@@ -14285,7 +14417,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (e.target.closest && e.target.closest("[data-cfgpix]")) {
       vaiAba("conta");
       var cp9 = $("cfgPixChave");
-      if (cp9) { try { cp9.focus(); cp9.scrollIntoView({ block: "center" }); } catch (e9) {} }
+      if (cp9) { try { if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.reveal(cp9); else { cp9.focus(); cp9.scrollIntoView({ block: "center" }); } } catch (e9) {} }
     }
   });
   $("cfgResumo").addEventListener("change", function (e) {
@@ -14306,7 +14438,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o app dos alunos muda de cara: todos entram na fila de publicar (mesma
     // regra do botao Salvar da sub-aba — nada de dois caminhos diferentes)
     if (tg === "feedOn") st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
-    save(st);
+    if (S.write("ptStudio", st) === false) {
+      e.target.checked = !e.target.checked;
+      if (par && $(par[2])) $(par[2]).checked = e.target.checked;
+      $("cfgStatus").textContent = "Não foi possível salvar esta preferência. Tente novamente após liberar espaço."; return;
+    }
+    if (window.MT_FERRAMENTAS && par) window.MT_FERRAMENTAS.clear("config", [par[2]]);
+    idxInvalida(); render();
   });
   var CFG_VE = [["cfgVeWod", "wod"], ["cfgVeCardio", "cardio"], ["cfgVeUtil", "util"], ["cfgVeAgenda", "agenda"], ["cfgVeChat", "chat"], ["cfgVePag", "pag"], ["cfgVeIndica", "indica"]];
   function renderConfigPT() {
@@ -14337,8 +14475,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderConta(); // o cartão Minha conta vive aqui também (entrar/senha/sair)
     renderAutos();
     pintaCfgResumo();
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.restore("config");
   }
   $("cfgSalva").addEventListener("click", function () {
+    var atrasoDigitado = Number($("cfgAtraso").value), playlistDigitada = $("cfgPlaylist").value.trim();
+    if (!Number.isInteger(atrasoDigitado) || atrasoDigitado < 0 || atrasoDigitado > 28) {
+      $("cfgStatus").textContent = "Informe a tolerância entre 0 e 28 dias inteiros.";
+      window.__cfgAba("conta"); if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.reveal($("cfgAtraso")); return;
+    }
+    if (playlistDigitada && !/^https?:\/\/[^\s]+$/i.test(playlistDigitada)) {
+      $("cfgStatus").textContent = "O link da playlist precisa começar com https:// ou http://. Corrija ou apague o campo para remover.";
+      window.__cfgAba("app"); if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.reveal($("cfgPlaylist")); return;
+    }
     var st = load();
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
@@ -14364,7 +14512,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.scanOn = $("cfgScan").checked;
     // o app dos alunos muda de cara — todos entram na fila de publicar
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("cfgStatus").textContent = "Não foi possível salvar. Suas alterações continuam nos campos; libere espaço e tente novamente."; return; }
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.clear("config", window.MT_FERRAMENTAS.configFields);
+    idxInvalida(); render();
     // v756: e o interruptor do Resumo acompanha, senão ele fica dizendo
     // "Tudo ligado" até a próxima repintura da tela
     document.querySelectorAll("#cfgResumo [data-cfgtg]").forEach(function (sw) {
@@ -14467,10 +14617,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     var t = $("cfgTermo").value.trim().slice(0, 8000);
     var antes = (st.config.termo || {}).t || "";
-    if (t === antes) { $("cfgTermoStatus").textContent = "Nada mudou."; return; }
+    if (t === antes) { $("cfgTermoStatus").textContent = "Nada mudou."; if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.clear("config", ["cfgTermo"]); return; }
     st.config.termo = t ? { t: t, v: S.todayISO() } : null;
     st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("cfgTermoStatus").textContent = "Não foi possível salvar o termo. O texto continua aqui para tentar novamente."; return; }
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.clear("config", ["cfgTermo"]);
+    idxInvalida(); render();
     $("cfgTermoStatus").textContent = t
       ? "Salvo! Publique os apps — cada aluno lê e aceita na próxima vez que abrir."
       : "Termo removido — o app para de pedir o aceite.";
@@ -15327,6 +15479,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spPreview").srcdoc = montaSitePro(st);
     pintaSpDepos(st);
     pintaSp4e(st);
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.restore("site");
   }
   /* 💬 Depoimentos (v694): o que o aluno escreveu no app volta no retorno
    * (depo) e fica aqui esperando o professor APROVAR — só aprovado entra na
@@ -15431,6 +15584,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .eq("id", b.getAttribute("data-aexpok")).then(function () { aulaExp.carrega(); });
   });
   function spSalva() {
+    if ($("spEmail").value.trim() && !$("spEmail").checkValidity()) {
+      $("spStatus").textContent = "Confira o e-mail da página antes de salvar.";
+      if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.reveal($("spEmail")); return null;
+    }
     var st = load();
     st.config = st.config || {};
     var sp = st.config.sitePro || {};
@@ -15458,18 +15615,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sp.cor = corIn && corIn.toLowerCase() !== corPers.toLowerCase() ? corIn : "";
     sp.fundo = fundoIn && fundoIn.toLowerCase() !== fundoPers.toLowerCase() ? fundoIn : "";
     st.config.sitePro = sp;
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) {
+      $("spStatus").textContent = "Não foi possível salvar a página. Seu rascunho continua nos campos; tente novamente após liberar espaço."; return null;
+    }
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.clear("site");
     return st;
   }
   $("spSalvar").addEventListener("click", function () {
     var st = spSalva();
+    if (!st) return;
     renderSitePro();
     $("spStatus").textContent = "Salvo! A prévia aí embaixo já está do jeito que o visitante vê.";
+    if (window.MT_FERRAMENTAS) window.MT_FERRAMENTAS.reveal($("spPreview"));
     return st;
   });
-  $("spCapaBtn").addEventListener("click", function () { spSalva(); abreGaleria({ tipo: "sitepro" }); });
+  $("spCapaBtn").addEventListener("click", function () { if (spSalva()) abreGaleria({ tipo: "sitepro" }); });
   $("spCorPadrao").addEventListener("click", function () {
-    spSalva();
+    if (!spSalva()) return;
     var st = load();
     delete st.config.sitePro.cor;
     delete st.config.sitePro.fundo;
@@ -15482,6 +15644,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var desce = e.target.getAttribute && e.target.getAttribute("data-spdesce");
     if (!sobe && !desce) return;
     var st = spSalva(); // preserva o que estiver digitado antes de repintar
+    if (!st) return;
     var ordem = spOrdemDe(st.config.sitePro);
     var k = sobe || desce;
     var i = ordem.indexOf(k);
@@ -15498,7 +15661,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var f = this.files && this.files[0];
     this.value = "";
     if (!f) return;
-    spSalva();
+    if (!spSalva()) return;
     var url = URL.createObjectURL(f);
     var img = new Image();
     img.onload = function () {
@@ -15520,19 +15683,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     img.src = url;
   });
   $("spLogoTira").addEventListener("click", function () {
-    spSalva();
+    if (!spSalva()) return;
     var st = load();
     if (st.config.sitePro) delete st.config.sitePro.logo;
     S.write("ptStudio", st);
     renderSitePro();
   });
   $("spCapaTira").addEventListener("click", function () {
-    var st = load();
+    var st = spSalva();
+    if (!st) return;
     if ((st.config || {}).sitePro) { delete st.config.sitePro.capaId; S.write("ptStudio", st); }
     renderSitePro();
   });
   $("spBaixar").addEventListener("click", function () {
     var st = spSalva();
+    if (!st) return;
     var blob = new Blob([montaSitePro(st)], { type: "text/html" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -15542,7 +15707,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spStatus").textContent = "Arquivo baixado! Dá pra hospedar em qualquer lugar — ou use o Publicar na internet.";
   });
   $("spPublicar").addEventListener("click", function () {
+    if (this.disabled) return;
     var st = spSalva();
+    if (!st) return;
     renderSitePro();
     var sp = st.config.sitePro || {};
     if (!/^[a-z0-9-]{3,30}$/.test(sp.slug || "")) {
@@ -15555,6 +15722,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     $("spStatus").textContent = "Publicando…";
+    $("spPublicar").disabled = true;
     var stamp = new Date().toISOString();
     nuvem.client.from("site_pro").upsert([{ slug: sp.slug, academia_id: nuvem.aid, dados: { html: montaSitePro(st), stamp: stamp }, atualizado: stamp }])
       .then(function (r) {
@@ -15576,6 +15744,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         st2.config.sitePro = st2.config.sitePro || {};
         st2.config.sitePro.slugPub = sp.slug;
         S.write("ptStudio", st2);
+        pintaSp4e(st2);
         var url = "https://www.torqueon.com.br/pagina.html?s=" + encodeURIComponent(sp.slug);
         $("spStatus").innerHTML = "No ar! Sua página: <a href='" + url + "' target='_blank' rel='noopener' style='color:var(--roxo);'>" + esc(url.replace("https://www.", "")) + "</a> — publique de novo sempre que mudar algo aqui.";
         apagaVelha.then(function (apagou) {
@@ -15584,7 +15753,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         });
       }, function () {
         $("spStatus").textContent = "Sem conexão agora — tenta de novo com internet.";
-      });
+      }).finally(function () { $("spPublicar").disabled = false; });
   });
   // ---------- tela 4e: o endereco da pagina e o que ela ja rendeu ----------
   function spURL(st) {
@@ -15603,8 +15772,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // e quem pede aula cai no WhatsApp. Dizer um numero aqui seria inventar.
     box.innerHTML = '<div class="dnota">' +
       (url ? "A página está <b>no ar</b>. " : "") +
-      "Quem pede aula por ela chega direto no <b>seu WhatsApp</b> — o painel ainda não conta visitas nem pedidos, " +
-      "então não mostra número nenhum aqui em vez de inventar um.</div>";
+      "Os pedidos de aula chegam ao <b>seu WhatsApp</b>.</div>";
   }
   $("spCopiar").addEventListener("click", function () {
     var url = "https://" + spURL(load());
@@ -15951,10 +16119,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   })();
   // sub-links do Financeiro: recebimentos, planos e contratos
   function mostraPgAba(aba) {
+    if (["receb", "planos", "contratos", "serv", "desp"].indexOf(aba) < 0) aba = "receb";
     document.querySelectorAll("#vPagamentos [data-pgsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pgsec") !== aba; });
     document.querySelectorAll("#pgAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pga") === aba); });
     if (aba === "serv") renderServicos();
     if (aba === "desp") renderDespesas();
+    if (aba === "receb" && window.MT_GESTAO && MT_GESTAO.cobrancas) MT_GESTAO.cobrancas();
   }
   $("pgAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-pga]");
@@ -15970,6 +16140,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("pgLancar").addEventListener("click", function () {
     var cx = $("pValor");
     if (!cx) return;
+    var porta = cx.closest("details"); if (porta) porta.open = true;
     cx.scrollIntoView({ behavior: "smooth", block: "center" });
     cx.focus();
   });
@@ -16013,14 +16184,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return "<div style='margin:5px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;gap:8px;'><span>" + esc(c) + "</span><b style='white-space:nowrap;'>" + S.fmtBRL(porCat[c]) + " · " + pc + "%</b></div>" +
         "<div style='background:var(--tk-sup2);border-radius:99px;height:7px;overflow:hidden;'><div style='width:" + pc + "%;height:100%;background:#7c3aed;'></div></div></div>";
     }).join("");
-    $("dpLista").innerHTML = doMes.length ? doMes.slice().sort(function (a, b) { return (b.data || "").localeCompare(a.data || ""); }).map(function (d) {
+    var despFiltradas = doMes.filter(function (d) {
+      var q = fgTexto(fgValor("fgDespBusca")), tipo = fgValor("fgDespTipo"), cat = fgValor("fgDespCat");
+      return (!q || fgTexto((d.desc || "") + " " + (d.cat || "")).indexOf(q) >= 0) && (!tipo || (tipo === "fixa" ? !!d.fixa : !d.fixa)) && (!cat || (d.cat || "Outros") === cat);
+    });
+    if ($("fgDespResumo")) $("fgDespResumo").textContent = despFiltradas.length + " de " + doMes.length + " despesas · " + S.fmtBRL(despFiltradas.reduce(function (s, d) { return s + (+d.valor || 0); }, 0)) + " nos resultados. O resumo e as categorias consideram o mês inteiro.";
+    $("dpLista").innerHTML = despFiltradas.length ? despFiltradas.slice().sort(function (a, b) { return (b.data || "").localeCompare(a.data || ""); }).map(function (d) {
       return "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--tk-bd);'>" +
         "<span>" + (d.fixa ? "<b style='color:var(--tk-roxoTx2);'>fixa</b> · " : "") + esc(d.desc || d.cat || "Despesa") +
         " <span class='muted' style='font-size:12px;'>" + esc(d.cat || "") + " · desde " + S.fmtData(d.data) + "</span></span>" +
         "<span style='white-space:nowrap;'><b>" + S.fmtBRL(+d.valor || 0) + "</b> " +
         (d.fixa && !d.fim ? "<button class='btn sec mini' data-dpfim='" + d.id + "' title='Para de contar a partir do mês seguinte'>encerrar</button> " : "") +
-        "<button class='btn sec mini' data-dpdel='" + d.id + "' aria-label='Excluir despesa' title='Excluir'>✕</button></span></div>";
-    }).join("") : "Nenhuma despesa em " + dpMesRot(dpMes) + ".";
+        "<button class='btn sec mini' data-dpdel='" + esc(d.id) + "' aria-label='Excluir despesa' title='Excluir'>Excluir</button></span></div>";
+    }).join("") : "Nenhuma despesa encontrada em " + dpMesRot(dpMes) + ". Ajuste os filtros ou registre uma despesa.";
   }
   $("dpAdd").addEventListener("click", function () {
     var valor = +$("dpValor").value;
@@ -16110,6 +16286,53 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (bq) pintaQuestSemana();
   });
   window.__dsAba = fazSubAbas("vDesafio", "dsAbas", "data-dsa", "data-dssec", "config");
+  // Navegação móvel usa os mesmos botões e listeners das áreas no desktop.
+  function acxLigaAbas(selectId, abasId, atributo, hook) {
+    var sel = $(selectId), abas = $(abasId), anterior = window[hook];
+    function sincroniza(valor) {
+      sel.value = valor;
+      abas.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute(atributo) === valor ? "true" : "false"); });
+    }
+    window[hook] = function (valor) {
+      if (!Array.from(sel.options).some(function (o) { return o.value === valor; })) return;
+      anterior(valor); sincroniza(valor);
+    };
+    abas.addEventListener("click", function (e) { var b = e.target.closest("button[" + atributo + "]"); if (b) sincroniza(b.getAttribute(atributo)); });
+    sel.addEventListener("change", function () { var b = Array.from(abas.querySelectorAll("button")).find(function (b) { return b.getAttribute(atributo) === sel.value; }); if (b) b.click(); });
+    sincroniza((abas.querySelector(".ativa") || abas.querySelector("button")).getAttribute(atributo));
+  }
+  acxLigaAbas("avArea", "avAbas", "data-ava", "__avAba");
+  acxLigaAbas("qtArea", "qtAbas", "data-qta", "__qtAba");
+  acxLigaAbas("dsArea", "dsAbas", "data-dsa", "__dsAba");
+  // Os nós são mantidos: rótulos visíveis não recriam controles nem apagam valores/listeners.
+  var acxRotulos = { avAluno: "Aluno", avData: "Data da medição", avPeso: "Peso (kg)", avAltura: "Altura (cm)", avSexo: "Sexo para o protocolo", dbMetodo: "Protocolo das dobras",
+    ccPescoco: "Pescoço (cm)", avCintura: "Cintura (cm)", avQuadril: "Quadril (cm)", avBraco: "Braço (cm)", ccTorax: "Tórax (cm)", ccAbdomen: "Abdômen (cm)", ccAntebraco: "Antebraço (cm)", ccCoxa: "Coxa (cm)", ccPanturrilha: "Panturrilha (cm)",
+    avGord: "Gordura medida (%)", biaAgua: "Água (L)", biaProteina: "Proteína (kg)", biaMineral: "Minerais (kg)", biaGordKg: "Gordura (kg)", biaMme: "Músculo (kg)", biaVisceral: "Gordura visceral (nível)", biaAngulo: "Ângulo de fase (°)", biaBracoE: "Braço esquerdo (kg)", biaBracoD: "Braço direito (kg)", biaTronco: "Tronco (kg)", biaPernaE: "Perna esquerda (kg)", biaPernaD: "Perna direita (kg)",
+    scanAluno: "Aluno para a câmera", scanAltura: "Altura (cm)", scanSexo: "Sexo para a estimativa", avCmpAluno: "Aluno no comparativo",
+    qpSigla: "Sigla (até 5 letras)", qpTitulo: "Título", qpTipo: "Tipo de resposta", qpTexto: "Pergunta", qqNome: "Nome do questionário", qeAluno: "Aluno destinatário", qeQuest: "Questionário", qeLink: "Link deste questionário",
+    dsNome: "Nome do desafio", dsPremio: "Prêmio (opcional)" };
+  Object.keys(acxRotulos).forEach(function (id) {
+    var campo = $(id); if (!campo || campo.closest("label")) return;
+    var busca = $(id + "Busca"), alvo = busca && busca.parentNode.contains(campo) ? busca.parentNode : campo;
+    var label = document.createElement("label"); label.className = "acx-field"; label.htmlFor = busca ? busca.id : id;
+    var rotulo = document.createElement("span"); rotulo.textContent = acxRotulos[id]; label.appendChild(rotulo);
+    alvo.parentNode.insertBefore(label, alvo); label.appendChild(alvo);
+    if (label.parentNode.classList.contains("linha-flex")) label.parentNode.classList.add("acx-fields");
+  });
+  document.querySelectorAll(".qpOp").forEach(function (campo, i) {
+    var label = document.createElement("label"); label.className = "acx-field";
+    label.textContent = "Alternativa " + (i + 1) + " " + campo.getAttribute("data-e");
+    campo.parentNode.insertBefore(label, campo); label.appendChild(campo); label.parentNode.classList.add("acx-fields");
+  });
+  ["avHistBusca", "avHistDe", "avHistAte"].forEach(function (id) { $(id).addEventListener(id === "avHistBusca" ? "input" : "change", function () { renderAvaliacoes(load()); }); });
+  $("avHistLimpar").addEventListener("click", function () { ["avHistBusca", "avHistDe", "avHistAte"].forEach(function (id) { $(id).value = ""; }); renderAvaliacoes(load()); });
+  $("qpBusca").addEventListener("input", function () { acxFiltra("qpLista", "qpBusca", "[data-qp-row]", "qpResultado"); });
+  $("qsBusca").addEventListener("input", filtraQuestSemana); $("qsFiltro").addEventListener("change", filtraQuestSemana);
+  $("qrBusca").addEventListener("input", function () { acxFiltra("qRespostas", "qrBusca", "[data-qr-row]", "qrResultado"); });
+  $("qrAtualizar").addEventListener("click", carregaRespostasQuest);
+  $("dsBusca").addEventListener("input", function () { acxFiltra("dsRanking", "dsBusca", "[data-dsrank]", "dsResultado"); });
+  $("dsAtualizar").addEventListener("click", carregaRankingDesafio);
+  window.__acompExperiencia = { filtraSemana: filtraQuestSemana, renderAvaliacoes: function () { renderAvaliacoes(load()); } };
   // abrir a sub-aba Comunidade já busca o feed da turma
   $("dsAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-dsa]");
@@ -18190,7 +18413,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderPlanosPT() {
     var st = load();
     var el = $("plLista");
-    el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
+    var planosFiltrados = st.planosPT.filter(function (pl) { return !fgValor("fgPlanoBusca") || fgTexto(pl.nome + " " + (pl.modalidade || "")).indexOf(fgTexto(fgValor("fgPlanoBusca"))) >= 0; });
+    el.innerHTML = planosFiltrados.length ? planosFiltrados.map(function (pl) {
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
       return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + rotuloValorPlano(pl) + "</span>" +
         (+pl.pacoteQtd > 0 ? '<span class="tag roxo" title="pacote fechado de aulas' + (pl.pacoteRenova ? " — renova sozinho ao acabar" : "") + '">pacote' + (pl.pacoteRenova ? " ↻" : "") + "</span>"
@@ -18199,19 +18423,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (pl.cobranca === "sessao" ? "" : '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>") +
         (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
         "<span class='muted'>" + n + " contrato(s)</span>" +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '" aria-label="excluir o plano">✕</button></div>';
-    }).join("") : "Nenhum plano ainda.";
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-pldup="' + esc(pl.id) + '">Usar como modelo</button><button class="btn sec mini" data-plrm="' + esc(pl.id) + '" aria-label="excluir o plano">Excluir</button></div>';
+    }).join("") : "Nenhum plano encontrado. Crie um plano ou ajuste a busca.";
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
-    var ativos = st.contratosPT.filter(function (c) { return c.status === "ativo"; });
+    var situacao = fgValor("fgContratoStatus") || "ativo", buscaCt = fgTexto(fgValor("fgContratoBusca"));
+    var ativos = st.contratosPT.filter(function (c) {
+      var pl = planoDe(st, c.planoId) || {};
+      return (situacao === "todos" || c.status === situacao) && (!buscaCt || fgTexto((nomeDe[c.alunoId] || "") + " " + (pl.nome || "")).indexOf(buscaCt) >= 0);
+    });
     $("ctLista").innerHTML = ativos.length ? ativos.map(function (c) {
       var pl = planoDe(st, c.planoId) || {};
       // hora-aula/pacote não tem "vence dia": quem cobra é a carteira
-      return '<div class="sessao-pt"><b>' + esc(nomeDe[c.alunoId] || "?") + "</b><span>" + esc(pl.nome || "?") + "</span>" +
-        "<span>" + S.fmtBRL(+pl.valor || 0) + rotuloValorPlano(pl) + "</span><span class='muted'>" +
+      return '<div class="sessao-pt"><b>' + esc(nomeDe[c.alunoId] || "Aluno não encontrado") + "</b><span>" + esc(pl.nome || "Plano removido") + "</span>" +
+        "<span>" + (pl.id ? S.fmtBRL(+pl.valor || 0) + rotuloValorPlano(pl) : "Valor do plano indisponível") + "</span><span class='muted'>" +
         (pl.cobranca === "sessao" ? "" : "vence dia " + c.diaVenc + " · ") + "desde " + S.fmtData(c.inicio) + "</span>" +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-ctrm="' + c.id + '">Encerrar</button></div>';
-    }).join("") : "Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.";
+        '<span class="tag">' + (c.status === "ativo" ? "Ativo" : "Encerrado") + '</span><span style="margin-left:auto;"></span><button class="btn sec mini" data-abreperfil="' + esc(c.alunoId) + '">Abrir aluno</button>' +
+        (c.status === "ativo" ? '<button class="btn sec mini" data-ctrm="' + esc(c.id) + '">Encerrar</button>' : '') + '</div>';
+    }).join("") : "Nenhum contrato encontrado. Ajuste os filtros ou abra o perfil do aluno para criar um contrato.";
   }
   // hora-aula é venda UNITÁRIA: preço de UMA aula, sem ciclo mensal/anual e sem
   // assinatura recorrente (mês tem 4 semanas num mês e 5 no outro — plano mensal
@@ -18234,10 +18463,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__plModoSessao = plModoSessao; // testes
   $("plAdd").addEventListener("click", function () {
     var nome = $("plNome").value.trim();
-    if (!nome || !+$("plValor").value) { alert("Preencha nome e valor do plano."); return; }
+    var valorPlano = +$("plValor").value;
+    if (!nome || !Number.isFinite(valorPlano) || valorPlano <= 0) { alert("Preencha o nome e um valor maior que zero para o plano."); return; }
     var st = load();
     var ehSesPl = $("plCobranca").value === "sessao";
-    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value,
+    var linkDigitado = $("plLink").value.trim(), linkValidado = ehSesPl ? "" : linkRecOk(linkDigitado);
+    if (!ehSesPl && linkDigitado && !linkValidado) return;
+    var qtdPlano = +$("plPacQtd").value;
+    if (ehSesPl && (!Number.isSafeInteger(qtdPlano) || qtdPlano < 0)) { alert("Use uma quantidade inteira de aulas no pacote."); return; }
+    st.planosPT.push({ id: S.uid(), nome: nome, valor: valorPlano,
       // hora-aula: sem ciclo e sem link de assinatura — é venda unitária de créditos
       ciclo: ehSesPl ? 1 : (+$("plCiclo").value || 1),
       cobranca: $("plCobranca") ? $("plCobranca").value : "mes",
@@ -18246,17 +18480,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       pacoteQtd: ehSesPl ? (Math.floor(+$("plPacQtd").value) || 0) : 0,
       pacoteRenova: ehSesPl && +$("plPacQtd").value > 0 && $("plPacRenova").checked,
       treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value,
-      linkRec: ehSesPl ? "" : linkRecOk($("plLink").value) });
+      linkRec: linkValidado });
+    if (S.write("ptStudio", st) === false) { alert("Não foi possível salvar o plano. Confira o armazenamento do aparelho e tente novamente."); return; }
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
     $("plPacQtd").value = ""; $("plPacRenova").checked = false;
-    S.write("ptStudio", st);
     renderPlanosPT(); render();
   });
   $("plLista").addEventListener("click", function (e) {
+    var dup = e.target.closest && e.target.closest("[data-pldup]");
+    if (dup) {
+      var modelo = planoDe(load(), dup.getAttribute("data-pldup")); if (!modelo) return;
+      $("plCobranca").value = modelo.cobranca || "mes";
+      $("plPacQtd").value = modelo.pacoteQtd || ""; plModoSessao();
+      $("plNome").value = "Cópia de " + modelo.nome; $("plValor").value = modelo.valor;
+      $("plCiclo").value = modelo.ciclo || 1; $("plTreinos").value = modelo.treinosSem == null ? 3 : modelo.treinosSem;
+      $("plModal").value = modelo.modalidade || "presencial"; $("plLink").value = modelo.linkRec || ""; $("plPacRenova").checked = !!modelo.pacoteRenova;
+      var portaPlano = $("plNome").closest("details"); if (portaPlano) portaPlano.open = true;
+      $("plNome").focus(); $("plNome").scrollIntoView({ behavior: "smooth", block: "center" }); return;
+    }
     var rm = e.target.getAttribute && e.target.getAttribute("data-plrm");
     if (!rm) return;
     var st = load();
     if (st.contratosPT.some(function (c) { return c.planoId === rm && c.status === "ativo"; })) { alert("Tem contrato ativo nesse plano — encerre antes."); return; }
+    if (!confirm("Excluir este plano da lista? Os recebimentos já registrados são preservados.")) return;
     st.planosPT = st.planosPT.filter(function (x) { return x.id !== rm; });
     S.write("ptStudio", st);
     renderPlanosPT();
@@ -18349,8 +18595,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("avData").value = S.todayISO();
   }
   $("dbMetodo").addEventListener("change", renderDobrasCampos);
+  var avAlunoAnterior = $("avAluno").value;
+  $("vAvaliacoes").addEventListener("input", function (e) {
+    if (e.target.closest('[data-avsec="avaliar"]') && e.target.id !== "avAluno") avAlunoAnterior = $("avAluno").value;
+  });
   $("avAluno").addEventListener("change", function () {
     var aAlt = alunoAv();
+    if (avAlunoAnterior && avAlunoAnterior !== (aAlt && aAlt.id)) limpaMedidasAvaliacao();
+    avAlunoAnterior = aAlt ? aAlt.id : "";
     $("avSexo").value = (aAlt && aAlt.sexo) || "";
     renderDobrasCampos();
     pintaAvisoAv();
@@ -19082,7 +19334,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderAvaliacoes(st) {
     var el = $("listaAvaliacoes");
     var avs = st.avaliacoes || [];
-    if (!avs.length) { el.textContent = "Nenhuma avaliação registrada."; pintaAvCmp(st); return; }
+    var busca = acxTexto($("avHistBusca").value), de = $("avHistDe").value, ate = $("avHistAte").value, totalMostrado = 0;
+    $("avHistResultado").textContent = "";
+    if (de && ate && de > ate) { el.textContent = "A data inicial precisa ser anterior ou igual à data final."; pintaAvCmp(st); return; }
+    if (!avs.length) { el.textContent = "Nenhuma avaliação registrada. Em Nova avaliação, escolha o aluno e registre a primeira medição."; pintaAvCmp(st); return; }
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
     var porAluno = {};
@@ -19098,15 +19353,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#listaAvaliacoes details[data-avdet]").forEach(function (d) {
       avAbertos[d.getAttribute("data-avdet")] = d.open;
     });
-    el.innerHTML = Object.keys(porAluno).map(function (id) {
+    el.innerHTML = Object.keys(porAluno).filter(function (id) { return acxTexto(nomeDe[id]).indexOf(busca) >= 0; }).sort(function (a, b) { return String(nomeDe[a] || "").localeCompare(String(nomeDe[b] || ""), "pt-BR"); }).map(function (id) {
       var lista = porAluno[id].slice().sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+      var visiveis = lista.filter(function (v) { return (!de || v.data >= de) && (!ate || v.data <= ate); });
+      if (!visiveis.length) return "";
+      totalMostrado += visiveis.length;
       return '<details data-avdet="' + id + '"' + (avAbertos[id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
         '<summary style="padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<b style="font-size:14.5px;">' + esc(nomeDe[id] || "?") + "</b>" +
-        '<span class="muted" style="font-size:12px;">' + S.plural(lista.length, "avaliação", "avaliações") + " · última em " + S.fmtData(lista[lista.length - 1].data) + "</span>" +
+        '<span class="muted" style="font-size:12px;">' + S.plural(visiveis.length, "avaliação", "avaliações") + " · última em " + S.fmtData(visiveis[visiveis.length - 1].data) + "</span>" +
         '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
         '<div style="padding:0 14px 12px;">' +
         lista.map(function (v, i) {
+          if ((de && v.data < de) || (ate && v.data > ate)) return "";
           var ant = i > 0 ? lista[i - 1] : {};
           return '<div class="sessao-pt"><b>' + S.fmtData(v.data) + "</b>" +
             (v.peso ? "<span>" + String(v.peso).replace(".", ",") + " kg" + delta(v.peso, ant.peso) + "</span>" : "") +
@@ -19120,9 +19379,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.scan ? '<span class="tag" style="font-size:10px;background:var(--pt-sel);color:var(--pt-roxo-claro);">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
-            '<button class="btn sec mini" data-avrm="' + v.id + '" aria-label="excluir a avaliação">✕</button></div>';
+            '<button class="btn sec mini" data-avrm="' + v.id + '" aria-label="excluir a avaliação">Excluir</button></div>';
         }).join("") + "</div></details>";
     }).join("");
+    $("avHistResultado").textContent = totalMostrado + " de " + avs.length + " medições";
+    if (!totalMostrado) el.textContent = "Nenhuma medição para estes filtros. Tente outro nome ou limpe o período.";
     pintaAvCmp(st);
   }
   // grupos recolhíveis por aluno: clicar no nome abre, clicar de novo fecha
@@ -19579,6 +19840,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("relMesProx").hidden = relMesOff === 0;
       $("relMesHoje").hidden = relMesOff === 0;
       $("relPerNota").textContent = relMesOff === 0 ? "os números abaixo são deste mês" : "você está olhando um mês passado";
+      if ($("relMesInput")) { $("relMesInput").value = mesRel; $("relMesInput").max = hoje.slice(0, 7); $("relMesInput").min = "1900-01"; }
     }
     var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
     var nomeDe = {};
@@ -21181,6 +21443,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.baixaCSV("receita-por-aluno.csv", linhas);
   });
   window.__relPT = renderRelatorios; // testes
+  window.__gestaoPT = {
+    historico: function () { fgHistLimite = 30; renderHistoricoPagamentos(load()); },
+    maisHistorico: function () { fgHistLimite += 30; renderHistoricoPagamentos(load()); },
+    resultados: function () { return fgHistorico(load()); },
+    exportaHistorico: function () {
+      var st = load(), nomes = {}, linhas = [["Data", "Aluno", "Descrição", "Forma de pagamento", "Valor (R$)"]];
+      st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
+      fgHistorico(st).forEach(function (p) { linhas.push([String(p.data || "").slice(0, 10), nomes[p.alunoId] || "Avulso", p.desc || "Mensalidade", p.forma || "", String(+p.valor || 0).replace(".", ",")]); });
+      if (linhas.length > 1) S.baixaCSV("recebimentos-filtrados.csv", linhas);
+    },
+    planos: renderPlanosPT, servicos: renderServicos, despesas: renderDespesas, relatorios: renderRelatorios,
+    periodo: function (mes) {
+      var hoje = S.todayISO().slice(0, 7);
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes) || mes < "1900-01" || mes > hoje) {
+        if ($("relPerNota")) $("relPerNota").textContent = "Escolha um mês entre janeiro de 1900 e o mês atual.";
+        if ($("relMesInput")) $("relMesInput").value = relMesSel(); return false;
+      }
+      relMesOff = (+hoje.slice(0, 4) - +mes.slice(0, 4)) * 12 + (+hoje.slice(5, 7) - +mes.slice(5, 7)); renderRelatorios(); return true;
+    }
+  };
 
   // ---------- app do aluno do personal ----------
   // Os ícones das conquistas (MT_CQICONS) moram no construtor do app,
@@ -21892,103 +22174,83 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__acessoAluno = { cria: criaAcessoAluno, senha: senhaAleatoria, msg: msgAcesso }; // testes
 
   // ---------- assessoria (adesão remota) ----------
+  var assessoriaSeq = 0, assessoriaCache = null;
+  function assessoriaDados(st, cache) {
+    var hoje = S.todayISO(), seg = new Date(hoje + "T12:00:00");
+    seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    var inicio = S.todayISO(seg), porToken = {};
+    (cache.logs || []).forEach(function (l) { (porToken[l.token] = porToken[l.token] || []).push(l.dia); });
+    function dataValida(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= cache.corte && d <= hoje && S.todayISO(new Date(d + "T12:00:00")) === d; }
+    return st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) {
+      var temAcesso = !!a.appTokenP && !a.appRevogadoEm, dias = {}, ret = a.retorno || a.demoRetorno || {}, feitos = ret.feitos;
+      if (temAcesso) {
+        if (feitos && typeof feitos === "object" && !Array.isArray(feitos)) Object.keys(feitos).forEach(function (d) { if (dataValida(d)) dias[d] = 1; });
+        (porToken[a.appTokenP] || []).forEach(function (d) { if (dataValida(String(d || ""))) dias[d] = 1; });
+      }
+      var lista = Object.keys(dias).sort(), ultimo = lista.length ? lista[lista.length - 1] : null;
+      var distancia = ultimo ? Math.round((new Date(hoje) - new Date(ultimo)) / 864e5) : null;
+      var semana = lista.filter(function (d) { return d >= inicio; }).length, meta = +a.metaSemana > 0 ? +a.metaSemana : 3;
+      var estado = !temAcesso ? "semacesso" : !ultimo ? "semregistro" : distancia >= 5 ? "atencao" : semana >= meta ? "meta" : "andamento";
+      var texto = estado === "semacesso" ? (a.appRevogadoEm ? "Acesso ao app pausado" : "App ainda não liberado") : estado === "semregistro" ? "sem registros no período" : estado === "atencao" ? "parado há " + distancia + " dias" : estado === "meta" ? "meta da semana batida (" + semana + "/" + meta + ")" : semana + "/" + meta + " treinos na semana";
+      var primeiro = String(a.nome || "").split(" ")[0];
+      var msg = estado === "semregistro" ? "Oi " + primeiro + "! Não vi registros recentes de treino pelo app. Como está sua rotina? Me conta se precisar de ajuda para retomar. 💪" : estado === "atencao" ? "Oi " + primeiro + "! Como está sua rotina? Não vi registros recentes de treino pelo app. Me conta se precisar ajustar alguma coisa. 💪" : estado === "meta" ? "Oi " + primeiro + "! Vi que você alcançou sua meta da semana: " + semana + " treinos registrados. Parabéns pela dedicação! 👏" : "Oi " + primeiro + "! Vi " + semana + " de " + meta + " treinos registrados nesta semana. Como está sendo seguir o planejamento?";
+      var checks = cache.checks == null ? null : cache.checks.filter(function (c) { return temAcesso && c.token === a.appTokenP && dataValida(String(c.dia || "")); }).sort(function (a, b) { return String(b.dia).localeCompare(String(a.dia)); }).slice(0, 3);
+      return { aluno: a, estado: estado, texto: texto, dias: lista.length, ultimo: ultimo, semana: semana, meta: meta, mensagem: msg, checks: checks };
+    });
+  }
+  function pintaAssessoria() {
+    var cache = assessoriaCache, st = load(), nuvem = S.cloud && S.cloud();
+    if (!cache || !nuvem || cache.aid !== nuvem.aid) return;
+    var todos = assessoriaDados(st, cache), termo = alTextoBusca($("assessoriaBusca").value).trim(), numero = termo.replace(/\D/g, ""), filtro = $("assessoriaFiltro").value;
+    var linhas = todos.filter(function (x) {
+      return (filtro === "todos" || x.estado === filtro) && (!termo || alTextoBusca(x.aluno.nome).indexOf(termo) >= 0 || (numero.length >= 3 && String(x.aluno.zap || "").replace(/\D/g, "").indexOf(numero) >= 0));
+    }).sort(function (a, b) { var ordem = { atencao: 0, semregistro: 1, andamento: 2, meta: 3, semacesso: 4 }; return ordem[a.estado] - ordem[b.estado] || a.aluno.nome.localeCompare(b.aluno.nome, "pt-BR"); });
+    $("assessoriaResumo").hidden = false;
+    $("assessoriaResumo").innerHTML = [[todos.filter(function (x) { return x.estado !== "semacesso"; }).length, "Com acesso ao app"], [todos.filter(function (x) { return x.estado === "atencao"; }).length, "Precisam de atenção"], [todos.filter(function (x) { return x.estado === "meta"; }).length, "Meta alcançada"]].map(function (x) { return '<div class="pc-kpi"><strong>' + x[0] + '</strong><span>' + x[1] + '</span></div>'; }).join("");
+    $("assessoriaStatus").textContent = S.plural(linhas.length, "aluno", "alunos") + " de " + todos.length + " · registros desde " + S.fmtData(cache.corte) + (cache.checks == null ? " · Check-ins indisponíveis agora." : ".") + (cache.limitado ? " A consulta atingiu o limite de registros; os totais podem estar incompletos." : "");
+    var abertos = {};
+    document.querySelectorAll("#assessoriaLista [data-aschecks][open]").forEach(function (d) { abertos[d.dataset.aschecks] = true; });
+    $("assessoriaLista").innerHTML = linhas.length ? linhas.map(function (x) {
+      var a = x.aluno, acesso = x.estado !== "semacesso";
+      var checks = x.checks == null ? '<p class="muted">Check-ins semanais: fora do ar agora. Atualize para tentar novamente.</p>' : x.checks.length ? x.checks.map(function (c) { return '<div class="pc-ass-check"><b>' + esc(S.fmtData(c.dia)) + '</b> · ' + (c.nota != null && +c.nota >= 1 && +c.nota <= 5 ? "nota " + +c.nota + " de 5" : "nota não informada") + (c.peso != null && +c.peso > 0 ? ' · ' + esc(String(c.peso).replace(".", ",")) + ' kg' : '') + (c.texto ? '<p>' + esc(c.texto) + '</p>' : '') + '</div>'; }).join("") : '<p class="muted">Nenhum check-in semanal ainda.</p>';
+      return '<article class="pc-ass-card" data-asaluno="' + esc(a.id) + '" data-asestado="' + x.estado + '"><div class="pc-ass-top"><div class="pc-ass-main"><button type="button" class="pc-ass-title" data-asacao="perfil" data-asid="' + esc(a.id) + '">' + esc(a.nome) + '</button><div><span class="pc-ass-state">' + esc(x.texto) + '</span></div>' + (x.ultimo ? '<div class="pc-ass-meta">Último treino: ' + esc(S.fmtData(x.ultimo)) + ' · ' + S.plural(x.dias, "dia com treino", "dias com treino") + ' no período</div>' : '') + '</div></div><div class="pc-ass-actions"><button type="button" class="btn sec mini" data-asacao="perfil" data-asid="' + esc(a.id) + '">Ver perfil</button>' + (acesso ? '<button type="button" class="btn sec mini" data-asacao="treino" data-asid="' + esc(a.id) + '">Revisar treino</button><button type="button" class="btn sec mini" data-asacao="chat" data-asid="' + esc(a.id) + '">Abrir chat</button>' + (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '?text=' + encodeURIComponent(x.mensagem) + '">Mensagem pronta</a>' : '') : '<span class="pc-ass-meta">Gerencie o acesso na ficha do aluno.</span>') + '</div>' + (acesso ? '<details class="pc-ass-checks" data-aschecks="' + esc(a.id) + '"' + (abertos[a.id] ? ' open' : '') + '><summary>Check-ins recentes' + (x.checks && x.checks.length ? ' · ' + x.checks.length : '') + '</summary>' + checks + '</details>' : '') + '</article>';
+    }).join("") : '<div class="pc-empty">Nenhum aluno com estes filtros. Altere a busca ou selecione Todos os alunos.</div>';
+  }
   function renderAssessoria() {
-    var el = $("assessoriaLista");
-    var st = load();
+    var el = $("assessoriaLista"), st = load(), nuvem = S.cloud && S.cloud(), seq = ++assessoriaSeq;
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
-    if (!ativos.length) { el.innerHTML = '<div class="card muted">Cadastre alunos primeiro.</div>'; return; }
-    var nuvem = S.cloud && S.cloud();
-    if (!nuvem) {
-      el.innerHTML = '<div class="card" style="border-left:4px solid var(--tk-aten);"><b>A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (menu → Sua ilha) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
-      return;
-    }
-    var tokens = ativos.filter(function (a) { return a.appTokenP; }).map(function (a) { return a.appTokenP; });
-    if (!tokens.length) {
-      el.innerHTML = '<div class="card muted">Gere o App de cada aluno (aba Alunos) — o acompanhamento começa aí.</div>';
-      return;
-    }
-    var corte = new Date(); corte.setDate(corte.getDate() - 28);
-    var iso28 = S.todayISO(corte);
+    $("assessoriaAtualiza").disabled = false; $("assessoriaResumo").hidden = true; $("assessoriaStatus").textContent = "";
+    if (!ativos.length) { assessoriaCache = null; el.innerHTML = '<div class="pc-empty">Cadastre alunos primeiro para acompanhar seus registros.</div>'; return; }
+    if (!nuvem || !nuvem.client) { assessoriaCache = null; el.innerHTML = '<div class="pc-empty"><b>A assessoria a distância precisa da sua conta.</b><p>Entre na sua conta e libere o app dos alunos para receber treinos e check-ins.</p></div>'; return; }
+    var tokens = ativos.filter(function (a) { return a.appTokenP && !a.appRevogadoEm; }).map(function (a) { return a.appTokenP; });
+    var corte = new Date(); corte.setDate(corte.getDate() - 28); var iso28 = S.todayISO(corte);
+    if (!tokens.length) { assessoriaCache = { aid: nuvem.aid, logs: [], checks: [], corte: iso28 }; pintaAssessoria(); return; }
+    $("assessoriaAtualiza").disabled = true; $("assessoriaStatus").textContent = "Atualizando registros…";
+    if (!assessoriaCache || assessoriaCache.aid !== nuvem.aid) el.innerHTML = '<div class="pc-empty">Carregando registros do app…</div>';
+    function vigente() { var agora = S.cloud && S.cloud(); return seq === assessoriaSeq && agora && agora.aid === nuvem.aid; }
+    function falhou() { if (!vigente()) return; $("assessoriaAtualiza").disabled = false; $("assessoriaStatus").textContent = "Não foi possível atualizar. Tente novamente."; assessoriaCache = null; el.innerHTML = '<div class="pc-empty"><b>Não deu pra ler os treinos agora.</b><p>Não vou mostrar "sem registros" sem ter certeza: seus alunos podem estar treinando normalmente. Use Atualizar registros para tentar novamente.</p></div>'; }
     Promise.all([
       nuvem.client.from("app_treino_log").select("token,dia,exercicio").gte("dia", iso28).in("token", tokens).limit(2000),
       nuvem.client.from("app_checkin").select("token,dia,nota,texto,peso").gte("dia", iso28).in("token", tokens).order("dia", { ascending: false }).limit(200),
     ]).then(function (rs) {
-      /* v755: só o erro dos check-ins era tratado. Se a leitura dos TREINOS
-       * falhasse (RLS, SQL não rodado, timeout), a lista vinha vazia e todo
-       * aluno caía em "sem registros ainda" — com a mensagem pronta de "já
-       * instalou o app?" pra quem treinou ontem. */
-      if (rs[0].error) {
-        el.innerHTML = '<div class="card" style="border-left:4px solid var(--tk-aten);"><b>Não deu pra ler os treinos agora.</b>' +
-          '<p class="muted" style="margin:6px 0 0;">' + esc(foraDoAr("A leitura dos treinos", "app_treino_log: " + ((rs[0].error || {}).message || ""))) + ' ' +
-          'Não vou mostrar "sem registros" sem ter certeza: seus alunos podem estar treinando normalmente.</p></div>';
-        return;
-      }
-      var logs = (rs[0].data || []);
-      var checks = rs[1].error ? null : (rs[1].data || []);
-      var hoje = S.todayISO();
-      var seg = new Date(hoje + "T12:00"); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
-      var iniSemana = S.todayISO(seg);
-      el.innerHTML = ativos.map(function (a) {
-        if (!a.appTokenP) {
-          return '<div class="card" style="margin-bottom:10px;"><b>' + esc(a.nome) + '</b> <span class="muted">— gere o App dele na aba Alunos pra acompanhar.</span></div>';
-        }
-        /* v756: esta tela contava "dia treinado" só pelo app_treino_log,
-         * enquanto o resto do painel (perfil, relatórios, lista de Alunos,
-         * Resolver hoje) conta pelo `retorno.feitos` que chega no devolveApp.
-         * As duas fontes divergem — retorno sincronizado e log ainda não, ou o
-         * contrário — e o professor via "3/3 na semana" numa tela e "parado há
-         * 6 dias" na outra, e mandava o "senti sua falta" pra quem tinha
-         * treinado. Agora o `retorno.feitos` é a fonte (a MESMA do resto) e o
-         * log só ACRESCENTA o dia que ele ainda não tem: são o mesmo evento
-         * (o "Treinei hoje" do app), então a união nunca conta a mais. */
-        var dias = {};
-        var retA = a.retorno || a.demoRetorno || {};
-        var feA = (retA.feitos && typeof retA.feitos === "object" && !Array.isArray(retA.feitos)) ? retA.feitos : {};
-        Object.keys(feA).forEach(function (d9) { if (d9 >= iso28) dias[d9] = 1; });
-        logs.forEach(function (l) { if (l.token === a.appTokenP) dias[l.dia] = 1; });
-        var listaDias = Object.keys(dias).sort();
-        var ultimo = listaDias.length ? listaDias[listaDias.length - 1] : null;
-        var diasSem = ultimo ? Math.round((new Date(hoje) - new Date(ultimo)) / 864e5) : null;
-        var naSemana = listaDias.filter(function (d) { return d >= iniSemana; }).length;
-        var meta = +a.metaSemana || 3;
-        var stAtu, cor, msg;
-        var primeiro = a.nome.split(" ")[0];
-        if (ultimo == null) {
-          stAtu = "sem registros ainda"; cor = "var(--tk-tx4)";
-          msg = "Oi " + primeiro + "! Já instalou seu app de treino? Qualquer dúvida pra abrir eu te ajudo — bora começar! 💪";
-        } else if (diasSem >= 5) {
-          stAtu = "parado há " + diasSem + " dias"; cor = "var(--tk-erro)";   // v756: token, não hex novo
-          msg = "Oi " + primeiro + "! Senti sua falta nos treinos 😢 Aconteceu alguma coisa? Se a planilha ficou pesada ou a rotina mudou, me fala que eu ajusto — o importante é não parar. Bora retomar essa semana? 💪";
-        } else if (naSemana >= meta) {
-          stAtu = "meta da semana batida (" + naSemana + "/" + meta + ")"; cor = "var(--tk-ok)";
-          msg = "AEEE " + primeiro + "! 🔥 Meta da semana batida (" + naSemana + " treinos)! Tô acompanhando tudo por aqui e o comprometimento tá impecável — segue assim que o resultado não tem pra onde correr. 👏";
-        } else {
-          stAtu = naSemana + "/" + meta + " treinos na semana"; cor = "var(--roxo)";
-          msg = "Oi " + primeiro + "! Vi seus treinos da semana por aqui (" + naSemana + " de " + meta + ") — faltou pouco pra meta! Consegue encaixar mais " + (meta - naSemana) + "? Qualquer coisa eu adapto o treino pra caber na sua rotina. 💜";
-        }
-        var meusChecks = checks == null ? [] : checks.filter(function (c) { return c.token === a.appTokenP; }).slice(0, 3);
-        var NOTAS = ["", "nota 1", "nota 2", "nota 3", "nota 4", "nota 5"];
-        var checksHTML = checks == null
-          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Check-ins semanais: fora do ar agora — nada se perdeu, eles aparecem aqui quando voltar.</p>'
-          : (meusChecks.length
-            ? '<div style="margin-top:8px;">' + meusChecks.map(function (c) {
-                return '<div class="sessao-pt">' + (NOTAS[c.nota] || "check-in") + " <b>" + S.fmtData(c.dia) + "</b>" +
-                  (c.peso ? "<span>" + String(c.peso).replace(".", ",") + " kg</span>" : "") +
-                  (c.texto ? '<span class="muted">"' + esc(c.texto) + '"</span>' : "") + "</div>";
-              }).join("") + "</div>"
-            : '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Nenhum check-in semanal ainda.</p>');
-        return '<div class="card" style="margin-bottom:10px;border-left:4px solid ' + cor + ';">' +
-          '<div class="linha-flex" style="justify-content:space-between;flex-wrap:wrap;">' +
-          "<div><b style='font-size:15px;'>" + esc(a.nome) + "</b><div style='color:" + cor + ";font-weight:700;font-size:13.5px;margin-top:2px;'>" + stAtu + "</div>" +
-          (ultimo ? "<div class='muted' style='font-size:12.5px;'>último treino: " + S.fmtData(ultimo) + " · " + listaDias.length + " treino(s) em 28 dias</div>" : "") + "</div>" +
-          (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Mensagem pronta</a>' : "") +
-          "</div>" + checksHTML + "</div>";
-      }).join("");
-    }, function () {
-      el.innerHTML = '<div class="card" style="color:var(--tk-aten2);">Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
-    });
+      if (!vigente()) return;
+      if (rs[0].error) { falhou(); return; }
+      $("assessoriaAtualiza").disabled = false;
+      assessoriaCache = { aid: nuvem.aid, logs: rs[0].data || [], checks: rs[1].error ? null : (rs[1].data || []), corte: iso28, limitado: (rs[0].data || []).length >= 2000 || (rs[1].data || []).length >= 200 };
+      pintaAssessoria();
+    }, falhou);
   }
-  window.__assessoria = renderAssessoria; // testes
+  $("assessoriaBusca").addEventListener("input", pintaAssessoria);
+  $("assessoriaFiltro").addEventListener("change", pintaAssessoria);
+  $("assessoriaAtualiza").addEventListener("click", renderAssessoria);
+  $("assessoriaLista").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-asacao]"); if (!b) return;
+    var id = b.dataset.asid, acao = b.dataset.asacao;
+    if (!load().alunos.some(function (a) { return a.id === id && a.ativo !== false; })) return;
+    if (acao === "perfil") abrePerfil(id); else alExecutaAcao(id, acao);
+  });
+  window.__assessoria = renderAssessoria; // testes e integrações existentes
+  window.__assessoriaUI = { pinta: pintaAssessoria, dados: function () { return assessoriaCache ? assessoriaDados(load(), assessoriaCache) : []; } };
 
   // ---------- robô de atendimento (chatbot do app do aluno) ----------
   function botPadraoP(st) {
@@ -22006,7 +22268,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = (st.config || {}).bot;
     return (b && b.ops && b.ops.length) ? b : botPadraoP(st);
   }
+  var botRascunhoSujo = false;
   function renderBotP() {
+    if (botRascunhoSujo) return;
     var bot = botDe(load());
     $("botAtivoP").checked = bot.ativo !== false;
     $("botOiP").value = bot.oi || "";
@@ -22014,6 +22278,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("botSalvaP").addEventListener("click", function () {
     var st = load();
+    var linhasBot = $("botOpsP").value.split("\n").filter(function (ln) { return ln.trim(); });
+    if (linhasBot.some(function (ln) { var p = ln.split("|"); return !p[0].trim() || !p.slice(1).join("|").trim(); })) {
+      $("botOkP").textContent = "Revise as opções: cada linha precisa de Rótulo | Resposta. Nenhuma alteração foi salva."; return;
+    }
     var ops = $("botOpsP").value.split("\n").map(function (ln) {
       var p = ln.split("|");
       return { r: (p[0] || "").trim(), t: (p.slice(1).join("|") || "").trim() };
@@ -22039,14 +22307,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     } else {
       st.config.automacoes = { principal: "a1", lista: [{ id: "a1", nome: "Automação principal", dados: fluxoNovo }] };
     }
-    save(st);
+    if (S.write("ptStudio", st) === false) { $("botOkP").textContent = "Não foi possível salvar. Suas alterações continuam no formulário."; return; }
+    botRascunhoSujo = false; $("botCancelaP").hidden = true;
+    renderPubPendentes(st);
     if (builderP) { builderP.reg().lista = st.config.automacoes.lista; builderP.reg().principal = st.config.automacoes.principal; builderP.render(); }
     var pendBot = load().alunos.filter(function (a) { return appPendente(load(), a); }).length;
     $("botOkP").textContent = "Robô salvo! Vai pros apps na próxima publicação" +
       (pendBot ? " (" + pendBot + " pendente(s) — o botão Publicar apps atualizados está na aba Treinos → Em grupo)." : ".") +
-      " O WhatsApp oficial também passou a responder com este fluxo.";
+      " O fluxo do WhatsApp está preparado para publicação.";
     setTimeout(function () { $("botOkP").textContent = ""; }, 8000);
   });
+  ["botAtivoP", "botOiP", "botOpsP"].forEach(function (id) { $(id).addEventListener("input", function () { botRascunhoSujo = true; $("botCancelaP").hidden = false; $("botOkP").textContent = "Alterações ainda não salvas."; }); });
+  $("botCancelaP").addEventListener("click", function () { botRascunhoSujo = false; this.hidden = true; renderBotP(); $("botOkP").textContent = "Formulário restaurado. O robô salvo continua igual."; });
   // fluxograma com linhas (mesmo desenho de blocos do chatbot da academia)
   function botDoEditorP() {
     var ops = $("botOpsP").value.split("\n").map(function (ln) {
@@ -22144,69 +22416,74 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var dif = Math.round((new Date(hoje + "T12:00:00") - new Date(d + "T12:00:00")) / 864e5);
     return dif < 7 ? DS[new Date(d + "T12:00:00").getDay()] : S.fmtData(d);
   }
-  function renderChatPT() {
-    var el = $("chatAlunos");
-    var st = load();
-    var nuvem = S.cloud && S.cloud();
-    if (!nuvem) {
-      el.innerHTML = '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Nenhuma conversa por aqui ainda.</div>';
-      $("chatBusca").hidden = true;
-      $("chatAv").hidden = true;
-      $("chatFicha").hidden = true;
-      $("chatCtx").hidden = true;
-      $("chatSub").textContent = "";
-      $("chatTitulo").textContent = "Chat interno";
-      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (menu → Sua ilha). Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
-      $("chatEnvio").hidden = true;
-      return;
-    }
-    $("chatBusca").hidden = false;
-    $("chatAv").hidden = !chatAluno;
-    var ativos = st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP && !a.appRevogadoEm; });
-    if (!ativos.length) {
-      el.innerHTML = '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Gere o App dos alunos primeiro — o chat vive dentro dele.</div>';
-      return;
-    }
-    // a lista precisa da ULTIMA mensagem de cada um (era so a contagem de novas):
-    // sem previa, escolher a conversa virava adivinhacao
-    /* v742: ORDER ascendente + LIMIT devolvia as 1200 mensagens mais VELHAS
-     * da academia — o PostgREST ordena e depois corta. Com a base crescendo, a
-     * prévia e o contador de novas paravam no passado. Agora vêm as mais
-     * novas; a primeira vista de cada aluno é a última mensagem dele. */
-    nuvem.client.from("app_chat").select("token,de,lida,texto,criado").eq("academia_id", nuvem.aid)
-      .order("criado", { ascending: false }).limit(1200).then(function (r) {
-      var novas = {}, ultima = {};
-      (r.data || []).forEach(function (m) {
-        if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1;
-        if (!ultima[m.token] || String(m.criado || "") > String(ultima[m.token].criado || "")) ultima[m.token] = m;
-      });
-      var termo = ($("chatBusca") ? $("chatBusca").value : "").trim().toLowerCase();
-      var linhas = ativos.map(function (a) {
-        var u = ultima[a.appTokenP];
-        return { a: a, u: u, n: novas[a.appTokenP] || 0, quando: u ? u.criado : "" };
-      }).filter(function (x) { return !termo || x.a.nome.toLowerCase().indexOf(termo) >= 0; })
-        .sort(function (x, y) { return (y.quando || "") < (x.quando || "") ? -1 : 1; });
-      var totalN = Object.keys(novas).reduce(function (t, k) { return t + novas[k]; }, 0);
-      var bn = $("chNovas");
-      if (bn) { bn.hidden = !totalN; bn.textContent = totalN; }
-      el.innerHTML = linhas.length ? linhas.map(function (x) {
-        var prev = x.u ? (x.u.de === "personal" ? "Você: " : "") + String(x.u.texto || "") : "sem mensagem ainda";
-        return '<button type="button" class="qsit' + (chatAluno === x.a.id ? " on" : "") + '" data-chat="' + x.a.id + '">' +
-          '<span class="qsav">' + esc(String(x.a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</span>" +
-          '<span style="min-width:0;flex:1;"><span class="qsnm">' + esc(x.a.nome) + "</span>" +
-          '<span class="qssub">' + esc(prev.length > 32 ? prev.slice(0, 31) + "…" : prev) + "</span></span>" +
-          '<span style="flex:none;text-align:right;">' +
-          '<span style="display:block;font-size:11px;font-weight:700;color:var(--tk-tx5);">' + esc(chQuando(x.quando)) + "</span>" +
-          (x.n ? '<span class="chn">' + x.n + "</span>" : "") + "</span></button>";
-      }).join("") : '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Nenhum aluno com esse nome.</div>';
+  var chatListaSeq = 0, chatListaCache = null;
+  function chatAtivos(st) { return st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP && !a.appRevogadoEm; }); }
+  function pintaListaChat() {
+    var cache = chatListaCache, nuvem = S.cloud && S.cloud();
+    if (!cache || !nuvem || cache.aid !== nuvem.aid) return;
+    var novas = {}, ultima = {}, ativos = chatAtivos(load()), tokens = {};
+    ativos.forEach(function (a) { tokens[a.appTokenP] = true; });
+    cache.msgs.forEach(function (m) {
+      if (!tokens[m.token]) return;
+      if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1;
+      if (!ultima[m.token] || String(m.criado || "") > String(ultima[m.token].criado || "")) ultima[m.token] = m;
     });
+    var termo = alTextoBusca($("chatBusca").value).trim(), numero = termo.replace(/\D/g, ""), filtro = $("chatFiltro").value;
+    var linhas = ativos.map(function (a) { var u = ultima[a.appTokenP]; return { a: a, u: u, n: novas[a.appTokenP] || 0, quando: u ? u.criado : "", draft: chatRascunhos[a.id] || "" }; })
+      .filter(function (x) { return (!termo || alTextoBusca(x.a.nome).indexOf(termo) >= 0 || (numero.length >= 3 && String(x.a.zap || "").replace(/\D/g, "").indexOf(numero) >= 0)) && (filtro !== "novas" || x.n > 0) && (filtro !== "rascunhos" || x.draft.trim()); })
+      .sort(function (a, b) { return String(b.quando).localeCompare(String(a.quando)) || a.a.nome.localeCompare(b.a.nome, "pt-BR"); });
+    var total = Object.keys(novas).reduce(function (s, k) { return s + novas[k]; }, 0);
+    $("chNovas").hidden = !total; $("chNovas").textContent = total;
+    $("chatListaStatus").textContent = S.plural(linhas.length, "conversa", "conversas") + (cache.msgs.length >= 1200 ? " · mensagens recentes" : "");
+    var el = $("chatAlunos"), rolagem = el.scrollTop;
+    el.innerHTML = linhas.length ? linhas.map(function (x) {
+      var prev = x.draft.trim() ? "Rascunho: " + x.draft.trim() : x.u ? (x.u.de === "personal" ? "Você: " : "") + String(x.u.texto || "") : "sem mensagem ainda";
+      return '<button type="button" class="qsit' + (chatAluno === x.a.id ? ' on' : '') + '" data-chat="' + esc(x.a.id) + '" aria-pressed="' + (chatAluno === x.a.id) + '"><span class="qsav">' + esc(String(x.a.nome || "?").trim().slice(0, 2).toUpperCase()) + '</span><span style="min-width:0;flex:1"><span class="qsnm">' + esc(x.a.nome) + '</span><span class="qssub' + (x.draft.trim() ? ' pc-draft' : '') + '">' + esc(prev.length > 65 ? prev.slice(0, 64) + '…' : prev) + '</span></span><span style="flex:none;text-align:right"><span style="display:block;font-size:11px;color:var(--cinza)">' + esc(chQuando(x.quando)) + '</span>' + (x.n ? '<span class="chn" aria-label="' + x.n + ' mensagens não lidas">' + x.n + '</span>' : '') + '</span></button>';
+    }).join("") : '<div class="pc-empty">' + (!ativos.length ? "Libere o app dos alunos para começar uma conversa." : filtro === "novas" ? "Nenhuma conversa não lida com estes filtros." : filtro === "rascunhos" ? "Nenhum rascunho com estes filtros." : "Nenhum aluno com esse nome ou telefone.") + '</div>';
+    el.scrollTop = rolagem;
+  }
+  function renderChatPT() {
+    var el = $("chatAlunos"), st = load(), nuvem = S.cloud && S.cloud(), seq = ++chatListaSeq;
+    $("chatAtualiza").disabled = false;
+    if (!nuvem || !nuvem.client) {
+      guardaRascunhoChat(); chatAluno = null; chatConsultaSeq++; chatListaCache = null;
+      $("vChat").classList.remove("chat-aberto");
+      el.innerHTML = '<div class="pc-empty">O chat precisa da sua conta. Entre pela área Sua ilha para conversar com seus alunos.</div>';
+      $("chatBusca").hidden = true; $("chatFiltro").disabled = true;
+      $("chatAv").hidden = true; $("chatFicha").hidden = true; $("chatCtx").hidden = true;
+      $("chatSub").textContent = ""; $("chatTitulo").textContent = "Chat interno";
+      $("chatMsgs").innerHTML = '<div class="pc-empty">O chat interno precisa da sua conta. Enquanto isso, o WhatsApp continua disponível na aba Alunos.</div>';
+      $("chatEnvio").hidden = true; $("chNovas").hidden = true; $("chatListaStatus").textContent = "Conta desconectada";
+      $("chatLeituraStatus").textContent = ""; $("chatTenta").hidden = true;
+      return;
+    }
+    $("chatBusca").hidden = false; $("chatFiltro").disabled = false;
+    var ativos = chatAtivos(st);
+    if (chatAluno && !ativos.some(function (a) { return a.id === chatAluno; })) {
+      guardaRascunhoChat(); chatAluno = null; chatConsultaSeq++; chatPintado = { id: "", marca: "" };
+      $("vChat").classList.remove("chat-aberto"); $("chatEnvio").hidden = true; $("chatFicha").hidden = true;
+      $("chatTitulo").textContent = "Escolha um aluno"; $("chatMsgs").innerHTML = '<div class="pc-empty">Esta conversa não está disponível. Confira o acesso ao app na ficha do aluno.</div>';
+    }
+    $("chatAv").hidden = !chatAluno;
+    if (!ativos.length) { chatListaCache = { aid: nuvem.aid, msgs: [] }; pintaListaChat(); return; }
+    $("chatListaStatus").textContent = "Atualizando…"; $("chatAtualiza").disabled = true;
+    if (!chatListaCache || chatListaCache.aid !== nuvem.aid) el.innerHTML = '<div class="pc-empty">Carregando conversas…</div>';
+    function vigente() { var agora = S.cloud && S.cloud(); return seq === chatListaSeq && agora && agora.aid === nuvem.aid; }
+    function erro() { if (!vigente()) return; $("chatAtualiza").disabled = false; $("chatListaStatus").textContent = "Não foi possível atualizar."; if (!chatListaCache || chatListaCache.aid !== nuvem.aid) el.innerHTML = '<div class="pc-empty">Não deu para carregar as conversas. Use Atualizar para tentar novamente.</div>'; }
+    // A lista consulta as mensagens recentes uma vez; busca e filtros usam o resultado local.
+    nuvem.client.from("app_chat").select("token,de,lida,texto,criado").eq("academia_id", nuvem.aid).order("criado", { ascending: false }).limit(1200).then(function (r) {
+      if (!vigente()) return;
+      if (!r || r.error) { erro(); return; }
+      $("chatAtualiza").disabled = false; chatListaCache = { aid: nuvem.aid, msgs: r.data || [] }; pintaListaChat();
+    }, erro);
   }
   /* v755: marca da última conversa pintada — {id, marca}. O timer de 25 s
    * chamava abreChat e ele reconstruía tudo por innerHTML, jogava a rolagem
    * pro fim (quem estava lendo mensagem antiga era puxado a cada 25 s) e
    * rodava o update de lidas + uma segunda consulta mesmo sem novidade. */
-  var chatPintado = { id: "", marca: "" }, chatRascunhos = Object.create(null), chatConsultaSeq = 0;
-  function guardaRascunhoChat() { if (chatAluno) chatRascunhos[chatAluno] = $("chatTexto").value; }
+  var chatPintado = { id: "", marca: "" }, chatRascunhos = Object.create(null), chatConsultaSeq = 0, chatEnviando = Object.create(null);
+  function contaTextoChat() { $("chatContagem").textContent = $("chatTexto").value.length + "/1000"; }
+  function guardaRascunhoChat() { if (chatAluno) chatRascunhos[chatAluno] = $("chatTexto").value; contaTextoChat(); }
   $("chatTexto").addEventListener("input", guardaRascunhoChat);
   function abreChat(id) {
     /* tela 22 do handoff: no celular a conversa e uma TELA CHEIA — a lista de
@@ -22214,13 +22491,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     var nuvem = S.cloud && S.cloud();
-    if (!a || !a.appTokenP || a.appRevogadoEm || !nuvem || !nuvem.client) return;
+    if (!a || a.ativo === false || !a.appTokenP || a.appRevogadoEm || !nuvem || !nuvem.client) return;
     if (chatAluno !== id) {
       guardaRascunhoChat(); $("chatTexto").value = chatRascunhos[id] || "";
       $("chatEnvioErro").hidden = true; chatPintado = { id: "", marca: "" };
       $("chatMsgs").innerHTML = '<p class="muted">Carregando a conversa…</p>';
     }
     chatAluno = id;
+    contaTextoChat(); $("chatEnviar").disabled = !!chatEnviando[id];
     var consultaSeq = ++chatConsultaSeq;
     if ($("vChat")) $("vChat").classList.add("chat-aberto");
     $("chatTitulo").textContent = a.nome;
@@ -22242,16 +22520,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ctx.hidden = !partes.length;
     ctx.textContent = partes.join(" · ");
     $("chatFicha").hidden = false;
+    $("chatLeituraStatus").textContent = chatPintado.id === id ? "" : "Carregando a conversa…";
+    $("chatTenta").hidden = true;
+    function consultaVigente() {
+      var agora = S.cloud && S.cloud(), atual = load().alunos.find(function (x) { return x.id === id; });
+      return chatAluno === id && consultaSeq === chatConsultaSeq && agora && agora.aid === nuvem.aid && atual && atual.ativo !== false && !atual.appRevogadoEm && atual.appTokenP === a.appTokenP;
+    }
+    function leituraFalhou() {
+      if (!consultaVigente()) return;
+      $("chatLeituraStatus").textContent = "Não deu para carregar a conversa. Seu rascunho foi mantido."; $("chatTenta").hidden = false;
+      if (chatPintado.id !== id) $("chatMsgs").innerHTML = '<div class="pc-empty">As mensagens estão indisponíveis agora. Tente novamente para ver a conversa.</div>';
+    }
     /* v742: ORDER asc + LIMIT 80 congelava a conversa nas 80 mensagens mais
      * ANTIGAS: passado disso o professor nunca mais via o que o aluno
      * escrevia, e o update abaixo marcava tudo como lido. Busca as 80 mais
      * novas e vira a lista pra ficar em ordem de leitura. */
     nuvem.client.from("app_chat").select("de,texto,criado,lida").eq("token", a.appTokenP)
       .order("criado", { ascending: false }).limit(80).then(function (r) {
-        if (chatAluno !== id || consultaSeq !== chatConsultaSeq) return;
+        if (!consultaVigente()) return;
+        if (!r || r.error) { leituraFalhou(); return; }
+        $("chatLeituraStatus").textContent = ""; $("chatTenta").hidden = true;
         var msgs = (r.data || []).slice().reverse();
         var caixaCh = $("chatMsgs");
-        var marca = msgs.length + "|" + String((msgs[msgs.length - 1] || {}).criado || "");
+        var marca = JSON.stringify(msgs.map(function (m) { return [m.de, m.texto, m.criado, m.lida]; }));
         var mesma = chatPintado.id === id && chatPintado.marca === marca;
         if (mesma) return; // nada mudou: não repinta, não rola, não consulta de novo
         // só rola pro fim quem já estava no fim (ou acabou de abrir a conversa)
@@ -22261,7 +22552,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var diaAnt = "";
         caixaCh.innerHTML = msgs.length ? msgs.map(function (m, i) {
           var minha = m.de === "personal";
-          var dia = String(m.criado || "").slice(0, 10);
+          var instante = chData(m.criado), dia = instante ? S.todayISO(instante) : String(m.criado || "").slice(0, 10);
           var sep = "";
           if (dia && dia !== diaAnt) {
             diaAnt = dia;
@@ -22287,17 +22578,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // marca como lidas SÓ as que apareceram na tela (as 80 mais novas)
         var qLida = nuvem.client.from("app_chat").update({ lida: true }).eq("token", a.appTokenP).eq("de", "aluno").eq("lida", false);
         if (msgs.length >= 80 && msgs[0] && msgs[0].criado && qLida.gte) qLida = qLida.gte("criado", msgs[0].criado);
-        qLida.then(function () { renderChatPT(); });
-      });
+        qLida.then(function (r) { if (!consultaVigente()) return; if (r && r.error) { $("chatLeituraStatus").textContent = "Conversa carregada; não foi possível atualizar a leitura."; return; } renderChatPT(); }, function () { if (consultaVigente()) $("chatLeituraStatus").textContent = "Conversa carregada; não foi possível atualizar a leitura."; });
+      }, leituraFalhou);
+    pintaListaChat();
   }
   // v755: cada tecla na busca disparava uma consulta de até 1200 linhas
-  var chatBuscaTmr = null;
   if ($("chatBusca")) $("chatBusca").addEventListener("input", function () {
-    clearTimeout(chatBuscaTmr);
-    chatBuscaTmr = setTimeout(renderChatPT, 300);
+    pintaListaChat();
   });
+  $("chatFiltro").addEventListener("change", pintaListaChat);
+  $("chatAtualiza").addEventListener("click", renderChatPT);
+  $("chatTenta").addEventListener("click", function () { if (chatAluno) abreChat(chatAluno); });
   if ($("chatVolta")) $("chatVolta").addEventListener("click", function () {
-    guardaRascunhoChat(); $("chatTexto").value = ""; chatConsultaSeq++;
+    guardaRascunhoChat(); $("chatTexto").value = ""; contaTextoChat(); chatConsultaSeq++;
     chatAluno = null;
     chatPintado = { id: "", marca: "" }; // v755
     if ($("vChat")) $("vChat").classList.remove("chat-aberto");
@@ -22309,10 +22602,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var t = b.getAttribute("data-chrap");
     // "Mandar a ficha" nao inventa link: escreve a frase e deixa o professor
     // completar; o envio de verdade e o botao "Enviar pro app" da aba Treinos
-    $("chatTexto").value = t === "Mandar a ficha" ? "Acabei de atualizar sua ficha — abre o app que já tá lá 💪"
+    if ($("chatTexto").value.trim() && !confirm("Substituir o rascunho pela resposta rápida?")) return;
+    $("chatTexto").value = t === "Mandar a ficha" ? "Seu treino pode ser consultado na área Meu treino do app. Me avise se precisar de ajuda para abrir. 💪"
       : t === "Remarcar" ? "Consegue remarcar? Me diz dois horários que funcionam pra você."
       : t;
-    $("chatTexto").focus();
+    guardaRascunhoChat(); $("chatTexto").focus();
   });
   $("chatFicha").addEventListener("click", function () {
     if (!chatAluno) return;
@@ -22326,41 +22620,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (d) abreChat(d.getAttribute("data-chat"));
   });
   $("chatEnviar").addEventListener("click", function () {
-    var rascunhoEnviado = $("chatTexto").value, texto = rascunhoEnviado.trim();
-    var st = load();
-    var a = st.alunos.find(function (x) { return x.id === chatAluno; });
-    var nuvem = S.cloud && S.cloud();
-    if (!texto || !a || !nuvem) return;
-    /* v755: a caixa era limpa ANTES de gravar e o supabase-js resolve com
-     * {error} em vez de rejeitar — então, sem rede, o texto sumia, o aluno
-     * recebia push de uma mensagem que não existe e a tela repintava sem ela.
-     * Agora: só limpa, avisa e notifica quando a gravação deu certo.
-     * lida:false porque a mensagem do professor nasce NÃO lida (ninguém marca
-     * ainda; ver o comentário do selo lá em cima). Os contadores de novas
-     * filtram de="aluno", então isso não acende badge nenhum. */
-    var btEnv = this;
-    btEnv.disabled = true;
-    var falhou = function () {
-      btEnv.disabled = false;
-      if (chatRascunhos[a.id] == null) chatRascunhos[a.id] = texto;
+    var rascunhoEnviado = $("chatTexto").value, texto = rascunhoEnviado.trim(), st = load();
+    var a = st.alunos.find(function (x) { return x.id === chatAluno; }), nuvem = S.cloud && S.cloud();
+    if (!texto || !a || chatEnviando[a.id]) return;
+    if (!nuvem || !nuvem.client || a.ativo === false || !a.appTokenP || a.appRevogadoEm) {
+      $("chatEnvioErro").hidden = false; $("chatEnvioErro").textContent = "Esta conversa não está disponível. Confira a conexão e o acesso ao app na ficha do aluno."; return;
+    }
+    if (rascunhoEnviado.length > 1000) { $("chatEnvioErro").hidden = false; $("chatEnvioErro").textContent = "A mensagem aceita até 1000 caracteres. Divida o texto antes de enviar."; contaTextoChat(); return; }
+    guardaRascunhoChat(); chatEnviando[a.id] = true; this.disabled = true;
+    function mesmaConta() { var atual = S.cloud && S.cloud(); return atual && atual.aid === nuvem.aid; }
+    function encerra() { delete chatEnviando[a.id]; if (chatAluno === a.id) $("chatEnviar").disabled = false; }
+    function falhou() {
+      encerra();
+      if (!mesmaConta()) return;
+      if (chatRascunhos[a.id] == null) chatRascunhos[a.id] = rascunhoEnviado;
       if (chatAluno === a.id) {
-        if (!$("chatTexto").value) $("chatTexto").value = texto;
-        $("chatEnvioErro").hidden = false;
+        if (!$("chatTexto").value) $("chatTexto").value = rascunhoEnviado;
+        contaTextoChat(); $("chatEnvioErro").hidden = false;
         $("chatEnvioErro").textContent = "Não deu pra enviar — confere a internet e tenta de novo.";
       }
-    };
+    }
     $("chatEnvioErro").hidden = true;
-    Promise.resolve(nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto.slice(0, 1000), lida: false }))
-      .then(function (r) {
-        btEnv.disabled = false;
-        if (r && r.error) { falhou(); return; }
-        if (chatRascunhos[a.id] === rascunhoEnviado) chatRascunhos[a.id] = "";
-        if (chatAluno === a.id && $("chatTexto").value === rascunhoEnviado) $("chatTexto").value = "";
-        pushAluno(a.appTokenP, "Mensagem do seu personal", texto.slice(0, 120));
-        if (chatAluno) abreChat(chatAluno);
-      }, falhou);
+    var envio;
+    try { envio = nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto, lida: false }); }
+    catch (e) { falhou(); return; }
+    Promise.resolve(envio).then(function (r) {
+      if (!r || r.error) { falhou(); return; }
+      encerra(); if (!mesmaConta()) return;
+      if (chatRascunhos[a.id] === rascunhoEnviado) chatRascunhos[a.id] = "";
+      if (chatAluno === a.id && $("chatTexto").value === rascunhoEnviado) { $("chatTexto").value = ""; contaTextoChat(); }
+      pushAluno(a.appTokenP, "Mensagem do seu personal", texto.slice(0, 120));
+      if (chatAluno === a.id) abreChat(a.id);
+      renderChatPT();
+    }, falhou);
   });
-  $("chatTexto") && $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviar").click(); });
+  $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("chatEnviar").click(); } });
   clearInterval(chatTimer);
   chatTimer = setInterval(timerSeguro(function () {
     if (!$("vChat").hidden) { if (chatAluno) abreChat(chatAluno); else renderChatPT(); }
@@ -23033,6 +23327,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderImagens() {
     var lista = imgsLe(), usado = imgsPeso(lista);
+    var buscaImg = $("imgBusca") ? alTextoBusca($("imgBusca").value.trim()) : "";
+    var exibidas = lista.filter(function (im) { return !buscaImg || alTextoBusca(im.n).includes(buscaImg); });
+    if ($("imgOrdem") && $("imgOrdem").value === "nome") exibidas.sort(function (a, b) { return String(a.n || "").localeCompare(String(b.n || ""), "pt-BR"); });
     var pct = Math.min(100, Math.round(100 * usado / IMG_TETO));
     var naNuvem = lista.filter(imgEhNuvem).length;
     $("imgEspaco").textContent = lista.length + " imagem(ns) · " + imgFmt(usado) + " de " + imgFmt(IMG_TETO) + " usados" +
@@ -23040,20 +23337,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (pct >= 80 ? " — quase cheio, apague o que não usa mais" : "");
     $("imgBarra").firstElementChild.style.width = pct + "%";
     $("imgBarra").classList.toggle("cheia", pct >= 90);
-    $("imgGaleria").innerHTML = lista.length
-      ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;">' +
-        lista.map(function (im) {
-          return '<div class="card" style="padding:10px;">' +
-            '<img src="' + im.d + '" alt="' + esc(im.n) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;display:block;">' +
-            '<div style="font-weight:700;font-size:13px;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(im.n) + "</div>" +
+    $("imgGaleria").innerHTML = exibidas.length
+      ? '<div class="ptf-gallery-grid">' +
+        exibidas.map(function (im) {
+          return '<div class="ptf-image">' +
+            '<img loading="lazy" src="' + esc(im.d) + '" alt="' + esc(im.n) + '">' +
+            '<div class="ptf-image-name">' + esc(im.n) + "</div>" +
             // v752: foto da nuvem é só uma URL de ~120 letras — imprimir o tamanho dela dava "0 KB", cara de foto quebrada
-            '<div class="muted" style="font-size:11.5px;">' + (imgEhNuvem(im) ? "na nuvem" : imgFmt((im.d || "").length)) + " · " + S.fmtData(im.em) + "</div>" +
+            '<div class="muted ptf-image-meta">' + (imgEhNuvem(im) ? "na nuvem" : imgFmt((im.d || "").length)) + " · " + S.fmtData(im.em) + "</div>" +
             '<div class="linha-flex" style="gap:6px;margin-top:8px;">' +
             '<button class="btn sec mini" data-imgnome="' + im.id + '">Renomear</button>' +
-            '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card “treino de hoje” (vale pra todos os alunos)">Usar no card</button>' +
-            '<button class="btn sec mini" data-imgrm="' + im.id + '" aria-label="excluir a imagem">✕</button></div></div>';
+            '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card “treino de hoje” (vale pra todos os alunos)">Usar como capa</button>' +
+            '<button class="btn sec mini" data-imgrm="' + im.id + '" aria-label="excluir a imagem ' + esc(im.n) + '">Excluir</button></div></div>';
         }).join("") + "</div>"
-      : '<div class="vazio">Nenhuma imagem ainda — toque em <b>Enviar imagem</b> e monte o seu banco.</div>';
+      : '<div class="vazio">' + (lista.length ? "Nenhuma imagem com esse nome. Tente outro termo." : "Nenhuma imagem ainda — toque em <b>Enviar imagem</b> e monte o seu banco.") + '</div>';
   }
   window.__imagensPT = { render: renderImagens, lista: imgsLe, peso: imgsPeso }; // testes
   $("imgAdd").addEventListener("click", function () { $("imgFile").click(); });
@@ -23066,9 +23363,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * lote — conta como ignorada, o laço segue e a galeria repinta no fim com
      * o resumo. Antes a 3ª de 8 falhando descartava as outras 5 sem aviso e
      * as 2 que entraram só apareciam ao sair e voltar na aba. */
-    var entraram = 0, ignoradas = [];
+    var entraram = 0, ignoradas = arqs.slice(10).map(function (arq) { return String(arq.name || "foto") + " — limite de 10 imagens por envio; envie esta no próximo lote"; });
+    $("imgAdd").disabled = true;
+    if ($("imgStatus")) $("imgStatus").textContent = "Preparando " + fila.length + " imagens…";
     var fim = function () {
+      $("imgAdd").disabled = false;
       renderImagens();
+      if ($("imgStatus")) $("imgStatus").textContent = entraram + " imagens adicionadas." + (ignoradas.length ? " " + ignoradas.length + " não entraram: " + ignoradas.join("; ") : "");
       if (ignoradas.length) {
         alert(S.plural(entraram, "foto entrou", "fotos entraram") + " no banco; " +
           S.plural(ignoradas.length, "foi ignorada", "foram ignoradas") + ":\n• " + ignoradas.join("\n• "));
@@ -23088,8 +23389,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
           lista.unshift({ id: S.uid(), n: nomeArq.replace(/\.[a-z0-9]+$/i, "").slice(0, 40),
             d: urlNuvem || d, em: S.todayISO() });
-          S.write("ptImagens", lista);
-          entraram++;
+          if (S.write("ptImagens", lista) === false) ignoradas.push(nomeArq + " — não foi possível salvar no aparelho");
+          else entraram++;
           proxima();
         });
       }, function (motivo) {
@@ -23106,6 +23407,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var lista = imgsLe();
     if (rm) {
       var alvo = lista.find(function (x) { return x.id === rm; });
+      var studioImg = load(), usosImg = [];
+      if ((((studioImg.config || {}).sitePro || {}).capaId) === rm) usosImg.push("capa de Minha página");
+      (studioImg.zapAutos || []).forEach(function (a) { if (a.imgId === rm) usosImg.push("automação “" + a.nome + "”"); });
+      if (usosImg.length) {
+        var avisoImg = "Esta imagem está em uso: " + usosImg.join(", ") + ". Troque ou remova a foto nesses locais antes de excluir do banco.";
+        if ($("imgStatus")) $("imgStatus").textContent = avisoImg; else alert(avisoImg);
+        return;
+      }
       if (!confirm("Apagar a imagem “" + ((alvo && alvo.n) || "") + "”? Onde ela já foi usada (card, ficha) a foto continua.")) return;
       if (alvo && imgEhNuvem(alvo)) {
         // melhor esforço: some da lista já; o arquivo na nuvem cai junto quando dá
