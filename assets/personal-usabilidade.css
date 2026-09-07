@@ -424,7 +424,9 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
 #vPerfil .pfp-field:has(>input[type=checkbox]){display:flex;align-items:flex-start;gap:8px;padding:9px 0;font-size:14px;font-weight:400}
 #vPerfil .pfp-field>input[type=checkbox]{margin:1px 0 0}
 #vPerfil .pfp-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}
-#vPerfil .pfp-disclosure #pfParqBadge{font-size:12px;font-weight:500;max-width:60%;line-height:1.5}
+#vPerfil #pfAnamnese>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
+#vPerfil #pfAnamnese>summary::after{grid-column:2;grid-row:1 / span 2}
+#vPerfil .pfp-disclosure #pfParqBadge{grid-column:1;font-size:12px;font-weight:500;max-width:none;line-height:1.5}
 #vPerfil .dbt{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 14px;border:1px solid var(--linha);border-radius:9px;background:var(--roxo);color:#fff;font-family:inherit;font-size:14px;font-weight:650;line-height:1.4;cursor:pointer}
 #vPerfil .dbt.sec{background:var(--tk-sup);color:var(--texto)}
 #vPerfil #pfIrFin{padding:10px 0;border:0;border-radius:0;background:transparent;color:var(--tk-roxoTx)}
@@ -528,7 +530,7 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
   #vPerfil #pfAcoes.pfp-share{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   #vPerfil #pfAbas.pfp-tabs{display:none}
   #vPerfil .pfp-mobile-nav{display:flex;align-items:center;gap:12px;padding:16px 0 22px}
-  #vPerfil .pfp-mobile-nav>label{font-size:12px;font-weight:600;line-height:1.45;color:var(--tk-tx3);flex:0 1 74px;margin:0}
+  #vPerfil .pfp-mobile-nav>label{font-size:12px;font-weight:600;line-height:1.45;letter-spacing:0;white-space:nowrap;color:var(--tk-tx3);flex:0 0 auto;margin:0}
   #vPerfil .pfp-mobile-nav>select{flex:1;width:0;min-width:0;min-height:48px;margin:0;font-size:16px;font-weight:600;color:var(--texto)}
   #vPerfil .pfp-section>h2,#vPerfil .pfp-section-head>h2{font-size:19px!important}
   #vPerfil .pfp-section-head{gap:10px;margin-bottom:14px}

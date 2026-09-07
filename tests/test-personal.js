@@ -31,6 +31,15 @@ async function abaPt(p, a) {
   await p.click('#abas [data-a="' + a + '"]');
 }
 
+// Percorre os disclosures pela mesma interação visível que o professor usa.
+async function abreDetalhesDoPerfil(p, selector) {
+  const ancestrais = p.locator(selector).locator("xpath=ancestor::details");
+  for (let i = 0; i < await ancestrais.count(); i++) {
+    const detalhe = ancestrais.nth(i);
+    if (!await detalhe.evaluate(el => el.open)) await detalhe.locator(":scope > summary").click();
+  }
+}
+
 
 
 
@@ -389,6 +398,7 @@ async function abaPt(p, a) {
   const joaoId = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId);
   ok(await p.evaluate(() => !!document.getElementById("pfCtPlano") && !!document.getElementById("pfCtAdd")), "perfil sem contrato mostra o form de fechar contrato");
+  await abreDetalhesDoPerfil(p, "#pfCtPlano");
   await p.selectOption("#pfCtPlano", { index: 1 });
   await p.fill("#pfCtDia", String(diaVenc));
   await p.click("#pfCtAdd");
@@ -3771,6 +3781,7 @@ async function abaPt(p, a) {
 
   // renovação de contrato com 1 toque
   await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId2);
+  await abreDetalhesDoPerfil(p, "[data-pfctrenova]");
   await p.click("[data-pfctrenova]");
   await p.waitForTimeout(250);
   ok(await p.evaluate(() => {
@@ -4037,7 +4048,7 @@ async function abaPt(p, a) {
   ok(dor.abre, "🩹 a ação do card abre a ficha do aluno");
   ok(dor.antigos === 0, "🩹 relato de mais de 7 dias não alarma mais");
 
-  // 🧭 v690: esteira do aluno novo — checklist no topo do Resumo da ficha
+  // 🧭 v690: primeiros passos do aluno novo — checklist recolhido no Resumo da ficha
   const est = await p.evaluate(() => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const hoje = diaISO(new Date());
@@ -4055,7 +4066,8 @@ async function abaPt(p, a) {
       temMontar: el ? !!el.querySelector("[data-montatreino]") : false,
       temApp: el ? !!el.querySelector("[data-app]") : false,
       temAnam: el ? !!el.querySelector('[data-est="anam"]') : false,
-      titulo: el ? el.querySelector("h3").textContent : "",
+      titulo: el ? el.querySelector("summary").textContent : "",
+      pendentes: el ? parseInt(el.querySelector("summary > span:last-child").textContent, 10) : 0,
     };
     // aluno de 2020 com 8 sessões feitas NÃO é novo: a esteira some mesmo faltando passo
     window.__pfResumo(velho);
@@ -4068,7 +4080,7 @@ async function abaPt(p, a) {
     window.__pfResumo(st2.alunos.find((a) => a.nome === "João Cliente"));
     return out;
   });
-  ok(est.tem && est.linhas >= 5 && est.feitos === 0 && /0 de \d/.test(est.titulo),
+  ok(est.tem && est.linhas >= 5 && est.feitos === 0 && est.pendentes === est.linhas - est.feitos && /Primeiros passos/.test(est.titulo),
     "🧭 aluno novo cru mostra a esteira completa, nada riscado (" + est.titulo + ")");
   ok(est.temMontar && est.temApp && est.temAnam,
     "🧭 cada passo pendente tem a ação DENTRO da linha (montar, mandar app, pedir anamnese)");
