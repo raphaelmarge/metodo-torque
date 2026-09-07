@@ -299,7 +299,7 @@ const prescricao = [
   await pb.evaluate(() => document.querySelector('.guiabtn').click());
   await pb.fill('#gKg', '20'); await pb.fill('#gReps', '5'); await salvaAnotacao(pb); await pb.click('#gSerie');
   igual(await pb.locator('.setbtn').allTextContents(), ['1/3 séries ✓', '0/3 séries ✓'], 'nomes repetidos têm contadores independentes');
-  await pb.evaluate(() => window.__zeraDescanso()); await pb.click('#gSerie'); await pb.evaluate(() => window.__pintaUlt());
+  await pb.evaluate(() => window.__zeraDescanso()); await pb.click('#gSemRegistro'); await pb.evaluate(() => window.__pintaUlt());
   ok(!(await pb.locator('.exult,.exkg').allTextContents()).join(' ').includes('null'), 'concluir sem anotar carga não mostra null kg');
   await pb.evaluate(() => window.__zeraDescanso()); await pb.fill('#gKg', 'abc'); await pb.fill('#gReps', '9'); await salvaAnotacao(pb);
   ok(await pb.evaluate(() => !Object.values(JSON.parse(localStorage.getItem('ptdc'))).flat().some(x => x.i === '0:0:2')), 'carga inválida não é convertida silenciosamente em ausência ou zero');
@@ -309,7 +309,7 @@ const prescricao = [
   ok(await pb.evaluate(() => window.__gvDe().e === 0) && await pb.inputValue('#gReps') === '9', 'avançar com valores inválidos preserva as repetições preenchidas');
   await pb.fill('#gKg', ''); await pb.fill('#gReps', ''); await pb.click('#gFechar');
   ok(!await pb.isVisible('#guiaBox'), 'limpar os campos opcionais permite sair');
-  await pb.click('#navApp [data-msec="treino"]');await pb.click('#acRetomar button'); await pb.click('#gSerie'); await pb.evaluate(() => window.__zeraDescanso());
+  await pb.click('#navApp [data-msec="treino"]');await pb.click('#acRetomar button'); await pb.click('#gSemRegistro'); await pb.evaluate(() => window.__zeraDescanso());
   igual(await pb.locator('.setbtn').allTextContents(), ['3/3 séries ✓', '0/3 séries ✓'], 'concluir o primeiro slot não completa a segunda ocorrência');
   ok(await pb.evaluate(() => !Object.keys(JSON.parse(localStorage.getItem('ptfeitos') || '{}')).length), 'ficha incompleta não ganha conclusão por nomes repetidos');
   await pb.fill('#gKg', '30'); await pb.fill('#gReps', '6'); await salvaAnotacao(pb); await pb.click('#gSerie');

@@ -309,7 +309,7 @@ console.log("v751 — regras estáticas:");
   const gvx = html.slice(html.indexOf("if(e.target.id==='gVoltaEx')"), html.indexOf("if(e.target.id==='gVoltaEx')") + 220);
   ok(/gv\.timer=null;gDescTick=null/.test(gp) && /gv\.timer=null;gDescTick=null/.test(gvx), "🏋️ pular/voltar exercício mata o tick do descanso");
   const formSerie = html.slice(html.indexOf("function gCargaHtml(it"), html.indexOf("function ligaStepper(it"));
-  ok(/reg=SR\.registro\(it,si,gv\.f,ei\)/.test(formSerie) && /var v=reg&&reg\.kg!=null\?reg\.kg:'',r=reg&&reg\.r!=null\?reg\.r:''/.test(formSerie), "🏋️ execução nasce apenas do registro daquela série; sem confirmação, carga e reps ficam vazias");
+  ok(/reg=SR\.registro\(it,si,gv\.f,ei\)/.test(formSerie) && /GP\.form\(it,si,ei,reg,a,v,r,u\)/.test(formSerie), "🏋️ formulário recebe o registro da série e sua prescrição; prioridade e confirmação são validadas em test-aluno-series-praticas");
   const sugestaoSerie = html.slice(html.indexOf("if(e.target.id==='gSugT')"), html.indexOf("if(e.target.id==='gMudaCarga')"));
   ok(!/gGrava\(/.test(sugestaoSerie) && /gMudaCarga'\)\.click\(\)/.test(sugestaoSerie) && /confirme após realizar/.test(sugestaoSerie), "🏋️ aceitar a sugestão abre um rascunho; não cria carga nem repetições realizadas");
   ok(/var sug=gPasso\(kg\)/.test(html) && !/var sug=kg<20\?1:2\.5/.test(html), "🏋️ o toast de progressão usa o MESMO degrau (gPasso) do botão de sugestão");

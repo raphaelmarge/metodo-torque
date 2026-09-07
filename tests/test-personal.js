@@ -2561,7 +2561,7 @@ async function novaExecucaoAluno(p) {
       "🗺️ v743: o trajeto guarda a corrida INTEIRA (afinado por distância), não os últimos 600 pontos");
     ok(/var fF9=L\('ptfeitos',\{\}\);if\(!fF9\[hjR\]&&f\.it\.length\)\{fF9\[hjR\]=1;Sv\('ptfeitos',fF9\)/.test(bld),
       "✅ v743: terminar a ficha pelo player marca o dia (com ABC o automático nunca disparava)");
-    ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)return;/.test(bld),
+    ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /if\(!rd\._interacao\|\|\(rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)\)return;/.test(bld),
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
     ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
 
@@ -11552,9 +11552,12 @@ async function novaExecucaoAluno(p) {
         const ticks = Array.from(rd.querySelectorAll("i"));
         let idx = ticks.findIndex((t) => +t.dataset.v === valor);
         if (idx < 0) idx = valor;
+        // Distingue o gesto do aluno da rolagem usada para alinhar a sugestão.
+        rd.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
         rd.scrollLeft = idx * px;
         rd.dispatchEvent(new Event("scroll"));
         await new Promise((r) => setTimeout(r, 150));
+        rd.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch" }));
       };
       await window.__roda("gWKg", 40);
       await window.__roda("gWRep", 12);
@@ -11673,14 +11676,16 @@ async function novaExecucaoAluno(p) {
       chip.click();
       await new Promise((r) => setTimeout(r, 120));
       document.querySelector(".gserie-ajustes summary").click();
-      await window.__roda("gWKg", 30);                  // mexe e NÃO salva
+      // A sugestão pode já ser 30; este cenário precisa de uma edição real.
+      const cargaEsperada = Number(document.getElementById("gKg").value.replace(",", ".")) === 30 ? 35 : 30;
+      await window.__roda("gWKg", cargaEsperada);       // mexe e NÃO salva
       document.getElementById("gVoltaFim").click();     // sai pelo caminho que grava o pendente
       await new Promise((r) => setTimeout(r, 150));
       const dep = JSON.parse(localStorage.getItem("ptdc") || "{}");
       const outros = Object.keys(dep).filter((k) => JSON.stringify(dep[k] || []) !== JSON.stringify(antes[k] || []));
-      return { nome: nome, mexeu: outros, registro: (dep[nome] || []).find((r) => r.d === diaISO() && r.g === 2 && r.i === slot) };
+      return { nome: nome, mexeu: outros, cargaEsperada, registro: (dep[nome] || []).find((r) => r.d === diaISO() && r.g === 2 && r.i === slot) };
     });
-    ok(alvoCerto.nome && alvoCerto.mexeu.length === 1 && alvoCerto.mexeu[0] === alvoCerto.nome && alvoCerto.registro && alvoCerto.registro.kg === 30,
+    ok(alvoCerto.nome && alvoCerto.mexeu.length === 1 && alvoCerto.mexeu[0] === alvoCerto.nome && alvoCerto.registro && alvoCerto.registro.kg === alvoCerto.cargaEsperada,
       "o que a repescagem grava vai pro exercício DELA, nunca pro último aberto (" + alvoCerto.mexeu.join(", ") + ")");
     await pApp.evaluate(() => { const v = document.getElementById("gVoltaFim"); if (v) v.click(); });
     await pApp.waitForTimeout(150);
@@ -11702,12 +11707,14 @@ async function novaExecucaoAluno(p) {
       const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
       // (a) 'Iniciar exercício' semeia as séries já marcadas hoje pela ficha
       const stK = "ptsets_" + hj; const stAntes = localStorage.getItem(stK);
+      const historicoAntesAbrir = localStorage.getItem("ptdc");
       const st = {}; st[nome] = 1; localStorage.setItem(stK, JSON.stringify(st));
       const bIni = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); out.temIni = !!bIni;
       if (bIni) bIni.click();
       await dorme(200);
       out.semeou = window.__gvDe().s === 1 && /Série 2 de/.test(document.getElementById("gGrupo").textContent);
       document.getElementById("gFechar").click(); await dorme(100);
+      out.fecharSemConfirmar = localStorage.getItem("ptdc") === historicoAntesAbrir;
       if (stAntes == null) localStorage.removeItem(stK); else localStorage.setItem(stK, stAntes);
       // (b) aceitar a sugestão abre a anotação, sem gravar execução antecipadamente
       const dcAntes = localStorage.getItem("ptdc"); const dc = JSON.parse(dcAntes || "{}");
@@ -11715,17 +11722,17 @@ async function novaExecucaoAluno(p) {
       dc[nome] = [{ d: "2026-01-05", kg: 20, r: alvo }, { d: d7, kg: 20, r: alvo }];
       localStorage.setItem("ptdc", JSON.stringify(dc));
       const bIni2 = document.querySelector(".inibtn[data-g='0'][data-e='" + ei + "']"); bIni2.click(); await dorme(200);
-      // (b0) o histórico anterior é um lembrete; a execução desta série começa vazia
+      // (b0) histórico e alvo já preenchem a série, sem registrar a sugestão
       const rp0 = document.getElementById("gReps");
-      out.semBotaoSug = !document.getElementById("gSug") && !!rp0 && rp0.value === "" && /Usar última carga: 20 kg/.test(document.getElementById("gMiolo2").textContent);
+      out.preenchidoSemExecucao = !document.getElementById("gSug") && !!rp0 && rp0.value === String(alvo) && document.getElementById("gKg").value === "20" && /Usar última carga: 20 kg/.test(document.getElementById("gMiolo2").textContent) && JSON.stringify(JSON.parse(localStorage.getItem("ptdc") || "{}")) === JSON.stringify(dc);
       const bt = document.getElementById("gSugT"); out.temSugT = !!bt;
       if (bt) bt.click(); await dorme(150);
       out.sugKg = +document.getElementById("gKg").value.replace(",", ".");
       out.sugSemRegistro = JSON.stringify(JSON.parse(localStorage.getItem("ptdc") || "{}")) === JSON.stringify(dc);
       out.sujo = window.__gvDe().sujo;
-      // (c) aceitar mantém reps vazias e guarda a sugestão apenas como rascunho
+      // (c) aceitar a progressão mantém o alvo de reps e só cria um rascunho
       const rp = document.getElementById("gReps");
-      out.repsVazio = !!rp && rp.value === "" && rp.placeholder === '—' && new RegExp(alvo + ' reps').test(document.querySelector('[data-gserie][aria-pressed="true"]').textContent);
+      out.repsPrescritas = !!rp && rp.value === String(alvo) && new RegExp(alvo + ' reps').test(document.querySelector('[data-gserie][aria-pressed="true"]').textContent);
       // (d) 'Série feita' guarda a carga digitada no formulário aberto
       const kgI = document.getElementById("gKg"); kgI.value = "33"; kgI.dispatchEvent(new Event("input"));
       const repsReais = Math.max(1, alvo - 1); rp.value = String(repsReais); rp.dispatchEvent(new Event("input"));
@@ -11746,10 +11753,11 @@ async function novaExecucaoAluno(p) {
     ok(!!g751, "o app de teste tem ficha com exercício de 2+ séries e reps prescritas (base dos asserts v751)");
     if (g751) {
       ok(g751.temIni && g751.semeou, "🏋️ v751: 'Iniciar exercício' já nasce na série seguinte à marcada na ficha (Série 2 de N)");
+      ok(g751.fecharSemConfirmar, "🏋️ v794: abrir e fechar sugestões intocadas não cria registro de execução");
       ok(g751.temSugT && g751.sugKg === 22.5 && g751.sugSemRegistro && g751.sujo === true,
         "🏋️ v751: aceitar a sugestão mantém 22,5 kg como rascunho para confirmar, sem criar registro ou repetições realizadas");
-      ok(g751.repsVazio && g751.semBotaoSug,
-        "🏋️ v751: a anotação desta série começa com reps vazias e alvo no seletor da série, mantendo a sessão anterior como lembrete");
+      ok(g751.repsPrescritas && g751.preenchidoSemExecucao,
+        "🏋️ v794: reps prescritas e carga anterior já aparecem preenchidas, sem gravar execução até confirmar");
       ok(g751.serieSalvou, "🏋️ v751: 'Série feita' salva 33 kg e as repetições digitadas como execução concluída desta série");
       ok(g751.tickVivo && g751.tickMorto, "🏋️ v751: pular exercício no descanso mata o tick antigo (nada de 'Descanso acabou' fantasma ao voltar do 2º plano)");
     }
