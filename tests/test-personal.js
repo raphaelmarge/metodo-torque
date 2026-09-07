@@ -6885,8 +6885,11 @@ async function abreDetalhesDoPerfil(p, selector) {
         window.alert = (m) => { recado = String(m); };
         const criaOrig = document.createElement.bind(document);
         document.createElement = (t) => { const el = criaOrig(t); if (t === "a") { const c = el.click.bind(el); el.click = () => { if (el.download) baixou = true; return c(); }; } return el; };
-        const b = document.querySelector('[data-app="' + st.alunos[0].id + '"]');
-        if (b) b.click();
+        window.__perfilPT(st.alunos[0].id);
+        window.__pfAba("app");
+        const b = document.getElementById("pfApp");
+        if (!b || b.offsetParent === null) throw new Error("Publicar app precisa estar visível na aba App e acesso");
+        b.click();
         await new Promise((r) => setTimeout(r, 400));
         window.alert = alertOrig;
         document.createElement = criaOrig;
