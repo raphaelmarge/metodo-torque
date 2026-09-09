@@ -34,6 +34,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 
 ## Produtos (arquivos principais)
 
+### v813 — Identidade visual Torque One
+
+- Estética da prévia Treino + Nutrição aplicada sobre o aplicativo existente, sem substituir fluxos, abas, permissões ou fontes de dados. Referência em `design/TORQUE-ONE.md`.
+- Personal: camada final `assets/personal-torque-one.css`, após onboarding. Aluno: camada final de CSS em `app/aluno-skin.js`. Os construtores e contratos de dados permanecem iguais.
+- Grafite neutro, bordas discretas, títulos em caixa mista, lilás para a marca e verde para nutrição/indicadores. Cor personalizada e modo claro continuam funcionando.
+- Preservar todas as 18 áreas do Personal, subabas e recursos do aluno, inclusive o histórico de decisões de layout acima. Nunca copiar as limitações da simulação para o produto real.
+
+
 | Produto | Arquivo | O que é |
 |---|---|---|
 | Portal TORQUE ON | `index.html` + `apps/*.html` | Sistema da academia (estilo EVO): alunos, financeiro, check-in, grade, modo TV, chat com IA |
