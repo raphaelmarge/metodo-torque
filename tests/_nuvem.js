@@ -111,6 +111,30 @@ const MOCK_NUVEM = `
     if (opts.extra) Object.keys(opts.extra).forEach(function (k) { nv[k] = opts.extra[k]; });
     return nv;
   };
+  /* Publicação do Personal usa o cliente privado do motor de sincronização,
+   * não apenas MTStore.cloud(). Cenários de interface que trocam a nuvem por
+   * este mock usam a mesma porta CAS sem depender do estado privado do motor;
+   * a concorrência do motor real continua coberta por test-sync-cas. */
+  window.mockPublicacaoCas = function (nuvem) {
+    var S = window.MTStore;
+    var preparaOrig = S.preparaAppsSeguros, publicaOrig = S.publicaAppsSeguros;
+    var revisao = "2099-01-01T00:00:00.000Z";
+    var preparaMock = function () { return Promise.resolve({ raw: localStorage.getItem("mtapp:ptStudio"), revisao: revisao, ciclo: 1 }); };
+    var publicaMock = function (linhas) {
+      var seguras = linhas.map(function (linha) { return Object.assign({}, linha, {
+        dados: Object.assign({}, linha.dados, { sourceUpdatedAt: revisao }),
+      }); });
+      return nuvem.client.rpc("app_aluno_publica_cas", {
+        p_academia: nuvem.aid, p_source_atualizado: revisao, p_linhas: seguras,
+      });
+    };
+    S.preparaAppsSeguros = preparaMock;
+    S.publicaAppsSeguros = publicaMock;
+    return function () {
+      if (S.preparaAppsSeguros === preparaMock) S.preparaAppsSeguros = preparaOrig;
+      if (S.publicaAppsSeguros === publicaMock) S.publicaAppsSeguros = publicaOrig;
+    };
+  };
 })();
 `;
 /* Embrulha o browser pra TODO contexto nascer com o window.mockNuvem — a suíte

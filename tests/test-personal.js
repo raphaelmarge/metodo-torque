@@ -138,32 +138,6 @@ async function novaExecucaoAluno(p) {
   p.on("dialog", (d) => d.accept());
   await p.goto(BASE + "/personal.html");
   await p.waitForFunction(() => window.__ptStudio);
-  /* Os cenários funcionais abaixo trocam S.cloud por um cliente fictício, mas
-   * a publicação CAS real usa o cliente privado do motor de sync. Esta ponte
-   * mantém o contrato seguro (preparo + app_aluno_publica_cas) no mock; as
-   * recusas por revisão/concorrência do motor real ficam em test-sync-cas. */
-  await p.evaluate(() => {
-    window.__mockPublicacaoCas = function (nuvem) {
-      const S = window.MTStore;
-      const preparaOrig = S.preparaAppsSeguros, publicaOrig = S.publicaAppsSeguros;
-      const revisao = "2099-01-01T00:00:00.000Z";
-      const preparaMock = () => Promise.resolve({ raw: localStorage.getItem("mtapp:ptStudio"), revisao, ciclo: 1 });
-      const publicaMock = (linhas) => {
-        const seguras = linhas.map((linha) => Object.assign({}, linha, {
-          dados: Object.assign({}, linha.dados, { sourceUpdatedAt: revisao }),
-        }));
-        return nuvem.client.rpc("app_aluno_publica_cas", {
-          p_academia: nuvem.aid, p_source_atualizado: revisao, p_linhas: seguras,
-        });
-      };
-      S.preparaAppsSeguros = preparaMock;
-      S.publicaAppsSeguros = publicaMock;
-      return function () {
-        if (S.preparaAppsSeguros === preparaMock) S.preparaAppsSeguros = preparaOrig;
-        if (S.publicaAppsSeguros === publicaMock) S.publicaAppsSeguros = publicaOrig;
-      };
-    };
-  });
 
   // onboarding do módulo
   const obVisivel = await p.evaluate(() => !document.getElementById("boasVindas").hidden);
@@ -6736,7 +6710,7 @@ async function novaExecucaoAluno(p) {
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-teste" } } }) },
       });
       window.MTStore.cloud = () => nuvem;
-      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/envia-email")) {
           chamadas.email = JSON.parse(opts.body);
@@ -6786,7 +6760,7 @@ async function novaExecucaoAluno(p) {
         rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
       });
       S.cloud = () => nuvem;
-      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       window.__fetchOrig = window.__fetchOrig || window.fetch;
       window.fetch = (u, o) => String(u).includes("functions/v1/envia-email")
         ? Promise.resolve({ status: 200, json: () => Promise.resolve({ ok: true }) })
@@ -6823,7 +6797,7 @@ async function novaExecucaoAluno(p) {
         onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") publicado = e.corpo; },
       });
       S.cloud = () => nuvem;
-      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
       restauraPublicacao();
       S.cloud = window.__cloudOrig;
@@ -7097,7 +7071,7 @@ async function novaExecucaoAluno(p) {
         onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") subiu = subiu.concat(e.corpo); },
       });
       S.cloud = () => nuvem;
-      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       window.__appsPendentes.auto(true);   // força: o painel já pode ter rodado a automática antes
       await new Promise((r) => setTimeout(r, 1200));
       const st2 = S.read("ptStudio", {});
@@ -7364,7 +7338,7 @@ async function novaExecucaoAluno(p) {
         onEscreve: (e) => { if (e.acao === "upsert") upserts += (e.corpo || []).length; },
       });
       S.cloud = () => nuvem;
-      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       window.__congelados.checa();
       await new Promise((r) => setTimeout(r, 250));
       const box = document.getElementById("avisoCongelados");
