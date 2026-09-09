@@ -32,18 +32,21 @@ function fixtureState() {
   };
 }
 function testCore() {
-  const st=fixtureState(),aluno={id:"aluno-a",nome:"Alex Silva",cpf:"529.982.247-25",nasc:"1990-05-20",email:"alex@teste.invalid",zap:"31999990000",valor:400,onboardingConsultoria:{requerido:true,revisao:"1"}};
-  const pacote=Core.pacote(st,aluno,{plano:{nome:"Consultoria mensal",valor:400},contrato:{inicio:"2026-09-09"}});
+  const st=fixtureState(),aluno={id:"aluno-a",nome:"Alex Silva",cpf:"529.982.247-25",nasc:"1990-05-20",email:"alex@teste.invalid",zap:"31999990000",valor:400,onboardingConsultoria:{requerido:true,revisao:"1",pagamentoRecorrente:true}};
+  const comercio={plano:{id:"plano-consultoria",nome:"Consultoria com ciclo trimestral",valor:400,ciclo:3,cobranca:"mes",treinosSem:3,modalidade:"consultoria",linkRec:"https://checkout.example/assinatura-teste"},contrato:{id:"contrato-aluno-a",planoId:"plano-consultoria",inicio:"2026-09-09",diaVenc:12}};
+  const pacote=Core.pacote(st,aluno,comercio);
   ok(/^oc-[a-f0-9]{16}$/.test(pacote.v),"pacote recebe versão estável");
-  eq(Core.pacote(st,aluno,{plano:{nome:"Consultoria mensal",valor:400},contrato:{inicio:"2026-09-09"}}).v,pacote.v,"mesmos termos preservam a versão");
+  eq(Core.pacote(st,aluno,comercio).v,pacote.v,"mesmos termos preservam a versão");
+  eq(Core.validaPacote(pacote),"","plano real com contrato e link recorrente passa na validação");
   st.questPerguntas[0].texto="Qual é sua prioridade agora?";
-  ok(Core.pacote(st,aluno,{plano:{nome:"Consultoria mensal",valor:400},contrato:{inicio:"2026-09-09"}}).v!==pacote.v,"alterar uma pergunta exige nova versão");
+  ok(Core.pacote(st,aluno,comercio).v!==pacote.v,"alterar uma pergunta exige nova versão");
   eq(Core.pacote(fixtureState(),{...aluno,onboardingConsultoria:{requerido:false}},{}),null,"personal pode dispensar um aluno");
   const inactive=fixtureState();inactive.config.onboardingConsultoria.ativo=false;
   eq(Core.pacote(inactive,aluno,{}),null,"personal pode desligar o onboarding inteiro");
   ok(Core.cpfValido("529.982.247-25")&&!Core.cpfValido("111.111.111-11"),"CPF válido é conferido e sequência repetida é recusada");
   const doc=Core.resolveContrato(Core.CONTRATO_PADRAO,{nome:"Alex Silva",nacionalidade:"Brasileiro",estadoCivil:"solteiro",profissao:"designer",rg:"MG-123",rgOrgao:"SSP/MG",cpf:"529.982.247-25",nascimento:"20/05/1990",email:"alex@teste.invalid",telefone:"(31) 99999-0000",cep:"30110-000",logradouro:"Rua Teste",numero:"20",bairro:"Centro",cidade:"Belo Horizonte",uf:"MG"},pacote);
   ok(!doc.includes("{{")&&doc.includes("Alex Silva")&&doc.includes("designer")&&doc.includes("Studio Teste"),"contrato resolve a qualificação completa das partes");
+  ok(doc.includes("Consultoria com ciclo trimestral")&&doc.includes("R$ 400,00 por mês")&&doc.includes("Ciclo contratual: 3 meses")&&doc.includes("dia 12"),"contrato mostra o plano vendido, valor mensal, ciclo e vencimento");
   ok(/ptonbconsult:\s*"\s*\+\s*escopo/.test(Core.runtime.toString()),"estado local é separado por token do aluno");
   return {st,aluno,pacote};
 }
@@ -56,7 +59,7 @@ async function testStudent(f) {
   const noGate=global.MT_APP_ALUNO.monta({...D,a:{...f.aluno,appTokenP:"token-sem-onboarding"},onboardingApp:null});
   ok(!noGate.includes("app_consultoria_estado"),"aluno dispensado recebe o app sem o bloqueio");
   const ctx=await browser.newContext({viewport:{width:390,height:844},locale:"pt-BR",timezoneId:"America/Sao_Paulo",serviceWorkers:"block"});
-  const page=await ctx.newPage(),calls=[],errors=[];let accepted=null, reply="reject";
+  const page=await ctx.newPage(),calls=[],errors=[],checkouts=[];let accepted=null, reply="reject";
   page.on("pageerror",e=>errors.push(e.message));
   await ctx.addInitScript(()=>{localStorage.setItem("pttour",JSON.stringify({feito:true}));localStorage.setItem("ptonb",JSON.stringify({feito:true}));});
   await ctx.route("**/*",async route=>{
@@ -65,9 +68,11 @@ async function testStudent(f) {
       if(u.pathname==="/onboarding-consultoria-test.html")return route.fulfill({contentType:"text/html",body:html});
       return route.continue();
     }
+    if(u.origin==="https://checkout.example"){checkouts.push(u.href);return route.fulfill({contentType:"text/html",body:"<h1>Checkout simulado</h1>"});}
+    if(u.origin==="https://viacep.com.br")return route.fulfill({contentType:"application/json",body:JSON.stringify({cep:"30110-000",logradouro:"Rua Teste",bairro:"Centro",localidade:"Belo Horizonte",uf:"MG"})});
     if(u.origin!==FAKE)return route.abort();
     const fn=u.pathname.split("/").pop(),body=route.request().postDataJSON();calls.push({fn,body});
-    if(fn==="app_consultoria_estado")return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:true,concluido:false})});
+    if(fn==="app_consultoria_estado")return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:true,concluido:!!accepted,aceito_em:accepted?"2026-09-09T15:00:00Z":null,documento_hash:accepted?"a".repeat(64):null})});
     if(fn==="app_consultoria_conclui"){
       if(reply==="offline")return route.abort();
       if(reply==="reject")return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:false,erro:"documento_divergente"})});
@@ -78,6 +83,7 @@ async function testStudent(f) {
   await page.goto(BASE+"/onboarding-consultoria-test.html");
   await page.locator("#ocOverlay").waitFor();
   ok(await page.getByText("Vamos preparar sua consultoria").isVisible(),"aluno vê a explicação antes das perguntas");
+  eq(await page.locator("#ocPagar").count(),0,"checkout fica oculto antes do contrato");
   await page.locator("#ocProx").click();
   await page.locator("#ocTexto").fill("Ganhar força e melhorar minha rotina");await page.locator("#ocProx").click();
   await page.locator('[data-nota="7"]').click();await page.locator("#ocProx").click();
@@ -88,6 +94,8 @@ async function testStudent(f) {
   await page.locator("#ocProx").click();
   ok((await page.locator("#ocDocumento").innerText()).includes("designer"),"documento mostrado já contém os dados conferidos");
   const documentoVisto=await page.locator("#ocDocumento").textContent();
+  ok(documentoVisto.includes("R$ 400,00 por mês")&&documentoVisto.includes("Ciclo contratual: 3 meses"),"aluno lê preço mensal e ciclo antes de assinar");
+  eq(await page.locator("#ocPagar").count(),0,"ler o contrato ainda não oferece checkout");
   await page.locator("#ocLgpd").check();await page.locator("#ocAceite").check();await page.locator("#ocProx").click();
   await page.locator("#ocAssNome").fill("Alex Silva");
   const box=await page.locator("#ocCanvas").boundingBox();
@@ -96,11 +104,15 @@ async function testStudent(f) {
   await page.waitForTimeout(80);await page.locator("#ocProx").click();
   await page.waitForFunction(()=>document.getElementById('ocErro').textContent.includes('atualizado'));
   ok(await page.locator('#ocOverlay').isVisible()&&!await page.locator('#ocEntrar').count(),'rejeição do servidor não libera o app');
+  eq(await page.locator("#ocPagar").count(),0,"contrato rejeitado pelo servidor não oferece pagamento");
   reply='offline';await page.locator('#ocProx').click();
   await page.waitForFunction(()=>document.getElementById('ocErro').textContent.includes('Sem conexão'));
   ok(await page.evaluate(()=>window.__onboardingConsultoria.pendente()),'falha de rede mantém o preenchimento para reenvio');
+  eq(await page.locator("#ocPagar").count(),0,"envio sem conexão não oferece pagamento");
   reply='success';await page.locator('#ocProx').click();
   await page.getByText("Cadastro concluído").waitFor();
+  ok(await page.locator("#ocPagar").isVisible(),"checkout aparece depois da confirmação do aceite");
+  eq(await page.locator("#ocPagar").getAttribute("href"),"https://checkout.example/assinatura-teste","checkout usa exatamente o link aprovado pelo personal");
   eq(accepted.p_assinatura.documento,documentoVisto,'texto enviado é exatamente o contrato exibido');
   ok((await page.locator('#ocEntrar').boundingBox()).height<100,'ação final permanece compacta');
   ok(!!accepted,"aceite foi enviado à RPC dedicada");
@@ -110,11 +122,53 @@ async function testStudent(f) {
   ok(accepted.p_assinatura.aceitou&&accepted.p_assinatura.consentimentoSaude&&accepted.p_assinatura.imagem.startsWith("data:image/png;base64,"),"aceite, consentimento destacado e assinatura acompanham a versão");
   eq(accepted.p_versao,f.pacote.v,"aceite fica ligado à versão mostrada");
   ok(calls.filter(x=>x.fn==="app_consultoria_conclui").length===3,"cada tentativa gera somente um envio");
+  const storageAntes=await page.evaluate(()=>Object.fromEntries(Object.entries(localStorage))),rpcAntes=calls.length;
+  const popupPromise=page.waitForEvent("popup");await page.locator("#ocPagar").click();const popup=await popupPromise;await popup.waitForLoadState("domcontentloaded");await popup.close();
+  eq(checkouts,["https://checkout.example/assinatura-teste"],"clique abre apenas o checkout simulado");
+  eq(await page.evaluate(()=>Object.fromEntries(Object.entries(localStorage))),storageAntes,"abrir o link não registra pagamento nem ativa assinatura local");
+  eq(calls.length,rpcAntes,"abrir checkout não chama RPC financeira nem repete o aceite");
+  await page.reload();await page.locator("#ocPagar").waitFor();
+  eq(calls.filter(x=>x.fn==="app_consultoria_conclui").length,3,"reabrir o fluxo de pagamento não envia outro contrato");
   for(const width of [320,360,390,430]){await page.setViewportSize({width,height:844});ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),"onboarding sem rolagem horizontal em "+width+"px");}
   if(process.env.ONBOARDING_SHOTS){await page.screenshot({path:path.join(process.env.ONBOARDING_SHOTS,"onboarding-concluido.png"),fullPage:true});}
   await page.locator("#ocEntrar").click();ok(await page.locator("#ocOverlay").count()===0,"app é liberado depois da conclusão");
   ok(errors.length===0,"fluxo não gera erro JavaScript: "+errors.join("; "));
   await ctx.close();
+}
+
+async function testAlreadySubscribed(f) {
+  const D = { a: f.aluno, studio: "Studio Teste", cfg: {}, fichasApp: [], guiaFichasP: [], fexs: [], sessApp: [], wodsApp: [], cardiosApp: [], onboardingApp: f.pacote, pagApp: { auto: true }, atualizador: "" };
+  const html = global.MT_APP_ALUNO.monta(D);
+  for (const local of [false, true]) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "pt-BR", serviceWorkers: "block" });
+    const page = await ctx.newPage(), calls = [], errors = [];
+    page.on("pageerror", e => errors.push(e.message));
+    await ctx.addInitScript(({ local, token, version }) => {
+      localStorage.setItem("pttour", JSON.stringify({ feito: true })); localStorage.setItem("ptonb", JSON.stringify({ feito: true }));
+      if (local) {
+        let hash = 2166136261; for (let i = 0; i < token.length; i++) { hash ^= token.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+        // Este aparelho ainda não viu o checkout, mas a recorrência já está ativa.
+        localStorage.setItem("ptonbconsult:" + (hash >>> 0).toString(36), JSON.stringify({ v: version, status: "enviado", id: "aceite-ficticio", em: "2026-09-09T15:00:00Z" }));
+      }
+    }, { local, token: f.aluno.appTokenP, version: f.pacote.v });
+    await ctx.route("**/*", route => {
+      const u = new URL(route.request().url());
+      if (u.origin === new URL(BASE).origin) {
+        if (u.pathname === "/onboarding-assinatura-ativa-test.html") return route.fulfill({ contentType: "text/html", body: html });
+        return route.continue();
+      }
+      if (u.origin !== FAKE) return route.abort();
+      const fn = u.pathname.split("/").pop(); calls.push(fn);
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify(fn === "app_consultoria_estado" ? { ok: true, concluido: true, id: "aceite-ficticio", aceito_em: "2026-09-09T15:00:00Z", documento_hash: "a".repeat(64) } : null) });
+    });
+    await page.goto(BASE + "/onboarding-assinatura-ativa-test.html");
+    await page.waitForFunction(() => !!window.__onboardingConsultoria && !document.getElementById("ocOverlay"));
+    eq(await page.locator("#ocPagar").count(), 0, "cobrança automática ativa oculta checkout com aceite " + (local ? "local" : "recuperado do servidor"));
+    eq(calls.filter(fn => fn === "app_consultoria_conclui").length, 0, "assinatura ativa não pede nem reenvia contrato já aceito");
+    eq(calls.filter(fn => fn === "app_consultoria_estado").length, local ? 0 : 1, "aceite " + (local ? "local permanece válido sem reabrir entrada" : "em outro aparelho é recuperado uma vez"));
+    eq(errors, [], "retomada com cobrança ativa não gera erro JavaScript");
+    await ctx.close();
+  }
 }
 
 (async()=>{
@@ -123,5 +177,6 @@ async function testStudent(f) {
   f.aluno.appTokenP="token-onboarding-aluno-a";
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:["--no-sandbox"]});
   await testStudent(f);
+  await testAlreadySubscribed(f);
   console.log(checks+" verificações do onboarding passaram.");
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});

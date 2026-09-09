@@ -3,7 +3,8 @@
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
 const sqlBase=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909182500_consultoria_onboarding_contrato.sql"),"utf8");
 const sqlHard=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909190000_onboarding_integridade_e_retorno_reservado.sql"),"utf8");
-const sql=sqlBase+"\n"+sqlHard;
+const sqlPlano=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909193000_consultoria_plano_pagamento_documentos.sql"),"utf8");
+const sql=sqlBase+"\n"+sqlHard+"\n"+sqlPlano;
 const setup=fs.readFileSync(path.join(__dirname,"../supabase-setup.sql"),"utf8");
 let n=0;function ok(v,s){assert.ok(v,s);n++;console.log("OK "+s);}
 ok(/unique \(token, versao\)/i.test(sql),"uma versão aceita é imutável por aluno");
@@ -25,5 +26,13 @@ ok(/89504e470d0a1a0a/i.test(sqlHard)&&/49484452/i.test(sqlHard)&&/49454e44/i.tes
 ok(/lower\(regexp_replace\(v_assinatura->>'nome'/i.test(sqlHard)&&/'tipo',case when v_menor/i.test(sqlHard),"signatário é vinculado ao aluno ou responsável legal");
 ok(/v_generico\s*:=\s*p_dados\s*-\s*'nutricaoV1'/i.test(sqlHard)&&/where token\s*=\s*t and revogado_em is null/i.test(sqlHard),"retorno genérico não contorna a validação da nutrição");
 ok(/revoke all on function public\.app_nutricao_estado\(text\) from public, anon, authenticated/i.test(sqlHard),"ACL das RPCs de nutrição remove concessões antigas");
-ok(setup.includes(sqlBase.trim())&&setup.includes(sqlHard.trim()),"instalação integral contém as duas migrations exatas");
+ok(/v_cfg->>'v' <> p_versao/.test(sqlPlano)&&/where token=t and revogado_em is null for share/.test(sqlPlano),"RPC atual conserva token ativo, versão publicada e lock durante o aceite");
+ok(/on conflict \(token,versao\) do nothing/.test(sqlPlano)&&/v_row\.conteudo_hash is distinct from v_conteudo_hash/.test(sqlPlano),"RPC atual continua rejeitando substituição de conteúdo já aceito");
+ok(/v_fluxo_novo := coalesce\(v_cfg->'fluxo' = '2'::jsonb,false\)/.test(sqlPlano)&&/if v_fluxo_novo then/.test(sqlPlano),"campos e validações novas ficam restritos ao fluxo 2");
+ok(/PLANO CONTRATADO/.test(sqlPlano)&&/Ciclo contratual:/.test(sqlPlano)&&/Vencimento mensal:/.test(sqlPlano)&&/documento_divergente/.test(sqlPlano),"plano, ciclo e vencimento fazem parte do texto conferido pelo servidor");
+ok(/cpf_invalido/.test(sqlPlano)&&/identidade_invalida/.test(sqlPlano)&&/cin_divergente/.test(sqlPlano)&&/v_rg_normalizado <> v_cpf_aluno/.test(sqlPlano),"RPC atual distingue erros de CPF, RG e CIN divergente");
+ok(/link_pagamento_invalido/.test(sqlPlano)&&/position\('@' in v_autoridade\)>0/.test(sqlPlano)&&/v_plano->>'cobranca'<>'mes'/.test(sqlPlano),"recorrência exige plano mensal e URL sem credenciais");
+ok(!/\b(?:insert into|update|delete from)\s+(?:public\.)?(?:pagamentos|assinaturas|app_aluno)\b/i.test(sqlPlano)&&!/\bupdate\s+public\.app_consultoria_aceites\b/i.test(sqlPlano),"migration nova não marca pagamento nem reescreve aceites existentes");
+ok(/revoke all on function public\.app_consultoria_conclui\([^;]+from public, anon, authenticated/.test(sqlPlano)&&/grant execute on function public\.app_consultoria_conclui\([^;]+to anon/.test(sqlPlano),"RPC atual preserva concessão mínima e explícita");
+ok(setup.includes(sqlBase.trim())&&setup.includes(sqlHard.trim())&&setup.includes(sqlPlano.trim()),"instalação integral contém as três migrations exatas");
 console.log(n+" garantias de backend verificadas.");

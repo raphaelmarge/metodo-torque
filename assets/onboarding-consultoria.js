@@ -7,7 +7,7 @@
   var CONTRATO_PADRAO = [
     "CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONSULTORIA FITNESS",
     "",
-    "CONTRATANTE: {{aluno_nome}}, {{aluno_nacionalidade}}, {{aluno_estado_civil}}, {{aluno_profissao}}, RG {{aluno_rg}} ({{aluno_rg_orgao}}), CPF {{aluno_cpf}}, nascido(a) em {{aluno_nascimento}}, residente em {{aluno_endereco}}, e-mail {{aluno_email}} e telefone {{aluno_telefone}}.",
+    "CONTRATANTE: {{aluno_nome}}, {{aluno_nacionalidade}}, {{aluno_estado_civil}}, {{aluno_profissao}}, {{aluno_documento_tipo}} {{aluno_rg}} ({{aluno_rg_orgao}}), CPF {{aluno_cpf}}, nascido(a) em {{aluno_nascimento}}, residente em {{aluno_endereco}}, e-mail {{aluno_email}} e telefone {{aluno_telefone}}.",
     "",
     "{{representante_legal}}",
     "",
@@ -52,10 +52,49 @@
     return ("00000000" + (h1 >>> 0).toString(16)).slice(-8) + ("00000000" + (h2 >>> 0).toString(16)).slice(-8);
   }
   function cpfValido(valor) {
+    if (!/^[\d.\-\s]+$/.test(String(valor || ""))) return false;
     var c = soDigitos(valor);
     if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
     function dv(tam) { var soma = 0; for (var i = 0; i < tam; i++) soma += +c[i] * ((tam + 1) - i); var n = 11 - (soma % 11); return n > 9 ? 0 : n; }
     return dv(9) === +c[9] && dv(10) === +c[10];
+  }
+  function identidadeErro(tipo, numero, cpf) {
+    var raw = String(numero || "").trim(), n = raw.replace(/[.\-\s/]/g, "").toUpperCase();
+    if (tipo === "cin") {
+      if (!/^[\d.\-\s]+$/.test(raw) || n !== String(cpf || "").replace(/\D/g, "")) return "O número da CIN deve ser igual ao CPF informado.";
+      return "";
+    }
+    // RGs antigos variam por estado e podem conter letras antes ou depois dos números.
+    if (!/^[A-Za-z\d.\-\s/]+$/.test(raw) || n.length < 5 || n.length > 20 || (n.match(/\d/g) || []).length < 3 || /^(.)\1+$/.test(n)) return "Confira o número da identidade, incluindo letras e dígito final.";
+    return "";
+  }
+  function linkHttps(v) {
+    var s = String(v || "").trim();
+    if (!s || s.length > 2048 || /[\s\u0000-\u001f]/.test(s)) return "";
+    try { var u = new URL(s); return u.protocol === "https:" && u.hostname && !u.username && !u.password ? u.href : ""; } catch (_) { return ""; }
+  }
+  function planoTexto(cfg) {
+    if (!cfg || cfg.fluxo !== 2 || !(cfg.contrato || {}).ativo) return "";
+    var p = cfg.contrato.plano || {}, pg = cfg.pagamento || {}, mensal = p.cobranca !== "sessao";
+    var valor = "R$ " + (+p.valor || 0).toFixed(2).replace(".", ","), data = String(p.inicio || "").split("-").reverse().join("/");
+    var linhas = ["PLANO CONTRATADO", "Plano: " + (p.nome || "—") + ".", "Modalidade: " + (p.modalidade || "consultoria") + ".",
+      "Valor: " + valor + (mensal ? " por mês." : +p.pacoteQtd > 0 ? " pelo pacote de " + p.pacoteQtd + " aulas." : " por sessão.")];
+    if (mensal) linhas.push("Ciclo contratual: " + (+p.ciclo || 1) + ((+p.ciclo || 1) === 1 ? " mês." : " meses."));
+    if (+p.treinosSem > 0) linhas.push("Frequência: " + p.treinosSem + " treino(s) por semana.");
+    linhas.push("Início: " + (data || "a data do aceite") + ".");
+    if (mensal) linhas.push("Vencimento mensal: dia " + p.diaVenc + ".");
+    if (!mensal && +p.pacoteQtd > 0) linhas.push("Renovação do pacote: " + (p.pacoteRenova ? "automática ao concluir as aulas." : "mediante nova contratação."));
+    linhas.push(pg.ativo ? "Pagamento: assinatura recorrente pelo link " + pg.link + "." : "Pagamento: conforme combinado entre as partes.");
+    return linhas.join("\n");
+  }
+  function validaPacote(cfg) {
+    if (!cfg || !(cfg.contrato || {}).ativo || cfg.fluxo !== 2) return "";
+    var p = cfg.contrato.plano || {}, pg = cfg.pagamento || {};
+    if (!p.id || !p.contratoId || !p.nome || !Number.isFinite(p.valor) || p.valor <= 0 || p.valor > 1000000) return "Vincule um plano com valor válido ao contrato deste aluno em App e acesso.";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.inicio || "") || isNaN(new Date(p.inicio + "T12:00:00Z")) || new Date(p.inicio + "T12:00:00Z").toISOString().slice(0,10) !== p.inicio) return "Confira a data de início do plano.";
+    if (!["mes", "sessao"].includes(p.cobranca) || !Number.isInteger(p.ciclo) || p.ciclo < 1 || p.ciclo > 60 || !Number.isInteger(p.diaVenc) || p.diaVenc < 1 || p.diaVenc > 28) return "Confira o ciclo e o vencimento do plano.";
+    if (pg.ativo && (p.cobranca === "sessao" || +p.pacoteQtd > 0 || !linkHttps(pg.link))) return "Use um link HTTPS de assinatura recorrente para um plano mensal.";
+    return "";
   }
   function perguntasDo(st, id) {
     var q = (st.questionarios || []).find(function (x) { return x.id === id; });
@@ -94,13 +133,18 @@
     if (!c.ativo || !vinculo || vinculo.requerido !== true) return null;
     var ps = perguntasDo(st, c.questionarioId), ct = comercio && comercio.contrato, pl = comercio && comercio.plano;
     if (!ps.length && !c.contratoAtivo) return null;
+    var oferecerPagamento = !!vinculo.pagamentoRecorrente && c.contratoAtivo && (pl || {}).cobranca !== "sessao" && !((pl || {}).pacoteQtd > 0);
     var base = {
+      fluxo: 2,
       titulo: c.titulo, introducao: c.introducao, perguntas: ps,
       contrato: {
         ativo: c.contratoAtivo, modo: c.modoAssinatura, titulo: c.contratoTitulo, texto: c.contratoTexto,
         prestador: c.prestador,
-        plano: { nome: texto((pl || {}).nome || (aluno || {}).plano || "consultoria", 120), valor: +((pl || {}).valor || (aluno || {}).valor || 0), inicio: texto((ct || {}).inicio || (aluno || {}).desde, 10) }
+        plano: { id: texto((pl || {}).id, 100), contratoId: texto((ct || {}).id, 100), nome: texto((pl || {}).nome, 120), valor: Math.round(+(pl || {}).valor * 100) / 100 || 0,
+          ciclo: +(pl || {}).ciclo || 1, cobranca: (pl || {}).cobranca === "sessao" ? "sessao" : "mes", inicio: texto((ct || {}).inicio, 10), diaVenc: +(ct || {}).diaVenc || 5,
+          treinosSem: Math.max(0, Math.min(7, Math.floor(+(pl || {}).treinosSem || 0))), modalidade: texto((pl || {}).modalidade || "consultoria", 120), pacoteQtd: Math.max(0, Math.floor(+(pl || {}).pacoteQtd || 0)), pacoteRenova: !!(pl || {}).pacoteRenova }
       },
+      pagamento: { ativo: oferecerPagamento, link: oferecerPagamento ? linkHttps(vinculo.linkRec || (pl || {}).linkRec) : "" },
       aluno: {
         nome: texto((aluno || {}).nome, 160), cpf: texto((aluno || {}).cpf, 30), nascimento: texto((aluno || {}).nasc, 10),
         email: texto((aluno || {}).email, 160), telefone: texto((aluno || {}).zap, 30), cep: texto((aluno || {}).cep, 12),
@@ -121,7 +165,7 @@
     var temRep = String(modelo || "").indexOf("{{representante_legal}}") >= 0;
     var mapa = {
       aluno_nome: d.nome, aluno_nacionalidade: d.nacionalidade, aluno_estado_civil: d.estadoCivil,
-      aluno_profissao: d.profissao, aluno_rg: d.rg, aluno_rg_orgao: d.rgOrgao,
+      aluno_profissao: d.profissao, aluno_rg: d.rg, aluno_rg_orgao: d.rgOrgao, aluno_documento_tipo:cfg&&cfg.fluxo===2?(d.documentoTipo==="cin"?"CIN":"RG"):undefined,
       aluno_cpf: d.cpf, aluno_nascimento: data, aluno_endereco: end,
       aluno_email: d.email, aluno_telefone: d.telefone, prestador_nome: p.nome,
       prestador_documento: p.documento, prestador_endereco: p.endereco, prestador_email: p.email, prestador_telefone: p.telefone,
@@ -130,7 +174,8 @@
       responsavel_nome:d.responsavelNome, responsavel_cpf:d.responsavelCpf, representante_legal:rep
     };
     var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g, function (_, k) { return k==="representante_legal" ? rep : String(mapa[k] == null || mapa[k] === "" ? "—" : mapa[k]); });
-    return !temRep && rep ? pronto + "\n\n" + rep : pronto;
+    pronto = !temRep && rep ? pronto + "\n\n" + rep : pronto;
+    var comercial = planoTexto(cfg); return comercial ? pronto + "\n\n" + comercial : pronto;
   }
 
   /* Runtime serializado no app. Dependências vêm no objeto api para que o
@@ -145,6 +190,7 @@
     function escapeHtml(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
     function digits(v) { return String(v || "").replace(/\D/g, ""); }
     function cpfOk(v) {
+      if(!/^[\d.\-\s]+$/.test(String(v||"")))return false;
       var c = digits(v); if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
       function dv(n) { var s = 0; for (var i = 0; i < n; i++) s += +c[i] * ((n + 1) - i); var x = 11 - s % 11; return x > 9 ? 0 : x; }
       return dv(9) === +c[9] && dv(10) === +c[10];
@@ -155,11 +201,11 @@
       var en = [d.logradouro, d.numero, d.complemento, d.bairro, d.cidade && d.uf ? d.cidade + "/" + d.uf : d.cidade || d.uf, d.cep && "CEP " + d.cep].filter(Boolean).join(", ");
       var data=/^\d{4}-\d{2}-\d{2}$/.test(d.nascimento||"")?d.nascimento.slice(8,10)+"/"+d.nascimento.slice(5,7)+"/"+d.nascimento.slice(0,4):d.nascimento;
       var rep=d.responsavelNome?"REPRESENTANTE LEGAL DO CONTRATANTE: "+d.responsavelNome+", CPF "+(d.responsavelCpf||"—")+", que aceita e assina este instrumento em nome do menor.":"",temRep=String(modelo||"").indexOf("{{representante_legal}}")>=0;
-      var m = { aluno_nome:d.nome, aluno_nacionalidade:d.nacionalidade, aluno_estado_civil:d.estadoCivil, aluno_profissao:d.profissao, aluno_rg:d.rg, aluno_rg_orgao:d.rgOrgao,
+      var m = { aluno_nome:d.nome, aluno_nacionalidade:d.nacionalidade, aluno_estado_civil:d.estadoCivil, aluno_profissao:d.profissao, aluno_rg:d.rg, aluno_rg_orgao:d.rgOrgao, aluno_documento_tipo:d.documentoTipo==="cin"?"CIN":"RG",
         aluno_cpf:d.cpf, aluno_nascimento:data, aluno_endereco:en, aluno_email:d.email, aluno_telefone:d.telefone,
         prestador_nome:p.nome, prestador_documento:p.documento, prestador_endereco:p.endereco, prestador_email:p.email, prestador_telefone:p.telefone, plano_nome:pl.nome || "consultoria",
         plano_valor:+pl.valor ? "R$ "+(+pl.valor).toFixed(2).replace(".",",") : "conforme combinado", contrato_inicio:pl.inicio ? pl.inicio.split("-").reverse().join("/") : "a data do aceite", foro_cidade:p.cidade && p.uf ? p.cidade + "/" + p.uf : p.cidade || "cidade do contratante", responsavel_nome:d.responsavelNome,responsavel_cpf:d.responsavelCpf,representante_legal:rep };
-      var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g,function(_,k){return k==="representante_legal"?rep:String(m[k]==null||m[k]===""?"—":m[k]);});return !temRep&&rep?pronto+"\n\n"+rep:pronto;
+      var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g,function(_,k){return k==="representante_legal"?rep:String(m[k]==null||m[k]===""?"—":m[k]);});pronto=!temRep&&rep?pronto+"\n\n"+rep:pronto;var comercial=api.planoTexto?api.planoTexto(cfg):"";return comercial?pronto+"\n\n"+comercial:pronto;
     }
     function termoDepois() { setTimeout(function () { if (window.__abreTermoResponsabilidade) window.__abreTermoResponsabilidade(); }, 80); }
     function concluido(s) { return s && s.v === cfg.v && s.status === "enviado"; }
@@ -176,7 +222,8 @@
     }
     window.addEventListener("online", function(){enviaFila().then(function(r){if(r&&r.ok&&document.getElementById("ocOverlay"))mostraSucesso();});});
     window.__onboardingConsultoria = { versao: cfg.v, pendente: function () { return !!api.load(Q, null); }, reenviar: enviaFila };
-    if (concluido(estado)) { enviaFila(); termoDepois(); return; }
+    var pagamento=cfg.pagamento||{}, planoPagamento=(cfg.contrato||{}).plano||{}, linkPagamento=!api.cobrancaAutomatica&&pagamento.ativo&&(cfg.contrato||{}).ativo&&planoPagamento.cobranca!=="sessao"&&!(+planoPagamento.pacoteQtd>0)&&api.linkHttps?api.linkHttps(pagamento.link):"";
+    if (concluido(estado) && (!linkPagamento || estado.pagamentoVisto)) { enviaFila(); termoDepois(); return; }
 
     var css = document.createElement("style"); css.id = "ocCss"; css.textContent =
       "#ocOverlay{position:fixed;inset:0;z-index:150;background:var(--bg,#0d0c10);color:#f2f0f6;overflow:auto;font-family:inherit}"+
@@ -184,38 +231,84 @@
       "#ocOverlay .oc-mark{font-size:10px;letter-spacing:.23em;text-transform:uppercase;color:var(--corc,#c4b5fd);font-weight:900}#ocOverlay h1{font-size:29px;line-height:1.08;margin:8px 0 8px;letter-spacing:-.025em}#ocOverlay .oc-sub{color:#a9a4b5;line-height:1.5;font-size:14px;margin:0}"+
       "#ocOverlay .oc-progress{display:flex;gap:5px;margin:22px 0 24px}#ocOverlay .oc-progress i{height:4px;flex:1;background:#26222f;border-radius:9px}#ocOverlay .oc-progress i.on{background:var(--cor,#7c3aed)}"+
       "#ocOverlay .oc-body{flex:1}#ocOverlay .oc-card{background:#141218;border:1px solid #26222f;border-radius:18px;padding:18px}#ocOverlay .oc-q{font-size:22px;font-weight:850;line-height:1.22;margin:0 0 18px}"+
-      "#ocOverlay label{display:block;font-size:12px;font-weight:800;color:#cfcbdb;margin:12px 0 5px}#ocOverlay input,#ocOverlay textarea{width:100%;min-height:48px;border-radius:12px;border:1px solid #322e3d;background:#121016;color:#f2f0f6;padding:11px 13px;font:inherit}#ocOverlay textarea{min-height:100px;resize:vertical}"+
+      "#ocOverlay label{display:block;font-size:12px;font-weight:800;color:#cfcbdb;margin:12px 0 5px}#ocOverlay input,#ocOverlay textarea,#ocOverlay select{width:100%;min-height:48px;border-radius:12px;border:1px solid #322e3d;background:#121016;color:#f2f0f6;padding:11px 13px;font:inherit}#ocOverlay textarea{min-height:100px;resize:vertical}"+
       "#ocOverlay .oc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}#ocOverlay .oc-full{grid-column:1/-1}#ocOverlay .oc-ops{display:grid;gap:9px}#ocOverlay .oc-op{min-height:52px;border-radius:13px;border:1px solid #322e3d;background:#18151f;color:#f2f0f6;font:inherit;font-weight:750;padding:10px 13px;text-align:left}#ocOverlay .oc-op.on{border-color:var(--cor,#7c3aed);background:rgba(124,58,237,.18)}"+
       "#ocOverlay .oc-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}#ocOverlay .oc-scale button{min-height:44px;border-radius:10px;border:1px solid #322e3d;background:#18151f;color:#f2f0f6;font-weight:800}#ocOverlay .oc-scale button.on{background:var(--cor,#7c3aed);border-color:var(--cor,#7c3aed)}"+
       "#ocOverlay .oc-doc{white-space:pre-wrap;line-height:1.65;font-size:13px;max-height:43vh;overflow:auto;background:#0f0d13;border:1px solid #26222f;border-radius:13px;padding:14px}#ocOverlay .oc-check{display:flex;gap:10px;align-items:flex-start;margin:14px 0;color:#cfcbdb;font-size:13px;line-height:1.45}#ocOverlay .oc-check input{width:20px;min-height:20px;margin:0;flex:none}"+
       "#ocOverlay .oc-sign{width:100%;height:150px;background:#fff;border-radius:12px;touch-action:none;display:block}#ocOverlay .oc-actions{display:flex;gap:10px;margin-top:20px}#ocOverlay .oc-btn{min-height:52px;border:0;border-radius:13px;padding:12px 18px;font:inherit;font-weight:850;cursor:pointer}#ocOverlay .oc-btn.pri{background:var(--cor,#7c3aed);color:#fff}#ocOverlay .oc-actions .oc-btn.pri{flex:1}#ocOverlay .oc-btn.sec{background:#1d1a24;color:#cfcbdb}#ocOverlay .oc-btn:disabled{opacity:.45}#ocOverlay .oc-erro{color:#fca5a5;font-size:13px;line-height:1.4;margin-top:12px}"+
       "@media(max-width:430px){#ocOverlay .oc-wrap{padding-left:16px;padding-right:16px}#ocOverlay .oc-grid{grid-template-columns:1fr}#ocOverlay .oc-full{grid-column:auto}#ocOverlay h1{font-size:27px}}";
+    css.textContent+="#ocOverlay .oc-field{min-width:0}#ocOverlay input,#ocOverlay select{min-width:0;max-width:100%}#ocOverlay [aria-invalid=true]{border-color:#f87171}#ocOverlay .oc-field-error{color:#fca5a5;grid-column:1/-1;font-size:12px;line-height:1.4;margin-top:4px}#ocOverlay .oc-cep-status{grid-column:1/-1;font-size:12px;color:#a9a4b5;line-height:1.4;margin:6px 0}#ocOverlay a.oc-btn{display:block;text-decoration:none;text-align:center}#ocOverlay .oc-plan{font-size:14px;white-space:pre-line;line-height:1.6;margin:12px 0 0}";
     document.head.appendChild(css);
     var ov = document.createElement("div"); ov.id = "ocOverlay"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-labelledby","ocTituloEtapa"); document.body.appendChild(ov);
     var scrollHtml=document.documentElement.style.overflow,scrollBody=document.body.style.overflow,bloqueados=[];document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";
     [].forEach.call(document.body.children,function(el){if(el===ov||el.tagName==="SCRIPT"||el.tagName==="STYLE")return;bloqueados.push({el:el,inert:!!el.inert,aria:el.getAttribute("aria-hidden")});el.inert=true;el.setAttribute("aria-hidden","true");});
     function fechaOverlay(){bloqueados.forEach(function(x){x.el.inert=x.inert;if(x.aria==null)x.el.removeAttribute("aria-hidden");else x.el.setAttribute("aria-hidden",x.aria);});document.documentElement.style.overflow=scrollHtml;document.body.style.overflow=scrollBody;if(ov.parentNode)ov.remove();}
-    ov.addEventListener("keydown",function(e){if(e.key!=="Tab")return;var fs=[].filter.call(ov.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),function(x){return !x.hidden&&x.offsetParent!==null;});if(!fs.length){e.preventDefault();return;}var a=fs[0],z=fs[fs.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus();}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus();}});
+    ov.addEventListener("keydown",function(e){if(e.key!=="Tab")return;var fs=[].filter.call(ov.querySelectorAll('button:not([disabled]),a[href],select:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),function(x){return !x.hidden&&x.offsetParent!==null;});if(!fs.length){e.preventDefault();return;}var a=fs[0],z=fs[fs.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus();}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus();}});
     var salvoFila=api.load(Q,null), respostas=salvoFila&&salvoFila.v===cfg.v&&salvoFila.respostas?Object.fromEntries(salvoFila.respostas.map(function(r){return[r.id,r];})): {}, dados = {
-      nome:(cfg.aluno||{}).nome||"", nacionalidade:"Brasileiro(a)", estadoCivil:"", profissao:"", rg:"", rgOrgao:"", cpf:(cfg.aluno||{}).cpf||"", nascimento:(cfg.aluno||{}).nascimento||"", email:(cfg.aluno||{}).email||"", telefone:(cfg.aluno||{}).telefone||"", cep:(cfg.aluno||{}).cep||"", logradouro:(cfg.aluno||{}).endereco||"", numero:"", complemento:"", bairro:"", cidade:"", uf:"", responsavelNome:"", responsavelCpf:""
+      documentoTipo:"rg", nome:(cfg.aluno||{}).nome||"", nacionalidade:"Brasileiro(a)", estadoCivil:"", profissao:"", rg:"", rgOrgao:"", cpf:(cfg.aluno||{}).cpf||"", nascimento:(cfg.aluno||{}).nascimento||"", email:(cfg.aluno||{}).email||"", telefone:(cfg.aluno||{}).telefone||"", cep:(cfg.aluno||{}).cep||"", logradouro:(cfg.aluno||{}).endereco||"", numero:"", complemento:"", bairro:"", cidade:"", uf:"", responsavelNome:"", responsavelCpf:""
     }, assinatura = { aceitou:false, nome:"", imagem:"" }, passo = 0, ps = cfg.perguntas || [], temContrato = !!(cfg.contrato && cfg.contrato.ativo), total = 1 + ps.length + (temContrato ? 3 : 1), canvas = null, desenhou = false;
     if(salvoFila&&salvoFila.v===cfg.v){if(salvoFila.dados&&typeof salvoFila.dados==="object")dados=Object.assign(dados,salvoFila.dados);if(salvoFila.assinatura&&typeof salvoFila.assinatura==="object")assinatura=Object.assign(assinatura,salvoFila.assinatura);desenhou=/^data:image\/png;base64,/.test(assinatura.imagem||"");passo=total-1;}
     function barra() { var h="<div class='oc-progress'>"; for(var i=0;i<total;i++) h+="<i class='"+(i<=passo?'on':'')+"'></i>"; return h+"</div>"; }
-    function campo(id, rot, tipo, cls, extra) { var m=String(extra||"").match(/data-dado='([^']+)'/),v=m&&dados?dados[m[1]]||"":"";return "<label class='"+(cls||"")+"' for='"+id+"'>"+rot+"</label><input class='"+(cls||"")+"' id='"+id+"' type='"+(tipo||"text")+"' value='"+escapeHtml(v)+"' "+(extra||"")+">"; }
+    function campo(id, rot, tipo, cls, extra) { var m=String(extra||"").match(/data-dado='([^']+)'/),v=m&&dados?dados[m[1]]||"":"";return "<div class='oc-field "+(cls||"")+"'><label for='"+id+"'>"+rot+"</label><input id='"+id+"' type='"+(tipo||"text")+"' value='"+escapeHtml(v)+"' "+(extra||"")+"></div>"; }
     function cab() { return "<div class='oc-mark'>INÍCIO DA CONSULTORIA</div><h1 id='ocTituloEtapa' tabindex='-1'>"+escapeHtml(cfg.titulo||"Antes de começar")+"</h1>"+barra(); }
     function erro(msg, id) { var e=document.getElementById("ocErro"); if(e)e.textContent=msg||""; if(id){var x=document.getElementById(id);if(x){x.focus();x.scrollIntoView({block:"center"});}} return false; }
     function guardaCampos() { document.querySelectorAll("#ocOverlay [data-dado]").forEach(function(x){dados[x.dataset.dado]=String(x.value||"").trim();}); var na=document.getElementById("ocAssNome");if(na)assinatura.nome=na.value.trim();if(canvas&&desenhou)assinatura.imagem=canvas.toDataURL("image/png"); }
     function canon(v){return String(v||"").trim().replace(/\s+/g," ").toLocaleLowerCase("pt-BR");}
     function nascOk(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(v||"")||v<"1900-01-01"||v>new Date().toISOString().slice(0,10))return false;var d=new Date(v+"T12:00:00Z");return !isNaN(d)&&d.toISOString().slice(0,10)===v;}
-    function normalizaEnvio(){var d=Object.assign({},dados);Object.keys(d).forEach(function(k){if(typeof d[k]==="string")d[k]=d[k].trim();});d.cpf=digits(d.cpf);d.responsavelCpf=digits(d.responsavelCpf);d.cep=digits(d.cep);d.telefone=digits(d.telefone);d.uf=String(d.uf||"").toUpperCase();if(idade(d.nascimento)>=18){d.responsavelNome="";d.responsavelCpf="";}return d;}
+    function normalizaEnvio(){var d=Object.assign({},dados);Object.keys(d).forEach(function(k){if(typeof d[k]==="string")d[k]=d[k].trim();});d.documentoTipo=d.documentoTipo==="cin"?"cin":"rg";d.rg=String(d.rg||"").trim().toUpperCase();d.cpf=digits(d.cpf);d.responsavelCpf=digits(d.responsavelCpf);d.cep=digits(d.cep);d.telefone=digits(d.telefone);d.uf=String(d.uf||"").toUpperCase();if(idade(d.nascimento)>=18){d.responsavelNome="";d.responsavelCpf="";}return d;}
+    var cepEstado={codigo:"",status:""}, cepSeq=0, cepTimer=null, cepAbort=null, cepAuto={}, rgAnterior="";
+    function erroCampo(id,msg){
+      var x=document.getElementById(id);if(!x)return;
+      var eid=id+"Erro",e=document.getElementById(eid);
+      if(!msg){x.removeAttribute("aria-invalid");x.removeAttribute("aria-describedby");if(e)e.remove();return;}
+      x.setAttribute("aria-invalid","true");x.setAttribute("aria-describedby",eid);
+      if(!e){e=document.createElement("div");e.id=eid;e.className="oc-field-error";x.insertAdjacentElement("afterend",e);}e.textContent=msg;
+    }
+    function ligaDocumentosCep(){
+      var cpf=document.getElementById("ocCpf"),rg=document.getElementById("ocRg"),tipo=document.getElementById("ocDocTipo"),cep=document.getElementById("ocCep");if(!cpf||!cep)return;
+      function confereCpf(x){erroCampo(x.id,x.value&&!cpfOk(x.value)?"CPF inválido. Confira os números.":"");}
+      function sincronizaCin(){if(tipo.value==="cin"){dados.rg=digits(cpf.value);rg.value=dados.rg;erroCampo(rg.id,"");}}
+      cpf.addEventListener("blur",function(){confereCpf(cpf);});
+      cpf.addEventListener("input",function(){sincronizaCin();if(digits(cpf.value).length===11)confereCpf(cpf);});
+      var rc=document.getElementById("ocRespCpf");if(rc)rc.addEventListener("blur",function(){confereCpf(rc);});
+      function mudaTipo(){dados.documentoTipo=tipo.value;if(tipo.value==="cin"){rgAnterior=rg.value;rg.readOnly=true;sincronizaCin();}else{rg.readOnly=false;if(rgAnterior){dados.rg=rgAnterior;rg.value=rgAnterior;}}erroCampo(rg.id,"");}
+      tipo.addEventListener("change",mudaTipo);if(tipo.value==="cin"){rg.readOnly=true;sincronizaCin();}
+      rg.addEventListener("blur",function(){erroCampo(rg.id,rg.value&&api.identidadeErro?api.identidadeErro(tipo.value,rg.value,cpf.value):"");});
+      function status(msg){var e=document.getElementById("ocCepStatus");if(e)e.textContent=msg;}
+      function cancela(){clearTimeout(cepTimer);cepSeq++;if(cepAbort)cepAbort.abort();cepAbort=null;}
+      function consulta(){
+        var codigo=digits(cep.value);if(!/^[\d\-\s]+$/.test(cep.value)||codigo.length!==8)return;
+        if(cepEstado.codigo===codigo&&["buscando","encontrado","inexistente"].indexOf(cepEstado.status)>=0)return;
+        cancela();var seq=cepSeq,campos={logradouro:"ocRua",bairro:"ocBairro",cidade:"ocCidade",uf:"ocUf"},antes={};
+        Object.keys(campos).forEach(function(k){antes[k]=dados[k];});
+        cepEstado={codigo:codigo,status:"buscando"};status("Localizando endereço…");erroCampo(cep.id,"");
+        var controller=typeof AbortController!=="undefined"?new AbortController():null;cepAbort=controller;
+        var limite=setTimeout(function(){if(controller)controller.abort();},8000);
+        fetch("https://viacep.com.br/ws/"+codigo+"/json/",{credentials:"omit",referrerPolicy:"no-referrer",signal:controller?controller.signal:undefined}).then(function(r){if(!r.ok)throw new Error("indisponivel");return r.json();}).then(function(r){
+          if(seq!==cepSeq||digits(dados.cep)!==codigo||!document.getElementById("ocCep"))return;
+          if(r.erro){cepEstado={codigo:codigo,status:"inexistente"};erroCampo(cep.id,"CEP não encontrado. Confira os números.");status("");return;}
+          if(digits(r.cep)!==codigo||!r.localidade||!r.uf)throw new Error("resposta_invalida");
+          var valores={logradouro:r.logradouro,bairro:r.bairro,cidade:r.localidade,uf:r.uf};
+          Object.keys(campos).forEach(function(k){
+            if(dados[k]!==antes[k])return;
+            var valor=String(valores[k]||"").trim().slice(0,k==="uf"?2:200);
+            if(valor||dados[k]===cepAuto[k]){dados[k]=valor;cepAuto[k]=valor;var el=document.getElementById(campos[k]);if(el){el.value=valor;erroCampo(el.id,"");}}
+          });
+          cepEstado={codigo:codigo,status:"encontrado"};status(r.logradouro&&r.bairro?"Endereço localizado. Complete o número e confira os dados.":"CEP localizado. Complete o logradouro, bairro e número.");
+        }).catch(function(){if(seq!==cepSeq)return;cepEstado={codigo:codigo,status:"indisponivel"};status("Consulta indisponível agora. Você pode preencher o endereço manualmente.");}).finally(function(){clearTimeout(limite);if(seq===cepSeq)cepAbort=null;});
+      }
+      cep.addEventListener("input",function(){cancela();cepEstado={codigo:digits(cep.value),status:""};status("");if(/^[\d\-\s]+$/.test(cep.value)&&digits(cep.value).length===8)cepTimer=setTimeout(consulta,300);});
+      cep.addEventListener("blur",function(){if(!cep.value)return;if(!/^[\d\-\s]+$/.test(cep.value)||digits(cep.value).length!==8)erroCampo(cep.id,"Informe o CEP com 8 números.");else consulta();});
+      if(/^[\d\-\s]+$/.test(cep.value)&&digits(cep.value).length===8&&(!dados.cidade||!dados.uf))consulta();
+    }
     function validaAtual() {
       guardaCampos();
       if(passo>=1&&passo<=ps.length){var p=ps[passo-1],r=respostas[p.id];if(!r||!String(r.resposta||"").trim())return erro("Responda esta pergunta para continuar.",p.tipo==="texto"?"ocTexto":null);}
       if(temContrato&&passo===ps.length+1){
-        var req=[["nome","nome completo","ocNome"],["nacionalidade","nacionalidade","ocNacionalidade"],["estadoCivil","estado civil","ocEstadoCivil"],["profissao","profissão","ocProfissao"],["rg","RG","ocRg"],["rgOrgao","órgão expedidor do RG","ocRgOrgao"],["cpf","CPF","ocCpf"],["nascimento","data de nascimento","ocNasc"],["email","e-mail","ocEmail"],["telefone","telefone","ocTelefone"],["cep","CEP","ocCep"],["logradouro","logradouro","ocRua"],["numero","número","ocNumero"],["bairro","bairro","ocBairro"],["cidade","cidade","ocCidade"],["uf","UF","ocUf"]];
-        for(var i=0;i<req.length;i++)if(!dados[req[i][0]])return erro("Preencha "+req[i][1]+".",req[i][2]);
-        if(dados.nome.length<3)return erro("Informe o nome completo.","ocNome");if(dados.nacionalidade.length<3)return erro("Informe a nacionalidade.","ocNacionalidade");if(dados.estadoCivil.length<3)return erro("Informe o estado civil.","ocEstadoCivil");if(dados.profissao.length<2)return erro("Informe a profissão.","ocProfissao");if(dados.rg.length<3)return erro("Confira o RG.","ocRg");if(dados.rgOrgao.length<2)return erro("Confira o órgão expedidor.","ocRgOrgao");
-        if(!cpfOk(dados.cpf))return erro("Confira o CPF informado.","ocCpf");if(!nascOk(dados.nascimento))return erro("Confira a data de nascimento.","ocNasc");if(!/^\S+@\S+\.\S+$/.test(dados.email))return erro("Confira o e-mail informado.","ocEmail");if(digits(dados.telefone).length<10)return erro("Informe o telefone com DDD.","ocTelefone");if(digits(dados.cep).length!==8)return erro("Informe o CEP com 8 números.","ocCep");if(dados.logradouro.length<3)return erro("Informe o logradouro completo.","ocRua");if(!dados.numero)return erro("Informe o número.","ocNumero");if(dados.bairro.length<2)return erro("Informe o bairro.","ocBairro");if(dados.cidade.length<2)return erro("Informe a cidade.","ocCidade");if(!/^[A-Za-z]{2}$/.test(dados.uf))return erro("Informe a UF com 2 letras.","ocUf");
+        var req=[["nome","nome completo","ocNome"],["nacionalidade","nacionalidade","ocNacionalidade"],["estadoCivil","estado civil","ocEstadoCivil"],["profissao","profissão","ocProfissao"],["rg","número da identidade","ocRg"],["rgOrgao","órgão expedidor","ocRgOrgao"],["cpf","CPF","ocCpf"],["nascimento","data de nascimento","ocNasc"],["email","e-mail","ocEmail"],["telefone","telefone","ocTelefone"],["cep","CEP","ocCep"],["logradouro","logradouro","ocRua"],["numero","número","ocNumero"],["bairro","bairro","ocBairro"],["cidade","cidade","ocCidade"],["uf","UF","ocUf"]];
+        for(var i=0;i<req.length;i++)if(!(req[i][0]==="rg"&&dados.documentoTipo==="cin")&&!dados[req[i][0]])return erro("Preencha "+req[i][1]+".",req[i][2]);
+        if(dados.nome.length<3)return erro("Informe o nome completo.","ocNome");if(dados.nacionalidade.length<3)return erro("Informe a nacionalidade.","ocNacionalidade");if(dados.estadoCivil.length<3)return erro("Informe o estado civil.","ocEstadoCivil");if(dados.profissao.length<2)return erro("Informe a profissão.","ocProfissao");if(dados.documentoTipo!=="cin"&&dados.rg.length<3)return erro("Confira o número da identidade.","ocRg");if(dados.rgOrgao.length<2)return erro("Confira o órgão expedidor.","ocRgOrgao");
+        if(!cpfOk(dados.cpf)){erroCampo("ocCpf","CPF inválido. Confira os números.");return erro("CPF inválido. Confira os números.","ocCpf");}var ie=api.identidadeErro&&api.identidadeErro(dados.documentoTipo,dados.rg,dados.cpf);if(ie){erroCampo("ocRg",ie);return erro(ie,"ocRg");}if(cepEstado.codigo===digits(dados.cep)&&cepEstado.status==="inexistente")return erro("CEP não encontrado. Confira os números.","ocCep");if(cepEstado.codigo===digits(dados.cep)&&cepEstado.status==="buscando")return erro("Aguarde a consulta do CEP terminar.","ocCep");if(!nascOk(dados.nascimento))return erro("Confira a data de nascimento.","ocNasc");if(!/^\S+@\S+\.\S+$/.test(dados.email))return erro("Confira o e-mail informado.","ocEmail");if(digits(dados.telefone).length<10)return erro("Informe o telefone com DDD.","ocTelefone");if(!/^[\d\-\s]+$/.test(dados.cep)||digits(dados.cep).length!==8)return erro("Informe o CEP com 8 números.","ocCep");if(dados.logradouro.length<3)return erro("Informe o logradouro completo.","ocRua");if(!dados.numero)return erro("Informe o número.","ocNumero");if(dados.bairro.length<2)return erro("Informe o bairro.","ocBairro");if(dados.cidade.length<2)return erro("Informe a cidade.","ocCidade");if(!/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/i.test(dados.uf))return erro("Informe a UF com 2 letras.","ocUf");
         if(idade(dados.nascimento)<18){if(dados.responsavelNome.length<3)return erro("Informe o nome completo do responsável legal.","ocRespNome");if(!cpfOk(dados.responsavelCpf))return erro("Confira o CPF do responsável legal.","ocRespCpf");}
         dados=normalizaEnvio();
       }
@@ -225,20 +318,22 @@
       return true;
     }
     function pinta() {
+      if(cepEstado&&cepEstado.status==="buscando"&&!(temContrato&&passo===ps.length+1)){clearTimeout(cepTimer);cepSeq++;if(cepAbort)cepAbort.abort();cepEstado.status="";}
       var corpo="", titulo="";
-      if(passo===0){titulo="Vamos preparar sua consultoria";corpo="<div class='oc-card'><p class='oc-q'>"+escapeHtml(cfg.introducao||"")+"</p><p class='oc-sub'>São "+ps.length+" pergunta(s)"+(temContrato?" e a conferência do contrato":"")+". Você pode revisar antes de enviar.</p></div>";}
+      if(passo===0){titulo="Vamos preparar sua consultoria";corpo="<div class='oc-card'><p class='oc-q'>"+escapeHtml(cfg.introducao||"")+"</p><p class='oc-sub'>São "+ps.length+" pergunta(s)"+(temContrato?" e a conferência do contrato":"")+". Você pode revisar antes de enviar.</p>"+((cfg.contrato||{}).plano&&cfg.contrato.plano.nome?"<p class='oc-plan'><b>"+escapeHtml(cfg.contrato.plano.nome)+"</b><br>R$ "+(+cfg.contrato.plano.valor).toFixed(2).replace(".",",")+ (cfg.contrato.plano.cobranca!=="sessao"?" por mês":+cfg.contrato.plano.pacoteQtd>0?" pelo pacote de "+cfg.contrato.plano.pacoteQtd+" aulas":" por sessão")+"</p>":"")+"</div>";}
       else if(passo<=ps.length){var p=ps[passo-1],r=respostas[p.id]||{};titulo="Pergunta "+passo+" de "+ps.length;corpo="<div class='oc-card'><p class='oc-q'>"+escapeHtml(p.texto)+"</p>";
         if(p.tipo==="emoji")corpo+="<div class='oc-ops'>"+(p.ops||[]).map(function(o,i){return "<button class='oc-op "+(r.indice===i?"on":"")+"' data-op='"+i+"'><span style='font-size:22px;margin-right:9px'>"+escapeHtml(o.e)+"</span>"+escapeHtml(o.r)+"</button>";}).join("")+"</div>";
         else if(p.tipo==="linear"){corpo+="<div class='oc-scale'>";for(var n=0;n<=10;n++)corpo+="<button class='"+(String(r.resposta)===String(n)?"on":"")+"' data-nota='"+n+"'>"+n+"</button>";corpo+="</div>";}
         else corpo+="<textarea id='ocTexto' maxlength='1000' placeholder='Escreva sua resposta'>"+escapeHtml(r.resposta||"")+"</textarea>";corpo+="</div>";}
       else if(temContrato&&passo===ps.length+1){titulo="Confira seus dados";var menor=idade(dados.nascimento)>=0&&idade(dados.nascimento)<18;corpo="<div class='oc-card'><p class='oc-sub'>Esses dados identificam você no contrato. Complete o que faltar.</p><div class='oc-grid'>"+
-        campo("ocNome","Nome completo","text","oc-full","data-dado='nome' autocomplete='name'")+campo("ocNacionalidade","Nacionalidade","text","","data-dado='nacionalidade'")+campo("ocEstadoCivil","Estado civil","text","","data-dado='estadoCivil'")+campo("ocProfissao","Profissão","text","oc-full","data-dado='profissao'")+campo("ocRg","RG","text","","data-dado='rg'")+campo("ocRgOrgao","Órgão expedidor","text","","data-dado='rgOrgao'")+campo("ocCpf","CPF","text","","data-dado='cpf' inputmode='numeric'")+campo("ocNasc","Nascimento","date","","data-dado='nascimento' autocomplete='bday'")+campo("ocEmail","E-mail","email","oc-full","data-dado='email' autocomplete='email'")+campo("ocTelefone","Telefone com DDD","tel","","data-dado='telefone' autocomplete='tel'")+campo("ocCep","CEP","text","","data-dado='cep' inputmode='numeric' autocomplete='postal-code'")+campo("ocRua","Logradouro","text","oc-full","data-dado='logradouro' autocomplete='street-address'")+campo("ocNumero","Número","text","","data-dado='numero'")+campo("ocComplemento","Complemento (opcional)","text","","data-dado='complemento'")+campo("ocBairro","Bairro","text","","data-dado='bairro'")+campo("ocCidade","Cidade","text","","data-dado='cidade'")+campo("ocUf","UF","text","","data-dado='uf' maxlength='2'")+"</div><div id='ocMenor' "+(menor?"":"hidden")+"><hr style='border:0;border-top:1px solid #26222f;margin:18px 0'><p class='oc-sub'>Como o aluno é menor de 18 anos, o responsável legal também assina.</p><div class='oc-grid'>"+campo("ocRespNome","Nome do responsável","text","","data-dado='responsavelNome'")+campo("ocRespCpf","CPF do responsável","text","","data-dado='responsavelCpf' inputmode='numeric'")+"</div></div></div>";}
+        campo("ocNome","Nome completo","text","oc-full","data-dado='nome' autocomplete='name'")+campo("ocNacionalidade","Nacionalidade","text","","data-dado='nacionalidade'")+campo("ocEstadoCivil","Estado civil","text","","data-dado='estadoCivil'")+campo("ocProfissao","Profissão","text","oc-full","data-dado='profissao'")+"<label class='oc-full' for='ocDocTipo'>Documento de identidade</label><select class='oc-full' id='ocDocTipo' data-dado='documentoTipo'><option value='rg'>RG antigo</option><option value='cin'>CIN · nova identidade (CPF)</option></select>"+campo("ocRg","Número da identidade","text","","data-dado='rg' maxlength='40'")+campo("ocRgOrgao","Órgão expedidor","text","","data-dado='rgOrgao'")+campo("ocCpf","CPF","text","","data-dado='cpf' inputmode='numeric'")+campo("ocNasc","Nascimento","date","","data-dado='nascimento' autocomplete='bday'")+campo("ocEmail","E-mail","email","oc-full","data-dado='email' autocomplete='email'")+campo("ocTelefone","Telefone com DDD","tel","","data-dado='telefone' autocomplete='tel'")+campo("ocCep","CEP","text","","data-dado='cep' inputmode='numeric' autocomplete='postal-code' maxlength='10'")+"<div class='oc-cep-status' id='ocCepStatus' role='status'></div>"+campo("ocRua","Logradouro","text","oc-full","data-dado='logradouro' autocomplete='street-address'")+campo("ocNumero","Número","text","","data-dado='numero'")+campo("ocComplemento","Complemento (opcional)","text","","data-dado='complemento'")+campo("ocBairro","Bairro","text","","data-dado='bairro'")+campo("ocCidade","Cidade","text","","data-dado='cidade'")+campo("ocUf","UF","text","","data-dado='uf' maxlength='2'")+"</div><div id='ocMenor' "+(menor?"":"hidden")+"><hr style='border:0;border-top:1px solid #26222f;margin:18px 0'><p class='oc-sub'>Como o aluno é menor de 18 anos, o responsável legal também assina.</p><div class='oc-grid'>"+campo("ocRespNome","Nome do responsável","text","","data-dado='responsavelNome'")+campo("ocRespCpf","CPF do responsável","text","","data-dado='responsavelCpf' inputmode='numeric'")+"</div></div></div>";}
       else if(temContrato&&passo===ps.length+2){titulo="Leia o contrato";corpo="<div class='oc-card'><div class='oc-doc' id='ocDocumento'>"+escapeHtml(resolve(cfg.contrato.texto,dados))+"</div>"+(ps.length?"<label class='oc-check'><input id='ocLgpd' type='checkbox'>Autorizo, de forma livre, informada e destacada, o uso das minhas respostas e dos dados de saúde para personalizar e acompanhar esta consultoria.</label>":"")+"<label class='oc-check'><input id='ocAceite' type='checkbox'>Li o contrato completo, tive oportunidade de esclarecer dúvidas e aceito esta versão.</label></div>";}
       else if(temContrato){titulo="Assinar e enviar";var nomeEsperado=idade(dados.nascimento)<18?dados.responsavelNome:dados.nome;corpo="<div class='oc-card'><p class='oc-sub'>Digite o nome completo de "+(idade(dados.nascimento)<18?"quem responde legalmente pelo aluno":"quem aceita o contrato")+".</p><label for='ocAssNome'>Nome completo</label><input id='ocAssNome' maxlength='160' autocomplete='name' value='"+escapeHtml(assinatura.nome||nomeEsperado||"")+"'>"+((cfg.contrato||{}).modo==="assinatura"?"<label>Assinatura no quadro</label><canvas class='oc-sign' id='ocCanvas' tabindex='0' aria-label='Quadro para assinatura'></canvas><button class='oc-btn sec' id='ocLimpa' type='button' style='margin-top:8px'>Limpar assinatura</button>":"<p class='oc-sub' style='margin-top:14px'>O aceite eletrônico será vinculado ao seu nome, à versão lida e à data registrada pelo servidor.</p>")+"</div>";}
       else{titulo="Autorizar e enviar";corpo="<div class='oc-card'><p class='oc-q'>Tudo pronto para enviar</p><label class='oc-check'><input id='ocConsentimento' type='checkbox'>Autorizo, de forma livre, informada e destacada, o uso das minhas respostas e dos dados de saúde para personalizar e acompanhar esta consultoria.</label><p class='oc-sub'>Seu personal verá apenas as respostas deste cadastro.</p></div>";}
       ov.innerHTML="<div class='oc-wrap'>"+cab()+"<div class='oc-mark' style='letter-spacing:.14em;margin-bottom:8px'>"+escapeHtml(titulo)+"</div><div class='oc-body'>"+corpo+"<div id='ocErro' class='oc-erro' role='alert'></div></div><div class='oc-actions'>"+(passo>0?"<button class='oc-btn sec' id='ocVolta'>Voltar</button>":"")+"<button class='oc-btn pri' id='ocProx'>"+(passo===total-1?(temContrato?"Aceitar e concluir":"Enviar respostas"):temContrato&&passo===total-2?"Ir para assinatura":"Continuar")+"</button></div></div>";
       function repoeDados(){document.querySelectorAll("#ocOverlay [data-dado]").forEach(function(x){x.value=dados[x.dataset.dado]||"";});}
-      repoeDados();document.querySelectorAll("#ocOverlay [data-dado]").forEach(function(x){x.addEventListener("input",function(){dados[x.dataset.dado]=x.value;if(x.id==="ocNasc"){var m=document.getElementById("ocMenor");if(m)m.hidden=!(idade(x.value)>=0&&idade(x.value)<18);}});});
+      repoeDados();document.querySelectorAll("#ocOverlay [data-dado]").forEach(function(x){x.addEventListener("input",function(){dados[x.dataset.dado]=x.value;erroCampo(x.id,"");if(x.id==="ocNasc"){var m=document.getElementById("ocMenor");if(m)m.hidden=!(idade(x.value)>=0&&idade(x.value)<18);}});});
+      ligaDocumentosCep();
       var txt=document.getElementById("ocTexto");if(txt)txt.addEventListener("input",function(){respostas[ps[passo-1].id]={id:ps[passo-1].id,pergunta:ps[passo-1].texto,resposta:txt.value.slice(0,1000),pontos:null};});
       document.querySelectorAll("[data-op]").forEach(function(b){b.onclick=function(){var p=ps[passo-1],o=(p.ops||[])[+b.dataset.op]||{};respostas[p.id]={id:p.id,pergunta:p.texto,resposta:o.r||o.e||"",pontos:+o.p||0,indice:+b.dataset.op};pinta();};});
       document.querySelectorAll("[data-nota]").forEach(function(b){b.onclick=function(){var p=ps[passo-1];respostas[p.id]={id:p.id,pergunta:p.texto,resposta:b.dataset.nota,pontos:+b.dataset.nota};pinta();};});
@@ -249,16 +344,16 @@
     }
     function ligaCanvas(){canvas=document.getElementById("ocCanvas");var ctx=canvas.getContext("2d"),r=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.max(300,Math.round(r.width*dpr));canvas.height=Math.round(150*dpr);ctx.scale(dpr,dpr);ctx.strokeStyle="#17121f";ctx.lineWidth=2.2;ctx.lineCap="round";var down=false;if(/^data:image\/png;base64,/.test(assinatura.imagem||"")){var im=new Image();im.onload=function(){ctx.drawImage(im,0,0,r.width,150);desenhou=true;};im.src=assinatura.imagem;}
       function pos(e){var q=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-q.left,y:p.clientY-q.top};}function ini(e){down=true;var p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault();}function mov(e){if(!down)return;var p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();desenhou=true;e.preventDefault();}function fim(){down=false;}canvas.addEventListener("pointerdown",ini);canvas.addEventListener("pointermove",mov);addEventListener("pointerup",fim);var l=document.getElementById("ocLimpa");if(l)l.onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);assinatura.imagem="";desenhou=false;};}
-    function mensagemServidor(c){var m={respostas_invalidas:"As respostas mudaram. Volte e confira o questionário.",resposta_obrigatoria:"Volte e responda todas as perguntas.",dados_contratuais_incompletos:"Volte e confira todos os dados do contrato.",cpf_invalido:"Volte e confira o CPF.",nascimento_invalido:"Volte e confira a data de nascimento.",responsavel_legal_necessario:"Volte e confira o responsável legal.",aceite_necessario:"O nome de quem assina deve ser igual ao nome completo informado no contrato.",assinatura_necessaria:"Refaça a assinatura no quadro.",assinatura_invalida:"Refaça a assinatura no quadro.",documento_divergente:"O contrato foi atualizado. Volte, leia novamente e confirme a versão atual.",onboarding_desatualizado:"O personal atualizou esta entrada. Reabra o app para responder a versão nova.",contrato_incompleto:"O contrato precisa ser corrigido pelo personal antes do envio."};return m[c]||"O servidor não aceitou este envio. Confira os dados ou peça ao personal para revisar a configuração.";}
-    function mostraSucesso(){ov.innerHTML="<div class='oc-wrap' style='justify-content:center;text-align:center'><div style='width:76px;height:76px;border-radius:50%;background:rgba(74,222,128,.14);color:#4ade80;display:grid;place-items:center;font-size:36px;margin:0 auto 18px'>✓</div><h1 id='ocTituloEtapa' tabindex='-1'>Cadastro concluído</h1><p class='oc-sub'>Seu personal já recebeu suas respostas"+(temContrato?" e o contrato assinado":"")+".</p><button class='oc-btn pri' id='ocEntrar' style='margin-top:24px'>Entrar no meu app</button></div>";document.getElementById("ocEntrar").onclick=function(){fechaOverlay();termoDepois();};document.getElementById("ocEntrar").focus();}
+    function mensagemServidor(c){var m={identidade_invalida:"Confira o número da identidade, incluindo letras e dígito final.",cin_divergente:"O número da CIN deve ser igual ao CPF informado.",plano_invalido:"O personal precisa vincular um plano válido ao contrato. Peça para revisar e publicar novamente.",link_pagamento_invalido:"O personal precisa revisar o link de pagamento recorrente.",respostas_invalidas:"As respostas mudaram. Volte e confira o questionário.",resposta_obrigatoria:"Volte e responda todas as perguntas.",dados_contratuais_incompletos:"Volte e confira todos os dados do contrato.",cpf_invalido:"Volte e confira o CPF.",nascimento_invalido:"Volte e confira a data de nascimento.",responsavel_legal_necessario:"Volte e confira o responsável legal.",aceite_necessario:"O nome de quem assina deve ser igual ao nome completo informado no contrato.",assinatura_necessaria:"Refaça a assinatura no quadro.",assinatura_invalida:"Refaça a assinatura no quadro.",documento_divergente:"O contrato foi atualizado. Volte, leia novamente e confirme a versão atual.",onboarding_desatualizado:"O personal atualizou esta entrada. Reabra o app para responder a versão nova.",contrato_incompleto:"O contrato precisa ser corrigido pelo personal antes do envio."};return m[c]||"O servidor não aceitou este envio. Confira os dados ou peça ao personal para revisar a configuração.";}
+    function mostraSucesso(){var p=(cfg.contrato||{}).plano||{};ov.innerHTML="<div class='oc-wrap' style='justify-content:center;text-align:center'><div style='width:76px;height:76px;border-radius:50%;background:rgba(74,222,128,.14);color:#4ade80;display:grid;place-items:center;font-size:36px;margin:0 auto 18px'>✓</div><h1 id='ocTituloEtapa' tabindex='-1'>Cadastro concluído</h1><p class='oc-sub'>Seu personal já recebeu suas respostas"+(temContrato?" e o contrato assinado":"")+".</p>"+(linkPagamento?"<div class='oc-card' style='margin-top:22px;text-align:left'><b>Próximo passo: pagamento do plano</b><p class='oc-plan'>"+escapeHtml(p.nome||"Seu plano")+" · R$ "+(+p.valor||0).toFixed(2).replace(".",",")+" por mês</p><p class='oc-sub' style='margin-top:8px'>Confira as condições no provedor antes de autorizar a recorrência.</p><a id='ocPagar' class='oc-btn pri' style='margin-top:16px' href='"+escapeHtml(linkPagamento)+"' target='_blank' rel='noopener noreferrer'>Ir para pagamento recorrente</a></div>":"")+"<button class='oc-btn "+(linkPagamento?"sec":"pri")+"' id='ocEntrar' style='margin-top:24px'>Entrar no meu app</button></div>";document.getElementById("ocEntrar").onclick=function(){estado.pagamentoVisto=true;salva(K,estado);fechaOverlay();termoDepois();};document.getElementById(linkPagamento?"ocPagar":"ocEntrar").focus();}
     function finalizar(){var bt=document.getElementById("ocProx");bt.disabled=true;bt.textContent="Enviando…";if(canvas&&desenhou)assinatura.imagem=canvas.toDataURL("image/png");dados=normalizaEnvio();assinatura.nome=String(assinatura.nome||"").trim().slice(0,160);assinatura.aceitou=true;assinatura.consentimentoSaude=!ps.length||assinatura.consentimentoSaude;assinatura.documento=temContrato?resolve(cfg.contrato.texto,dados):"";var lista=ps.map(function(p){var r=respostas[p.id]||{};return{id:p.id,pergunta:p.texto,resposta:String(r.resposta||"").slice(0,1000),pontos:r.pontos==null?null:+r.pontos};});var fila={v:cfg.v,respostas:lista,dados:dados,assinatura:assinatura,localEm:new Date().toISOString()};if(!salva(Q,fila)||!salva(K,{v:cfg.v,status:"pendente",em:fila.localEm})){bt.disabled=false;bt.textContent="Aceitar e concluir";return erro("O aparelho está sem espaço para guardar o contrato. Libere espaço e tente de novo.");}estado={v:cfg.v,status:"pendente",em:fila.localEm};enviaFila().then(function(r){if(r&&r.ok){mostraSucesso();return;}bt=document.getElementById("ocProx");if(bt){bt.disabled=false;bt.textContent=temContrato?"Aceitar e concluir":"Enviar respostas";}if(r&&r.tipo==="servidor")erro(mensagemServidor(r.erro));else erro("Sem conexão para concluir agora. O preenchimento ficou protegido neste aparelho; conecte-se e toque em enviar novamente.");});}
-    function inicia(){var ant=document.getElementById("termoOv");if(ant)ant.remove();pinta();}
-    if(api.online())rpc("app_consultoria_estado",{t:api.token,p_versao:cfg.v}).then(function(r){if(r&&r.ok&&r.concluido){estado={v:cfg.v,status:"enviado",em:r.aceito_em||"",hash:r.documento_hash||"",id:r.id||""};salva(K,estado);fechaOverlay();termoDepois();}else inicia();});else inicia();
+    function inicia(){var ant=document.getElementById("termoOv");if(ant)ant.remove();if(concluido(estado)&&linkPagamento)mostraSucesso();else pinta();}
+    if(api.online())rpc("app_consultoria_estado",{t:api.token,p_versao:cfg.v}).then(function(r){if(r&&r.ok&&r.concluido){estado={v:cfg.v,status:"enviado",em:r.aceito_em||"",hash:r.documento_hash||"",id:r.id||""};salva(K,estado);if(linkPagamento)mostraSucesso();else{fechaOverlay();termoDepois();}}else inicia();});else inicia();
   }
 
   raiz.MT_ONBOARDING_CONSULTORIA = {
     CONTRATO_PADRAO: CONTRATO_PADRAO, hash: hash, cpfValido: cpfValido,
     perguntasDo: perguntasDo, normalizaConfig: normalizaConfig, pacote: pacote,
-    resolveContrato: resolveContrato, runtime: runtime
+    resolveContrato: resolveContrato, runtime: runtime, identidadeErro: identidadeErro, linkHttps: linkHttps, planoTexto: planoTexto, validaPacote: validaPacote
   };
 })(typeof self !== "undefined" ? self : this);
