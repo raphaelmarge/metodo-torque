@@ -6,6 +6,13 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v817 — Foto grande no topo do aluno
+
+- No celular (até 800px), o carrossel volta a começar no topo e ocupar toda a largura do app, sem margens ou cantos de cartão. Saudação, sino e avatar ficam sobre a foto, com safe area e contraste nos dois temas.
+- A altura original volta com `svh` e fallback `vh`; a imagem usa `object-fit:cover`, sem deformar. O degradê termina na cor atual da página. Preservar o carrossel, os indicadores, as ações, Minha semana e os hábitos.
+- Mudança somente em `app/aluno-skin.js`; não reescrever builder, sincronização, pacotes ou Supabase. Desktop Torque One e primeiro dia sem treino mantêm a estrutura anterior.
+- Regenerar `demo-aluno.html`. Teste de regressão em `tests/test-aluno-hero-full-bleed.js`, além das suítes existentes do Início e de prescrição/sincronização.
+
 ## v811 — Nutrição integrada ao Personal (adição solicitada pelo Raphael)
 
 - O visual, as abas fixas, os treinos e os hábitos existentes permanecem. Menu **Nutrição** no Personal e área **Alimentação** no perfil e no menu do aluno.
