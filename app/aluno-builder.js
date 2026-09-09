@@ -305,7 +305,7 @@
   // Alimentação adicionada ao app atual. A fábrica e o core viajam no HTML offline.
   function runtimeNutricao(pacote, N) {
     function escopoToken(v) { var a = 2166136261, b = 5381, s = String(v || 'local'); for (var i = 0; i < s.length; i++) { a = Math.imul(a ^ s.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ s.charCodeAt(i); } return (a >>> 0).toString(36) + (b >>> 0).toString(36); }
-    var sufixo = escopoToken(TOKEN), CHAVES = { estado:'ptnutricao:' + sufixo, fila:'ptnutriFila:' + sufixo, rascunho:'ptnutriRascunho:' + sufixo };
+    var sufixo = escopoToken(TOKEN), CHAVES = { estado:'ptnutricao:' + sufixo, fila:'ptnutriFila:' + sufixo, rascunho:'ptnutriRascunho:' + sufixo, compras:'ptnutriCompras:' + sufixo, respostas:'ptnutriRespostas:' + sufixo };
     var historico = L(CHAVES.estado, { v: 1, registros: {} }), ativo = !!(pacote && pacote.ativo === true);
     if (!pacote && !(historico && historico.registros && Object.keys(historico.registros).length)) return null;
     pacote = pacote || { ativo: false, refeicoes: [] };
@@ -313,6 +313,9 @@
     document.body.appendChild(box);
     if (!N) { box.textContent = 'Não foi possível carregar a alimentação. Atualize o app quando tiver conexão.'; return null; }
     var plano = N.normalizaPlano(pacote), edit = null, editSeq = 0, photoSeq = 0, analisando = false, analiseAbort = null, salvando = false, recebendo = false, falha = '', syncTimer;
+    var conversaId = '', conversaSeq = 0, feedbackAtual = [], enviandoResposta = false, respostas = L(CHAVES.respostas, {}), compras = L(CHAVES.compras, {}), compraLinhas = [], catalogoLimite = 20;
+    if (!respostas || typeof respostas !== 'object' || Array.isArray(respostas)) respostas = {};
+    if (!compras || typeof compras !== 'object' || Array.isArray(compras)) compras = {};
     var estado = historico, fila = L(CHAVES.fila, {}), tokenLocalInicial = null, identidadePerdida = false, pedidos = [];
     try { tokenLocalInicial = localStorage.getItem('tq_app_token'); } catch (_) {}
     if (!estado || !estado.registros || Array.isArray(estado.registros)) estado = { v: 1, registros: {} };
@@ -326,7 +329,11 @@
     function totais(itens) { var t = N.totalItens(itens); return fmt(t.k) + ' kcal · P ' + fmt(t.pt) + ' g · C ' + fmt(t.cb) + ' g · G ' + fmt(t.g) + ' g'; }
     function dataValida(s) { var d = new Date(s + 'T12:00:00'); return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(d) && isoLoc(d) === s; }
     function lista() { return Object.keys(estado.registros).map(function (id) { return estado.registros[id]; }).filter(function (r) { return r && !r.apagado; }); }
-    function metricas() { var rs = lista(), dias = {}; rs.forEach(function (r) { if (dataValida(r.d) && r.d <= isoHj()) dias[r.d] = (dias[r.d] || 0) + 1; }); return { registros: rs.filter(function(r){return r.d <= isoHj();}).length, dias: Object.keys(dias).length, xp: Object.keys(dias).reduce(function (n, d) { return n + Math.min(10, dias[d] * 2); }, 0) }; }
+    function metricas() { var rs = lista(), dias = {}, inicio = desloca(isoHj(), -6); rs.forEach(function (r) { if (dataValida(r.d) && r.d <= isoHj()) dias[r.d] = (dias[r.d] || 0) + 1; }); return { registros: rs.filter(function(r){return r.d <= isoHj();}).length, dias: Object.keys(dias).length, semanaDias: Object.keys(dias).filter(function(d){return d >= inicio;}).length, organizados: Object.keys(compras).filter(function(k){return compras[k] === true;}).length, xp: Object.keys(dias).reduce(function (n, d) { return n + Math.min(10, dias[d] * 2); }, 0) }; }
+    function desloca(d, n) { var dt = new Date(d + 'T12:00:00'); dt.setDate(dt.getDate() + n); return isoLoc(dt); }
+    function dataTexto(d) { return dataValida(d) ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }) : ''; }
+    function referenciasDia(d) { return N.refeicoesDia ? N.refeicoesDia(plano, d) : plano.refeicoes.filter(function(r){return (!plano.inicio || d >= plano.inicio) && (!plano.fim || d <= plano.fim) && (!r.dias || !r.dias.length || r.dias.indexOf(new Date(d + 'T12:00:00').getDay()) >= 0);}); }
+    function guardaLocal(chave, valor) { if (!contextoAtual()) return false; try { localStorage.setItem(chave, JSON.stringify(valor)); return true; } catch (_) { aviso('Não foi possível guardar neste aparelho. Seu preenchimento continua aberto.'); return false; } }
     function repintaXP() { try { pintaXP(); pintaConquistas(); } catch (_) {} }
     function aviso(t) { porId('ntpAviso').textContent = t || ''; }
     function contextoAtual() {
@@ -334,7 +341,7 @@
       var atual; try { atual = localStorage.getItem('tq_app_token'); } catch (_) { return true; }
       if (atual === TOKEN || (!atual && !tokenLocalInicial)) return true;
       identidadePerdida = true; editSeq++; photoSeq++; clearTimeout(syncTimer); pedidos.forEach(function(p){p.abort();}); if (analiseAbort) analiseAbort.abort(); edit = null; analisando = false;
-      porId('ntpEditor').hidden = true; porId('ntpNovo').hidden = true; box.querySelectorAll('button,input').forEach(function(el){el.disabled = true;});
+      porId('ntpEditor').hidden = true; porId('ntpNovo').hidden = true; porId('ntpConversa').hidden = true; conversaSeq++; conversaId=''; box.querySelectorAll('button,input,textarea,select').forEach(function(el){el.disabled = true;});
       aviso('Outro acesso foi aberto neste aparelho. Reabra o app deste aluno para continuar. Nenhum dado foi transferido.'); status(); return false;
     }
     function status() {
@@ -403,36 +410,121 @@
       if (!res || !res.ok || !mescla(res.nutricao)) falha = 'Não foi possível consultar o histórico na nuvem. Seus registros locais continuam disponíveis.'; else falha = '';
       status(); if (ativo && Object.keys(fila).length && navigator.onLine !== false) sincroniza();
     }
-    box.innerHTML = '<header class="ntp-head"><p>Seu acompanhamento</p><h1>Alimentação</h1><p>Plano e diário privado, no mesmo app.</p></header>' +
+    box.innerHTML = '<header class="ntp-head"><p>Seu acompanhamento</p><h1>Alimentação</h1></header>' +
+      '<nav class="ntp-nav" aria-label="Áreas da alimentação"><button type="button" data-ntp-ir="ntpHoje">Meu dia</button><button type="button" data-ntp-ir="ntpRecursos">Receitas e compras</button><button type="button" data-ntp-ir="ntpDiarioSec">Diário</button></nav>' +
       '<div class="ntp-sync"><span id="ntpSync" role="status"></span><button type="button" id="ntpTentar">Tentar sincronizar</button></div><p id="ntpAviso" role="alert"></p>' +
+      '<section class="ntp-section" id="ntpHoje"><div class="ntp-date"><button type="button" id="ntpAnt" aria-label="Dia anterior">‹</button><label for="ntpData">Seu dia<input type="date" id="ntpData"></label><button type="button" id="ntpProx" aria-label="Próximo dia">›</button></div><div id="ntpResumo"></div></section>' +
       '<section class="ntp-section"><h2>Seu plano alimentar</h2><div id="ntpPlano"></div></section>' +
-      '<section class="ntp-section"><div class="ntp-section-head"><h2>Diário alimentar</h2><button type="button" class="btnx" id="ntpNovo">Registrar refeição</button></div>' +
-      '<div class="ntp-date"><button type="button" id="ntpAnt" aria-label="Dia anterior">‹</button><label for="ntpData">Data do diário<input type="date" id="ntpData"></label><button type="button" id="ntpProx" aria-label="Próximo dia">›</button></div><p id="ntpTotal"></p><div id="ntpDiario"></div></section>' +
+      '<section class="ntp-section" id="ntpDiarioSec"><div class="ntp-section-head"><h2>Diário alimentar</h2><button type="button" class="btnx" id="ntpNovo">Registrar refeição</button></div>' +
+      '<p id="ntpTotal"></p><div id="ntpDiario"></div><details id="ntpRecentes"><summary>Repetir uma refeição recente</summary><div id="ntpRecentesLista"></div></details></section>' +
       '<section class="ntp-section ntp-editor" id="ntpEditor" hidden aria-labelledby="ntpEdTitulo"><h2 id="ntpEdTitulo">Revisar refeição</h2><p>Confira os alimentos e as quantidades antes de confirmar.</p>' +
       '<div class="ntp-fields"><label for="ntpTitulo">Refeição<input id="ntpTitulo" maxlength="120" placeholder="Ex.: almoço"></label><label for="ntpEdData">Data<input type="date" id="ntpEdData"></label><label for="ntpHora">Horário<input type="time" id="ntpHora"></label></div>' +
       '<div class="ntp-photo-tools"><label class="ntp-upload" for="ntpFoto">Adicionar foto do prato<input id="ntpFoto" type="file" accept="image/*"></label><button type="button" id="ntpTiraFoto" hidden>Remover foto</button></div><img id="ntpPreview" alt="Foto desta refeição" hidden>' +
       '<button type="button" id="ntpAnalisa" hidden>Estimar alimentos da foto com IA</button><p id="ntpIAAviso" role="status"></p>' +
-      '<p class="ntp-help">Os valores nutricionais são da porção base; a quantidade multiplica essa porção. Sem valores conhecidos, registre apenas o título ou a foto.</p><div id="ntpItens"></div><button type="button" id="ntpMaisItem">Adicionar alimento</button><p id="ntpEdTotal"></p>' +
-      '<div class="ntp-editor-actions"><button type="button" class="btnx" id="ntpSalvar">Confirmar refeição</button><button type="button" id="ntpCancelar">Cancelar</button></div></section>';
+      '<div id="ntpItens"></div><details id="ntpBiblioteca"><summary>Buscar alimento na biblioteca</summary><label for="ntpBusca">Nome do alimento<input id="ntpBusca" type="search" placeholder="Ex.: arroz, banana" autocomplete="off"></label><div id="ntpCatalogo"></div><button type="button" id="ntpCatalogoMais" hidden>Mostrar mais alimentos</button></details>' +
+      '<button type="button" id="ntpMaisItem">Adicionar alimento manualmente</button><p id="ntpEdTotal"></p>' +
+      '<div class="ntp-editor-actions"><button type="button" class="btnx" id="ntpSalvar">Confirmar refeição</button><button type="button" id="ntpCancelar">Cancelar</button></div></section>' +
+      '<section class="ntp-section" id="ntpConversa" hidden aria-labelledby="ntpConversaTitulo"><div class="ntp-section-head"><h2 id="ntpConversaTitulo">Conversa da refeição</h2><button type="button" id="ntpConversaFechar">Fechar conversa</button></div><p id="ntpConversaRef"></p><div id="ntpComentarios" aria-live="polite"></div><p id="ntpConversaStatus" role="status"></p><label for="ntpResposta">Sua mensagem<textarea id="ntpResposta" rows="3" maxlength="2000" placeholder="Ex.: fiquei com dúvida sobre esta substituição"></textarea></label><button type="button" id="ntpResponder" class="btnx">Enviar mensagem</button></section>' +
+      '<section class="ntp-section" id="ntpRecursos"><h2>Organize sua semana</h2><div id="ntpMissoes"></div><details id="ntpReceitas"><summary>Receitas do seu plano</summary><label for="ntpReceitaBusca">Encontrar receita<input type="search" id="ntpReceitaBusca" placeholder="Nome ou ingrediente"></label><div id="ntpReceitasLista"></div></details>' +
+      '<details id="ntpCompras"><summary>Lista de compras</summary><div class="ntp-fields"><label for="ntpCompraInicio">A partir de<input id="ntpCompraInicio" type="date"></label><label for="ntpCompraDias">Período<select id="ntpCompraDias"><option value="7">7 dias</option><option value="3">3 dias</option><option value="1">1 dia</option><option value="14">14 dias</option></select></label></div><p id="ntpComprasResumo"></p><div id="ntpComprasLista"></div><button type="button" id="ntpComprasCopiar">Copiar lista</button><p id="ntpComprasStatus" role="status"></p></details></section>';
     porId('ntpData').value = isoHj(); porId('ntpData').max = isoHj(); porId('ntpEdData').max = isoHj(); porId('ntpNovo').hidden = !ativo;
+    porId('ntpCompraInicio').value = isoHj();
     function idParte(v) { v = String(v || ''); if (/^[A-Za-z0-9_-]{1,100}$/.test(v)) return v; var a = 2166136261, b = 5381; for (var i = 0; i < v.length; i++) { a = Math.imul(a ^ v.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ v.charCodeAt(i); } return (a >>> 0).toString(16) + (b >>> 0).toString(16); }
     function planoId(ref, d) { return 'plano:' + idParte(plano.id) + ':' + idParte(ref.id) + ':' + d; }
     function pinta() {
       var dia = porId('ntpData').value, rs = lista().filter(function (r) { return r.d === dia; }).sort(function (a, b) { return (a.hora + a.id).localeCompare(b.hora + b.id); });
       porId('ntpProx').disabled = dia >= isoHj();
-      porId('ntpPlano').innerHTML = '<h3>' + seguro(plano.titulo || 'Plano alimentar') + '</h3>' + (plano.objetivo ? '<p>' + seguro(plano.objetivo) + '</p>' : '') +
+      porId('ntpPlano').innerHTML = '<h3>' + seguro(plano.titulo || 'Plano alimentar') + '</h3><details class="ntp-plan-info"><summary>Detalhes do plano</summary>' + (plano.objetivo ? '<p>' + seguro(plano.objetivo) + '</p>' : '') +
         (plano.responsavel ? '<p class="ntp-help">Responsável: ' + seguro(plano.responsavel) + (plano.crn ? ' · CRN ' + seguro(plano.crn) : '') + '</p>' : '') +
-        (plano.orientacoes ? '<details><summary>Orientações do plano</summary><p class="ntp-text">' + seguro(plano.orientacoes) + '</p></details>' : '') +
-        (plano.refeicoes.length ? plano.refeicoes.map(function (ref) { var r = estado.registros[planoId(ref, dia)], feita = r && !r.apagado; return '<details class="ntp-ref"><summary><span>' + seguro(ref.hora) + ' · ' + seguro(ref.titulo || 'Refeição') + '</span><small>' + (feita ? 'Registrada' : ativo ? 'Planejada' : 'Plano desativado') + '</small></summary><ul>' + ref.itens.map(function (it) { return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + '</li>'; }).join('') + '</ul><p>' + (ref.itens.length ? totais(ref.itens) : 'Sem alimentos informados') + '</p>' + (ativo ? '<button type="button" data-ntp-ref="' + seguro(ref.id) + '">' + (feita ? 'Revisar registro' : 'Registrar esta refeição') + '</button>' : '') + '</details>'; }).join('') : '<p>' + (ativo ? 'Seu plano aparecerá aqui quando for disponibilizado. Você já pode registrar seu diário.' : 'Nenhum plano ativo. Seu histórico continua disponível abaixo.') + '</p>');
+        ((plano.inicio || plano.fim || plano.versao) ? '<p class="ntp-help">' + (plano.versao ? 'Versão ' + seguro(plano.versao) + ' · ' : '') + (plano.inicio ? 'Desde ' + dataTexto(plano.inicio) : '') + (plano.fim ? ' até ' + dataTexto(plano.fim) : '') + '</p>' : '') +
+        (plano.orientacoes ? '<p class="ntp-text">' + seguro(plano.orientacoes) + '</p>' : '') + '</details>' +
+        (referenciasDia(dia).length ? referenciasDia(dia).map(function (ref) { var r = estado.registros[planoId(ref, dia)], feita = r && !r.apagado; return '<article class="ntp-meal' + (feita ? ' is-done' : '') + '"><div class="ntp-section-head"><h3>' + seguro(ref.titulo || 'Refeição') + '</h3><span class="ntp-badge">' + (feita ? '✓ Registrada' : seguro(ref.hora) || 'Planejada') + '</span></div><p class="ntp-help">' + ref.itens.slice(0, 3).map(function(it){return seguro(it.nome);}).join(' · ') + (ref.itens.length > 3 ? ' + ' + (ref.itens.length - 3) : '') + '</p><details class="ntp-ref"><summary>Ver alimentos e porções</summary><ul>' + ref.itens.map(function (it) { return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + (it.substituicoes && it.substituicoes.length ? ' · tem substituições' : '') + '</li>'; }).join('') + '</ul><p class="ntp-help">' + (ref.itens.length ? totais(ref.itens) : 'Sem alimentos informados') + '</p></details>' + (ativo ? '<div class="ntp-meal-actions">' + (feita ? '' : '<button type="button" class="btnx" data-ntp-comi="' + seguro(ref.id) + '">Comi como planejado</button>') + '<button type="button" data-ntp-ref="' + seguro(ref.id) + '">' + (feita ? 'Revisar registro' : 'Ajustar ou trocar') + '</button></div>' : '<p class="ntp-help">Plano em modo consulta</p>') + '</article>'; }).join('') : '<p>' + (ativo ? (plano.refeicoes.length ? 'Nenhuma refeição planejada para esta data. Seu diário continua disponível.' : 'Seu plano aparecerá aqui quando for disponibilizado. Você já pode registrar seu diário.') : 'Nenhum plano ativo. Seu histórico continua disponível abaixo.') + '</p>');
       var alimentos = []; rs.forEach(function(r){alimentos = alimentos.concat(r.itens || []);});
       porId('ntpTotal').textContent = rs.length ? rs.length + ' refeição(ões) registradas' + (alimentos.length ? ' · valores informados: ' + totais(alimentos) : ' · sem valores nutricionais informados') : 'Nenhuma refeição registrada nesta data.';
-      porId('ntpDiario').innerHTML = rs.map(function (r) { return '<article class="ntp-entry">' + (fotoOk(r.foto) ? '<img src="' + r.foto + '" alt="Foto de ' + seguro(r.titulo || 'refeição') + '" loading="lazy">' : '') + '<div><h3>' + seguro(r.titulo || 'Refeição') + '</h3><p>' + seguro(r.hora) + (r.itens.length ? ' · ' + totais(r.itens) : ' · sem valores informados') + '</p>' + (r.estimativa ? '<small>Estimativa por foto, revisada por você.</small>' : '') + (r.itens.length ? '<details><summary>Ver alimentos</summary><ul>' + r.itens.map(function(it){return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + '</li>';}).join('') + '</ul></details>' : '') + (ativo ? '<div class="ntp-entry-actions"><button type="button" data-ntp-edita="' + seguro(r.id) + '">Editar</button><button type="button" data-ntp-apaga="' + seguro(r.id) + '">Excluir</button></div>' : '') + '</div></article>'; }).join('');
+      porId('ntpDiario').innerHTML = rs.map(function (r) { return '<article class="ntp-entry">' + (fotoOk(r.foto) ? '<img src="' + r.foto + '" alt="Foto de ' + seguro(r.titulo || 'refeição') + '" loading="lazy">' : '') + '<div><h3>' + seguro(r.titulo || 'Refeição') + '</h3><p>' + seguro(r.hora) + (r.itens.length ? ' · ' + fmt(N.totalItens(r.itens).k) + ' kcal informadas' : ' · sem valores informados') + '</p>' + (r.estimativa ? '<small>Estimativa por foto, conferida por você. Sujeita à revisão profissional.</small>' : '') + (r.itens.length ? '<details><summary>Ver alimentos e nutrientes</summary><ul>' + r.itens.map(function(it){return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + '</li>';}).join('') + '</ul><p class="ntp-help">' + totais(r.itens) + '</p></details>' : '') + '<div class="ntp-entry-actions">' + (ativo ? '<button type="button" data-ntp-edita="' + seguro(r.id) + '">Editar</button>' : '') + '<button type="button" data-ntp-conversa="' + seguro(r.id) + '">Conversa</button>' + (ativo ? '<button type="button" data-ntp-apaga="' + seguro(r.id) + '">Excluir</button>' : '') + '</div></div></article>'; }).join('');
+      pintaResumo(dia, rs, alimentos); pintaRecentes(); pintaMissoes();
+      if(conversaId){var conversando=estado.registros[conversaId];if(!conversando||conversando.apagado){guardaResposta();conversaId='';conversaSeq++;feedbackAtual=[];porId('ntpConversa').hidden=true;porId('ntpComentarios').textContent='';porId('ntpResposta').value='';}else pintaFeedback(feedbackAtual);}
     }
+    function pintaResumo(dia, rs, alimentos) {
+      var refs = referenciasDia(dia), feitas = refs.filter(function(ref){var r=estado.registros[planoId(ref,dia)];return r && !r.apagado;}).length, total = N.totalItens(alimentos), metas = plano.metas || {};
+      var semanas = []; for (var i=6;i>=0;i--) { var d=desloca(dia,-i), n=lista().filter(function(r){return r.d===d;}).length; semanas.push('<button type="button" data-ntp-dia="' + d + '" aria-label="' + dataTexto(d) + ': ' + (n ? n + ' registros' : 'sem registro') + '" class="' + (n ? 'is-done' : '') + '"' + (d === dia ? ' aria-current="date"' : '') + '><small>' + dataTexto(d) + '</small><strong>' + (n ? '✓' : '—') + '</strong></button>'); }
+      porId('ntpResumo').innerHTML = '<div class="ntp-day-summary"><strong>' + (refs.length ? feitas + ' de ' + refs.length + ' refeições registradas' : rs.length + ' refeições registradas') + '</strong></div>' +
+        '<details class="ntp-goals"><summary>Metas e valores do dia</summary><div class="ntp-targets">' + [['k','Energia','kcal'],['pt','Proteína','g'],['cb','Carboidratos','g'],['g','Gorduras','g']].map(function(f){var tem=typeof metas[f[0]]==='number'&&isFinite(metas[f[0]])&&metas[f[0]]>=0;return '<div><small>' + f[1] + '</small><strong>' + (alimentos.length ? fmt(total[f[0]]) : '—') + ' ' + f[2] + '</strong><span>' + (tem ? 'Meta: ' + fmt(metas[f[0]]) + ' ' + f[2] : 'Meta não definida') + '</span></div>';}).join('') + '</div><p class="ntp-help">Valores registrados podem estar incompletos. As metas são definidas pelo responsável.</p></details>' +
+        '<details class="ntp-week-details"><summary>Acompanhamento da semana</summary><p class="ntp-help">Últimos 7 dias · presença no diário. ' + (rs.length ? 'O resumo considera apenas o que você confirmou.' : 'Sem registro não significa que você não comeu.') + '</p><div class="ntp-week">' + semanas.join('') + '</div></details>';
+    }
+    function pintaRecentes() {
+      var recentes = lista().filter(function(r){return r.d<=isoHj();}).sort(function(a,b){return (b.d+b.hora+b.atualizadoEm).localeCompare(a.d+a.hora+a.atualizadoEm);}), usados = {};
+      recentes = recentes.filter(function(r){var k=String(r.titulo).toLocaleLowerCase()+'|'+JSON.stringify(r.itens);if(usados[k])return false;usados[k]=true;return true;}).slice(0,6);
+      porId('ntpRecentes').hidden = !ativo || !recentes.length;
+      porId('ntpRecentesLista').innerHTML = recentes.map(function(r){return '<div class="ntp-list-row"><div><strong>'+seguro(r.titulo)+'</strong><small>'+dataTexto(r.d)+' · '+r.itens.length+' alimentos</small></div><button type="button" data-ntp-repetir="'+seguro(r.id)+'">Repetir</button></div>';}).join('');
+    }
+    function pintaMissoes() { var m=metricas(), organizadas=compraLinhas.filter(function(it){return compras[compraChave(it)]===true;}).length; porId('ntpMissoes').innerHTML='<div class="ntp-missions"><div><strong>Constância no diário</strong><span>'+Math.min(3,m.semanaDias)+' de 3 dias registrados nos últimos 7 dias</span><progress max="3" value="'+Math.min(3,m.semanaDias)+'" aria-label="Dias de constância"></progress></div><div><strong>Semana organizada</strong><span>'+(organizadas ? organizadas+' itens marcados na lista de compras' : 'Marque os ingredientes que já tem em casa')+'</span></div><p class="ntp-help">'+m.xp+' XP em alimentação</p></div>'; }
     function fotoPinta() { var img = porId('ntpPreview'); img.hidden = !edit || !fotoOk(edit.foto); if (!img.hidden) img.src = edit.foto; else img.removeAttribute('src'); porId('ntpTiraFoto').hidden = img.hidden; porId('ntpAnalisa').hidden = !edit || !edit.imagem; porId('ntpAnalisa').disabled = analisando; porId('ntpSalvar').disabled = analisando; }
     function itemHtml(it, i) {
-      var fields = [['nome','Alimento','text'],['porcao','Porção base','text'],['qtd','Quantidade','number'],['k','kcal por porção','number'],['pt','Proteína (g)','number'],['cb','Carboidrato (g)','number'],['g','Gordura (g)','number']];
-      return '<fieldset data-ntp-item="' + i + '"><legend>Alimento ' + (i + 1) + '</legend><div class="ntp-item-fields">' + fields.map(function (f) { return '<label for="ntpItem' + i + f[0] + '">' + f[1] + '<input id="ntpItem' + i + f[0] + '" data-ncampo="' + f[0] + '" type="' + f[2] + '" ' + (f[2] === 'number' ? 'min="0" step="any" inputmode="decimal"' : 'maxlength="200"') + ' value="' + seguro(it[f[0]] == null ? '' : it[f[0]]) + '"></label>'; }).join('') + '</div><button type="button" data-ntp-rmitem="' + i + '">Remover alimento</button></fieldset>';
+      var fields = [['nome','Alimento','text'],['porcao','Porção base','text'],['k','kcal por porção','number'],['pt','Proteína (g)','number'],['cb','Carboidrato (g)','number'],['g','Gordura (g)','number']], base = N.gramasPorcao ? N.gramasPorcao(it) : null;
+      var medidas = base ? (it.medidas || []).filter(function(m){return m.gramas>0;}) : [];
+      return '<fieldset data-ntp-item="' + i + '"><legend>' + seguro(it.nome || 'Novo alimento') + '</legend><p class="ntp-help">' + seguro(it.porcao || 'Defina a porção base nos detalhes') + (it.preparo ? ' · ' + seguro(it.preparo) : '') + '</p><div class="ntp-portion"><button type="button" data-ntp-quant="' + i + '" data-delta="-0.5" aria-label="Reduzir quantidade de ' + seguro(it.nome || 'alimento') + '">−</button><label for="ntpItem' + i + 'qtd">Quantidade de porções<input id="ntpItem' + i + 'qtd" data-ncampo="qtd" type="number" min="0.01" max="1000" step="any" inputmode="decimal" value="' + seguro(it.qtd == null ? 1 : it.qtd) + '"></label><button type="button" data-ntp-quant="' + i + '" data-delta="0.5" aria-label="Aumentar quantidade de ' + seguro(it.nome || 'alimento') + '">+</button></div>' +
+        (medidas.length ? '<label for="ntpMedida' + i + '">Usar medida caseira<select id="ntpMedida' + i + '" data-ntp-medida="' + i + '"><option value="">Escolher uma medida</option>' + medidas.map(function(m,j){return '<option value="' + j + '">' + seguro(m.nome) + ' (' + fmt(m.gramas) + ' g)</option>';}).join('') + '</select></label>' : '') +
+        (it.substituicoes && it.substituicoes.length ? '<details class="ntp-swaps"><summary>Trocar por uma opção aprovada</summary>' + it.substituicoes.map(function(alt,j){return '<button type="button" data-ntp-troca="' + i + '" data-alt="' + j + '">' + seguro(alt.nome) + ' · ' + fmt(alt.qtd) + ' × ' + seguro(alt.porcao) + '</button>';}).join('') + '</details>' : '') +
+        '<details class="ntp-nutrients"' + (!N.normalizaItem(it) ? ' open' : '') + '><summary>Detalhes do alimento e nutrientes</summary><p class="ntp-help">Valores por porção base. A quantidade multiplica estes valores. Se não souber, remova a linha e registre somente o título ou a foto.</p><div class="ntp-item-fields">' + fields.map(function (f) { return '<label for="ntpItem' + i + f[0] + '">' + f[1] + '<input id="ntpItem' + i + f[0] + '" data-ncampo="' + f[0] + '" type="' + f[2] + '" ' + (f[2] === 'number' ? 'min="0" step="any" inputmode="decimal"' : 'maxlength="200"') + ' value="' + seguro(it[f[0]] == null ? '' : it[f[0]]) + '"></label>'; }).join('') + '</div>' + (it.fonte ? '<p class="ntp-help">Fonte: ' + seguro(it.fonte) + '</p>' : '') + '</details><button type="button" data-ntp-rmitem="' + i + '">Remover alimento</button></fieldset>';
     }
+    function buscaTexto(v) { return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR'); }
+    function pintaCatalogo() {
+      var termos=buscaTexto(porId('ntpBusca').value).split(/\s+/).filter(Boolean), catalogo=plano.catalogo || [], encontrados=[];
+      catalogo.forEach(function(it,i){if(termos.every(function(t){return buscaTexto(it.nome+' '+(it.preparo||'')).indexOf(t)>=0;}))encontrados.push({it:it,i:i});});
+      porId('ntpCatalogo').innerHTML = encontrados.slice(0,catalogoLimite).map(function(x){return '<div class="ntp-list-row"><div><strong>'+seguro(x.it.nome)+'</strong><small>'+seguro(x.it.porcao)+(x.it.preparo?' · '+seguro(x.it.preparo):'')+'</small></div><button type="button" data-ntp-alimento="'+x.i+'" aria-label="Adicionar '+seguro(x.it.nome)+'">Adicionar</button></div>';}).join('') || '<p class="ntp-help">'+(catalogo.length ? 'Nenhum alimento encontrado. Tente outro nome.' : 'Seu responsável ainda não disponibilizou a biblioteca. Você pode registrar uma foto ou preencher manualmente.')+'</p>';
+      porId('ntpCatalogoMais').hidden = encontrados.length <= catalogoLimite;
+    }
+    function adicionaItens(itens) { if (!contextoAtual() || !ativo || !edit) return; guardaEditor(); if (edit.itens.length+itens.length>100) { aviso('O limite é de 100 alimentos por refeição.'); return; } edit.itens=edit.itens.concat(copia(itens)); porId('ntpItens').innerHTML=edit.itens.map(itemHtml).join(''); guardaEditor(); }
+    function pintaReceitas() {
+      var busca=buscaTexto(porId('ntpReceitaBusca').value), receitas=plano.receitas || [];
+      porId('ntpReceitasLista').innerHTML=receitas.map(function(r,i){if(buscaTexto(r.nome+' '+r.ingredientes.join(' ')).indexOf(busca)<0)return '';return '<details class="ntp-recipe"><summary>'+seguro(r.nome)+'</summary><p class="ntp-help">'+(r.tempo ? fmt(r.tempo)+' min · ' : '')+'Rende '+fmt(r.rendimento)+' porção(ões)</p>'+(r.ingredientes.length?'<h3>Ingredientes</h3><ul>'+r.ingredientes.map(function(s){return '<li>'+seguro(s)+'</li>';}).join('')+'</ul>':'')+(r.modo.length?'<h3>Como preparar</h3><ol>'+r.modo.map(function(s){return '<li>'+seguro(s)+'</li>';}).join('')+'</ol>':'')+(r.fonte?'<p class="ntp-help">Fonte: '+seguro(r.fonte)+'</p>':'')+(ativo&&r.itens.length?'<button type="button" data-ntp-receita="'+i+'">Registrar uma porção</button>':'<p class="ntp-help">Receita para consulta.</p>')+'</details>';}).join('') || '<p class="ntp-help">'+(receitas.length?'Nenhuma receita encontrada.':'As receitas compartilhadas pelo responsável aparecerão aqui.')+'</p>';
+    }
+    function compraChave(linha) { return idParte(plano.id)+':'+idParte(plano.versao||plano.atualizadoEm)+':'+porId('ntpCompraInicio').value+':'+porId('ntpCompraDias').value+':'+idParte(JSON.stringify([linha.nome,linha.porcao,linha.qtd])); }
+    function pintaCompras() {
+      var inicio=porId('ntpCompraInicio').value, dias=+porId('ntpCompraDias').value;
+      compraLinhas=N.listaCompras && dataValida(inicio) ? N.listaCompras(plano,inicio,dias) : [];
+      porId('ntpComprasResumo').textContent=compraLinhas.length ? dataTexto(inicio)+' a '+dataTexto(desloca(inicio,dias-1))+' · '+compraLinhas.length+' alimentos do plano' : 'Nenhum alimento planejado neste período.';
+      porId('ntpComprasLista').innerHTML=compraLinhas.map(function(it,i){var key=compraChave(it);return '<label class="ntp-shopping"><input type="checkbox" data-ntp-compra="'+i+'"'+(compras[key]?' checked':'')+'><span><strong>'+seguro(it.nome)+'</strong><small>'+fmt(it.qtd)+' × '+seguro(it.porcao || 'porção')+(it.gramas!==null?' · '+fmt(it.gramas)+' g':'')+'</small></span></label>';}).join('');
+      porId('ntpComprasCopiar').disabled=!compraLinhas.length;pintaMissoes();
+    }
+    function guardaResposta() { if (!contextoAtual() || !conversaId) return; var atual=respostas[conversaId] || {}, texto=porId('ntpResposta').value; respostas[conversaId]={id:atual.id && atual.texto===texto ? atual.id : 'msg-'+idParte(typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now()+'-'+Math.random()),texto:texto}; guardaLocal(CHAVES.respostas,respostas); }
+    function pintaFeedback(dados) {
+      var feedback=Array.isArray(dados)?dados:[], r=estado.registros[conversaId];
+      feedbackAtual=copia(feedback);
+      porId('ntpComentarios').innerHTML=feedback.filter(function(f){return f && typeof f.texto==='string' && f.registroId===conversaId;}).map(function(f){var profissional=f.autor==='profissional';return '<article class="ntp-comment'+(profissional?' is-pro':'')+'"><strong>'+seguro(f.nome || (profissional?'Responsável':'Você'))+'</strong><small>'+seguro(f.criadoEm && !isNaN(Date.parse(f.criadoEm))?new Date(f.criadoEm).toLocaleString('pt-BR'):'')+(profissional&&f.revisado&&r&&f.registroVersao===r.atualizadoEm?' · Refeição revisada':'')+'</small><p>'+seguro(f.texto)+'</p></article>';}).join('') || '<p class="ntp-help">Ainda não há mensagens nesta refeição.</p>';
+    }
+    async function abreConversa(id) {
+      if (!contextoAtual() || !estado.registros[id] || estado.registros[id].apagado) return;
+      if (conversaId) guardaResposta(); conversaId=id; feedbackAtual=[]; var seq=++conversaSeq, reg=estado.registros[id];
+      porId('ntpConversa').hidden=false; porId('ntpConversaRef').textContent=reg.titulo+' · '+dataTexto(reg.d); porId('ntpComentarios').textContent=''; porId('ntpResposta').value=respostas[id]&&respostas[id].texto || ''; porId('ntpResposta').disabled=!ativo; porId('ntpResponder').disabled=!ativo; porId('ntpConversaStatus').textContent='Carregando conversa…'; porId('ntpConversa').scrollIntoView({block:'start'});
+      if (!NUVEM || !TOKEN || navigator.onLine===false) { porId('ntpConversaStatus').textContent='Conecte-se para consultar a conversa. O texto digitado fica neste aparelho.'; return; }
+      var res=await rpc('app_nutricao_feedback_lista',{t:TOKEN,p_registro:id});
+      if(!contextoAtual()||seq!==conversaSeq||id!==conversaId)return;
+      if(!res||!res.ok){porId('ntpConversaStatus').textContent='Não foi possível carregar a conversa. Seu texto foi mantido.';return;}
+      pintaFeedback(res.feedback);porId('ntpConversaStatus').textContent=ativo?'Conversa privada desta refeição.':'Acompanhamento em modo consulta.';
+    }
+    porId('ntpResponder').onclick=async function(){
+      if(!contextoAtual()||!ativo||!conversaId||enviandoResposta)return;guardaResposta();var id=conversaId,seq=conversaSeq,rascunho=copia(respostas[id]);
+      if(!rascunho.texto.trim()){porId('ntpConversaStatus').textContent='Escreva uma mensagem antes de enviar.';return;}
+      if(!NUVEM||!TOKEN||navigator.onLine===false){porId('ntpConversaStatus').textContent='Sua mensagem ficou guardada. Conecte-se e toque em Enviar mensagem.';return;}
+      seq=++conversaSeq;enviandoResposta=true;porId('ntpResponder').disabled=true;porId('ntpConversaStatus').textContent='Enviando mensagem…';
+      try{
+        if(fila[id])await sincroniza();
+        if(fila[id]){if(seq===conversaSeq)porId('ntpConversaStatus').textContent='Primeiro sincronize esta refeição. Sua mensagem foi mantida.';return;}
+        var res=await rpc('app_nutricao_feedback_envia',{t:TOKEN,p_registro:id,p_texto:rascunho.texto.trim(),p_id:rascunho.id,p_origem:'aluno',p_revisado:false});
+        if(!contextoAtual()||seq!==conversaSeq||id!==conversaId)return;
+        if(!res||!res.ok){porId('ntpConversaStatus').textContent='Não foi possível enviar. Sua mensagem foi mantida; tente novamente.';return;}
+        if(porId('ntpResposta').value===rascunho.texto){delete respostas[id];guardaLocal(CHAVES.respostas,respostas);porId('ntpResposta').value='';}else{delete respostas[id];guardaResposta();}
+        pintaFeedback(res.feedback);porId('ntpConversaStatus').textContent='Mensagem enviada.';
+      }finally{enviandoResposta=false;if(contextoAtual())porId('ntpResponder').disabled=!ativo;}
+    };
+    porId('ntpResposta').oninput=guardaResposta;
+    porId('ntpConversaFechar').onclick=function(){guardaResposta();conversaSeq++;conversaId='';feedbackAtual=[];porId('ntpConversa').hidden=true;};
+    porId('ntpBusca').oninput=function(){catalogoLimite=20;pintaCatalogo();};porId('ntpCatalogoMais').onclick=function(){catalogoLimite+=20;pintaCatalogo();};
+    porId('ntpReceitaBusca').oninput=pintaReceitas;
+    porId('ntpCompraInicio').onchange=function(){if(!dataValida(this.value))this.value=isoHj();pintaCompras();};porId('ntpCompraDias').onchange=pintaCompras;
+    porId('ntpComprasCopiar').onclick=async function(){if(!contextoAtual())return;var texto='Lista de compras · '+dataTexto(porId('ntpCompraInicio').value)+'\n'+compraLinhas.map(function(it){return (compras[compraChave(it)]?'✓ ':'□ ')+it.nome+' — '+fmt(it.qtd)+' × '+it.porcao;}).join('\n');try{await navigator.clipboard.writeText(texto);porId('ntpComprasStatus').textContent='Lista copiada.';}catch(_){porId('ntpComprasStatus').textContent='Não foi possível copiar automaticamente. Selecione os alimentos na lista para copiar.';}};
     function leEditor() {
       if (!edit) return null; var r = copia(edit); r.titulo = porId('ntpTitulo').value; r.d = porId('ntpEdData').value; r.hora = porId('ntpHora').value;
       r.itens = [].map.call(porId('ntpItens').querySelectorAll('[data-ntp-item]'), function (el, i) { var it = Object.assign({}, edit.itens[i] || {}); el.querySelectorAll('[data-ncampo]').forEach(function (inp) { it[inp.dataset.ncampo] = inp.value; }); return it; }); return r;
@@ -442,11 +534,11 @@
       if (!contextoAtual() || !ativo) return;
       if (edit && !confirm('Substituir o rascunho aberto por esta refeição?')) return;
       editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = copia(r); if (!Array.isArray(edit.itens)) edit.itens = [];
-      porId('ntpTitulo').value = edit.titulo || ''; porId('ntpEdData').value = edit.d || isoHj(); porId('ntpEdData').readOnly = !!(edit.refeicaoId && estado.registros[edit.id] && !estado.registros[edit.id].apagado); porId('ntpHora').value = edit.hora || '';
+      porId('ntpTitulo').value = edit.titulo || ''; porId('ntpEdData').value = edit.d || isoHj(); porId('ntpEdData').readOnly = /^repetir:/.test(edit.id) || !!(edit.refeicaoId && estado.registros[edit.id] && !estado.registros[edit.id].apagado); porId('ntpHora').value = edit.hora || '';
       porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join(''); porId('ntpEditor').hidden = false;
       porId('ntpSalvar').textContent = estado.registros[edit.id] && !estado.registros[edit.id].apagado ? 'Salvar alterações' : 'Confirmar refeição';
       porId('ntpIAAviso').textContent = edit.estimativa ? 'Estimativa por foto: confira cada alimento e quantidade. ' + (edit.observacao || '') : '';
-      aviso(''); fotoPinta(); guardaEditor(); porId('ntpEditor').scrollIntoView({ block: 'start' });
+      aviso(''); fotoPinta(); guardaEditor(); pintaCatalogo(); porId('ntpEditor').scrollIntoView({ block: 'start' });
     }
     function novo() { return { id: 'manual:' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)), d: porId('ntpData').value, refeicaoId: '', titulo: '', hora: new Date().toTimeString().slice(0, 5), itens: [], origem: 'manual', foto: '', atualizadoEm: new Date().toISOString(), apagado: false }; }
     function fechaEditor() { if (!contextoAtual()) return; editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = null; porId('ntpEditor').hidden = true; try { localStorage.removeItem(CHAVES.rascunho); } catch (_) {} }
@@ -457,6 +549,7 @@
     porId('ntpSalvar').onclick = function () {
       if (!contextoAtual() || !edit || analisando) return; guardaEditor(); var r = copia(edit);
       if (!r.titulo.trim() || !dataValida(r.d) || r.d > isoHj() || (r.hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(r.hora)) || !r.itens.every(function(it){return !!N.normalizaItem(it);})) { aviso('Informe o nome, uma data até hoje e os valores válidos de cada alimento. Nenhum registro foi confirmado.'); return; }
+      if(/^repetir:[A-Za-z0-9_-]+:\d{4}-\d{2}-\d{2}$/.test(r.id))r.d=r.id.slice(-10);
       if (r.refeicaoId && !estado.registros[r.id]) r.id = /^plano:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:\d{4}-\d{2}-\d{2}$/.test(r.id) ? r.id.replace(/\d{4}-\d{2}-\d{2}$/, r.d) : planoId({id:r.refeicaoId}, r.d);
       var antigo = estado.registros[r.id]; r.atualizadoEm = new Date(Math.max(Date.now(), antigo ? Date.parse(antigo.atualizadoEm) + 1 : 0)).toISOString(); r.apagado = false; delete r.imagem;
       if (grava(r)) { porId('ntpData').value = r.d; fechaEditor(); pinta(); aviso('Refeição confirmada.'); porId('ntpDiario').scrollIntoView({ block: 'nearest' }); }
@@ -464,10 +557,28 @@
     box.addEventListener('click', function (e) {
       if (!contextoAtual()) return;
       var b = e.target.closest('button'); if (!b) return;
+      if (b.hasAttribute('data-ntp-ir')) { var destino=porId(b.dataset.ntpIr); if(destino)destino.scrollIntoView({block:'start',behavior:'smooth'}); }
+      if (b.hasAttribute('data-ntp-dia')) { porId('ntpData').value=b.dataset.ntpDia; pinta(); }
+      if (b.hasAttribute('data-ntp-comi')) {
+        if(!ativo)return;var dia=porId('ntpData').value,ref=referenciasDia(dia).find(function(r){return r.id===b.dataset.ntpComi;});if(!ref||!dataValida(dia)||dia>isoHj())return;
+        var id=planoId(ref,dia),antigo=estado.registros[id];if(antigo&&!antigo.apagado){aviso('Esta refeição já está registrada. Use Revisar registro para ajustar.');return;}
+        if(grava({id:id,d:dia,refeicaoId:ref.id,titulo:ref.titulo || 'Refeição',hora:ref.hora,itens:copia(ref.itens),origem:'plano',foto:'',atualizadoEm:new Date(Math.max(Date.now(),antigo?Date.parse(antigo.atualizadoEm)+1:0)).toISOString(),apagado:false}))aviso('Refeição registrada como planejada. Você pode revisar quando precisar.');
+      }
       if (b.hasAttribute('data-ntp-ref')) { var ref = plano.refeicoes.find(function(r){return r.id === b.dataset.ntpRef;}); if (!ref) return; var id = planoId(ref, porId('ntpData').value), reg = estado.registros[id]; abre(reg && !reg.apagado ? reg : { id:id, d:porId('ntpData').value, refeicaoId:ref.id, titulo:ref.titulo, hora:ref.hora, itens:ref.itens, origem:'plano', foto:'', atualizadoEm:new Date().toISOString(), apagado:false }); }
       if (b.hasAttribute('data-ntp-edita')) { var r = estado.registros[b.dataset.ntpEdita]; if (r) abre(r); }
+      if (b.hasAttribute('data-ntp-conversa')) abreConversa(b.dataset.ntpConversa);
+      if (b.hasAttribute('data-ntp-repetir')) { if(!ativo)return;var fonte=estado.registros[b.dataset.ntpRepetir];if(!fonte||fonte.apagado)return;var dia=porId('ntpData').value,id=/^repetir:[A-Za-z0-9_-]+:\d{4}-\d{2}-\d{2}$/.test(fonte.id)?fonte.id.replace(/\d{4}-\d{2}-\d{2}$/,dia):'repetir:'+idParte(fonte.id)+':'+dia,ant=estado.registros[id],r=copia(fonte);r.id=id;r.d=dia;r.refeicaoId='';r.origem='manual';r.foto='';r.apagado=false;abre(ant&&!ant.apagado?ant:r); }
+      if (b.hasAttribute('data-ntp-alimento')) { var item=(plano.catalogo||[])[+b.dataset.ntpAlimento];if(item){adicionaItens([item]);aviso('Alimento adicionado ao rascunho. Ajuste a quantidade e confirme a refeição.');} }
+      if (b.hasAttribute('data-ntp-receita')) { if(!ativo)return;var receita=(plano.receitas||[])[+b.dataset.ntpReceita];if(!receita||!receita.itens.length)return;var r=novo();r.titulo=receita.nome;r.itens=receita.itens.map(function(it){var x=copia(it);x.qtd=x.qtd/receita.rendimento;return x;});abre(r); }
+      if (b.hasAttribute('data-ntp-quant') && edit) { var input=porId('ntpItem'+b.dataset.ntpQuant+'qtd');if(input){input.value=Math.max(.01,Math.round((Number(input.value)||0)*100+Number(b.dataset.delta)*100)/100);guardaEditor();} }
+      if (b.hasAttribute('data-ntp-troca') && edit) { guardaEditor();var i=+b.dataset.ntpTroca,it=edit.itens[i],op=it&&it.substituicoes&&it.substituicoes[+b.dataset.alt];if(!op)return;var anteriores=[copia(it)].concat(copia(it.substituicoes));anteriores.forEach(function(x){delete x.substituicoes;});var novoItem=copia(op);novoItem.substituicoes=anteriores.filter(function(x){return x.nome!==op.nome||x.porcao!==op.porcao;}).slice(0,12);edit.itens[i]=novoItem;porId('ntpItens').innerHTML=edit.itens.map(itemHtml).join('');guardaEditor();aviso('Substituição aplicada ao rascunho. Confirme para salvar.'); }
       if (b.hasAttribute('data-ntp-apaga')) { var r = estado.registros[b.dataset.ntpApaga]; if (!r || !confirm('Excluir esta refeição do diário?')) return; r = copia(r); r.apagado = true; r.foto = ''; r.itens = []; r.atualizadoEm = new Date(Math.max(Date.now(), Date.parse(r.atualizadoEm) + 1)).toISOString(); if (grava(r)) aviso('Refeição excluída.'); }
       if (b.hasAttribute('data-ntp-rmitem') && edit) { guardaEditor(); edit.itens.splice(+b.dataset.ntpRmitem, 1); porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join(''); guardaEditor(); }
+    });
+    box.addEventListener('change',function(e){
+      if(!contextoAtual())return;
+      if(e.target.hasAttribute('data-ntp-compra')){var it=compraLinhas[+e.target.dataset.ntpCompra];if(!it)return;var novo=copia(compras);novo[compraChave(it)]=e.target.checked;if(guardaLocal(CHAVES.compras,novo)){compras=novo;pintaMissoes();repintaXP();}else e.target.checked=!e.target.checked;}
+      if(e.target.hasAttribute('data-ntp-medida')&&edit&&e.target.value!==''){guardaEditor();var i=+e.target.dataset.ntpMedida,it=edit.itens[i],peso=N.gramasPorcao&&N.gramasPorcao(it),med=(it.medidas||[])[+e.target.value];if(peso&&med){porId('ntpItem'+i+'qtd').value=Math.round(med.gramas/peso*1000000)/1000000;guardaEditor();}}
     });
     function mudaDia(n) { var d = new Date(porId('ntpData').value + 'T12:00:00'); d.setDate(d.getDate() + n); var s = isoLoc(d); if (s <= isoHj()) { porId('ntpData').value = s; pinta(); } }
     porId('ntpAnt').onclick = function () { mudaDia(-1); }; porId('ntpProx').onclick = function () { mudaDia(1); };
@@ -499,7 +610,7 @@
     };
     window.addEventListener('storage', function (e) { if (e.key === 'tq_app_token' || e.key === null) contextoAtual(); });
     window.addEventListener('online', function () { if (ativo && Object.keys(fila).length) sincroniza(); else recebe(); }); window.addEventListener('offline', status);
-    pinta(); status(); var rascunho = L(CHAVES.rascunho, null); if (rascunho && idOk(rascunho.id)) abre(rascunho);
+    pinta(); pintaReceitas(); pintaCompras(); status(); var rascunho = L(CHAVES.rascunho, null); if (rascunho && idOk(rascunho.id)) abre(rascunho);
     setTimeout(recebe, 1200);
     var api = { estado:function(){return copia(estado);}, sync:sincroniza, xp:function(){return metricas().xp;}, metricas:metricas, abrir:function(id){var r=estado.registros[id];if(r)abre(r);}, chaves:Object.assign({}, CHAVES) };
     window.__nutriAluno = api; return api;
@@ -3561,7 +3672,7 @@
           n: String(c.n || "").replace(/[<>&"']/g, "").slice(0, 28), m: Math.max(1, Math.min(5000, +c.meta || 1)) };
       }).filter(function (c) { return c.n; })) + ";" +
       "CQX.forEach(function(c){BADGES.push([c.p,c.n,total,c.m]);});" +
-      "if(window.__nutriAluno){var nm=window.__nutriAluno.metricas();var ni=\"<circle cx='12' cy='12' r='8'/><path d='M4 12h16M12 4v16'/>\";BADGES.push([ni,'Primeira refeição registrada',nm.registros,1],[ni,'7 dias de diário alimentar',nm.dias,7],[ni,'30 dias de diário alimentar',nm.dias,30]);}" +
+      "if(window.__nutriAluno){var nm=window.__nutriAluno.metricas();var ni=\"<circle cx='12' cy='12' r='8'/><path d='M4 12h16M12 4v16'/>\";BADGES.push([ni,'Primeira refeição registrada',nm.registros,1],[ni,'7 dias de diário alimentar',nm.dias,7],[ni,'30 dias de diário alimentar',nm.dias,30],[ni,'3 dias de constância alimentar',nm.semanaDias||0,3],[ni,'Compras organizadas',nm.organizados||0,5]);}" +
       // tela 31: cards lisos sem contorno — conquistada tem o ícone COLORIDO
       // (a cor varia por medalha), bloqueada vira cadeado cinza com o progresso
       // pequenininho; o estado vai no data-cqok (é o que os testes leem)

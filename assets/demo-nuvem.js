@@ -31,6 +31,7 @@
   var AID = "demo-studio";
   var SEQ = 1;
   var BASE = null;   // { tabela: [linhas] } — montado na primeira consulta
+  var NUTRI_FEEDBACK = Object.create(null);
 
   // ---------- datas sempre relativas a HOJE (senão o demo envelhece) ----------
   function dia(atras) {
@@ -331,7 +332,17 @@
   // ---------- as RPCs ----------
   function rpc(nome, args) {
     var d = null;
-    if (nome === "app_desafio_ranking") {
+    if (nome === 'app_nutricao_feedback_lista' || nome === 'app_nutricao_feedback_envia') {
+      var a = alunos().find(function (x) { return x.appTokenP === (args || {}).t; });
+      var reg = a && (((a.demoRetorno || a.retorno || {}).nutricaoV1 || {}).registros || {})[(args || {}).p_registro];
+      if (!reg || reg.apagado) return Promise.resolve({data:{erro:'Refeição não encontrada na demonstração.'},error:null});
+      if (nome === 'app_nutricao_feedback_envia' && args.p_revisado && args.p_registro_versao !== reg.atualizadoEm) return Promise.resolve({data:{erro:'A refeição mudou. Atualize a conversa antes de revisar.'},error:null});
+      var key = a.id + ':' + reg.id, rows = NUTRI_FEEDBACK[key] || (NUTRI_FEEDBACK[key] = []);
+      if (nome === 'app_nutricao_feedback_envia' && !rows.some(function (x) { return x.id === args.p_id; })) {
+        rows.push({id:args.p_id,registroId:reg.id,autor:'profissional',nome:'Equipe de nutrição · demo',texto:String(args.p_texto || '').slice(0,2000),revisado:!!args.p_revisado,registroVersao:reg.atualizadoEm,criadoEm:new Date().toISOString()});
+      }
+      d = {ok:true,simulado:true,feedback:rows.map(function (x) { return Object.assign({},x,{revisado:x.revisado && x.registroVersao === reg.atualizadoEm}); })};
+    } else if (nome === "app_desafio_ranking") {
       var as = alunos().slice(0, 6);
       d = { ok: true, ranking: as.map(function (a, i) {
         return { nome: a.nome, dias: 15 - i * 2, ultimo: dia(i % 3) };

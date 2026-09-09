@@ -17,6 +17,7 @@ jobs:
           node-version: 22
       - name: Instalar Playwright
         run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
           npm init -y >/dev/null
           npm i playwright@1 >/dev/null
           bash .github/scripts/prepara-playwright-ci.sh
