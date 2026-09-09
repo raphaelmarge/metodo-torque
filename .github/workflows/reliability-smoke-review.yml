@@ -1,0 +1,46 @@
+name: Recuperação pela interface mt-v807
+on:
+  push:
+    branches: [diagnostics/mt-v807-ci]
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c31b5a53d3027a704aec516c8ab6ab27bfdc10d8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Executar o mesmo cenário completo de recuperação por clique
+        env:
+          TZ: America/Sao_Paulo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          SRV=$!
+          trap 'kill $SRV 2>/dev/null || true' EXIT
+          node - <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const src=fs.readFileSync('tests/test-personal.js','utf8');
+          const start=src.indexOf('  // ---------- sync: aparelho novo');
+          const end=src.indexOf('\n\n  {\n    // 👥 Comunidade',start);
+          assert.ok(start>0 && end>start,'cenário canônico completo precisa existir');
+          const body=src.slice(start,end);
+          assert.ok(body.includes('Carregar versão da nuvem')&&body.includes('recuperado.copia'),'não pode recortar só a metade inicial');
+          let count=0;const ok=(cond,name)=>{assert.ok(cond,name);count++;console.log('PASS '+name);};
+          const {chromium}=require('playwright');
+          (async()=>{
+            const b=await chromium.launch({headless:true,args:['--no-sandbox']});const erros=[];
+            try {
+              await new (Object.getPrototypeOf(async function(){}).constructor)('b','BASE','erros','ok',body)(b,'http://127.0.0.1:8765',erros,ok);
+              assert.equal(erros.length,0,JSON.stringify(erros));assert.equal(count,4,'todos os quatro resultados devem ser verificados');
+              console.log('PASS recuperação pela interface: quatro verificações, sem erro JavaScript');
+            } finally { await b.close(); }
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          JS
