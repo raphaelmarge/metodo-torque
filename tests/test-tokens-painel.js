@@ -222,7 +222,7 @@ const ESPERADO = {
     "Torque One: botao conserva44px de toque e usa raio10 (" + base.btn.raio + " / " + base.btn.alt + ")");
   t(parseFloat(base.sec.bd) >= 1, "o botao secundario tem borda (" + base.sec.bd + ")");
   t(base.zap.bg === base.sec.bg, "o botao de WhatsApp e secundario com tinta verde, nao verde chapado");
-  t(Math.round(parseFloat(base.corpo)) === 26, "a area de conteudo respira 26px dos lados (" + base.corpo + ")");
+  t(Math.round(parseFloat(base.corpo)) === 42, "Torque One: a área de conteúdo respira 42px dos lados (" + base.corpo + ")");
 
   /* A COR DO STUDIO pinta o redesenho (conserto da v688): o redesenho cravou
    * o roxo na familia --pt-roxo* e a Personalizacao so setava --roxo (apps.css)

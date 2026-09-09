@@ -75,11 +75,11 @@
     var wasOpen = false;
     new MutationObserver(function () {
       var open = document.body.classList.contains('menu-aberto'); $('btnMenuPt').setAttribute('aria-expanded', String(open));
-      if (open && !wasOpen) { $('menuBuscaPt').value = ''; filter(); items.scrollTop = 0; if (matchMedia('(max-width:1099px)').matches) (matchMedia('(pointer:coarse)').matches ? close : $('menuBuscaPt')).focus({preventScroll:true}); }
+      if (open && !wasOpen) { $('menuBuscaPt').value = ''; filter(); items.scrollTop = 0; if (matchMedia('(max-width:800px)').matches) (matchMedia('(pointer:coarse)').matches ? close : $('menuBuscaPt')).focus({preventScroll:true}); }
       wasOpen = open;
     }).observe(document.body,{attributes:true,attributeFilter:['class']});
     menu.addEventListener('keydown', function (e) {
-      if (!document.body.classList.contains('menu-aberto') || !matchMedia('(max-width:1099px)').matches) return;
+      if (!document.body.classList.contains('menu-aberto') || !matchMedia('(max-width:800px)').matches) return;
       if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
       if (e.key !== 'Tab') return;
       var f = Array.from(menu.querySelectorAll('button,input,[tabindex="0"]')).filter(function (x) { return !x.disabled && x.getClientRects().length; }), first = f[0], end = f[f.length-1];

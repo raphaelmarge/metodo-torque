@@ -29,6 +29,13 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - Novos testes: core, Personal, aluno e SQL/feedback. Antes de `tests/run.sh`, instalar o runtime SQL com `npm ci --prefix tests/runtime --ignore-scripts`; PGlite 0.5.8 e lock fixos, sem conexão de teste com produção.
 - Contrato detalhado e limites em `design/NUTRICAO-V814-CONTRATO.md`. Preservar dados antigos e a identidade Torque One.
 
+## v816 — Composição Torque One
+
+- A aplicação real usa a estrutura visual da referência, além das cores: sidebar 234px/200px (tablet a partir de 801px), colapso de 66px, cabeçalho com contexto, indicadores abertos, painéis e resumo nutricional lateral. Até 800px mantém a gaveta com busca e as cinco abas inferiores.
+- `personal-torque-one.js` é apresentação e delega atalhos aos botões existentes. Preservar IDs, permissões, todos os 18 destinos, subabas, dados, rascunhos e fluxos de publicação. Arquivo incluído no precache.
+- Skin do aluno mantém carrossel, fotos, hábitos, séries/reps/carga, conquistas, calendários e nutrição; desktop ganha área ampla e navegação lateral. Regenerar demo após mudar skin.
+- Referência e matriz de verificação em `design/TORQUE-ONE.md` e `tests/test-torque-one-layout.js`.
+
 ## v815 — Nutrição no dashboard do Personal
 
 - O Início inclui um resumo compacto com planos vigentes e alunos com/sem registros nos últimos sete dias. Os indicadores abrem a Nutrição no filtro correspondente; dados não consultados permanecem desconhecidos.

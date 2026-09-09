@@ -12188,6 +12188,10 @@ async function novaExecucaoAluno(p) {
     // a fita rola por dentro; o CARD nunca pode estourar a largura da tela
     const cardCabe = mapa.scrollWidth <= mapa.clientWidth + 1 && anual.scrollWidth <= anual.clientWidth + 1;
     const fitaRola = rol.scrollWidth > rol.clientWidth;
+    const janela = rol.getBoundingClientRect(), colunas = Array.from(rol.firstChild.children);
+    const fitaInteiraVisivel = colunas.length === 52 && colunas.every(c => {
+      const r = c.getBoundingClientRect(); return r.left >= janela.left - 2 && r.right <= janela.right + 2;
+    });
     // "abre mostrando hoje": a ÚLTIMA coluna (a semana atual) tem que estar
     // dentro da janela que o aluno enxerga, sem ele arrastar nada
     const pontaVisivel = () => {
@@ -12219,7 +12223,7 @@ async function novaExecucaoAluno(p) {
     if (preferenciaAnterior === null) localStorage.removeItem("ptmapv");
     else localStorage.setItem("ptmapv", preferenciaAnterior);
     return {
-      quad, txtAno, cardCabe, fitaRola, abreEmHoje, aindaEmHoje, ambasVisiveis, legadoIntacto, dadosIntactos,
+      quad, txtAno, cardCabe, fitaRola, fitaInteiraVisivel, abreEmHoje, aindaEmHoje, ambasVisiveis, legadoIntacto, dadosIntactos,
       anualPreservado, mudouMes, voltouMes: window.__mapaMes.mes() === mesAntes && /treinos? em \w+/.test(mapa.textContent),
       tituloComAno: mapa.textContent.includes(String(new Date().getFullYear())),
       celsMes: mapa.querySelectorAll("div[style*='aspect-ratio']").length,
@@ -12229,14 +12233,23 @@ async function novaExecucaoAluno(p) {
     "histórico anual mantém os pontinhos do ano todo (52 semanas x 7 dias = 364)");
   ok(!!mapAno && /treinos? nas últimas 52 semanas/.test(mapAno.txtAno),
     "o cabeçalho da fita conta os treinos das últimas52 semanas");
-  ok(!!mapAno && mapAno.cardCabe && mapAno.fitaRola,
-    "a fita rola de lado por dentro do card, sem estourar a largura da tela");
+  ok(!!mapAno && mapAno.cardCabe && (mapAno.fitaRola || mapAno.fitaInteiraVisivel),
+    "a fita cabe inteira no desktop amplo ou rola por dentro, sem estourar a largura da tela");
   ok(!!mapAno && mapAno.abreEmHoje && mapAno.aindaEmHoje,
     "a fita abre mostrando HOJE — inclusive quando o app repintou com a aba escondida");
   ok(!!mapAno && mapAno.ambasVisiveis && mapAno.legadoIntacto && mapAno.dadosIntactos,
     "mês e ano ficam abertos juntos, sem modificar a preferência legada ptmapv nem os dados de evolução");
   ok(!!mapAno && mapAno.mudouMes && mapAno.voltouMes && mapAno.tituloComAno && mapAno.anualPreservado && mapAno.celsMes >= 28 && mapAno.celsMes <= 31,
     "navegar os meses preserva o histórico anual e sua posição, com ano explícito e todos os dias do mês");
+  const viewportMapaAnterior = pApp.viewportSize();
+  await pApp.setViewportSize({width:390,height:844});
+  const mapaMovel = await pApp.evaluate(() => {
+    const r=document.getElementById('mapaAnoRol'), a=document.getElementById('mapaHistoricoAno');
+    r.scrollLeft=0;r.scrollLeft=-100;
+    return r.scrollWidth>r.clientWidth && Math.abs(r.scrollLeft)>0 && a.scrollWidth<=a.clientWidth+1;
+  });
+  ok(mapaMovel, "no celular, as 52 semanas continuam rolando dentro do card sem alargar a página");
+  await pApp.setViewportSize(viewportMapaAnterior);
 
   // --- o Ranking da turma saiu das Conquistas (pedido do Raphael) ---
   ok(!/cqRank/.test(appHtml2) && !/Ranking da turma/.test(appHtml2),
@@ -15710,8 +15723,8 @@ async function novaExecucaoAluno(p) {
         bt: getComputedStyle(document.getElementById("btnMenuFino")).display,
       }));
       const aberto = await largura();
-      ok(aberto.menu === 258 && aberto.bt !== "none",
-        "menu aberto tem 258px e mostra o botão de encolher");
+      ok(aberto.menu === 234 && aberto.bt !== "none",
+        "menu Torque One aberto tem 234px e mostra o botão de encolher");
       await pR.click("#btnMenuFino");
       await pR.waitForTimeout(350);
       const fino = await largura();
@@ -15735,7 +15748,7 @@ async function novaExecucaoAluno(p) {
       await pR.click("#btnMenuFino");
       await pR.waitForTimeout(350);
       const volta = await largura();
-      ok(volta.menu === 258, "tocar de novo devolve o menu inteiro");
+      ok(volta.menu === 234, "tocar de novo devolve o menu inteiro");
       // no celular o retrátil não existe: lá a gaveta é a do ☰
       await pR.setViewportSize({ width: 390, height: 844 });
       await pR.waitForTimeout(300);
