@@ -1,0 +1,41 @@
+name: Diagnóstico de logs mt-v807
+on:
+  push:
+    branches: [diagnostics/mt-v807-ci]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  excerpts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ler falhas do job completo, sem alterar execução nem resultados
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os,re,urllib.request
+          url='https://api.github.com/repos/raphaelmarge/metodo-torque/actions/jobs/102340581150/logs'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          try:
+              response=urllib.request.build_opener(NoRedirect).open(req,timeout=30)
+          except urllib.error.HTTPError as e:
+              if e.code != 302: raise
+              target=e.headers['Location']
+              assert target.startswith('https://'), 'HTTPS obrigatório'
+              # A URL assinada é usada sem encaminhar o token GitHub e não é impressa.
+              response=urllib.request.urlopen(target,timeout=30)
+          lines=response.read().decode('utf-8-sig').splitlines()
+          selected=set()
+          pattern=re.compile(r'❌|\bFAIL(?:ED)?\b|Error:|Timeout.*exceeded|suítes.*falha|FALHA\(S\)|exit code [1-9]',re.I)
+          for i,line in enumerate(lines):
+              if pattern.search(line): selected.update(range(max(0,i-5),min(len(lines),i+22)))
+          print('Job 102340581150: linhas totais',len(lines),'linhas de contexto',len(selected))
+          previous=-2
+          for i in sorted(selected):
+              if i != previous+1: print('...')
+              print(lines[i][:1500]); previous=i
+          PY
