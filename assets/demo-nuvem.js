@@ -332,7 +332,23 @@
   // ---------- as RPCs ----------
   function rpc(nome, args) {
     var d = null;
-    if (nome === 'app_nutricao_feedback_lista' || nome === 'app_nutricao_feedback_envia') {
+    if (nome === 'personal_nutricao_resumo') {
+      args = args || {};
+      var hojeN = String(args.p_hoje || ''), inicioN = new Date(hojeN + 'T12:00:00');
+      if (args.p_academia !== AID || !Array.isArray(args.p_tokens) || !args.p_tokens.length || args.p_tokens.length > 100 || !/^\d{4}-\d{2}-\d{2}$/.test(hojeN) || !Number.isFinite(inicioN.getTime())) return Promise.resolve({ data: { erro: 'Resumo indisponível na demonstração.' }, error: null });
+      inicioN.setDate(inicioN.getDate() - 6);
+      var inicioTxtN = inicioN.getFullYear() + '-' + String(inicioN.getMonth() + 1).padStart(2, '0') + '-' + String(inicioN.getDate()).padStart(2, '0');
+      d = { ok: true, simulado: true, inicio: inicioTxtN, hoje: hojeN, consultadoEm: new Date().toISOString(), alunos: alunos().filter(function (a) {
+        return !a.appRevogadoEm && args.p_tokens.indexOf(a.appTokenP) >= 0;
+      }).map(function (a) {
+        var mapa = (((a.retorno || a.demoRetorno || {}).nutricaoV1 || {}).registros || {});
+        var n = Object.keys(mapa).filter(function (id) {
+          var r = raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.normalizaRegistro(mapa[id]);
+          return r && r.id === id && !r.apagado && r.d >= inicioTxtN && r.d <= hojeN;
+        }).length;
+        return { token: a.appTokenP, registros7dias: n };
+      }) };
+    } else if (nome === 'app_nutricao_feedback_lista' || nome === 'app_nutricao_feedback_envia') {
       var a = alunos().find(function (x) { return x.appTokenP === (args || {}).t; });
       var reg = a && (((a.demoRetorno || a.retorno || {}).nutricaoV1 || {}).registros || {})[(args || {}).p_registro];
       if (!reg || reg.apagado) return Promise.resolve({data:{erro:'Refeição não encontrada na demonstração.'},error:null});

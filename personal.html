@@ -2033,6 +2033,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="dh-next" id="dashDia"><div class="dh-section-head"><h2>Próxima sessão</h2><button type="button" class="btn sec mini" id="dVerSemana">Ver agenda</button></div><div id="bHojeP" class="dh-next-body">Nenhuma sessão agendada.</div></div>
       <div id="dashResolver"></div>
     </div>
+    <section id="dashNutricao" aria-label="Resumo de nutrição"></section>
     <div class="dh-secondary">
       <details class="dh-disclosure" id="dashRadar"><summary class="dh-disclosure-head"><span class="dh-disclosure-title">Acompanhamento dos alunos</span><span class="dh-disclosure-count" id="dRadarCount">0 pendências</span></summary><div id="bRadarP" class="dh-disclosure-body"></div></details>
       <details class="dh-disclosure" id="dashZap"><summary class="dh-disclosure-head"><span class="dh-disclosure-title">WhatsApp de hoje</span><span class="dh-disclosure-count" id="dZapCount">0 mensagens</span></summary><div id="bZapP" class="dh-disclosure-body">Nenhuma mensagem pendente.</div></details>
@@ -20718,6 +20719,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaResolver(st);
     pintaSino(st);
     pintaMesDash(st, d);
+    if (self.MT_PERSONAL_NUTRICAO && self.MT_PERSONAL_NUTRICAO.renderDashboard) self.MT_PERSONAL_NUTRICAO.renderDashboard(st);
     resolverChat();
     resolverDor();
     sinoNuvem();
@@ -23942,6 +23944,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       publicaPacotes(nuvem, [a]).then(cb, function () { cb({ erro: "Não foi possível publicar. Tente novamente." }); });
     }
   });
+  if (self.MT_PERSONAL_NUTRICAO && self.MT_PERSONAL_NUTRICAO.renderDashboard) self.MT_PERSONAL_NUTRICAO.renderDashboard(load());
   if (self.MT_PERSONAL_ONBOARDING_INIT) self.MT_PERSONAL_ONBOARDING_INIT.init({
     load: load, save: save, marcaPendente: marcaAppPendente,
     perfilId: function () { return perfilId; },
