@@ -296,7 +296,7 @@ async function novaExecucaoAluno(p) {
         cor: c.borderBottomColor, alt: Math.round(b.getBoundingClientRect().height) };
     });
     ok(fita.raio === "0px" && /rgba\(0, 0, 0, 0\)|transparent/.test(fita.fundo) &&
-      fita.linha === "2px" && /124, 58, 237/.test(fita.cor) && fita.alt === 46,
+      fita.linha === "2px" && /140, 84, 247/.test(fita.cor) && fita.alt === 46,
       "🎗 sub-menu é fita de sublinhado como o desenho manda, não pílula roxa (" +
       fita.alt + "px, raio " + fita.raio + ", sublinhado " + fita.linha + ")");
   }
@@ -12645,9 +12645,9 @@ async function novaExecucaoAluno(p) {
     out.voltou = !document.documentElement.classList.contains("claro");
     return out;
   });
-  ok(!temaSnap.antesClaro && temaSnap.corpoAntes === "rgb(13, 12, 16)" && /Modo claro/.test(temaSnap.btn),
+  ok(!temaSnap.antesClaro && temaSnap.corpoAntes === "rgb(12, 13, 17)" && /Modo claro/.test(temaSnap.btn),
     "app nasce no modo noturno com o botão ☀️ Modo claro na gaveta");
-  ok(temaSnap.claro && temaSnap.corpo === "rgb(244, 243, 247)" && temaSnap.txt === "rgb(25, 22, 34)" && temaSnap.superficie === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
+  ok(temaSnap.claro && temaSnap.corpo === "rgb(244, 243, 247)" && temaSnap.txt === "rgb(33, 27, 45)" && temaSnap.superficie === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
     "modo claro pinta página, superfícies e texto e guarda a escolha do aluno");
   ok(temaSnap.voltou, "um toque devolve pro modo noturno");
   ok(temaSnap.hojeTxt === "rgb(25, 22, 34)" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
@@ -15643,7 +15643,7 @@ async function novaExecucaoAluno(p) {
         d.remove();
         return c;
       });
-      ok(/124,\s*58,\s*237/.test(roxo), "🎨 3d: o roxo da marca é o mesmo nos dois temas");
+      ok(/140,\s*84,\s*247/.test(roxo), "🎨 3d: o roxo da marca é o mesmo nos dois temas");
       // a página de vendas é documento AUTÔNOMO: não pode levar token do painel
       const pagina = await pL.evaluate(() => window.__sitePro.monta(window.MTStore.read("ptStudio", {})));
       ok(!/var\(--tk-/.test(pagina),
