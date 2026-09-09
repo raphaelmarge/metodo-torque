@@ -13853,7 +13853,8 @@ async function novaExecucaoAluno(p) {
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
   const htmlV = await p.evaluate(() => document.documentElement.outerHTML);
-  ok(/personal trainer/i.test(corpo) && /treino guiado/i.test(htmlV) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
+  ok(/personal presencial/i.test(corpo) && /consultoria on-line/i.test(corpo) && /treino guiado/i.test(htmlV) && /R\$ 49/.test(corpo),
+    "landing com presencial e consultoria on-line, features atuais e preço");
   ok(/14 dias grátis/i.test(corpo) && /sem cartão/i.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
   ok(await p.evaluate(() => [...document.querySelectorAll("a[href]")].some((a) => /Testar grátis|14 dias grátis|meu tempo de volta/i.test(a.textContent) && /personal\.html/.test(a.href))), "CTA principal leva direto pro módulo");
   {
@@ -13978,7 +13979,7 @@ async function novaExecucaoAluno(p) {
     const guarda = await pS.evaluate(async () => {
       // cliente fake: a nuvem tem 3 alunos com carimbo MAIS VELHO que o local vazio
       const nuvemVal = { alunos: [{ id: "n1", nome: "Aluno Nuvem 1", ativo: true }, { id: "n2", nome: "Aluno Nuvem 2", ativo: true }, { id: "n3", nome: "Aluno Nuvem 3", ativo: true }], sessoes: [], pagamentos: [], config: {} };
-      const upserts = [];
+      const envios = [];
       // consulta encadeável (eq/in/gt/order/limit…) que resolve com a resposta dada
       const consulta = (resp) => {
         const o = { then: (fn, rej) => Promise.resolve(resp).then(fn, rej) };
@@ -13987,12 +13988,16 @@ async function novaExecucaoAluno(p) {
       };
       window.MT_supabase = {
         auth: { getSession: async () => ({ data: { session: { user: { id: "user-sync-ficticio", email: "r@t.br" } } } }) },
-        rpc: () => Promise.resolve({ data: null }),
+        rpc: (nome, args) => {
+          if (nome === "dados_cas") envios.push({ chave: args.p_chave, valor: args.p_valor });
+          if (nome === "dados_grava") envios.push(...(args.p_linhas || []));
+          return Promise.resolve({ data: null });
+        },
         from: (tabela) => ({
           select: () => consulta(tabela === "dados"
             ? { data: [{ chave: "mtapp:ptStudio", valor: nuvemVal, atualizado: "2099-01-01T00:00:00.000Z" }] }
             : { data: tabela === "membros" ? [{ academia_id: "acad-1", papel: "dono" }] : [] }),
-          upsert: (linhas) => { upserts.push(...(Array.isArray(linhas) ? linhas : [linhas])); return Promise.resolve({}); },
+          upsert: (linhas) => { envios.push(...(Array.isArray(linhas) ? linhas : [linhas])); return Promise.resolve({}); },
           insert: () => Promise.resolve({}),
         }),
       };
@@ -14000,11 +14005,16 @@ async function novaExecucaoAluno(p) {
       await new Promise((res) => setTimeout(res, 2000));
       return {
         alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
-        subiuVazio: upserts.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+        subiuVazio: envios.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+        conflito: !!((window.__MTSync._estado.conflitos || {})["mtapp:ptStudio"]),
+        base: window.__MTSync.baseDe("mtapp:ptStudio"),
+        backup: !!localStorage.getItem("mtsync:bak:mtapp:ptStudio"),
       };
     });
     ok(guarda.alunos === 3, "1º sync num aparelho vazio: a base da nuvem vence (3 alunos aplicados)");
     ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
+    ok(!guarda.conflito && guarda.base === "2099-01-01T00:00:00.000Z", "a primeira puxada vira a base CAS comprovada sem falso conflito");
+    ok(guarda.backup, "o seed local fica em backup antes de a base cheia da nuvem ser aplicada");
     await pS.close();
     await ctxS.close();
   }

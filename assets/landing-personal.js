@@ -13,8 +13,8 @@
   var features = [
     {
       tag: "Seu dia",
-      title: "Abra. Resolva. Treine.",
-      description: "O painel mostra quem cobrar, quem chamar e qual é a próxima sessão — com a ação certa ao lado.",
+      title: "Seu atendimento, por inteiro.",
+      description: "Veja a próxima sessão presencial, quem precisa de contato na consultoria on-line e as cobranças pendentes — com a ação certa ao lado.",
       returnText: "A lista mental que você carrega o dia inteiro.",
       image: "assets/vendas/painel-inicio.webp",
       alt: "Painel inicial com a próxima sessão e a lista Resolver hoje"
@@ -22,7 +22,7 @@
     {
       tag: "Produto",
       title: "Treino em minutos, não em noites.",
-      description: "Monte fichas com vídeos, progressão, circuito e corrida. A IA propõe o mês obedecendo às regras que você definiu para cada aluno.",
+      description: "Prepare a sessão presencial ou a programação da consultoria on-line com vídeos, progressão, circuito e corrida. A IA sugere; você revisa e publica.",
       returnText: "A noite de domingo montando ficha.",
       image: "assets/vendas/painel-treinos.webp",
       alt: "Tela de montagem de treino com fichas e opção de gerar com IA"
@@ -30,7 +30,7 @@
     {
       tag: "Financeiro",
       title: "Cobrança sem caça ao recibo.",
-      description: "Atrasados aparecem no topo, com link, Pix e baixa na própria linha. O pagamento entra direto na sua conta.",
+      description: "Organize os recebimentos do presencial e da consultoria on-line. Atrasados, link, Pix e baixa ficam na mesma tela; o pagamento vai para sua conta.",
       returnText: "A planilha e a conversa constrangedora.",
       image: "assets/vendas/painel-financeiro.webp",
       alt: "Painel financeiro com recebido do mês e lista de pagamentos atrasados"
@@ -38,7 +38,7 @@
     {
       tag: "Alunos",
       title: "Perceba antes que ele suma.",
-      description: "Os filtros Ativos, Sumindo e Devendo deixam claro quem precisa de contato antes de virar cancelamento.",
+      description: "Acompanhe alunos presenciais e da consultoria no mesmo painel. Os filtros Ativos, Sumindo e Devendo ajudam a priorizar quem precisa de contato.",
       returnText: "O aluno que você só percebeu tarde demais.",
       image: "assets/vendas/painel-alunos.webp",
       alt: "Lista de alunos com filtros Ativos, Sumindo e Devendo"
@@ -46,7 +46,7 @@
     {
       tag: "Atendimento",
       title: "Uma conversa que não se perde.",
-      description: "Chat dentro do app, respostas rápidas e lembretes no celular do aluno. Tudo ligado à ficha dele.",
+      description: "Tire dúvidas entre sessões e acompanhe a consultoria on-line pelo chat do app. Respostas rápidas e lembretes ajudam a manter o contato com cada aluno.",
       returnText: "As vinte respostas para a mesma pergunta.",
       image: "assets/vendas/painel-chat.webp",
       alt: "Chat com aluno e atalhos de respostas rápidas"
@@ -54,7 +54,7 @@
     {
       tag: "Avaliação",
       title: "Resultado que o aluno enxerga.",
-      description: "Compare medições, composição corporal e evolução. O histórico fica organizado e o laudo sai pronto para compartilhar.",
+      description: "Compare as medições registradas e a evolução de cada aluno. Consulte o histórico nos encontros presenciais e no acompanhamento da consultoria on-line.",
       returnText: "Digitar medidas e montar laudo à mão.",
       image: "assets/vendas/painel-avaliacao.webp",
       alt: "Histórico de avaliação física com comparação entre medições"
@@ -62,7 +62,7 @@
     {
       tag: "Agenda",
       title: "A sessão se resolve na linha.",
-      description: "Confirme pedidos, registre faltas e leve os horários para o calendário do celular sem o vai-e-vem de mensagens.",
+      description: "Organize as sessões presenciais junto ao acompanhamento on-line. Confirme pedidos, registre faltas e leve os horários para o calendário do celular.",
       returnText: "A remarcação que atravessa o seu dia.",
       image: "assets/vendas/painel-agenda.webp",
       alt: "Agenda com pedidos de horário e ações de cada sessão"
@@ -72,13 +72,13 @@
   var studentScreens = [
     {
       title: "Ficha do mês",
-      description: "A semana, os exercícios e as cargas organizados para o aluno consultar.",
+      description: "Programação, exercícios e cargas para a sessão presencial ou os treinos da consultoria on-line.",
       image: "assets/vendas/app-fichas.webp",
       alt: "Lista de fichas e semana atual no aplicativo do aluno"
     },
     {
       title: "Treino guiado",
-      description: "Vídeo, séries, descanso e registro de cargas, um exercício por vez.",
+      description: "Vídeo, séries, descanso e cargas para seguir sua orientação, ao seu lado ou à distância.",
       image: "assets/vendas/app-treino.webp",
       alt: "Treino guiado com exercício, carga e histórico da última sessão"
     },
@@ -90,7 +90,7 @@
     },
     {
       title: "Conquistas",
-      description: "XP, medalhas e sequência de treinos mostram a constância do aluno.",
+      description: "XP, medalhas e sequência valorizam a constância nos treinos presenciais e da consultoria.",
       image: "assets/vendas/app-conquistas.webp",
       alt: "Tela de conquistas com experiência, medalhas e sequência de treinos"
     },
