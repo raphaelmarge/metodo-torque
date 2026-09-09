@@ -1,7 +1,7 @@
 /* Nutrição dentro do Personal: cadastro único, rascunhos por aluno e publicação canônica. */
 (function (root) {
   'use strict';
-  var C, S, N, alunoId = '', area = 'plano', drafts = Object.create(null), mensagens = Object.create(null), geracoes = Object.create(null), seq = 0, mostrando = 40, pickMais = 30, soFav = false, picker = null, dono = null;
+  var C, S, N, alunoId = '', area = 'plano', drafts = Object.create(null), mensagens = Object.create(null), geracoes = Object.create(null), registrosCache = Object.create(null), registrosBusca = Object.create(null), seq = 0, mostrando = 40, pickMais = 30, soFav = false, picker = null, dono = null;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
   var norm = function (v) { return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); };
@@ -17,7 +17,7 @@
     if (!dono) { dono = { email: email, aid: aid }; return true; }
     var mudou = dono.email !== email || (!!dono.aid && !!aid && dono.aid !== aid);
     dono = { email: email, aid: aid || (mudou ? '' : dono.aid) };
-    if (mudou) { drafts = Object.create(null); mensagens = Object.create(null); geracoes = Object.create(null); alunoId = ''; picker = null; if ($('pnFoodDialog').open) $('pnFoodDialog').close(); return false; }
+    if (mudou) { drafts = Object.create(null); mensagens = Object.create(null); geracoes = Object.create(null); registrosCache = Object.create(null); registrosBusca = Object.create(null); alunoId = ''; picker = null; if ($('pnFoodDialog').open) $('pnFoodDialog').close(); return false; }
     return true;
   }
   function avisa(s) { mensagens[alunoId] = s; $('pnStatus').textContent = s; }
@@ -142,13 +142,26 @@
   }
   function pintaPicker() { var q = norm($('pnPickBusca').value), st = C.load(), fav = state(st).favoritos || [], list = catalogo(st).filter(function (a) { return !q || norm(a.nome).indexOf(q) >= 0; }).sort(function (a, b) { return Number(fav.indexOf(b.id) >= 0) - Number(fav.indexOf(a.id) >= 0); }); $('pnPickLista').innerHTML = list.slice(0, pickMais).map(function (a) { return '<div class="pn-food-row"><div><b>' + esc(a.nome) + '</b><small>' + esc(a.porcao) + ' · ' + fmt(a.k) + ' kcal</small></div><button type="button" class="btn sec" data-pnadd="' + esc(a.id) + '" aria-label="Adicionar ' + esc(a.nome) + '">Adicionar</button></div>'; }).join('') || '<p class="muted">Nenhum alimento encontrado. Você pode cadastrar um alimento próprio na Biblioteca.</p>'; $('pnPickMais').hidden = list.length <= pickMais; }
   function adicionaAlimento(id) { var d = atual(), ref = d && picker && picker.aluno === alunoId && d.plano.refeicoes.find(function (r) { return r.id === picker.ref; }), a = catalogo(C.load()).find(function (x) { return x.id === id; }); if (!ref || !a) return; if (ref.itens.length >= 100) { avisa('Esta refeição atingiu o limite de 100 itens.'); return; } ref.itens.push(N.normalizaItem(Object.assign({}, a, { id: uid(), alimId: a.id, qtd: 1 }))); d.revisao = false; $('pnFoodDialog').close(); picker = null; pintaEditor(); }
-  function registros(st, id) { var a = aluno(st, id), map = a && ((a.retorno || {}).nutricaoV1 || {}).registros || {}; return Object.keys(map).map(function (key) { return N.normalizaRegistro(map[key]); }).filter(function (r) { return r && !r.apagado; }).sort(function (a, b) { return (b.d + b.hora).localeCompare(a.d + a.hora); }); }
+  function registros(st, id) { var a = aluno(st, id), remoto = Object.prototype.hasOwnProperty.call(registrosCache,id) ? registrosCache[id] : null, map = remoto ? remoto.registros || {} : a && ((a.retorno || {}).nutricaoV1 || {}).registros || {}; return Object.keys(map).map(function (key) { return N.normalizaRegistro(map[key]); }).filter(function (r) { return r && !r.apagado; }).sort(function (a, b) { return (b.d + b.hora).localeCompare(a.d + a.hora); }); }
   function registrosHtml(list) {
     if (!list.length) return '<p class="muted">Nenhuma refeição registrada neste período. Os registros aparecem após o aluno sincronizar o app.</p>';
     var dias = {}; list.forEach(function (r) { (dias[r.d] = dias[r.d] || []).push(r); });
     return Object.keys(dias).map(function (d) { var rows = dias[d]; return '<section class="pn-meal"><div class="pn-head"><h4>' + d.slice(8) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) + '</h4><span class="muted">' + fmt(N.totalItens(rows.reduce(function (all, r) { return all.concat(r.itens); }, [])).k) + ' kcal registradas</span></div>' + rows.map(function (r) { return '<details class="pn-details"><summary>' + esc((r.hora ? r.hora + ' · ' : '') + r.titulo) + ' <span class="muted">' + fmt(N.totalItens(r.itens).k) + ' kcal' + (r.estimativa ? ' · estimativa' : '') + '</span></summary><ul class="pn-plan-list">' + r.itens.map(function (it) { return '<li><span>' + esc(it.nome) + '</span><span>' + fmt(it.qtd) + ' × ' + esc(it.porcao) + '</span></li>'; }).join('') + '</ul>' + (r.observacao ? '<p class="pn-preline">' + esc(r.observacao) + '</p>' : '') + (r.foto ? '<img class="pn-record-photo" src="' + esc(r.foto) + '" alt="Foto da refeição registrada pelo aluno">' : '') + '</details>'; }).join('') + '</section>'; }).join('');
   }
-  function pintaRegistros() { var list = registros(C.load(), alunoId), dias = +$('pnPeriodo').value; if (dias) { var d = new Date(S.todayISO() + 'T12:00:00'); d.setDate(d.getDate() - dias + 1); var ini = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); list = list.filter(function (r) { return r.d >= ini && r.d <= S.todayISO(); }); } $('pnRegistros').innerHTML = !alunoId ? '<p class="muted">Escolha um aluno para consultar os registros.</p>' : registrosHtml(list); }
+  function buscaRegistros(id, novamente) {
+    var st=C.load(),a=aluno(st,id),n=S.cloud&&S.cloud(); if(!a||!a.appTokenP)return;
+    if(!novamente&&(Object.prototype.hasOwnProperty.call(registrosCache,id)||registrosBusca[id]))return;
+    if(!n||!n.client||typeof n.client.from!=='function'){registrosBusca[id]={erro:'Entre na sua conta para consultar os registros na nuvem.'};if(area==='registros'&&alunoId===id)pintaRegistros();return;}
+    var pedido={token:a.appTokenP,aid:n.aid,carregando:true};registrosBusca[id]=pedido;
+    if(area==='registros'&&alunoId===id)pintaRegistros();
+    n.client.from('app_aluno').select('retorno').eq('academia_id',n.aid).eq('token',a.appTokenP).limit(1).then(function(r){
+      var atual=aluno(C.load(),id);if(registrosBusca[id]!==pedido||!atual||atual.appTokenP!==pedido.token)return;
+      if(r&&r.error){registrosBusca[id]={erro:'Não foi possível consultar agora. Tente novamente.'};}
+      else{var row=r&&r.data&&r.data[0],nutri=row&&row.retorno&&row.retorno.nutricaoV1;registrosCache[id]=nutri&&typeof nutri==='object'&&!Array.isArray(nutri)?clone(nutri):{v:1,registros:{}};registrosBusca[id]={pronto:true};}
+      if(area==='registros'&&alunoId===id)pintaRegistros();if(C.perfilId&&C.perfilId()===id&&$('pfArea').value==='alimentacao')perfil(id);
+    },function(){if(registrosBusca[id]===pedido){registrosBusca[id]={erro:'Não foi possível consultar agora. Tente novamente.'};if(area==='registros'&&alunoId===id)pintaRegistros();}});
+  }
+  function pintaRegistros() { var id=alunoId,list = registros(C.load(), id), busca=id&&registrosBusca[id], dias = +$('pnPeriodo').value; if (dias) { var d = new Date(S.todayISO() + 'T12:00:00'); d.setDate(d.getDate() - dias + 1); var ini = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); list = list.filter(function (r) { return r.d >= ini && r.d <= S.todayISO(); }); } if(!id){$('pnRegistros').innerHTML='<p class="muted">Escolha um aluno para consultar os registros.</p>';return;} if(!Object.prototype.hasOwnProperty.call(registrosCache,id)&&!busca)buscaRegistros(id);busca=registrosBusca[id];if(busca&&busca.carregando&&!list.length){$('pnRegistros').innerHTML='<p class="muted">Carregando os registros do aluno…</p>';return;}if(busca&&busca.erro&&!list.length){$('pnRegistros').innerHTML='<p class="muted">'+esc(busca.erro)+'</p><button type="button" class="btn sec" id="pnRegTentar">Tentar novamente</button>';$('pnRegTentar').onclick=function(){delete registrosBusca[id];buscaRegistros(id,true);};return;}$('pnRegistros').innerHTML=registrosHtml(list)+(busca&&busca.carregando?'<p class="muted">Atualizando registros…</p>':''); }
   function perfil(id) { if (!C || !$('pfNutricao')) return; var st = C.load(), p = plano(st, id); $('pfNutricao').innerHTML = htmlPlano(p) + '<details class="pn-details"><summary>Últimos registros de alimentação</summary>' + registrosHtml(registros(st, id).slice(0, 7)) + '</details>'; }
   function contexto(st, id) { var a = aluno(st, id); return JSON.stringify({ aluno: a ? { id: a.id, nome: a.nome, sexo: a.sexo, nasc: a.nasc, altura: a.altura, peso: a.peso, obs: a.obs, anamnese: a.anamnese } : null, avaliacoes: (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; }), plano: plano(st, id) }); }
   function promptIA(st, a, d) {

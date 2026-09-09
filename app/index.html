@@ -20,27 +20,40 @@
 <!-- o código do app vem daqui, do site: uma fonte só pra todos os alunos -->
 <script src="aluno-skin.js"></script>
 <script src="../assets/nutricao-core.js"></script>
+<script src="../assets/onboarding-consultoria.js"></script>
 <script src="aluno-builder.js"></script>
 <!-- e o do paciente do NUTRI também (o pacote diz qual é pelo dados.tipo) -->
 <script src="nutri-skin.js"></script>
 <script src="nutri-builder.js"></script>
 <script>
 (function () {
+  function escopoToken(v) { var a = 2166136261, b = 5381, s = String(v || "local"); for (var i = 0; i < s.length; i++) { a = Math.imul(a ^ s.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ s.charCodeAt(i); } return (a >>> 0).toString(36) + (b >>> 0).toString(36); }
+  function chavesNutri(v) { var s = escopoToken(v); return { estado:"ptnutricao:" + s, fila:"ptnutriFila:" + s, rascunho:"ptnutriRascunho:" + s }; }
   // token: da URL ou, se instalado/aberto sem ?t=, o último usado neste aparelho
   var tUrl = new URLSearchParams(location.search).get("t") || "";
-  var t = tUrl;
-  try { t = t || localStorage.getItem("tq_app_token") || ""; } catch (e) {}
+  var tAnt = "", t = tUrl;
+  try { tAnt = localStorage.getItem("tq_app_token") || ""; t = t || tAnt; } catch (e) {}
   /* v744: outro aluno abrindo o app no MESMO aparelho (ou o professor
    * conferindo dois alunos no próprio celular): os registros pt e nt do
    * anterior ficavam e subiam pra nuvem no nome do novo — peso, fotos e chat
    * de um aparecendo pro outro. Token diferente do guardado = limpa antes. */
   try {
-    var tAnt = localStorage.getItem("tq_app_token") || "";
+    var nk0 = chavesNutri(t), legadas0 = { ptnutricao:nk0.estado, ptnutriFila:nk0.fila, ptnutriRascunho:nk0.rascunho };
+    /* Atualiza instalações antigas somente quando o token já guardado prova a
+     * quem pertencem os dados. Depois de logout não há dono verificável: as
+     * chaves antigas são descartadas em vez de serem atribuídas ao próximo. */
+    Object.keys(legadas0).forEach(function (velha) {
+      var valor = localStorage.getItem(velha); if (valor == null) return;
+      if (t && tAnt && t === tAnt) {
+        if (localStorage.getItem(legadas0[velha]) == null) localStorage.setItem(legadas0[velha], valor);
+      }
+      localStorage.removeItem(velha);
+    });
     if (tUrl && tAnt && tUrl !== tAnt) {
       var fora0 = [];
       for (var i0 = 0; i0 < localStorage.length; i0++) {
         var k0 = localStorage.key(i0);
-        if (k0 && /^(pt|nt)[a-z]/.test(k0)) fora0.push(k0);
+        if (k0 && /^(pt|nt)[a-z]/.test(k0) && !/^ptnutri(?:cao|Fila|Rascunho):/.test(k0) && !/^ptonbconsult(?:fila)?:/.test(k0)) fora0.push(k0);
       }
       fora0.forEach(function (k) { localStorage.removeItem(k); });
       ["tq_app_pacote", "tq_app_html", "tq_app_stamp", "tq_app_visto"].forEach(function (k) { localStorage.removeItem(k); });
@@ -92,7 +105,7 @@
     if (!d) return [];
     var f = [];
     if (d.tipo === "nutri") { if (!self.MT_NUTRI_SKIN) f.push("nutri-skin.js"); if (!self.MT_APP_NUTRI) f.push("nutri-builder.js"); }
-    else { if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado('ptnutricao')) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
+    else { if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
     return f;
   }
   function construtorPresente(pac) {

@@ -38,6 +38,7 @@ var ESQUELETO = [
   "../assets/cloud-config.js",
   "../assets/versao.js",
   "../assets/nutricao-core.js",
+  "../assets/onboarding-consultoria.js",
   // a cara do redesenho é a Archivo — sem ela no esqueleto, o app offline
   // abria na fonte do sistema e ficava diferente do desenho
   "../assets/fonts/archivo.css",

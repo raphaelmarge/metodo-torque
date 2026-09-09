@@ -304,14 +304,16 @@
   }
   // Alimentação adicionada ao app atual. A fábrica e o core viajam no HTML offline.
   function runtimeNutricao(pacote, N) {
-    var historico = L('ptnutricao', { v: 1, registros: {} }), ativo = !!(pacote && pacote.ativo === true);
+    function escopoToken(v) { var a = 2166136261, b = 5381, s = String(v || 'local'); for (var i = 0; i < s.length; i++) { a = Math.imul(a ^ s.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ s.charCodeAt(i); } return (a >>> 0).toString(36) + (b >>> 0).toString(36); }
+    var sufixo = escopoToken(TOKEN), CHAVES = { estado:'ptnutricao:' + sufixo, fila:'ptnutriFila:' + sufixo, rascunho:'ptnutriRascunho:' + sufixo };
+    var historico = L(CHAVES.estado, { v: 1, registros: {} }), ativo = !!(pacote && pacote.ativo === true);
     if (!pacote && !(historico && historico.registros && Object.keys(historico.registros).length)) return null;
     pacote = pacote || { ativo: false, refeicoes: [] };
     var box = document.createElement('section'); box.id = 'nutriAluno'; box.className = 'ntp-area'; box.setAttribute('data-sec', 'alimentacao'); box.setAttribute('data-sec-off', '1');
     document.body.appendChild(box);
     if (!N) { box.textContent = 'Não foi possível carregar a alimentação. Atualize o app quando tiver conexão.'; return null; }
     var plano = N.normalizaPlano(pacote), edit = null, editSeq = 0, photoSeq = 0, analisando = false, analiseAbort = null, salvando = false, recebendo = false, falha = '', syncTimer;
-    var estado = historico, fila = L('ptnutriFila', {}), tokenLocalInicial = null, identidadePerdida = false, pedidos = [];
+    var estado = historico, fila = L(CHAVES.fila, {}), tokenLocalInicial = null, identidadePerdida = false, pedidos = [];
     try { tokenLocalInicial = localStorage.getItem('tq_app_token'); } catch (_) {}
     if (!estado || !estado.registros || Array.isArray(estado.registros)) estado = { v: 1, registros: {} };
     if (!fila || typeof fila !== 'object' || Array.isArray(fila)) fila = {};
@@ -343,9 +345,9 @@
     }
     function persiste(novo, pendentes) {
       if (!contextoAtual()) return false;
-      var antes = localStorage.getItem('ptnutricao'), antFila = localStorage.getItem('ptnutriFila');
-      try { localStorage.setItem('ptnutricao', JSON.stringify(novo)); localStorage.setItem('ptnutriFila', JSON.stringify(pendentes)); }
-      catch (_) { try { if (antes == null) localStorage.removeItem('ptnutricao'); else localStorage.setItem('ptnutricao', antes); if (antFila == null) localStorage.removeItem('ptnutriFila'); else localStorage.setItem('ptnutriFila', antFila); } catch (_) {} aviso('Não foi possível salvar neste aparelho. Seu formulário foi mantido; libere espaço e tente novamente.'); return false; }
+      var antes = localStorage.getItem(CHAVES.estado), antFila = localStorage.getItem(CHAVES.fila);
+      try { localStorage.setItem(CHAVES.estado, JSON.stringify(novo)); localStorage.setItem(CHAVES.fila, JSON.stringify(pendentes)); }
+      catch (_) { try { if (antes == null) localStorage.removeItem(CHAVES.estado); else localStorage.setItem(CHAVES.estado, antes); if (antFila == null) localStorage.removeItem(CHAVES.fila); else localStorage.setItem(CHAVES.fila, antFila); } catch (_) {} aviso('Não foi possível salvar neste aparelho. Seu formulário foi mantido; libere espaço e tente novamente.'); return false; }
       estado = novo; fila = pendentes; status(); return true;
     }
     function registroValido(r) {
@@ -435,7 +437,7 @@
       if (!edit) return null; var r = copia(edit); r.titulo = porId('ntpTitulo').value; r.d = porId('ntpEdData').value; r.hora = porId('ntpHora').value;
       r.itens = [].map.call(porId('ntpItens').querySelectorAll('[data-ntp-item]'), function (el, i) { var it = Object.assign({}, edit.itens[i] || {}); el.querySelectorAll('[data-ncampo]').forEach(function (inp) { it[inp.dataset.ncampo] = inp.value; }); return it; }); return r;
     }
-    function guardaEditor() { if (!contextoAtual() || !edit) return; edit = leEditor(); try { localStorage.setItem('ptnutriRascunho', JSON.stringify(edit)); } catch (_) { aviso('Não foi possível guardar o rascunho neste aparelho. Não feche o formulário antes de confirmar.'); } porId('ntpEdTotal').textContent = edit.itens.length && edit.itens.every(function(it){return !!N.normalizaItem(it);}) ? 'Valores a confirmar: ' + totais(edit.itens) : 'Preencha os valores de cada alimento ou remova a linha para registrar sem estimativa.'; }
+    function guardaEditor() { if (!contextoAtual() || !edit) return; edit = leEditor(); try { localStorage.setItem(CHAVES.rascunho, JSON.stringify(edit)); } catch (_) { aviso('Não foi possível guardar o rascunho neste aparelho. Não feche o formulário antes de confirmar.'); } porId('ntpEdTotal').textContent = edit.itens.length && edit.itens.every(function(it){return !!N.normalizaItem(it);}) ? 'Valores a confirmar: ' + totais(edit.itens) : 'Preencha os valores de cada alimento ou remova a linha para registrar sem estimativa.'; }
     function abre(r) {
       if (!contextoAtual() || !ativo) return;
       if (edit && !confirm('Substituir o rascunho aberto por esta refeição?')) return;
@@ -447,7 +449,7 @@
       aviso(''); fotoPinta(); guardaEditor(); porId('ntpEditor').scrollIntoView({ block: 'start' });
     }
     function novo() { return { id: 'manual:' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)), d: porId('ntpData').value, refeicaoId: '', titulo: '', hora: new Date().toTimeString().slice(0, 5), itens: [], origem: 'manual', foto: '', atualizadoEm: new Date().toISOString(), apagado: false }; }
-    function fechaEditor() { if (!contextoAtual()) return; editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = null; porId('ntpEditor').hidden = true; try { localStorage.removeItem('ptnutriRascunho'); } catch (_) {} }
+    function fechaEditor() { if (!contextoAtual()) return; editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = null; porId('ntpEditor').hidden = true; try { localStorage.removeItem(CHAVES.rascunho); } catch (_) {} }
     porId('ntpNovo').onclick = function () { abre(novo()); };
     porId('ntpCancelar').onclick = function () { if (!edit || confirm('Descartar este rascunho? Os registros já confirmados serão mantidos.')) fechaEditor(); };
     porId('ntpEditor').addEventListener('input', function (e) { if (e.target.type !== 'file') guardaEditor(); });
@@ -497,9 +499,9 @@
     };
     window.addEventListener('storage', function (e) { if (e.key === 'tq_app_token' || e.key === null) contextoAtual(); });
     window.addEventListener('online', function () { if (ativo && Object.keys(fila).length) sincroniza(); else recebe(); }); window.addEventListener('offline', status);
-    pinta(); status(); var rascunho = L('ptnutriRascunho', null); if (rascunho && idOk(rascunho.id)) abre(rascunho);
+    pinta(); status(); var rascunho = L(CHAVES.rascunho, null); if (rascunho && idOk(rascunho.id)) abre(rascunho);
     setTimeout(recebe, 1200);
-    var api = { estado:function(){return copia(estado);}, sync:sincroniza, xp:function(){return metricas().xp;}, metricas:metricas, abrir:function(id){var r=estado.registros[id];if(r)abre(r);} };
+    var api = { estado:function(){return copia(estado);}, sync:sincroniza, xp:function(){return metricas().xp;}, metricas:metricas, abrir:function(id){var r=estado.registros[id];if(r)abre(r);}, chaves:Object.assign({}, CHAVES) };
     window.__nutriAluno = api; return api;
   }
   // Resumo da evolução: move os controles existentes e conserva seus eventos.
@@ -2673,7 +2675,7 @@
        * próxima abertura — nada trava o treino de quem está sem tempo).
        * Sem termo configurado, NADA aparece. */
       "var TERMO=" + jsonApp(D.termoApp || null) + ";" +
-      "(function(){if(!TERMO||!TERMO.t)return;var ac=L('ptaceite',null);if(ac&&ac.v===TERMO.v)return;" +
+      "window.__abreTermoResponsabilidade=function(){if(!TERMO||!TERMO.t)return;var ac=L('ptaceite',null);if(ac&&ac.v===TERMO.v)return;" +
       "var ov=document.createElement('div');ov.id='termoOv';" +
       "ov.style.cssText='position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));';" +
       "var h=document.createElement('div');h.innerHTML=\"<b style='font-size:19px;font-weight:900;'>Termo de responsabilidade</b><div style='font-size:12.5px;color:#8a8695;margin-top:2px;'>do seu personal — leia antes de continuar</div>\";" +
@@ -2682,7 +2684,8 @@
       "var dp=document.createElement('button');dp.type='button';dp.textContent='Deixar pra depois';dp.style.cssText='min-height:44px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:13px;cursor:pointer;margin-top:6px;';" +
       "bt.addEventListener('click',function(){Sv('ptaceite',{v:TERMO.v,em:isoHj()});ov.remove();});" +
       "dp.addEventListener('click',function(){ov.remove();});" +
-      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);})();" +
+      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);};" +
+      (D.onboardingApp ? "" : "window.__abreTermoResponsabilidade();") +
       "window.__termo={v:TERMO&&TERMO.v||null};" +
       /* Depoimento (v694): o card do Início só aparece quando o PROFESSOR pediu
        * (chega no pacote como PDEPO) e o aluno ainda não escreveu. O texto vai
@@ -2816,6 +2819,11 @@
       "ativ:\"<path d='M22 12h-4l-3 9L9 3l-3 9H2'/>\"};" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}" +
+      "function rpcOnboarding(fn,corpo){if(!NUVEM)return Promise.resolve({__rede:true});" +
+      "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json().catch(function(){return r.ok?null:{erro:'http_'+r.status};});}).catch(function(){return {__rede:true};});}" +
+      (D.onboardingApp && raiz.MT_ONBOARDING_CONSULTORIA && raiz.MT_ONBOARDING_CONSULTORIA.runtime
+        ? "(" + raiz.MT_ONBOARDING_CONSULTORIA.runtime.toString() + ")(" + jsonApp(D.onboardingApp) + ",{load:L,rpc:rpcOnboarding,token:TOKEN,online:function(){return !!NUVEM&&navigator.onLine!==false;}});"
+        : "") +
       // notificações push (quando o app abre pelo link hospedado)
       "(function(){if(!NUVEM||!('Notification'in window))return;" +
       "var VP='BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I';" +

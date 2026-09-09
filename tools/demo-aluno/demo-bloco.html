@@ -2,6 +2,7 @@
 var __demoDados={};
 /* NUTRICAO_DEMO_FIXTURE */
 var __demoNutriRemoto={v:1,registros:{}};
+var __demoOnboardingAceite=null;
 (function(){
   if(typeof __demoNutriPlano==='undefined')return;
   [0,1,2,3,4,5,6].forEach(function(atras){
@@ -11,7 +12,8 @@ var __demoNutriRemoto={v:1,registros:{}};
       __demoNutriRemoto.registros[id]={id:id,d:dia,refeicaoId:ref.id,titulo:ref.titulo,hora:ref.hora,itens:JSON.parse(JSON.stringify(ref.itens)),origem:'plano',foto:'',atualizadoEm:d.toISOString(),apagado:false};
     });
   });
-  __demoDados.ptnutricao=JSON.stringify(__demoNutriRemoto);
+  var a=2166136261,b=5381,t='demo-token-comunidade';for(var i=0;i<t.length;i++){a=Math.imul(a^t.charCodeAt(i),16777619);b=Math.imul(b,33)^t.charCodeAt(i);}var esc=(a>>>0).toString(36)+(b>>>0).toString(36);
+  __demoDados['ptnutricao:'+esc]=JSON.stringify(__demoNutriRemoto);
 })();
 (function(){
   function iso(n){var d=new Date(Date.now()-n*864e5);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
@@ -174,6 +176,11 @@ var __demoFeed=(function(){
         if(!old||Date.parse(reg.atualizadoEm)>Date.parse(old.atualizadoEm))__demoNutriRemoto.registros[reg.id]=JSON.parse(JSON.stringify(reg));
       });
       r={ok:true,nutricao:JSON.parse(JSON.stringify(__demoNutriRemoto))};
+    }
+    else if(fn==='app_consultoria_estado')r={ok:true,concluido:!!__demoOnboardingAceite,id:__demoOnboardingAceite&&__demoOnboardingAceite.id,aceito_em:__demoOnboardingAceite&&__demoOnboardingAceite.aceito_em,documento_hash:__demoOnboardingAceite&&__demoOnboardingAceite.documento_hash};
+    else if(fn==='app_consultoria_conclui'){
+      __demoOnboardingAceite={id:'demo-aceite',aceito_em:new Date().toISOString(),documento_hash:'demo-'+String(corpo.p_versao||'').slice(-8)};
+      r={ok:true,id:__demoOnboardingAceite.id,aceito_em:__demoOnboardingAceite.aceito_em,documento_hash:__demoOnboardingAceite.documento_hash,simulado:true};
     }
     else if(fn==="app_aluno_feed")r=__demoFeed.feed();
     else if(fn==="app_desafio_ranking")r=__demoFeed.ranking();

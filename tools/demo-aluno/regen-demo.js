@@ -32,6 +32,20 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.config = st.config || {};
     st.config.nome = "Studio TORQUE Demo";
     st.config.feedOn = true;
+    st.config.onboardingConsultoria = {
+      ativo: true,
+      titulo: "Antes de começar sua consultoria",
+      introducao: "Esta demonstração mostra o questionário inicial, a conferência dos dados e a assinatura do contrato. Nada é enviado para uma pessoa real.",
+      questionarioId: "demoOnboarding",
+      contratoAtivo: true,
+      modoAssinatura: "assinatura",
+      contratoTitulo: "Contrato de consultoria fitness",
+      prestador: {
+        nome: "Studio TORQUE Demo", documento: "00.000.000/0001-00",
+        endereco: "Rua da Demonstração, 120, Centro, Rio de Janeiro/RJ, CEP 20000-000",
+        email: "demo@torqueon.com.br", telefone: "(21) 99999-0000", cidade: "Rio de Janeiro", uf: "RJ"
+      }
+    };
     st.config.conquistas = [{ e: "rato", n: "Rato de academia", meta: 30 }, { e: "medalha", n: "Lenda do Studio", meta: 100 }];
     st.config.mural = ["Sábado o studio abre 8h em vez de 7h. Quem treina cedo, me chama que a gente remarca."];
     /* foto de produto da demo (v705): SVG quadrado em base64 — passa no
@@ -63,7 +77,15 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       if (!e) { e = { id: "dmx" + nome.replace(/\W/g, ""), nome, grupo, descricao: desc || "" }; st.exercicios.push(e); }
       return e.id;
     };
-    const alex = { id: "demoAlx", nome: "Alex Silva", appTokenP: "demo-token-comunidade", metaSemana: 4, altura: 178, objetivo: "Ganhar músculo" };
+    st.questPerguntas = (st.questPerguntas || []).filter((x) => !/^demoOc/.test(x.id || "")).concat([
+      { id: "demoOc1", sigla: "OBJ", titulo: "Objetivo", texto: "Qual é o principal resultado que você quer alcançar com a consultoria?", tipo: "texto", ops: [] },
+      { id: "demoOc2", sigla: "ROT", titulo: "Rotina", texto: "De 0 a 10, quanto sua rotina atual favorece os treinos?", tipo: "linear", ops: [] },
+      { id: "demoOc3", sigla: "SAUDE", titulo: "Cuidados", texto: "Existe alguma dor, lesão, condição de saúde ou medicamento que o personal precisa conhecer?", tipo: "texto", ops: [] },
+    ]);
+    st.questionarios = (st.questionarios || []).filter((x) => x.id !== "demoOnboarding").concat([
+      { id: "demoOnboarding", nome: "Entrada da consultoria", perguntas: ["demoOc1", "demoOc2", "demoOc3"] },
+    ]);
+    const alex = { id: "demoAlx", nome: "Alex Silva", appTokenP: "demo-token-comunidade", metaSemana: 4, altura: 178, objetivo: "Ganhar músculo", onboardingConsultoria: { requerido: true, revisao: "demo-1" } };
     /* questionário do personal esperando resposta: sem isso a área Questionários
      * da demo mostrava só o check-in da semana, e quem assiste não via o recurso
      * que o professor mais usa. Liberado ONTEM pra já estar aberto na tela. */

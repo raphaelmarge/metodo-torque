@@ -15,6 +15,7 @@ global.self = global;
 require('../assets/nutricao-core.js');
 const Core = global.MT_NUTRICAO;
 const clone = x => JSON.parse(JSON.stringify(x));
+function nutriKeys(token){let a=2166136261,b=5381,s=String(token||'local');for(let i=0;i<s.length;i++){a=Math.imul(a^s.charCodeAt(i),16777619);b=Math.imul(b,33)^s.charCodeAt(i);}const x=(a>>>0).toString(36)+(b>>>0).toString(36);return{estado:'ptnutricao:'+x,fila:'ptnutriFila:'+x,rascunho:'ptnutriRascunho:'+x};}
 let browser, checks = 0;
 function ok(value, label) { assert.ok(value, label); checks++; console.log('  OK ' + label); }
 function eq(value, expected, label) { assert.deepEqual(value, expected, label); checks++; console.log('  OK ' + label); }
@@ -61,6 +62,7 @@ async function appFixture(overrides={}, initial={}, state={}) {
   const D={a:{id:'nutri-a',nome:'Aluno Nutri A',appTokenP:'token-nutricao-a'},studio:'Studio teste',
     metaSemana:3,cfg:{},fichasApp:[],guiaFichasP:[],fexs:[],sessApp:[],wodsApp:[],cardiosApp:[],nutricaoApp:plan(),atualizador:'',...overrides};
   const html=global.MT_APP_ALUNO.monta(D),ctx=await browser.newContext({viewport:{width:390,height:844},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+  const nk=nutriKeys(D.a.appTokenP),seed={...initial};if(Object.prototype.hasOwnProperty.call(seed,'ptnutricao')){seed[nk.estado]=seed.ptnutricao;delete seed.ptnutricao;}if(Object.prototype.hasOwnProperty.call(seed,'ptnutriFila')){seed[nk.fila]=seed.ptnutriFila;delete seed.ptnutriFila;}if(Object.prototype.hasOwnProperty.call(seed,'ptnutriRascunho')){seed[nk.rascunho]=seed.ptnutriRascunho;delete seed.ptnutriRascunho;}
   const p=await ctx.newPage();attachErrors(p);await p.clock.setFixedTime(new Date(STAMP));
   state.calls=[];state.records=state.records||{};
   await ctx.route('**/*',async route=>{
@@ -85,10 +87,11 @@ async function appFixture(overrides={}, initial={}, state={}) {
     }
     return route.fulfill({contentType:'application/json',body:'null'});
   });
-  await ctx.addInitScript(seed=>{
+  await ctx.addInitScript(({seed,token})=>{
     localStorage.setItem('pttour',JSON.stringify({como:'teste'}));localStorage.setItem('ptonb',JSON.stringify({feito:true}));
+    localStorage.setItem('tq_app_token',token);
     Object.entries(seed).forEach(([key,value])=>localStorage.setItem(key,JSON.stringify(value)));
-  },initial);
+  },{seed,token:D.a.appTokenP});
   await p.goto(BASE+'/nutricao-integrada-test.html');
   await p.waitForFunction(present=>present?!!window.__nutriAluno:!!window.__inicioAtualiza,!!D.nutricaoApp);
   p.on('dialog',dialog=>dialog.accept());
@@ -104,9 +107,9 @@ async function reveal(p, selector) {
   for(let i=0;i<await ancestors.count();i++)if(!await ancestors.nth(i).evaluate(el=>el.open))await ancestors.nth(i).locator(':scope > summary').click();
 }
 const getRecords=p=>p.evaluate(()=>window.__nutriAluno.estado().registros);
-const getQueue=p=>p.evaluate(()=>JSON.parse(localStorage.getItem('ptnutriFila')||'{}'));
+const getQueue=p=>p.evaluate(()=>JSON.parse(localStorage.getItem(window.__nutriAluno.chaves.fila)||'{}'));
 const field=(p,i,name)=>p.locator('#ntpItens [data-ntp-item="'+i+'"] [data-ncampo="'+name+'"]');
-async function synced(p){await p.waitForFunction(()=>Object.keys(JSON.parse(localStorage.getItem('ptnutriFila')||'{}')).length===0);}
+async function synced(p){await p.waitForFunction(()=>Object.keys(JSON.parse(localStorage.getItem(window.__nutriAluno.chaves.fila)||'{}')).length===0);}
 async function until(check,label){const end=Date.now()+10000;while(!check()){if(Date.now()>end)throw new Error('Tempo excedido: '+label);await new Promise(resolve=>setTimeout(resolve,25));}}
 async function testApp() {
   const training={ptdc:{Supino:[{d:DAY,kg:30,r:10,g:2,i:'0:0:0',serie:1,feito:true}]},ptfeitos:{[DAY]:true},pthab:{[DAY]:[1,0,0,0]}};
@@ -195,7 +198,7 @@ async function testApp() {
   await ack.ctx.close();
 
   const quota=await appFixture();await openNutrition(quota.p);await quota.p.locator('#ntpNovo').click();await quota.p.locator('#ntpTitulo').fill('Preservar formulário');
-  await quota.p.evaluate(()=>{window.__setNutriOriginal=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='ptnutriFila')throw new DOMException('Cota cheia','QuotaExceededError');return window.__setNutriOriginal.call(this,k,v);};});
+  await quota.p.evaluate(()=>{window.__setNutriOriginal=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k===window.__nutriAluno.chaves.fila)throw new DOMException('Cota cheia','QuotaExceededError');return window.__setNutriOriginal.call(this,k,v);};});
   await quota.p.locator('#ntpSalvar').click();eq(await getRecords(quota.p),{},'Falha na fila reverte a gravação parcial do diário');
   ok(await quota.p.locator('#ntpEditor').isVisible()&&await quota.p.locator('#ntpTitulo').inputValue()==='Preservar formulário','Cota cheia conserva o preenchimento para tentar novamente');
   await quota.p.evaluate(()=>{Storage.prototype.setItem=window.__setNutriOriginal;});await quota.p.locator('#ntpSalvar').click();
@@ -264,8 +267,8 @@ async function testTokenIsolation() {
   await b.goto(BASE+'/app/?t=token-nutricao-b');await b.waitForFunction(()=>window.__nutriAluno&&window.__nutriAluno.estado().registros.beatriz);
   eq(Object.keys(await getRecords(b)),['beatriz'],'Loader real troca token antes de hidratar o histórico do segundo aluno');
   eq(await getQueue(b),{},'Fila do aluno anterior não migra para o novo token');
-  ok(!(await b.evaluate(()=>localStorage.getItem('ptnutriRascunho'))),'Rascunho alimentar do primeiro acesso não aparece no segundo');
-  const stored=()=>b.evaluate(()=>Object.fromEntries(['ptnutricao','ptnutriFila','ptnutriRascunho'].map(k=>[k,localStorage.getItem(k)]))),before=await stored();
+  ok(!(await b.evaluate(()=>localStorage.getItem(window.__nutriAluno.chaves.rascunho))),'Rascunho alimentar do primeiro acesso não aparece no segundo');
+  const stored=()=>b.evaluate(()=>Object.fromEntries(Object.values(window.__nutriAluno.chaves).map(k=>[k,localStorage.getItem(k)]))),before=await stored();
   releaseA();await p.waitForTimeout(150);
   eq(await stored(),before,'ACK da aba antiga não regrava diário, fila ou rascunho do segundo aluno');
   if(await p.locator('#ntpEditor').isVisible()){

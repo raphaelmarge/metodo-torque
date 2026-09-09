@@ -1864,6 +1864,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 <link href="assets/personal-ferramentas.css" rel="stylesheet">
 <link href="assets/personal-comunicacao.css" rel="stylesheet">
 <link href="assets/personal-nutricao.css" rel="stylesheet">
+<link href="assets/personal-onboarding.css" rel="stylesheet">
 <script defer src="assets/personal-gestao.js"></script>
 <script defer src="assets/personal-ferramentas.js"></script>
 </head>
@@ -2099,6 +2100,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <div class="campo"><label>CEP</label><input id="aCep" inputmode="numeric" placeholder="00000-000"></div>
             <div class="campo" style="grid-column: 1 / -1;"><label>Endereço</label><input id="aEnd" placeholder="Rua, nº, bairro — cidade/UF (o CEP preenche sozinho)"></div>
           </div>
+          <label class="ocp-switch" id="naOnboardingBox" hidden><input type="checkbox" id="naOnboarding"><span><b>Questionário e contrato antes da consultoria</b><small>Você pode dispensar este aluno sem desligar o recurso para os próximos.</small></span></label>
           <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora (login = e-mail, senha temporária junto). Anamnese e PAR-Q ficam no perfil.</p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px;">
             <button class="btn sec" id="naCancela">Cancelar</button>
@@ -3884,6 +3886,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/alimentos-db.js"></script>
 <script src="assets/nutricao-core.js"></script>
 <script src="assets/personal-nutricao.js"></script>
+<script src="assets/onboarding-consultoria.js"></script>
+<script src="assets/personal-onboarding.js"></script>
 <script src="assets/composicao-corporal.js"></script>
 <script src="assets/avaliacao-ui.js"></script>
 <script src="assets/scanner-visao.js"></script>
@@ -5287,6 +5291,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: 0, modo: "mes", metaSemana: 3,
       objetivo: $("aObjetivo").value.trim(), sexo: $("aSexo").value, cpf: $("aCpf").value.trim(), cep: $("aCep").value.trim(), endereco: $("aEnd").value.trim(),
       ativo: true, desde: S.todayISO() };
+    if ($("naOnboarding") && $("naOnboarding").checked) novo.onboardingConsultoria = { requerido: true, revisao: String(Date.now()) };
     st.alunos.push(novo);
     save(st);
     naAlunoId = novo.id;
@@ -5749,7 +5754,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
            * salvamento do painel passar a falhar. As fotos continuam vindo da
            * nuvem na hora, na aba App do aluno, que faz a própria busca. */
           var retLeve = {};
-          Object.keys(ret).forEach(function (kR) { if (!/^foto/i.test(kR)) retLeve[kR] = ret[kR]; });
+          /* O diário alimentar pode carregar fotos e megabytes de histórico.
+           * Ele é consultado sob demanda pelo módulo de Nutrição e nunca entra
+           * no ptStudio, que é o estado leve do painel. */
+          Object.keys(ret).forEach(function (kR) { if (!/^foto/i.test(kR) && kR !== "nutricaoV1" && kR !== "nutricao") retLeve[kR] = ret[kR]; });
           var st2 = load();
           var a2 = (st2.alunos || []).find(function (x) { return x.id === a.id; });
           // S.write e nao save(): gravar sem redesenhar a tela embaixo de quem le
@@ -21770,6 +21778,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         foto: a.fotoAluno || a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
+      onboardingApp: self.MT_ONBOARDING_CONSULTORIA ? self.MT_ONBOARDING_CONSULTORIA.pacote(st, a, { contrato: ctApp, plano: plApp }) : null,
       nutricaoApp: self.MT_NUTRICAO ? self.MT_NUTRICAO.normalizaPlano((((st.nutricaoV1 || {}).planos || {})[a.id]) || null) : null,
       /* v772: o sino do app avisa "seu treino foi atualizado" — e o carimbo
        * certo é o da PRESCRIÇÃO (marcaTreinoMudou), nunca o stamp do pacote: o
@@ -23922,6 +23931,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var st = load(), a = st.alunos.find(function (x) { return x.id === id; }), nuvem = S.cloud && S.cloud();
       if (!a || a.ativo === false) { cb({ erro: "Escolha um aluno ativo." }); return; }
       if (!a.appTokenP) { cb({ erro: "Crie o acesso deste aluno em App e acesso antes de publicar." }); return; }
+      if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
+      if (!nuvem || !nuvem.client) { cb({ erro: "Entre na sua conta para publicar no app." }); return; }
+      publicaPacotes(nuvem, [a]).then(cb, function () { cb({ erro: "Não foi possível publicar. Tente novamente." }); });
+    }
+  });
+  if (self.MT_PERSONAL_ONBOARDING_INIT) self.MT_PERSONAL_ONBOARDING_INIT.init({
+    load: load, save: save, marcaPendente: marcaAppPendente,
+    perfilId: function () { return perfilId; },
+    onChange: function (fn) { S.onChange(fn); },
+    cloud: function () { return S.cloud && S.cloud(); },
+    pacote: function (st, a) {
+      var ct = contratoDe(st, a.id), pl = ct ? planoDe(st, ct.planoId) : null;
+      return self.MT_ONBOARDING_CONSULTORIA.pacote(st, a, { contrato: ct, plano: pl });
+    },
+    publicar: function (id, cb) {
+      var st = load(), a = st.alunos.find(function (x) { return x.id === id; }), nuvem = S.cloud && S.cloud();
+      if (!a || a.ativo === false) { cb({ erro: "Escolha um aluno ativo." }); return; }
+      if (!a.appTokenP) { cb({ erro: "Crie o acesso deste aluno antes de publicar." }); return; }
       if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
       if (!nuvem || !nuvem.client) { cb({ erro: "Entre na sua conta para publicar no app." }); return; }
       publicaPacotes(nuvem, [a]).then(cb, function () { cb({ erro: "Não foi possível publicar. Tente novamente." }); });
