@@ -56,7 +56,7 @@ async function testStudent(f) {
   const noGate=global.MT_APP_ALUNO.monta({...D,a:{...f.aluno,appTokenP:"token-sem-onboarding"},onboardingApp:null});
   ok(!noGate.includes("app_consultoria_estado"),"aluno dispensado recebe o app sem o bloqueio");
   const ctx=await browser.newContext({viewport:{width:390,height:844},locale:"pt-BR",timezoneId:"America/Sao_Paulo",serviceWorkers:"block"});
-  const page=await ctx.newPage(),calls=[],errors=[];let accepted=null;
+  const page=await ctx.newPage(),calls=[],errors=[];let accepted=null, reply="reject";
   page.on("pageerror",e=>errors.push(e.message));
   await ctx.addInitScript(()=>{localStorage.setItem("pttour",JSON.stringify({feito:true}));localStorage.setItem("ptonb",JSON.stringify({feito:true}));});
   await ctx.route("**/*",async route=>{
@@ -69,6 +69,8 @@ async function testStudent(f) {
     const fn=u.pathname.split("/").pop(),body=route.request().postDataJSON();calls.push({fn,body});
     if(fn==="app_consultoria_estado")return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:true,concluido:false})});
     if(fn==="app_consultoria_conclui"){
+      if(reply==="offline")return route.abort();
+      if(reply==="reject")return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:false,erro:"documento_divergente"})});
       accepted=body;return route.fulfill({contentType:"application/json",body:JSON.stringify({ok:true,id:"aceite-ficticio",aceito_em:"2026-09-09T15:00:00Z",documento_hash:"a".repeat(64)})});
     }
     return route.fulfill({contentType:"application/json",body:"null"});
@@ -85,20 +87,29 @@ async function testStudent(f) {
   for(const [id,value] of Object.entries(data))await page.locator("#"+id).fill(value);
   await page.locator("#ocProx").click();
   ok((await page.locator("#ocDocumento").innerText()).includes("designer"),"documento mostrado já contém os dados conferidos");
+  const documentoVisto=await page.locator("#ocDocumento").textContent();
   await page.locator("#ocLgpd").check();await page.locator("#ocAceite").check();await page.locator("#ocProx").click();
   await page.locator("#ocAssNome").fill("Alex Silva");
   const box=await page.locator("#ocCanvas").boundingBox();
   await page.mouse.move(box.x+30,box.y+75);await page.mouse.down();await page.mouse.move(box.x+120,box.y+45,{steps:5});await page.mouse.move(box.x+220,box.y+95,{steps:5});await page.mouse.up();
   await page.locator("#ocVolta").click();await page.locator("#ocLgpd").check();await page.locator("#ocAceite").check();await page.locator("#ocProx").click();
   await page.waitForTimeout(80);await page.locator("#ocProx").click();
+  await page.waitForFunction(()=>document.getElementById('ocErro').textContent.includes('atualizado'));
+  ok(await page.locator('#ocOverlay').isVisible()&&!await page.locator('#ocEntrar').count(),'rejeição do servidor não libera o app');
+  reply='offline';await page.locator('#ocProx').click();
+  await page.waitForFunction(()=>document.getElementById('ocErro').textContent.includes('Sem conexão'));
+  ok(await page.evaluate(()=>window.__onboardingConsultoria.pendente()),'falha de rede mantém o preenchimento para reenvio');
+  reply='success';await page.locator('#ocProx').click();
   await page.getByText("Cadastro concluído").waitFor();
+  eq(accepted.p_assinatura.documento,documentoVisto,'texto enviado é exatamente o contrato exibido');
+  ok((await page.locator('#ocEntrar').boundingBox()).height<100,'ação final permanece compacta');
   ok(!!accepted,"aceite foi enviado à RPC dedicada");
   eq(accepted.t,"token-onboarding-aluno-a","RPC usa somente o token deste aluno");
   eq(accepted.p_respostas.map(x=>x.id),["oq1","oq2","oq3"],"servidor recebe exatamente as perguntas publicadas");
   ok(accepted.p_dados.nome==="Alex Silva"&&accepted.p_dados.profissao==="designer"&&accepted.p_dados.logradouro==="Rua Teste","dados essenciais da parte contratante são enviados");
   ok(accepted.p_assinatura.aceitou&&accepted.p_assinatura.consentimentoSaude&&accepted.p_assinatura.imagem.startsWith("data:image/png;base64,"),"aceite, consentimento destacado e assinatura acompanham a versão");
   eq(accepted.p_versao,f.pacote.v,"aceite fica ligado à versão mostrada");
-  ok(calls.filter(x=>x.fn==="app_consultoria_conclui").length===1,"toque final não duplica o contrato");
+  ok(calls.filter(x=>x.fn==="app_consultoria_conclui").length===3,"cada tentativa gera somente um envio");
   for(const width of [320,360,390,430]){await page.setViewportSize({width,height:844});ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),"onboarding sem rolagem horizontal em "+width+"px");}
   if(process.env.ONBOARDING_SHOTS){await page.screenshot({path:path.join(process.env.ONBOARDING_SHOTS,"onboarding-concluido.png"),fullPage:true});}
   await page.locator("#ocEntrar").click();ok(await page.locator("#ocOverlay").count()===0,"app é liberado depois da conclusão");

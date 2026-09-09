@@ -297,6 +297,7 @@ async function testPersonal() {
     st.nutricaoV1={planos:{'nutri-a':seed.a,'nutri-b':seed.b},favoritos:[],alimentos:[]};
     window.__nutriTestWrites=[];window.__nutriTestOriginalCloud=S.cloud;window.__nutriTestOriginalWrite=S.write;
     S.cloud=()=>window.mockNuvem({aid:'nutri-test',tabelas:{app_aluno:q=>q.colunas==='retorno'?[{retorno:(S.read('ptStudio',{}).alunos.find(a=>a.appTokenP===q.filtros.token)||{}).retorno||{}}]:[]},onEscreve:w=>window.__nutriTestWrites.push({tabela:w.tabela,acao:w.acao,corpo:w.corpo})});
+    window.__nutriRestoreCas=window.mockPublicacaoCas(S.cloud());
     localStorage.setItem('mtapp:ptStudio',JSON.stringify(st));window.__renderPT();
   },seed);
   async function main(k){if(await p.locator('#btnMenuPt').isVisible()&&!await p.locator('body').evaluate(el=>el.classList.contains('menu-aberto')))await p.locator('#btnMenuPt').click();await p.locator('#abas [data-a="'+k+'"]').click();}
@@ -366,7 +367,7 @@ async function testPersonal() {
   await p.waitForTimeout(100);ok(await p.locator('#pnEditor').isVisible()&&!await p.locator('#pnRevisao').isVisible(),'Geração cancelada não reabre a prévia ao responder');
   eq(await p.locator('#pnTitulo').inputValue(),'Manual antes da IA','Cancelamento conserva a edição manual');
   await p.locator('#pnCancelar').click();await p.evaluate(()=>{window.MT_FUNCAO.chama=window.__nutriFunctionOriginal;});
-  await p.evaluate(()=>{window.MTStore.cloud=window.__nutriTestOriginalCloud;});await ctx.close();
+  await p.evaluate(()=>{window.__nutriRestoreCas();window.MTStore.cloud=window.__nutriTestOriginalCloud;});await ctx.close();
 }
 (async()=>{
   testCore();

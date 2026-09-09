@@ -98,7 +98,7 @@
       var c = rascunho(), e = valida(c); if (e) { $("ocpStatus").textContent = e; return; }
       var st = api.load(); st.config = st.config || {}; st.config.onboardingConsultoria = c;
       (st.alunos || []).forEach(function (a) { if (a.onboardingConsultoria && a.onboardingConsultoria.requerido) api.marcaPendente(st, a.id); });
-      api.save(st); sujo = false; resumo(); $("ocpStatus").textContent = c.ativo ? "✓ Configuração salva. Publique os apps dos alunos marcados para entregar esta versão." : "✓ Recurso desativado. Publique os apps marcados para retirar a exigência."; atualizaNovoAluno(); renderPerfil();
+      if(!api.save(st)){sujo=true;$("ocpStatus").textContent="Não foi possível salvar neste aparelho. Libere espaço e tente novamente.";return;} sujo = false; resumo(); $("ocpStatus").textContent = c.ativo ? "✓ Configuração salva. Publique os apps dos alunos marcados para entregar esta versão." : "✓ Recurso desativado. Publique os apps marcados para retirar a exigência."; atualizaNovoAluno(); renderPerfil();
     };
 
     function atualizaNovoAluno() {
@@ -129,11 +129,11 @@
     function buscaAceite(a, versao) {
       var seq=++consultaSeq,n=api.cloud(); if(!n||!n.client||typeof n.client.from!=="function"){if($("pfOcStatus"))$("pfOcStatus").textContent="Entre na sua conta para conferir o envio do aluno.";return;}
       n.client.from("app_consultoria_aceites").select("id,versao,respostas,dados,assinatura,config_snapshot,documento_texto,documento_hash,aceito_em").eq("academia_id",n.aid).eq("token",a.appTokenP).order("aceito_em",{ascending:false}).limit(1).then(function(r){
-        if(seq!==consultaSeq||api.perfilId()!==a.id)return;var st=api.load(),atual=(st.alunos||[]).find(function(x){return x.id===a.id;});if(!atual||atual.appTokenP!==a.appTokenP)return;
+        if(seq!==consultaSeq||api.perfilId()!==a.id||!api.cloud()||api.cloud().aid!==n.aid)return;var st=api.load(),atual=(st.alunos||[]).find(function(x){return x.id===a.id;});if(!atual||atual.appTokenP!==a.appTokenP)return;
         var row=r&&!r.error&&r.data&&r.data[0],status=$("pfOcStatus"),badge=$("pfOcBadge"),ver=$("pfOcVer");
         if(!row){if(status)status.textContent=r&&r.error?"Não foi possível consultar agora.":"O aluno ainda não concluiu esta entrada.";return;}
         respostasCache[a.id]=row;if(row.versao===versao){if(status)status.textContent="Concluído em "+dataBr(row.aceito_em)+" · documento "+String(row.documento_hash||"").slice(0,10);if(badge){badge.textContent="Concluído";badge.className="ocp-badge ok";}if(ver){ver.hidden=false;ver.onclick=function(){abreResultado(a,row);};}}
-        else if(status)status.textContent="Existe uma resposta anterior. A versão atual ainda está aguardando preenchimento.";
+        else {if(status)status.textContent="Existe uma resposta anterior. A versão atual ainda está aguardando preenchimento.";if(ver){ver.hidden=false;ver.textContent="Ver resposta anterior";ver.onclick=function(){abreResultado(a,row);};}}
       },function(){if(seq===consultaSeq&&$("pfOcStatus"))$("pfOcStatus").textContent="Não foi possível consultar agora.";});
     }
     var impressaoAtual=null;

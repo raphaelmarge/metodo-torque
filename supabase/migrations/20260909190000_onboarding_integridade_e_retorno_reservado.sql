@@ -51,6 +51,10 @@ declare
   v_rep text := '';
   v_tinha_rep boolean := position('{{representante_legal}}' in coalesce(p_modelo, '')) > 0;
   v_num numeric;
+  v_valores jsonb := '{}'::jsonb;
+  v_match text[];
+  v_resto text;
+  v_pos integer;
 begin
   v_cidade_uf := case
     when coalesce(p_dados->>'cidade','') <> '' and coalesce(p_dados->>'uf','') <> '' then (p_dados->>'cidade') || '/' || (p_dados->>'uf')
@@ -77,33 +81,43 @@ begin
       ', que aceita e assina este instrumento em nome do menor.';
   end if;
 
-  v_doc := replace(v_doc, '{{aluno_nome}}', coalesce(nullif(p_dados->>'nome',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_nacionalidade}}', coalesce(nullif(p_dados->>'nacionalidade',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_estado_civil}}', coalesce(nullif(p_dados->>'estadoCivil',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_profissao}}', coalesce(nullif(p_dados->>'profissao',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_rg}}', coalesce(nullif(p_dados->>'rg',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_rg_orgao}}', coalesce(nullif(p_dados->>'rgOrgao',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_cpf}}', coalesce(nullif(p_dados->>'cpf',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_nascimento}}', coalesce(nullif(v_nascimento,''),'—'));
-  v_doc := replace(v_doc, '{{aluno_endereco}}', coalesce(nullif(v_endereco,''),'—'));
-  v_doc := replace(v_doc, '{{aluno_email}}', coalesce(nullif(p_dados->>'email',''),'—'));
-  v_doc := replace(v_doc, '{{aluno_telefone}}', coalesce(nullif(p_dados->>'telefone',''),'—'));
-  v_doc := replace(v_doc, '{{prestador_nome}}', coalesce(nullif(p_cfg #>> '{contrato,prestador,nome}',''),'—'));
-  v_doc := replace(v_doc, '{{prestador_documento}}', coalesce(nullif(p_cfg #>> '{contrato,prestador,documento}',''),'—'));
-  v_doc := replace(v_doc, '{{prestador_endereco}}', coalesce(nullif(p_cfg #>> '{contrato,prestador,endereco}',''),'—'));
-  v_doc := replace(v_doc, '{{prestador_email}}', coalesce(nullif(p_cfg #>> '{contrato,prestador,email}',''),'—'));
-  v_doc := replace(v_doc, '{{prestador_telefone}}', coalesce(nullif(p_cfg #>> '{contrato,prestador,telefone}',''),'—'));
-  v_doc := replace(v_doc, '{{plano_nome}}', coalesce(nullif(p_cfg #>> '{contrato,plano,nome}',''),'consultoria'));
-  v_doc := replace(v_doc, '{{plano_valor}}', v_valor);
-  v_doc := replace(v_doc, '{{contrato_inicio}}', v_inicio);
-  v_doc := replace(v_doc, '{{foro_cidade}}', case
+  v_valores := v_valores || jsonb_build_object('aluno_nome', coalesce(nullif(p_dados->>'nome',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_nacionalidade', coalesce(nullif(p_dados->>'nacionalidade',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_estado_civil', coalesce(nullif(p_dados->>'estadoCivil',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_profissao', coalesce(nullif(p_dados->>'profissao',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_rg', coalesce(nullif(p_dados->>'rg',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_rg_orgao', coalesce(nullif(p_dados->>'rgOrgao',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_cpf', coalesce(nullif(p_dados->>'cpf',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_nascimento', coalesce(nullif(v_nascimento,''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_endereco', coalesce(nullif(v_endereco,''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_email', coalesce(nullif(p_dados->>'email',''),'—'));
+  v_valores := v_valores || jsonb_build_object('aluno_telefone', coalesce(nullif(p_dados->>'telefone',''),'—'));
+  v_valores := v_valores || jsonb_build_object('prestador_nome', coalesce(nullif(p_cfg #>> '{contrato,prestador,nome}',''),'—'));
+  v_valores := v_valores || jsonb_build_object('prestador_documento', coalesce(nullif(p_cfg #>> '{contrato,prestador,documento}',''),'—'));
+  v_valores := v_valores || jsonb_build_object('prestador_endereco', coalesce(nullif(p_cfg #>> '{contrato,prestador,endereco}',''),'—'));
+  v_valores := v_valores || jsonb_build_object('prestador_email', coalesce(nullif(p_cfg #>> '{contrato,prestador,email}',''),'—'));
+  v_valores := v_valores || jsonb_build_object('prestador_telefone', coalesce(nullif(p_cfg #>> '{contrato,prestador,telefone}',''),'—'));
+  v_valores := v_valores || jsonb_build_object('plano_nome', coalesce(nullif(p_cfg #>> '{contrato,plano,nome}',''),'consultoria'));
+  v_valores := v_valores || jsonb_build_object('plano_valor', v_valor);
+  v_valores := v_valores || jsonb_build_object('contrato_inicio', v_inicio);
+  v_valores := v_valores || jsonb_build_object('foro_cidade', case
     when coalesce(p_cfg #>> '{contrato,prestador,cidade}','') <> '' and coalesce(p_cfg #>> '{contrato,prestador,uf}','') <> ''
       then (p_cfg #>> '{contrato,prestador,cidade}') || '/' || (p_cfg #>> '{contrato,prestador,uf}')
     else coalesce(nullif(p_cfg #>> '{contrato,prestador,cidade}',''),'cidade do contratante') end);
-  v_doc := replace(v_doc, '{{responsavel_nome}}', coalesce(nullif(p_dados->>'responsavelNome',''),'—'));
-  v_doc := replace(v_doc, '{{responsavel_cpf}}', coalesce(nullif(p_dados->>'responsavelCpf',''),'—'));
-  v_doc := replace(v_doc, '{{representante_legal}}', v_rep);
-  v_doc := regexp_replace(v_doc, '\{\{[a-z_]+\}\}', '—', 'g');
+  v_valores := v_valores || jsonb_build_object('responsavel_nome', coalesce(nullif(p_dados->>'responsavelNome',''),'—'));
+  v_valores := v_valores || jsonb_build_object('responsavel_cpf', coalesce(nullif(p_dados->>'responsavelCpf',''),'—'));
+  v_valores := v_valores || jsonb_build_object('representante_legal', v_rep);
+  -- Uma passagem: valores digitados não são interpretados como novos campos.
+  v_resto := coalesce(p_modelo, '');
+  v_doc := '';
+  loop
+    v_match := regexp_match(v_resto, '(\{\{([a-z_]+)\}\})');
+    exit when v_match is null;
+    v_pos := position(v_match[1] in v_resto);
+    v_doc := v_doc || substring(v_resto from 1 for v_pos - 1) || coalesce(v_valores->>v_match[2], '—');
+    v_resto := substring(v_resto from v_pos + length(v_match[1]));
+  end loop;
+  v_doc := v_doc || v_resto;
   if not v_tinha_rep and v_rep <> '' then v_doc := v_doc || E'\n\n' || v_rep; end if;
   return v_doc;
 end;
