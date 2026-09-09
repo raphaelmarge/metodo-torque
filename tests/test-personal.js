@@ -13964,15 +13964,35 @@ async function novaExecucaoAluno(p) {
           insert: () => Promise.resolve({}),
         }),
       };
+      window.__syncPrimeiroUpserts = upserts;
       window.MTStore.iniciaSync();
       await new Promise((res) => setTimeout(res, 2000));
       return {
         alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
+        conflito: !!window.__MTSync._estado.conflitos["mtapp:ptStudio"],
+        copia: Object.keys(localStorage).some(k => k.startsWith("mtsync:conflito:acad-1:")),
         subiuVazio: upserts.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
       };
     });
-    ok(guarda.alunos === 3, "1º sync num aparelho vazio: a base da nuvem vence (3 alunos aplicados)");
+    // O onboarding já GRAVOU uma biblioteca local sem revisão da nuvem.
+    // CAS não infere que ela seja descartável pela quantidade de alunos:
+    // preserva a cópia e pede a mesma confirmação de qualquer rascunho legado.
+    ok(guarda.alunos === 0 && guarda.conflito && guarda.copia,
+      "1º sync com semente local sem revisão preserva cópia e pede confirmação");
     ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
+    await pS.locator('#mtSyncConflito').getByRole('button', { name: 'Carregar versão da nuvem', exact: true }).click();
+    await pS.waitForFunction(() => (JSON.parse(localStorage.getItem('mtapp:ptStudio')).alunos || []).length === 3);
+    const recuperado = await pS.evaluate(() => ({
+      alunos: JSON.parse(localStorage.getItem('mtapp:ptStudio')).alunos.length,
+      conflito: !!window.__MTSync._estado.conflitos['mtapp:ptStudio'],
+      base: window.__MTSync.baseDe('mtapp:ptStudio'),
+      copia: Object.keys(localStorage).some(k => k.startsWith('mtsync:conflito:acad-1:')),
+      subiuVazio: window.__syncPrimeiroUpserts.some(l => l.chave === 'mtapp:ptStudio' && !(l.valor && (l.valor.alunos || []).length)),
+    }));
+    ok(recuperado.alunos === 3 && !recuperado.conflito && recuperado.base === '2099-01-01T00:00:00.000Z',
+      "Carregar versão da nuvem recupera os 3 alunos e a revisão confirmada");
+    ok(recuperado.copia && !recuperado.subiuVazio,
+      "recuperar o aparelho mantém backup local e nunca publica o estado vazio");
     await pS.close();
     await ctxS.close();
   }

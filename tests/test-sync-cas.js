@@ -111,5 +111,18 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   assert.ok(x.ctx.__MTSync._estado.conflitos[K]);await x.logout();assert.equal(x.ctx.MTStore.cloud(),null);
   assert.equal(Object.keys(x.ctx.__MTSync._estado.conflitos).length,0);assert.ok([...x.memory.keys()].some(k=>k.startsWith('mtsync:conflito:academy-a:')));
  });
+ await test('instalação sem cópia local recebe automaticamente a revisão da nuvem',async()=>{
+  const x=await setup({rows:[dataRow(initial())]});await x.start();
+  assert.deepEqual(JSON.parse(x.memory.get(K)),initial());assert.equal(x.ctx.__MTSync.baseDe(K),A);
+  assert.ok(!x.ctx.__MTSync._estado.conflitos?.[K]);assert.ok(!x.calls.some(c=>c.rows&&c.table==='dados'));
+ });
+ await test('semente local sem revisão não ganha autoridade por estar vazia',async()=>{
+  const seed={alunos:[],config:{},exercicios:[{id:'semente-ficticia',nome:'Exemplo'}]};
+  const x=await setup({rows:[dataRow(initial())],local:{[K]:seed,'mtsync:ts':{[K]:'2099-12-31T00:00:00.000Z'}}});await x.start();
+  assert.deepEqual(JSON.parse(x.memory.get(K)),seed);assert.ok(x.ctx.__MTSync._estado.conflitos[K]);
+  assert.ok(!x.calls.some(c=>c.rows&&c.table==='dados'));
+  assert.equal(await x.ctx.__MTSync.resolveConflito(K),true);assert.deepEqual(JSON.parse(x.memory.get(K)),initial());
+  assert.ok([...x.memory.values()].some(v=>v.includes('semente-ficticia')));assert.equal(x.ctx.__MTSync.baseDe(K),A);
+ });
  console.log(passed+' cenários de concorrência passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -184,10 +184,13 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       const corpos = sql.split(/create or replace function public\./).slice(1);
       const semGuarda = [];
       let varridas = 0;
-      const puladas = [];
+      const puladas = [], gatilhos = [];
       corpos.forEach((bloco) => {
         const nome = (bloco.match(/^(\w+)\s*\(/) || ["", ""])[1];
         if (!/^app_aluno_/.test(nome)) return;
+        // RETURNS trigger não é RPC: a proteção é não oferecer EXECUTE direto.
+        const definicao = bloco.split("$$;")[0];
+        if (/returns\s+trigger\b/i.test(definicao)) { gatilhos.push(nome); return; }
         if (dispensadas.indexOf(nome) >= 0) { puladas.push(nome); return; }
         varridas++;
         const corpo = bloco.split("$$;")[0];
@@ -196,6 +199,9 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       t(semGuarda.length === 0,
         "toda RPC do aluno confere se o acesso ainda vale" +
         (semGuarda.length ? " — sem guarda: " + semGuarda.join(", ") : ""));
+      t(gatilhos.length >= 2 && gatilhos.every(nome =>
+        sql.toLowerCase().includes('revoke execute on function public.' + nome.toLowerCase() + '() from public, anon, authenticated;')),
+        "gatilhos internos do app não são RPCs e não permitem EXECUTE público");
       // piso: se o formato do SQL mudar e o split não achar nada, o teste FALHA
       // em vez de passar no vácuo (antes não havia contagem mínima)
       t(varridas >= 18, "o teste realmente varreu as RPCs do aluno (" + varridas + " encontradas)");
