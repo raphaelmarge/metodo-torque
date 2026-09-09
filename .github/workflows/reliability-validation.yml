@@ -1,0 +1,75 @@
+name: Reliability - PostgreSQL real
+on:
+  pull_request:
+    paths:
+      - 'apps/store.js'
+      - 'migrations/**'
+      - 'tests/test-sync*'
+      - 'tests/sql/**'
+      - '.github/workflows/reliability-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: reliability-postgres-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: reliability_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: reliability_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arquivar fonte exata (somente código do repositório)
+        run: |
+          mkdir -p /tmp/reliability-source
+          git archive --format=tar HEAD -o /tmp/reliability-source/source.tar
+          git rev-parse HEAD > /tmp/reliability-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reliability-source
+          path: /tmp/reliability-source/
+          retention-days: 2
+      - name: Reproduzir o upsert usado pelo cliente, sem dados de produção
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create role anon;
+          create role authenticated;
+          create table public.dados (
+            academia_id uuid not null,
+            chave text not null,
+            valor jsonb,
+            atualizado timestamptz not null default now(),
+            primary key (academia_id, chave)
+          );
+          create function public.dados_carimba() returns trigger language plpgsql as $$ begin new.atualizado := now(); return new; end $$;
+          create trigger dados_carimba_tg before insert or update on public.dados for each row execute function public.dados_carimba();
+          SQL
+          psql -v ON_ERROR_STOP=1 -f migrations/20260909_ptstudio_cas_v807.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into public.dados(academia_id,chave,valor) values ('00000000-0000-0000-0000-000000000001','mtapp:ptStudio','{"teste":"inicial"}');
+          select atualizado as base from public.dados where chave='mtapp:ptStudio' \gset
+          insert into public.dados(academia_id,chave,valor,base_atualizado)
+          values ('00000000-0000-0000-0000-000000000001','mtapp:ptStudio','{"teste":"atualizado"}',:'base')
+          on conflict (academia_id,chave) do update set valor=excluded.valor,base_atualizado=excluded.base_atualizado
+          returning chave,valor,atualizado;
+          SQL
