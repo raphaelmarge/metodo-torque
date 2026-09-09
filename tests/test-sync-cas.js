@@ -83,6 +83,8 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
  });
  await test('banco compara e grava na mesma transação respeitando RLS',async()=>{
   assert.match(sql,/function public\.dados_cas[\s\S]*security invoker[\s\S]*d\.atualizado = p_base_atualizado/);
+  assert.equal((sql.match(/on conflict on constraint dados_pkey/g)||[]).length,2,
+    'as RPCs não deixam a coluna-chave ambígua no PL/pgSQL');
   assert.match(sql,/function public\.app_aluno_publica_cas[\s\S]*security invoker[\s\S]*for share/);
   assert.match(sql,/grant execute on function public\.dados_cas[^;]+to authenticated/);
   assert.match(sql,/revoke all on function public\.dados_cas[^;]+from public, anon/);

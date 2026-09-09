@@ -925,7 +925,7 @@ begin
     return query
       insert into public.dados as d (academia_id, chave, valor)
       values (p_academia, p_chave, p_valor)
-      on conflict (academia_id, chave) do nothing
+      on conflict on constraint dados_pkey do nothing
       returning d.chave, d.atualizado;
   else
     return query
@@ -981,7 +981,7 @@ begin
     insert into public.dados as d (academia_id, chave, valor)
     select (item->>'academia_id')::uuid, item->>'chave', item->'valor'
       from jsonb_array_elements(p_linhas) item
-    on conflict (academia_id, chave) do update set valor = excluded.valor
+    on conflict on constraint dados_pkey do update set valor = excluded.valor
     returning d.chave, d.atualizado;
 end;
 $$;
