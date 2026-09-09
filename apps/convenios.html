@@ -86,7 +86,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("convenios", { empresas: [], vinculos: [] }); }
-  function save(st) { S.write("convenios", st); render(); }
+  function save(st) { S.mustWrite("convenios", st); render(); }
 
   var busca = "", editId = null;
 

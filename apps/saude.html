@@ -180,7 +180,7 @@
     ["bracoD", "Braço D"], ["bracoE", "Braço E"], ["coxaD", "Coxa D"], ["coxaE", "Coxa E"], ["pant", "Panturrilha"]];
 
   function load() { var st = S.read("saude", { avaliacoes: [], evolucoes: [] }); st.evolucoes = st.evolucoes || []; return st; }
-  function save(st) { S.write("saude", st); render(); }
+  function save(st) { S.mustWrite("saude", st); render(); }
 
   var busca = "", alunoSel = null, aba = "avals";
 

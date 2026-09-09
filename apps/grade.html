@@ -247,11 +247,11 @@ Semana que vem: manutenção na área de peso livre"></textarea>
         noshowLimite: +$("rgFaltas").value || 0,
         noshowDias: +$("rgDias").value || 7,
       };
-      S.write("grade", st);
+      if (S.write("grade", st) === false) { $("rgStatus").textContent = "Não foi possível salvar. A grade anterior foi mantida."; return; }
       $("rgStatus").textContent = "✅ Salvo — republique os apps dos alunos para valer no celular.";
     };
   })();
-  function save(st) { S.write("grade", st); render(); }
+  function save(st) { S.mustWrite("grade", st); render(); }
 
   // ---------- estado ----------
   var refDia = S.todayISO();

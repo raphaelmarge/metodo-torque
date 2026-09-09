@@ -98,7 +98,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("adquirentes", { itens: [] }); }
-  function save(st) { S.write("adquirentes", st); render(); }
+  function save(st) { S.mustWrite("adquirentes", st); render(); }
 
   function taxaDe(a, forma) {
     if (forma === "debito") return +a.debito || 0;

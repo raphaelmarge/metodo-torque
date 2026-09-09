@@ -33,8 +33,12 @@ create table if not exists public.dados (
   chave text not null,
   valor jsonb,
   atualizado timestamptz not null default now(),
+  -- v807: precondição de escrita enviada pelo cliente. É zerada pelo trigger
+  -- antes de armazenar; existe só para o PostgREST aceitar o campo no upsert.
+  base_atualizado timestamptz,
   primary key (academia_id, chave)
 );
+alter table public.dados add column if not exists base_atualizado timestamptz;
 
 -- ==================== HELPERS ====================
 -- v747: o DIA no fuso do produto. O servidor vive em UTC e vira o dia às 21h
@@ -872,7 +876,19 @@ create trigger dados_hist_tg
 create or replace function public.dados_carimba()
 returns trigger language plpgsql set search_path = public as $$
 begin
+  -- v807: ptStudio é o agregado crítico do Personal. Atualização só entra se
+  -- foi montada sobre EXATAMENTE a revisão que ainda está no servidor. Cliente
+  -- antigo (sem base_atualizado) recebe PT409 e, portanto, não consegue apagar
+  -- trabalho mais novo por acidente. Inserts continuam permitidos com base nula.
+  if new.chave = 'mtapp:ptStudio' and tg_op = 'UPDATE' then
+    if new.base_atualizado is null or old.atualizado is distinct from new.base_atualizado then
+      raise exception using
+        errcode = 'PT409',
+        message = 'Conflito de revisão: outra sessão alterou o painel. Atualize antes de salvar.';
+    end if;
+  end if;
   new.atualizado := now();
+  new.base_atualizado := null;
   return new;
 end $$;
 

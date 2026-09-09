@@ -86,7 +86,7 @@
   var DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
   function load() { return S.read("contagens", { itens: [] }); }
-  function save(st) { S.write("contagens", st); render(); }
+  function save(st) { S.mustWrite("contagens", st); render(); }
   function totalDe(c) { return (+c.musc || 0) + (+c.cardio || 0) + (+c.outras || 0); }
   function diaSemana(iso) { return DIAS[new Date(iso + "T12:00").getDay()]; }
 

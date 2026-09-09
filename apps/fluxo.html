@@ -105,8 +105,12 @@
     return b.contas || [];
   }
   var cbs = contasBancarias();
-  $("fConta").innerHTML = '<option value="">Todas as contas</option>' +
-    cbs.map(function (c) { return '<option value="' + c.id + '">' + (c.nome || c.banco || "Conta") + "</option>"; }).join("");
+  var fConta = $("fConta");
+  fConta.replaceChildren();
+  var todas = document.createElement("option"); todas.value = ""; todas.textContent = "Todas as contas"; fConta.appendChild(todas);
+  cbs.forEach(function (c) {
+    var op = document.createElement("option"); op.value = String(c.id || ""); op.textContent = c.nome || c.banco || "Conta"; fConta.appendChild(op);
+  });
 
   ["fDe", "fAte", "fConta"].forEach(function (id) { $(id).addEventListener("change", renderDiario); });
   $("fSaldo").addEventListener("change", function () {

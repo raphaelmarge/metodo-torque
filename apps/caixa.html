@@ -85,7 +85,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("caixa", { dias: {} }); }
-  function save(st) { S.write("caixa", st); render(); }
+  function save(st) { S.mustWrite("caixa", st); render(); }
 
   var dia = S.todayISO();
   function diaSt(st) { return st.dias[dia] || null; }

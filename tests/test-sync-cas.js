@@ -60,6 +60,20 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   const x=await setup({rows:[dataRow(initial())]});await x.start();const r=await x.ctx.MTStore.publicaAppsSeguros([{token:'token-ficticio',academia_id:'academy-a',dados:{dados:{a:{id:'aluno-ficticio'}}}}]);
   assert.ok(!r.error);const pub=x.calls.find(c=>c.table==='app_aluno'&&c.rows);assert.equal(pub.rows[0].dados.sourceUpdatedAt,A);
  });
+
+ await test('cliente público bloqueia publicação que contornaria a barreira',async()=>{
+  const x=await setup({rows:[dataRow(initial())]});await x.start();
+  const cloud=x.ctx.MTStore.cloud();assert.ok(cloud&&cloud.client);
+  const r=await cloud.client.from('app_aluno').upsert([{token:'token-proxy',academia_id:'academy-a',dados:{}}]);
+  assert.ok(!r.error);const pub=x.calls.find(c=>c.table==='app_aluno'&&c.rows&&c.rows.some(y=>y.token==='token-proxy'));
+  assert.equal(pub.rows[0].dados.sourceUpdatedAt,A);
+ });
+ await test('mustWrite interrompe o fluxo quando uma gravação é recusada',async()=>{
+  const x=await setup({rows:[dataRow(initial())]});await x.start();
+  const antigo=x.ctx.MTStore.read('ptStudio'),novo=x.ctx.MTStore.read('ptStudio');novo.nota='mais novo';x.ctx.MTStore.write('ptStudio',novo);antigo.nota='stale';
+  assert.throws(()=>x.ctx.MTStore.mustWrite('ptStudio',antigo),e=>e&&e.name==='MTWriteError'&&e.mtWrite===true);
+  assert.match(x.memory.get(K),/mais novo/);
+ });
  await test('conflito impede publicar o pacote antigo do aluno',async()=>{
   const x=await setup({rows:[dataRow(initial())],local:{[K]:{alunos:[{id:'antigo'}]},'mtsync:ts':{[K]:'2026-09-06T15:00:00.000Z'}}});await x.start();
   const r=await x.ctx.MTStore.publicaAppsSeguros([{dados:{}}]);assert.ok(r.error);assert.ok(!x.calls.some(c=>c.table==='app_aluno'));

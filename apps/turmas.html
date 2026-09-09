@@ -86,7 +86,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("turmas", { turmas: [], chamadas: {} }); }
-  function save(st) { S.write("turmas", st); render(); }
+  function save(st) { S.mustWrite("turmas", st); render(); }
 
   var editId = null;
   var hoje = S.todayISO();

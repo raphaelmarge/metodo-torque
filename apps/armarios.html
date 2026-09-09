@@ -94,7 +94,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("armarios", { total: 20, valorPadrao: 25, locacoes: [] }); }
-  function save(st) { S.write("armarios", st); render(); }
+  function save(st) { S.mustWrite("armarios", st); render(); }
 
   function fimDe(l) {
     var d = new Date(l.inicio + "T12:00");

@@ -118,7 +118,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("descontos", { itens: [] }); }
-  function save(st) { S.write("descontos", st); render(); }
+  function save(st) { S.mustWrite("descontos", st); render(); }
 
   function valorFmt(d) { return d.tipo === "pct" ? (+d.valor || 0) + " %" : brl(+d.valor || 0); }
 

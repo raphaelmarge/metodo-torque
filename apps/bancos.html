@@ -104,7 +104,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { var st = S.read("bancos", { contas: [], transferencias: [] }); st.transferencias = st.transferencias || []; return st; }
-  function save(st) { S.write("bancos", st); render(); }
+  function save(st) { S.mustWrite("bancos", st); render(); }
 
   function render() {
     var st = load();

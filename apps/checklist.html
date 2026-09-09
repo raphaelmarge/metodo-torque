@@ -138,7 +138,7 @@
     }
     return st;
   }
-  function save(st) { S.write("checklist", st); render(); }
+  function save(st) { S.mustWrite("checklist", st); render(); }
 
   var diaSel = S.todayISO();
 

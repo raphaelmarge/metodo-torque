@@ -92,7 +92,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("nps", { respostas: [] }); }
-  function save(st) { S.write("nps", st); render(); }
+  function save(st) { S.mustWrite("nps", st); render(); }
 
   var mes = S.monthKey(new Date());
   var filtro = "";

@@ -106,7 +106,7 @@
 
   // estado: { chamados: [{id, cat, prio, titulo, local, desc, status, criado, agendado, fotos:[], hist:[{data,txt}]}] }
   function load() { return S.read("manut", { chamados: [] }); }
-  function save(st) { S.write("manut", st); render(); }
+  function save(st) { S.mustWrite("manut", st); render(); }
 
   var CAT = { aparelho: "🏋 Aparelho", predial: "🏢 Predial", limpeza: "🧽 Limpeza" };
   var PRIO = { alta: ["ALTA", "erro"], media: ["MÉDIA", "alerta"], baixa: ["BAIXA", "neutro"] };

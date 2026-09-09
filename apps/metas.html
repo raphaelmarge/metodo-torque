@@ -138,7 +138,7 @@
   function load() {
     return S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
   }
-  function save(st) { S.write("metas", st); render(); }
+  function save(st) { S.mustWrite("metas", st); render(); }
 
   var mesAtual = S.monthKey();
 

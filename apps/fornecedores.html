@@ -83,7 +83,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("fornecedores", { lista: [] }); }
-  function save(st) { S.write("fornecedores", st); render(); }
+  function save(st) { S.mustWrite("fornecedores", st); render(); }
   function norm(s) { return String(s || "").trim().toLowerCase(); }
 
   // gasto por fornecedor a partir das Contas a Pagar (12 meses e mês atual)

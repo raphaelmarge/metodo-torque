@@ -90,7 +90,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("vouchers", { cupons: [] }); }
-  function save(st) { S.write("vouchers", st); render(); }
+  function save(st) { S.mustWrite("vouchers", st); render(); }
 
   var busca = "";
   function statusDe(c) {
