@@ -7531,11 +7531,14 @@ async function novaExecucaoAluno(p) {
     const pub = await p.evaluate(async () => {
       window.__cloudOrigQ = window.MTStore.cloud;
       let upsertRow = null;
-      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+      const nuvem = window.mockNuvem({ aid: "acad-1", // v756
         onEscreve: (e) => { if (e.acao === "upsert") upsertRow = { tb: e.tabela, row: e.corpo[0] }; },
       });
+      window.MTStore.cloud = () => nuvem;
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       document.getElementById("qeGerar").click();
       await new Promise((res) => setTimeout(res, 300));
+      restauraPublicacao();
       window.MTStore.cloud = window.__cloudOrigQ;
       return {
         tb: upsertRow && upsertRow.tb,
@@ -7622,11 +7625,14 @@ async function novaExecucaoAluno(p) {
       document.getElementById("qeSemanal").checked = true;
       let upsert = null;
       window.__cloudOrigQA = window.MTStore.cloud;
-      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-1", // v756
+      const nuvem = window.mockNuvem({ aid: "acad-1", // v756
         onEscreve: (e) => { if (e.acao === "upsert") upsert = { tb: e.tabela, row: e.corpo[0] }; },
       });
+      window.MTStore.cloud = () => nuvem;
+      const restauraPublicacao = window.mockPublicacaoCas(nuvem);
       document.getElementById("qeApp").click();
       await new Promise((res) => setTimeout(res, 300));
+      restauraPublicacao();
       window.MTStore.cloud = window.__cloudOrigQA;
       const st = window.MTStore.read("ptStudio", {});
       const a = st.alunos.find((x) => x.id === sel.value);

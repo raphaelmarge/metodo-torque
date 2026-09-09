@@ -33,7 +33,13 @@ async function inspectScreen(page, imageId, closeButton = false) {
 }
 
 async function mobileCtaState(page, visible) {
-  await page.waitForFunction(visible => document.getElementById('mobileCta').getAttribute('aria-hidden') === String(!visible), visible);
+  await page.waitForFunction(visible => {
+    const cta = document.getElementById('mobileCta');
+    const links = Array.from(cta.querySelectorAll('a'));
+    return cta.getAttribute('aria-hidden') === String(!visible) &&
+      cta.inert === !visible && links.length > 0 &&
+      links.every(link => link.getAttribute('tabindex') === (visible ? '0' : '-1'));
+  }, visible);
   assert.equal(await page.locator('#mobileCta').evaluate(el => el.inert), !visible);
   assert(await page.locator('#mobileCta a').evaluateAll((links, visible) => links.length > 0 && links.every(link => link.getAttribute('tabindex') === (visible ? '0' : '-1')), visible));
 }
