@@ -138,6 +138,32 @@ async function novaExecucaoAluno(p) {
   p.on("dialog", (d) => d.accept());
   await p.goto(BASE + "/personal.html");
   await p.waitForFunction(() => window.__ptStudio);
+  /* Os cenários funcionais abaixo trocam S.cloud por um cliente fictício, mas
+   * a publicação CAS real usa o cliente privado do motor de sync. Esta ponte
+   * mantém o contrato seguro (preparo + app_aluno_publica_cas) no mock; as
+   * recusas por revisão/concorrência do motor real ficam em test-sync-cas. */
+  await p.evaluate(() => {
+    window.__mockPublicacaoCas = function (nuvem) {
+      const S = window.MTStore;
+      const preparaOrig = S.preparaAppsSeguros, publicaOrig = S.publicaAppsSeguros;
+      const revisao = "2099-01-01T00:00:00.000Z";
+      const preparaMock = () => Promise.resolve({ raw: localStorage.getItem("mtapp:ptStudio"), revisao, ciclo: 1 });
+      const publicaMock = (linhas) => {
+        const seguras = linhas.map((linha) => Object.assign({}, linha, {
+          dados: Object.assign({}, linha.dados, { sourceUpdatedAt: revisao }),
+        }));
+        return nuvem.client.rpc("app_aluno_publica_cas", {
+          p_academia: nuvem.aid, p_source_atualizado: revisao, p_linhas: seguras,
+        });
+      };
+      S.preparaAppsSeguros = preparaMock;
+      S.publicaAppsSeguros = publicaMock;
+      return function () {
+        if (S.preparaAppsSeguros === preparaMock) S.preparaAppsSeguros = preparaOrig;
+        if (S.publicaAppsSeguros === publicaMock) S.publicaAppsSeguros = publicaOrig;
+      };
+    };
+  });
 
   // onboarding do módulo
   const obVisivel = await p.evaluate(() => !document.getElementById("boasVindas").hidden);
@@ -6697,11 +6723,20 @@ async function novaExecucaoAluno(p) {
       window.__cloudOrig = window.MTStore.cloud;
       window.__fetchOrig = window.fetch;
       const chamadas = { upsert: 0, rpc: null, email: null };
-      window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-teste", // v756
+      const nuvem = window.mockNuvem({ aid: "acad-teste", // v756
         onEscreve: (e) => { if (e.acao === "upsert") chamadas.upsert++; },
-        rpc: (fn, args) => { chamadas.rpc = { fn, login: args.p_login, temSenha: (args.p_senha || "").length >= 8 }; return Promise.resolve({ data: { ok: true, login: args.p_login } }); },
+        rpc: (fn, args) => {
+          if (fn === "app_aluno_publica_cas") {
+            chamadas.upsert += (args.p_linhas || []).length;
+            return Promise.resolve({ data: { ok: true, publicados: (args.p_linhas || []).length }, error: null });
+          }
+          chamadas.rpc = { fn, login: args.p_login, temSenha: (args.p_senha || "").length >= 8 };
+          return Promise.resolve({ data: { ok: true, login: args.p_login } });
+        },
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-teste" } } }) },
       });
+      window.MTStore.cloud = () => nuvem;
+      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/envia-email")) {
           chamadas.email = JSON.parse(opts.body);
@@ -6720,6 +6755,7 @@ async function novaExecucaoAluno(p) {
       };
       const r2 = await new Promise((res) => window.__acessoAluno.cria(st.alunos[0].id, res));
       window.fetch = window.__fetchOrig;
+      restauraPublicacao();
       window.MTStore.cloud = window.__cloudOrig;
       return { senha, chamadas, r, r2 };
     });
@@ -6745,10 +6781,12 @@ async function novaExecucaoAluno(p) {
       const S = window.MTStore, st = S.read("ptStudio", {});
       window.__cloudOrig = window.__cloudOrig || S.cloud;
       // v756: mockNuvem — o perfil faz vários selects em tabelas diferentes
-      S.cloud = () => window.mockNuvem({ aid: "a1",
+      const nuvem = window.mockNuvem({ aid: "a1",
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
         rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
       });
+      S.cloud = () => nuvem;
+      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
       window.__fetchOrig = window.__fetchOrig || window.fetch;
       window.fetch = (u, o) => String(u).includes("functions/v1/envia-email")
         ? Promise.resolve({ status: 200, json: () => Promise.resolve({ ok: true }) })
@@ -6762,6 +6800,7 @@ async function novaExecucaoAluno(p) {
       const out = { caixaVisivel: box.offsetParent !== null, temRecado: /Acesso enviado|Acesso criado/.test(box.innerText),
         naStatus: !!document.getElementById("naAcessoStatus") };
       window.fetch = window.__fetchOrig;
+      restauraPublicacao();
       S.cloud = window.__cloudOrig;
       return out;
     });
@@ -6779,12 +6818,14 @@ async function novaExecucaoAluno(p) {
       S.write("ptStudio", st);
       let publicado = null;
       window.__cloudOrig = window.__cloudOrig || S.cloud;
-      S.cloud = () => window.mockNuvem({ aid: "a1", // v756
+      const nuvem = window.mockNuvem({ aid: "a1", // v756
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
-        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
         onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") publicado = e.corpo; },
       });
+      S.cloud = () => nuvem;
+      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
       const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
+      restauraPublicacao();
       S.cloud = window.__cloudOrig;
       return { r: r, token: publicado && publicado[0].token, temDados: !!(publicado && publicado[0].dados.dados && publicado[0].dados.ver), semHtml: !!(publicado && publicado[0].dados.html === ""),
         pubEm: !!(S.read("ptStudio", {}).alunos.find((x) => x.id === a.id) || {}).appPubEm,
@@ -7050,12 +7091,13 @@ async function novaExecucaoAluno(p) {
       S.write("ptStudio", st);
       let subiu = [], tocouPush = false;
       window.__cloudOrig3 = S.cloud;
-      S.cloud = () => window.mockNuvem({ aid: "a", // v756
+      const nuvem = window.mockNuvem({ aid: "a", // v756
         auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
-        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
         onFrom: (t) => { if (t === "push_subs") tocouPush = true; },
         onEscreve: (e) => { if (e.acao === "upsert" && e.tabela === "app_aluno") subiu = subiu.concat(e.corpo); },
       });
+      S.cloud = () => nuvem;
+      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
       window.__appsPendentes.auto(true);   // força: o painel já pode ter rodado a automática antes
       await new Promise((r) => setTimeout(r, 1200));
       const st2 = S.read("ptStudio", {});
@@ -7063,6 +7105,7 @@ async function novaExecucaoAluno(p) {
         pendentes: st2.alunos.filter((a) => window.__appsPendentes.pendente(st2, a)).length };
       st2.alunos = st2.alunos.filter((a) => a.id !== "auto1" && a.id !== "auto2");
       S.write("ptStudio", st2);
+      restauraPublicacao();
       S.cloud = window.__cloudOrig3;
       return fim;
     });
@@ -7315,11 +7358,13 @@ async function novaExecucaoAluno(p) {
       }));
       let upserts = 0;
       // v756: mockNuvem — a conferência pede só token + ver, nunca o HTML de 200 KB
-      S.cloud = () => window.mockNuvem({ aid: "x",
+      const nuvem = window.mockNuvem({ aid: "x",
         auth: { getSession: () => Promise.resolve({ data: {} }) },
         tabelas: (q) => (/token/.test(q.colunas) && /ver/.test(q.colunas) ? [{ token: "tok-cong", ver: null }] : []),
         onEscreve: (e) => { if (e.acao === "upsert") upserts += (e.corpo || []).length; },
       });
+      S.cloud = () => nuvem;
+      const restauraPublicacao = window.__mockPublicacaoCas(nuvem);
       window.__congelados.checa();
       await new Promise((r) => setTimeout(r, 250));
       const box = document.getElementById("avisoCongelados");
@@ -7327,6 +7372,7 @@ async function novaExecucaoAluno(p) {
       document.getElementById("btnDescongela").click();
       await new Promise((r) => setTimeout(r, 500));
       const sumiu = box.hidden;
+      restauraPublicacao();
       S.cloud = orig;
       S.write("ptStudio", JSON.parse(guarda)); // devolve o studio dos outros testes
       return { visivel: antes.visivel, texto: antes.texto, upserts, sumiu };
@@ -7483,6 +7529,7 @@ async function novaExecucaoAluno(p) {
   await p.fill("#qpTitulo", "Motivação");
   await p.fill("#qpTexto", "Qual foi sua motivação pra treinar nos últimos 7 dias?");
   await p.click("#qpAdd");
+  await p.waitForFunction(() => !document.getElementById("qpNovoBox").open);
   await abreDetalhes(p, "#qpSigla");
   await p.fill("#qpSigla", "AEROB");
   await p.fill("#qpTitulo", "Aeróbico");
