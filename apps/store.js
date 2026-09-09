@@ -100,6 +100,21 @@
       return n > 0 && (l === 0 || n > l * 1.5 + 3);
     });
   }
+  /* O boot do Personal cria um esqueleto antes do login e pode semear apenas o
+   * catálogo de exercícios. Isso não é trabalho do professor. Qualquer outra
+   * lista preenchida, mapa preenchido ou campo de domínio já torna a cópia um
+   * estado real e a reconciliação CAS deve pedir resolução de conflito. */
+  function seedInicialVazio(v) {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+    return Object.keys(v).every(function (k) {
+      var x = v[k];
+      if (k === 'exercicios') return Array.isArray(x);
+      if (k === 'config' || k.charAt(0) === '_') return true;
+      if (Array.isArray(x)) return x.length === 0;
+      if (x && typeof x === 'object') return Object.keys(x).length === 0;
+      return x == null || x === '' || x === false || x === 0;
+    });
+  }
   window.__nuvemTemMais = nuvemTemMais; window.__sincronizavel = sincronizavel; // testes
   /* v747: quantos registros cada chave tinha na ÚLTIMA gravação/aplicação —
    * o logGeral precisa do "antes" pra dizer "incluído (3 → 4)", e até aqui o
@@ -647,7 +662,7 @@
       r.data.forEach(function (row) {
         if (row.atualizado > maxTs) maxTs = row.atualizado;
         if (!sincronizavel(row.chave)) return;
-        if (chaveProtegida(row.chave)) { if (recebeProtegida(row) === false) pulouOcupada = true; return; }
+        if (chaveProtegida(row.chave)) { if (recebeProtegida(row, primeira) === false) pulouOcupada = true; return; }
         /* v745: escrita local ainda NA FILA (ainda não subiu) nunca é coberta
          * pela nuvem. O servidor carimba o upsert na CHEGADA, então o eco do
          * envio anterior volta "mais novo" que uma escrita feita logo depois —
@@ -817,7 +832,7 @@
       delete sync.sujas[k]; delete sync.conflitos[k]; avisaStatus(); return true;
     }, function () { return false; });
   }
-  function recebeProtegida(row) {
+  function recebeProtegida(row, primeira) {
     var k = row.chave, raw = localStorage.getItem(k), igual = raw === JSON.stringify(row.valor);
     if ((sync.emEnvio || []).indexOf(k) >= 0) return false; // confirmação atualizará a base; não reaplica eco em voo
     if (sync.conflitos && sync.conflitos[k]) return;
@@ -826,6 +841,23 @@
     if (!b && carimboDaNuvem(ts)) { try { guardaBase(k, ts); b = ts; } catch (e) {} }
     var editado = !!sync.sujas[k] || !!(raw && (!ts || !carimboDaNuvem(ts)));
     if (igual) {
+      if (aplicaProtegida(row)) delete sync.sujas[k];
+      return;
+    }
+    /* Aparelho recém-instalado pode ter um seed local vazio, carimbado pelo
+     * próprio boot, mas nenhuma revisão que prove uma leitura da nuvem. Nesse
+     * caso a regra anti-apagão continua valendo também para a chave CAS: se a
+     * primeira puxada tem listas claramente maiores, ela vence, o seed fica em
+     * backup e a revisão remota passa a ser a base comprovada. Uma cópia local
+     * com conteúdo semelhante continua no caminho de conflito logo abaixo. */
+    var nuvemMaior = false;
+    if (primeira && !b && raw) {
+      var localVal = null;
+      try { localVal = JSON.parse(raw); } catch (e) {}
+      nuvemMaior = seedInicialVazio(localVal) && nuvemTemMais(localVal, row.valor);
+    }
+    if (nuvemMaior) {
+      try { localStorage.setItem('mtsync:bak:' + k, JSON.stringify({ em: new Date().toISOString(), valor: JSON.parse(raw) })); } catch (eB) {}
       if (aplicaProtegida(row)) delete sync.sujas[k];
       return;
     }
