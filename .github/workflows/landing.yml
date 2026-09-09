@@ -24,6 +24,7 @@ jobs:
       - name: Preparar navegador
         run: |
           npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
           npx playwright install --with-deps chromium
       - name: Conferir a landing em seis larguras
         run: |

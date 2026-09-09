@@ -19,6 +19,7 @@ jobs:
         run: |
           npm init -y >/dev/null
           npm i playwright@1 >/dev/null
+          bash .github/scripts/prepara-playwright-ci.sh
           npx playwright install --with-deps chromium
           # Mesmos caminhos das suítes locais e do workflow testes.yml.
           sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
