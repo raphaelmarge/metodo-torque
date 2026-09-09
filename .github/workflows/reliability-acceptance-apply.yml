@@ -1,0 +1,101 @@
+name: Atualizar aceitação mt-v807
+on:
+  push:
+    branches: [reliability/mt-v807]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ contains(github.event.head_commit.message, '[v807-acceptance]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Atualizar somente os testes do contrato CAS, sem retirar a proteção
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def replace(path,old,new):
+              p=Path(path);t=p.read_text();assert t.count(old)==1,(path,t.count(old));p.write_text(t.replace(old,new,1))
+          replace('tests/test-personal.js', '''      window.MTStore.iniciaSync();
+                await new Promise((res) => setTimeout(res, 2000));
+                return {
+                  alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
+                  subiuVazio: upserts.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+                };
+              });
+              ok(guarda.alunos === 3, "1º sync num aparelho vazio: a base da nuvem vence (3 alunos aplicados)");
+              ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");'''.replace('\n          ','\n'), '''      window.__syncPrimeiroUpserts = upserts;
+                window.MTStore.iniciaSync();
+                await new Promise((res) => setTimeout(res, 2000));
+                return {
+                  alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
+                  conflito: !!window.__MTSync._estado.conflitos["mtapp:ptStudio"],
+                  copia: Object.keys(localStorage).some(k => k.startsWith("mtsync:conflito:acad-1:")),
+                  subiuVazio: upserts.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+                };
+              });
+              // O onboarding já GRAVOU uma biblioteca local sem revisão da nuvem.
+              // CAS não infere que ela seja descartável pela quantidade de alunos:
+              // preserva a cópia e pede a mesma confirmação de qualquer rascunho legado.
+              ok(guarda.alunos === 0 && guarda.conflito && guarda.copia,
+                "1º sync com semente local sem revisão preserva cópia e pede confirmação");
+              ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
+              await pS.locator('#mtSyncConflito').getByRole('button', { name: 'Carregar versão da nuvem', exact: true }).click();
+              await pS.waitForFunction(() => (JSON.parse(localStorage.getItem('mtapp:ptStudio')).alunos || []).length === 3);
+              const recuperado = await pS.evaluate(() => ({
+                alunos: JSON.parse(localStorage.getItem('mtapp:ptStudio')).alunos.length,
+                conflito: !!window.__MTSync._estado.conflitos['mtapp:ptStudio'],
+                base: window.__MTSync.baseDe('mtapp:ptStudio'),
+                copia: Object.keys(localStorage).some(k => k.startsWith('mtsync:conflito:acad-1:')),
+                subiuVazio: window.__syncPrimeiroUpserts.some(l => l.chave === 'mtapp:ptStudio' && !(l.valor && (l.valor.alunos || []).length)),
+              }));
+              ok(recuperado.alunos === 3 && !recuperado.conflito && recuperado.base === '2099-01-01T00:00:00.000Z',
+                "Carregar versão da nuvem recupera os 3 alunos e a revisão confirmada");
+              ok(recuperado.copia && !recuperado.subiuVazio,
+                "recuperar o aparelho mantém backup local e nunca publica o estado vazio");'''.replace('\n          ','\n'))
+          replace('tests/test-revogacao.js','      const puladas = [];','      const puladas = [], gatilhos = [];')
+          replace('tests/test-revogacao.js','        if (!/^app_aluno_/.test(nome)) return;', '''        if (!/^app_aluno_/.test(nome)) return;
+                  // RETURNS trigger não é RPC: a proteção é não oferecer EXECUTE direto.
+                  const definicao = bloco.split("$$;")[0];
+                  if (/returns\\s+trigger\\b/i.test(definicao)) { gatilhos.push(nome); return; }'''.replace('\n          ','\n'))
+          replace('tests/test-revogacao.js','      // piso: se o formato do SQL mudar','''      t(gatilhos.length >= 2 && gatilhos.every(nome =>
+                  sql.toLowerCase().includes('revoke execute on function public.' + nome.toLowerCase() + '() from public, anon, authenticated;')),
+                  "gatilhos internos do app não são RPCs e não permitem EXECUTE público");
+                // piso: se o formato do SQL mudar'''.replace('\n          ','\n'))
+          replace('tests/test-sync-cas.js'," console.log(passed+' cenários de concorrência passaram.');",''' await test('instalação sem cópia local recebe automaticamente a revisão da nuvem',async()=>{
+            const x=await setup({rows:[dataRow(initial())]});await x.start();
+            assert.deepEqual(JSON.parse(x.memory.get(K)),initial());assert.equal(x.ctx.__MTSync.baseDe(K),A);
+            assert.ok(!x.ctx.__MTSync._estado.conflitos?.[K]);assert.ok(!x.calls.some(c=>c.rows&&c.table==='dados'));
+           });
+           await test('semente local sem revisão não ganha autoridade por estar vazia',async()=>{
+            const seed={alunos:[],config:{},exercicios:[{id:'semente-ficticia',nome:'Exemplo'}]};
+            const x=await setup({rows:[dataRow(initial())],local:{[K]:seed,'mtsync:ts':{[K]:'2099-12-31T00:00:00.000Z'}}});await x.start();
+            assert.deepEqual(JSON.parse(x.memory.get(K)),seed);assert.ok(x.ctx.__MTSync._estado.conflitos[K]);
+            assert.ok(!x.calls.some(c=>c.rows&&c.table==='dados'));
+            assert.equal(await x.ctx.__MTSync.resolveConflito(K),true);assert.deepEqual(JSON.parse(x.memory.get(K)),initial());
+            assert.ok([...x.memory.values()].some(v=>v.includes('semente-ficticia')));assert.equal(x.ctx.__MTSync.baseDe(K),A);
+           });
+           console.log(passed+' cenários de concorrência passaram.');'''.replace('\n          ','\n'))
+          PY
+      - name: Validar contratos preservados
+        run: |
+          node tests/test-sync-cas.js
+          node tests/test-sync-identidade.js
+          node tests/test-sync-cas-sql.js
+          node --check tests/test-personal.js
+          node --check tests/test-revogacao.js
+          git diff --check
+      - name: Gravar somente a revisão de testes na branch
+        run: |
+          rm .github/workflows/reliability-acceptance-apply.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test-personal.js tests/test-revogacao.js tests/test-sync-cas.js .github/workflows/reliability-acceptance-apply.yml
+          git commit -m 'test: valida recuperação explícita e separa RPCs de gatilhos [v807-applied]'
+          git push origin HEAD:reliability/mt-v807
