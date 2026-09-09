@@ -29,6 +29,12 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - Novos testes: core, Personal, aluno e SQL/feedback. Antes de `tests/run.sh`, instalar o runtime SQL com `npm ci --prefix tests/runtime --ignore-scripts`; PGlite 0.5.8 e lock fixos, sem conexão de teste com produção.
 - Contrato detalhado e limites em `design/NUTRICAO-V814-CONTRATO.md`. Preservar dados antigos e a identidade Torque One.
 
+## v815 — Nutrição no dashboard do Personal
+
+- O Início inclui um resumo compacto com planos vigentes e alunos com/sem registros nos últimos sete dias. Os indicadores abrem a Nutrição no filtro correspondente; dados não consultados permanecem desconhecidos.
+- O resumo consulta apenas contagens, sem baixar fotos ou históricos inteiros. RPC `personal_nutricao_resumo` somente para profissional autenticado com vínculo na academia, por lotes de tokens. Cache em memória por conta, token e data, atualização manual e prazo de cinco minutos.
+- Demos continuam simulados; três planos ilustram registros recentes e ausência de registros no período. Preserva dashboard, abas, treinos e alimentação existentes.
+
 ## v811 — Entrada opcional da consultoria
 
 - Questionários → Criar e organizar configura perguntas existentes, contrato padrão editável e aceite eletrônico ou assinatura desenhada. O cadastro e App e acesso permitem exigir ou dispensar cada aluno.

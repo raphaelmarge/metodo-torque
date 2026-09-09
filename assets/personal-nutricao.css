@@ -1,4 +1,28 @@
-/* Apenas as novas áreas de Nutrição; usa os tokens e botões atuais do Personal. */
+/* Nutrição integrada; usa os tokens e botões atuais do Personal. */
+/* Visão compacta no Início: uma seção, sem cartões dentro de cartões. */
+#vDash #dashNutricao { min-width: 0; padding: 20px 0; margin: 0; border: 0; border-top: 1px solid var(--pt-borda); border-radius: 0; background: transparent; box-shadow: none; color: var(--pt-txt); }
+#dashNutricao:empty { display: none; }
+#dashNutricao .dn-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 14px; }
+#dashNutricao .dn-head h2 { margin: 0; padding: 0; font-size: 19px; font-weight: 600; letter-spacing: -.025em; color: var(--pt-ok); }
+#dashNutricao .dn-period { color: var(--pt-txt-3); font-size: 12px; line-height: 1.4; }
+#dashNutricao .dn-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 16px; }
+#dashNutricao .dn-metric { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 7px; box-sizing: border-box; min-width: 0; min-height: 84px; padding: 8px 16px; border: 0; border-inline-start: 1px solid var(--pt-borda); border-radius: 0; background: transparent; color: var(--pt-txt); text-align: left; font: inherit; cursor: pointer; }
+#dashNutricao .dn-metric:first-child { padding-inline-start: 0; border-inline-start: 0; }
+#dashNutricao .dn-metric:disabled { cursor: default; opacity: 1; }
+#dashNutricao .dn-metric:not(:disabled):hover .dn-label { color: var(--pt-ok); text-decoration: underline; text-underline-offset: 3px; }
+#dashNutricao .dn-value { font-size: 28px; font-weight: 650; line-height: 1.05; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+#dashNutricao .dn-label { font-size: 13px; line-height: 1.35; color: var(--pt-txt-3); overflow-wrap: anywhere; }
+#dashNutricao .dn-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; }
+#vDash #dashNutricao .dn-actions .btn { min-height: 44px; max-width: 100%; font-size: 13px; background: var(--pt-caixa); color: var(--pt-txt); border: 1px solid var(--pt-borda); }
+#dashNutricao .dn-note { margin: 10px 0 0; color: var(--pt-txt-3); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+#dashNutricao .dn-note:empty { display: none; }
+#dashNutricao :is(button,a):focus-visible { outline: 2px solid var(--pt-roxo); outline-offset: 3px; }
+@media (max-width: 400px) {
+  #vDash #dashNutricao { padding: 18px 0; }
+  #dashNutricao .dn-metric { padding: 8px 10px; }
+  #dashNutricao .dn-label { font-size: 12px; }
+  #dashNutricao .dn-value { font-size: 25px; }
+}
 #vNutricao, #pfNutricao, #pnFoodDialog { min-width: 0; color: var(--tk-tx); }
 #vNutricao [hidden], #pnFoodDialog [hidden] { display: none !important; }
 #vNutricao { padding-bottom: 24px; }
