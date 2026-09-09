@@ -6327,7 +6327,10 @@ async function novaExecucaoAluno(p) {
       const Sy = window.__MTSync, st = Sy._estado, out = {};
       const cliOrig = st.client, sujOrig = st.sujas, recOrig = st.reconciliou;
       let upserts = 0;
-      st.client = { from: () => ({ upsert: () => { upserts++; return Promise.resolve({ error: null }); } }) };
+      st.client = { rpc: (nome, args) => {
+        upserts++;
+        return Promise.resolve({ data: [{ chave: args.p_chave, atualizado: "2099-01-01T00:00:00Z" }], error: null });
+      } };
       st.sujas = { "mtapp:ptStudio": true };
       // ANTES da primeira puxada: o envio tem que segurar a fila, sem upsert
       st.reconciliou = false;

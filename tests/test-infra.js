@@ -355,24 +355,27 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
     const S = window.MTStore, sync = window.__MTSync._estado;
     S.write("env", { b: 1 });
     const stamp = "2099-03-01T00:00:00.000000+00:00";
-    let pediuSelect = false;
-    sync.client = { from: () => ({ upsert: () => ({ select: () => { pediuSelect = true; return Promise.resolve({ data: [{ chave: "mtapp:env", atualizado: stamp }], error: null }); } }) }) };
+    let pediuRpc = false;
+    sync.client = { rpc: (nome, args) => {
+      pediuRpc = nome === "dados_grava" && args.p_linhas[0].chave === "mtapp:env";
+      return Promise.resolve({ data: [{ chave: "mtapp:env", atualizado: stamp }], error: null });
+    } };
     sync.aid = "acad-t"; sync.reconciliou = true;
     sync.sujas = { "mtapp:env": true };
     window.__MTSync.enviaSujas();
     await new Promise((r) => setTimeout(r, 50));
     const ts = JSON.parse(localStorage.getItem("mtsync:ts"))["mtapp:env"];
-    // mock antigo, sem .select: continua funcionando (só a promessa)
+    // a RPC pode devolver só a promessa, como o cliente Supabase real
     let semSelectOk = false;
-    sync.client = { from: () => ({ upsert: () => Promise.resolve({ error: null }) }) };
+    sync.client = { rpc: () => Promise.resolve({ data: [], error: null }) };
     sync.sujas = { "mtapp:env": true };
     try { window.__MTSync.enviaSujas(); semSelectOk = true; } catch (e) {}
     await new Promise((r) => setTimeout(r, 30));
     sync.client = null;
-    return { pediuSelect, ts, semSelectOk, stamp };
+    return { pediuRpc, ts, semSelectOk, stamp };
   });
-  t(r5.pediuSelect && r5.ts === r5.stamp, "enviaSujas guarda o carimbo do SERVIDOR — o eco do próprio envio compara igual na puxada seguinte");
-  t(r5.semSelectOk, "cliente sem .select (mocks antigos) continua aceito");
+  t(r5.pediuRpc && r5.ts === r5.stamp, "enviaSujas guarda o carimbo do SERVIDOR — o eco do próprio envio compara igual na puxada seguinte");
+  t(r5.semSelectOk, "cliente RPC que devolve só a promessa continua aceito");
 
   // contagem em memória: o logGeral continua contando certo sem re-parsear
   const r6 = await p.evaluate(() => {

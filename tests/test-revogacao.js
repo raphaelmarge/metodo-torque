@@ -177,10 +177,12 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
      * ENUMERA as funções do aluno e cobra o porteiro em cada uma. */
     {
       // lista FECHADA de dispensas: o porteiro em pessoa, a função que PRECISA
-      // responder pra aluno cortado ("seu acesso acabou"), o gatilho de histórico
-      // (não tem token) e a faxina de revogação (recebe token[]). Qualquer outra
-      // RPC do aluno tem que ter o porteiro — e escape silencioso não vale.
-      const dispensadas = ["app_aluno_ativo", "app_aluno_estado", "app_aluno_guarda_hist", "app_aluno_faxina"];
+      // responder pra aluno cortado ("seu acesso acabou"), os gatilhos (não têm
+      // token), a faxina (recebe token[]) e as portas de publicação do profissional
+      // (authenticated + RLS, cobertas por test-sync-cas). Qualquer outra RPC
+      // chamada pelo aluno tem que ter o porteiro — e escape silencioso não vale.
+      const dispensadas = ["app_aluno_ativo", "app_aluno_estado", "app_aluno_guarda_hist", "app_aluno_faxina",
+        "app_aluno_publica_cas", "app_aluno_publica", "app_aluno_exige_rpc"];
       const corpos = sql.split(/create or replace function public\./).slice(1);
       const semGuarda = [];
       let varridas = 0;

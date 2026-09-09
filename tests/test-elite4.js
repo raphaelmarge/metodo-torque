@@ -282,9 +282,9 @@ function ok(cond, nome) {
   ok(copiaEsc === false, "botão copiar aparece junto com o link");
   // erro da nuvem → status honesto de falha
   pubOk = await p.evaluate(() => {
-    // v756: mockNuvem — a tabela devolve ERRO, que é o que este bloco mede
+    // a publicação segura passa por RPC; devolve o erro dessa porta
     window.MTStore.cloud = () => window.mockNuvem({ aid: "acad-teste",
-      tabelas: () => ({ data: null, error: { message: "permission denied" } }) });
+      rpc: () => Promise.resolve({ data: null, error: { message: "permission denied" } }) });
     return window.__appPub(false);
   });
   ok(pubOk === false, "erro da nuvem devolve falso");
