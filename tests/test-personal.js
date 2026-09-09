@@ -6594,13 +6594,19 @@ async function novaExecucaoAluno(p) {
       const st = window.MTStore.read("ptStudio", {});
       const al = st.alunos[0];
       const orig = self.MT_APP_ALUNO.monta;
+      const origPrepara = window.MTStore.preparaAppsSeguros;
+      const origPublica = window.MTStore.publicaAppsSeguros;
       self.MT_APP_ALUNO.monta = () => { throw new Error("boom de teste"); };
+      window.MTStore.preparaAppsSeguros = () => Promise.resolve({ raw: localStorage.getItem("mtapp:ptStudio"), revisao: "2026-01-01T00:00:00Z", ciclo: 1 });
+      window.MTStore.publicaAppsSeguros = () => { chamouUpsert = true; return Promise.resolve({}); };
       let msg = "";
       try { window.__pacoteApp(al, "2026-01-01T00:00:00Z"); } catch (e) { msg = e.message; }
       let chamouUpsert = false;
       const nuvemFalsa = { aid: "a1", client: { from: () => ({ upsert: () => { chamouUpsert = true; return Promise.resolve({}); } }) } };
       const r = await window.__publicaPacotes(nuvemFalsa, [al], "2026-01-01T00:00:00Z");
       self.MT_APP_ALUNO.monta = orig;
+      window.MTStore.preparaAppsSeguros = origPrepara;
+      window.MTStore.publicaAppsSeguros = origPublica;
       return { msg, erro: r && r.erro, chamouUpsert };
     });
     ok(/não montou/.test(fumaca.msg) && /boom de teste/.test(fumaca.msg) && /NÃO subiu/.test(fumaca.msg),
@@ -15074,13 +15080,17 @@ async function novaExecucaoAluno(p) {
         storage: { from: () => ({ upload: () => Promise.resolve({ error: null }) }) },
       } });
       window.__cloudOrigV = S.cloud;
+      window.__preparaOrigV = S.preparaAppsSeguros;
+      window.__publicaOrigV = S.publicaAppsSeguros;
+      S.preparaAppsSeguros = () => Promise.resolve({ raw: localStorage.getItem("mtapp:ptStudio"), revisao: "2026-01-01T00:00:00Z", ciclo: 1 });
+      S.publicaAppsSeguros = (linhas) => { window.__v755.upserts.push({ t: "app_aluno", l: linhas }); return Promise.resolve({ error: null }); };
     });
 
     /* 1) UM caminho pra publicar: o par upsert + carimbo estava copiado em
      *    SETE lugares e já divergia. */
     const fonteV = fs.readFileSync(require("path").join(__dirname, "..", "personal.html"), "utf8");
-    ok((fonteV.match(/from\("app_aluno"\)\.upsert/g) || []).length === 1,
-      "v755: o upsert do pacote do aluno existe UMA vez no arquivo (publicaPacotes) — antes eram sete cópias");
+    ok((fonteV.match(/from\("app_aluno"\)\.upsert/g) || []).length === 0 && /publicaAppsSeguros/.test(fonteV),
+      "v806: o personal não contorna a publicação CAS com upsert direto");
     const pub1 = await pV.evaluate(async () => {
       const S = window.MTStore;
       S.cloud = window.__cloudV755;
@@ -15530,6 +15540,10 @@ async function novaExecucaoAluno(p) {
     ok(/Mensal/.test(csv) && /200/.test(csv),
       "v755: a planilha de alunos traz o plano do contrato ativo (a coluna Plano saía vazia, lendo um campo que nada grava) — " + csv.slice(0, 60));
 
+    await pV.evaluate(() => {
+      window.MTStore.preparaAppsSeguros = window.__preparaOrigV;
+      window.MTStore.publicaAppsSeguros = window.__publicaOrigV;
+    });
     await ctxV.close();
   }
   {

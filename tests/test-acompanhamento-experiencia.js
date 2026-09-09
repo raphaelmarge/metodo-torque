@@ -74,10 +74,10 @@ const eq = (a,b,label) => { assert.deepEqual(a,b,label); checks++; console.log('
   await select('qeAluno','ac-b');eq(await p.evaluate(()=>[qeSaida.hidden,qeLink.value,qeZap.hasAttribute('href'),qeAppAviso.hidden]),[true,'',false,true],'Trocar destinatário limpa link e avisos antigos');
  for(const button of ['qeGerar','qeApp']){
   await select('qeAluno','ac-a');await select('qeQuest','ac-q1');
-  await p.evaluate(()=>{window.__acCloudBack=MTStore.cloud;const c=window.mockNuvem({aid:'ac-test'}),from=c.client.from;c.client.from=table=>{const q=from(table);if(table==='app_aluno')q.upsert=()=>new Promise(resolve=>{window.__acResolve=resolve;});return q;};window.__acResolve=null;MTStore.cloud=()=>c;});
+  await p.evaluate(()=>{window.__acCloudBack=MTStore.cloud;window.__acPreparaBack=MTStore.preparaAppsSeguros;window.__acPublicaBack=MTStore.publicaAppsSeguros;const c=window.mockNuvem({aid:'ac-test'});window.__acResolve=null;MTStore.cloud=()=>c;MTStore.preparaAppsSeguros=()=>Promise.resolve({raw:localStorage.getItem('mtapp:ptStudio'),revisao:'2026-01-01T00:00:00Z',ciclo:1});MTStore.publicaAppsSeguros=()=>new Promise(resolve=>{window.__acResolve=resolve;});});
   await p.click('#'+button);await p.waitForFunction(()=>typeof window.__acResolve==='function');
   await select('qeAluno','ac-b');
-  await p.evaluate(async()=>{window.__acResolve({data:[],error:null});await new Promise(r=>setTimeout(r,0));MTStore.cloud=window.__acCloudBack;});
+  await p.evaluate(async()=>{window.__acResolve({data:[],error:null});await new Promise(r=>setTimeout(r,0));MTStore.cloud=window.__acCloudBack;MTStore.preparaAppsSeguros=window.__acPreparaBack;MTStore.publicaAppsSeguros=window.__acPublicaBack;});
   eq(await p.evaluate(()=>[qeAluno.value,qeSaida.hidden,qeAppAviso.hidden,qeAviso.textContent]),['ac-b',true,true,''],'Retorno atrasado de '+button+' não repinta envio de outro aluno');
  }
  await area('qtArea','resp');await p.click('#qrAtualizar');await p.waitForSelector('#qRespostas [data-qr-row]');

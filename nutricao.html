@@ -3549,7 +3549,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var senha = senhaAleatoria();
     // v776: o teste de fumaça do pacoteAppN pode estourar — vira cb({erro}), não exceção solta
     var pk; try { pk = pacoteAppN(p, stamp); } catch (e) { cb({ erro: (e && e.message) || "o app não montou" }); return; }
-    nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }])
+    S.publicaApps([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }], nuvem)
       .then(function (r) {
         if (r && r.error) { cb({ erro: "Não deu pra publicar o app na nuvem: " + r.error.message }); return; }
         nuvem.client.rpc("aluno_define_login", { t: p.appTokenN, p_login: email, p_senha: senha }).then(function (r2) {
@@ -3624,7 +3624,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         return;
       }
       var pk; try { pk = pacoteAppN(p, stamp); } catch (e) { alert("O app NÃO foi publicado: " + ((e && e.message) || "o app não montou")); return; } // v776
-      nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }])
+      S.publicaApps([{ token: p.appTokenN, academia_id: nuvem.aid, dados: pk, atualizado: stamp }], nuvem)
         .then(function (r) {
           if (r.error) { alert("O app NÃO foi publicado: " + r.error.message + "\n\nO link do paciente só funciona depois de publicar com internet."); return; }
           var stM = load();
@@ -3684,7 +3684,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       });
       lote = sobem;
       if (!linhas.length) return;
-      nuvem.client.from("app_aluno").upsert(linhas).then(function (r2) {
+      S.publicaApps(linhas, nuvem).then(function (r2) {
         if (r2 && r2.error) return; // sem rede: tenta na próxima abertura do painel
         var st3 = load();
         lote.forEach(function (p) {
@@ -4047,7 +4047,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       avisoQ.textContent = "⏳ Preparando o app do paciente na nuvem…";
       var stampQ = new Date().toISOString();
       var pkQ; try { pkQ = pacoteAppN(p, stampQ); } catch (e) { avisoQ.textContent = "Não deu pra publicar o app do paciente (" + ((e && e.message) || "o app não montou") + ")."; return; } // v776
-      nuvemQ.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: pkQ, atualizado: stampQ }])
+      S.publicaApps([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: pkQ, atualizado: stampQ }], nuvemQ)
         .then(function (r) {
           if (r && r.error) { avisoQ.textContent = "Não deu pra publicar o app do paciente (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
           avisoQ.textContent = "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";

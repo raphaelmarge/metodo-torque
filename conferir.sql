@@ -62,7 +62,22 @@ with itens(ordem, item, existe, pra_que) as (
          'Central de Comando: seus clientes e mensalidades'),
     (18, 'Tabela: eventos do Pagar.me',
          to_regclass('public.pagarme_eventos') is not null,
-         'Baixa automática quando o cliente paga no cartão')
+         'Baixa automática quando o cliente paga no cartão'),
+    (19, 'Concorrência: gravação CAS do painel',
+         to_regprocedure('public.dados_cas(uuid,text,jsonb,timestamp with time zone)') is not null,
+         'Impede uma sessão antiga de sobrescrever uma revisão mais nova'),
+    (20, 'Concorrência: publicação CAS do app do aluno',
+         to_regprocedure('public.app_aluno_publica_cas(uuid,timestamp with time zone,jsonb)') is not null,
+         'Só publica pacotes construídos da revisão atual do painel'),
+    (21, 'Compatibilidade: gravação comum pela porta segura',
+         to_regprocedure('public.dados_grava(jsonb)') is not null,
+         'Mantém os outros módulos sincronizando sem liberar o caminho antigo'),
+    (22, 'Barreira: cliente antigo não grava dados direto',
+         exists (select 1 from pg_trigger where tgname = 'dados_exige_rpc_tg' and not tgisinternal),
+         'Versões anteriores à correção recebem recusa em vez de sobrescrever dados'),
+    (23, 'Barreira: cliente antigo não publica app direto',
+         exists (select 1 from pg_trigger where tgname = 'app_aluno_exige_rpc_tg' and not tgisinternal),
+         'Versões antigas não conseguem publicar um pacote desatualizado')
 )
 select
   case when existe then '✅ ok' else '❌ FALTA' end as situacao,
@@ -78,6 +93,10 @@ with tudo(existe) as (
   union all select to_regprocedure('public.criar_academia(text,text)') is not null
   union all select to_regclass('public.app_feed') is not null
   union all select to_regclass('public.academias') is not null
+  union all select to_regprocedure('public.dados_cas(uuid,text,jsonb,timestamp with time zone)') is not null
+  union all select to_regprocedure('public.app_aluno_publica_cas(uuid,timestamp with time zone,jsonb)') is not null
+  union all select exists (select 1 from pg_trigger where tgname = 'dados_exige_rpc_tg' and not tgisinternal)
+  union all select exists (select 1 from pg_trigger where tgname = 'app_aluno_exige_rpc_tg' and not tgisinternal)
 )
 select case when bool_and(existe)
   then '🎉 Instalação completa — pode seguir.'

@@ -21848,16 +21848,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * normalmente — um D ruim não pode segurar a publicação de quatro alunos
      * sãos. Só vira {erro} quando ninguém sobrou, e sempre resolve (o contrato
      * acima) em vez de exceção solta dentro do botão. */
-    var linhas = [], pulados = [], sobem = [], referencias = {}, antesPublicar = load();
-    alunos.forEach(function (a) {
-      try {
-        linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
-        sobem.push(a);
-        referencias[a.id] = MT_ACOMP.snapshot(antesPublicar, a.id);
-      } catch (e) { pulados.push({ id: a.id, nome: a.nome || "", erro: (e && e.message) || "o app não montou" }); }
-    });
-    if (!linhas.length) return Promise.resolve({ erro: pulados.length ? pulados[0].erro : "nenhum aluno pra publicar", stamp: stamp, pulados: pulados });
-    return Promise.resolve(nuvem.client.from("app_aluno").upsert(linhas)).then(function (r) {
+    var ids = alunos.map(function (a) { return a.id; });
+    return Promise.resolve(S.preparaAppsSeguros()).then(function (preparo) {
+      if (preparo && preparo.error) return { erro: preparo.error.message || "erro na sincronização", stamp: stamp, pulados: [] };
+      /* Só monta os pacotes DEPOIS que o painel terminou o CAS. Recarrega os
+       * alunos pelo id: os objetos recebidos podem ter sido criados antes da
+       * espera da rede e já não representar a revisão confirmada. */
+      var linhas = [], pulados = [], sobem = [], referencias = {}, antesPublicar = load();
+      ids.forEach(function (id) {
+        var a = antesPublicar.alunos.find(function (x) { return x.id === id; });
+        if (!a) { pulados.push({ id: id, nome: "", erro: "aluno mudou durante a publicação" }); return; }
+        try {
+          linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
+          sobem.push(a);
+          referencias[a.id] = MT_ACOMP.snapshot(antesPublicar, a.id);
+        } catch (e) { pulados.push({ id: a.id, nome: a.nome || "", erro: (e && e.message) || "o app não montou" }); }
+      });
+      if (!linhas.length) return { erro: pulados.length ? pulados[0].erro : "nenhum aluno pra publicar", stamp: stamp, pulados: pulados };
+      return Promise.resolve(S.publicaAppsSeguros(linhas, preparo)).then(function (r) {
       if (r && r.error) return { erro: (r.error.message || "erro na nuvem"), stamp: stamp, pulados: pulados };
       var st2 = load();
       sobem.forEach(function (a) {
@@ -21867,7 +21875,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
       S.write("ptStudio", st2);
       return { ok: true, stamp: stamp, linhas: linhas, pulados: pulados };
-    }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp, pulados: pulados }; });
+      }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp, pulados: pulados }; });
+    });
   }
   window.__publicaPacotes = publicaPacotes; // testes
   // v755: um recado so pro aluno com acesso cortado (publicar, mandar app, criar acesso)

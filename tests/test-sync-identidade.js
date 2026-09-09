@@ -9,6 +9,30 @@ async function setup(opts = {}) {
   const state = { session: opts.session === null ? null : { user: { id: 'user-a', email: 'a@example.invalid' } }, offline: !!opts.offline,
     memberError: opts.memberError, members: opts.members || [{ academia_id: 'academy-a', papel: 'funcionario', academias: { nome: 'Equipe fictícia' } }] };
   const client = { auth: { getSession: async () => { if (state.offline) throw Error('offline'); return { data: { session: state.session } }; }, onAuthStateChange: fn => authListener = fn },
+    rpc(name, args) {
+      const call = { rpc: name, args }; calls.push(call);
+      if (typeof opts.rpc === 'function') return Promise.resolve(opts.rpc(name, args, call));
+      if (name === 'dados_cas') {
+        if (opts.sendPromise) return opts.sendPromise;
+        return Promise.resolve({ data: [{ chave: args.p_chave, atualizado: '2026-09-06T13:00:00+00:00' }] });
+      }
+      if (name === 'dados_grava') {
+        if (opts.sendPromise) return opts.sendPromise;
+        return Promise.resolve({ data: args.p_linhas.map(x => ({ chave: x.chave, atualizado: '2026-09-06T13:00:00+00:00' })) });
+      }
+      if (name === 'app_aluno_publica_cas') {
+        const fonte = (opts.rows || []).find(x => x.chave === 'mtapp:ptStudio');
+        if (fonte && fonte.atualizado !== args.p_source_atualizado)
+          return Promise.resolve({ error: { code: 'PT409', message: 'Conflito fictício' } });
+        call.rows = args.p_linhas;
+        return Promise.resolve({ data: { ok: true, publicados: args.p_linhas.length } });
+      }
+      if (name === 'app_aluno_publica') {
+        call.rows = args.p_linhas;
+        return Promise.resolve({ data: { ok: true, publicados: args.p_linhas.length } });
+      }
+      return Promise.resolve({ data: null });
+    },
     from(table) {
       const call = { table, filters: [] }; calls.push(call);
       const query = { select() { return this; }, eq(k,v) { call.filters.push([k,v]); return this; }, gt() { return this; },
@@ -100,7 +124,7 @@ async function test(name, fn) { await fn(); count++; console.log('  ✅ ' + name
     const pull = deferred(), x = await setup({pullPromise:pull.promise}); await x.start();
     x.ctx.MTStore.write('ptStudio',{alunos:[{id:'pendente'}]}); x.ctx.__MTSync.enviaSujas();
     assert.ok(!x.calls.some(c => c.rows)); pull.resolve({data:[]}); await x.flush();
-    assert.ok(x.calls.some(c => c.rows && c.rows.some(r => r.valor && r.valor.alunos && r.valor.alunos[0].id === 'pendente')));
+    assert.ok(x.calls.some(c => c.rpc === 'dados_cas' && c.args.p_valor && c.args.p_valor.alunos && c.args.p_valor.alunos[0].id === 'pendente'));
   });
   console.log(count + ' cenários de identidade e reconexão passaram.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

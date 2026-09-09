@@ -76,7 +76,21 @@ const MOCK_NUVEM = `
     }
     var cli = {
       from: function (tb) { if (opts.onFrom) opts.onFrom(tb); return consulta(tb); },
-      rpc: opts.rpc || function () { return Promise.resolve({ data: null, error: null }); },
+      rpc: opts.rpc || function (nome, args) {
+        if (nome === "app_aluno_publica" || nome === "app_aluno_publica_cas") {
+          if (opts.onEscreve) opts.onEscreve({ tabela: "app_aluno", acao: "upsert", corpo: (args || {}).p_linhas || [], rpc: nome });
+          return Promise.resolve({ data: { ok: true, publicados: ((args || {}).p_linhas || []).length }, error: null });
+        }
+        if (nome === "dados_cas") {
+          if (opts.onEscreve) opts.onEscreve({ tabela: "dados", acao: "upsert", corpo: [{ academia_id: args.p_academia, chave: args.p_chave, valor: args.p_valor }], rpc: nome });
+          return Promise.resolve({ data: [{ chave: args.p_chave, atualizado: new Date().toISOString() }], error: null });
+        }
+        if (nome === "dados_grava") {
+          if (opts.onEscreve) opts.onEscreve({ tabela: "dados", acao: "upsert", corpo: (args || {}).p_linhas || [], rpc: nome });
+          return Promise.resolve({ data: ((args || {}).p_linhas || []).map(function (x) { return { chave: x.chave, atualizado: new Date().toISOString() }; }), error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
       auth: opts.auth || { getSession: function () { return Promise.resolve({ data: { session: null } }); } },
       storage: opts.storage || { from: function () { return {
         upload: function () { return Promise.resolve({ data: null, error: null }); },

@@ -2,6 +2,8 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const scaffold = fs.readFileSync(path.join(__dirname, 'test-sync-identidade.js'), 'utf8').split('let count = 0;')[0];
 const setup = new Function('require', '__dirname', scaffold + '\nreturn setup;')(require, __dirname);
+const sql = fs.readFileSync(path.join(__dirname, '../supabase-setup.sql'), 'utf8');
+const storeCode = fs.readFileSync(path.join(__dirname, '../apps/store.js'), 'utf8');
 const K = 'mtapp:ptStudio', A = '2026-09-06T12:00:00+00:00', B = '2026-09-06T13:00:00+00:00', C = '2026-09-06T14:00:00+00:00';
 const initial = () => ({ alunos: [{id:'aluno-ficticio'}], treinosV2: {}, questionarios: [{id:'questionario-ficticio'}] });
 const dataRow = (valor, atualizado=A) => ({chave:K,valor,atualizado});
@@ -12,7 +14,8 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
  await test('envio leva a revisão lida, não o horário local',async()=>{
   const opts={rows:[dataRow(initial())]},x=await setup(opts); await x.start();
   const st=x.ctx.MTStore.read('ptStudio'); st.nota='edição fictícia'; x.ctx.MTStore.write('ptStudio',st); await x.ctx.__MTSync.enviaSujas();
-  const calls=x.calls.filter(c=>c.table==='dados'&&c.rows);assert.equal(calls.at(-1).rows.find(r=>r.chave===K).base_atualizado,A);
+  const call=x.calls.filter(c=>c.rpc==='dados_cas').at(-1);assert.equal(call.args.p_base_atualizado,A);
+  assert.equal(call.args.p_chave,K);assert.equal(call.args.p_valor.nota,'edição fictícia');
   assert.equal(x.ctx.__MTSync.baseDe(K),B);
  });
  await test('cópia offline antiga sem base comprovada nunca sobrescreve a nuvem',async()=>{
@@ -29,8 +32,8 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
  await test('PT409 conserva o rascunho e não tenta enviar repetidamente',async()=>{
   const opts={rows:[dataRow(initial())],sendPromise:Promise.resolve({error:{code:'PT409',message:'Conflito fictício'}})},x=await setup(opts);await x.start();
   const st=x.ctx.MTStore.read('ptStudio');st.nota='meu rascunho';x.ctx.MTStore.write('ptStudio',st);await x.ctx.__MTSync.enviaSujas();
-  assert.ok(x.ctx.__MTSync._estado.conflitos[K]);const n=x.calls.filter(c=>c.rows&&c.rows.some(r=>r.chave===K)).length;
-  await x.ctx.__MTSync.enviaSujas();assert.equal(x.calls.filter(c=>c.rows&&c.rows.some(r=>r.chave===K)).length,n);
+  assert.ok(x.ctx.__MTSync._estado.conflitos[K]);const n=x.calls.filter(c=>c.rpc==='dados_cas').length;
+  await x.ctx.__MTSync.enviaSujas();assert.equal(x.calls.filter(c=>c.rpc==='dados_cas').length,n);
   assert.match(x.memory.get(K),/meu rascunho/);
  });
  await test('edição durante um envio mantém a fila e usa a base da confirmação',async()=>{
@@ -38,7 +41,7 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   let st=x.ctx.MTStore.read('ptStudio');st.nota='primeira';x.ctx.MTStore.write('ptStudio',st);const first=x.ctx.__MTSync.enviaSujas();
   st=x.ctx.MTStore.read('ptStudio');st.nota='segunda';x.ctx.MTStore.write('ptStudio',st);
   wait.resolve({data:[{chave:K,atualizado:B}]});await first;assert.equal(x.ctx.__MTSync._estado.sujas[K],true);assert.equal(x.ctx.__MTSync.baseDe(K),B);
-  await x.ctx.__MTSync.enviaSujas();assert.equal(x.calls.filter(c=>c.rows).at(-1).rows.find(r=>r.chave===K).base_atualizado,B);
+  await x.ctx.__MTSync.enviaSujas();assert.equal(x.calls.filter(c=>c.rpc==='dados_cas').at(-1).args.p_base_atualizado,B);
  });
  await test('cursor não pula a atualização recebida enquanto há envio',async()=>{
   const wait=deferred(),opts={rows:[dataRow(initial())],sendPromise:wait.promise},x=await setup(opts);await x.start();
@@ -57,12 +60,39 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   assert.equal(await x.ctx.__MTSync.resolveConflito(K),true);assert.match(x.memory.get(K),/canônico/);assert.equal(x.ctx.__MTSync.baseDe(K),C);
  });
  await test('publicação leva a revisão do painel já sincronizado',async()=>{
-  const x=await setup({rows:[dataRow(initial())]});await x.start();const r=await x.ctx.MTStore.publicaAppsSeguros([{token:'token-ficticio',academia_id:'academy-a',dados:{dados:{a:{id:'aluno-ficticio'}}}}]);
-  assert.ok(!r.error);const pub=x.calls.find(c=>c.table==='app_aluno'&&c.rows);assert.equal(pub.rows[0].dados.sourceUpdatedAt,A);
+  const x=await setup({rows:[dataRow(initial())]});await x.start();const prep=await x.ctx.MTStore.preparaAppsSeguros();
+  const r=await x.ctx.MTStore.publicaAppsSeguros([{token:'token-ficticio',academia_id:'academy-a',dados:{dados:{a:{id:'aluno-ficticio'}}}}],prep);
+  assert.ok(!r.error);const pub=x.calls.find(c=>c.rpc==='app_aluno_publica_cas');assert.equal(pub.args.p_source_atualizado,A);assert.equal(pub.args.p_linhas[0].dados.sourceUpdatedAt,A);
  });
  await test('conflito impede publicar o pacote antigo do aluno',async()=>{
   const x=await setup({rows:[dataRow(initial())],local:{[K]:{alunos:[{id:'antigo'}]},'mtsync:ts':{[K]:'2026-09-06T15:00:00.000Z'}}});await x.start();
-  const r=await x.ctx.MTStore.publicaAppsSeguros([{dados:{}}]);assert.ok(r.error);assert.ok(!x.calls.some(c=>c.table==='app_aluno'));
+  const prep=await x.ctx.MTStore.preparaAppsSeguros();assert.ok(prep.error);const r=await x.ctx.MTStore.publicaAppsSeguros([{dados:{}}],prep);
+  assert.ok(r.error);assert.ok(!x.calls.some(c=>c.rpc==='app_aluno_publica_cas'));
+ });
+ await test('avanço remoto ainda não puxado recusa atomicamente a publicação antiga',async()=>{
+  const opts={rows:[dataRow(initial())]},x=await setup(opts);await x.start();const prep=await x.ctx.MTStore.preparaAppsSeguros();
+  opts.rows=[dataRow({...initial(),nota:'remoto novo'},C)];
+  const r=await x.ctx.MTStore.publicaAppsSeguros([{token:'token-ficticio',dados:{ficha:'antiga'}}],prep);
+  assert.equal(r.error.code,'PT409');assert.ok(x.ctx.__MTSync._estado.conflitos[K]);
+  const pub=x.calls.find(c=>c.rpc==='app_aluno_publica_cas');assert.equal(pub.args.p_source_atualizado,A);
+ });
+ await test('pacote montado antes de nova edição local nunca é publicado',async()=>{
+  const x=await setup({rows:[dataRow(initial())]});await x.start();const prep=await x.ctx.MTStore.preparaAppsSeguros();
+  const pacote=[{token:'token-ficticio',dados:{ficha:'antiga'}}],st=x.ctx.MTStore.read('ptStudio');st.nota='edição posterior';x.ctx.MTStore.write('ptStudio',st);
+  const r=await x.ctx.MTStore.publicaAppsSeguros(pacote,prep);assert.ok(r.error);assert.ok(!x.calls.some(c=>c.rpc==='app_aluno_publica_cas'));
+ });
+ await test('banco compara e grava na mesma transação respeitando RLS',async()=>{
+  assert.match(sql,/function public\.dados_cas[\s\S]*security invoker[\s\S]*d\.atualizado = p_base_atualizado/);
+  assert.match(sql,/function public\.app_aluno_publica_cas[\s\S]*security invoker[\s\S]*for share/);
+  assert.match(sql,/grant execute on function public\.dados_cas[^;]+to authenticated/);
+  assert.match(sql,/revoke all on function public\.dados_cas[^;]+from public, anon/);
+ });
+ await test('clientes antigos não contornam as portas seguras',async()=>{
+  assert.match(sql,/create trigger dados_exige_rpc_tg/);assert.match(sql,/create trigger app_aluno_exige_rpc_tg/);
+  assert.match(sql,/errcode = 'PT426'/);assert.match(storeCode,/rpc\("dados_grava"/);assert.match(storeCode,/rpc\("dados_cas"/);
+  for(const f of ['../personal.html','../nutricao.html','../apps/app-aluno.html']){
+    const code=fs.readFileSync(path.join(__dirname,f),'utf8');assert.doesNotMatch(code,/from\(["']app_aluno["']\)\.upsert/);
+  }
  });
  console.log(passed+' cenários de concorrência passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

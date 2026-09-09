@@ -99,7 +99,8 @@ create policy "dados_insert" on public.dados
   for insert with check (academia_id in (select public.minhas_academias()));
 drop policy if exists "dados_update" on public.dados;
 create policy "dados_update" on public.dados
-  for update using (academia_id in (select public.minhas_academias()));
+  for update using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
 drop policy if exists "dados_delete" on public.dados;
 create policy "dados_delete" on public.dados
   for delete using (academia_id in (select public.minhas_academias()));
@@ -880,6 +881,251 @@ drop trigger if exists dados_carimba_tg on public.dados;
 create trigger dados_carimba_tg
   before insert or update on public.dados
   for each row execute function public.dados_carimba();
+
+-- ==================== CONCORRÊNCIA OTIMISTA (v806) ====================
+-- O cliente envia o carimbo da cópia que realmente leu. Comparar e gravar
+-- acontece nesta única instrução/ transação; dois aparelhos com a mesma base
+-- não conseguem confirmar duas versões diferentes.
+create or replace function public.dados_exige_rpc()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if current_user in ('anon', 'authenticated')
+     and coalesce(current_setting('mt.sync_rpc', true), '') <> '1' then
+    raise exception using
+      errcode = 'PT426',
+      message = 'Atualize o app para sincronizar com segurança. A versão antiga não gravou.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists dados_exige_rpc_tg on public.dados;
+create trigger dados_exige_rpc_tg
+  before insert or update on public.dados
+  for each row execute function public.dados_exige_rpc();
+
+create or replace function public.dados_cas(
+  p_academia uuid,
+  p_chave text,
+  p_valor jsonb,
+  p_base_atualizado timestamptz default null
+)
+returns table (chave text, atualizado timestamptz)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  perform set_config('mt.sync_rpc', '1', true);
+  if p_base_atualizado is null then
+    return query
+      insert into public.dados as d (academia_id, chave, valor)
+      values (p_academia, p_chave, p_valor)
+      on conflict (academia_id, chave) do nothing
+      returning d.chave, d.atualizado;
+  else
+    return query
+      update public.dados as d
+         set valor = p_valor
+       where d.academia_id = p_academia
+         and d.chave = p_chave
+         and d.atualizado = p_base_atualizado
+      returning d.chave, d.atualizado;
+  end if;
+
+  if not found then
+    raise exception using
+      errcode = 'PT409',
+      message = 'Outra sessão salvou uma versão mais nova. A sua cópia não foi sobrescrita.';
+  end if;
+end;
+$$;
+
+revoke all on function public.dados_cas(uuid, text, jsonb, timestamptz) from public, anon;
+grant execute on function public.dados_cas(uuid, text, jsonb, timestamptz) to authenticated;
+
+-- As demais chaves continuam com a política histórica de última escrita, mas
+-- também passam por uma porta única. Isso impede que versões anteriores à v806
+-- contornem o CAS fazendo upsert direto na tabela.
+create or replace function public.dados_grava(p_linhas jsonb)
+returns table (chave text, atualizado timestamptz)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_total integer;
+begin
+  if p_linhas is null or jsonb_typeof(p_linhas) <> 'array' then
+    raise exception using errcode = 'PT400', message = 'Lote de sincronização inválido.';
+  end if;
+  v_total := jsonb_array_length(p_linhas);
+  if v_total < 1 or v_total > 200 then
+    raise exception using errcode = 'PT400', message = 'O lote deve ter entre 1 e 200 registros.';
+  end if;
+  if exists (
+    select 1 from jsonb_array_elements(p_linhas) item
+     where nullif(btrim(item->>'academia_id'), '') is null
+        or nullif(btrim(item->>'chave'), '') is null
+        or item->>'chave' = 'mtapp:ptStudio'
+  ) then
+    raise exception using errcode = 'PT400', message = 'Há uma chave inválida no lote comum.';
+  end if;
+
+  perform set_config('mt.sync_rpc', '1', true);
+  return query
+    insert into public.dados as d (academia_id, chave, valor)
+    select (item->>'academia_id')::uuid, item->>'chave', item->'valor'
+      from jsonb_array_elements(p_linhas) item
+    on conflict (academia_id, chave) do update set valor = excluded.valor
+    returning d.chave, d.atualizado;
+end;
+$$;
+
+revoke all on function public.dados_grava(jsonb) from public, anon;
+grant execute on function public.dados_grava(jsonb) to authenticated;
+
+-- Publica os pacotes dos alunos somente se a revisão do painel ainda for a
+-- mesma. A checagem e todos os upserts compartilham uma transação: ou o lote
+-- inteiro corresponde à fonte canônica, ou nenhum app é alterado.
+create or replace function public.app_aluno_publica_cas(
+  p_academia uuid,
+  p_source_atualizado timestamptz,
+  p_linhas jsonb
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_atual timestamptz;
+  v_total integer;
+begin
+  if p_linhas is null or jsonb_typeof(p_linhas) <> 'array' then
+    raise exception using errcode = 'PT400', message = 'Lote de publicação inválido.';
+  end if;
+
+  v_total := jsonb_array_length(p_linhas);
+  if v_total < 1 or v_total > 100 then
+    raise exception using errcode = 'PT400', message = 'O lote deve ter entre 1 e 100 apps.';
+  end if;
+
+  select d.atualizado into v_atual
+    from public.dados d
+   where d.academia_id = p_academia
+     and d.chave = 'mtapp:ptStudio'
+   for share;
+
+  if not found or v_atual is distinct from p_source_atualizado then
+    raise exception using
+      errcode = 'PT409',
+      message = 'O painel mudou em outra sessão. Nenhum app de aluno foi alterado.';
+  end if;
+
+  if exists (
+    select 1
+      from jsonb_array_elements(p_linhas) as item
+     where nullif(btrim(item->>'token'), '') is null
+        or (item->'dados'->>'sourceUpdatedAt')::timestamptz is distinct from p_source_atualizado
+  ) then
+    raise exception using errcode = 'PT400', message = 'Há um app sem token ou sem a revisão da fonte no lote.';
+  end if;
+
+  perform set_config('mt.app_publica_rpc', '1', true);
+  insert into public.app_aluno as a (token, academia_id, dados, atualizado)
+  select item->>'token', p_academia, item->'dados', now()
+    from jsonb_array_elements(p_linhas) as item
+  on conflict (token) do update
+    set academia_id = excluded.academia_id,
+        dados = excluded.dados,
+        atualizado = excluded.atualizado;
+
+  return jsonb_build_object('ok', true, 'publicados', v_total,
+                            'source_atualizado', v_atual);
+end;
+$$;
+
+revoke all on function public.app_aluno_publica_cas(uuid, timestamptz, jsonb) from public, anon;
+grant execute on function public.app_aluno_publica_cas(uuid, timestamptz, jsonb) to authenticated;
+
+-- Porta compatível para módulos cujo pacote não nasce de ptStudio (Nutri e o
+-- portal legado). Mantém RLS e bloqueia o caminho direto usado por clientes
+-- antigos, sem fingir um CAS com uma fonte que esses módulos não possuem.
+create or replace function public.app_aluno_publica(p_academia uuid, p_linhas jsonb)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_total integer;
+begin
+  if p_linhas is null or jsonb_typeof(p_linhas) <> 'array' then
+    raise exception using errcode = 'PT400', message = 'Lote de publicação inválido.';
+  end if;
+  v_total := jsonb_array_length(p_linhas);
+  if v_total < 1 or v_total > 100 then
+    raise exception using errcode = 'PT400', message = 'O lote deve ter entre 1 e 100 apps.';
+  end if;
+  if exists (
+    select 1 from jsonb_array_elements(p_linhas) item
+     where nullif(btrim(item->>'token'), '') is null
+        or coalesce(item->'dados'->'dados' ? 'a', false)
+  ) then
+    raise exception using errcode = 'PT400', message = 'Lote inválido ou app do Personal fora da publicação CAS.';
+  end if;
+
+  perform set_config('mt.app_publica_rpc', '1', true);
+  insert into public.app_aluno as a (token, academia_id, dados, atualizado)
+  select item->>'token', p_academia, item->'dados', now()
+    from jsonb_array_elements(p_linhas) item
+  on conflict (token) do update
+    set academia_id = excluded.academia_id,
+        dados = excluded.dados,
+        atualizado = excluded.atualizado;
+  return jsonb_build_object('ok', true, 'publicados', v_total);
+end;
+$$;
+
+revoke all on function public.app_aluno_publica(uuid, jsonb) from public, anon;
+grant execute on function public.app_aluno_publica(uuid, jsonb) to authenticated;
+
+create or replace function public.app_aluno_exige_rpc()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_mudou boolean;
+begin
+  v_mudou := tg_op = 'INSERT';
+  if tg_op = 'UPDATE' then
+    v_mudou := old.dados is distinct from new.dados;
+  end if;
+  if current_user in ('anon', 'authenticated')
+     and v_mudou
+     and coalesce(current_setting('mt.app_publica_rpc', true), '') <> '1' then
+    raise exception using
+      errcode = 'PT426',
+      message = 'Atualize o app para publicar com segurança. A versão antiga não gravou.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists app_aluno_exige_rpc_tg on public.app_aluno;
+create trigger app_aluno_exige_rpc_tg
+  before insert or update on public.app_aluno
+  for each row execute function public.app_aluno_exige_rpc();
+
+revoke execute on function public.dados_exige_rpc() from public, anon, authenticated;
+revoke execute on function public.app_aluno_exige_rpc() from public, anon, authenticated;
 
 -- ==================== REDUNDÂNCIA: HISTÓRICO DO APP DO ALUNO ====================
 -- O `retorno` é o que o aluno registrou no app (peso, cargas, treinos, fotos) —

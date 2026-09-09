@@ -16,11 +16,16 @@
   } catch (e) {}
 
   var PREFIX = "mtapp:";
+  var leituras = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  function leitura(k, obj, raw) {
+    if (k === 'ptStudio' && leituras && obj && typeof obj === 'object') leituras.set(obj, raw);
+    return obj;
+  }
 
   function read(key, fallback) {
     try {
       var raw = localStorage.getItem(PREFIX + key);
-      if (!raw) return fallback;
+      if (!raw) return leitura(key, fallback, null);
       var val = JSON.parse(raw);
       // dados parciais (sync/importação/versões antigas) não podem derrubar telas:
       // se o fallback é objeto plano, garante as chaves padrão que faltarem
@@ -28,7 +33,7 @@
           !Array.isArray(val) && !Array.isArray(fallback)) {
         for (var k in fallback) { if (val[k] == null) val[k] = fallback[k]; }
       }
-      return val;
+      return leitura(key, val, raw);
     } catch (e) { return fallback; }
   }
 
@@ -192,6 +197,10 @@
   window.__zerouTudo = zerouTudo; // testes
 
   function write(key, value) {
+    if (key === 'ptStudio' && leituras && leituras.has(value) && leituras.get(value) !== localStorage.getItem(PREFIX + key)) {
+      sinalizaConflito(PREFIX + key, 'Este formulário foi aberto antes de outra alteração. O salvamento foi bloqueado para preservar as duas versões.', JSON.stringify(value), true);
+      return false;
+    }
     var na = contagemDe(PREFIX + key);
     var gAntes = gentesAntes(PREFIX + key);
     var gDepois = gentesDe(value);
@@ -203,7 +212,9 @@
       return false;
     }
     try {
-      localStorage.setItem(PREFIX + key, JSON.stringify(value));
+      var gravadoRaw = JSON.stringify(value);
+      localStorage.setItem(PREFIX + key, gravadoRaw);
+      leitura(key, value, gravadoRaw);
     } catch (e) {
       /* cota do navegador estourou — avisa e não derruba a página. v742: o
        * aviso volta a cada 10 minutos (era UMA vez por sessão: depois do
@@ -526,13 +537,14 @@
   }
 
   function enviaSujas() {
-    if (!sync.client || sync.emEnvio) return;
+    if (!sync.client) return Promise.resolve();
+    if (sync.emEnvio) return sync.promessaEnvio || Promise.resolve();
     var ciclo = sync.ciclo;
     // regra de ferro: só envia depois da primeira puxada da sessão. A fila
     // fica guardada e sobe assim que a puxada reconciliar (o puxa chama
     // enviaSujas no fim) — aparelho zerado nunca mais apaga a nuvem no boot.
     if (!sync.reconciliou) { avisaStatus(); return; }
-    var chaves = Object.keys(sync.sujas);
+    var chaves = Object.keys(sync.sujas).filter(function (k) { return !(sync.conflitos && sync.conflitos[k]); });
     if (!chaves.length) return;
     sync.emEnvio = chaves;
     sync.sujas = {};
@@ -550,18 +562,41 @@
      * de qualquer salvamento, ou ao voltar do WhatsApp. Com o carimbo do
      * servidor guardado, o eco compara igual e nem entra no branch. O .select
      * só é encadeado quando existe: os mocks de teste devolvem só a promessa. */
-    var q = sync.client.from("dados").upsert(linhas);
-    if (q && typeof q.select === "function") { try { q = q.select("chave,atualizado"); } catch (e) {} }
-    q.then(function (r) {
+    var comuns = linhas.filter(function (l) { return !chaveProtegida(l.chave); });
+    var protegidas = linhas.filter(function (l) { return chaveProtegida(l.chave); });
+    var envios = protegidas.map(function (l) {
+      return sync.client.rpc("dados_cas", {
+        p_academia: l.academia_id, p_chave: l.chave, p_valor: l.valor,
+        p_base_atualizado: baseDe(l.chave)
+      }).then(function (r) {
+        if (r && !r.error && r.data && !Array.isArray(r.data)) r.data = [r.data];
+        return r || { data: [] };
+      });
+    });
+    if (comuns.length) {
+      envios.push(sync.client.rpc("dados_grava", { p_linhas: comuns }).then(function (r) {
+        if (r && !r.error && r.data && !Array.isArray(r.data)) r.data = [r.data];
+        return r || { data: [] };
+      }));
+    }
+    sync.promessaEnvio = Promise.all(envios).then(function (rs) {
       if (ciclo !== sync.ciclo || !sync.client) return;
       sync.emEnvio = null;
-      if (r.error) {
+      var falha = rs.find(function (r) { return r && r.error; });
+      if (falha) {
         // devolve à fila para tentar de novo no próximo ciclo
         chaves.forEach(function (k) { sync.sujas[k] = true; });
+        if (falha.error.code === 'PT409') chaves.filter(chaveProtegida).forEach(function (k) { sinalizaConflito(k, falha.error.message); });
+        avisaStatus();
       } else {
-        (Array.isArray(r.data) ? r.data : []).forEach(function (row) {
+        var respostas = [];
+        rs.forEach(function (r) { respostas = respostas.concat(Array.isArray(r && r.data) ? r.data : []); });
+        respostas.forEach(function (row) {
           // só se a chave não foi escrita DE NOVO enquanto o envio viajava
-          if (row && row.chave && row.atualizado && !sync.sujas[row.chave]) marcaTs(row.chave, row.atualizado);
+          if (row && row.chave && row.atualizado) {
+            if (chaveProtegida(row.chave)) { try { guardaBase(row.chave, row.atualizado); } catch (e) { sinalizaConflito(row.chave); } }
+            if (!sync.sujas[row.chave]) marcaTs(row.chave, row.atualizado);
+          }
         });
         avisaStatus();
       }
@@ -569,7 +604,9 @@
       if (ciclo !== sync.ciclo || !sync.client) return;
       sync.emEnvio = null;
       chaves.forEach(function (k) { sync.sujas[k] = true; });
+      avisaStatus();
     });
+    return sync.promessaEnvio;
   }
 
   function puxa() {
@@ -606,10 +643,11 @@
       if (r.error || !r.data) return;
       var m = tsMap();
       var mudou = [];
-      var maxTs = sync.marca || "";
+      var maxTs = sync.marca || "", pulouOcupada = false;
       r.data.forEach(function (row) {
         if (row.atualizado > maxTs) maxTs = row.atualizado;
         if (!sincronizavel(row.chave)) return;
+        if (chaveProtegida(row.chave)) { if (recebeProtegida(row) === false) pulouOcupada = true; return; }
         /* v745: escrita local ainda NA FILA (ainda não subiu) nunca é coberta
          * pela nuvem. O servidor carimba o upsert na CHEGADA, então o eco do
          * envio anterior volta "mais novo" que uma escrita feita logo depois —
@@ -677,7 +715,7 @@
           }
         }
       });
-      if (maxTs) sync.marca = maxTs;
+      if (maxTs && !pulouOcupada) sync.marca = maxTs;
       // chaves locais que a nuvem ainda não tem (só faz sentido na puxada completa)
       if (primeira) {
         var remotas = {};
@@ -703,9 +741,141 @@
     }, function () {});
   }
 
+  /* v806: revisão da cópia que foi realmente lida, não o relógio do aparelho.
+   * Uma edição offline nunca recebe a revisão de uma cópia que não aplicou. */
+  function chaveProtegida(k) { return k === 'mtapp:ptStudio'; }
+  function baseKey() { return 'mtsync:base:' + (sync.aid || 'local'); }
+  function bases() { try { return JSON.parse(localStorage.getItem(baseKey())) || {}; } catch (e) { return {}; } }
+  function baseDe(k) { return bases()[k] || null; }
+  function guardaBase(k, ts) {
+    var b = bases(); b[k] = ts;
+    localStorage.setItem(baseKey(), JSON.stringify(b));
+  }
+  function guardaRascunho(k, raw) {
+    var nome = 'mtsync:conflito:' + (sync.aid || 'local') + ':' + Date.now() + ':' + Math.random().toString(36).slice(2);
+    try {
+      localStorage.setItem(nome, JSON.stringify({ chave: k, em: new Date().toISOString(), raw: raw }));
+      return nome;
+    } catch (e) { return ''; }
+  }
+  function notificaChave(k) {
+    delete contagem[k]; delete gentes[k];
+    ouvintes.forEach(function (cb) { try { cb(k.slice(PREFIX.length)); } catch (e) {} });
+  }
+  function aplicaProtegida(row) {
+    var k = row.chave, raw = JSON.stringify(row.valor), anterior = localStorage.getItem(k), ts = tsMap()[k];
+    try {
+      marcaTs(k, row.atualizado); // a outra aba recebe o carimbo antes do evento storage
+      localStorage.setItem(k, raw);
+      guardaBase(k, row.atualizado);
+    } catch (e) {
+      if (ts) marcaTs(k, ts);
+      sinalizaConflito(k, 'A memória do aparelho está cheia. A cópia da nuvem não foi aplicada.');
+      return false;
+    }
+    if (anterior !== raw) notificaChave(k);
+    return true;
+  }
+  function sinalizaConflito(k, mensagem, rascunho, local) {
+    sync.conflitos = sync.conflitos || {};
+    if (sync.conflitos[k]) return;
+    var raw = rascunho === undefined ? localStorage.getItem(k) : rascunho, copia = guardaRascunho(k, raw);
+    sync.conflitos[k] = { copia: copia, raw: raw, local: !!local, mensagem: mensagem || 'Outro aparelho alterou este painel. Nada foi sobrescrito na nuvem.' };
+    avisaStatus();
+    if (!document.body || !document.createElement) return;
+    var box = document.getElementById('mtSyncConflito');
+    if (!box) {
+      box = document.createElement('section'); box.id = 'mtSyncConflito'; box.setAttribute('role', 'alert');
+      box.style.cssText = 'position:fixed;inset:auto 12px 12px;z-index:2147483647;padding:16px;background:#211b16;color:#fff;border:2px solid #f1b25b;border-radius:12px;box-shadow:0 4px 30px #0008;font:15px/1.4 system-ui;max-height:65vh;overflow:auto';
+      document.body.appendChild(box);
+    }
+    box.textContent = sync.conflitos[k].mensagem + (copia ? ' Seu rascunho foi preservado neste aparelho.' : ' Preserve uma cópia antes de fechar a página.');
+    var baixar = document.createElement('button'); baixar.textContent = 'Salvar cópia do rascunho';
+    baixar.style.cssText = 'display:inline-block;margin:12px 10px 0 0;padding:12px;cursor:pointer';
+    baixar.onclick = function () {
+      var v = sync.conflitos[k].local ? sync.conflitos[k].raw : localStorage.getItem(k), blob = new Blob([JSON.stringify({ formato: 'torque-rascunho-conflito', chave: k, em: new Date().toISOString(), valor: JSON.parse(v || 'null') }, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a'), u = URL.createObjectURL(blob); a.href = u; a.download = 'torque-rascunho-' + todayISO() + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+    };
+    box.appendChild(baixar);
+    var carregar = document.createElement('button'); carregar.textContent = local ? 'Reabrir com os dados atuais' : 'Carregar versão da nuvem';
+    carregar.style.cssText = baixar.style.cssText;
+    carregar.onclick = function () { resolveConflito(k).then(function (ok) { if (ok) box.remove(); }); };
+    box.appendChild(carregar);
+  }
+  function resolveConflito(k) {
+    if (sync.conflitos && sync.conflitos[k] && sync.conflitos[k].local) {
+      if (!guardaRascunho(k, sync.conflitos[k].raw)) return Promise.resolve(false);
+      delete sync.conflitos[k]; notificaChave(k); avisaStatus(); return Promise.resolve(true);
+    }
+    if (!sync.client || (sync.emEnvio || []).indexOf(k) >= 0) return Promise.resolve(false);
+    var ciclo = sync.ciclo, raw = localStorage.getItem(k);
+    // Sem cópia confirmada, não substitui nem mesmo após o clique.
+    if (!guardaRascunho(k, raw)) return Promise.resolve(false);
+    return sync.client.from('dados').select('chave,valor,atualizado').eq('academia_id', sync.aid).eq('chave', k).then(function (r) {
+      if (ciclo !== sync.ciclo || !sync.client || r.error || !r.data || !r.data.length || localStorage.getItem(k) !== raw) return false;
+      if (!aplicaProtegida(r.data[0])) return false;
+      delete sync.sujas[k]; delete sync.conflitos[k]; avisaStatus(); return true;
+    }, function () { return false; });
+  }
+  function recebeProtegida(row) {
+    var k = row.chave, raw = localStorage.getItem(k), igual = raw === JSON.stringify(row.valor);
+    if ((sync.emEnvio || []).indexOf(k) >= 0) return false; // confirmação atualizará a base; não reaplica eco em voo
+    if (sync.conflitos && sync.conflitos[k]) return;
+    var ts = tsMap()[k], b = baseDe(k);
+    // Migração de um cliente antigo: só um carimbo do servidor prova a leitura.
+    if (!b && carimboDaNuvem(ts)) { try { guardaBase(k, ts); b = ts; } catch (e) {} }
+    var editado = !!sync.sujas[k] || !!(raw && (!ts || !carimboDaNuvem(ts)));
+    if (igual) {
+      if (aplicaProtegida(row)) delete sync.sujas[k];
+      return;
+    }
+    if (editado && raw) {
+      if (b && b === row.atualizado) { sync.sujas[k] = true; return; }
+      sinalizaConflito(k); return;
+    }
+    aplicaProtegida(row);
+  }
+  function preparaAppsSeguros() {
+    if (!sync.client) return Promise.resolve({ error: { message: 'Entre na nuvem antes de publicar.' } });
+    var k = 'mtapp:ptStudio', ciclo = sync.ciclo;
+    return Promise.resolve(sync.promessaEnvio).then(function () { return enviaSujas(); }).then(function () {
+      if (ciclo !== sync.ciclo || !sync.client || !sync.reconciliou || (sync.conflitos && sync.conflitos[k]))
+        return { error: { message: 'Resolva o conflito de sincronização antes de publicar. O app do aluno não foi alterado.' } };
+      if (sync.sujas[k] || (sync.emEnvio || []).indexOf(k) >= 0 || !baseDe(k))
+        return { error: { message: 'O painel ainda não terminou de salvar. Aguarde e publique novamente.' } };
+      return { raw: localStorage.getItem(k), revisao: baseDe(k), ciclo: ciclo };
+    });
+  }
+  function publicaAppsSeguros(linhas, preparo) {
+    var k = 'mtapp:ptStudio';
+    if (!preparo || preparo.error) return Promise.resolve(preparo || { error: { message: 'Prepare a publicação a partir da versão sincronizada.' } });
+    if (preparo.ciclo !== sync.ciclo || !sync.client || !sync.reconciliou ||
+        (sync.conflitos && sync.conflitos[k]) || sync.sujas[k] ||
+        (sync.emEnvio || []).indexOf(k) >= 0 || preparo.raw !== localStorage.getItem(k) ||
+        preparo.revisao !== baseDe(k))
+      return Promise.resolve({ error: { message: 'O painel mudou durante a publicação. O app do aluno não foi alterado; publique novamente.' } });
+    var seguras = linhas.map(function (l) {
+      var c = Object.assign({}, l);
+      c.dados = Object.assign({}, l.dados, { sourceUpdatedAt: preparo.revisao });
+      return c;
+    });
+    return sync.client.rpc('app_aluno_publica_cas', {
+      p_academia: sync.aid, p_source_atualizado: preparo.revisao, p_linhas: seguras
+    }).then(function (r) {
+      if (r && r.error && r.error.code === 'PT409') sinalizaConflito(k, r.error.message);
+      return r;
+    });
+  }
+  function publicaApps(linhas, nuvem) {
+    var cliente = nuvem && nuvem.client ? nuvem.client : sync.client;
+    var aid = nuvem && nuvem.aid ? nuvem.aid : sync.aid;
+    if (!cliente || !aid) return Promise.resolve({ error: { message: 'Entre na nuvem antes de publicar.' } });
+    return cliente.rpc('app_aluno_publica', { p_academia: aid, p_linhas: linhas });
+  }
+
   function avisaStatus() {
     if (window.MT_syncInfo) {
-      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima, pendentes: Object.keys(sync.sujas).length }); } catch (e) {}
+      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima, pendentes: Object.keys(Object.assign({}, sync.sujas, sync.conflitos || {})).length }); } catch (e) {}
     }
   }
 
@@ -938,7 +1108,8 @@
   // discordam é a que evita perder a base de alunos — precisa ser testável
   window.__MTSync = { listasDe: listasDe, nuvemTemMais: nuvemTemMais,
     enviaSujas: enviaSujas, puxa: puxa, _estado: sync, // _estado/enviaSujas/puxa: só pros testes
-    carimboDaNuvem: carimboDaNuvem, contagemDe: contagemDe, auditoria: auditoria };
+    carimboDaNuvem: carimboDaNuvem, contagemDe: contagemDe, auditoria: auditoria,
+    baseDe: baseDe, resolveConflito: resolveConflito };
   window.MTStore = {
     baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
@@ -949,7 +1120,8 @@
     savePhoto: savePhoto, savePhotoData: savePhotoData, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange, equipeDatalist: equipeDatalist,
-    iniciaSync: iniciaSync,
+    iniciaSync: iniciaSync, preparaAppsSeguros: preparaAppsSeguros,
+    publicaAppsSeguros: publicaAppsSeguros, publicaApps: publicaApps,
     // acesso à conexão da nuvem (para publicações como o App do Aluno)
     cloud: function () { return sync.client ? { client: sync.client, aid: sync.aid } : null; },
     /* Token de login pra chamar Edge Function.

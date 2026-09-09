@@ -1109,7 +1109,7 @@
         fila = fila.then(function () {
           if (falha) return;
           statusPub("⏳ Publicando… " + feitos + "/" + linhas.length);
-          return nuvem.client.from("app_aluno").upsert(lote).then(function (r) {
+          return S.publicaApps(lote, nuvem).then(function (r) {
             if (r.error) { falha = String(r.error.message || "erro"); return; }
             feitos += lote.length;
           }, function (e) { falha = (e && e.message) || "rede"; });
