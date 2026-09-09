@@ -23,15 +23,29 @@ Questionários: ação Usar como base cabe no celular. Os testes abrem o formul�
 somente quando fechado e aguardam o término do salvamento antes de criar outra
 pergunta. A geração opcional de screenshots não altera o estado do teste.
 
+## Primeira sincronização e aceitação
+
+Sem cópia local, a revisão da nuvem é aplicada automaticamente. Quando o
+onboarding já gravou uma biblioteca local, mas não existe revisão confirmada,
+ela segue a proteção de qualquer rascunho legado: backup local e confirmação
+em Carregar versão da nuvem. Não se conclui que uma cópia seja descartável só
+porque tem zero alunos; ela pode conter perguntas ou exercícios personalizados.
+O teste geral agora percorre o botão visível e exige recuperar os três alunos,
+a revisão confirmada e manter o backup, sem qualquer envio do estado vazio.
+
+O scanner de segurança separa RETURNS trigger de RPC: gatilhos internos precisam
+ter EXECUTE público revogado; as RPCs continuam exigindo a verificação de acesso.
+Não foram excluídas suítes nem removidas as verificações de preservação de dados.
+
 ## Evidências exigidas antes de publicar
 
 - Testes gerais de navegador sobre o SHA final do PR, sem reduzir as suítes.
-- tests/test-sync-cas.js: 17 cenários simulados de concorrência e publicação.
+- tests/test-sync-cas.js: 19 cenários simulados de concorrência e publicação.
 - tests/test-sync-identidade.js: 13 cenários de identidade e reconexão.
 - tests/test-sync-cas-sql.js: 15 contratos estáticos, não execução do banco.
-- tests/sql/test-reliability.py: PostgreSQL real descartável, duas conexões,
-  upsert, publicação, RLS, histórico e funções canônicas do aluno; testa corte
-  e devolução de acesso, faxina e retorno sequencial com mescla de listas.
+- tests/sql/test-reliability.py: 42 verificações em PostgreSQL real descartável,
+  duas conexões, upsert, publicação, RLS, histórico e funções canônicas do aluno;
+  corte/devolução de acesso, faxina e retorno sequencial com mescla de listas.
 - Migração idêntica à definição de instalação nova em supabase-setup.sql.
 - Testes de versão para frontend e os dois service workers.
 
