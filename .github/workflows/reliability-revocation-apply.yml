@@ -1,0 +1,50 @@
+name: Validar revogação mt-v807
+on:
+  push:
+    branches: [reliability/mt-v807]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ contains(github.event.head_commit.message, '[v807-revocation]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: reliability_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: reliability_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar revisão pequena sobre fontes conferidas
+        run: python3 tools/reliability-revocation-apply.py
+      - name: Testar SQL real e contratos antes do commit
+        run: |
+          python3 tests/sql/test-reliability.py
+          node tests/test-sync-cas-sql.js
+          node tests/test-sync-cas.js
+          node tests/test-versao.js
+          git diff --check
+      - name: Gravar revisão somente na branch sem force push
+        run: |
+          rm tools/reliability-revocation-apply.py .github/workflows/reliability-revocation-apply.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add migrations/20260909_ptstudio_cas_v807.sql supabase-setup.sql tests/sql/test-reliability.py tools/reliability-revocation-apply.py .github/workflows/reliability-revocation-apply.yml
+          git commit -m 'fix: conserva revogação canônica e testa retorno sequencial [v807-applied]'
+          git push origin HEAD:reliability/mt-v807
