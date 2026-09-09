@@ -182,6 +182,7 @@ const ABAS = [
   ["pagamentos", "Financeiro", "pga", ["receb", "planos", "contratos", "serv", "desp"]],
   ["treinos", "Treinos", "tra", ["fichas", "wod", "cardio", "plano", "auto", "ex", "videos", "grupo"]],
   ["chat", "Chat", "cha", ["conversas", "robo"]],
+  ["nutricao", "Nutrição", "pna", ["plano", "biblioteca", "registros"]],
   ["avaliacoes", "Avaliações", "ava", ["historico", "avaliar"]],
   ["quest", "Questionários", "qta", ["semana", "enviar", "montar", "resp"]],
   ["desafio", "Desafio", "dsa", ["config", "placar", "feed"]],
@@ -194,7 +195,7 @@ const ABAS = [
   ["conta", "Sua ilha", "ilhaa", ["contato", "acesso", "backup"]],
   ["ajuda", "Ajuda", "ajtopico", ["agenda"]], // v706: a Central de ajuda também tem que ser legível no celular
 ];
-const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino"];
+const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino", "alimentacao"];
 
 (async () => {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
@@ -224,7 +225,7 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     await p.waitForTimeout(1100);
   }
   async function sub(attr, v) {
-    const novosSelects = { pga: 'pgArea', rela: 'relArea', cfga: 'cfgArea', ava: 'avArea', qta: 'qtArea', dsa: 'dsArea', spa: 'spArea', persa: 'persArea', ilhaa: 'ilhaArea' };
+    const novosSelects = { pna: 'pnArea', pga: 'pgArea', rela: 'relArea', cfga: 'cfgArea', ava: 'avArea', qta: 'qtArea', dsa: 'dsArea', spa: 'spArea', persa: 'persArea', ilhaa: 'ilhaArea' };
     if (novosSelects[attr] && await p.locator('#' + novosSelects[attr]).isVisible()) {
       await p.locator('#' + novosSelects[attr]).selectOption(v);
       await p.waitForTimeout(950);

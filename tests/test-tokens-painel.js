@@ -185,7 +185,7 @@ const ESPERADO = {
     "no claro o token muda e o apelido acompanha SOZINHO (" + esc.card + " → " + cla.card + ")");
   t(cla.txt3 === cla.txt3Apelido && cla.txt3 !== esc.txt3,
     "o texto também (" + esc.txt3 + " → " + cla.txt3 + ")");
-  t(cla.roxo === esc.roxo && /7c3aed/i.test(cla.roxo),
+  t(cla.roxo === esc.roxo && /8c54f7/i.test(cla.roxo),
     "o roxo da marca NÃO muda entre temas (" + cla.roxo + ")");
   t(cla.fundo !== esc.fundo, "o fundo do painel troca de tema (" + esc.fundo + " → " + cla.fundo + ")");
 
@@ -215,11 +215,11 @@ const ESPERADO = {
   t(parseFloat(base.card.bd) >= 1 && base.card.sombra === "none",
     "o card tem BORDA e nao tem sombra (o apps.css faz o contrario) — " + base.card.bd + " / " + base.card.sombra);
   t(Math.round(parseFloat(base.card.pad)) === 17, "padding do card e o do desenho (" + base.card.pad + ")");
-  t(parseFloat(base.h2.fs) >= 15 && base.h2.cx === "none" && base.h2.peso === "800",
-    "titulo de card e 15,5px em caixa mista, nao rotulo cinza em CAIXA ALTA (" +
+  t(parseFloat(base.h2.fs) >= 18 && base.h2.cx === "none" && base.h2.peso === "600",
+    "Torque One: titulo de card com 18px, caixa mista e peso600 (" +
     base.h2.fs + " / " + base.h2.cx + " / " + base.h2.peso + ")");
-  t(Math.round(parseFloat(base.btn.raio)) === 11 && Math.round(parseFloat(base.btn.alt)) === 44,
-    "botao e retangulo de 44px com raio 11, nao pilula de 46 (" + base.btn.raio + " / " + base.btn.alt + ")");
+  t(Math.round(parseFloat(base.btn.raio)) === 10 && Math.round(parseFloat(base.btn.alt)) === 44,
+    "Torque One: botao conserva44px de toque e usa raio10 (" + base.btn.raio + " / " + base.btn.alt + ")");
   t(parseFloat(base.sec.bd) >= 1, "o botao secundario tem borda (" + base.sec.bd + ")");
   t(base.zap.bg === base.sec.bg, "o botao de WhatsApp e secundario com tinta verde, nao verde chapado");
   t(Math.round(parseFloat(base.corpo)) === 26, "a area de conteudo respira 26px dos lados (" + base.corpo + ")");
@@ -277,7 +277,7 @@ const ESPERADO = {
   });
   await p.reload(); await p.waitForTimeout(700);
   const cor3 = await leCor();
-  t(/7c3aed/i.test(cor3.roxo) && /a78bfa/i.test(cor3.claro),
+  t(/8c54f7/i.test(cor3.roxo) && /b994ff/i.test(cor3.claro),
     "sem cor escolhida, volta o roxo padrao da marca (" + cor3.roxo + ")");
 
   /* A FRONTEIRA: o pacote do app do aluno NAO e CSS do painel.
