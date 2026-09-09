@@ -44,6 +44,19 @@ async function mobileCtaState(page, visible) {
   assert(await page.locator('#mobileCta a').evaluateAll((links, visible) => links.length > 0 && links.every(link => link.getAttribute('tabindex') === (visible ? '0' : '-1')), visible));
 }
 
+async function editStudioName(page, value, preview) {
+  const input = page.locator('#studioName');
+  // Usa a edição por teclado: fill() deixou texto parcial ou não limpou no Chromium do CI.
+  await input.click();
+  await input.press('ControlOrMeta+A');
+  await input.press('Backspace');
+  if (value) await input.pressSequentially(value);
+  await page.waitForFunction(({ value, preview }) =>
+    document.getElementById('studioName').value === value &&
+    document.getElementById('studioPreview').textContent === preview,
+  { value, preview });
+}
+
 async function landingBrand(page) {
   return page.evaluate(() => {
     const root = getComputedStyle(document.documentElement);
@@ -161,14 +174,14 @@ async function landingBrand(page) {
     await inspectScreen(page, 'journey-image');
     await inspectScreen(page, 'hero-image');
 
-    await page.locator('#studioName').fill('TORQUE STUDIO');
+    await editStudioName(page, 'TORQUE STUDIO', 'TORQUE STUDIO');
     assert.equal(await page.locator('#studioPreview').textContent(), 'TORQUE STUDIO');
     assert.equal(await page.locator('#studioName').getAttribute('maxlength'), '32');
     const unsafeName = '<img src=x onerror=alert(1)>';
-    await page.locator('#studioName').fill(unsafeName);
+    await editStudioName(page, unsafeName, unsafeName);
     assert.equal(await page.locator('#studioPreview').textContent(), unsafeName);
     assert.equal(await page.locator('#studioPreview img').count(), 0);
-    await page.locator('#studioName').fill('');
+    await editStudioName(page, '', 'Seu nome');
     assert.equal(await page.locator('#studioPreview').textContent(), 'Seu nome');
     if (width <= 860) await mobileCtaState(page, false);
     const originalBrand = await landingBrand(page);
