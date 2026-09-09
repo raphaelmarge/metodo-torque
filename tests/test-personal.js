@@ -13966,7 +13966,7 @@ async function novaExecucaoAluno(p) {
     await ctxS.addInitScript(() => {
       localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "R" }));
       localStorage.setItem("mtapp:academia", JSON.stringify({ id: "acad-1", papel: "dono" }));
-      // Sem uma revisão da nuvem, até o estado vazio semeado é um rascunho local.
+      // aparelho recém-instalado: onboarding semeou o estado VAZIO com carimbo de agora
       localStorage.setItem("mtapp:ptStudio", JSON.stringify({ alunos: [], sessoes: [], pagamentos: [], config: {} }));
       localStorage.setItem("mtsync:ts", JSON.stringify({ "mtapp:ptStudio": "2099-12-31T00:00:00.000Z" }));
       localStorage.setItem("mtapp:ptSemConta", "1");
@@ -13975,15 +13975,10 @@ async function novaExecucaoAluno(p) {
     pS.on("pageerror", (e) => erros.push("sync: " + e));
     await pS.goto(BASE + "/personal.html");
     await pS.waitForTimeout(500);
-    await pS.evaluate(() => {
+    const guarda = await pS.evaluate(async () => {
       // cliente fake: a nuvem tem 3 alunos com carimbo MAIS VELHO que o local vazio
       const nuvemVal = { alunos: [{ id: "n1", nome: "Aluno Nuvem 1", ativo: true }, { id: "n2", nome: "Aluno Nuvem 2", ativo: true }, { id: "n3", nome: "Aluno Nuvem 3", ativo: true }], sessoes: [], pagamentos: [], config: {} };
-      window.__primeiroSync = { localRaw: localStorage.getItem("mtapp:ptStudio"), escritas: [] };
-      const registra = (via, linhas) => {
-        (Array.isArray(linhas) ? linhas : [linhas]).forEach((linha) => {
-          if (linha && linha.chave === "mtapp:ptStudio") window.__primeiroSync.escritas.push({ via, linha });
-        });
-      };
+      const envios = [];
       // consulta encadeável (eq/in/gt/order/limit…) que resolve com a resposta dada
       const consulta = (resp) => {
         const o = { then: (fn, rej) => Promise.resolve(resp).then(fn, rej) };
@@ -13993,48 +13988,32 @@ async function novaExecucaoAluno(p) {
       window.MT_supabase = {
         auth: { getSession: async () => ({ data: { session: { user: { id: "user-sync-ficticio", email: "r@t.br" } } } }) },
         rpc: (nome, args) => {
-          if (nome === "dados_cas") registra(nome, { chave: args.p_chave, valor: args.p_valor });
-          if (nome === "dados_grava") registra(nome, args.p_linhas);
+          if (nome === "dados_cas") envios.push({ chave: args.p_chave, valor: args.p_valor });
+          if (nome === "dados_grava") envios.push(...(args.p_linhas || []));
           return Promise.resolve({ data: null });
         },
         from: (tabela) => ({
           select: () => consulta(tabela === "dados"
-            ? { data: [{ chave: "mtapp:ptStudio", valor: nuvemVal, atualizado: "2099-01-01T00:00:00+00:00" }] }
+            ? { data: [{ chave: "mtapp:ptStudio", valor: nuvemVal, atualizado: "2099-01-01T00:00:00.000Z" }] }
             : { data: tabela === "membros" ? [{ academia_id: "acad-1", papel: "dono" }] : [] }),
-          upsert: (linhas) => { registra("upsert:" + tabela, linhas); return Promise.resolve({}); },
+          upsert: (linhas) => { envios.push(...(Array.isArray(linhas) ? linhas : [linhas])); return Promise.resolve({}); },
           insert: () => Promise.resolve({}),
         }),
       };
       window.MTStore.iniciaSync();
-    });
-    await pS.locator("#mtSyncConflito").waitFor({ state: "visible" });
-    const guarda = await pS.evaluate(() => {
-      const salvo = Object.keys(localStorage).some((chave) => {
-        if (!chave.startsWith("mtsync:conflito:")) return false;
-        const copia = JSON.parse(localStorage.getItem(chave));
-        return copia.chave === "mtapp:ptStudio" && copia.raw === window.__primeiroSync.localRaw;
-      });
+      await new Promise((res) => setTimeout(res, 2000));
       return {
         alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
-        preservado: localStorage.getItem("mtapp:ptStudio") === window.__primeiroSync.localRaw,
-        salvo,
-        escritas: window.__primeiroSync.escritas.length,
+        subiuVazio: envios.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+        conflito: !!((window.__MTSync._estado.conflitos || {})["mtapp:ptStudio"]),
+        base: window.__MTSync.baseDe("mtapp:ptStudio"),
+        backup: !!localStorage.getItem("mtsync:bak:mtapp:ptStudio"),
       };
     });
-    ok(guarda.alunos === 0 && guarda.preservado && guarda.salvo,
-      "1º sync sem revisão comprovada preserva o rascunho vazio e sua cópia antes de carregar a nuvem");
-    ok(guarda.escritas === 0, "o estado vazio não sobe por RPC nem pelo upsert legado durante o conflito");
-    await pS.getByRole("button", { name: "Carregar versão da nuvem", exact: true }).click();
-    await pS.waitForFunction(() => !document.getElementById("mtSyncConflito") &&
-      (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length === 3);
-    const resolvido = await pS.evaluate(() => ({
-      alunos: JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.map((aluno) => aluno.id),
-      base: JSON.parse(localStorage.getItem("mtsync:base:acad-1"))["mtapp:ptStudio"],
-      escritas: window.__primeiroSync.escritas.length,
-    }));
-    ok(resolvido.alunos.join(",") === "n1,n2,n3" && resolvido.base === "2099-01-01T00:00:00+00:00",
-      "Carregar versão da nuvem aplica os 3 alunos e registra a revisão após a escolha explícita");
-    ok(resolvido.escritas === 0, "carregar a versão da nuvem não sobrescreve os dados remotos por RPC nem por upsert");
+    ok(guarda.alunos === 3, "1º sync num aparelho vazio: a base da nuvem vence (3 alunos aplicados)");
+    ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
+    ok(!guarda.conflito && guarda.base === "2099-01-01T00:00:00.000Z", "a primeira puxada vira a base CAS comprovada sem falso conflito");
+    ok(guarda.backup, "o seed local fica em backup antes de a base cheia da nuvem ser aplicada");
     await pS.close();
     await ctxS.close();
   }

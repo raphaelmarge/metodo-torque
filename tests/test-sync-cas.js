@@ -18,6 +18,14 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   assert.equal(call.args.p_chave,K);assert.equal(call.args.p_valor.nota,'edição fictícia');
   assert.equal(x.ctx.__MTSync.baseDe(K),B);
  });
+ await test('aparelho novo com seed vazio baixa a base cheia antes de qualquer envio',async()=>{
+  const remoto={alunos:[{id:'n1'},{id:'n2'},{id:'n3'}],sessoes:[],pagamentos:[],config:{}};
+  const x=await setup({rows:[dataRow(remoto)],local:{[K]:{alunos:[],sessoes:[],pagamentos:[],config:{},exercicios:Array(10).fill({seed:true}),_exSeed:1},'mtsync:ts':{[K]:'2099-12-31T00:00:00.000Z'}}});
+  await x.start();
+  assert.equal(x.ctx.MTStore.read('ptStudio').alunos.length,3);assert.equal(x.ctx.__MTSync.baseDe(K),A);
+  assert.ok(!x.ctx.__MTSync._estado.conflitos?.[K]);assert.equal(x.calls.filter(c=>c.rpc==='dados_cas').length,0);
+  assert.ok(x.memory.has('mtsync:bak:'+K));
+ });
  await test('cópia offline antiga sem base comprovada nunca sobrescreve a nuvem',async()=>{
   const x=await setup({rows:[dataRow(initial())],local:{[K]:{alunos:[{id:'antigo'}]},'mtsync:ts':{[K]:'2026-09-06T15:00:00.000Z'}}});await x.start();
   assert.ok(x.ctx.__MTSync._estado.conflitos[K]);assert.equal(x.calls.filter(c=>c.rows).length,0);
