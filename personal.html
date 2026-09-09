@@ -23956,15 +23956,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var inicio = String(dados.inicio || ""), dataInicio = new Date(inicio + "T12:00:00Z"), dia = +dados.diaVenc;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || isNaN(dataInicio.getTime()) || dataInicio.toISOString().slice(0, 10) !== inicio) return { erro: "Confira a data de início do contrato." };
       if (!Number.isInteger(dia) || dia < 1 || dia > 28) return { erro: "Escolha um vencimento entre os dias 1 e 28." };
+      var ct = contratoDe(st, id), anterior = a.onboardingConsultoria || {}, mudouPlano = !ct || ct.planoId !== pl.id;
       var rec = !!dados.pagamentoRecorrente, link = String(dados.linkRec || "").trim(), efetivo = link || String(pl.linkRec || "").trim();
       if (rec && (pl.cobranca === "sessao" || +pl.pacoteQtd > 0)) return { erro: "O link recorrente é destinado aos planos mensais, sem pacote de aulas." };
       if (pl.cobranca === "sessao" || +pl.pacoteQtd > 0) link = "";
-      if (rec && (a.assinaturaRec || a.assinaturaAs)) return { erro: "Este aluno já tem cobrança automática. Confira a assinatura no Financeiro antes de oferecer outra." };
+      if ((a.assinaturaRec || a.assinaturaAs) && ((rec && (!anterior.pagamentoRecorrente || mudouPlano)) || link !== String(anterior.linkRec || "").trim())) return { erro: "Este aluno já tem cobrança automática. Confira a assinatura no Financeiro antes de oferecer outro plano ou link." };
       function linkSeguro(v) { return !!(self.MT_ONBOARDING_CONSULTORIA && self.MT_ONBOARDING_CONSULTORIA.linkHttps(v)); }
       if (link && (!linkSeguro(link) || link.length > 2000)) return { erro: "Use um link completo começando com https://, sem usuário ou senha no endereço." };
       if (rec && (!linkSeguro(efetivo) || efetivo.length > 2000)) return { erro: "Cole o link de assinatura recorrente deste plano para mostrar depois do aceite." };
-      var ct = contratoDe(st, id), anterior = a.onboardingConsultoria || {}, mudouPlano = !ct || ct.planoId !== pl.id;
       var mudou = mudouPlano || ct.inicio !== inicio || +ct.diaVenc !== dia || !!anterior.pagamentoRecorrente !== rec || String(anterior.linkRec || "") !== link;
+      if (!mudou) return { ok: true, mudou: false };
       if (mudouPlano) {
         if (ct) { ct.status = "encerrado"; ct.encerradoEm = S.todayISO(); ct.motivo = "troca"; }
         ct = { id: S.uid(), alunoId: id, planoId: pl.id, inicio: inicio, diaVenc: dia, status: "ativo" };

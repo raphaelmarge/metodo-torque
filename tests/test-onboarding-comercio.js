@@ -124,11 +124,75 @@ async function testPersonal() {
   await context.close();
 }
 
+async function testActiveSubscription() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "pt-BR", serviceWorkers: "block" });
+  const page = await context.newPage(), errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await context.addInitScript(() => {
+    Object.defineProperty(window, "MT_PERSONAL_ONBOARDING_INIT", { configurable: true, set(value) {
+      const original = value.init;
+      value.init = function (api) { window.__onboardingComercioApi = api; return original.call(this, api); };
+      Object.defineProperty(window, "MT_PERSONAL_ONBOARDING_INIT", { configurable: true, writable: true, value });
+    } });
+  });
+  await context.route("**/*", route => new URL(route.request().url()).origin === new URL(BASE).origin ? route.continue() : route.abort());
+  await page.goto(BASE + "/demo-personal.html"); await page.locator("#btnDemo").click(); await page.waitForURL(/personal\.html/);
+  await page.waitForFunction(() => !!window.__onboardingComercioApi);
+  const setup = await page.evaluate(() => {
+    const st = MTStore.read("ptStudio"), a = st.alunos.find(x => x.onboardingConsultoria && x.onboardingConsultoria.requerido) || st.alunos[0];
+    delete a.assinaturaRec; delete a.assinaturaAs;
+    a.onboardingConsultoria = { requerido: true, revisao: "termos-ja-aceitos", pagamentoRecorrente: true, linkRec: "https://checkout.example/ja-contratado" };
+    st.planosPT.push({ id: "oc-ativo-plano", nome: "Plano já contratado", valor: 490, ciclo: 3, cobranca: "mes", treinosSem: 3, modalidade: "online", linkRec: "https://checkout.example/padrao" });
+    st.planosPT.push({ id: "oc-outro-plano", nome: "Outro plano", valor: 590, ciclo: 3, cobranca: "mes", linkRec: "https://checkout.example/outro" });
+    st.contratosPT = st.contratosPT.filter(x => x.alunoId !== a.id);
+    st.contratosPT.push({ id: "oc-contrato-aceito", alunoId: a.id, planoId: "oc-ativo-plano", status: "ativo", inicio: "2026-09-09", diaVenc: 5 });
+    MTStore.write("ptStudio", st);
+    const versao = window.__onboardingComercioApi.pacote(st, a).v;
+    a.assinaturaAs = { id: "assinatura-ficticia-ativa", valor: 490, desde: "2026-09-09" }; MTStore.write("ptStudio", st);
+    window.__perfilPT(a.id); window.__pfAba("app");
+    return { id: a.id, versao, vinculo: a.onboardingConsultoria };
+  });
+  await page.locator("#pfOcRecorrente").waitFor();
+  eq(await page.locator("#pfOcRecorrente").isChecked(), true, "assinatura ativa conserva toggle comercial já contratado");
+  eq(await page.locator("#pfOcRecorrente").isEnabled(), false, "assinatura ativa impede nova oferta pelo toggle");
+  eq(await page.locator("#pfOcLink").isEnabled(), false, "assinatura ativa impede trocar URL na interface");
+  const before = await page.evaluate(() => JSON.stringify(MTStore.read("ptStudio")));
+  await page.locator("#pfOcSalvarPlano").click();
+  eq(await page.evaluate(() => JSON.stringify(MTStore.read("ptStudio"))), before, "Salvar sem alterações não modifica estado nem revisão depois da ativação");
+  const unchanged = await page.evaluate(id => { const st = MTStore.read("ptStudio"), a = st.alunos.find(x => x.id === id); return { v: window.__onboardingComercioApi.pacote(st, a).v, vinculo: a.onboardingConsultoria }; }, setup.id);
+  eq(unchanged.v, setup.versao, "abrir e salvar com assinatura ativa conserva versão do contrato aceito");
+  eq(unchanged.vinculo, setup.vinculo, "aceite conserva flag, link e revisão originais");
+  const refusals = await page.evaluate(id => {
+    const api = window.__onboardingComercioApi, st = MTStore.read("ptStudio"), a = st.alunos.find(x => x.id === id);
+    const dados = { planoId: "oc-ativo-plano", inicio: "2026-09-09", diaVenc: 5, pagamentoRecorrente: true, linkRec: a.onboardingConsultoria.linkRec };
+    const url = api.salvaComercio(id, { ...dados, linkRec: "https://checkout.example/nova-assinatura" });
+    const plano = api.salvaComercio(id, { ...dados, planoId: "oc-outro-plano" });
+    const stable = JSON.stringify(MTStore.read("ptStudio")) === JSON.stringify(st);
+    a.onboardingConsultoria.pagamentoRecorrente = false; MTStore.write("ptStudio", st);
+    const nova = api.salvaComercio(id, dados);
+    a.onboardingConsultoria.pagamentoRecorrente = true; MTStore.write("ptStudio", st);
+    return { url, plano, nova, stable };
+  }, setup.id);
+  ok(refusals.url.erro && /automática/.test(refusals.url.erro), "bridge recusa novo link com assinatura ativa");
+  ok(refusals.plano.erro && /automática/.test(refusals.plano.erro), "bridge recusa oferta recorrente de outro plano com assinatura ativa");
+  ok(refusals.nova.erro && /automática/.test(refusals.nova.erro), "bridge recusa ativar oferta que não fazia parte do contrato");
+  ok(refusals.stable, "tentativas recusadas não alteram plano, vínculo ou recebimentos");
+  await page.locator("#pfOcDia").selectOption("8"); await page.locator("#pfOcSalvarPlano").click();
+  const edited = await page.evaluate(id => { const st = MTStore.read("ptStudio"), a = st.alunos.find(x => x.id === id); return { v: window.__onboardingComercioApi.pacote(st, a).v, vinculo: a.onboardingConsultoria, ct: st.contratosPT.find(x => x.alunoId === id && x.status === "ativo") }; }, setup.id);
+  eq(edited.ct.diaVenc, 8, "editar outra condição comercial continua permitido");
+  eq(edited.vinculo.pagamentoRecorrente, true, "editar outra condição conserva a recorrência contratada");
+  eq(edited.vinculo.linkRec, setup.vinculo.linkRec, "editar outra condição conserva o link contratado");
+  ok(edited.v !== setup.versao, "apenas mudança material de vencimento cria nova versão");
+  eq(errors, [], "salvamento com assinatura ativa não gera erro JavaScript");
+  await context.close();
+}
+
 (async () => {
-  testCore();
+  if (!process.env.AUTO_ONLY) testCore();
   if (!process.env.CORE_ONLY) {
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ["--no-sandbox"] });
-    await testPersonal();
+    if (!process.env.AUTO_ONLY) await testPersonal();
+    await testActiveSubscription();
   }
   console.log(checks + " verificações comerciais do onboarding passaram.");
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

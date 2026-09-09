@@ -154,9 +154,10 @@
       function pintaPlano() {
         var pl = selecionado(), semRec = !pl || pl.cobranca === "sessao" || +pl.pacoteQtd > 0, ativa = !!(a.assinaturaRec || a.assinaturaAs), ck = $("pfOcRecorrente");
         $("pfOcPlanoResumo").textContent = resumoPlano(pl); ck.disabled = semRec || ativa;
-        if (ck.disabled) ck.checked = false;
+        if (semRec) ck.checked = false;
         $("pfOcDia").disabled = !!pl && (pl.cobranca === "sessao" || +pl.pacoteQtd > 0);
         $("pfOcLinkBox").hidden = !ck.checked;
+        $("pfOcLink").disabled = ativa;
         $("pfOcLink").placeholder = pl && pl.linkRec || "https://…";
         $("pfOcLinkAjuda").textContent = pl && pl.linkRec ? "Deixe vazio para usar o link já cadastrado no plano." : "Cole o link recorrente gerado na sua plataforma de pagamento.";
         $("pfOcRecorrenteAjuda").textContent = ativa ? "Este aluno já tem cobrança automática. Gerencie a assinatura no Financeiro." : semRec ? (pl ? "Sessões e pacotes de aulas não usam este link recorrente." : "Selecione um plano para configurar o pagamento.") : ck.checked ? "O clique abre o pagamento. A confirmação continua sendo feita pela plataforma e pelo Financeiro." : "O contrato será concluído sem abrir uma etapa de pagamento.";
