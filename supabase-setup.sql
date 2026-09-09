@@ -929,6 +929,11 @@ declare
   v_personal boolean;
 begin
   if tg_op = 'UPDATE' then
+    -- Revogação canônica remove pacote/login; não é publicação. A exceção
+    -- exige acesso cortado e pacote NULL, sem trocar aluno ou academia.
+    if new.revogado_em is not null and new.dados is null
+       and new.token is not distinct from old.token
+       and new.academia_id is not distinct from old.academia_id then return new; end if;
     if new.dados is not distinct from old.dados
        and new.token is not distinct from old.token
        and new.academia_id is not distinct from old.academia_id then return new; end if;
