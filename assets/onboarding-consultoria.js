@@ -129,7 +129,7 @@
       contrato_inicio: pl.inicio ? pl.inicio.split("-").reverse().join("/") : "a data do aceite", foro_cidade: p.cidade && p.uf ? p.cidade + "/" + p.uf : p.cidade || "cidade do contratante",
       responsavel_nome:d.responsavelNome, responsavel_cpf:d.responsavelCpf, representante_legal:rep
     };
-    var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g, function (_, k) { return texto(Object.prototype.hasOwnProperty.call(mapa,k) ? mapa[k] : "—", 500); });
+    var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g, function (_, k) { return k==="representante_legal" ? rep : String(mapa[k] == null || mapa[k] === "" ? "—" : mapa[k]); });
     return !temRep && rep ? pronto + "\n\n" + rep : pronto;
   }
 
@@ -159,7 +159,7 @@
         aluno_cpf:d.cpf, aluno_nascimento:data, aluno_endereco:en, aluno_email:d.email, aluno_telefone:d.telefone,
         prestador_nome:p.nome, prestador_documento:p.documento, prestador_endereco:p.endereco, prestador_email:p.email, prestador_telefone:p.telefone, plano_nome:pl.nome || "consultoria",
         plano_valor:+pl.valor ? "R$ "+(+pl.valor).toFixed(2).replace(".",",") : "conforme combinado", contrato_inicio:pl.inicio ? pl.inicio.split("-").reverse().join("/") : "a data do aceite", foro_cidade:p.cidade && p.uf ? p.cidade + "/" + p.uf : p.cidade || "cidade do contratante", responsavel_nome:d.responsavelNome,responsavel_cpf:d.responsavelCpf,representante_legal:rep };
-      var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g,function(_,k){return String(Object.prototype.hasOwnProperty.call(m,k)?m[k]:"—");});return !temRep&&rep?pronto+"\n\n"+rep:pronto;
+      var pronto=String(modelo || "").replace(/\{\{([a-z_]+)\}\}/g,function(_,k){return k==="representante_legal"?rep:String(m[k]==null||m[k]===""?"—":m[k]);});return !temRep&&rep?pronto+"\n\n"+rep:pronto;
     }
     function termoDepois() { setTimeout(function () { if (window.__abreTermoResponsabilidade) window.__abreTermoResponsabilidade(); }, 80); }
     function concluido(s) { return s && s.v === cfg.v && s.status === "enviado"; }
