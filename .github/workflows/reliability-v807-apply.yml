@@ -1,0 +1,43 @@
+name: Aplicar reliability mt-v807
+
+on:
+  push:
+    branches:
+      - reliability/mt-v807
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[v807-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/mt-v807
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar correções de confiabilidade
+        run: python3 tools/reliability-v807.py
+      - name: Validar CAS e versão
+        run: |
+          node tests/test-sync-cas.js
+          node tests/test-sync-cas-sql.js
+          node tests/test-versao.js
+          git diff --check
+      - name: Gravar alterações na branch
+        shell: bash
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Nada para gravar"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/store.js apps/*.html supabase-setup.sql migrations/20260909_ptstudio_cas_v807.sql tests/test-sync-cas.js tests/test-sync-cas-sql.js assets/versao.js sw.js app/app-sw.js docs/reliability-mt-v807.md
+          git commit -m "fix: reliability mt-v807 [v807-applied]"
+          git push origin HEAD:reliability/mt-v807
