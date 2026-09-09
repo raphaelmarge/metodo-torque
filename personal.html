@@ -1868,6 +1868,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 <link href="assets/personal-torque-one.css" rel="stylesheet">
 <script defer src="assets/personal-gestao.js"></script>
 <script defer src="assets/personal-ferramentas.js"></script>
+<script defer src="assets/personal-torque-one.js"></script>
 </head>
 <body>
 
@@ -2031,8 +2032,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div id="dashMes"></div>
     <div class="dh-main">
       <div class="dh-next" id="dashDia"><div class="dh-section-head"><h2>Próxima sessão</h2><button type="button" class="btn sec mini" id="dVerSemana">Ver agenda</button></div><div id="bHojeP" class="dh-next-body">Nenhuma sessão agendada.</div></div>
-      <div id="dashResolver"></div>
+      <section id="onePlanner" aria-labelledby="onePlannerTitle"><span class="one-eyebrow">TREINO + NUTRIÇÃO</span><h2 id="onePlannerTitle">Planeje o próximo passo.</h2><p>Monte e acompanhe os planos de cada aluno em um só lugar.</p><div class="one-planner-actions"><button type="button" class="btn" data-one-route="nutricao">Planejar alimentação <span aria-hidden="true">↗</span></button><button type="button" class="btn sec" data-one-route="treinos">Planejar treino <span aria-hidden="true">↗</span></button></div></section>
     </div>
+    <div id="dashResolver"></div>
     <section id="dashNutricao" aria-label="Resumo de nutrição"></section>
     <div class="dh-secondary">
       <details class="dh-disclosure" id="dashRadar"><summary class="dh-disclosure-head"><span class="dh-disclosure-title">Acompanhamento dos alunos</span><span class="dh-disclosure-count" id="dRadarCount">0 pendências</span></summary><div id="bRadarP" class="dh-disclosure-body"></div></details>
@@ -3581,7 +3583,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <section id="vAssessoria" hidden>
     <div class="pc-heading">
-      <h2>Acompanhamento a distância</h2>
+      <h2>Assessoria</h2>
       <p class="muted">Veja quem precisa de atenção e acompanhe os registros recentes do app.</p>
     </div>
     <div id="assessoriaResumo" class="pc-kpis" hidden></div>

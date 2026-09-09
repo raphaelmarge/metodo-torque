@@ -41,10 +41,10 @@
   }
   function htmlPlano(p) {
     if (!p) return '<p class="muted">Nenhum plano alimentar aplicado para este aluno.</p>';
-    return '<div class="pn-head"><div><h3>' + esc(p.titulo || 'Plano alimentar') + '</h3><p class="muted">' + esc(p.objetivo) + (p.ativo ? '' : ' · Plano pausado') + '</p></div></div>' +
-      '<p class="muted">Versão '+esc(p.versao||1)+(p.inicio?' · A partir de '+esc(p.inicio.split('-').reverse().join('/')):'')+(p.fim?' até '+esc(p.fim.split('-').reverse().join('/')):'')+'</p><div class="pn-macros">' + totais(itensPlano(p)) + '</div>' + p.refeicoes.map(function (r) {
+    return '<div class="pn-plan-layout"><div class="pn-plan-main"><div class="pn-head"><div><h3>' + esc(p.titulo || 'Plano alimentar') + '</h3><p class="muted">' + esc(p.objetivo) + (p.ativo ? '' : ' · Plano pausado') + '</p></div></div>' +
+      '<p class="muted">Versão '+esc(p.versao||1)+(p.inicio?' · A partir de '+esc(p.inicio.split('-').reverse().join('/')):'')+(p.fim?' até '+esc(p.fim.split('-').reverse().join('/')):'')+'</p>' + p.refeicoes.map(function (r) {
         return '<section class="pn-meal"><div class="pn-head"><h4>' + esc(r.hora ? r.hora + ' · ' : '') + esc(r.titulo || 'Refeição') + '</h4><span class="muted">' + fmt(N.totalItens(r.itens).k) + ' kcal</span></div><p class="muted">'+diasTexto(r.dias)+'</p><ul class="pn-plan-list">' + r.itens.map(function (it) { return '<li><span>' + esc(it.nome) +((it.substituicoes||[]).length?'<small class="pn-alt-text">Trocas: '+it.substituicoes.map(function(s){return esc(s.nome)+' ('+fmt(s.qtd)+' × '+esc(s.porcao)+')';}).join(' ou ')+'</small>':'')+ '</span><span class="muted">' + fmt(it.qtd) + ' × ' + esc(it.porcao || 'porção') + '</span></li>'; }).join('') + '</ul></section>';
-      }).join('') + (p.orientacoes ? '<p class="pn-preline">' + esc(p.orientacoes) + '</p>' : '') + ((p.responsavel || p.crn) ? '<p class="muted">Responsável: ' + esc(p.responsavel || 'Não informado') + (p.crn ? ' · CRN ' + esc(p.crn) : '') + '</p>' : '');
+      }).join('') + (p.orientacoes ? '<p class="pn-preline">' + esc(p.orientacoes) + '</p>' : '') + ((p.responsavel || p.crn) ? '<p class="muted">Responsável: ' + esc(p.responsavel || 'Não informado') + (p.crn ? ' · CRN ' + esc(p.crn) : '') + '</p>' : '') + '</div><aside class="pn-plan-summary" aria-label="Resumo nutricional"><h4>Total das refeições</h4><div class="pn-macros">'+totais(itensPlano(p))+'</div></aside></div>';
   }
   function opcoesAlunos() {
     var st = C.load(), q = norm($('pnAlunoBusca').value), ativos = (st.alunos || []).filter(function (a) { return a.ativo !== false; }), filtro=$('pnAlunoFiltro')&&$('pnAlunoFiltro').value;
