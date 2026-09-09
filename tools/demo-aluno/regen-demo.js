@@ -13,6 +13,7 @@ const PW = "/opt/node22/lib/node_modules/playwright";
 const { chromium } = require(fs.existsSync(PW) ? PW : "playwright");
 const EXEC = "/opt/pw-browsers/chromium";
 const RAIZ = path.join(__dirname, "..", "..");
+const NUTRICAO_DEMO = JSON.parse(fs.readFileSync(path.join(__dirname, "nutricao-demo.json"), "utf8"));
 
 // fotos de capa da demo (já passadas pelo mesmo corte 16:9 / 720 px do painel)
 const capa = (arq) => "data:image/jpeg;base64," + fs.readFileSync(path.join(__dirname, arq)).toString("base64");
@@ -24,7 +25,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
   p.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
   await p.goto((process.env.BASE_URL || "http://127.0.0.1:8765") + "/personal.html");
   await p.waitForTimeout(800);
-  const html = await p.evaluate((CAPAS) => {
+  const html = await p.evaluate(({ CAPAS, NUTRICAO_DEMO }) => {
     const S = window.MTStore;
     const snap = JSON.stringify(S.read("ptStudio", {}));
     const st = S.read("ptStudio", {});
@@ -180,16 +181,17 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         "0": [{ tp: "cardio", id: "dmc3" }],
       } },
     };
+    st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [] };
     window.MTStore.write("ptStudio", st);
     const out = window.__montaAppAluno(alex, new Date().toISOString());
     window.MTStore.write("ptStudio", JSON.parse(snap));
     return out;
-  }, CAPAS);
+  }, { CAPAS, NUTRICAO_DEMO });
   await br.close();
   if (!html || html.length < 50000) { console.log("ERRO: html curto", html && html.length); process.exit(1); }
 
   // pós-processo: localStorage → __demoLS, título, bloco demo depois do <body>
-  const bloco = fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8");
+  const bloco = fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";");
   let out = html.replace(/localStorage/g, "__demoLS");
   out = out.replace(/<title>[^<]*<\/title>/, "<title>Alex · Studio TORQUE Demo</title>");
   const ib = out.indexOf("<body");

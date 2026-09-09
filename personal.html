@@ -1863,6 +1863,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 <link href="assets/personal-acompanhamento.css" rel="stylesheet">
 <link href="assets/personal-ferramentas.css" rel="stylesheet">
 <link href="assets/personal-comunicacao.css" rel="stylesheet">
+<link href="assets/personal-nutricao.css" rel="stylesheet">
 <script defer src="assets/personal-gestao.js"></script>
 <script defer src="assets/personal-ferramentas.js"></script>
 </head>
@@ -2001,6 +2002,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="pagamentos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg>Financeiro</button>
     <button data-a="treinos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg>Treinos</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <button class="pouco" data-a="nutricao"><svg class="mi" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5zM12 7.5c0-2 1-3.5 2.5-4"/></svg>Nutrição</button>
     <div class="navgrupo">Menos usado</div>
     <button class="pouco" data-a="avaliacoes"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg>Avaliações</button>
     <button class="pouco" data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Questionários</button>
@@ -3704,6 +3706,35 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       </div>
     </div>
   </div>
+<section id="vNutricao" hidden>
+  <header class="pn-head"><div><span class="alk">ACOMPANHAMENTO</span><h2>Nutrição</h2><p class="muted">Plano alimentar, biblioteca e registros do aluno.</p></div></header>
+  <div class="pn-fields pn-student"><label class="pn-field" for="pnAlunoBusca">Buscar aluno<input id="pnAlunoBusca" type="search" placeholder="Nome ou telefone" autocomplete="off"></label><label class="pn-field" for="pnAluno">Aluno<select id="pnAluno"><option value="">Escolha um aluno</option></select></label></div>
+  <label class="pn-mobile-area" for="pnArea">Área<select id="pnArea"><option value="plano">Plano alimentar</option><option value="biblioteca">Biblioteca de alimentos</option><option value="registros">Registros do aluno</option></select></label>
+  <div class="abas pn-tabs" id="pnAbas"><button type="button" data-pna="plano" class="ativa">Plano alimentar</button><button type="button" data-pna="biblioteca">Biblioteca de alimentos</button><button type="button" data-pna="registros">Registros do aluno</button></div>
+  <p id="pnStatus" class="muted pn-status" role="status" aria-live="polite"></p>
+  <section data-pnsec="plano" class="pn-section">
+    <div id="pnPlano"></div>
+    <div class="pn-actions"><button type="button" class="btn" id="pnNovo">Montar plano</button><button type="button" class="btn sec" id="pnEditar" hidden>Editar plano</button><button type="button" class="btn sec" id="pnPublicar" hidden>Publicar no app</button><button type="button" class="btn sec" id="pnAcesso" hidden>App e acesso</button></div>
+    <section id="pnEditor" class="pn-editor" hidden aria-labelledby="pnEditorTitulo">
+      <div class="pn-head"><h3 id="pnEditorTitulo">Rascunho do plano</h3><button type="button" class="btn sec" id="pnCancelar">Descartar rascunho</button></div>
+      <p class="muted">Revise o plano com o profissional responsável. O rascunho fica nesta sessão até você aplicar; a publicação no app é uma ação separada.</p>
+      <div class="pn-fields"><label class="pn-field" for="pnTitulo">Nome do plano<input id="pnTitulo" maxlength="160" placeholder="Plano alimentar"></label><label class="pn-field" for="pnObjetivo">Objetivo<input id="pnObjetivo" maxlength="300" placeholder="Objetivo definido no acompanhamento"></label></div>
+      <details class="pn-details"><summary>Orientações e profissional responsável</summary><div class="pn-fields"><label class="pn-field" for="pnResponsavel">Nome do responsável<input id="pnResponsavel" maxlength="160"></label><label class="pn-field" for="pnCrn">CRN<input id="pnCrn" maxlength="80"></label></div><label class="pn-field" for="pnOrientacoes">Orientações<textarea id="pnOrientacoes" rows="3" maxlength="6000"></textarea></label></details>
+      <label class="pn-actions"><input type="checkbox" id="pnAtivo" checked style="width:auto;margin:0">Plano ativo no app</label>
+      <div id="pnRefeicoes"></div><div class="pn-actions"><button type="button" class="btn sec" id="pnAddRefeicao">Adicionar refeição</button></div>
+      <details class="pn-details" id="pnIAOptions"><summary>Montar uma proposta com IA</summary><label class="pn-field" for="pnIAPedido">Preferências, restrições e orientação para a proposta<textarea id="pnIAPedido" rows="3" maxlength="2000" placeholder="Informe alergias, alimentos que evita, rotina e preferências."></textarea></label><p class="muted">A IA usa o cadastro e os alimentos da biblioteca. Confira as porções e restrições antes de aplicar.</p><div class="pn-actions"><button type="button" class="btn sec" id="pnIAGerar">Gerar proposta com IA</button><button type="button" class="btn sec" id="pnIACancelar" hidden>Cancelar geração</button></div><p id="pnIAStatus" role="status" class="muted"></p></details>
+      <div class="pn-actions"><button type="button" class="btn" id="pnRevisar">Revisar plano</button></div>
+    </section>
+    <section id="pnRevisao" class="pn-editor" hidden aria-labelledby="pnRevisaoTitulo"><h3 id="pnRevisaoTitulo">Conferir antes de aplicar</h3><div id="pnRevisaoConteudo"></div><p class="muted">Aplicar substitui o plano alimentar deste aluno no painel. O treino e os registros realizados permanecem preservados.</p><div class="pn-actions"><button type="button" class="btn" id="pnAplicar">Aplicar plano ao aluno</button><button type="button" class="btn sec" id="pnVoltarEditor">Voltar e ajustar</button><button type="button" class="btn sec" id="pnDescartarIA" hidden>Descartar proposta da IA</button></div></section>
+  </section>
+  <section data-pnsec="biblioteca" class="pn-section" hidden>
+    <div class="pn-fields"><label class="pn-field" for="pnBusca">Buscar alimento<input id="pnBusca" type="search" placeholder="Nome do alimento" autocomplete="off"></label><label class="pn-field" for="pnCategoria">Categoria<select id="pnCategoria"><option value="">Todas as categorias</option></select></label></div>
+    <div class="pn-actions"><button type="button" class="btn sec" id="pnFavoritos" aria-pressed="false">Só favoritos</button><span id="pnTotalCatalogo" class="muted"></span></div><div id="pnCatalogo"></div><button type="button" class="btn sec" id="pnMais">Mostrar mais alimentos</button>
+    <details class="pn-details" id="pnNovoAlimento"><summary>Cadastrar alimento próprio</summary><p class="muted">Informe os valores da porção base conforme o rótulo ou a referência que você utiliza.</p><div class="pn-fields"><label class="pn-field" for="pnAlNome">Alimento<input id="pnAlNome" maxlength="200"></label><label class="pn-field" for="pnAlPorcao">Porção base<input id="pnAlPorcao" maxlength="100" placeholder="Ex.: 100 g ou 1 unidade"></label><label class="pn-field" for="pnAlK">Energia (kcal)<input id="pnAlK" inputmode="decimal"></label><label class="pn-field" for="pnAlPt">Proteínas (g)<input id="pnAlPt" inputmode="decimal"></label><label class="pn-field" for="pnAlCb">Carboidratos (g)<input id="pnAlCb" inputmode="decimal"></label><label class="pn-field" for="pnAlG">Gorduras (g)<input id="pnAlG" inputmode="decimal"></label></div><button type="button" class="btn" id="pnAlSalvar">Salvar alimento</button><p id="pnAlStatus" class="muted" role="status"></p></details>
+  </section>
+  <section data-pnsec="registros" class="pn-section" hidden><div class="pn-head"><div><h3>Registros do aluno</h3><p class="muted">Refeições registradas no app, com as quantidades informadas pelo aluno.</p></div><label class="pn-field" for="pnPeriodo">Período<select id="pnPeriodo"><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="">Todo o histórico</option></select></label></div><div id="pnRegistros"></div></section>
+</section>
+<dialog id="pnFoodDialog" class="pn-dialog"><div class="pn-head"><h3>Adicionar alimento</h3><button type="button" class="btn sec" id="pnFoodFechar">Fechar</button></div><p id="pnFoodDestino" class="muted"></p><label class="pn-field" for="pnPickBusca">Buscar na biblioteca<input id="pnPickBusca" type="search" placeholder="Digite o nome do alimento" autocomplete="off"></label><div id="pnPickLista"></div><button type="button" class="btn sec" id="pnPickMais">Mostrar mais</button></dialog>
 <section id="vPerfil" hidden>
   <header class="pftopo pfp-header">
     <div class="pfvolta"><button type="button" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista">&lsaquo; Alunos</button><div class="pfp-header-tools"><button type="button" id="pfEditar">Editar cadastro</button><button class="btn mini" id="pfAcoesBtn" aria-expanded="false" title="Compartilhar com o aluno" aria-controls="pfAcoes"><span class="pf-ac-rot">Compartilhar</span> <span class="fseta" aria-hidden="true">▾</span></button></div></div>
@@ -3721,6 +3752,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   <div class="pfp-mobile-nav"><label for="pfArea">Área da ficha</label><select id="pfArea"><optgroup label="Acompanhamento"><option value="resumo">Resumo</option><option value="treino">Treino</option><option value="freq">Frequência</option><option value="aval">Avaliações</option><option value="quest">Questionários e hábitos</option></optgroup><optgroup label="Gestão"><option value="cadastro">Cadastro</option><option value="app">App e acesso</option><option value="fin">Financeiro</option></optgroup></select></div>
   <div class="abas pfp-tabs" id="pfAbas">
     <button data-pfa="resumo" class="ativa">Resumo</button>
+    <button data-pfa="alimentacao">Alimentação</button>
     <button data-pfa="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App e acesso</button>
     <button data-pfa="cadastro"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='8' r='3.6'/><path d='M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5'/></svg> Cadastro</button>
     <button data-pfa="fin"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
@@ -3729,6 +3761,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <button data-pfa="aval"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Avaliações</button>
     <button data-pfa="treino"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Treino</button>
   </div>
+  <section class="card pfp-section" data-pfsec="alimentacao" hidden><div class="pfp-section-head"><h2>Alimentação</h2><button type="button" class="dbt" id="pfNutricaoAbrir">Abrir Nutrição</button></div><div id="pfNutricao"></div></section>
   <section class="card pfp-section" data-pfsec="resumo" hidden>
     <div id="pfProxima" class="pfprox pfp-next"></div>
     <div id="pfResumo"></div>
@@ -3848,6 +3881,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/demo-nuvem.js"></script>
 <script src="assets/pagarme-cartao.js"></script>
 <script src="assets/exercicios-db.js"></script>
+<script src="assets/alimentos-db.js"></script>
+<script src="assets/nutricao-core.js"></script>
+<script src="assets/personal-nutricao.js"></script>
 <script src="assets/composicao-corporal.js"></script>
 <script src="assets/avaliacao-ui.js"></script>
 <script src="assets/scanner-visao.js"></script>
@@ -4179,6 +4215,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.dataset.a === "agenda" && window.__aulaExp) window.__aulaExp.carrega();
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
+    $("vNutricao").hidden = b.dataset.a !== "nutricao";
+    if (b.dataset.a === "nutricao" && self.MT_PERSONAL_NUTRICAO) self.MT_PERSONAL_NUTRICAO.abre();
     if (b.dataset.a === "treinos") renderGrupos();
     if (b.dataset.a === "treinos") mostraTrAba(trAbaAtual);
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
@@ -5446,7 +5484,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   // abas do perfil (pra tela não ficar tumultuada — pedido do Raphael)
   function mostraPfAba(aba) {
-    if (["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino"].indexOf(aba) < 0) aba = "resumo";
+    if (["resumo", "app", "cadastro", "fin", "freq", "quest", "aval", "treino", "alimentacao"].indexOf(aba) < 0) aba = "resumo";
+    if (aba === "alimentacao" && self.MT_PERSONAL_NUTRICAO) self.MT_PERSONAL_NUTRICAO.perfil(perfilId);
     var permiteFin = alFinanceiroPermitido();
     if (aba === "fin" && !permiteFin) { alert("O financeiro fica com o dono do studio (modo colaborador)."); aba = "resumo"; }
     document.querySelectorAll("#vPerfil [data-pfsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pfsec") !== aba; });
@@ -6134,7 +6173,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
     // vira PÁGINA: esconde as outras seções e mostra o perfil
-    ["vDash", "vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vSitePro", "vChat", "cardConta"].forEach(function (v) { $(v).hidden = true; });
+    ["vDash", "vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vNutricao", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vSitePro", "vChat", "cardConta"].forEach(function (v) { $(v).hidden = true; });
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
@@ -21731,6 +21770,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         foto: a.fotoAluno || a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
+      nutricaoApp: self.MT_NUTRICAO ? self.MT_NUTRICAO.normalizaPlano((((st.nutricaoV1 || {}).planos || {})[a.id]) || null) : null,
       /* v772: o sino do app avisa "seu treino foi atualizado" — e o carimbo
        * certo é o da PRESCRIÇÃO (marcaTreinoMudou), nunca o stamp do pacote: o
        * autoPublicaApps republica sozinho, e pelo stamp o aluno receberia o
@@ -23134,6 +23174,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderConta();
     renderPubPendentes(st);
     renderRelatorios(); // o Dashboard (aba inicial) mostra os alertas
+    if (self.MT_PERSONAL_NUTRICAO) self.MT_PERSONAL_NUTRICAO.render();
     setTimeout(autoPublicaApps, 1500); // deixa a tela pintar antes de subir os apps
   }
   /* v756: "salvo" na tela. Os campos da ilha gravam no change e ficavam
@@ -23873,6 +23914,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
 
   window.__ptStudio = { load: load, render: render }; // testes
+  if (self.MT_PERSONAL_NUTRICAO) self.MT_PERSONAL_NUTRICAO.init({
+    load: load, save: save, marcaPendente: marcaAppPendente,
+    perfilId: function () { return perfilId; },
+    acesso: function (id) { abrePerfil(id); mostraPfAba("app"); },
+    publicar: function (id, cb) {
+      var st = load(), a = st.alunos.find(function (x) { return x.id === id; }), nuvem = S.cloud && S.cloud();
+      if (!a || a.ativo === false) { cb({ erro: "Escolha um aluno ativo." }); return; }
+      if (!a.appTokenP) { cb({ erro: "Crie o acesso deste aluno em App e acesso antes de publicar." }); return; }
+      if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
+      if (!nuvem || !nuvem.client) { cb({ erro: "Entre na sua conta para publicar no app." }); return; }
+      publicaPacotes(nuvem, [a]).then(cb, function () { cb({ erro: "Não foi possível publicar. Tente novamente." }); });
+    }
+  });
 })();
 </script>
 <script>/* TORQUE camada visual (aditiva) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;if(RM)return;function conta(el){var tx=el.textContent.trim();var m=tx.match(/^([0-9]+)/);if(!m)return;var alvo=parseInt(m[1],10);if(!alvo)return;var resto=tx.slice(m[1].length);var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/800);el.textContent=Math.round(alvo*(1-Math.pow(1-p,3)))+resto;if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}

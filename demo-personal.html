@@ -458,6 +458,25 @@
     desafio: { nome: "30 dias TORQUE", ini: iso(20), fim: iso(-10), premio: "1 mês de assessoria grátis", ativo: true },
   };
 
+// Nutrição integrada: exemplos no mesmo cadastro; sem pacientes reais ou nuvem.
+  var planoNutriDemo = {"v":1,"ativo":true,"id":"demo-nutri","atualizadoEm":"2026-09-07T12:00:00.000Z","titulo":"Rotina alimentar · exemplo","objetivo":"Organizar as refeições ao longo do dia","orientacoes":"Plano demonstrativo para conhecer o app. As porções podem ser ajustadas na revisão.","responsavel":"Equipe de nutrição · demonstração","crn":"","refeicoes":[{"id":"cafe","hora":"07:30","titulo":"Café da manhã","itens":[{"id":"dc1","alimId":"","nome":"Iogurte natural","porcao":"1 pote (170 g)","qtd":1,"k":107,"pt":6,"cb":9,"g":5},{"id":"dc2","alimId":"","nome":"Banana","porcao":"1 unidade (90 g)","qtd":1,"k":80,"pt":1,"cb":20,"g":0.2}]},{"id":"almoco","hora":"12:30","titulo":"Almoço","itens":[{"id":"da1","alimId":"","nome":"Arroz cozido","porcao":"100 g","qtd":1,"k":128,"pt":2.5,"cb":28,"g":0.2},{"id":"da2","alimId":"","nome":"Feijão cozido","porcao":"100 g","qtd":1,"k":76,"pt":4.8,"cb":13.6,"g":0.5},{"id":"da3","alimId":"","nome":"Frango grelhado","porcao":"100 g","qtd":1.2,"k":159,"pt":32,"cb":0,"g":2.5},{"id":"da4","alimId":"","nome":"Salada de folhas","porcao":"1 prato de sobremesa","qtd":1,"k":20,"pt":1,"cb":3,"g":0.3}]},{"id":"lanche","hora":"16:00","titulo":"Lanche da tarde","itens":[{"id":"dl1","alimId":"","nome":"Maçã","porcao":"1 unidade (130 g)","qtd":1,"k":73,"pt":0.4,"cb":19,"g":0.2}]}]};
+  seed.nutricaoV1 = { planos: {}, favoritos: [], alimentos: [] };
+  alunos.slice(0, 2).forEach(function(a, i) {
+    var p = JSON.parse(JSON.stringify(planoNutriDemo));
+    p.id = 'demo-nutri-' + a.id; p.atualizadoEm = new Date().toISOString();
+    seed.nutricaoV1.planos[a.id] = p;
+    var diario = { v: 1, registros: {} };
+    [0, 1, 2].forEach(function(atras) {
+      var ref = p.refeicoes[0], id = 'plano:' + p.id + ':' + ref.id + ':' + iso(atras);
+      diario.registros[id] = { id: id, d: iso(atras), refeicaoId: ref.id, titulo: ref.titulo, hora: ref.hora,
+        itens: JSON.parse(JSON.stringify(ref.itens)), origem: 'plano', foto: '', atualizadoEm: new Date(Date.now() - atras * 864e5).toISOString(), apagado: false };
+    });
+    a.demoRetorno = a.demoRetorno || {};
+    a.demoRetorno.nutricaoV1 = diario;
+    a.retorno = a.retorno || {};
+    a.retorno.nutricaoV1 = JSON.parse(JSON.stringify(diario));
+  });
+
   document.getElementById("btnDemo").onclick = function () {
     try {
       // banco de imagens com a arte da promo — a automação "Pacote acabando"

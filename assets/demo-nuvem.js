@@ -73,7 +73,7 @@
     as.forEach(function (a) {
       b.app_aluno.push({
         token: a.appTokenP, academia_id: AID, ver: raiz.MT_VERSAO || "mt-v621",
-        atualizado: inst(2, "09:00"), dados: { ver: raiz.MT_VERSAO || "mt-v621" }, retorno: null,
+        atualizado: inst(2, "09:00"), dados: { ver: raiz.MT_VERSAO || "mt-v621" }, retorno: a.demoRetorno || null,
       });
     });
 
@@ -412,12 +412,26 @@
     return { ok: true, simulado: true, texto: JSON.stringify(plano) };
   }
 
+  function propostaDietaDemo() {
+    var lista = raiz.MT_ALIMENTOS || [];
+    function procura(termo) { return lista.find(function(a) { return String(a.n || '').toLowerCase().indexOf(termo) >= 0; }); }
+    var cafe = [procura('iogurte'), procura('banana')].filter(Boolean);
+    var almoco = [procura('arroz'), procura('feijão'), procura('frango')].filter(Boolean);
+    if (!cafe.length || !almoco.length) return { erro: 'A biblioteca ainda está carregando. Tente novamente.' };
+    var proposta = { simulado: true, refeicoes: [
+      { titulo: 'Café da manhã · exemplo', hora: '07:30', itens: cafe.map(function(a) { return {nome:a.n,qtd:1}; }) },
+      { titulo: 'Almoço · exemplo', hora: '12:30', itens: almoco.map(function(a) { return {nome:a.n,qtd:1}; }) }
+    ] };
+    return { ok: true, simulado: true, texto: JSON.stringify(proposta) };
+  }
+
   /* Edge Function no demo, não. São elas que mandam WhatsApp de verdade, geram
    * link de cobrança e chamam a IA — nada disso pode sair de uma página pública
    * de demonstração. O recado diz a verdade em vez de dar erro de rede. */
   if (raiz.MT_FUNCAO && typeof raiz.MT_FUNCAO.chama === "function") {
     raiz.MT_FUNCAO.chama = function (client, nome, corpo, oQue) {
       if (nome === "chat-envia" && corpo && corpo.acao === "ia_treino") return Promise.resolve(propostaTreinoDemo(corpo));
+      if (nome === "chat-envia" && corpo && corpo.acao === "ia_dieta") return Promise.resolve(propostaDietaDemo());
       return Promise.resolve({
         erro: (oQue || "Isso") + " não roda no demo — aqui é uma demonstração, " +
           "sem conta e sem internet. No sistema de verdade funciona normalmente.",

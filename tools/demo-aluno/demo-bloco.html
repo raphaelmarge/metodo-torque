@@ -1,5 +1,18 @@
 <script>/* demonstração: dados fake de 14 meses, só em memória (não gravam no aparelho) */
 var __demoDados={};
+/* NUTRICAO_DEMO_FIXTURE */
+var __demoNutriRemoto={v:1,registros:{}};
+(function(){
+  if(typeof __demoNutriPlano==='undefined')return;
+  [0,1,2,3,4,5,6].forEach(function(atras){
+    var d=new Date(Date.now()-atras*864e5),dia=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    __demoNutriPlano.refeicoes.slice(0,atras?2:1).forEach(function(ref){
+      var id='plano:'+__demoNutriPlano.id+':'+ref.id+':'+dia;
+      __demoNutriRemoto.registros[id]={id:id,d:dia,refeicaoId:ref.id,titulo:ref.titulo,hora:ref.hora,itens:JSON.parse(JSON.stringify(ref.itens)),origem:'plano',foto:'',atualizadoEm:d.toISOString(),apagado:false};
+    });
+  });
+  __demoDados.ptnutricao=JSON.stringify(__demoNutriRemoto);
+})();
 (function(){
   function iso(n){var d=new Date(Date.now()-n*864e5);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
   function dt(n,h){var d=new Date(Date.now()-n*864e5);d.setHours(h,12,0,0);return d.toISOString();}
@@ -141,11 +154,28 @@ var __demoFeed=(function(){
   var fetchReal=window.fetch;
   window.fetch=function(url,op){
     var u=String(url||"");
+    if(u.indexOf('/functions/v1/chat-envia')>=0){
+      var fotoReq={};try{fotoReq=JSON.parse((op&&op.body)||'{}');}catch(e){}
+      var fotoResposta=fotoReq.acao==='ia_prato'?{ok:true,simulado:true,estimativa:true,
+        itens:JSON.parse(JSON.stringify(__demoNutriPlano.refeicoes[1].itens)),
+        observacao:'Demonstração: alimentos de exemplo. Esta foto não foi analisada por IA. Ajuste as porções para testar.'
+      }:{erro:'Esta ação não está disponível no demo.'};
+      return Promise.resolve({ok:true,status:200,json:function(){return Promise.resolve(fotoResposta);}});
+    }
     if(u.indexOf("/rest/v1/rpc/")<0) return fetchReal.apply(this,arguments);
     var fn=u.split("/rest/v1/rpc/")[1];
     var corpo={};try{corpo=JSON.parse((op&&op.body)||"{}");}catch(e){}
     var r={ok:true};
-    if(fn==="app_aluno_feed")r=__demoFeed.feed();
+    if(fn==='app_nutricao_estado')r={ok:true,nutricao:JSON.parse(JSON.stringify(__demoNutriRemoto))};
+    else if(fn==='app_nutricao_salva'){
+      (corpo.p_registros||[]).forEach(function(reg){
+        if(!reg||!/^[A-Za-z0-9:_-]{1,300}$/.test(reg.id)||['__proto__','constructor','prototype'].indexOf(reg.id)>=0)return;
+        var old=__demoNutriRemoto.registros[reg.id];
+        if(!old||Date.parse(reg.atualizadoEm)>Date.parse(old.atualizadoEm))__demoNutriRemoto.registros[reg.id]=JSON.parse(JSON.stringify(reg));
+      });
+      r={ok:true,nutricao:JSON.parse(JSON.stringify(__demoNutriRemoto))};
+    }
+    else if(fn==="app_aluno_feed")r=__demoFeed.feed();
     else if(fn==="app_desafio_ranking")r=__demoFeed.ranking();
     else if(fn==="app_aluno_posta")r=__demoFeed.posta(corpo);
     else if(fn==="app_aluno_reage")r=__demoFeed.reage(corpo);

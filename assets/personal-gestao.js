@@ -46,7 +46,7 @@
     var menu = $('abas'); if (!menu) return;
     var groups = [
       ['Rotina', ['dash','alunos','agenda','treinos','chat']],
-      ['Acompanhamento', ['avaliacoes','quest','assessoria','desafio']],
+      ['Acompanhamento', ['nutricao','avaliacoes','quest','assessoria','desafio']],
       ['Gestão', ['pagamentos','relatorios']],
       ['Sua marca', ['sitepro','pers','imagens']],
       ['Preferências', ['config','conta','ajuda']]
@@ -63,7 +63,7 @@
     // Só a lista rola: cabeçalho, busca e tema nunca disputam altura com os links.
     var items = el('div','fg-menu-items'); items.id = 'menuItensPt'; search.after(items); items.appendChild(empty);
     captions.forEach(function (g) { items.appendChild(g[0]); g[1].forEach(function (b) { items.appendChild(b); }); });
-    var aliases = { pagamentos:'cobranca cobrancas mensalidades despesas caixa dinheiro planos contratos servicos', relatorios:'receita resultado indicadores metas', config:'integracao pix conta whatsapp preferencia', pers:'cor logo tema beneficio app', imagens:'foto fotos imagem imagens galeria capa', sitepro:'site endereco link pagina', conta:'nuvem backup acesso sincronizacao', ajuda:'suporte duvida tutorial chamado', quest:'perguntas check-in habitos formularios', assessoria:'online frequencia acompanhamento' };
+    var aliases = { nutricao:'alimentacao dieta alimento refeicao calorias macros biblioteca', pagamentos:'cobranca cobrancas mensalidades despesas caixa dinheiro planos contratos servicos', relatorios:'receita resultado indicadores metas', config:'integracao pix conta whatsapp preferencia', pers:'cor logo tema beneficio app', imagens:'foto fotos imagem imagens galeria capa', sitepro:'site endereco link pagina', conta:'nuvem backup acesso sincronizacao', ajuda:'suporte duvida tutorial chamado', quest:'perguntas check-in habitos formularios', assessoria:'online frequencia acompanhamento' };
     function filter() {
       var q = norm($('menuBuscaPt').value), count = 0;
       buttons.forEach(function (b) { var match = !q || norm((b.title || b.textContent) + ' ' + (aliases[b.dataset.a] || '')).indexOf(q) >= 0; b.toggleAttribute('data-menu-filtrado', !match); if (match && !b.hidden && getComputedStyle(b).display !== 'none') count++; });

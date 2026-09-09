@@ -3188,10 +3188,10 @@ async function novaExecucaoAluno(p) {
       return { total: bs.length, unicas: new Set(bs.map(b => b.dataset.a)).size, grupos,
         contadores: [...document.querySelectorAll("#abas .cnt")].map((c) => c.parentElement.dataset.a) };
     });
-    ok(menu1a.total === 17 && menu1a.unicas === 17 && menu1a.grupos.map(g => g.nome).join('|') === 'Rotina|Acompanhamento|Gestão|Sua marca|Preferências',
-      "🎨 menu: as 17 áreas únicas continuam acessíveis em cinco grupos nomeados");
-    ok(menu1a.grupos.map(g => g.abas.join(',')).join('|') === 'dash,alunos,agenda,treinos,chat|avaliacoes,quest,assessoria,desafio|pagamentos,relatorios|sitepro,pers,imagens|config,conta,ajuda',
-      "🎨 menu: cada grupo mantém suas áreas e a rotina fica primeiro");
+    ok(menu1a.total === 18 && menu1a.unicas === 18 && menu1a.grupos.map(g => g.nome).join('|') === 'Rotina|Acompanhamento|Gestão|Sua marca|Preferências',
+      "🎨 menu: Nutrição e as 17 áreas anteriores ficam acessíveis em cinco grupos nomeados");
+    ok(menu1a.grupos.map(g => g.abas.join(',')).join('|') === 'dash,alunos,agenda,treinos,chat|nutricao,avaliacoes,quest,assessoria,desafio|pagamentos,relatorios|sitepro,pers,imagens|config,conta,ajuda',
+      "🎨 menu: Nutrição entra em Acompanhamento, preservando cada área e a rotina primeiro");
     ok(menu1a.contadores.indexOf("alunos") > -1,
       "🎨 menu: as abas do dia a dia mostram o contador do que está esperando");
 
@@ -7367,7 +7367,7 @@ async function novaExecucaoAluno(p) {
       const depois = { app: vis("pfAppDados"), cadastro: vis("pfNome"), ativa: document.querySelector("#pfAbas .ativa").getAttribute("data-pfa") };
       return { antes, depois, nBotoes: document.querySelectorAll("#pfAbas button").length };
     });
-    ok(abas.nBotoes === 8 && abas.antes.resumo && !abas.antes.app && !abas.antes.cadastro && !abas.antes.fin,
+    ok(abas.nBotoes === 9 && abas.antes.resumo && !abas.antes.app && !abas.antes.cadastro && !abas.antes.fin,
       "perfil abre no Resumo (tela 2b) com as outras seções escondidas");
 
     /* ---- ficha do aluno repaginada (tela 2b) ---- */
