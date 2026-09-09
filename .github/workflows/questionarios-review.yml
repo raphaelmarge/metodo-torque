@@ -1,0 +1,48 @@
+name: Questionários - revisão isolada
+on:
+  pull_request:
+    paths:
+      - 'assets/personal-questionarios*'
+      - 'assets/personal-ferramentas.js'
+      - 'personal.html'
+      - 'tests/test-questionarios*'
+      - '.github/workflows/questionarios-review.yml'
+permissions:
+  contents: read
+jobs:
+  questionarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Código exato sob teste (sem credenciais ou dados de produção)
+        run: |
+          mkdir -p /tmp/questionarios-evidence
+          git archive --format=tar HEAD -o /tmp/questionarios-evidence/source.tar
+          git rev-parse HEAD > /tmp/questionarios-evidence/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: questionarios-source
+          path: /tmp/questionarios-evidence/
+          retention-days: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar navegadores de teste
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Interface com dados fictícios
+        run: |
+          mkdir -p /tmp/questionarios-previews
+          set -o pipefail
+          QPX_SHOTS=/tmp/questionarios-previews node tests/test-questionarios-usabilidade.js | tee /tmp/questionarios-previews/interface.log
+          node tests/test-versao.js | tee /tmp/questionarios-previews/versao.log
+      - name: Evidências de interface
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: questionarios-previews
+          path: /tmp/questionarios-previews/
+          if-no-files-found: ignore
+          retention-days: 7

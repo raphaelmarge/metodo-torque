@@ -162,3 +162,13 @@
   window.MT_FERRAMENTAS = { restore: restore, clear: clear, reveal: reveal, ready: function () { return ready; }, configFields: configFields };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
+
+/* Extensão isolada de Questionários; a tela antiga continua utilizável se falhar. */
+(function () {
+  var source = document.currentScript && document.currentScript.src;
+  if (!source || document.getElementById("qpxScript")) return;
+  var css = document.createElement("link"); css.rel = "stylesheet";
+  css.href = new URL("personal-questionarios.css", source).href; document.head.appendChild(css);
+  var js = document.createElement("script"); js.id = "qpxScript";
+  js.src = new URL("personal-questionarios.js", source).href; document.head.appendChild(js);
+})();
