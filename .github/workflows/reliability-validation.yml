@@ -48,28 +48,5 @@ jobs:
           name: reliability-source
           path: /tmp/reliability-source/
           retention-days: 2
-      - name: Reproduzir o upsert usado pelo cliente, sem dados de produção
-        shell: bash
-        run: |
-          psql -v ON_ERROR_STOP=1 <<'SQL'
-          create role anon;
-          create role authenticated;
-          create table public.dados (
-            academia_id uuid not null,
-            chave text not null,
-            valor jsonb,
-            atualizado timestamptz not null default now(),
-            primary key (academia_id, chave)
-          );
-          create function public.dados_carimba() returns trigger language plpgsql as $$ begin new.atualizado := now(); return new; end $$;
-          create trigger dados_carimba_tg before insert or update on public.dados for each row execute function public.dados_carimba();
-          SQL
-          psql -v ON_ERROR_STOP=1 -f migrations/20260909_ptstudio_cas_v807.sql
-          psql -v ON_ERROR_STOP=1 <<'SQL'
-          insert into public.dados(academia_id,chave,valor) values ('00000000-0000-0000-0000-000000000001','mtapp:ptStudio','{"teste":"inicial"}');
-          select atualizado as base from public.dados where chave='mtapp:ptStudio' \gset
-          insert into public.dados(academia_id,chave,valor,base_atualizado)
-          values ('00000000-0000-0000-0000-000000000001','mtapp:ptStudio','{"teste":"atualizado"}',:'base')
-          on conflict (academia_id,chave) do update set valor=excluded.valor,base_atualizado=excluded.base_atualizado
-          returning chave,valor,atualizado;
-          SQL
+      - name: Integração com duas conexões, RLS e RPC do aluno
+        run: python3 tests/sql/test-reliability.py
