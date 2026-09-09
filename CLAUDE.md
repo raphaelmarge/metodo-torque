@@ -25,6 +25,13 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - app_consultoria_aceites conserva texto exato, snapshot, assinatura, hashes e data do servidor. RLS limita a leitura à academia; escrita somente por RPC com token ativo e versão publicada. O representante legal assina para menores.
 - O histórico anterior permanece consultável após pedir novo preenchimento. O modelo comercial é editável e precisa ser adequado pelo profissional.
 
+## v812 — Plano, pagamento e dados na entrada
+
+- App e acesso vincula o contrato ao plano do Financeiro, com início e vencimento; a prévia usa o plano real. O resumo comercial integra a versão e o documento assinado.
+- Link HTTPS recorrente opcional por aluno (ou padrão do plano), oferecido após confirmação do aceite. Clique nunca cria baixa ou assinatura. Sessões, pacotes e alunos com assinatura existente não recebem nova oferta.
+- CEP consulta ViaCEP com proteção contra respostas atrasadas e preserva número/complemento/edição manual; indisponibilidade permite preenchimento manual. CPF por dígitos verificadores; CIN igual ao CPF; RG antigo por formato conservador, sem alegar autenticação.
+- Fluxo 2 valida plano/documentos no servidor. Pacotes e hashes anteriores permanecem compatíveis; nada reescreve os aceites existentes. Demo de checkout em demo-pagamento.html, sem coleta ou cobrança.
+
 ## Produtos (arquivos principais)
 
 | Produto | Arquivo | O que é |

@@ -85,7 +85,9 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.questionarios = (st.questionarios || []).filter((x) => x.id !== "demoOnboarding").concat([
       { id: "demoOnboarding", nome: "Entrada da consultoria", perguntas: ["demoOc1", "demoOc2", "demoOc3"] },
     ]);
-    const alex = { id: "demoAlx", nome: "Alex Silva", appTokenP: "demo-token-comunidade", metaSemana: 4, altura: 178, objetivo: "Ganhar músculo", onboardingConsultoria: { requerido: true, revisao: "demo-1" } };
+    const alex = { id: "demoAlx", nome: "Alex Silva", appTokenP: "demo-token-comunidade", metaSemana: 4, altura: 178, objetivo: "Ganhar músculo", onboardingConsultoria: { requerido: true, revisao: "demo-2", pagamentoRecorrente: true, linkRec: "https://www.torqueon.com.br/demo-pagamento.html" } };
+    st.planosPT = (st.planosPT || []).filter(x => x.id !== "demoPlanoConsultoria").concat([{ id: "demoPlanoConsultoria", nome: "Consultoria online", valor: 650, ciclo: 3, cobranca: "mes", treinosSem: 4, modalidade: "consultoria online" }]);
+    st.contratosPT = (st.contratosPT || []).filter(x => x.alunoId !== alex.id).concat([{ id: "demoContratoConsultoria", alunoId: alex.id, planoId: "demoPlanoConsultoria", inicio: "2026-09-09", diaVenc: 10, status: "ativo" }]);
     /* questionário do personal esperando resposta: sem isso a área Questionários
      * da demo mostrava só o check-in da semana, e quem assiste não via o recurso
      * que o professor mais usa. Liberado ONTEM pra já estar aberto na tela. */

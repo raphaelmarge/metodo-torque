@@ -2822,7 +2822,7 @@
       "function rpcOnboarding(fn,corpo){if(!NUVEM)return Promise.resolve({__rede:true});" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json().catch(function(){return r.ok?null:{erro:'http_'+r.status};});}).catch(function(){return {__rede:true};});}" +
       (D.onboardingApp && raiz.MT_ONBOARDING_CONSULTORIA && raiz.MT_ONBOARDING_CONSULTORIA.runtime
-        ? "(" + raiz.MT_ONBOARDING_CONSULTORIA.runtime.toString() + ")(" + jsonApp(D.onboardingApp) + ",{load:L,rpc:rpcOnboarding,token:TOKEN,online:function(){return !!NUVEM&&navigator.onLine!==false;}});"
+        ? "(" + raiz.MT_ONBOARDING_CONSULTORIA.runtime.toString() + ")(" + jsonApp(D.onboardingApp) + ",{load:L,rpc:rpcOnboarding,token:TOKEN,cobrancaAutomatica:" + (!!(D.pagApp || {}).auto) + ",planoTexto:" + raiz.MT_ONBOARDING_CONSULTORIA.planoTexto.toString() + ",identidadeErro:" + raiz.MT_ONBOARDING_CONSULTORIA.identidadeErro.toString() + ",linkHttps:" + raiz.MT_ONBOARDING_CONSULTORIA.linkHttps.toString() + ",online:function(){return !!NUVEM&&navigator.onLine!==false;}});"
         : "") +
       // notificações push (quando o app abre pelo link hospedado)
       "(function(){if(!NUVEM||!('Notification'in window))return;" +
