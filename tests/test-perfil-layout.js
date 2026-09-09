@@ -1,9 +1,9 @@
-/* A ficha do aluno reúne oito áreas sem misturar pessoas, rascunhos ou acessos. */
+/* A ficha do aluno reúne nove áreas sem misturar pessoas, rascunhos ou acessos. */
 const assert = require('assert/strict');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const { comMockNuvem } = require('./_nuvem.js');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
-const AREAS = ['resumo', 'treino', 'freq', 'aval', 'quest', 'cadastro', 'app', 'fin'];
+const AREAS = ['resumo', 'treino', 'alimentacao', 'freq', 'aval', 'quest', 'cadastro', 'app', 'fin'];
 let browser, checks = 0;
 function eq(value, expected, name) { assert.deepEqual(value, expected, name); checks++; console.log('OK: ' + name); }
 function ok(value, name) { assert.ok(value, name); checks++; console.log('OK: ' + name); }
@@ -73,7 +73,7 @@ function ok(value, name) { assert.ok(value, name); checks++; console.log('OK: ' 
     shown: [...new Set([...document.querySelectorAll('#vPerfil [data-pfsec]')].filter(e => !e.hidden).map(e => e.dataset.pfsec))],
   }));
   await page.waitForFunction(() => document.querySelector('#pfKpiPeso .v').textContent.includes('88,8'));
-  eq(await page.locator('#pfArea option').evaluateAll(options => options.map(o => o.value)), AREAS, 'seletor móvel oferece as oito áreas da ficha');
+  eq(await page.locator('#pfArea option').evaluateAll(options => options.map(o => o.value)), AREAS, 'seletor móvel oferece Alimentação e as oito áreas anteriores da ficha');
   eq(await selected(), { select: 'resumo', tab: 'resumo', shown: ['resumo'] }, 'perfil abre no Resumo com seletor e abas sincronizados');
   for (const value of AREAS) {
     await area(value);
@@ -133,6 +133,6 @@ function ok(value, name) { assert.ok(value, name); checks++; console.log('OK: ' 
   await page.evaluate(() => { document.querySelector('#abas [data-a="pagamentos"]').style.display = window.__perfilNavAntes; window.MTStore.cloud = window.__perfilCloudOriginal; });
   ok(dialogs.every(t => /colaborador|financeiro|dono/i.test(t)), 'nenhuma ação de envio ou exclusão foi solicitada');
   eq(network, [], 'nenhuma chamada alcança o Supabase real');
-  eq(errors, [], 'nenhum erro JavaScript ao percorrer as oito áreas');
+  eq(errors, [], 'nenhum erro JavaScript ao percorrer as nove áreas');
   console.log(checks + ' verificações passaram.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

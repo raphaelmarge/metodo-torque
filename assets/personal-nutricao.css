@@ -1,0 +1,56 @@
+/* Apenas as novas áreas de Nutrição; usa os tokens e botões atuais do Personal. */
+#vNutricao, #pfNutricao, #pnFoodDialog { min-width: 0; color: var(--tk-tx); }
+#vNutricao [hidden], #pnFoodDialog [hidden] { display: none !important; }
+#vNutricao { padding-bottom: 24px; }
+.pn-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.pn-head h2, .pn-head h3, .pn-head h4 { margin: 0; }
+.pn-head p { margin: 6px 0 0; }
+.pn-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 12px 0; }
+.pn-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; }
+.pn-field input, .pn-field select, .pn-field textarea { box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; margin: 0; font-weight: 400; }
+#vNutricao select:not([hidden]):not([multiple]):not([data-busca]) { appearance: none; -webkit-appearance: none; color: var(--tk-tx); background-color: var(--pt-fundo); padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23918b9c' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.pn-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+.pn-actions .btn { min-height: 44px; }
+.pn-section { padding: 18px 0; }
+.pn-status { line-height: 1.5; margin: 12px 0; }
+.pn-status:empty { display: none; }
+.pn-editor { border-top: 1px solid var(--tk-bd); margin-top: 24px; padding-top: 22px; scroll-margin-top: 80px; }
+.pn-meal { padding: 18px 0; border-bottom: 1px solid var(--tk-bd); }
+.pn-meal .pn-head { margin-bottom: 10px; }
+.pn-meal h4 { font-size: 15px; }
+.pn-macros { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 0; font-size: 13px; color: var(--tk-tx2); }
+.pn-macros b { color: var(--tk-tx); }
+.pn-plan-list { list-style: none; margin: 0; padding: 0; }
+.pn-plan-list li { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14px; }
+.pn-plan-list li > span { min-width: 0; overflow-wrap: anywhere; }
+.pn-food-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--tk-bd); }
+.pn-food-row > div:first-child { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.pn-food-row b { display: block; font-size: 14px; }
+.pn-food-row small { display: block; color: var(--tk-tx2); line-height: 1.5; margin-top: 3px; }
+.pn-food-row .btn { flex-shrink: 0; min-height: 44px; }
+.pn-qty { display: flex; flex-direction: column; gap: 5px; width: 85px; flex-shrink: 0; color: var(--tk-tx2); font-size: 12px; }
+.pn-qty input { min-width: 0; box-sizing: border-box; width: 100%; margin: 0; }
+.pn-details { border-top: 1px solid var(--tk-bd); padding: 12px 0; margin-top: 12px; }
+.pn-details summary { cursor: pointer; padding: 10px 0; min-height: 44px; box-sizing: border-box; font-weight: 600; }
+.pn-details summary .muted { font-weight: 400; }
+.pn-preline { white-space: pre-line; overflow-wrap: anywhere; font-size: 14px; line-height: 1.6; }
+.pn-dialog { box-sizing: border-box; width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px; border: 1px solid var(--tk-bd); border-radius: 16px; color: var(--tk-tx); background: var(--pt-card); }
+.pn-dialog::backdrop { background: rgba(0,0,0,.6); }
+.pn-dialog .pn-head { position: sticky; top: -20px; padding: 10px 0; background: var(--pt-card); z-index: 1; }
+.pn-record-photo { display: block; width: min(320px, 100%); max-height: 280px; object-fit: contain; margin-top: 12px; border-radius: 10px; }
+.pn-mobile-area { display: none; }
+@media (max-width: 700px) {
+  .pn-mobile-area { display: flex; flex-direction: column; gap: 6px; margin: 16px 0 8px; font-size: 13px; }
+  .pn-mobile-area select { margin: 0; width: 100%; }
+  .pn-tabs { display: none !important; }
+  .pn-food-row { flex-wrap: wrap; gap: 10px; }
+  #pnRefeicoes .pn-food-row > div:first-child { flex-basis: 100%; }
+  #pnRefeicoes .pn-food-row > .btn { margin-left: auto; }
+  .pn-plan-list li { flex-wrap: wrap; gap: 3px 14px; }
+  .pn-plan-list li > span:first-child { flex-basis: 100%; }
+}
+@media (max-width: 400px) {
+  .pn-fields { grid-template-columns: minmax(0, 1fr); }
+  .pn-actions > .btn { flex: 1 1 auto; }
+  .pn-dialog { padding: 14px; }
+}

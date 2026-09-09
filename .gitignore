@@ -1,2 +1,3 @@
 # v756: as telas gravadas pelo test-mobile-sistema (bytes que ninguém compara)
 tests/out/
+supabase/.temp/

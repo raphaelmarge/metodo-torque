@@ -30,6 +30,7 @@ jobs:
       - name: Playwright + Chromium nos caminhos que as suítes esperam
         run: |
           npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
           npx playwright install --with-deps chromium
           sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
           sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright

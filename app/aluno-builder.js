@@ -302,6 +302,208 @@
     }
     return { feita: feita, conta: conta, proxima: proxima, inicia: inicia, guarda: guarda, limpa: limpa, entrada: entrada, botoes: botoes, form: form, pintaForm: pintaForm, conclui: conclui, clique: clique, revisao: revisao, atualizaVolume: atualizaVolume, salvaPendentes: salvaPendentes, antesAbrir: antesAbrir, salvaDraft: salvaDraft };
   }
+  // Alimentação adicionada ao app atual. A fábrica e o core viajam no HTML offline.
+  function runtimeNutricao(pacote, N) {
+    function escopoToken(v) { var a = 2166136261, b = 5381, s = String(v || 'local'); for (var i = 0; i < s.length; i++) { a = Math.imul(a ^ s.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ s.charCodeAt(i); } return (a >>> 0).toString(36) + (b >>> 0).toString(36); }
+    var sufixo = escopoToken(TOKEN), CHAVES = { estado:'ptnutricao:' + sufixo, fila:'ptnutriFila:' + sufixo, rascunho:'ptnutriRascunho:' + sufixo };
+    var historico = L(CHAVES.estado, { v: 1, registros: {} }), ativo = !!(pacote && pacote.ativo === true);
+    if (!pacote && !(historico && historico.registros && Object.keys(historico.registros).length)) return null;
+    pacote = pacote || { ativo: false, refeicoes: [] };
+    var box = document.createElement('section'); box.id = 'nutriAluno'; box.className = 'ntp-area'; box.setAttribute('data-sec', 'alimentacao'); box.setAttribute('data-sec-off', '1');
+    document.body.appendChild(box);
+    if (!N) { box.textContent = 'Não foi possível carregar a alimentação. Atualize o app quando tiver conexão.'; return null; }
+    var plano = N.normalizaPlano(pacote), edit = null, editSeq = 0, photoSeq = 0, analisando = false, analiseAbort = null, salvando = false, recebendo = false, falha = '', syncTimer;
+    var estado = historico, fila = L(CHAVES.fila, {}), tokenLocalInicial = null, identidadePerdida = false, pedidos = [];
+    try { tokenLocalInicial = localStorage.getItem('tq_app_token'); } catch (_) {}
+    if (!estado || !estado.registros || Array.isArray(estado.registros)) estado = { v: 1, registros: {} };
+    if (!fila || typeof fila !== 'object' || Array.isArray(fila)) fila = {};
+    var porId = function (id) { return document.getElementById(id); }, copia = function (v) { return JSON.parse(JSON.stringify(v)); };
+    var seguro = function (v) { return esc2(v == null ? '' : v).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+    var fotoOk = function (v) { return typeof v === 'string' && v.length <= 60000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(v); };
+    var bytes = function (v) { return new TextEncoder().encode(JSON.stringify(v)).length; };
+    var idOk = function (id) { return /^[A-Za-z0-9:_-]{1,300}$/.test(id) && ['__proto__','constructor','prototype'].indexOf(id) < 0; };
+    function fmt(n) { return n.toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
+    function totais(itens) { var t = N.totalItens(itens); return fmt(t.k) + ' kcal · P ' + fmt(t.pt) + ' g · C ' + fmt(t.cb) + ' g · G ' + fmt(t.g) + ' g'; }
+    function dataValida(s) { var d = new Date(s + 'T12:00:00'); return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(d) && isoLoc(d) === s; }
+    function lista() { return Object.keys(estado.registros).map(function (id) { return estado.registros[id]; }).filter(function (r) { return r && !r.apagado; }); }
+    function metricas() { var rs = lista(), dias = {}; rs.forEach(function (r) { if (dataValida(r.d) && r.d <= isoHj()) dias[r.d] = (dias[r.d] || 0) + 1; }); return { registros: rs.filter(function(r){return r.d <= isoHj();}).length, dias: Object.keys(dias).length, xp: Object.keys(dias).reduce(function (n, d) { return n + Math.min(10, dias[d] * 2); }, 0) }; }
+    function repintaXP() { try { pintaXP(); pintaConquistas(); } catch (_) {} }
+    function aviso(t) { porId('ntpAviso').textContent = t || ''; }
+    function contextoAtual() {
+      if (identidadePerdida) return false;
+      var atual; try { atual = localStorage.getItem('tq_app_token'); } catch (_) { return true; }
+      if (atual === TOKEN || (!atual && !tokenLocalInicial)) return true;
+      identidadePerdida = true; editSeq++; photoSeq++; clearTimeout(syncTimer); pedidos.forEach(function(p){p.abort();}); if (analiseAbort) analiseAbort.abort(); edit = null; analisando = false;
+      porId('ntpEditor').hidden = true; porId('ntpNovo').hidden = true; box.querySelectorAll('button,input').forEach(function(el){el.disabled = true;});
+      aviso('Outro acesso foi aberto neste aparelho. Reabra o app deste aluno para continuar. Nenhum dado foi transferido.'); status(); return false;
+    }
+    function status() {
+      if (identidadePerdida) { porId('ntpSync').textContent = 'Alimentação pausada após a troca de acesso.'; porId('ntpTentar').hidden = true; return; }
+      var n = Object.keys(fila).length;
+      porId('ntpSync').textContent = !ativo ? 'Acompanhamento em modo consulta. Histórico e pontos foram mantidos.' + (falha ? ' ' + falha : '') : !NUVEM || !TOKEN ? 'Registros salvos neste aparelho.' : salvando || recebendo ? 'Sincronizando alimentação…' : n ? 'Salvo neste aparelho · ' + n + ' registro(s) aguardando envio.' + (falha ? ' ' + falha : '') : falha || 'Alimentação sincronizada.';
+      porId('ntpTentar').hidden = !NUVEM || !TOKEN || (!falha && (!ativo || !n)); porId('ntpTentar').disabled = salvando || recebendo;
+    }
+    function persiste(novo, pendentes) {
+      if (!contextoAtual()) return false;
+      var antes = localStorage.getItem(CHAVES.estado), antFila = localStorage.getItem(CHAVES.fila);
+      try { localStorage.setItem(CHAVES.estado, JSON.stringify(novo)); localStorage.setItem(CHAVES.fila, JSON.stringify(pendentes)); }
+      catch (_) { try { if (antes == null) localStorage.removeItem(CHAVES.estado); else localStorage.setItem(CHAVES.estado, antes); if (antFila == null) localStorage.removeItem(CHAVES.fila); else localStorage.setItem(CHAVES.fila, antFila); } catch (_) {} aviso('Não foi possível salvar neste aparelho. Seu formulário foi mantido; libere espaço e tente novamente.'); return false; }
+      estado = novo; fila = pendentes; status(); return true;
+    }
+    function registroValido(r) {
+      if (!r || !idOk(r.id) || !dataValida(r.d) || !Array.isArray(r.itens) || r.itens.length > 100 || (r.foto && !fotoOk(r.foto))) return null;
+      var n = N.normalizaRegistro(r); return n && n.itens.length === r.itens.length && bytes(n) <= 140000 ? n : null;
+    }
+    function grava(r) {
+      if (!contextoAtual()) return false;
+      if (!ativo) { aviso('O acompanhamento está em modo consulta. Seus registros foram mantidos.'); return false; }
+      r = registroValido(r); if (!r) { aviso('Confira os alimentos, a data e o tamanho da foto antes de confirmar.'); return false; }
+      var novo = copia(estado), pend = copia(fila);
+      novo.registros[r.id] = r; pend[r.id] = r.atualizadoEm;
+      if (bytes(novo) > 3000000) { aviso('O diário atingiu o limite de armazenamento. Remova a foto deste preenchimento ou reduza seu tamanho. Nenhum registro antigo foi apagado.'); return false; }
+      if (!persiste(novo, pend)) return false;
+      pinta(); repintaXP(); clearTimeout(syncTimer); syncTimer = setTimeout(sincroniza, 700); return true;
+    }
+    function mescla(remoto, enviados) {
+      if (!contextoAtual()) return false;
+      if (!remoto || !remoto.registros || Array.isArray(remoto.registros)) return false;
+      var novo = copia(estado), pend = copia(fila);
+      Object.keys(remoto.registros).forEach(function (id) {
+        var r = registroValido(remoto.registros[id]); if (!r || id !== r.id) return;
+        var local = novo.registros[id], ack = enviados && enviados[id] && pend[id] === enviados[id] && Date.parse(r.atualizadoEm) >= Date.parse(enviados[id]);
+        if (!local || Date.parse(r.atualizadoEm) > Date.parse(local.atualizadoEm) || (Date.parse(r.atualizadoEm) === Date.parse(local.atualizadoEm) && (!pend[id] || ack))) novo.registros[id] = r;
+        if (ack) delete pend[id];
+      });
+      if (!persiste(novo, pend)) return false; pinta(); repintaXP(); return true;
+    }
+    async function rpc(fn, body) {
+      if (!contextoAtual()) return null;
+      var ab = new AbortController(), timer = setTimeout(function () { ab.abort(); }, 20000);
+      pedidos.push(ab);
+      try { var r = await fetch(NUVEM.u + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: NUVEM.k, Authorization: 'Bearer ' + NUVEM.k, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ab.signal }); var res = await r.json(); return contextoAtual() ? res : null; }
+      catch (_) { return null; } finally { clearTimeout(timer); pedidos = pedidos.filter(function(p){return p !== ab;}); }
+    }
+    async function sincroniza() {
+      if (!contextoAtual() || !ativo || !NUVEM || !TOKEN || salvando || recebendo || navigator.onLine === false) { status(); return; }
+      salvando = true; falha = ''; status();
+      try {
+        while (Object.keys(fila).length) {
+          var batch = [], enviados = {};
+          Object.keys(fila).some(function (id) { var r = estado.registros[id]; if (!r) return false; if (batch.length && bytes(batch.concat([r])) > 400000) return true; batch.push(copia(r)); enviados[id] = fila[id]; return batch.length >= 20; });
+          if (!batch.length) break;
+          var res = await rpc('app_nutricao_salva', { t: TOKEN, p_registros: batch });
+          if (!res || !res.ok || !mescla(res.nutricao, enviados)) { falha = res && typeof res.erro === 'string' ? res.erro.slice(0, 260) + ' Os registros locais foram preservados.' : 'Não foi possível enviar agora. Tente novamente com conexão.'; break; }
+          if (Object.keys(enviados).some(function(id){return fila[id] === enviados[id];})) { falha = 'O servidor ainda não confirmou estes registros. Tente novamente.'; break; }
+        }
+      } finally { salvando = false; status(); }
+    }
+    async function recebe() {
+      if (!contextoAtual() || !NUVEM || !TOKEN || recebendo || salvando || navigator.onLine === false) return;
+      recebendo = true; status(); var res = await rpc('app_nutricao_estado', { t: TOKEN }); recebendo = false;
+      if (!res || !res.ok || !mescla(res.nutricao)) falha = 'Não foi possível consultar o histórico na nuvem. Seus registros locais continuam disponíveis.'; else falha = '';
+      status(); if (ativo && Object.keys(fila).length && navigator.onLine !== false) sincroniza();
+    }
+    box.innerHTML = '<header class="ntp-head"><p>Seu acompanhamento</p><h1>Alimentação</h1><p>Plano e diário privado, no mesmo app.</p></header>' +
+      '<div class="ntp-sync"><span id="ntpSync" role="status"></span><button type="button" id="ntpTentar">Tentar sincronizar</button></div><p id="ntpAviso" role="alert"></p>' +
+      '<section class="ntp-section"><h2>Seu plano alimentar</h2><div id="ntpPlano"></div></section>' +
+      '<section class="ntp-section"><div class="ntp-section-head"><h2>Diário alimentar</h2><button type="button" class="btnx" id="ntpNovo">Registrar refeição</button></div>' +
+      '<div class="ntp-date"><button type="button" id="ntpAnt" aria-label="Dia anterior">‹</button><label for="ntpData">Data do diário<input type="date" id="ntpData"></label><button type="button" id="ntpProx" aria-label="Próximo dia">›</button></div><p id="ntpTotal"></p><div id="ntpDiario"></div></section>' +
+      '<section class="ntp-section ntp-editor" id="ntpEditor" hidden aria-labelledby="ntpEdTitulo"><h2 id="ntpEdTitulo">Revisar refeição</h2><p>Confira os alimentos e as quantidades antes de confirmar.</p>' +
+      '<div class="ntp-fields"><label for="ntpTitulo">Refeição<input id="ntpTitulo" maxlength="120" placeholder="Ex.: almoço"></label><label for="ntpEdData">Data<input type="date" id="ntpEdData"></label><label for="ntpHora">Horário<input type="time" id="ntpHora"></label></div>' +
+      '<div class="ntp-photo-tools"><label class="ntp-upload" for="ntpFoto">Adicionar foto do prato<input id="ntpFoto" type="file" accept="image/*"></label><button type="button" id="ntpTiraFoto" hidden>Remover foto</button></div><img id="ntpPreview" alt="Foto desta refeição" hidden>' +
+      '<button type="button" id="ntpAnalisa" hidden>Estimar alimentos da foto com IA</button><p id="ntpIAAviso" role="status"></p>' +
+      '<p class="ntp-help">Os valores nutricionais são da porção base; a quantidade multiplica essa porção. Sem valores conhecidos, registre apenas o título ou a foto.</p><div id="ntpItens"></div><button type="button" id="ntpMaisItem">Adicionar alimento</button><p id="ntpEdTotal"></p>' +
+      '<div class="ntp-editor-actions"><button type="button" class="btnx" id="ntpSalvar">Confirmar refeição</button><button type="button" id="ntpCancelar">Cancelar</button></div></section>';
+    porId('ntpData').value = isoHj(); porId('ntpData').max = isoHj(); porId('ntpEdData').max = isoHj(); porId('ntpNovo').hidden = !ativo;
+    function idParte(v) { v = String(v || ''); if (/^[A-Za-z0-9_-]{1,100}$/.test(v)) return v; var a = 2166136261, b = 5381; for (var i = 0; i < v.length; i++) { a = Math.imul(a ^ v.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ v.charCodeAt(i); } return (a >>> 0).toString(16) + (b >>> 0).toString(16); }
+    function planoId(ref, d) { return 'plano:' + idParte(plano.id) + ':' + idParte(ref.id) + ':' + d; }
+    function pinta() {
+      var dia = porId('ntpData').value, rs = lista().filter(function (r) { return r.d === dia; }).sort(function (a, b) { return (a.hora + a.id).localeCompare(b.hora + b.id); });
+      porId('ntpProx').disabled = dia >= isoHj();
+      porId('ntpPlano').innerHTML = '<h3>' + seguro(plano.titulo || 'Plano alimentar') + '</h3>' + (plano.objetivo ? '<p>' + seguro(plano.objetivo) + '</p>' : '') +
+        (plano.responsavel ? '<p class="ntp-help">Responsável: ' + seguro(plano.responsavel) + (plano.crn ? ' · CRN ' + seguro(plano.crn) : '') + '</p>' : '') +
+        (plano.orientacoes ? '<details><summary>Orientações do plano</summary><p class="ntp-text">' + seguro(plano.orientacoes) + '</p></details>' : '') +
+        (plano.refeicoes.length ? plano.refeicoes.map(function (ref) { var r = estado.registros[planoId(ref, dia)], feita = r && !r.apagado; return '<details class="ntp-ref"><summary><span>' + seguro(ref.hora) + ' · ' + seguro(ref.titulo || 'Refeição') + '</span><small>' + (feita ? 'Registrada' : ativo ? 'Planejada' : 'Plano desativado') + '</small></summary><ul>' + ref.itens.map(function (it) { return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + '</li>'; }).join('') + '</ul><p>' + (ref.itens.length ? totais(ref.itens) : 'Sem alimentos informados') + '</p>' + (ativo ? '<button type="button" data-ntp-ref="' + seguro(ref.id) + '">' + (feita ? 'Revisar registro' : 'Registrar esta refeição') + '</button>' : '') + '</details>'; }).join('') : '<p>' + (ativo ? 'Seu plano aparecerá aqui quando for disponibilizado. Você já pode registrar seu diário.' : 'Nenhum plano ativo. Seu histórico continua disponível abaixo.') + '</p>');
+      var alimentos = []; rs.forEach(function(r){alimentos = alimentos.concat(r.itens || []);});
+      porId('ntpTotal').textContent = rs.length ? rs.length + ' refeição(ões) registradas' + (alimentos.length ? ' · valores informados: ' + totais(alimentos) : ' · sem valores nutricionais informados') : 'Nenhuma refeição registrada nesta data.';
+      porId('ntpDiario').innerHTML = rs.map(function (r) { return '<article class="ntp-entry">' + (fotoOk(r.foto) ? '<img src="' + r.foto + '" alt="Foto de ' + seguro(r.titulo || 'refeição') + '" loading="lazy">' : '') + '<div><h3>' + seguro(r.titulo || 'Refeição') + '</h3><p>' + seguro(r.hora) + (r.itens.length ? ' · ' + totais(r.itens) : ' · sem valores informados') + '</p>' + (r.estimativa ? '<small>Estimativa por foto, revisada por você.</small>' : '') + (r.itens.length ? '<details><summary>Ver alimentos</summary><ul>' + r.itens.map(function(it){return '<li>' + seguro(it.nome) + ' · ' + seguro(it.qtd) + ' × ' + seguro(it.porcao || 'porção') + '</li>';}).join('') + '</ul></details>' : '') + (ativo ? '<div class="ntp-entry-actions"><button type="button" data-ntp-edita="' + seguro(r.id) + '">Editar</button><button type="button" data-ntp-apaga="' + seguro(r.id) + '">Excluir</button></div>' : '') + '</div></article>'; }).join('');
+    }
+    function fotoPinta() { var img = porId('ntpPreview'); img.hidden = !edit || !fotoOk(edit.foto); if (!img.hidden) img.src = edit.foto; else img.removeAttribute('src'); porId('ntpTiraFoto').hidden = img.hidden; porId('ntpAnalisa').hidden = !edit || !edit.imagem; porId('ntpAnalisa').disabled = analisando; porId('ntpSalvar').disabled = analisando; }
+    function itemHtml(it, i) {
+      var fields = [['nome','Alimento','text'],['porcao','Porção base','text'],['qtd','Quantidade','number'],['k','kcal por porção','number'],['pt','Proteína (g)','number'],['cb','Carboidrato (g)','number'],['g','Gordura (g)','number']];
+      return '<fieldset data-ntp-item="' + i + '"><legend>Alimento ' + (i + 1) + '</legend><div class="ntp-item-fields">' + fields.map(function (f) { return '<label for="ntpItem' + i + f[0] + '">' + f[1] + '<input id="ntpItem' + i + f[0] + '" data-ncampo="' + f[0] + '" type="' + f[2] + '" ' + (f[2] === 'number' ? 'min="0" step="any" inputmode="decimal"' : 'maxlength="200"') + ' value="' + seguro(it[f[0]] == null ? '' : it[f[0]]) + '"></label>'; }).join('') + '</div><button type="button" data-ntp-rmitem="' + i + '">Remover alimento</button></fieldset>';
+    }
+    function leEditor() {
+      if (!edit) return null; var r = copia(edit); r.titulo = porId('ntpTitulo').value; r.d = porId('ntpEdData').value; r.hora = porId('ntpHora').value;
+      r.itens = [].map.call(porId('ntpItens').querySelectorAll('[data-ntp-item]'), function (el, i) { var it = Object.assign({}, edit.itens[i] || {}); el.querySelectorAll('[data-ncampo]').forEach(function (inp) { it[inp.dataset.ncampo] = inp.value; }); return it; }); return r;
+    }
+    function guardaEditor() { if (!contextoAtual() || !edit) return; edit = leEditor(); try { localStorage.setItem(CHAVES.rascunho, JSON.stringify(edit)); } catch (_) { aviso('Não foi possível guardar o rascunho neste aparelho. Não feche o formulário antes de confirmar.'); } porId('ntpEdTotal').textContent = edit.itens.length && edit.itens.every(function(it){return !!N.normalizaItem(it);}) ? 'Valores a confirmar: ' + totais(edit.itens) : 'Preencha os valores de cada alimento ou remova a linha para registrar sem estimativa.'; }
+    function abre(r) {
+      if (!contextoAtual() || !ativo) return;
+      if (edit && !confirm('Substituir o rascunho aberto por esta refeição?')) return;
+      editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = copia(r); if (!Array.isArray(edit.itens)) edit.itens = [];
+      porId('ntpTitulo').value = edit.titulo || ''; porId('ntpEdData').value = edit.d || isoHj(); porId('ntpEdData').readOnly = !!(edit.refeicaoId && estado.registros[edit.id] && !estado.registros[edit.id].apagado); porId('ntpHora').value = edit.hora || '';
+      porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join(''); porId('ntpEditor').hidden = false;
+      porId('ntpSalvar').textContent = estado.registros[edit.id] && !estado.registros[edit.id].apagado ? 'Salvar alterações' : 'Confirmar refeição';
+      porId('ntpIAAviso').textContent = edit.estimativa ? 'Estimativa por foto: confira cada alimento e quantidade. ' + (edit.observacao || '') : '';
+      aviso(''); fotoPinta(); guardaEditor(); porId('ntpEditor').scrollIntoView({ block: 'start' });
+    }
+    function novo() { return { id: 'manual:' + (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)), d: porId('ntpData').value, refeicaoId: '', titulo: '', hora: new Date().toTimeString().slice(0, 5), itens: [], origem: 'manual', foto: '', atualizadoEm: new Date().toISOString(), apagado: false }; }
+    function fechaEditor() { if (!contextoAtual()) return; editSeq++; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit = null; porId('ntpEditor').hidden = true; try { localStorage.removeItem(CHAVES.rascunho); } catch (_) {} }
+    porId('ntpNovo').onclick = function () { abre(novo()); };
+    porId('ntpCancelar').onclick = function () { if (!edit || confirm('Descartar este rascunho? Os registros já confirmados serão mantidos.')) fechaEditor(); };
+    porId('ntpEditor').addEventListener('input', function (e) { if (e.target.type !== 'file') guardaEditor(); });
+    porId('ntpMaisItem').onclick = function () { if (!contextoAtual() || !edit) return; guardaEditor(); if (edit.itens.length >= 100) { aviso('O limite é de 100 alimentos por refeição.'); return; } edit.itens.push({ id: 'item-' + Date.now() + '-' + edit.itens.length, alimId: '', nome: '', porcao: '', qtd: 1, k: '', pt: '', cb: '', g: '' }); porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join(''); guardaEditor(); };
+    porId('ntpSalvar').onclick = function () {
+      if (!contextoAtual() || !edit || analisando) return; guardaEditor(); var r = copia(edit);
+      if (!r.titulo.trim() || !dataValida(r.d) || r.d > isoHj() || (r.hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(r.hora)) || !r.itens.every(function(it){return !!N.normalizaItem(it);})) { aviso('Informe o nome, uma data até hoje e os valores válidos de cada alimento. Nenhum registro foi confirmado.'); return; }
+      if (r.refeicaoId && !estado.registros[r.id]) r.id = /^plano:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:\d{4}-\d{2}-\d{2}$/.test(r.id) ? r.id.replace(/\d{4}-\d{2}-\d{2}$/, r.d) : planoId({id:r.refeicaoId}, r.d);
+      var antigo = estado.registros[r.id]; r.atualizadoEm = new Date(Math.max(Date.now(), antigo ? Date.parse(antigo.atualizadoEm) + 1 : 0)).toISOString(); r.apagado = false; delete r.imagem;
+      if (grava(r)) { porId('ntpData').value = r.d; fechaEditor(); pinta(); aviso('Refeição confirmada.'); porId('ntpDiario').scrollIntoView({ block: 'nearest' }); }
+    };
+    box.addEventListener('click', function (e) {
+      if (!contextoAtual()) return;
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.hasAttribute('data-ntp-ref')) { var ref = plano.refeicoes.find(function(r){return r.id === b.dataset.ntpRef;}); if (!ref) return; var id = planoId(ref, porId('ntpData').value), reg = estado.registros[id]; abre(reg && !reg.apagado ? reg : { id:id, d:porId('ntpData').value, refeicaoId:ref.id, titulo:ref.titulo, hora:ref.hora, itens:ref.itens, origem:'plano', foto:'', atualizadoEm:new Date().toISOString(), apagado:false }); }
+      if (b.hasAttribute('data-ntp-edita')) { var r = estado.registros[b.dataset.ntpEdita]; if (r) abre(r); }
+      if (b.hasAttribute('data-ntp-apaga')) { var r = estado.registros[b.dataset.ntpApaga]; if (!r || !confirm('Excluir esta refeição do diário?')) return; r = copia(r); r.apagado = true; r.foto = ''; r.itens = []; r.atualizadoEm = new Date(Math.max(Date.now(), Date.parse(r.atualizadoEm) + 1)).toISOString(); if (grava(r)) aviso('Refeição excluída.'); }
+      if (b.hasAttribute('data-ntp-rmitem') && edit) { guardaEditor(); edit.itens.splice(+b.dataset.ntpRmitem, 1); porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join(''); guardaEditor(); }
+    });
+    function mudaDia(n) { var d = new Date(porId('ntpData').value + 'T12:00:00'); d.setDate(d.getDate() + n); var s = isoLoc(d); if (s <= isoHj()) { porId('ntpData').value = s; pinta(); } }
+    porId('ntpAnt').onclick = function () { mudaDia(-1); }; porId('ntpProx').onclick = function () { mudaDia(1); };
+    porId('ntpData').onchange = function () { if (!dataValida(this.value) || this.value > isoHj()) this.value = isoHj(); pinta(); };
+    porId('ntpTentar').onclick = function () { falha = ''; if (ativo && Object.keys(fila).length) sincroniza(); else recebe(); };
+    function comprime(img, limite, largura) { var c = document.createElement('canvas'), escala = Math.min(1, largura / Math.max(img.naturalWidth, img.naturalHeight)), dado; c.width = Math.max(1, Math.round(img.naturalWidth * escala)); c.height = Math.max(1, Math.round(img.naturalHeight * escala)); for (var q = .82; q >= .22; q -= .12) { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); dado = c.toDataURL('image/jpeg', q); if (dado.length <= limite) return dado; } return ''; }
+    porId('ntpFoto').onchange = function () {
+      var f = this.files && this.files[0]; this.value = ''; if (!contextoAtual() || !f || !edit) return;
+      if (!/^image\//.test(f.type) || f.size > 20000000) { aviso('Escolha uma imagem de até 20 MB.'); return; }
+      guardaEditor(); var seq = editSeq, fotoSeq = ++photoSeq, url = URL.createObjectURL(f), im = new Image(); if (analiseAbort) analiseAbort.abort(); analisando = false; fotoPinta();
+      im.onload = function () { URL.revokeObjectURL(url); if (!contextoAtual() || !edit || seq !== editSeq || fotoSeq !== photoSeq) return; var img, thumb; try { img = comprime(im, 530000, 1400); thumb = comprime(im, 60000, 480); } catch (_) {} if (!img || !thumb) { aviso('Esta imagem ficou grande demais. Escolha outra foto; seu preenchimento foi mantido.'); return; } edit.imagem = img; edit.foto = thumb; if (edit.origem === 'manual') edit.origem = 'foto'; fotoPinta(); guardaEditor(); };
+      im.onerror = function () { URL.revokeObjectURL(url); if (seq === editSeq && fotoSeq === photoSeq) aviso('Não foi possível abrir a imagem. Escolha outra foto.'); }; im.src = url;
+    };
+    porId('ntpTiraFoto').onclick = function () { if (!contextoAtual() || !edit) return; photoSeq++; if (analiseAbort) analiseAbort.abort(); analisando = false; edit.imagem = ''; edit.foto = ''; fotoPinta(); guardaEditor(); };
+    porId('ntpAnalisa').onclick = async function () {
+      if (!contextoAtual() || !edit || !edit.imagem || analisando) return;
+      if (!NUVEM || !TOKEN || navigator.onLine === false) { porId('ntpIAAviso').textContent = 'A estimativa precisa de conexão. A foto continua aqui; você pode preencher manualmente.'; return; }
+      guardaEditor(); var seq = editSeq, fotoSeq = photoSeq, img = edit.imagem, assinaturaItens = JSON.stringify(edit.itens); analisando = true; fotoPinta(); porId('ntpIAAviso').textContent = 'Analisando a foto. A estimativa ainda precisará da sua revisão.';
+      var ab = new AbortController(), timer = setTimeout(function(){ab.abort();}, 45000); analiseAbort = ab;
+      try {
+        var resp = await fetch(NUVEM.u + '/functions/v1/chat-envia', { method:'POST', headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify({acao:'ia_prato',t:TOKEN,imagem:img}),signal:ab.signal }), r = await resp.json();
+        if (!contextoAtual() || !edit || seq !== editSeq || fotoSeq !== photoSeq) return;
+        if (!r || !r.ok || !Array.isArray(r.itens) || !r.itens.length || r.itens.length > 100 || !r.itens.every(function(it){return !!N.normalizaItem(it);})) throw new Error('estimativa');
+        guardaEditor(); if (JSON.stringify(edit.itens) !== assinaturaItens) { porId('ntpIAAviso').textContent = 'Seu preenchimento mudou durante a análise e foi preservado. Analise novamente se quiser outra estimativa.'; return; }
+        edit.itens = r.itens.map(N.normalizaItem); edit.estimativa = true; edit.observacao = String(r.observacao || '').slice(0,2000); porId('ntpItens').innerHTML = edit.itens.map(itemHtml).join('');
+        porId('ntpIAAviso').textContent = 'Estimativa por foto — confirme alimentos e quantidades. ' + edit.observacao; guardaEditor();
+      } catch (_) { if (edit && seq === editSeq && fotoSeq === photoSeq) porId('ntpIAAviso').textContent = 'Não foi possível estimar agora. Sua foto foi mantida e você pode preencher manualmente.'; }
+      finally { clearTimeout(timer); if (seq === editSeq && fotoSeq === photoSeq) { analisando = false; fotoPinta(); } }
+    };
+    window.addEventListener('storage', function (e) { if (e.key === 'tq_app_token' || e.key === null) contextoAtual(); });
+    window.addEventListener('online', function () { if (ativo && Object.keys(fila).length) sincroniza(); else recebe(); }); window.addEventListener('offline', status);
+    pinta(); status(); var rascunho = L(CHAVES.rascunho, null); if (rascunho && idOk(rascunho.id)) abre(rascunho);
+    setTimeout(recebe, 1200);
+    var api = { estado:function(){return copia(estado);}, sync:sincroniza, xp:function(){return metricas().xp;}, metricas:metricas, abrir:function(id){var r=estado.registros[id];if(r)abre(r);}, chaves:Object.assign({}, CHAVES) };
+    window.__nutriAluno = api; return api;
+  }
   // Resumo da evolução: move os controles existentes e conserva seus eventos.
   function runtimeResumo() {
     var porId = function (id) { return document.getElementById(id); };
@@ -2403,6 +2605,7 @@
       "if(k9>=3&&+x.s>0&&((+x.s/60)/k9)<=6.05)rp=1;});" +
       "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
+      "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
        * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
@@ -2472,7 +2675,7 @@
        * próxima abertura — nada trava o treino de quem está sem tempo).
        * Sem termo configurado, NADA aparece. */
       "var TERMO=" + jsonApp(D.termoApp || null) + ";" +
-      "(function(){if(!TERMO||!TERMO.t)return;var ac=L('ptaceite',null);if(ac&&ac.v===TERMO.v)return;" +
+      "window.__abreTermoResponsabilidade=function(){if(!TERMO||!TERMO.t)return;var ac=L('ptaceite',null);if(ac&&ac.v===TERMO.v)return;" +
       "var ov=document.createElement('div');ov.id='termoOv';" +
       "ov.style.cssText='position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));';" +
       "var h=document.createElement('div');h.innerHTML=\"<b style='font-size:19px;font-weight:900;'>Termo de responsabilidade</b><div style='font-size:12.5px;color:#8a8695;margin-top:2px;'>do seu personal — leia antes de continuar</div>\";" +
@@ -2481,7 +2684,8 @@
       "var dp=document.createElement('button');dp.type='button';dp.textContent='Deixar pra depois';dp.style.cssText='min-height:44px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:13px;cursor:pointer;margin-top:6px;';" +
       "bt.addEventListener('click',function(){Sv('ptaceite',{v:TERMO.v,em:isoHj()});ov.remove();});" +
       "dp.addEventListener('click',function(){ov.remove();});" +
-      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);})();" +
+      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);};" +
+      (D.onboardingApp ? "" : "window.__abreTermoResponsabilidade();") +
       "window.__termo={v:TERMO&&TERMO.v||null};" +
       /* Depoimento (v694): o card do Início só aparece quando o PROFESSOR pediu
        * (chega no pacote como PDEPO) e o aluno ainda não escreveu. O texto vai
@@ -2615,6 +2819,11 @@
       "ativ:\"<path d='M22 12h-4l-3 9L9 3l-3 9H2'/>\"};" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}" +
+      "function rpcOnboarding(fn,corpo){if(!NUVEM)return Promise.resolve({__rede:true});" +
+      "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json().catch(function(){return r.ok?null:{erro:'http_'+r.status};});}).catch(function(){return {__rede:true};});}" +
+      (D.onboardingApp && raiz.MT_ONBOARDING_CONSULTORIA && raiz.MT_ONBOARDING_CONSULTORIA.runtime
+        ? "(" + raiz.MT_ONBOARDING_CONSULTORIA.runtime.toString() + ")(" + jsonApp(D.onboardingApp) + ",{load:L,rpc:rpcOnboarding,token:TOKEN,online:function(){return !!NUVEM&&navigator.onLine!==false;}});"
+        : "") +
       // notificações push (quando o app abre pelo link hospedado)
       "(function(){if(!NUVEM||!('Notification'in window))return;" +
       "var VP='BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I';" +
@@ -3352,6 +3561,7 @@
           n: String(c.n || "").replace(/[<>&"']/g, "").slice(0, 28), m: Math.max(1, Math.min(5000, +c.meta || 1)) };
       }).filter(function (c) { return c.n; })) + ";" +
       "CQX.forEach(function(c){BADGES.push([c.p,c.n,total,c.m]);});" +
+      "if(window.__nutriAluno){var nm=window.__nutriAluno.metricas();var ni=\"<circle cx='12' cy='12' r='8'/><path d='M4 12h16M12 4v16'/>\";BADGES.push([ni,'Primeira refeição registrada',nm.registros,1],[ni,'7 dias de diário alimentar',nm.dias,7],[ni,'30 dias de diário alimentar',nm.dias,30]);}" +
       // tela 31: cards lisos sem contorno — conquistada tem o ícone COLORIDO
       // (a cor varia por medalha), bloqueada vira cadeado cinza com o progresso
       // pequenininho; o estado vai no data-cqok (é o que os testes leem)
@@ -6941,7 +7151,7 @@
        * séries do mesmo treino são um esforço só). */
       "var ncr=(L('ptcardio',[])||[]).length;" +
       "var dcd={};var dc9=L('ptdc',{});Object.keys(dc9).forEach(function(ex){(dc9[ex]||[]).forEach(function(x){if(cargaConcluida(x)&&x.d)dcd[String(x.d).slice(0,10)]=1;});});" +
-      "return Object.keys(pf).length*10+nh*2+nq*20+ncr*10+Object.keys(dcd).length*5;}" +
+      "return Object.keys(pf).length*10+nh*2+nq*20+ncr*10+Object.keys(dcd).length*5+(window.__nutriAluno?window.__nutriAluno.xp():0);}" +
       /* nível: o XP acumulado vira nível numa curva quadrática — chegar ao
        * nível n custa 20·(n−1)·n XP. Os primeiros vêm rápido e cada um seguinte
        * custa mais, que é o padrão dos apps de hábito.
@@ -6996,6 +7206,7 @@
       "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Hoje']," +
       "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treinos']," +
       "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
+      "['alimentacao',\"<circle cx='12' cy='12' r='7'/><path d='M3 3v6M1 3v4c0 3 4 3 4 0V3M3 9v12M21 3v18M21 3c-3 2-3 8 0 8'/>\",'Alimentação']," +
       // com o feed ligado a Comunidade vira a 4ª aba fixa (a Agenda vai pro menu ☰)
       "['feed',\"<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>\",'Turma']," +
       "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
@@ -7033,6 +7244,7 @@
       "if(el.id==='trTopo'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'||el.id==='evCargas'||el.id==='evMarcas'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
+      "if(el.id==='nutriAluno'){el.setAttribute('data-sec','alimentacao');return;}" +
       // clube e loja (v699): telas próprias, abertas SÓ pelo menu — o Raphael não
       // quis os cards ocupando a tela inicial do app
       "if(el.id==='clubeCard'){el.setAttribute('data-sec','clube');return;}" +
@@ -7100,7 +7312,7 @@
       "\"<span style='line-height:0;'>\"+ic(MICO[sec])+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>\"+(MTIT[sec]||sec)+\"</span><span class='mgsub'></span></span>\"+" +
       "(extra||\"<span class='mgchev'>\"+CHEV+'</span>')+'</button>';}" +
-      "var mgg=['chat','agenda','treino','util','feed','pagamento'].filter(function(s){return MICO[s]&&!fixos.some(function(f9){return f9[0]===s;});});" +
+      "var mgg=['alimentacao','chat','agenda','treino','util','feed','pagamento'].filter(function(s){return MICO[s]&&!fixos.some(function(f9){return f9[0]===s;});});" +
       "gav.innerHTML=" +
       "\"<div class='mghd'><span class='mgav'><img id='mgImg' alt='' style='display:none;'><span id='mgIni'></span></span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgnome'></span><span class='mgstudio'></span></span></div>\"+" +
@@ -7140,7 +7352,7 @@
       "(function(){var ai=document.getElementById('avIni'),ii=document.getElementById('mgIni');if(ai&&ii)ii.textContent=ai.textContent;" +
       "var av=document.getElementById('avImg');if(av&&ii&&av.getAttribute('src')&&av.style.display!=='none'){var mi9=document.getElementById('mgImg');mi9.src=av.src;mi9.style.display='';ii.style.display='none';}})();" +
       // subtítulos calculados: agenda = próxima sessão; fichas = treinos ativos
-      "var MSUB={chat:'fale com seu personal',util:'cronômetro, 1RM, anilhas, água',feed:'o feed da sua turma',pagamento:PLSUB,ajustes:'tema, lembretes, minha conta'," +
+      "var MSUB={alimentacao:'plano e diário alimentar privado',chat:'fale com seu personal',util:'cronômetro, 1RM, anilhas, água',feed:'o feed da sua turma',pagamento:PLSUB,ajustes:'tema, lembretes, minha conta'," +
       "agenda:(function(){var hj9=isoHj();var pr=(SESS||[]).filter(function(s9){return s9.d>=hj9;})[0];if(!pr)return 'sem sessão marcada';var dw=new Date(pr.d+'T12:00:00').getDay();return (dw===0||dw===6?'próximo ':'próxima ')+DSEM_[dw].toLowerCase()+(pr.h?', '+pr.h:'');})()," +
       "treino:(function(){var n9=(FICHAS_META||[]).length+(WODS||[]).length+(CARDIOS||[]).length;return n9?pl(n9,'treino ativo','treinos ativos'):'seus treinos';})()};" +
       "gav.querySelectorAll('.mgrow[data-msec]').forEach(function(b){var s9=MSUB[b.getAttribute('data-msec')];var el9=b.querySelector('.mgsub');if(el9&&s9!=null)el9.textContent=s9;});" +
@@ -7192,7 +7404,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes'||s==='clube'||s==='loja'||s==='ajuda');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='alimentacao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes'||s==='clube'||s==='loja'||s==='ajuda');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)

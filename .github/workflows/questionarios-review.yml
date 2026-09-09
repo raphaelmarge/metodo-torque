@@ -31,6 +31,7 @@ jobs:
       - name: Instalar navegadores de teste
         run: |
           npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
           npx playwright install --with-deps chromium webkit
       - name: Interface com dados fictícios
         run: |

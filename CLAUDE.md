@@ -6,6 +6,25 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v811 — Nutrição integrada ao Personal (adição solicitada pelo Raphael)
+
+- O visual, as abas fixas, os treinos e os hábitos existentes permanecem. Menu **Nutrição** no Personal e área **Alimentação** no perfil e no menu do aluno.
+- Estado em `ptStudio.nutricaoV1`: planos por ID do aluno, favoritos e alimentos próprios. Usa `MT_ALIMENTOS`; `ntStudio` permanece independente, sem migração automática de pacientes.
+- Plano manual ou proposta com `ia_dieta`: rascunho por aluno, revisão, aplicar e publicar pelo fluxo canônico `publicaPacotes`. O DTO entrega somente `dados.nutricaoApp` daquele aluno e nunca define `dados.tipo="nutri"`.
+- `assets/nutricao-core.js` é autocontido e serializado no builder. Diário, fila e rascunho usam chaves com escopo por token. A troca de identidade conserva cada conjunto isolado; retornos de fotos ficam em memória no painel, fora de ptStudio. Cada refeição guarda seu snapshot confirmado, inclusive quantidade e foto reduzida.
+- Sincronização exclusiva por `app_nutricao_estado` e `app_nutricao_salva`. Não incluir alimentação no merge genérico de `app_aluno_devolve`. Substituição integral por ID/carimbo, tombstones, lock da linha por token e proteção de registros dos outros alunos. Limites: foto 60k caracteres, registro 140k bytes, lote 20/500k bytes e histórico 3MB; sem descarte silencioso.
+- `chat-envia` recebe `ia_prato`: imagem base64 validada, aluno com plano ativo ou profissional autenticado, quota existente e proposta estimada para confirmar. Nenhuma foto gera registro ou XP automaticamente. Planos pausados mantêm consulta ao histórico; novos registros exigem plano ativo.
+- XP de alimentação soma ao atual: 2 por registro confirmado, máximo 10/dia. Três conquistas adicionais; não recompensa déficit calórico. Editar o mesmo registro não duplica pontos.
+- Demos continuam isolados: planos e diário de exemplo, `ia_dieta` e `ia_prato` simulados e identificados; nenhuma chamada real de IA. Regenerar aluno com `tools/demo-aluno/regen-demo.js` após alterar builder/fixture.
+- Testes: `test-nutricao-integrada.js` cobre painel, aluno, mobile, revisão, isolamento, offline e concorrência; `test-nutricao-backend.js` exercita o código real da Edge com rede simulada. SQL validado em PostgreSQL local via PGlite, incluindo permissões e exclusões.
+
+## v811 — Entrada opcional da consultoria
+
+- Questionários → Criar e organizar configura perguntas existentes, contrato padrão editável e aceite eletrônico ou assinatura desenhada. O cadastro e App e acesso permitem exigir ou dispensar cada aluno.
+- Pacote versionado em onboardingApp, sem exigir entrada de quem está dispensado. O aluno responde, confere identificação/endereço, lê o documento e confirma. Falhas de rede conservam o preenchimento, mas somente a confirmação do servidor libera o app.
+- app_consultoria_aceites conserva texto exato, snapshot, assinatura, hashes e data do servidor. RLS limita a leitura à academia; escrita somente por RPC com token ativo e versão publicada. O representante legal assina para menores.
+- O histórico anterior permanece consultável após pedir novo preenchimento. O modelo comercial é editável e precisa ser adequado pelo profissional.
+
 ## Produtos (arquivos principais)
 
 | Produto | Arquivo | O que é |
