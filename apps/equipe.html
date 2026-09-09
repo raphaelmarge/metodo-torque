@@ -109,7 +109,7 @@
     st.cargos = st.cargos || []; st.colaboradores = st.colaboradores || [];
     return st;
   }
-  function save(st) { S.write("equipe", st); render(); }
+  function save(st) { S.mustWrite("equipe", st); render(); }
 
   var busca = "", filtroCargo = "", verInativos = false, editId = null;
   function ehHorista(c) { return /horista|diarista/i.test(c.tipoContrato || ""); }

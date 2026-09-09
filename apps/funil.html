@@ -143,7 +143,7 @@
   }
 
   function load() { return S.read("funil", { leads: [] }); }
-  function save(st) { S.write("funil", st); render(); }
+  function save(st) { S.mustWrite("funil", st); render(); }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   function atrasado(l) { return l.proximo && l.proximo < S.todayISO(); }

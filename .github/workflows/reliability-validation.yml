@@ -1,0 +1,52 @@
+name: Reliability - PostgreSQL real
+on:
+  pull_request:
+    paths:
+      - 'apps/store.js'
+      - 'migrations/**'
+      - 'tests/test-sync*'
+      - 'tests/sql/**'
+      - '.github/workflows/reliability-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: reliability-postgres-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: reliability_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: reliability_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arquivar fonte exata (somente código do repositório)
+        run: |
+          mkdir -p /tmp/reliability-source
+          git archive --format=tar HEAD -o /tmp/reliability-source/source.tar
+          git rev-parse HEAD > /tmp/reliability-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reliability-source
+          path: /tmp/reliability-source/
+          retention-days: 2
+      - name: Integração com duas conexões, RLS e RPC do aluno
+        run: python3 tests/sql/test-reliability.py

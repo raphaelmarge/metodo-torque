@@ -89,7 +89,7 @@
   var $ = function (id) { return document.getElementById(id); };
 
   function load() { return S.read("exper", { aulas: [] }); }
-  function save(st) { S.write("exper", st); render(); }
+  function save(st) { S.mustWrite("exper", st); render(); }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   var filtro = "proximas";

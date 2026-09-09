@@ -157,7 +157,7 @@
     st.devedores = st.devedores || [];
     return st;
   }
-  function save(st) { S.write("inad", st); render(); }
+  function save(st) { S.mustWrite("inad", st); render(); }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   var filtro = "aberto";

@@ -91,7 +91,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("personais", { lista: [], pagamentos: {} }); }
-  function save(st) { S.write("personais", st); render(); }
+  function save(st) { S.mustWrite("personais", st); render(); }
 
   var mes = S.todayISO().slice(0, 7);
   $("fMes").value = mes;

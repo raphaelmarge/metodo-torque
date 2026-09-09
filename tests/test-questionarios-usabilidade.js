@@ -39,6 +39,10 @@ __qtAba('montar');renderQuest();
 let browser, checks=0;
 function ok(value,label){assert.ok(value,label);checks++;console.log('OK '+label);}
 async function snapshot(p){return p.evaluate(()=>JSON.stringify(state));}
+async function abreFormulario(p, id) {
+ if (!await p.locator(id).evaluate(el => el.open)) await p.locator(id + ' > summary').click();
+ await p.waitForFunction(sel => document.querySelector(sel).open, id);
+}
 (async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
@@ -57,7 +61,7 @@ async function snapshot(p){return p.evaluate(()=>JSON.stringify(state));}
  await p.locator('#qqNovoBox > summary').click();await p.locator('.qqCheck[value="disp"]').check();
  ok((await p.locator('#qpxSelected').innerText()).includes('1 pergunta'),'Seleção informa quantas perguntas estão marcadas');
  // Primeira captura: lista real de controles decorados, com dados fictícios.
- if(process.env.QPX_SHOTS){await p.locator('#qqNovoBox > summary').click();await p.screenshot({path:path.join(process.env.QPX_SHOTS,'questionarios-organizados.png'),fullPage:true});}
+ if(process.env.QPX_SHOTS){await p.screenshot({path:path.join(process.env.QPX_SHOTS,'questionarios-organizados.png'),fullPage:true});}
  await p.locator('#qpNovoBox > summary').click();
  await p.getByRole('button',{name:'Disposição',exact:true}).click();
  ok(await p.evaluate(()=>writes.length===0),'Usar modelo só preenche rascunho');
@@ -78,7 +82,7 @@ async function snapshot(p){return p.evaluate(()=>JSON.stringify(state));}
  if(process.env.QPX_SHOTS){await p.selectOption('#qpxDirection','maior');await p.locator('#qpNovoBox').scrollIntoViewIfNeeded();await p.locator('#qpNovoBox').screenshot({path:path.join(process.env.QPX_SHOTS,'criacao-pergunta.png')});await p.selectOption('#qpxDirection','menor');}
  await p.click('#qpAdd');await p.waitForFunction(()=>!document.getElementById('qpNovoBox').open);
  ok(await p.evaluate(()=>{const x=state.questPerguntas.find(p=>p.sigla==='PRONT');return x.menosMelhor&&x.ops[0].p===2&&x.ops[4].p===-2;}),'Carinhas preservam pontos negativos/zero e sentido escolhido');
- await p.locator('#qqNovoBox > summary').click();await p.fill('#qqNome','Meu novo check-in');
+ await abreFormulario(p, '#qqNovoBox');await p.fill('#qqNome','Meu novo check-in');
  await p.locator('.qqCheck[value="dor"]').check();await p.click('#qqAdd');
  ok(await p.evaluate(()=>{const q=state.questionarios.at(-1);return q.nome==='Meu novo check-in'&&q.perguntas.includes('disp')&&q.perguntas.includes('dor');}),'Questionário usa IDs canônicos sem regravar perguntas');
  ok(await p.evaluate(()=>__questPT.payload(state,state.questionarios[0]).ps.find(p=>p.s==='DOR').mm),'Payload do aluno mantém a direção da dor');

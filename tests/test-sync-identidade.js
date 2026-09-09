@@ -12,9 +12,9 @@ async function setup(opts = {}) {
     from(table) {
       const call = { table, filters: [] }; calls.push(call);
       const query = { select() { return this; }, eq(k,v) { call.filters.push([k,v]); return this; }, gt() { return this; },
-        upsert(rows) { call.rows = rows; return this; },
+        upsert(rows, options) { call.rows = rows; call.options = options; return this; },
         then(ok,bad) { const result = table === 'membros' ? opts.membersPromise || Promise.resolve(state.memberError ? { error: { message: 'denied' } } : { data: state.members })
-          : call.rows ? opts.sendPromise || Promise.resolve({ data: call.rows.map(x => ({ chave: x.chave, atualizado: '2026-09-06T13:00:00+00:00' })) })
+          : call.rows ? opts.sendPromise || Promise.resolve({ data: (Array.isArray(call.rows) ? call.rows : [call.rows]).map(x => ({ chave: x.chave, atualizado: '2026-09-06T13:00:00+00:00' })) })
           : opts.pullPromise || Promise.resolve({ data: opts.rows || [] });
           return result.then(ok,bad); }
       }; return query;

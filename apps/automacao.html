@@ -198,7 +198,7 @@
     if (mudouSeed) S.write("automacao", st);
     return st;
   }
-  function save(st) { S.write("automacao", st); render(); }
+  function save(st) { S.mustWrite("automacao", st); render(); }
   function integ() { return S.read("config", { dados: {} }).integracoes || {}; }
   function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
 

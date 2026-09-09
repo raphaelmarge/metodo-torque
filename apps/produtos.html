@@ -144,7 +144,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("produtos", { itens: [], vendas: [] }); }
-  function save(st) { S.write("produtos", st); render(); }
+  function save(st) { S.mustWrite("produtos", st); render(); }
 
   var aba = "vender";
   var carrinho = []; // {produtoId, nome, preco, qtd}

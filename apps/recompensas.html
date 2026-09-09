@@ -93,7 +93,7 @@
 
   var PADRAO = { pontos: { checkin: 1, indicacao: 10, renovacao: 20, avaliacao: 5, matricula: 15, graduacao: 30 }, premios: [], resgates: [] };
   function load() { return S.read("recompensas", JSON.parse(JSON.stringify(PADRAO))); }
-  function save(st) { S.write("recompensas", st); render(); }
+  function save(st) { S.mustWrite("recompensas", st); render(); }
 
   ["pCheckin", "pIndicacao", "pRenovacao", "pAvaliacao", "pMatricula", "pGraduacao"].forEach(function (id) {
     $(id).addEventListener("change", function () {

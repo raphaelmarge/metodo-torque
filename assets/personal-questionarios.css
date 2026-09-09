@@ -50,5 +50,5 @@
  #vQuest.qpx-root .qpx-actions>.btn{flex:1 1 100%;min-height:48px}
  #vQuest.qpx-root .qpx-question,#vQuest.qpx-root .qpx-saved{padding:15px!important}
  #vQuest.qpx-root .qpx-question-info{flex-basis:100%}
- #vQuest.qpx-root .qpx-saved-actions .qpx-details{flex:1 1 90px}
+ #vQuest.qpx-root .qpx-saved-actions>.btn{flex-basis:100%;white-space:nowrap}.qpx-saved-actions .qpx-details{flex:1 1 90px}
 }

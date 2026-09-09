@@ -138,7 +138,7 @@
 
   var CENTROS_PADRAO = ["Aluguel", "Energia e água", "Folha de pagamento", "Marketing", "Manutenção", "Equipamentos", "Impostos e taxas", "Sistema e software", "Outros"];
   function load() { return S.read("contas", { centros: CENTROS_PADRAO.slice(), contas: [] }); }
-  function save(st) { S.write("contas", st); render(); }
+  function save(st) { S.mustWrite("contas", st); render(); }
 
   var modelo = "avencer";
   var busca = "";

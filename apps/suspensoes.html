@@ -96,7 +96,7 @@
   function dias(a, b) { return Math.max(0, Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 86400000)); }
 
   function load() { return S.read("suspensoes", { itens: [] }); }
-  function save(st) { S.write("suspensoes", st); render(); }
+  function save(st) { S.mustWrite("suspensoes", st); render(); }
   function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
 
   function statusDe(s, hoje) {
