@@ -6,6 +6,13 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v817 — Foto grande no destaque do aluno
+
+- A foto do treino no topo do Início voltou às proporções anteriores: 420px de
+  altura, 430px nos celulares de até 360px, e margens laterais de 16px/12px.
+- O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
+  mudança é somente visual em `app/aluno-skin.js`.
+
 ## v811 — Nutrição integrada ao Personal (adição solicitada pelo Raphael)
 
 - O visual, as abas fixas, os treinos e os hábitos existentes permanecem. Menu **Nutrição** no Personal e área **Alimentação** no perfil e no menu do aluno.
