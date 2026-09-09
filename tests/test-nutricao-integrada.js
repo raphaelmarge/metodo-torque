@@ -333,7 +333,11 @@ async function testPersonal() {
   await p.waitForFunction(()=>window.__nutriTestWrites.some(x=>x.tabela==='app_aluno'&&x.acao==='upsert'));
   const publication=await p.evaluate(()=>window.__nutriTestWrites.filter(x=>x.tabela==='app_aluno'&&x.acao==='upsert').flatMap(x=>x.corpo));
   eq(publication.length,1,'Publicação envia somente o aluno escolhido');eq(publication[0].token,'token-nutricao-a','Pacote usa o token da pessoa revisada');
-  eq(publication[0].dados.dados.nutricaoApp,applied['nutri-a'],'Pacote do app carrega exatamente o plano aplicado');
+  const nutritionPacket=clone(publication[0].dados.dados.nutricaoApp),packetCatalog=nutritionPacket.catalogo,packetRecipes=nutritionPacket.receitas;
+  delete nutritionPacket.catalogo;delete nutritionPacket.receitas;
+  eq(nutritionPacket,applied['nutri-a'],'Pacote do app carrega exatamente o plano aplicado, com biblioteca separada');
+  ok(Array.isArray(packetCatalog)&&packetCatalog.length>0&&packetCatalog.every(x=>!!Core.normalizaItem(x)),'Biblioteca publicada oferece apenas alimentos com valores válidos');
+  ok(Array.isArray(packetRecipes)&&packetRecipes.every(x=>!!Core.normalizaReceita(x)),'Receitas publicadas preservam o contrato normalizado');
   eq(publication[0].dados.html,'','Publicação preserva o pacote de dados sem HTML duplicado');
   ok(!('nutricaoV1' in publication[0].dados.dados)&&!JSON.stringify(publication[0].dados.dados).includes('Plano exclusivo de Beatriz'),'DTO não inclui o mapa com planos de outros alunos');
   await area('registros');ok((await p.locator('#pnRegistros').textContent()).includes('Registro exclusivo de Ágata')&&!(await p.locator('#pnRegistros').textContent()).includes('Registro exclusivo de Beatriz'),'Registros filtram pelo aluno selecionado');

@@ -2,6 +2,7 @@
 var __demoDados={};
 /* NUTRICAO_DEMO_FIXTURE */
 var __demoNutriRemoto={v:1,registros:{}};
+var __demoNutriFeedback=Object.create(null);
 var __demoOnboardingAceite=null;
 (function(){
   if(typeof __demoNutriPlano==='undefined')return;
@@ -168,7 +169,17 @@ var __demoFeed=(function(){
     var fn=u.split("/rest/v1/rpc/")[1];
     var corpo={};try{corpo=JSON.parse((op&&op.body)||"{}");}catch(e){}
     var r={ok:true};
-    if(fn==='app_nutricao_estado')r={ok:true,nutricao:JSON.parse(JSON.stringify(__demoNutriRemoto))};
+    if(fn==='app_nutricao_feedback_lista'||fn==='app_nutricao_feedback_envia'){
+      var reg=__demoNutriRemoto.registros[corpo.p_registro];
+      if(!reg||reg.apagado)r={erro:'Refeição não encontrada na demonstração.'};
+      else{
+        var rows=__demoNutriFeedback[reg.id];
+        if(!rows)rows=__demoNutriFeedback[reg.id]=[{id:'demo-equipe-'+reg.id,registroId:reg.id,autor:'profissional',nome:'Equipe de nutrição · demo',texto:'Exemplo de comentário: conte como foi organizar esta refeição.',revisado:false,registroVersao:reg.atualizadoEm,criadoEm:new Date().toISOString()}];
+        if(fn==='app_nutricao_feedback_envia'&&!rows.some(function(x){return x.id===corpo.p_id;}))rows.push({id:corpo.p_id,registroId:reg.id,autor:'aluno',nome:'Alex · demo',texto:String(corpo.p_texto||'').slice(0,2000),revisado:false,registroVersao:reg.atualizadoEm,criadoEm:new Date().toISOString()});
+        r={ok:true,simulado:true,feedback:rows.map(function(x){return Object.assign({},x,{revisado:x.revisado&&x.registroVersao===reg.atualizadoEm});})};
+      }
+    }
+    else if(fn==='app_nutricao_estado')r={ok:true,nutricao:JSON.parse(JSON.stringify(__demoNutriRemoto))};
     else if(fn==='app_nutricao_salva'){
       (corpo.p_registros||[]).forEach(function(reg){
         if(!reg||!/^[A-Za-z0-9:_-]{1,300}$/.test(reg.id)||['__proto__','constructor','prototype'].indexOf(reg.id)>=0)return;

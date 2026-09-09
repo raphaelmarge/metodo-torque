@@ -18,6 +18,17 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - Demos continuam isolados: planos e diário de exemplo, `ia_dieta` e `ia_prato` simulados e identificados; nenhuma chamada real de IA. Regenerar aluno com `tools/demo-aluno/regen-demo.js` após alterar builder/fixture.
 - Testes: `test-nutricao-integrada.js` cobre painel, aluno, mobile, revisão, isolamento, offline e concorrência; `test-nutricao-backend.js` exercita o código real da Edge com rede simulada. SQL validado em PostgreSQL local via PGlite, incluindo permissões e exclusões.
 
+## v814 — Nutrição completa no mesmo aplicativo
+
+- Mantém Plano, Biblioteca e Registros. Editor inclui rascunho persistente por conta/aluno, duplicação/ordenação, metas, avaliação alimentar, vigência, dias, alternativas aprovadas, modelos e versões restauráveis como rascunho. Aplicar preserva a versão anterior; publicar continua explícito.
+- IA usa avaliação estruturada e pode alterar apenas uma refeição; o restante do plano permanece. Metas e porções são revisadas pelo responsável, nunca aplicadas automaticamente.
+- Biblioteca inclui receitas, composição inteira/rendimento, fonte e medidas caseiras. Receita sem composição completa permanece consultável; não preencher nutrientes ausentes com zero. Usar o catálogo já existente, sem importar bases cuja licença não permita uso comercial.
+- Core v1 continua compatível e acrescenta somente campos opcionais. `MT_PERSONAL_NUTRICAO.pacote(st,id)` entrega o plano selecionado + catálogo e receitas, sem expor outros alunos. O histórico não duplica o catálogo.
+- Aluno: confirmação direta, ajustes, trocas aprovadas, busca, repetição, metas, receitas/compras e missões de constância. Nenhum XP ao abrir, planejar ou analisar foto; edição conserva identidade. Datas/semana e hábitos da Home e treino guiado permanecem.
+- Conversas em `app_nutricao_feedback`, fora do retorno do aluno. RPCs lista/envia checam token ativo e vínculo do JWT; profissional vem do servidor. Marcar revisado exige `p_registro_versao` igual ao snapshot visto; edição invalida o selo. Idempotência, limites e RLS selada. Nenhuma mensagem real é criada pelos demos/testes.
+- Novos testes: core, Personal, aluno e SQL/feedback. Antes de `tests/run.sh`, instalar o runtime SQL com `npm ci --prefix tests/runtime --ignore-scripts`; PGlite 0.5.8 e lock fixos, sem conexão de teste com produção.
+- Contrato detalhado e limites em `design/NUTRICAO-V814-CONTRATO.md`. Preservar dados antigos e a identidade Torque One.
+
 ## v811 — Entrada opcional da consultoria
 
 - Questionários → Criar e organizar configura perguntas existentes, contrato padrão editável e aceite eletrônico ou assinatura desenhada. O cadastro e App e acesso permitem exigir ou dispensar cada aluno.

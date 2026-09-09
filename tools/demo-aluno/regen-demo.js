@@ -205,7 +205,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         "0": [{ tp: "cardio", id: "dmc3" }],
       } },
     };
-    st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [] };
+    st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
     const out = window.__montaAppAluno(alex, new Date().toISOString());
     window.MTStore.write("ptStudio", JSON.parse(snap));
