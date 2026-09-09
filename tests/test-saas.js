@@ -90,7 +90,10 @@ function crcNode(s) {
     "comissão 0 (ou carteira não configurada) = NENHUM split enviado — o professor recebe 100%");
   ok(/comissao_pct numeric not null default 0/.test(sql),
     "comissao_pct nasce em 0 no banco — o modelo existe desligado, sem mudar nada pra ninguém");
-  ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
+  // Confere cada definição da RPC; o restante do setup contém tokens de app
+  // em hashes internos, sem relação com a credencial do WhatsApp.
+  const zapVeBodies = [...sql.matchAll(/create or replace function public\.zap_config_ve\(\)[\s\S]*?\bas\s+(\$(?:[a-z_][a-z_0-9]*)?\$)([\s\S]*?)\1\s*;/gi)].map(x => x[2]);
+  ok(zapVeBodies.length > 0 && zapVeBodies.every(body => /'tem_token'/.test(body) && !/jsonb_build_object\([^)]*'token'/.test(body)),
     "zap_config_ve devolve se TEM token, nunca o token");
 
   // modelo de cobrança: cada profissional paga o próprio WhatsApp. A função não
