@@ -7474,12 +7474,16 @@ async function novaExecucaoAluno(p) {
   await p.fill("#qpTitulo", "Motivação");
   await p.fill("#qpTexto", "Qual foi sua motivação pra treinar nos últimos 7 dias?");
   await p.click("#qpAdd");
+  // O decorador termina o salvamento antes de preparar a próxima pergunta.
+  await p.waitForFunction(() => !document.getElementById("qpNovoBox").open && !document.getElementById("qpAdd").disabled);
   await abreDetalhes(p, "#qpSigla");
   await p.fill("#qpSigla", "AEROB");
   await p.fill("#qpTitulo", "Aeróbico");
   await p.selectOption("#qpTipo", "linear");
   await p.fill("#qpTexto", "De 0 a 10, quanto cardio você fez essa semana?");
   await p.click("#qpAdd");
+  // O decorador termina o salvamento antes de preparar a próxima pergunta.
+  await p.waitForFunction(() => !document.getElementById("qpNovoBox").open && !document.getElementById("qpAdd").disabled);
   const qpTxt = await p.evaluate(() => document.getElementById("qpLista").textContent);
   ok(/MOTEX/.test(qpTxt) && /AEROB/.test(qpTxt), "perguntas salvas com sigla em maiúsculas (MOTEX, AEROB)");
   await abreDetalhes(p, "#qqNome");

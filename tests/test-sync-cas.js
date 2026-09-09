@@ -78,5 +78,38 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
   const x=await setup({rows:[dataRow(initial())],local:{[K]:{alunos:[{id:'antigo'}]},'mtsync:ts':{[K]:'2026-09-06T15:00:00.000Z'}}});await x.start();
   const r=await x.ctx.MTStore.publicaAppsSeguros([{dados:{}}]);assert.ok(r.error);assert.ok(!x.calls.some(c=>c.table==='app_aluno'));
  });
+
+ await test('Nutri publica sem ptStudio e mantém opções e encadeamento',async()=>{
+  const x=await setup();x.ctx.location.pathname='/nutricao.html';await x.start();
+  const row={token:'paciente-ficticio',academia_id:'academy-a',dados:{dados:{tipo:'nutri',a:{id:'paciente'}}}};
+  const query=x.ctx.MTStore.cloud().client.from('app_aluno').upsert(row,{onConflict:'token'});
+  assert.equal(typeof query.select,'function');const r=await query.select();assert.ok(!r.error);
+  const pub=x.calls.find(c=>c.table==='app_aluno'&&c.rows);assert.deepEqual(pub.rows,row);assert.equal(pub.options.onConflict,'token');
+ });
+ await test('Academia publica HTML legado sem depender do painel Personal',async()=>{
+  const x=await setup();x.ctx.location.pathname='/apps/app-aluno.html';await x.start();
+  const rows=[{token:'academia-ficticia',dados:{html:'<p>Exemplo</p>',stamp:'ficticio'}}];
+  const r=await x.ctx.MTStore.cloud().client.from('app_aluno').upsert(rows);assert.ok(!r.error);
+  assert.deepEqual(x.calls.find(c=>c.table==='app_aluno'&&c.rows).rows,rows);
+ });
+ await test('Personal aceita publicação de objeto único sem alterar o original',async()=>{
+  const x=await setup({rows:[dataRow(initial())]});await x.start();
+  const row={token:'aluno-ficticio',dados:{dados:{a:{appTokenP:'aluno-ficticio'}}}};
+  const before=JSON.stringify(row),r=await x.ctx.MTStore.cloud().client.from('app_aluno').upsert(row,{onConflict:'token'});
+  assert.ok(!r.error);assert.equal(JSON.stringify(row),before);
+  const pub=x.calls.find(c=>c.table==='app_aluno'&&c.rows);assert.equal(pub.rows.dados.sourceUpdatedAt,A);assert.equal(pub.rows.dados.sourceKey,K);assert.equal(pub.options.onConflict,'token');
+ });
+ await test('Conflito confirmado pelo servidor ao publicar preserva cópia e bloqueia repetição',async()=>{
+  const opts={rows:[dataRow(initial())]},x=await setup(opts);await x.start();opts.sendPromise=Promise.resolve({error:{code:'PT409',message:'Prescrição alterada'}});
+  const publish=()=>x.ctx.MTStore.cloud().client.from('app_aluno').upsert([{dados:{}}]);
+  assert.equal((await publish()).error.code,'PT409');assert.ok(x.ctx.__MTSync._estado.conflitos[K]);
+  const n=x.calls.filter(c=>c.table==='app_aluno'&&c.rows).length;assert.ok((await publish()).error);
+  assert.equal(x.calls.filter(c=>c.table==='app_aluno'&&c.rows).length,n);assert.ok([...x.memory.keys()].some(k=>k.startsWith('mtsync:conflito:academy-a:')));
+ });
+ await test('Logout remove conflito da sessão mas conserva backup da conta',async()=>{
+  const x=await setup({rows:[dataRow(initial())],local:{[K]:{alunos:[{id:'rascunho'}]},'mtsync:ts':{[K]:'2026-09-06T15:00:00.000Z'}}});await x.start();
+  assert.ok(x.ctx.__MTSync._estado.conflitos[K]);await x.logout();assert.equal(x.ctx.MTStore.cloud(),null);
+  assert.equal(Object.keys(x.ctx.__MTSync._estado.conflitos).length,0);assert.ok([...x.memory.keys()].some(k=>k.startsWith('mtsync:conflito:academy-a:')));
+ });
  console.log(passed+' cenários de concorrência passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

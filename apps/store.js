@@ -540,6 +540,8 @@
   function paraSync() {
     (sync.emEnvio || []).forEach(function (k) { sync.sujas[k] = true; });
     sync.emEnvio = null;
+    sync.conflitos = {}; sync.promessaEnvio = null;
+    try { var aviso = document.getElementById('mtSyncConflito'); if (aviso) aviso.remove(); } catch (_) {}
     sync.ciclo++; sync.client = null; clienteSeguro = null; clienteSeguroOrigem = null; sync.email = ""; sync.reconciliou = false;
     sync.marca = ""; clearTimeout(sync.timer); avisaStatus();
   }
@@ -839,6 +841,12 @@
     }
     aplicaProtegida(row);
   }
+  function pacoteDoPersonal(linha) {
+    var pacote = linha && linha.dados, dados = pacote && pacote.dados;
+    if (dados && dados.tipo === 'nutri') return false;
+    return !!(pacote && pacote.sourceKey === 'mtapp:ptStudio') ||
+      !!(dados && dados.a && dados.a.appTokenP) || /(?:^|\/)personal\.html$/.test(location.pathname || '');
+  }
   function publicaAppsSeguros(linhas, opcoes) {
     if (!sync.client) return Promise.resolve({ error: { message: 'Entre na nuvem antes de publicar.' } });
     var k = 'mtapp:ptStudio', raw = localStorage.getItem(k), ciclo = sync.ciclo;
@@ -848,8 +856,17 @@
       if (sync.sujas[k] || (sync.emEnvio || []).indexOf(k) >= 0 || raw !== localStorage.getItem(k) || !baseDe(k))
         return { error: { message: 'O painel mudou ou ainda não terminou de salvar. Confira a prescrição e publique novamente.' } };
       var rev = baseDe(k);
-      var seguras = linhas.map(function (l) { var c = Object.assign({}, l); c.dados = Object.assign({}, l.dados, { sourceUpdatedAt: rev }); return c; });
-      return sync.client.from('app_aluno').upsert(seguras, opcoes);
+      var lista = Array.isArray(linhas) ? linhas : [linhas];
+      var seguras = lista.map(function (l) {
+        if (!pacoteDoPersonal(l)) return l;
+        var c = Object.assign({}, l);
+        c.dados = Object.assign({}, l.dados, { sourceKey: k, sourceUpdatedAt: rev });
+        return c;
+      });
+      return Promise.resolve(sync.client.from('app_aluno').upsert(Array.isArray(linhas) ? seguras : seguras[0], opcoes)).then(function (r) {
+        if (r && r.error && r.error.code === 'PT409' && ciclo === sync.ciclo && sync.client) sinalizaConflito(k, r.error.message);
+        return r;
+      });
     }
     // Não publica um pacote construído sobre dados que o banco recusou.
     return Promise.resolve(sync.promessaEnvio).then(function () { return enviaSujas(); }).then(enviar);
@@ -873,7 +890,10 @@
           if (tabela !== 'app_aluno' || typeof Proxy !== 'function') return query;
           return new Proxy(query, {
             get: function (q, p) {
-              if (p === 'upsert') return function (linhas, opcoes) { return publicaAppsSeguros(linhas, opcoes); };
+              if (p === 'upsert') return function (linhas, opcoes) {
+                var lista = Array.isArray(linhas) ? linhas : [linhas];
+                return lista.some(pacoteDoPersonal) ? publicaAppsSeguros(linhas, opcoes) : q.upsert(linhas, opcoes);
+              };
               var v = q[p]; return typeof v === 'function' ? v.bind(q) : v;
             }
           });
