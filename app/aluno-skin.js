@@ -291,27 +291,9 @@
   ].join("");
   css += "@media(min-width:801px){body.aluno-v793{max-width:1056px!important}body.aluno-v793 #navApp{left:0!important;right:auto!important;margin:0!important;max-width:none!important}body.aluno-v793 #menuApp{left:234px!important;max-width:1056px!important}body.aluno-v793 #navApp #navMenuApp{font-size:14px!important;letter-spacing:0!important;text-transform:none!important}}@media(min-width:801px) and (max-width:1100px){body.aluno-v793 #menuApp{left:200px!important}}";
   css += "@media(min-width:801px){body.aluno-v793 #navApp{overflow-y:auto;overscroll-behavior:contain}body.aluno-v793 #menuApp{margin:0!important}body.aluno-v793 #navMenuApp>span:nth-child(2){font-size:14px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}}";
-  /* v817 — Foto no topo, de ponta a ponta, como no Início original.
-   * Só apresentação no celular: mantém carrossel, imagens, destinos e dados.
-   * Depois da composição v816 para que suas margens não encolham a foto.
-   * svh evita saltos quando a barra do Safari recolhe; vh é o fallback.
-   * O desktop com sidebar e o primeiro dia sem carrossel não mudam.
-   */
-  css += [
-    "@media(max-width:800px){",
-    "body.aluno-v793:has(#heroCarr) #blocoHoje{padding-top:0}",
-    "body.aluno-v793 #heroCarr{width:100%!important;margin:0!important;margin-inline:0!important;padding:0!important;gap:0!important;border-radius:0}",
-    "body.aluno-v793 #heroCarr>div{height:clamp(470px,64vh,570px)!important;height:clamp(470px,64svh,570px)!important;border-radius:0!important;background:var(--one-bg,var(--bg0))!important}",
-    "body.aluno-v793:has(#heroCarr) #heroTopo{padding:calc(18px + env(safe-area-inset-top,0px)) 20px 0!important;align-items:flex-start!important}",
-    "body.aluno-v793:has(#heroCarr) #heroTopo>div>div:first-child{color:rgba(255,255,255,.82)!important;text-shadow:0 1px 12px rgba(0,0,0,.35)}",
-    "body.aluno-v793:has(#heroCarr) #heroSauda{color:#fff!important;font-size:clamp(22px,6.5vw,27px)!important;overflow-wrap:anywhere;text-shadow:0 1px 16px rgba(0,0,0,.35)}",
-    "body.aluno-v793:has(#heroCarr) :is(#sinoBtn,#avBtn2){background:rgba(12,13,17,.4)!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}",
-    "body.aluno-v793 #heroCarr>div>img{object-fit:cover;object-position:center}",
-    "body.aluno-v793 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(12,13,17,.66) 0%,rgba(12,13,17,.08) 30%,rgba(12,13,17,.16) 42%,rgba(12,13,17,.4) 55%,rgba(12,13,17,.72) 68%,rgba(12,13,17,.9) 82%,var(--one-bg,var(--bg0)) 100%)!important}",
-    "html.claro body.aluno-v793 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(12,13,17,.66) 0%,rgba(12,13,17,.08) 28%,rgba(244,243,247,.12) 38%,rgba(244,243,247,.84) 58%,rgba(244,243,247,.97) 76%,var(--one-bg) 100%)!important}",
-    "html.claro body.aluno-v793 #heroCarr :is(.htit,#htTitulo){color:var(--one-text)!important}html.claro body.aluno-v793 #heroCarr :is(.hsub,#htSub){color:var(--one-muted)!important}html.claro body.aluno-v793 #heroCarr .htk2{color:var(--cor)!important}",
-    "}"
-  ].join("");
+  /* v817 — a foto do treino volta a dominar o topo, como antes da compactação
+   * da v816. Mantém o carrossel e todo o conteúdo/CTA sobre a mesma imagem. */
+  css += "body.aluno-v793 #heroCarr{width:calc(100% - 32px)!important;margin-inline:16px!important}body.aluno-v793 #heroCarr>div{height:420px!important}@media(max-width:360px){body.aluno-v793 #heroCarr{width:calc(100% - 24px)!important;margin-inline:12px!important}body.aluno-v793 #heroCarr>div{height:430px!important}}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
