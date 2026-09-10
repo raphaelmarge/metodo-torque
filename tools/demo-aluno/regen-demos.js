@@ -2,8 +2,8 @@
  *
  * Requer o mesmo servidor local usado por regen-demo.js na porta 8765.
  * Saídas:
- *   demo-aluno-cadastro.html — mostra toda a entrada inicial/contrato.
- *   demo-aluno-direto.html   — simula o cadastro inicial já concluído e abre o app.
+ *   demo-aluno-cadastro.html     — mostra toda a entrada inicial/contrato.
+ *   demo-aluno-sem-cadastro.html — simula o cadastro inicial já concluído e abre o app.
  *
  * O objetivo é não manter duas cópias de lógica: primeiro regeneramos
  * demo-aluno.html pelo fluxo canônico e só então derivamos as duas variantes.
@@ -30,10 +30,10 @@ if (!titulo.test(src)) throw new Error('Título da demo canônica não encontrad
 
 const comCadastro = src.replace(titulo, '<title>Alex · Demo do aluno — com cadastro inicial</title>');
 const aceite = "var __demoOnboardingAceite={id:'demo-aceite-concluido',aceito_em:'2026-09-10T12:00:00Z',documento_hash:'demo-concluido'};";
-const direto = src
-  .replace(titulo, '<title>Alex · Demo do aluno — acesso direto</title>')
+const semCadastro = src
+  .replace(titulo, '<title>Alex · Demo do aluno — sem cadastro inicial</title>')
   .replace(marker, aceite);
 
 fs.writeFileSync(path.join(ROOT, 'demo-aluno-cadastro.html'), comCadastro);
-fs.writeFileSync(path.join(ROOT, 'demo-aluno-direto.html'), direto);
-console.log('demos do aluno geradas:', comCadastro.length, direto.length);
+fs.writeFileSync(path.join(ROOT, 'demo-aluno-sem-cadastro.html'), semCadastro);
+console.log('demos do aluno geradas:', comCadastro.length, semCadastro.length);
