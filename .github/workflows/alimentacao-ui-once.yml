@@ -1,0 +1,95 @@
+name: Validar navegacao da alimentacao
+on:
+  push:
+    branches: [fix/aluno-alimentacao-navegacao]
+    paths:
+      - .github/workflows/alimentacao-ui-once.yml
+permissions:
+  contents: write
+concurrency:
+  group: preparar-alimentacao-v820
+  cancel-in-progress: false
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_PATH: /opt/node22/lib/node_modules
+      CHROMIUM_PATH: /opt/pw-browsers/chromium
+      TZ: America/Sao_Paulo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Conferir integridade e aplicar patch revisado
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, gzip, hashlib, subprocess
+          def sha(data):
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          # Normaliza duas insercoes ocorridas no transporte do patch comprimido.
+          # Nada e aplicado sem reproduzir o hash exato do patch testado localmente.
+          encoded=base64.b64encode(Path('tools/nutri-ui-once.patch.gz').read_bytes()).decode()
+          encoded=encoded.replace('LzfNtaLBJd6','LzfNtaLBd6').replace('fHR49dPUxPs','fHR49PUxPs').rstrip('=')
+          encoded+='='*((-len(encoded))%4)
+          data=base64.b64decode(encoded,validate=True)
+          assert sha(data)=='8d136309c39a0ad4fd3d7a5c710e27be534396c5','Patch de transporte divergente'
+          Path('/tmp/nutri-ui.patch').write_bytes(gzip.decompress(data))
+          assert sha(Path('app/aluno-builder.js').read_bytes())=='3604d2752c79a4305b07f7871e776a5ebd7c9c50','Builder base mudou'
+          assert sha(Path('app/aluno-skin.js').read_bytes())=='54e17f52227b16b8f158b29405c63d8b23b0eea4','Skin base mudou'
+          subprocess.run(['git','apply','--check','/tmp/nutri-ui.patch'],check=True)
+          subprocess.run(['git','apply','/tmp/nutri-ui.patch'],check=True)
+          expected={
+              'app/aluno-builder.js':'17d32ed3b55834de414f44ca9ba9f1e4afcfb978',
+              'app/aluno-skin.js':'018c0e0bab04d5dda479ccffc6764b5fd3ca75ef',
+              'assets/versao.js':'ae4c3bc7140f8bb321b4242bec487729a6d621f7',
+              'sw.js':'df5c694b7475250679cf09ae328c11059993f9de',
+              'app/app-sw.js':'42d07b11d6ecad13b3b90b41fbf25b8e9c589dbb',
+              'tests/test-nutricao-aluno-completa.js':'58ab22a28b28010af02d5e2decb19f78a102420c',
+              'tests/test-nutricao-integrada.js':'4d36f0044720eb8d488146710035cb32b84b726a',
+              'tests/test-nutricao-navegacao.js':'158fda4ea554ca9c3da16446891691fe2422b8c1',
+              'design/ALIMENTACAO-NAVEGACAO-V820.md':'0fa7218196fcb57d6632a29568c766975689a4f1'
+          }
+          for file,expected_sha in expected.items():
+              assert sha(Path(file).read_bytes())==expected_sha,'Conteudo diferente da revisao local: '+file
+          PY
+          node --check app/aluno-builder.js
+          node --check app/aluno-skin.js
+          git diff --check
+      - name: Preparar ambiente isolado dos testes
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/torque-pw --no-audit --no-fund playwright@1.57.0
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)
+          test -n "$CHROME"
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -sf /tmp/torque-pw/node_modules/playwright /opt/node22/lib/node_modules/playwright
+          sudo ln -sf "$CHROME" /opt/pw-browsers/chromium
+          "$CHROME" --version
+      - name: Regenerar as tres demos e validar fluxos existentes
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/nutri-http.log 2>&1 &
+          SRV=$!
+          trap 'kill "$SRV" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/personal.html >/dev/null && break; sleep .25; done
+          node tools/demo-aluno/regen-demos.js
+          node tests/test-nutricao-navegacao.js
+          node tests/test-nutricao-aluno-completa.js
+          node tests/test-nutricao-integrada.js
+          node tests/test-nutricao-core-completa.js
+          node tests/test-demo-aluno-variantes.js
+          node tests/test-aluno-hero-full-bleed.js
+          node tests/test-sync-cas.js
+          node tests/test-sync-identidade.js
+          node tests/test-versao.js
+          git diff --check
+      - name: Salvar apenas no branch de revisao
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/aluno-builder.js app/aluno-skin.js assets/versao.js sw.js app/app-sw.js tests/test-nutricao-aluno-completa.js tests/test-nutricao-integrada.js tests/test-nutricao-navegacao.js design/ALIMENTACAO-NAVEGACAO-V820.md demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          git diff --cached --check
+          git commit -m 'refactor(aluno): alimentacao em Refeicoes, Diario e Planejar (mt-v820)'
+          git push origin HEAD:refs/heads/fix/aluno-alimentacao-navegacao
