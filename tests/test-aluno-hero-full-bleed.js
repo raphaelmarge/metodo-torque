@@ -79,7 +79,7 @@ async function geometry(page) {
       for (const width of [801,1024,1280]) {
         await page.setViewportSize({width,height:900}); await page.evaluate(() => window.scrollTo(0,0));
         const g=await geometry(page);
-        ok(g.radius==='16px' && Math.abs(g.card.h-400)<1 && g.carr.y>g.top.bottom && !g.overflow, name + ': layout desktop preservado em '+width+'px');
+        ok(g.radius==='16px' && Math.abs(g.card.h-420)<1 && g.carr.y>g.top.bottom && !g.overflow, name + ': layout desktop preservado em '+width+'px');
       }
       assert.deepEqual(errors, []); ok(true,name + ': sem erros JavaScript');
     } finally {await ctx.close();}
