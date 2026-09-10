@@ -291,6 +291,9 @@
   ].join("");
   css += "@media(min-width:801px){body.aluno-v793{max-width:1056px!important}body.aluno-v793 #navApp{left:0!important;right:auto!important;margin:0!important;max-width:none!important}body.aluno-v793 #menuApp{left:234px!important;max-width:1056px!important}body.aluno-v793 #navApp #navMenuApp{font-size:14px!important;letter-spacing:0!important;text-transform:none!important}}@media(min-width:801px) and (max-width:1100px){body.aluno-v793 #menuApp{left:200px!important}}";
   css += "@media(min-width:801px){body.aluno-v793 #navApp{overflow-y:auto;overscroll-behavior:contain}body.aluno-v793 #menuApp{margin:0!important}body.aluno-v793 #navMenuApp>span:nth-child(2){font-size:14px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}}";
+  /* v817 — a foto do treino volta a dominar o topo, como antes da compactação
+   * da v816. Mantém o carrossel e todo o conteúdo/CTA sobre a mesma imagem. */
+  css += "body.aluno-v793 #heroCarr{width:calc(100% - 32px)!important;margin-inline:16px!important}body.aluno-v793 #heroCarr>div{height:420px!important}@media(max-width:360px){body.aluno-v793 #heroCarr{width:calc(100% - 24px)!important;margin-inline:12px!important}body.aluno-v793 #heroCarr>div{height:430px!important}}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
