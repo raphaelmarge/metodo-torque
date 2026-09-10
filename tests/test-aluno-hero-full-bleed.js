@@ -71,6 +71,7 @@ async function geometry(page) {
       await page.evaluate(() => {document.documentElement.classList.add('claro'); window.scrollTo(0,0);});
       ok((await geometry(page)).greeting==='rgb(255, 255, 255)', name + ': saudação continua clara sobre a foto no tema claro');
       ok(await page.locator('#htTitulo').evaluate(e => getComputedStyle(e).color==='rgb(33, 27, 45)'), name + ': título com contraste no degradê claro');
+      ok(await page.locator('#htSub').evaluate(e => getComputedStyle(e).color==='rgb(102, 94, 115)'), name + ': subtítulo legível no degradê claro');
       await page.evaluate(() => document.documentElement.classList.remove('claro'));
       await page.locator('#sinoBtn').click();
       ok(await page.locator('#sinoCx').isVisible(), name + ': sino funciona sobre a foto');
