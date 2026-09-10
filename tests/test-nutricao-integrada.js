@@ -134,7 +134,7 @@ async function testApp() {
   ok(Object.keys(await getQueue(p)).length===1,'Falha de envio conserva o registro na fila local');
   await p.reload();await p.waitForFunction(()=>window.__nutriAluno);await openNutrition(p);
   near(Core.totalItens((await getRecords(p))[id].itens).k,520,'Reload offline do servidor conserva o snapshot realizado');
-  await p.locator('[data-ntp-edita="'+id+'"]').click();await field(p,0,'qtd').fill('.5');await p.locator('#ntpSalvar').click();
+  await p.locator('#ntpTabDiario').click();await p.locator('[data-ntp-edita="'+id+'"]').click();await field(p,0,'qtd').fill('.5');await p.locator('#ntpSalvar').click();
   records=await getRecords(p);eq(Object.keys(records).length,1,'Editar conserva a identidade sem duplicar a refeição');
   near(Core.totalItens(records[id].itens).k,325,'A edição recalcula apenas os valores efetivamente informados');
   eq(await p.evaluate(()=>window.__nutriAluno.xp()),2,'Editar a mesma refeição não duplica XP');
@@ -142,7 +142,7 @@ async function testApp() {
   await p.reload();await p.waitForFunction(()=>window.__nutriAluno);await openNutrition(p);
   eq((await getRecords(p))[id].itens[0].qtd,.5,'Novo plano publicado não reescreve a quantidade já realizada');
   near(Core.totalItens((await getRecords(p))[id].itens).k,325,'Histórico usa seu snapshot, não as calorias do plano atualizado');
-  await p.locator('[data-ntp-edita="'+id+'"]').click();await p.locator('#ntpTitulo').fill('Almoço editado após novo plano');await p.locator('#ntpSalvar').click();
+  await p.locator('#ntpTabDiario').click();await p.locator('[data-ntp-edita="'+id+'"]').click();await p.locator('#ntpTitulo').fill('Almoço editado após novo plano');await p.locator('#ntpSalvar').click();
   eq(Object.keys(await getRecords(p)),[id],'Editar registro de plano antigo conserva seu ID após publicar outro plano');
   eq((await getRecords(p))[id].titulo,'Almoço editado após novo plano','Revisão altera o snapshot existente sem duplicar a refeição');
   state.fail=false;await p.locator('#ntpTentar').click();await synced(p);
@@ -191,7 +191,7 @@ async function testApp() {
   await openNutrition(ack.p);const flight=ack.p.evaluate(()=>window.__nutriAluno.sync());
   await ack.p.waitForTimeout(100);await ack.p.waitForFunction(()=>document.getElementById('ntpSync').textContent.includes('Sincronizando'));
   await until(()=>!!ack.state.release,'primeiro envio aguardando confirmação');
-  await ack.p.locator('[data-ntp-edita="corrida"]').click();await field(ack.p,0,'qtd').fill('3');await ack.p.locator('#ntpSalvar').click();
+  await ack.p.locator('#ntpTabDiario').click();await ack.p.locator('[data-ntp-edita="corrida"]').click();await field(ack.p,0,'qtd').fill('3');await ack.p.locator('#ntpSalvar').click();
   ack.state.hold=false;ack.state.release();await synced(ack.p);await flight;
   eq(ack.state.records.corrida.itens[0].qtd,3,'Resposta antiga não quita edição feita durante o envio');
   ok(ack.state.calls.filter(x=>x.rpc==='app_nutricao_salva').length>=2,'Edição durante envio recebe confirmação própria');
