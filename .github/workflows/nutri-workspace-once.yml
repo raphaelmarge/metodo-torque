@@ -1,0 +1,22 @@
+name: Preparar workspace da interface nutricional
+on:
+  push:
+    branches: [fix/aluno-alimentacao-navegacao]
+    paths: [.github/workflows/nutri-workspace-once.yml]
+permissions:
+  contents: read
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exportar somente arquivos versionados
+        run: git archive --format=tar.gz HEAD > /tmp/torque-ui-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: torque-ui-source
+          path: /tmp/torque-ui-source.tar.gz
+          retention-days: 1
