@@ -814,8 +814,33 @@
     box.appendChild(baixar);
     var carregar = document.createElement('button'); carregar.textContent = local ? 'Reabrir com os dados atuais' : 'Carregar versão da nuvem';
     carregar.style.cssText = baixar.style.cssText;
-    carregar.onclick = function () { resolveConflito(k).then(function (ok) { if (ok) box.remove(); }); };
+    carregar.onclick = function () {
+      carregar.disabled = true;
+      var rotulo = carregar.textContent;
+      carregar.textContent = local ? 'Reabrindo…' : 'Carregando…';
+      resolveConflito(k).then(function (ok) {
+        if (ok) { box.remove(); return; }
+        carregar.disabled = false; carregar.textContent = rotulo;
+        var status = box.querySelector && box.querySelector('[data-mt-sync-status]');
+        if (!status) {
+          status = document.createElement('div'); status.setAttribute('data-mt-sync-status', '1');
+          status.style.cssText = 'margin-top:10px;color:#ffd9a0;font-size:13px'; box.appendChild(status);
+        }
+        status.textContent = 'Não foi possível resolver agora. Você pode fechar este aviso sem perder o rascunho; a proteção continuará ativa.';
+      }, function () {
+        carregar.disabled = false; carregar.textContent = rotulo;
+      });
+    };
     box.appendChild(carregar);
+    var fechar = document.createElement('button'); fechar.type = 'button'; fechar.textContent = 'Fechar aviso';
+    fechar.setAttribute('aria-label', 'Fechar aviso de conflito sem descartar o rascunho');
+    fechar.style.cssText = baixar.style.cssText + ';background:transparent;color:#fff;border:1px solid #ffffff55';
+    fechar.onclick = function () {
+      // Fecha só a interface. O item continua em sync.conflitos e segue bloqueando
+      // qualquer sobrescrita até a pessoa resolver explicitamente ou recarregar.
+      if (box && box.remove) box.remove();
+    };
+    box.appendChild(fechar);
   }
   function resolveConflito(k) {
     if (sync.conflitos && sync.conflitos[k] && sync.conflitos[k].local) {
