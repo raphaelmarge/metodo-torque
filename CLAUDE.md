@@ -13,6 +13,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v818 — Foto no topo de ponta a ponta
+
+- Complementa a publicação simultânea v817: no celular (até 800px), a foto começa no topo e ocupa toda a largura do app, sem margens ou cantos de cartão. Saudação, sino e avatar ficam sobre a imagem, com safe area e contraste nos dois temas.
+- Mantém a altura restaurada de 470–570px com svh e fallback vh, imagem em cover e degradê para o fundo. Carrossel, destinos, Minha semana e hábitos continuam iguais.
+- A composição desktop publicada pela v817 (420px) permanece. Preservar também o primeiro dia sem treino e o fallback sem foto.
+- Somente skin, demo, versão/caches e testes; nenhuma alteração de builder, pacotes, sincronização ou Supabase. Demo regenerada pelo gerador canônico.
+- `test-aluno-hero-full-bleed.js` cobre 66 verificações. O teste de geometria adicionado simultaneamente em `test-aluno-inicio-experiencia.js` acompanha o topo full-bleed sem remover as verificações de foto ou fluxo.
+
 ## v811 — Nutrição integrada ao Personal (adição solicitada pelo Raphael)
 
 - O visual, as abas fixas, os treinos e os hábitos existentes permanecem. Menu **Nutrição** no Personal e área **Alimentação** no perfil e no menu do aluno.
