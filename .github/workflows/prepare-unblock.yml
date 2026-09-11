@@ -1,0 +1,43 @@
+name: Preparar correção limitada 826
+on:
+  push:
+    branches: [work/826-prepare-unblock]
+permissions:
+  contents: write
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Conferir e preparar somente a árvore revisada
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/prepare-unblock.py
+          node --check assets/personal-nutricao.js
+          node --check tests/test-personal.js
+          node --check tests/test-nutricao-personal-completa.js
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          tree=$(git write-tree)
+          commit=$(printf '%s\n' 'fix(personal): preservar registros abertos e validar bootstrap isolado (mt-v824)' 'Refs #826. Sem migração ou dados reais; aguardando CI completo e publicação.' | git commit-tree "$tree" -p 102fcdbc4f5c83dc3ec0aa18cb32d4d6dd0dc176)
+          mkdir -p "$RUNNER_TEMP/candidato"
+          echo "$commit" > "$RUNNER_TEMP/candidato/commit.txt"
+          echo "$tree" > "$RUNNER_TEMP/candidato/tree.txt"
+          git diff 102fcdbc4f5c83dc3ec0aa18cb32d4d6dd0dc176 "$commit" > "$RUNNER_TEMP/candidato/correcao.patch"
+          # Branch exclusivamente de preparação. Nunca atualiza main ou faz deploy.
+          git push origin "$commit:refs/heads/work/826-unblock-prepared"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidato-desbloqueio-${{ github.run_id }}
+          path: ${{ runner.temp }}/candidato/
+          retention-days: 7
