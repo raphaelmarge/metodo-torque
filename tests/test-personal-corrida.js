@@ -1,7 +1,7 @@
 /* Fluxo real do Personal, com dados sintéticos e rede externa bloqueada. */
 const assert=require('node:assert/strict');
 let chromium;try{chromium=require('playwright').chromium;}catch(_){chromium=require('/opt/node22/lib/node_modules/playwright').chromium;}
-const {comMockNuvem}=require('./_nuvem');
+const {comMockNuvem}=require('./_nuvem.js');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 let browser,n=0;
 function ok(v,m){assert.ok(v,m);n++;console.log('OK '+m);}

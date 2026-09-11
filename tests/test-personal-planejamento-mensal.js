@@ -4,7 +4,7 @@ const fs = require('node:fs');
 let chromium;
 try { chromium = require('playwright').chromium; }
 catch (_) { try { chromium = require('./ci/node_modules/playwright').chromium; } catch (_) { chromium = require('/opt/node22/lib/node_modules/playwright').chromium; } }
-const {comMockNuvem} = require('./_nuvem');
+const {comMockNuvem} = require('./_nuvem.js');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
 let browser, n = 0;
 function eq(a, b, label) { assert.deepEqual(a, b, label); n++; console.log('OK ' + label); }

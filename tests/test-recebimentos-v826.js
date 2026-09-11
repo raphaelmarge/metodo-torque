@@ -29,7 +29,7 @@ eq(R.recebimentoDuplicados(st,{...base,id:'novo',eventoId:undefined}).length,0,'
  else if(fs.existsSync('/opt/pw-browsers/chromium'))launch.executablePath='/opt/pw-browsers/chromium';
  browser=comMockNuvem(await chromium.launch(launch));
  const ctx=await browser.newContext({viewport:{width:1280,height:900},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
- const root=path.resolve(__dirname,'..'),BASE='http://torque-financeiro.test',errors=[];
+ const root=path.resolve(__dirname,'..'),BASE=(process.env.BASE_URL||'http://torque-financeiro.test').replace(/\/+$/,''),errors=[];
  const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp'};
  await ctx.route('**/*',async route=>{
    const u=new URL(route.request().url());
