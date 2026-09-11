@@ -157,7 +157,7 @@
     st.devedores = st.devedores || [];
     return st;
   }
-  function save(st) { S.write("inad", st); render(); }
+  function save(st) { if (S.write("inad", st) === false) return false; render(); return true; }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   var filtro = "aberto";
@@ -264,11 +264,13 @@
     $("nNome").value = ""; $("nZap").value = ""; $("nValor").value = ""; $("nVenc").value = "";
     $("dlgNovo").showModal();
   };
-  $("dlgNovo").addEventListener("close", function () {
-    if ($("dlgNovo").returnValue !== "ok") return;
+  $("dlgNovo").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.devedores.unshift({ id: S.uid(), nome: $("nNome").value.trim(), zap: $("nZap").value.trim(), valor: +$("nValor").value || 0, vencimento: $("nVenc").value, status: "aberto", envios: {} });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgNovo").close("ok");
   });
 
   $("btnCfg").onclick = function () {
@@ -278,11 +280,13 @@
     $("cLink").value = st.config.link || "";
     $("dlgCfg").showModal();
   };
-  $("dlgCfg").addEventListener("close", function () {
-    if ($("dlgCfg").returnValue !== "ok") return;
+  $("dlgCfg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.config = { acad: $("cAcad").value.trim(), link: $("cLink").value.trim(), autoMeses: +$("cAutoMeses").value || 0 };
-    save(st);
+    if (!save(st)) return false;
+    $("dlgCfg").close("ok");
   });
 
   var ligandoPara = null;
@@ -299,7 +303,7 @@
       // registra o envio (o link já abre pelo href)
       d.envios = d.envios || {};
       if (passo) d.envios[passo.id] = S.todayISO();
-      save(st);
+      if (!save(st)) return false;
       return;
     }
     if (acao === "ligar") {
@@ -311,13 +315,22 @@
     if (acao === "zapauto") {
       var btn = e.target;
       btn.disabled = true; btn.textContent = "enviando…";
-      enviaWaAuto(d, passo).then(function (r) {
+      var chaveEnvio = contextoOperacao() + "|" + id + "|" + (passo ? passo.id : "manual") + "|" + S.todayISO();
+      var contextoEnvio = contextoOperacao();
+      (enviosConfirmados[chaveEnvio] ? Promise.resolve(enviosConfirmados[chaveEnvio]) : enviaWaAuto(d, passo)).then(function (r) {
         if (r && r.ok) {
+          enviosConfirmados[chaveEnvio] = r;
+          if (contextoEnvio !== contextoOperacao()) return;
           var st2 = load();
           var d2 = st2.devedores.find(function (x) { return x.id === id; });
+          if (!d2) { btn.disabled = false; btn.textContent = "Mensagem enviada"; return; }
           d2.envios = d2.envios || {};
           if (passo) d2.envios[passo.id] = S.todayISO();
-          save(st2);
+          if (!save(st2)) {
+            btn.disabled = false; btn.textContent = "Salvar registro do envio";
+            alert((r.demo ? "Simulação concluída" : "Mensagem enviada") + ", mas o histórico não foi salvo. Use Salvar registro do envio para tentar novamente sem reenviar a mensagem.");
+            return false;
+          }
           alert(r.demo ? "🎭 SIMULAÇÃO: mensagem " + (passo ? passo.rotulo : "") + " registrada para " + d.nome.split(" ")[0] + " — nada foi enviado de verdade. Com o WhatsApp oficial conectado, sai sozinha." :
             "📨 Mensagem " + (passo ? passo.rotulo : "") + " enviada pela API oficial para " + d.nome.split(" ")[0] + "!");
         } else {
@@ -338,7 +351,7 @@
       if (!confirm("Excluir esta pendência?")) return;
       st.devedores = st.devedores.filter(function (x) { return x.id !== id; });
     }
-    save(st);
+    if (!save(st)) return false;
   });
 
   // ---------- Fase 2: WhatsApp oficial (envio pela API, sem abrir o app) ----------
@@ -375,6 +388,24 @@
   }
 
   // ---------- Fase 2: cobrança automática (Pagar.me via Edge Function) ----------
+  // Resultados externos confirmados não são reenviados quando só o registro local falha.
+  var cobrancasPendentes = Object.create(null), cobrancasEmCurso = Object.create(null), enviosConfirmados = Object.create(null), cobrancaAberta = "";
+  function contextoOperacao() {
+    var nuvem = S.cloud && S.cloud(), perfil = S.read("perfil", {}), academia = S.read("academia", {});
+    return JSON.stringify([nuvem && nuvem.aid || academia.id || "local", perfil.email || perfil.nome || ""]);
+  }
+  function chaveCobranca(dev) { return contextoOperacao() + "|" + dev.id; }
+  function salvaCobrancaPendente(dev) {
+    var chave = chaveCobranca(dev), pendente = cobrancasPendentes[chave];
+    if (!pendente) return true;
+    var st = load(), atual = st.devedores.find(function (x) { return x.id === dev.id; });
+    if (!atual) return false;
+    Object.assign(atual, pendente);
+    var gravou = save(st);
+    if (gravou) delete cobrancasPendentes[chave];
+    renderCob(atual);
+    return gravou;
+  }
   function pagarmeManual() {
     var c = S.read("config", { dados: {} });
     return (c.integracoes && c.integracoes.pagarmeUrl) || "";
@@ -440,6 +471,9 @@
     return { cpf: (a && a.cpf) || "", email: (a && a.email) || "" };
   }
   function renderCob(dev) {
+    var chave = chaveCobranca(dev);
+    if (cobrancaAberta && cobrancaAberta !== chave) return;
+    if (cobrancasPendentes[chave]) dev = Object.assign({}, dev, cobrancasPendentes[chave]);
     var c = dev.cobranca;
     $("cobTitulo").textContent = "💳 Cobrança — " + dev.nome;
     var demoTag = (demoOn() && !pagarmeUrl()) ? '<p class="tag alerta" style="margin-bottom: 8px;">MODO DEMONSTRAÇÃO — nada é cobrado de verdade</p>' : "";
@@ -486,19 +520,33 @@
     if (bv) bv.onclick = function () {
       $("cobAviso").textContent = "consultando…";
       chamaFuncao({ acao: "status", orderId: c.orderId }).then(function (r) {
+        if (chave !== chaveCobranca(dev)) return;
         if (r && r.status === "paid") {
           var st = load();
           var d2 = st.devedores.find(function (x) { return x.id === dev.id; });
-          d2.cobranca.statusPago = true;
+          if (!d2) return;
+          d2.cobranca = Object.assign({}, c, { statusPago: true });
           d2.status = "pago"; d2.pagoEm = S.todayISO();
-          save(st);
+          cobrancasPendentes[chave] = { cobranca: d2.cobranca, status: d2.status, pagoEm: d2.pagoEm };
+          if (!salvaCobrancaPendente(d2)) return false;
           $("dlgCob").close();
           alert((demoOn() && !pagarmeUrl() ? "🎭 SIMULAÇÃO: pagamento aprovado! " : "Pagamento confirmado pelo Pagar.me! ") + dev.nome.split(" ")[0] + " marcado(a) como pago. 🎉");
         } else $("cobAviso").textContent = "ainda não pago (status: " + ((r && r.status) || "?") + ")";
       }).catch(function (e) { $("cobAviso").textContent = "erro: " + e.message; });
     };
+    if (cobrancasPendentes[chave]) {
+      $("cobAviso").textContent = "Cobrança " + (c.statusPago ? "paga" : "gerada") + ", mas o registro local não foi salvo. Copie os dados antes de sair desta página.";
+      var tentar = document.createElement("button"); tentar.id = "cobRetentar"; tentar.className = "btn mini";
+      tentar.textContent = "Salvar registro sem gerar outra cobrança";
+      tentar.onclick = function () { salvaCobrancaPendente(dev); };
+      $("cobCorpo").appendChild(tentar);
+    }
   }
   function geraCob(dev, metodo) {
+    var chave = chaveCobranca(dev), contexto = contextoOperacao();
+    if (cobrancasPendentes[chave]) { salvaCobrancaPendente(dev); return; }
+    if (cobrancasEmCurso[chave]) return;
+    cobrancasEmCurso[chave] = true;
     $("cobAviso").textContent = "gerando " + metodo + "…";
     var extra = cpfDe(dev);
     chamaFuncao({
@@ -508,19 +556,20 @@
       nome: dev.nome, cpf: extra.cpf, email: extra.email,
       vencimento: S.todayISO(), parcelas: metodo === "cartao" ? 3 : 1,
     }).then(function (r) {
-      if (!r || !r.ok) { $("cobAviso").textContent = "erro: " + ((r && r.erro) || "resposta inválida"); return; }
-      var st = load();
-      var d2 = st.devedores.find(function (x) { return x.id === dev.id; });
-      d2.cobranca = { orderId: r.orderId, metodo: r.metodo, pixCopiaECola: r.pixCopiaECola,
+      if (!r || !r.ok) { if (cobrancaAberta === chave) $("cobAviso").textContent = "erro: " + ((r && r.erro) || "resposta inválida"); return; }
+      var cobranca = { orderId: r.orderId, metodo: r.metodo, pixCopiaECola: r.pixCopiaECola,
         boletoUrl: r.boletoUrl || r.boletoPdf, linhaDigitavel: r.linhaDigitavel,
         linkPagamento: r.linkPagamento, criadoEm: S.todayISO() };
-      save(st);
-      renderCob(d2);
-    }).catch(function (e) { $("cobAviso").textContent = "não alcancei a função: " + e.message; });
+      cobrancasPendentes[chave] = { cobranca: cobranca };
+      if (contexto !== contextoOperacao()) return;
+      salvaCobrancaPendente(dev);
+    }).catch(function (e) { if (cobrancaAberta === chave) $("cobAviso").textContent = "não alcancei a função: " + e.message; })
+      .finally(function () { delete cobrancasEmCurso[chave]; });
   }
   function abreCobranca(devId) {
     var dev = load().devedores.find(function (x) { return x.id === devId; });
     if (!dev) return;
+    cobrancaAberta = chaveCobranca(dev);
     renderCob(dev);
     $("dlgCob").showModal();
   }
@@ -532,7 +581,7 @@
       var passo = passoAtual(d);
       d.envios = d.envios || {};
       if (passo) d.envios[passo.id] = S.todayISO();
-      save(st);
+      if (!save(st)) return false;
     }
     $("roteiro").close();
   };
@@ -578,7 +627,7 @@
           return !(r.contratoId === c2.id && r.status === "aberto" && r.vencimento > hoje);
         });
       });
-      S.write("alunos", stA);
+      if (S.write("alunos", stA) === false) return false;
       renderAutoCancel();
       alert(cands.length + " contrato(s) cancelado(s) por inadimplência. Os devedores continuam na régua até quitar ou você excluir.");
     };

@@ -86,7 +86,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("turmas", { turmas: [], chamadas: {} }); }
-  function save(st) { S.write("turmas", st); render(); }
+  function save(st) { if (S.write("turmas", st) === false) return false; render(); return true; }
 
   var editId = null;
   var hoje = S.todayISO();
@@ -193,11 +193,11 @@
       var cap2 = +t2.capacidade || 0;
       if (cap2 > 0 && t2.alunos.length >= cap2) {
         t2.espera.push(nome);
-        save(st);
+        if (!save(st)) return false;
         alert("Turma lotada — " + nome + " entrou na FILA DE ESPERA. Você é avisado quando abrir vaga.");
       } else {
         t2.alunos.push(nome);
-        save(st);
+        if (!save(st)) return false;
       }
       inp.value = "";
       return;
@@ -207,7 +207,7 @@
       var pp = id.split("|");
       var t3 = st.turmas.find(function (x) { return x.id === pp[0]; });
       t3.alunos = (t3.alunos || []).filter(function (a) { return a !== pp[1]; });
-      save(st);
+      if (!save(st)) return false;
       if ((t3.espera || []).length) alert("Abriu vaga! Há " + t3.espera.length + " na fila de espera de \"" + t3.nome + "\" — chame o próximo.");
       return;
     }
@@ -218,7 +218,7 @@
       tp.espera = (tp.espera || []).filter(function (n) { return n !== pm[1]; });
       tp.alunos = tp.alunos || [];
       if (tp.alunos.indexOf(pm[1]) === -1) tp.alunos.push(pm[1]);
-      save(st);
+      if (!save(st)) return false;
       return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-saifila");
@@ -226,7 +226,7 @@
       var sf = id.split("|");
       var tf = st.turmas.find(function (x) { return x.id === sf[0]; });
       tf.espera = (tf.espera || []).filter(function (n) { return n !== sf[1]; });
-      save(st);
+      if (!save(st)) return false;
       return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-salvar");
@@ -237,28 +237,32 @@
       var tb = st.turmas.find(function (x) { return x.id === id; });
       var bonusN = +tb.bonusSeguidas || 0;
       var premiados = [];
+      if (!save(st)) return false;
       if (bonusN > 0) {
+        var stAl = S.read("alunos", { alunos: [] });
         marcados.forEach(function (nomeAl) {
           var seguidas = presencasSeguidas(st, tb, nomeAl);
           if (seguidas > 0 && seguidas % bonusN === 0) {
-            var stAl = S.read("alunos", { alunos: [] });
             var al = stAl.alunos.find(function (x) { return x.nome === nomeAl; });
-            if (al) {
+            if (al && !(al.bonusLog || []).some(function (item) { return item.em === hoje && (item.turmaId === id || (!item.turmaId && item.turma === tb.nome)); })) {
               al.bonusSessoes = (al.bonusSessoes || 0) + 1;
               al.bonusLog = al.bonusLog || [];
-              al.bonusLog.push({ turma: tb.nome, em: hoje, motivo: seguidas + " presenças seguidas" });
-              S.write("alunos", stAl);
+              al.bonusLog.push({ turmaId: id, turma: tb.nome, em: hoje, motivo: seguidas + " presenças seguidas" });
               premiados.push(nomeAl);
             }
           }
         });
+        if (premiados.length && S.write("alunos", stAl) === false) {
+          alert("A chamada foi salva, mas os bônus não foram registrados. Salve a chamada novamente para tentar registrar os bônus.");
+          return false;
+        }
       }
-      save(st);
       alert("Chamada salva: " + marcados.length + " presente(s)." + (premiados.length ? "\n\n🎁 Sessão extra de bonificação para: " + premiados.join(", ") : ""));
     }
   });
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     if (editId) {
       var t = st.turmas.find(function (x) { return x.id === editId; });
@@ -267,15 +271,16 @@
     } else {
       st.turmas.push({ id: S.uid(), nome: $("fNome").value.trim(), prof: $("fProf").value.trim(), hora: $("fHora").value.trim(), capacidade: +$("fCapac").value || 0, bonusSeguidas: +$("fBonus").value || 0, alunos: [], espera: [] });
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
   $("fExcluir").onclick = function () {
     if (!confirm("Excluir a turma e as chamadas dela?")) return;
     var st = load();
     st.turmas = st.turmas.filter(function (x) { return x.id !== editId; });
     Object.keys(st.chamadas).forEach(function (k) { if (k.indexOf(editId + "|") === 0) delete st.chamadas[k]; });
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
 
   S.equipeDatalist(["fProf"]);
@@ -305,7 +310,7 @@
     if (!confirm("Registrar FALTA JUSTIFICADA de " + p[1] + " hoje e gerar 1 reposição válida por 30 dias?")) return;
     var val = new Date(); val.setDate(val.getDate() + 30);
     rep.itens.push({ id: S.uid(), aluno: p[1], turmaNome: t.nome, data: hoje, validade: S.todayISO(val) });
-    S.write("reposicoes", rep);
+    if (S.write("reposicoes", rep) === false) return false;
     renderRepo();
   });
   $("listaRepo").addEventListener("click", function (e) {
@@ -317,7 +322,7 @@
       var r = rep.itens.find(function (x) { return x.id === id; });
       if (r) r.usadaEm = S.todayISO();
     } else rep.itens = rep.itens.filter(function (x) { return x.id !== id; });
-    S.write("reposicoes", rep);
+    if (S.write("reposicoes", rep) === false) return false;
     renderRepo();
   });
   renderRepo();

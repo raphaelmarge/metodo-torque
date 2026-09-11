@@ -85,7 +85,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("caixa", { dias: {} }); }
-  function save(st) { S.write("caixa", st); render(); }
+  function save(st) { if (S.write("caixa", st) === false) return false; render(); return true; }
 
   var dia = S.todayISO();
   function diaSt(st) { return st.dias[dia] || null; }
@@ -186,7 +186,7 @@
       if (troco == null) return;
       var st2 = load();
       st2.dias[dia] = { abertura: +String(troco).replace(",", ".") || 0, fechado: false, movs: [], abertoEm: new Date().toTimeString().slice(0, 5) };
-      save(st2);
+      if (!save(st2)) return false;
     };
     var fc = $("btnFechar");
     if (fc) fc.onclick = function () {
@@ -199,7 +199,7 @@
       d2.contado = +String(contado).replace(",", ".") || 0;
       d2.quebra = d2.contado - t2.dinheiro;
       d2.fechadoEm = new Date().toTimeString().slice(0, 5);
-      save(st2);
+      if (!save(st2)) return false;
       alert(Math.abs(d2.quebra) < 0.005 ? "Caixa bateu certinho! 🎉" :
         d2.quebra > 0 ? "Sobrou " + S.fmtBRL(d2.quebra) + " na gaveta — confira os lançamentos." :
         "Faltou " + S.fmtBRL(Math.abs(d2.quebra)) + " — confira os lançamentos do dia.");
@@ -208,7 +208,7 @@
     if (rb) rb.onclick = function () {
       var st2 = load();
       st2.dias[dia].fechado = false;
-      save(st2);
+      if (!save(st2)) return false;
     };
   }
 
@@ -221,8 +221,8 @@
       forma: $("mTipo").value === "sangria" ? "Dinheiro" : $("mForma").value,
       valor: valor, hora: new Date().toTimeString().slice(0, 5),
     });
+    if (!save(st)) return false;
     $("mDesc").value = ""; $("mValor").value = "";
-    save(st);
   };
   $("listaMovs").addEventListener("click", function (e) {
     var i = e.target.getAttribute && e.target.getAttribute("data-rm");
@@ -230,7 +230,7 @@
     if (!confirm("Remover este lançamento?")) return;
     var st = load();
     st.dias[dia].movs.splice(+i, 1);
-    save(st);
+    if (!save(st)) return false;
   });
 
   function mudaDia(n) {
@@ -246,7 +246,7 @@
   $("chkCego").addEventListener("change", function () {
     var st = load();
     st.cego = this.checked;
-    S.write("caixa", st);
+    if (S.write("caixa", st) === false) return false;
   });
   S.onChange(function (k) { if (k === "caixa" || k === "produtos" || k === "alunos") render(); });
   render();

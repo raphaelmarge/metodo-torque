@@ -18,6 +18,20 @@ jobs:
   testes:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_PASSWORD: torque-test-only
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGTESTURL: postgresql://postgres:torque-test-only@127.0.0.1:55432/postgres
     steps:
       - uses: actions/checkout@v4
         with:

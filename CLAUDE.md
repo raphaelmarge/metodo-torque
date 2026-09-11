@@ -13,6 +13,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v825 — Integração e correções de salvamento
+
+- Parte da main v824. Calendários recebem as refeições por horário usando uma única projeção do plano vigente; mantém programação por datas, atendimento online/presencial e corrida por blocos. Alimentação acrescenta busca, filtros, próxima refeição e atalhos de foto/repetição. Abrir uma data nunca confirma consumo ou XP; futuro é somente consulta. Rascunhos e foco sobrevivem à navegação.
+- Módulos `apps/*.html` verificam o retorno da gravação antes de fechar formulários, limpar campos ou mostrar sucesso. Falhas conservam o preenchimento para nova tentativa. Operações em mais de uma chave distinguem gravação parcial; não repetir créditos já persistidos. O motor CAS/RPC continua com os contratos atuais.
+- Oferta nativa alinhada a R$ 49/mês. Esse texto não configura nem altera o produto na App Store, Google Play ou RevenueCat; conferir a configuração externa antes de distribuir o app nativo.
+- `tests/test-sync-postgres-real.js` exercita as funções canônicas em PostgreSQL local descartável com duas conexões e observação de bloqueios. Requer `npm ci --prefix tests/sql --ignore-scripts` e `PGTESTURL`; veja `tests/sql/README.md`. O CI fornece PostgreSQL 17.11 isolado, e ausência da conexão é falha, nunca aprovação por omissão. Nenhuma migração antiga do PR #807 foi reaplicada.
+- Regenerar juntas as três demos com `node tools/demo-aluno/regen-demos.js`. Detalhes em `docs/releases/mt-v825-integracao-correcoes.md`.
+
 ## v818 — Foto no topo de ponta a ponta
 
 - Complementa a publicação simultânea v817: no celular (até 800px), a foto começa no topo e ocupa toda a largura do app, sem margens ou cantos de cartão. Saudação, sino e avatar ficam sobre a imagem, com safe area e contraste nos dois temas.

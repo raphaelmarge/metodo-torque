@@ -91,7 +91,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("personais", { lista: [], pagamentos: {} }); }
-  function save(st) { S.write("personais", st); render(); }
+  function save(st) { if (S.write("personais", st) === false) return false; render(); return true; }
 
   var mes = S.todayISO().slice(0, 7);
   $("fMes").value = mes;
@@ -170,11 +170,11 @@
     }
     if (t.getAttribute && t.getAttribute("data-paga")) {
       (st.pagamentos[mes] = st.pagamentos[mes] || {})[t.getAttribute("data-paga")] = S.todayISO();
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     if (t.getAttribute && t.getAttribute("data-desfaz")) {
       delete (st.pagamentos[mes] || {})[t.getAttribute("data-desfaz")];
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     if (t.getAttribute && t.getAttribute("data-edita")) {
       abre(st.lista.find(function (p) { return p.id === t.getAttribute("data-edita"); }));
@@ -183,6 +183,7 @@
 
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = {
       nome: $("pNome").value.trim(), cref: $("pCref").value.trim(),
@@ -197,7 +198,8 @@
       dados.criado = S.todayISO();
       st.lista.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
 
   S.onChange(function (k) { if (k === "personais") render(); });

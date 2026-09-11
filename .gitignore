@@ -3,3 +3,4 @@ tests/out/
 supabase/.temp/
 tests/runtime/node_modules/
 tests/ci/node_modules/
+tests/sql/node_modules/

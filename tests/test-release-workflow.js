@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const {execFileSync, spawnSync} = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n');
 let checks = 0;
 function ok(value, label) { assert.ok(value, label); checks++; console.log('OK ' + label); }
 const pages = read('.github/workflows/pages.yml');
@@ -18,6 +18,9 @@ const lock = JSON.parse(read('tests/ci/package-lock.json'));
 assert.deepEqual(lock.packages[''].dependencies, manifest.dependencies);
 ok(true, 'Manifesto e lock têm as mesmas dependências');
 ok(/npm ci --prefix tests\/ci --ignore-scripts/.test(setup) && !/npm install/.test(setup), 'CI exige lock e não executa scripts de instalação');
+ok(/image: postgres:17\.11/.test(tests) && /55432:5432/.test(tests), 'Concorrência usa PostgreSQL isolado com versão fixa');
+ok(/PGTESTURL: postgresql:\/\/postgres:torque-test-only@127\.0\.0\.1:55432\/postgres/.test(tests), 'Suíte SQL recebe somente o serviço local fictício');
+ok(/npm ci --prefix tests\/sql --ignore-scripts/.test(setup), 'Dependências SQL seguem lock e instalação sem scripts');
 const pinned = manifest.dependencies.playwright;
 ok(/^\d+\.\d+\.\d+$/.test(pinned) &&
  lock.packages['node_modules/playwright'].version === pinned &&
@@ -43,13 +46,13 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'torque-release-'));
 try {
  const repo = path.join(tmp, 'repo'); fs.mkdirSync(repo);
  const git = (...args) => execFileSync('git', args, {cwd: repo, encoding: 'utf8', stdio: ['ignore','pipe','pipe']}).trim();
- git('init'); git('config','user.name','Teste local'); git('config','user.email','fixture@example.invalid');
+ git('init'); git('config','core.autocrlf','false'); git('config','user.name','Teste local'); git('config','user.email','fixture@example.invalid');
  fs.mkdirSync(path.join(repo,'assets'));
  fs.writeFileSync(path.join(repo,'assets/versao.js'),'self.MT_VERSAO = "mt-v822";\n');
  fs.writeFileSync(path.join(repo,'index.html'),'<h1>Fixture sem dados reais</h1>\n');
  git('add','.'); git('commit','-m','Fixture');
  const sha=git('rev-parse','HEAD'), output=path.join(tmp,'output');
- const env={...process.env,RUNNER_TEMP:tmp,GITHUB_OUTPUT:output,GITHUB_SHA:sha};
+ const env={...process.env,RUNNER_TEMP:tmp.replace(/\\/g,'/'),GITHUB_OUTPUT:output.replace(/\\/g,'/'),GITHUB_SHA:sha};
  const run=()=>spawnSync('bash',[path.join(root,'.github/scripts/prepare-pages.sh')],{cwd:repo,env,encoding:'utf8'});
  fs.writeFileSync(path.join(repo,'nao-publicar.txt'),'Arquivo não versionado');
  let result=run();ok(result.status===0,'Empacota commit limpo após aprovação: '+result.stderr);

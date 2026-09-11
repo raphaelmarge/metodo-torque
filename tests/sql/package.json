@@ -1,0 +1,8 @@
+{
+  "name": "torque-postgres-concurrency-tests",
+  "private": true,
+  "description": "Cliente de teste para PostgreSQL real e isolado; não acessa produção.",
+  "dependencies": {
+    "pg": "8.23.0"
+  }
+}

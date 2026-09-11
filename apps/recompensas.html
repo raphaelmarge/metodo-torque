@@ -93,7 +93,7 @@
 
   var PADRAO = { pontos: { checkin: 1, indicacao: 10, renovacao: 20, avaliacao: 5, matricula: 15, graduacao: 30 }, premios: [], resgates: [] };
   function load() { return S.read("recompensas", JSON.parse(JSON.stringify(PADRAO))); }
-  function save(st) { S.write("recompensas", st); render(); }
+  function save(st) { if (S.write("recompensas", st) === false) return false; render(); return true; }
 
   ["pCheckin", "pIndicacao", "pRenovacao", "pAvaliacao", "pMatricula", "pGraduacao"].forEach(function (id) {
     $(id).addEventListener("change", function () {
@@ -101,7 +101,7 @@
       var k = id.slice(1).toLowerCase();
       if (st.pontos[k] === (+this.value || 0)) return;
       st.pontos[k] = +this.value || 0;
-      save(st);
+      if (!save(st)) return false;
     });
   });
 
@@ -170,8 +170,8 @@
     if (!nome || custo < 1) return;
     var st = load();
     st.premios.push({ id: S.uid(), nome: nome, custo: custo });
+    if (S.write("recompensas", st) === false) return false;
     $("npNome").value = ""; $("npCusto").value = "";
-    S.write("recompensas", st);
     renderPremios(); render();
   };
   $("listaPremios").addEventListener("click", function (e) {
@@ -179,7 +179,7 @@
     if (i == null) return;
     var st = load();
     st.premios.splice(+i, 1);
-    S.write("recompensas", st);
+    if (S.write("recompensas", st) === false) return false;
     renderPremios(); render();
   });
 
@@ -231,6 +231,7 @@
   });
   $("dlgResgate").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var p = st.premios.find(function (x) { return x.id === $("rgPremio").value; });
     if (!p) return;
@@ -239,8 +240,9 @@
     var pt = pontosDe(a, st, stA);
     if (p.custo > pt.saldo) { alert("Saldo insuficiente."); return; }
     st.resgates.push({ id: S.uid(), alunoId: alvoId, premio: p.nome, custo: p.custo, em: S.todayISO() });
-    save(st);
+    if (!save(st)) return false;
     alert("Resgatado! " + a.nome.split(" ")[0] + " trocou " + p.custo + " pts por: " + p.nome);
+    $("dlgResgate").close("ok");
   });
 
   S.onChange(function (k) { if (k === "recompensas" || k === "alunos" || k === "saude") render(); });

@@ -10573,8 +10573,8 @@ async function novaExecucaoAluno(p) {
   ok(gateInfo.signUp === "novo@personal.com" && gateInfo.criou && gateInfo.acad && gateInfo.acad.id === "acad-gate",
     "criar conta cadastra na nuvem e já cria a ilha com o nome do studio");
   await g.waitForSelector("#telaAssinatura", { state: "visible", timeout: 5000 });
-  ok(/59,90/.test(await g.textContent("#telaAssinatura")),
-    "a oferta de assinatura aparece sozinha depois do cadastro, com o preço da loja (R$ 59,90/mês)");
+  ok(/R\$ 49\s*\/mês/.test(await g.textContent("#telaAssinatura")),
+    "a oferta de assinatura aparece sozinha depois do cadastro, com o preço mensal de R$ 49");
   await g.click("#taDepois");
   ok(await g.isHidden("#telaAssinatura"), "dá pra continuar no teste grátis sem assinar");
   const compra = await g.evaluate(async () => {
@@ -12100,7 +12100,7 @@ async function novaExecucaoAluno(p) {
     return {
       meta: document.getElementById("mpMetaTxt").textContent + "|" + document.getElementById("mpBarra").textContent,
       mapaTxt: mapa ? mapa.textContent : "",
-      mapaCells: mapa ? mapa.querySelectorAll("div[style*='aspect-ratio']").length : 0,
+      mapaCells: mapa ? mapa.querySelectorAll("button[data-cal-dia]").length : 0,
       mapaForca: window.__mapaMes ? [window.__mapaMes.forca("2099-01-01", {}),
         window.__mapaMes.forca(isoLocal(new Date()), f2)] : null,
       mapaCabe: mapa ? mapa.scrollWidth <= mapa.clientWidth + 1 : false,
@@ -12210,7 +12210,7 @@ async function novaExecucaoAluno(p) {
       quad, txtAno, cardCabe, fitaRola, fitaInteiraVisivel, abreEmHoje, aindaEmHoje, ambasVisiveis, legadoIntacto, dadosIntactos,
       anualPreservado, mudouMes, voltouMes: window.__mapaMes.mes() === mesAntes && /treinos? em \w+/.test(mapa.textContent),
       tituloComAno: mapa.textContent.includes(String(new Date().getFullYear())),
-      celsMes: mapa.querySelectorAll("div[style*='aspect-ratio']").length,
+      celsMes: mapa.querySelectorAll("button[data-cal-dia]").length,
     };
   });
   ok(!!mapAno && mapAno.quad === 364,
@@ -12636,6 +12636,7 @@ async function novaExecucaoAluno(p) {
     const isoHj = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0") + "-" + String(hj.getDate()).padStart(2, "0");
     const cel = document.querySelector("[data-agdia='" + isoHj + "']");
     out.hojeTxt = cel ? getComputedStyle(cel).color : "";
+    out.hojeToken = getComputedStyle(document.body).getPropertyValue("--one-text").trim();
     out.hojeBg = cel ? getComputedStyle(cel).backgroundColor : "";
     // devolve pro noturno (padrão) pra não afetar os testes seguintes
     document.getElementById("btnTemaApp").click();
@@ -12647,7 +12648,7 @@ async function novaExecucaoAluno(p) {
   ok(temaSnap.claro && temaSnap.corpo === "rgb(244, 243, 247)" && temaSnap.txt === "rgb(33, 27, 45)" && temaSnap.superficie === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
     "modo claro pinta página, superfícies e texto e guarda a escolha do aluno");
   ok(temaSnap.voltou, "um toque devolve pro modo noturno");
-  ok(temaSnap.hojeTxt === "rgb(25, 22, 34)" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
+  ok(temaSnap.hojeTxt === "rgb(33, 27, 45)" && temaSnap.hojeToken === "#211b2d" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
     "no modo claro o dia de hoje aparece no calendário (texto escuro sobre um véu da cor, não branco no vazio)");
   await pApp.close();
 
@@ -16032,7 +16033,7 @@ async function novaExecucaoAluno(p) {
         depoisDaFoto: !!(document.getElementById("blocoHoje").compareDocumentPosition(sb) & Node.DOCUMENT_POSITION_FOLLOWING),
         chips: chips.length,
         // pontinho só em quem tem alguma coisa marcada (seg e ter, pelo plano)
-        comPonto: chips.filter((c) => c.querySelector("span[style*='border-radius:50%']")).length,
+        comPonto: chips.filter((c) => c.querySelector(".cal-ponto.cal-treino")).length,
       };
       chips.find((c) => c.getAttribute("data-semd") === isoSeg).click();
       out.gavetaSeg = document.getElementById("semDia").textContent.replace(/\s+/g, " ").trim();

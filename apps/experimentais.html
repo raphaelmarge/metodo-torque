@@ -89,7 +89,7 @@
   var $ = function (id) { return document.getElementById(id); };
 
   function load() { return S.read("exper", { aulas: [] }); }
-  function save(st) { S.write("exper", st); render(); }
+  function save(st) { if (S.write("exper", st) === false) return false; render(); return true; }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   var filtro = "proximas";
@@ -120,7 +120,7 @@
     l.status = novoStatus;
     if (campoData) l[campoData] = S.todayISO();
     l.proximo = S.todayISO();
-    S.write("funil", fu);
+    if (S.write("funil", fu) === false) return false;
   }
 
   function render() {
@@ -199,11 +199,13 @@
     $("aData").value = S.todayISO(); $("aHora").value = "18:00";
     $("dlgNova").showModal();
   };
-  $("dlgNova").addEventListener("close", function () {
-    if ($("dlgNova").returnValue !== "ok") return;
+  $("dlgNova").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.aulas.push({ id: S.uid(), nome: $("aNome").value.trim(), zap: $("aZap").value.trim(), data: $("aData").value, hora: $("aHora").value, prof: $("aProf").value.trim(), origem: $("aOrigem").value, status: "agendada" });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgNova").close("ok");
   });
 
   $("agenda").addEventListener("click", function (e) {
@@ -214,20 +216,20 @@
     if (!a) return;
     var acao = b.getAttribute("data-acao");
 
-    if (acao === "compareceu") { a.status = "compareceu"; syncLead(a, "visitou", "visitouEm"); }
-    else if (acao === "faltou") { a.status = "faltou"; syncLead(a, "contato", null); }
-    else if (acao === "matriculou") { a.status = "matriculado"; syncLead(a, "matriculado", "matriculouEm"); }
+    if (acao === "compareceu") { a.status = "compareceu"; if (syncLead(a, "visitou", "visitouEm") === false) return; }
+    else if (acao === "faltou") { a.status = "faltou"; if (syncLead(a, "contato", null) === false) return; }
+    else if (acao === "matriculou") { a.status = "matriculado"; if (syncLead(a, "matriculado", "matriculouEm") === false) return; }
     else if (acao === "remarcar") {
       var d = prompt("Nova data? (AAAA-MM-DD)", S.todayISO());
       if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
       var h = prompt("Horário? (HH:MM)", a.hora || "18:00") || a.hora;
       a.data = d; a.hora = h; a.status = "agendada";
-      syncLead(a, "agendado", null);
+      if (syncLead(a, "agendado", null) === false) return;
     } else if (acao === "excluir") {
       if (!confirm("Excluir esta aula?")) return;
       st.aulas = st.aulas.filter(function (x) { return x.id !== id; });
     }
-    save(st);
+    if (!save(st)) return false;
   });
 
   S.onChange(function () { render(); });

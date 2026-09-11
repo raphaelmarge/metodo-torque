@@ -180,7 +180,7 @@
     ["bracoD", "Braço D"], ["bracoE", "Braço E"], ["coxaD", "Coxa D"], ["coxaE", "Coxa E"], ["pant", "Panturrilha"]];
 
   function load() { var st = S.read("saude", { avaliacoes: [], evolucoes: [] }); st.evolucoes = st.evolucoes || []; return st; }
-  function save(st) { S.write("saude", st); render(); }
+  function save(st) { if (S.write("saude", st) === false) return false; render(); return true; }
 
   var busca = "", alunoSel = null, aba = "avals";
 
@@ -380,7 +380,7 @@
     if (!confirm("Excluir esta avaliação?")) return;
     var st = load();
     st.avaliacoes = st.avaliacoes.filter(function (v) { return v.id !== id; });
-    save(st);
+    if (!save(st)) return false;
   });
   $("painel").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-deld");
@@ -388,7 +388,7 @@
     if (!confirm("Excluir este registro de evolução?")) return;
     var st = load();
     st.evolucoes = st.evolucoes.filter(function (v) { return v.id !== id; });
-    save(st);
+    if (!save(st)) return false;
   });
 
   // ---------- nova ----------
@@ -407,13 +407,16 @@
   };
   $("dlgDiario").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.evolucoes.push({ id: S.uid(), alunoId: alunoSel, data: $("dData").value, atividade: $("dAtividade").value.trim(),
       sentiu: $("dSentiu").value, detalhe: $("dDetalhe").value.trim() });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgDiario").close("ok");
   });
   $("dlgAval").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var medidas = {};
     MEDIDAS.forEach(function (m) {
@@ -425,9 +428,10 @@
       peso: +$("vPeso").value || 0, altura: +$("vAltura").value || 0, gordura: +$("vGordura").value || "",
       medidas: medidas, obs: $("vObs").value.trim(), fotos: fotosPendentes,
     });
+    if (!save(st)) return false;
     fotosPendentes = {};
     $("vFotoF").value = ""; $("vFotoL").value = "";
-    save(st);
+    $("dlgAval").close("ok");
   });
 
   function render() { renderLista(); renderPainel(); }

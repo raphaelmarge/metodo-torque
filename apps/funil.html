@@ -143,7 +143,7 @@
   }
 
   function load() { return S.read("funil", { leads: [] }); }
-  function save(st) { S.write("funil", st); render(); }
+  function save(st) { if (S.write("funil", st) === false) return false; render(); return true; }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   function atrasado(l) { return l.proximo && l.proximo < S.todayISO(); }
@@ -217,15 +217,17 @@
     $("nNome").value = ""; $("nZap").value = ""; $("nInteresse").value = ""; $("nTemp").value = "morno";
     $("dlgNovo").showModal();
   };
-  $("dlgNovo").addEventListener("close", function () {
-    if ($("dlgNovo").returnValue !== "ok") return;
+  $("dlgNovo").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.leads.unshift({
       id: S.uid(), nome: $("nNome").value.trim(), zap: $("nZap").value.trim(),
       origem: $("nOrigem").value, interesse: $("nInteresse").value.trim(), temperatura: $("nTemp").value,
       status: "novo", criado: S.todayISO(), proximo: S.todayISO(),
     });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgNovo").close("ok");
   });
 
   // ---------- detalhe da oportunidade ----------
@@ -259,8 +261,8 @@
     var l = st.leads.find(function (x) { return x.id === vendoLead; });
     if (!l) return;
     (l.contatos = l.contatos || []).push({ data: S.todayISO(), tipo: $("ctTipo").value, obs: $("ctObs").value.trim() });
+    if (S.write("funil", st) === false) return false;
     $("ctObs").value = "";
-    S.write("funil", st);
     abreVerLead(l);
   };
 
@@ -273,7 +275,7 @@
     if (l && b.getAttribute("data-acao") === "temp") {
       var it = TEMPS.indexOf(l.temperatura || "morno");
       l.temperatura = TEMPS[(it + 1) % TEMPS.length];
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     if (!l) return;
     var acao = b.getAttribute("data-acao");
@@ -294,8 +296,9 @@
       l.status = "agendado"; l.agendouEm = hoje; l.proximo = da;
       // integra com o programa de Aulas Experimentais
       var ex = S.read("exper", { aulas: [] });
-      ex.aulas.push({ id: S.uid(), nome: l.nome, zap: l.zap, data: da, hora: hora, prof: "", origem: l.origem, status: "agendada", leadId: l.id });
-      S.write("exper", ex);
+      if (!ex.aulas.some(function (aula) { return aula.leadId === l.id && aula.data === da && aula.hora === hora; }))
+        ex.aulas.push({ id: S.uid(), nome: l.nome, zap: l.zap, data: da, hora: hora, prof: "", origem: l.origem, status: "agendada", leadId: l.id });
+      if (S.write("exper", ex) === false) return false;
     } else if (acao === "visitou") {
       l.status = "visitou"; l.visitouEm = hoje; l.proximo = hoje;
     } else if (acao === "matricular") {
@@ -304,7 +307,7 @@
       if (!confirm("Marcar " + l.nome + " como perdido?")) return;
       l.status = "perdido"; l.perdidoEm = hoje; l.proximo = "";
     }
-    save(st);
+    if (!save(st)) return false;
   });
 
   S.onChange(function () { render(); });
@@ -352,8 +355,8 @@
           }
           novos++;
         });
-        if (novos) S.write("funil", st);
-        if (stI.itens.length) S.write("indicacoes", stI);
+        if (novos) if (S.write("funil", st) === false) return false;
+        if (stI.itens.length) if (S.write("indicacoes", stI) === false) return false;
         return nuvem.client.from("matriculas_online").update({ status: "importado" })
           .in("id", r.data.map(function (m) { return m.id; })).then(function () {
             var el = document.createElement("div");
@@ -390,7 +393,7 @@
     if (!b) return;
     var stI = S.read("indicacoes", { itens: [] });
     var it = stI.itens.find(function (x) { return x.id === b.dataset.recompensa; });
-    if (it) { it.recompensado = true; S.write("indicacoes", stI); renderIndicacoes(); }
+    if (it) { it.recompensado = true; if (S.write("indicacoes", stI) === false) return false; renderIndicacoes(); }
   });
   S.onChange(function (k) { if (k === "indicacoes") renderIndicacoes(); });
   renderIndicacoes();

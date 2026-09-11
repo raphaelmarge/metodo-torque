@@ -37,6 +37,7 @@
     <button data-a="regras">Automações</button>
     <button data-a="templates">Templates</button>
   </div>
+  <div id="remotoPendente" class="card" role="status" hidden><span id="remotoAviso"></span> <button class="btn sec mini" id="remotoRepetir">Salvar resultado pendente</button></div>
   <div id="painel"></div>
   <div class="card">
     <h2>Jornada do aluno novo</h2>
@@ -167,7 +168,7 @@
         { id: "rg2", nome: "Resgate de sumidos", gatilho: "faltante7", templateId: "tp2", ativo: true },
         { id: "rg3", nome: "Cobrança em atraso", gatilho: "inadimplente", templateId: "tp4", ativo: true },
       ], historico: {} };
-      S.write("automacao", st);
+      if (S.write("automacao", st) === false) return st;
     }
     st.historico = st.historico || {};
     // semeia a régua de avaliação no Google (em lojas novas E em quem já usava)
@@ -195,10 +196,96 @@
       ] };
       mudouSeed = true;
     }
-    if (mudouSeed) S.write("automacao", st);
+    if (mudouSeed && S.write("automacao", st) === false) return st;
     return st;
   }
-  function save(st) { S.write("automacao", st); render(); }
+  function save(st) { if (S.write("automacao", st) === false) return false; render(); return true; }
+  // Resultado externo confirmado não é reenviado quando falha apenas o registro local.
+  // O pequeno recibo é separado por conta; não contém token, mensagem ou credenciais.
+  var recibosPorConta = Object.create(null);
+  function identidadeRemota() {
+    var c = S.cloud && S.cloud(), a = S.read("academia", {}), p = S.read("perfil", {});
+    return JSON.stringify([c && c.aid || a.id || "local", p.id || p.email || p.nome || "local"]);
+  }
+  function contextoRemoto() {
+    var chave = identidadeRemota(), c = S.cloud && S.cloud();
+    if (!recibosPorConta[chave]) {
+      var salvos = {};
+      try { salvos = JSON.parse(sessionStorage.getItem("mt:automacao:recibos:" + chave) || "{}"); } catch (_) {}
+      recibosPorConta[chave] = { pendentes: salvos && typeof salvos === "object" && !Array.isArray(salvos) ? salvos : {}, ocupado: false, fila: [], processandoFila: false };
+    }
+    return { chave: chave, client: c && c.client, estado: recibosPorConta[chave] };
+  }
+  function mesmaContaRemota(ctx) {
+    var c = S.cloud && S.cloud();
+    return ctx.chave === identidadeRemota() && ctx.client === (c && c.client);
+  }
+  // Timers distintos esperam o envio em andamento, sem transformar duplo clique em novo envio.
+  function agendaAutomatico(id, atraso, executar) {
+    var conta = identidadeRemota();
+    setTimeout(function executaAutomaticoAgendado() {
+      var ctx = contextoRemoto();
+      if (ctx.chave !== conta) return;
+      if (!ctx.estado.fila.some(function (item) { return item.id === id; })) ctx.estado.fila.push({ id: id, executar: executar, ctx: ctx });
+      processaAutomaticos(ctx);
+    }, atraso);
+  }
+  async function processaAutomaticos(ctx) {
+    var estado = ctx.estado;
+    if (estado.ocupado || estado.processandoFila || Object.keys(estado.pendentes).length) return;
+    estado.processandoFila = true;
+    try {
+      while (estado.fila.length && !estado.ocupado && !Object.keys(estado.pendentes).length) {
+        var item = estado.fila.shift();
+        if (!mesmaContaRemota(item.ctx)) continue;
+        await item.executar(item.ctx);
+        // Um lote pode ter parado depois de confirmar só parte dos itens. Na retomada,
+        // o próprio trabalho relê os recibos salvos e pula tudo que já foi confirmado.
+        if (Object.keys(estado.pendentes).length) estado.fila.unshift(item);
+      }
+    } finally { estado.processandoFila = false; }
+  }
+  function liberaRemoto(ctx) {
+    ctx.estado.ocupado = false;
+    if (mesmaContaRemota(ctx)) render();
+    processaAutomaticos(ctx);
+  }
+  function guardaRecibos(ctx) {
+    try { sessionStorage.setItem("mt:automacao:recibos:" + ctx.chave, JSON.stringify(ctx.estado.pendentes)); } catch (_) {}
+  }
+  function avisoRemoto(texto) {
+    $("remotoAviso").textContent = texto;
+    $("remotoPendente").hidden = !texto;
+  }
+  function salvaRecibos(ctx) {
+    if (!mesmaContaRemota(ctx)) return false;
+    var ids = Object.keys(ctx.estado.pendentes);
+    if (!ids.length) return true;
+    var st = load();
+    ids.forEach(function (id) {
+      var r = ctx.estado.pendentes[id];
+      if (r.tipo === "resumo" && (r.campo === "ultimo" || r.campo === "ultimoSemanal")) { st.resumoDono = st.resumoDono || {}; st.resumoDono[r.campo] = r.dia; }
+      if (r.tipo === "disparo") { st.historico = st.historico || {}; (st.historico[r.dia] = st.historico[r.dia] || {})[r.chave] = r.quando; }
+      if (r.tipo === "pix") { st.linksPix = st.linksPix || {}; st.linksPix[r.aluno] = r.valor; }
+    });
+    if (S.write("automacao", st) === false) {
+      avisoRemoto("A operação foi confirmada, mas o registro local não foi salvo. Use Salvar resultado pendente; nenhuma mensagem ou cobrança será repetida. Mantenha esta página aberta.");
+      return false;
+    }
+    ids.forEach(function (id) { delete ctx.estado.pendentes[id]; });
+    guardaRecibos(ctx); avisoRemoto("");
+    return true;
+  }
+  function confirmaRemoto(ctx, id, recibo) {
+    ctx.estado.pendentes[id] = recibo;
+    guardaRecibos(ctx);
+    return salvaRecibos(ctx);
+  }
+  $("remotoRepetir").onclick = function () {
+    var ctx = contextoRemoto();
+    if (ctx.estado.ocupado) return;
+    if (salvaRecibos(ctx)) { $("resumoStatus").textContent = "Resultado salvo."; render(); processaAutomaticos(ctx); }
+  };
   function integ() { return S.read("config", { dados: {} }).integracoes || {}; }
   function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
 
@@ -404,7 +491,7 @@
       st2.resumoDono.zap = $("resumoZap").value.replace(/\D/g, "");
       st2.resumoDono.ativo = $("resumoAtivo").checked;
       st2.resumoDono.semanal = $("resumoSemAtivo").checked;
-      S.write("automacao", st2);
+      if (S.write("automacao", st2) === false) return false;
     }
     $("resumoZap").addEventListener("change", salvaR);
     $("resumoAtivo").addEventListener("change", salvaR);
@@ -412,14 +499,14 @@
     $("btnResumoAgora").addEventListener("click", function () { enviaResumoDono(true); });
     $("btnSemanalAgora").addEventListener("click", function () { enviaResumoSemanal(true); });
     if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (waOn() || demoOn())) {
-      setTimeout(function () { enviaResumoDono(false); }, 1500);
+      agendaAutomatico("resumo-diario", 1500, function (ctx) { return enviaResumoDono(false, ctx); });
     }
     // fechamento semanal: dispara no domingo (ou na 1ª abertura depois dele), no máx. 1x por semana
     if (cfgR.semanal && cfgR.zap && (waOn() || demoOn())) {
       var hj = new Date(S.todayISO() + "T12:00");
       var ultimo = cfgR.ultimoSemanal || "";
       var diasDesde = ultimo ? Math.floor((hj - new Date(ultimo + "T12:00")) / 864e5) : 99;
-      if (hj.getDay() === 0 && diasDesde >= 6) setTimeout(function () { enviaResumoSemanal(false); }, 2500);
+      if (hj.getDay() === 0 && diasDesde >= 6) agendaAutomatico("resumo-semanal", 2500, function (ctx) { return enviaResumoSemanal(false, ctx); });
     }
   })();
 
@@ -434,13 +521,14 @@
     return c.url ? String(c.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
   }
   function waOn() { return !!integ().whatsappLigado && !!waUrl(); }
-  function enviaWa(para, texto) {
+  function enviaWa(para, texto, ctx) {
     // modo demonstração: registra o disparo sem chamar a API oficial
     if (!waOn() && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
     // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
     return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      if (ctx && !mesmaContaRemota(ctx)) return { cancelado: true };
       headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
       return fetch(waUrl(), { method: "POST", headers: headers,
         body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
@@ -523,48 +611,47 @@
       "Semana anterior: " + S.fmtBRL(B.receita) + " · " + B.checkins + " check-ins · " + B.novos + " novos · " + B.cancelados + " cancel.\n" +
       "Enviado automaticamente pelo TORQUE ON 💜";
   }
-  function enviaResumoSemanal(manual) {
-    var st = load();
-    var cfgR = st.resumoDono || {};
-    if (!cfgR.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
-    var texto = montaResumoSemanal();
-    enviaWa(cfgR.zap, texto).then(function (r) {
-      var ok = r && (r.ok || r.sucesso || r.demo);
-      if (ok) {
-        st = load();
-        st.resumoDono = st.resumoDono || {};
-        st.resumoDono.ultimoSemanal = S.todayISO();
-        S.write("automacao", st);
-      }
-      $("resumoStatus").textContent = ok
-        ? "✅ Fechamento semanal enviado" + (r.demo ? " (simulação)" : "") + "."
-        : "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
-    }).catch(function () {
-      $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
-    });
+  function enviaResumoSemanal(manual, ctx) {
+    return enviaResumoConfirmado("ultimoSemanal", manual, montaResumoSemanal, ctx);
   }
 
-  function enviaResumoDono(manual) {
-    var st = load();
-    var cfgR = st.resumoDono || {};
-    if (!cfgR.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
+  function enviaResumoDono(manual, ctx) {
+    return enviaResumoConfirmado("ultimo", manual, function () {
+      var ontem = new Date(S.todayISO() + "T12:00"); ontem.setDate(ontem.getDate() - 1);
+      return montaResumo(S.todayISO(ontem));
+    }, ctx);
+  }
+  async function enviaResumoConfirmado(campo, manual, monta, ctx) {
+    ctx = ctx || contextoRemoto();
     var hoje = S.todayISO();
-    var ontem = new Date(hoje + "T12:00"); ontem.setDate(ontem.getDate() - 1);
-    var texto = montaResumo(S.todayISO(ontem));
-    enviaWa(cfgR.zap, texto).then(function (r) {
-      var ok = r && (r.ok || r.sucesso || r.demo);
-      if (ok) {
-        st = load();
-        st.resumoDono = st.resumoDono || {};
-        st.resumoDono.ultimo = hoje;
-        S.write("automacao", st);
+    if (!mesmaContaRemota(ctx)) return;
+    if (ctx.estado.ocupado) return;
+    if (Object.keys(ctx.estado.pendentes).length) {
+      if (salvaRecibos(ctx)) { $("resumoStatus").textContent = "Envio anterior registrado. Nenhuma mensagem foi reenviada."; processaAutomaticos(ctx); }
+      return;
+    }
+    var cfg = load().resumoDono || {};
+    if (!manual) {
+      if (!(waOn() || demoOn()) || !(campo === "ultimo" ? cfg.ativo : cfg.semanal)) return;
+      if (campo === "ultimoSemanal") {
+        var dataAtual = new Date(hoje + "T12:00");
+        if (dataAtual.getDay() !== 0 || (cfg.ultimoSemanal && Math.floor((dataAtual - new Date(cfg.ultimoSemanal + "T12:00")) / 864e5) < 6)) return;
       }
-      $("resumoStatus").textContent = ok
-        ? "✅ Resumo de ontem enviado" + (r.demo ? " (simulação)" : "") + "."
-        : "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
-    }).catch(function () {
-      $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
-    });
+    }
+    if (!cfg.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
+    if (cfg[campo] === hoje) { $("resumoStatus").textContent = "Este resumo já foi enviado hoje."; return; }
+    ctx.estado.ocupado = true;
+    try {
+      var r = await enviaWa(cfg.zap, monta(), ctx);
+      if (r && (r.ok || r.sucesso || r.demo)) {
+        var salvo = confirmaRemoto(ctx, "resumo|" + campo + "|" + hoje, { tipo: "resumo", campo: campo, dia: hoje });
+        if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = salvo
+          ? "✅ " + (campo === "ultimo" ? "Resumo de ontem" : "Fechamento semanal") + " enviado" + (r.demo ? " (simulação)" : "") + "."
+          : "Enviado. O histórico aguarda gravação local; use Salvar resultado pendente.";
+      } else if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
+    } catch (_) {
+      if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "⚠️ Sem confirmação do envio. Confira o WhatsApp antes de tentar novamente.";
+    } finally { liberaRemoto(ctx); }
   }
 
   window.__resumoSemanal = { monta: montaResumoSemanal, envia: enviaResumoSemanal }; // testes
@@ -633,49 +720,46 @@
   window.__campanha = { publico: publicoCampanha }; // testes
 
   // gera o link Pix sozinho para os disparos D-2 que ainda não têm (máx. 10/dia)
-  function geraPixPendentes() {
+  async function geraPixPendentes(ctx) {
+    ctx = ctx || contextoRemoto();
+    if (!mesmaContaRemota(ctx)) return;
+    if (ctx.estado.ocupado) return;
+    if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) { render(); processaAutomaticos(ctx); } return; }
     var urlPg = integ().pagarmeUrl || "";
     if (!urlPg && !demoOn()) return;
     // NUNCA gerar cobrança com a régua desligada
     var temRegra = load().regras.some(function (r) { return r.gatilho === "venc_mensalidade" && r.ativo !== false; });
     if (!temRegra) return;
-    var st = { linksPix: {} }; // só os links novos; mescla no final sem pisar no histórico
     var alvos = alvosDe("venc_mensalidade").filter(function (a) { return !a.link; }).slice(0, 10);
     if (!alvos.length) return;
-    var fila = Promise.resolve();
-    alvos.forEach(function (alvo) {
-      fila = fila.then(function () {
-        if (!urlPg && demoOn()) {
-          st.linksPix[alvo.a.id] = { link: "https://exemplo.dev/pix-demo-" + alvo.a.id.slice(-5), criadoEm: S.todayISO() };
-          return null;
-        }
-        var headers = { "Content-Type": "application/json" };
-        if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
-        // o pagarme também exige usuário logado — anonKey crua leva 401
-        return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+    ctx.estado.ocupado = true;
+    try {
+      for (var i = 0; i < alvos.length; i++) {
+        if (!mesmaContaRemota(ctx)) return;
+        var alvo = alvos[i], r;
+        if (!urlPg && demoOn()) r = { ok: true, linkPagamento: "https://exemplo.dev/pix-demo-" + alvo.a.id.slice(-5) };
+        else {
+          var headers = { "Content-Type": "application/json" };
+          if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+          var tok = await (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve(""));
+          if (!mesmaContaRemota(ctx)) return;
           headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
-          return fetch(urlPg, { method: "POST", headers: headers, body: JSON.stringify({
-            acao: "criar", metodo: "pix",
-            valorCentavos: Math.round((+alvo.valor || 0) * 100),
-            descricao: "Mensalidade — venc. em " + alvo.dias + " dia(s)",
-            nome: alvo.a.nome, vencimento: S.todayISO(), parcelas: 1,
-          }) }).then(function (r) { return r.json(); });
-        }).then(function (r) {
-          if (r && r.ok && (r.linkPagamento || r.pixCopiaECola)) {
-            st.linksPix[alvo.a.id] = { link: r.linkPagamento || r.pixCopiaECola, criadoEm: S.todayISO() };
-          }
-        }).catch(function () {});
-      });
-    });
-    fila.then(function () {
-      var fresco = load();
-      fresco.linksPix = fresco.linksPix || {};
-      Object.keys(st.linksPix).forEach(function (k) { fresco.linksPix[k] = st.linksPix[k]; });
-      S.write("automacao", fresco);
-      render();
-    });
+          r = await fetch(urlPg, { method: "POST", headers: headers, body: JSON.stringify({
+            acao: "criar", metodo: "pix", valorCentavos: Math.round((+alvo.valor || 0) * 100),
+            descricao: "Mensalidade — venc. em " + alvo.dias + " dia(s)", nome: alvo.a.nome, vencimento: S.todayISO(), parcelas: 1
+          }) }).then(function (response) { return response.json(); });
+        }
+        if (r && r.ok && (r.linkPagamento || r.pixCopiaECola)) {
+          if (!confirmaRemoto(ctx, "pix|" + alvo.a.id, { tipo: "pix", aluno: alvo.a.id,
+            valor: { link: r.linkPagamento || r.pixCopiaECola, orderId: r.orderId || "", criadoEm: S.todayISO() } })) return;
+        } else { if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "Cobrança não confirmada. Confira o provedor antes de tentar novamente."; return; }
+      }
+      if (mesmaContaRemota(ctx)) render();
+    } catch (_) {
+      if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "Geração interrompida sem confirmação. Confira as cobranças no provedor antes de tentar novamente.";
+    } finally { liberaRemoto(ctx); }
   }
-  setTimeout(geraPixPendentes, 2500);
+  agendaAutomatico("pix", 2500, geraPixPendentes);
   window.__geraPix = geraPixPendentes; // testes
 
   // ---------- editor da jornada ----------
@@ -704,7 +788,7 @@
       if (st.jornada.etapas[i]) st.jornada.etapas[i].texto = tx.value;
     });
     st.jornada.etapas.sort(function (a, b) { return a.dia - b.dia; });
-    S.write("automacao", st);
+    if (S.write("automacao", st) === false) { $("jornadaStatus").textContent = "Não foi possível salvar. Suas alterações continuam nos campos."; return false; }
     $("jornadaStatus").textContent = "✅ Salvo.";
   }
   $("jornadaAtiva").addEventListener("change", salvaJornada);
@@ -714,13 +798,13 @@
     if (!b) return;
     var st = load();
     st.jornada.etapas.splice(+b.dataset.jdel, 1);
-    S.write("automacao", st);
+    if (S.write("automacao", st) === false) return false;
     renderJornada();
   });
   $("jornadaAdd").addEventListener("click", function () {
     var st = load();
     (st.jornada = st.jornada || { ativa: false, etapas: [] }).etapas.push({ dia: 14, texto: "Oi {nome}! " });
-    S.write("automacao", st);
+    if (S.write("automacao", st) === false) return false;
     renderJornada();
   });
   renderJornada();
@@ -730,6 +814,9 @@
   var aba = "disparos";
   function render() {
     var st = load();
+    var contexto = contextoRemoto();
+    if (Object.keys(contexto.estado.pendentes).length) avisoRemoto("Há uma operação já confirmada aguardando gravação local. Salve o resultado pendente sem repetir o envio.");
+    else avisoRemoto("");
     var h = "";
     if (aba === "disparos") {
       var lista = disparosDeHoje();
@@ -774,30 +861,33 @@
     $("painel").innerHTML = h;
 
     var bt = $("btnTodos");
-    if (bt) bt.onclick = function () {
+    if (bt) bt.disabled = bt.disabled || contexto.estado.ocupado;
+    if (bt) bt.onclick = async function () {
+      var ctx = contextoRemoto();
+      if (ctx.estado.ocupado) return;
+      if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) { render(); processaAutomaticos(ctx); } return; }
       var lista = disparosDeHoje().filter(function (d) { return !d.enviado; });
       if (!lista.length) return;
       if (!confirm("Enviar " + lista.length + " mensagem(ns) agora pelo WhatsApp oficial?")) return;
       bt.disabled = true;
+      ctx.estado.ocupado = true;
       var okN = 0, falha = 0;
-      var fila = lista.slice();
-      (function proxima() {
-        var d = fila.shift();
-        if (!d) {
-          render();
-          alert("Disparo concluído: " + okN + " enviada(s)" + (falha ? ", " + falha + " falhou(aram) — ficaram pendentes com o link manual." : "!"));
-          return;
-        }
-        enviaWa(d.alvo.a.zap, d.msg).then(function (r) {
-          if (r && r.ok) {
+      try {
+        for (var i = 0; i < lista.length; i++) {
+          if (!mesmaContaRemota(ctx)) return;
+          var d = lista[i], dia = S.todayISO(), r = await enviaWa(d.alvo.a.zap, d.msg, ctx);
+          if (r && (r.ok || r.sucesso || r.demo)) {
             okN++;
-            var st2 = load();
-            (st2.historico[S.todayISO()] = st2.historico[S.todayISO()] || {})[d.chave] = new Date().toISOString();
-            S.write("automacao", st2);
-          } else falha++;
-          proxima();
-        }).catch(function () { falha++; proxima(); });
-      })();
+            if (!confirmaRemoto(ctx, "disparo|" + dia + "|" + d.chave,
+              { tipo: "disparo", dia: dia, chave: d.chave, quando: new Date().toISOString() })) return;
+          } else { falha++; break; }
+        }
+        if (mesmaContaRemota(ctx)) alert("Disparo concluído: " + okN + " enviada(s)" + (falha ? ". Um envio não foi confirmado; confira antes de tentar novamente." : "!"));
+      } catch (_) {
+        if (mesmaContaRemota(ctx)) alert("Envios interrompidos sem confirmação da última mensagem. Confira o WhatsApp antes de tentar novamente.");
+      } finally {
+        liberaRemoto(ctx);
+      }
     };
     var bnr = $("btnNovaRegra");
     if (bnr) bnr.onclick = function () {
@@ -815,9 +905,9 @@
   $("painel").addEventListener("click", function (e) {
     var g = function (attr) { return e.target.getAttribute && e.target.getAttribute(attr); };
     var st = load();
-    if (g("data-liga")) { var r = st.regras.find(function (x) { return x.id === g("data-liga"); }); r.ativo = r.ativo === false; save(st); }
-    else if (g("data-delr")) { st.regras = st.regras.filter(function (x) { return x.id !== g("data-delr"); }); save(st); }
-    else if (g("data-delt")) { st.templates = st.templates.filter(function (x) { return x.id !== g("data-delt"); }); save(st); }
+    if (g("data-liga")) { var r = st.regras.find(function (x) { return x.id === g("data-liga"); }); r.ativo = r.ativo === false; if (!save(st)) return false; }
+    else if (g("data-delr")) { st.regras = st.regras.filter(function (x) { return x.id !== g("data-delr"); }); if (!save(st)) return false; }
+    else if (g("data-delt")) { st.templates = st.templates.filter(function (x) { return x.id !== g("data-delt"); }); if (!save(st)) return false; }
     else if (g("data-edt")) {
       editTpl = g("data-edt");
       var t = st.templates.find(function (x) { return x.id === editTpl; });
@@ -828,19 +918,23 @@
   });
   $("dlgRegra").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.regras.push({ id: S.uid(), nome: $("rNome").value.trim() || GATILHOS[$("rGatilho").value],
       gatilho: $("rGatilho").value, templateId: $("rTemplate").value, ativo: true });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgRegra").close("ok");
   });
   $("dlgTpl").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     if (editTpl) {
       var t = st.templates.find(function (x) { return x.id === editTpl; });
       t.nome = $("tNome").value.trim(); t.texto = $("tTexto").value;
     } else st.templates.push({ id: S.uid(), nome: $("tNome").value.trim() || "Template", texto: $("tTexto").value });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgTpl").close("ok");
   });
   $("abas").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;

@@ -83,7 +83,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("fornecedores", { lista: [] }); }
-  function save(st) { S.write("fornecedores", st); render(); }
+  function save(st) { if (S.write("fornecedores", st) === false) return false; render(); return true; }
   function norm(s) { return String(s || "").trim().toLowerCase(); }
 
   // gasto por fornecedor a partir das Contas a Pagar (12 meses e mês atual)
@@ -151,12 +151,13 @@
     if (!editandoId || !confirm("Excluir este fornecedor? (as contas lançadas não são apagadas)")) return;
     var st = load();
     st.lista = st.lista.filter(function (f) { return f.id !== editandoId; });
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
 
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = {
       nome: $("fNome").value.trim(), cat: $("fCat").value,
@@ -171,7 +172,8 @@
       dados.criado = S.todayISO();
       st.lista.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
 
   S.onChange(function (k) { if (k === "fornecedores" || k === "contas") render(); });
