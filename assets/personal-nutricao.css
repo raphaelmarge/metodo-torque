@@ -48,6 +48,8 @@
 .pn-plan-list li { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14px; }
 .pn-plan-list li > span { min-width: 0; overflow-wrap: anywhere; }
 .pn-food-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--tk-bd); }
+/* As trocas ocupam uma linha própria também no desktop, sem comprimir o alimento. */
+#pnRefeicoes .pn-food-row { flex-wrap: wrap; }
 .pn-food-row > div:first-child { min-width: 0; flex: 1; overflow-wrap: anywhere; }
 .pn-food-row b { display: block; font-size: 14px; }
 .pn-food-row small { display: block; color: var(--tk-tx2); line-height: 1.5; margin-top: 3px; }

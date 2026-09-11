@@ -8,6 +8,7 @@ Base: `fac57f5724f7c06bf1a528533fc1306ecfe7c3db`, posterior à publicação mt-v
 - Planejamento: calendário mensal com atividades salvas, editor do dia, várias atividades/horários, descanso e volta à semana recorrente. Cópia de 1–12 semanas compara origem/destinos com a prévia, preserva ajustes por padrão e exige confirmação para substituir. Os formatos `plano.dias` e `plano.datas` permanecem.
 - Corrida: editar, duplicar e mover blocos; editar/duplicar zonas por pace, velocidade ou FC. O treino salva uma cópia da zona e não muda quando a biblioteca é atualizada. Rascunhos separados por conta e aluno, com erros e conflitos explícitos.
 - Questionários: editar e renomear o modelo existente, ordenar perguntas, pesquisar título/enunciado e conferir a prévia. Cópias reutilizam as perguntas por ID na ordem escolhida. Questionários já enviados e respostas permanecem intactos. Mudança de conta bloqueia gravação de modelo/pergunta e retornos tardios de confirmação.
+- Nutrição: corrige o nome do alimento quebrado letra por letra no editor desktop. Trocas aprovadas passam à linha seguinte, preservando nome, porção e ações. Em 1129 px, o espaço do nome passa de 0 para 327 px e o título de 462 para 21 px de altura. Apenas CSS do editor, sem alteração do plano ou dos cálculos.
 
 ## Preservação e integração
 
@@ -22,6 +23,7 @@ Nenhuma alteração de schema, RPC, credencial ou dado real. Publicar o código 
 - Corrida: 55 verificações no painel local com ordem, snapshots, isolamento, falhas e ambos os temas.
 - Questionários: 39 verificações do editor e 43 da usabilidade existente, com criação inline, retorno tardio, ordem, cópia, modelo concorrente e larguras móveis.
 - Integração anterior do relatório: 38 verificações de painel/app gerado; core: 17 regras executáveis.
+- Nutrição: 96 verificações de regressão com alimentos e trocas de 320 a 1280 px, nos dois temas, após reproduzir a largura zero no CSS anterior. Suíte existente do Personal nutricional aprovada com 58 verificações, incluindo rascunho, revisão, aplicação, receitas e comentários simulados.
 
 Testes usam dados sintéticos, serviços simulados ou banco local isolado. Não representam homologação em iPhone físico ou transações reais. O workflow oficial descobre todas as suítes e a publicação depende de sua aprovação no mesmo commit.
 
