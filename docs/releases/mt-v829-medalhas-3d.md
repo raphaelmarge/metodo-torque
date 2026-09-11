@@ -9,3 +9,5 @@ O arrasto permanece disponível. O giroscópio é desligado ao fechar, trocar de
 Níveis, próximos objetivos, fixação, grade parcialmente recolhida, medalhas anteriores, XP, histórico e demais funcionalidades não mudam. Não há novos campos de pacote, dependências externas, gravações ou alterações de banco.
 
 As três demos são regeneradas pelo fluxo canônico. A verificação cobre igualdade do SVG no modal e no canvas, pixels da imagem exportada, cores, emojis, giro, sensores, falhas e geometrias em 320/390/1280px. Sensores e permissão iOS são simulados em navegador; não houve teste em iPhone físico. A publicação exige a suíte completa do commit de integração e conferência dos arquivos servidos.
+
+A fixture de `DeviceOrientationEvent` é sempre sintética: o cenário de sensor disponível não depende de uma permissão nativa ou de hardware do executor. A permissão iOS tardia continua simulada separadamente, com as mesmas verificações de movimento reduzido e remoção dos listeners. Essa correção de teste não altera o runtime nem a versão dos arquivos do aplicativo.

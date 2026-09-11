@@ -50,7 +50,11 @@ function svgText(src) { return src.includes(';base64,') ? Buffer.from(src.split(
       const add = window.addEventListener, remove = window.removeEventListener;
       window.addEventListener = function (type, listener, options) { if (type === 'deviceorientation') window.__3dSensors.add(listener); return add.call(this, type, listener, options); };
       window.removeEventListener = function (type, listener, options) { if (type === 'deviceorientation') window.__3dSensors.delete(listener); return remove.call(this, type, listener, options); };
-      if (!window.DeviceOrientationEvent) window.DeviceOrientationEvent = class extends Event { constructor(type, options) { super(type); Object.assign(this, options); } };
+      // A disponibilidade/permissão nativa varia entre Chromium e Chrome. O cenário
+      // normal usa sensor sintético sem pedir permissão; o caso iOS abaixo injeta
+      // explicitamente sua promessa para testar a chegada após fechar o modal.
+      Object.defineProperty(window, 'DeviceOrientationEvent', { configurable: true, writable: true,
+        value: class extends Event { constructor(type, options = {}) { super(type, options); Object.assign(this, options); } } });
     }, { data, token });
     await page.clock.setFixedTime(new Date('2026-09-11T12:00:00-03:00'));
     await page.goto(BASE + '/medalha-3d-sintetica.html');
