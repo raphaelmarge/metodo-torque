@@ -13,6 +13,13 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v829 — Medalhas 3D em aço escovado
+
+- Medalhas evolutivas e anteriores usam o mesmo renderizador SVG autocontido no medalhão interativo e na imagem PNG compartilhada. Aparência em aço escovado, com relevo e tonalidade por nível/marca.
+- Giro por arrasto preservado; sensor respeita movimento reduzido, fechamento, troca, compartilhamento e permissão tardia. Ao fechar a arte de uma medalha anterior, seu giro volta a funcionar.
+- Níveis, metas, fixação, XP, histórico e grade permanecem. Sem novas dependências ou contratos de dados. Demos somente pelo gerador canônico.
+- Teste específico: `tests/test-medalhas-3d.js`; detalhes: `docs/releases/mt-v829-medalhas-3d.md`.
+
 ## v828 — Medalhas por modalidade e evolução
 
 - Personalização ganha área Medalhas com busca, filtro, ativação individual/em grupo, nome e etapas editáveis. Medalhas livres anteriores (`config.conquistas`) são preservadas.

@@ -361,6 +361,14 @@
     '.me-modal .me-medal svg{width:68px;height:68px}.me-modal .me-current{color:var(--me-metal)}',
     '.me-milestones small{display:block;font-size:11px;font-weight:600;color:var(--me-metal);margin-bottom:3px}.me-milestones b{color:var(--one-text,#f3f3f6)}'
   ].join('');
+  /* v829: a mesma arte de aço escovado ocupa a tela e o compartilhamento. */
+  css += [
+    '.cq-medal3d,#cqMed.cq-medal3d{position:relative;display:block;width:min(76vw,286px)!important;max-width:100%;height:auto;aspect-ratio:1;border:0;border-radius:0;background:none;box-shadow:none;transform-style:preserve-3d;transition:transform .12s ease-out;touch-action:none;user-select:none;cursor:grab;line-height:0}',
+    '.cq-medal3d:active{cursor:grabbing}.cq-medal3d>.cq-medal-art{display:block;width:100%;height:100%;max-width:none;object-fit:contain;pointer-events:none;-webkit-user-drag:none}',
+    '.me-stage{perspective:900px;display:flex;justify-content:center;margin:2px auto 0}.me-modal .me-stage+h2{margin-top:0}',
+    '#cqPalco:has(.cq-medal3d){margin-bottom:0}',
+    '@media(prefers-reduced-motion:reduce){.cq-medal3d,#cqMed.cq-medal3d{transition:none!important}}'
+  ].join('');
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
