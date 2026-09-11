@@ -47,7 +47,7 @@ jobs:
           SRV=$!
           trap 'kill "$SRV" 2>/dev/null || true' EXIT
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js >/dev/null && break; sleep .25; done
-          node tools/demo-aluno/regen-demo.js
+          node tools/demo-aluno/regen-demos.js
           for t in tests/test-calendario-alimentacao.js tests/test-calendario-alimentacao-editor.js tests/test-nutricao-navegacao.js tests/test-nutricao-integrada.js tests/test-aluno-evolucao-experiencia.js tests/test-demo-aluno-variantes.js tests/test-versao.js tests/test-postural.js tests/test-postural-lifecycle.js; do
             echo "===== $t ====="
             timeout 600 node "$t"
