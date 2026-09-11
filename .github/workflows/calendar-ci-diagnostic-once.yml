@@ -15,12 +15,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api repos/raphaelmarge/metodo-torque/actions/jobs/103147635846/logs > "$RUNNER_TEMP/calendar-failed-job.log"
+          gh api --allow-escape-sequences repos/raphaelmarge/metodo-torque/actions/jobs/103147635846/logs > "$RUNNER_TEMP/calendar-failed-job.log"
           python3 - <<'PY'
           import os,re
           from pathlib import Path
           p=Path(os.environ['RUNNER_TEMP'])/'calendar-failed-job.log'
-          lines=p.read_text(errors='replace').splitlines()
+          lines=re.sub(r'\x1b\[[0-9;]*[A-Za-z]','',p.read_text(errors='replace')).splitlines()
           matches=[i for i,s in enumerate(lines) if re.search(r'FALH|FAIL|AssertionError|TimeoutError|\bError:|✗|✖|❌',s,re.I)]
           chosen=set(range(max(0,len(lines)-30),len(lines)))
           for i in matches[-18:]:
