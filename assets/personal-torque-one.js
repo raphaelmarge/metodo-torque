@@ -51,3 +51,31 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
+
+/* Postural: dependências isoladas, sem alterar o estado/pacote dos alunos. */
+(function () {
+  'use strict';
+  function load() {
+    if (!document.getElementById('avAbas')) return;
+    var css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = 'assets/personal-postural.css';
+    document.head.appendChild(css);
+    var assets = ['assets/postural-core.js', 'assets/postural-store.js', 'assets/personal-postural.js'];
+    function next() {
+      var src = assets.shift();
+      if (!src) return;
+      var script = document.createElement('script');
+      script.src = src; script.onload = next;
+      script.onerror = function () {
+        var aviso = document.createElement('p');
+        aviso.setAttribute('role', 'status');
+        aviso.textContent = 'A avaliação postural não carregou. Recarregue o app para tentar novamente. As outras avaliações continuam disponíveis.';
+        document.getElementById('avAbas').after(aviso);
+      };
+      document.head.appendChild(script);
+    }
+    next();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+})();
