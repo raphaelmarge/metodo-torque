@@ -13376,7 +13376,7 @@ async function novaExecucaoAluno(p) {
       // v768: o leitor do dia virou plnPri (o primeiro treino do dia); a agenda
       // com o dia inteiro é a gaveta do calendário (v771 — o card "Seu dia" saiu)
       out.heroLeDia = html.indexOf("plnPri(new Date().getDay())") > -1 && html.indexOf("Dia de recuperar") > -1;
-      out.agendaCard = /id='semDia'/.test(html) && /function plnDia\(d\)/.test(html) && /data-semt=/.test(html) &&
+      out.agendaCard = /id='semDia'/.test(html) && /function plnDia\(d(?:,iso)?\)/.test(html) && /data-semt=/.test(html) &&
         !/id='agHojeCard'/.test(html);
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela
       // cheia, com risquinhos por card ("1 de 3 · arraste") e um botão por tipo
