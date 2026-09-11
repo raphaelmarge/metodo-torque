@@ -46,6 +46,21 @@
 #vQuest.qpx-root .qpx-choice span{overflow-wrap:anywhere;min-width:0}
 #vQuest.qpx-root .qpx-questionnaires>h2,#vQuest.qpx-root .qpx-bank>h2{margin-bottom:4px;color:var(--texto)}
 #vQuest.qpx-root #qpNovoBox>summary,#vQuest.qpx-root #qqNovoBox>summary{color:var(--tk-roxoTx)}
+#vQuest.qpx-root .qpx-order{display:grid;gap:0;min-width:0}
+#vQuest.qpx-root .qpx-order-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--linha);font-size:14px;min-width:0}
+#vQuest.qpx-root .qpx-order-row>span{min-width:0;overflow-wrap:anywhere;flex:1}
+#vQuest.qpx-root .qpx-order-actions{display:flex;gap:4px;flex-shrink:0}
+#vQuest.qpx-root .qpx-order-actions>.btn{min-width:44px;min-height:44px;padding:8px;font-size:18px}
+#vQuest.qpx-root .qpx-order-actions>.btn:disabled{opacity:.35;cursor:default}
+#vQuest.qpx-root #qqPerguntas .qpx-choice{display:flex;gap:10px;align-items:flex-start}
+#vQuest.qpx-root .qpx-choice input{flex-shrink:0;margin-top:4px}
+#vQuest.qpx-root .qpx-choice small{display:block;color:var(--tk-tx3);font-size:13px;line-height:1.5;margin-top:4px;font-weight:400}
+#vQuest.qpx-root .qpx-whole-preview h3{font-size:20px;overflow-wrap:anywhere}
+#vQuest.qpx-root .qpx-preview-row{padding:16px 0;border-bottom:1px solid var(--linha)}
+#vQuest.qpx-root .qpx-preview-row:last-child{border-bottom:0}
+#vQuest.qpx-root .qpx-preview-row .qpx-preview-question{font-size:16px;margin:0 0 8px}
+#vQuest.qpx-root .qpx-editor [hidden]{display:none!important}
+#vQuest.qpx-root #qqPerguntas label.qpx-choice[hidden]{display:none!important}
 @media(max-width:600px){
  #vQuest.qpx-root .qpx-actions{align-items:stretch}
  #vQuest.qpx-root .qpx-actions>.btn{flex:1 1 100%;min-height:48px}

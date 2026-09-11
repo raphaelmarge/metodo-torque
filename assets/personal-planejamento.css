@@ -1,0 +1,47 @@
+/* Calendário do Personal: usa a paleta e os controles Torque One de cada tema. */
+#r809Datas.plm-calendar{padding:0;margin:24px 0 32px;border:0;background:transparent;min-width:0}
+.plm-heading,.plm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.plm-heading{margin-bottom:20px}.plm-heading p{max-width:64ch;margin:6px 0 0}.plm-heading>button{flex-shrink:0}
+.plm-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:28px;align-items:start}
+.plm-month,.plm-agenda{min-width:0}.plm-toolbar{margin-bottom:12px}
+#r809Datas h4{font-size:18px;line-height:1.35;letter-spacing:-.02em;font-weight:600;margin:0}
+#r809MesTitulo::first-letter,#r809DiaTitulo::first-letter{text-transform:uppercase}
+.plm-nav{display:flex;gap:6px;align-items:center}.plm-nav button{min-width:44px;flex-shrink:0}
+#r809MesAnterior,#r809MesProximo{font-size:25px;line-height:1;padding:6px}
+.plm-scroll{overflow-x:auto;overscroll-behavior-x:contain;border-radius:var(--pt-r-caixa,10px);scrollbar-width:thin;scrollbar-color:var(--pt-borda-forte) transparent}
+.plm-weekdays,.plm-grid{display:grid;grid-template-columns:repeat(7,minmax(44px,1fr));min-width:308px}
+.plm-weekdays span{font-size:12px;font-weight:600;text-align:center;padding:8px 0;color:var(--pt-txt-4)}
+#r809Datas .plm-day{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:44px;min-height:100px;padding:10px 7px;border:1px solid var(--pt-hairline);border-radius:0;background:var(--pt-card);text-align:left;color:var(--pt-txt);overflow:hidden}
+#r809Datas .plm-day:hover{background:var(--pt-caixa)}
+#r809Datas .plm-day[aria-pressed="true"]{background:var(--pt-sel);box-shadow:inset 0 0 0 2px var(--pt-roxo);z-index:1}
+#r809Datas .plm-day:focus-visible{outline:2px solid var(--pt-roxo);outline-offset:-3px;z-index:2}
+.plm-number{font-weight:600;line-height:1.4;font-size:14px}
+.plm-day[aria-current="date"] .plm-number{color:var(--pt-roxo-claro);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.plm-out .plm-number{color:var(--pt-txt-5)}
+.plm-specific:after{content:"";position:absolute;right:6px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--pt-roxo-claro)}
+.plm-day-detail{display:block;min-width:0;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.4;color:var(--pt-txt-3)}
+.plm-count{font-size:11px;line-height:1.4;color:var(--pt-txt-4);margin-top:auto}.plm-count-label{font-size:10px}
+#r809Datas .plm-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;margin:12px 0 0}
+.plm-legend-dot{width:6px;height:6px;border-radius:50%;background:var(--pt-roxo-claro)}
+.plm-agenda{border-left:1px solid var(--pt-borda);padding-left:24px}
+.plm-origin{display:block;color:var(--pt-roxo-claro);font-size:12px;font-weight:600;margin-bottom:8px}
+.plm-activities{list-style:none;margin:20px 0;padding:0}.plm-activity{display:flex;gap:10px;justify-content:space-between;align-items:start;padding:14px 0;border-bottom:1px solid var(--pt-hairline)}
+.plm-activity:first-child{padding-top:0}.plm-activity>div:first-child{min-width:0}.plm-activity strong{display:block;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.plm-time,.plm-type{display:block;color:var(--pt-txt-4);font-size:12px;line-height:1.5}.plm-time{margin-bottom:4px}.plm-type{margin-top:4px}
+.plm-item-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.plm-item-actions button{font-size:12px;padding:8px!important}
+.plm-empty{font-size:14px;color:var(--pt-txt-4);line-height:1.6;padding:0 0 16px;border-bottom:1px solid var(--pt-hairline)}
+#r809Datas .plm-editor h4{font-size:15px;margin-bottom:10px}.plm-editor .r809-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.plm-training{grid-column:1/-1}
+.plm-editor label,.plm-editor input,.plm-editor select{min-width:0;max-width:100%}.plm-editor .r809-actions{margin:12px 0}
+#r809Datas .plm-primary{background:var(--pt-one-primary,var(--pt-roxo));border-color:transparent;color:var(--pt-txt-sobre-cor,#fff);font-weight:600}
+#r809DataStatus:empty{display:none}#r809DataStatus{overflow-wrap:anywhere}
+.plm-day-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:18px;border-top:1px solid var(--pt-hairline)}
+.plm-day-actions button{font-size:12px}#r809Datas button:disabled{opacity:.5;cursor:default}
+.plm-week-title{font-size:18px;margin:28px 0 8px;padding-top:24px;border-top:1px solid var(--pt-borda)}
+.plm-dialog{max-width:600px;width:calc(100% - 24px)}.plm-dialog select{box-sizing:border-box;min-height:44px;max-width:100%;width:100%;padding:10px;border:1px solid var(--pt-borda);border-radius:var(--pt-r-caixa,10px);background:var(--pt-caixa);color:var(--pt-txt);font:inherit;font-size:16px}
+.plm-dialog .plm-confirm{display:flex;gap:10px;align-items:center;padding:12px 0;line-height:1.5}.plm-dialog .plm-confirm input{flex:0 0 22px;width:22px;height:44px;accent-color:var(--pt-roxo)}
+.plm-copy-days{padding:0;list-style:none;margin:0}.plm-copy-days li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--pt-hairline);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.plm-dialog button:disabled{opacity:.5;cursor:default}
+@media(max-width:1200px){.plm-layout{grid-template-columns:1fr;gap:28px}.plm-agenda{border-left:0;border-top:1px solid var(--pt-borda);padding:24px 0 0}.plm-activity{align-items:center}.plm-item-actions{flex-wrap:nowrap}#r809Datas .plm-day{min-height:88px}}
+@media(max-width:600px){.plm-heading{align-items:flex-start;flex-direction:column;gap:12px}.plm-toolbar{gap:10px;flex-wrap:wrap}#r809Datas h4{font-size:17px}.plm-nav{margin-left:auto}.plm-day-detail{display:none}#r809Datas .plm-day{min-height:64px;padding:7px 6px;gap:3px}.plm-count-label{display:none}.plm-count{font-size:12px}.plm-activity{align-items:flex-start;flex-wrap:wrap}.plm-item-actions{justify-content:flex-start}.plm-editor .r809-grid{grid-template-columns:1fr}.plm-training{grid-column:auto}.plm-day-actions button{flex:1 1 160px}.plm-dialog{padding:16px}.plm-dialog .r809-grid{grid-template-columns:1fr}}
+@media(max-width:360px){.plm-scroll{margin-inline:-10px}}
+@media(prefers-reduced-motion:reduce){.plm-scroll{scroll-behavior:auto}}

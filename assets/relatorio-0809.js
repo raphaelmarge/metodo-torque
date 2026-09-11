@@ -83,6 +83,42 @@
     blocos(bs).forEach(function(b){if(b.tipo==="repetir"){for(var i=0;i<b.repeticoes;i++){add(b.alvo,"f","Ativo "+(i+1)+" de "+b.repeticoes);add(b.recuperacao,"l","Recuperação "+(i+1)+" de "+b.repeticoes);}}else add(b.alvo,b.tipo==="aquecimento"?"aq":b.tipo==="recuperacao"?"vc":"c",{aquecimento:"Aquecimento",ativo:"Ativo",recuperacao:"Recuperação"}[b.tipo]);});return out;
   }
   var api={atendimento:atendimento,online:online,pacotePrePago:pacotePrePago,dataOk:dataOk,horaOk:horaOk,dia:dia,opcoes:opcoes,pacoteDatas:pacoteDatas,zona:zona,zonaTxt:zonaTxt,blocos:blocos,blocoTxt:blocoTxt,expande:expande};
+  // A descrição é uma anotação. Legados preservam a natureza anterior à edição.
+  function recebimentoTipo(p) { return p && (p.tipoRecebimento === "aulas" || p.tipoRecebimento === "servico") ? p.tipoRecebimento : p && p.desc ? "servico" : "aulas"; }
+  function recebimentoAtivo(p) { return !!p && !p.anulacao; }
+  function recebimentosAtivos(st) { return (st.pagamentos || []).filter(recebimentoAtivo); }
+  function recebimentoDuplicados(st, p) {
+    if (!recebimentoAtivo(p) || p.eventoId) return [];
+    return recebimentosAtivos(st).filter(function(x) {
+      return x.id !== p.id && x.alunoId === p.alunoId &&
+        String(x.data || "").slice(0,10) === String(p.data || "").slice(0,10) &&
+        (x.mes || String(x.data || "").slice(0,7)) === (p.mes || String(p.data || "").slice(0,7)) &&
+        Math.round(+x.valor*100) === Math.round(+p.valor*100) && recebimentoTipo(x) === recebimentoTipo(p);
+    });
+  }
+  function alteraRecebimento(st, pid, original, campos, meta) {
+    var i=(st.pagamentos||[]).findIndex(function(p){return p.id===pid;});
+    if(i<0 || JSON.stringify(st.pagamentos[i])!==original)throw new Error("Este recebimento mudou em outra sessão. Seu rascunho não foi salvo; feche e confira a versão atual.");
+    var antes=st.pagamentos[i];
+    if(!recebimentoAtivo(antes))throw new Error("Este recebimento já foi anulado. Consulte o histórico.");
+    var next=Object.assign({},antes,{tipoRecebimento:recebimentoTipo(antes)});
+    if(meta.acao==="anular") {
+      var motivo=String(campos.motivo||"").trim();
+      if(!motivo || motivo.length>200)throw new Error("Informe um motivo para a anulação, com até 200 caracteres.");
+      next.anulacao={em:meta.em,por:meta.por,motivo:motivo};
+    } else {
+      var data=String(campos.data||""),mes=String(campos.mes||"");
+      if(!dataOk(data)||(mes&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)))throw new Error("Confira a data e a competência.");
+      next.data=data;next.valor=Math.round(numero(campos.valor,.01,1e12)*100)/100;
+      next.forma=String(campos.forma||"").trim().slice(0,80);next.desc=String(campos.desc||"").trim().slice(0,200);
+      if(mes)next.mes=mes;else delete next.mes;
+    }
+    st.pagamentosAuditoria=Array.isArray(st.pagamentosAuditoria)?st.pagamentosAuditoria:[];
+    st.pagamentosAuditoria.push({id:meta.id,pagamentoId:pid,alunoId:antes.alunoId,acao:meta.acao,em:meta.em,por:meta.por,antes:copy(antes),depois:copy(next)});
+    st.pagamentos[i]=next;st.recebimentosRevisao=(+st.recebimentosRevisao||0)+1;
+    return next;
+  }
+  Object.assign(api,{recebimentoTipo:recebimentoTipo,recebimentoAtivo:recebimentoAtivo,recebimentosAtivos:recebimentosAtivos,recebimentoDuplicados:recebimentoDuplicados,alteraRecebimento:alteraRecebimento});
   root.MT_RELATORIO_0809=api;
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   if(typeof document==="undefined")return;
@@ -96,93 +132,231 @@
   function msg(id,e){$(id).textContent=e.message||String(e);}
   function options(opts){return opts.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(o.nome)+'</option>';}).join("");}
   function dialog(html){var d=document.createElement("dialog");d.className="r809-dialog";d.innerHTML=html;document.body.appendChild(d);d.addEventListener("close",function(){d.remove();});d.showModal();return d;}
+  function pagamentoHistorico(st,p) {
+    var hist=(st.pagamentosAuditoria||[]).filter(function(x){return x.pagamentoId===p.id;});
+    function resumo(x){if(!x)return "—";return (x.anulacao?"Anulado · ":"")+String(x.data||"")+" · R$ "+Number(x.valor||0).toFixed(2).replace(".",",")+" · "+String(x.forma||"")+(x.mes?" · competência "+x.mes:"")+(x.desc?" · "+x.desc:"");}
+    return '<details><summary>Histórico de alterações · '+hist.length+'</summary>'+ (hist.length?hist.slice().reverse().map(function(x){return '<p><b>'+esc(x.acao==="anular"?"Anulação":"Edição")+'</b> · '+esc(new Date(x.em).toLocaleString("pt-BR"))+'<br>Antes: '+esc(resumo(x.antes))+'<br>Depois: '+esc(resumo(x.depois))+(x.depois&&x.depois.anulacao?'<br>Motivo: '+esc(x.depois.anulacao.motivo):'')+'</p>';}).join(''):'<p>Nenhuma alteração registrada.</p>')+'</details>';
+  }
   function pagamento(pid){
     if(!ctx.financeiro())return;
     var st=ctx.load(),p=(st.pagamentos||[]).find(function(x){return x.id===pid;});if(!p)return;
-    var original=JSON.stringify(p),conta=ctx.conta(),id=p.alunoId;
-    if(!al(st,id))return;
-    var d=dialog('<form><h2>Editar recebimento</h2><p>Corrija o lançamento. Isso não altera cobranças no banco ou no cartão.</p><label>Data<input name="data" type="date" required value="'+esc(p.data)+'"></label><label>Valor (R$)<input name="valor" type="number" min="0" step="0.01" required value="'+esc(p.valor)+'"></label><label>Competência (opcional)<input name="mes" type="month" value="'+esc(p.mes||"")+'"></label><label>Forma<input name="forma" maxlength="80" value="'+esc(p.forma||"")+'"></label><label>Descrição<input name="desc" maxlength="200" value="'+esc(p.desc||"")+'"></label><p role="status"></p><div class="r809-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Salvar alteração</button></div></form>');
+    var original=JSON.stringify(p),conta=ctx.conta(),id=p.alunoId,anulado=!recebimentoAtivo(p);
+    var d=dialog('<form><h2>'+(anulado?'Recebimento anulado':'Editar recebimento')+'</h2><p>Corrija o registro financeiro. Cobranças no banco ou no cartão e quantidades de aulas permanecem como estão.</p>'+
+      (anulado?'<p><b>Anulado em '+esc(new Date(p.anulacao.em).toLocaleString("pt-BR"))+'</b><br>'+esc(p.anulacao.motivo)+'</p>':'')+
+      '<fieldset'+(anulado?' disabled':'')+'><label>Data<input name="data" type="date" required value="'+esc(p.data)+'"></label><label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" required value="'+esc(p.valor)+'"></label><label>Competência (opcional)<input name="mes" type="month" value="'+esc(p.mes||"")+'"></label><label>Forma<input name="forma" maxlength="80" value="'+esc(p.forma||"")+'"></label><label>Descrição / anotação<input name="desc" maxlength="200" value="'+esc(p.desc||"")+'"></label></fieldset>'+
+      pagamentoHistorico(st,p)+'<p role="status" aria-live="polite"></p><div class="r809-actions"><button type="button" data-cancel>Fechar</button>'+(anulado?'':'<button type="submit">Salvar alteração</button>')+'</div>'+
+      (anulado?'':'<details><summary>Anular recebimento</summary><p>O lançamento sai dos totais e da quitação, mas continua no histórico. Nenhum reembolso será enviado.</p><label>Motivo<input name="motivo" maxlength="200" placeholder="Ex.: lançamento duplicado"></label><button type="button" data-anular>Anular recebimento</button></details>')+'</form>');
     d.querySelector('[data-cancel]').onclick=function(){d.close();};
-    d.querySelector('form').onsubmit=function(e){e.preventDefault();var status=d.querySelector('[role=status]');try{
+    function envia(acao){var status=d.querySelector('[role=status]');try{
       if(!ctx.financeiro()||ctx.conta()!==conta)throw new Error("A conta ou permissão mudou. Feche e reabra o recebimento.");
-      var s=ctx.load(),i=(s.pagamentos||[]).findIndex(function(x){return x.id===pid&&x.alunoId===id;});
-      if(i<0||JSON.stringify(s.pagamentos[i])!==original)throw new Error("Este recebimento mudou em outra sessão. Seu rascunho não foi salvo; feche e confira a versão atual.");
-      var fd=new FormData(e.currentTarget),data=String(fd.get('data')||""),mes=String(fd.get('mes')||""),v=numero(fd.get('valor'),0,1e12);
-      if(!dataOk(data)|| (mes&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)))throw new Error("Confira a data e a competência.");
-      var next=Object.assign({},s.pagamentos[i],{data:data,valor:Math.round(v*100)/100,forma:String(fd.get('forma')||"").trim().slice(0,80),desc:String(fd.get('desc')||"").trim().slice(0,200)});
-      if(mes)next.mes=mes;else delete next.mes;
-      if(JSON.stringify(next)===original){d.close();return;}
-      s.pagamentosAuditoria=Array.isArray(s.pagamentosAuditoria)?s.pagamentosAuditoria:[];
-      s.pagamentosAuditoria.push({id:uid(),pagamentoId:pid,alunoId:id,em:new Date().toISOString(),por:conta,antes:copy(s.pagamentos[i]),depois:copy(next)});
-      s.pagamentos[i]=next;grava(s,id);d.close();ctx.perfil(id);
-    }catch(e2){status.textContent=e2.message;}};
+      var s=ctx.load(),form=d.querySelector('form'),fd=new FormData(form),campos={};
+      fd.forEach(function(v,k){campos[k]=v;});
+      var next=alteraRecebimento(s,pid,original,campos,{id:uid(),acao:acao,em:new Date().toISOString(),por:conta});
+      if(acao==='editar'&&recebimentoDuplicados(s,next).length&&!root.confirm("Possível duplicidade: já existe outro recebimento deste aluno com a mesma data, valor e competência. Salvar mesmo assim?")){status.textContent="Confira o outro recebimento. Seu rascunho continua aqui.";return;}
+      if(acao==='anular'&&!root.confirm("Anular este recebimento? Ele sai dos totais e da quitação, com o histórico preservado."))return;
+      grava(s,id);d.close();if(al(s,id))ctx.perfil(id);
+    }catch(e2){status.textContent=e2.message;}}
+    d.querySelector('form').onsubmit=function(e){e.preventDefault();if(!anulado)envia('editar');};
+    var bt=d.querySelector('[data-anular]');if(bt)bt.onclick=function(){envia('anular');};
   }
   api.perfil=function(a){if(!ctx||!a)return;var b=$('pfIrAgenda');if(b)b.hidden=online(a);document.querySelectorAll('#vPerfil [data-pfagendar],#vPerfil [data-alacao=agendar]').forEach(function(x){x.hidden=online(a);});};
 
-  var planoAluno="",planoConta="",dataBase=null,planoRows={};
+  // Rascunhos e snapshots permanecem separados por conta, aluno e data.
+  var planoAluno="",planoConta="",planoEstado=null,planoRascunhos=Object.create(null);
+  function plmDate(s){var p=s.split('-'),d=new Date(2000,0,1,12);d.setFullYear(+p[0],+p[1]-1,+p[2]);return d;}
+  function plmIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function plmHoje(){return plmIso(new Date());}
+  function plmAdd(s,n){var d=plmDate(s);d.setDate(d.getDate()+n);return plmIso(d);}
+  function plmSemana(s){return plmAdd(s,-((plmDate(s).getDay()+6)%7));}
+  function plmTexto(s,curto){return plmDate(s).toLocaleDateString('pt-BR',curto?{day:'2-digit',month:'2-digit'}:{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  function plmProprio(t,d){return Object.prototype.hasOwnProperty.call(t.plano&&t.plano.datas||{},d);}
+  function plmDia(t,d){return dia(t.plano,d,plmDate(d).getDay());}
+  function plmBase(t,d){return JSON.stringify({proprio:plmProprio(t,d),data:(t.plano&&t.plano.datas||{})[d],semana:plmProprio(t,d)?null:(t.plano&&t.plano.dias||{})[String(plmDate(d).getDay())]});}
+  function plmEditor(t,d){return {base:plmBase(t,d),rows:copy(plmDia(t,d)),proprio:plmProprio(t,d),opt:'',hora:'',edit:null,status:''};}
+  function plmAtual(){return planoEstado&&planoEstado.editores[planoEstado.data];}
+  function plmCaptura(){var ed=plmAtual();if(ed){ed.opt=$('r809DataTreino').value;ed.hora=$('r809DataHora').value;}}
+  function plmStatus(s){var ed=plmAtual();if(ed)ed.status=s;$('r809DataStatus').textContent=s;}
+  function plmNome(t,p){var o=opcoes(t).find(function(x){return x.tp===p.tp&&x.id===p.id;});return o?o.n:'Treino indisponível';}
+  function plmCampos(t){
+    var ed=plmAtual(),sel=$('r809DataTreino');if(!ed)return;
+    var opts=opcoes(t);sel.innerHTML='<option value="">Escolha um treino</option>'+opts.map(function(o){return '<option value="'+esc(o.tp+':'+o.id)+'">'+esc(o.n)+'</option>';}).join('');
+    if(ed.opt&&!opts.some(function(o){return o.tp+':'+o.id===ed.opt;}))sel.insertAdjacentHTML('beforeend','<option value="'+esc(ed.opt)+'">Treino indisponível — escolha outro</option>');
+    sel.value=ed.opt;$('r809DataHora').value=ed.hora;$('r809Data').value=planoEstado.data;
+    $('r809DataAdd').textContent=ed.edit===null?'Salvar nova atividade':'Salvar alteração';
+    $('r809DataCancel').hidden=ed.edit===null;
+    $('r809DataEditorTitulo').textContent=ed.edit===null?'Adicionar atividade':'Editar atividade '+(ed.edit+1);
+  }
+  function plmDesenha(t){
+    var d=planoEstado.data,ed=plmAtual(),mes=planoEstado.mes,hoje=plmHoje(),first=mes+'-01',inicio=plmSemana(first),last=new Date(plmDate(first).getFullYear(),plmDate(first).getMonth()+1,0).getDate();
+    var cells=Math.ceil((((plmDate(first).getDay()+6)%7)+last)/7)*7,html='';
+    $('r809MesTitulo').textContent=plmDate(first).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    for(var i=0;i<cells;i++){
+      var iso=plmAdd(inicio,i),rows=plmDia(t,iso),own=plmProprio(t,iso),out=iso.slice(0,7)!==mes;
+      var detalhe=rows.length?rows.map(function(p){return (p.h?p.h+' · ':'')+plmNome(t,p);}).join(', '):(own?'Descanso programado':'Sem atividade na semana recorrente');
+      html+='<button type="button" class="plm-day'+(out?' plm-out':'')+(own?' plm-specific':'')+'" data-r809-date="'+iso+'" aria-label="'+esc(plmTexto(iso)+'. '+detalhe)+'" aria-pressed="'+(iso===d)+'"'+(iso===hoje?' aria-current="date"':'')+'><span class="plm-number">'+plmDate(iso).getDate()+'</span><span class="plm-day-detail">'+esc(rows.length?plmNome(t,rows[0]):own?'Descanso':'')+'</span><span class="plm-count">'+(rows.length?rows.length+'<span class="plm-count-label"> '+(rows.length===1?'atividade':'atividades')+'</span>':own?'—':'')+'</span></button>';
+    }
+    $('r809MesGrid').innerHTML=html;
+    $('r809DiaTitulo').textContent=plmTexto(d);
+    $('r809DiaOrigem').textContent=ed.proprio?'Ajuste desta data':'Semana recorrente salva';
+    $('r809DataLista').innerHTML=ed.rows.length?ed.rows.map(function(p,i){return {p:p,i:i};}).sort(function(a,b){return (a.p.h||'99:99').localeCompare(b.p.h||'99:99');}).map(function(r){return '<li class="plm-activity"><div><span class="plm-time">'+esc(r.p.h||'Sem horário')+'</span><strong>'+esc(plmNome(t,r.p))+'</strong><span class="plm-type">'+esc({ficha:'Musculação',wod:'Circuito',cardio:'Corrida e bike'}[r.p.tp]||'Atividade')+'</span></div><div class="plm-item-actions"><button type="button" data-r809-edit="'+r.i+'" aria-label="Editar atividade '+(r.i+1)+': '+esc(plmNome(t,r.p))+'">Editar</button><button type="button" data-r809-del="'+d+':'+r.i+'" aria-label="Remover atividade '+(r.i+1)+': '+esc(plmNome(t,r.p))+'">Remover</button></div></li>';}).join(''):'<li class="plm-empty">'+(ed.proprio?'Descanso programado para esta data.':'Nenhuma atividade na semana recorrente para este dia.')+'</li>';
+    var stale=ed.base!==plmBase(t,d);$('r809DataReload').hidden=!stale;
+    $('r809DataStatus').textContent=stale?'Essa data mudou em outra sessão. Seu rascunho foi mantido. Recarregue o dia para conferir antes de salvar.':ed.status;
+    $('r809DataReset').disabled=!ed.proprio;
+  }
   function calendario(){
     if(!ctx||!$('r809Datas'))return;
-    var id=$('plnAluno').value,st=ctx.load(),t=tDe(st,id),conta=ctx.conta();
+    var id=$('plnAluno').value,conta=ctx.conta(),t=tDe(ctx.load(),id);
     $('r809Datas').hidden=!id;
-    var changed=id!==planoAluno||conta!==planoConta;
-    if(changed){planoAluno=id;planoConta=conta;$('r809Data').value="";$('r809DataHora').value="";dataBase=null;}
-    var sel=$('r809DataTreino'),keep=sel.value;
-    sel.innerHTML='<option value="">Escolha um treino</option>'+opcoes(t).map(function(o){return '<option value="'+esc(o.tp+":"+o.id)+'">'+esc(o.n)+'</option>';}).join("");sel.value=keep;
-    var ds=t.plano&&t.plano.datas||{};planoRows={};Object.keys(ds).forEach(function(d){planoRows[d]=JSON.stringify(ds[d]);});
-    $('r809DataLista').innerHTML=Object.keys(ds).filter(dataOk).sort().map(function(d){var ns=dia(t.plano,d,-1).map(function(p){var o=opcoes(t).find(function(x){return x.tp===p.tp&&x.id===p.id;});return (p.h?p.h+" · ":"")+(o?o.n:"Treino indisponível");});return '<div class="r809-row"><div><b>'+esc(d)+'</b><p>'+esc(ns.join(" / ")||"Descanso programado")+'</p>'+ns.map(function(n,i){return '<button type="button" data-r809-del="'+d+':'+i+'">Remover atividade '+(i+1)+'</button>';}).join('')+'</div><button type="button" data-r809-date="'+d+'">Editar data</button></div>';}).join("")||'<p>Sem exceções por data. A semana recorrente continua valendo.</p>';
-    // Não sobrescrever o snapshot do editor aberto após uma sincronização.
-    if(changed) $('r809DataStatus').textContent="";
+    if(id!==planoAluno||conta!==planoConta||!planoEstado){
+      plmCaptura();planoAluno=id;planoConta=conta;
+      if(!id){planoEstado=null;return;}
+      var key=JSON.stringify([conta,id]);planoEstado=planoRascunhos[key];
+      if(!planoEstado){var hoje=plmHoje();planoEstado=planoRascunhos[key]={data:hoje,mes:hoje.slice(0,7),editores:Object.create(null)};planoEstado.editores[hoje]=plmEditor(t,hoje);}
+    }else plmCaptura();
+    plmCampos(t);plmDesenha(t);
   }
-  function dataSelecionada(){var st=ctx.load(),ds=tDe(st,$('plnAluno').value).plano||{};dataBase=JSON.stringify((ds.datas||{})[$('r809Data').value]);$('r809DataStatus').textContent="Adicionar inclui outro treino no mesmo dia. Descanso substitui os treinos dessa data.";}
+  function dataSelecionada(d){
+    if(!planoEstado)return;d=typeof d==='string'?d:$('r809Data').value;
+    if(!dataOk(d)){plmStatus('Escolha uma data válida.');return;}
+    plmCaptura();planoEstado.data=d;planoEstado.mes=d.slice(0,7);
+    var t=tDe(ctx.load(),planoAluno);if(!planoEstado.editores[d])planoEstado.editores[d]=plmEditor(t,d);
+    plmCampos(t);plmDesenha(t);
+  }
+  function plmConfere(){
+    if(!planoEstado||!planoAluno||$('plnAluno').value!==planoAluno||ctx.conta()!==planoConta)throw new Error('A conta ou o aluno mudou. Volte ao aluno deste rascunho antes de salvar.');
+    if($('r809Data').value!==planoEstado.data||!dataOk(planoEstado.data))throw new Error('Escolha uma data válida.');
+    // A identidade retornada por load preserva a proteção CAS local de MTStore.write.
+    var st=ctx.load(),t=tDe(st,planoAluno);
+    if(!al(st,planoAluno))throw new Error('Aluno não encontrado.');
+    if(plmAtual().base!==plmBase(t,planoEstado.data))throw new Error('Essa data mudou em outra sessão. Seu rascunho foi mantido. Recarregue o dia para conferir antes de salvar.');
+    return {st:st,t:t};
+  }
   function mudaData(acao){try{
-    var id=$('plnAluno').value,d=$('r809Data').value;
-    if(!id||id!==planoAluno||ctx.conta()!==planoConta)throw new Error("Escolha novamente o aluno.");
-    if(!dataOk(d))throw new Error("Escolha uma data válida.");
-    var st=ctx.load(),t=tDe(st,id),ds=t.plano&&t.plano.datas||{};
-    if(JSON.stringify(ds[d])!==dataBase)throw new Error("Essa data mudou em outra sessão. Selecione a data novamente para conferir.");
-    if(!al(st,id))throw new Error("Aluno não encontrado.");
+    plmCaptura();var atual=plmConfere(),st=atual.st,t=atual.t,id=planoAluno,d=planoEstado.data,ed=plmAtual(),ds=copy(t.plano&&t.plano.datas||{}),rows=copy(plmDia(t,d));
     if(acao==='add'){
-      var opt=opcoes(t).find(function(o){return o.tp+":"+o.id===$('r809DataTreino').value;}),h=$('r809DataHora').value;
-      if(!opt||!horaOk(h))throw new Error("Escolha o treino e confira o horário.");
-      var ls=lista(ds[d]).slice();if(ls.length>=10)throw new Error("Use até 10 atividades por data.");
-      if(ls.some(function(p){return p.tp===opt.tp&&p.id===opt.id&&(p.h||"")===h;}))throw new Error("Esse treino já está programado nesse horário.");
-      ls.push({tp:opt.tp,id:opt.id,h:h});ds[d]=ls;
-    }else if(acao.indexOf('del:')===0){var rows=lista(ds[d]).slice();rows.splice(+acao.slice(4),1);ds[d]=rows;}else if(acao==='rest'){if(lista(ds[d]).length&&!confirm("Substituir os treinos dessa data por descanso?"))return;ds[d]=[];}
-    else {if(!confirm("Remover a exceção desta data e voltar à semana recorrente?"))return;delete ds[d];}
-    if(!st.treinosV2)st.treinosV2={};st.treinosV2[id]=t;t.plano=t.plano||{dias:{}};t.plano.datas=ds;
-    grava(st,id,true);dataBase=JSON.stringify(ds[d]);calendario();$('r809DataStatus').textContent="Salvo no painel. Publique o planejamento para atualizar o app do aluno.";
-  }catch(e){msg('r809DataStatus',e);}}
+      var opt=opcoes(t).find(function(o){return o.tp+':'+o.id===ed.opt;}),h=ed.hora;
+      if(!opt||!horaOk(h))throw new Error('Escolha o treino e confira o horário.');
+      if(ed.edit===null&&rows.length>=10)throw new Error('Use até 10 atividades por data.');
+      if(ed.edit!==null&&!rows[ed.edit])throw new Error('A atividade mudou. Recarregue o dia antes de editar.');
+      if(rows.some(function(p,i){return i!==ed.edit&&p.tp===opt.tp&&p.id===opt.id&&(p.h||'')===h;}))throw new Error('Esse treino já está programado nesse horário.');
+      var item={tp:opt.tp,id:opt.id,h:h};if(ed.edit===null)rows.push(item);else rows[ed.edit]=Object.assign({},rows[ed.edit],item);ds[d]=rows;
+    }else if(acao.indexOf('del:')===0){var ix=Number(acao.slice(4));if(!Number.isInteger(ix)||!rows[ix])throw new Error('A atividade mudou. Recarregue o dia.');if(!confirm('Remover '+plmNome(t,rows[ix])+' somente de '+plmTexto(d,true)+'?'))return;rows.splice(ix,1);ds[d]=rows;}
+    else if(acao==='rest'){if(rows.length&&!confirm('Substituir as '+rows.length+' atividades de '+plmTexto(d,true)+' por descanso?'))return;ds[d]=[];}
+    else if(acao==='reset'){if(!confirm('Remover o ajuste de '+plmTexto(d,true)+' e voltar à semana recorrente?'))return;delete ds[d];}
+    else return;
+    st.treinosV2=st.treinosV2||{};st.treinosV2[id]=t;t.plano=t.plano||{dias:{}};t.plano.datas=ds;
+    grava(st,id,true);
+    var next=plmEditor(t,d);next.opt=ed.opt;next.hora=ed.hora;next.status='Salvo no painel. Publique o planejamento para atualizar o app do aluno.';planoEstado.editores[d]=next;
+    plmCampos(t);plmDesenha(t);
+  }catch(e){plmStatus(e.message||String(e));if(planoEstado)$('r809DataReload').hidden=plmAtual().base===plmBase(tDe(ctx.load(),planoAluno),planoEstado.data);}}
+  function plmCopia(){
+    if(!planoEstado)return;plmCaptura();
+    var aluno=planoAluno,conta=planoConta,semana=plmSemana(planoEstado.data),preview=null;
+    var d=dialog('<form class="plm-copy"><h2>Copiar semana</h2><p>Copia os sete dias salvos, incluindo horários, atividades e descanso. Alterações da semana recorrente precisam ser salvas antes.</p><label>Semana de origem<input type="date" name="origem" required value="'+semana+'"></label><div class="r809-grid"><label>Primeira semana de destino<input type="date" name="destino" required value="'+plmAdd(semana,7)+'"></label><label>Semanas seguidas<input type="number" name="semanas" min="1" max="12" step="1" required value="1"></label></div><label>Datas com ajustes no destino<select name="modo"><option value="preservar">Manter ajustes existentes</option><option value="substituir">Substituir ajustes existentes</option></select></label><button type="button" data-plm-preview>Conferir cópia</button><div data-plm-resumo aria-live="polite"></div><label class="plm-confirm" hidden><input type="checkbox" name="confirma"><span data-plm-confirm-text></span></label><p role="status"></p><div class="r809-actions"><button type="button" data-cancel>Cancelar</button><button type="submit" disabled>Salvar cópia no painel</button></div></form>');
+    d.classList.add('plm-dialog');var form=d.querySelector('form'),status=d.querySelector('[role=status]'),submit=d.querySelector('[type=submit]');
+    function campo(n){return form.elements.namedItem(n);}
+    function confereConta(){if(ctx.conta()!==conta||$('plnAluno').value!==aluno||planoAluno!==aluno||planoConta!==conta)throw new Error('A conta ou o aluno mudou. Volte ao aluno de origem antes de copiar.');}
+    function semanaBase(t,start){var a=[];for(var i=0;i<7;i++)a.push(plmBase(t,plmAdd(start,i)));return JSON.stringify(a);}
+    function conferePreview(){try{
+      confereConta();var origem=campo('origem').value,destino=campo('destino').value,n=Number(campo('semanas').value),modo=campo('modo').value;
+      if(!dataOk(origem)||!dataOk(destino)||!Number.isInteger(n)||n<1||n>12)throw new Error('Escolha datas válidas e de 1 a 12 semanas.');
+      origem=plmSemana(origem);destino=plmSemana(destino);
+      if(destino<=plmAdd(origem,6)&&plmAdd(destino,n*7-1)>=origem)throw new Error('As semanas de destino não podem incluir a semana de origem.');
+      var st=ctx.load(),t=tDe(st,aluno);if(!al(st,aluno))throw new Error('Aluno não encontrado.');
+      var source=[],targets=[],ocupados=0;
+      for(var i=0;i<7;i++){var sd=plmAdd(origem,i),rows=copy(plmDia(t,sd));if(rows.length>10||rows.some(function(p){return !opcoes(t).some(function(o){return o.tp===p.tp&&o.id===p.id;})||!horaOk(p.h||'');}))throw new Error('A semana de origem tem atividades indisponíveis ou inválidas. Corrija antes de copiar.');source.push(rows);}
+      for(var j=0;j<n*7;j++){var td=plmAdd(destino,j),own=plmProprio(t,td);if(own)ocupados++;targets.push({data:td,base:plmBase(t,td),rows:copy(source[j%7]),salvar:modo==='substituir'||!own});}
+      preview={origem:origem,destino:destino,n:n,modo:modo,sourceBase:semanaBase(t,origem),targets:targets,ocupados:ocupados};
+      campo('confirma').checked=false;d.querySelector('.plm-confirm').hidden=!(modo==='substituir'&&ocupados);d.querySelector('[data-plm-confirm-text]').textContent='Confirmo substituir os ajustes de '+ocupados+' datas no destino.';
+      var quantidade=targets.filter(function(x){return x.salvar;}).length;
+      d.querySelector('[data-plm-resumo]').innerHTML='<p><strong>Origem: '+esc(plmTexto(origem,true))+' a '+esc(plmTexto(plmAdd(origem,6),true))+'</strong></p><ul class="plm-copy-days">'+source.map(function(rows,i){return '<li><span>'+esc(plmDate(plmAdd(origem,i)).toLocaleDateString('pt-BR',{weekday:'short'}))+'</span><span>'+esc(rows.length?rows.map(function(p){return (p.h?p.h+' · ':'')+plmNome(t,p);}).join(' / '):'Descanso')+'</span></li>';}).join('')+'</ul><p>Destino: '+esc(plmTexto(destino,true))+' a '+esc(plmTexto(plmAdd(destino,n*7-1),true))+'. '+quantidade+' datas serão salvas. '+(ocupados?ocupados+' datas com ajustes serão '+(modo==='substituir'?'substituídas após sua confirmação.':'mantidas.'):'Nenhum ajuste existente será substituído.')+'</p>';
+      status.textContent=quantidade?'Confira os dias e salve a cópia. Publicar no app continua sendo uma ação separada.':'Todas as datas já têm ajustes. Nenhuma data será alterada.';submit.disabled=!quantidade;
+    }catch(e){preview=null;submit.disabled=true;status.textContent=e.message;}}
+    form.addEventListener('input',function(e){if(e.target.name==='confirma')return;preview=null;submit.disabled=true;d.querySelector('[data-plm-resumo]').textContent='Os campos mudaram. Confira a cópia novamente.';d.querySelector('.plm-confirm').hidden=true;status.textContent='';});
+    d.querySelector('[data-plm-preview]').onclick=conferePreview;d.querySelector('[data-cancel]').onclick=function(){d.close();};
+    form.onsubmit=function(e){e.preventDefault();try{
+      confereConta();if(!preview)throw new Error('Confira a cópia antes de salvar.');
+      if(preview.modo==='substituir'&&preview.ocupados&&!campo('confirma').checked)throw new Error('Confirme a substituição dos ajustes indicados ou escolha mantê-los.');
+      var st=ctx.load(),t=tDe(st,aluno);if(!al(st,aluno))throw new Error('Aluno não encontrado.');
+      if(semanaBase(t,preview.origem)!==preview.sourceBase||preview.targets.some(function(x){return plmBase(t,x.data)!==x.base;}))throw new Error('Uma das datas mudou em outra sessão. Seu rascunho foi mantido. Confira a cópia novamente.');
+      if(preview.targets.some(function(x){return x.salvar&&x.rows.some(function(p){return !opcoes(t).some(function(o){return o.tp===p.tp&&o.id===p.id;});});}))throw new Error('Um treino da origem não está mais disponível. Confira a cópia novamente.');
+      st.treinosV2=st.treinosV2||{};st.treinosV2[aluno]=t;t.plano=t.plano||{dias:{}};t.plano.datas=t.plano.datas||{};var count=0;
+      preview.targets.forEach(function(x){if(x.salvar){t.plano.datas[x.data]=copy(x.rows);count++;}});
+      grava(st,aluno,true);d.close();calendario();plmStatus(count+' datas copiadas e salvas no painel. Publique o planejamento para atualizar o app do aluno.');
+    }catch(err){status.textContent=err.message;}};
+    conferePreview();
+  }
   api.plano=calendario;
 
-  function bsForm(){try{return blocos(JSON.parse($('cbBlocos').value||'[]'));}catch(e){return [];}}
-  function bsDraw(){if(!$('r809BlocosLista'))return;var bs=bsForm();$('r809BlocosLista').innerHTML=bs.map(function(b,i){return '<div class="r809-row"><p>'+esc(blocoTxt(b))+'</p><button type="button" data-r809-block="'+i+'">Remover</button></div>';}).join("")||'<p>Sem blocos: o treino simples acima continua valendo.</p>';}
-  var corridaAluno="",corridaConta="";
-  function zonasDraw(){
-    if(!ctx||!$('r809Corrida'))return;var id=$('cbAluno').value,st=ctx.load(),zs=tDe(st,id).zonasCorrida||[];$('r809Corrida').hidden=!id;
-    if(id!==corridaAluno||ctx.conta()!==corridaConta){corridaAluno=id;corridaConta=ctx.conta();['r809ZonaNome','r809ZonaMin','r809ZonaMax','r809AlvoValor','r809RecValor'].forEach(function(k){$(k).value='';});$('r809CorridaStatus').textContent='';}
-    ['r809ZonaAlvo','r809ZonaRec'].forEach(function(k){var s=$(k),v=s.value;s.innerHTML='<option value="">Sem zona definida</option>'+zs.map(function(z){return '<option value="'+esc(z.id)+'">'+esc(zonaTxt(z))+'</option>';}).join("");s.value=v;});
-    $('r809ZonasLista').innerHTML=zs.map(function(z){return '<div class="r809-row"><span>'+esc(zonaTxt(z))+'</span><button type="button" data-r809-zone="'+esc(z.id)+'">Remover zona</button></div>';}).join("")||'<p>Nenhuma zona cadastrada para este aluno.</p>';
-    bsDraw();
+  var corridaAluno="",corridaConta="",corridaRasc={},corridaSerial="",zonaEdit=null,blocoEdit=null;
+  var zonasVistas={},blocoZonas={alvo:null,rec:null},ZONA_SNAPSHOT="__r809_prescrita__";
+  var corridaCampos=['r809ZonaNome','r809ZonaTipo','r809ZonaMin','r809ZonaMax','r809BlocoTipo','r809BlocoReps','r809AlvoValor','r809AlvoUnidade','r809ZonaAlvo','r809RecValor','r809RecUnidade','r809ZonaRec'];
+  function bsForm(){return blocos(JSON.parse($('cbBlocos').value||'[]'));}
+  function corridaKey(){return JSON.stringify([corridaConta,corridaAluno]);}
+  function corridaContexto(){var id=$('cbAluno').value;if(!id||id!==corridaAluno||ctx.conta()!==corridaConta||!al(ctx.load(),id))throw new Error('O aluno ou a conta mudou. Selecione novamente o aluno.');return id;}
+  function corridaFoco(id){var el=$(id);for(var p=el.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;el.scrollIntoView({block:'nearest'});el.focus({preventScroll:true});}
+  function blocoPendente(){return !!(blocoEdit||$('r809AlvoValor').value||$('r809RecValor').value);}
+  function blocoModo(){var repetir=$('r809BlocoTipo').value==='repetir';$('r809RepsLabel').hidden=!repetir;$('r809RecBox').hidden=!repetir;$('r809BlocoAdd').textContent=blocoEdit?'Salvar alteração do bloco':'Adicionar bloco ao rascunho';$('r809BlocoCancel').hidden=!blocoPendente();$('r809BlocoCancel').textContent=blocoEdit?'Cancelar edição do bloco':'Limpar campos do bloco';$('r809BlocoTitulo').textContent=blocoEdit?'Editar bloco '+(blocoEdit.index+1):'Novo bloco';}
+  function zonaModo(){$('r809ZonaAdd').textContent=zonaEdit?'Salvar alteração da zona':'Salvar zona';$('r809ZonaCancel').hidden=!zonaEdit&&!$('r809ZonaNome').value;$('r809ZonaTitulo').textContent=zonaEdit?'Editar zona':'Nova zona';var tipo=$('r809ZonaTipo').value;$('r809ZonaMin').placeholder=tipo==='pace'?'Ex.: 5:00':tipo==='fc'?'Ex.: 120':'Ex.: 8,5';$('r809ZonaMax').placeholder=tipo==='pace'?'Ex.: 6:00':tipo==='fc'?'Ex.: 150':'Ex.: 10';}
+  function blocoLimpa(){blocoEdit=null;blocoZonas={alvo:null,rec:null};$('r809BlocoTipo').value='aquecimento';$('r809BlocoReps').value='1';['r809AlvoValor','r809RecValor','r809ZonaAlvo','r809ZonaRec'].forEach(function(k){$(k).value='';});$('r809AlvoUnidade').value='km';$('r809RecUnidade').value='s';blocoModo();}
+  function zonaLimpa(){zonaEdit=null;['r809ZonaNome','r809ZonaMin','r809ZonaMax'].forEach(function(k){$(k).value='';});$('r809ZonaTipo').value='pace';zonaModo();}
+  function corridaGuarda(){if(!corridaAluno)return;var campos={};corridaCampos.forEach(function(k){campos[k]=$(k).value;});corridaRasc[corridaKey()]={campos:campos,zonaEdit:copy(zonaEdit),blocoEdit:copy(blocoEdit),blocoZonas:copy(blocoZonas),serial:corridaSerial};}
+  function zonaOptions(zs,keeps){[['r809ZonaAlvo','alvo'],['r809ZonaRec','rec']].forEach(function(par){var s=$(par[0]),v=keeps?keeps[par[0]]:s.value,z=blocoZonas[par[1]];s.innerHTML='<option value="">Sem zona definida</option>'+(z?'<option value="'+ZONA_SNAPSHOT+'">Manter zona prescrita: '+esc(zonaTxt(z))+'</option>':'')+zs.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(zonaTxt(x))+'</option>';}).join('');s.value=v||'';if(v&&s.value!==v){var o=document.createElement('option');o.value=v;o.textContent='Zona removida — selecione outra';s.appendChild(o);s.value=v;}});}
+  function alvoForm(p,k,zs){var v=$(k).value,z=v===ZONA_SNAPSHOT?blocoZonas[p==='r809Alvo'?'alvo':'rec']:zs.find(function(x){return x.id===v;});if(v&&!z)throw new Error('Uma zona foi removida. Selecione outra zona ou escolha “Sem zona definida”.');return {valor:$(p+'Valor').value,unidade:$(p+'Unidade').value,zona:z||null};}
+  function blocoForm(){var zs=tDe(ctx.load(),corridaAluno).zonasCorrida||[],b={tipo:$('r809BlocoTipo').value,repeticoes:$('r809BlocoReps').value,alvo:alvoForm('r809Alvo','r809ZonaAlvo',zs)};if(b.tipo==='repetir')b.recuperacao=alvoForm('r809Rec','r809ZonaRec',zs);return bloco(b);}
+  function blocoPreview(){try{$('r809BlocoPreview').textContent=blocoTxt(blocoForm());}catch(e){$('r809BlocoPreview').textContent='Preencha a etapa para conferir a prévia antes de adicionar.';}}
+  function bsDraw(){
+    if(!$('r809BlocosLista'))return;
+    try{var bs=bsForm();$('r809BlocosResumo').textContent=bs.length?bs.length+' bloco(s) · '+expande(bs).length+' etapa(s) na execução':'Nenhum bloco no rascunho';
+      $('r809BlocosLista').innerHTML=bs.map(function(b,i){var titulo={aquecimento:'Aquecimento',ativo:'Ativo',repetir:'Esforço e recuperação',recuperacao:'Recuperação final'}[b.tipo];return '<li class="r809-corrida-row"><div class="r809-corrida-info"><h4>'+(i+1)+'. '+titulo+(b.tipo==='repetir'?' · '+b.repeticoes+' repetições':'')+'</h4><p>'+esc(alvoTxt(b.alvo))+'</p>'+(b.recuperacao?'<p>Recuperação: '+esc(alvoTxt(b.recuperacao))+'</p>':'')+'</div><div class="r809-corrida-actions"><button type="button" data-r809-block-edit="'+i+'" aria-label="Editar bloco '+(i+1)+'">Editar</button><button type="button" data-r809-block-copy="'+i+'" aria-label="Duplicar bloco '+(i+1)+'">Duplicar</button><button type="button" data-r809-block-up="'+i+'" aria-label="Mover bloco '+(i+1)+' para cima"'+(!i?' disabled':'')+'>↑ Subir</button><button type="button" data-r809-block-down="'+i+'" aria-label="Mover bloco '+(i+1)+' para baixo"'+(i===bs.length-1?' disabled':'')+'>↓ Descer</button><button type="button" data-r809-block="'+i+'" aria-label="Remover bloco '+(i+1)+'">Remover</button></div></li>';}).join('')||'<li class="r809-corrida-empty">O treino simples acima continua valendo. Adicione blocos para montar uma sequência.</li>';
+    }catch(e){$('r809BlocosResumo').textContent='Confira a estrutura do treino.';$('r809BlocosLista').innerHTML='<li class="r809-corrida-empty">'+esc(e.message)+'. O conteúdo original foi mantido.</li>';}
+    blocoPreview();
   }
+  function bsWrite(bs){$('cbBlocos').value=JSON.stringify(blocos(bs));corridaSerial=$('cbBlocos').value;bsDraw();corridaGuarda();}
+  function blocoAbrir(i){var bs=bsForm(),b=bs[i];if(!b)return;if(blocoPendente()&&!confirm('Substituir o rascunho do bloco?'))return;blocoEdit={index:i,base:JSON.stringify(bs)};blocoZonas={alvo:copy(b.alvo.zona),rec:b.recuperacao?copy(b.recuperacao.zona):null};$('r809BlocoTipo').value=b.tipo;$('r809BlocoReps').value=b.repeticoes;[['r809Alvo',b.alvo],['r809Rec',b.recuperacao]].forEach(function(par){$(par[0]+'Valor').value=par[1]?par[1].valor:'';$(par[0]+'Unidade').value=par[1]?par[1].unidade:'s';});zonaOptions(tDe(ctx.load(),corridaAluno).zonasCorrida||[],{r809ZonaAlvo:b.alvo.zona?ZONA_SNAPSHOT:'',r809ZonaRec:b.recuperacao&&b.recuperacao.zona?ZONA_SNAPSHOT:''});blocoModo();blocoPreview();corridaFoco('r809BlocoTipo');}
+  function zonasDraw(){
+    if(!ctx||!$('r809Corrida'))return;var id=$('cbAluno').value,conta=ctx.conta(),st=ctx.load(),zs=tDe(st,id).zonasCorrida||[],changed=id!==corridaAluno||conta!==corridaConta,restored=null;$('r809Corrida').hidden=!id;
+    if(changed){corridaGuarda();corridaAluno=id;corridaConta=conta;zonaLimpa();blocoLimpa();restored=corridaRasc[corridaKey()];if(restored){corridaCampos.forEach(function(k){if(k.indexOf('r809ZonaAlvo')<0&&k.indexOf('r809ZonaRec')<0)$(k).value=restored.campos[k];});zonaEdit=copy(restored.zonaEdit);if(restored.serial===($('cbBlocos').value||'[]')){blocoEdit=copy(restored.blocoEdit);blocoZonas=copy(restored.blocoZonas);}else{blocoLimpa();restored=null;}}$('r809CorridaStatus').textContent='';}
+    else if(corridaSerial!==($('cbBlocos').value||'[]'))blocoLimpa();
+    corridaSerial=$('cbBlocos').value||'[]';zonaOptions(zs,restored&&restored.campos);zonasVistas={};zs.forEach(function(z){zonasVistas[z.id]=copy(z);});
+    $('r809ZonasLista').innerHTML=zs.map(function(z){return '<li class="r809-corrida-row"><div class="r809-corrida-info"><h4>'+esc(z.nome)+'</h4><p>'+esc(zonaTxt(z))+'</p></div><div class="r809-corrida-actions"><button type="button" data-r809-zone-edit="'+esc(z.id)+'">Editar zona</button><button type="button" data-r809-zone-copy="'+esc(z.id)+'">Duplicar zona</button><button type="button" data-r809-zone="'+esc(z.id)+'">Remover zona</button></div></li>';}).join('')||'<li class="r809-corrida-empty">Nenhuma zona cadastrada para este aluno.</li>';
+    zonaModo();blocoModo();bsDraw();
+  }
+  function zonaAbrir(z,duplicar){if((zonaEdit||$('r809ZonaNome').value)&&!confirm('Substituir o rascunho da zona?'))return;zonaEdit=duplicar?null:{id:z.id,base:JSON.stringify(z)};$('r809ZonaNome').value=duplicar?(z.nome.slice(0,52)+' (cópia)'):z.nome;$('r809ZonaTipo').value=z.tipo;$('r809ZonaMin').value=zNum(z.min,z.tipo);$('r809ZonaMax').value=zNum(z.max,z.tipo);zonaModo();corridaFoco('r809ZonaNome');}
+  function zonaSave(){try{var id=corridaContexto(),st=ctx.load(),zs=tDe(st,id).zonasCorrida||[],index=zonaEdit?zs.findIndex(function(z){return z.id===zonaEdit.id;}):-1;if(zonaEdit&&(index<0||JSON.stringify(zs[index])!==zonaEdit.base))throw new Error('Esta zona mudou em outra sessão. Seu rascunho foi mantido; cancele e reabra a zona para conferir.');var z=zona({id:zonaEdit?zonaEdit.id:uid(),nome:$('r809ZonaNome').value,tipo:$('r809ZonaTipo').value,min:$('r809ZonaMin').value,max:$('r809ZonaMax').value});if(!zonaEdit&&zs.length>=100)throw new Error('Limite de 100 zonas por aluno.');st.treinosV2=st.treinosV2||{};var t=st.treinosV2[id]=st.treinosV2[id]||{fichas:[]};t.zonasCorrida=zs.slice();if(zonaEdit)t.zonasCorrida[index]=z;else t.zonasCorrida.push(z);if(ctx.save(st)===false)throw new Error('Não foi possível salvar a zona. Seu rascunho foi mantido.');zonaLimpa();zonasDraw();$('r809CorridaStatus').textContent='Zona salva na biblioteca deste aluno. Os blocos existentes mantêm os alvos prescritos.';corridaGuarda();}catch(e){msg('r809CorridaStatus',e);}}
   api.corrida=zonasDraw;
+  api.corridaLimpa=function(){if(!$('r809BlocoTipo'))return;blocoLimpa();corridaSerial=$('cbBlocos').value||'[]';corridaGuarda();bsDraw();};
   api.init=function(c){
     if(ctx)return;ctx=c;
     document.addEventListener('click',function(e){var b=e.target.closest('[data-edita-pagamento]');if(b){e.preventDefault();pagamento(b.getAttribute('data-edita-pagamento'));}});
-    var ds=document.createElement('section');ds.id='r809Datas';ds.className='r809-card';
-    ds.innerHTML='<h3>Planejamento por data</h3><p>Opcional: dias específicos substituem a semana recorrente. Um dia de descanso pode ser programado sem apagar a semana.</p><div class="r809-grid"><label>Data<input type="date" id="r809Data"></label><label>Treino deste aluno<select id="r809DataTreino"></select></label><label>Horário (opcional)<input type="time" id="r809DataHora"></label></div><div class="r809-actions"><button type="button" id="r809DataAdd">Adicionar treino à data</button><button type="button" id="r809DataRest">Programar descanso</button><button type="button" id="r809DataReset">Voltar à semana recorrente</button></div><p id="r809DataStatus" role="status"></p><div id="r809DataLista"></div>';
-    $('plnDias').parentElement.appendChild(ds);
-    $('r809Data').onchange=dataSelecionada;
+    var ds=document.createElement('section');ds.id='r809Datas';ds.className='r809-card plm-calendar';
+    ds.innerHTML='<div class="plm-heading"><div><h3>Calendário mensal</h3><p>Selecione um dia para ajustar atividades e horários. O mês mostra a programação salva.</p></div><button type="button" id="r809CopiaSemana">Copiar semana</button></div><div class="plm-layout"><div class="plm-month"><div class="plm-toolbar"><h4 id="r809MesTitulo" aria-live="polite"></h4><div class="plm-nav"><button type="button" id="r809MesAnterior" aria-label="Mês anterior">‹</button><button type="button" id="r809MesHoje">Hoje</button><button type="button" id="r809MesProximo" aria-label="Próximo mês">›</button></div></div><div class="plm-scroll" tabindex="0" role="group" aria-labelledby="r809MesTitulo"><div class="plm-weekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div><div id="r809MesGrid" class="plm-grid"></div></div><p class="plm-legend"><span class="plm-legend-dot"></span>Ajuste por data <span>·</span> Os outros dias seguem a semana recorrente.</p></div><div class="plm-agenda"><span id="r809DiaOrigem" class="plm-origin"></span><h4 id="r809DiaTitulo"></h4><ol id="r809DataLista" class="plm-activities"></ol><div class="plm-editor"><h4 id="r809DataEditorTitulo">Adicionar atividade</h4><div class="r809-grid"><label>Data<input type="date" id="r809Data"></label><label>Horário (opcional)<input type="time" id="r809DataHora"></label><label class="plm-training">Treino deste aluno<select id="r809DataTreino"></select></label></div><div class="r809-actions"><button type="button" class="plm-primary" id="r809DataAdd">Salvar nova atividade</button><button type="button" id="r809DataCancel" hidden>Cancelar edição</button></div><p id="r809DataStatus" role="status"></p><button type="button" id="r809DataReload" hidden>Recarregar dia</button><div class="plm-day-actions"><button type="button" id="r809DataRest">Programar descanso</button><button type="button" id="r809DataReset">Voltar à semana recorrente</button></div><p>Salvar atualiza o painel. Use Publicar no app para enviar ao aluno.</p></div></div></div>';
+    $('plnResumo').insertAdjacentElement('beforebegin',ds);
+    var recorrente=document.createElement('h3');recorrente.className='plm-week-title';recorrente.textContent='Semana recorrente';$('plnResumo').insertAdjacentElement('beforebegin',recorrente);
+    $('r809Data').onchange=function(){dataSelecionada();};
+    ['r809DataHora','r809DataTreino'].forEach(function(k){$(k).addEventListener('input',plmCaptura);$(k).addEventListener('change',plmCaptura);});
     $('r809DataAdd').onclick=function(){mudaData('add');};$('r809DataRest').onclick=function(){mudaData('rest');};$('r809DataReset').onclick=function(){mudaData('reset');};
-    $('r809DataLista').onclick=function(e){var b=e.target.closest('[data-r809-date]'),del=e.target.closest('[data-r809-del]');if(b){$('r809Data').value=b.dataset.r809Date;dataSelecionada();$('r809Data').focus();}if(del){var v=del.dataset.r809Del.split(':');$('r809Data').value=v[0];dataBase=planoRows[v[0]];mudaData('del:'+v[1]);}};
+    $('r809CopiaSemana').onclick=plmCopia;
+    function mesMove(n){if(!planoEstado)return;var m=plmDate(planoEstado.mes+'-01');m.setMonth(m.getMonth()+n);planoEstado.mes=plmIso(m).slice(0,7);plmDesenha(tDe(ctx.load(),planoAluno));}
+    $('r809MesAnterior').onclick=function(){mesMove(-1);};$('r809MesProximo').onclick=function(){mesMove(1);};$('r809MesHoje').onclick=function(){dataSelecionada(plmHoje());};
+    $('r809MesGrid').onclick=function(e){var b=e.target.closest('[data-r809-date]');if(b)dataSelecionada(b.dataset.r809Date);};
+    $('r809MesGrid').onkeydown=function(e){var b=e.target.closest('[data-r809-date]'),offset={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(!b||!offset)return;e.preventDefault();var d=plmAdd(b.dataset.r809Date,offset);dataSelecionada(d);var next=$('r809MesGrid').querySelector('[data-r809-date="'+d+'"]');if(next)next.focus();};
+    $('r809DataCancel').onclick=function(){var ed=plmAtual();if(!ed)return;ed.edit=null;ed.opt='';ed.hora='';plmCampos(tDe(ctx.load(),planoAluno));plmStatus('Edição cancelada. As atividades salvas foram mantidas.');};
+    $('r809DataReload').onclick=function(){if(!planoEstado)return;var ed=plmAtual();plmCaptura();if(ed.edit!==null&&!confirm('Descartar a edição desta atividade e conferir a versão atual do dia?'))return;var t=tDe(ctx.load(),planoAluno),novo=plmEditor(t,planoEstado.data);if(ed.edit===null){novo.opt=ed.opt;novo.hora=ed.hora;}planoEstado.editores[planoEstado.data]=novo;plmCampos(t);plmDesenha(t);};
+    $('r809DataLista').onclick=function(e){var edit=e.target.closest('[data-r809-edit]'),del=e.target.closest('[data-r809-del]');if(edit){var ed=plmAtual(),i=Number(edit.dataset.r809Edit),p=ed.rows[i];if(!p)return;ed.edit=i;ed.opt=p.tp+':'+p.id;ed.hora=p.h||'';plmCampos(tDe(ctx.load(),planoAluno));$('r809DataTreino').focus();}if(del)mudaData('del:'+del.dataset.r809Del.split(':')[1]);};
     var cr=document.createElement('section');cr.id='r809Corrida';cr.className='r809-card';
-    function target(prefix,label){return '<fieldset><legend>'+label+'</legend><div class="r809-grid"><label>Duração ou distância<input id="'+prefix+'Valor" type="number" min="0.01" step="any"></label><label>Unidade<select id="'+prefix+'Unidade"><option value="km">km</option><option value="min">minutos</option><option value="s">segundos</option></select></label><label>Zona<select id="'+(prefix==='r809Alvo'?'r809ZonaAlvo':'r809ZonaRec')+'"></select></label></div></fieldset>';}
-    cr.innerHTML='<details><summary>Zonas de esforço deste aluno</summary><p>As zonas são definidas pelo profissional. Cada bloco mantém uma cópia da zona usada; remover da biblioteca não muda treinos já prescritos.</p><div class="r809-grid"><label>Nome<input id="r809ZonaNome" maxlength="60"></label><label>Medida<select id="r809ZonaTipo"><option value="pace">Pace (min/km)</option><option value="velocidade">Velocidade (km/h)</option><option value="fc">Frequência cardíaca (bpm)</option></select></label><label>Limite inicial<input id="r809ZonaMin" placeholder="Ex.: 5:00 para pace"></label><label>Limite final<input id="r809ZonaMax" placeholder="Ex.: 6:00 para pace"></label></div><button type="button" id="r809ZonaAdd">Salvar zona</button><div id="r809ZonasLista"></div></details><details><summary>Estrutura por blocos (opcional)</summary><p>Ao adicionar blocos, eles substituem o treino simples acima, inclusive o aquecimento e a recuperação. Salve o treino e depois publique no app.</p><div class="r809-grid"><label>Etapa<select id="r809BlocoTipo"><option value="aquecimento">Aquecimento</option><option value="ativo">Ativo</option><option value="repetir">Repetir esforço e recuperação</option><option value="recuperacao">Recuperação final</option></select></label><label id="r809RepsLabel" hidden>Repetições<input id="r809BlocoReps" type="number" min="1" max="20" value="1"></label></div>'+target('r809Alvo','Etapa ativa')+'<div id="r809RecBox" hidden>'+target('r809Rec','Recuperação entre repetições')+'</div><button type="button" id="r809BlocoAdd">Adicionar bloco ao rascunho</button><div id="r809BlocosLista"></div></details><p id="r809CorridaStatus" role="status"></p>';
+    function target(prefix,label){return '<fieldset><legend>'+label+'</legend><div class="r809-grid"><label>Duração ou distância<input id="'+prefix+'Valor" type="number" min="0.01" step="any" inputmode="decimal"></label><label>Unidade<select id="'+prefix+'Unidade"><option value="km">km</option><option value="min">minutos</option><option value="s">segundos</option></select></label><label class="r809-corrida-zone-field">Zona<select id="'+(prefix==='r809Alvo'?'r809ZonaAlvo':'r809ZonaRec')+'"></select></label></div></fieldset>';}
+    cr.innerHTML='<details id="r809ZonasBox"><summary>Zonas de esforço deste aluno</summary><p>Defina as faixas usadas nos próximos blocos. Alterar a biblioteca preserva as zonas dos treinos já montados.</p><h4 id="r809ZonaTitulo">Nova zona</h4><div class="r809-grid"><label>Nome<input id="r809ZonaNome" maxlength="60"></label><label>Medida<select id="r809ZonaTipo"><option value="pace">Pace (min/km)</option><option value="velocidade">Velocidade (km/h)</option><option value="fc">Frequência cardíaca (bpm)</option></select></label><label>Limite inicial<input id="r809ZonaMin" placeholder="Ex.: 5:00"></label><label>Limite final<input id="r809ZonaMax" placeholder="Ex.: 6:00"></label></div><div class="r809-actions"><button type="button" id="r809ZonaAdd">Salvar zona</button><button type="button" id="r809ZonaCancel" hidden>Cancelar edição da zona</button></div><ul id="r809ZonasLista" class="r809-corrida-list" aria-label="Biblioteca de zonas"></ul></details><details id="r809BlocosBox"><summary>Estrutura por blocos (opcional)</summary><p>Os blocos substituem o treino simples acima, incluindo aquecimento e recuperação. Confira a sequência, salve o treino e depois publique no app.</p><p id="r809BlocosResumo" class="r809-corrida-summary"></p><ol id="r809BlocosLista" class="r809-corrida-list" aria-label="Sequência de blocos"></ol><div class="r809-corrida-editor"><h4 id="r809BlocoTitulo">Novo bloco</h4><div class="r809-grid"><label>Etapa<select id="r809BlocoTipo"><option value="aquecimento">Aquecimento</option><option value="ativo">Ativo</option><option value="repetir">Repetir esforço e recuperação</option><option value="recuperacao">Recuperação final</option></select></label><label id="r809RepsLabel" hidden>Repetições<input id="r809BlocoReps" type="number" min="1" max="20" value="1"></label></div>'+target('r809Alvo','Duração e alvo da etapa')+'<div id="r809RecBox" hidden>'+target('r809Rec','Recuperação entre repetições')+'</div><div class="r809-corrida-preview"><strong>Prévia do bloco</strong><p id="r809BlocoPreview" aria-live="polite"></p></div><div class="r809-actions"><button type="button" id="r809BlocoAdd">Adicionar bloco ao rascunho</button><button type="button" id="r809BlocoCancel" hidden>Cancelar edição do bloco</button></div></div></details><p id="r809CorridaStatus" role="status" aria-live="polite"></p>';
     $('cbObs').closest('label').insertAdjacentElement('afterend',cr);
-    $('r809BlocoTipo').onchange=function(){var r=this.value==='repetir';$('r809RepsLabel').hidden=!r;$('r809RecBox').hidden=!r;};
-    $('r809ZonaAdd').onclick=function(){try{var id=$('cbAluno').value,st=ctx.load();if(!id||!al(st,id))throw new Error('Escolha o aluno.');var z=zona({id:uid(),nome:$('r809ZonaNome').value,tipo:$('r809ZonaTipo').value,min:$('r809ZonaMin').value,max:$('r809ZonaMax').value});st.treinosV2=st.treinosV2||{};var t=st.treinosV2[id]=st.treinosV2[id]||{fichas:[]};t.zonasCorrida=t.zonasCorrida||[];if(t.zonasCorrida.length>=100)throw new Error('Limite de 100 zonas por aluno.');t.zonasCorrida.push(z);if(ctx.save(st)===false)throw new Error('Não foi possível salvar a zona.');zonasDraw();$('r809CorridaStatus').textContent='Zona salva para este aluno. Selecione-a nos blocos.';}catch(e){msg('r809CorridaStatus',e);}};
-    $('r809BlocoAdd').onclick=function(){try{var id=$('cbAluno').value,zs=tDe(ctx.load(),id).zonasCorrida||[];if(!id)throw new Error('Escolha o aluno.');function targetRead(p,k){var z=zs.find(function(z){return z.id===$(k).value;});return {valor:$(p+'Valor').value,unidade:$(p+'Unidade').value,zona:z||null};}var b={tipo:$('r809BlocoTipo').value,repeticoes:$('r809BlocoReps').value,alvo:targetRead('r809Alvo','r809ZonaAlvo'),recuperacao:targetRead('r809Rec','r809ZonaRec')};var bs=bsForm();bs.push(b);$('cbBlocos').value=JSON.stringify(blocos(bs));bsDraw();$('r809CorridaStatus').textContent='Bloco adicionado ao rascunho. Clique em Salvar treino para aplicar.';}catch(e){msg('r809CorridaStatus',e);}};
-    $('r809BlocosLista').onclick=function(e){var b=e.target.closest('[data-r809-block]');if(b){var bs=bsForm();bs.splice(+b.dataset.r809Block,1);$('cbBlocos').value=JSON.stringify(bs);bsDraw();}};
-    $('r809ZonasLista').onclick=function(e){var b=e.target.closest('[data-r809-zone]');if(!b||!confirm('Remover a zona da biblioteca? Os treinos já prescritos serão preservados.'))return;try{var st=ctx.load(),t=tDe(st,$('cbAluno').value);t.zonasCorrida=(t.zonasCorrida||[]).filter(function(z){return z.id!==b.dataset.r809Zone;});if(ctx.save(st)===false)throw new Error('Não foi possível remover.');zonasDraw();}catch(e2){msg('r809CorridaStatus',e2);}};
+    $('cbSalva').addEventListener('click',function(e){try{if($('cbAluno').value)corridaContexto();if(blocoPendente())throw new Error('Adicione ou salve o bloco em edição antes de salvar o treino. Você também pode cancelar a edição do bloco.');}catch(err){e.preventDefault();e.stopImmediatePropagation();msg('cbStatus',err);msg('r809CorridaStatus',err);if(blocoPendente())corridaFoco('r809BlocoAdd');}},true);
+    cr.addEventListener('input',function(){zonaModo();blocoModo();blocoPreview();corridaGuarda();});
+    cr.addEventListener('change',function(){zonaModo();blocoModo();blocoPreview();corridaGuarda();});
+    $('r809ZonaAdd').onclick=zonaSave;
+    $('r809ZonaCancel').onclick=function(){zonaLimpa();zonasDraw();corridaGuarda();$('r809CorridaStatus').textContent='Edição da zona cancelada. A biblioteca foi mantida.';};
+    $('r809BlocoCancel').onclick=function(){blocoLimpa();zonaOptions(tDe(ctx.load(),corridaAluno).zonasCorrida||[]);bsDraw();corridaGuarda();$('r809CorridaStatus').textContent='Edição do bloco cancelada. A sequência foi mantida.';};
+    $('r809BlocoAdd').onclick=function(){try{corridaContexto();var b=blocoForm(),bs=bsForm(),edit=!!blocoEdit;if(blocoEdit){if(JSON.stringify(bs)!==blocoEdit.base)throw new Error('A sequência mudou. Cancele e reabra o bloco para conferir.');bs[blocoEdit.index]=b;}else bs.push(b);blocos(bs);blocoLimpa();bsWrite(bs);zonaOptions(tDe(ctx.load(),corridaAluno).zonasCorrida||[]);$('r809CorridaStatus').textContent=(edit?'Bloco atualizado':'Bloco adicionado')+' no rascunho. Salve o treino para aplicar.';}catch(e){msg('r809CorridaStatus',e);}};
+    $('r809BlocosLista').onclick=function(e){var b=e.target.closest('button');if(!b)return;try{corridaContexto();if(b.hasAttribute('data-r809-block-edit')){blocoAbrir(+b.dataset.r809BlockEdit);return;}if(blocoEdit)throw new Error('Salve ou cancele a edição do bloco antes de mudar a sequência.');var bs=bsForm(),i,j,acao;if(b.hasAttribute('data-r809-block')){i=+b.dataset.r809Block;if(!confirm('Remover o bloco '+(i+1)+' do rascunho?'))return;bs.splice(i,1);acao='Bloco removido';}else if(b.hasAttribute('data-r809-block-copy')){i=+b.dataset.r809BlockCopy;bs.splice(i+1,0,copy(bs[i]));acao='Bloco duplicado';}else{var up=b.hasAttribute('data-r809-block-up');i=+(up?b.dataset.r809BlockUp:b.dataset.r809BlockDown);j=i+(up?-1:1);if(j<0||j>=bs.length)return;var temp=bs[i];bs[i]=bs[j];bs[j]=temp;acao='Ordem atualizada';}bsWrite(bs);$('r809CorridaStatus').textContent=acao+' no rascunho. Salve o treino para aplicar.';var focus=$('r809BlocosLista').querySelector('[data-r809-block-edit="'+Math.max(0,Math.min(j==null?i:j,bs.length-1))+'"]');if(focus)focus.focus();}catch(err){msg('r809CorridaStatus',err);}};
+    $('r809ZonasLista').onclick=function(e){var b=e.target.closest('button');if(!b)return;try{var id=corridaContexto(),key=b.dataset.r809ZoneEdit||b.dataset.r809ZoneCopy||b.dataset.r809Zone,z=zonasVistas[key];if(!z)return;if(b.hasAttribute('data-r809-zone-edit')||b.hasAttribute('data-r809-zone-copy')){zonaAbrir(z,b.hasAttribute('data-r809-zone-copy'));return;}if(!confirm('Remover a zona da biblioteca? Os treinos já prescritos serão preservados.'))return;var st=ctx.load(),t=tDe(st,id),atual=(t.zonasCorrida||[]).find(function(x){return x.id===key;});if(JSON.stringify(atual)!==JSON.stringify(z))throw new Error('Esta zona mudou em outra sessão. Atualize a lista antes de remover.');t.zonasCorrida=(t.zonasCorrida||[]).filter(function(x){return x.id!==key;});if(ctx.save(st)===false)throw new Error('Não foi possível remover a zona.');if(zonaEdit&&zonaEdit.id===key)zonaLimpa();zonasDraw();$('r809CorridaStatus').textContent='Zona removida da biblioteca. Os blocos existentes foram preservados.';corridaGuarda();}catch(err){msg('r809CorridaStatus',err);}};
     calendario();zonasDraw();
   };
 })(typeof self!=="undefined"?self:globalThis);
