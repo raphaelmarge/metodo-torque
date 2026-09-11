@@ -1859,11 +1859,13 @@ async function novaExecucaoAluno(p) {
   }));
   ok(/entrou R\$\s?400/.test(relR.entradas), "o gráfico de entrou × saiu × sobrou mostra os R$ 400 do mês");
   ok(relR.sumiu, "o gráfico duplicado 'Receita dos 6 meses' não voltou pra aba Financeiro dos Relatórios");
-  // Isola a régua da presença: a falta marcada em "amanhã" lá no início
-  // da suíte não pode virar falta de hoje se a execução atravessar meia-noite.
+  // Cenário local de relatório: semeia e restaura bytes fictícios sem passar
+  // por write(), que corretamente rejeita um objeto lido antes de outra edição.
+  // Nenhuma chamada de persistência/sincronização é parte desta consulta.
+  const relAntes = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   const relA = await p.evaluate(() => {
-    const original = window.MTStore.read("ptStudio", {});
-    const st = JSON.parse(JSON.stringify(original));
+    const original = localStorage.getItem("mtapp:ptStudio");
+    const st = JSON.parse(original);
     const aluno = st.alunos.find(a => a.nome === "João Cliente");
     const hoje = diaISO(new Date());
     const ontem = diaISO(new Date(Date.now() - 864e5));
@@ -1874,16 +1876,20 @@ async function novaExecucaoAluno(p) {
       {id:"presenca-futura", alunoId:aluno.id, data:amanha, faltou:true}
     ];
     try {
-      window.MTStore.write("ptStudio", st); window.__relPT();
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st)); window.__relPT();
       const semFalta = document.getElementById("relAssiduidade").textContent;
       st.sessoes.push({id:"presenca-falta", alunoId:aluno.id, data:ontem, faltou:true});
-      window.MTStore.write("ptStudio", st); window.__relPT();
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st)); window.__relPT();
       return {semFalta, comFalta:document.getElementById("relAssiduidade").textContent};
-    } finally { window.MTStore.write("ptStudio", original); window.__relPT(); }
+    } finally { localStorage.setItem("mtapp:ptStudio", original); window.__relPT(); }
   });
   ok(/João Cliente/.test(relA.semFalta) && /1 sessão/.test(relA.semFalta), "assiduidade conta a sessão feita");
   ok(/presença 100%/.test(relA.semFalta) && /1 sem registro/.test(relA.semFalta), "presença100% ignora sessão sem registro e falta futura");
   ok(/presença 50%/.test(relA.comFalta) && /1 falta/.test(relA.comFalta), "presença50% inclui somente a falta passada explicitamente registrada");
+  ok(await p.evaluate(raw => localStorage.getItem("mtapp:ptStudio") === raw, relAntes),
+    "cenário de assiduidade restaura exatamente os dados fictícios, inclusive os horários");
+  ok(await p.locator("#mtSyncConflito").count() === 0,
+    "consulta de assiduidade não cria conflito de salvamento nem bloqueia outros relatórios");
 
   // 📊 v712: relatórios com PERÍODO retroativo + relatório de VENDAS
   const rel12 = await p.evaluate(() => {
