@@ -2525,7 +2525,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </section>
 
     <section class="card trx-section" data-trsec="cardio" hidden>
-      <div class="trx-heading"><div><h2>Corrida e bike</h2><p>Defina a modalidade, o alvo e os intervalos de cada sessão.</p></div></div>
+      <div class="trx-heading"><div><h2>Corrida e bike</h2><p>Monte a sequência que seu aluno vai seguir, etapa por etapa.</p></div><button type="button" id="cbNovo" class="btn sec">+ Novo treino</button></div>
       <label class="trx-field trx-student" for="cbAluno">Aluno<select id="cbAluno"></select></label>
       <div id="cbLista" class="trx-list">Escolha o aluno para ver os treinos.</div>
       <details id="cbEditor" class="trx-editor">
@@ -2533,7 +2533,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="trx-editor-body"><div class="trx-fields">
           <label class="trx-field trx-wide" for="cbNome">Nome do treino<input id="cbNome" placeholder="Ex.: corrida de terça"></label>
           <label class="trx-field" for="cbMod">Modalidade<select id="cbMod"><option value="corrida">Corrida</option><option value="caminhada">Caminhada</option><option value="bike">Bike</option></select></label>
-          <label class="trx-field" for="cbTipo">Formato<select id="cbTipo"><option value="continuo">Contínuo</option><option value="intervalado">Intervalos de esforço e pausa</option><option value="misto">Contínuo + intervalos</option></select></label>
+          <label class="trx-field trx-wide" for="cbModo">Como montar<select id="cbModo"><option value="etapas">Etapas livres · correr, caminhar e repetir</option><option value="simples">Formato simples · contínuo ou intervalos</option></select></label></div><div id="cbSimples" class="trx-fields" hidden><label class="trx-field trx-wide" for="cbTipo">Formato<select id="cbTipo"><option value="continuo">Contínuo</option><option value="intervalado">Intervalos de esforço e pausa</option><option value="misto">Contínuo + intervalos</option></select></label>
           <label class="trx-field" for="cbDist" data-cbcfg="continuo">Distância (km)<input id="cbDist" inputmode="decimal" value="5"><small>0 = distância livre</small></label>
           <label class="trx-field" for="cbTempo" data-cbcfg="continuo">Tempo alvo (min)<input id="cbTempo" inputmode="numeric" value="0"><small>0 = tempo livre</small></label>
           <label class="trx-field" for="cbPace" data-cbcfg="continuo">Pace alvo (min/km)<input id="cbPace" placeholder="Opcional · ex.: 6:30"><input id="cbBlocos" type="hidden" value="[]"></label>
@@ -13765,7 +13765,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var trFormAlunos = { wp: "", cb: "" }, trFormRasc = { wp: {}, cb: {} };
   var trFormCampos = {
     wp: { Nome: "", Modelo: "", Tipo: "fortime", Cap: "12", Min: "10", Rounds: "8", Work: "20", Rest: "10", Aq: "", Obs: "" },
-    cb: { Nome: "", Mod: "corrida", Tipo: "continuo", Dist: "5", Tempo: "0", Pace: "", Reps: "8", Tiro: "60", Desc: "90", Obs: "", Blocos: "[]" }
+    cb: { Nome: "", Mod: "corrida", Tipo: "continuo", Dist: "5", Tempo: "0", Pace: "", Reps: "8", Tiro: "60", Desc: "90", Obs: "", Blocos: "[]", Modo: "etapas" }
   };
   function trFormAcaoLimpar(p) {
     var edit = p === "wp" ? wpEditando : cbEditando;
@@ -14099,7 +14099,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   var cbEditando = null;
   function cbMostraCfg() {
-    var tipo = $("cbTipo").value;
+    var tipo = $("cbTipo").value, simples = $("cbModo").value === "simples";
+    $("cbSimples").hidden = !simples;
+    if ($("r809BlocosBox")) $("r809BlocosBox").hidden = simples;
+    $("cbResumo").hidden = !simples;
     /* "misto" e o MESMO treino com parte continua E tiros (pedido do Raphael):
      * os dois grupos de campos ficam visiveis ao mesmo tempo. */
     document.querySelectorAll("[data-cbcfg]").forEach(function (l) {
@@ -14107,7 +14110,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     var d = $("cbDica");
     if (d) {
-      d.hidden = tipo !== "misto";
+      d.hidden = !simples || tipo !== "misto";
       d.textContent = "No app o aluno faz a parte contínua primeiro e os tiros depois — nessa ordem, guiado por voz.";
     }
     if ($("cbResumo")) {
@@ -14118,6 +14121,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   ["cbMod", "cbDist", "cbTempo", "cbPace", "cbReps", "cbTiro", "cbDesc"].forEach(function (id) { $(id).addEventListener("input", cbMostraCfg); $(id).addEventListener("change", cbMostraCfg); });
   $("cbTipo").addEventListener("change", cbMostraCfg);
+  $("cbModo").addEventListener("change", function () {
+    if (this.value === "simples" && ($("cbBlocos").value !== "[]" || R809.corridaPendente())) {
+      if (!confirm("Trocar para o formato simples? A sequência será retirada apenas deste rascunho. O treino salvo continua igual até você salvar.")) { this.value = "etapas"; cbMostraCfg(); return; }
+      $("cbBlocos").value = "[]";
+      R809.corridaLimpa();
+    }
+    cbMostraCfg();
+  });
+  $("cbNovo").addEventListener("click", function () {
+    if (!$("cbAluno").value) { $("cbStatus").textContent = "Escolha o aluno para montar o treino."; $("cbAluno").focus(); return; }
+    if (($("cbNome").value.trim() || $("cbBlocos").value !== "[]" || R809.corridaPendente()) && !confirm("Começar um novo treino e descartar o rascunho aberto? Os treinos salvos serão mantidos.")) return;
+    trFormLimpa("cb"); $("cbEditor").open = true; $("cbNome").focus();
+  });
+  function cbResumoCurto(c) {
+    if (!Array.isArray(c.blocos) || !c.blocos.length) return cbResumo(c);
+    try { var etapas=R809.expande(c.blocos),km=0,seg=0,partes=[]; etapas.forEach(function(e){km+=e.km;seg+=e.s;});
+      if(km)partes.push(String(Math.round(km*1000)/1000).replace(".",",")+" km");
+      if(seg)partes.push(String(Math.round(seg/60*10)/10).replace(".",",")+" min");
+      return etapas.length+" etapas"+(partes.length?" · "+partes.join(" + "):"");
+    } catch(e) { return "Confira a sequência deste treino."; }
+  }
   function renderCardios() {
     var alunoId = $("cbAluno").value;
     trFormTroca("cb", alunoId);
@@ -14128,7 +14152,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return '<div class="sessao-pt"><b>' + esc(c.nome) + "</b>" +
           (indice >= 10 ? '<span class="muted">Fora do limite de 10 treinos enviados ao app</span>' : '') +
           '<span class="tag ok">' + (CB_MODS[c.mod] || c.mod) + "</span>" +
-          '<span class="muted">' + esc(cbResumo(c)) + "</span>" +
+          '<span class="muted">' + esc(cbResumoCurto(c)) + "</span>" +
           '<span class="trx-actions"><button class="btn sec mini" data-cbed="' + c.id + '">Editar</button><details class="trx-details trx-row-more"><summary>Mais opções</summary><div class="trx-actions">' +
           (c.capa ? '<img src="' + c.capa + '" alt="capa do treino" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
           '<button class="btn sec mini" data-ccapa="' + c.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (c.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
@@ -14147,6 +14171,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tipoValid = $("cbTipo").value, valida = [];
     var blocosValid;
     try { blocosValid = R809.blocos(JSON.parse($("cbBlocos").value || "[]")); } catch (e) { $("cbStatus").textContent = e.message; return; }
+    if ($("cbModo").value === "etapas" && !blocosValid.length) { $("cbStatus").textContent = "Adicione pelo menos uma etapa ou escolha o formato simples."; return; }
     if (tipoValid !== "intervalado") valida = [["cbDist", 0, null, false], ["cbTempo", 0, null, true]];
     if (tipoValid !== "continuo") valida = valida.concat([["cbReps", 1, null, true], ["cbTiro", 1, null, true], ["cbDesc", 1, null, true]]);
     if (!blocosValid.length && !valida.every(function (c) { return trCampoNumero(c[0], c[1], c[2], c[3], "cbStatus"); })) return;
@@ -14227,6 +14252,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cbNome").value = c.nome; $("cbMod").value = c.mod || "corrida"; $("cbTipo").value = c.tipo || "continuo";
     $("cbDist").value = c.dist || 0; $("cbTempo").value = c.tempo || 0; $("cbPace").value = c.pace || "";
     $("cbBlocos").value = JSON.stringify(c.blocos || []);
+    $("cbModo").value = c.blocos && c.blocos.length ? "etapas" : "simples";
     R809.corridaLimpa();
     R809.corrida();
     $("cbReps").value = c.reps || 8; $("cbTiro").value = c.tiro || 60; $("cbDesc").value = c.desc || 90;

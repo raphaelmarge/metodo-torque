@@ -32,11 +32,24 @@
   }
   function zNum(n,t) { return t === "pace" ? Math.floor(n/60) + ":" + String(n%60).padStart(2,"0") : String(n).replace(".",","); }
   function zonaTxt(z) { return zonaValida(z) ? z.nome + " · " + zNum(z.min,z.tipo) + "–" + zNum(z.max,z.tipo) + " " + ({pace:"min/km",velocidade:"km/h",fc:"bpm"}[z.tipo]) : ""; }
+  function esforco(x) {
+    if (!x || ["pace","velocidade","fc","rpe"].indexOf(x.tipo)<0) throw new Error("Escolha um alvo de ritmo, velocidade, frequência cardíaca ou percepção de esforço.");
+    var teto={pace:5999,velocidade:200,fc:300,rpe:10}[x.tipo],piso=x.tipo==="rpe"?1:.01;
+    if (!Number.isFinite(x.min) || !Number.isFinite(x.max) || x.min<piso || x.max>teto || x.min>x.max) throw new Error("Confira os limites do esforço da etapa.");
+    if ((x.tipo==="pace"||x.tipo==="fc") && (!Number.isInteger(x.min)||!Number.isInteger(x.max))) throw new Error("Use valores inteiros para segundos de ritmo e batimentos.");
+    return {tipo:x.tipo,min:x.min,max:x.max};
+  }
+  function esforcoTxt(x) { var nomes={pace:"Ritmo",velocidade:"Velocidade",fc:"FC",rpe:"Esforço"},unidades={pace:"min/km",velocidade:"km/h",fc:"bpm",rpe:"/10"};return nomes[x.tipo]+" "+zNum(x.min,x.tipo)+(x.max!==x.min?"–"+zNum(x.max,x.tipo):"")+(x.tipo==="rpe"?"":" ")+unidades[x.tipo]; }
+  function acaoTxt(a) { var nomes={correr:"Correr",caminhar:"Caminhar",pedalar:"Pedalar",aquecer:"Aquecer",recuperar:"Recuperar"};return typeof a.acao==="string"&&Object.prototype.hasOwnProperty.call(nomes,a.acao)?nomes[a.acao]:""; }
   function alvo(x) {
-    if (!x || ["km","min","s"].indexOf(x.unidade)<0) throw new Error("Escolha a unidade do bloco.");
-    var v = numero(x.valor, .01, x.unidade === "km" ? 500 : x.unidade === "min" ? 1440 : 86400);
+    if (!x || ["km","m","min","s"].indexOf(x.unidade)<0) throw new Error("Escolha a unidade do bloco.");
+    var v = numero(x.valor, .01, x.unidade === "km" ? 500 : x.unidade === "m" ? 500000 : x.unidade === "min" ? 1440 : 86400);
     if (x.zona && !zonaValida(x.zona)) throw new Error("A zona do bloco não é válida. Selecione-a novamente.");
-    return {valor:v, unidade:x.unidade, zona:x.zona ? copy(x.zona) : null};
+    var a={valor:v, unidade:x.unidade, zona:x.zona ? copy(x.zona) : null};
+    if (x.acao != null && x.acao !== "") { if(!acaoTxt(x))throw new Error("Escolha a ação da etapa.");a.acao=x.acao; }
+    if (x.esforco != null) { if(x.zona)throw new Error("Escolha uma zona salva ou um esforço direto para a etapa.");a.esforco=esforco(x.esforco); }
+    if (x.orientacao != null && x.orientacao !== "") { if(typeof x.orientacao!=="string"||x.orientacao.trim().length>240)throw new Error("Use uma orientação de até 240 caracteres por etapa.");var obs=x.orientacao.trim();if(obs)a.orientacao=obs; }
+    return a;
   }
   function bloco(x) {
     if (!x || ["aquecimento","ativo","repetir","recuperacao"].indexOf(x.tipo)<0) throw new Error("Escolha o tipo de bloco.");
@@ -50,11 +63,11 @@
     if(n>60)throw new Error("A estrutura permite até 60 etapas, contando as repetições.");
     return r;
   }
-  function alvoTxt(a) { return String(a.valor).replace(".",",")+" "+a.unidade+(a.zona?" · "+zonaTxt(a.zona):""); }
-  function blocoTxt(b) { var nomes={aquecimento:"Aquecimento",ativo:"Ativo",repetir:"Repetir",recuperacao:"Recuperação"}; return nomes[b.tipo]+(b.tipo==="repetir"?" "+b.repeticoes+"×":"")+": "+alvoTxt(b.alvo)+(b.recuperacao?" / "+alvoTxt(b.recuperacao):""); }
+  function alvoTxt(a) { return String(a.valor).replace(".",",")+" "+a.unidade+(a.zona?" · "+zonaTxt(a.zona):"")+(a.esforco?" · "+esforcoTxt(a.esforco):"")+(a.orientacao?" · "+a.orientacao:""); }
+  function blocoTxt(b) { var nomes={aquecimento:"Aquecimento",ativo:"Ativo",repetir:"Repetir",recuperacao:"Recuperação"},repetir=b.tipo==="repetir";return (repetir?nomes[b.tipo]:acaoTxt(b.alvo)||nomes[b.tipo])+(repetir?" "+b.repeticoes+"×":"")+": "+(repetir&&acaoTxt(b.alvo)?acaoTxt(b.alvo)+" ":"")+alvoTxt(b.alvo)+(b.recuperacao?" / "+(acaoTxt(b.recuperacao)?acaoTxt(b.recuperacao)+" ":"")+alvoTxt(b.recuperacao):""); }
   function expande(bs) {
     var out=[];
-    function add(a,k,n){out.push({k:k,n:n,d:alvoTxt(a),s:a.unidade==="km"?0:a.valor*(a.unidade==="min"?60:1),km:a.unidade==="km"?a.valor:0});}
+    function add(a,k,n){var distancia=a.unidade==="km"||a.unidade==="m",ordem=n.match(/ \d+ de \d+$/);out.push({k:k,n:acaoTxt(a)?acaoTxt(a)+(ordem?ordem[0]:""):n,d:alvoTxt(a),s:distancia?0:a.valor*(a.unidade==="min"?60:1),km:distancia?a.valor/(a.unidade==="m"?1000:1):0});}
     blocos(bs).forEach(function(b){if(b.tipo==="repetir"){for(var i=0;i<b.repeticoes;i++){add(b.alvo,"f","Ativo "+(i+1)+" de "+b.repeticoes);add(b.recuperacao,"l","Recuperação "+(i+1)+" de "+b.repeticoes);}}else add(b.alvo,b.tipo==="aquecimento"?"aq":b.tipo==="recuperacao"?"vc":"c",{aquecimento:"Aquecimento",ativo:"Ativo",recuperacao:"Recuperação"}[b.tipo]);});return out;
   }
     try { var limpos = blocos(bs); return { bl: expande(limpos), br: limpos.map(blocoTxt).join(" | ") }; }
@@ -4791,7 +4804,7 @@
        * aluno digitou; sem alvo nenhum so o toque dele (Pular) fecha. Antes os
        * dois caminhos tinham prioridade oposta e ligar/desligar a moldura de
        * aquecimento mudava em silencio a hora em que os tiros comecavam. */
-      "function crFimContinua(dKm,sg,kmF,elF){if(dKm&&cr.gpsOn)return kmF>=dKm;if(sg)return elF>=sg;if(dKm)return kmF>=dKm;return false;}" +
+      "function crFimContinua(dKm,sg,kmF,elF){if(dKm&&cr.gpsOn)return kmF+1e-9>=dKm;if(sg)return elF>=sg;if(dKm)return kmF+1e-9>=dKm;return false;}" +
       "function pintaCr(){" +
       // pausa automática (estilo app de corrida): parou de andar com GPS ligado → o relógio pausa sozinho
       "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&(cr.plano.t==='intervalado'||cr.plano.t==='misto'))){" +
@@ -5429,7 +5442,7 @@
       "if(cr.bi>=cr.blocos.length){cr.bi=cr.blocos.length-1;crFinaliza('TREINO GUIADO COMPLETO!');return false;}" +
       "var agora=(Date.now()-cr.t0)/1000;" +
       "cr.bt0=(modo==='t'&&ant&&ant.s)?((cr.bt0||0)+ant.s):agora;" +
-      "cr.bkm0=(modo==='k'&&ant&&ant.km)?((cr.bkm0||0)+ant.km):cr.km;" +
+      "cr.bkm0=(modo==='k'&&ant&&ant.km)?((cr.bkm0||0)+ant.km):crKmAtual();" +
       "crAvisaBloco(crBlocoAtual());return true;}" +
       "function crPulaBloco(){if(!cr.blocos)return;if(crAvanca(''))pintaCr();}" +
       "function crTrilhoPinta(){var tr=crEl('crTrilho');if(!tr||!cr.blocos)return;" +
@@ -5441,7 +5454,7 @@
       "if(!cr.blocos){if(cx)cx.style.display='none';return false;}" +
       // acerta a fila inteira: quem deixou o celular no bolso volta minutos depois
       "if(cr.run){var giro=0;while(cr.blocos&&giro++<60){var bx=cr.blocos[cr.bi];if(!bx)break;" +
-      "var pkX=!!(bx.km&&cr.gpsOn);" +
+      "var pkX=!!(bx.km&&(cr.gpsOn||!bx.s));" +
       "var fimX=crFimContinua(bx.km||0,bx.s||0,km-(cr.bkm0||0),el2-(cr.bt0||0));" +
       "if(!fimX)break;if(!crAvanca(pkX?'k':'t'))return 2;}}" +
       "var b4=crBlocoAtual();" +
@@ -5453,8 +5466,8 @@
       "var bd=crEl('crBlocoD'),bt=crEl('crBlocoT');" +
       "var prox=cr.blocos[cr.bi+1];" +
       "if(bd)bd.textContent=prox?('depois: '+prox.n):'último bloco';" +
-      "var porKm=!!(b4.km&&cr.gpsOn);" +
-      "if(bt)bt.textContent=porKm?(String(Math.round(fkm*100)/100).replace('.',',')+' km'):(b4.s?wodFmt(falta):'livre');" +
+      "var porKm=!!(b4.km&&(cr.gpsOn||!b4.s));" +
+      "if(bt)bt.textContent=porKm?(fkm<1?(Math.ceil(fkm*1000-1e-6)+' m'):(String(Math.round(fkm*100)/100).replace('.',',')+' km')):(b4.s?wodFmt(falta):'livre');" +
       "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
       "return true;}" +
       // v751: só a LARGADA zera o batimento — 'Continuar' depois da pausa também cai aqui e apagava a média da corrida inteira

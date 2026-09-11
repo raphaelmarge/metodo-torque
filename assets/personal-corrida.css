@@ -1,34 +1,99 @@
-/* Editor de corrida: mesmos tokens e temas do painel Personal. */
-#r809Corrida{min-width:0;max-width:100%;box-sizing:border-box}
-#r809Corrida *,#r809Corrida *::before,#r809Corrida *::after{box-sizing:border-box}
-#r809Corrida h4{margin:0 0 8px;color:var(--pt-txt);font-size:15px;line-height:1.45;overflow-wrap:anywhere}
-#r809Corrida .r809-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-#r809Corrida :is(label,input,select,fieldset){min-width:0;max-width:100%}
-#r809Corrida .r809-corrida-zone-field{grid-column:1/-1}
-#r809Corrida :is(button,summary,input,select){min-height:44px}
-#r809Corrida button{white-space:normal;line-height:1.35;overflow-wrap:anywhere}
-#r809Corrida button:disabled{opacity:.45;cursor:default}
-#r809Corrida :is(button,summary,input,select):focus-visible{outline:3px solid var(--pt-roxo);outline-offset:3px}
-#r809Corrida>.r809-corrida-list,#r809Corrida .r809-corrida-list{margin:12px 0;padding:0;list-style:none}
-#r809Corrida .r809-corrida-row{display:flex;flex-wrap:wrap;gap:12px;padding:15px 0;border-top:1px solid var(--pt-borda)}
-#r809Corrida .r809-corrida-info{flex:1 1 240px;min-width:0}
-#r809Corrida .r809-corrida-info p{margin:4px 0;font-size:13px;line-height:1.55;overflow-wrap:anywhere}
-#r809Corrida .r809-corrida-actions{display:flex;align-items:flex-start;flex-wrap:wrap;gap:7px;flex:1 1 250px;min-width:0}
-#r809Corrida .r809-corrida-actions button{flex:1 1 90px;min-width:0;font-size:12px;padding:9px}
-#r809Corrida .r809-corrida-editor{padding:16px;background:var(--pt-caixa);border:1px solid var(--pt-borda);border-radius:12px;margin-top:16px}
-#r809Corrida .r809-corrida-editor :is(input,select){background:var(--pt-card)}
-#r809Corrida .r809-corrida-preview{padding:13px;border-left:3px solid var(--pt-roxo);background:var(--pt-card);border-radius:8px;margin:14px 0;overflow-wrap:anywhere}
-#r809Corrida .r809-corrida-preview strong{font-size:12px;color:var(--pt-txt)}
-#r809Corrida .r809-corrida-preview p{margin:6px 0 0;color:var(--pt-txt);line-height:1.55}
-#r809Corrida .r809-corrida-summary{font-size:14px;font-weight:600;color:var(--pt-txt)}
-#r809Corrida .r809-corrida-empty{font-size:13px;line-height:1.6;color:var(--pt-txt-4);padding:12px 0}
-#r809Corrida #r809CorridaStatus{margin:12px 0 0;overflow-wrap:anywhere}
+/* Corrida e bike: sequência livre com os tokens e temas do Personal. */
+#r809Corrida,[data-trsec="cardio"] #r809ZonasBox{min-width:0;max-width:100%;box-sizing:border-box;color:var(--pt-txt)}
+#r809Corrida{margin:24px 0;padding:0;border:0;border-radius:0;background:transparent}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) *,:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) *::before,:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) *::after{box-sizing:border-box}
+[data-trsec="cardio"] [hidden]{display:none!important}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) :is(label,input,select,fieldset,textarea){min-width:0;max-width:100%}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) :is(button,summary,input,select){min-height:44px}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) button{font-family:inherit;line-height:1.4;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) button:disabled{opacity:.45;cursor:default}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) :is(button,summary,input,select,textarea):focus-visible{outline:2px solid var(--pt-roxo-claro);outline-offset:3px}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) :is(h3,h4){margin:0;color:var(--pt-txt);font-weight:600;letter-spacing:-.02em;line-height:1.4;overflow-wrap:anywhere}
+#r809Corrida .r827-sequence-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 20px;padding-bottom:14px;border-bottom:1px solid var(--pt-borda)}
+#r809Corrida .r827-sequence-head h3{font-size:19px}
+#r809Corrida #r809BlocosResumo{margin:0;color:var(--pt-txt-3);font-size:13px;font-weight:500;line-height:1.55;overflow-wrap:anywhere}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-corrida-list{margin:0;padding:0;list-style:none}
+#r809Corrida #r809BlocosLista>.r809-corrida-row{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) 44px;align-items:start;gap:12px;min-width:0;padding:15px 0;border:0;border-bottom:1px solid var(--pt-borda);border-radius:0;background:transparent}
+#r809Corrida .r827-step-number{position:relative;z-index:1;display:grid;place-items:center;align-self:start;min-width:30px;height:30px;margin-top:6px;border:1px solid var(--pt-borda-forte,var(--pt-borda));border-radius:50%;color:var(--pt-txt-3);background:var(--pt-card);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+#r809Corrida #r809BlocosLista>.r809-corrida-row:not(:last-child)::before{content:"";position:absolute;top:49px;bottom:-21px;left:15px;width:1px;background:var(--pt-borda)}
+#r809Corrida button.r827-step-main{display:block;width:100%;min-width:0;min-height:44px;margin:0;padding:5px 4px;border:0;border-radius:6px;background:transparent;color:var(--pt-txt);text-align:left;box-shadow:none}
+#r809Corrida .r827-step-main :is(strong,h4){display:block;font-size:15px;font-weight:600}
+#r809Corrida .r827-step-main :is(p,small,span){display:block;margin:4px 0 0;color:var(--pt-txt-3);font-size:13px;font-weight:400;line-height:1.55;overflow-wrap:anywhere}
+#r809Corrida .r827-step-main:hover{background:var(--pt-caixa)}
+#r809Corrida .r827-step-menu{position:relative;margin:0;padding:0;border:0}
+#r809Corrida .r827-step-menu>summary{display:grid;place-items:center;width:44px;min-height:44px;padding:8px;border:1px solid transparent;border-radius:var(--pt-r-caixa,10px);background:transparent;color:var(--pt-txt-3);font-size:18px;font-weight:600;line-height:1;list-style:none;cursor:pointer}
+#r809Corrida .r827-step-menu>summary::marker,#r809Corrida .r827-step-menu>summary::-webkit-details-marker{display:none;content:""}
+#r809Corrida .r827-step-menu>summary::after{content:none}
+#r809Corrida .r827-step-menu>summary:hover,#r809Corrida .r827-step-menu[open]>summary{background:var(--pt-caixa);border-color:var(--pt-borda);color:var(--pt-txt)}
+#r809Corrida .r827-step-menu[open]{z-index:4}
+#r809Corrida .r827-step-menu .r809-corrida-actions{position:absolute;top:50px;right:0;display:grid;grid-template-columns:minmax(0,1fr);gap:2px;width:192px;max-width:calc(100vw - 48px);margin:0;padding:6px;border:1px solid var(--pt-borda-forte,var(--pt-borda));border-radius:12px;background:var(--pt-card);box-shadow:0 8px 24px rgb(0 0 0 / .16)}
+#r809Corrida .r827-step-menu .r809-corrida-actions button{width:100%;min-width:0;min-height:44px;padding:10px;border:0;border-radius:7px;color:var(--pt-txt-2);background:transparent;font-size:13px;font-weight:500;text-align:left}
+#r809Corrida .r827-step-menu .r809-corrida-actions button:hover:not(:disabled){background:var(--pt-caixa);color:var(--pt-txt)}
+#r809Corrida .r827-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0 22px}
+#r809Corrida .r827-quick-actions button{min-width:0;min-height:44px;padding:10px 8px;border:1px solid var(--pt-borda);border-radius:var(--pt-r-caixa,10px);background:transparent;color:var(--pt-txt-2);font-size:13px;font-weight:600}
+#r809Corrida .r827-quick-actions button:hover{border-color:var(--pt-roxo);background:var(--pt-sel);color:var(--pt-txt)}
+#r809Corrida #r827EtapaEditor{margin:20px 0 0;padding:20px 0 0;border:0;border-top:1px solid var(--pt-borda);border-radius:0;background:transparent}
+#r809Corrida #r809BlocoTitulo{margin-bottom:14px;font-size:17px}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px 16px}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) label{display:grid;align-content:start;gap:7px;margin:8px 0;color:var(--pt-txt-2);font-size:13px;font-weight:500;line-height:1.4}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) :is(input,select,textarea){width:100%;min-height:44px;margin:0;padding:10px 12px;border:1px solid var(--pt-borda);border-radius:var(--pt-r-caixa,10px);background:var(--pt-caixa);color:var(--pt-txt);font-family:inherit;font-size:16px;line-height:1.4}
+#r809Corrida fieldset{margin:18px 0 0;padding:0;border:0;border-radius:0;background:transparent}
+#r809Corrida legend{margin-bottom:4px;padding:0;color:var(--pt-txt);font-size:14px;font-weight:600}
+#r809Corrida .r827-measure{display:grid;grid-template-columns:minmax(0,1fr) minmax(82px,.6fr);align-items:end;gap:8px;min-width:0}
+#r809Corrida .r827-effort-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;min-width:0}
+#r809Corrida .r827-effort-fields>.r809-grid{grid-column:1/-1}
+#r809Corrida .r827-effort-fields>:is(p,small,.r827-effort-hint),#r809Corrida .r809-corrida-zone-field{grid-column:1/-1}
+#r809Corrida :is(.r827-effort-fields,.r827-measure) label{min-width:0}
+#r809Corrida .r827-effort-fields :is(p,small){margin:4px 0 8px;font-size:12px;line-height:1.5;color:var(--pt-txt-4)}
+#r809Corrida .r827-step-note{margin:8px 0 0;padding:0;border:0}
+#r809Corrida .r827-step-note>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;color:var(--pt-txt-3);font-size:13px;font-weight:500;list-style:none;cursor:pointer}
+#r809Corrida .r827-step-note>summary::marker,#r809Corrida .r827-step-note>summary::-webkit-details-marker{display:none;content:""}
+#r809Corrida .r827-step-note>summary::after{content:"+";color:var(--pt-roxo-claro);font-size:18px}
+#r809Corrida .r827-step-note[open]>summary::after{content:"−"}
+#r809Corrida .r809-corrida-preview{margin:18px 0 10px;padding:0 0 0 14px;border:0;border-left:3px solid var(--pt-roxo);border-radius:0;background:transparent;overflow-wrap:anywhere}
+#r809Corrida .r809-corrida-preview>strong{color:var(--pt-txt-4);font-size:12px;font-weight:500}
+#r809Corrida #r809BlocoPreview{margin:5px 0 0;color:var(--pt-txt);font-size:14px;line-height:1.6}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-actions button{flex:0 1 auto;min-width:0;padding:10px 14px;font-size:13px}
+#r809Corrida #r809BlocoAdd{border-color:var(--pt-roxo);background:var(--pt-sel);color:var(--pt-txt);font-weight:600}
+:is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-corrida-empty{padding:18px 0;color:var(--pt-txt-4);font-size:13px;line-height:1.6}
+[data-trsec="cardio"] #r809ZonasBox{margin:26px 0 0;padding:0;border:0;border-top:1px solid var(--pt-borda);border-radius:0;background:transparent}
+[data-trsec="cardio"] #r809ZonasBox>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;color:var(--pt-txt-2);font-size:14px;font-weight:600;line-height:1.5;list-style:none;cursor:pointer}
+[data-trsec="cardio"] #r809ZonasBox>summary::marker,[data-trsec="cardio"] #r809ZonasBox>summary::-webkit-details-marker{display:none;content:""}
+[data-trsec="cardio"] #r809ZonasBox>summary::after{content:"+";flex:none;color:var(--pt-roxo-claro);font-size:20px;font-weight:400}
+[data-trsec="cardio"] #r809ZonasBox[open]>summary::after{content:"−"}
+[data-trsec="cardio"] #r809ZonasBox>p{margin:0 0 16px;color:var(--pt-txt-4);font-size:13px;line-height:1.6}
+[data-trsec="cardio"] #r809ZonasBox h4{font-size:15px}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-list{margin-top:20px}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;padding:14px 0;border:0;border-top:1px solid var(--pt-borda);background:transparent}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-info{flex:1 1 200px;min-width:0}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-info p{margin:4px 0 0;color:var(--pt-txt-3);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+[data-trsec="cardio"] #r809ZonasBox .r809-corrida-actions button{min-height:44px;min-width:0;padding:9px 10px;font-size:12px}
+#r809Corrida #r809CorridaStatus{margin:14px 0 0;color:var(--pt-txt);font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 #r809Corrida #r809CorridaStatus:empty{display:none}
-@media(max-width:480px){
-  #r809Corrida{padding:12px}
-  #r809Corrida .r809-grid{grid-template-columns:minmax(0,1fr);gap:6px}
-  #r809Corrida .r809-corrida-editor{padding:11px}
-  #r809Corrida fieldset{padding:10px}
-  #r809Corrida .r809-corrida-actions{flex-basis:100%}
-  #r809Corrida .r809-actions button{flex:1 1 100%;min-width:0}
+#r809Corrida .r827-editor-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+#r809Corrida .r827-editor-head select{width:auto;max-width:210px;margin:0;font-size:13px}
+#r809Corrida .r827-repeat-count{max-width:210px}
+[data-trsec="cardio"] #cbLista .sessao-pt{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:16px 0}
+[data-trsec="cardio"] #cbLista .sessao-pt>.muted{flex:1 1 180px;min-width:0}
+[data-trsec="cardio"] #cbLista .sessao-pt>.trx-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0}
+[data-trsec="cardio"] #cbLista .trx-row-more{margin:0}
+[data-trsec="cardio"] #cbLista .trx-row-more>summary{padding:10px;font-size:12px;min-height:44px}
+@media(max-width:600px){
+  #r809Corrida{margin:20px 0}
+  #r809Corrida .r827-sequence-head{display:block}
+  #r809Corrida #r809BlocosResumo{margin-top:4px}
+  #r809Corrida .r827-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #r809Corrida #r809BlocosLista>.r809-corrida-row{grid-template-columns:28px minmax(0,1fr) 44px;gap:8px}
+  #r809Corrida .r827-step-number{min-width:28px;height:28px;font-size:11px}
+  #r809Corrida #r809BlocosLista>.r809-corrida-row:not(:last-child)::before{left:13px;top:47px}
+  #r809Corrida .r827-step-main :is(strong,h4){font-size:14px}
+  :is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-grid{grid-template-columns:minmax(0,1fr);gap:0}
+  :is(#r809Corrida,[data-trsec="cardio"] #r809ZonasBox) .r809-actions button{flex:1 1 130px}
+  [data-trsec="cardio"] #r809ZonasBox .r809-corrida-actions{width:100%}
+  [data-trsec="cardio"] #r809ZonasBox .r809-corrida-actions button{flex:1 1 90px}
+}
+@media(prefers-reduced-motion:no-preference){
+  #r809Corrida :is(.r827-step-main,.r827-quick-actions button,.r827-step-menu>summary){transition:background-color .15s,border-color .15s}
 }

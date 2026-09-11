@@ -9087,6 +9087,8 @@ async function novaExecucaoAluno(p) {
     sel.value = sel.options[1].value;
     sel.dispatchEvent(new Event("change"));
     document.getElementById("cbNome").value = "Rodagem de terça";
+    document.getElementById("cbModo").value = "simples";
+    document.getElementById("cbModo").dispatchEvent(new Event("change"));
     document.getElementById("cbTipo").value = "continuo";
     document.getElementById("cbDist").value = "5";
     document.getElementById("cbPace").value = "6:30";
@@ -9094,6 +9096,8 @@ async function novaExecucaoAluno(p) {
     document.getElementById("cbSalva").click();
     await new Promise((r) => setTimeout(r, 200));
     document.getElementById("cbNome").value = "Tiros de quinta";
+    document.getElementById("cbModo").value = "simples";
+    document.getElementById("cbModo").dispatchEvent(new Event("change"));
     document.getElementById("cbTipo").value = "intervalado";
     document.getElementById("cbTipo").dispatchEvent(new Event("change"));
     document.getElementById("cbReps").value = "2";
