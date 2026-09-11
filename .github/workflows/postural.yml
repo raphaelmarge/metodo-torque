@@ -1,0 +1,63 @@
+name: Avaliação postural (integração)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'assets/*postural*'
+      - 'assets/personal-torque-one.js'
+      - 'personal.html'
+      - 'supabase/migrations/*personal_postural*'
+      - 'tests/*postural*'
+      - '.github/workflows/postural.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/*postural*'
+      - 'supabase/migrations/*personal_postural*'
+      - 'tests/*postural*'
+      - '.github/workflows/postural.yml'
+permissions:
+  contents: read
+jobs:
+  postural:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: America/Sao_Paulo
+      BASE_URL: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preparar dependências isoladas
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --no-save --package-lock=false playwright@1
+          bash .github/scripts/prepara-playwright-ci.sh
+          npx playwright install --with-deps chromium
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          echo "CHROMIUM_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Geometria, RLS e ciclo de vida
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p postural-evidence
+          for test in tests/test-postural.js tests/test-postural-sql.js tests/test-postural-lifecycle.js tests/test-versao.js; do
+            node "$test" | tee "postural-evidence/$(basename "$test").log"
+          done
+      - name: Editor real e IndexedDB
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >postural-evidence/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 40); do curl -fsS "$BASE_URL/assets/versao.js" >/dev/null && break; sleep 0.25; done
+          timeout 180 node tests/test-postural-editor.js 2>&1 | tee postural-evidence/editor.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postural-evidence-${{ github.sha }}
+          path: postural-evidence/
+          retention-days: 7

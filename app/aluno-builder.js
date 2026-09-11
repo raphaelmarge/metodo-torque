@@ -16,6 +16,50 @@
  * que chega em variáveis CSS no bloco :root.
  */
 (function (raiz) {
+
+  /* Blocos prescritos: valida o pacote antes de preparar o player.
+   * Mesmas regras do editor; testes comparam as duas saídas. */
+  function corridaEstruturada(bs) {
+  function copy(x) { return JSON.parse(JSON.stringify(x)); }
+  function numero(x, min, max) {
+    var s = String(x == null ? "" : x).trim().replace(",", "."), n = Number(s);
+    if (!s || !isFinite(n) || n < min || n > max) throw new Error("Confira os limites numéricos informados.");
+    return n;
+  }
+  function zonaValida(z) {
+    return !!(z && typeof z.nome === "string" && z.nome.length <= 60 && ["pace","velocidade","fc"].indexOf(z.tipo)>=0 &&
+      Number.isFinite(z.min) && Number.isFinite(z.max) && z.min > 0 && z.min <= z.max && z.max <= (z.tipo === "pace" ? 5999 : z.tipo === "fc" ? 300 : 200));
+  }
+  function zNum(n,t) { return t === "pace" ? Math.floor(n/60) + ":" + String(n%60).padStart(2,"0") : String(n).replace(".",","); }
+  function zonaTxt(z) { return zonaValida(z) ? z.nome + " · " + zNum(z.min,z.tipo) + "–" + zNum(z.max,z.tipo) + " " + ({pace:"min/km",velocidade:"km/h",fc:"bpm"}[z.tipo]) : ""; }
+  function alvo(x) {
+    if (!x || ["km","min","s"].indexOf(x.unidade)<0) throw new Error("Escolha a unidade do bloco.");
+    var v = numero(x.valor, .01, x.unidade === "km" ? 500 : x.unidade === "min" ? 1440 : 86400);
+    if (x.zona && !zonaValida(x.zona)) throw new Error("A zona do bloco não é válida. Selecione-a novamente.");
+    return {valor:v, unidade:x.unidade, zona:x.zona ? copy(x.zona) : null};
+  }
+  function bloco(x) {
+    if (!x || ["aquecimento","ativo","repetir","recuperacao"].indexOf(x.tipo)<0) throw new Error("Escolha o tipo de bloco.");
+    var b = {tipo:x.tipo, alvo:alvo(x.alvo), repeticoes:1};
+    if (b.tipo === "repetir") { b.repeticoes = numero(x.repeticoes,1,20); if(!Number.isInteger(b.repeticoes))throw new Error("Use um número inteiro de repetições."); b.recuperacao = alvo(x.recuperacao); }
+    return b;
+  }
+  function blocos(bs) {
+    if(!Array.isArray(bs) || bs.length>20)throw new Error("Use até 20 blocos.");
+    var r=bs.map(bloco), n=0; r.forEach(function(b){n+=b.tipo==="repetir"?2*b.repeticoes:1;});
+    if(n>60)throw new Error("A estrutura permite até 60 etapas, contando as repetições.");
+    return r;
+  }
+  function alvoTxt(a) { return String(a.valor).replace(".",",")+" "+a.unidade+(a.zona?" · "+zonaTxt(a.zona):""); }
+  function blocoTxt(b) { var nomes={aquecimento:"Aquecimento",ativo:"Ativo",repetir:"Repetir",recuperacao:"Recuperação"}; return nomes[b.tipo]+(b.tipo==="repetir"?" "+b.repeticoes+"×":"")+": "+alvoTxt(b.alvo)+(b.recuperacao?" / "+alvoTxt(b.recuperacao):""); }
+  function expande(bs) {
+    var out=[];
+    function add(a,k,n){out.push({k:k,n:n,d:alvoTxt(a),s:a.unidade==="km"?0:a.valor*(a.unidade==="min"?60:1),km:a.unidade==="km"?a.valor:0});}
+    blocos(bs).forEach(function(b){if(b.tipo==="repetir"){for(var i=0;i<b.repeticoes;i++){add(b.alvo,"f","Ativo "+(i+1)+" de "+b.repeticoes);add(b.recuperacao,"l","Recuperação "+(i+1)+" de "+b.repeticoes);}}else add(b.alvo,b.tipo==="aquecimento"?"aq":b.tipo==="recuperacao"?"vc":"c",{aquecimento:"Aquecimento",ativo:"Ativo",recuperacao:"Recuperação"}[b.tipo]);});return out;
+  }
+    try { var limpos = blocos(bs); return { bl: expande(limpos), br: limpos.map(blocoTxt).join(" | ") }; }
+    catch (e) { return { bl: [], br: "Prescrição por blocos inválida — confirme com seu personal.", erro: true }; }
+  }
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&"']/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function jsonApp(v) { return JSON.stringify(v).replace(/</g, "\\u003c"); }
   // Uma regra para editor, pacote e player. O corpo também viaja no HTML gerado.
@@ -965,6 +1009,10 @@
     // ordenada por horário no painel. Formato antigo (um objeto por dia)
     // continua valendo: plnLista devolve os dois como lista.
     var planoApp = D.planoApp || null;
+    var planoDatas = D.planoDatas && typeof D.planoDatas === "object" && !Array.isArray(D.planoDatas) ? D.planoDatas : null;
+    if (planoDatas && Object.keys(planoDatas).length && !planoApp) planoApp = {};
+    var atendimento809 = String(D.atendimento || D.modalidade || (D.a && (D.a.atendimento || D.a.modalidade)) || "").trim().toLowerCase();
+    var agendaPresencial = ["online", "on-line", "consultoria online", "consultoria on-line"].indexOf(atendimento809) < 0;
     var plnLista = function (dk) {
       var v = planoApp ? planoApp[String(dk)] : null;
       if (!v) return [];
@@ -1111,6 +1159,7 @@
      * os dois na ordem em que o aluno vai fazer. Gemeo do crAlvoTxt() la
      * dentro do app (que le as chaves curtas) — mexeu num, confira o outro. */
     var alvoCardio = function (c) {
+      if (Array.isArray(c.blocos) && c.blocos.length) return corridaEstruturada(c.blocos).br;
       var cont = [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""),
         (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ");
       var tiros = (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve";
@@ -1186,7 +1235,7 @@
             "</div>";
         }).join("") + "</div></div>";
     };
-    var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+    var htmlApp = "<!DOCTYPE html><html lang='pt-BR' data-atendimento-online='" + (agendaPresencial ? "0" : "1") + "'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
@@ -3333,7 +3382,7 @@
        * semana. Quem tem data de verdade são as sessões, e essas vêm no pacote. */
       "function agItensDia(iso){var out=[];" +
       "var d9=new Date(iso+'T12:00:00');" +
-      "plnDia(d9.getDay()).forEach(function(p){" +
+      "plnDia(d9.getDay(),iso).forEach(function(p){" +
       "out.push({k:'treino',tp:p.tp,i:p.i,h:p.h||'',tit:p.n||'Treino'," +
       "sub:p.tp==='wod'?'circuito':p.tp==='cardio'?'corrida e bike':'musculação'});});" +
       /* v771: a gaveta do calendário do Início chama isto ANTES deste bloco
@@ -3484,7 +3533,7 @@
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
       "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
       "(function(){for(var dp=1;dp<=nd;dp++){var isoP=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dp).slice(-2);" +
-      "if(pontos[isoP])continue;var dw=new Date(isoP+'T12:00:00').getDay();if(plnDia(dw).length)pontos[isoP]='treino';}})();" +
+      "if(pontos[isoP])continue;var dw=new Date(isoP+'T12:00:00').getDay();if(plnDia(dw,isoP).length)pontos[isoP]='treino';}})();" +
       "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' aria-label='Mês anterior' style='background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' aria-label='Próximo mês' style='background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
@@ -3573,13 +3622,14 @@
       "var r9=e.target.closest&&e.target.closest('[data-agrem]');if(!r9)return;var p9=r9.getAttribute('data-agrem').split('|');" +
       "if(window.__trocaSec)window.__trocaSec('chat');var ct9=document.getElementById('chTexto');" +
       "if(ct9){ct9.value='Preciso remarcar a sessão de '+p9[0].slice(8,10)+'/'+p9[0].slice(5,7)+(p9[1]?' às '+p9[1]:'')+' — pode ser?';ct9.focus();}});" +
-      "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
+      "var AGENDA_PRESENCIAL=" + jsonApp(agendaPresencial) + ";" +
+      "document.getElementById('agPede').addEventListener('click',function(){if(!AGENDA_PRESENCIAL)return;if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){var l=L('ptagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ptagenda',l);document.getElementById('agObs').value='';pintaCal();" +
-      "alert('Pedido enviado! '+PRIMEIRO+', seu personal confirma em breve.');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
+      "alert('Pedido enviado! '+PRIMEIRO+', seu personal confirma em breve.');}else{alert((r&&r.erro==='atendimento_online')?'Este atendimento é exclusivamente online. Não é possível pedir aula presencial.':(r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
       "else{var pd=AGSEL.split('-');window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent('Oi! Queria marcar horário dia '+pd[2]+'/'+pd[1]+' às '+hr+(ob?' — '+ob:'')),'_blank');}});" +
       // o atalho de baixo: seleciona HOJE no calendário e abre o formulário
-      "var apj=document.getElementById('agPedeJa');if(apj)apj.addEventListener('click',function(){" +
+      "var apj=document.getElementById('agPedeJa');if(apj)apj.addEventListener('click',function(){if(!AGENDA_PRESENCIAL)return;" +
       "if(!AGSEL){var c9=document.querySelector(\"[data-agdia='\"+isoHj()+\"']\");if(c9)c9.click();}" +
       "var f9=document.getElementById('agForm');if(f9&&f9.style.display!=='none')f9.scrollIntoView({behavior:'smooth',block:'center'});});" +
       "carregaAgenda();" +
@@ -4389,12 +4439,18 @@
       "function hrZ(b){var mx=hrMax();if(!mx||!(b>0))return -1;var p=b/mx;return p<.6?0:p<.7?1:p<.8?2:p<.9?3:4;}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
-      "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaRef(c) }; })) + ";" +
+      "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) {
+        var estrutura = Array.isArray(c.blocos) && c.blocos.length ? corridaEstruturada(c.blocos) : null;
+        return { id:c.id, n:c.nome, m:c.mod, t:estrutura ? "blocos" : c.tipo,
+          d:estrutura ? 0 : (+c.dist || 0), tp:estrutura ? 0 : (+c.tempo || 0), p:estrutura ? "" : (c.pace || ""),
+          r:+c.reps || 8, ti:+c.tiro || 60, de:+c.desc || 90, cp:capaRef(c),
+          bl:estrutura && estrutura.bl, br:estrutura && estrutura.br, erro:!!(estrutura && estrutura.erro) };
+      })) + ";" +
       /* O resumo do treino de cardio numa linha. 'misto' e o pedido do
        * professor: a MESMA folha tem parte continua E tiros, entao o resumo
        * mostra os dois na ordem em que o aluno vai fazer. Gemeo do
        * alvoCardio() aqui de cima — mexeu num, confira o outro. */
-      "function crAlvoTxt(c){if(!c)return 'livre';" +
+      "function crAlvoTxt(c){if(!c)return 'livre';if(c.br)return c.br;" +
       "var ct=[(c.d?String(c.d).replace('.',',')+' km':''),(c.tp?c.tp+' min':''),(c.p?'pace '+c.p:'')].filter(Boolean).join(' \\u00b7 ');" +
       "var ti=(c.r||8)+'\\u00d7 '+(c.ti||60)+'s forte / '+(c.de||90)+'s leve';" +
       "if(c.t==='intervalado')return ti;if(c.t==='misto')return (ct||'parte cont\\u00ednua')+' + '+ti;return ct||'livre';}" +
@@ -4672,7 +4728,7 @@
       "crCd(forte?p2.ti-pos:ciclo-pos);try{espelhaCr();}catch(e){}return;}" +
       "fase.style.color='#a9a4b5';" +
       "fase.textContent=cr.run?(CRMODS[cr.mod]||'Cardio').toUpperCase()+(p2?' \\u00b7 '+p2.n.toUpperCase():''):(cr.acum>0?(cr.autoP?'PAUSA AUTOM\\u00c1TICA \\u2014 anda que volta':'Pausado'):'Pronto pra correr?');" +
-      "if(p2){var alvos=[];if(p2.d)alvos.push(p2.d+' km');if(p2.tp)alvos.push(p2.tp+' min');if(p2.p)alvos.push('pace '+p2.p);" +
+      "if(p2){var alvos=[];if(p2.br)alvos.push(p2.br);if(p2.d)alvos.push(p2.d+' km');if(p2.tp)alvos.push(p2.tp+' min');if(p2.p)alvos.push('pace '+p2.p);" +
       "info.textContent='Alvo: '+(alvos.join(' \\u00b7 ')||'livre')+(p2.d&&km>=p2.d?' \\u2014 ALVO BATIDO!':'');" +
       "if(cr.run&&!cr.alvoBipou&&((p2.d&&km>=p2.d)||(p2.tp&&el2>=p2.tp*60))){cr.alvoBipou=true;bip(1300,300);if(navigator.vibrate)navigator.vibrate([150,80,150]);}}" +
       "else if(cr.metaD||cr.metaT){info.textContent='Meta: '+(cr.metaD?cr.metaD+' km':cr.metaT+' min')+((cr.metaD&&km>=cr.metaD)||(cr.metaT&&el2>=cr.metaT*60)?' \\u2014 META BATIDA!':'');" +
@@ -5199,7 +5255,7 @@
       "document.addEventListener('click',function(e){var b=e.target.closest('.crModBt');if(!b||cr.run)return;" +
       "cr.plano=null;cr.mod=b.dataset.crmod;cr.alvoBipou=false;cr.mistoT0=null;cr.mistoVai=false;crChips();pintaCr();});" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
-      "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
+      "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;if(p3.erro){alert(p3.br);return;}" +
       /* v751: trocar de treino no meio da corrida pede confirmacao e passa pelo
        * MESMO Zerar de sempre (rota, rumo, wake lock, mistoT0...) — antes
        * zerava metade dos campos sem perguntar e o trajeto da corrida jogada
@@ -5218,7 +5274,8 @@
       /* A fila de blocos do treino guiado. 'misto' e o pedido do professor: o
        * MESMO treino tem uma parte continua E os tiros. Ela entra como continuo
        * PRIMEIRO e tiros depois — e a ordem que o corpo aguenta. */
-      "function crMontaBlocos(p){if(!p||!crCfg().bl)return null;" +
+      "function crMontaBlocos(p){if(!p||p.erro)return null;" +
+      "if(p.bl&&p.bl.length)return p.bl.map(function(b){return Object.assign({},b);});if(!crCfg().bl)return null;" +
       "var b=[{k:'aq',n:'Aquecimento',d:'ritmo leve — dá pra conversar',s:AQ_SEG}];" +
       "var temC=p.t==='continuo'||p.t==='misto',temI=p.t==='intervalado'||p.t==='misto';" +
       "if(!temC&&!temI)temC=true;" +
@@ -7126,16 +7183,18 @@
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
           "var PLANO=" + jsonApp(planoApp) + ";" +
+          "var PLANO_DATAS=" + jsonApp(planoDatas) + ";" +
       /* v768: o dia do plano virou uma LISTA (corrida + musculação no mesmo
        * dia). `plnDia` aceita os dois formatos — o antigo, que é um objeto só,
        * e o novo — e devolve sempre uma lista; `plnPri` é o PRIMEIRO do dia
        * (o mais cedo, porque o painel já manda ordenado por horário) e é o que
        * o card grande de HOJE, o recado do coach e as abas continuam usando.
        * Assim nada do que já existia mudou de comportamento. */
-      "function plnDia(d){var v=(typeof PLANO!=='undefined'&&PLANO)?PLANO[String(d)]:null;" +
+      "function plnDia(d,iso){var v=(typeof PLANO!=='undefined'&&PLANO)?PLANO[String(d)]:null;" +
+      "if(iso&&PLANO_DATAS&&Object.prototype.hasOwnProperty.call(PLANO_DATAS,iso))v=PLANO_DATAS[iso];" +
       "if(!v)return [];return Array.isArray(v)?v.filter(Boolean):[v];}" +
-      "function plnPri(d){return plnDia(d)[0]||null;}" +
-      "function plnHoje(){return plnDia(new Date().getDay());}" +
+      "function plnPri(d){return plnDia(d,d===new Date().getDay()?isoHj():null)[0]||null;}" +
+      "function plnHoje(){return plnDia(new Date().getDay(),isoHj());}" +
       "window.__plnDia=plnDia;window.__plnHoje=plnHoje;" +
       /* v771: o card "Seu dia" virou a gaveta do calendário do Início
        * (pintaSemDia, lá em cima) — três blocos falavam a mesma coisa na mesma

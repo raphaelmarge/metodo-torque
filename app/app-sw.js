@@ -14,7 +14,7 @@
  * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
  * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
  * este número bate com o do assets/versao.js e o do sw.js. */
-var VERSION = "mt-v821";
+var VERSION = "mt-v822";
 var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
@@ -31,16 +31,16 @@ var ESQUELETO = [
   "./",
   "index.html",
   "aluno-builder.js",
-  "aluno-skin.js",
+  "aluno-skin.js",     // v776: faltava — o app abria offline sem a cara do redesenho
   "nutri-builder.js",
   "nutri-skin.js",
   "manifest.webmanifest",
   "../assets/cloud-config.js",
   "../assets/versao.js",
-  "../assets/relatorio-0809.js",
-  "../assets/relatorio-0809.css",
   "../assets/nutricao-core.js",
   "../assets/onboarding-consultoria.js",
+  // a cara do redesenho é a Archivo — sem ela no esqueleto, o app offline
+  // abria na fonte do sistema e ficava diferente do desenho
   "../assets/fonts/archivo.css",
   "../assets/fonts/files/archivo-latin-400-normal.woff2",
   "../assets/fonts/files/archivo-latin-500-normal.woff2",
@@ -57,7 +57,7 @@ self.addEventListener("install", function (e) {
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
     return Promise.all(ks.map(function (k) {
-      if (k === MAPA) return null;
+      if (k === MAPA) return null;                       // a do mapa sobrevive à troca de versão
       return k !== CACHE && k.indexOf("mt-app-") === 0 ? caches.delete(k) : null;
     }));
   }).then(function () { return self.clients.claim(); }));
@@ -67,8 +67,9 @@ self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
-  if (url.origin !== location.origin) return;
+  if (url.origin !== location.origin) return; // nuvem e vídeos passam direto
 
+  // motor do mapa 3D: cache primeiro, cache própria, atravessa as versões
   if (url.pathname.indexOf("/assets/vendor/maplibre/") > -1) {
     e.respondWith(caches.open(MAPA).then(function (c) {
       return c.match(req).then(function (hit) {
@@ -85,10 +86,19 @@ self.addEventListener("fetch", function (e) {
   e.respondWith(
     fetch(req).then(function (r) {
       if (r && r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); return r; }
+      /* v776: resposta que veio mas NÃO é ok (503 do CDN, portal cativo
+       * devolvendo HTML com 200 pra um .js não passa aqui — mas 4xx/5xx sim)
+       * era entregue ao <script> como se fosse o arquivo. Com cópia boa no
+       * cache, a cópia vale mais que o erro. Sem cópia, o erro segue. */
       return caches.match(req).then(function (c) { return c || r; });
     }).catch(function () {
       return caches.match(req).then(function (c) {
         if (c) return c;
+        /* v747: o index.html só serve de reserva pra NAVEGAÇÃO. Antes qualquer
+         * arquivo que faltasse offline (script, imagem, JSON) recebia HTML com
+         * status 200: o onerror nunca disparava e o erro aparecia longe
+         * ("SyntaxError", "window.X is undefined"). Sub-recurso que falta
+         * falha de verdade, como a rede falharia. */
         if (req.mode === "navigate") return caches.match("index.html");
         return Response.error();
       });
@@ -99,6 +109,7 @@ self.addEventListener("fetch", function (e) {
 self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
+  // sem título no payload vale a marca do produto (nunca a academia do dono)
   e.waitUntil(self.registration.showNotification(d.t || "TORQUE ON", {
     body: d.b || "",
     icon: "../assets/icons/icon-192.png",

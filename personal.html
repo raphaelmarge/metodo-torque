@@ -2096,6 +2096,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Novo aluno — passo 1 de 2 · Cadastro</h2>
           <div class="grid-2" style="margin-top: 10px;">
             <div class="campo"><label>Nome *</label><input id="aNome" placeholder="Nome completo"></div>
+            <label class="campo" for="aAtendimento">Tipo de atendimento<select id="aAtendimento"><option value="">Conforme o plano (cadastro antigo preservado)</option><option value="presencial">Personal presencial</option><option value="consultoria online">Consultoria online</option><option value="híbrido">Híbrido</option></select></label>
             <div class="campo"><label>WhatsApp</label><input id="aZap" placeholder="DDD + número" inputmode="numeric"></div>
             <div class="campo"><label>E-mail (cria o acesso do app)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
             <div class="campo"><label>Objetivo</label><input id="aObjetivo" placeholder="Ex.: hipertrofia, emagrecimento"></div>
@@ -2535,7 +2536,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <label class="trx-field" for="cbTipo">Formato<select id="cbTipo"><option value="continuo">Contínuo</option><option value="intervalado">Intervalos de esforço e pausa</option><option value="misto">Contínuo + intervalos</option></select></label>
           <label class="trx-field" for="cbDist" data-cbcfg="continuo">Distância (km)<input id="cbDist" inputmode="decimal" value="5"><small>0 = distância livre</small></label>
           <label class="trx-field" for="cbTempo" data-cbcfg="continuo">Tempo alvo (min)<input id="cbTempo" inputmode="numeric" value="0"><small>0 = tempo livre</small></label>
-          <label class="trx-field" for="cbPace" data-cbcfg="continuo">Pace alvo (min/km)<input id="cbPace" placeholder="Opcional · ex.: 6:30"></label>
+          <label class="trx-field" for="cbPace" data-cbcfg="continuo">Pace alvo (min/km)<input id="cbPace" placeholder="Opcional · ex.: 6:30"><input id="cbBlocos" type="hidden" value="[]"></label>
           <label class="trx-field" for="cbReps" data-cbcfg="intervalado" hidden>Intervalos<input id="cbReps" inputmode="numeric" value="8"></label>
           <label class="trx-field" for="cbTiro" data-cbcfg="intervalado" hidden>Esforço (s)<input id="cbTiro" inputmode="numeric" value="60"></label>
           <label class="trx-field" for="cbDesc" data-cbcfg="intervalado" hidden>Recuperação (s)<input id="cbDesc" inputmode="numeric" value="90"></label>
@@ -3778,6 +3779,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <fieldset class="pfp-group"><legend>Identificação e contato</legend><div class="pfp-fields"><label class="pfp-field" for="pfNome">Nome<input id="pfNome"></label>
 <label class="pfp-field" for="pfZap">WhatsApp<input id="pfZap" inputmode="numeric"></label>
 <label class="pfp-field" for="pfEmail">E-mail<input id="pfEmail" type="email"></label>
+<label class="pfp-field" for="pfAtendimento">Tipo de atendimento<select id="pfAtendimento"><option value="">Conforme o plano (cadastro antigo preservado)</option><option value="presencial">Personal presencial</option><option value="consultoria online">Consultoria online</option><option value="híbrido">Híbrido</option></select></label>
 <label class="pfp-field" for="pfNasc">Nascimento<input id="pfNasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="bday"></label>
 <label class="pfp-field" for="pfSexo">Sexo<select id="pfSexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
 <label class="pfp-field" for="pfProfissao">Profissão<input id="pfProfissao"></label></div></fieldset>
@@ -3835,7 +3837,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     </div>
 
     <button class="btn mini" id="pfAnSalvar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar anamnese</button>
-    <span id="pfAnSalvo" class="muted"></span></div></details>
+    <span id="pfAnSalvo" class="muted"></span>
+</div></details>
   </section>
   <section class="card pfp-section" data-pfsec="app" hidden>
     <div class="pfp-section-head"><h2>App e acesso</h2></div><p id="pfAcessoStatus" class="muted"></p>
@@ -3908,10 +3911,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="app/aluno-skin.js"></script>
 <script src="app/aluno-builder.js"></script>
 <script src="assets/prescricao-series.js"></script>
+<link rel="stylesheet" href="assets/relatorio-0809.css">
+<script src="assets/relatorio-0809.js"></script>
 <script>
 (function () {
   "use strict";
   var S = window.MTStore;
+  var R809 = self.MT_RELATORIO_0809;
   var $ = function (id) { return document.getElementById(id); };
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&"']/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
@@ -5016,6 +5022,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function alProximoPasso(a, m, permiteFin) {
     if (a.ativo === false) return { acao: "agenda", titulo: "Aluno encerrado", motivo: "Consulte o histórico e a agenda antes de retomar o acompanhamento.", botao: "Ver agenda", peso: 9 };
     if (m.fi.velha) return { acao: "treino", titulo: m.fi.o === "Sem ficha" ? "Montar o treino" : "Revisar o treino", motivo: m.fi.o === "Sem ficha" ? "Este aluno ainda não tem ficha de musculação." : "A prescrição atual precisa de revisão.", botao: m.fi.o === "Sem ficha" ? "Montar treino" : "Revisar treino", peso: 0 };
+    if (R809.online(a)) return { acao:"treino", titulo:"Acompanhar consultoria", motivo:"Atendimento online: consulte a prescrição e o retorno do aluno.", botao:"Ver treino", peso:2 };
     if (m.sumindo) return { acao: "agendar", titulo: "Retomar o acompanhamento", motivo: "Está sem atividade recente e sem sessão marcada.", botao: "Agendar sessão", peso: 1 };
     if (m.prox && m.prox.data === S.todayISO()) return { acao: "agenda", titulo: "Conferir a sessão de hoje", motivo: "Há uma sessão de hoje ainda sem presença registrada.", botao: "Ver agenda", peso: 2 };
     if (m.est === "devendo" && permiteFin) return { acao: "financeiro", titulo: "Conferir o financeiro", motivo: "Existe cobrança vencida. Confira o histórico antes de entrar em contato.", botao: "Ver financeiro", peso: 3 };
@@ -5195,7 +5202,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // O formulário mora em vAlunos: todos os atalhos precisam exibir a aba
     // antes de abrir o modal, senão o diálogo invisível bloqueia a página.
     vaiAba("alunos");
-    ["aNome", "aZap", "aEmail", "aObjetivo", "aSexo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
+    ["aAtendimento", "aNome", "aZap", "aEmail", "aObjetivo", "aSexo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
     $("naPasso1").hidden = false;
     $("naPasso2").hidden = true;
     naAlunoId = null;
@@ -5295,7 +5302,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: 0, modo: "mes", metaSemana: 3,
       objetivo: $("aObjetivo").value.trim(), sexo: $("aSexo").value, cpf: $("aCpf").value.trim(), cep: $("aCep").value.trim(), endereco: $("aEnd").value.trim(),
-      ativo: true, desde: S.todayISO() };
+      atendimento: $("aAtendimento").value, ativo: true, desde: S.todayISO() };
     if ($("naOnboarding") && $("naOnboarding").checked) novo.onboardingConsultoria = { requerido: true, revisao: String(Date.now()) };
     st.alunos.push(novo);
     save(st);
@@ -5844,12 +5851,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * mesmo que #chatFicha e o data-altreino da lista. */
     if (id === "pfIrChat") { if (perfilId) alExecutaAcao(perfilId, "chat"); return; }
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
-    if (id === "pfIrAgenda") { if (perfilId) alExecutaAcao(perfilId, "agendar"); return; }
+    if (id === "pfIrAgenda") { if (perfilId && !R809.online(load().alunos.find(function(a){return a.id===perfilId;}))) alExecutaAcao(perfilId, "agendar"); return; }
     if (id === "pfMontaTreino" && perfilId) { vaiMontarTreino(perfilId); return; }
     if (id === "pfNovaAval") { abreAvaliacaoDoPerfil(); return; }
     if (id === "pfEnviarQuest") { abreQuestionarioDoPerfil(); return; }
     if (origem && origem.hasAttribute("data-pfagenda")) { abreAgendaDoPerfil(); return; }
-    if (origem && origem.hasAttribute("data-pfagendar")) { if (perfilId) alExecutaAcao(perfilId, "agendar"); return; }
+    if (origem && origem.hasAttribute("data-pfagendar")) { if (perfilId && !R809.online(load().alunos.find(function(a){return a.id===perfilId;}))) alExecutaAcao(perfilId, "agendar"); return; }
     if (origem && origem.hasAttribute("data-pfsemana")) {
       var alunoSem = origem.getAttribute("data-pfsemana"); vaiMontarTreino(alunoSem);
       $("plnAluno").value = alunoSem; $("plnAluno").dispatchEvent(new Event("change", { bubbles: true }));
@@ -5934,7 +5941,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfNome").value = a.nome; $("pfZap").value = a.zap || "";
     $("pfNasc").value = nascPraTela(a.nasc); $("pfValor").value = a.valor || "";
     $("pfMetaSem").value = +a.metaSemana || 3;
-    $("pfModo").value = a.modo || "mes"; $("pfPagto").value = a.pagto || "";
+    $("pfModo").value = a.modo || "mes";
+    $("pfAtendimento").value = a.atendimento || "";
+    $("pfAtendimento").dataset.original = a.atendimento || ""; $("pfPagto").value = a.pagto || "";
     $("pfObjetivo").value = a.objetivo || ""; $("pfObs").value = a.obs || "";
     $("pfEmail").value = a.email || ""; $("pfSexo").value = a.sexo || "";
     $("pfAltura").value = a.altura || ""; $("pfProfissao").value = a.profissao || "";
@@ -6059,6 +6068,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return "<div style='display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
             "<span><b>" + S.fmtData(p.data) + "</b> <span class='muted'>· " + S.fmtBRL(+p.valor) +
             (p.forma ? " · " + esc(p.forma) : "") + (p.desc ? " · " + esc(p.desc) : "") + "</span></span>" +
+            (alFinanceiroPermitido() ? '<button type="button" class="btn sec mini" data-edita-pagamento="' + esc(p.id) + '">Editar</button>' : "") +
             '<a href="#" data-recibo="' + p.id + '" style="color:var(--roxo);flex:none;">recibo</a></div>';
         }).join("") +
         (pgs.length > 6 ? "<div class='muted' style='font-size:12px;margin-top:6px;'>Mais antigos ficam em Financeiro → Histórico.</div>" : "")
@@ -6192,6 +6202,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaAppDados(a);
     pintaDiario(id);
     pintaAssinatura(a);
+    R809.perfil(a);
   }
   // ---------- diário de sessões ----------
   function pintaDiario(alunoId) {
@@ -7249,6 +7260,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }, function () { if (aindaNesteAluno()) box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
   }
   function alExecutaAcao(id, acao) {
+    if (acao === "agendar" && R809.online(load().alunos.find(function(a){return a.id===id;}))) { alert("Este atendimento é online e não usa agenda presencial."); return; }
     var st = load(), a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) { renderAlunos(st); return; }
     if (a.ativo === false && (acao === "treino" || acao === "agendar")) {
@@ -7414,6 +7426,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });
     if (!a) return;
+    var tipoCampo = $("pfAtendimento"), tipoMudou = tipoCampo.value !== tipoCampo.dataset.original;
+    if (tipoMudou && (a.atendimento || "") !== tipoCampo.dataset.original) { $("pfSalvo").textContent = "O atendimento mudou em outra sessão. Reabra o cadastro antes de salvar."; return; }
     a.nome = $("pfNome").value.trim() || a.nome;
     a.zap = $("pfZap").value.replace(/\D/g, "");
     // data pela metade ou impossível não entra — e não apaga a que já existia
@@ -7423,6 +7437,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     else alert("Nascimento incompleto — use dia/mês/ano (ex.: 20/10/1980). O campo ficou como estava.");
     a.valor = parseFloat(($("pfValor").value || "").replace(",", ".")) || 0;
     a.modo = $("pfModo").value;
+    if (tipoMudou) { a.atendimento = tipoCampo.value; marcaAppPendente(st, a.id); }
     // marco da carteira: a partir de hoje as aulas passam a descontar por sessão
     if (a.modo === "sessao") { if (!a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO(); }
     else a.modoSessaoDesde = "";
@@ -7440,7 +7455,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var metaNova = Math.min(7, Math.max(1, +$("pfMetaSem").value || 3));
     if (metaNova !== (+a.metaSemana || 3)) marcaAppPendente(st, a.id); // a meta muda o app do aluno
     a.metaSemana = metaNova;
-    save(st);
+    if (save(st) === false) { $("pfSalvo").textContent = "Não foi possível salvar. Confira o aviso de sincronização."; return; }
+    tipoCampo.dataset.original = a.atendimento || "";
+    R809.perfil(a);
     $("pfTitulo").textContent = a.nome;
     $("pfSalvo").textContent = "✓ salvo!";
     setTimeout(function () { $("pfSalvo").textContent = ""; }, 2000);
@@ -8435,6 +8452,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (cmd.data === S.todayISO() ? "hoje" : "em " + S.fmtData(cmd.data)) +
         (cmd.hora ? " às " + cmd.hora : ", sem horário") + "?")) return;
       var st1 = load();
+      if (R809.online(st1.alunos.find(function (a) { return a.id === cmd.aluno.id; }))) { alert("Aluno de consultoria online: não é possível criar uma sessão presencial."); return; }
       st1.sessoes.push({ id: S.uid(), alunoId: cmd.aluno.id, data: cmd.data, hora: cmd.hora, feita: false });
       marcaAppPendente(st1, cmd.aluno.id);
       save(st1);
@@ -10882,7 +10900,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var itens = [];
     var t = (st.treinosV2 || {})[alunoId];
     if (t && t.plano) {
-      plnDoDia(t.plano.dias, diaDoPlano(iso)).forEach(function (p) {
+      R809.dia(t.plano, iso, diaDoPlano(iso)).forEach(function (p) {
         var tit = "Treino";
         if (p.tp === "wod") {
           var w = (t.wods || []).find(function (x) { return x.id === p.id; });
@@ -11168,6 +11186,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       e.target.disabled = true; // trava contra toque duplo / re-render antes do update subir
       var st = load();
       var a = st.alunos.find(function (x) { return x.appTokenP === e.target.getAttribute("data-tok"); });
+      if (a && R809.online(a)) { e.target.disabled = false; alert("Este aluno é de consultoria online. O pedido não foi confirmado."); return; }
       if (a) {
         var diaP = e.target.getAttribute("data-dia"), horaP = e.target.getAttribute("data-hora") || "";
         // não cria a sessão duas vezes (mesmo aluno/dia/hora ainda não realizada)
@@ -11258,6 +11277,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     var st = load();
+    if (ids.some(function (id) { return R809.online(st.alunos.find(function (a) { return a.id === id; })); })) { alert("Consultoria online não permite sessões presenciais. Confira os alunos selecionados."); return; }
     var alunoId = ids[0], hora = $("sHora").value || "";
     var datas = [$("sData").value];
     // v748: Remarcar em andamento — edita a sessão (mesmo id/fixaId), não cria outra
@@ -11385,6 +11405,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (fx.diaSem.indexOf(d.getDay()) === -1) continue;
         if (bloqueioDe(st, iso9)) continue;
         (fx.ids || []).forEach(function (aidX) {
+          if (R809.online(st.alunos.find(function (a) { return a.id === aidX; }))) return;
           var ja = st.sessoes.some(function (x) { return x.alunoId === aidX && x.data === iso9 && (x.hora || "") === (fx.hora || ""); });
           if (ja) return;
           st.sessoes.push({ id: S.uid(), alunoId: aidX, data: iso9, hora: fx.hora || "", feita: false, fixaId: fx.id });
@@ -11872,6 +11893,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- pagamentos ----------
   // dívida acumulada: meses sem pagamento desde o início do contrato (não some na virada do mês)
   function dividaDe(st, a) {
+    if (R809.pacotePrePago(st, a)) return { meses: 0, total: 0, valor: 0, chaves: [] };
     var ct = contratoDe(st, a.id);
     var pl = ct ? planoDe(st, ct.planoId) : null;
     // hora-aula não tem "mês devido": quem cobra é a carteira de créditos
@@ -12115,6 +12137,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * do dividaDe) já é vencido; o mês corrente vence depois de diaVenc +
    * tolerância (sem contrato, não pagou = vencido, como sempre foi). */
   function cobrancaVencida(st, a) {
+    if (R809.pacotePrePago(st, a)) return null;
     if (!a || a.ativo === false) return null;
     var ct = contratoDe(st, a.id);
     var pl = ct ? planoDe(st, ct.planoId) : null;
@@ -12565,6 +12588,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("listaPagamentos").innerHTML = lista.length ? lista.map(function (p) {
       return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "Avulso") + "</span>" +
         '<span class="muted">' + esc((p.desc ? p.desc + " · " : "") + (p.forma || "")) + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b>" +
+        (alFinanceiroPermitido() ? '<button type="button" class="btn sec mini" data-edita-pagamento="' + esc(p.id) + '">Editar recebimento</button>' : "") +
         '<button class="btn sec mini" data-recibo="' + esc(p.id) + '" title="recibo pra imprimir ou salvar em PDF">Ver recibo</button></div>';
     }).join("") : "Nenhum recebimento encontrado. Ajuste os filtros ou registre um pagamento.";
     if ($("fgHistResumo")) $("fgHistResumo").textContent = lista.length + " de " + todas.length + " recebimentos · " + S.fmtBRL(todas.reduce(function (s, p) { return s + (+p.valor || 0); }, 0)) + " nos resultados. Os totais do mês permanecem gerais.";
@@ -13704,7 +13728,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var trFormAlunos = { wp: "", cb: "" }, trFormRasc = { wp: {}, cb: {} };
   var trFormCampos = {
     wp: { Nome: "", Modelo: "", Tipo: "fortime", Cap: "12", Min: "10", Rounds: "8", Work: "20", Rest: "10", Aq: "", Obs: "" },
-    cb: { Nome: "", Mod: "corrida", Tipo: "continuo", Dist: "5", Tempo: "0", Pace: "", Reps: "8", Tiro: "60", Desc: "90", Obs: "" }
+    cb: { Nome: "", Mod: "corrida", Tipo: "continuo", Dist: "5", Tempo: "0", Pace: "", Reps: "8", Tiro: "60", Desc: "90", Obs: "", Blocos: "[]" }
   };
   function trFormAcaoLimpar(p) {
     var edit = p === "wp" ? wpEditando : cbEditando;
@@ -13717,6 +13741,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     Object.keys(trFormCampos[p]).forEach(function (k) { $(p + k).value = trFormCampos[p][k]; });
     if (p === "wp") { wpEditando = null; wpMontaLinhas(); wpMostraCfg(); }
     else { cbEditando = null; cbMostraCfg(); }
+    if (p === "cb") R809.corrida();
     $(p + "FormTit").textContent = p === "wp" ? "Novo circuito" : "Novo treino";
     $(p + "Status").textContent = "Rascunho limpo.";
     trFormAcaoLimpar(p);
@@ -13752,10 +13777,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return true;
   }
   function trRetiraDoPlano(t, tipo, id) {
-    if (!t || !t.plano || !t.plano.dias) return;
-    Object.keys(t.plano.dias).forEach(function (k) {
-      var l = plnDoDia(t.plano.dias, k).filter(function (x) { return x.tp !== tipo || x.id !== id; });
-      if (l.length) t.plano.dias[k] = l; else delete t.plano.dias[k];
+    if (!t || !t.plano) return;
+    ["dias", "datas"].forEach(function (campo) {
+      var mapa = t.plano[campo] || {};
+      Object.keys(mapa).forEach(function (k) {
+        var l = plnDoDia(mapa, k).filter(function (x) { return x.tp !== tipo || x.id !== id; });
+        if (l.length || campo === "datas") mapa[k] = l; else delete mapa[k];
+      });
     });
   }
   document.addEventListener("click", function (e) {
@@ -14018,6 +14046,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * app/aluno-builder.js (que le as MESMAS chaves) — mexeu num, confira o
    * outro; e do crAlvoTxt() de dentro do app, que le as chaves curtas. */
   function cbResumo(c) {
+    if (Array.isArray(c.blocos) && c.blocos.length) return c.blocos.map(R809.blocoTxt).join(" | ");
     var tiros = (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve";
     if (c.tipo === "intervalado") return tiros;
     var pedacos = [];
@@ -14067,6 +14096,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (c.capa ? '<button class="btn sec mini" data-ccapax="' + c.id + '" title="tirar a foto deste treino">Remover foto</button>' : "") +
           '<button class="btn sec mini" data-cbrm="' + c.id + '">Excluir treino</button></div></details></span></div>';
       }).join("") : "Nenhum treino de corrida/bike ainda — monte o primeiro abaixo.";
+    R809.corrida();
   }
   $("cbAluno").addEventListener("change", renderCardios);
   $("cbSalva").addEventListener("click", function () {
@@ -14075,11 +14105,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nome = $("cbNome").value.trim();
     if (!nome) { alert("Dê um nome pro treino (ex.: Rodagem leve)."); return; }
     var tipoValid = $("cbTipo").value, valida = [];
+    var blocosValid;
+    try { blocosValid = R809.blocos(JSON.parse($("cbBlocos").value || "[]")); } catch (e) { $("cbStatus").textContent = e.message; return; }
     if (tipoValid !== "intervalado") valida = [["cbDist", 0, null, false], ["cbTempo", 0, null, true]];
     if (tipoValid !== "continuo") valida = valida.concat([["cbReps", 1, null, true], ["cbTiro", 1, null, true], ["cbDesc", 1, null, true]]);
-    if (!valida.every(function (c) { return trCampoNumero(c[0], c[1], c[2], c[3], "cbStatus"); })) return;
+    if (!blocosValid.length && !valida.every(function (c) { return trCampoNumero(c[0], c[1], c[2], c[3], "cbStatus"); })) return;
     var paceValid = $("cbPace").value.trim();
-    if (tipoValid !== "intervalado" && paceValid && !/^\d{1,2}:[0-5]\d$/.test(paceValid)) { $("cbStatus").textContent = "Use o pace no formato minutos:segundos, por exemplo 6:30."; $("cbPace").focus(); return; }
+    if (!blocosValid.length && tipoValid !== "intervalado" && paceValid && !/^\d{1,2}:[0-5]\d$/.test(paceValid)) { $("cbStatus").textContent = "Use o pace no formato minutos:segundos, por exemplo 6:30."; $("cbPace").focus(); return; }
     var st = load();
     st.treinosV2 = st.treinosV2 || {};
     var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
@@ -14098,10 +14130,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     c.tiro = +$("cbTiro").value || 60;
     c.desc = +$("cbDesc").value || 90;
     c.obs = $("cbObs").value.trim();
+    if (blocosValid.length) c.blocos = blocosValid; else delete c.blocos;
     /* v755: no MISTO o app troca a parte contínua pelos tiros quando bate o
      * tempo alvo (ou a distância). Sem nenhum dos dois, o aluno corre pra
      * sempre na parte contínua e os tiros nunca começam. */
-    if (c.tipo === "misto" && !c.dist && !c.tempo) {
+    if (!blocosValid.length && c.tipo === "misto" && !c.dist && !c.tempo) {
       alert("No treino misto, preencha a distância OU o tempo da parte contínua — é ela que diz quando os tiros começam.");
       return; // nada foi gravado: o st só vira disco no save() lá embaixo
     }
@@ -14112,6 +14145,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cbFormTit").textContent = "Novo treino";
     trFormAcaoLimpar("cb");
     $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
+    $("cbBlocos").value = "[]";
     $("cbStatus").innerHTML = msgPublicar($("cbAluno").value, "Salvo!");
     renderCardios();
   });
@@ -14151,6 +14185,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     trFormAcaoLimpar("cb");
     $("cbNome").value = c.nome; $("cbMod").value = c.mod || "corrida"; $("cbTipo").value = c.tipo || "continuo";
     $("cbDist").value = c.dist || 0; $("cbTempo").value = c.tempo || 0; $("cbPace").value = c.pace || "";
+    $("cbBlocos").value = JSON.stringify(c.blocos || []);
+    R809.corrida();
     $("cbReps").value = c.reps || 8; $("cbTiro").value = c.tiro || 60; $("cbDesc").value = c.desc || 90;
     $("cbObs").value = c.obs || "";
     cbMostraCfg();
@@ -14220,7 +14256,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var box = $("plnDias");
     if (!box) return;
     var alunoId = $("plnAluno").value;
-    if (!alunoId) { plnGuardaRasc(); plnRasc = null; plnRascAluno = ""; box.textContent = "Escolha o aluno pra montar a semana dele."; if ($("plnResumo")) $("plnResumo").textContent = ""; return; }
+    if (!alunoId) { plnGuardaRasc(); plnRasc = null; plnRascAluno = ""; box.textContent = "Escolha o aluno pra montar a semana dele."; if ($("plnResumo")) $("plnResumo").textContent = ""; R809.plano(); return; }
     if (!plnRasc || plnRascAluno !== alunoId) {
       plnGuardaRasc();
       if (plnRascunhos[alunoId]) { plnRasc = JSON.parse(JSON.stringify(plnRascunhos[alunoId])); plnRascAluno = alunoId; }
@@ -14263,6 +14299,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (it && it.tp && it.id) sel.value = it.tp + ":" + it.id;
     });
     pintaPlnResumo();
+    R809.plano();
   }
   function plnItem(alvo) {
     var r = String(alvo || "").split(":");
@@ -14312,7 +14349,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .map(function (x) { return { tp: x.tp, id: x.id, h: plnHora(x) }; }).sort(plnOrdem);
       if (lst.length) { dias[k] = lst; total += lst.length; }
     });
-    if (total) t.plano = { dias: dias };
+    var datasMantidas = t.plano && t.plano.datas;
+    if (total || (datasMantidas && Object.keys(datasMantidas).length)) t.plano = Object.assign({}, t.plano || {}, { dias: dias });
     else delete t.plano;
     marcaTreinoMudou(st, alunoId);
     if (S.write("ptStudio", st) === false) { $("plnStatus").textContent = "Não foi possível salvar. O planejamento anterior e seu rascunho foram mantidos."; return; }
@@ -14322,11 +14360,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderPlanoSem();
     $("plnStatus").innerHTML = total
       ? msgPublicar(alunoId, S.plural(total, "treino", "treinos") + " na semana — salvo!")
-      : "Planejamento limpo — o card HOJE do app volta ao rodízio automático de fichas.";
+      : "Semana recorrente limpa. Datas específicas foram preservadas; sem nenhuma programação, o app usa o rodízio de fichas.";
   });
   if ($("plnLimpa")) $("plnLimpa").addEventListener("click", function () {
     if (!plnRasc) return;
-    if (!confirm("Limpar todos os dias deste rascunho? O planejamento publicado só muda depois de salvar e publicar. Ao salvar uma semana vazia, o app volta ao rodízio automático de fichas.")) return;
+    if (!confirm("Limpar todos os dias deste rascunho? O planejamento publicado só muda depois de salvar e publicar. Datas específicas não serão apagadas. Sem nenhuma programação, o app usa o rodízio de fichas.")) return;
     Object.keys(plnRasc).forEach(function (k) { plnRasc[k] = []; });
     renderPlanoSem();
   });
@@ -21784,6 +21822,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         foto: a.fotoAluno || a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
+      atendimento: R809.atendimento(a),
+      planoDatas: R809.pacoteDatas(t2),
       onboardingApp: self.MT_ONBOARDING_CONSULTORIA ? self.MT_ONBOARDING_CONSULTORIA.pacote(st, a, { contrato: ctApp, plano: plApp }) : null,
       nutricaoApp: self.MT_PERSONAL_NUTRICAO ? self.MT_PERSONAL_NUTRICAO.pacote(st, a.id) : (self.MT_NUTRICAO ? self.MT_NUTRICAO.normalizaPlano((((st.nutricaoV1 || {}).planos || {})[a.id]) || null) : null),
       /* v772: o sino do app avisa "seu treino foi atualizado" — e o carimbo
@@ -23933,6 +23973,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
 
   window.__ptStudio = { load: load, render: render }; // testes
+  R809.init({
+    load: load, save: save, marca: marcaAppPendente, treinoMarca: marcaTreinoMudou,
+    financeiro: alFinanceiroPermitido,
+    conta: function () { var nuv = S.cloud && S.cloud(); return JSON.stringify([nuv && nuv.aid || "", (S.usuario && S.usuario().email) || "local"]); },
+    perfil: function (id) { abrePerfil(id); mostraPfAba("fin"); }
+  });
   if (self.MT_PERSONAL_NUTRICAO) self.MT_PERSONAL_NUTRICAO.init({
     load: load, save: save, marcaPendente: marcaAppPendente,
     perfilId: function () { return perfilId; },

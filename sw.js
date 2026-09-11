@@ -14,10 +14,18 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v821";
+var VERSION = "mt-v822";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
+// O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
+// PRÓPRIA, por dois motivos: o precache usa addAll (se um arquivo falhar, o
+// service worker inteiro não instala e o site perde o offline), e o RUNTIME é
+// apagado a cada versão nova — o professor baixaria os 17 MB de novo toda vez.
 var VISAO = "mt-visao-v1";
+/* Motor do mapa 3D (MapLibre, ~1 MB): mesma ideia da cache do leitor de
+ * imagem — cache PRÓPRIA, com versão independente da do site, pra o aluno não
+ * rebaixar 1 MB a cada mt-vNNN publicado. Fora do PRECACHE de propósito: o
+ * addAll é atômico e um caminho errado derrubaria o service worker inteiro. */
 var MAPA = "mt-mapa-v1";
 
 var CORE = [
@@ -43,6 +51,10 @@ var CORE = [
   "assets/personal-onboarding.css",
   "assets/personal-torque-one.css",
   "assets/personal-torque-one.js",
+  "assets/postural-core.js",
+  "assets/postural-store.js",
+  "assets/personal-postural.js",
+  "assets/personal-postural.css",
   "assets/personal-acompanhamento.css",
   "assets/personal-ferramentas.css",
   "assets/personal-ferramentas.js",
@@ -104,10 +116,15 @@ var CORE = [
   "assets/modulo-conta.js",
   "assets/excluir-conta.js",
   "assets/bot-builder.js",
+  // simulador de nuvem do demo do painel (auto-desligado fora do demo)
   "assets/demo-nuvem.js",
+  // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
+  // skin do redesenho: a camada visual que o builder embute no app publicado
   "app/aluno-skin.js",
+  // construtor do app do paciente (NUTRI): a mesma fonte única, a partir da v661
   "app/nutri-builder.js",
+  // e a skin do paciente (camada visual, v665)
   "app/nutri-skin.js",
   "privacidade.html",
   "excluir-conta.html",
@@ -128,6 +145,12 @@ var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug 
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(PRECACHE).then(function (cache) {
+      /* cache: "no-cache" REVALIDA cada arquivo no servidor (o GitHub Pages
+       * responde 304 pelo ETag quando o arquivo não mudou) — continua sem
+       * misturar página nova com script velho, mas só TRANSFERE o que mudou.
+       * v747: era "reload", que ignora até o ETag: os 7,8 MB do precache
+       * (fontes, react, bancos de dados, 152 páginas do curso) eram baixados
+       * de novo a cada mt-vNNN — e saíram 12 versões num único dia. */
       return cache.addAll(CORE.concat(DOC_PAGES).map(function (u) {
         return new Request(u, { cache: "no-cache" });
       }));
@@ -139,6 +162,10 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
+        // v747: a cache do app do aluno (mt-app-*, do app/app-sw.js) é da MESMA
+        // origem e este activate a apagava a cada versão do site — o aluno que
+        // também abriu o portal perdia a cópia offline até a próxima abertura
+        // online. Quem cuida das mt-app-* é o app-sw.js.
         if (k.indexOf("mt-app-") === 0) return null;
         if (k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
       }));
@@ -146,6 +173,9 @@ self.addEventListener("activate", function (event) {
   );
 });
 
+/* Push do PROFESSOR (a partir da v682): o painel se inscreve com o token
+ * 'prof:<user_id>' na push_subs e recebe aviso de mensagem de aluno, pedido de
+ * horário e pagamento confirmado. O payload é o mesmo {t, b} do app do aluno. */
 self.addEventListener("push", function (event) {
   var d = {};
   try { d = event.data ? event.data.json() : {}; } catch (err) {}
@@ -169,6 +199,7 @@ self.addEventListener("fetch", function (event) {
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
+  // motor do mapa 3D: cache própria, que atravessa as trocas de versão do site
   if (url.pathname.indexOf("/assets/vendor/maplibre/") > -1) {
     event.respondWith(caches.open(MAPA).then(function (cache) {
       return cache.match(req).then(function (hit) {
@@ -182,6 +213,7 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  // leitor de imagem: cache própria, que atravessa as trocas de versão do site
   if (url.pathname.indexOf("/assets/vendor/mediapipe/") > -1) {
     event.respondWith(caches.open(VISAO).then(function (cache) {
       return cache.match(req).then(function (hit) {
@@ -195,6 +227,17 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  // código das Edge Functions (o funcoes.html copia dali pro Supabase), o
+  // supabase-setup.sql (o sql.html copia dali pro SQL Editor) e o construtor do
+  // app do aluno: SEMPRE rede primeiro. Servir do cache aqui fazia o professor
+  // copiar e publicar uma função VELHA sem perceber — foi assim que a
+  // chat-envia "republicada" continuou sem a IA de treino. Pro SQL é ainda mais
+  // sério: rodar uma versão velha do setup pode recriar estruturas erradas no
+  // banco. E o aluno-builder.js é a FONTE ÚNICA do app do aluno: servir ele do
+  // cache é o mesmo que desligar o conserto automático que ele existe pra dar.
+  // Nos três casos o cache continua valendo como reserva, pro app abrir offline.
+  // vídeo (.mp4) não passa pelo SW: o player pede pedaços (range) e uma
+  // resposta inteira vinda do cache quebraria o play no iPhone
   if (url.pathname.endsWith(".mp4")) return;
 
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
@@ -219,8 +262,11 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  // páginas (navegações): rede primeiro — quem está online sempre vê a
+  // versão nova sem precisar limpar cache; o cache só entra offline
   if (req.mode === "navigate") {
     event.respondWith(
+      // no-cache: revalida no servidor (senão o cache HTTP do navegador segura HTML velho)
       fetch(req, { cache: "no-cache" }).then(function (res) {
         if (res && res.ok) {
           var copy = res.clone();
@@ -236,6 +282,7 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  // demais arquivos (css/js/fontes/imagens): cache primeiro (rápido/offline)
   event.respondWith(
     caches.match(req, { ignoreSearch: true }).then(function (hit) {
       if (hit) return hit;
