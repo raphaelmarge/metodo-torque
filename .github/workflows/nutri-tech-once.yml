@@ -1,0 +1,140 @@
+name: Validar alimentacao tecnologica
+on:
+  push:
+    branches: [feat/alimentacao-tech-v821]
+    paths: [.github/workflows/nutri-tech-once.yml]
+permissions:
+  contents: write
+concurrency:
+  group: alimentacao-tech-v821
+  cancel-in-progress: false
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_PATH: /opt/node22/lib/node_modules
+      CHROMIUM_PATH: /opt/pw-browsers/chromium
+      TZ: America/Sao_Paulo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Conferir integridade e aplicar somente a revisao testada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import urllib.request, os, json, base64, gzip, hashlib
+          def sha(b):
+              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          req=urllib.request.Request('https://api.github.com/repos/raphaelmarge/metodo-torque/git/blobs/91cb1969014736a0d53ec6b51d89439c7730db3d',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'torque-ui-integrity'})
+          data=json.load(urllib.request.urlopen(req))
+          encoded=''.join(data['content'].split())
+          Path('/tmp/nutri-tech-transport.txt').write_text(encoded)
+          # Restaurar apenas erros conhecidos de transcricao; o SHA256 original
+          # continua obrigatorio, assim como os hashes de entrada e de saida.
+          encoded=encoded.replace('UFO64PxGwbVV','UFO64PxG8GwbVV').replace('860e1ya8ezdHe','860e1yaezdHe')
+          encoded=encoded.rstrip('=');encoded+='='*((-len(encoded))%4)
+          payload=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(payload).hexdigest()=='e243d6b28a051fb56a3b00a05f3eb3c7488639d1472cccd9cf874c215284d7cd','Transporte diferente da revisao validada'
+          changes=json.loads(gzip.decompress(payload))
+          allowed={'app/aluno-builder.js','app/aluno-skin.js','tests/test-nutricao-tech.js','design/ALIMENTACAO-NAVEGACAO-V820.md'}
+          assert {c['path'] for c in changes}==allowed and len(changes)==len(allowed)
+          prepared=[]
+          for change in changes:
+              p=Path(change['path']); raw=p.read_bytes() if p.exists() else b''
+              assert (sha(raw) if p.exists() else None)==change['before'],'Base mudou: '+str(p)
+              lines=raw.decode().splitlines(keepends=True)
+              for start,end,new in reversed(change['edits']):
+                  lines[start:end]=[new]
+              new=''.join(lines).encode()
+              assert sha(new)==change['after'],'Saida divergiu: '+str(p)
+              prepared.append((p,new))
+          for p,new in prepared:p.write_bytes(new)
+          for name in ('assets/versao.js','sw.js','app/app-sw.js'):
+              p=Path(name); text=p.read_text();assert text.count('mt-v820')==1,'Versao mudou: '+name
+              p.write_text(text.replace('mt-v820','mt-v821'))
+          p=Path('design/ALIMENTACAO-NAVEGACAO-V820.md')
+          p.write_text(p.read_text()+'\nAtualizacao de integracao: o PR #821 foi mesclado durante a revisao. Esta evolucao parte da main 81a912a, preserva o template publicado e usa mt-v821. Nenhuma publicacao automatica em producao neste workflow.\n')
+          PY
+          node --check app/aluno-builder.js
+          node --check app/aluno-skin.js
+          node --check tests/test-nutricao-tech.js
+          git diff --check
+      - name: Preparar ambiente dos testes existentes
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/torque-pw --no-audit --no-fund playwright@1.57.0
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)
+          test -n "$CHROME"
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -sf /tmp/torque-pw/node_modules/playwright /opt/node22/lib/node_modules/playwright
+          sudo ln -sf "$CHROME" /opt/pw-browsers/chromium
+      - name: Regenerar demos e testar interacoes e protecoes
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/nutri-http.log 2>&1 &
+          SRV=$!
+          trap 'kill "$SRV" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/personal.html >/dev/null && break; sleep .25; done
+          node tools/demo-aluno/regen-demos.js
+          node tests/test-nutricao-tech.js
+          node tests/test-nutricao-navegacao.js
+          node tests/test-nutricao-aluno-completa.js
+          node tests/test-nutricao-integrada.js
+          node tests/test-nutricao-core-completa.js
+          node tests/test-demo-aluno-variantes.js
+          node tests/test-aluno-hero-full-bleed.js
+          node tests/test-sync-cas.js
+          node tests/test-sync-identidade.js
+          node tests/test-versao.js
+          git diff --check
+      - name: Capturar a interface real com dados de demonstracao
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path('tests/test-nutricao-navegacao.js').read_text().split('async function run(){')[0]
+          source=source.replace('viewport:{width:390,height:844},','viewport:{width:390,height:844},deviceScaleFactor:2,')
+          tail="""
+          (async()=>{
+            browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
+            fs.mkdirSync('/tmp/torque-tech-preview',{recursive:true});
+            const initial=await mount();
+            await initial.p.locator('[data-ntp-comi="'+DEMO.refeicoes[0].id+'"]').click();
+            const seed=await initial.p.evaluate(()=>__ntUiLS.snapshot());await initial.ctx.close();
+            const {p,ctx}=await mount(DEMO,seed);
+            for(const [id,name] of [['ntpTabRefeicoes','refeicoes'],['ntpTabDiario','diario'],['ntpTabPlanejar','planejar']]){
+              await tab(p,id);await p.evaluate(()=>window.scrollTo(0,0));
+              await p.screenshot({path:'/tmp/torque-tech-preview/'+name+'.png'});
+            }
+            await tab(p,'ntpTabRefeicoes');await p.evaluate(()=>{document.documentElement.classList.add('claro');window.scrollTo(0,0);});
+            await p.screenshot({path:'/tmp/torque-tech-preview/tema-claro.png'});
+            await p.setViewportSize({width:1280,height:900});await p.evaluate(()=>{document.documentElement.classList.remove('claro');window.scrollTo(0,0);});
+            await p.screenshot({path:'/tmp/torque-tech-preview/desktop.png'});
+            assert.deepEqual(errors,[]);await ctx.close();await browser.close();
+          })().catch(async e=>{console.error(e);if(browser)await browser.close();process.exitCode=1;});
+          """
+          Path('tests/nutri-tech-preview-once.cjs').write_text(source+tail)
+          PY
+          node tests/nutri-tech-preview-once.cjs
+          rm tests/nutri-tech-preview-once.cjs
+      - name: Salvar somente no branch de revisao
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/aluno-builder.js app/aluno-skin.js tests/test-nutricao-tech.js design/ALIMENTACAO-NAVEGACAO-V820.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          git diff --cached --check
+          git commit -m 'feat(aluno): alimentacao tecnologica com busca, filtros e acoes diretas (mt-v821)'
+          git push origin HEAD:refs/heads/feat/alimentacao-tech-v821
+          git archive --format=tar HEAD | gzip > /tmp/torque-tech-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: torque-tech-revisao
+          retention-days: 1
+          path: |
+            /tmp/torque-tech-preview
+            /tmp/torque-tech-source.tar.gz
+            /tmp/nutri-tech-transport.txt
