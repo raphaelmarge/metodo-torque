@@ -827,6 +827,108 @@
     return api;
   }
   // Evolução aditiva. Consultar medalhas nunca grava treino, nutrição ou XP.
+  /* Serializável: o mesmo SVG serve ao medalhão interativo e ao canvas da arte. */
+  function runtimeMedalhaVisual() {
+    'use strict';
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function cor(v, alternativa) {
+      v = String(v || '').trim();
+      return /^(?:#[\da-f]{3}|#[\da-f]{4}|#[\da-f]{6}|#[\da-f]{8}|(?:rgb|rgba|hsl|hsla)\([\d\s.,%+\-/deg]+\)|white|black|transparent)$/i.test(v) ? v : alternativa;
+    }
+    function paleta(marca, nivel, bloqueada) {
+      marca = marca || {};
+      var base = {
+        cor: cor(marca.cor, '#8053c4'),
+        clara: cor(marca.clara, '#c8b3e8'),
+        escura: cor(marca.escura, '#3e285e')
+      };
+      var graus = [
+        ['#79818c', '#c5cbd3', '#3c444e'],
+        ['#aa7a54', '#dfbea0', '#553b29'],
+        ['#9ba7b6', '#e3e8ee', '#465260'],
+        ['#b59a51', '#e4d29a', '#605027'],
+        ['#8aa99f', '#d4e2dc', '#3b5b50'],
+        ['#8caabd', '#d7e7ef', '#3c566d']
+      ];
+      var indice = bloqueada || nivel === 0 ? 0 : (typeof nivel === 'number' && nivel >= 1 && nivel < 6 ? Math.floor(nivel) : -1);
+      if (indice >= 0) base = { cor: graus[indice][0], clara: graus[indice][1], escura: graus[indice][2] };
+      return base;
+    }
+    // O catálogo fornece traços de SVG, nunca imagens ou links. A lista permite só geometria.
+    function traco(fonte) {
+      var tags = ['path', 'circle', 'ellipse', 'rect', 'line', 'polyline', 'polygon', 'g'];
+      var numericos = ['cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'x2', 'y1', 'y2', 'width', 'height', 'stroke-width', 'opacity'];
+      var saida = '', grupos = 0;
+      String(fonte || '').slice(0, 12000).replace(/<\s*(\/?)\s*([a-z][\w:-]*)\b([^<>]*?)(\/?)\s*>/gi, function (_, fechar, tag, atributos) {
+        tag = tag.toLowerCase();
+        if (tags.indexOf(tag) < 0) return '';
+        if (fechar) { if (tag === 'g' && grupos) { saida += '</g>'; grupos--; } return ''; }
+        var attrs = '';
+        atributos.replace(/([a-z][\w:-]*)\s*=\s*(["'])(.*?)\2/gi, function (_, nome, aspas, valor) {
+          var valido = false;
+          if (numericos.indexOf(nome) >= 0) valido = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?%?$/i.test(valor.trim());
+          else if (nome === 'd') valido = /^[MmLlHhVvCcSsQqTtAaZz\d\s.,eE+\-]+$/.test(valor);
+          else if (nome === 'points') valido = /^[\d\s.,eE+\-]+$/.test(valor);
+          else if (nome === 'transform') valido = /^(?:\s*(?:matrix|translate|scale|rotate|skewX|skewY)\([\d\s.,eE+\-]+\)\s*)+$/.test(valor);
+          else if (nome === 'fill' || nome === 'stroke') valido = /^(?:none|currentColor|white|#fff|#ffffff)$/i.test(valor);
+          else if (nome === 'stroke-linecap') valido = /^(?:butt|round|square)$/.test(valor);
+          else if (nome === 'stroke-linejoin') valido = /^(?:miter|round|bevel)$/.test(valor);
+          else if (nome === 'fill-rule' || nome === 'clip-rule') valido = /^(?:nonzero|evenodd)$/.test(valor);
+          if (valido) attrs += ' ' + nome + '="' + esc(valor) + '"';
+          return '';
+        });
+        saida += '<' + tag + attrs + (tag === 'g' ? '>' : '/>');
+        if (tag === 'g') grupos++;
+        return '';
+      });
+      while (grupos-- > 0) saida += '</g>';
+      return saida || '<circle cx="12" cy="9" r="5"/><path d="m9 13-2 8 5-2 5 2-2-8"/>';
+    }
+    function svg(args) {
+      args = args || {};
+      var cores = paleta(args.cores, null, !!args.bloqueada), c = esc(cores.cor), l = esc(cores.clara), d = esc(cores.escura);
+      var nome = String(args.n || 'Medalha').slice(0, 160);
+      var miolo = args.bloqueada
+        ? '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+        : traco(args.p);
+      var simbolo = args.emo && !args.bloqueada
+        ? '<text x="140" y="156" text-anchor="middle" font-size="76" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif" fill="#f4f5f6">' + esc(String(args.p || args.emo).slice(0, 30)) + '</text>'
+        : '<g transform="translate(86 78) scale(4.5)" fill="none" stroke="#f1f2f3" color="#f1f2f3" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">' + miolo + '</g>';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="280" viewBox="0 0 280 280" role="img" aria-label="' + esc(nome) + '">' +
+      '<title id="mv-title">' + esc(nome) + '</title><defs>' +
+        '<linearGradient id="mv-rim" x1=".18" y1="0" x2=".82" y2="1" gradientUnits="objectBoundingBox">' +
+        '<stop stop-color="' + d + '"/><stop offset=".17" stop-color="' + l + '"/><stop offset=".34" stop-color="' + c + '"/><stop offset=".55" stop-color="' + l + '"/><stop offset=".78" stop-color="' + c + '"/><stop offset="1" stop-color="' + d + '"/></linearGradient>' +
+        '<linearGradient id="mv-face" x1=".15" y1="0" x2=".85" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="' + c + '"/><stop offset=".35" stop-color="' + l + '"/><stop offset=".53" stop-color="' + c + '"/><stop offset="1" stop-color="' + d + '"/></linearGradient>' +
+        '<linearGradient id="mv-bevel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="' + d + '"/><stop offset=".6" stop-color="' + c + '"/><stop offset="1" stop-color="' + l + '"/></linearGradient>' +
+        '<radialGradient id="mv-light" cx=".32" cy=".23" r=".83"><stop stop-color="#fff" stop-opacity=".16"/><stop offset=".56" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#000" stop-opacity=".13"/></radialGradient>' +
+        '<pattern id="mv-brush" width="280" height="7" patternUnits="userSpaceOnUse"><path d="M0 .7H280M0 4.5H280" stroke="#fff" stroke-opacity=".10" stroke-width=".55"/><path d="M0 2.2H280M0 6.2H280" stroke="#000" stroke-opacity=".09" stroke-width=".45"/><path d="M0 3.3H280" stroke="#fff" stroke-opacity=".035" stroke-width=".5" stroke-dasharray="37 23 71 11 46 32"/></pattern>' +
+        '<filter id="mv-shadow" x="-40%" y="-60%" width="180%" height="230%"><feGaussianBlur stdDeviation="5"/></filter>' +
+        '<filter id="mv-relief" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="1.4" stdDeviation=".6" flood-color="#14202a" flood-opacity=".58"/></filter>' +
+        '</defs>' +
+        '<ellipse cx="140" cy="247" rx="83" ry="10" fill="#000" opacity=".35" filter="url(#mv-shadow)"/>' +
+        '<circle cx="140" cy="138" r="111" fill="' + d + '" stroke="' + d + '" stroke-width="2"/>' +
+        '<circle cx="140" cy="132" r="112" fill="url(#mv-rim)" stroke="' + d + '" stroke-width="1.2"/>' +
+        '<circle cx="140" cy="132" r="110" fill="none" stroke="' + l + '" stroke-opacity=".52" stroke-width=".8"/>' +
+        '<circle cx="140" cy="132" r="103" fill="none" stroke="' + d + '" stroke-opacity=".55" stroke-width=".8"/>' +
+        '<circle cx="140" cy="132" r="97" fill="url(#mv-bevel)"/>' +
+        '<circle cx="140" cy="132" r="93" fill="url(#mv-face)" stroke="' + d + '" stroke-opacity=".6" stroke-width=".8"/>' +
+        '<circle cx="140" cy="132" r="112" fill="url(#mv-brush)"/>' +
+        '<circle cx="140" cy="132" r="92.5" fill="url(#mv-light)"/>' +
+        '<path d="M67 74a94 94 0 0 1 119-17" fill="none" stroke="#fff" stroke-opacity=".24" stroke-width=".7"/>' +
+        '<g filter="url(#mv-relief)">' + simbolo + '</g></svg>';
+    }
+    function url(args) {
+      var bytes = new TextEncoder().encode(svg(args)), binario = '';
+      for (var i = 0; i < bytes.length; i++) binario += String.fromCharCode(bytes[i]);
+      return 'data:image/svg+xml;base64,' + btoa(binario);
+    }
+    return { svg: svg, paleta: paleta, url: url };
+  }
+
   function runtimeMedalhas(M, selecionadas, icones) {
     if (!M) return null;
     var tokenTexto=String(TOKEN||'local'),hashA=2166136261,hashB=5381;for(var hi=0;hi<tokenTexto.length;hi++){hashA=Math.imul(hashA^tokenTexto.charCodeAt(hi),16777619);hashB=Math.imul(hashB,33)^tokenTexto.charCodeAt(hi);}
@@ -849,11 +951,11 @@
     function pinta(){var grid=document.getElementById('cqGrid');if(!grid||!identidade())return;var lista=estados(),meta=metaAtual(lista),box=document.getElementById('meProxima');if(!box){box=document.createElement('section');box.id='meProxima';box.className='me-next';box.setAttribute('aria-label','Próximo objetivo');grid.before(box);}box.innerHTML='<div class="me-next-head"><span>Seu próximo objetivo</span><button type="button" data-me-open="'+e(meta.d.id)+'">Ver evolução</button></div><h3>'+e(meta.d.n)+'</h3><p>'+e(alvoTexto(meta))+'</p><progress max="100" value="'+meta.p.percentual+'" aria-label="Progresso para o próximo nível"></progress><span class="me-next-level">'+(meta.p.nivel?'Nível '+meta.p.nivel+' conquistado · ':'')+'próximo: nível '+(meta.p.nivel+1)+(pin===meta.d.id?' · fixado':'')+'</span>';
       grid.querySelectorAll('[data-me-id]').forEach(function(el){el.remove();});var frag=document.createDocumentFragment();lista.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='me-badge';b.dataset.meId=x.d.id;b.dataset.meOpen=x.d.id;b.dataset.meRank=String(Math.min(6,x.p.nivel));b.dataset.cqok=x.p.nivel>0?'1':'0';b.setAttribute('aria-label',x.d.n+'. Nível '+x.p.nivel+'. '+alvoTexto(x));b.innerHTML='<span class="me-icon">'+icon(x.d)+'</span><strong>'+e(x.d.n)+'</strong><span class="me-tier">'+(x.p.nivel?faixa(x.p.nivel)+' · '+x.p.nivel:'Bronze à vista')+'</span><span class="me-step">'+e(x.p.proxima==null?'Marcos alcançados':fmt(x.p.valor)+' / '+fmt(x.p.proxima))+'</span><progress max="100" value="'+x.p.percentual+'" aria-label="Próxima meta de '+e(x.d.n)+'"></progress>';frag.appendChild(b);});grid.prepend(frag);var mais=document.getElementById('cqVerMais'),total=grid.querySelectorAll(':scope>button').length;if(mais){var aberto=mais.getAttribute('aria-expanded')==='true';grid.classList.toggle('enc',!aberto&&total>6);mais.style.display=total>6?'':'none';mais.textContent=aberto?'Mostrar menos':'Ver todas as '+total+' conquistas';}return {n:lista.filter(function(x){return x.p.nivel>0;}).length,tot:lista.length};
     }
-    function fecha(){if(modal&&modal.open)modal.close();if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();}
-    function abre(id){if(!identidade())return;var d=defs.find(function(x){return x.id===id;})||(id===base.id?base:null);if(!d)return;var p=M.progresso(d,M.metricas(snapshot()));focoAnterior=document.activeElement;if(!modal){modal=document.createElement('dialog');modal.id='meDetalhe';modal.className='me-modal';document.body.appendChild(modal);modal.addEventListener('close',function(){if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();});modal.addEventListener('click',function(ev){if(ev.target===modal)fecha();});}
-      var alvos=p.metas.slice(),proximos=alvos.filter(function(v){return v>p.valor;}).slice(0,3);if(!proximos.length&&p.proxima!=null)proximos=[p.proxima];modal.dataset.meRank=String(Math.min(6,p.nivel));modal.innerHTML='<div class="me-modal-head"><span>'+e(grupo(d))+'</span><button type="button" data-me-close aria-label="Fechar evolução da medalha">×</button></div><div class="me-medal">'+icon(d)+'</div><h2>'+e(d.n)+'</h2><p class="me-current">'+(p.nivel?faixa(p.nivel)+' · Nível '+p.nivel+' conquistado':'Sua jornada começa no Bronze')+'</p><p>'+e(alvoTexto({d:d,p:p}))+'</p><progress max="100" value="'+p.percentual+'" aria-label="Progresso da medalha"></progress><h3>'+(proximos.length?'Próximos objetivos':'Marcos disponíveis')+'</h3><ol class="me-milestones">'+(proximos.length?proximos:alvos.slice(-3)).map(function(v){var nivelAlvo=alvos.indexOf(v)>=0?alvos.indexOf(v)+1:p.nivel+1,resta=v-p.valor;return '<li data-me-rank="'+Math.min(6,nivelAlvo)+'"><span><small>'+faixa(nivelAlvo)+'</small>'+fmt(v)+' '+e(unidade(d,v))+'</span><b>'+(v<=p.valor?'✓':(resta===1?'Falta ':'Faltam ')+fmt(resta))+'</b></li>';}).join('')+'</ol><details><summary>Como esta medalha é calculada</summary><p>'+e(d.criterio||d.fonte||'A partir dos registros no aplicativo.')+'</p>'+(p.limiteHistorico?'<p>Considera o histórico disponível. Novos registros e correções atualizam o progresso.</p>':'')+'</details><div class="me-modal-actions">'+(p.proxima!=null?'<button type="button" data-me-pin="'+e(d.id)+'">'+(pin===d.id?'Desfixar objetivo':'Fixar como meu objetivo')+'</button>':'')+(p.nivel?'<button type="button" data-me-share="'+e(d.id)+'">Compartilhar conquista</button>':'')+'<button type="button" data-me-close>Voltar às medalhas</button></div><p id="meStatus" role="status"></p>';if(!modal.open)modal.showModal();
+    function fecha(){cqDesligaGiro();if(modal&&modal.open)modal.close();if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();}
+    function abre(id){if(!identidade())return;var d=defs.find(function(x){return x.id===id;})||(id===base.id?base:null);if(!d)return;var p=M.progresso(d,M.metricas(snapshot()));focoAnterior=document.activeElement;if(!modal){modal=document.createElement('dialog');modal.id='meDetalhe';modal.className='me-modal';document.body.appendChild(modal);modal.addEventListener('close',function(){cqDesligaGiro();if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();});modal.addEventListener('click',function(ev){if(ev.target===modal)fecha();});}
+      var alvos=p.metas.slice(),proximos=alvos.filter(function(v){return v>p.valor;}).slice(0,3);if(!proximos.length&&p.proxima!=null)proximos=[p.proxima];modal.dataset.meRank=String(Math.min(6,p.nivel));modal.innerHTML='<div class="me-modal-head"><span>'+e(grupo(d))+'</span><button type="button" data-me-close aria-label="Fechar evolução da medalha">×</button></div><div class="me-stage">'+cqMedalhaHTML({p:caminho(d),n:d.n,nivel:p.nivel},p.nivel>0,'meMed')+'</div><h2>'+e(d.n)+'</h2><p class="me-current">'+(p.nivel?faixa(p.nivel)+' · Nível '+p.nivel+' conquistado':'Sua jornada começa no Bronze')+'</p><p>'+e(alvoTexto({d:d,p:p}))+'</p><progress max="100" value="'+p.percentual+'" aria-label="Progresso da medalha"></progress><h3>'+(proximos.length?'Próximos objetivos':'Marcos disponíveis')+'</h3><ol class="me-milestones">'+(proximos.length?proximos:alvos.slice(-3)).map(function(v){var nivelAlvo=alvos.indexOf(v)>=0?alvos.indexOf(v)+1:p.nivel+1,resta=v-p.valor;return '<li data-me-rank="'+Math.min(6,nivelAlvo)+'"><span><small>'+faixa(nivelAlvo)+'</small>'+fmt(v)+' '+e(unidade(d,v))+'</span><b>'+(v<=p.valor?'✓':(resta===1?'Falta ':'Faltam ')+fmt(resta))+'</b></li>';}).join('')+'</ol><details><summary>Como esta medalha é calculada</summary><p>'+e(d.criterio||d.fonte||'A partir dos registros no aplicativo.')+'</p>'+(p.limiteHistorico?'<p>Considera o histórico disponível. Novos registros e correções atualizam o progresso.</p>':'')+'</details><div class="me-modal-actions">'+(p.proxima!=null?'<button type="button" data-me-pin="'+e(d.id)+'">'+(pin===d.id?'Desfixar objetivo':'Fixar como meu objetivo')+'</button>':'')+(p.nivel?'<button type="button" data-me-share="'+e(d.id)+'">Compartilhar conquista</button>':'')+'<button type="button" data-me-close>Voltar às medalhas</button></div><p id="meStatus" role="status"></p>';if(!modal.open)modal.showModal();modal.scrollTop=0;cqLigaGiro(document.getElementById('meMed'));
     }
-    document.addEventListener('click',function(ev){var el=ev.target.closest&&ev.target.closest('[data-me-open],[data-me-pin],[data-me-share],[data-me-close]');if(!el)return;if(el.hasAttribute('data-me-close')){fecha();return;}if(el.hasAttribute('data-me-open')){abre(el.dataset.meOpen);return;}if(!identidade())return;if(el.hasAttribute('data-me-share')){var d=defs.find(function(x){return x.id===el.dataset.meShare;})||(el.dataset.meShare===base.id?base:null),p=d&&M.progresso(d,M.metricas(snapshot()));if(p&&p.nivel){fecha();cqArte({p:caminho(d),n:d.n+' · '+faixa(p.nivel),cor:'var(--corc)',d:''});}return;}var nova=pin===el.dataset.mePin?'':el.dataset.mePin;try{localStorage.setItem(pinKey,JSON.stringify(nova));pin=nova;pinta();el.textContent=pin?'Desfixar objetivo':'Fixar como meu objetivo';var status=document.getElementById('meStatus');if(status)status.textContent=pin?'Objetivo fixado no início das medalhas.':'Objetivo voltou à seleção automática.';}catch(_){var erro=document.getElementById('meStatus');if(erro)erro.textContent='Não foi possível salvar sua escolha neste aparelho.';}});
+    document.addEventListener('click',function(ev){var el=ev.target.closest&&ev.target.closest('[data-me-open],[data-me-pin],[data-me-share],[data-me-close]');if(!el)return;if(el.hasAttribute('data-me-close')){fecha();return;}if(el.hasAttribute('data-me-open')){abre(el.dataset.meOpen);return;}if(!identidade())return;if(el.hasAttribute('data-me-share')){var d=defs.find(function(x){return x.id===el.dataset.meShare;})||(el.dataset.meShare===base.id?base:null),p=d&&M.progresso(d,M.metricas(snapshot()));if(p&&p.nivel){fecha();cqArte({p:caminho(d),n:d.n,nivel:p.nivel,etapa:faixa(p.nivel)+' · Nível '+p.nivel,d:''});}return;}var nova=pin===el.dataset.mePin?'':el.dataset.mePin;try{localStorage.setItem(pinKey,JSON.stringify(nova));pin=nova;pinta();el.textContent=pin?'Desfixar objetivo':'Fixar como meu objetivo';var status=document.getElementById('meStatus');if(status)status.textContent=pin?'Objetivo fixado no início das medalhas.':'Objetivo voltou à seleção automática.';}catch(_){var erro=document.getElementById('meStatus');if(erro)erro.textContent='Não foi possível salvar sua escolha neste aparelho.';}});
     window.__meAluno={pinta:pinta,estados:estados,abre:abre,fecha:fecha,chave:pinKey,prioridade:function(){return metaAtual(estados());}};return window.__meAluno;
   }
   // Resumo da evolução: move os controles existentes e conserva seus eventos.
@@ -2976,6 +3078,7 @@
       "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
+      "var cqVisual=(" + runtimeMedalhaVisual.toString() + ")();" +
       "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
@@ -3837,21 +3940,19 @@
        * Tocou numa medalha: abre por cima, a medalha gigante gira com o
        * movimento do celular e o brilho anda junto. O <div> é criado na hora
        * (fora do classificador de seções, que já rodou) e vive no <body>. */
-      "var cqGiro=null;" + // {handler} do giroscópio ligado agora
-      "function cqFecha(){var f=document.getElementById('cqFull');if(f)f.classList.remove('on');" +
-      "if(cqGiro){window.removeEventListener('deviceorientation',cqGiro);cqGiro=null;}" +
-      "document.body.style.overflow='';}" +
+      "var cqGiro=null,cqGiroFim=null;\n" +
+      "function cqDesligaGiro(){if(cqGiroFim){var fim=cqGiroFim;cqGiroFim=null;fim();}if(cqGiro){window.removeEventListener('deviceorientation',cqGiro);cqGiro=null;}}\n" +
+      "function cqCores(b,tem){return cqVisual.paleta({cor:CV('cor'),clara:CV('corc'),escura:CV('cor-esc')},typeof b.nivel==='number'?b.nivel:null,!tem);}\n" +
+      "function cqSVG(b,tem){return cqVisual.url({p:b.p,emo:b.emo,n:b.n,cores:cqCores(b,tem),bloqueada:!tem});}\n" +
+      "function cqMedalhaHTML(b,tem,id){return \"<div id='\"+id+\"' class='cq-medal3d\"+(tem?'':' travada')+\"'><img class='cq-medal-art' draggable='false' alt='\"+esc2('Medalha 3D: '+b.n)+\"' src='\"+cqSVG(b,tem)+\"'></div>\";}\n" +
+      "function cqFecha(){cqDesligaGiro();var f=document.getElementById('cqFull');if(f)f.classList.remove('on');document.body.style.overflow='';}\n" +
       "window.__cqFecha=cqFecha;" +
       "function cqAbre(i){var b=CQATUAL[i];if(!b)return;var tem=b.v>=b.m;" +
       "var f=document.getElementById('cqFull');" +
       "if(!f){f=document.createElement('div');f.id='cqFull';document.body.appendChild(f);}" +
       "var falta=Math.max(0,b.m-b.v);" +
       "var comoFaz=tem?'':(falta>0?(falta===1?'Falta <b>1</b> pra destravar':'Faltam <b>'+falta+'</b> pra destravar'):'Ainda não destravou');" +
-      "f.innerHTML=\"<div id='cqPalco'><div id='cqMed'\"+(tem?'':\" class='travada'\")+\">\"+" +
-      "\"<span class='aro'></span><span class='disco'></span>\"+" +
-      "\"<span class='ico'>\"+(tem?(b.emo?\"<span style='font-size:74px;line-height:1;'>\"+b.p+'</span>':icq(b.p))" +
-      ":icq(\"<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>\"))+'</span>'+" +
-      "\"<span class='brilho'></span></div></div>\"+" +
+      "f.innerHTML=\"<div id='cqPalco'>\"+cqMedalhaHTML(b,tem,'cqMed')+\"</div>\"+\n" +
       "\"<div class='cqsel'>\"+(tem?'Conquistada':'Bloqueada')+'</div>'+" +
       "'<h3>'+esc2(b.n)+'</h3>'+" +
       "(tem?(b.d?\"<div class='cqsub'>Você conquistou em \"+b.d.slice(8,10)+'/'+b.d.slice(5,7)+'/'+b.d.slice(0,4)+'</div>':\"<div class='cqsub'>Está no seu mural — orgulho define.</div>\")" +
@@ -3859,47 +3960,31 @@
       "\"<div class='cqsub' style='margin-top:8px;font-weight:800;color:#8a8695;'>\"+Math.min(b.v,b.m)+' de '+b.m+'</div>')+" +
       "\"<div class='cqpe'>\"+(tem?\"<button type='button' class='prin' id='cqShare'>Compartilhar</button>\":'')+" +
       "\"<button type='button' class='sec' id='cqVolta'>Fechar</button></div>\";" +
-      "f.classList.add('on');document.body.style.overflow='hidden';" +
+      "f.classList.add('on');f.scrollTop=0;document.body.style.overflow='hidden';" +
       "document.getElementById('cqVolta').addEventListener('click',cqFecha);" +
       "var sh=document.getElementById('cqShare');if(sh)sh.addEventListener('click',function(){cqArte(b);});" +
       "cqLigaGiro(document.getElementById('cqMed'));" +
       "if(navigator.vibrate)navigator.vibrate(12);}" +
       // giroscópio (iOS pede permissão DENTRO do toque) com o dedo de reserva
-      "function cqLigaGiro(med){if(!med)return;var ax=0,ay=0;" +
-      "function poe(rx,ry){med.style.transform='rotateX('+rx.toFixed(1)+'deg) rotateY('+ry.toFixed(1)+'deg)';" +
-      "med.style.setProperty('--bx',(50-ry*1.6).toFixed(0)+'%');med.style.setProperty('--by',(38+rx*1.6).toFixed(0)+'%');}" +
-      "poe(0,0);" +
-      "function liga(){if(cqGiro)return;cqGiro=function(ev){var be=ev.beta,ga=ev.gamma;if(be==null||ga==null)return;" +
-      "ax=Math.max(-22,Math.min(22,(be-42)*0.55));ay=Math.max(-22,Math.min(22,ga*0.55));poe(-ax,ay);};" +
-      "window.addEventListener('deviceorientation',cqGiro);}" +
-      "try{var DOE=window.DeviceOrientationEvent;" +
-      "if(DOE&&typeof DOE.requestPermission==='function')DOE.requestPermission().then(function(r){if(r==='granted')liga();}).catch(function(){});" +
-      "else if(DOE)liga();}catch(e9){}" +
-      // arrastar com o dedo: funciona no computador e quando o giro não vem
-      "var arr=false,x0=0,y0=0,rx0=0,ry0=0;" +
-      "med.addEventListener('pointerdown',function(ev){arr=true;x0=ev.clientX;y0=ev.clientY;rx0=-ax;ry0=ay;med.setPointerCapture&&med.setPointerCapture(ev.pointerId);});" +
-      "med.addEventListener('pointermove',function(ev){if(!arr)return;" +
-      "var rx=Math.max(-26,Math.min(26,rx0-(ev.clientY-y0)*0.28));var ry=Math.max(-26,Math.min(26,ry0+(ev.clientX-x0)*0.28));poe(rx,ry);});" +
-      "['pointerup','pointercancel','pointerleave'].forEach(function(t9){med.addEventListener(t9,function(){arr=false;});});}" +
+      "function cqLigaGiro(med){cqDesligaGiro();if(!med)return;var vivo=true,arr=false,rx=0,ry=0,x0=0,y0=0,rx0=0,ry0=0,sensor=null;\n" +
+      "function poe(x,y){rx=x;ry=y;med.style.transform='rotateX('+x.toFixed(1)+'deg) rotateY('+y.toFixed(1)+'deg)';med.style.setProperty('--bx',(50-y*1.6).toFixed(0)+'%');med.style.setProperty('--by',(38+x*1.6).toFixed(0)+'%');}\n" +
+      "function desce(ev){if(ev.button>0)return;arr=true;x0=ev.clientX;y0=ev.clientY;rx0=rx;ry0=ry;try{if(med.setPointerCapture)med.setPointerCapture(ev.pointerId);}catch(_){}}\n" +
+      "function move(ev){if(!arr)return;poe(Math.max(-26,Math.min(26,rx0-(ev.clientY-y0)*.28)),Math.max(-26,Math.min(26,ry0+(ev.clientX-x0)*.28)));}\n" +
+      "function solta(){arr=false;}\n" +
+      "function limpa(){vivo=false;arr=false;if(sensor){window.removeEventListener('deviceorientation',sensor);if(cqGiro===sensor)cqGiro=null;sensor=null;}med.removeEventListener('pointerdown',desce);med.removeEventListener('pointermove',move);['pointerup','pointercancel','lostpointercapture'].forEach(function(t){med.removeEventListener(t,solta);});}\n" +
+      "cqGiroFim=limpa;poe(0,0);med.addEventListener('pointerdown',desce);med.addEventListener('pointermove',move);['pointerup','pointercancel','lostpointercapture'].forEach(function(t){med.addEventListener(t,solta);});\n" +
+      "function liga(){if(!vivo||!med.isConnected||cqGiroFim!==limpa)return;sensor=function(ev){if(!vivo||arr||ev.beta==null||ev.gamma==null)return;poe(-Math.max(-22,Math.min(22,(ev.beta-42)*.55)),Math.max(-22,Math.min(22,ev.gamma*.55)));};cqGiro=sensor;window.addEventListener('deviceorientation',sensor);}\n" +
+      "try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var DOE=window.DeviceOrientationEvent;if(DOE&&typeof DOE.requestPermission==='function')DOE.requestPermission().then(function(r){if(r==='granted')liga();}).catch(function(){});else if(DOE)liga();}catch(_){}\n" +
+      "}\n" +
       // arte da conquista pro Stories, pela MESMA prévia do resto do app
-      "function cqArte(b){var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d');" +
-      "var gr=g.createLinearGradient(0,0,0,1350);gr.addColorStop(0,CV('cor'));gr.addColorStop(1,CV('cor-esc'));g.fillStyle=gr;g.fillRect(0,0,1080,1350);" +
-      "g.textAlign='center';" +
-      "g.fillStyle='rgba(255,255,255,.75)';g.font='800 34px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,28),540,140);" +
-      "g.fillStyle='rgba(255,255,255,.14)';g.beginPath();g.arc(540,600,250,0,7);g.fill();" +
-      "g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=8;g.beginPath();g.arc(540,600,250,0,7);g.stroke();" +
-      "g.fillStyle='rgba(255,255,255,.9)';g.font='800 30px system-ui,sans-serif';g.fillText('CONQUISTA DESBLOQUEADA',540,980);" +
-      "g.fillStyle='#fff';g.font='900 74px system-ui,sans-serif';" +
-      "var nm=String(b.n);if(nm.length>18){var pr=nm.split(' ');var meio=Math.ceil(pr.length/2);" +
-      "g.fillText(pr.slice(0,meio).join(' '),540,1080);g.fillText(pr.slice(meio).join(' '),540,1160);}" +
-      "else g.fillText(nm,540,1110);" +
-      "g.fillStyle='rgba(255,255,255,.8)';g.font='600 36px system-ui,sans-serif';" +
-      "g.fillText(b.d?b.d.slice(8,10)+'/'+b.d.slice(5,7)+'/'+b.d.slice(0,4):PRIMEIRO,540,1250);" +
-      // a medalha (SVG) entra por cima como imagem; sem ela a arte sai igual
-      "var sv=\"<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>\"+b.p+'</svg>';" +
-      "var im=new Image();im.onload=function(){g.drawImage(im,540-130,600-130,260,260);arteMostra(c,'conquista.png');};" +
-      "im.onerror=function(){arteMostra(c,'conquista.png');};" +
-      "im.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(sv)));}" +
+      "function cqArte(b){cqDesligaGiro();function retoma(){var f=document.getElementById('cqFull');if(f&&f.classList.contains('on'))cqLigaGiro(document.getElementById('cqMed'));}var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d'),cores=cqCores(b,true);\n" +
+      "g.fillStyle='#0c0d11';g.fillRect(0,0,1080,1350);var gr=g.createRadialGradient(540,390,10,540,390,920);gr.addColorStop(0,cores.escura);gr.addColorStop(1,'#0c0d11');g.fillStyle=gr;g.fillRect(0,0,1080,1350);g.textAlign='center';\n" +
+      "g.fillStyle='rgba(255,255,255,.75)';g.font='800 34px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,28),540,140);\n" +
+      "g.fillStyle='rgba(255,255,255,.9)';g.font='800 30px system-ui,sans-serif';g.fillText(b.etapa?b.etapa.toUpperCase():'CONQUISTA DESBLOQUEADA',540,980);\n" +
+      "g.fillStyle='#fff';g.font='900 74px system-ui,sans-serif';var nm=String(b.n);if(nm.length>18){var pr=nm.split(' '),meio=Math.ceil(pr.length/2);g.fillText(pr.slice(0,meio).join(' '),540,1080,960);g.fillText(pr.slice(meio).join(' '),540,1160,960);}else g.fillText(nm,540,1110,960);\n" +
+      "g.fillStyle='rgba(255,255,255,.8)';g.font='600 36px system-ui,sans-serif';g.fillText(b.d?b.d.slice(8,10)+'/'+b.d.slice(5,7)+'/'+b.d.slice(0,4):PRIMEIRO,540,1250);\n" +
+      "var im=new Image();im.onload=function(){g.drawImage(im,230,290,620,620);arteMostra(c,'conquista.png');document.getElementById('artePrev').querySelector('img').alt='Medalha: '+b.n;document.getElementById('arteFecha').addEventListener('click',retoma);};im.onerror=function(){retoma();alert('Não foi possível preparar a medalha. Tente compartilhar novamente.');};im.src=cqSVG(b,true);\n" +
+      "}\n" +
       // clique num card da grade → abre a tela cheia
       "document.addEventListener('click',function(e8){var b8=e8.target.closest&&e8.target.closest('[data-cqi]');" +
       "if(b8)cqAbre(+b8.getAttribute('data-cqi'));});" +
