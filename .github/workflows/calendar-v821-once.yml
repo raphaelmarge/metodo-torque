@@ -1,0 +1,61 @@
+name: Validar alimentacao nos calendarios v821
+on:
+  push:
+    branches: [feat/alimentacao-calendario-horarios]
+    paths:
+      - .github/workflows/calendar-v821-once.yml
+      - tools/calendar-v821-once.py
+      - tools/calendar-v821.patch.gz
+permissions:
+  contents: write
+concurrency:
+  group: calendar-v821-preparation
+  cancel-in-progress: false
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Conferir base e aplicar somente o patch revisado
+        run: |
+          python3 tools/calendar-v821-once.py
+          node --check app/aluno-builder.js
+          node --check app/aluno-skin.js
+          node --check assets/personal-nutricao.js
+          git diff --check
+      - name: Preparar ambiente existente de testes
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          sudo ln -s "$CHROME" /opt/pw-browsers/chromium
+      - name: Regenerar demos e testar navegacao, editor e preservacao
+        env:
+          TZ: America/Sao_Paulo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/calendar-http.log 2>&1 &
+          SRV=$!
+          trap 'kill "$SRV" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js >/dev/null && break; sleep .25; done
+          node tools/demo-aluno/regen-demos.js
+          for t in test-calendario-alimentacao test-calendario-alimentacao-editor test-nutricao-navegacao test-nutricao-integrada test-nutricao-aluno-completa test-nutricao-personal-completa test-nutricao-core-completa test-aluno-evolucao-experiencia test-aluno-inicio-experiencia test-aluno-hero-full-bleed test-sync-cas test-sync-identidade test-demo-aluno-variantes test-versao; do
+            echo "=== $t ==="
+            timeout 300 node "tests/$t.js"
+          done
+          git diff --check
+      - name: Salvar apenas no branch isolado
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/aluno-builder.js app/aluno-skin.js assets/personal-nutricao.js assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html tests/test-aluno-evolucao-experiencia.js tests/test-nutricao-integrada.js tests/test-calendario-alimentacao.js tests/test-calendario-alimentacao-editor.js design/ALIMENTACAO-CALENDARIO-V821.md
+          git diff --cached --check
+          git commit -m 'feat(aluno): alimentacao por horario nos calendarios (mt-v821)'
+          git push origin HEAD:refs/heads/feat/alimentacao-calendario-horarios
