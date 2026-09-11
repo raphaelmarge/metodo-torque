@@ -826,6 +826,36 @@
     window.__nutriAluno = api;
     return api;
   }
+  // Evolução aditiva. Consultar medalhas nunca grava treino, nutrição ou XP.
+  function runtimeMedalhas(M, selecionadas, icones) {
+    if (!M) return null;
+    var tokenTexto=String(TOKEN||'local'),hashA=2166136261,hashB=5381;for(var hi=0;hi<tokenTexto.length;hi++){hashA=Math.imul(hashA^tokenTexto.charCodeAt(hi),16777619);hashB=Math.imul(hashB,33)^tokenTexto.charCodeAt(hi);}
+    var defs=[],vistas={},base=M.pacote(['treinos-dias'])[0],pinKey='ptmedalhaFoco:'+(hashA>>>0).toString(36)+(hashB>>>0).toString(36),pin='',focoAnterior=null,modal=null;
+    (Array.isArray(selecionadas)?selecionadas:M.pacote()).forEach(function(d){try{d=M.definicao(d);if(!vistas[d.id]){vistas[d.id]=1;defs.push(d);}}catch(_){}});
+    try { pin=JSON.parse(localStorage.getItem(pinKey)||'null')||''; } catch (_) {}
+    var tokenInicial;try{tokenInicial=localStorage.getItem('tq_app_token');}catch(_){}
+    function identidade(){try{var t=localStorage.getItem('tq_app_token');return t===TOKEN||(!t&&!tokenInicial);}catch(_){return true;}}
+    function e(s){return esc2(String(s==null?'':s)).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+    function fmt(n){return Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:2});}
+    function faixa(n){var nomes=['Comece aqui','Bronze','Prata','Ouro','Platina','Diamante','Elite'];return nomes[Math.min(6,n)]+(n>6?' '+(n-5):'');}
+    function unidade(d,n){var singular={'registros':'registro','dias de treino':'dia de treino','semanas':'semana','dias com carga':'dia com carga','corridas':'corrida','pedais':'pedal','caminhadas':'caminhada','dias de diário':'dia de diário','dias em 7':'dia em 7','dias marcados':'dia marcado','dias com 3 hábitos':'dia com 3 hábitos','pesagens':'pesagem','respostas':'resposta'};return n===1?(singular[d.unidade]||d.unidade):d.unidade;}
+    function grupo(d){return {treino:'Treinos',circuito:'Circuitos',crossfit:'CrossFit',hyrox:'HYROX',corrida:'Corrida',bike:'Bike',caminhada:'Caminhada',nutricao:'Nutrição',habitos:'Hábitos',outros:'Acompanhamento'}[d.grupo]||d.grupo;}
+    function caminho(d){return Object.prototype.hasOwnProperty.call(icones||{},d.icone)?icones[d.icone]:"<circle cx='12' cy='9' r='5'/><path d='M9 13.5 7 21l5-2.4L17 21l-2-7.5'/>";}
+    function icon(d){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+caminho(d)+'</svg>';}
+    function snapshot(){return {hoje:isoHj(),metaSem:META,feitos:L('ptfeitos',{}),cardio:L('ptcardio',[]),wodres:L('ptwodres',{}),habitos:L('pthab',{}),peso:L('ptpeso',{}),cargas:L('ptdc',{}),qa:L('ptqa',{}),checkins:L('ptckh',{}),nutricao:window.__nutriAluno?window.__nutriAluno.estado():null};}
+    function estados(){var m=M.metricas(snapshot());return defs.map(function(d){return {d:d,p:M.progresso(d,m)};});}
+    function alvoTexto(x){return x.p.proxima==null?'Marcos do histórico alcançados':fmt(x.p.valor)+' de '+fmt(x.p.proxima)+' '+unidade(x.d,x.p.proxima);}
+    function metaAtual(lista){var elegiveis=lista.filter(function(x){return x.p.proxima!=null;}),fixa=elegiveis.find(function(x){return x.d.id===pin;});return fixa||elegiveis.sort(function(a,b){return b.p.percentual-a.p.percentual;})[0]||{d:base,p:M.progresso(base,M.metricas(snapshot()))};}
+    function pinta(){var grid=document.getElementById('cqGrid');if(!grid||!identidade())return;var lista=estados(),meta=metaAtual(lista),box=document.getElementById('meProxima');if(!box){box=document.createElement('section');box.id='meProxima';box.className='me-next';box.setAttribute('aria-label','Próximo objetivo');grid.before(box);}box.innerHTML='<div class="me-next-head"><span>Seu próximo objetivo</span><button type="button" data-me-open="'+e(meta.d.id)+'">Ver evolução</button></div><h3>'+e(meta.d.n)+'</h3><p>'+e(alvoTexto(meta))+'</p><progress max="100" value="'+meta.p.percentual+'" aria-label="Progresso para o próximo nível"></progress><span class="me-next-level">'+(meta.p.nivel?'Nível '+meta.p.nivel+' conquistado · ':'')+'próximo: nível '+(meta.p.nivel+1)+(pin===meta.d.id?' · fixado':'')+'</span>';
+      grid.querySelectorAll('[data-me-id]').forEach(function(el){el.remove();});var frag=document.createDocumentFragment();lista.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='me-badge';b.dataset.meId=x.d.id;b.dataset.meOpen=x.d.id;b.dataset.meRank=String(Math.min(6,x.p.nivel));b.dataset.cqok=x.p.nivel>0?'1':'0';b.setAttribute('aria-label',x.d.n+'. Nível '+x.p.nivel+'. '+alvoTexto(x));b.innerHTML='<span class="me-icon">'+icon(x.d)+'</span><strong>'+e(x.d.n)+'</strong><span class="me-tier">'+(x.p.nivel?faixa(x.p.nivel)+' · '+x.p.nivel:'Bronze à vista')+'</span><span class="me-step">'+e(x.p.proxima==null?'Marcos alcançados':fmt(x.p.valor)+' / '+fmt(x.p.proxima))+'</span><progress max="100" value="'+x.p.percentual+'" aria-label="Próxima meta de '+e(x.d.n)+'"></progress>';frag.appendChild(b);});grid.prepend(frag);var mais=document.getElementById('cqVerMais'),total=grid.querySelectorAll(':scope>button').length;if(mais){var aberto=mais.getAttribute('aria-expanded')==='true';grid.classList.toggle('enc',!aberto&&total>6);mais.style.display=total>6?'':'none';mais.textContent=aberto?'Mostrar menos':'Ver todas as '+total+' conquistas';}return {n:lista.filter(function(x){return x.p.nivel>0;}).length,tot:lista.length};
+    }
+    function fecha(){if(modal&&modal.open)modal.close();if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();}
+    function abre(id){if(!identidade())return;var d=defs.find(function(x){return x.id===id;})||(id===base.id?base:null);if(!d)return;var p=M.progresso(d,M.metricas(snapshot()));focoAnterior=document.activeElement;if(!modal){modal=document.createElement('dialog');modal.id='meDetalhe';modal.className='me-modal';document.body.appendChild(modal);modal.addEventListener('close',function(){if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();});modal.addEventListener('click',function(ev){if(ev.target===modal)fecha();});}
+      var alvos=p.metas.slice(),proximos=alvos.filter(function(v){return v>p.valor;}).slice(0,3);if(!proximos.length&&p.proxima!=null)proximos=[p.proxima];modal.dataset.meRank=String(Math.min(6,p.nivel));modal.innerHTML='<div class="me-modal-head"><span>'+e(grupo(d))+'</span><button type="button" data-me-close aria-label="Fechar evolução da medalha">×</button></div><div class="me-medal">'+icon(d)+'</div><h2>'+e(d.n)+'</h2><p class="me-current">'+(p.nivel?faixa(p.nivel)+' · Nível '+p.nivel+' conquistado':'Sua jornada começa no Bronze')+'</p><p>'+e(alvoTexto({d:d,p:p}))+'</p><progress max="100" value="'+p.percentual+'" aria-label="Progresso da medalha"></progress><h3>'+(proximos.length?'Próximos objetivos':'Marcos disponíveis')+'</h3><ol class="me-milestones">'+(proximos.length?proximos:alvos.slice(-3)).map(function(v){var nivelAlvo=alvos.indexOf(v)>=0?alvos.indexOf(v)+1:p.nivel+1,resta=v-p.valor;return '<li data-me-rank="'+Math.min(6,nivelAlvo)+'"><span><small>'+faixa(nivelAlvo)+'</small>'+fmt(v)+' '+e(unidade(d,v))+'</span><b>'+(v<=p.valor?'✓':(resta===1?'Falta ':'Faltam ')+fmt(resta))+'</b></li>';}).join('')+'</ol><details><summary>Como esta medalha é calculada</summary><p>'+e(d.criterio||d.fonte||'A partir dos registros no aplicativo.')+'</p>'+(p.limiteHistorico?'<p>Considera o histórico disponível. Novos registros e correções atualizam o progresso.</p>':'')+'</details><div class="me-modal-actions">'+(p.proxima!=null?'<button type="button" data-me-pin="'+e(d.id)+'">'+(pin===d.id?'Desfixar objetivo':'Fixar como meu objetivo')+'</button>':'')+(p.nivel?'<button type="button" data-me-share="'+e(d.id)+'">Compartilhar conquista</button>':'')+'<button type="button" data-me-close>Voltar às medalhas</button></div><p id="meStatus" role="status"></p>';if(!modal.open)modal.showModal();
+    }
+    document.addEventListener('click',function(ev){var el=ev.target.closest&&ev.target.closest('[data-me-open],[data-me-pin],[data-me-share],[data-me-close]');if(!el)return;if(el.hasAttribute('data-me-close')){fecha();return;}if(el.hasAttribute('data-me-open')){abre(el.dataset.meOpen);return;}if(!identidade())return;if(el.hasAttribute('data-me-share')){var d=defs.find(function(x){return x.id===el.dataset.meShare;})||(el.dataset.meShare===base.id?base:null),p=d&&M.progresso(d,M.metricas(snapshot()));if(p&&p.nivel){fecha();cqArte({p:caminho(d),n:d.n+' · '+faixa(p.nivel),cor:'var(--corc)',d:''});}return;}var nova=pin===el.dataset.mePin?'':el.dataset.mePin;try{localStorage.setItem(pinKey,JSON.stringify(nova));pin=nova;pinta();el.textContent=pin?'Desfixar objetivo':'Fixar como meu objetivo';var status=document.getElementById('meStatus');if(status)status.textContent=pin?'Objetivo fixado no início das medalhas.':'Objetivo voltou à seleção automática.';}catch(_){var erro=document.getElementById('meStatus');if(erro)erro.textContent='Não foi possível salvar sua escolha neste aparelho.';}});
+    window.__meAluno={pinta:pinta,estados:estados,abre:abre,fecha:fecha,chave:pinKey,prioridade:function(){return metaAtual(estados());}};return window.__meAluno;
+  }
   // Resumo da evolução: move os controles existentes e conserva seus eventos.
   function runtimeResumo() {
     var porId = function (id) { return document.getElementById(id); };
@@ -845,7 +875,7 @@
     var reconhecimentos = document.createElement('section'), titulo = document.createElement('h2');
     reconhecimentos.id = 'evReconhecimentos'; reconhecimentos.setAttribute('aria-labelledby', 'evMedalhasTitulo');
     titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Suas medalhas'; reconhecimentos.appendChild(titulo);
-    ['cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
+    ['meProxima', 'cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
     [reconhecimentos, h, tiles, porId('cqGraf'), calendario, anual, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
     if (window.__mapaMes) window.__mapaMes.pinta();
     window.__evResumoContagem = function () {
@@ -1063,6 +1093,19 @@
   // "#7c3aed" -> "124,58,237" — deixa rgba(var(--x),.18) funcionar
   function rgbDe(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }
   var MT_CQICONS = {
+    corrida: "<circle cx='15' cy='4' r='2'/><path d='m9 21 3-5-3-4 4-5 3 4 4-1M4 12h5m3 4 5 5'/>",
+    bike: "<circle cx='5' cy='16' r='4'/><circle cx='19' cy='16' r='4'/><path d='m5 16 5-8 5 8H5m8-12h3l3 12M7 8h5'/>",
+    maca: "<path d='M12 7C5 2 1 9 6 19c2 4 5 1 6 1s4 3 6-1c5-10 1-17-6-12zm0 0c0-4 3-6 6-5'/>",
+    gota: "<path d='M12 2C9 8 5 10 5 15a7 7 0 0 0 14 0c0-5-4-7-7-13z'/>",
+    lua: "<path d='M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12z'/>",
+    pegadas: "<ellipse cx='8' cy='8' rx='3' ry='5' transform='rotate(-25 8 8)'/><ellipse cx='16' cy='15' rx='3' ry='5' transform='rotate(25 16 15)'/><path d='m5 14 2 3m10-13 2 3'/>",
+    bandeira: "<path d='M5 22V3m0 0c5-4 9 4 14 0v11c-5 4-9-4-14 0'/>",
+    mapa: "<path d='m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15'/>",
+    prato: "<circle cx='12' cy='12' r='7'/><circle cx='12' cy='12' r='3'/><path d='M2 3v7m0 2v9m20-18v18'/>",
+    calendario: "<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M7 2v6m10-6v6M3 11h18m-14 5 3 3 6-5'/>",
+    ativ: "<path d='M2 12h5l3-9 4 18 3-9h5'/>",
+    grafico: "<path d='M3 3v18h18M6 15l5-5 4 3 6-7'/>",
+    check: "<circle cx='12' cy='12' r='9'/><path d='m7 12 3 3 7-7'/>",
     medalha: "<circle cx='12' cy='9' r='5'/><path d='M9 13.5 7 21l5-2.4L17 21l-2-7.5'/>",
     trofeu: "<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>",
     estrela: "<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>",
@@ -2922,7 +2965,7 @@
       // Atualiza o resumo de evolução ao registrar uma carga.
       "if(k==='ptdc'){try{if(typeof acEvolucao==='function')acEvolucao();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
-      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}return ok9;}" +
+      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&window.__meAluno&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
        * (escopo do app, antes de tudo) porque o card Conquistas e o bloco da
        * corrida moram em IIFEs diferentes e cada um refazia a conta do pace. */
@@ -2933,6 +2976,7 @@
       "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
+      "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
        * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
@@ -3927,7 +3971,7 @@
       "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
       /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364

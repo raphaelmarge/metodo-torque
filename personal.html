@@ -3224,8 +3224,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de subir, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
     </div>
 
-    <div class="card" style="margin-top: 14px;">
-      <h2>Conquistas do app</h2>
+    <div class="card" id="cqPersonalCard" style="margin-top: 14px;">
+      <h2>Medalhas e próximos objetivos</h2>
+      <details id="cqLegadas"><summary>Criar medalha livre por total de treinos</summary>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Crie as <b>suas</b> medalhas — elas aparecem no card Conquistas do app de todos os alunos, junto das padrão. A meta é em <b>treinos registrados</b> (ex.: Rato de academia — 200 treinos).</p>
       <div id="cqPersLista" style="margin-bottom: 10px;"></div>
       <p class="muted" style="margin: 0 0 6px; font-size: 12px;">Escolha o desenho da medalha:</p>
@@ -3236,6 +3237,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn" id="cqPersAdd">Adicionar</button>
       </div>
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Criou ou removeu uma conquista? Use <b>Publicar</b> no topo da Personalização para atualizar os alunos.</p>
+      </details>
     </div>
   </section>
 
@@ -3909,7 +3911,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <!-- construtor do app do aluno: uma fonte só, usada aqui e em /app/ -->
 <script src="assets/acompanhamento.js"></script>
 <script src="app/aluno-skin.js"></script>
+<script src="app/medalhas-core.js"></script>
+<script src="app/medalhas-catalogo.js"></script>
 <script src="app/aluno-builder.js"></script>
+<link rel="stylesheet" href="assets/personal-medalhas.css">
+<script src="assets/personal-medalhas.js"></script>
 <script src="assets/prescricao-series.js"></script>
 <link rel="stylesheet" href="assets/relatorio-0809.css">
 <link rel="stylesheet" href="assets/personal-planejamento.css">
@@ -21627,7 +21633,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- app do aluno do personal ----------
   // Os ícones das conquistas (MT_CQICONS) moram no construtor do app,
   // em app/aluno-builder.js — uma definição só pro editor e pro app.
-  var MT_CQNOMES = { medalha: "Medalha", trofeu: "Troféu", estrela: "Estrela", coroa: "Coroa", diamante: "Diamante", fogo: "Fogo", raio: "Raio", alvo: "Alvo", foguete: "Foguete", montanha: "Montanha", halter: "Halter", coracao: "Coração" };
+  var MT_CQNOMES = { medalha: "Medalha", trofeu: "Troféu", estrela: "Estrela", coroa: "Coroa", diamante: "Diamante", fogo: "Fogo", raio: "Raio", alvo: "Alvo", foguete: "Foguete", montanha: "Montanha", halter: "Halter", coracao: "Coração", corrida: "Corrida", bike: "Bicicleta", maca: "Alimentação", gota: "Água", lua: "Sono", pegadas: "Caminhada", bandeira: "Chegada", mapa: "Percurso", prato: "Refeição", calendario: "Constância", ativ: "Movimento", grafico: "Evolução", check: "Conclusão" };
   // JSON que vai DENTRO de um <script> do HTML gerado: JSON.stringify não escapa
   // "<", então um nome de studio/exercício com um fecha-script literal encerrava
   // o bloco no meio da declaração e
@@ -21892,6 +21898,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      medalhasApp: self.MT_MEDALHAS ? self.MT_MEDALHAS.pacote((st.config || {}).medalhasEvolutivas) : undefined,
       planoDatas: R809.pacoteDatas(t2),
       onboardingApp: self.MT_ONBOARDING_CONSULTORIA ? self.MT_ONBOARDING_CONSULTORIA.pacote(st, a, { contrato: ctApp, plano: plApp }) : null,
       nutricaoApp: self.MT_PERSONAL_NUTRICAO ? self.MT_PERSONAL_NUTRICAO.pacote(st, a.id) : (self.MT_NUTRICAO ? self.MT_NUTRICAO.normalizaPlano((((st.nutricaoV1 || {}).planos || {})[a.id]) || null) : null),
@@ -24042,6 +24049,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
 
   window.__ptStudio = { load: load, render: render }; // testes
+  if (self.MT_PERSONAL_MEDALHAS) self.MT_PERSONAL_MEDALHAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
   R809.init({
     load: load, save: save, marca: marcaAppPendente, treinoMarca: marcaTreinoMudou,
     financeiro: alFinanceiroPermitido,

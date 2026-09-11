@@ -13,6 +13,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v828 — Medalhas por modalidade e evolução
+
+- Personalização ganha área Medalhas com busca, filtro, ativação individual/em grupo, nome e etapas editáveis. Medalhas livres anteriores (`config.conquistas`) são preservadas.
+- `app/medalhas-core.js` contém critérios puros; `app/medalhas-catalogo.js` acrescenta benchmarks com fontes oficiais ao mesmo array, preservando a referência usada por normaliza/pacote. As seleções ficam em `config.medalhasEvolutivas`, o DTO `medalhasApp` leva somente definições selecionadas.
+- Aluno mantém seis medalhas inicialmente visíveis, com próximo objetivo, progresso, etapas e objetivo fixável no aparelho por chave com hash do token. As conquistas anteriores, nível/XP, calendários, hábitos, fotos e rotas continuam disponíveis.
+- Contadores vêm dos registros existentes. Circuito exige placar concluído e nome exato para benchmark; não certifica evento oficial nem RX. Corrida/circuito indicam o histórico disponível, respeitando a retenção existente. A jornada por dias de treino continua oferecendo novos degraus.
+- Não há mudança de banco, autenticação, XP ou retenção de dados. Demos regeneradas exclusivamente pelo gerador canônico. Cobertura de catálogo, fontes e limites: `docs/releases/mt-v828-medalhas-evolutivas.md`.
+
 ## v827 — Corrida por etapas livres
 
 - Novo treino abre no editor de sequência. Cada etapa possui ação explícita (correr, caminhar, pedalar, aquecer, recuperar), distância ou tempo independente em km/m/min/s e orientação opcional. Repetições mantêm duas etapas configuráveis; editar, duplicar e ordenar ficam na própria sequência.

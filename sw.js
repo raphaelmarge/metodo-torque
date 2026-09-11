@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v827";
+var VERSION = "mt-v828";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -122,6 +122,10 @@ var CORE = [
   "assets/demo-nuvem.js",
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
+  "app/medalhas-core.js",
+  "app/medalhas-catalogo.js",
+  "assets/personal-medalhas.js",
+  "assets/personal-medalhas.css",
   // skin do redesenho: a camada visual que o builder embute no app publicado
   "app/aluno-skin.js",
   // construtor do app do paciente (NUTRI): a mesma fonte única, a partir da v661
@@ -246,6 +250,8 @@ self.addEventListener("fetch", function (event) {
       url.pathname.indexOf("supabase-setup.sql") > -1 ||
       url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
       url.pathname.indexOf("/app/aluno-skin.js") > -1 ||
+      url.pathname.indexOf("/app/medalhas-core.js") > -1 ||
+      url.pathname.indexOf("/app/medalhas-catalogo.js") > -1 ||
       url.pathname.indexOf("/app/nutri-builder.js") > -1 ||
       url.pathname.indexOf("/app/nutri-skin.js") > -1) {
     event.respondWith(
