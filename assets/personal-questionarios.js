@@ -140,13 +140,43 @@
     qbody.appendChild(field(qname, 'Nome do questionário')); qname.placeholder = 'Ex.: Check-in semanal';
     var selected = node('p', 'qpx-selected'); selected.id = 'qpxSelected'; selected.setAttribute('role', 'status'); qbody.appendChild(selected);
     qbody.appendChild(qchecks);
+    var qerror = node('p', 'qpx-error'); qerror.id = 'qpxQuestionnaireError';
+    qerror.setAttribute('role', 'alert'); qerror.hidden = true; qbody.appendChild(qerror);
     qbody.appendChild(button('+ Criar uma pergunta', function () { forQuestionnaire = true; form.open = true; reveal(title); }));
     var qactions = node('div', 'qpx-actions'); qsave.textContent = 'Criar questionário'; qactions.appendChild(qsave); qbody.appendChild(qactions);
     qbody.appendChild(node('p', 'qpx-help', 'Criar salva o modelo. O envio acontece na área “Enviar ao aluno”.'));
     while (qform.children.length > 1) qform.lastElementChild.remove(); qform.appendChild(qbody);
     function updateSelection() { var checks = Array.from(qchecks.querySelectorAll('.qqCheck')), count = checks.filter(function (c) { return c.checked; }).length; selected.textContent = count + (count === 1 ? ' pergunta selecionada' : ' perguntas selecionadas'); if (!checks.length) selected.textContent = 'Crie sua primeira pergunta no banco abaixo.'; }
     qchecks.addEventListener('change', updateSelection);
-    qsave.addEventListener('click', function () { setTimeout(function () { updateSelection(); if (!$('qqNome').value) { qform.open = false; qform.querySelector('summary').focus({ preventScroll: true }); } }); });
+    // Captura o rascunho ANTES do handler canônico, que pode limpar os campos
+    // mesmo quando o armazenamento recusa a gravação. Só ele continua gravando;
+    // aqui confirmamos um ID novo e restauramos apenas a interface em caso de falha.
+    qsave.addEventListener('click', function (event) {
+      if (qsave.disabled) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+      var pendingName = qname.value;
+      var pendingIds = Array.from(qchecks.querySelectorAll('.qqCheck:checked')).map(function (c) { return c.value; });
+      if (!pendingName.trim() || !pendingIds.length) return; // Validação canônica.
+      var previousIds = read().qs.map(function (q) { return q.id; });
+      qerror.hidden = true; qsave.disabled = true;
+      setTimeout(function () {
+        try {
+          var added = read().qs.some(function (q) {
+            return previousIds.indexOf(q.id) < 0 && q.nome === pendingName.trim() &&
+              Array.isArray(q.perguntas) && q.perguntas.length === pendingIds.length &&
+              q.perguntas.every(function (id, i) { return id === pendingIds[i]; });
+          });
+          if (!added) {
+            qname.value = pendingName;
+            qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = pendingIds.indexOf(c.value) >= 0; });
+            qerror.textContent = 'Não foi possível confirmar a gravação. O nome e a seleção foram mantidos; confira o armazenamento antes de tentar novamente.';
+            qerror.hidden = false; qform.open = true; reveal(qname);
+          } else {
+            qform.open = false; qform.querySelector('summary').focus({ preventScroll: true });
+          }
+          updateSelection();
+        } finally { qsave.disabled = false; }
+      });
+    }, true);
     function decorateQuestions() {
       var data = read(), counts = {}; data.ps.forEach(function (p) { var key = normalize(p.sigla); counts[key] = (counts[key] || 0) + 1; });
       $('qpLista').querySelectorAll('[data-qp-row]').forEach(function (row) {

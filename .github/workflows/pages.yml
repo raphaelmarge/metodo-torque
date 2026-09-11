@@ -7,37 +7,74 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# Não interromper uma publicação já iniciada com outro deploy concorrente.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  validar:
+    uses: ./.github/workflows/tests.yml
+    with:
+      upload_pages: true
   deploy:
+    needs: validar
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Recusar publicação de código ultrapassado
+        uses: actions/github-script@v7
         with:
-          path: .
-      # O publicador automático antigo ("pages build and deployment") roda em
-      # paralelo em pushes na main e os dois deploys conflitam. Espera ele
-      # terminar antes de publicar.
-      - name: Aguardar publicador paralelo
-        if: github.event_name == 'push'
-        run: sleep 75
+          script: |
+            const { data } = await github.rest.git.getRef({ ...context.repo, ref: 'heads/main' });
+            if (data.object.sha !== context.sha) {
+              // O bot atualiza só este briefing na main com GITHUB_TOKEN, sem
+              // disparar outro Pages. Não confundir documentação com código novo.
+              const { data: comparison } = await github.request(
+                'GET /repos/{owner}/{repo}/compare/{basehead}', {
+                  ...context.repo, basehead: `${context.sha}...${data.object.sha}`,
+                  page: 1, per_page: 1
+                });
+              const onlyBriefing = comparison.status === 'ahead' &&
+                comparison.ahead_by > 0 && comparison.behind_by === 0 &&
+                Array.isArray(comparison.files) && comparison.files.length === 1 &&
+                comparison.files[0].filename === 'design/BRIEFING-CLAUDE-DESIGN.md' &&
+                comparison.files[0].status === 'modified';
+              if (!onlyBriefing) {
+                core.setFailed('A main mudou além do briefing; validar o novo código antes de publicar.');
+              } else {
+                core.info('Somente o briefing avançou; o artefato permanece no commit testado.');
+              }
+            }
+      - uses: actions/configure-pages@v5
+      # Não refaz checkout: publica o artefato gerado após os testes neste run.
       - id: deployment
         uses: actions/deploy-pages@v4
-        continue-on-error: true
-      - name: Nova tentativa se houve conflito
-        if: steps.deployment.outcome == 'failure'
-        run: sleep 45
-      - id: deployment-retry
-        if: steps.deployment.outcome == 'failure'
-        uses: actions/deploy-pages@v4
+      - name: Conferir o commit efetivamente servido
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --max-time 20 \
+              "${PAGE_URL%/}/release-info.json?sha=$EXPECTED_SHA" \
+              -o "$RUNNER_TEMP/release-info.json" && \
+              python3 -c 'import json,os,sys; sys.exit(json.load(open(sys.argv[1])).get("commit") != os.environ["EXPECTED_SHA"])' "$RUNNER_TEMP/release-info.json"; then
+              echo "Commit publicado confirmado: $EXPECTED_SHA"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo 'Não foi possível confirmar o commit publicado; verificar logs e publicadores paralelos.' >&2
+          exit 1

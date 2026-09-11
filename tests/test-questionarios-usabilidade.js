@@ -26,7 +26,12 @@ var state={alunos:[{id:'demo-a',nome:'Aluno de demonstração'}],questionarios:[
 {id:'obs',sigla:'OBS',titulo:'Recado',texto:'O que gostaria de contar ao seu personal?',tipo:'texto',ops:[],menosMelhor:false}
 ]};
 var writes=[],uid=0;var S=window.MTStore={read:()=>structuredClone(state),uid:()=>('created-'+(++uid)),todayISO:()=>('2026-09-08')};
-function load(){return S.read();} function save(s){state=structuredClone(s);writes.push(structuredClone(s));return true;}
+var saveFailures=0;
+function load(){return S.read();}
+function save(s){
+ if(saveFailures>0){saveFailures--;renderQuest();return false;}
+ state=structuredClone(s);writes.push(structuredClone(s));return true;
+}
 function sincronizaBusca(){}
 ${canonical}
 ${payload}
@@ -82,6 +87,38 @@ async function snapshot(p){return p.evaluate(()=>JSON.stringify(state));}
  await p.locator('.qqCheck[value="dor"]').check();await p.click('#qqAdd');
  ok(await p.evaluate(()=>{const q=state.questionarios.at(-1);return q.nome==='Meu novo check-in'&&q.perguntas.includes('disp')&&q.perguntas.includes('dor');}),'Questionário usa IDs canônicos sem regravar perguntas');
  ok(await p.evaluate(()=>__questPT.payload(state,state.questionarios[0]).ps.find(p=>p.s==='DOR').mm),'Payload do aluno mantém a direção da dor');
+ // Falha de armazenamento: o handler canônico repinta e limpa os campos.
+ // Um questionário antigo com o mesmo nome não comprova a nova gravação.
+ await p.waitForFunction(()=>!document.getElementById('qqNovoBox').open);
+ await p.locator('#qqNovoBox').evaluate(el=>{el.open=true;});
+ await p.fill('#qqNome','  Check-in semanal  ');
+ await p.locator('.qqCheck[value="dor"]').check();
+ await p.locator('.qqCheck[value="obs"]').check();
+ const failedBefore=await snapshot(p), failedWrites=await p.evaluate(()=>writes.length);
+ await p.evaluate(()=>{saveFailures=1;});await p.click('#qqAdd');
+ await p.waitForTimeout(50);
+ ok(await p.inputValue('#qqNome')==='  Check-in semanal  ','Falha de gravação preserva o nome completo do rascunho');
+ ok(await p.evaluate(()=>Array.from(document.querySelectorAll('.qqCheck:checked')).map(c=>c.value).join(','))==='dor,obs','Falha preserva a seleção por IDs, sem confundir códigos duplicados');
+ ok(await p.locator('#qqNovoBox').evaluate(el=>el.open),'Falha mantém o editor aberto');
+ ok(await snapshot(p)===failedBefore&&await p.evaluate(()=>writes.length)===failedWrites,'Falha não grava nem altera dados já existentes');
+ ok(await p.locator('#qpxQuestionnaireError').isVisible(),'Falha apresenta mensagem acessível, sem falso sucesso');
+ ok(!await p.locator('#qqAdd').isDisabled(),'Falha libera nova tentativa consciente');
+ await p.click('#qqAdd');await p.waitForFunction(()=>!document.getElementById('qqNovoBox').open);
+ ok(await p.evaluate(()=>writes.length)===failedWrites+1,'Nova tentativa cria uma única gravação');
+ ok(await p.evaluate(()=>{const q=state.questionarios.at(-1);return q.nome==='Check-in semanal'&&q.perguntas.join(',')==='dor,obs';}),'Nova tentativa usa o mesmo rascunho preservado');
+ ok(!await p.locator('#qpxQuestionnaireError').isVisible(),'Sucesso limpa o erro anterior');
+ // A proteção existente do banco de perguntas continua preservando o rascunho.
+ await p.locator('#qpNovoBox').evaluate(el=>{el.open=true;});
+ await p.fill('#qpTitulo','Pergunta não gravada');await p.fill('#qpTexto','Como foi a sessão?');
+ await p.selectOption('#qpTipo','emoji');await p.selectOption('#qpxDirection','menor');
+ await p.evaluate(()=>{saveFailures=1;});const questionBefore=await snapshot(p);
+ await p.click('#qpAdd');await p.waitForFunction(()=>!document.getElementById('qpxError').hidden);
+ ok(await p.inputValue('#qpTitulo')==='Pergunta não gravada'&&await p.inputValue('#qpTexto')==='Como foi a sessão?','Falha da pergunta preserva título e texto');
+ ok(await p.inputValue('#qpTipo')==='emoji'&&await p.inputValue('#qpxDirection')==='menor','Falha da pergunta preserva tipo e interpretação');
+ ok(await snapshot(p)===questionBefore,'Falha da pergunta não modifica questionários ou histórico');
+ await p.click('#qpAdd');await p.waitForFunction(()=>!document.getElementById('qpNovoBox').open);
+ ok(await p.evaluate(()=>state.questPerguntas.filter(x=>x.titulo==='Pergunta não gravada').length===1),'Pergunta pode ser salva novamente sem duplicação');
+
  const used=p.locator('#qpLista [data-qp-row]').filter({has:p.locator('[data-qprm="dor"]')});await used.locator('summary').click();
  ok(!await used.locator('[data-qprm="dor"]').isVisible(),'Pergunta usada não oferece exclusão que quebraria vínculos');
  await used.locator('select').selectOption('maior');
