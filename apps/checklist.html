@@ -134,11 +134,11 @@
       PADRAO_FECHAMENTO.forEach(function (t, i) {
         st.tarefas.push({ id: "f" + i, turno: "fechamento", texto: t, resp: "", hora: "23:00" });
       });
-      S.write("checklist", st);
+      if (S.write("checklist", st) === false) return st;
     }
     return st;
   }
-  function save(st) { S.write("checklist", st); render(); }
+  function save(st) { if (S.write("checklist", st) === false) return false; render(); return true; }
 
   var diaSel = S.todayISO();
 
@@ -226,7 +226,7 @@
     } else {
       delete dia[tid];
     }
-    save(st);
+    if (!save(st)) return false;
   });
 
   $("dia").onchange = function () { diaSel = this.value || S.todayISO(); render(); };
@@ -244,7 +244,7 @@
     var nome = $("eqNome").value.trim(); if (!nome) return;
     var st = load();
     st.equipe.push({ id: S.uid(), nome: nome, zap: $("eqZap").value.trim() });
-    S.write("checklist", st);
+    if (S.write("checklist", st) === false) return false;
     $("eqNome").value = ""; $("eqZap").value = "";
     renderEquipe(); render();
   };
@@ -254,7 +254,7 @@
     var st = load();
     st.equipe = st.equipe.filter(function (x) { return x.id !== id; });
     st.tarefas.forEach(function (t) { if (t.resp === id) t.resp = ""; });
-    S.write("checklist", st);
+    if (S.write("checklist", st) === false) return false;
     renderEquipe(); render();
   });
 
@@ -277,7 +277,7 @@
     var texto = $("tTexto").value.trim(); if (!texto) return;
     var st = load();
     st.tarefas.push({ id: S.uid(), turno: $("tTurno").value, texto: texto, hora: $("tHora").value || "", resp: $("tResp").value });
-    S.write("checklist", st);
+    if (S.write("checklist", st) === false) return false;
     $("tTexto").value = "";
     renderTarefas(); render();
   };
@@ -286,17 +286,17 @@
     if (!id) return;
     var st = load();
     st.tarefas = st.tarefas.filter(function (t) { return t.id !== id; });
-    S.write("checklist", st);
+    if (S.write("checklist", st) === false) return false;
     renderTarefas(); render();
   });
   $("dlgTarefas").addEventListener("change", function (e) {
     var st = load(), t;
     if (e.target.hasAttribute("data-hora")) {
       t = st.tarefas.find(function (x) { return x.id === e.target.getAttribute("data-hora"); });
-      if (t) { t.hora = e.target.value; S.write("checklist", st); render(); }
+      if (t) { t.hora = e.target.value; if (S.write("checklist", st) === false) return false; render(); }
     } else if (e.target.hasAttribute("data-resp")) {
       t = st.tarefas.find(function (x) { return x.id === e.target.getAttribute("data-resp"); });
-      if (t) { t.resp = e.target.value; S.write("checklist", st); render(); }
+      if (t) { t.resp = e.target.value; if (S.write("checklist", st) === false) return false; render(); }
     }
   });
 

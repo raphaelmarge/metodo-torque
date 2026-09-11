@@ -144,7 +144,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("produtos", { itens: [], vendas: [] }); }
-  function save(st) { S.write("produtos", st); render(); }
+  function save(st) { if (S.write("produtos", st) === false) return false; render(); return true; }
 
   var aba = "vender";
   var carrinho = []; // {produtoId, nome, preco, qtd}
@@ -228,9 +228,10 @@
       total: total, forma: $("vForma").value, cliente: $("vCliente").value.trim(),
       vendedor: $("vVendedor").value.trim(), // alimenta as comissões de vendedor
     });
+    if (S.write("produtos", st) === false) return false;
     carrinho = [];
     $("vCliente").value = "";
-    save(st);
+    render();
     alert("Venda registrada! " + S.fmtBRL(total) + " (" + $("vForma").value + ")");
   };
 
@@ -273,17 +274,18 @@
       var qtd = prompt("Quantas unidades chegaram?");
       if (!qtd || !+qtd) return;
       st.itens.find(function (x) { return x.id === id; }).estoque += +qtd;
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-del");
     if (id) {
       if (!confirm("Excluir este produto?")) return;
       st.itens = st.itens.filter(function (x) { return x.id !== id; });
-      save(st);
+      if (!save(st)) return false;
     }
   });
   $("dlgProd").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = { nome: $("pNome").value.trim(), preco: +$("pPreco").value || 0, estoque: +$("pEstoque").value || 0, minimo: +$("pMinimo").value || 0 };
     if (editProdId) {
@@ -293,7 +295,8 @@
       dados.id = S.uid();
       st.itens.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlgProd").close("ok");
   });
 
   // ---------- HISTÓRICO ----------
@@ -352,7 +355,7 @@
       if (p) p.estoque += i.qtd;
     });
     st.vendas = st.vendas.filter(function (x) { return x.id !== id; });
-    save(st);
+    if (!save(st)) return false;
   });
 
   function render() {
@@ -376,56 +379,96 @@
 (function () {
   var S = window.MTStore;
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var pedidosEmEnvio = Object.create(null), pedidosConta = "", pedidosConsulta = 0;
+  function contaPedidos() {
+    var c = S.cloud && S.cloud(), a = S.read("academia", {}), p = S.read("perfil", {});
+    return JSON.stringify([c && c.aid || a.id || "local", p.id || p.email || p.nome || "local"]);
+  }
+  function avisoPedido(texto) {
+    var el = document.getElementById("pedidosAppAviso");
+    if (el) el.textContent = texto;
+  }
 
   function puxaPedidosApp() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return;
+    var conta = contaPedidos(), consulta = ++pedidosConsulta;
     nuvem.client.from("app_pedidos").select("id,aluno,itens,total,status,criado")
       .eq("status", "novo").order("criado", { ascending: true }).then(function (r) {
+        var atual = S.cloud && S.cloud();
+        if (consulta !== pedidosConsulta || conta !== contaPedidos() || !atual || atual.client !== nuvem.client) return;
         var box = document.getElementById("pedidosAppBox");
         if (r.error || !box) return;
         var lista = r.data || [];
+        pedidosConta = conta;
+        window.__pedidosApp = lista; // testes
         box.hidden = !lista.length;
         if (!lista.length) return;
+        var vendas = S.read("produtos", { vendas: [] }).vendas || [];
         document.getElementById("pedidosAppLista").innerHTML = lista.map(function (p) {
+          var registrado = vendas.some(function (v) { return v.pedidoId === p.id; });
+          var ocupado = !!pedidosEmEnvio[conta + "|" + p.id];
           return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:var(--card);padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
             "<div><b>" + esc(p.aluno || "Aluno do app") + "</b> · R$ " + (+p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) +
             '<br><span class="muted" style="font-size:12.5px;">' +
             (p.itens || []).map(function (x) { return x.q + "x " + esc(x.n); }).join(", ") + "</span></div>" +
             '<div class="linha-flex" style="gap:6px;">' +
-            '<button class="btn mini" data-entrega="' + p.id + '">✔ Entregue (baixa estoque)</button>' +
-            '<button aria-label="Excluir" class="btn perigo mini" data-cancela="' + p.id + '">✕</button></div></div>';
+            '<button class="btn mini" data-entrega="' + p.id + '"' + (ocupado ? ' disabled' : '') + '>' + (registrado ? 'Confirmar entrega no app' : '✔ Entregue (baixa estoque)') + '</button>' +
+            '<button aria-label="Excluir" class="btn perigo mini" data-cancela="' + p.id + '"' + (ocupado || registrado ? ' disabled' : '') + '>✕</button></div></div>';
         }).join("");
-        window.__pedidosApp = lista; // testes
       });
   }
 
-  document.addEventListener("click", function (e) {
+  document.addEventListener("click", async function (e) {
     var ent = e.target.closest("[data-entrega]");
     var can = e.target.closest("[data-cancela]");
     if (!ent && !can) return;
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return;
+    var conta = contaPedidos();
+    if (pedidosConta !== conta) { puxaPedidosApp(); return; }
     var id = (ent || can).getAttribute(ent ? "data-entrega" : "data-cancela");
+    var chave = conta + "|" + id;
+    if (pedidosEmEnvio[chave]) return;
     var pedido = (window.__pedidosApp || []).find(function (p) { return p.id === id; });
-    if (ent && pedido) {
-      var st = S.read("produtos", { itens: [], vendas: [] });
+    if (!pedido) return;
+    var st = S.read("produtos", { itens: [], vendas: [] });
+    var vendaExiste = st.vendas.some(function (v) { return v.pedidoId === id; });
+    if (can && vendaExiste) { avisoPedido("A entrega já foi registrada. Confirme a entrega no app; o estoque não será baixado novamente."); return; }
+    pedidosEmEnvio[chave] = true;
+    (ent || can).disabled = true;
+    try {
+    if (ent && !vendaExiste) {
       (pedido.itens || []).forEach(function (x) {
         var prod = st.itens.find(function (i) { return i.nome === x.n; });
         if (prod) prod.estoque = Math.max(0, (+prod.estoque || 0) - (+x.q || 0));
       });
       st.vendas.push({
-        id: S.uid(), data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5),
+        id: S.uid(), pedidoId: id, data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5),
         itens: (pedido.itens || []).map(function (x) {
           var prod2 = st.itens.find(function (i) { return i.nome === x.n; });
           return { produtoId: prod2 ? prod2.id : "", nome: x.n, qtd: +x.q || 0, preco: +x.v || 0 };
         }),
         total: +pedido.total || 0, forma: "a receber (app)", cliente: pedido.aluno || "",
       });
-      S.write("produtos", st);
+      if (S.write("produtos", st) === false) return false;
     }
-    nuvem.client.from("app_pedidos").update({ status: ent ? "entregue" : "cancelado" }).eq("id", id)
-      .then(function () { puxaPedidosApp(); location.reload(); });
+    var status = ent ? "entregue" : "cancelado";
+    var resultado = await nuvem.client.from("app_pedidos").update({ status: status }).eq("id", id).select("id,status");
+    var atual = S.cloud && S.cloud();
+    if (conta !== contaPedidos() || !atual || atual.client !== nuvem.client) return;
+    if (resultado.error || !(resultado.data || []).some(function (row) { return row.id === id && row.status === status; })) {
+      avisoPedido(ent ? "Venda e estoque já registrados. Falta confirmar a entrega no app; tente novamente sem baixar o estoque outra vez." : "Cancelamento não confirmado. Tente novamente.");
+      return;
+    }
+    avisoPedido("Pedido atualizado.");
+    puxaPedidosApp();
+    } catch (_) {
+      if (conta === contaPedidos()) avisoPedido(ent ? "Venda registrada. Sem confirmação no app; tente novamente apenas a confirmação da entrega." : "Sem confirmação do cancelamento. Tente novamente.");
+    } finally {
+      delete pedidosEmEnvio[chave];
+      if (conta === contaPedidos()) { (ent || can).disabled = false; puxaPedidosApp(); }
+    }
   });
 
   var main = document.querySelector("main");
@@ -434,7 +477,7 @@
   card.id = "pedidosAppBox";
   card.hidden = true;
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><div id='pedidosAppLista'></div>";
+  card.innerHTML = "<h2>Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><p id='pedidosAppAviso' role='status'></p><div id='pedidosAppLista'></div>";
   main.appendChild(card);
 
   // curva ABC dos últimos 90 dias

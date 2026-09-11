@@ -13,7 +13,7 @@ O que já está pronto no repositório:
 - `assets/modulo-conta.js` → a tela de entrada agora tem CRIAR CONTA
   self-service (nome + e-mail + senha): quem baixa o app da loja se cadastra
   sozinho na primeira abertura.
-- `personal.html` → tela de assinatura (R$ 59,90/mês) que aparece logo depois
+- `personal.html` → tela de assinatura (R$ 49/mês) que aparece logo depois
   do login/cadastro no app da loja, com o botão Assinar já ligado no plugin do
   RevenueCat; consulta o status ao conectar na nuvem, mostra a situação no
   card Sua ilha e as faixas de atraso/vencimento; esconde a oferta com preço
@@ -24,7 +24,7 @@ O que já está pronto no repositório:
 
 O que falta e entra no PRÓXIMO build nativo (não dá pra fazer sem as contas):
 
-1. **Criar o produto de assinatura nas lojas** — R$ 59,90/mês:
+1. **Criar ou conferir o produto de assinatura nas lojas** — R$ 49/mês:
    - Play Console → Monetizar → Produtos → Assinaturas → criar
      (ex.: id `torque_personal_mensal`).
    - App Store Connect → app TORQUE PERSONAL → Assinaturas → criar grupo e
@@ -54,6 +54,7 @@ Regras das lojas pra não ser rejeitado:
 - Dentro do app NUNCA mencionar o preço da web nem mandar pagar por fora
   (Apple rejeita na revisão). O painel já esconde a faixa com preço quando
   roda no app nativo.
-- O preço da loja (R$ 59,90) é maior que o da web (R$ 49) por causa da
-  comissão de 15% da Apple/Google — isso é permitido, só não pode ser
-  anunciado dentro do app.
+- A oferta do app é R$ 49/mês. A comissão da loja fica por nossa conta.
+  Alterar o texto do aplicativo não altera a cobrança: conferir o produto
+  `torque_personal_mensal` na App Store, no Google Play e no RevenueCat antes
+  de liberar uma nova versão nativa.

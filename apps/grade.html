@@ -247,11 +247,11 @@ Semana que vem: manutenção na área de peso livre"></textarea>
         noshowLimite: +$("rgFaltas").value || 0,
         noshowDias: +$("rgDias").value || 7,
       };
-      S.write("grade", st);
+      if (S.write("grade", st) === false) { $("rgStatus").textContent = "Não foi possível salvar. Suas alterações continuam nos campos."; return false; }
       $("rgStatus").textContent = "✅ Salvo — republique os apps dos alunos para valer no celular.";
     };
   })();
-  function save(st) { S.write("grade", st); render(); }
+  function save(st) { if (S.write("grade", st) === false) return false; render(); return true; }
 
   // ---------- estado ----------
   var refDia = S.todayISO();
@@ -362,7 +362,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
   // avisos do telão (modo TV) — um por linha, sincroniza pela conta
   $("tvAvisosTxt").value = (S.read("tvAvisos", { itens: [] }).itens || []).join("\n");
   $("tvAvisosTxt").addEventListener("change", function () {
-    S.write("tvAvisos", { itens: this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 6) });
+    if (S.write("tvAvisos", { itens: this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 6) }) === false) return false;
   });
 
   // ---------- nova aula / editar ----------
@@ -414,6 +414,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
 
   $("dlgAula").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var dias = [];
     Array.prototype.forEach.call(document.querySelectorAll("#gDias input:checked"), function (c) { dias.push(+c.value); });
     if (!dias.length) { e.preventDefault(); alert("Marque pelo menos um dia da semana."); return; }
@@ -431,15 +432,16 @@ Semana que vem: manutenção na área de peso livre"></textarea>
       dados.id = S.uid();
       st.aulas.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlgAula").close("ok");
   });
   $("gExcluir").onclick = function () {
     if (!confirm("Excluir esta aula da grade? (as presenças registradas somem também)")) return;
     var st = load();
     st.aulas = st.aulas.filter(function (x) { return x.id !== editandoId; });
     Object.keys(st.presencas).forEach(function (k) { if (k.indexOf(editandoId + "|") === 0) delete st.presencas[k]; });
+    if (!save(st)) return false;
     $("dlgAula").close();
-    save(st);
   };
 
   // ---------- sob demanda ----------
@@ -451,13 +453,15 @@ Semana que vem: manutenção na área de peso livre"></textarea>
   };
   $("dlgDemanda").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.avulsas.push({
       id: S.uid(), data: $("dData").value, inicio: $("dInicio").value,
       nome: $("dNome").value.trim(), dur: +$("dDur").value || 60, vagas: +$("dVagas").value || 14,
       prof: $("dProf").value.trim(), sala: $("dSala").value.trim(), cor: "#57534e",
     });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgDemanda").close("ok");
   });
 
   // ---------- participantes ----------
@@ -513,7 +517,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
     if (lista.length >= (+aula.vagas || 0) && !confirm("A aula já está cheia (" + aula.vagas + " vagas). Adicionar mesmo assim?")) return;
     lista.push(n);
     st.presencas[chaveAberta] = lista;
-    S.write("grade", st);
+    if (S.write("grade", st) === false) return false;
     renderPart(); render();
   };
   $("partNome").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("partAdd").click(); } });
@@ -529,7 +533,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
         var limpo = nomeX.replace(" 📲", "");
         if (aulaX.fixos.indexOf(limpo) === -1) aulaX.fixos.push(limpo);
         stX.presencas[chaveAberta].splice(+fx, 1); // sai da lista do dia: agora é fixo em todas
-        S.write("grade", stX);
+        if (S.write("grade", stX) === false) return false;
         renderPart(); render();
       }
       return;
@@ -540,7 +544,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
       var aulaY = stY.aulas.find(function (x) { return x.id === chaveAberta.split("|")[0]; });
       if (aulaY && aulaY.fixos) {
         aulaY.fixos.splice(+rf, 1);
-        S.write("grade", stY);
+        if (S.write("grade", stY) === false) return false;
         renderPart(); render();
       }
       return;
@@ -556,7 +560,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
         var j = arr.indexOf(iso);
         if (j >= 0) arr.splice(j, 1); else arr.push(iso);
         stF.faltas[nomeF] = arr;
-        S.write("grade", stF);
+        if (S.write("grade", stF) === false) return false;
         renderPart();
       }
       return;
@@ -565,7 +569,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
     if (i == null) return;
     var st = load();
     (st.presencas[chaveAberta] || []).splice(+i, 1);
-    S.write("grade", st);
+    if (S.write("grade", st) === false) return false;
     renderPart(); render();
   });
   $("partFechar").onclick = function () { $("dlgPart").close(); };
@@ -628,7 +632,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
         });
       });
 
-      if (mudou) S.write("grade", st);
+      if (mudou) if (S.write("grade", st) === false) return false;
       var fila = Promise.resolve();
       if (aplicados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "confirmado" }).in("id", aplicados); });
       if (cancelados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "cancelado_ok" }).in("id", cancelados); });

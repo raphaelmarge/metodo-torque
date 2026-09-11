@@ -106,7 +106,7 @@
 
   // estado: { chamados: [{id, cat, prio, titulo, local, desc, status, criado, agendado, fotos:[], hist:[{data,txt}]}] }
   function load() { return S.read("manut", { chamados: [] }); }
-  function save(st) { S.write("manut", st); render(); }
+  function save(st) { if (S.write("manut", st) === false) return false; render(); return true; }
 
   var CAT = { aparelho: "🏋 Aparelho", predial: "🏢 Predial", limpeza: "🧽 Limpeza" };
   var PRIO = { alta: ["ALTA", "erro"], media: ["MÉDIA", "alerta"], baixa: ["BAIXA", "neutro"] };
@@ -202,13 +202,25 @@
   });
   $("filtroStatus").onchange = function () { filtro = this.value; render(); };
 
+  var fotoNovaPendente = null, salvandoNovo = false, aberturaNovo = 0;
+  function cancelaNovo() { aberturaNovo++; salvandoNovo = false; }
+  $("dlgNovo").addEventListener("cancel", cancelaNovo);
+  $("dlgNovo").addEventListener("close", function () { if (!$("dlgNovo").open) cancelaNovo(); });
   $("btnNovo").onclick = function () {
+    aberturaNovo++; salvandoNovo = false;
+    Array.prototype.forEach.call($("dlgNovo").querySelectorAll("button"), function (b) { b.disabled = false; });
     $("nTitulo").value = ""; $("nLocal").value = ""; $("nDesc").value = ""; $("nData").value = ""; $("nFoto").value = "";
     $("dlgNovo").showModal();
   };
 
-  $("dlgNovo").addEventListener("close", function () {
-    if ($("dlgNovo").returnValue !== "ok") return;
+  $("dlgNovo").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") { cancelaNovo(); return; }
+    e.preventDefault();
+    if (salvandoNovo) return;
+    salvandoNovo = true;
+    var abertura = aberturaNovo;
+    var botao = e.submitter;
+    if (botao) botao.disabled = true;
     var novo = {
       id: S.uid(), cat: $("nCat").value, prio: $("nPrio").value,
       titulo: $("nTitulo").value.trim(), local: $("nLocal").value.trim(), desc: $("nDesc").value.trim(),
@@ -216,9 +228,20 @@
       criado: S.todayISO(), agendado: $("nData").value || "", fotos: [], hist: [],
     };
     var f = $("nFoto").files[0];
-    var fim = function () { var st = load(); st.chamados.unshift(novo); save(st); };
-    if (f) S.savePhoto(f).then(function (fid) { novo.fotos.push(fid); fim(); }, fim);
-    else fim();
+    var foto = f ? (fotoNovaPendente && fotoNovaPendente.file === f ? Promise.resolve(fotoNovaPendente.id) : S.savePhoto(f)) : Promise.resolve(null);
+    Promise.resolve(foto).then(function (fid) {
+      if (abertura !== aberturaNovo || !$("dlgNovo").open) { if (fid) S.deletePhoto(fid); return false; }
+      if (fid) { fotoNovaPendente = { file: f, id: fid }; novo.fotos.push(fid); }
+      var st = load(); st.chamados.unshift(novo);
+      if (!save(st)) return false;
+      fotoNovaPendente = null;
+      $("dlgNovo").close("ok");
+    }, function () {
+      if (abertura !== aberturaNovo || !$("dlgNovo").open) return;
+      alert("Não foi possível salvar a foto. O chamado não foi criado; mantenha o formulário aberto para tentar novamente.");
+    }).finally(function () {
+      if (abertura === aberturaNovo) { salvandoNovo = false; if (botao) botao.disabled = false; }
+    });
   });
 
   $("lista").addEventListener("click", function (e) {
@@ -239,30 +262,30 @@
     if (acao === "resolver") {
       c.status = "resolvido"; c.resolvido = S.todayISO();
       c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Resolvido" });
-      save(st);
+      if (!save(st)) return false;
     } else if (acao === "agendar") {
       var d = prompt("Agendar para qual data? (AAAA-MM-DD)", c.agendado || S.todayISO());
       if (!d) return;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { alert("Use o formato AAAA-MM-DD, ex.: 2026-07-15"); return; }
       c.agendado = d; c.status = "agendado";
       c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Agendado para " + S.fmtData(d) });
-      save(st);
+      if (!save(st)) return false;
     } else if (acao === "reabrir") {
       c.status = "aberto"; c.resolvido = ""; c.agendado = "";
       c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Reaberto (retorno)" });
-      save(st);
+      if (!save(st)) return false;
     } else if (acao === "nota") {
       var txt = prompt("Anotação:");
       if (!txt) return;
       c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: txt });
-      save(st);
+      if (!save(st)) return false;
     } else if (acao === "foto") {
       cardEl.querySelector("[data-fotoinput]").click();
     } else if (acao === "excluir") {
       if (!confirm("Excluir este chamado?")) return;
-      (c.fotos || []).forEach(S.deletePhoto);
       st.chamados = st.chamados.filter(function (x) { return x.id !== id; });
-      save(st);
+      if (!save(st)) return false;
+      (c.fotos || []).forEach(S.deletePhoto);
     }
   });
 
@@ -273,7 +296,7 @@
     S.savePhoto(f).then(function (fid) {
       var st = load();
       var c = st.chamados.find(function (x) { return x.id === id; });
-      if (c) { c.fotos = (c.fotos || []).concat(fid); save(st); }
+      if (c) { c.fotos = (c.fotos || []).concat(fid); if (!save(st)) return false; }
     }, function () { alert("Não foi possível salvar a foto."); });
   });
 

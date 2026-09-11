@@ -118,7 +118,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("descontos", { itens: [] }); }
-  function save(st) { S.write("descontos", st); render(); }
+  function save(st) { if (S.write("descontos", st) === false) return false; render(); return true; }
 
   function valorFmt(d) { return d.tipo === "pct" ? (+d.valor || 0) + " %" : brl(+d.valor || 0); }
 
@@ -175,11 +175,12 @@
     if (!editId || !confirm("Excluir este desconto?")) return;
     var st = load();
     st.itens = st.itens.filter(function (d) { return d.id !== editId; });
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = {
       desc: $("dDesc").value.trim(), tipo: $("dTipo").value, valor: +$("dValor").value || 0,
@@ -197,7 +198,8 @@
       dados.id = S.uid();
       st.itens.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
   // ---------- aprovações e teto (Gerencial - Desconto/Créditos) ----------
   function cfg() { return S.read("config", { dados: {} }); }
@@ -236,7 +238,7 @@
   $("tetoValor").addEventListener("change", function () {
     var st = cfg();
     st.tetoCreditos = +this.value || 0;
-    S.write("config", st);
+    if (S.write("config", st) === false) return false;
     renderAprov();
   });
   $("tabAprov").addEventListener("click", function (e) {
@@ -252,15 +254,15 @@
       if (x.tipo === "credito" && x.alunoId) {
         var stA = S.read("alunos", { alunos: [], recebiveis: [] });
         var a = stA.alunos.find(function (z) { return z.id === x.alunoId; });
-        if (a) {
+        if (a && !(a.creditos || []).some(function (item) { return item.aprovacaoId === x.id; })) {
           a.saldoCredor = Math.round(((+a.saldoCredor || 0) + (+x.valor || 0)) * 100) / 100;
           a.creditos = a.creditos || [];
-          a.creditos.push({ valor: +x.valor || 0, motivo: (x.desc || "crédito") + " (aprovado)", em: S.todayISO() });
-          S.write("alunos", stA);
+          a.creditos.push({ aprovacaoId: x.id, valor: +x.valor || 0, motivo: (x.desc || "crédito") + " (aprovado)", em: S.todayISO() });
+          if (S.write("alunos", stA) === false) return false;
         }
       }
     } else x.status = "reprovado";
-    S.write("aprovacoes", ap);
+    if (S.write("aprovacoes", ap) === false) return false;
     renderAprov();
   });
   document.querySelector(".abas").addEventListener("click", function (e) {

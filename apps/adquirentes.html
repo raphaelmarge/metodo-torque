@@ -98,7 +98,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("adquirentes", { itens: [] }); }
-  function save(st) { S.write("adquirentes", st); render(); }
+  function save(st) { if (S.write("adquirentes", st) === false) return false; render(); return true; }
 
   function taxaDe(a, forma) {
     if (forma === "debito") return +a.debito || 0;
@@ -159,11 +159,12 @@
     if (!editId || !confirm("Excluir esta adquirente?")) return;
     var st = load();
     st.itens = st.itens.filter(function (a) { return a.id !== editId; });
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = { nome: $("aNome").value.trim(), prazo: +$("aPrazo").value || 0,
       debito: +$("aDebito").value || 0, cred1: +$("aCred1").value || 0,
@@ -176,7 +177,8 @@
       dados.id = S.uid();
       st.itens.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
   S.onChange(function (k) { if (k === "adquirentes") render(); });
   render();

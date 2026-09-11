@@ -92,7 +92,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("nps", { respostas: [] }); }
-  function save(st) { S.write("nps", st); render(); }
+  function save(st) { if (S.write("nps", st) === false) return false; render(); return true; }
 
   var mes = S.monthKey(new Date());
   var filtro = "";
@@ -127,9 +127,9 @@
       id: S.uid(), aluno: $("rAluno").value.trim(), nota: notaSel,
       comentario: $("rComent").value.trim(), data: S.todayISO(), tratado: false,
     });
+    if (!save(st)) return false;
     $("rAluno").value = ""; $("rComent").value = ""; notaSel = null;
     Array.prototype.forEach.call(document.querySelectorAll("#notas button"), function (x) { x.className = ""; });
-    save(st);
   };
 
   function doMes(st) {
@@ -194,14 +194,14 @@
     if (id) {
       var st = load();
       st.respostas.find(function (r) { return r.id === id; }).tratado = true;
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-del");
     if (id) {
       if (!confirm("Excluir esta resposta?")) return;
       var st2 = load();
       st2.respostas = st2.respostas.filter(function (r) { return r.id !== id; });
-      save(st2);
+      if (!save(st2)) return false;
     }
   });
 

@@ -138,7 +138,7 @@
 
   var CENTROS_PADRAO = ["Aluguel", "Energia e água", "Folha de pagamento", "Marketing", "Manutenção", "Equipamentos", "Impostos e taxas", "Sistema e software", "Outros"];
   function load() { return S.read("contas", { centros: CENTROS_PADRAO.slice(), contas: [] }); }
-  function save(st) { S.write("contas", st); render(); }
+  function save(st) { if (S.write("contas", st) === false) return false; render(); return true; }
 
   var modelo = "avencer";
   var busca = "";
@@ -223,19 +223,19 @@
     if (id) {
       var c = st.contas.find(function (x) { return x.id === id; });
       c.status = "pago"; c.pagoEm = S.todayISO();
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-cancelar");
     if (id) {
       if (!confirm("Cancelar esta conta?")) return;
       st.contas.find(function (x) { return x.id === id; }).status = "cancelado";
-      save(st); return;
+      if (!save(st)) return false; return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-reabrir");
     if (id) {
       var c2 = st.contas.find(function (x) { return x.id === id; });
       c2.status = "aberto"; c2.pagoEm = "";
-      save(st);
+      if (!save(st)) return false;
     }
   });
 
@@ -250,6 +250,7 @@
   };
   $("dlgConta").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var n = +$("fRepete").value || 1;
     var venc = new Date($("fVenc").value + "T12:00");
@@ -262,7 +263,8 @@
         vencimento: S.todayISO(v), status: "aberto",
       });
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlgConta").close("ok");
   });
 
   // ---------- centros ----------
@@ -280,7 +282,7 @@
     var st = load();
     if (st.centros.indexOf(n) !== -1) { alert("Esse centro já existe."); return; }
     st.centros.push(n);
-    S.write("contas", st);
+    if (S.write("contas", st) === false) return false;
     $("novoCentro").value = "";
     renderCentros();
   };
@@ -289,7 +291,7 @@
     if (i == null) return;
     var st = load();
     st.centros.splice(+i, 1);
-    S.write("contas", st);
+    if (S.write("contas", st) === false) return false;
     renderCentros();
   });
   $("fecharCentros").onclick = function () { $("dlgCentros").close(); };

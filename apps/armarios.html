@@ -94,7 +94,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("armarios", { total: 20, valorPadrao: 25, locacoes: [] }); }
-  function save(st) { S.write("armarios", st); render(); }
+  function save(st) { if (S.write("armarios", st) === false) return false; render(); return true; }
 
   function fimDe(l) {
     var d = new Date(l.inicio + "T12:00");
@@ -142,13 +142,13 @@
     var maiorOcupado = st.locacoes.reduce(function (m, l) { return Math.max(m, l.num); }, 0);
     if (novo < maiorOcupado) { alert("Há armário alugado com número maior que " + novo + "."); render(); return; }
     st.total = novo;
-    save(st);
+    if (!save(st)) return false;
   });
   $("cfgValor").addEventListener("change", function () {
     var st = load();
     if (st.valorPadrao === (+this.value || 0)) return;
     st.valorPadrao = +this.value || 0;
-    save(st);
+    if (!save(st)) return false;
   });
 
   var numSel = null;
@@ -189,6 +189,7 @@
 
   $("dlgArm").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var nome = $("fAluno").value.trim();
     if (!nome) { e.preventDefault(); alert("Informe o aluno."); return; }
     var st = load();
@@ -197,14 +198,15 @@
       num: numSel, aluno: nome, inicio: $("fInicio").value || S.todayISO(),
       meses: +$("fMeses").value || 1, valor: +$("fValor").value || 0,
     });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgArm").close("ok");
   });
   $("btnLiberar").onclick = function () {
     if (!confirm("Liberar o armário " + numSel + "?")) return;
     var st = load();
     st.locacoes = st.locacoes.filter(function (l) { return l.num !== numSel; });
+    if (!save(st)) return false;
     $("dlgArm").close();
-    save(st);
   };
 
   S.onChange(function (k) { if (k === "armarios" || k === "alunos") render(); });

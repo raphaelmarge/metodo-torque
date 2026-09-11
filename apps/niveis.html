@@ -74,7 +74,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("niveis", { grupos: [] }); }
-  function save(st) { S.write("niveis", st); render(); }
+  function save(st) { if (S.write("niveis", st) === false) return false; render(); return true; }
   function stA() { return S.read("alunos", { alunos: [] }); }
 
   var CORES = ["#9ca3af", "#3b82f6", "#a855f7", "#f59e0b", "#8b5cf6", "#ef4444", "#111827"];
@@ -151,8 +151,9 @@
   };
   $("gAddNivel").onclick = function () { $("gNiveis").appendChild(linhaNivel(null, $("gNiveis").children.length)); };
 
-  $("dlgGrupo").addEventListener("close", function () {
-    if ($("dlgGrupo").returnValue !== "ok") return;
+  $("dlgGrupo").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var nome = $("gNome").value.trim();
     if (!nome) return;
     var niveis = [];
@@ -169,7 +170,8 @@
     } else {
       st.grupos.push({ id: S.uid(), nome: nome, modo: $("gModo").value, niveis: niveis });
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlgGrupo").close("ok");
   });
 
   $("lista").addEventListener("click", function (e) {
@@ -181,8 +183,8 @@
       st.grupos = st.grupos.filter(function (x) { return x.id !== gid; });
       var stAl = stA();
       stAl.alunos.forEach(function (a) { if (a.niveis) delete a.niveis[gid]; });
-      S.write("alunos", stAl);
-      save(st); return;
+      if (S.write("alunos", stAl) === false) return false;
+      if (!save(st)) return false; return;
     }
     if (t.hasAttribute("data-add")) {
       var nome = prompt("Nome do aluno a incluir nesta trilha:") || "";
@@ -191,7 +193,7 @@
       if (!a) { if (nome.trim()) alert("Aluno não encontrado."); return; }
       a.niveis = a.niveis || {};
       a.niveis[gid] = { desde: S.todayISO(), bonus: 0 };
-      S.write("alunos", stAl); render(); return;
+      if (S.write("alunos", stAl) === false) return false; render(); return;
     }
     var bonus = t.getAttribute("data-bonus");
     if (bonus) {
@@ -203,7 +205,7 @@
         var antes = nivelAtual(a2, g0).atual.nome;
         a2.niveis[pb[0]].bonus = (a2.niveis[pb[0]].bonus || 0) + 1;
         var depois = nivelAtual(a2, g0).atual.nome;
-        S.write("alunos", stAl2); render();
+        if (S.write("alunos", stAl2) === false) return false; render();
         if (antes !== depois) alert("🎉 " + a2.nome + " subiu para " + depois + "!");
       }
       return;
@@ -213,7 +215,7 @@
       var pr = rem.split("|");
       var stAl3 = stA();
       var a3 = stAl3.alunos.find(function (x) { return x.id === pr[1]; });
-      if (a3 && a3.niveis) { delete a3.niveis[pr[0]]; S.write("alunos", stAl3); render(); }
+      if (a3 && a3.niveis) { delete a3.niveis[pr[0]]; if (S.write("alunos", stAl3) === false) return false; render(); }
     }
   });
 

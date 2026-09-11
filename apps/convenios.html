@@ -86,7 +86,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   function load() { return S.read("convenios", { empresas: [], vinculos: [] }); }
-  function save(st) { S.write("convenios", st); render(); }
+  function save(st) { if (S.write("convenios", st) === false) return false; render(); return true; }
 
   var busca = "", editId = null;
 
@@ -174,17 +174,18 @@
       if (!nome) return;
       if (st.vinculos.some(function (v) { return v.empresaId === id && v.aluno === nome; })) { alert("Já vinculado."); return; }
       st.vinculos.push({ id: S.uid(), empresaId: id, aluno: nome });
-      save(st);
+      if (!save(st)) return false;
       return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-rmv");
     if (id) {
       st.vinculos = st.vinculos.filter(function (v) { return v.id !== id; });
-      save(st);
+      if (!save(st)) return false;
     }
   });
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = {
       nome: $("fNome").value.trim(), desconto: +$("fDesconto").value || 0,
@@ -197,15 +198,16 @@
       dados.id = S.uid();
       st.empresas.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
   $("fExcluir").onclick = function () {
     if (!confirm("Excluir a empresa e os vínculos dela?")) return;
     var st = load();
     st.empresas = st.empresas.filter(function (x) { return x.id !== editId; });
     st.vinculos = st.vinculos.filter(function (v) { return v.empresaId !== editId; });
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
 
   S.onChange(function (k) { if (k === "convenios" || k === "alunos") render(); });

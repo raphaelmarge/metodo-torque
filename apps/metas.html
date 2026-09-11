@@ -138,7 +138,7 @@
   function load() {
     return S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
   }
-  function save(st) { S.write("metas", st); render(); }
+  function save(st) { if (S.write("metas", st) === false) return false; render(); return true; }
 
   var mesAtual = S.monthKey();
 
@@ -250,11 +250,13 @@
     $("dlgVenda").showModal();
   };
 
-  $("dlgVenda").addEventListener("close", function () {
-    if ($("dlgVenda").returnValue !== "ok") return;
+  $("dlgVenda").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     st.vendas.push({ id: S.uid(), vid: $("vVend").value, tipo: $("vTipo").value, valor: +$("vValor").value || 0, data: $("vData").value || S.todayISO() });
-    save(st);
+    if (!save(st)) return false;
+    $("dlgVenda").close("ok");
   });
 
   $("listaVendas").addEventListener("click", function (e) {
@@ -263,12 +265,12 @@
     if (!confirm("Excluir esta venda?")) return;
     var st = load();
     st.vendas = st.vendas.filter(function (v) { return v.id !== id; });
-    save(st);
+    if (!save(st)) return false;
   });
 
   // ---------- config ----------
   $("btnConfig").onclick = function () { renderConfig(); $("dlgConfig").showModal(); };
-  $("cfgFechar").onclick = function () { salvarConfig(); $("dlgConfig").close(); };
+  $("cfgFechar").onclick = function () { if (salvarConfig() === false) return; $("dlgConfig").close(); };
 
   function renderConfig() {
     var st = load();
@@ -296,7 +298,7 @@
       var mat = tr.querySelector(".cfg-mat"), rec = tr.querySelector(".cfg-rec");
       if (mat && rec) meta.vend[vid] = { mat: +mat.value || 0, rec: +rec.value || 0 };
     });
-    save(st);
+    if (!save(st)) return false;
   }
 
   $("addVend").onclick = function () {
@@ -304,7 +306,7 @@
     if (!nome) return;
     var st = load();
     st.vendedoras.push({ id: S.uid(), nome: nome, ativa: true });
-    S.write("metas", st);
+    if (S.write("metas", st) === false) return false;
     $("novoNome").value = "";
     renderConfig();
   };
@@ -316,7 +318,7 @@
     var st = load();
     var v = st.vendedoras.find(function (x) { return x.id === vid; });
     if (v) v.ativa = v.ativa === false;
-    S.write("metas", st);
+    if (S.write("metas", st) === false) return false;
     renderConfig();
     render();
   });
@@ -350,7 +352,7 @@
     st.empresa[ano] = st.empresa[ano] || {};
     st.empresa[ano][p[0]] = st.empresa[ano][p[0]] || [];
     st.empresa[ano][p[0]][+p[1]] = +e.target.value || 0;
-    S.write("metas", st);
+    if (S.write("metas", st) === false) return false;
   });
   renderEmpresa();
 

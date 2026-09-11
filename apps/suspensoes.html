@@ -96,7 +96,7 @@
   function dias(a, b) { return Math.max(0, Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 86400000)); }
 
   function load() { return S.read("suspensoes", { itens: [] }); }
-  function save(st) { S.write("suspensoes", st); render(); }
+  function save(st) { if (S.write("suspensoes", st) === false) return false; render(); return true; }
   function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
 
   function statusDe(s, hoje) {
@@ -184,18 +184,18 @@
         var stAl = stA();
         var al = stAl.alunos.find(function (x) { return x.id === s.alunoId; });
         var ct = al && (al.contratos || []).find(function (c) { return c.status === "ativo"; });
-        if (ct) {
+        if (ct && !(ct.diasLog || []).some(function (item) { return item.suspensaoId === s.id; })) {
           ct.diasCreditados = (+ct.diasCreditados || 0) + diasSusp;
           ct.diasLog = ct.diasLog || [];
-          ct.diasLog.push({ dias: diasSusp, motivo: "Suspensão (" + (s.motivo || "") + ")", em: S.todayISO() });
-          S.write("alunos", stAl);
-        } else alert("Sem contrato ativo para creditar — anote para ajustar depois.");
+          ct.diasLog.push({ suspensaoId: s.id, dias: diasSusp, motivo: "Suspensão (" + (s.motivo || "") + ")", em: S.todayISO() });
+          if (S.write("alunos", stAl) === false) return false;
+        } else if (!ct) alert("Sem contrato ativo para creditar — anote para ajustar depois.");
       }
     } else {
       if (!confirm("Excluir este registro de suspensão?")) return;
       st.itens = st.itens.filter(function (x) { return x.id !== id; });
     }
-    save(st);
+    if (!save(st)) return false;
   });
 
   $("btnNova").onclick = function () {
@@ -210,6 +210,7 @@
   $("sTipo").addEventListener("change", function () { $("campoFim").hidden = this.value === "Indeterminada"; });
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var stAl = stA();
     var nome = $("sAluno").value.trim();
     var a = stAl.alunos.find(function (x) { return x.nome.toLowerCase() === nome.toLowerCase(); });
@@ -245,7 +246,8 @@
       fim: $("campoFim").hidden ? "" : $("sFim").value,
       motivo: $("sMotivo").value.trim(),
     });
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
 
   $("btnExportar").onclick = function () {

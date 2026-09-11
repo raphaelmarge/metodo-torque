@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+npm ci --prefix tests/sql --ignore-scripts --no-audit --no-fund
 # Versões e integridades no lock revisado e versionado. Não atualiza dependências.
 npm ci --prefix tests/ci --ignore-scripts --no-audit --no-fund
 bash .github/scripts/prepara-playwright-ci.sh

@@ -109,7 +109,7 @@
     st.cargos = st.cargos || []; st.colaboradores = st.colaboradores || [];
     return st;
   }
-  function save(st) { S.write("equipe", st); render(); }
+  function save(st) { if (S.write("equipe", st) === false) return false; render(); return true; }
 
   var busca = "", filtroCargo = "", verInativos = false, editId = null;
   function ehHorista(c) { return /horista|diarista/i.test(c.tipoContrato || ""); }
@@ -216,7 +216,7 @@
       var d = $("ferData").value;
       if (!d) { alert("Escolha a data do feriado."); return; }
       var stF = S.read("feriados", { datas: [] });
-      if (stF.datas.indexOf(d) === -1) { stF.datas.push(d); S.write("feriados", stF); }
+      if (stF.datas.indexOf(d) === -1) { stF.datas.push(d); if (S.write("feriados", stF) === false) return false; }
       render();
       return;
     }
@@ -225,7 +225,7 @@
       e.preventDefault();
       var stF2 = S.read("feriados", { datas: [] });
       stF2.datas = stF2.datas.filter(function (x) { return x !== del; });
-      S.write("feriados", stF2);
+      if (S.write("feriados", stF2) === false) return false;
       render();
     }
   });
@@ -268,12 +268,13 @@
     if (!novo) return;
     var st = load();
     if (st.cargos.indexOf(novo) === -1) st.cargos.push(novo);
-    S.write("equipe", st);
+    if (S.write("equipe", st) === false) return false;
     $("fCargoSel").innerHTML += "<option selected>" + esc(novo) + "</option>";
     $("fCargoSel").value = novo;
   };
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
     var st = load();
     var dados = {
       nome: $("fNome").value.trim(), cargo: $("fCargoSel").value,
@@ -287,14 +288,15 @@
       dados.id = S.uid(); dados.ativo = true;
       st.colaboradores.push(dados);
     }
-    save(st);
+    if (!save(st)) return false;
+    $("dlg").close("ok");
   });
   $("fDesativar").onclick = function () {
     if (!confirm("Desativar este colaborador(a)?")) return;
     var st = load();
     st.colaboradores.find(function (x) { return x.id === editId; }).ativo = false;
+    if (!save(st)) return false;
     $("dlg").close();
-    save(st);
   };
 
   S.onChange(function (k) { if (k === "equipe") render(); });
@@ -362,7 +364,7 @@
     var st = stE();
     st.escala[partes[0]] = st.escala[partes[0]] || {};
     st.escala[partes[0]][partes[1]] = alvo.value.trim();
-    S.write("equipe", st);
+    if (S.write("equipe", st) === false) return false;
   });
   function bate(tipo) {
     var nome = $("pontoSel").value;
@@ -371,7 +373,7 @@
     var ag = new Date();
     st.ponto.push({ nome: nome, tipo: tipo, quando: S.todayISO() + "T" + ag.toTimeString().slice(0, 5) });
     if (st.ponto.length > 2000) st.ponto = st.ponto.slice(-2000);
-    S.write("equipe", st);
+    if (S.write("equipe", st) === false) return false;
     renderPonto();
   }
   $("pontoEntrada").onclick = function () { bate("entrada"); };

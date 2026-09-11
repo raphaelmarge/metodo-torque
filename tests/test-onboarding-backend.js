@@ -1,11 +1,12 @@
 /* Contrato de persistência do onboarding. O teste SQL executável roda à parte;
  * esta guarda impede que permissões, imutabilidade e evidências saiam da migration. */
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
-const sqlBase=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909182500_consultoria_onboarding_contrato.sql"),"utf8");
-const sqlHard=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909190000_onboarding_integridade_e_retorno_reservado.sql"),"utf8");
-const sqlPlano=fs.readFileSync(path.join(__dirname,"../supabase/migrations/20260909193000_consultoria_plano_pagamento_documentos.sql"),"utf8");
+const readSql=p=>fs.readFileSync(path.join(__dirname,p),"utf8").replace(/\r\n/g,"\n");
+const sqlBase=readSql("../supabase/migrations/20260909182500_consultoria_onboarding_contrato.sql");
+const sqlHard=readSql("../supabase/migrations/20260909190000_onboarding_integridade_e_retorno_reservado.sql");
+const sqlPlano=readSql("../supabase/migrations/20260909193000_consultoria_plano_pagamento_documentos.sql");
 const sql=sqlBase+"\n"+sqlHard+"\n"+sqlPlano;
-const setup=fs.readFileSync(path.join(__dirname,"../supabase-setup.sql"),"utf8");
+const setup=readSql("../supabase-setup.sql");
 let n=0;function ok(v,s){assert.ok(v,s);n++;console.log("OK "+s);}
 ok(/unique \(token, versao\)/i.test(sql),"uma versão aceita é imutável por aluno");
 ok(/on conflict \(token,\s*versao\) do nothing/i.test(sql)&&/aceite_conflitante/i.test(sql),"reenvio idêntico é idempotente e conteúdo diferente conflita");
