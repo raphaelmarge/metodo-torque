@@ -1,0 +1,81 @@
+name: Preparar correção de contratos da agenda (única)
+on:
+  push:
+    branches: [work/826-preparar-agenda-v823]
+permissions:
+  contents: read
+jobs:
+  preparar:
+    if: ${{ github.repository == 'raphaelmarge/metodo-torque' && github.ref == 'refs/heads/work/826-preparar-agenda-v823' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Aplicar somente as duas substituições revisadas
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = f19c1ddc5519f71aaa0d9835aa803a9c97547359
+          python3 - <<'PY'
+          import pathlib,hashlib
+          changes=[
+           ('tests/test-infra.js','9f96e730a59f518a2b4e9addd05b23534b73bfb9',r'/p_dia < public\.hoje_br\(\)/',r'/p_dia\s*<\s*public\.hoje_br\(\)/'),
+           ('tests/test-personal.js','f14729d694ab4d00c866ef91bf3d46e0ca1cd03a',r'/function plnDia\(d\)/',r'/function plnDia\(d(?:,iso)?\)/')
+          ]
+          for name,expected,old,new in changes:
+           p=pathlib.Path(name); b=p.read_bytes()
+           assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==expected,name+' divergiu'
+           s=b.decode(); assert s.count(old)==1,name+' não tem alvo único'
+           p.write_bytes(s.replace(old,new).encode())
+          PY
+          node --check tests/test-infra.js
+          node --check tests/test-personal.js
+          mkdir -p "$RUNNER_TEMP/agenda-evidencias"
+          node tests/test-agenda-contratos.js | tee "$RUNNER_TEMP/agenda-evidencias/contratos.log"
+          git diff --check
+          git diff -- tests/test-infra.js tests/test-personal.js > "$RUNNER_TEMP/agenda-evidencias/correcao.patch"
+      - name: Criar commit proposto, sem atualizar qualquer branch
+        id: objetos
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs');
+            const base='f19c1ddc5519f71aaa0d9835aa803a9c97547359';
+            const paths=['tests/test-infra.js','tests/test-personal.js','tests/test-agenda-contratos.js','docs/personal/EXECUCAO-20260911-AGENDA.md','tools/verify-personal-backend.sql'];
+            const {data:parent}=await github.rest.git.getCommit({...context.repo,commit_sha:base});
+            if(parent.tree.sha!=='22ba010babfa401244f2bca7a9208557e8729c95')throw Error('Árvore-base divergente');
+            const tree=[];
+            for(const path of paths){
+              const {data:blob}=await github.rest.git.createBlob({...context.repo,content:fs.readFileSync(path,'utf8'),encoding:'utf-8'});
+              tree.push({path,mode:'100644',type:'blob',sha:blob.sha});
+            }
+            const {data:t}=await github.rest.git.createTree({...context.repo,base_tree:parent.tree.sha,tree});
+            const {data:c}=await github.rest.git.createCommit({...context.repo,tree:t.sha,parents:[base],message:'test(ci): reconciliar contratos de agenda da mt-v823\n\nRefs #826. Corrige duas verificações presas a espaços/assinatura antigos sem mudar runtime, cache ou Supabase. Inclui regressões do leitor gerado e conferência read-only do backend. Suíte completa do novo SHA ainda obrigatória.'});
+            core.setOutput('commit',c.sha);
+            fs.writeFileSync(process.env.RUNNER_TEMP+'/agenda-evidencias/commit.txt',c.sha+'\n');
+            fs.writeFileSync(process.env.RUNNER_TEMP+'/agenda-evidencias/tree.json',JSON.stringify(tree,null,2));
+            core.info('COMMIT_PROPOSTO='+c.sha+' TREE='+t.sha);
+      - name: Guardar fonte exata do commit proposto
+        env:
+          PROPOSED: ${{ steps.objetos.outputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$PROPOSED"
+          test "$(git rev-parse FETCH_HEAD)" = "$PROPOSED"
+          git archive --format=tar "$PROPOSED" > "$RUNNER_TEMP/agenda-evidencias/source.tar"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agenda-proposta-${{ github.run_id }}
+          path: ${{ runner.temp }}/agenda-evidencias/
+          retention-days: 7
