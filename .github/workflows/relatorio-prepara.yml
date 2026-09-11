@@ -1,0 +1,118 @@
+name: Relatorio integration preparation
+on:
+  push:
+    branches: [fix/relatorio-0809-completo]
+    paths: [.github/workflows/relatorio-prepara.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report-transport
+          path: .release/r809-*.b64
+          include-hidden-files: true
+      - name: Verify transport and apply to exact production baseline
+        env:
+          EXPECTED_BASE: 4d4e91be7fb16af905f933096d26d4445d8b8adc
+        run: |
+          python3 - <<'PY'
+          import base64,gzip,hashlib,json,os,subprocess
+          from pathlib import Path
+          raw=''.join(Path('.release/r809-'+x+'.b64').read_text().strip() for x in ('a','b'))
+          assert hashlib.sha256(raw.encode()).hexdigest()=='71c4033d70d082a941c0a5f48e90c16fd90866efc42b4613cc198af7d5269ff6', 'Transport integrity mismatch; nothing applied'
+          data=gzip.decompress(base64.b64decode(raw,validate=True))
+          assert hashlib.sha256(data).hexdigest()=='6f5e24f2c0a7345e259a44ebcadabe8fdd42dbff4b1f06717a371b4df14a592a'
+          bundle=json.loads(data);base=os.environ['EXPECTED_BASE']
+          assert bundle['base']==base
+          subprocess.run(['git','fetch','origin','main'],check=True)
+          assert subprocess.check_output(['git','rev-parse','origin/main'],text=True).strip()==base,'main moved; reconcile before applying'
+          subprocess.run(['git','read-tree','--reset','-u',base],check=True)
+          sha=lambda x:hashlib.sha256(x.encode()).hexdigest()
+          for f in bundle['files']:
+            p=Path(f['path']);assert not p.is_absolute() and '..' not in p.parts
+            if f['before'] is None:
+              assert not p.exists(),str(p)+' already exists';out=f['content']
+            else:
+              out=p.read_text();assert sha(out)==f['before'],str(p)+' baseline mismatch'
+              for a,b,t in reversed(f['edits']):out=out[:a]+t+out[b:]
+            assert sha(out)==f['after'],str(p)+' result mismatch'
+            p.parent.mkdir(parents=True,exist_ok=True);p.write_text(out)
+          subprocess.run(['git','add','-A'],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          Path('/tmp/report-manifest.json').write_text(json.dumps(bundle,ensure_ascii=False))
+          print('Verified',len(bundle['files']),'files on',base)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare the same runtime used by full CI
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          sudo ln -s "$CHROME" /opt/pw-browsers/chromium
+      - name: Real integration and regression validation
+        env:
+          TZ: America/Sao_Paulo
+          BASE_URL: http://127.0.0.1:8765
+          MT_BASE: http://127.0.0.1:8765
+        run: |
+          set -o pipefail
+          mkdir -p test-output
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/report-http.log 2>&1 &
+          SRV=$!
+          trap 'kill $SRV 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS "$BASE_URL/assets/versao.js" >/dev/null && break; sleep .25; done
+          for t in tests/test-relatorio-0809-core.js tests/test-relatorio-0809-sql.js tests/test-relatorio-0809-browser.js tests/test-app-sintaxe.js tests/test-versao.js tests/test-sync-cas.js tests/test-sync-identidade.js; do
+            timeout 600 node "$t" 2>&1 | tee "test-output/$(basename "$t").log"
+          done
+          # Regenerate demos with the canonical generator, blocking external network.
+          cp tools/demo-aluno/regen-demo.js /tmp/report-regen-original.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/demo-aluno/regen-demo.js');s=p.read_text();a='  p.on("pageerror",'
+          assert s.count(a)==1
+          s=s.replace(a,'  await p.route("**/*", r => { const u = new URL(r.request().url()); return u.hostname === "127.0.0.1" ? r.continue() : r.abort(); });\n'+a)
+          p.write_text(s)
+          PY
+          node tools/demo-aluno/regen-demos.js 2>&1 | tee test-output/demo-regeneration.log
+          cp /tmp/report-regen-original.js tools/demo-aluno/regen-demo.js
+          git add demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          node tests/test-demo-aluno-variantes.js 2>&1 | tee test-output/demo-variants.log
+          git diff --cached --check
+      - name: Advance only this PR branch with verified tree and both parents
+        env:
+          EXPECTED_BASE: 4d4e91be7fb16af905f933096d26d4445d8b8adc
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          TREE=$(git write-tree)
+          COMMIT=$(printf '%s\n' 'fix: integrate report with canonical app flows and preserve current production (mt-v822)' | git commit-tree "$TREE" -p "$GITHUB_SHA" -p "$EXPECTED_BASE")
+          git push origin "$COMMIT:refs/heads/fix/relatorio-0809-completo"
+          printf '%s\n' "$COMMIT" | tee test-output/reviewed-head.txt
+      - name: Collect diagnostics and sources even on failure
+        if: always()
+        run: |
+          mkdir -p test-output
+          cp /tmp/report-manifest.json test-output/ 2>/dev/null || true
+          git diff --cached > test-output/working.patch
+          tar -czf test-output/working-sources.tar.gz personal.html app/aluno-builder.js app/aluno-skin.js assets/relatorio-0809.* tests/test-relatorio-0809-* migrations/20260911_agenda_modalidade_v822.sql 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-integration-results
+          path: test-output/
+          retention-days: 7
