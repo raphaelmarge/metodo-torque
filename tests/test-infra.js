@@ -127,7 +127,7 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   const sql = le("supabase-setup.sql");
   t(/chave = 'mtapp:grade'/.test(sql) && !/chave = 'grade'/.test(sql), "app_aluno_agenda lê 'mtapp:grade' — o limite de agendamentos configurado passa a valer");
   t(/create or replace function public\.hoje_br\(\)/.test(sql) && /values \(v_acad, t, public\.hoje_br\(\), greatest/.test(sql) &&
-    /p_dia < public\.hoje_br\(\)/.test(sql) && /coalesce\(p_data, public\.hoje_br\(\)\)/.test(sql),
+    /p_dia\s*<\s*public\.hoje_br\(\)/.test(sql) && /coalesce\(p_data, public\.hoje_br\(\)\)/.test(sql),
     "check-in, pedido de horário e avaliação usam o dia do Brasil (hoje_br)");
   const quest = sql.slice(sql.indexOf("create or replace function public.app_quest_responde"));
   t(/v_acad := public\.app_aluno_ativo\(t\);/.test(quest.slice(0, 1200)) && !/from public\.app_aluno where token = t limit 1/.test(quest.slice(0, 1200)),
