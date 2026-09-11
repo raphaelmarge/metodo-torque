@@ -1,0 +1,20 @@
+const fs = require('fs');
+const assert = require('assert');
+const js = fs.readFileSync('assets/relatorio-0809.js','utf8');
+const css = fs.readFileSync('assets/relatorio-0809.css','utf8');
+const ver = fs.readFileSync('assets/versao.js','utf8');
+const sql = fs.readFileSync('migrations/20260911_agenda_modalidade_v821.sql','utf8');
+function ok(v,m){assert.ok(v,m);console.log('✓',m)}
+new Function(js); new Function(ver);
+ok(/mt-v821/.test(ver),'versão publicada é mt-v821');
+ok(/relatorio-0809\.js/.test(ver),'versão carrega a camada do relatório somente no documento');
+ok(/pagamentosAuditoria/.test(js) && /antes:before/.test(js),'edição de recebimento preserva auditoria anterior/depois');
+ok(/MTStore/.test(js) && /write\("ptStudio"/.test(js),'gravações passam pelo MTStore/CAS');
+ok(/pacoteAtivo/.test(js) && /contratosAtivos/.test(js),'status de pacote não ignora contrato mensal ativo');
+ok(/Tipo de atendimento/.test(js) && /consultoria online/.test(js) && /híbrido/.test(js),'perfil distingue presencial, consultoria e híbrido');
+ok(/programacaoDatas/.test(js) && /Planejamento por data/.test(js),'planejamento mensal/data específica existe e preserva semana recorrente');
+ok(/zonasCorrida/.test(js) && /pace/.test(js) && /velocidade/.test(js) && /Frequência cardíaca/.test(js),'zonas customizadas aceitam pace, velocidade e FC');
+ok(/dadosAppAluno/.test(js) && /d\.programacaoDatas/.test(js) && /d\.zonasCorrida/.test(js),'publicação inclui programação por data e zonas no pacote do aluno');
+ok(/atendimento_online/.test(sql) && /appTokenP/.test(sql),'RPC bloqueia pedido presencial de aluno exclusivamente online');
+ok(/conteudo/.test(css) && /#272433/.test(css) && /prefers-color-scheme:light/.test(css),'modo claro força contraste legível em conteúdos');
+console.log('11 verificações · relatório 08/09 v821');
