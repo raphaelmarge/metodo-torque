@@ -1,0 +1,48 @@
+name: Diagnóstico limitado dos bloqueios 826
+on:
+  push:
+    branches: [work/826-diagnose-blocks]
+permissions:
+  contents: read
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [personal, nutricao-personal-completa]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bash .github/scripts/setup-tests.sh
+      - name: Executar a sequência canônica com observação
+        env:
+          SUITE: ${{ matrix.suite }}
+          BLOCKS_OUT: ${{ runner.temp }}/bloqueios
+          BASE_URL: http://127.0.0.1:8765
+          TZ: America/Sao_Paulo
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$BLOCKS_OUT"
+          git rev-parse HEAD > "$BLOCKS_OUT/commit.txt"
+          python3 -m http.server 8765 --bind 127.0.0.1 > "$BLOCKS_OUT/server.log" 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            curl --fail --silent "$BASE_URL/assets/versao.js" > /dev/null && break
+            sleep .25
+          done
+          node .github/scripts/diagnose-blocks.cjs "$SUITE" 2>&1 | tee "$BLOCKS_OUT/teste.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bloqueios-${{ matrix.suite }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/bloqueios/
+          retention-days: 7
