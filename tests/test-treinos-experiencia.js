@@ -181,6 +181,7 @@ const ok = (v, name) => { assert.ok(v, name); checks++; console.log('OK: ' + nam
   for (const [tab, prefix, name] of [['wod', 'wp', 'Circuito editado de Ágata'], ['cardio', 'cb', 'Corrida editada de Ágata']]) {
     await area(tab); await student(prefix + 'Aluno', 'tr-a'); await open('#' + prefix + 'Nome');
     await p.locator('#' + prefix + 'Nome').fill(name);
+    if (tab === 'cardio') await p.locator('#cbModo').selectOption('simples');
     if (tab === 'wod') { await p.locator('#wpMovLinhas .wpe').first().fill('Agachamento livre'); await p.locator('#wpMovLinhas .wpq').first().fill('12'); }
     const before = await snap(); await student(prefix + 'Aluno', 'tr-b');
     eq(await p.locator('#' + prefix + 'Nome').inputValue(), '', tab + ': aluno B não herda rascunho de A');
