@@ -9703,7 +9703,7 @@ async function novaExecucaoAluno(p) {
     window.__trocaSec("evolucao");
     // tela 31: o estado da medalha vive no data-cqok (o selo textual saiu do desenho)
     // os cards viraram <button> (tocar abre a conquista em tela cheia)
-    const cards = [...document.querySelectorAll("#cqGrid [data-cqok]")].map((x) => ({ t: x.textContent, ok: x.getAttribute("data-cqok") === "1" }));
+    const cards = [...document.querySelectorAll("#cqGrid [data-cqi][data-cqok]")].map((x) => ({ t: x.textContent, ok: x.getAttribute("data-cqok") === "1" }));
     const acha = (n) => cards.find((c) => c.t.indexOf(n) > -1) || { t: "", ok: false };
     return {
       primeira: acha("Primeira corrida").ok,
@@ -9720,7 +9720,8 @@ async function novaExecucaoAluno(p) {
   await abreDetalhes(pCr, '#cqGrid');
   const cqTela = await pCr.evaluate(async () => {
     window.__evSub("conq");
-    document.querySelector("#cqGrid [data-cqok='1']").click();
+    // Medalhas legadas abrem cqFull; as evolutivas têm o modal meDetalhe.
+    document.querySelector("#cqGrid [data-cqi][data-cqok='1']").click();
     await new Promise((r) => setTimeout(r, 200));
     const f = document.getElementById("cqFull"), med = document.getElementById("cqMed");
     const antes = med.style.transform;
@@ -9738,7 +9739,7 @@ async function novaExecucaoAluno(p) {
     await new Promise((r) => setTimeout(r, 120));
     out.fechou = !f.classList.contains("on") && document.body.style.overflow === "";
     // e uma bloqueada mostra o progresso, sem compartilhar
-    document.querySelector("#cqGrid [data-cqok='0']").click();
+    document.querySelector("#cqGrid [data-cqi][data-cqok='0']").click();
     await new Promise((r) => setTimeout(r, 150));
     out.bloqSelo = f.querySelector(".cqsel").textContent;
     out.bloqBarra = !!f.querySelector(".cqbar b");

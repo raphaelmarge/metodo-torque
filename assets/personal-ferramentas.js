@@ -98,9 +98,9 @@
   function setupPers() {
     var root = $("vPers"); root.classList.add("ptf-tools");
     var cards = Array.from(root.querySelectorAll(":scope > .card"));
-    var panes = partition(root, "persArea", "Personalizar", [["marca", "Cores e logo"], ["fotos", "Fotos dos treinos"], ["beneficios", "Benefícios, loja e conquistas"]]);
+    var panes = partition(root, "persArea", "Personalizar", [["marca", "Cores e logo"], ["fotos", "Fotos dos treinos"], ["beneficios", "Benefícios e loja"], ["medalhas", "Medalhas"]]);
     root.prepend(root.querySelector(".altopo"));
-    cards.forEach(function (card, i) { var key = i < 2 ? "marca" : i === 4 || i === 5 ? "fotos" : "beneficios"; panes[key].appendChild(card); card.classList.add("ptf-content"); if (key === "beneficios" || i === 5) disclosure(card, "persGrupo" + i, card.querySelector("h2").textContent, false); });
+    cards.forEach(function (card, i) { var key = card.id === "cqPersonalCard" ? "medalhas" : i < 2 ? "marca" : i === 4 || i === 5 ? "fotos" : "beneficios"; panes[key].appendChild(card); card.classList.add("ptf-content"); if (key === "beneficios" || i === 5) disclosure(card, "persGrupo" + i, card.querySelector("h2").textContent, false); });
     root.querySelectorAll(".fotoguia").forEach(function (g, i) { var d = disclosure(g, "persFotoGuia" + i, "Como preparar a foto", false); d.classList.add("ptf-instructions"); });
     labelInput("cqPersNome", "Nome da conquista"); labelInput("cqPersMeta", "Meta de treinos");
     $("persStatus").setAttribute("role", "status"); $("persPublica").title = "Publicar as alterações salvas nos apps dos alunos";

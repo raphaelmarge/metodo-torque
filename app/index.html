@@ -21,6 +21,7 @@
 <script src="aluno-skin.js"></script>
 <script src="../assets/nutricao-core.js"></script>
 <script src="../assets/onboarding-consultoria.js"></script>
+<script src="medalhas-core.js"></script>
 <script src="aluno-builder.js"></script>
 <!-- e o do paciente do NUTRI também (o pacote diz qual é pelo dados.tipo) -->
 <script src="nutri-skin.js"></script>
@@ -105,7 +106,7 @@
     if (!d) return [];
     var f = [];
     if (d.tipo === "nutri") { if (!self.MT_NUTRI_SKIN) f.push("nutri-skin.js"); if (!self.MT_APP_NUTRI) f.push("nutri-builder.js"); }
-    else { if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
+    else { if (!self.MT_MEDALHAS) f.push("medalhas-core.js"); if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
     return f;
   }
   function construtorPresente(pac) {

@@ -47,6 +47,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       }
     };
     st.config.conquistas = [{ e: "rato", n: "Rato de academia", meta: 30 }, { e: "medalha", n: "Lenda do Studio", meta: 100 }];
+    st.config.medalhasEvolutivas = [{"id": "cf-fran"}, {"id": "hyrox-open"}, {"id": "nutri-dias"}, {"id": "corrida-distancia"}, {"id": "treinos-dias"}, {"id": "habito-agua"}, {"id": "circuitos-registros"}, {"id": "cf-murph"}, {"id": "hyrox-estacao-skierg"}, {"id": "bike-registros"}, {"id": "nutri-registros"}, {"id": "habito-sono"}];
     st.config.mural = ["Sábado o studio abre 8h em vez de 7h. Quem treina cedo, me chama que a gente remarca."];
     /* foto de produto da demo (v705): SVG quadrado em base64 — passa no
      * logoOk (data:image/, sem aspas) e vira o thumb de 56px no app. O MESMO
