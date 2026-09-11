@@ -161,7 +161,13 @@ async function testApp() {
   ok(!!state.records[manual.id],'Reconexão envia a refeição pendente');
   await p.locator('#ntpAnt').click();eq(await p.locator('#ntpData').inputValue(),'2026-09-06','Consulta anterior usa o dia local correto');
   eq(await p.locator('#ntpDiario [data-ntp-edita]').count(),0,'Outro dia não mistura a refeição de hoje');
-  await p.locator('#ntpProx').click();ok(await p.locator('#ntpProx').isDisabled(),'Calendário para em hoje');
+  await p.locator('#ntpProx').click();eq(await p.locator('#ntpData').inputValue(),DAY,'Volta ao dia atual');
+  const antesFuturo=await getRecords(p);
+  await p.locator('#ntpProx').click();eq(await p.locator('#ntpData').inputValue(),'2026-09-08','Calendário permite consultar plano futuro');
+  ok(await p.locator('#ntpNovo').isDisabled(),'Consulta futura não permite registrar consumo');
+  eq(await p.locator('[data-ntp-comi]').count(),0,'Plano futuro não oferece confirmação de consumo');
+  eq(await getRecords(p),antesFuturo,'Consultar o futuro não modifica os registros existentes');
+  await p.locator('#ntpVoltaHoje').click();
   eq(await p.evaluate(()=>JSON.stringify(Object.fromEntries(['ptdc','ptfeitos','pthab'].map(k=>[k,JSON.parse(localStorage.getItem(k))])))),original,'Plano, edição, exclusão e sync preservam treino e hábitos legados');
   for(const width of [360,390,1280]){await p.setViewportSize({width,height:844});ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Alimentação sem overflow em '+width+'px');}
   await ctx.close();
