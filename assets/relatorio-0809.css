@@ -1,0 +1,13 @@
+/* Tokens reais do Personal; sem estilos globais por texto/tema do aparelho. */
+.r809-card{padding:18px;margin:18px 0;border:1px solid var(--pt-borda);border-radius:var(--pt-r-card,16px);background:var(--pt-card);color:var(--pt-txt)}
+.r809-card p,.r809-dialog p{font-size:13px;line-height:1.5;color:var(--pt-txt-4)}
+.r809-card h3{margin:0 0 8px}.r809-card [hidden],.r809-dialog [hidden]{display:none!important}
+.r809-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+.r809-card label,.r809-dialog label{display:grid;gap:6px;font-size:13px;margin:8px 0}
+.r809-card input,.r809-card select,.r809-dialog input{box-sizing:border-box;width:100%;min-height:44px;padding:10px;font:inherit;font-size:16px;color:var(--pt-txt);background:var(--pt-caixa);border:1px solid var(--pt-borda);border-radius:var(--pt-r-caixa,10px)}
+.r809-card button,.r809-dialog button{min-height:44px;padding:9px 12px;font:inherit;color:var(--pt-txt);background:var(--pt-caixa);border:1px solid var(--pt-borda);border-radius:10px;cursor:pointer}
+.r809-card button:focus-visible,.r809-dialog button:focus-visible{outline:3px solid var(--pt-roxo)}
+.r809-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.r809-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--pt-borda)}.r809-row p{margin:4px 0}.r809-row button{flex-shrink:0}
+.r809-card summary{padding:12px 0;min-height:44px;cursor:pointer;font-weight:600}.r809-card fieldset{border:1px solid var(--pt-borda);border-radius:10px;margin:12px 0;padding:12px}.r809-card legend{font-size:13px}
+.r809-dialog{box-sizing:border-box;width:min(520px,calc(100% - 24px));max-height:90vh;overflow:auto;border:1px solid var(--pt-borda);border-radius:20px;padding:22px;background:var(--pt-card);color:var(--pt-txt)}.r809-dialog::backdrop{background:rgba(0,0,0,.6)}.r809-dialog h2{margin:0;font-size:22px}.r809-dialog [role=status],.r809-card [role=status]{color:var(--pt-txt)}
+@media(max-width:480px){.r809-grid{grid-template-columns:1fr}.r809-card{padding:14px}.r809-row{align-items:flex-start;flex-wrap:wrap}.r809-actions button{flex:1 1 140px}}
