@@ -3819,6 +3819,7 @@
       "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;'>\"+cols+'</div>'+" +
       "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;margin-top:5px;'>\"+labs+'</div></div>'};}" +
       "function pintaMapaMes(f){var el=document.getElementById('mapaAno');if(!el)return;f=f||L('ptfeitos',{});" +
+      "var focoMapa=document.activeElement&&el.contains(document.activeElement)?document.activeElement.id:'';" +
       "el.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
       "var hoje=new Date(),corpo='',tit='',sub='';var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
       "var y=base.getFullYear(),m=base.getMonth();" +
@@ -3848,7 +3849,8 @@
       "mapSeta('mapAnt','\\u2039','M\\u00eas anterior',false)+mapSeta('mapProx','\\u203a','Pr\\u00f3ximo m\\u00eas',mapMes<=0)+" +
       "'</span></div>'+corpo+AGAL.legenda()+mapLegenda();" +
       "var ba=document.getElementById('mapAnt');if(ba)ba.addEventListener('click',function(){mapMes++;pintaMapaMes();});" +
-      "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaMes();}});}" +
+      "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaMes();}});" +
+      "if(focoMapa==='mapAnt'||focoMapa==='mapProx'){var focoNovo=document.getElementById(focoMapa);if(focoNovo&&focoNovo.disabled)focoNovo=ba;if(focoNovo)focoNovo.focus({preventScroll:true});}}" +
       "function mapLegenda(){return " +
       "\"<div class='ev800-map-legenda' style='display:flex;align-items:center;gap:7px;font-size:10.5px;color:#6e6a78;margin-top:11px;'><span>menos</span>\"+" +
       "[['var(--bg8)'],['rgba(var(--cor-rgb),.3)'],['rgba(var(--cor-rgb),.62)'],['var(--cor)']].map(function(c8){" +

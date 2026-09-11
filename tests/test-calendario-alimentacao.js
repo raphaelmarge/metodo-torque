@@ -73,7 +73,20 @@ async function dots(p,selector,date,train,nutri){
  eq(Object.keys((await snapshot(p)).state.registros).length,1,'confirmação continua funcionando no próprio dia');
  await dots(p,'[data-semd="$"]',TODAY,1,1);eq((await snapshot(p)).feitos,before.feitos,'consumo não vira treino concluído');
  const after=await snapshot(p);
- await p.evaluate(()=>{window.__trocaSec('evolucao');window.__evSub('conq');});await p.locator('[data-cal-dia="'+TODAY+'"]').click();
+ await p.evaluate(()=>{window.__trocaSec('evolucao');window.__evSub('conq');});
+ await p.locator('#mapAnt').focus();await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.id),'mapAnt','mês anterior conserva foco de teclado após repintar os dias');
+ await p.keyboard.press('Enter');eq(await p.evaluate(()=>window.__mapaMes.mes()),2,'teclado continua navegando a partir da seta focada');
+ await p.locator('#mapProx').focus();await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.id),'mapProx','próximo mês conserva foco enquanto pode avançar');
+ await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.id),'mapAnt','ao chegar ao mês atual, foco vai para a seta habilitada');
+ ok(await p.locator('#mapProx').isDisabled(),'fim da navegação não habilita mês futuro indevidamente');
+ await p.evaluate(()=>window.__mapaMes.pinta());eq(await p.evaluate(()=>document.activeElement.id),'mapAnt','atualização do calendário conserva foco da navegação');
+ await p.locator('#navMenuApp').focus();await p.evaluate(()=>window.__mapaMes.pinta());
+ eq(await p.evaluate(()=>document.activeElement.id),'navMenuApp','atualização não rouba o foco de outra área do app');
+ eq(await snapshot(p),after,'navegação de teclado não grava dados de treino ou alimentação');
+ await p.locator('[data-cal-dia="'+TODAY+'"]').click();
  ok(await p.locator('#agCal').isVisible(),'calendário da Evolução abre a Agenda do dia');eq(await p.locator('#agDia [data-al-ref]').count(),3,'Evolução chega aos mesmos horários');
  for(const width of [320,390,430,800,1280]){
   await p.setViewportSize({width,height:844});

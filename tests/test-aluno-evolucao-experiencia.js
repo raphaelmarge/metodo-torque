@@ -63,6 +63,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
  const anualInicial=await page.locator('#mapaAnoRol').evaluate(e=>{e.scrollLeft=-120;window.__evoAnual=e;return{pos:e.scrollLeft,html:e.innerHTML};});
  await page.evaluate(()=>{window.__evoMapWrites=0;window.__evoSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='ptmapv')window.__evoMapWrites++;return window.__evoSetItem.call(this,k,v);};});
  await page.locator('#mapAnt').click();eq(await page.evaluate(()=>window.__mapaMes.mes()),1,'Mês anterior seleciona agosto');
+ eq(await page.evaluate(()=>document.activeElement.id),'mapAnt','Navegação mensal conserva o foco da seta após repintar os dias');
  ok(/agosto de 2026/i.test(await page.locator('#mapaAno').textContent())&&await page.locator('#mapaAno [data-cal-dia]').count()===31,'Agosto mostra ano e31 dias');
  eq(await page.locator('#mapaAnoRol').evaluate(e=>({pos:e.scrollLeft,html:e.innerHTML})),anualInicial,'Mudar o mês preserva dados e posição do histórico anual');
  ok(await page.locator('#mapaAnoRol').evaluate(e=>e===window.__evoAnual),'Navegação mensal não substitui o histórico anual');
