@@ -6,10 +6,17 @@ const path = require('node:path');
 const STORE = fs.readFileSync(path.join(__dirname, '../apps/store.js'), 'utf8');
 module.exports = async function primeiraPuxada(browser) {
   const ctx = await browser.newContext({serviceWorkers:'block'});
-  let deadline;
+  function bounded(task, label) {
+    let timer;
+    return Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label)),10000);})]).finally(()=>clearTimeout(timer));
+  }
   try {
     await ctx.route('**/*', route => route.abort());
     const page = await ctx.newPage();
+    // O timer de 1,2 s não pode mascarar a ausência do envio ao fim da puxada.
+    // Relógio oficial do Playwright, instalado antes de carregar o store.
+    await page.clock.install({time:new Date('2026-09-11T12:00:00Z')});
+    await page.clock.pauseAt(new Date('2026-09-11T12:01:00Z'));
     await page.setContent('<!doctype html><html><body>Sincronização fictícia isolada</body></html>');
     await page.evaluate(() => {
       const memory = new Map();
@@ -18,8 +25,8 @@ module.exports = async function primeiraPuxada(browser) {
         getItem:k=>memory.get(k) || null, setItem:(k,v)=>memory.set(k,String(v)), removeItem:k=>memory.delete(k)
       }});
       function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
-      const first = deferred(), ack = deferred(), called = deferred();
-      window.fixtureSync = {first,ack,called,calls:[],queries:[],reading:false};
+      const first = deferred(), ack = deferred(), called = deferred(), readingSignal = deferred();
+      window.fixtureSync = {first,ack,called,readingSignal,calls:[],queries:[],reading:false};
       const client = {
         auth:{getSession:async()=>({data:{session:{user:{id:'fixture-user',email:'fixture@example.invalid'}}}}),onAuthStateChange(){}},
         from(table){
@@ -29,7 +36,7 @@ module.exports = async function primeiraPuxada(browser) {
             then(ok,bad){
               if(table==='membros')return Promise.resolve({data:[{academia_id:'fixture-academy',papel:'funcionario',academias:{nome:'Fixture'}}]}).then(ok,bad);
               if(table!=='dados')throw Error('Consulta inesperada: '+table);
-              fixtureSync.reading=true;
+              fixtureSync.reading=true;readingSignal.resolve();
               return first.promise.then(ok,bad);
             }
           };
@@ -45,8 +52,8 @@ module.exports = async function primeiraPuxada(browser) {
       window.supabase={createClient:()=>client};
     });
     await page.addScriptTag({content:STORE});
-    await page.waitForFunction(()=>fixtureSync.reading, null, {timeout:5000});
-    return await Promise.race([page.evaluate(async () => {
+    await bounded(page.evaluate(()=>fixtureSync.readingSignal.promise),'A consulta inicial não começou');
+    return await bounded(page.evaluate(async () => {
       const f=fixtureSync, S=MTStore, Y=__MTSync, K='mtapp:ptStudio', out={};
       out.identidade=S.cloud().aid==='fixture-academy'&&f.queries.filter(q=>q.table==='dados').every(q=>q.filters.some(([k,v])=>k==='academia_id'&&v==='fixture-academy'));
       S.write('ptStudio',{alunos:[{id:'pendente',nome:'Fixture'}]});
@@ -67,6 +74,6 @@ module.exports = async function primeiraPuxada(browser) {
       out.comuns=f.calls.some(c=>c.name==='dados_grava'&&c.args.p_linhas.some(r=>r.chave==='mtapp:config'));
       out.contadorGenericoFalharia=f.calls.length>1; // motivo para observar a operação, não todas as RPCs
       return out;
-    }), new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('A primeira puxada não concluiu os checkpoints em 10 s')),10000);})]);
-  } finally { clearTimeout(deadline); await ctx.close(); }
+    }), 'A primeira puxada não concluiu os checkpoints em 10 s');
+  } finally { await ctx.close(); }
 };
