@@ -1,0 +1,47 @@
+name: Evolução - diagnóstico de geometria
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app/aluno-skin.js
+      - app/aluno-builder.js
+      - tests/test-aluno-evolucao-experiencia.js
+      - .github/scripts/diagnose-evolucao.cjs
+      - .github/workflows/evolucao-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  geometria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar as mesmas versões da suíte completa
+        run: bash .github/scripts/setup-tests.sh
+      - name: Medir sem alterar o limite ou a sequência da suíte
+        shell: bash
+        env:
+          EVO_CAPTURE_DIR: ${{ runner.temp }}/evolucao-diagnostico/imagens
+          TZ: America/Sao_Paulo
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/evolucao-diagnostico"
+          git rev-parse HEAD > "$RUNNER_TEMP/evolucao-diagnostico/commit.txt"
+          node .github/scripts/diagnose-evolucao.cjs 2>&1 | tee "$RUNNER_TEMP/evolucao-diagnostico/teste.log"
+      - name: Guardar medidas e imagens mesmo em falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolucao-geometria-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/evolucao-diagnostico/
+          retention-days: 7
