@@ -12,6 +12,19 @@ function ok(value, label) { assert.ok(value, label); checks++; console.log('OK '
 const pages = read('.github/workflows/pages.yml');
 const tests = read('.github/workflows/tests.yml');
 const alias = read('.github/workflows/testes.yml');
+const setup = read('.github/scripts/setup-tests.sh');
+const manifest = JSON.parse(read('tests/ci/package.json'));
+const lock = JSON.parse(read('tests/ci/package-lock.json'));
+assert.deepEqual(lock.packages[''].dependencies, manifest.dependencies);
+ok(true, 'Manifesto e lock têm as mesmas dependências');
+ok(/npm ci --prefix tests\/ci --ignore-scripts/.test(setup) && !/npm install/.test(setup), 'CI exige lock e não executa scripts de instalação');
+const pinned = manifest.dependencies.playwright;
+ok(/^\d+\.\d+\.\d+$/.test(pinned) &&
+ lock.packages['node_modules/playwright'].version === pinned &&
+ lock.packages['node_modules/playwright-core'].version === pinned &&
+ Object.entries(lock.packages).filter(([name])=>name).every(([,p])=>
+  p.resolved.startsWith('https://registry.npmjs.org/') && /^sha512-[A-Za-z0-9+/]+={0,2}$/.test(p.integrity)),
+ 'Playwright e core têm versões exatas, registro oficial e integridades no lock');
 ok(/needs: validar/.test(pages), 'Deploy depende do job validar');
 ok(/uses: \.\/\.github\/workflows\/tests.yml/.test(pages), 'Pages reutiliza a suíte canônica do mesmo commit');
 ok(/upload_pages: true/.test(pages) && /inputs.upload_pages/.test(tests), 'Artefato só é disponibilizado explicitamente');

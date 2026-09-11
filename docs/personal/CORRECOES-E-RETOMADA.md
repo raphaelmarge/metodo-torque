@@ -1,54 +1,55 @@
 # Torque Personal — correções e retomada
 
-Registro iniciado em 11/09/2026. Fila canônica: issue #826.
-Base inspecionada: `4d4e91be7fb16af905f933096d26d4445d8b8adc`.
-O artefato local usado para testes veio do Pages no pai `355f69049fa65baa2cf5225450534aae7101fb3b`; o commit posterior contém apenas o briefing gerado. A branch preserva esse briefing pela árvore-base da main.
+Iniciado em 11/09/2026. Fila: issue #826. Implementação: PR #827, branch `fix/826-rascunhos-ci-seguro`. Consultar o head atual do PR antes de retomar; um hash histórico não comprova a versão vigente.
 
-## Lote 1 — rascunhos e publicação segura
+## Estado do lote 1
 
-Implementado na branch, **não significa publicado**:
+Implementado na branch, **não publicado em produção**:
 
-- A camada visual recupera nome e perguntas selecionadas por ID quando o handler canônico não persiste o questionário. Não declara sucesso só porque já existe um modelo com o mesmo nome. A nova tentativa é explícita, sem duplicação, sem gravações paralelas ou alteração do CAS.
-- Testes de falha de storage reproduziram a perda de rascunho antes da correção e passaram depois. A fixture chama o mesmo handler extraído de `personal.html`, com re-render na falha; não inicializa autenticação nem chama produção.
-- `tests.yml` é o workflow canônico para PR e reuso. Na main, `pages.yml` chama esse workflow antes de publicar; `testes.yml` permanece como alias manual. Não há dois disparos gerais automáticos por push/PR.
-- O empacotamento recusa alterações em arquivos versionados após os testes e checkout de outro SHA. Usa `git archive HEAD`, excluindo arquivos não versionados, dependências instaladas e saídas locais. O deploy usa esse artefato, sem novo checkout. `release-info.json` identifica commit e versão; a conferência pós-deploy tem seis tentativas limitadas. Reexecuções de commits ultrapassados são recusadas antes de publicar.
-- Evidências de teste ficam como artefatos por sete dias, inclusive quando há falha. Falhas não são ignoradas nem repetidas indefinidamente para obter verde.
-- Playwright direto fixado em 1.63.0. **Aguardando incorporar o package-lock gerado pelo CI e trocar a instalação por `npm ci`.** Não afirmar reprodução completa enquanto essa etapa estiver pendente.
-- Runtime proposto mt-v822 nos três marcadores de versão. Reconciliar com a main antes de integrar; não reduzir uma versão mais nova.
+- Questionários: preserva nome e seleção por ID quando a gravação falha. Mantém o editor aberto, apresenta erro acessível e libera nova tentativa sem duplicação. Exige um ID novo com nome e perguntas correspondentes; um modelo antigo de mesmo nome não é falso sucesso. A camada visual não grava dados diretamente e não altera o CAS.
+- CI: `tests.yml` é a suíte geral canônica para PR/reuso; `pages.yml` a chama na main; `testes.yml` é alias manual. Checkpoints de dependências precedem a suíte completa. Logs são guardados inclusive em falhas, por sete dias, sem repetição indefinida para obter verde.
+- Publicação: depende dos testes, recusa checkout divergente e arquivos versionados alterados durante a execução. `git archive HEAD` exclui arquivos não versionados e dependências instaladas. O deploy usa esse mesmo artefato, sem novo checkout. `release-info.json` identifica commit/versão; a conferência pós-deploy tem seis tentativas limitadas.
+- Main adiantada: o guard compara SHAs fixos e só tolera a modificação isolada de `design/BRIEFING-CLAUDE-DESIGN.md`. Esse bot usa GITHUB_TOKEN sem disparar outro Pages; a checagem inicial bloquearia publicações válidas. Código, renomeações, divergências, resposta vazia/incompleta e erro de API continuam bloqueantes.
+- Dependências: Playwright e core 1.63.0 com lock versionado; instalação via `npm ci --ignore-scripts`. Isso não equivale a auditoria de vulnerabilidades dos pacotes ou do código vendorizado.
+- Runtime proposto: mt-v822 nos três marcadores. Conferir a main antes de integrar e nunca reduzir uma versão concorrente mais nova.
 
-## Evidências locais
+## Evidências
 
-| Verificação | Resultado |
+| Comando | Resultado local |
 | --- | --- |
-| `node tests/test-sync-cas.js` | 15 cenários aprovados; mocks e contratos SQL estáticos |
-| `node tests/test-sync-identidade.js` | 13 cenários aprovados; mocks de identidade/reconexão |
-| `node tests/test-sync-conflito-ui.js` | Aprovado; contrato da interface |
-| `CHROMIUM_PATH=/usr/bin/chromium node tests/test-questionarios-usabilidade.js` | 43 verificações aprovadas, 13 adicionais; DOM offline |
-| `node tests/test-release-workflow.js` | 19 verificações; contratos estáticos + Git temporário real |
-| `node tests/test-versao.js` | 17 verificações aprovadas |
-| Sintaxe | JavaScript, Bash e parse YAML local aprovados |
+| `node tests/test-sync-cas.js` | 15 cenários, mocks e contratos SQL estáticos |
+| `node tests/test-sync-identidade.js` | 13 cenários, mocks |
+| `node tests/test-sync-conflito-ui.js` | Aprovado, contrato da interface |
+| `CHROMIUM_PATH=/usr/bin/chromium node tests/test-questionarios-usabilidade.js` | 43 verificações; 13 novas, DOM offline |
+| `node tests/test-release-workflow.js` | 32 verificações; contratos, Git temporário e guard com API simulada |
+| `node tests/test-versao.js` | 17 verificações |
+| Sintaxe JavaScript/Bash e parse YAML | Aprovados; parse YAML não substitui validação do GitHub |
 
-O navegador local é Chromium com o driver Playwright disponível no ambiente, diferente da versão proposta no CI. Portanto, os resultados locais **não substituem** a execução remota do commit final. Não houve teste em dispositivo físico nem validação de produção. A suíte completa deve passar no PR antes da integração.
+O teste de rascunho falhou antes da correção e passou depois. O bloqueio indevido do briefing também foi reproduzido antes do ajuste. O driver Chromium local difere do usado no CI; o CI do head final continua obrigatório. Não houve teste em aparelho físico ou homologação do banco em produção.
 
-## Fluxo de trabalho
+A revisão isolada de questionários passou nos runs `34565450564` (head `b28aca68bbea5f1274f988239f6e7aa3ca7f5e20`) e `34566273069` (head `1f2fb8a2c7f746e2cfc6899bdb8869381b0dbee0`). A suíte geral foi acionada nos runs `34565450627` e `34566273075`; consultar seus resultados e o run do head final. Aprovação de um head anterior não aprova commits posteriores.
 
-`reproduzir → corrigir → testar regressão → revisar diff e SHA → suíte completa → integrar → confirmar artefato publicado → registrar conclusão`
+O lock veio do artefato `10186127614`, run `34566273075`, head `1f2fb8a`, merge de teste `4abe75b90a538da32771be8821b6d527e569e62d`. SHA-256 do ZIP confirmado: `b51f588b853bbfd5585709a6395fd36179a1108c190270d182258018b40d6bc0`. Manifesto, versões, registro oficial e formato das integridades foram conferidos; o arquivo foi copiado sem alteração.
 
-Para cada item da issue #826, manter estado separado: identificado, reproduzido, corrigido na branch, validado no CI, publicado, validado no ambiente real. Não marcar como concluído por estar em um patch ou por haver apenas um PR aberto.
+Base inspecionada: main `4d4e91be7fb16af905f933096d26d4445d8b8adc`, posterior ao runtime `355f69049fa65baa2cf5225450534aae7101fb3b` apenas pelo briefing gerado. O artefato do PR no merge de teste `8073f963033a13b23d1fe0d53c1806b153fedea0` permitiu confrontar os arquivos iniciais byte a byte. Os três arquivos do segundo commit também tiveram seus hashes conferidos. Isso não prova publicação.
 
-## Próxima retomada
+## Fluxo de trabalho e retomada
 
-1. Ler esta página, a issue #826 e a discussão do PR. Consultar novamente o HEAD da main e do PR; não usar hashes históricos como se fossem atuais.
-2. Confrontar os arquivos alterados com a main, preservando entregas concorrentes. Não mesclar #807/#823 cegamente; conferir também a sobreposição #822/#825.
-3. Obter o lockfile das evidências do CI, revisar versões e integridades, versionar e substituir a instalação transitória por `npm ci`. Reexecutar os checks no novo SHA.
-4. Executar as suítes da tabela e `bash tests/run.sh` com os pré-requisitos do workflow. Investigar falhas reais; repetir apenas falha transitória identificada, registrando a razão.
-5. Verificar configuração administrativa antes de declarar o deploy integralmente protegido. Só integrar o SHA efetivamente revisado e aprovado. Confirmar Pages e `release-info.json`.
-6. Próximo lote P0: reconciliar #806/#807 com a RPC `dados_cas` já presente no código vigente; verificar definições e permissões do banco e concorrência real em ambiente controlado. Os testes simulados aprovados não encerram essa etapa.
+`reproduzir → corrigir → testar regressão → revisar diff/SHA → suíte completa → integrar → confirmar publicação → registrar conclusão`
 
-## Bloqueios e itens que permanecem abertos
+Cada item permanece separado em: identificado, reproduzido, corrigido na branch, aprovado no CI, publicado e validado no ambiente real.
 
-A main consultada está sem proteção. A conexão não oferece escrita de branch protection nem da fonte de Pages. Um administrador deve configurar checks obrigatórios e fonte **GitHub Actions**, eliminando o publicador paralelo mencionado no workflow antigo. A mudança do YAML não impede outro publicador habilitado administrativamente.
+1. Reler esta página, issue #826 e PR #827. Conferir os heads atuais da main e da branch, preservando entregas concorrentes.
+2. Confirmar a instalação por `npm ci` e a suíte completa no SHA final. Investigar falhas reais; não remover testes nem repetir sem diagnosticar a causa. Checkpoints e logs registram o commit executado.
+3. Confirmar proteção administrativa e fonte de Pages. Integrar somente o SHA revisado/aprovado; depois conferir `release-info.json` e os fluxos do Personal e do aluno.
+4. Próximo lote P0: reconciliar #806/#807 com o CAS já presente no cliente atual. Verificar implantação, permissões/RLS, sessões concorrentes, reconexão e clientes antigos em ambiente controlado. Não restaurar históricos automaticamente.
 
-Este lote não altera RLS, migrações, alunos, cobranças, prescrições ou históricos. Não atualiza Capacitor, não faz auditoria completa de dependências vendorizadas e não encerra os PRs funcionais. Cobertura, análise estática, matriz móvel e contratos RPC/API permanecem na issue #826.
+## Bloqueios e pendências
 
-O registro é um ponto de retomada, não um agente autônomo. Os workflows executam passos definidos quando acionados; não reiniciam esta conversa nem corrigem código sozinhos após o encerramento da sessão.
+A main consultada está sem proteção. A conexão não oferece escrita de branch protection ou da fonte de Pages. Um administrador deve configurar checks obrigatórios e fonte **GitHub Actions**, eliminando o publicador paralelo. O YAML sozinho não impede outro publicador habilitado administrativamente.
+
+A tentativa de ler somente metadados, em transação read-only, do Supabase indicado por `assets/cloud-config.js` foi bloqueada pela ferramenta. **Não foi possível confirmar as definições e permissões instaladas no banco.** Nenhuma alteração de dados ou migração foi executada; mocks aprovados não encerram essa validação.
+
+Permanecem na issue #826: reconciliação dos PRs #807/#823 e sobreposição #822/#825, cobertura e análise estática, inventário de dependências vendorizadas, observabilidade sem dados sensíveis, contratos RPC/API, Safari e aparelhos físicos. Não mesclar PRs conflitantes às cegas nem atualizar a plataforma nativa junto de uma correção visual.
+
+O registro permite retomar o trabalho. Os workflows executam os passos definidos quando acionados; **não corrigem código sozinhos nem reiniciam esta conversa após o encerramento da sessão**.
