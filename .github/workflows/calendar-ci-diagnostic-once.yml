@@ -1,38 +1,55 @@
-name: Diagnostico compacto dos calendarios
+name: Corrigir isolamento do teste de assiduidade
 on:
   push:
     branches: [feat/alimentacao-calendario-horarios]
     paths: [.github/workflows/calendar-ci-diagnostic-once.yml]
 permissions:
-  contents: read
-  actions: read
+  contents: write
 jobs:
-  diagnostico:
+  preparar:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Ler o log do job que falhou sem alterar codigo ou dados
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/calendar-ci-diagnostic"
-          gh api --allow-escape-sequences repos/raphaelmarge/metodo-torque/actions/jobs/103147635846/logs > "$RUNNER_TEMP/calendar-ci-diagnostic/failed-job.log"
-          python3 - <<'PY'
-          import os,re
-          from pathlib import Path
-          root=Path(os.environ['RUNNER_TEMP'])/'calendar-ci-diagnostic'
-          lines=re.sub(r'\x1b\[[0-9;]*[A-Za-z]','',(root/'failed-job.log').read_text(errors='replace')).splitlines()
-          matches=[i for i,s in enumerate(lines) if re.search(r'❌|✗|✖|💥|AssertionError|TimeoutError|\bError:|[1-9][0-9]* falhas',s)]
-          chosen=set()
-          for i in matches:
-              chosen.update(range(max(0,i-5),min(len(lines),i+12)))
-          output='\n'.join(str(i+1)+': '+lines[i] for i in sorted(chosen))
-          (root/'errors.txt').write_text(output)
-          print(output[-26000:])
-          PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: calendar-ci-diagnostic
-          path: ${{ runner.temp }}/calendar-ci-diagnostic
-          retention-days: 1
-          if-no-files-found: error
+          node-version: 22
+      - name: Corrigir somente o cenario sintetico com hashes conferidos
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('tests/test-personal.js')
+          s=p.read_text()
+          def sha(s):
+              b=s.encode(); return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          assert sha(s)=='fe27bfbdee1786ac567a6a37b4ed1d130315cc3d', 'Fonte mudou; revisar'
+          a=s.index('  // Isola a régua da presença:')
+          b=s.index('  // 📊 v712: relatórios com PERÍODO',a)
+          r=s[a:b]
+          old='  // Isola a régua da presença: a falta marcada em "amanhã" lá no início\n  // da suíte não pode virar falta de hoje se a execução atravessar meia-noite.\n'
+          new='  // Cenário local de relatório: semeia e restaura bytes fictícios sem passar\n  // por write(), que corretamente rejeita um objeto lido antes de outra edição.\n  // Nenhuma chamada de persistência/sincronização é parte desta consulta.\n  const relAntes = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));\n'
+          assert r.count(old)==1
+          r=r.replace(old,new)
+          r=r.replace('const original = window.MTStore.read("ptStudio", {});\n    const st = JSON.parse(JSON.stringify(original));','const original = localStorage.getItem("mtapp:ptStudio");\n    const st = JSON.parse(original);')
+          assert r.count('window.MTStore.write("ptStudio", st)')==2
+          r=r.replace('window.MTStore.write("ptStudio", st)','localStorage.setItem("mtapp:ptStudio", JSON.stringify(st))')
+          r=r.replace('window.MTStore.write("ptStudio", original)','localStorage.setItem("mtapp:ptStudio", original)')
+          assert r.endswith('\n\n')
+          r=r[:-1]+'  ok(await p.evaluate(raw => localStorage.getItem("mtapp:ptStudio") === raw, relAntes),\n    "cenário de assiduidade restaura exatamente os dados fictícios, inclusive os horários");\n  ok(await p.locator("#mtSyncConflito").count() === 0,\n    "consulta de assiduidade não cria conflito de salvamento nem bloqueia outros relatórios");\n\n'
+          s=s[:a]+r+s[b:]
+          assert sha(s)=='ef02d5a80cee9a7ec38a967cee02fc77c576652d', 'Saida divergiu da revisao'
+          p.write_text(s)
+          print('Teste corrigido: '+sha(s))
+          PY
+          node --check tests/test-personal.js
+          node tests/test-sync-cas.js
+          git diff --check
+          test "$(git diff --name-only)" = 'tests/test-personal.js'
+      - name: Salvar somente no branch para nova bateria geral
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test-personal.js
+          git commit -m 'test: isolar dados ficticios de assiduidade sem acionar conflito CAS'
+          git push origin HEAD:refs/heads/feat/alimentacao-calendario-horarios
