@@ -40,6 +40,21 @@ async function dots(p,selector,date,train,nutri){
 (async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/opt/pw-browsers/chromium',args:['--no-sandbox']});
  const {page:p,ctx}=await mount();const before=await snapshot(p);
+ await p.evaluate(()=>window.__trocaSec('agenda'));
+ eq(await p.locator('#agProxTit').textContent(),'Sua programação','agenda não anuncia vazio quando há programação');
+ await p.locator('#agAnt').focus();await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.id),'agAnt','Agenda preserva foco na seta anterior');
+ await p.keyboard.press('Enter');ok((await p.locator('#agCal').textContent()).includes('Julho 2026'),'Agenda permite navegar repetidamente pelo teclado');
+ await p.locator('#agProx').focus();await p.keyboard.press('Enter');await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.id),'agProx','Agenda preserva foco na seta seguinte');
+ await p.locator('[data-agdia="'+TODAY+'"]').focus();await p.keyboard.press('Enter');
+ eq(await p.evaluate(()=>document.activeElement.dataset.agdia),TODAY,'Agenda mantém foco na data selecionada');
+ await p.evaluate(()=>window.__inicioAtualiza());
+ eq(await p.evaluate(()=>document.activeElement.dataset.agdia),TODAY,'atualização preserva foco do dia consultado');
+ await p.locator('#navMenuApp').focus();await p.evaluate(()=>window.__inicioAtualiza());
+ eq(await p.evaluate(()=>document.activeElement.id),'navMenuApp','repintar Agenda não rouba foco do menu');
+ eq(await snapshot(p),before,'teclado da Agenda não grava consumo, presença ou hábitos');
+ await p.evaluate(()=>window.__trocaSec('inicio'));
  eq(await p.evaluate(d=>window.__nutriAluno.agenda(d).map(x=>x.h),TODAY),['07:30','12:30','19:00'],'refeições ordenadas pelo horário, não pela ordem do editor');
  eq(await p.evaluate(d=>window.__nutriAluno.agenda(d).map(x=>x.h),FRIDAY),['07:30','12:30','19:00',''],'horário ausente vem ao fim sem inventar 00:00');
  for(const d of ['2026-09-09',SATURDAY,'2026-02-30','invalid'])eq(await p.evaluate(d=>window.__nutriAluno.agenda(d),d),[],'vigência/data válida respeitadas '+d);
@@ -100,6 +115,10 @@ async function dots(p,selector,date,train,nutri){
    }
   }
  }
+ await p.evaluate(()=>{window.__trocaSec('agenda');document.documentElement.classList.add('claro');});
+ await p.locator('[data-agdia="'+FRIDAY+'"]').click();
+ eq(await p.locator('[data-agdia="'+TODAY+'"]').evaluate(e=>getComputedStyle(e).color),'rgb(33, 27, 45)','hoje usa texto legível do tema claro sem estar selecionado');
+ ok(await p.locator('[data-agdia="'+TODAY+'"]').evaluate(e=>getComputedStyle(e).backgroundColor!=='rgba(0, 0, 0, 0)'),'hoje conserva superfície visível no tema claro');
  eq(await snapshot(p),after,'navegação após confirmação preserva o diário');
  if(process.env.TORQUE_SCREENSHOTS){
   fs.mkdirSync(process.env.TORQUE_SCREENSHOTS,{recursive:true});await p.setViewportSize({width:390,height:844});await p.evaluate(()=>document.documentElement.classList.remove('claro'));

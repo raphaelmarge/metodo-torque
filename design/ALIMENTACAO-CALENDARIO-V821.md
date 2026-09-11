@@ -1,4 +1,4 @@
-# v821 — Alimentação nos calendários do aluno
+# v822 — Alimentação nos calendários do aluno
 
 ## Comportamento
 
@@ -52,3 +52,23 @@ editor com ponte de persistência/publicação simulada e verifica o DTO.
 As três demos devem ser regeneradas pelo gerador canônico. Também conferir
 as suítes de navegação/nutrição, Evolução, Início, CAS, identidade e versão.
 Testes em Chromium não representam validação em iPhone/Safari físico.
+
+## Fechamento e conciliação — mt-v822
+
+A numeração mt-v821 foi usada pela avaliação postural publicada em paralelo.
+Esta entrega é mt-v822 e preserva todos os arquivos, caches e permissões daquela
+publicação. Não reaplicar suas migrações. O nome deste documento conserva a
+referência original do PR.
+
+- Foco preservado ao navegar com teclado nas setas da Agenda e da Evolução,
+  inclusive na repintura do dia selecionado; não rouba foco de outras áreas.
+- Cabeçalho sem sessão presencial usa "Sua programação", evitando anunciar
+  "Nada marcado" quando há refeições ou treinos do plano.
+- A suíte geral mede células e marcadores pelos atributos semânticos novos,
+  sem deixar de verificar a contagem, o histórico anual ou o contraste.
+- A prova de assiduidade usa um cenário local isolado: presença100% com uma
+  sessão feita, uma sem registro e uma falta futura; presença50% após uma falta
+  passada explícita. Restaura os dados fictícios ao terminar e não depende de
+  "amanhã" calculado quinze minutos antes, que podia mudar na meia-noite.
+- Não há alteração de cálculos nutricionais, consumo registrado, treino, hábitos,
+  sincronização, banco ou dados reais nesta conciliação.

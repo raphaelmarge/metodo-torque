@@ -2005,7 +2005,7 @@
       "<div class='cardx' id='agTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:26px 20px 22px;color:#fff;'>" +
       "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Agenda</div>" +
-      "<div id='agProxTit' style='font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:2px;'>Nada marcado</div>" +
+      "<div id='agProxTit' style='font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:2px;'>Sua programação</div>" +
       "<div id='agProxSub' style='font-size:13px;color:rgba(255,255,255,.85);margin-top:2px;'></div>" +
       "<div id='agTopoBts' style='display:flex;gap:10px;margin-top:14px;'></div></div></div>" +
       (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio) + "</h2>" +
@@ -3529,6 +3529,7 @@
       "try{pintaSino();}catch(e4){}" +
       "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
+      "var focoAg=document.activeElement&&el.contains(document.activeElement)?document.activeElement:null;var focoAgId=focoAg?focoAg.id:'',focoAgDia=focoAg&&focoAg.dataset?focoAg.dataset.agdia:'';" +
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
       "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
       "(function(){for(var dp=1;dp<=nd;dp++){var isoP=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dp).slice(-2);" +
@@ -3552,7 +3553,8 @@
       "AGAL.pontos(iso)+'</button>';}" +
       "h+='</div>';el.innerHTML=h+AGAL.legenda();" +
       "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
-      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();pintaAgTopo();}" +
+      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();pintaAgTopo();" +
+      "var focoAgNovo=focoAgId==='agAnt'||focoAgId==='agProx'?document.getElementById(focoAgId):focoAgDia?Array.from(el.querySelectorAll('[data-agdia]')).find(function(b){return b.dataset.agdia===focoAgDia;}):null;if(focoAgNovo)focoAgNovo.focus({preventScroll:true});}" +
       // cabeçalho da agenda (tela 14): a próxima sessão confirmada + os dois botões
       "function pintaAgTopo(){var el=document.getElementById('agProxTit');if(!el)return;var hj9=isoHj();" +
       "var fut=agDados().filter(function(x){return x.status==='confirmado'&&x.dia>=hj9;}).sort(function(a9,b9){return (a9.dia+(a9.hora||'')).localeCompare(b9.dia+(b9.hora||''));})[0];" +
