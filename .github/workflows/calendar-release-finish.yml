@@ -1,0 +1,69 @@
+name: Finalizar calendarios mt-v822
+on:
+  push:
+    branches: [feat/alimentacao-calendario-horarios]
+    paths:
+      - .github/workflows/calendar-release-finish.yml
+      - tools/calendar-release-finish.py
+permissions:
+  contents: write
+concurrency:
+  group: calendar-release-finish-v822
+  cancel-in-progress: false
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Aplicar os ajustes revisados com hashes fixos
+        run: |
+          python3 tools/calendar-release-finish.py
+          node --check app/aluno-builder.js
+          node --check tests/test-personal.js
+          git diff --check
+          git diff --exit-code 4d4e91be7fb16af905f933096d26d4445d8b8adc -- assets/personal-postural.js assets/personal-postural.css assets/personal-torque-one.js assets/postural-core.js assets/postural-store.js supabase .github/workflows/postural.yml
+      - name: Preparar o ambiente canonico de testes
+        run: |
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm install --no-save playwright
+          bash .github/scripts/prepara-playwright-ci.sh
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          sudo ln -s "$CHROME" /opt/pw-browsers/chromium
+      - name: Regenerar demos e validar a integracao
+        env:
+          TZ: America/Sao_Paulo
+          TORQUE_SCREENSHOTS: /tmp/calendar-release-previews
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/calendar-release-http.log 2>&1 &
+          SRV=$!
+          trap 'kill "$SRV" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js >/dev/null && break; sleep .25; done
+          node tools/demo-aluno/regen-demo.js
+          for t in tests/test-calendario-alimentacao.js tests/test-calendario-alimentacao-editor.js tests/test-nutricao-navegacao.js tests/test-nutricao-integrada.js tests/test-aluno-evolucao-experiencia.js tests/test-demo-aluno-variantes.js tests/test-versao.js tests/test-postural.js tests/test-postural-lifecycle.js; do
+            echo "===== $t ====="
+            timeout 600 node "$t"
+          done
+      - name: Salvar somente os arquivos previstos no branch do PR
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/aluno-builder.js tests/test-personal.js tests/test-calendario-alimentacao.js design/ALIMENTACAO-CALENDARIO-V821.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          git diff --cached --check
+          git commit -m 'fix(aluno): finalizar calendarios e conciliar publicacao postural (mt-v822)'
+          git push origin HEAD:refs/heads/feat/alimentacao-calendario-horarios
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calendar-release-previews
+          path: /tmp/calendar-release-previews
+          retention-days: 2
+          if-no-files-found: warn
