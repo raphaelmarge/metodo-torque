@@ -1,4 +1,4 @@
-name: Validar alimentacao tecnologica
+name: Validar alimentacao e calendarios
 on:
   push:
     branches: [feat/alimentacao-tech-v821]
@@ -11,7 +11,7 @@ concurrency:
 jobs:
   validar:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       NODE_PATH: /opt/node22/lib/node_modules
       CHROMIUM_PATH: /opt/pw-browsers/chromium
@@ -21,49 +21,75 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Conferir integridade e aplicar somente a revisao testada
+      - name: Recuperar somente arquivos que reproduzem os hashes originais
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import urllib.request, os, json, base64, gzip, hashlib
+          import urllib.request, os, json, base64, zlib, hashlib
           def sha(b):
               return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          expected=[
+              ('app/aluno-builder.js','17d32ed3b55834de414f44ca9ba9f1e4afcfb978','bc1a1c0bc09cd79988ba1b01f4856e643a9efe5a'),
+              ('app/aluno-skin.js','018c0e0bab04d5dda479ccffc6764b5fd3ca75ef','f4b7af9ad64e38e2c78531b7e6299bb869f4a43a'),
+              ('tests/test-nutricao-tech.js',None,'0bc289400ece259444f2beccf3b2626fea4e61f8')
+          ]
           req=urllib.request.Request('https://api.github.com/repos/raphaelmarge/metodo-torque/git/blobs/91cb1969014736a0d53ec6b51d89439c7730db3d',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'torque-ui-integrity'})
-          data=json.load(urllib.request.urlopen(req))
-          encoded=''.join(data['content'].split())
-          Path('/tmp/nutri-tech-transport.txt').write_text(encoded)
-          # O blob passou por duas alteracoes conhecidas no transporte textual.
-          # Corrigimos somente essas ocorrencias e validamos o payload corrigido
-          # antes de aplicar qualquer arquivo.
-          encoded=encoded.replace('UFO64PxGwbVV','UFO64PxG8GwbVV').replace('860e1ya8ezdHe','860e1yaezdHe')
-          encoded=encoded.rstrip('=');encoded+='='*((-len(encoded))%4)
+          encoded=''.join(json.load(urllib.request.urlopen(req,timeout=30))['content'].split())
+          encoded=encoded.replace('UFO64PxGwbVV','UFO64PxG8GwbVV').replace('860e1ya8ezdHe','860e1yaezdHe').rstrip('=')
+          encoded+='='*((-len(encoded))%4)
           payload=base64.b64decode(encoded,validate=True)
-          assert hashlib.sha256(payload).hexdigest()=='05fcb5dd1b2324ab555e5c27cac668acbfab59daafc80e74f6543ae9a5a49719','Transporte diferente da revisao validada'
-          changes=json.loads(gzip.decompress(payload))
-          allowed={'app/aluno-builder.js','app/aluno-skin.js','tests/test-nutricao-tech.js','design/ALIMENTACAO-NAVEGACAO-V820.md'}
-          assert {c['path'] for c in changes}==allowed and len(changes)==len(allowed)
-          prepared=[]
-          for change in changes:
-              p=Path(change['path']); raw=p.read_bytes() if p.exists() else b''
-              assert (sha(raw) if p.exists() else None)==change['before'],'Base mudou: '+str(p)
+          assert hashlib.sha256(payload).hexdigest()=='05fcb5dd1b2324ab555e5c27cac668acbfab59daafc80e74f6543ae9a5a49719','Transporte mudou'
+          # A cauda documental esta danificada. Nao e aplicada nem executada.
+          # Aceitar apenas os tres objetos completos, com hashes independentes
+          # conhecidos de ANTES e DEPOIS, iguais aos arquivos revisados localmente.
+          text=zlib.decompressobj(31).decompress(payload).decode('utf-8',errors='replace')
+          assert text.startswith('[')
+          pos=1; prepared=[]
+          for path,before,after in expected:
+              while text[pos] in ' \r\n\t,': pos+=1
+              change,pos=json.JSONDecoder().raw_decode(text,pos)
+              assert (change['path'],change['before'],change['after'])==(path,before,after)
+              p=Path(path); raw=p.read_bytes() if p.exists() else b''
+              assert (sha(raw) if p.exists() else None)==before,'Base mudou: '+path
               lines=raw.decode().splitlines(keepends=True)
               for start,end,new in reversed(change['edits']):
+                  assert 0<=start<=end<=len(lines)
                   lines[start:end]=[new]
-              new=''.join(lines).encode()
-              assert sha(new)==change['after'],'Saida divergiu: '+str(p)
-              prepared.append((p,new))
-          for p,new in prepared:p.write_bytes(new)
+              result=''.join(lines).encode()
+              assert sha(result)==after,'Arquivo recuperado nao corresponde ao original: '+path
+              prepared.append((p,result))
+          for p,result in prepared:p.write_bytes(result)
+          for path,expected_sha in {
+              'assets/personal-nutricao.js':'920dfaae0048f9fa8eb318f3cbc84e3d55177cc5',
+              'tests/test-aluno-evolucao-experiencia.js':'fed38342ffb58dad37548631318d80afc4ecbb42',
+              'tests/test-nutricao-calendarios.js':'ba3c783ac43b6d30eb4567b7c735160e5f29b968'
+          }.items():
+              assert sha(Path(path).read_bytes())==expected_sha,'Base/teste mudou: '+path
+          PY
+          python3 tools/finish-nutri-calendar-once.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          def sha(b):
+              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          expected={
+              'app/aluno-builder.js':'9c04f8d1826849723b58434a4f2734f509ff1c9d',
+              'app/aluno-skin.js':'22e85c48d3ab3b7e509e6c6af92fa0a5b874957f',
+              'assets/personal-nutricao.js':'0c61ef02f078f8b1a543790146194b7a966d9269',
+              'tests/test-aluno-evolucao-experiencia.js':'e1cba164e59abaf7cd8c88b4685e6110f441a57b'
+          }
+          for path,expected_sha in expected.items():
+              assert sha(Path(path).read_bytes())==expected_sha,'Saida divergiu da revisao testada: '+path
           for name in ('assets/versao.js','sw.js','app/app-sw.js'):
               p=Path(name); text=p.read_text();assert text.count('mt-v820')==1,'Versao mudou: '+name
               p.write_text(text.replace('mt-v820','mt-v821'))
-          p=Path('design/ALIMENTACAO-NAVEGACAO-V820.md')
-          p.write_text(p.read_text()+'\nAtualizacao de integracao: o PR #821 foi mesclado durante a revisao. Esta evolucao parte da main 81a912a, preserva o template publicado e usa mt-v821. Nenhuma publicacao automatica em producao neste workflow.\n')
           PY
           node --check app/aluno-builder.js
           node --check app/aluno-skin.js
-          node --check tests/test-nutricao-tech.js
+          node --check assets/personal-nutricao.js
+          node --check tests/test-nutricao-calendarios.js
           git diff --check
       - name: Preparar ambiente dos testes existentes
         run: |
@@ -74,7 +100,7 @@ jobs:
           sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
           sudo ln -sf /tmp/torque-pw/node_modules/playwright /opt/node22/lib/node_modules/playwright
           sudo ln -sf "$CHROME" /opt/pw-browsers/chromium
-      - name: Regenerar demos e testar interacoes e protecoes
+      - name: Regenerar demos e testar calendarios e protecoes
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/nutri-http.log 2>&1 &
           SRV=$!
@@ -82,21 +108,34 @@ jobs:
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/personal.html >/dev/null && break; sleep .25; done
           node tools/demo-aluno/regen-demos.js
           node tests/test-nutricao-tech.js
+          TORQUE_SCREENSHOTS=/tmp/torque-calendar-preview node tests/test-nutricao-calendarios.js
           node tests/test-nutricao-navegacao.js
           node tests/test-nutricao-aluno-completa.js
           node tests/test-nutricao-integrada.js
           node tests/test-nutricao-core-completa.js
+          node tests/test-nutricao-personal-completa.js
+          node tests/test-aluno-evolucao-experiencia.js
           node tests/test-demo-aluno-variantes.js
           node tests/test-aluno-hero-full-bleed.js
           node tests/test-sync-cas.js
           node tests/test-sync-identidade.js
           node tests/test-versao.js
           git diff --check
-      - name: Salvar somente no branch de revisao
+      - name: Limpar preparacao e salvar somente no branch de revisao
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/aluno-builder.js app/aluno-skin.js tests/test-nutricao-tech.js design/ALIMENTACAO-NAVEGACAO-V820.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          git rm .github/workflows/nutri-tech-once.yml .github/workflows/nutri-workspace-once.yml tools/finish-nutri-calendar-once.py
+          git add app/aluno-builder.js app/aluno-skin.js assets/personal-nutricao.js tests/test-nutricao-tech.js tests/test-nutricao-calendarios.js tests/test-aluno-evolucao-experiencia.js design/ALIMENTACAO-CALENDARIO-V821.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
           git diff --cached --check
-          git commit -m 'feat(aluno): alimentacao tecnologica com busca, filtros e acoes diretas (mt-v821)'
+          git commit -m 'feat(aluno): alimentacao tecnologica e calendarios integrados (mt-v821)'
           git push origin HEAD:refs/heads/feat/alimentacao-tech-v821
+          git archive --format=tar HEAD | gzip > /tmp/torque-calendar-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: torque-calendar-revisao
+          retention-days: 1
+          path: |
+            /tmp/torque-calendar-preview
+            /tmp/torque-calendar-source.tar.gz
