@@ -133,10 +133,22 @@ async function dots(p,selector,date,train,nutri){
   await p.evaluate(()=>window.__trocaSec('agenda'));await p.locator('[data-agdia="'+TODAY+'"]').click();await p.locator('#agCal').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(process.env.TORQUE_SCREENSHOTS,'agenda.png')});
  }
  await ctx.close();
- for(const plan of [null,{...PLAN,ativo:false},{...PLAN,refeicoes:[] },{...PLAN,refeicoes:[{id:'vazia',titulo:'Sem alimentos',hora:'08:00',itens:[]}]}]){
-  const x=await mount(plan);eq(await x.page.locator('#diasSem .cal-alimentacao').count(),0,'sem plano ativo/preenchido não inventa bolinhas');eq(await x.page.evaluate(d=>window.__agItens(d).filter(i=>i.k==='alimentacao').length,TODAY),0,'sem programação não cria horários');await x.ctx.close();
- }
- const legacy={v:1,id:'legacy',ativo:true,titulo:'Legado',refeicoes:[{id:'r"<&',titulo:'Refeição <teste> "legado"',hora:'',itens:[food]}]};
+  for(const plan of [null,{...PLAN,ativo:false},{...PLAN,refeicoes:[] },{...PLAN,refeicoes:[{id:'vazia',titulo:'Sem alimentos',hora:'08:00',itens:[]}]}]){
+   const x=await mount(plan);eq(await x.page.locator('#diasSem .cal-alimentacao').count(),0,'sem plano ativo/preenchido não inventa bolinhas');eq(await x.page.evaluate(d=>window.__agItens(d).filter(i=>i.k==='alimentacao').length,TODAY),0,'sem programação não cria horários');await x.ctx.close();
+  }
+  for(const session of [{d:TODAY,h:'08:00'},{d:TODAY,h:'08:00',sv:'Avaliação física'}]){
+   const x=await mount(null,{planoApp:{},sessApp:[session]}),label=session.sv||'Sessão publicada sem serviço',beforeSession=await snapshot(x.page);
+   eq(await x.page.evaluate(d=>window.__agItens(d).map(i=>({k:i.k,status:i.status})),TODAY),[{k:session.sv?'servico':'sessao',status:'confirmado'}],label+' conserva a classificação legada da agenda');
+   for(const selector of ['[data-semd="$"]','[data-agdia="$"]','[data-cal-dia="$"]']){
+    await dots(x.page,selector,TODAY,1,0);
+    const aria=await x.page.locator(selector.replace('$',TODAY)).getAttribute('aria-label');
+    ok(aria.includes('treino ou sessão programada')&&!aria.includes('sem treino'),label+' é anunciado no calendário '+selector);
+   }
+   await x.page.locator('[data-semd="'+TODAY+'"]').click();
+   ok((await x.page.locator('#semDia').textContent()).includes(session.sv||'Sessão com'),label+' continua disponível na lista do dia');
+   eq(await snapshot(x.page),beforeSession,label+' não vira consumo ou treino concluído ao consultar');await x.ctx.close();
+  }
+  const legacy={v:1,id:'legacy',ativo:true,titulo:'Legado',refeicoes:[{id:'r"<&',titulo:'Refeição <teste> "legado"',hora:'',itens:[food]}]};
  const x=await mount(legacy);eq(await x.page.evaluate(d=>window.__nutriAluno.agenda(d).length,SUNDAY),1,'plano legado sem dias/vigência vale todos os dias');
  await x.page.locator('[data-semd="'+TODAY+'"]').click();eq(await x.page.locator('#semDia [data-al-ref]').getAttribute('data-al-ref'),'r"<&','ID arbitrário não quebra atributo HTML');
  ok((await x.page.locator('#semDia').textContent()).includes('Sem horário'),'hora desconhecida é anunciada explicitamente');

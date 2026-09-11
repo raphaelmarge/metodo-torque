@@ -212,13 +212,43 @@
     if (!recibosPorConta[chave]) {
       var salvos = {};
       try { salvos = JSON.parse(sessionStorage.getItem("mt:automacao:recibos:" + chave) || "{}"); } catch (_) {}
-      recibosPorConta[chave] = { pendentes: salvos && typeof salvos === "object" && !Array.isArray(salvos) ? salvos : {}, ocupado: false };
+      recibosPorConta[chave] = { pendentes: salvos && typeof salvos === "object" && !Array.isArray(salvos) ? salvos : {}, ocupado: false, fila: [], processandoFila: false };
     }
     return { chave: chave, client: c && c.client, estado: recibosPorConta[chave] };
   }
   function mesmaContaRemota(ctx) {
     var c = S.cloud && S.cloud();
     return ctx.chave === identidadeRemota() && ctx.client === (c && c.client);
+  }
+  // Timers distintos esperam o envio em andamento, sem transformar duplo clique em novo envio.
+  function agendaAutomatico(id, atraso, executar) {
+    var conta = identidadeRemota();
+    setTimeout(function executaAutomaticoAgendado() {
+      var ctx = contextoRemoto();
+      if (ctx.chave !== conta) return;
+      if (!ctx.estado.fila.some(function (item) { return item.id === id; })) ctx.estado.fila.push({ id: id, executar: executar, ctx: ctx });
+      processaAutomaticos(ctx);
+    }, atraso);
+  }
+  async function processaAutomaticos(ctx) {
+    var estado = ctx.estado;
+    if (estado.ocupado || estado.processandoFila || Object.keys(estado.pendentes).length) return;
+    estado.processandoFila = true;
+    try {
+      while (estado.fila.length && !estado.ocupado && !Object.keys(estado.pendentes).length) {
+        var item = estado.fila.shift();
+        if (!mesmaContaRemota(item.ctx)) continue;
+        await item.executar(item.ctx);
+        // Um lote pode ter parado depois de confirmar só parte dos itens. Na retomada,
+        // o próprio trabalho relê os recibos salvos e pula tudo que já foi confirmado.
+        if (Object.keys(estado.pendentes).length) estado.fila.unshift(item);
+      }
+    } finally { estado.processandoFila = false; }
+  }
+  function liberaRemoto(ctx) {
+    ctx.estado.ocupado = false;
+    if (mesmaContaRemota(ctx)) render();
+    processaAutomaticos(ctx);
   }
   function guardaRecibos(ctx) {
     try { sessionStorage.setItem("mt:automacao:recibos:" + ctx.chave, JSON.stringify(ctx.estado.pendentes)); } catch (_) {}
@@ -254,7 +284,7 @@
   $("remotoRepetir").onclick = function () {
     var ctx = contextoRemoto();
     if (ctx.estado.ocupado) return;
-    if (salvaRecibos(ctx)) { $("resumoStatus").textContent = "Resultado salvo. Nenhum novo envio foi feito."; render(); }
+    if (salvaRecibos(ctx)) { $("resumoStatus").textContent = "Resultado salvo."; render(); processaAutomaticos(ctx); }
   };
   function integ() { return S.read("config", { dados: {} }).integracoes || {}; }
   function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
@@ -469,14 +499,14 @@
     $("btnResumoAgora").addEventListener("click", function () { enviaResumoDono(true); });
     $("btnSemanalAgora").addEventListener("click", function () { enviaResumoSemanal(true); });
     if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (waOn() || demoOn())) {
-      setTimeout(function () { enviaResumoDono(false); }, 1500);
+      agendaAutomatico("resumo-diario", 1500, function (ctx) { return enviaResumoDono(false, ctx); });
     }
     // fechamento semanal: dispara no domingo (ou na 1ª abertura depois dele), no máx. 1x por semana
     if (cfgR.semanal && cfgR.zap && (waOn() || demoOn())) {
       var hj = new Date(S.todayISO() + "T12:00");
       var ultimo = cfgR.ultimoSemanal || "";
       var diasDesde = ultimo ? Math.floor((hj - new Date(ultimo + "T12:00")) / 864e5) : 99;
-      if (hj.getDay() === 0 && diasDesde >= 6) setTimeout(function () { enviaResumoSemanal(false); }, 2500);
+      if (hj.getDay() === 0 && diasDesde >= 6) agendaAutomatico("resumo-semanal", 2500, function (ctx) { return enviaResumoSemanal(false, ctx); });
     }
   })();
 
@@ -581,24 +611,33 @@
       "Semana anterior: " + S.fmtBRL(B.receita) + " · " + B.checkins + " check-ins · " + B.novos + " novos · " + B.cancelados + " cancel.\n" +
       "Enviado automaticamente pelo TORQUE ON 💜";
   }
-  function enviaResumoSemanal(manual) {
-    return enviaResumoConfirmado("ultimoSemanal", manual, montaResumoSemanal);
+  function enviaResumoSemanal(manual, ctx) {
+    return enviaResumoConfirmado("ultimoSemanal", manual, montaResumoSemanal, ctx);
   }
 
-  function enviaResumoDono(manual) {
+  function enviaResumoDono(manual, ctx) {
     return enviaResumoConfirmado("ultimo", manual, function () {
       var ontem = new Date(S.todayISO() + "T12:00"); ontem.setDate(ontem.getDate() - 1);
       return montaResumo(S.todayISO(ontem));
-    });
+    }, ctx);
   }
-  async function enviaResumoConfirmado(campo, manual, monta) {
-    var ctx = contextoRemoto(), hoje = S.todayISO();
+  async function enviaResumoConfirmado(campo, manual, monta, ctx) {
+    ctx = ctx || contextoRemoto();
+    var hoje = S.todayISO();
+    if (!mesmaContaRemota(ctx)) return;
     if (ctx.estado.ocupado) return;
     if (Object.keys(ctx.estado.pendentes).length) {
-      if (salvaRecibos(ctx)) $("resumoStatus").textContent = "Envio anterior registrado. Nenhuma mensagem foi reenviada.";
+      if (salvaRecibos(ctx)) { $("resumoStatus").textContent = "Envio anterior registrado. Nenhuma mensagem foi reenviada."; processaAutomaticos(ctx); }
       return;
     }
     var cfg = load().resumoDono || {};
+    if (!manual) {
+      if (!(waOn() || demoOn()) || !(campo === "ultimo" ? cfg.ativo : cfg.semanal)) return;
+      if (campo === "ultimoSemanal") {
+        var dataAtual = new Date(hoje + "T12:00");
+        if (dataAtual.getDay() !== 0 || (cfg.ultimoSemanal && Math.floor((dataAtual - new Date(cfg.ultimoSemanal + "T12:00")) / 864e5) < 6)) return;
+      }
+    }
     if (!cfg.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
     if (cfg[campo] === hoje) { $("resumoStatus").textContent = "Este resumo já foi enviado hoje."; return; }
     ctx.estado.ocupado = true;
@@ -612,7 +651,7 @@
       } else if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
     } catch (_) {
       if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "⚠️ Sem confirmação do envio. Confira o WhatsApp antes de tentar novamente.";
-    } finally { ctx.estado.ocupado = false; if (mesmaContaRemota(ctx)) render(); }
+    } finally { liberaRemoto(ctx); }
   }
 
   window.__resumoSemanal = { monta: montaResumoSemanal, envia: enviaResumoSemanal }; // testes
@@ -681,10 +720,11 @@
   window.__campanha = { publico: publicoCampanha }; // testes
 
   // gera o link Pix sozinho para os disparos D-2 que ainda não têm (máx. 10/dia)
-  async function geraPixPendentes() {
-    var ctx = contextoRemoto();
+  async function geraPixPendentes(ctx) {
+    ctx = ctx || contextoRemoto();
+    if (!mesmaContaRemota(ctx)) return;
     if (ctx.estado.ocupado) return;
-    if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) render(); return; }
+    if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) { render(); processaAutomaticos(ctx); } return; }
     var urlPg = integ().pagarmeUrl || "";
     if (!urlPg && !demoOn()) return;
     // NUNCA gerar cobrança com a régua desligada
@@ -717,9 +757,9 @@
       if (mesmaContaRemota(ctx)) render();
     } catch (_) {
       if (mesmaContaRemota(ctx)) $("resumoStatus").textContent = "Geração interrompida sem confirmação. Confira as cobranças no provedor antes de tentar novamente.";
-    } finally { ctx.estado.ocupado = false; if (mesmaContaRemota(ctx)) render(); }
+    } finally { liberaRemoto(ctx); }
   }
-  setTimeout(geraPixPendentes, 2500);
+  agendaAutomatico("pix", 2500, geraPixPendentes);
   window.__geraPix = geraPixPendentes; // testes
 
   // ---------- editor da jornada ----------
@@ -825,7 +865,7 @@
     if (bt) bt.onclick = async function () {
       var ctx = contextoRemoto();
       if (ctx.estado.ocupado) return;
-      if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) render(); return; }
+      if (Object.keys(ctx.estado.pendentes).length) { if (salvaRecibos(ctx)) { render(); processaAutomaticos(ctx); } return; }
       var lista = disparosDeHoje().filter(function (d) { return !d.enviado; });
       if (!lista.length) return;
       if (!confirm("Enviar " + lista.length + " mensagem(ns) agora pelo WhatsApp oficial?")) return;
@@ -846,8 +886,7 @@
       } catch (_) {
         if (mesmaContaRemota(ctx)) alert("Envios interrompidos sem confirmação da última mensagem. Confira o WhatsApp antes de tentar novamente.");
       } finally {
-        ctx.estado.ocupado = false;
-        if (mesmaContaRemota(ctx)) render();
+        liberaRemoto(ctx);
       }
     };
     var bnr = $("btnNovaRegra");

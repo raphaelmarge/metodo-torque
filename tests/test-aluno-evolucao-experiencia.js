@@ -152,7 +152,16 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
   ok(await page.locator('#evTopoNv').isVisible()&&await page.locator('#evXp').isVisible()&&await page.locator('#evFalta').isVisible()&&!await legendaXp.isVisible()&&await page.locator('#cqGrid>button:visible').count()===6,'Nível, XP, progresso e seis medalhas visíveis, sem explicação de pontos, em '+width+'px '+(claro?'claro':'escuro'));
   if(process.env.EVO_CAPTURE_DIR)await page.screenshot({path:path.join(process.env.EVO_CAPTURE_DIR,'resumo-'+width+'-'+(claro?'claro':'escuro')+'.png')});
   ok(await page.locator('#mapaAno').isVisible()&&await page.locator('#mapaAnoRol').isVisible(),'Mês e ano permanecem abertos em '+width+'px '+(claro?'claro':'escuro'));
-  ok(await page.locator('#mapaAno .ev800-map-nav button').evaluateAll(bs=>bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'Setas do calendário mantêm alvos de toque de44px em '+width+'px');
+  ok(await page.locator('#mapaAno .ev800-map-nav button').evaluateAll(bs=>bs.length===2&&bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'Setas do calendário mantêm alvos de toque de44px em '+width+'px');
+  // Dias são uma grade de sete colunas; não são as duas setas de navegação.
+  // Em320px, impor44px em cada coluna faria a grade ultrapassar o conteúdo.
+  const daysGeometry=await page.locator('#mapaAno [data-cal-dia]').evaluateAll(bs=>{
+   const grid=bs[0]?.parentElement,r=grid?.getBoundingClientRect();
+   return {columns:grid?getComputedStyle(grid).gridTemplateColumns.split(' ').length:0,left:r?.left,right:r?.right,viewport:innerWidth,cells:bs.map(b=>{const r=b.getBoundingClientRect();return {date:b.dataset.calDia,label:b.getAttribute('aria-label'),width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})};
+  });
+  const month=daysGeometry.cells[0]?.date||'',monthLength=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate();
+  ok(daysGeometry.cells.length===monthLength&&new Set(daysGeometry.cells.map(d=>d.date)).size===monthLength&&daysGeometry.cells.every(d=>d.label&&d.date.startsWith(month.slice(0,7))),'Grade preserva todos os dias distintos e seus nomes acessíveis em '+width+'px');
+  ok(daysGeometry.columns===7&&daysGeometry.cells.every(d=>d.width>=32&&d.height>=40&&d.left>=daysGeometry.left-1&&d.right<=daysGeometry.right+1)&&daysGeometry.cells.every((d,i)=>daysGeometry.cells.every((other,j)=>i===j||d.right<=other.left+.5||other.right<=d.left+.5||d.bottom<=other.top+.5||other.bottom<=d.top+.5)),'Dias têm pelo menos32×40px em sete colunas, sem sobreposição ou transbordamento, em '+width+'px');
   await page.locator('#cqVerMais').click();
   ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Calendário e medalhas expandidos sem overflow em '+width+'px '+(claro?'claro':'escuro'));
  }

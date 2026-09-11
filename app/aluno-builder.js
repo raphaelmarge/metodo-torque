@@ -353,7 +353,7 @@
     function itens(d) { try { return valido(d) ? agItensDia(d) : []; } catch (_) { return []; } }
     function tipos(d) {
       var lista=itens(d);
-      return { treino:lista.some(function(i){return i.k==='treino'||(i.k==='sessao'&&(!i.status||i.status==='confirmado'));}),
+      return { treino:lista.some(function(i){return i.k==='treino'||((i.k==='sessao'||i.k==='servico')&&(!i.status||i.status==='confirmado'));}),
         refeicoes:lista.filter(function(i){return i.k==='alimentacao';}).length };
     }
     function pontos(d) { var t=tipos(d); return '<span class="cal-pontos" aria-hidden="true">'+

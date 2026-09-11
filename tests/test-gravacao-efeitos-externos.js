@@ -1,15 +1,15 @@
 /* UI real, respostas externas inteiramente simuladas, sem dados ou serviços reais. */
 'use strict';
 const assert=require('node:assert/strict');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT || 'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT || './ci/node_modules/playwright');
 const {comMockNuvem}=require('./_nuvem.js');
 const BASE=process.env.BASE_URL || process.env.MT_BASE || 'http://127.0.0.1:8765';
 let browser,checks=0;
 const ok=(value,label)=>{assert.ok(value,label);checks++;console.log('OK '+label);};
-async function pageFor(module) {
+async function pageFor(module, automaticos=false) {
   const context=await browser.newContext({viewport:{width:1280,height:900},serviceWorkers:'block'});
   await context.route('**/*',route=>new URL(route.request().url()).origin===new URL(BASE).origin ? route.continue() : route.abort());
-  await context.addInitScript(()=>{
+  await context.addInitScript(automaticos=>{
     if(!localStorage.getItem('remote-test-seeded')) {
       const seed={perfil:{nome:'Pessoa Teste',id:'user-test'},academia:{id:'academy-test',nome:'Academia Teste',papel:'dono'},
         config:{dados:{},integracoes:{whatsappLigado:true}},
@@ -18,14 +18,26 @@ async function pageFor(module) {
         automacao:{templates:[{id:'tp1',nome:'Teste',texto:'Oi {nome}'},{id:'tp5',nome:'Teste',texto:'Oi'},{id:'tp6',nome:'Teste',texto:'Oi'}],
           regras:[{id:'rg5',gatilho:'venc_mensalidade',ativo:false,templateId:'tp6'},{id:'rg4',gatilho:'avaliacao_google',ativo:false,templateId:'tp5'}],
           historico:{},linksPix:{},jornada:{ativa:false,etapas:[]},resumoDono:{zap:'31999990000',ativo:false,semanal:false}}};
+      if(automaticos) {
+        seed.automacao.resumoDono.ativo=true;seed.automacao.resumoDono.semanal=true;
+        seed.automacao.regras[0].ativo=true;
+        seed.config.integracoes.pagarmeUrl='https://fake.invalid/pix';
+        seed.alunos.recebiveis=seed.alunos.alunos.map(a=>({alunoId:a.id,status:'aberto',vencimento:'2026-09-13',valor:50}));
+      }
       for(const [key,value] of Object.entries(seed))localStorage.setItem('mtapp:'+key,JSON.stringify(value));
       localStorage.setItem('remote-test-seeded','1');
     }
+    if(automaticos)window.MT_CLOUD={url:'https://fake.invalid',anonKey:'fake-public'};
     window.__alerts=[];window.alert=text=>window.__alerts.push(String(text));window.confirm=()=>true;
     const original=window.setTimeout;
-    window.setTimeout=(fn,ms,...args)=>['geraPixPendentes','puxaPedidosApp'].includes(fn&&fn.name)?0:original(fn,ms,...args);
-  });
+    window.setTimeout=(fn,ms,...args)=>!automaticos&&['geraPixPendentes','puxaPedidosApp','executaAutomaticoAgendado'].includes(fn&&fn.name)?0:original(fn,ms,...args);
+  },automaticos);
   const page=await context.newPage(),errors=[];
+  if(automaticos) {
+    const domingo=new Date('2026-09-13T12:00:00-03:00');
+    await page.clock.install({time:domingo});
+    await page.clock.pauseAt(domingo);
+  }
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(BASE+'/apps/'+module+'.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.MTStore);
@@ -138,6 +150,75 @@ async function allowWrite(page){await page.evaluate(()=>window.__failWrite=false
     ok(await calls(p,'pix')===1&&Boolean((await read(p,'automacao')).linksPix.a1),'Retentativa de Pix só recupera link e orderId confirmados');
     await p.evaluate(()=>window.__geraPix());ok(await calls(p,'pix')===2,'Cobrança seguinte não repete o aluno que já possui link');
     await p.evaluate(()=>window.__geraPix());ok(await calls(p,'pix')===2,'Todos os links existentes impedem gerar cobranças duplicadas');
+    await x.close();
+  }
+  {
+    const x=await pageFor('automacao',true),p=x.page;
+    await allowWrite(p);await p.evaluate(()=>window.__holdExternal=true);
+    await p.clock.runFor(1500);await p.waitForFunction(()=>window.__releaseExternal);
+    ok(await calls(p,'whatsapp')===1,'Timer real inicia resumo diário em 1500 ms');
+    await p.clock.runFor(1000);
+    ok(await calls(p,'whatsapp')===1&&await calls(p,'pix')===0,'Semanal e Pix de 2500 ms esperam o diário ainda pendente');
+    await p.evaluate(()=>document.getElementById('btnResumoAgora').click());
+    ok(await calls(p,'whatsapp')===1,'Clique manual durante fila automática não duplica o diário');
+    await p.evaluate(()=>{window.__holdExternal=false;window.__releaseExternal();});
+    await p.waitForFunction(()=>window.__calls.filter(c=>c.tipo==='pix').length===2&&Boolean(MTStore.read('automacao').linksPix.a2));
+    const st=await read(p,'automacao');
+    ok(await calls(p,'whatsapp')===2&&await calls(p,'pix')===2,'Fila conclui diário, semanal e dois Pix sem perder trabalhos');
+    ok(st.resumoDono.ultimo==='2026-09-13'&&st.resumoDono.ultimoSemanal==='2026-09-13'&&Object.keys(st.linksPix).length===2,'Todos os resultados da fila ficam registrados');
+    await p.evaluate(()=>{document.getElementById('btnResumoAgora').click();document.getElementById('btnSemanalAgora').click();});
+    await p.evaluate(()=>window.__geraPix());
+    ok(await calls(p,'whatsapp')===2&&await calls(p,'pix')===2,'Retentar depois da fila não repete resumos nem cobranças confirmadas');
+    await x.close();
+  }
+  {
+    const x=await pageFor('automacao',true),p=x.page;
+    await p.evaluate(()=>window.__holdExternal=true);
+    await p.clock.runFor(2500);await p.waitForFunction(()=>window.__releaseExternal);
+    await p.evaluate(()=>{window.__holdExternal=false;window.__releaseExternal();});
+    await p.waitForFunction(()=>!document.getElementById('remotoPendente').hidden);
+    ok(await calls(p,'whatsapp')===1&&await calls(p,'pix')===0,'Falha ao salvar recibo pausa os trabalhos automáticos seguintes');
+    await allowWrite(p);await p.evaluate(()=>document.getElementById('remotoRepetir').click());
+    await p.waitForFunction(()=>Boolean(MTStore.read('automacao').linksPix.a2));
+    ok(await calls(p,'whatsapp')===2&&await calls(p,'pix')===2,'Salvar recibo retoma somente semanal e Pix que ainda faltavam');
+    ok(await p.evaluate(()=>window.__calls.filter(c=>c.tipo==='whatsapp'&&c.body.texto.includes('resumo de')).length===1),'Retomada da fila nunca reenvia o diário já confirmado');
+    await x.close();
+  }
+  {
+    const x=await pageFor('automacao',true),p=x.page;
+    await allowWrite(p);await p.evaluate(()=>{
+      const st=MTStore.read('automacao');st.resumoDono.ativo=false;st.resumoDono.semanal=false;MTStore.write('automacao',st);
+      window.__failWrite=true;
+    });
+    await p.clock.runFor(2500);await p.waitForFunction(()=>!document.getElementById('remotoPendente').hidden);
+    ok(await calls(p,'pix')===1,'Lote automático de Pix pausa após confirmar o primeiro sem gravação local');
+    await allowWrite(p);await p.evaluate(()=>document.getElementById('remotoRepetir').click());
+    await p.waitForFunction(()=>Boolean(MTStore.read('automacao').linksPix.a2));
+    ok(await calls(p,'pix')===2&&await calls(p,'whatsapp')===0,'Retomada do lote automático conclui somente o Pix restante');
+    ok(await p.evaluate(()=>new Set(window.__calls.filter(c=>c.tipo==='pix').map(c=>c.body.nome)).size===2),'Cada aluno recebe uma única criação de Pix na retomada automática');
+    await x.close();
+  }
+  {
+    const x=await pageFor('automacao',true),p=x.page;
+    await allowWrite(p);await p.evaluate(()=>window.__holdExternal=true);
+    await p.clock.runFor(2500);await p.waitForFunction(()=>window.__releaseExternal);
+    await p.evaluate(()=>{
+      const st=MTStore.read('automacao');st.resumoDono.semanal=false;st.regras[0].ativo=false;MTStore.write('automacao',st);
+      window.__holdExternal=false;window.__releaseExternal();
+    });
+    await p.waitForFunction(()=>Boolean(MTStore.read('automacao').resumoDono.ultimo));
+    await p.clock.runFor(10);
+    ok(await calls(p,'whatsapp')===1&&await calls(p,'pix')===0,'Fila revalida regras desativadas enquanto aguardavam');
+    await x.close();
+  }
+  {
+    const x=await pageFor('automacao',true),p=x.page;
+    await allowWrite(p);await p.evaluate(()=>window.__holdExternal=true);
+    await p.clock.runFor(2500);await p.waitForFunction(()=>window.__releaseExternal);
+    await p.evaluate(()=>{window.__aid='outra-conta';window.__holdExternal=false;window.__releaseExternal();});
+    await p.clock.runFor(10);
+    ok(await calls(p,'whatsapp')===1&&await calls(p,'pix')===0,'Fila da conta original não envia semanal ou Pix após troca de identidade');
+    ok(!(await read(p,'automacao')).resumoDono.ultimo,'Resposta do diário anterior não grava na nova conta');
     await x.close();
   }
   {
