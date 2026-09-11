@@ -13,6 +13,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v827 — Corrida por etapas livres
+
+- Novo treino abre no editor de sequência. Cada etapa possui ação explícita (correr, caminhar, pedalar, aquecer, recuperar), distância ou tempo independente em km/m/min/s e orientação opcional. Repetições mantêm duas etapas configuráveis; editar, duplicar e ordenar ficam na própria sequência.
+- Esforço é opcional: sensação 1–10, ritmo min/km, velocidade km/h, FC bpm ou uma zona salva do aluno. O alvo direto e a zona são alternativas; não há cálculo fisiológico automático. Snapshots de zonas já prescritas permanecem intactos.
+- Contrato aditivo em alvo: acao, esforco {tipo,min,max}, orientacao; metros convertem para km no executor. Ausência dos campos mantém a saída legada. Normalizadores em assets/relatorio-0809.js e app/aluno-builder.js devem continuar equivalentes.
+- O player respeita a origem e o excedente de cada trecho por distância também sem GPS, mostra metros nos trechos curtos e preserva voz, pausa, sensores e formatos antigos. Formato simples permanece disponível; treinos antigos abrem nesse modo.
+- Três demos do aluno regeneradas pela fonte canônica. Exemplo de 1 km + 100 m + 2 km + 200 m adicionado apenas aos dados demonstrativos. Detalhes e referências em docs/releases/mt-v827-corrida-etapas.md.
+
 ## v826 — Relatório: recebimentos e praticidade da prescrição
 
 - Cobrança coletiva usa a mesma regra de vencimento do perfil. Recebimentos mantêm natureza independente da anotação; legados preservam a inferência anterior. Anulação conserva original, motivo, auditoria e eventoId, sai dos totais/quitação/carteira e não reembolsa gateway nem altera quantidade de aulas. Duplicidade manual pede conferência; eventos automáticos mantêm idempotência.

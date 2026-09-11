@@ -24,7 +24,8 @@ function eq(v,w,m){assert.deepEqual(v,w,m);n++;console.log('OK '+m);}
  });
  await p.evaluate(()=>{document.querySelector('#abas [data-a="treinos"]').click();document.querySelector('#trAbas [data-tra="cardio"]').click();});
  await p.locator('#cbAluno').selectOption('corrida-a');await p.locator('[data-cbed="corrida-1"]').click();
- await p.locator('#r809BlocosBox').evaluate(e=>e.open=true);await p.locator('#r809ZonasBox').evaluate(e=>e.open=true);
+ await p.locator('#r809ZonasBox > summary').click();
+ async function stepAction(kind,index){const button=p.locator('[data-r809-block-'+kind+'="'+index+'"]');await button.locator('xpath=ancestor::details[1]').locator('summary').click();await button.click();}
  const store=()=>p.evaluate(()=>MTStore.read('ptStudio',{}));
  const blocks=()=>p.evaluate(()=>JSON.parse(document.getElementById('cbBlocos').value));
  const original=JSON.stringify((await store()).treinosV2['corrida-a'].cardio);
@@ -34,8 +35,8 @@ function eq(v,w,m){assert.deepEqual(v,w,m);n++;console.log('OK '+m);}
  eq(JSON.stringify((await store()).treinosV2['corrida-a'].cardio),original,'salvar treino com bloco em edição preserva o rascunho e não descarta alterações');
  await p.locator('#r809BlocoAdd').click();eq((await blocks())[1].recuperacao.valor,60,'editar bloco aplica a nova recuperação no rascunho');
  eq(JSON.stringify((await store()).treinosV2['corrida-a'].cardio),original,'editar bloco não grava o treino antes de Salvar');
- await p.locator('[data-r809-block-copy="1"]').click();eq((await blocks()).length,3,'duplicar cria bloco independente na sequência');
- await p.locator('[data-r809-block-up="2"]').click();await p.locator('[data-r809-block-down="0"]').click();
+ await stepAction('copy',1);eq((await blocks()).length,3,'duplicar cria bloco independente na sequência');
+ await stepAction('up',2);await stepAction('down',0);
  eq((await blocks()).map(b=>b.tipo),['repetir','aquecimento','repetir'],'subir e descer reordenam por ações acessíveis');
  await p.locator('[data-r809-block-edit="0"]').click();await p.locator('#r809AlvoValor').fill('0.4');await p.locator('#r809BlocoAdd').click();
  eq((await blocks())[2].alvo.valor,.2,'alterar cópia não modifica o bloco de origem');
@@ -74,7 +75,7 @@ function eq(v,w,m){assert.deepEqual(v,w,m);n++;console.log('OK '+m);}
  await p.locator('#r809BlocoCancel').click();eq((await blocks())[0].alvo.valor,.5,'cancelar edição conserva valor aplicado anteriormente');
  await p.locator('[data-r809-block-edit="0"]').click();await p.locator('#r809AlvoValor').fill('0.9');await p.locator('[data-cbed="corrida-2"]').click();
  eq(await p.locator('#r809AlvoValor').inputValue(),'','abrir outro treino descarta subeditor da sequência anterior');eq((await blocks())[0].alvo.valor,3,'abrir outro treino lê seus próprios blocos');
- await p.locator('[data-r809-block-copy="0"]').click();await p.evaluate(()=>window.__corridaFail=1);const beforeFail=JSON.stringify(await blocks());await p.locator('#cbSalva').click();
+ await stepAction('copy',0);await p.evaluate(()=>window.__corridaFail=1);const beforeFail=JSON.stringify(await blocks());await p.locator('#cbSalva').click();
  eq(JSON.stringify(await blocks()),beforeFail,'falha ao salvar treino conserva sequência montada');eq(await p.locator('#cbNome').inputValue(),'Outra sequência','falha ao salvar treino conserva modo de edição');
  await p.locator('#cbSalva').click();eq((await store()).treinosV2['corrida-a'].cardio.find(c=>c.id==='corrida-2').blocos.length,2,'nova tentativa salva no mesmo treino');eq(await blocks(),[],'sucesso limpa os blocos do rascunho');
  await p.locator('#cbAluno').selectOption('corrida-b');await p.locator('#cbAluno').selectOption('corrida-a');eq(await blocks(),[],'retornar ao aluno não ressuscita blocos já salvos');

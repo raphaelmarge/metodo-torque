@@ -183,6 +183,12 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { id: "dmc4", nome: "Longão com finalização", mod: "corrida", tipo: "misto",
           dist: 6, tempo: 35, pace: "6:20", reps: 6, tiro: 45, desc: 75,
           obs: "Os 6 km no ritmo de conversa. Só depois os tiros — e neles não segura nada." },
+        { id: "corrida-etapas-demo", nome: "Correr e caminhar · exemplo", mod: "corrida", tipo: "continuo", blocos: [
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "correr", valor: 1, unidade: "km", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "caminhar", valor: 100, unidade: "m", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "correr", valor: 2, unidade: "km", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "caminhar", valor: 200, unidade: "m", zona: null } }
+        ] },
       ],
       // o painel casa o dia com o ID do treino (não com a posição): ficha sem id
       // sumia do plano — e a Semana do aluno da demo ficava só com sábado e domingo

@@ -282,6 +282,12 @@
       }
     })();
     if (idx === 0) {
+      treinosV2[id].cardio.push({ id: "corrida-etapas-demo", nome: "Correr e caminhar · exemplo", mod: "corrida", tipo: "continuo", blocos: [
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "correr", valor: 1, unidade: "km", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "caminhar", valor: 100, unidade: "m", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "correr", valor: 2, unidade: "km", zona: null } },
+          { tipo: "ativo", repeticoes: 1, alvo: { acao: "caminhar", valor: 200, unidade: "m", zona: null } }
+        ] });
       treinosV2[id].wods = [{ id: "wod" + id, nome: "WOD do sábado", tipo: "amrap", cap: 12, min: 12, rounds: 8, work: 20, rest: 10,
         movs: [{ q: "10", n: "Agachamento livre" }, { q: "10", n: "Flexão de braço" }, { q: "200m", n: "Corrida" }],
         mov: ["10 Agachamento livre", "10 Flexão de braço", "200m Corrida"],
