@@ -2,7 +2,7 @@ name: Relatorio integration preparation
 on:
   push:
     branches: [fix/relatorio-0809-completo]
-    paths: [.github/workflows/relatorio-prepara.yml]
+    paths: [.github/workflows/relatorio-prepara.yml, .release/**]
 permissions:
   contents: write
 jobs:
@@ -13,48 +13,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/upload-artifact@v4
-        with:
-          name: report-transport
-          path: .release/r809-*.b64
-          include-hidden-files: true
-      - name: Verify transport and apply to exact production baseline
+      - name: Verify transport and reconcile exact baseline
         env:
           EXPECTED_BASE: 4d4e91be7fb16af905f933096d26d4445d8b8adc
-        run: |
-          python3 - <<'PY'
-          import base64,gzip,hashlib,json,os,subprocess
-          from pathlib import Path
-          raw=''.join(Path('.release/r809-'+x+'.b64').read_text().strip() for x in ('a','b'))
-          # Exact comparison of downloaded transport to original local bytes.
-          assert hashlib.sha256(raw.encode()).hexdigest()=='64709a416a474febfd9a2fce11f4c35b404c586df3545ec61dd0dfd3f58096a7'
-          repairs=[[490,491,'G',''],[1483,1484,'E',''],[2726,2727,'U',''],[2811,2812,'h','J'],[3941,3942,'I',''],[5087,5088,'N',''],[5485,5486,'T',''],[10123,10125,'ws',''],[10578,10579,'U','']]
-          for i,j,old,new in reversed(repairs):
-            assert raw[i:j]==old
-            raw=raw[:i]+new+raw[j:]
-          assert hashlib.sha256(raw.encode()).hexdigest()=='71c4033d70d082a941c0a5f48e90c16fd90866efc42b4613cc198af7d5269ff6', 'Transport integrity mismatch; nothing applied'
-          data=gzip.decompress(base64.b64decode(raw,validate=True))
-          assert hashlib.sha256(data).hexdigest()=='6f5e24f2c0a7345e259a44ebcadabe8fdd42dbff4b1f06717a371b4df14a592a'
-          bundle=json.loads(data);base=os.environ['EXPECTED_BASE']
-          assert bundle['base']==base
-          subprocess.run(['git','fetch','origin','main'],check=True)
-          assert subprocess.check_output(['git','rev-parse','origin/main'],text=True).strip()==base,'main moved; reconcile before applying'
-          subprocess.run(['git','read-tree','--reset','-u',base],check=True)
-          sha=lambda x:hashlib.sha256(x.encode()).hexdigest()
-          for f in bundle['files']:
-            p=Path(f['path']);assert not p.is_absolute() and '..' not in p.parts
-            if f['before'] is None:
-              assert not p.exists(),str(p)+' already exists';out=f['content']
-            else:
-              out=p.read_text();assert sha(out)==f['before'],str(p)+' baseline mismatch'
-              for a,b,t in reversed(f['edits']):out=out[:a]+t+out[b:]
-            assert sha(out)==f['after'],str(p)+' result mismatch'
-            p.parent.mkdir(parents=True,exist_ok=True);p.write_text(out)
-          subprocess.run(['git','add','-A'],check=True)
-          subprocess.run(['git','diff','--cached','--check'],check=True)
-          Path('/tmp/report-manifest.json').write_text(json.dumps(bundle,ensure_ascii=False))
-          print('Verified',len(bundle['files']),'files on',base)
-          PY
+        run: python3 .release/r809-prepare.py
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -83,7 +45,6 @@ jobs:
           for t in tests/test-relatorio-0809-core.js tests/test-relatorio-0809-sql.js tests/test-relatorio-0809-browser.js tests/test-app-sintaxe.js tests/test-versao.js tests/test-sync-cas.js tests/test-sync-identidade.js; do
             timeout 600 node "$t" 2>&1 | tee "test-output/$(basename "$t").log"
           done
-          # Regenerate demos with the canonical generator, blocking external network.
           cp tools/demo-aluno/regen-demo.js /tmp/report-regen-original.js
           python3 - <<'PY'
           from pathlib import Path
@@ -97,7 +58,7 @@ jobs:
           git add demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
           node tests/test-demo-aluno-variantes.js 2>&1 | tee test-output/demo-variants.log
           git diff --cached --check
-      - name: Advance only this PR branch with verified tree and both parents
+      - name: Advance only this PR branch with tested tree and both parents
         env:
           EXPECTED_BASE: 4d4e91be7fb16af905f933096d26d4445d8b8adc
         run: |
@@ -109,7 +70,7 @@ jobs:
           COMMIT=$(printf '%s\n' 'fix: integrate report with canonical app flows and preserve current production (mt-v822)' | git commit-tree "$TREE" -p "$GITHUB_SHA" -p "$EXPECTED_BASE")
           git push origin "$COMMIT:refs/heads/fix/relatorio-0809-completo"
           printf '%s\n' "$COMMIT" | tee test-output/reviewed-head.txt
-      - name: Collect diagnostics and sources even on failure
+      - name: Collect diagnostics and sources
         if: always()
         run: |
           mkdir -p test-output
