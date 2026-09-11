@@ -15,24 +15,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api --allow-escape-sequences repos/raphaelmarge/metodo-torque/actions/jobs/103147635846/logs > "$RUNNER_TEMP/calendar-failed-job.log"
+          mkdir -p "$RUNNER_TEMP/calendar-ci-diagnostic"
+          gh api --allow-escape-sequences repos/raphaelmarge/metodo-torque/actions/jobs/103147635846/logs > "$RUNNER_TEMP/calendar-ci-diagnostic/failed-job.log"
           python3 - <<'PY'
           import os,re
           from pathlib import Path
-          p=Path(os.environ['RUNNER_TEMP'])/'calendar-failed-job.log'
-          lines=re.sub(r'\x1b\[[0-9;]*[A-Za-z]','',p.read_text(errors='replace')).splitlines()
-          matches=[i for i,s in enumerate(lines) if re.search(r'FALH|FAIL|AssertionError|TimeoutError|\bError:|✗|✖|❌',s,re.I)]
-          chosen=set(range(max(0,len(lines)-30),len(lines)))
-          for i in matches[-18:]:
-              chosen.update(range(max(0,i-3),min(len(lines),i+9)))
+          root=Path(os.environ['RUNNER_TEMP'])/'calendar-ci-diagnostic'
+          lines=re.sub(r'\x1b\[[0-9;]*[A-Za-z]','',(root/'failed-job.log').read_text(errors='replace')).splitlines()
+          matches=[i for i,s in enumerate(lines) if re.search(r'❌|✗|✖|💥|AssertionError|TimeoutError|\bError:|[1-9][0-9]* falhas',s)]
+          chosen=set()
+          for i in matches:
+              chosen.update(range(max(0,i-5),min(len(lines),i+12)))
           output='\n'.join(str(i+1)+': '+lines[i] for i in sorted(chosen))
-          result=Path(os.environ['RUNNER_TEMP'])/'calendar-ci-errors.txt'
-          result.write_text(output)
+          (root/'errors.txt').write_text(output)
           print(output[-26000:])
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: calendar-ci-errors
-          path: ${{ runner.temp }}/calendar-ci-errors.txt
+          name: calendar-ci-diagnostic
+          path: ${{ runner.temp }}/calendar-ci-diagnostic
           retention-days: 1
           if-no-files-found: error
