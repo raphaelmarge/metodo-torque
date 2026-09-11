@@ -36,7 +36,8 @@ jobs:
           npm install --no-save --package-lock=false playwright@1
           bash .github/scripts/prepara-playwright-ci.sh
           npx playwright install --with-deps chromium
-          echo "CHROMIUM_PATH=$(node -e \"console.log(require('playwright').chromium.executablePath())\")" >> "$GITHUB_ENV"
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          echo "CHROMIUM_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Geometria, RLS e ciclo de vida
         shell: bash
         run: |
