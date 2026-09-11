@@ -63,7 +63,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
  const anualInicial=await page.locator('#mapaAnoRol').evaluate(e=>{e.scrollLeft=-120;window.__evoAnual=e;return{pos:e.scrollLeft,html:e.innerHTML};});
  await page.evaluate(()=>{window.__evoMapWrites=0;window.__evoSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='ptmapv')window.__evoMapWrites++;return window.__evoSetItem.call(this,k,v);};});
  await page.locator('#mapAnt').click();eq(await page.evaluate(()=>window.__mapaMes.mes()),1,'Mês anterior seleciona agosto');
- ok(/agosto de 2026/i.test(await page.locator('#mapaAno').textContent())&&await page.locator('#mapaAno div[style*="aspect-ratio"]').count()===31,'Agosto mostra ano e31 dias');
+ ok(/agosto de 2026/i.test(await page.locator('#mapaAno').textContent())&&await page.locator('#mapaAno [data-agenda-iso]').count()===31,'Agosto mostra ano e31 dias');
  eq(await page.locator('#mapaAnoRol').evaluate(e=>({pos:e.scrollLeft,html:e.innerHTML})),anualInicial,'Mudar o mês preserva dados e posição do histórico anual');
  ok(await page.locator('#mapaAnoRol').evaluate(e=>e===window.__evoAnual),'Navegação mensal não substitui o histórico anual');
  await page.evaluate(()=>{window.__evSub('corpo');window.__evSub('conq');});
@@ -75,7 +75,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
  ok(/dezembro de 2025/i.test(await page.locator('#mapaAno').textContent()),'Mês anterior atravessa o limite do ano');
  await page.locator('#mapProx').click();ok(/janeiro de 2026/i.test(await page.locator('#mapaAno').textContent()),'Próximo mês atravessa dezembro para janeiro do ano seguinte');
  await page.evaluate(()=>{for(let i=0;i<23;i++)document.getElementById('mapAnt').click();});
- ok(/fevereiro de 2024/i.test(await page.locator('#mapaAno').textContent())&&await page.locator('#mapaAno div[style*="aspect-ratio"]').count()===29,'Fevereiro bissexto conserva os29 dias no ano correto');
+ ok(/fevereiro de 2024/i.test(await page.locator('#mapaAno').textContent())&&await page.locator('#mapaAno [data-agenda-iso]').count()===29,'Fevereiro bissexto conserva os29 dias no ano correto');
  await page.evaluate(()=>{for(let i=0;i<31;i++)document.getElementById('mapProx').click();});
  eq(await page.evaluate(()=>localStorage.getItem('ptmapv')),'"ano"','Navegar meses não regrava a preferência legada');
  eq(await page.evaluate(()=>{Storage.prototype.setItem=window.__evoSetItem;return window.__evoMapWrites;}),0,'Nenhuma navegação escreve ptmapv, nem mesmo o mesmo valor legado');
