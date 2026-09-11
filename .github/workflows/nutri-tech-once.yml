@@ -64,11 +64,14 @@ jobs:
           for path,expected_sha in {
               'assets/personal-nutricao.js':'920dfaae0048f9fa8eb318f3cbc84e3d55177cc5',
               'tests/test-aluno-evolucao-experiencia.js':'fed38342ffb58dad37548631318d80afc4ecbb42',
+              'tests/test-nutricao-integrada.js':'4d36f0044720eb8d488146710035cb32b84b726a',
+              'tests/test-nutricao-personal-completa.js':'2a1d5f79bcddde4ca046e1dec16f331cc98eb7c2',
               'tests/test-nutricao-calendarios.js':'ba3c783ac43b6d30eb4567b7c735160e5f29b968'
           }.items():
               assert sha(Path(path).read_bytes())==expected_sha,'Base/teste mudou: '+path
           PY
           python3 tools/finish-nutri-calendar-once.py
+          python3 tools/finish-nutri-calendar-tests-once.py
           python3 - <<'PY'
           from pathlib import Path
           import hashlib
@@ -78,7 +81,9 @@ jobs:
               'app/aluno-builder.js':'9c04f8d1826849723b58434a4f2734f509ff1c9d',
               'app/aluno-skin.js':'22e85c48d3ab3b7e509e6c6af92fa0a5b874957f',
               'assets/personal-nutricao.js':'0c61ef02f078f8b1a543790146194b7a966d9269',
-              'tests/test-aluno-evolucao-experiencia.js':'e1cba164e59abaf7cd8c88b4685e6110f441a57b'
+              'tests/test-aluno-evolucao-experiencia.js':'e1cba164e59abaf7cd8c88b4685e6110f441a57b',
+              'tests/test-nutricao-integrada.js':'d9352e8f406de7757ded1cb9ffd9e98122c040ef',
+              'tests/test-nutricao-personal-completa.js':'8b994fb25a2f705398c8c35203390768604cdbfc'
           }
           for path,expected_sha in expected.items():
               assert sha(Path(path).read_bytes())==expected_sha,'Saida divergiu da revisao testada: '+path
@@ -125,8 +130,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/nutri-tech-once.yml .github/workflows/nutri-workspace-once.yml tools/finish-nutri-calendar-once.py
-          git add app/aluno-builder.js app/aluno-skin.js assets/personal-nutricao.js tests/test-nutricao-tech.js tests/test-nutricao-calendarios.js tests/test-aluno-evolucao-experiencia.js design/ALIMENTACAO-CALENDARIO-V821.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
+          git rm .github/workflows/nutri-tech-once.yml .github/workflows/nutri-workspace-once.yml tools/finish-nutri-calendar-once.py tools/finish-nutri-calendar-tests-once.py
+          git add app/aluno-builder.js app/aluno-skin.js assets/personal-nutricao.js tests/test-nutricao-tech.js tests/test-nutricao-calendarios.js tests/test-aluno-evolucao-experiencia.js tests/test-nutricao-integrada.js tests/test-nutricao-personal-completa.js design/ALIMENTACAO-CALENDARIO-V821.md assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html
           git diff --cached --check
           git commit -m 'feat(aluno): alimentacao tecnologica e calendarios integrados (mt-v821)'
           git push origin HEAD:refs/heads/feat/alimentacao-tech-v821
