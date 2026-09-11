@@ -6323,28 +6323,12 @@ async function novaExecucaoAluno(p) {
    * apagões do Diogo: o boot escrevia o estúdio vazio, o timer de 1,2 s
    * enviava, e a nuvem cheia virava nada antes de a puxada voltar. */
   {
-    const ferro = await p.evaluate(async () => {
-      const Sy = window.__MTSync, st = Sy._estado, out = {};
-      const cliOrig = st.client, sujOrig = st.sujas, recOrig = st.reconciliou;
-      let upserts = 0;
-      st.client = { rpc: (nome, args) => {
-        upserts++;
-        return Promise.resolve({ data: [{ chave: args.p_chave, atualizado: "2099-01-01T00:00:00Z" }], error: null });
-      } };
-      st.sujas = { "mtapp:ptStudio": true };
-      // ANTES da primeira puxada: o envio tem que segurar a fila, sem upsert
-      st.reconciliou = false;
-      Sy.enviaSujas();
-      await new Promise((r) => setTimeout(r, 50));
-      out.segurou = upserts === 0 && st.sujas["mtapp:ptStudio"] === true;
-      // DEPOIS da puxada reconciliar: a mesma fila sobe
-      st.reconciliou = true;
-      Sy.enviaSujas();
-      await new Promise((r) => setTimeout(r, 50));
-      out.subiu = upserts === 1;
-      st.client = cliOrig; st.sujas = sujOrig; st.reconciliou = recOrig;
-      return out;
-    });
+    // O motor é exercitado numa janela própria, com consulta e confirmação
+    // controladas. A janela extensa do painel contém timers de outros módulos:
+    // contar todas as RPCs depois de 50 ms confundia essas operações com o CAS.
+    const ferro = await require('./_sync-primeira-puxada')(b);
+    ok(ferro.identidade && ferro.aguarda && ferro.naoDuplicou && ferro.confirmou && ferro.comuns,
+      "primeira puxada valida a identidade, aguarda confirmação e separa o CAS das demais chaves");
     ok(ferro.segurou, "🔒 antes da 1ª puxada da sessão, NADA sobe pra nuvem — a fila fica guardada (mata o apagão do aparelho zerado)");
     ok(ferro.subiu, "depois que a puxada reconcilia, a mesma fila sobe normalmente");
     // e o motor de verdade liga a regra nos dois pontos certos (fonte do store.js)

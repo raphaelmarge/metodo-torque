@@ -182,7 +182,55 @@
     owner=owner||alunoId;
     if (!list.length) return '<p class="muted">Nenhuma refeição registrada neste período. Os registros aparecem após o aluno sincronizar o app.</p>';
     var dias = {}; list.forEach(function (r) { (dias[r.d] = dias[r.d] || []).push(r); });
-    return Object.keys(dias).map(function (d) { var rows = dias[d]; return '<section class="pn-meal"><div class="pn-head"><h4>' + d.slice(8) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) + '</h4><span class="muted">' + fmt(N.totalItens(rows.reduce(function (all, r) { return all.concat(r.itens); }, [])).k) + ' kcal registradas</span></div>' + rows.map(function (r) { return '<details class="pn-details"><summary>' + esc((r.hora ? r.hora + ' · ' : '') + r.titulo) + ' <span class="muted">' + fmt(N.totalItens(r.itens).k) + ' kcal' + (r.estimativa ? ' · estimativa' : '') +(revisado(owner,r)?' · revisada':'')+ '</span></summary><ul class="pn-plan-list">' + r.itens.map(function (it) { return '<li><span>' + esc(it.nome) + '</span><span>' + fmt(it.qtd) + ' × ' + esc(it.porcao) + '</span></li>'; }).join('') + '</ul>' + (r.observacao ? '<p class="pn-preline">' + esc(r.observacao) + '</p>' : '') + (r.foto ? '<img class="pn-record-photo" src="' + esc(r.foto) + '" alt="Foto da refeição registrada pelo aluno">' : '') + '<div class="pn-actions"><button type="button" class="btn sec" data-pnfeedback="'+esc(r.id)+'" data-pnowner="'+esc(owner)+'">Comentar e revisar</button></div></details>'; }).join('') + '</section>'; }).join('');
+    return Object.keys(dias).map(function (d) { var rows = dias[d]; return '<section class="pn-meal"><div class="pn-head"><h4>' + d.slice(8) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) + '</h4><span class="muted">' + fmt(N.totalItens(rows.reduce(function (all, r) { return all.concat(r.itens); }, [])).k) + ' kcal registradas</span></div>' + rows.map(function (r) { return '<details class="pn-details" data-pnrecord="'+esc(JSON.stringify([owner,r.id]))+'"><summary>' + esc((r.hora ? r.hora + ' · ' : '') + r.titulo) + ' <span class="muted">' + fmt(N.totalItens(r.itens).k) + ' kcal' + (r.estimativa ? ' · estimativa' : '') +(revisado(owner,r)?' · revisada':'')+ '</span></summary><ul class="pn-plan-list">' + r.itens.map(function (it) { return '<li><span>' + esc(it.nome) + '</span><span>' + fmt(it.qtd) + ' × ' + esc(it.porcao) + '</span></li>'; }).join('') + '</ul>' + (r.observacao ? '<p class="pn-preline">' + esc(r.observacao) + '</p>' : '') + (r.foto ? '<img class="pn-record-photo" src="' + esc(r.foto) + '" alt="Foto da refeição registrada pelo aluno">' : '') + '<div class="pn-actions"><button type="button" class="btn sec" data-pnfeedback="'+esc(r.id)+'" data-pnowner="'+esc(owner)+'">Comentar e revisar</button></div></details>'; }).join('') + '</section>'; }).join('');
+  }
+  // Reconsultar não é fechar a refeição que o profissional está lendo.
+  // A identidade inclui conta, aluno e token. Nenhum estado visual passa de conta.
+  function atualizaRegistrosDOM(el, html, scope) {
+    var anterior = el._pnRecordsView, mesma = anterior && anterior.scope === scope;
+    if (mesma && anterior.html === html) return; // conserva nós, foco e expansão
+    var abertos = Object.create(null), foco = document.activeElement, focoKey = null, focoTipo = null;
+    if (mesma) {
+      el.querySelectorAll('details[data-pnrecord]').forEach(function (d) {
+        var key = d.getAttribute('data-pnrecord');
+        if (d.open) abertos[key] = true;
+        if (foco && d.contains(foco)) {
+          focoKey = key;
+          focoTipo = foco.hasAttribute('data-pnfeedback') ? 'button[data-pnfeedback]' : foco.tagName === 'SUMMARY' ? 'summary' : null;
+        }
+      });
+    }
+    el.innerHTML = html;
+    el._pnRecordsView = { scope: scope, html: html };
+    el.querySelectorAll('details[data-pnrecord]').forEach(function (d) {
+      var key = d.getAttribute('data-pnrecord');
+      if (abertos[key]) d.open = true;
+      if (focoTipo && key === focoKey) {
+        var target = d.querySelector(focoTipo);
+        if (target) target.focus({ preventScroll: true });
+      }
+    });
+    if (!el._pnRecordsEvents) {
+      // O rodapé é fixo: abrir uma refeição perto do fim da tela podia deixar
+      // a ação por baixo da navegação. Desloca só o trecho que está encoberto.
+      function revelaAcao(d) {
+        requestAnimationFrame(function () {
+          if (!d || !d.isConnected || !d.open) return;
+          var button = d.querySelector('[data-pnfeedback]'), nav = $('navPt');
+          if (!button || !nav) return;
+          var r = button.getBoundingClientRect(), n = nav.getBoundingClientRect();
+          if (r.height > 0 && n.height > 0 && r.top < n.bottom && r.bottom > n.top && r.left < n.right && r.right > n.left) {
+            window.scrollBy({ top: r.bottom - n.top + 16, behavior: 'auto' });
+          }
+        });
+      }
+      el.addEventListener('toggle', function (e) { if (e.target.matches('details[data-pnrecord]') && e.target.open) revelaAcao(e.target); }, true);
+      el.addEventListener('focusin', function (e) { if (e.target.matches('[data-pnfeedback]')) revelaAcao(e.target.closest('details[data-pnrecord]')); });
+      el._pnRecordsEvents = true;
+    }
+  }
+  function exibeRegistros(html) {
+    atualizaRegistrosDOM($('pnRegistros'), html, JSON.stringify([alunoId, identidadeNutri(C.load(), alunoId)]));
   }
   function buscaRegistros(id, novamente) {
     var st=C.load(),a=aluno(st,id),n=S.cloud&&S.cloud(); if(!a||!a.appTokenP||a.appRevogadoEm)return;
@@ -197,8 +245,16 @@
       if(area==='registros'&&alunoId===id)pintaRegistros();if(C.perfilId&&C.perfilId()===id&&$('pfArea').value==='alimentacao')perfil(id);
     },function(){if(registrosBusca[id]===pedido){registrosBusca[id]={erro:'Não foi possível consultar agora. Tente novamente.'};if(area==='registros'&&alunoId===id)pintaRegistros();}});
   }
-  function pintaRegistros() { var id=alunoId,list = registros(C.load(), id), busca=id&&registrosBusca[id], dias = +$('pnPeriodo').value,q=norm($('pnRegBusca').value),f=$('pnRegFiltro').value; pintaResumoSemana(list); list=list.filter(function(r){return r.d<=S.todayISO()&&(!dias||r.d>=diaOffset(S.todayISO(),-dias+1))&&(!q||norm(r.titulo+' '+r.itens.map(function(it){return it.nome;}).join(' ')).indexOf(q)>=0)&&(!f||(f==='foto'&&r.foto)||(f==='revisao'&&r.foto&&!revisado(id,r))||(f==='plano'&&r.origem==='plano')||(f==='manual'&&r.origem!=='plano'));}); if(!id){$('pnRegistros').innerHTML='<p class="muted">Escolha um aluno para consultar os registros.</p>';return;} if(!cacheRegistros(C.load(),id)&&!busca)buscaRegistros(id);busca=registrosBusca[id];if(busca&&busca.carregando&&!list.length){$('pnRegistros').innerHTML='<p class="muted">Carregando os registros do aluno…</p>';return;}if(busca&&busca.erro&&!list.length){$('pnRegistros').innerHTML='<p class="muted">'+esc(busca.erro)+'</p><button type="button" class="btn sec" id="pnRegTentar">Tentar novamente</button>';$('pnRegTentar').onclick=function(){delete registrosBusca[id];buscaRegistros(id,true);};return;}$('pnRegistros').innerHTML=registrosHtml(list)+(busca&&busca.carregando?'<p class="muted">Atualizando registros…</p>':''); }
-  function perfil(id) { if (!C || !$('pfNutricao')) return; var st = C.load(), p = plano(st, id), aberto=$('pfNutriRegistros')&&$('pfNutriRegistros').open; $('pfNutricao').innerHTML = htmlPlano(p) + '<details class="pn-details" id="pfNutriRegistros" '+(aberto?'open':'')+'><summary>Últimos registros de alimentação</summary>' + registrosHtml(registros(st, id).slice(0, 7),id) + '</details>'; $('pfNutriRegistros').ontoggle=function(){if(this.open)buscaRegistros(id);}; }
+  function pintaRegistros() { var id=alunoId,list = registros(C.load(), id), busca=id&&registrosBusca[id], dias = +$('pnPeriodo').value,q=norm($('pnRegBusca').value),f=$('pnRegFiltro').value; pintaResumoSemana(list); list=list.filter(function(r){return r.d<=S.todayISO()&&(!dias||r.d>=diaOffset(S.todayISO(),-dias+1))&&(!q||norm(r.titulo+' '+r.itens.map(function(it){return it.nome;}).join(' ')).indexOf(q)>=0)&&(!f||(f==='foto'&&r.foto)||(f==='revisao'&&r.foto&&!revisado(id,r))||(f==='plano'&&r.origem==='plano')||(f==='manual'&&r.origem!=='plano'));}); if(!id){exibeRegistros('<p class="muted">Escolha um aluno para consultar os registros.</p>');return;} if(!cacheRegistros(C.load(),id)&&!busca)buscaRegistros(id);busca=registrosBusca[id];if(busca&&busca.carregando&&!list.length){exibeRegistros('<p class="muted">Carregando os registros do aluno…</p>');return;}if(busca&&busca.erro&&!list.length){exibeRegistros('<p class="muted">'+esc(busca.erro)+'</p><button type="button" class="btn sec" id="pnRegTentar">Tentar novamente</button>');$('pnRegTentar').onclick=function(){delete registrosBusca[id];buscaRegistros(id,true);};return;}exibeRegistros(registrosHtml(list)+(busca&&busca.carregando?'<p class="muted">Atualizando registros…</p>':'')); }
+  function perfil(id) {
+    if (!C || !$('pfNutricao')) return;
+    var st = C.load(), p = plano(st, id), el = $('pfNutricao');
+    var scope = JSON.stringify([id, identidadeNutri(st, id)]);
+    var mesma = el._pnRecordsView && el._pnRecordsView.scope === scope;
+    var aberto = mesma && $('pfNutriRegistros') && $('pfNutriRegistros').open;
+    atualizaRegistrosDOM(el, htmlPlano(p) + '<details class="pn-details" id="pfNutriRegistros" '+(aberto?'open':'')+'><summary>Últimos registros de alimentação</summary>' + registrosHtml(registros(st, id).slice(0, 7), id) + '</details>', scope);
+    $('pfNutriRegistros').ontoggle = function () { if (this.open) buscaRegistros(id); };
+  }
   function contexto(st, id) { var a = aluno(st, id); return JSON.stringify({ aluno: a ? { id: a.id, nome: a.nome, sexo: a.sexo, nasc: a.nasc, altura: a.altura, peso: a.peso, obs: a.obs, anamnese: a.anamnese } : null, avaliacoes: (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; }), plano: plano(st, id) }); }
   function promptIA(st, a, d, alvo) {
     var prioridade = (state(st).favoritos || []).concat(itensPlano(d.plano).map(function (it) { return it.alimId; }));

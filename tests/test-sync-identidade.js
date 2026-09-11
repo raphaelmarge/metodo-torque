@@ -123,7 +123,7 @@ async function test(name, fn) { await fn(); count++; console.log('  ✅ ' + name
   await test('Reconexão da mesma conta espera a nuvem antes de enviar pendências', async () => {
     const pull = deferred(), x = await setup({pullPromise:pull.promise}); await x.start();
     x.ctx.MTStore.write('ptStudio',{alunos:[{id:'pendente'}]}); x.ctx.__MTSync.enviaSujas();
-    assert.ok(!x.calls.some(c => c.rows)); pull.resolve({data:[]}); await x.flush();
+    assert.ok(!x.calls.some(c => c.rows || c.rpc === 'dados_cas' || c.rpc === 'dados_grava')); pull.resolve({data:[]}); await x.flush();
     assert.ok(x.calls.some(c => c.rpc === 'dados_cas' && c.args.p_valor && c.args.p_valor.alunos && c.args.p_valor.alunos[0].id === 'pendente'));
   });
   console.log(count + ' cenários de identidade e reconexão passaram.');
