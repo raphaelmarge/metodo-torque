@@ -20,7 +20,7 @@
   function init() {
     if (!$('qpNovoBox') || !window.__questPT || window.MT_QUESTIONARIOS) return;
     var root = $("vQuest"), form = $("qpNovoBox"), bank = form.closest('.card'), qform = $("qqNovoBox"), questionnaires = qform.closest('.card');
-    var options = [], forQuestionnaire = false, autoCode = true, lastCode = "", saveIds = [], newQuestion = null;
+    var options = [], forQuestionnaire = false, autoCode = true, lastCode = "", saveIds = [], newQuestion = null, questionAccount = account();
     root.classList.add("qpx-root"); bank.classList.add("qpx-bank"); questionnaires.classList.add("qpx-questionnaires"); bank.before(questionnaires);
     bank.querySelector('h2').textContent = "Banco de perguntas"; questionnaires.querySelector('h2').textContent = "Meus questionários";
     bank.querySelector('h2').after(node('p', 'qpx-help', 'Crie uma vez e reutilize em diferentes questionários.'));
@@ -32,6 +32,7 @@
     function fail(text, input) { error.textContent = text; error.hidden = false; if (input) { input.setAttribute('aria-invalid', 'true'); reveal(input); } }
     function changed() { error.hidden = true; form.querySelectorAll('[aria-invalid]').forEach(function (el) { el.removeAttribute('aria-invalid'); }); preview(); }
     var body = node('div', 'qpx-editor'), title = $('qpTitulo'), question = $('qpTexto'), type = $('qpTipo'), code = $('qpSigla'), less = $('qpMenos'), save = $('qpAdd');
+    save.dataset.qpConta = questionAccount;
     var legacy = node('div'); legacy.hidden = true; legacy.className = 'qpx-legacy';
     var oldOptions = Array.from(form.querySelectorAll('.qpOp'));
     var presetBar = node('div', 'qpx-presets'); presetBar.setAttribute('aria-label', 'Modelos de pergunta');
@@ -90,6 +91,7 @@
       previewContent.appendChild(answers);
     }
     function reset() {
+      questionAccount = account(); save.dataset.qpConta = questionAccount;
       title.value = ''; question.value = ''; code.value = ''; less.checked = false; type.value = 'emoji'; autoCode = true; lastCode = ''; forQuestionnaire = false;
       var labels = ['Altíssimo', 'Alto', 'Médio', 'Baixo', 'Nenhum'];
       options.forEach(function (op, i) { op.label.value = labels[i]; op.score.value = String(2 - i); op.input.setAttribute('data-e', ['😍', '🙂', '😐', '🙁', '😫'][i]); op.input.value = labels[i] + ' | ' + (2 - i); });
@@ -97,6 +99,7 @@
     }
     function draft(p) {
       if ((title.value.trim() || question.value.trim()) && !confirm('Substituir o rascunho não salvo por este modelo?')) return;
+      questionAccount = account(); save.dataset.qpConta = questionAccount;
       title.value = p.titulo || ''; question.value = p.texto || ''; type.value = p.tipo || 'linear'; less.checked = !!p.menosMelhor;
       autoCode = true; lastCode = uniqueCode(title.value); code.value = lastCode;
       if (p.tipo === 'emoji' && p.ops && p.ops.length <= options.length) options.forEach(function (op, i) { var x = p.ops[i]; op.label.value = x ? x.r : ''; op.score.value = String(x ? x.p : 0); if (x) op.input.setAttribute('data-e', x.e); op.input.value = op.label.value + ' | ' + op.score.value; });
@@ -107,6 +110,7 @@
     save.addEventListener('click', function (event) {
       error.hidden = true;
       function stop(message, input) { event.preventDefault(); event.stopImmediatePropagation(); fail(message, input); }
+      if (account() !== questionAccount) return stop('A conta mudou. Limpe o rascunho para criar uma pergunta nesta conta.', title);
       if (!title.value.trim()) return stop('Dê um nome à pergunta.', title);
       if (!question.value.trim()) return stop('Escreva a pergunta que o aluno vai responder.', question);
       if (!code.value.trim() || autoCode) code.value = uniqueCode(title.value);
@@ -123,10 +127,11 @@
       }
       if (type.value === 'texto') less.checked = false;
       save.disabled = true;
-      saveIds = read().ps.map(function (p) { return p.id; }); newQuestion = { code: code.value, forQuestionnaire: forQuestionnaire, title: title.value, text: question.value, less: less.checked };
+      saveIds = read().ps.map(function (p) { return p.id; }); newQuestion = { code: code.value, forQuestionnaire: forQuestionnaire, title: title.value, text: question.value, less: less.checked, account: questionAccount };
       // The original click listener saves. Verify by reading AFTER it; never write here.
       setTimeout(function () {
         save.disabled = false;
+        if (account() !== newQuestion.account) { reset(); fail('O salvamento foi iniciado na conta anterior. Confira aquela conta antes de repetir a operação.'); return; }
         var added = read().ps.find(function (p) { return saveIds.indexOf(p.id) < 0 && p.sigla === newQuestion.code; });
         if (!added) { title.value = newQuestion.title; question.value = newQuestion.text; code.value = newQuestion.code; less.checked = newQuestion.less; changed(); fail('Não foi possível confirmar a gravação. O rascunho foi mantido; confira o armazenamento antes de tentar novamente.'); return; }
         if (newQuestion.forQuestionnaire) { var check = Array.from(document.querySelectorAll('.qqCheck')).find(function (c) { return c.value === added.id; }); if (check) check.checked = true; }
@@ -136,17 +141,76 @@
       });
     }, true);
     // Questionnaire creation: name -> selection -> save, without a new data model.
-    var qbody = node('div', 'qpx-editor'), qname = $('qqNome'), qchecks = $('qqPerguntas'), qsave = $('qqAdd');
+    var qbody = node('div', 'qpx-editor'), qname = $('qqNome'), qchecks = $('qqPerguntas'), qsave = $('qqAdd'), orderedIds = [];
+    function account() { var c = window.MTStore.cloud && window.MTStore.cloud(); return c && c.aid ? String(c.aid) : 'local'; }
+    var draftAccount = account(); qsave.dataset.qqConta = draftAccount;
     qbody.appendChild(field(qname, 'Nome do questionário')); qname.placeholder = 'Ex.: Check-in semanal';
     var selected = node('p', 'qpx-selected'); selected.id = 'qpxSelected'; selected.setAttribute('role', 'status'); qbody.appendChild(selected);
+    var orderBox = node('div', 'qpx-order'); orderBox.id = 'qpxOrder'; qbody.appendChild(orderBox);
+    var search = node('input'); search.type = 'search'; search.id = 'qpxSearch'; search.placeholder = 'Título ou texto da pergunta';
+    qbody.appendChild(field(search, 'Adicionar perguntas do banco'));
+    var noResults = node('p', 'qpx-help', 'Nenhuma pergunta encontrada. Tente outro termo.'); noResults.hidden = true; qbody.appendChild(noResults);
     qbody.appendChild(qchecks);
     var qerror = node('p', 'qpx-error'); qerror.id = 'qpxQuestionnaireError';
     qerror.setAttribute('role', 'alert'); qerror.hidden = true; qbody.appendChild(qerror);
     qbody.appendChild(button('+ Criar uma pergunta', function () { forQuestionnaire = true; form.open = true; reveal(title); }));
-    var qactions = node('div', 'qpx-actions'); qsave.textContent = 'Criar questionário'; qactions.appendChild(qsave); qbody.appendChild(qactions);
-    qbody.appendChild(node('p', 'qpx-help', 'Criar salva o modelo. O envio acontece na área “Enviar ao aluno”.'));
+    var wholePreview = details('Conferir questionário completo'); wholePreview.id = 'qpxWholePreview';
+    var previewQuestions = node('div', 'qpx-whole-preview'); wholePreview.appendChild(previewQuestions); qbody.appendChild(wholePreview);
+    var qactions = node('div', 'qpx-actions'); qsave.textContent = 'Criar questionário'; qactions.appendChild(qsave);
+    var cancelEdit = button('Cancelar edição', function () { if (!confirm('Descartar as alterações ainda não salvas neste modelo?')) return; clearQuestionnaire(); qform.open = false; });
+    cancelEdit.id = 'qpxCancelEdit'; cancelEdit.hidden = true; qactions.appendChild(cancelEdit); qbody.appendChild(qactions);
+    var modelHelp = node('p', 'qpx-help', 'Criar salva o modelo. O envio acontece na área “Enviar ao aluno”.'); qbody.appendChild(modelHelp);
     while (qform.children.length > 1) qform.lastElementChild.remove(); qform.appendChild(qbody);
-    function updateSelection() { var checks = Array.from(qchecks.querySelectorAll('.qqCheck')), count = checks.filter(function (c) { return c.checked; }).length; selected.textContent = count + (count === 1 ? ' pergunta selecionada' : ' perguntas selecionadas'); if (!checks.length) selected.textContent = 'Crie sua primeira pergunta no banco abaixo.'; }
+    function clearQuestionnaire() {
+      delete qsave.dataset.qqEdit; delete qsave.dataset.qqSnapshot; delete qsave.dataset.qqResult;
+      qsave.textContent = 'Criar questionário'; cancelEdit.hidden = true; qname.value = ''; orderedIds = [];
+      qform.querySelector('summary').textContent = 'Criar questionário'; modelHelp.textContent = 'Criar salva o modelo. O envio acontece na área “Enviar ao aluno”.';
+      qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = false; });
+      qsave.dataset.qqConta = draftAccount = account(); qerror.hidden = true; search.value = ''; updateSelection();
+    }
+    function filterSelection() {
+      var query = String(search.value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(), visible = 0;
+      qchecks.querySelectorAll('.qpx-choice').forEach(function (label) {
+        label.hidden = query && String(label.textContent).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().indexOf(query) < 0;
+        if (!label.hidden) visible++;
+      }); noResults.hidden = !!visible || !query;
+    }
+    search.addEventListener('input', filterSelection);
+    qname.addEventListener('input', function () { drawWholePreview(); });
+    function drawWholePreview() {
+      var data = read(); previewQuestions.replaceChildren(node('h3', '', qname.value.trim() || 'Seu questionário'));
+      if (!orderedIds.length) previewQuestions.appendChild(node('p', 'qpx-help', 'Selecione as perguntas para conferir a ordem e as respostas.'));
+      orderedIds.forEach(function (id, i) {
+        var p = data.ps.find(function (x) { return x.id === id; }); if (!p) return;
+        var row = node('section', 'qpx-preview-row'); row.appendChild(node('p', 'qpx-preview-question', (i + 1) + '. ' + p.texto));
+        row.appendChild(node('p', 'qpx-help', p.tipo === 'texto' ? 'Resposta em texto livre' : p.tipo === 'linear' ? 'Nota de 0 a 10' : (p.ops || []).map(function (o) { return (o.e || '') + ' ' + o.r; }).join(' · ')));
+        previewQuestions.appendChild(row);
+      });
+    }
+    function updateSelection() {
+      if (account() !== draftAccount) { reset(); clearQuestionnaire(); qerror.textContent = 'A conta mudou. Abra ou crie um questionário nesta conta.'; qerror.hidden = false; return; }
+      var checks = Array.from(qchecks.querySelectorAll('.qqCheck')), checked = checks.filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
+      orderedIds = orderedIds.filter(function (id) { return checked.indexOf(id) >= 0; });
+      checked.forEach(function (id) { if (orderedIds.indexOf(id) < 0) orderedIds.push(id); });
+      // A ordem do DOM é a ordem usada pelo salvamento canônico e sobrevive ao render.
+      var labels = orderedIds.map(function (id) { return checks.find(function (c) { return c.value === id; }).closest('label'); });
+      checks.filter(function (c) { return !c.checked; }).forEach(function (c) { labels.push(c.closest('label')); });
+      labels.forEach(function (label, i) { if (label && qchecks.children[i] !== label) qchecks.insertBefore(label, qchecks.children[i] || null); });
+      selected.textContent = orderedIds.length + (orderedIds.length === 1 ? ' pergunta selecionada' : ' perguntas selecionadas');
+      if (!checks.length) selected.textContent = 'Crie sua primeira pergunta no banco abaixo.';
+      var data = read(); orderBox.replaceChildren();
+      orderedIds.forEach(function (id, i) {
+        var p = data.ps.find(function (x) { return x.id === id; }); if (!p) return;
+        var row = node('div', 'qpx-order-row'); row.appendChild(node('span', '', (i + 1) + '. ' + p.titulo));
+        var controls = node('div', 'qpx-order-actions');
+        [[-1, '↑', 'Subir'], [1, '↓', 'Descer']].forEach(function (move) {
+          var b = button(move[1], function () { var next = i + move[0]; if (next < 0 || next >= orderedIds.length) return; orderedIds.splice(i, 1); orderedIds.splice(next, 0, id); updateSelection(); var focus = Array.from(orderBox.querySelectorAll('[data-qpx-move]')).find(function (el) { return el.dataset.qpxId === id && el.dataset.qpxMove === String(move[0]); }); if (focus && !focus.disabled) focus.focus(); });
+          b.setAttribute('aria-label', move[2] + ' ' + p.titulo); b.dataset.qpxId = id; b.dataset.qpxMove = move[0]; b.disabled = i + move[0] < 0 || i + move[0] >= orderedIds.length; controls.appendChild(b);
+        });
+        var remove = button('×', function () { checks.find(function (c) { return c.value === id; }).checked = false; updateSelection(); }); remove.setAttribute('aria-label', 'Retirar ' + p.titulo + ' do questionário'); controls.appendChild(remove);
+        row.appendChild(controls); orderBox.appendChild(row);
+      }); drawWholePreview(); filterSelection();
+    }
     qchecks.addEventListener('change', updateSelection);
     // Captura o rascunho ANTES do handler canônico, que pode limpar os campos
     // mesmo quando o armazenamento recusa a gravação. Só ele continua gravando;
@@ -155,22 +219,26 @@
       if (qsave.disabled) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       var pendingName = qname.value;
       var pendingIds = Array.from(qchecks.querySelectorAll('.qqCheck:checked')).map(function (c) { return c.value; });
+      var pendingEdit = qsave.dataset.qqEdit || '';
       if (!pendingName.trim() || !pendingIds.length) return; // Validação canônica.
       var previousIds = read().qs.map(function (q) { return q.id; });
       qerror.hidden = true; qsave.disabled = true;
+      delete qsave.dataset.qqResult;
       setTimeout(function () {
         try {
           var added = read().qs.some(function (q) {
-            return previousIds.indexOf(q.id) < 0 && q.nome === pendingName.trim() &&
+            return (pendingEdit ? q.id === pendingEdit && qsave.dataset.qqResult === 'salvo' : previousIds.indexOf(q.id) < 0) && q.nome === pendingName.trim() &&
               Array.isArray(q.perguntas) && q.perguntas.length === pendingIds.length &&
               q.perguntas.every(function (id, i) { return id === pendingIds[i]; });
           });
           if (!added) {
             qname.value = pendingName;
+            orderedIds = pendingIds.slice();
             qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = pendingIds.indexOf(c.value) >= 0; });
-            qerror.textContent = 'Não foi possível confirmar a gravação. O nome e a seleção foram mantidos; confira o armazenamento antes de tentar novamente.';
+            if (qerror.hidden) qerror.textContent = 'Não foi possível confirmar a gravação. O nome e a seleção foram mantidos; confira o armazenamento antes de tentar novamente.';
             qerror.hidden = false; qform.open = true; reveal(qname);
           } else {
+            clearQuestionnaire(); status.textContent = pendingEdit ? 'Modelo atualizado. Os questionários já enviados foram preservados.' : 'Questionário criado. Prepare o envio quando quiser.';
             qform.open = false; qform.querySelector('summary').focus({ preventScroll: true });
           }
           updateSelection();
@@ -215,15 +283,22 @@
         var info = node('div', 'qpx-question-info'); info.appendChild(node('h3', '', q.nome));
         info.appendChild(node('p', 'qpx-help', q.perguntas.length + ' pergunta(s) · Modelo salvo'));
         var actions = node('div', 'qpx-saved-actions');
+        var edit = button('Editar modelo', function () {
+          if (qname.value.trim() && !confirm('Substituir o rascunho ainda não salvo?')) return;
+          qsave.dataset.qqEdit = q.id; qsave.dataset.qqSnapshot = JSON.stringify(q); qsave.dataset.qqConta = draftAccount = account();
+          qname.value = q.nome; orderedIds = q.perguntas.slice(); search.value = ''; qerror.hidden = true;
+          qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = orderedIds.indexOf(c.value) >= 0; });
+          qsave.textContent = 'Salvar alterações'; qform.querySelector('summary').textContent = 'Editar questionário'; modelHelp.textContent = 'As alterações valem para os próximos envios. Respostas e questionários já enviados ficam preservados.'; cancelEdit.hidden = false; updateSelection(); qform.open = true; reveal(qname);
+        }); edit.dataset.qpxEdit = q.id; actions.appendChild(edit);
         actions.appendChild(button('Preparar envio', function () { window.__qtAba('enviar'); $('qeQuest').value = q.id; $('qeQuest').dispatchEvent(new Event('change', { bubbles: true })); reveal($('qeAlunoBusca') || $('qeAluno')); }));
         var more = details('Opções'); more.appendChild(button('Usar como base', function () {
           if ($('qqNome').value.trim() && !confirm('Substituir o questionário ainda não salvo por este modelo?')) return;
-          $('qqNome').value = q.nome + ' (cópia)'; qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = q.perguntas.indexOf(c.value) >= 0; }); updateSelection(); qform.open = true; reveal($('qqNome'));
+          clearQuestionnaire(); $('qqNome').value = q.nome + ' (cópia)'; orderedIds = q.perguntas.slice(); qchecks.querySelectorAll('.qqCheck').forEach(function (c) { c.checked = q.perguntas.indexOf(c.value) >= 0; }); updateSelection(); qform.open = true; reveal($('qqNome'));
         })); more.appendChild(remove); actions.appendChild(more); row.replaceChildren(info, actions);
       });
     }
     function decorateSelection() {
-      var data = read(); qchecks.querySelectorAll('.qqCheck').forEach(function (c) { var label = c.closest('label'), p = data.ps.find(function (x) { return x.id === c.value; }); if (!label || !p || label.dataset.qpxReady) return; label.dataset.qpxReady = '1'; label.className = 'qpx-choice'; label.removeAttribute('style'); label.replaceChildren(c, node('span', '', p.titulo + ' · ' + p.sigla)); }); updateSelection();
+      var data = read(); qchecks.querySelectorAll('.qqCheck').forEach(function (c) { var label = c.closest('label'), p = data.ps.find(function (x) { return x.id === c.value; }); if (!label || !p || label.dataset.qpxReady) return; label.dataset.qpxReady = '1'; label.className = 'qpx-choice'; label.removeAttribute('style'); var content = node('span'); content.appendChild(node('b', '', p.titulo)); content.appendChild(node('small', '', p.texto)); label.replaceChildren(c, content); }); updateSelection();
     }
     new MutationObserver(decorateQuestions).observe($('qpLista'), { childList: true, subtree: true });
     new MutationObserver(decorateQuestionnaires).observe($('qqLista'), { childList: true, subtree: true });

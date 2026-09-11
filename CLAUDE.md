@@ -13,6 +13,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v826 — Relatório: recebimentos e praticidade da prescrição
+
+- Cobrança coletiva usa a mesma regra de vencimento do perfil. Recebimentos mantêm natureza independente da anotação; legados preservam a inferência anterior. Anulação conserva original, motivo, auditoria e eventoId, sai dos totais/quitação/carteira e não reembolsa gateway nem altera quantidade de aulas. Duplicidade manual pede conferência; eventos automáticos mantêm idempotência.
+- Planejamento por data tem calendário mensal e agenda do dia, edição individual, descanso, retorno à semana e cópia de 1–12 semanas com prévia e substituição explícita. Semana recorrente, plano.datas e pacote do aluno continuam compatíveis. Salvar e publicar são ações distintas.
+- Corrida permite editar/duplicar/reordenar blocos e editar/duplicar zonas. Treinos já prescritos mantêm snapshots; rascunhos são isolados por conta/aluno. Musculação permanece no fluxo existente.
+- Questionários permitem editar modelos pelo mesmo ID, ordenar perguntas, buscar enunciados e conferir a prévia completa. Cópia conserva ordem; envios anteriores não são reescritos. Modelo e pergunta em elaboração verificam a conta; erros e conflitos conservam rascunhos da conta correta.
+- Salvamentos mantêm o objeto devolvido por load até save: clonar o estado inteiro elimina a identidade de concorrência do store. Clonar apenas coleções/snapshots necessários. Novas suítes: recebimentos-v826, recebimentos-sync-v826, personal-planejamento-mensal, personal-corrida e questionarios-editor. Detalhes em docs/releases/mt-v826-relatorio-e-praticidade.md.
+
 ## v825 — Integração e correções de salvamento
 
 - Parte da main v824. Calendários recebem as refeições por horário usando uma única projeção do plano vigente; mantém programação por datas, atendimento online/presencial e corrida por blocos. Alimentação acrescenta busca, filtros, próxima refeição e atalhos de foto/repetição. Abrir uma data nunca confirma consumo ou XP; futuro é somente consulta. Rascunhos e foco sobrevivem à navegação.
