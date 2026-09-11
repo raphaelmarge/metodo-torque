@@ -22,9 +22,10 @@ ok(!/^  push:/m.test(tests) && !/^  (push|pull_request):/m.test(alias), 'Uma su�
 ok(/ref: \$\{\{ github.sha \}\}/.test(tests), 'Checkout fixado no SHA do evento');
 ok(/set -euo pipefail[\s\S]*bash tests\/run.sh.*tee/.test(tests), 'Logs não escondem falhas da suíte');
 ok(/if: always\(\)/.test(tests), 'Evidências preservadas mesmo em falha');
+ok(tests.indexOf('name: dependencias-ci-') > 0 && tests.indexOf('name: dependencias-ci-') < tests.indexOf('bash tests/run.sh'), 'Dependências possuem checkpoint antes da suíte completa');
 ok(pages.indexOf('pages: write') > pages.indexOf('  deploy:'), 'Permissão de publicação limitada ao deploy');
 ok(!/secrets: inherit|contents: write/.test(tests + pages), 'Testes não recebem segredos nem permissão de editar código');
-ok(/data.object.sha !== context.sha/.test(pages), 'Reexecução de commit ultrapassado não substitui a main atual');
+ok(/data.object.sha !== context.sha/.test(pages), 'Divergência da main exige verificação antes de publicar');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'torque-release-'));
 try {
  const repo = path.join(tmp, 'repo'); fs.mkdirSync(repo);
@@ -48,4 +49,50 @@ try {
  git('checkout','--','index.html');env.GITHUB_SHA='0'.repeat(40);
  ok(run().status!==0,'Checkout de outro commit bloqueia publicação');
 } finally { fs.rmSync(tmp,{recursive:true,force:true}); }
-console.log(checks+' verificações de release aprovadas; não atesta configuração administrativa nem deploy real.');
+
+// Executa o próprio guard do workflow. A única exceção de main adiantada
+// permitida é o arquivo de briefing gerado pelo bot; nunca código de runtime.
+const block = pages.match(/          script: \|\n([\s\S]*?)      - uses: actions\/configure-pages/);
+assert.ok(block, 'Guard do deploy localizado');
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+const guard = new AsyncFunction('github', 'context', 'core', block[1].replace(/^            /gm, ''));
+(async () => {
+ const tested = 'a'.repeat(40), current = 'b'.repeat(40);
+ const context = {repo:{owner:'fixture',repo:'torque'},sha:tested};
+ async function simulate(head, comparison, rejectCompare = false) {
+  const failures = [], comparisons = [];
+  const github = {
+   rest:{git:{getRef:async args=>{assert.equal(args.ref,'heads/main');return {data:{object:{sha:head}}};}}},
+   request:async (route,args)=>{
+    comparisons.push(args.basehead);
+    assert.equal(route,'GET /repos/{owner}/{repo}/compare/{basehead}');
+    assert.equal(args.page,1);
+    if(rejectCompare)throw new Error('Falha de API simulada');
+    return {data:comparison};
+   }
+  };
+  try { await guard(github,context,{setFailed:m=>failures.push(m),info:()=>{}}); }
+  catch(error){failures.push(error.message);}
+  return {failures,comparisons};
+ }
+ const docs = {status:'ahead',ahead_by:1,behind_by:0,files:[{filename:'design/BRIEFING-CLAUDE-DESIGN.md',status:'modified'}]};
+ let result = await simulate(tested,null);
+ ok(result.failures.length===0&&result.comparisons.length===0,'Mesmo commit aprovado dispensa comparação');
+ result = await simulate(current,docs);
+ ok(result.failures.length===0,'Atualização isolada do briefing não bloqueia o runtime já testado');
+ ok(result.comparisons[0]===tested+'...'+current,'Comparação usa SHAs fixos, não uma main móvel');
+ result = await simulate(current,{...docs,files:[...docs.files,{filename:'personal.html',status:'modified'}]});
+ ok(result.failures.length>0,'Mudança de código junto do briefing bloqueia deploy antigo');
+ result = await simulate(current,{...docs,status:'diverged',behind_by:1});
+ ok(result.failures.length>0,'Históricos divergentes não são autorizados como documentação');
+ result = await simulate(current,{...docs,files:[]});
+ ok(result.failures.length>0,'Comparação vazia não é aceita como prova');
+ result = await simulate(current,{...docs,files:undefined});
+ ok(result.failures.length>0,'Resposta incompleta bloqueia publicação');
+ result = await simulate(current,{...docs,files:[{filename:'design/BRIEFING-CLAUDE-DESIGN.md',status:'renamed',previous_filename:'personal.html'}]});
+ ok(result.failures.length>0,'Renomear código para briefing não contorna o bloqueio');
+ result = await simulate(current,docs,true);
+ ok(result.failures.length>0,'Falha da API é bloqueante, não autorização implícita');
+ console.log(checks+' verificações de release aprovadas; não atesta configuração administrativa nem deploy real.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
+
