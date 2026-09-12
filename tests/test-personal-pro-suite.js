@@ -11,6 +11,7 @@ const shell = read('assets/personal-torque-one.js');
 const sw = read('sw.js');
 const mig = read('supabase/migrations/20260912120000_personal_pro_suite_v830.sql');
 const idx = read('supabase/migrations/20260912120500_personal_pro_suite_v830_indexes.sql');
+const auto = read('supabase/migrations/20260912121500_personal_pro_suite_v830_automacoes.sql');
 
 [
   ["nav('import'", 'import'],
@@ -52,9 +53,18 @@ tables.forEach(t => {
 ok(mig.includes('to authenticated'), 'políticas/grants usam authenticated');
 ok(mig.includes('revoke all on public.personal_importacoes from anon'), 'anon não recebe acesso às novas tabelas');
 ok(mig.includes('torque_private.personal_automacao_enfileira_questionario'), 'gatilho de questionário vive em schema privado');
-ok(mig.includes('revoke all on function torque_private.personal_automacao_enfileira_questionario() from public, anon, authenticated'), 'função de gatilho não é RPC pública');
-ok(mig.includes("a.gatilho = 'questionario.respondido'"), 'somente automações explícitas de questionário entram na fila');
+ok(mig.includes('revoke all on function torque_private.personal_automacao_enfileira_questionario() from public, anon, authenticated'), 'função de questionário não é RPC pública');
+ok(mig.includes("a.gatilho = 'questionario.respondido'"), 'questionário só enfileira regra explicitamente ativa');
 ok(idx.includes('personal_automacao_fila_automacao_idx'), 'índice de FK da fila presente');
 ok(idx.includes('personal_aluno_equipe_substituto_idx'), 'índice de FK do substituto presente');
+
+ok(auto.includes('on delete set null (substituto_id)'), 'remoção do substituto preserva academia_id');
+ok(auto.includes('personal_automacao_enfileira_aluno_novo'), 'novo aluno possui executor de automação');
+ok(auto.includes('after insert on public.app_aluno'), 'novo aluno dispara somente após criação real');
+ok(auto.includes('personal_automacao_enfileira_agenda_cancelada'), 'agenda possui executor de automação');
+ok(auto.includes("new.status = 'recusado'"), 'gatilho da agenda respeita o estado terminal legado');
+ok(auto.includes('after update of status on public.app_agenda'), 'agenda reage somente a mudança de status');
+ok(auto.includes('revoke all on function torque_private.personal_automacao_enfileira_aluno_novo() from public, anon, authenticated'), 'executor de aluno novo não é RPC pública');
+ok(auto.includes('revoke all on function torque_private.personal_automacao_enfileira_agenda_cancelada() from public, anon, authenticated'), 'executor de agenda não é RPC pública');
 
 console.log(`personal-pro-suite: ${n} verificações passaram`);
