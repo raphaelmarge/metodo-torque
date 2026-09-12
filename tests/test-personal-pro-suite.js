@@ -12,16 +12,22 @@ const sw = read('sw.js');
 const mig = read('supabase/migrations/20260912120000_personal_pro_suite_v830.sql');
 const idx = read('supabase/migrations/20260912120500_personal_pro_suite_v830_indexes.sql');
 
-['import','presencial','automacoes','agenda','equipe'].forEach(id =>
-  ok(js.includes(`data-ptpro-tab="${id}"`), `aba ${id} precisa existir`)
-);
+[
+  ["nav('import'", 'import'],
+  ["nav('presencial'", 'presencial'],
+  ["nav('automacoes'", 'automacoes'],
+  ["nav('agenda'", 'agenda'],
+  ["nav('equipe'", 'equipe'],
+].forEach(([source, id]) => ok(js.includes(source), `aba ${id} precisa existir`));
+ok(js.includes('data-ptpro-tab='), 'navegação usa atributo próprio da Central Pro');
+ok(js.includes('data-ptpro-view='), 'conteúdo usa atributo próprio da Central Pro');
 ok(js.includes("from('personal_importacoes')"), 'importação usa tabela dedicada');
 ok(js.includes("from('personal_sessoes')"), 'sessão presencial usa tabela dedicada');
 ok(js.includes("from('personal_automacoes')"), 'automação usa tabela dedicada');
 ok(js.includes("from('personal_lista_espera')"), 'lista de espera usa tabela dedicada');
 ok(js.includes("from('personal_creditos')"), 'créditos usam tabela dedicada');
 ok(js.includes("from('personal_aluno_equipe')"), 'equipe usa tabela dedicada');
-ok(js.includes("window.MT_supabase"), 'reutiliza cliente Supabase existente');
+ok(js.includes('window.MT_supabase'), 'reutiliza cliente Supabase existente');
 ok(!js.includes('service_role'), 'frontend nunca contém service_role');
 ok(!js.includes('data-a="'), 'módulo não cria/substitui rotas data-a do Personal');
 ok(shell.includes('assets/personal-pro-suite.js'), 'shell carrega módulo de forma isolada');
