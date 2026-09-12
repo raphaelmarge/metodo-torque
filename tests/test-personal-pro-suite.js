@@ -34,9 +34,10 @@ ok(!js.includes('data-a="'), 'módulo não cria/substitui rotas data-a do Person
 ok(shell.includes('assets/personal-pro-suite.js'), 'shell carrega módulo de forma isolada');
 ok(sw.includes('assets/personal-pro-suite.js'), 'JS entra no precache');
 ok(sw.includes('assets/personal-pro-suite.css'), 'CSS entra no precache');
-ok(sw.includes('mt-v830'), 'service worker raiz avança para mt-v830');
-ok(read('assets/versao.js').includes('mt-v830'), 'versão pública avança para mt-v830');
-ok(read('app/app-sw.js').includes('mt-v830'), 'service worker do aluno permanece sincronizado');
+const version = read('assets/versao.js').match(/MT_VERSAO\s*=\s*["'](mt-v(\d+))["']/);
+ok(version && Number(version[2]) >= 830, 'versão pública inclui a Central Pro (v830 ou posterior)');
+ok(sw.match(/var VERSION\s*=\s*["']([^"']+)["']/)?.[1] === version[1], 'service worker raiz permanece sincronizado');
+ok(read('app/app-sw.js').match(/var VERSION\s*=\s*["']([^"']+)["']/)?.[1] === version[1], 'service worker do aluno permanece sincronizado');
 
 ['--pt-fundo','--pt-card','--pt-borda','--pt-txt','--pt-one-primary'].forEach(token =>
   ok(css.includes(token), `visual deve herdar token ${token}`)

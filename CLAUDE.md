@@ -13,6 +13,13 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - O carrossel, o conteúdo sobreposto e a ação principal continuam iguais; a
   mudança é somente visual em `app/aluno-skin.js`.
 
+## v831 — Demonstração direta da Central Pro
+
+- `demo-central-pro.html` abre as cinco abas sem login, cadastro ou questionário inicial. Reutiliza os handlers de `assets/personal-pro-suite.js` e o tema do Personal.
+- O adaptador `assets/demo-central-pro-data.js` mantém alunos, equipe e registros fictícios somente em memória. Não carrega SDK, não usa armazenamento persistente nem acessa o backend; atualizar/recomeçar restaura os exemplos. A página bloqueia conexões com CSP.
+- CSV de exemplo, sessão presencial, três eventos simulados de automação, espera/créditos e responsável/substituto podem ser experimentados. Demos completos do Personal e do aluno continuam acessíveis pelos links da página.
+- Cobertura: `tests/test-demo-central-pro.js`. Detalhes e limites: `docs/releases/mt-v831-demo-central-pro.md`.
+
 ## v829 — Medalhas 3D em aço escovado
 
 - Medalhas evolutivas e anteriores usam o mesmo renderizador SVG autocontido no medalhão interativo e na imagem PNG compartilhada. Aparência em aço escovado, com relevo e tonalidade por nível/marca.
