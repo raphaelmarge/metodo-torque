@@ -1,0 +1,48 @@
+/* Apenas a demonstração dedicada; a Central Pro usa seu módulo e tema reais. */
+.pro-demo,.pro-demo *{box-sizing:border-box}
+.pro-demo{margin:0;line-height:1.5}
+.demo-pro-home{max-width:620px;margin:12vh auto;padding:28px}
+.demo-pro-home h1{font-size:36px;letter-spacing:-.04em;margin:8px 0 16px}
+.demo-pro-home p{color:var(--pt-txt-4)}
+.demo-pro-eyebrow{color:var(--pt-roxo-claro)!important;font-size:12px;letter-spacing:.1em;font-weight:700}
+.pro-demo #abas{position:static;display:block;width:auto;min-width:0;height:auto;max-height:none;opacity:1;visibility:visible;transform:none;overflow:visible;padding:0;border:0;background:transparent}
+.pro-demo #ptProSuiteBtn{justify-content:center;margin:24px 0 0;min-height:48px}
+.demo-pro-links{display:flex;flex-wrap:wrap;gap:16px;margin-top:24px}
+.demo-pro-links a{color:var(--pt-roxo-claro);text-underline-offset:4px}
+.pro-demo .ptpro-shell{width:min(1200px,100vw);height:100dvh;max-height:100dvh}
+.pro-demo .ptpro-top{padding-top:max(14px,env(safe-area-inset-top));align-items:flex-start}
+.pro-demo .ptpro-brand p{max-width:600px}
+.demo-pro-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.demo-pro-tools button{min-height:44px;padding:6px 10px;font-size:12px}
+.demo-pro-tools .demo-pro-demo-label{display:inline-flex;align-items:center;color:var(--pt-ok);font-size:12px;font-weight:600;margin-right:4px}
+.pro-demo .ptpro-layout{min-width:0}
+.pro-demo .ptpro-main,.pro-demo .ptpro-card,.pro-demo .ptpro-card>*,.pro-demo .ptpro-field{min-width:0}
+.pro-demo .ptpro-main{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.pro-demo .ptpro-nav button{align-items:flex-start}
+.pro-demo .ptpro-nav button b{flex:0 0 auto}
+.pro-demo .ptpro-nav button div{min-width:0}
+.pro-demo .ptpro-row>select{flex:1;min-width:160px;max-width:100%;padding:10px;border:1px solid var(--pt-borda);border-radius:10px;background:var(--pt-caixa);color:var(--pt-txt);font:16px Archivo,Arial,sans-serif;min-height:44px}
+.pro-demo .ptpro-item>div{min-width:0;overflow-wrap:anywhere}
+.pro-demo .ptpro-badge{flex-shrink:0}
+.pro-demo .ptpro-drop{text-align:left}
+.demo-pro-example{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+.demo-pro-simulate{margin-top:20px;padding-top:18px;border-top:1px solid var(--pt-borda)}
+.demo-pro-simulate h4{margin-bottom:6px}
+.pro-demo :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--pt-roxo-claro);outline-offset:3px}
+.pro-demo .ptpro-status.erro{color:var(--pt-danger,#ff9aa8)}
+.pro-demo[data-tema="claro"] .ptpro-status.erro,html[data-tema="claro"] .pro-demo .ptpro-status.erro{color:#b4233a}
+@media(max-width:860px){
+  .pro-demo .ptpro-layout{grid-template-rows:auto minmax(0,1fr)}
+  .pro-demo .ptpro-nav{min-width:0;max-height:104px}
+  .pro-demo .ptpro-nav button{flex:0 0 164px}
+  .pro-demo .ptpro-grid>.ptpro-card{grid-column:1/-1!important}
+  .pro-demo .ptpro-row>.ptpro-field{flex:1 1 140px!important}
+}
+@media(max-width:400px){
+  .pro-demo .ptpro-top{padding-left:12px;padding-right:12px;gap:8px}
+  .pro-demo .ptpro-brand h2{font-size:21px}
+  .pro-demo .ptpro-brand p{font-size:12px}
+  .pro-demo .ptpro-card{padding:12px}
+  .pro-demo .ptpro-drop{padding:12px}
+  .pro-demo .ptpro-row>.ptpro-btn{flex:1 1 100%}
+}
