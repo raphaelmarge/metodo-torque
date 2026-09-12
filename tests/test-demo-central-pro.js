@@ -170,6 +170,27 @@ function ok(value, label) { assert.ok(value, label); checks++; console.log('OK: 
   await p.waitForFunction(() => /Marina Costa/.test(document.querySelector('#ptProTeamList').textContent) && /Rafael Lima/.test(document.querySelector('#ptProTeamList').textContent));
 
   const beforeBrowse = await snapshot(), themeColors = [];
+  await p.setViewportSize({ width: 390, height: 844 });
+  await tab('automacoes');
+  await p.locator('.ptpro-main').evaluate(el => { el.scrollTop = 300; });
+  eq(await p.locator('.ptpro-main').evaluate(el => el.scrollTop), 300, 'caso móvel começa com conteúdo de Automações realmente rolado');
+  await tab('automacoes');
+  eq(await p.locator('.ptpro-main').evaluate(el => el.scrollTop), 300, 'reabrir a mesma aba preserva a posição usada pelo simulador');
+  await tab('agenda');
+  eq(await p.locator('.ptpro-main').evaluate(el => el.scrollTop), 0, 'trocar de Automações para Agenda abre o conteúdo no início');
+  for (const [key, expected] of [['Home', 'import'], ['End', 'equipe'], ['ArrowLeft', 'agenda'], ['ArrowUp', 'automacoes'], ['ArrowDown', 'agenda'], ['ArrowRight', 'equipe'], ['ArrowRight', 'import'], ['ArrowLeft', 'equipe']]) {
+    await p.keyboard.press(key);
+    await p.locator('[data-ptpro-view="' + expected + '"].ativa').waitFor({ state: 'visible' });
+    const state = await p.evaluate(() => {
+      const tabs = Array.from(document.querySelectorAll('[data-ptpro-tab]'));
+      return { focus: document.activeElement.dataset.ptproTab,
+        active: tabs.filter(el => el.classList.contains('ativa')).map(el => el.dataset.ptproTab),
+        selected: tabs.filter(el => el.getAttribute('aria-selected') === 'true').map(el => el.dataset.ptproTab),
+        tabbable: tabs.filter(el => el.tabIndex === 0).map(el => el.dataset.ptproTab),
+        othersSkipTab: tabs.filter(el => !el.classList.contains('ativa')).every(el => el.tabIndex === -1) };
+    });
+    eq(state, { focus: expected, active: [expected], selected: [expected], tabbable: [expected], othersSkipTab: true }, key + ' ativa ' + expected + ', move o foco e mantém somente uma aba na ordem de Tab');
+  }
   for (let theme = 0; theme < 2; theme++) {
     if (theme) await p.locator('#demoProTema').click();
     themeColors.push(await p.locator('.ptpro-shell').evaluate(el => getComputedStyle(el).backgroundColor));

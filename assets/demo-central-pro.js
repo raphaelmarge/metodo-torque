@@ -85,6 +85,10 @@
       home.inert = back.classList.contains('aberta');
     }
     back.querySelector('.ptpro-nav').setAttribute('role','tablist');
+    back.querySelector('.ptpro-nav').addEventListener('click', function (ev) {
+      var target = ev.target.closest('[data-ptpro-tab]');
+      if (target && !target.classList.contains('ativa')) back.querySelector('.ptpro-main').scrollTop = 0;
+    }, true);
     back.querySelector('.ptpro-nav').addEventListener('keydown', function (ev) {
       var tabs = Array.from(this.querySelectorAll('[data-ptpro-tab]')), index = tabs.indexOf(document.activeElement);
       if (index < 0 || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(ev.key)) return;
