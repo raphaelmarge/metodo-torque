@@ -79,3 +79,20 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
   else load();
 })();
+
+/* Central Pro: módulo aditivo. Falha nele não bloqueia as 18 áreas existentes. */
+(function () {
+  'use strict';
+  function load() {
+    if (!document.getElementById('abas') || document.querySelector('script[data-pt-pro-suite]')) return;
+    var script = document.createElement('script');
+    script.src = 'assets/personal-pro-suite.js';
+    script.dataset.ptProSuite = '1';
+    script.onerror = function () {
+      console.warn('Central Pro não carregou; o restante do Torque Personal segue disponível.');
+    };
+    document.head.appendChild(script);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
+})();
