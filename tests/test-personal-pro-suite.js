@@ -31,11 +31,12 @@ ok(js.includes("from('personal_aluno_equipe')"), 'equipe usa tabela dedicada');
 ok(js.includes('window.MT_supabase'), 'reutiliza cliente Supabase existente');
 ok(!js.includes('service_role'), 'frontend nunca contém service_role');
 ok(!js.includes('data-a="'), 'módulo não cria/substitui rotas data-a do Personal');
-ok(shell.includes('assets/personal-pro-suite.js'), 'shell carrega módulo de forma isolada');
+ok(!shell.includes('assets/personal-pro-suite.js'), 'shell do Personal não carrega a Central Pro');
+ok(!shell.includes('ptProSuite'), 'shell não recria o ponto de entrada da Central Pro');
 ok(sw.includes('assets/personal-pro-suite.js'), 'JS entra no precache');
 ok(sw.includes('assets/personal-pro-suite.css'), 'CSS entra no precache');
 const version = read('assets/versao.js').match(/MT_VERSAO\s*=\s*["'](mt-v(\d+))["']/);
-ok(version && Number(version[2]) >= 830, 'versão pública inclui a Central Pro (v830 ou posterior)');
+ok(version && Number(version[2]) >= 830, 'versão pública preserva a compatibilidade dos dados e da demo (v830 ou posterior)');
 ok(sw.match(/var VERSION\s*=\s*["']([^"']+)["']/)?.[1] === version[1], 'service worker raiz permanece sincronizado');
 ok(read('app/app-sw.js').match(/var VERSION\s*=\s*["']([^"']+)["']/)?.[1] === version[1], 'service worker do aluno permanece sincronizado');
 
