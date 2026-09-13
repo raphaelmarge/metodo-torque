@@ -231,7 +231,11 @@
       // Renderizar/normalizar sem mudar o painel não cria edição pendente.
       // Preserva o carimbo da nuvem para receber novos alunos de outro aparelho.
       if (key === 'ptStudio' && localStorage.getItem(PREFIX + key) === gravadoRaw) {
-        leitura(key, value, gravadoRaw); return true;
+        leitura(key, value, gravadoRaw);
+        // O contrato do Personal exige uma notificação para concluir o Salvar,
+        // mesmo sem mudança. Não cria timestamp, auditoria nem envio artificial.
+        ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
+        return true;
       }
       localStorage.setItem(PREFIX + key, gravadoRaw);
       leitura(key, value, gravadoRaw);

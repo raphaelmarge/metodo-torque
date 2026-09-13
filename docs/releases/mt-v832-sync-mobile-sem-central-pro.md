@@ -30,3 +30,7 @@ Adicionado teste com IndexedDB real e interação com o botão em 390 e 1280 px,
 ## Publicação e aceite
 
 Esta nota não comprova deploy. Antes de publicar, verificar o HEAD do PR, os checks desse HEAD e o fluxo de Pages. Após a publicação autorizada, conferir `mt-v832` no aparelho; com a mesma conta no PC e celular, cadastrar um aluno de teste, confirmar seu recebimento e testar uma edição concorrente real. Não limpar dados do navegador nem recriar alunos para contornar o problema.
+
+## Ajustes após o primeiro CI
+
+O run `34765300350` bloqueou a publicação por duas verificações. O salvamento idêntico agora mantém a notificação única exigida pelo Personal, sem alterar timestamp, auditoria ou fila. A fixture do teste de navegador declara UTF-8 explicitamente, como a página real, evitando decodificação incorreta dos acentos no JavaScript. A asserção original do texto do aviso permanece, e foi acrescentada a verificação de `document.characterSet`. O novo HEAD precisa de nova execução integral dos checks antes do merge.
