@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   preparar:
-    if: github.event.head_commit.message == 'chore: preparar correção móvel v832'
+    if: github.ref == 'refs/heads/codex/preparar-sync-mobile-v832'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
