@@ -228,6 +228,11 @@
     }
     try {
       var gravadoRaw = JSON.stringify(value);
+      // Renderizar/normalizar sem mudar o painel não cria edição pendente.
+      // Preserva o carimbo da nuvem para receber novos alunos de outro aparelho.
+      if (key === 'ptStudio' && localStorage.getItem(PREFIX + key) === gravadoRaw) {
+        leitura(key, value, gravadoRaw); return true;
+      }
       localStorage.setItem(PREFIX + key, gravadoRaw);
       leitura(key, value, gravadoRaw);
     } catch (e) {
@@ -766,29 +771,117 @@
     var b = bases(); b[k] = ts;
     localStorage.setItem(baseKey(), JSON.stringify(b));
   }
-  function guardaRascunho(k, raw) {
-    var nome = 'mtsync:conflito:' + (sync.aid || 'local') + ':' + Date.now() + ':' + Math.random().toString(36).slice(2);
+  function guardaRascunho(k, raw, aid) {
+    var nome = 'mtsync:conflito:' + ((aid === undefined ? sync.aid : aid) || 'local') + ':' + Date.now() + ':' + Math.random().toString(36).slice(2);
     try {
       localStorage.setItem(nome, JSON.stringify({ chave: k, em: new Date().toISOString(), raw: raw }));
       return nome;
     } catch (e) { return ''; }
   }
+  /* Rascunhos grandes não devem disputar a cota do localStorage com o painel.
+   * Só considera o arquivo durável após o COMMIT da transação IndexedDB.
+   * Falha, bloqueio ou falta de espaço nunca autorizam descartar o original. */
+  function arquivaRascunho(nome, conteudo) {
+    if (!window.indexedDB) return Promise.resolve(false);
+    return new Promise(function (resolve) {
+      var req, db, tx, terminou = false;
+      var timer = setTimeout(function () {
+        try { if (tx) tx.abort(); } catch (e) {}
+        fim(false);
+      }, 8000);
+      function fim(ok) {
+        if (terminou) return;
+        terminou = true; clearTimeout(timer);
+        try { if (db) db.close(); } catch (e) {}
+        resolve(ok);
+      }
+      try {
+        req = window.indexedDB.open('mt-sync-rascunhos', 1);
+        req.onupgradeneeded = function () {
+          if (!req.result.objectStoreNames.contains('rascunhos')) req.result.createObjectStore('rascunhos');
+        };
+        req.onerror = req.onblocked = function () { fim(false); };
+        req.onsuccess = function () {
+          db = req.result;
+          if (terminou) { db.close(); return; }
+          try {
+            tx = db.transaction('rascunhos', 'readwrite');
+            tx.oncomplete = function () { fim(true); };
+            tx.onerror = tx.onabort = function () { fim(false); };
+            tx.objectStore('rascunhos').put(conteudo, nome);
+          } catch (e) { fim(false); }
+        };
+      } catch (e) { fim(false); }
+    });
+  }
+  function preservaRascunho(k, raw, aid) {
+    var c = sync.conflitos && sync.conflitos[k], nome = '', conteudo = '';
+    // Reutiliza uma cópia idêntica: o botão antigo exigia uma SEGUNDA cópia
+    // completa, falhava por cota e nem chegava a consultar a nuvem.
+    if (c && c.copia && c.copia.indexOf('idb:') !== 0) {
+      try {
+        var existente = localStorage.getItem(c.copia), valor = JSON.parse(existente);
+        if (valor && valor.chave === k && valor.raw === raw) { nome = c.copia; conteudo = existente; }
+      } catch (e) {}
+    }
+    var copiaLocal = nome;
+    if (!nome) {
+      nome = 'mtsync:conflito:' + (aid || 'local') + ':' + Date.now() + ':' + Math.random().toString(36).slice(2);
+      conteudo = JSON.stringify({ chave: k, em: new Date().toISOString(), raw: raw });
+    }
+    return arquivaRascunho(nome, conteudo).then(function (ok) {
+      if (!ok) {
+        // O fallback também precisa continuar existindo e conter o mesmo texto.
+        if (copiaLocal && localStorage.getItem(copiaLocal) === conteudo) return copiaLocal;
+        return guardaRascunho(k, raw, aid);
+      }
+      var prefixo = 'mtsync:conflito:' + (aid || 'local') + ':', antigos = [];
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var id = localStorage.key(i);
+          if (!id || id.indexOf(prefixo) !== 0) continue;
+          var texto = localStorage.getItem(id);
+          try { if (JSON.parse(texto).chave === k) antigos.push({ id: id, texto: texto }); } catch (e) {}
+        }
+      } catch (e) {}
+      // Libera somente cópias de conflito deste painel/equipe, uma por vez,
+      // após arquivar integralmente. Nunca remove o painel, fotos ou outra conta.
+      return antigos.reduce(function (fila, item) {
+        return fila.then(function () {
+          var salvo = item.id === nome && item.texto === conteudo ? Promise.resolve(true) : arquivaRascunho(item.id, item.texto);
+          return salvo.then(function (confirmado) {
+            if (!confirmado) return;
+            try { if (localStorage.getItem(item.id) === item.texto) localStorage.removeItem(item.id); } catch (e) {}
+          });
+        });
+      }, Promise.resolve()).then(function () { return 'idb:' + nome; });
+    });
+  }
+  function falhaConflito(k, mensagem) {
+    if (sync.conflitos && sync.conflitos[k]) sync.conflitos[k].erro = mensagem;
+    return false;
+  }
   function notificaChave(k) {
     delete contagem[k]; delete gentes[k];
     ouvintes.forEach(function (cb) { try { cb(k.slice(PREFIX.length)); } catch (e) {} });
   }
-  function aplicaProtegida(row) {
-    var k = row.chave, raw = JSON.stringify(row.valor), anterior = localStorage.getItem(k), ts = tsMap()[k];
+  function aplicaProtegida(row, silencioso) {
+    var k = row.chave, raw = JSON.stringify(row.valor), anterior = localStorage.getItem(k);
+    var bk = baseKey(), tsAnterior = localStorage.getItem(TSKEY), baseAnterior = localStorage.getItem(bk);
+    var m = tsMap(), b = bases(); m[k] = row.atualizado; b[k] = row.atualizado;
     try {
-      marcaTs(k, row.atualizado); // a outra aba recebe o carimbo antes do evento storage
+      // Metadados primeiro; setItem do painel é atômico. Se a cota impedir
+      // qualquer etapa, o painel anterior permanece e as revisões são revertidas.
+      localStorage.setItem(TSKEY, JSON.stringify(m));
+      localStorage.setItem(bk, JSON.stringify(b));
       localStorage.setItem(k, raw);
-      guardaBase(k, row.atualizado);
     } catch (e) {
-      if (ts) marcaTs(k, ts);
+      try { if (tsAnterior === null) localStorage.removeItem(TSKEY); else localStorage.setItem(TSKEY, tsAnterior); } catch (eTs) {}
+      try { if (baseAnterior === null) localStorage.removeItem(bk); else localStorage.setItem(bk, baseAnterior); } catch (eBase) {}
       sinalizaConflito(k, 'A memória do aparelho está cheia. A cópia da nuvem não foi aplicada.');
       return false;
     }
-    if (anterior !== raw) notificaChave(k);
+    if (anterior !== raw && !silencioso) notificaChave(k);
     return true;
   }
   function sinalizaConflito(k, mensagem, rascunho, local) {
@@ -805,14 +898,14 @@
       document.body.appendChild(box);
     }
     box.textContent = sync.conflitos[k].mensagem + (copia ? ' Seu rascunho foi preservado neste aparelho.' : ' Preserve uma cópia antes de fechar a página.');
-    var baixar = document.createElement('button'); baixar.textContent = 'Salvar cópia do rascunho';
+    var baixar = document.createElement('button'); baixar.type = 'button'; baixar.textContent = 'Salvar cópia do rascunho';
     baixar.style.cssText = 'display:inline-block;margin:12px 10px 0 0;padding:12px;cursor:pointer';
     baixar.onclick = function () {
       var v = sync.conflitos[k].local ? sync.conflitos[k].raw : localStorage.getItem(k), blob = new Blob([JSON.stringify({ formato: 'torque-rascunho-conflito', chave: k, em: new Date().toISOString(), valor: JSON.parse(v || 'null') }, null, 2)], { type: 'application/json' });
       var a = document.createElement('a'), u = URL.createObjectURL(blob); a.href = u; a.download = 'torque-rascunho-' + todayISO() + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
     };
     box.appendChild(baixar);
-    var carregar = document.createElement('button'); carregar.textContent = local ? 'Reabrir com os dados atuais' : 'Carregar versão da nuvem';
+    var carregar = document.createElement('button'); carregar.type = 'button'; carregar.textContent = local ? 'Reabrir com os dados atuais' : 'Carregar versão da nuvem';
     carregar.style.cssText = baixar.style.cssText;
     carregar.onclick = function () {
       carregar.disabled = true;
@@ -826,7 +919,7 @@
           status = document.createElement('div'); status.setAttribute('data-mt-sync-status', '1');
           status.style.cssText = 'margin-top:10px;color:#ffd9a0;font-size:13px'; box.appendChild(status);
         }
-        status.textContent = 'Não foi possível resolver agora. Você pode fechar este aviso sem perder o rascunho; a proteção continuará ativa.';
+        status.textContent = 'Não foi possível resolver agora. ' + ((sync.conflitos[k] && sync.conflitos[k].erro) || 'Você pode fechar este aviso sem perder o rascunho; a proteção continuará ativa.');
       }, function () {
         carregar.disabled = false; carregar.textContent = rotulo;
       });
@@ -843,19 +936,45 @@
     box.appendChild(fechar);
   }
   function resolveConflito(k) {
-    if (sync.conflitos && sync.conflitos[k] && sync.conflitos[k].local) {
-      if (!guardaRascunho(k, sync.conflitos[k].raw)) return Promise.resolve(false);
-      delete sync.conflitos[k]; notificaChave(k); avisaStatus(); return Promise.resolve(true);
+    var c = sync.conflitos && sync.conflitos[k];
+    if (!c) return Promise.resolve(false);
+    if (c.resolvendo) return c.resolvendo;
+    if (!c.local && (!sync.client || (sync.emEnvio || []).indexOf(k) >= 0)) {
+      return Promise.resolve(falhaConflito(k, 'Aguarde a conexão e o salvamento em andamento, depois tente novamente.'));
     }
-    if (!sync.client || (sync.emEnvio || []).indexOf(k) >= 0) return Promise.resolve(false);
-    var ciclo = sync.ciclo, raw = localStorage.getItem(k);
-    // Sem cópia confirmada, não substitui nem mesmo após o clique.
-    if (!guardaRascunho(k, raw)) return Promise.resolve(false);
-    return sync.client.from('dados').select('chave,valor,atualizado').eq('academia_id', sync.aid).eq('chave', k).then(function (r) {
-      if (ciclo !== sync.ciclo || !sync.client || r.error || !r.data || !r.data.length || localStorage.getItem(k) !== raw) return false;
-      if (!aplicaProtegida(r.data[0])) return false;
-      delete sync.sujas[k]; delete sync.conflitos[k]; avisaStatus(); return true;
-    }, function () { return false; });
+    var ciclo = sync.ciclo, aid = sync.aid, raw = c.local ? c.raw : localStorage.getItem(k);
+    c.erro = '';
+    var trabalho = preservaRascunho(k, raw, aid).then(function (copia) {
+      if (!copia) return falhaConflito(k, 'Não houve espaço para preservar o rascunho. Nenhum dado foi substituído; salve uma cópia e tente novamente.');
+      if (ciclo !== sync.ciclo || aid !== sync.aid || !sync.conflitos || sync.conflitos[k] !== c) return false;
+      c.copia = copia;
+      if (c.local) {
+        if (c.raw !== raw) return falhaConflito(k, 'O rascunho mudou durante a recuperação. Tente novamente.');
+        delete sync.conflitos[k]; notificaChave(k); avisaStatus(); return true;
+      }
+      if (!sync.client || localStorage.getItem(k) !== raw || (sync.emEnvio || []).indexOf(k) >= 0)
+        return falhaConflito(k, 'O painel mudou durante a recuperação. O rascunho foi preservado; tente novamente.');
+      return sync.client.from('dados').select('chave,valor,atualizado').eq('academia_id', aid).eq('chave', k).then(function (r) {
+        if (ciclo !== sync.ciclo || aid !== sync.aid || !sync.client || sync.conflitos[k] !== c) return false;
+        if (r && r.error) return falhaConflito(k, 'Não foi possível consultar a nuvem. Confira a conexão e tente novamente.');
+        var row = r && Array.isArray(r.data) && r.data.length === 1 && r.data[0];
+        if (!row || row.chave !== k || !row.valor || typeof row.valor !== 'object' || Array.isArray(row.valor) || !row.atualizado)
+          return falhaConflito(k, 'A nuvem não retornou um painel válido para esta conta. A cópia local foi mantida.');
+        if (localStorage.getItem(k) !== raw || (sync.emEnvio || []).indexOf(k) >= 0)
+          return falhaConflito(k, 'O painel mudou durante a consulta. O rascunho foi preservado; tente novamente.');
+        if (!aplicaProtegida(row, true))
+          return falhaConflito(k, 'Ainda não há espaço para carregar o painel neste aparelho. O rascunho e a versão da nuvem foram preservados.');
+        // Libera a trava antes de atualizar as telas; uma edição nova feita
+        // por um ouvinte não pode ter sua fila apagada ao terminar a recuperação.
+        delete sync.sujas[k]; delete sync.conflitos[k];
+        if (localStorage.getItem(k) !== raw) notificaChave(k);
+        avisaStatus(); return true;
+      });
+    }).catch(function () {
+      return falhaConflito(k, 'A recuperação foi interrompida. A cópia local não foi descartada; tente novamente.');
+    });
+    c.resolvendo = trabalho.then(function (ok) { delete c.resolvendo; return ok; });
+    return c.resolvendo;
   }
   function recebeProtegida(row, primeira) {
     var k = row.chave, raw = localStorage.getItem(k), igual = raw === JSON.stringify(row.valor);
