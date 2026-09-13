@@ -1,1 +1,0 @@
-Este arquivo não deve existir na versão final.
