@@ -1,0 +1,1 @@
+Fluxo diário integrado preparado para validação no PR. Não publicar este arquivo isoladamente.
