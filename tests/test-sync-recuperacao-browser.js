@@ -9,7 +9,7 @@ function ok(value,message){assert.ok(value,message);checks++;console.log('OK '+m
  for(const width of [390,1280]){
   const context=await browser.newContext({viewport:{width,height:844},locale:'pt-BR',serviceWorkers:'block'});
   await context.route('**://*.supabase.co/**',route=>route.abort());
-  await context.route(BASE+'/__sync-mobile-test',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="pt-BR"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Teste de recuperação</title><body><main>Painel de teste</main><script src="/apps/store.js"></script></body></html>'}));
+  await context.route(BASE+'/__sync-mobile-test',route=>route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Teste de recuperação</title><body><main>Painel de teste</main><script src="/apps/store.js"></script></body></html>'}));
   await context.addInitScript(()=>{
    const K='mtapp:ptStudio';
    if(!localStorage.getItem('teste-recuperacao-semeado')){
@@ -30,6 +30,7 @@ function ok(value,message){assert.ok(value,message);checks++;console.log('OK '+m
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(BASE+'/__sync-mobile-test');await page.evaluate(()=>MTStore.iniciaSync());
+  ok(await page.evaluate(()=>document.characterSet==='UTF-8'),width+': fixture usa UTF-8 como o Personal real');
   await page.locator('#mtSyncConflito').waitFor();
   ok((await page.locator('#mtSyncConflito').innerText()).includes('Preserve uma cópia'),width+': reproduz a falta de espaço do print');
   await page.getByRole('button',{name:'Carregar versão da nuvem',exact:true}).click();

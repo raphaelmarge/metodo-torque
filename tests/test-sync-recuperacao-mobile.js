@@ -31,12 +31,12 @@ async function conflict(options={}){
 let passed=0;
 async function test(name,fn){await fn();passed++;console.log('  OK '+name);}
 (async()=>{
- await test('salvar sem mudança preserva carimbo, revisão e fila limpa',async()=>{
+ await test('salvar sem mudança notifica uma vez e preserva carimbo, revisão e fila limpa',async()=>{
   const x=await setup({rows:[row(old(),A)]});await x.start();const before=x.memory.get('mtsync:ts');
   let notifications=0;x.ctx.MTStore.onChange(()=>notifications++);
   assert.equal(x.ctx.MTStore.write('ptStudio',x.ctx.MTStore.read('ptStudio')),true);
   assert.equal(x.memory.get('mtsync:ts'),before);assert.equal(x.ctx.__MTSync.baseDe(K),A);
-  assert.ok(!x.ctx.__MTSync._estado.sujas[K]);assert.equal(notifications,0);
+  assert.ok(!x.ctx.__MTSync._estado.sujas[K]);assert.equal(notifications,1);assert.equal(x.calls.filter(c=>c.rpc==='dados_cas').length,0);
  });
  await test('aluno criado no PC aparece no celular após salvamento idêntico',async()=>{
   const opts={rows:[row(old(),A)]},x=await setup(opts);await x.start();x.ctx.MTStore.write('ptStudio',x.ctx.MTStore.read('ptStudio'));
