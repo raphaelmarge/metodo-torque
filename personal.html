@@ -3131,6 +3131,32 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <!-- v755: o recado do publicar mora AQUI. Antes ele saía no #geStatus, que
          vive na aba Treinos → Em grupo: o professor clicava e não via nada. -->
     <p id="persStatus" class="muted" style="margin: 0 0 10px; font-size: 12.5px;"></p>
+    <section class="ptmarca" aria-labelledby="marcaTitulo">
+      <h2 id="marcaTitulo">Identidade da marca</h2>
+      <p class="muted">Seu nome ou o nome do estúdio em destaque no app do aluno. Escolha a identidade, confira a prévia e salve antes de publicar.</p>
+      <div class="ptmarca-grid">
+        <form id="marcaForm">
+          <div class="ptmarca-campos">
+            <label class="ptmarca-wide" for="marcaModo">Como você quer aparecer?
+              <select id="marcaModo"><option value="">Manter identidade atual até escolher</option><option value="profissional">Meu nome</option><option value="estudio">Nome do estúdio / marca</option><option value="ambos">Marca + meu nome</option></select>
+            </label>
+            <label for="marcaProfissional">Nome do profissional<input id="marcaProfissional" maxlength="120" autocomplete="off"><small>Nome da pessoa responsável. Não muda o nome do seu login.</small></label>
+            <label for="marcaEstudio">Nome do estúdio / marca<input id="marcaEstudio" maxlength="120" autocomplete="off"><small>Nome fantasia apresentado aos alunos.</small></label>
+            <label id="marcaDestaqueCampo" class="ptmarca-wide" for="marcaDestaque" hidden>Qual nome fica em destaque?<select id="marcaDestaque"><option value="estudio">Estúdio / marca em destaque</option><option value="profissional">Profissional em destaque</option></select></label>
+            <label for="marcaCurto">Nome curto (opcional)<input id="marcaCurto" maxlength="32" autocomplete="off"><small>Para recados e notificações. Vazio mantém o nome principal.</small></label>
+            <label for="marcaSlogan">Slogan (opcional)<input id="marcaSlogan" maxlength="100" autocomplete="off"></label>
+          </div>
+          <div class="ptmarca-actions"><button type="submit" class="btn" id="marcaSalvar">Salvar identidade</button><button type="button" class="btn sec" id="marcaRecarregar">Recarregar campos</button><button type="button" class="btn sec" id="marcaLogoAtalho">Editar logo</button></div>
+          <p id="marcaStatus" role="status" aria-live="polite"></p>
+        </form>
+        <aside class="ptmarca-preview" aria-label="Prévia da identidade no celular">
+          <span>PRÉVIA · APP DO ALUNO</span>
+          <div class="ptmarca-brand"><img id="marcaPreviewLogo" hidden alt=""><strong id="marcaPreviewPrincipal"></strong><p id="marcaPreviewSecundario" hidden></p><em id="marcaPreviewSlogan" hidden></em></div>
+          <p>Recados com <b id="marcaNomeCurtoPreview"></b></p>
+          <small id="marcaPreviewNota"></small>
+        </aside>
+      </div>
+    </section>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Cores do app</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca — a <b>paleta inteira</b> do app do aluno muda junto: botões, gráficos, gradientes, cronômetros e até o card pro Stories, com os tons claro e escuro calculados sozinhos. O seu painel pinta na hora.</p>
@@ -3912,6 +3938,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/modulo-conta.js"></script>
 <!-- construtor do app do aluno: uma fonte só, usada aqui e em /app/ -->
 <script src="assets/acompanhamento.js"></script>
+<link rel="stylesheet" href="assets/personal-marca.css">
+<script src="assets/identidade-marca.js"></script>
+<script src="assets/personal-marca.js"></script>
 <script src="app/aluno-skin.js"></script>
 <script src="app/medalhas-core.js"></script>
 <script src="app/medalhas-catalogo.js"></script>
@@ -4069,7 +4098,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * cadastro da nuvem só mexe em config.nome. Sem professor, o helper tira o
    * genérico da frente ("Studio Léo" → "Léo") em vez de chutar. */
   var GENERICO_STUDIO = /^(studio|st[uú]dio|academia|box|ct|centro|espa[çc]o|personal|treinamento|assessoria|team|time|equipe|cross\w*)$/i;
+  function marcaPublica(cfg, padrao) {
+    var m = self.MT_IDENTIDADE_MARCA && self.MT_IDENTIDADE_MARCA.resolve(cfg);
+    return m && m.personalizado ? m.principal : (cfg || {}).nome || padrao;
+  }
   function nomeStudio() {
+    var marca = self.MT_IDENTIDADE_MARCA && self.MT_IDENTIDADE_MARCA.resolve(load().config);
+    if (marca && marca.personalizado) return marca.principal;
     var n = String((load().config || {}).nome || "").trim();
     if (!n) return "Meu Studio";
     return GENERICO_STUDIO.test(n.split(" ")[0]) ? n : "Studio " + n.split(" ")[0];
@@ -6270,7 +6305,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return "";
-    var studio = (st.config || {}).nome || "Personal";
+    var studio = marcaPublica(st.config, "Personal");
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
     var diario = ((st.diarioPT || {})[alunoId] || []).slice(-5).reverse();
@@ -7487,7 +7522,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * desliga em Configurações → Cobrança. Sem zap no cadastro, nada abre — e o
    * recibo imprimível do histórico continua existindo pros dois casos. */
   function reciboZapTexto(st, a, pg) {
-    var studio = (st.config || {}).nome || "Personal";
+    var studio = marcaPublica(st.config, "Personal");
     return "🧾 *Recibo — " + studio + "*\n" +
       "Recebi de " + a.nome + " o valor de " + S.fmtBRL(+pg.valor) +
       " em " + S.fmtData(pg.data) + (pg.desc ? ", referente a " + pg.desc : "") +
@@ -7511,7 +7546,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cfg = st.config || {};
     // v755: nomeStudio() não repete a palavra — quem se cadastrou como
     // "Studio Léo" via "Studio Studio" no cabeçalho do recibo
-    var quem = cfg.nome ? nomeStudio() : "Personal trainer";
+    var identidadeRecibo = self.MT_IDENTIDADE_MARCA && self.MT_IDENTIDADE_MARCA.resolve(cfg);
+    var quem = identidadeRecibo && identidadeRecibo.personalizado ? (cfg.professor || cfg.nome || "Personal trainer") : (cfg.nome ? nomeStudio() : "Personal trainer");
     var w = window.open("", "_blank");
     // v748: pop-up bloqueado devolve null — antes estourava calado no document.write
     if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
@@ -7520,6 +7556,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "h2{border-bottom:2px solid #111;padding-bottom:8px;}button{padding:10px 16px;margin-top:24px;cursor:pointer;}" +
       "@media print{.no-print{display:none;}}</style></head><body>" +
       "<h2>RECIBO — " + S.fmtBRL(+p.valor) + "</h2>" +
+      (identidadeRecibo && identidadeRecibo.personalizado ? "<p>" + esc(identidadeRecibo.principal) + "</p>" : "") +
       "<p>Recebi de <b>" + esc(a.nome) + "</b> a quantia de <b>" + S.fmtBRL(+p.valor) + "</b>, referente a " + (p.desc ? esc(p.desc) : "serviços de personal trainer") +
       (p.forma ? " (pagamento em " + esc(p.forma) + ")" : "") + ", no dia " + S.fmtData(p.data) + ".</p>" +
       "<p>" + (cfg.pixCidade ? esc(cfg.pixCidade) + ", " : "") + S.fmtData(S.todayISO()) + ".</p>" +
@@ -7731,7 +7768,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return "";
-    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+    var studio = marcaPublica(st.config, "TORQUE PERSONAL");
     var hoje = S.todayISO();
     var mes = /^\d{4}-\d{2}$/.test(mesQ || "") ? mesQ : mesRelPadrao(st, a);
     var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -7806,7 +7843,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var MESES9 = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     var mesNome = MESES9[+mes.slice(5, 7) - 1];
     var COR = corOk((st.config || {}).cor) || "#7c3aed";
-    var studio = (st.config || {}).nome || "TORQUE PERSONAL";
+    var studio = marcaPublica(st.config, "TORQUE PERSONAL");
     var cv = document.createElement("canvas");
     cv.width = 1080; cv.height = 1350;
     var x = cv.getContext("2d");
@@ -7824,7 +7861,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // topo: nome do studio (o logo, se tiver, entra por cima depois)
       x.fillStyle = "rgba(255,255,255,.92)";
       x.font = "900 44px Archivo, sans-serif";
-      x.fillText(studio.toUpperCase(), lg ? 210 : 84, 148);
+      x.fillText(studio.toUpperCase(), lg ? 210 : 84, 148, lg ? 786 : 912);
       // a história do mês
       x.fillStyle = "rgba(255,255,255,.7)";
       x.font = "800 34px Archivo, sans-serif";
@@ -8699,7 +8736,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   function montaPayloadQuest(st, q) {
     return {
-      marca: (st.config || {}).nome || "TORQUE PERSONAL",
+      marca: marcaPublica(st.config, "TORQUE PERSONAL"),
       nome: q.nome,
       ps: q.perguntas.map(function (pid) {
         var p = st.questPerguntas.find(function (x) { return x.id === pid; });
@@ -9564,6 +9601,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- push pro app + apps pendentes de publicar ----------
   // notificação push pro app hospedado do aluno (se ele ativou os lembretes) — degrada em silêncio
   function pushAluno(token, titulo, corpo) {
+    var identidade = self.MT_IDENTIDADE_MARCA && self.MT_IDENTIDADE_MARCA.resolve(load().config);
+    if (identidade && identidade.personalizado) titulo = identidade.curto + " · " + titulo;
     // resolve true só quando a função push-envia respondeu ok — quem chama pode re-tentar depois
     try {
       var nuvem = S.cloud && S.cloud();
@@ -12611,10 +12650,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (elH) {
       var doDia = R809.movimentosFinanceiros(st).filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
       var totH = doDia.reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+      var entrouH = doDia.filter(function (x) { return !x.movimentoEstorno; }).reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
+      var devolvidoH = doDia.filter(function (x) { return x.movimentoEstorno; }).reduce(function (t, x) { return t - (+x.valor || 0); }, 0);
       var nomes = {};
       st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
       elH.innerHTML = '<h3>Movimento de hoje<span style="float:right;font-size:13px;font-weight:800;color:' +
-        (totH ? "var(--tk-ok)" : "var(--tk-tx5)") + ';">' + (totH ? (totH>0?"+":"") + S.fmtBRL(totH) : "saldo zero") + "</span></h3>" +
+        (totH > 0 ? "var(--tk-ok)" : totH < 0 ? "var(--tk-warn)" : "var(--tk-tx5)") + ';">' + (totH ? (totH>0?"+":"") + S.fmtBRL(totH) : "saldo zero") + "</span></h3>" +
+        '<p class="muted" style="font-size:12px;margin:0 0 10px;">Entrou hoje: <b>' + S.fmtBRL(entrouH) + '</b> · Devolvido hoje: <b>' + S.fmtBRL(devolvidoH) + '</b> · Saldo líquido: <b>' + S.fmtBRL(totH) + '</b></p>' +
         (doDia.length ? doDia.map(function (x) {
           return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:var(--tk-ok);">✓</div>' +
             '<div style="min-width:0;"><div class="dnm">' + esc(nomes[x.alunoId] || "Avulso") + "</div>" +
@@ -15996,7 +16038,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderPers() {
     // cabecalho da tela 4b: o nome do studio e quantos apps estao esperando
     var stP = load();
-    if ($("persNome")) $("persNome").textContent = (stP.config || {}).nome || "Seu studio";
+    if ($("persNome")) $("persNome").textContent = marcaPublica(stP.config, "Seu studio");
+    if (self.MT_PERSONAL_MARCA) self.MT_PERSONAL_MARCA.render();
     if ($("persPublica")) {
       var pendP = stP.alunos.filter(function (a) { return appPendente(stP, a); }).length;
       $("persPublica").textContent = pendP ? "Publicar pros " + pendP : "Tudo publicado";
@@ -19352,8 +19395,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!l) { alert("Pro laudo completo o aluno precisa de altura no cadastro e peso na avaliação."); return; }
     var a = (st.alunos || []).find(function (x) { return x.id === av.alunoId; }) || {};
     var html = self.MT_CORPO.laudoHtml(l, {
-      nome: a.nome || "Aluno", quando: av.data, marca: "TORQUE PERSONAL",
-      profissional: (st.config || {}).nome || "", historico: histDe(st, av.alunoId),
+      nome: a.nome || "Aluno", quando: av.data, marca: marcaPublica(st.config, "TORQUE PERSONAL"),
+      profissional: (st.config || {}).professor || (st.config || {}).nome || "", historico: histDe(st, av.alunoId),
     });
     var w = window.open("", "_blank");
     if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
@@ -21656,7 +21699,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   function dadosAppAluno(a, stamp) {
     var st = load();
-    var studio = (st.config || {}).nome || "Meu Personal";
+    var studio = marcaPublica(st.config, "Meu Personal");
     // tema do studio dentro do app gerado (cor válida ou padrão roxo)
     var COR = corOk((st.config || {}).cor) || "#7c3aed";
     var COR2 = corOk((st.config || {}).cor) ? escurece(COR, .18) : "#6d28d9";
@@ -21951,6 +21994,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // banco de GIFs do dono: vai UMA regra (endereço base + padrão do nome), e o
       // app monta o link de cada exercício na hora. Zero peso no pacote do aluno.
       gif: gifRegra(),
+      identidadeApp: self.MT_IDENTIDADE_MARCA ? self.MT_IDENTIDADE_MARCA.resolve(st.config) : null,
       studio: studio, COR: COR, COR2: COR2, CORC: CORC, CORE: CORE, CORCL1: CORCL1, CORCL2: CORCL2,
       PAL: PAL, LOGOAPP: LOGOAPP, zapPersonal: zapPersonal, metaSemana: metaSemana,
       sessApp: sessApp, vidsApp: vidsApp, qa: qa, ctApp: ctApp, plApp: plApp, pixApp: pixApp, svApp: svApp,
@@ -22341,7 +22385,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var d = r2 && r2.data;
           if (r2 && r2.error) { desfazAcesso(); cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
           if (d && d.erro) { desfazAcesso(); cb({ erro: d.erro }); return; }
-          var studio = (load().config || {}).nome || "Seu personal";
+          var studio = marcaPublica(load().config, "Seu personal");
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {
               if (r3 && r3.ok) cb({ ok: true, email: email, senha: senha });
@@ -22451,7 +22495,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- robô de atendimento (chatbot do app do aluno) ----------
   function botPadraoP(st) {
-    var studio = (st.config || {}).nome || "Meu Personal";
+    var studio = marcaPublica(st.config, "Meu Personal");
     return { ativo: true,
       oi: "Oi! Eu sou o assistente do " + studio + ". Posso te ajudar rapidinho — escolhe uma opção:",
       ops: [
@@ -24062,6 +24106,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
 
   window.__ptStudio = { load: load, render: render }; // testes
+  if (self.MT_PERSONAL_MARCA) self.MT_PERSONAL_MARCA.init({
+    load: load, save: save, marca: marcaAppPendente,
+    render: function () { renderPers(); verificaOnboarding(); },
+    onChange: function (fn) { S.onChange(fn); },
+    conta: function () { var c = S.cloud && S.cloud(); return JSON.stringify([c && c.aid || "", (S.usuario && (S.usuario() || {}).email) || "local"]); },
+    permitido: function () { var b = document.querySelector('#abas [data-a="pers"]'); return !(b && b.style.display === "none") && !(S.usuario && (S.usuario() || {}).papel === "funcionario"); }
+  });
   if (self.MT_PERSONAL_MEDALHAS) self.MT_PERSONAL_MEDALHAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
   if (self.MT_ESTORNOS) self.MT_ESTORNOS.init({
     load: load, save: save, marca: marcaAppPendente, financeiro: alFinanceiroPermitido,
