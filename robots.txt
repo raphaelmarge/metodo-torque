@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# TORQUE PERSONAL (app do personal trainer) — discovery
+Allow: /app-personal-trainer.html
+Allow: /personal-vendas.html
+Allow: /personal.html
+Allow: /demo-personal.html
+Allow: /demo-aluno.html
+
+Sitemap: https://www.torqueon.com.br/sitemap.xml
