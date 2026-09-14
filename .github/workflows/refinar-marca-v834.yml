@@ -25,6 +25,7 @@ jobs:
           python3 .github/marca-v834/apply.py
           python3 .github/marca-v834/refine.py
           python3 .github/marca-v834/corrections.py
+          python3 .github/marca-v834/final.py
       - name: Preparar dependências versionadas
         run: bash .github/scripts/setup-tests.sh
       - name: Núcleo, interface, recibo, mobile e isolamento entre tokens
@@ -46,7 +47,7 @@ jobs:
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js >/dev/null && break || sleep .25; done
           node tools/demo-aluno/regen-demo.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/demo.log"
           if grep -q 'PAGEERROR:' "$TORQUE_EVIDENCE_DIR/demo.log"; then exit 1; fi
-          for test in tests/test-aluno-hero-full-bleed.js tests/test-demo-aluno-variantes.js tests/test-app-sintaxe.js tests/test-personal-estornos-core.js tests/test-personal-estornos-ui.js tests/test-recebimentos-v826.js tests/test-ferramentas-experiencia.js tests/test-versao.js tests/test-sync-cas.js; do
+          for test in tests/test-aluno-hero-full-bleed.js tests/test-demo-aluno-variantes.js tests/test-app-sintaxe.js tests/test-personal-estornos-core.js tests/test-personal-estornos-ui.js tests/test-recebimentos-v826.js tests/test-ferramentas-experiencia.js tests/test-celular-painel.js tests/test-versao.js tests/test-sync-cas.js; do
             echo "===== $test =====" | tee -a "$TORQUE_EVIDENCE_DIR/integracoes.log"
             timeout 240 node "$test" 2>&1 | tee -a "$TORQUE_EVIDENCE_DIR/integracoes.log"
           done
