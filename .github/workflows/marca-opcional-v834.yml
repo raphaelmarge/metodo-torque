@@ -1,0 +1,57 @@
+name: Validar nome secundário opcional v834
+on:
+  push:
+    branches: [codex/preparar-marca-opcional-v834]
+permissions:
+  contents: write
+jobs:
+  validar:
+    if: github.ref == 'refs/heads/codex/preparar-marca-opcional-v834'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      TZ: America/Sao_Paulo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Aplicar somente as cinco alterações verificadas
+        run: python3 .github/marca-opcional-v834/apply.py
+      - name: Preparar dependências versionadas
+        run: bash .github/scripts/setup-tests.sh
+      - name: Verificar identidade, autor, interface e devoluções sem produção
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TORQUE_EVIDENCE_DIR="$RUNNER_TEMP/marca-opcional"
+          mkdir -p "$TORQUE_EVIDENCE_DIR"
+          node --check assets/personal-marca.js
+          node --check tests/test-identidade-marca-ui.js
+          node tests/test-identidade-marca-core.js | tee "$TORQUE_EVIDENCE_DIR/core.log"
+          timeout 180 node tests/test-identidade-marca-ui.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/ui.log"
+          node tests/test-personal-estornos-core.js | tee "$TORQUE_EVIDENCE_DIR/estornos.log"
+          node tests/test-versao.js
+          node tests/test-sync-cas.js
+          git diff --check
+      - name: Guardar evidências sintéticas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marca-opcional-${{ github.run_id }}
+          path: ${{ runner.temp }}/marca-opcional/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Registrar apenas na branch de preparação
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = 'codex/preparar-marca-opcional-v834'
+          git rm -r .github/marca-opcional-v834 .github/workflows/marca-opcional-v834.yml
+          git add personal.html assets/personal-marca.js assets/personal-marca.css tests/test-identidade-marca-ui.js docs/releases/mt-v834-identidade-marca.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: nome abaixo da marca opcional e desligado por padrão'
+          git push origin HEAD:refs/heads/codex/preparar-marca-opcional-v834
