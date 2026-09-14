@@ -3137,12 +3137,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="ptmarca-grid">
         <form id="marcaForm">
           <div class="ptmarca-campos">
-            <label class="ptmarca-wide" for="marcaModo">Como você quer aparecer?
-              <select id="marcaModo"><option value="">Manter identidade atual até escolher</option><option value="profissional">Meu nome</option><option value="estudio">Nome do estúdio / marca</option><option value="ambos">Marca + meu nome</option></select>
+            <label class="ptmarca-wide" for="marcaModo">Nome em destaque
+              <select id="marcaModo"><option value="">Manter identidade atual até escolher</option><option value="profissional">Meu nome</option><option value="estudio">Nome do estúdio / marca</option></select>
             </label>
             <label for="marcaProfissional">Nome do profissional<input id="marcaProfissional" maxlength="120" autocomplete="off"><small>Nome da pessoa responsável. Não muda o nome do seu login.</small></label>
             <label for="marcaEstudio">Nome do estúdio / marca<input id="marcaEstudio" maxlength="120" autocomplete="off"><small>Nome fantasia apresentado aos alunos.</small></label>
-            <label id="marcaDestaqueCampo" class="ptmarca-wide" for="marcaDestaque" hidden>Qual nome fica em destaque?<select id="marcaDestaque"><option value="estudio">Estúdio / marca em destaque</option><option value="profissional">Profissional em destaque</option></select></label>
+            <label id="marcaSecundarioCampo" class="ptmarca-wide ptmarca-toggle" for="marcaMostrarSecundario" hidden>
+              <input id="marcaMostrarSecundario" type="checkbox" aria-describedby="marcaSecundarioAjuda">
+              <span><b id="marcaSecundarioRotulo">Mostrar nome do personal abaixo da marca</b><small id="marcaSecundarioAjuda">Opcional. Desligado, aparece só o nome em destaque.</small></span>
+            </label>
             <label for="marcaCurto">Nome curto (opcional)<input id="marcaCurto" maxlength="32" autocomplete="off"><small>Para recados e notificações. Vazio mantém o nome principal.</small></label>
             <label for="marcaSlogan">Slogan (opcional)<input id="marcaSlogan" maxlength="100" autocomplete="off"></label>
           </div>

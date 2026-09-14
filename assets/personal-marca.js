@@ -6,7 +6,11 @@
   function el(id) { return document.getElementById(id); }
   function snapshot(cfg) { cfg = cfg || {}; return JSON.stringify([cfg.nome || '', cfg.professor || '', cfg.identidadeMarca || null]); }
   function valores() {
-    return { modo: el('marcaModo').value, destaque: el('marcaDestaque').value, profissional: el('marcaProfissional').value,
+    var principal = el('marcaModo').value;
+    // A segunda linha só existe por escolha explícita. Reutiliza os modos
+    // canônicos, sem alterar o pacote, a autoria ou os dados do negócio.
+    var combinado = !!principal && el('marcaMostrarSecundario').checked;
+    return { modo: combinado ? 'ambos' : principal, destaque: principal, profissional: el('marcaProfissional').value,
       nomeEstudio: el('marcaEstudio').value, nomeCurto: el('marcaCurto').value, slogan: el('marcaSlogan').value };
   }
   function aviso(t) { el('marcaStatus').textContent = t; }
@@ -26,7 +30,10 @@
     el('marcaPreviewSecundario').hidden = !modelo.secundario;
     el('marcaPreviewSlogan').textContent = modelo.slogan;
     el('marcaPreviewSlogan').hidden = !modelo.slogan;
-    el('marcaDestaqueCampo').hidden = v.modo !== 'ambos';
+    el('marcaSecundarioCampo').hidden = !el('marcaModo').value;
+    el('marcaSecundarioRotulo').textContent = v.destaque === 'profissional'
+      ? 'Mostrar nome do estúdio abaixo do meu nome'
+      : 'Mostrar nome do personal abaixo da marca';
     var imagem = C.logo(cfg.logo); el('marcaPreviewLogo').hidden = !imagem;
     if (imagem) el('marcaPreviewLogo').src = imagem; else el('marcaPreviewLogo').removeAttribute('src');
     el('marcaPreviewLogo').alt = modelo.principal;
@@ -37,8 +44,10 @@
     conta = ctx.conta(); base = snapshot(cfg); dirty = false;
     el('marcaProfissional').value = C.texto(cfg.professor, 120);
     el('marcaEstudio').value = C.texto(m.nomeEstudio || cfg.nome, 120);
-    el('marcaModo').value = m.v === 1 ? m.modo || '' : '';
-    el('marcaDestaque').value = m.destaque === 'profissional' ? 'profissional' : 'estudio';
+    el('marcaModo').value = m.v === 1
+      ? (m.modo === 'ambos' ? (m.destaque === 'profissional' ? 'profissional' : 'estudio') : m.modo || '') : '';
+    // Preserva uma combinação já escolhida; novas configurações vêm desligadas.
+    el('marcaMostrarSecundario').checked = m.v === 1 && m.modo === 'ambos';
     el('marcaCurto').value = C.texto(m.nomeCurto, 32); el('marcaSlogan').value = C.texto(m.slogan, 100);
     aviso('Seu nome de cadastro, dados fiscais e nome do recebedor não são substituídos pela marca.');
     previa();
@@ -67,7 +76,11 @@
     if (!C || ctx || !el('marcaForm')) return;
     ctx = c; form = el('marcaForm'); carrega();
     form.addEventListener('input', function () { dirty = true; previa(); });
-    form.addEventListener('change', function () { dirty = true; previa(); });
+    form.addEventListener('change', function (e) {
+      // Trocar o destaque não liga uma segunda identidade por efeito colateral.
+      if (e.target.id === 'marcaModo') el('marcaMostrarSecundario').checked = false;
+      dirty = true; previa();
+    });
     form.addEventListener('submit', salva);
     el('persPublica').addEventListener('click', function (e) {
       if (!dirty) return; e.preventDefault(); e.stopImmediatePropagation();
