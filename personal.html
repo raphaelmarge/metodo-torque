@@ -3922,6 +3922,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <link rel="stylesheet" href="assets/relatorio-0809.css">
 <link rel="stylesheet" href="assets/personal-planejamento.css">
 <link rel="stylesheet" href="assets/personal-corrida.css">
+<link rel="stylesheet" href="assets/personal-estornos.css">
+<script src="assets/personal-estornos-core.js"></script>
+<script src="assets/personal-estornos.js"></script>
 <script src="assets/relatorio-0809.js"></script>
 <script>
 (function () {
@@ -5994,8 +5997,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pgs = idxDe(st).pagsDe(id).slice()
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
     var ano = S.todayISO().slice(0, 4);
-    var totalAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; })
-      .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
+    var totalAno = MT_ESTORNOS_CORE.totais(st,ano+"-01-01",ano+"-12-31",id).liquido;
     // mesma regra do resto do painel (lista, pendências, régua): venda de serviço
     // ou de pacote NÃO quita a mensalidade — senão o perfil diz "pago" e a cobrança
     // continua aberta em todas as outras telas
@@ -6022,7 +6024,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : !pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") +
       (extrasMes ? "<div class='muted' style='font-size:11.5px;'>+ " + S.fmtBRL(extrasMes) + " em serviços/pacotes</div>" : "") + "</div>" +
       "<div style='background:var(--tk-sup2);border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
-      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido em " + ano + "</div>" +
+      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido após devoluções em " + ano + "</div>" +
       "<div style='font-size:17px;font-weight:800;'>" + S.fmtBRL(totalAno) + "</div>" +
       "<div class='muted' style='font-size:11.5px;'>" + (nPagsAno === 1 ? "1 pagamento" : nPagsAno + " pagamentos") + "</div></div></div>";
     var ctBloco;
@@ -6084,6 +6086,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<span><b>" + S.fmtData(p.data) + "</b> <span class='muted'>· " + S.fmtBRL(+p.valor) +
             (p.forma ? " · " + esc(p.forma) : "") + (p.desc ? " · " + esc(p.desc) : "") + "</span></span>" +
             (!R809.recebimentoAtivo(p) ? '<span class="tag">Anulado</span>' : "") +
+            (self.MT_ESTORNOS ? MT_ESTORNOS.htmlPagamento(st,p,alFinanceiroPermitido()) : "") +
             (alFinanceiroPermitido() ? '<button type="button" class="btn sec mini" data-edita-pagamento="' + esc(p.id) + '">' + (R809.recebimentoAtivo(p) ? "Editar" : "Histórico") + '</button>' : "") +
             (R809.recebimentoAtivo(p) ? '<a href="#" data-recibo="' + p.id + '" style="color:var(--roxo);flex:none;">recibo</a>' : "") + "</div>";
         }).join("") +
@@ -6127,7 +6130,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (cartBloco ? '<section class="pfp-group">' + cartBloco + '</section>' : '') +
       '<details class="pfp-disclosure" id="pfContrato"><summary>Contrato e plano</summary><div class="pfp-detail-body">' + ctBloco.replace(rotSec("Contrato"), "") + '</div></details>' +
       '<section class="pfp-group">' + pcBloco + '</section>' +
-      '<details class="pfp-disclosure" id="pfPagamentosHistorico"><summary>Histórico de pagamentos · ' + histPgs.length + '</summary><div class="pfp-detail-body">' + histBloco.replace(rotSec("Últimos pagamentos"), "") + '</div></details>';
+      '<details class="pfp-disclosure" id="pfPagamentosHistorico"><summary>Histórico de pagamentos · ' + histPgs.length + '</summary><div class="pfp-detail-body">' + histBloco.replace(rotSec("Últimos pagamentos"), "") + '</div></details>' +
+      (self.MT_ESTORNOS ? MT_ESTORNOS.htmlAluno(st,a,alFinanceiroPermitido()) : "");
     // frequência: sessões feitas por mês
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
@@ -11607,7 +11611,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             var iPg = -1;
             for (var q = st.pagamentos.length - 1; q >= 0; q--) {
               var pg = st.pagamentos[q];
-              if (R809.recebimentoAtivo(pg) && pg.alunoId === alD.id && pg.forma === "sessão" && +pg.valor === vSesD) { iPg = q; break; }
+              if (R809.recebimentoAtivo(pg) && !R809.recebimentoPossuiDevolucao(st, pg.id) && pg.alunoId === alD.id && pg.forma === "sessão" && +pg.valor === vSesD) { iPg = q; break; }
             }
             if (iPg >= 0 && confirm("Anular também o pagamento de " + S.fmtBRL(vSesD) + " registrado nesta sessão? O histórico será preservado.")) {
               var pgDesfeito = st.pagamentos[iPg], nuvPg = S.cloud && S.cloud();
@@ -12057,7 +12061,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     function noPeriodo(x) { return !desde || String(x.data || "") >= desde; }
     var pagos = idxDe(st).pagsDe(a.id)
       .filter(function (p) { return R809.recebimentoTipo(p) === "aulas" && noPeriodo(p); })
-      .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
+      .reduce(function (t, p) { return t + R809.recebimentoLiquido(st, p); }, 0);
     var feitas = idxDe(st).sessFeitasDe(a.id).filter(noPeriodo).length;
     // aula coberta por um pacote (já pago à parte) não sai da carteira de sessões
     if (a.pacote && +a.pacote.total > 0) feitas = Math.max(0, feitas - (+a.pacote.total || 0));
@@ -12487,7 +12491,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var hero = $("pgHero");
     if (hero) {
       var metaF = +((st.config || {}).metasPT || {}).fat || 0;
-      var pctF = metaF ? Math.min(100, Math.round(d.fat / metaF * 100)) : 0;
+      var pctF = metaF ? Math.max(0,Math.min(100, Math.round(d.fat / metaF * 100))) : 0;
       // v747: a MESMA conta do card do mês do Início (compMesAnterior) — o
       // setMonth(−1) daqui transbordava no dia 31 e comparava o mês consigo
       var cmpH = compMesAnterior(st, mes, diaHoje, d.fat);
@@ -12554,17 +12558,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       for (var i = 5; i >= 0; i--) {
         var dRef = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 1 - i, 1);
         var k = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
-        var v = R809.recebimentosAtivos(st).filter(function (x) { return (x.data || "").slice(0, 7) === k; })
+        var v = R809.movimentosFinanceiros(st).filter(function (x) { return (x.data || "").slice(0, 7) === k; })
           .reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
         meses.push({ k: k, v: v, rot: MES[dRef.getMonth()].slice(0, 3).toUpperCase(), atual: k === mes });
         if (k !== mes) soma += v;
       }
       var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
       var proj = Math.round(d.fat / diaHoje * diasNoMes);
-      var max = Math.max(proj, Math.max.apply(null, meses.map(function (x) { return x.v; })), 1);
+      var max = Math.max(Math.abs(proj), Math.max.apply(null, meses.map(function (x) { return Math.abs(x.v); })), 1);
       /* v749: a média dividia por 5 sempre — studio com 2 meses de história
        * via a média derrubada pelos zeros. Agora é dos meses COM pagamento. */
-      var nComPg = meses.filter(function (m) { return !m.atual && m.v > 0; }).length;
+      var nComPg = meses.filter(function (m) { return !m.atual && m.v !== 0; }).length;
       var media = nComPg ? Math.round(soma / nComPg) : 0;
       // v749: uma unidade só — "800" ao lado de "1,2" lia-se como 800 mil (ou 0,8?)
       var emMil = function (v) { return v ? (v / 1000).toFixed(1).replace(".", ",") : "0"; };
@@ -12572,14 +12576,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (nComPg && nComPg < 5 ? " <span style='font-weight:600;color:var(--tk-tx5);'>(" + nComPg + (nComPg > 1 ? " meses" : " mês") + ")</span>" : "") + "</span></h3>" +
         '<div style="display:flex;gap:10px;align-items:flex-end;height:150px;margin-top:6px;">' +
         meses.map(function (m) {
-          var alt = Math.round(110 * (m.atual ? proj : m.v) / max);
-          var altReal = m.atual ? Math.round(110 * m.v / max) : alt;
+          var alt = Math.round(110 * Math.abs(m.atual ? proj : m.v) / max);
+          var altReal = m.atual ? Math.round(110 * Math.abs(m.v) / max) : alt;
           return '<div style="flex:1;text-align:center;">' +
             '<div style="font-size:12px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx)" : "var(--tk-tx4)") + ';">' +
             emMil(m.v) + "</div>" +
             '<div style="height:' + (114 - alt) + 'px;"></div>' +
             '<div style="height:' + Math.max(4, alt) + "px;border-radius:8px 8px 3px 3px;background:" +
-            (m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "var(--tk-trilha)") + ';"></div>' +
+            (m.v<0 ? "var(--tk-erro)" : m.atual ? "repeating-linear-gradient(45deg,#7c3aed,#7c3aed 5px,#5b21b6 5px,#5b21b6 10px)" : m.v ? "var(--roxo)" : "var(--tk-trilha)") + ';"></div>' +
             '<div style="font-size:10px;font-weight:800;color:' + (m.atual ? "var(--tk-roxoTx2)" : "var(--tk-tx5)") + ';margin-top:5px;">' + m.rot + "</div></div>";
         }).join("") + "</div>" +
         '<div style="font-size:11.5px;color:var(--tk-tx5);margin-top:8px;">o mês corrente aparece hachurado: é a <b>projeção</b> pelo ritmo de agora (' +
@@ -12605,12 +12609,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- entrou hoje ----
     var elH = $("pgHoje");
     if (elH) {
-      var doDia = R809.recebimentosAtivos(st).filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
+      var doDia = R809.movimentosFinanceiros(st).filter(function (x) { return (x.data || "").slice(0, 10) === hoje; });
       var totH = doDia.reduce(function (t, x) { return t + (+x.valor || 0); }, 0);
       var nomes = {};
       st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
-      elH.innerHTML = '<h3>Entrou hoje<span style="float:right;font-size:13px;font-weight:800;color:' +
-        (totH ? "var(--tk-ok)" : "var(--tk-tx5)") + ';">' + (totH ? "+" + S.fmtBRL(totH) : "nada ainda") + "</span></h3>" +
+      elH.innerHTML = '<h3>Movimento de hoje<span style="float:right;font-size:13px;font-weight:800;color:' +
+        (totH ? "var(--tk-ok)" : "var(--tk-tx5)") + ';">' + (totH ? (totH>0?"+":"") + S.fmtBRL(totH) : "saldo zero") + "</span></h3>" +
         (doDia.length ? doDia.map(function (x) {
           return '<div class="drad"><div class="dav2" style="background:rgba(74,222,128,.14);color:var(--tk-ok);">✓</div>' +
             '<div style="min-width:0;"><div class="dnm">' + esc(nomes[x.alunoId] || "Avulso") + "</div>" +
@@ -12639,6 +12643,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "Avulso") + "</span>" +
         '<span class="muted">' + esc((p.desc ? p.desc + " · " : "") + (p.forma || "")) + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b>" +
         (alFinanceiroPermitido() ? '<button type="button" class="btn sec mini" data-edita-pagamento="' + esc(p.id) + '">' + (R809.recebimentoAtivo(p) ? 'Editar recebimento' : 'Ver histórico') + '</button>' : "") +
+        (self.MT_ESTORNOS ? MT_ESTORNOS.htmlPagamento(st,p,alFinanceiroPermitido()) : "") +
         (R809.recebimentoAtivo(p) ? '<button class="btn sec mini" data-recibo="' + esc(p.id) + '" title="recibo pra imprimir ou salvar em PDF">Ver recibo</button>' : '<span class="tag">Anulado</span>') + '</div>';
     }).join("") : "Nenhum recebimento encontrado. Ajuste os filtros ou registre um pagamento.";
     if ($("fgHistResumo")) $("fgHistResumo").textContent = lista.length + " de " + todas.length + " recebimentos · " + S.fmtBRL(todas.filter(R809.recebimentoAtivo).reduce(function (s, p) { return s + (+p.valor || 0); }, 0)) + " válidos nos resultados. Os totais do mês permanecem gerais.";
@@ -12647,6 +12652,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderPagamentos(st) {
     renderHistoricoPagamentos(st);
+    var devResumo=$("ptDevolucoesResumo");
+    if(!devResumo){devResumo=document.createElement("div");devResumo.id="ptDevolucoesResumo";$("pgHero").after(devResumo);}
+    devResumo.innerHTML=alFinanceiroPermitido()?MT_ESTORNOS.htmlTotais(st,S.todayISO().slice(0,7)):"";
     $("reguaOn").checked = !((st.config || {}).reguaOff);
     pintaReguaStatus(st, 0);
     var diaHoje = +S.todayISO().slice(8, 10);
@@ -16334,7 +16342,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!$("dpData").value) $("dpData").value = S.todayISO();
     var doMes = despesasDoMes(st, dpMes);
     var gasto = doMes.reduce(function (s, d) { return s + (+d.valor || 0); }, 0);
-    var recebido = R809.recebimentosAtivos(st).filter(function (p) { return (p.data || "").slice(0, 7) === dpMes; })
+    var recebido = R809.movimentosFinanceiros(st).filter(function (p) { return (p.data || "").slice(0, 7) === dpMes; })
       .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
     var sobra = recebido - gasto;
     function cx(rot, val, cor) {
@@ -20023,7 +20031,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
     // ---- resumo do mês ----
     var pagsMes = R809.recebimentosAtivos(st).filter(function (p) { return (p.data || "").slice(0, 7) === mesRel; });
-    var recebidoMes = pagsMes.reduce(function (t, p) { return t + +p.valor; }, 0);
+    var recebidoMes = MT_ESTORNOS_CORE.totais(st,mesRel+"-01",mesRel+"-31").liquido;
     var pagantes = {};
     pagsMes.forEach(function (p) { pagantes[p.alunoId] = 1; });
     var nPagantes = Object.keys(pagantes).length;
@@ -20089,7 +20097,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (esBox) {
       var esL = meses.map(function (m) {
         var ent = R809.recebimentosAtivos(st).filter(function (p) { return (p.data || "").slice(0, 7) === m.chave; }).reduce(function (t, p) { return t + +p.valor; }, 0);
-        var sai = despesasDoMes(st, m.chave).reduce(function (t, dp) { return t + (+dp.valor || 0); }, 0);
+        var sai = despesasDoMes(st, m.chave).reduce(function (t, dp) { return t + (+dp.valor || 0); }, 0) + MT_ESTORNOS_CORE.totais(st,m.chave+"-01",m.chave+"-31").devolvido;
         return { rot: m.rot, ent: ent, sai: sai };
       });
       if (esL.some(function (l) { return l.ent || l.sai; })) {
@@ -20252,7 +20260,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- LTV: receita por aluno ----
     var ltv = st.alunos.map(function (a) {
       var pags = idxDe(st).pagsDe(a.id);
-      var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
+      var total = pags.reduce(function (t, p) { return t + R809.recebimentoLiquido(st,p); }, 0);
       var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
       return { nome: a.nome, total: total, n: pags.length, mesesCasa: mesesCasa, ativo: a.ativo !== false };
     }).filter(function (l) { return l.total > 0; }).sort(function (x, y) { return y.total - x.total; });
@@ -20402,7 +20410,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function dadosDoMes(st, mes) {
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     var pgs = R809.recebimentosAtivos(st).filter(function (p) { return (p.data || "").slice(0, 7) === mes; });
-    var fat = pgs.reduce(function (t, p) { return t + +p.valor; }, 0);
+    var movimentos = R809.movimentosFinanceiros(st).filter(function(p){return String(p.data||"").slice(0,7)===mes;});
+    var fat = movimentos.reduce(function (t, p) { return t + +p.valor; }, 0);
+    var devolvido = movimentos.filter(function(p){return p.movimentoEstorno;}).reduce(function(t,p){return t-p.valor;},0);
     var novos = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === mes; }).length;
     // quem SAIU é o aluno desativado no mês — a mesma conta da aba Relatórios.
     // Contar contrato encerrado dava dois números diferentes pro mesmo mês e
@@ -20428,8 +20438,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     // receita de AULAS (pagamento sem desc): é o que "Sua hora rendeu" divide
     // pelas sessões — uma massagem vendida não faz a hora de aula valer mais
-    var fatAulas = pgs.reduce(function (t, p) { return t + (R809.recebimentoTipo(p) === "aulas" ? +p.valor : 0); }, 0);
-    return { fat: fat, fatAulas: fatAulas, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas,
+    var fatAulas = movimentos.reduce(function (t, p) { return t + (R809.recebimentoTipo(p) === "aulas" ? +p.valor : 0); }, 0);
+    return { fat: fat, devolvido: devolvido, bruto: fat+devolvido, fatAulas: fatAulas, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas,
       semPagar: semPagar, semPagarNomes: semPagarNomes, ativos: ativos };
   }
   window.__dashDados = function (mes) { return dadosDoMes(load(), mes); }; // testes
@@ -20445,7 +20455,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var diasAnt = new Date(dAnt.getFullYear(), dAnt.getMonth() + 1, 0).getDate();
     var ateDia = mesAnt + "-" + ("0" + Math.min(+diaAtual || 1, diasAnt)).slice(-2);
     var fatAte = 0, fatCheio = 0;
-    R809.recebimentosAtivos(st).forEach(function (x) {
+    R809.movimentosFinanceiros(st).forEach(function (x) {
       var d = String(x.data || "");
       if (d.slice(0, 7) !== mesAnt) return;
       fatCheio += +x.valor || 0;
@@ -21605,7 +21615,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var linhas = [["Aluno", "Situação", "Total pago (R$)", "Pagamentos", "Meses de casa", "Cliente desde"]];
     st.alunos.forEach(function (a) {
       var pags = idxDe(st).pagsDe(a.id);
-      var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
+      var total = pags.reduce(function (t, p) { return t + R809.recebimentoLiquido(st,p); }, 0);
       var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
       linhas.push([a.nome, a.ativo !== false ? "ativo" : "encerrado", String(total).replace(".", ","), pags.length, mesesCasa, a.desde || ""]);
     });
@@ -21617,9 +21627,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     maisHistorico: function () { fgHistLimite += 30; renderHistoricoPagamentos(load()); },
     resultados: function () { return fgHistorico(load()); },
     exportaHistorico: function () {
-      var st = load(), nomes = {}, linhas = [["Data", "Aluno", "Descrição", "Forma de pagamento", "Valor (R$)", "Situação", "Motivo da anulação"]];
+      var st = load(), nomes = {}, linhas = [["Data", "Aluno", "Descrição", "Forma de pagamento", "Valor (R$)", "Situação", "Motivo da anulação", "Devolvido (R$)", "Devolução pendente (R$)", "Líquido do recebimento (R$)"]];
       st.alunos.forEach(function (a) { nomes[a.id] = a.nome; });
-      fgHistorico(st).forEach(function (p) { linhas.push([String(p.data || "").slice(0, 10), nomes[p.alunoId] || "Avulso", p.desc || "Mensalidade", p.forma || "", String(+p.valor || 0).replace(".", ","), R809.recebimentoAtivo(p) ? "Válido" : "Anulado", p.anulacao ? p.anulacao.motivo : ""]); });
+      fgHistorico(st).forEach(function (p) { linhas.push([String(p.data || "").slice(0, 10), nomes[p.alunoId] || "Avulso", p.desc || "Mensalidade", p.forma || "", String(+p.valor || 0).replace(".", ","), R809.recebimentoAtivo(p) ? "Válido" : "Anulado", p.anulacao ? p.anulacao.motivo : "", (!p.anulacao&&R809.recebimentoPossuiDevolucao(st,p.id))?MT_ESTORNOS_CORE.resumo(st,p).devolvido/100:0, (!p.anulacao&&R809.recebimentoPossuiDevolucao(st,p.id))?MT_ESTORNOS_CORE.resumo(st,p).pendente/100:0, p.anulacao?0:R809.recebimentoLiquido(st,p)]); });
       if (linhas.length > 1) S.baixaCSV("recebimentos-filtrados.csv", linhas);
     },
     planos: renderPlanosPT, servicos: renderServicos, despesas: renderDespesas, relatorios: renderRelatorios,
@@ -22939,9 +22949,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     baixaCsv("alunos", alunos);
     var porId = {};
     (st.alunos || []).forEach(function (a) { porId[a.id] = a.nome; });
-    var pgs = [["Data", "Aluno", "Valor (R$)", "Forma", "Descrição", "Situação", "Motivo da anulação"]];
+    var pgs = [["Data", "Aluno", "Valor (R$)", "Forma", "Descrição", "Situação", "Motivo da anulação", "Devolvido (R$)", "Devolução pendente (R$)", "Líquido do recebimento (R$)"]];
     (st.pagamentos || []).forEach(function (p) {
-      pgs.push([p.data, porId[p.alunoId] || p.alunoId || "", p.valor, p.forma, p.desc, R809.recebimentoAtivo(p) ? "Válido" : "Anulado", p.anulacao ? p.anulacao.motivo : ""]);
+      pgs.push([p.data, porId[p.alunoId] || p.alunoId || "", p.valor, p.forma, p.desc, R809.recebimentoAtivo(p) ? "Válido" : "Anulado", p.anulacao ? p.anulacao.motivo : "", (!p.anulacao&&R809.recebimentoPossuiDevolucao(st,p.id))?MT_ESTORNOS_CORE.resumo(st,p).devolvido/100:0, (!p.anulacao&&R809.recebimentoPossuiDevolucao(st,p.id))?MT_ESTORNOS_CORE.resumo(st,p).pendente/100:0, p.anulacao?0:R809.recebimentoLiquido(st,p)]);
     });
     baixaCsv("pagamentos", pgs);
   });
@@ -24053,6 +24063,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   window.__ptStudio = { load: load, render: render }; // testes
   if (self.MT_PERSONAL_MEDALHAS) self.MT_PERSONAL_MEDALHAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
+  if (self.MT_ESTORNOS) self.MT_ESTORNOS.init({
+    load: load, save: save, marca: marcaAppPendente, financeiro: alFinanceiroPermitido,
+    conta: function () { var nuv=S.cloud&&S.cloud(); return JSON.stringify([nuv&&nuv.aid||"",(S.usuario&&S.usuario().email)||"local"]); },
+    perfil: function (id) { abrePerfil(id); mostraPfAba("fin"); },
+    assinatura: function (id) { abrePerfil(id); mostraPfAba("fin"); var el=$("pfAssinaturaBox"); if(el)el.scrollIntoView({block:"center"}); }
+  });
   R809.init({
     load: load, save: save, marca: marcaAppPendente, treinoMarca: marcaTreinoMudou,
     financeiro: alFinanceiroPermitido,
