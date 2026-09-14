@@ -36,7 +36,7 @@ jobs:
           mkdir -p "$TORQUE_EVIDENCE_DIR"
           node tests/test-identidade-marca-core.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/core.log"
           timeout 240 node tests/test-identidade-marca-ui.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/ui.log"
-      - name: Regenerar demo canônica e testar integrações
+      - name: Regenerar demos canônicas e testar integrações
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +47,7 @@ jobs:
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js >/dev/null && break || sleep .25; done
           node tools/demo-aluno/regen-demo.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/demo.log"
           if grep -q 'PAGEERROR:' "$TORQUE_EVIDENCE_DIR/demo.log"; then exit 1; fi
+          node tools/demo-aluno/regen-demos.js 2>&1 | tee -a "$TORQUE_EVIDENCE_DIR/demo.log"
           for test in tests/test-aluno-hero-full-bleed.js tests/test-demo-aluno-variantes.js tests/test-app-sintaxe.js tests/test-personal-estornos-core.js tests/test-personal-estornos-ui.js tests/test-recebimentos-v826.js tests/test-ferramentas-experiencia.js tests/test-celular-painel.js tests/test-versao.js tests/test-sync-cas.js; do
             echo "===== $test =====" | tee -a "$TORQUE_EVIDENCE_DIR/integracoes.log"
             timeout 240 node "$test" 2>&1 | tee -a "$TORQUE_EVIDENCE_DIR/integracoes.log"
@@ -64,7 +65,7 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF_NAME" = 'codex/refinar-marca-v834'
           git rm -r -- .github/marca-v834 .github/workflows/preparar-marca-v834.yml .github/workflows/refinar-marca-v834.yml
-          git add personal.html app/aluno-builder.js app/index.html app/app-sw.js assets/personal-estornos.js assets/personal-ferramentas.js sw.js demo-aluno.html tests/test-identidade-marca-ui.js
+          git add personal.html app/aluno-builder.js app/index.html app/app-sw.js assets/personal-estornos.js assets/personal-ferramentas.js sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html tests/test-identidade-marca-ui.js
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'feat: identidade do estúdio ou profissional integrada ao aluno v834'
