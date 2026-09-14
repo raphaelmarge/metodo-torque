@@ -24,6 +24,7 @@ jobs:
         run: |
           python3 .github/marca-v834/apply.py
           python3 .github/marca-v834/refine.py
+          python3 .github/marca-v834/corrections.py
       - name: Preparar dependências versionadas
         run: bash .github/scripts/setup-tests.sh
       - name: Núcleo, interface, recibo, mobile e isolamento entre tokens
