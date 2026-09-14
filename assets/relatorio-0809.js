@@ -98,6 +98,11 @@
   var api={atendimento:atendimento,online:online,pacotePrePago:pacotePrePago,dataOk:dataOk,horaOk:horaOk,dia:dia,opcoes:opcoes,pacoteDatas:pacoteDatas,zona:zona,zonaTxt:zonaTxt,blocos:blocos,blocoTxt:blocoTxt,expande:expande};
   // A descrição é uma anotação. Legados preservam a natureza anterior à edição.
   function recebimentoTipo(p) { return p && (p.tipoRecebimento === "aulas" || p.tipoRecebimento === "servico") ? p.tipoRecebimento : p && p.desc ? "servico" : "aulas"; }
+  var Estornos = root.MT_ESTORNOS_CORE;
+  if (!Estornos && typeof module !== "undefined" && module.exports) Estornos = require('./personal-estornos-core.js');
+  function movimentosFinanceiros(st) { return Estornos ? Estornos.movimentos(st) : recebimentosAtivos(st); }
+  function recebimentoPossuiDevolucao(st, id) { return !!(Estornos && Estornos.possuiHistorico(st, id)); }
+  function recebimentoLiquido(st, p) { return recebimentoPossuiDevolucao(st, p.id) ? Estornos.resumo(st, p).liquido / 100 : (+p.valor || 0); }
   function recebimentoAtivo(p) { return !!p && !p.anulacao; }
   function recebimentosAtivos(st) { return (st.pagamentos || []).filter(recebimentoAtivo); }
   function recebimentoDuplicados(st, p) {
@@ -113,6 +118,7 @@
     var i=(st.pagamentos||[]).findIndex(function(p){return p.id===pid;});
     if(i<0 || JSON.stringify(st.pagamentos[i])!==original)throw new Error("Este recebimento mudou em outra sessão. Seu rascunho não foi salvo; feche e confira a versão atual.");
     var antes=st.pagamentos[i];
+    if(recebimentoPossuiDevolucao(st,pid))throw new Error("Este recebimento possui histórico de devolução. O original não pode ser editado ou anulado; consulte Devolução / estorno.");
     if(!recebimentoAtivo(antes))throw new Error("Este recebimento já foi anulado. Consulte o histórico.");
     var next=Object.assign({},antes,{tipoRecebimento:recebimentoTipo(antes)});
     if(meta.acao==="anular") {
@@ -131,7 +137,7 @@
     st.pagamentos[i]=next;st.recebimentosRevisao=(+st.recebimentosRevisao||0)+1;
     return next;
   }
-  Object.assign(api,{recebimentoTipo:recebimentoTipo,recebimentoAtivo:recebimentoAtivo,recebimentosAtivos:recebimentosAtivos,recebimentoDuplicados:recebimentoDuplicados,alteraRecebimento:alteraRecebimento});
+  Object.assign(api,{movimentosFinanceiros:movimentosFinanceiros,recebimentoLiquido:recebimentoLiquido,recebimentoPossuiDevolucao:recebimentoPossuiDevolucao,recebimentoTipo:recebimentoTipo,recebimentoAtivo:recebimentoAtivo,recebimentosAtivos:recebimentosAtivos,recebimentoDuplicados:recebimentoDuplicados,alteraRecebimento:alteraRecebimento});
   root.MT_RELATORIO_0809=api;
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   if(typeof document==="undefined")return;
@@ -153,12 +159,12 @@
   function pagamento(pid){
     if(!ctx.financeiro())return;
     var st=ctx.load(),p=(st.pagamentos||[]).find(function(x){return x.id===pid;});if(!p)return;
-    var original=JSON.stringify(p),conta=ctx.conta(),id=p.alunoId,anulado=!recebimentoAtivo(p);
-    var d=dialog('<form><h2>'+(anulado?'Recebimento anulado':'Editar recebimento')+'</h2><p>Corrija o registro financeiro. Cobranças no banco ou no cartão e quantidades de aulas permanecem como estão.</p>'+
+    var original=JSON.stringify(p),conta=ctx.conta(),id=p.alunoId,anulado=!recebimentoAtivo(p),bloqueado=anulado||recebimentoPossuiDevolucao(st,pid);
+    var d=dialog('<form><h2>'+(anulado?'Recebimento anulado':bloqueado?'Recebimento com devolução':'Editar recebimento')+'</h2><p>Corrija o registro financeiro. Cobranças no banco ou no cartão e quantidades de aulas permanecem como estão.</p>'+
       (anulado?'<p><b>Anulado em '+esc(new Date(p.anulacao.em).toLocaleString("pt-BR"))+'</b><br>'+esc(p.anulacao.motivo)+'</p>':'')+
-      '<fieldset'+(anulado?' disabled':'')+'><label>Data<input name="data" type="date" required value="'+esc(p.data)+'"></label><label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" required value="'+esc(p.valor)+'"></label><label>Competência (opcional)<input name="mes" type="month" value="'+esc(p.mes||"")+'"></label><label>Forma<input name="forma" maxlength="80" value="'+esc(p.forma||"")+'"></label><label>Descrição / anotação<input name="desc" maxlength="200" value="'+esc(p.desc||"")+'"></label></fieldset>'+
-      pagamentoHistorico(st,p)+'<p role="status" aria-live="polite"></p><div class="r809-actions"><button type="button" data-cancel>Fechar</button>'+(anulado?'':'<button type="submit">Salvar alteração</button>')+'</div>'+
-      (anulado?'':'<details><summary>Anular recebimento</summary><p>O lançamento sai dos totais e da quitação, mas continua no histórico. Nenhum reembolso será enviado.</p><label>Motivo<input name="motivo" maxlength="200" placeholder="Ex.: lançamento duplicado"></label><button type="button" data-anular>Anular recebimento</button></details>')+'</form>');
+      (bloqueado&&!anulado?'<p>O pagamento original permanece preservado. As devoluções estão registradas separadamente.</p>':'')+'<fieldset'+(bloqueado?' disabled':'')+'><label>Data<input name="data" type="date" required value="'+esc(p.data)+'"></label><label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" required value="'+esc(p.valor)+'"></label><label>Competência (opcional)<input name="mes" type="month" value="'+esc(p.mes||"")+'"></label><label>Forma<input name="forma" maxlength="80" value="'+esc(p.forma||"")+'"></label><label>Descrição / anotação<input name="desc" maxlength="200" value="'+esc(p.desc||"")+'"></label></fieldset>'+
+      pagamentoHistorico(st,p)+'<p role="status" aria-live="polite"></p><div class="r809-actions"><button type="button" data-cancel>Fechar</button>'+(bloqueado?'':'<button type="submit">Salvar alteração</button>')+'</div>'+
+      (bloqueado?'':'<details><summary>Anular recebimento</summary><p>O lançamento sai dos totais e da quitação, mas continua no histórico. Nenhum reembolso será enviado.</p><label>Motivo<input name="motivo" maxlength="200" placeholder="Ex.: lançamento duplicado"></label><button type="button" data-anular>Anular recebimento</button></details>')+'</form>');
     d.querySelector('[data-cancel]').onclick=function(){d.close();};
     function envia(acao){var status=d.querySelector('[role=status]');try{
       if(!ctx.financeiro()||ctx.conta()!==conta)throw new Error("A conta ou permissão mudou. Feche e reabra o recebimento.");
@@ -169,7 +175,7 @@
       if(acao==='anular'&&!root.confirm("Anular este recebimento? Ele sai dos totais e da quitação, com o histórico preservado."))return;
       grava(s,id);d.close();if(al(s,id))ctx.perfil(id);
     }catch(e2){status.textContent=e2.message;}}
-    d.querySelector('form').onsubmit=function(e){e.preventDefault();if(!anulado)envia('editar');};
+    d.querySelector('form').onsubmit=function(e){e.preventDefault();if(!bloqueado)envia('editar');};
     var bt=d.querySelector('[data-anular]');if(bt)bt.onclick=function(){envia('anular');};
   }
   api.perfil=function(a){if(!ctx||!a)return;var b=$('pfIrAgenda');if(b)b.hidden=online(a);document.querySelectorAll('#vPerfil [data-pfagendar],#vPerfil [data-alacao=agendar]').forEach(function(x){x.hidden=online(a);});};
