@@ -1,0 +1,25 @@
+name: Preparar identidade da marca v834
+on:
+  push:
+    branches: [codex/preparar-marca-v834]
+permissions:
+  contents: read
+jobs:
+  fonte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ef61740d3bec28a5887b24e7da87eb32e4b798c6
+          persist-credentials: false
+      - name: Empacotar somente a fonte versionada do PR
+        run: |
+          mkdir -p "$RUNNER_TEMP/torque-marca"
+          git archive --format=tar HEAD | gzip > "$RUNNER_TEMP/torque-marca/source.tar.gz"
+          git rev-parse HEAD > "$RUNNER_TEMP/torque-marca/commit.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fonte-marca-v834
+          path: ${{ runner.temp }}/torque-marca/
+          retention-days: 1
