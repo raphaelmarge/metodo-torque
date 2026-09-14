@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Meu app — TORQUE FIT</title>
+<title>Meu app — TORQUE ON</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
 <style>
@@ -14,10 +14,11 @@
 </style>
 </head>
 <body>
-<div class="box"><div class="marca">TORQUE</div><p id="msg">Abrindo seu app…</p></div>
+<div class="box"><img id="marcaAberturaLogo" hidden alt="" style="width:64px;height:64px;object-fit:contain"><div class="marca" id="marcaAberturaNome">TORQUE</div><div id="marcaAberturaSecundario"></div><p id="msg">Abrindo seu app…</p></div>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/versao.js"></script>
 <!-- o código do app vem daqui, do site: uma fonte só pra todos os alunos -->
+<script src="../assets/identidade-marca.js"></script>
 <script src="aluno-skin.js"></script>
 <script src="../assets/nutricao-core.js"></script>
 <script src="../assets/onboarding-consultoria.js"></script>
@@ -71,7 +72,21 @@
    * portal (apps/app-aluno.html) ainda manda; é só por ele que o `|| ""` fica.
    * Pro pacote do painel, construtor que faltou se resolve baixando de novo
    * (abreOuRecupera, abaixo), não com cópia congelada. */
+  function marcaAbertura(pac) {
+    var C = self.MT_IDENTIDADE_MARCA, d = pac && (pac.dados || (pac.a ? pac : null));
+    if (!C || !d || d.tipo === "nutri") return;
+    var m = C.doPacote(d), nome = document.getElementById("marcaAberturaNome");
+    if (!nome || !m.personalizado) return;
+    nome.textContent = m.principal; nome.style.cssText = "font-size:24px;letter-spacing:0;overflow-wrap:anywhere;max-width:360px;margin:14px auto;text-transform:none";
+    document.getElementById("marcaAberturaSecundario").textContent = m.secundario;
+    var img = document.getElementById("marcaAberturaLogo"), src = C.logo(d.LOGOAPP);
+    img.hidden = !src; if (src) img.src = src;
+    document.title = m.principal + " · App do aluno";
+  }
+  // Só a cópia do token atual serve de prévia durante a abertura.
+  if (t && t === tAnt) { try { marcaAbertura(JSON.parse(guardado("tq_app_pacote") || "null")); } catch (e) {} }
   function montaDoPacote(pac) {
+    marcaAbertura(pac);
     if (!pac || typeof pac !== "object") return "";
     // o D diz de quem é o app: dados.tipo === "nutri" vai pro builder do paciente
     // (nutri-builder.js); sem tipo é o app do aluno de sempre. NUNCA entregar um
@@ -106,7 +121,7 @@
     if (!d) return [];
     var f = [];
     if (d.tipo === "nutri") { if (!self.MT_NUTRI_SKIN) f.push("nutri-skin.js"); if (!self.MT_APP_NUTRI) f.push("nutri-builder.js"); }
-    else { if (!self.MT_MEDALHAS) f.push("medalhas-core.js"); if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
+    else { if (d.identidadeApp && !self.MT_IDENTIDADE_MARCA) f.push("../assets/identidade-marca.js"); if (!self.MT_MEDALHAS) f.push("medalhas-core.js"); if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
     return f;
   }
   function construtorPresente(pac) {

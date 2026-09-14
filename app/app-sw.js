@@ -38,6 +38,7 @@ var ESQUELETO = [
   "manifest.webmanifest",
   "../assets/cloud-config.js",
   "../assets/versao.js",
+  "../assets/identidade-marca.js",
   "../assets/nutricao-core.js",
   "../assets/onboarding-consultoria.js",
   // a cara do redesenho é a Archivo — sem ela no esqueleto, o app offline

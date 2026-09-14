@@ -1251,7 +1251,8 @@
     var INICIAIS = String(a.nome || "?").trim().split(/\s+/).slice(0, 2)
       .map(function (p) { return (p[0] || "").toUpperCase(); }).join("") || "?";
     var st = { config: D.cfg || {}, desafio: D.desafio || null };
-    var studio = D.studio || "Meu Personal";
+    var MARCA = raiz.MT_IDENTIDADE_MARCA ? raiz.MT_IDENTIDADE_MARCA.doPacote(D) : { principal: D.studio || "Meu Personal", personalizado: false };
+    var studio = MARCA.principal;
     /* v747: o app usava a PRIMEIRA PALAVRA do studio como se fosse o nome do professor
      * em doze frases — conta sem nome virava "Falar com Meu", e "Studio Bruno
      * Silva" virava "Recado do Studio". Uma regra só: o padrão do painel vira
@@ -1264,7 +1265,7 @@
       var generica = /^(studio|est[uú]dio|academia|personal|espa[cç]o|centro|box|team|equipe|cia\.?|assessoria|treinador|coach|prof\.?|professora?)$/i;
       return (w.length > 1 && generica.test(w[0])) ? w[0] + " " + w[1] : w[0];
     };
-    var STUDIO_CURTO = nomeCurto(studio);
+    var STUDIO_CURTO = MARCA.personalizado ? MARCA.curto : nomeCurto(studio);
     // a legenda do XP num lugar só (faixa da Evolução e card do nível liam cópias)
     var XPLEG = "treino ou cardio = 10 XP · dia com carga = 5 XP · hábito = 2 XP · check-in = 20 XP";
     // dinheiro sempre com centavos (a Loja já saía "R$ 149,90" e o plano "R$ 149,9")
@@ -1273,6 +1274,14 @@
     var urlOk = function (u) { u = String(u || "").trim(); return /^https?:\/\/[^\s'"<>]+$/i.test(u) ? u.slice(0, 300) : ""; };
     var COR = D.COR, COR2 = D.COR2, CORC = D.CORC, CORE = D.CORE, CORCL1 = D.CORCL1, CORCL2 = D.CORCL2;
     var PAL = D.PAL || [], LOGOAPP = D.LOGOAPP || "";
+    function marcaHtml(comLogo) {
+      var imagem = raiz.MT_IDENTIDADE_MARCA && raiz.MT_IDENTIDADE_MARCA.logo(LOGOAPP);
+      return "<div class='al-brand' aria-label='Identidade do acompanhamento'>" +
+        (comLogo && imagem ? "<img class='al-brand-logo' src='" + imagem + "' alt=''>" : "") +
+        "<div class='al-brand-copy'><strong class='al-brand-primary'>" + esc(studio) + "</strong>" +
+        (MARCA.secundario ? "<span class='al-brand-secondary'>" + esc(MARCA.secundario) + "</span>" : "") +
+        (MARCA.slogan ? "<span class='al-brand-slogan'>" + esc(MARCA.slogan) + "</span>" : "") + "</div></div>";
+    }
     var zapPersonal = D.zapPersonal || "", metaSemana = D.metaSemana || 3;
     var sessApp = D.sessApp || [], vidsApp = D.vidsApp || [], qa = D.qa || null;
     // v735: playlist do treino (link colado pelo professor; vazio = sem botão)
@@ -1544,6 +1553,7 @@
       // sequência e os hábitos do dia moram DENTRO dela (só no Início — nas
       // outras áreas a faixa fica curta, só com nome, nível e XP).
       ".topo{padding:calc(30px + env(safe-area-inset-top,0px)) 20px 18px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;color:#fff}" +
+      ".al-brand{display:flex;align-items:center;gap:10px;min-width:0;color:inherit}.al-brand-copy{min-width:0;overflow-wrap:anywhere}.al-brand .al-brand-logo{width:40px;height:40px;object-fit:contain;border-radius:8px;flex:none}.al-brand-primary{display:block;font-size:clamp(17px,4.8vw,24px);line-height:1.1;font-weight:900;letter-spacing:-.025em;text-transform:none}.al-brand-secondary,.al-brand-slogan{display:block;font-size:12px;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}.al-brand-slogan{font-size:11px;opacity:.9}#heroTopo:has(.al-brand){align-items:flex-start!important}#heroTopo .al-brand{align-items:flex-start}#heroTopo .al-brand-logo{width:30px;height:30px}body.aluno-v793 #heroTopo .al-brand :is(.al-brand-primary,.al-brand-secondary,.al-brand-slogan){color:#fff!important;text-shadow:0 1px 12px rgba(0,0,0,.4)}.mgstudio{overflow-wrap:anywhere}@media(min-width:801px){body.aluno-v793 #navApp[data-al-brand]::before{content:attr(data-al-brand);font-size:22px;line-height:1.15;overflow-wrap:anywhere;text-transform:none;letter-spacing:-.025em}}" +
       ".tpmarca{display:flex;align-items:center;gap:9px;margin-bottom:13px}" +
       ".tpmarca img{flex:none;height:26px;border-radius:7px;display:block}" +
       ".topo .k{min-width:0;font-size:9.5px;letter-spacing:.2em;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
@@ -2012,7 +2022,7 @@
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
       // e os chips, um nome comprido virava três linhas ou saía cortado
-      "<div class='tpmarca'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt=''>" : "") + "<span class='k'>" + esc(studio).toUpperCase() + "</span></div>" +
+      "<div class='tpmarca'>" + (MARCA.personalizado ? marcaHtml(true) : (LOGOAPP ? "<img src='" + LOGOAPP + "' alt=''>" : "") + "<span class='k'>" + esc(studio).toUpperCase() + "</span>") + "</div>" +
       "<div style='display:flex;align-items:center;gap:11px;'>" +
       // tocar no avatar troca a foto (a do painel vem no pacote; a que o aluno
       // escolher aqui vale mais, porque é ele mesmo se vendo)
@@ -2033,7 +2043,7 @@
       "</div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
-      "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
+      "<nav id='navApp'" + (MARCA.personalizado ? " data-al-brand='" + esc(studio) + "'" : "") + " aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
       [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Hoje"],
         ["<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>", "Treinos"],
         ["<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>", "Evolução"],
@@ -2140,7 +2150,7 @@
         // toque de trocar a foto do topo — aqui o topo colorido fica escondido)
         var heroTopo = "<div id='heroTopo' style='position:absolute;top:0;left:0;right:0;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 0;display:flex;align-items:center;gap:12px;z-index:2;pointer-events:none;'>" +
           "<div style='min-width:0;flex:1;'>" +
-          "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;color:rgba(255,255,255,.72);text-transform:uppercase;'>" + esc(studio).toUpperCase() + "</div>" +
+          (MARCA.personalizado ? marcaHtml(true) : "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;color:rgba(255,255,255,.72);text-transform:uppercase;'>" + esc(studio).toUpperCase() + "</div>") +
           "<div id='heroSauda' style='font-size:19px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-top:3px;'>" + esc(a.nome.split(" ")[0]) + "</div></div>" +
           /* v772: o sino. Fica à esquerda do avatar porque é o canto onde a mão
            * do polegar chega e onde todo app põe aviso. O badge é o número de
@@ -2817,7 +2827,7 @@
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:22px 20px;color:#fff;display:flex;align-items:center;gap:13px;'>" +
       "<span style='width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;overflow:hidden;flex:none;'>" +
       (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
-      "<span style='flex:1;min-width:0;'><span style='display:block;font-size:22px;font-weight:900;letter-spacing:-.02em;'>" + esc(studio) + "</span>" +
+      "<span style='flex:1;min-width:0;overflow-wrap:anywhere;'><span style='display:block;font-size:22px;font-weight:900;letter-spacing:-.02em;'>" + esc(studio) + "</span>" + (MARCA.secundario ? "<span class='al-brand-secondary'>" + esc(MARCA.secundario) + "</span>" : "") +
       "<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>seu personal · responde quando puder</span></span></div></div>" +
       "<div class='cardx'><h2>Conversa</h2>" +
       "<div id='chMsgs' style='max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
@@ -3042,7 +3052,7 @@
        * resolve contra o site. Sem suporte a manifest em data:, o navegador
        * cai no comportamento antigo — salvar a página atual, que TEM o ?t=. */
       "(function(){try{if(location.protocol.indexOf('http'))return;" +
-      "var man={name:'TORQUE FIT \\u2014 Meu app',short_name:'TORQUE FIT',display:'standalone',background_color:CV('bg'),theme_color:CV('cor')," +
+      "var man={name:" + jsonApp(MARCA.personalizado ? studio : "TORQUE FIT — Meu app") + ",short_name:" + jsonApp(MARCA.personalizado ? MARCA.curto : "TORQUE FIT") + ",display:'standalone',background_color:CV('bg'),theme_color:CV('cor')," +
       "start_url:TOKEN?location.origin+'/app/?t='+encodeURIComponent(TOKEN):location.href," +
       "scope:location.origin+'/app/'," +
       "icons:[{src:location.origin+'/assets/icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:location.origin+'/assets/icons/icon-512.png',sizes:'512x512',type:'image/png'},{src:location.origin+'/assets/icons/icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]};" +
@@ -7607,6 +7617,11 @@
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){inicioAbre(null,false);});var hficha=document.getElementById('htFicha');if(hficha)hficha.onclick=function(){inicioAbre(null,true);};" +
       // Carrossel do dia: indicadores e destinos acompanham cada item canônico.
       "var sa=document.getElementById('heroSauda');if(sa){var hh=new Date().getHours();sa.textContent=(hh<12?'Bom dia':hh<18?'Boa tarde':'Boa noite')+', '+PRIMEIRO;}" +
+      // Nomes completos não são truncados; o espaço do hero cresce quando necessário.
+      "(function(){var h=document.getElementById('heroTopo'),b=document.getElementById('blocoHoje');if(!h||!b||!h.querySelector('.al-brand'))return;" +
+      "function ajusta(){var px=Math.ceil(h.getBoundingClientRect().height);if(!px)return;var cards=b.querySelectorAll('#heroCarr>div');" +
+      "for(var i=0;i<cards.length;i++)cards[i].style.minHeight=(px+260)+'px';if(!cards.length&&b.firstElementChild!==h)b.firstElementChild.style.minHeight=(px+18)+'px';}" +
+      "ajusta();if(window.ResizeObserver){new ResizeObserver(ajusta).observe(h);}else window.addEventListener('resize',ajusta);})();" +
       "var inicioCarrossel=(" + runtimeCarrossel.toString() + ")();" +
       // pintaProgresso saiu com o card Progresso do Início: agora quem mostra
       // treinos do mês é o pintaCqTiles, na aba Conquistas

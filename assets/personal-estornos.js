@@ -145,7 +145,8 @@
   function declaracao(id) {
     if (!ctx || !ctx.financeiro()) return;
     var st = ctx.load(), r = (st.estornosPT || []).find(function (x) { return x.id === id && x.status === 'devolvido_manual'; }); if (!r) return;
-    var html = '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;"><title>Declaração de devolução manual</title><style>body{font:16px/1.6 system-ui;max-width:720px;margin:40px auto;padding:24px;color:#171717}h1{font-size:26px}small{display:block;margin-top:32px}dt{font-weight:bold}dd{margin:0 0 16px;overflow-wrap:anywhere}@media print{body{margin:0}}</style><h1>Declaração de devolução manual</h1><p>' + esc((st.config || {}).nome || 'TORQUE PERSONAL') + '</p><dl>' +
+    var marca = root.MT_IDENTIDADE_MARCA && root.MT_IDENTIDADE_MARCA.resolve(st.config);
+    var html = '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;"><title>Declaração de devolução manual</title><style>body{font:16px/1.6 system-ui;max-width:720px;margin:40px auto;padding:24px;color:#171717}h1{font-size:26px}small{display:block;margin-top:32px}dt{font-weight:bold}dd{margin:0 0 16px;overflow-wrap:anywhere}@media print{body{margin:0}}</style><h1>Declaração de devolução manual</h1><p>' + esc(marca && marca.personalizado ? marca.principal : (st.config || {}).nome || 'TORQUE PERSONAL') + '</p>' + (marca && marca.personalizado && marca.profissional ? '<p>Profissional responsável: ' + esc(marca.profissional) + '</p>' : '') + '<dl>' +
       [['Cliente', nome(st, r.alunoId)], ['Valor informado como devolvido', brl(r.valorCentavos / 100)], ['Data da devolução', data(r.data)], ['Meio', r.meio], ['Motivo', r.motivo], ['Referência do comprovante', r.comprovanteRef], ['Recebimento original', data(r.pagamentoOriginal.data) + ' · ' + brl(r.pagamentoOriginal.valor)], ['Registrado por', ator(r.confirmadoPor)], ['Registro', r.id]].map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') +
       '</dl><small>Registro administrativo informado pelo profissional. Não é comprovante bancário nem confirmação de estorno de cartão. Nenhuma transferência foi executada pelo TORQUE PERSONAL. Guarde o comprovante original do meio utilizado.</small></html>';
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' }), url = URL.createObjectURL(blob), link = document.createElement('a');
@@ -156,7 +157,7 @@
     try {
       var s = C.resumo(st, p), rot = s.devolvido ? (s.devolvido === s.bruto ? 'Devolução total registrada' : 'Devolução parcial registrada') : '';
       return (rot ? '<span class="tag">' + rot + ' · ' + brl(s.devolvido / 100) + '</span>' : '') + (s.pendente ? '<span class="tag alerta">' + brl(s.pendente / 100) + ' a devolver</span>' : '') +
-        (permitido && p.alunoId ? '<button type="button" class="btn sec mini" data-pt-estorno="' + esc(p.id) + '">Devolução / estorno</button>' : '');
+        (permitido && p.alunoId ? '<button type="button" class="btn sec mini" aria-label="Devolução / estorno" title="Devolução / estorno" data-pt-estorno="' + esc(p.id) + '">Devolução</button>' : '');
     } catch (_) { return '<span class="tag alerta">Conferir histórico de devoluções</span>'; }
   }
   function htmlAluno(st, a, permitido) {
