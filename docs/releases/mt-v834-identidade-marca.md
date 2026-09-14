@@ -4,9 +4,11 @@ Complementa os cancelamentos e devoluções do PR #843. Este documento não comp
 
 ## Caminho de uso
 
-Personalização → Identidade, cores e logo → Identidade da marca. Escolher **Meu nome**, **Nome do estúdio / marca** ou **Marca + meu nome**. Na opção combinada, escolher qual nome recebe destaque. Nome curto (32 caracteres) e slogan (100) são opcionais; nome principal e profissional comportam 120 caracteres. A prévia usa texto, cor e logo atuais. **Editar logo** abre o controle de upload existente.
+Personalização → Identidade, cores e logo → Identidade da marca. Escolher **Meu nome** ou **Nome do estúdio / marca** em **Nome em destaque**. A opção **Mostrar nome do personal abaixo da marca** é desligada por padrão. Quando o profissional é o destaque, o controle permite mostrar o estúdio abaixo. A combinação já salva é preservada; trocar o destaque desliga a segunda linha, que só volta por escolha explícita. Desligar remove a linha do template, sem deixar espaço vazio, e mantém o nome profissional nos registros e assinaturas. Nome curto (32 caracteres) e slogan (100) são opcionais; nome principal e profissional comportam 120 caracteres. A prévia usa texto, cor e logo atuais. **Editar logo** abre o controle de upload existente.
 
 Digitar apenas atualiza a prévia. **Salvar identidade** grava a configuração, preservando a revisão lida pelo MTStore, e marca os apps dos alunos como pendentes no fluxo existente. O botão **Publicar** aplica a atualização pelo caminho canônico do Personal; o editor impede publicar uma prévia com campos ainda não salvos. Falha de gravação, permissão insuficiente ou identidade alterada em outra sessão não descarta silenciosamente o rascunho.
+
+A interface usa um seletor de destaque e uma opção de segunda linha, sem um segundo seletor redundante. O modo `ambos` continua sendo o contrato interno; não foi criada configuração ou migração adicional.
 
 ## Dados e compatibilidade
 
