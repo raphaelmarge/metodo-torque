@@ -33,6 +33,7 @@ function save(s){
  state=structuredClone(s);writes.push(structuredClone(s));return true;
 }
 function sincronizaBusca(){}
+${require('./_identidade-marca-fixture')}
 ${canonical}
 ${payload}
 window.__questPT={render:renderQuest,payload:montaPayloadQuest};
@@ -87,6 +88,17 @@ async function snapshot(p){return p.evaluate(()=>JSON.stringify(state));}
  await p.locator('.qqCheck[value="dor"]').check();await p.click('#qqAdd');
  ok(await p.evaluate(()=>{const q=state.questionarios.at(-1);return q.nome==='Meu novo check-in'&&q.perguntas.includes('disp')&&q.perguntas.includes('dor');}),'Questionário usa IDs canônicos sem regravar perguntas');
  ok(await p.evaluate(()=>__questPT.payload(state,state.questionarios[0]).ps.find(p=>p.s==='DOR').mm),'Payload do aluno mantém a direção da dor');
+ ok(await p.evaluate(()=>__questPT.payload(state,state.questionarios[0]).marca==='TORQUE PERSONAL'),'Payload sem identidade mantém a marca padrão anterior');
+ const marcaBefore=await snapshot(p), marcaWrites=await p.evaluate(()=>writes.length);
+ for(const modo of ['profissional','estudio','ambos']) {
+  ok(await p.evaluate(m=>{
+   const s=structuredClone(state), cfg={nome:'Cadastro original',professor:'Ana Silva',pixNome:'ANA LEGAL',identidadeMarca:{v:1,modo:m,destaque:'estudio',nomeEstudio:'Studio Horizonte',nomeCurto:'Horizonte',slogan:''}};
+   s.config=cfg;
+   const pac=__questPT.payload(s,s.questionarios[0]), antigo=__questPT.payload(state,state.questionarios[0]);
+   return pac.marca===(m==='profissional'?'Ana Silva':'Studio Horizonte') && JSON.stringify(pac.ps)===JSON.stringify(antigo.ps) && cfg.nome==='Cadastro original' && cfg.pixNome==='ANA LEGAL';
+  },modo),'Payload usa identidade '+modo+' sem alterar perguntas, pontuação ou recebedor');
+ }
+ ok(await snapshot(p)===marcaBefore&&await p.evaluate(()=>writes.length)===marcaWrites,'Preparar payload com marca não grava alterações no painel');
  // Falha de armazenamento: o handler canônico repinta e limpa os campos.
  // Um questionário antigo com o mesmo nome não comprova a nova gravação.
  await p.waitForFunction(()=>!document.getElementById('qqNovoBox').open);

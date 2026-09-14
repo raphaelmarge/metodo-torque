@@ -13,6 +13,7 @@ var $=id=>document.getElementById(id),esc=t=>String(t==null?'':t).replace(/[<>&"
 var state={alunos:[],questionarios:[{id:'q1',nome:'Original',perguntas:['a','b']}],questPerguntas:[{id:'a',titulo:'Sono',sigla:'SONO',texto:'Como você dormiu?',tipo:'linear'},{id:'b',titulo:'Recado',sigla:'REC',texto:'Como foi a alimentação?',tipo:'texto'},{id:'c',titulo:'Energia',sigla:'ENE',texto:'Sua disposição hoje?',tipo:'linear'}],enviados:[{nome:'Original',ps:[{texto:'Como você dormiu?'}]}]};
 var accountId='studio-a',writes=0,saveFailures=0,uid=0,S=window.MTStore={read:()=>structuredClone(state),cloud:()=>({aid:accountId}),uid:()=>('new-'+(++uid)),todayISO:()=>('2026-09-11')};
 function load(){return S.read();}function save(s){if(saveFailures-- >0){renderQuest();return false;}state=structuredClone(s);writes++;renderQuest();return true;}function sincronizaBusca(){}
+${require('./_identidade-marca-fixture')}
 ${canonical}
 ${payload}
 window.__questPT={render:renderQuest,payload:montaPayloadQuest};window.__qtAba=v=>{$('qtArea').value=v;document.querySelectorAll('[data-qtsec]').forEach(e=>e.hidden=e.dataset.qtsec!==v);};__qtAba('montar');renderQuest();`;
