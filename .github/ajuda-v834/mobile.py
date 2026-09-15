@@ -9,3 +9,15 @@ s=s.replace(anchor, '  /* Atalhos da ajuda respeitam a largura útil do passo no
 p.write_text(s)
 assert hashlib.sha256(p.read_bytes()).hexdigest()=='29eb4751175c17b55199349fb897c7182f30d5f9c13ab0f63fa4f5c20f4d6296'
 print('personal.html',hashlib.sha256(p.read_bytes()).hexdigest())
+p=Path('tests/test-ajuda-atualizada-ui.js');s=p.read_text()
+a="        const fits = await p.locator('#vAjuda').evaluate(e=>e.scrollWidth<=e.clientWidth+1);"
+b="""        // Os cartões têm animação de entrada. Medir após a geometria final,
+        // sem desativar estilos nem ignorar conteúdo que exceda a tela.
+        await p.locator('#vAjuda').evaluate(e=>Promise.all(e.getAnimations({subtree:true}).filter(a=>Number.isFinite(a.effect.getComputedTiming().endTime)).map(a=>a.finished.catch(()=>{}))));
+        const fits = await p.locator('#vAjuda').evaluate(e=>e.scrollWidth<=e.clientWidth+1);"""
+assert s.count(a)==1;s=s.replace(a,b)
+a="          console.error('Elementos excedentes', await p.locator('#vAjuda').evaluate(e=>{"
+b="""          console.error('Dimensões da ajuda', await p.locator('#vAjuda').evaluate(e=>({client:e.clientWidth,scroll:e.scrollWidth,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,before:getComputedStyle(e,'::before').content,after:getComputedStyle(e,'::after').content,children:Array.from(e.children).map(x=>({tag:x.tagName,cls:x.className,client:x.clientWidth,scroll:x.scrollWidth,rect:x.getBoundingClientRect().toJSON()}))})));
+          console.error('Elementos excedentes', await p.locator('#vAjuda').evaluate(e=>{"""
+assert s.count(a)==1;s=s.replace(a,b);p.write_text(s)
+print('tests/test-ajuda-atualizada-ui.js',hashlib.sha256(p.read_bytes()).hexdigest())
