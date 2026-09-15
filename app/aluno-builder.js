@@ -102,8 +102,13 @@
       return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id; }).pop() || null;
     }
     function anterior(it, si) {
-      var l = (L("ptdc", {})[it.e] || []).filter(function (r) { return cargaConcluida(r) && r.d < isoHj() && (r.g !== 2 || r.serie === si + 1); });
-      return l.length ? l[l.length - 1] : null;
+      // A ordem de chegada/sincronização não é a ordem da execução.
+      // Só usa carga registrada antes de hoje; empate de data preserva o último registro.
+      return (L("ptdc", {})[it.e] || []).reduce(function (last, r) {
+        if (!cargaConcluida(r) || typeof r.d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(r.d) ||
+            !isFinite(Date.parse(r.d + 'T12:00:00Z')) || r.d >= isoHj() || (r.g === 2 && r.serie !== si + 1)) return last;
+        return !last || r.d >= last.d ? r : last;
+      }, null);
     }
     function marca(it, si, feito) {
       var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = isoHj(), n = -1;
@@ -179,7 +184,7 @@
       var sug = gv.formSerie && gv.formSerie.sugeridos;
       if (sug && id === 'gKg') sug.kg = false;
       if (sug && id === 'gReps') sug.reps = false;
-      gv.sujo = true; guarda(); acCheckpoint();
+      gv.sujo = true; guarda(); acCheckpoint(); pintaOrigem();
     }
     function valores(d) { var sug = d.sugeridos || {}; return { kg: sug.kg ? '' : d.kg, reps: sug.reps ? '' : d.reps }; }
     function salvaDraft(ex, d, id) { var v = valores(d); return gGrava(ex, v.kg, v.reps, id); }
@@ -263,6 +268,28 @@
       else if (kg == null && u) kg = +u.kg;
       return { kg: kg == null ? '' : kg, reps: r };
     }
+    // Referências não são resultados de hoje. Este bloco nunca grava nem confirma uma série.
+    function referencias(a, u) {
+      var reps = /^\d+$/.test(a.reps) ? a.reps + ' reps' : a.reps;
+      var prescrito = reps + ' · ' + (a.carga == null ? 'carga não definida' : gnum(a.carga) + ' kg');
+      var anterior = u ? (u.r == null ? 'reps não anotadas' : u.r + ' reps') + ' · ' + gnum(u.kg) + ' kg' : 'Sem carga anterior anotada';
+      var data = u ? ' · ' + u.d.slice(8, 10) + '/' + u.d.slice(5, 7) : '';
+      return '<dl class="gserie-referencias" aria-label="Referências da série"><div><dt>Prescrito</dt><dd data-gref="prescrito">' + esc2(prescrito) + '</dd></div>' +
+        '<div><dt>Anterior com carga' + esc2(data) + '</dt><dd data-gref="anterior">' + esc2(anterior) + '</dd></div></dl>';
+    }
+    function textoOrigem(done, reg, sug, dirty) {
+      if (dirty) return done ? 'Alteração em rascunho. Salve para atualizar esta série.' : 'Preenchimento em rascunho. ' + (gv.fim ? 'Salve a anotação para registrá-lo.' : 'Toque em Série feita para confirmar.');
+      if (done) return 'Série concluída. Salve qualquer alteração do registro.';
+      if (gv.fim) return 'Série não concluída. Salvar uma anotação não confirma a execução.';
+      if (reg) return 'Anotação salva; série ainda pendente. Toque em Série feita para confirmar.';
+      return (sug.kg || sug.reps ? 'Valores sugeridos, ainda não confirmados. ' : 'Série pendente. ') + 'Toque em Série feita depois de realizar.';
+    }
+    function pintaOrigem() {
+      var el = gEl('gOrigemSerie'), fs = gv.formSerie;
+      if (!el || !fs) return;
+      var it = GUIA[fs.fi] && GUIA[fs.fi].it[fs.ei]; if (!it) return;
+      el.textContent = textoOrigem(feita(it, fs.si, fs.ei), SR.registro(it, fs.si, fs.fi, fs.ei), fs.sugeridos || {}, !!gv.sujo);
+    }
     function form(it, si, ei, reg, a, v, r, u) {
       var id = SR.slot(gv.f, ei, si), draft = gv.rascunhos && gv.rascunhos[id], done = feita(it, si, ei);
       var sug = {}, fechamento = !!gv.fim || (done && conta(it, ei) >= it.s);
@@ -271,13 +298,13 @@
       gv.formSerie.sugeridos = sug;
       var reguas = '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div>';
       return '<div class="gcg gserie-form' + (fechamento ? ' gserie-fechamento' : '') + '"><div class="gserie-context"><span id="gCgLab" role="status">' + (fechamento ? (done && si === it.s - 1 ? 'Repetições e carga da última série' : 'Revise o que você realizou') : done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
-        '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série"></label>' +
-        '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos"></label></div>' +
+        referencias(a, u) + '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série" aria-describedby="gOrigemSerie"></label>' +
+        '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos" aria-describedby="gOrigemSerie"></label></div>' +
         (fechamento ? reguas : '') + '<details class="gserie-ajustes"><summary>Mais opções</summary>' +
         (u ? '<button type="button" id="gUsarUltima" class="gserie-ultima">Usar última carga: ' + gnum(u.kg) + ' kg <small>' + u.d.slice(8, 10) + '/' + u.d.slice(5, 7) + (u.r ? ' · ' + u.r + ' reps realizadas' : '') + '</small></button>' : '') +
         (fechamento ? '' : reguas) + '<button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim && !fechamento ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
         '<div class="gserie-actions">' + (gv.fim || fechamento ? '<button type="button" class="gsalvar" id="gSalvar">' + (fechamento ? 'Salvar repetições e carga' : 'Salvar alteração do registro') + '</button>' : '') + (done && !gv.fim ? '<button type="button" id="gDesfazSerie">Desfazer conclusão</button>' : '') + '</div>' +
-        '<small class="gserie-help">' + (done || gv.fim ? 'Salve a alteração para atualizar o registro.' : 'Toque em Série feita para confirmar estes valores.') + '</small></div>';
+        '<small id="gOrigemSerie" class="gserie-help" role="status">' + textoOrigem(done, reg, sug, !!draft) + '</small></div>';
     }
     function pintaForm(it) {
       gEl('gMiolo2').innerHTML = gCargaHtml(it); ligaStepper(it);
@@ -357,7 +384,7 @@
       });
       return '<details class="gserie-review" id="gRevisaoSeries"><summary><strong>' + concluidas + ' séries concluídas · ' + completas + ' com carga e repetições</strong><br>Revisar registros por série</summary>' + linhas + '</details>';
     }
-    return { feita: feita, conta: conta, proxima: proxima, inicia: inicia, guarda: guarda, limpa: limpa, entrada: entrada, botoes: botoes, form: form, pintaForm: pintaForm, conclui: conclui, clique: clique, revisao: revisao, atualizaVolume: atualizaVolume, salvaPendentes: salvaPendentes, antesAbrir: antesAbrir, salvaDraft: salvaDraft };
+    return { feita: feita, conta: conta, proxima: proxima, inicia: inicia, guarda: guarda, limpa: limpa, entrada: entrada, botoes: botoes, form: form, pintaForm: pintaForm, conclui: conclui, clique: clique, revisao: revisao, atualizaVolume: atualizaVolume, salvaPendentes: salvaPendentes, antesAbrir: antesAbrir, salvaDraft: salvaDraft, pintaOrigem: pintaOrigem };
   }
   // v821: agenda única, somente projeção do plano; navegar nunca registra consumo.
   function runtimeCalendarioAlimentacao() {
@@ -6202,12 +6229,12 @@
       "var ok=gGrava(it.e,kg.value,rp.value,gv.regi);" +
       "var lab=gEl('gCgLab');if(!lab)return;" +
       "if(!ok){GP.guarda();lab.textContent='Confira a carga e as repetições para salvar';return;}gv.sujo=false;GP.limpa();acCheckpoint();" +
-      "lab.textContent='Anotado ✓';lab.style.color='#16a34a';" +
+      "GP.pintaOrigem();lab.textContent='Anotado ✓';lab.style.color='#16a34a';" +
       "var h2=gEl('gHist');if(h2)h2.textContent=gHistTxt(it.e);" +
       "if(navigator.vibrate)navigator.vibrate(60);" +
       "setTimeout(function(){if(gEl('gCgLab')===lab){lab.textContent='Registro desta série';lab.style.color='';}},1600);};" +
       "gEl('gSemCarga').onclick=function(){kg.value='0';GP.entrada('gKg');if(!GP.salvaDraft(it.e,gv.rascunhos[gv.regi],gv.regi))return;gv.sujo=false;GP.limpa(false);gv.cargas[it.e]=0;acCheckpoint();" +
-      "var lab=gEl('gCgLab');if(lab){lab.textContent='Sem carga ✓';lab.style.color='#16a34a';}};}" +
+      "GP.pintaOrigem();var lab=gEl('gCgLab');if(lab){lab.textContent='Sem carga ✓';lab.style.color='#16a34a';}};}" +
       /* 📊 v732: o tile "kg no total" já existia — agora o volume ganha
        * MEMÓRIA (ptvol, um número por dia, teto 120 dias) e o recibo compara:
        * "Seu maior volume até hoje!" quando bate o recorde, ou "+X% vs seu
