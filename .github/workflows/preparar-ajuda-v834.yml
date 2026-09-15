@@ -1,0 +1,58 @@
+name: Validar dúvidas e novidades v834
+on:
+  push:
+    branches: [codex/preparar-duvidas-v834]
+permissions:
+  contents: write
+jobs:
+  ajuda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TZ: America/Sao_Paulo
+      BASE_URL: http://127.0.0.1:8765
+      MT_BASE: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Atualizar somente a ajuda da fonte conferida
+        run: python3 .github/ajuda-v834/apply.py
+      - name: Preparar dependências versionadas
+        run: bash .github/scripts/setup-tests.sh
+      - name: Validar conteúdo e interface sem produção
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TORQUE_EVIDENCE_DIR="$RUNNER_TEMP/ajuda-v834"
+          mkdir -p "$TORQUE_EVIDENCE_DIR"
+          node tests/test-ajuda-atualizada-core.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/core.log"
+          timeout 240 node tests/test-ajuda-atualizada-ui.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/ui.log"
+          python3 -m http.server 8765 --bind 127.0.0.1 > "$TORQUE_EVIDENCE_DIR/server.log" 2>&1 &
+          srv=$!
+          trap 'kill "$srv" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8765/assets/versao.js > /dev/null && break; sleep .25; done
+          timeout 180 node tests/test-ferramentas-experiencia.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/ferramentas.log"
+          node tests/test-versao.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/versao.log"
+          node tests/test-sync-cas.js 2>&1 | tee "$TORQUE_EVIDENCE_DIR/cas.log"
+      - name: Guardar evidências sintéticas inclusive em falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajuda-v834-${{ github.run_id }}
+          path: ${{ runner.temp }}/ajuda-v834/
+          retention-days: 7
+      - name: Registrar somente a branch de preparação
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = 'codex/preparar-duvidas-v834'
+          git rm -r -- .github/ajuda-v834 .github/workflows/preparar-ajuda-v834.yml
+          git add personal.html tests/test-ajuda-atualizada-core.js tests/test-ajuda-atualizada-ui.js docs/releases/mt-v834-ajuda-atualizada.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: atualizar dúvidas e novidades do Personal (mt-v834)'
+          git push origin HEAD:refs/heads/codex/preparar-duvidas-v834
