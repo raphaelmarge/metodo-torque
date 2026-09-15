@@ -59,15 +59,23 @@ function eq(a,b,message) { assert.deepEqual(a,b,message); checks++; console.log(
   for (const width of [320,390,1280]) {
     await p.setViewportSize({width,height:900});
     for (const light of [false,true]) {
-      await p.evaluate(light=>document.documentElement.classList.toggle('claro',light),light);
+      await p.evaluate(light=>document.documentElement.dataset.tema=light?'claro':'escuro',light);
       for (const id of ['novidades','marca','cancelamentos','sincronizacao','nutricao','presencial']) {
         await p.evaluate(id=>__ajudaPT.abre(id),id);
         eq(await p.locator('#vAjuda details[open]').count(),1,'Recolhimento em '+id+' '+width+' '+light);
-        ok(await p.locator('#vAjuda').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Sem rolagem lateral em '+id+' '+width+' '+light);
+        const fits = await p.locator('#vAjuda').evaluate(e=>e.scrollWidth<=e.clientWidth+1);
+        if (!fits) {
+          console.error('Elementos excedentes', await p.locator('#vAjuda').evaluate(e=>{
+            const r=e.getBoundingClientRect();
+            return Array.from(e.querySelectorAll('*')).map(x=>({tag:x.tagName,cls:x.className,text:x.textContent.slice(0,80),r:x.getBoundingClientRect().toJSON()})).filter(x=>x.r.width>0&&(x.r.right>r.right+1||x.r.left<r.left-1));
+          }));
+          if (process.env.TORQUE_EVIDENCE_DIR) await p.screenshot({path:path.join(process.env.TORQUE_EVIDENCE_DIR,'overflow-'+id+'-'+width+'-'+light+'.png')});
+        }
+        ok(fits,'Sem rolagem lateral em '+id+' '+width+' '+light);
       }
     }
   }
-  await p.evaluate(()=>{document.documentElement.classList.remove('claro');__ajudaPT.abre(null);});
+  await p.evaluate(()=>{document.documentElement.dataset.tema='escuro';__ajudaPT.abre(null);});
   const attack='\"><img src=x onerror="window.__ajudaXss=1">';
   await p.locator('#ajBusca').fill(attack);
   await p.evaluate(()=>__ajudaPT.abre('marca')); await p.locator('[data-ajvolta]').click();

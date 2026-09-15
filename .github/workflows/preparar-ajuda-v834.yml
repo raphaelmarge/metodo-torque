@@ -20,7 +20,9 @@ jobs:
         with:
           node-version: 22
       - name: Atualizar somente a ajuda da fonte conferida
-        run: python3 .github/ajuda-v834/apply.py
+        run: |
+          python3 .github/ajuda-v834/apply.py
+          python3 .github/ajuda-v834/mobile.py
       - name: Preparar dependências versionadas
         run: bash .github/scripts/setup-tests.sh
       - name: Validar conteúdo e interface sem produção
