@@ -173,7 +173,7 @@
       var kg = gEl('gKg'), rp = gEl('gReps');
       if (!kg || !gv.regi) return;
       if (!gv.rascunhos) gv.rascunhos = {};
-      if (gv.sujo) gv.rascunhos[gv.regi] = { kg: kg.value, reps: rp ? rp.value : '', sugeridos: Object.assign({}, (gv.formSerie && gv.formSerie.sugeridos) || {}) };
+      if (gv.sujo) gv.rascunhos[gv.regi] = { kg: kg.value, reps: rp ? rp.value : '', rpe: gEl('gRpe') ? gEl('gRpe').value : '', sugeridos: Object.assign({}, (gv.formSerie && gv.formSerie.sugeridos) || {}) };
     }
     function limpa(confirmou) {
       var sug = (gv.formSerie && gv.formSerie.sugeridos) || {};
@@ -187,13 +187,13 @@
       if (sug && id === 'gReps') sug.reps = false;
       gv.sujo = true; guarda(); acCheckpoint(); pintaOrigem();
     }
-    function valores(d) { var sug = d.sugeridos || {}; return { kg: sug.kg ? '' : d.kg, reps: sug.reps ? '' : d.reps }; }
-    function salvaDraft(ex, d, id) { var v = valores(d); return gGrava(ex, v.kg, v.reps, id); }
+    function valores(d) { var sug = d.sugeridos || {}; return { kg: sug.kg ? '' : d.kg, reps: sug.reps ? '' : d.reps, rpe: d.rpe == null ? '' : d.rpe }; }
+    function salvaDraft(ex, d, id) { var v = valores(d); return gGrava(ex, v.kg, v.reps, id, v.rpe); }
     function confirma() {
       var kg = gEl('gKg'), rp = gEl('gReps');
       if (!kg || !gv.reg) return false;
-      if (!gGrava(gv.reg, kg.value, rp ? rp.value : '', gv.regi)) {
-        var lab = gEl('gCgLab'); if (lab) { lab.textContent = 'Confira as repetições e a carga para confirmar.'; lab.setAttribute('role', 'alert'); }
+      if (!gGrava(gv.reg, kg.value, rp ? rp.value : '', gv.regi, gEl('gRpe') ? gEl('gRpe').value : '')) {
+        var lab = gEl('gCgLab'); if (lab) { lab.textContent = 'Confira carga, repetições e RPE (opcional, de 1 a 10) para confirmar.'; lab.setAttribute('role', 'alert'); }
         return false;
       }
       gv.sujo = false; limpa(); return true;
@@ -279,11 +279,11 @@
         '<div><dt>Anterior com carga' + esc2(data) + '</dt><dd data-gref="anterior">' + esc2(anterior) + '</dd></div></dl>';
     }
     function textoOrigem(done, reg, sug, dirty) {
-      if (dirty) return done ? 'Alteração em rascunho. Salve para atualizar esta série.' : 'Preenchimento em rascunho. ' + (gv.fim ? 'Salve a anotação para registrá-lo.' : 'Toque em Série feita para confirmar.');
+      if (dirty) return done ? 'Alteração em rascunho. Salve para atualizar esta série.' : 'Preenchimento em rascunho. ' + (gv.fim ? 'Salve a anotação para registrá-lo.' : 'Toque em Registrar série para confirmar.');
       if (done) return 'Série concluída. Salve qualquer alteração do registro.';
       if (gv.fim) return 'Série não concluída. Salvar uma anotação não confirma a execução.';
-      if (reg) return 'Anotação salva; série ainda pendente. Toque em Série feita para confirmar.';
-      return (sug.kg || sug.reps ? 'Valores sugeridos, ainda não confirmados. ' : 'Série pendente. ') + 'Toque em Série feita depois de realizar.';
+      if (reg) return 'Anotação salva; série ainda pendente. Toque em Registrar série para confirmar.';
+      return (sug.kg || sug.reps ? 'Valores sugeridos, ainda não confirmados. ' : 'Série pendente. ') + 'Toque em Registrar série depois de realizar.';
     }
     function pintaOrigem() {
       var el = gEl('gOrigemSerie'), fs = gv.formSerie;
@@ -300,7 +300,8 @@
       var reguas = '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div>';
       return '<div class="gcg gserie-form' + (fechamento ? ' gserie-fechamento' : '') + '"><div class="gserie-context"><span id="gCgLab" role="status">' + (fechamento ? (done && si === it.s - 1 ? 'Repetições e carga da última série' : 'Revise o que você realizou') : done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
         referencias(a, u) + '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série" aria-describedby="gOrigemSerie"></label>' +
-        '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos" aria-describedby="gOrigemSerie"></label></div>' +
+        '<label for="gKg">Carga <span>kg</span><input id="gKg" inputmode="decimal" autocomplete="off" value="' + atributo(v === '' ? '' : typeof v === 'number' ? gnum(v) : v) + '" placeholder="—" aria-label="Carga desta série em quilos" aria-describedby="gOrigemSerie"></label>' +
+        '<label for="gRpe">RPE <span>opcional</span><input id="gRpe" inputmode="decimal" autocomplete="off" value="' + atributo(draft && draft.rpe != null ? draft.rpe : reg && reg.rpe != null ? reg.rpe : '') + '" placeholder="—" aria-label="Esforço percebido desta série, de 1 a 10, opcional" aria-describedby="gOrigemSerie"></label></div>' +
         (fechamento ? reguas : '') + '<details class="gserie-ajustes"><summary>Mais opções</summary>' +
         (u ? '<button type="button" id="gUsarUltima" class="gserie-ultima">Usar última carga: ' + gnum(u.kg) + ' kg <small>' + u.d.slice(8, 10) + '/' + u.d.slice(5, 7) + (u.r ? ' · ' + u.r + ' reps realizadas' : '') + '</small></button>' : '') +
         (fechamento ? '' : reguas) + '<button type="button" class="gsemcarga" id="gSemCarga">Foi sem carga (peso do corpo)</button>' + (!gv.fim && !fechamento ? '<button type="button" class="gsalvar" id="gSalvar">Salvar somente a anotação</button>' : '') + '</details>' +
@@ -330,7 +331,7 @@
       var it = GUIA[gv.f].it[gv.e], si = SR.indice(it), antes = conta(it), done = feita(it, si);
       if (semAnotar) {
         guarda(); var draft = gv.rascunhos && gv.rascunhos[gv.regi], r = SR.registro(it, si), manuais = draft && valores(draft);
-        if (draft ? (String(manuais.kg).trim() || String(manuais.reps).trim()) : (r && (r.kg != null || r.r))) {
+        if (draft ? (String(manuais.kg).trim() || String(manuais.reps).trim() || String(manuais.rpe || '').trim()) : (r && (r.kg != null || r.r || r.rpe != null))) {
           var lab = gEl('gCgLab'); if (lab) lab.textContent = 'Há um preenchimento nesta série. Salve ou limpe os campos para concluir sem anotar.'; return;
         }
         if ((r || draft) && !gGrava(it.e, '', '', gv.regi)) return;
@@ -5857,7 +5858,7 @@
       "var GUIA=" + jsonApp((function () {
         var extra = (fichasApp || []).map(function (f) {
           return (f.itens || []).map(function (it) {
-            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "", al: (it.alts || []).slice(0, 2), ap: !!it.altsAprovadas, seriesDetalhadas: it.seriesDetalhadas, carga: it.carga };
+            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "", al: (it.alts || []).slice(0, 2), ap: !!it.altsAprovadas, seriesDetalhadas: it.seriesDetalhadas, carga: it.carga, rpe: it.rpe };
           });
         });
         // parte 2 do dia: entra no recibo do fim do treino ("ainda falta o A2")
@@ -5875,7 +5876,8 @@
           // propósito: o teste de escape do GUIA olha os 500 primeiros chars
           return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
-            var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas };
+            var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas, rpe: it.rpe != null ? it.rpe : x.rpe };
+            item.rpePorSerie = (item.seriesDetalhadas || []).map(function(s){return s && s.rpe != null ? s.rpe : null;});
             var sd = normalizaSeries(item); item.s = sd.length; item.d = sd[0].descanso; item.r = sd[0].reps;
             if (item.seriesDetalhadas) item.seriesDetalhadas = sd;
             return item;
@@ -5938,7 +5940,7 @@
       // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
       // e a guarda de valor igual fazia o aluno achar que salvou sem salvar.
-      "function gGrava(ex,kg,reps,slot){if(!ex)return false;slot=slot||'';var ps=slot.split(':'),porSerie=ps.length===3;var semKg=kg==null||String(kg).trim()==='';kg=semKg?null:Number(String(kg).replace(',','.'));reps=reps==null||String(reps).trim()===''?0:Number(reps);if(!isFinite(reps)||reps<0||reps>1000||Math.floor(reps)!==reps)return false;if(!semKg&&(!isFinite(kg)||kg<0||kg>2000))return false;if(!porSerie&&(kg==null||kg<=0))return false;" +
+      "function gGrava(ex,kg,reps,slot,rpe){if(!ex)return false;var informouRpe=arguments.length>=5,semRpe=rpe==null||String(rpe).trim()==='';if(informouRpe&&!semRpe){if(typeof rpe==='boolean')return false;rpe=Number(String(rpe).replace(',','.'));if(!isFinite(rpe)||rpe<1||rpe>10)return false;}slot=slot||'';var ps=slot.split(':'),porSerie=ps.length===3;var semKg=kg==null||String(kg).trim()==='';kg=semKg?null:Number(String(kg).replace(',','.'));reps=reps==null||String(reps).trim()===''?0:Number(reps);if(!isFinite(reps)||reps<0||reps>1000||Math.floor(reps)!==reps)return false;if(!semKg&&(!isFinite(kg)||kg<0||kg>2000))return false;if(!porSerie&&(kg==null||kg<=0))return false;" +
       "var h=L('ptdc',{}),l=h[ex]||[],hj=isoHj();slot=slot||'';" +
       "var reg={d:hj,kg:kg,g:porSerie?2:1};if(slot)reg.i=slot;if(porSerie)reg.serie=+ps[2]+1;if(isFinite(reps)&&reps>0)reg.r=reps;" +
       // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
@@ -5947,7 +5949,7 @@
       // recorde compara com TUDO que veio antes, menos a anotação de hoje que
       // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
       "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&cargaConcluida(l[k9])&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
-      "if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
+      "if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
       "h[ex]=l.slice(-600);if(Sv('ptdc',h)===false)return false;" +
       "if(reg.kg!=null)gv.cargas[ex]=reg.kg;if(reg.feito&&typeof GP!=='undefined')GP.atualizaVolume();try{if(cargaConcluida(reg)&&reg.kg>0)gFesteja(ex,reg.kg,maxA,l);}catch(e2){}return true;}" +
       "window.__gGrava=gGrava;" +
@@ -6225,9 +6227,9 @@
       "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
       "if(a){a._progPx=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;a.scrollLeft=a._progPx;}" +
       "if(b){b._progPx=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;b.scrollLeft=b._progPx;}});" +
-      "gv.sujo=!!(gv.rascunhos&&gv.rascunhos[gv.regi]);kg.oninput=GP.entrada;rp.oninput=GP.entrada;" +
+      "gv.sujo=!!(gv.rascunhos&&gv.rascunhos[gv.regi]);kg.oninput=GP.entrada;rp.oninput=GP.entrada;var rpeCampo=gEl('gRpe');if(rpeCampo)rpeCampo.oninput=GP.entrada;" +
       "gEl('gSalvar').onclick=function(){" +
-      "var ok=gGrava(it.e,kg.value,rp.value,gv.regi);" +
+      "var ok=gGrava(it.e,kg.value,rp.value,gv.regi,gEl('gRpe')?gEl('gRpe').value:'');" +
       "var lab=gEl('gCgLab');if(!lab)return;" +
       "if(!ok){GP.guarda();lab.textContent='Confira a carga e as repetições para salvar';return;}gv.sujo=false;GP.limpa();acCheckpoint();" +
       "GP.pintaOrigem();lab.textContent='Anotado ✓';lab.style.color='#16a34a';" +
