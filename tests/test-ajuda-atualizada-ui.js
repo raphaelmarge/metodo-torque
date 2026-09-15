@@ -4,7 +4,7 @@ let chromium;
 try { chromium = require('playwright').chromium; } catch (_) {
   try { chromium = require('./ci/node_modules/playwright').chromium; } catch (_) { chromium = require('/opt/node22/lib/node_modules/playwright').chromium; }
 }
-const { comMockNuvem } = require('./_nuvem');
+const { comMockNuvem } = require('./_nuvem.js');
 const ROOT = path.resolve(__dirname, '..');
 const BASE = (process.env.BASE_URL || 'http://torque-ajuda.test').replace(/\/+$/, '');
 let browser, checks = 0;
@@ -89,6 +89,18 @@ function eq(a,b,message) { assert.deepEqual(a,b,message); checks++; console.log(
   ok((await p.locator('#vAjuda').textContent()).includes('Entre na sua conta'),'Suporte sem conta não finge envio');
   await p.locator('[data-ajvolta]').click();
   eq(await p.locator('#abas [data-a]').evaluateAll(es=>es.map(e=>e.dataset.a)),nav,'Nenhum destino ou controle do menu foi removido');
+  // Confere a orientação no conteúdo visível e percorre a interface real.
+  // Só navega: não cadastra produto, não altera a marca e não publica pacotes.
+  await p.evaluate(()=>__ajudaPT.abre('appaluno'));
+  const lojaAjuda = p.locator('#vAjuda details').filter({has:p.locator('summary', {hasText:'Loja no app'})});
+  await lojaAjuda.locator('summary').click();
+  ok((await lojaAjuda.innerText()).includes('Personalização → Benefícios e loja → Loja do app'),'Caminho completo da Loja está visível na ajuda');
+  await p.evaluate(()=>document.querySelector('#abas [data-a="pers"]').click());
+  await p.locator('#persArea').selectOption({label:'Benefícios e loja'});
+  await p.locator('#vPers summary').filter({hasText:/^Loja do app$/}).click();
+  ok(await p.locator('#lojaNome').isVisible(),'Orientação leva ao campo de produto da Loja real');
+  ok(await p.locator('#lojaAdd').isVisible(),'Ação de cadastrar continua acessível sem executá-la');
+  await p.evaluate(()=>{document.querySelector('#abas [data-a="ajuda"]').click();__ajudaPT.abre(null);});
   eq(await p.evaluate(()=>localStorage.getItem('mtapp:ptStudio')),initial,'Ler, buscar e navegar na ajuda preservam todo o estado do negócio');
   if (process.env.TORQUE_EVIDENCE_DIR) {
     fs.mkdirSync(process.env.TORQUE_EVIDENCE_DIR,{recursive:true}); await p.setViewportSize({width:390,height:844});
