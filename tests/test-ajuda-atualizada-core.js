@@ -46,6 +46,11 @@ for (const [file, labels] of [
   ['assets/personal-estornos.js', ['Cancelar atendimento','Já devolvi o dinheiro','Devolução']],
   ['personal.html', ['Mostrar nome do personal abaixo da marca','Nome em destaque','Salvar identidade']],
 ]) for (const label of labels) ok(code(file).includes(label), 'Orientação corresponde a controle real: ' + label);
+// O caminho deve estar na resposta da Loja, não em um comentário para satisfazer o CI.
+const loja = byId.get('appaluno').subs.find(s => s.t === 'Loja no app');
+ok(loja.p.some(p => p.includes('Personalização → Benefícios e loja → Loja do app')), 'Loja explica o caminho completo da navegação atual');
+const uiSource = code('tests/test-ajuda-atualizada-ui.js');
+ok(/require\(["']\.\/_nuvem\.js["']\)/.test(uiSource), 'Ajuda usa a importação canônica do cliente compartilhado');
 ok(byId.get('agenda').subs.some(s => (s.fig||'').includes('assets/ajuda/') && s.fig.includes('ajfoco')), 'Preserva figuras e imagens da agenda');
 ok(html.includes('[tp.t, tp.d, tp.k || ""]') && html.includes('busca.split(/\\s+/).some'), 'Busca indexa aliases e todos os termos');
 console.log(checks + ' verificações editoriais da ajuda passaram.');

@@ -16980,7 +16980,7 @@ async function novaExecucaoAluno(p) {
     if (achados.length) achados.forEach((x) => console.log("     ainda aponta pro lugar errado: " + x[0] + " — " + x[1]));
     ok(achados.length === 0, "🧭 v756: nenhum texto da tela manda o professor pra uma tela que mudou de nome ou de lugar");
     // e os nomes NOVOS estão lá (senão bastaria apagar as frases pra ficar verde)
-    ok(/Configurações → Cobrança e conta/.test(srcP) && /Personalização → Loja/.test(srcP) &&
+    ok(/Configurações → Cobrança e conta/.test(srcP) && /Personalização → Benefícios e loja → Loja do app/.test(srcP) &&
       /Sua ilha → Backup dos dados/.test(srcP) && /menu → Sua ilha/.test(srcP),
       "🧭 v756: e os caminhos foram REESCRITOS pro nome certo, não simplesmente apagados");
 
