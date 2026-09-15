@@ -1734,6 +1734,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .ajsec[open] summary::after { transform: rotate(90deg); }
   .ajpassos { margin: 10px 0 0; padding: 0 0 0 4px; counter-reset: ajp; list-style: none; }
   .ajpassos li { counter-increment: ajp; position: relative; padding: 0 0 12px 34px; font-size: 13.5px; line-height: 1.55; color: var(--tk-tx2); }
+  /* Atalhos da ajuda respeitam a largura útil do passo no celular. */
+  #vAjuda .ajpassos [data-ajtopico] { box-sizing: border-box; max-width: 100%; min-width: 0; height: auto; min-height: 44px; white-space: normal; overflow-wrap: anywhere; padding-top: 8px; padding-bottom: 8px; margin: 4px 0; }
+  #vAjuda .ajsec summary::after { width: 20px; height: 20px; line-height: 20px; text-align: center; top: 12px; }
   .ajpassos li::before { content: counter(ajp); position: absolute; left: 0; top: 0; width: 22px; height: 22px;
     border-radius: 50%; background: var(--pt-roxo); color: #fff; font-size: 11.5px; font-weight: 900;
     display: flex; align-items: center; justify-content: center; }
@@ -4350,314 +4353,1051 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<span style='font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--tk-tx5);text-transform:uppercase;'>menu</span>" +
       ajBt("Início") + ajFoco(ajBt(rotulo), "é esta aba") + "</span>";
   }
+  // Guia funcional mt-v834. Atualizar com os fluxos da mesma release, não com promessas de roadmap.
   var AJUDA_PT = [
-    { id: "comeco", t: "Primeiros passos", d: "Da conta nova ao primeiro aluno com app no celular",
-      ic: "<path d='M5 12h14M13 6l6 6-6 6'/>",
-      subs: [
-        { t: "O caminho inteiro em 4 passos", p: [
-          "Cadastre seu primeiro aluno em <b>Alunos → + Novo aluno</b> (nome e WhatsApp bastam pra começar).",
-          "Monte a primeira ficha em <b>Treinos</b> — escolha o aluno e toque em <b>+ Adicionar exercício</b>.",
-          "Toque em <b>Salvar e publicar</b>: o app do aluno nasce nesse momento.",
-          "O aluno recebe o link e a senha <b>por e-mail</b> — ele entra por aluno-login.html com o e-mail dele.",
-        ], fig: ajFig(ajFoco(ajBt("+ Novo aluno", "pri"), "passo 1") + " " + ajBt("Montar treino") + " " + ajFoco(ajBt("Salvar e publicar", "pri"), "passo 3")) + ajImg("p-novo-aluno.jpg", "O botão + Novo aluno no topo do Início, marcado com a seta") },
-        { t: "Entrar na nuvem (sincronizar entre aparelhos)", p: [
-          "Tudo funciona offline neste aparelho — a nuvem entra pra sincronizar e ligar chat, questionários e comunidade.",
-          "Toque no aviso <b>Entre na sua conta</b> (ou Configurações → Cobrança e conta) e use seu e-mail.",
-          "Depois de entrar, o que você fizer aqui aparece no seu outro computador/celular sozinho.",
-        ] },
-        { t: "Instalar o painel no celular", p: [
+  {
+    "id": "novidades",
+    "t": "Novidades e mudanças",
+    "d": "O que mudou e onde encontrar cada recurso",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Nesta versão: identidade e devoluções",
+        "p": [
+          "<b>mt-v834:</b> escolha o nome que aparece em destaque no app do aluno e registre cancelamentos e devoluções no Financeiro.",
+          "O nome do personal abaixo da marca é <b>opcional e desligado por padrão</b>. Cancelamento e devolução continuam sendo operações diferentes; o aplicativo não transfere dinheiro.",
+          "<button type='button' class='btn sec mini' data-ajtopico='marca'>Como escolher a identidade</button> <button type='button' class='btn sec mini' data-ajtopico='cancelamentos'>Como cancelar e registrar uma devolução</button>"
+        ]
+      },
+      {
+        "t": "Fluxo do dia e Aluno 360°",
+        "p": [
+          "<b>mt-v833:</b> o Início reúne Próxima melhor ação, Iniciar sessão, Busca universal e Automações. O Aluno 360° fica no Resumo da ficha.",
+          "A sessão presencial permite registrar o atendimento pelo nome do aluno, inclusive com envio posterior quando estiver sem conexão. Os atalhos usam as áreas existentes, sem criar outra central.",
+          "<button type='button' class='btn sec mini' data-ajtopico='presencial'>Como registrar uma sessão</button>"
+        ]
+      },
+      {
+        "t": "Sincronização e retirada da Central Pro",
+        "p": [
+          "<b>mt-v832:</b> um salvamento sem alterações deixou de gerar uma pendência artificial. A recuperação da nuvem passou a preservar o rascunho antes de aplicar a versão atual.",
+          "A Central Pro foi retirada do painel. A sessão presencial e as automações agora ficam integradas ao Início e à ficha; não procure esse menu antigo.",
+          "<button type='button' class='btn sec mini' data-ajtopico='sincronizacao'>Resolver dúvidas de sincronização</button>"
+        ]
+      },
+      {
+        "t": "Corrida por etapas e medalhas",
+        "p": [
+          "<b>mt-v827 a mt-v829:</b> a corrida aceita etapas com distâncias ou durações diferentes. As medalhas mostram o nível alcançado e o próximo objetivo, com visual em relevo.",
+          "O personal escolhe as trilhas de medalhas e publica a seleção. As metas usam os registros disponíveis; não representam certificação de competições.",
+          "<button type='button' class='btn sec mini' data-ajtopico='treinos'>Ver planejamento e corrida</button> <button type='button' class='btn sec mini' data-ajtopico='medalhas'>Configurar medalhas</button>"
+        ]
+      },
+      {
+        "t": "Planejamento, recebimentos e questionários",
+        "p": [
+          "<b>mt-v822 a mt-v826:</b> modalidade de atendimento separada da cobrança, calendário por data, várias atividades no dia e cópia de semanas com revisão dos destinos.",
+          "Recebimentos ganharam edição e anulação com motivo e histórico. Questionários permitem editar modelos, ordenar perguntas e conferir a prévia sem alterar respostas já recebidas.",
+          "As telas continuam organizadas nas áreas do Personal. Alterar um rascunho, salvar no painel e publicar para o aluno são etapas distintas."
+        ]
+      },
+      {
+        "t": "Nutrição, entrada opcional e foto no topo",
+        "p": [
+          "A <b>Nutrição</b> está integrada ao Personal, com plano revisável e registros de alimentação. A entrada do aluno pode exigir ou dispensar questionário e contrato por aluno.",
+          "O topo do app do aluno preserva a foto grande e os controles de treino. Há demonstrações com e sem cadastro inicial, sem alterar contas reais.",
+          "<button type='button' class='btn sec mini' data-ajtopico='nutricao'>Usar a nutrição integrada</button> <button type='button' class='btn sec mini' data-ajtopico='quest'>Configurar a entrada do aluno</button>"
+        ]
+      }
+    ],
+    "k": "novidade novidades mudanças atualizações release versão mt-v834 mt-v833 mt-v832 dúvidas duvidas"
+  },
+  {
+    "id": "comeco",
+    "t": "Primeiros passos",
+    "d": "Da conta nova ao primeiro aluno com app no celular",
+    "ic": "<path d='M5 12h14M13 6l6 6-6 6'/>",
+    "subs": [
+      {
+        "t": "O caminho inteiro em 4 passos",
+        "p": [
+          "Em <b>Alunos → + Novo aluno</b>, cadastre o aluno e confira nome, contato e e-mail. O e-mail será usado no acesso dele.",
+          "Em <b>Treinos</b>, escolha esse aluno e monte uma ficha com os exercícios.",
+          "Revise e use <b>Salvar e publicar</b>. Salvar apenas um rascunho não atualiza o app do aluno.",
+          "No perfil, confira <b>App e acesso</b> e envie o acesso pelo fluxo disponível. Confirme a publicação e o envio antes de orientar o aluno a entrar."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>+ Novo aluno</span><i class='ajfoco-rot'>passo 1</i></span> <span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Montar treino</span> <span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Salvar e publicar</span><i class='ajfoco-rot'>passo 3</i></span></div></div><div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-novo-aluno.jpg' alt='O botão + Novo aluno no topo do Início, marcado com a seta' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "O que precisa de conta e internet?",
+        "p": [
+          "O painel mantém dados locais neste aparelho. Para sincronizar com outro dispositivo, publicar para alunos ou usar serviços online, entre na sua conta.",
+          "Use a <b>mesma conta e o mesmo espaço de trabalho</b> no computador e no celular. Registros em modo sem conta não aparecem automaticamente em outro aparelho.",
+          "Sem internet, trabalhe somente com o que já estiver carregado e confira o resultado do salvamento. Não presuma que chat, IA, envio de convite ou cobrança funcionem offline."
+        ]
+      },
+      {
+        "t": "Instalar o painel no celular",
+        "p": [
           "Abra o painel no navegador do celular.",
           "No iPhone: botão <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b>.",
-          "No Android: menu <b>⋮</b> do Chrome → <b>Instalar app</b>.",
-        ] },
-      ] },
-    { id: "inicio", t: "Início", d: "Resolver hoje, seu dia e o mês em um olhar",
-      ic: "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>",
-      subs: [
-        { t: "Resolver hoje", p: [
-          "O bloco <b>Resolver hoje</b> junta o que pede ação agora: aluno que relatou dor, cobrança vencida, ficha velha e conversa parada.",
-          "Cada card tem o botão que resolve — <b>Abrir ficha</b>, <b>Cobrar</b>, <b>Responder</b>. Resolvido, ele some sozinho.",
-        ], fig: ajFig(ajLinha("Ana Souza · RELATOU DOR", "“senti o ombro no supino…”", ajFoco(ajBt("Abrir ficha", "pri"), "resolve aqui"))) + ajImg("p-resolver.jpg", "Um card do Resolver hoje com o botão de ação marcado") },
-        { t: "Seu dia hoje", p: [
-          "A linha do tempo mostra as sessões do dia em ordem: a próxima ganha destaque roxo.",
-          "Dá pra marcar <b>Feita</b> ali mesmo, sem abrir a Agenda.",
-        ] },
-        { t: "A fila de WhatsApp", p: [
-          "As automações (aniversário, aluno sumido, pacote acabando) caem numa fila — nada sai sozinho.",
-          "Toque em <b>Enviar</b> pra abrir o WhatsApp já com a mensagem pronta, ou <b>Pular</b> pra descartar.",
-        ] },
-      ] },
-    { id: "alunos", t: "Alunos e ficha do aluno", d: "Cadastro, estados da lista e o perfil completo",
-      ic: "<circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/>",
-      subs: [
-        { t: "Cadastrar um aluno", p: [
+          "No Android: menu <b>⋮</b> do Chrome → <b>Instalar app</b>."
+        ]
+      },
+      {
+        "t": "Onde encontro uma função?",
+        "p": [
+          "A <b>Busca universal</b> do topo encontra alunos, telas, exercícios, questionários e fichas pelo nome. Para orientações, use a busca desta <b>Ajuda / Dúvidas</b>.",
+          "No celular, abra o menu para acessar as áreas que não aparecem na barra inferior. A navegação existente foi preservada; não é necessário procurar uma Central Pro."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sincronizacao",
+    "t": "Sincronização e atualizações",
+    "d": "Computador, celular, rascunhos e versão da nuvem",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Cadastrei no computador e não apareceu no celular",
+        "p": [
+          "Confirme a mesma conta e o mesmo espaço de trabalho nos dois aparelhos. Mantenha a conexão e confira se o salvamento no aparelho de origem terminou.",
+          "No outro aparelho, abra o painel conectado e observe os avisos. Uma alteração no cadastro do Personal não é a mesma coisa que publicar o app do aluno.",
+          "Se houver aviso de conflito, preserve o rascunho e siga a recuperação abaixo. <b>Não recrie o aluno</b> nem restaure um backup antigo para forçar a atualização."
+        ]
+      },
+      {
+        "t": "Outro aparelho alterou este painel: o que fazer?",
+        "p": [
+          "O aviso existe para evitar que uma versão antiga substitua dados mais novos. Use <b>Salvar cópia do rascunho</b> para guardar o que está neste aparelho.",
+          "Depois de conferir o que precisa preservar, use <b>Carregar versão da nuvem</b>. O sistema tenta guardar uma cópia do rascunho antes de aplicar os dados remotos.",
+          "Carregar a nuvem <b>não combina automaticamente</b> todas as edições locais. Compare a cópia preservada antes de refazer o que ainda faltar.",
+          "<b>Fechar aviso</b> oculta a mensagem, mas não desativa a proteção. Um aviso fechado não prova que os dados foram sincronizados."
+        ]
+      },
+      {
+        "t": "Carregar versão da nuvem não concluiu",
+        "p": [
+          "Leia a mensagem de erro: conexão, gravação em andamento, falta de espaço ou alteração durante a recuperação podem impedir a operação.",
+          "Mantenha a página e a cópia do rascunho. Aguarde um salvamento em andamento terminar, confira a conexão e tente novamente sem editar ao mesmo tempo.",
+          "Se persistir, abra <b>Falar com o suporte</b> e informe a versão, o aparelho e os passos. <b>Não limpe os dados do navegador</b> e não reinstale como tentativa de recuperação."
+        ]
+      },
+      {
+        "t": "Salvar no painel e publicar no app são a mesma coisa?",
+        "p": [
+          "<b>Não.</b> Salvar registra a alteração no Personal; a sincronização compartilha esse estado entre seus aparelhos quando a conta está conectada.",
+          "<b>Publicar</b> prepara e envia o conteúdo destinado ao app de cada aluno. Confira o status; uma falha deixa a publicação pendente.",
+          "Uma atualização do código do sistema não publica por conta própria um treino ou uma marca que você ainda está editando."
+        ]
+      },
+      {
+        "t": "Como conferir uma atualização com segurança?",
+        "p": [
+          "Salve as edições em andamento e confira avisos de sincronização/publicação antes de sair.",
+          "Reabra o app com internet para buscar a atualização. Informe a versão exibida ao suporte se continuar vendo uma tela antiga.",
+          "A confirmação de publicação do sistema não comprova que um aparelho offline já recebeu a versão. Preserve os dados locais até resolver a divergência."
+        ]
+      }
+    ],
+    "k": "sincronização sincronizacao nuvem conflito rascunho pc mobile celular safari cache atualização aluno sumiu dados desapareceram central pro"
+  },
+  {
+    "id": "inicio",
+    "t": "Início",
+    "d": "Próxima ação, agenda, busca e providências",
+    "ic": "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>",
+    "subs": [
+      {
+        "t": "Próxima melhor ação",
+        "p": [
+          "No <b>Início</b>, o quadro <b>Próxima melhor ação</b> sugere uma tarefa usando os registros disponíveis: revisar um relato, preparar uma sessão, montar ou revisar uma ficha e acompanhar frequência ou avaliação.",
+          "Toque na ação indicada ou em <b>Aluno 360°</b>. A sugestão não faz diagnóstico, não envia mensagem e não altera o treino sozinha.",
+          "Use <b>Atualizar</b> para recalcular o quadro. A ausência de um alerta não garante que todos os dados do aluno estejam completos."
+        ]
+      },
+      {
+        "t": "Resolver hoje",
+        "p": [
+          "O bloco <b>Resolver hoje</b> reúne pendências operacionais, como mensagens, cobranças e fichas a revisar.",
+          "Abra a ação indicada e confira o registro antes de concluir. Esse bloco permanece junto do fluxo do dia."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'><span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>Ana Souza · RELATOU DOR</b><span style='font-size:11px;color:var(--tk-tx4);'>“senti o ombro no supino…”</span></span><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Abrir ficha</span><i class='ajfoco-rot'>resolve aqui</i></span></span></div></div><div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-resolver.jpg' alt='Um card do Resolver hoje com o botão de ação marcado' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "Seu dia hoje",
+        "p": [
+          "Veja as sessões agendadas e abra a ficha do próximo aluno. A presença pode ser registrada na agenda.",
+          "Para anotar exercícios, cargas e repetições do atendimento, use <b>Iniciar sessão</b>. Marcar uma presença não substitui o registro dos exercícios."
+        ]
+      },
+      {
+        "t": "Busca universal",
+        "p": [
+          "Digite pelo menos duas letras na busca do topo para procurar exercício, questionário ou treino. Os resultados informam o tipo e, quando aplicável, o aluno.",
+          "Toque no resultado para abrir a área correspondente. A busca do topo encontra registros; a busca da Ajuda encontra instruções."
+        ]
+      },
+      {
+        "t": "WhatsApp e providências não são a mesma fila",
+        "p": [
+          "A fila de WhatsApp prepara mensagens para revisão e envio pelo canal configurado.",
+          "<b>Automações e providências</b> organiza tarefas de acompanhamento. Marcar uma providência como concluída não comprova que uma mensagem foi enviada.",
+          "<button type='button' class='btn sec mini' data-ajtopico='automacoes'>Entender as automações</button>"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alunos",
+    "t": "Alunos e ficha do aluno",
+    "d": "Cadastro, estados da lista e o perfil completo",
+    "ic": "<circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/>",
+    "subs": [
+      {
+        "t": "Cadastrar um aluno",
+        "p": [
           "Em <b>Alunos</b>, toque em <b>+ Novo aluno</b>.",
           "Preencha nome, WhatsApp e e-mail (o e-mail é o login do app dele).",
           "Escolha o plano (mensal, pacote de aulas ou por sessão) — é ele que alimenta a cobrança.",
-          "Salvou? A ficha abre pronta pra montar o primeiro treino.",
-        ] },
-        { t: "Entender a lista", p: [
+          "Salvou? A ficha abre pronta pra montar o primeiro treino."
+        ]
+      },
+      {
+        "t": "Entender a lista",
+        "p": [
           "Os filtros <b>Ativos / Sumindo / Devendo / Encerrados</b> contam a situação de cada um.",
           "<b>Sumindo</b> = parou de treinar há dias; <b>Devendo</b> = não pagou o mês e passou do vencimento.",
-          "Cada linha traz a AÇÃO que resolve o estado dela (Cobrar, Montar ficha, Chamar).",
-        ], fig: ajFig(ajLinha("Carlos Lima", "Mensal 3x · treinos 4/12", "<span style='display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:var(--pt-erro-bg);color:var(--pt-erro);font-size:10px;font-weight:900;'>DEVE 240</span>" + ajFoco(ajBt("Cobrar", "pri"), "ação da linha"))) },
-        { t: "A ficha (perfil) do aluno", p: [
-          "Toque no NOME do aluno pra abrir a ficha.",
-          "A aba <b>Resumo</b> traz treinos do mês, peso, batimento e check-in; as outras abas guardam cadastro, treino, financeiro, avaliações, frequência e app.",
-          "As <b>4 ações do dia</b> ficam no topo: montar treino, chat, financeiro e agenda.",
-        ], fig: ajImg("p-abrir-ficha.jpg", "A linha do aluno na lista — o nome abre a ficha") },
-        { t: "Anamnese preenchida pelo próprio aluno", p: [
+          "Cada linha traz a AÇÃO que resolve o estado dela (Cobrar, Montar ficha, Chamar)."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'><span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>Carlos Lima</b><span style='font-size:11px;color:var(--tk-tx4);'>Mensal 3x · treinos 4/12</span></span><span style='display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:var(--pt-erro-bg);color:var(--pt-erro);font-size:10px;font-weight:900;'>DEVE 240</span><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Cobrar</span><i class='ajfoco-rot'>ação da linha</i></span></span></div></div>"
+      },
+      {
+        "t": "A ficha e o Aluno 360°",
+        "p": [
+          "Toque no <b>nome do aluno</b> para abrir o perfil e entre em <b>Resumo → Aluno 360° / Visão completa</b>.",
+          "Consulte fichas, última sessão, avaliação, linha do tempo e <b>Frequência · 8 semanas</b>. Esse gráfico usa as sessões marcadas como feitas na agenda do Personal; não significa todo exercício praticado fora do app.",
+          "Quando conectado e com acesso do aluno vinculado, o quadro pode mostrar atualizações do app. As outras abas do perfil continuam disponíveis.",
+          "Os atalhos <b>Iniciar sessão, IA do treino, Semana, Questionário, Avaliação e Nutrição</b> abrem os fluxos existentes."
+        ],
+        "fig": "<div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-abrir-ficha.jpg' alt='A linha do aluno na lista — o nome abre a ficha' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "Atendimento presencial, online ou híbrido",
+        "p": [
+          "Confira a modalidade de atendimento no cadastro. Ela é separada do plano de cobrança: mensalidade, pacote ou sessão.",
+          "A consultoria online não deve ser usada para criar agendamentos presenciais nos fluxos de agenda. Alterar a modalidade não apaga sessões e recebimentos anteriores."
+        ]
+      },
+      {
+        "t": "Anamnese preenchida pelo próprio aluno",
+        "p": [
           "No cadastro, gere o <b>link da anamnese</b> e mande pro aluno no WhatsApp.",
-          "Ele responde no celular dele e as respostas caem direto na ficha — sem digitação dupla.",
-        ] },
-        { t: "Contrato digital", p: [
-          "Escreva seu termo de responsabilidade em <b>Configurações</b> (uma vez só).",
-          "O aluno lê e aceita dentro do próprio app; o aceite fica registrado com data.",
-        ] },
-        { t: "Trazer alunos de outro sistema", p: [
+          "Ele responde no celular dele e as respostas caem direto na ficha — sem digitação dupla."
+        ]
+      },
+      {
+        "t": "Entrada com ou sem questionário e contrato",
+        "p": [
+          "Configure a entrada em <b>Questionários → Criar e organizar</b> e confira a exigência de cada aluno em <b>App e acesso</b>.",
+          "O questionário, o documento e a exigência de entrada seguem a publicação do aluno. Dispensa não significa apagar aceites anteriores.",
+          "<button type='button' class='btn sec mini' data-ajtopico='quest'>Ver entrada e questionários</button>"
+        ]
+      },
+      {
+        "t": "Trazer alunos de outro sistema",
+        "p": [
           "Em <b>Alunos</b>, o <b>importador</b> aceita a planilha exportada de outro sistema (ou um CSV simples).",
-          "Confira a prévia, ajuste as colunas e confirme — os alunos entram de uma vez.",
-        ] },
-        { t: "Encerrar ou excluir", p: [
-          "Na ficha, menu <b>···</b> → <b>Encerrar aluno</b>: ele sai das listas e o app dele pode ser revogado na hora.",
-          "Encerrado não é apagado — o histórico fica guardado e dá pra reativar.",
-        ] },
-      ] },
-    { id: "agenda", t: "Agenda", d: "Marcar, confirmar pedidos e fechar o dia",
-      ic: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
-      subs: [
-        { t: "Marcar uma sessão", p: [
+          "Confira a prévia, ajuste as colunas e confirme — os alunos entram de uma vez."
+        ]
+      },
+      {
+        "t": "Encerrar atendimento sem apagar o histórico",
+        "p": [
+          "No perfil, abra <b>Financeiro → Cancelar atendimento</b> e revise o motivo e os efeitos antes de confirmar.",
+          "A nova operação preserva recebimentos e registros anteriores. Devolução do dinheiro e revogação do acesso ao app são decisões separadas.",
+          "Quando houver assinatura automática, use primeiro o cancelamento no fluxo do provedor. Encerrar somente o cadastro não é confirmação de fim das cobranças.",
+          "<button type='button' class='btn sec mini' data-ajtopico='cancelamentos'>Ver cancelamento e devolução</button>"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "presencial",
+    "t": "Sessão presencial",
+    "d": "Registrar o atendimento pelo nome do aluno",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Iniciar e registrar o que foi feito",
+        "p": [
+          "Use <b>Início → Iniciar sessão</b> ou o mesmo botão no <b>Aluno 360°</b>. Escolha o aluno pelo nome e a ficha, ou uma sessão livre.",
+          "Preencha a observação inicial e toque em <b>Iniciar sessão</b>. Use <b>+ Exercício</b> para incluir o registro.",
+          "Anote exercício, repetições, carga e percepção de esforço. O campo de esforço oferece <b>Leve, Na medida e Pesado</b>.",
+          "Revise os registros e toque em <b>Finalizar e salvar</b>. Fechar a janela não equivale a finalizar o atendimento."
+        ]
+      },
+      {
+        "t": "Registrar sem internet",
+        "p": [
+          "Com o painel e os dados necessários já carregados, a sessão concluída pode ficar salva neste aparelho para envio posterior.",
+          "Mantenha o mesmo aparelho e a mesma conta até a sincronização. Ao voltar a conexão, o painel tenta enviar a fila.",
+          "<b>Salvo neste aparelho</b> não é confirmação de recebimento na nuvem. Não apague os dados do navegador e não troque de conta para tentar destravar um envio.",
+          "Evite fechar o atendimento ainda em edição: finalize e confira a mensagem de salvamento. Não há garantia de recuperação de cada campo não finalizado."
+        ]
+      },
+      {
+        "t": "O que acontece na Agenda?",
+        "p": [
+          "Ao finalizar, uma sessão pendente do mesmo aluno no dia pode ser marcada como feita. Confira a Agenda, especialmente quando houver dois atendimentos no mesmo dia.",
+          "O registro de exercícios, a presença e o recebimento financeiro são informações distintas. Confira cada uma no seu fluxo."
+        ]
+      }
+    ],
+    "k": "modo presencial central pro aula atendimento reps carga esforço rpe offline nome aluno"
+  },
+  {
+    "id": "agenda",
+    "t": "Agenda",
+    "d": "Marcar, confirmar pedidos e fechar o dia",
+    "ic": "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
+    "subs": [
+      {
+        "t": "Marcar uma sessão",
+        "p": [
           "Toque em <b>Marcar sessão</b> (ou num horário vazio da grade — ele já preenche dia e hora).",
           "Escolha o aluno, o dia e a hora; <b>repetir toda semana</b> cria as próximas de uma vez.",
-          "Turminha? O modo <b>Turma</b> marca vários alunos no mesmo horário.",
-        ], fig: ajImg("p-marcar.jpg", "O botão Marcar sessão no cabeçalho da Agenda") },
-        { t: "Semana × Mês", p: [
+          "Turminha? O modo <b>Turma</b> marca vários alunos no mesmo horário."
+        ],
+        "fig": "<div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-marcar.jpg' alt='O botão Marcar sessão no cabeçalho da Agenda' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "Semana × Mês",
+        "p": [
           "O botão <b>Semana | Mês</b> troca o zoom do MESMO calendário.",
           "Semana é a grade de horários (no celular, um dia por vez); Mês serve pra achar uma data longe — tocar num dia leva pra semana dele.",
-          "As setas <b>‹ ›</b> andam as semanas; <b>Hoje</b> volta.",
-        ], fig: ajFig("<span style='display:inline-flex;gap:4px;'>" + ajFoco(ajBt("Semana", "pri"), "o zoom") + ajBt("Mês") + "</span>") + ajImg("p-semana-mes.jpg", "O botão Semana | Mês no cabeçalho da Agenda") },
-        { t: "Feita, Faltou ou Cancelou", p: [
-          "Toque na sessão (na grade ou na lista do dia) pra abrir as ações dela.",
-          "<b>Feita</b> desconta do pacote e oferece registrar o pagamento por sessão; <b>Faltou</b> conta na assiduidade; <b>Cancelou</b> desmarca.",
-          "Marcou errado? Na sessão feita aparece <b>Desfazer Feita</b>, que devolve aula e pagamento.",
-        ], fig: ajFig(ajLinha("07:00 · João", "Treino A", ajFoco(ajBt("⋮"), "as ações")) + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("Feita", "pri") + ajBt("Faltou") + ajBt("Cancelou") + "</span>") + ajImg("p-sessao-acoes.jpg", "As ações da sessão abertas dentro da grade da semana") },
-        { t: "Pedidos de horário do app", p: [
+          "As setas <b>‹ ›</b> andam as semanas; <b>Hoje</b> volta."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span style='display:inline-flex;gap:4px;'><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Semana</span><i class='ajfoco-rot'>o zoom</i></span><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Mês</span></span></div></div><div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-semana-mes.jpg' alt='O botão Semana | Mês no cabeçalho da Agenda' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "Feita, Faltou ou Cancelou",
+        "p": [
+          "Toque na sessão para abrir as ações <b>Feita, Faltou e Cancelou</b>. Revise o aluno e a data antes de confirmar.",
+          "Feita registra a presença; pacotes e cobranças por sessão seguem as regras do plano. Faltou registra a ausência; Cancelou desmarca a sessão.",
+          "<b>Desfazer Feita</b> corrige a presença conforme o fluxo da agenda. Isso <b>não envia dinheiro</b> ao aluno e não é o registro de uma devolução financeira.",
+          "Para encerrar todo o acompanhamento e avaliar devolução, use <b>Financeiro → Cancelar atendimento</b> na ficha, não apenas Cancelou na agenda."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'><span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>07:00 · João</b><span style='font-size:11px;color:var(--tk-tx4);'>Treino A</span></span><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>⋮</span><i class='ajfoco-rot'>as ações</i></span></span><span style='display:inline-flex;gap:6px;margin-top:8px;'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Feita</span><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Faltou</span><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Cancelou</span></span></div></div><div class='ajfig ajreal'><span class='ajfig-cab'>na tela de verdade</span><img class='ajimg' src='assets/ajuda/p-sessao-acoes.jpg' alt='As ações da sessão abertas dentro da grade da semana' loading='lazy' onerror=\"this.closest('.ajreal').style.display='none'\"></div>"
+      },
+      {
+        "t": "Pedidos de horário do app",
+        "p": [
           "Quando o aluno pede horário pelo app, aparece a faixa roxa no topo da Agenda.",
-          "<b>Confirmar</b> cria a sessão e avisa o aluno por notificação; <b>Recusar</b> também avisa, com carinho.",
-        ] },
-      ] },
-    { id: "treinos", t: "Montar treinos", d: "Fichas, circuito, corrida e a semana do aluno",
-      ic: "<path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/>",
-      subs: [
-        { t: "Montar uma ficha", p: [
+          "<b>Confirmar</b> cria a sessão e avisa o aluno por notificação; <b>Recusar</b> também avisa, com carinho."
+        ]
+      },
+      {
+        "t": "Sessão presencial integrada",
+        "p": [
+          "Abra <b>Iniciar sessão</b> no Início ou no Aluno 360° e escolha o aluno pelo nome.",
+          "Ao finalizar, o sistema procura uma sessão pendente desse aluno no dia para marcar como feita. Se houver mais de um horário, confira o registro na Agenda.",
+          "Esse registro não cria por si só um reembolso nem confirma um pagamento externo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "treinos",
+    "t": "Montar treinos",
+    "d": "Fichas, séries, calendário, corrida por etapas e IA",
+    "ic": "<path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/>",
+    "subs": [
+      {
+        "t": "Montar uma ficha",
+        "p": [
           "Em <b>Treinos</b>, escolha o aluno no topo.",
           "Abra a ficha (A, B, C…) e toque em <b>+ Adicionar exercício</b>: busque, escolha séries/repetições/descanso e confirme.",
           "Tocar num exercício já montado abre o editor dele (série, repetição, descanso, tipo de série e observação).",
-          "No fim, <b>Salvar e publicar</b> manda pro app do aluno.",
-        ], fig: ajFig(ajFoco(ajBt("+ Adicionar exercício", "pri"), "abre a busca") + " " + ajBt("Supino reto · 4 × 12")) },
-        { t: "Gerar com IA", p: [
-          "O botão <b>Gerar com IA</b> monta o mês inteiro (4 semanas com progressão) a partir da anamnese, das cargas reais e da SUA leitura.",
-          "Escreva sua diretriz na gaveta <b>Sua leitura</b> — o que você escreve ali vence qualquer padrão.",
-          "Escolha o tipo: musculação, circuito ou corrida. O resultado entra na aba certa pra você revisar antes de publicar.",
-        ] },
-        { t: "Semana do aluno", p: [
-          "A aba <b>Semana do aluno</b> amarra cada dia a UM treino (ficha, circuito ou corrida).",
-          "O card HOJE do app segue esse plano; dia sem treino vira DESCANSO.",
-        ] },
-        { t: "Parte 2 do dia (A2)", p: [
+          "No fim, <b>Salvar e publicar</b> manda pro app do aluno."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>+ Adicionar exercício</span><i class='ajfoco-rot'>abre a busca</i></span> <span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Supino reto · 4 × 12</span></div></div>"
+      },
+      {
+        "t": "Gerar com IA sem perder a revisão",
+        "p": [
+          "Em <b>Gerar com IA</b> ou <b>IA do treino</b> no Aluno 360°, escolha o aluno e confira os dados usados na proposta.",
+          "Preencha <b>Sua leitura</b> com a orientação do profissional. Revise exercícios, séries e planejamento antes de aplicar.",
+          "O resultado da IA é uma proposta. Aplicar e publicar continuam sendo ações do responsável; não há aprovação automática por um alerta do painel."
+        ]
+      },
+      {
+        "t": "Semana recorrente e calendário por data",
+        "p": [
+          "Abra <b>Semana do aluno</b> para montar a rotina recorrente. O calendário mensal permite conferir uma data específica e suas atividades.",
+          "No editor do dia, escolha as atividades do próprio aluno e, quando necessário, seus horários. Um dia pode ter mais de uma atividade.",
+          "Marque descanso explicitamente ou volte à semana recorrente. Uma exceção por data é diferente de modificar a rotina semanal inteira.",
+          "Salve e publique para o app receber a organização. O aluno continua com o treino e os registros anteriores preservados."
+        ]
+      },
+      {
+        "t": "Copiar semanas sem sobrescrever ajustes por engano",
+        "p": [
+          "No planejamento, use a cópia de semanas e confira a origem, o período de destino e a prévia.",
+          "A cópia aceita de <b>1 a 12 semanas</b> e preserva os ajustes existentes por padrão. Substituir requer confirmação.",
+          "Se a origem ou o destino mudou enquanto a prévia estava aberta, confira novamente antes de salvar."
+        ]
+      },
+      {
+        "t": "Parte 2 do dia (A2)",
+        "p": [
           "Dentro da ficha, o bloco <b>Parte 2</b> adiciona cardio/alongamento ao MESMO dia (vira A2, B2…).",
-          "No app ela aparece dentro da gaveta da ficha, com linhas marcáveis e cronômetro.",
-        ] },
-        { t: "Fichas-modelo e grupos", p: [
+          "No app ela aparece dentro da gaveta da ficha, com linhas marcáveis e cronômetro."
+        ]
+      },
+      {
+        "t": "Fichas-modelo e grupos",
+        "p": [
           "Salve uma ficha como <b>modelo</b> pra reaproveitar em outros alunos.",
-          "Os <b>treinos de grupo</b> disparam a mesma ficha pra vários alunos de uma vez.",
-        ] },
-      ] },
-    { id: "financeiro", t: "Financeiro", d: "Cobrança, recebimento e baixa automática",
-      ic: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/>",
-      subs: [
-        { t: "Cobrar quem está devendo", p: [
-          "O bloco vermelho <b>Atrasados</b> fica no topo, com a ação dentro da linha.",
-          "<b>Recebi</b> registra na mão; <b>Pix</b> mostra o QR da sua chave; <b>Link</b> gera o link de cartão/boleto.",
-          "<b>Cobrar todos</b> abre o WhatsApp de cada um com a mensagem pronta.",
-        ], fig: ajFig(ajLinha("Marina · venceu dia 5", "R$ 240,00", ajBt("Recebi") + ajBt("Pix") + ajFoco(ajBt("Link", "pri"), "link de pagamento"))) },
-        { t: "Receber na SUA conta (gateway próprio)", p: [
-          "Em <b>Configurações → Receber dos alunos</b>, escolha Mercado Pago, Asaas ou Pagar.me e cole a SUA chave.",
-          "O dinheiro do aluno cai direto na sua conta, sem repasse.",
-          "Com o gateway ligado, quando o aluno paga o link a <b>baixa entra sozinha</b> no financeiro.",
-          "Pelo Asaas dá pra ligar a <b>assinatura</b> (cobrança automática todo mês).",
-        ] },
-        { t: "Planos, pacotes e despesas", p: [
-          "Cadastre seus planos (mensal, pacote de aulas, por sessão) — a régua de cobrança segue o plano de cada aluno.",
-          "Pacote desconta aula a aula quando você marca <b>Feita</b> na Agenda, e avisa quando zera.",
-          "As <b>Despesas</b> fecham a conta do mês: o Relatório mostra quanto sobrou de verdade.",
-        ] },
-      ] },
-    { id: "chat", t: "Chat", d: "Conversa com cada aluno, dentro do painel",
-      ic: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/>",
-      subs: [
-        { t: "Como funciona", p: [
-          "A lista mostra as conversas com a última mensagem e o contador de novas; toque num aluno pra abrir.",
-          "O chip do topo traz o contexto (próxima sessão, treino do dia) e o atalho <b>Abrir ficha</b>.",
-          "As <b>respostas rápidas</b> agilizam o dia a dia; o chat precisa da conta na nuvem.",
-        ] },
-        { t: "Robô de boas-vindas", p: [
-          "O <b>assistente</b> responde perguntas comuns do aluno (horário, endereço, plano) quando você não está.",
-          "Você configura as respostas dele na própria aba do Chat.",
-        ] },
-      ] },
-    { id: "avaliacoes", t: "Avaliações físicas", d: "Medidas, laudo e evolução comparada",
-      ic: "<path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/>",
-      subs: [
-        { t: "Registrar uma avaliação", p: [
-          "Em <b>Avaliações</b>, escolha o aluno e preencha peso, dobras ou bioimpedância — o que você tiver.",
-          "O laudo completo (gordura, massa magra, TMB, pontuação) sai sozinho e pode ser impresso.",
-          "Quem tem bioimpedância digita os valores medidos e eles vencem as estimativas.",
-        ] },
-        { t: "Medidas pela câmera (beta)", p: [
-          "Ligue em Configurações; duas fotos guiadas viram circunferências estimadas.",
-          "A imagem é lida no aparelho e descartada — nunca sai do celular.",
-        ] },
-        { t: "Histórico e evolução", p: [
+          "Os <b>treinos de grupo</b> disparam a mesma ficha pra vários alunos de uma vez."
+        ]
+      },
+      {
+        "t": "Detalhar as séries e preservar registros",
+        "p": [
+          "No editor do exercício, revise séries, repetições, carga, descanso e observações. Use o detalhamento por série quando disponível.",
+          "No app do aluno, anotar carga e confirmar uma série realizada são ações diferentes. Não trate uma anotação como prova de que todas as séries foram feitas."
+        ]
+      },
+      {
+        "t": "Corrida por etapas",
+        "p": [
+          "No editor de corrida, adicione e ordene os trechos. Cada etapa pode usar <b>metros, quilômetros, minutos ou segundos</b>, sem precisar repetir o mesmo tamanho.",
+          "O menu da etapa permite editar, duplicar, mover ou remover. O resumo soma apenas distâncias e durações conhecidas.",
+          "Esforço, ritmo, velocidade, frequência cardíaca ou zona são orientações opcionais revisadas pelo profissional. A biblioteca de zonas não altera silenciosamente uma prescrição já salva.",
+          "Revise, salve e publique. As orientações exibidas pelo player não significam comparação automática com sensores."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "quest",
+    "t": "Questionários e check-ins",
+    "d": "Modelos, banco de perguntas, respostas e entrada opcional",
+    "ic": "<rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/>",
+    "subs": [
+      {
+        "t": "Criar, editar e organizar questionários",
+        "p": [
+          "Abra <b>Questionários → Criar e organizar</b>. Use os modelos existentes ou monte um novo com as perguntas do banco.",
+          "Você pode renomear o modelo, ordenar perguntas, pesquisar por título/enunciado e conferir a prévia.",
+          "Usar um modelo preenche o rascunho; confirme o salvamento. Editar o modelo <b>não reescreve os questionários já enviados nem as respostas recebidas</b>."
+        ]
+      },
+      {
+        "t": "Perguntas de nota, carinhas e texto livre",
+        "p": [
+          "Escolha o tipo de resposta e confira a configuração da pergunta. Notas e carinhas usam a pontuação e o sentido definidos.",
+          "<b>Texto livre não é uma nota</b>. Um campo de pontuação vazio não deve ser tratado como zero.",
+          "Perguntas já usadas mantêm sua identificação. Confira possíveis códigos duplicados e a seleção antes de salvar."
+        ]
+      },
+      {
+        "t": "Enviar e acompanhar respostas",
+        "p": [
+          "Escolha o questionário e os destinatários no fluxo de envio. Confira as opções de repetição e publicação.",
+          "Em <b>A semana</b> e nas respostas do aluno, revise quem respondeu e o conteúdo. Falta de resposta não prova falta de treino.",
+          "O botão de cobrança prepara o contato com quem ainda não respondeu; confira o envio no canal usado. Respostas com nota podem alimentar os gráficos de Check-ins."
+        ]
+      },
+      {
+        "t": "Questionário e contrato na entrada do aluno",
+        "p": [
+          "Configure a entrada em <b>Criar e organizar</b>. No cadastro ou em <b>App e acesso</b>, escolha exigir ou dispensar o preenchimento para aquele aluno.",
+          "Publique a configuração. O aluno com entrada exigida responde, confere os dados e confirma o documento no fluxo correspondente.",
+          "A confirmação depende do servidor; uma falha de conexão não equivale a aceite concluído. Aceites anteriores permanecem no histórico quando houver nova solicitação.",
+          "O texto comercial é editável e deve ser conferido pelo responsável. A ajuda não define multas nem condições legais do contrato."
+        ]
+      },
+      {
+        "t": "Posso ver os dois fluxos sem usar uma conta real?",
+        "p": [
+          "As demonstrações do aluno têm versões <b>com cadastro inicial</b> e <b>sem cadastro inicial</b>. Use-as para entender a diferença.",
+          "São dados fictícios: respostas e aceites da demonstração não configuram um aluno real nem comprovam a publicação do seu cadastro."
+        ]
+      }
+    ],
+    "k": "questionário questionario formulário modelo perguntas carinhas checkin check-in onboarding contrato aceite cadastro inicial dispensa"
+  },
+  {
+    "id": "nutricao",
+    "t": "Nutrição integrada",
+    "d": "Planejar, revisar, publicar e acompanhar alimentação",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Onde fica a alimentação do aluno?",
+        "p": [
+          "No Personal, abra <b>Nutrição</b> ou o atalho do Aluno 360°. Escolha o aluno antes de editar.",
+          "O fluxo permanece no mesmo acompanhamento. Ele não cria automaticamente um paciente no módulo separado Torque Nutri."
+        ]
+      },
+      {
+        "t": "Rascunho, revisão, aplicar e publicar",
+        "p": [
+          "Monte o plano no editor ou solicite uma proposta da IA quando o serviço estiver disponível. A proposta precisa de revisão do responsável.",
+          "Confira refeições, dados, alternativas e vigência antes de <b>aplicar</b>. Depois <b>publique</b> pelo fluxo do aluno.",
+          "Duplicar ou restaurar uma versão cria conteúdo para revisão. Não confunda rascunho com plano já disponível no app."
+        ]
+      },
+      {
+        "t": "Biblioteca, receitas e registros",
+        "p": [
+          "Use as áreas <b>Plano, Biblioteca e Registros</b> para organizar o conteúdo e conferir o acompanhamento.",
+          "Dados nutricionais ausentes não significam zero. Confira as informações do alimento ou receita antes de usar.",
+          "Comentários e marcações de revisão dependem do registro efetivamente consultado. Uma edição do registro pode exigir nova revisão."
+        ]
+      },
+      {
+        "t": "Foto da refeição e confirmação do aluno",
+        "p": [
+          "No app, <b>Alimentação</b> permite consultar o plano publicado e registrar o acompanhamento. Uma análise de foto é uma estimativa para conferir, não um registro automaticamente confirmado.",
+          "O aluno confirma o registro; abrir a tela ou analisar uma foto não gera, por si só, confirmação ou pontos.",
+          "Registro local pendente precisa ser sincronizado. Planos pausados preservam a consulta ao histórico; novos registros dependem da situação do plano."
+        ]
+      }
+    ],
+    "k": "nutrição nutricao alimentação alimentacao plano alimentar refeição refeicao receita biblioteca diário diario revisão rascunho"
+  },
+  {
+    "id": "avaliacoes",
+    "t": "Avaliações físicas",
+    "d": "Medidas, laudo e evolução comparada",
+    "ic": "<path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/>",
+    "subs": [
+      {
+        "t": "Registrar e revisar uma avaliação",
+        "p": [
+          "Em <b>Avaliações</b>, escolha o aluno e registre as medidas e observações disponíveis.",
+          "Confira os valores medidos e os resultados calculados antes de salvar, imprimir ou compartilhar. Estimativas do aplicativo não devem ser apresentadas como medições diretas."
+        ]
+      },
+      {
+        "t": "Avaliação postural e recursos de imagem",
+        "p": [
+          "Use o fluxo de avaliação postural disponível na área de Avaliações e confira as imagens e observações antes de concluir.",
+          "Medidas estimadas pela câmera são um recurso opcional. Revise o resultado; uma estimativa visual não é um diagnóstico.",
+          "Preserve a autoria e a identificação do aluno ao compartilhar um relatório."
+        ]
+      },
+      {
+        "t": "Histórico e evolução",
+        "p": [
           "A aba <b>Histórico e evolução</b> compara as duas últimas medições com os deltas.",
-          "As fotos de progresso do aluno ficam na ficha dele (aba Avaliações).",
-        ] },
-      ] },
-    { id: "quest", t: "Questionários e check-ins", d: "Perguntas suas + o check-in da semana",
-      ic: "<rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/>",
-      subs: [
-        { t: "Criar um questionário", p: [
-          "Em <b>Questionários</b>, monte as perguntas (nota, carinhas ou texto) e escolha pra quem vai.",
-          "Com <b>repetir</b>, ele reabre toda semana sozinho.",
-          "O aluno responde no app, uma pergunta por tela.",
-        ] },
-        { t: "Ler as respostas", p: [
-          "A aba <b>A semana</b> ordena: quem respondeu MAL vem primeiro, depois tudo bem, depois quem não respondeu.",
-          "<b>Cobrar os N</b> chama quem falta responder.",
-          "Na ficha do aluno, cada pergunta com nota vira gráfico de evolução (aba Check-ins).",
-        ] },
-      ] },
-    { id: "comunidade", t: "Comunidade e Desafio", d: "O feed da turma e o placar do mês",
-      ic: "<path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/>",
-      subs: [
-        { t: "Ligar a Comunidade", p: [
-          "Vem DESLIGADA. Ligue em <b>Configurações → Comunidade</b> e publique os apps.",
-          "Os alunos postam treino, curtem e comentam; a turma puxa a turma.",
-        ] },
-        { t: "Moderar", p: [
-          "Em <b>Desafio → Comunidade</b> você vê cada post e pode apagar o que não couber.",
-        ] },
-        { t: "Desafio do mês", p: [
-          "Crie um desafio com meta e prêmio; o placar conta os treinos e o app mostra o ranking.",
-        ] },
-      ] },
-    { id: "relatorios", t: "Relatórios", d: "O mês fechado, a retenção e quanto vale sua hora",
-      ic: "<path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/>",
-      subs: [
-        { t: "Do dia a dia", p: [
-          "A primeira sub-aba junta KPIs do mês, movimentação, indicadores, aniversários e os alertas do studio.",
-          "<b>Mandar no WhatsApp</b> abre o resumo do mês pronto pra enviar; <b>Mandar pro meu e-mail</b> manda pra sua caixa — e o fechamento do mês anterior pode ir sozinho (Sua ilha).",
-        ] },
-        { t: "Retenção (Radar)", p: [
-          "O Radar mostra quem está esfriando ANTES de virar cancelamento: frequência caindo, check-in piorando, conversa parada.",
-          "Cada linha traz a ação que puxa o aluno de volta.",
-        ] },
-        { t: "Quanto vale sua hora", p: [
-          "Nos Indicadores, <b>Sua hora rendeu</b> divide o que entrou de AULAS (mensalidade, sessão e crédito — venda avulsa fica fora) pelas sessões dadas — o número que decide reajuste e agenda cheia.",
-        ] },
-        { t: "O mês de UM aluno", p: [
-          "O <b>relatório mensal</b> de um aluno específico (e o <b>card pra postar</b> no Instagram, com sua cor e logo) saem da FICHA dele, aba Avaliações.",
-        ] },
-      ] },
-    { id: "assessoria", t: "Assessoria a distância", d: "Acompanhar quem treina longe de você",
-      ic: "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/>",
-      subs: [
-        { t: "Como funciona", p: [
-          "Aluno de consultoria online treina sozinho, mas registra tudo pelo app: treinos feitos, sequência e o check-in da semana.",
-          "A aba <b>Assessoria</b> junta esses alunos numa tela só — quem sumir fica vermelho.",
-          "A mensagem pronta a um clique mantém o aluno perto mesmo longe.",
-        ] },
-      ] },
-    { id: "appaluno", t: "O app dos seus alunos", d: "Publicar, personalizar, clube e loja",
-      ic: "<rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/>",
-      subs: [
-        { t: "Publicar e atualizar", p: [
-          "O app nasce no <b>Salvar e publicar</b> do treino, e o botão <b>Publicar</b> da Personalização atualiza todos de uma vez.",
-          "Correções do sistema chegam pra TODOS os alunos sozinhas — ninguém precisa reinstalar.",
-        ] },
-        { t: "A cara do seu app", p: [
-          "Em <b>Personalização</b>, escolha a cor da sua marca e o logo — a paleta inteira do app muda junto.",
-          "Suba uma <b>foto por tipo de treino</b> (perna, peito, corrida…) — cada ficha ganha a capa certa sozinha.",
-        ] },
-        { t: "Clube de vantagens", p: [
-          "Em <b>Personalização → Clube de vantagens</b>, cadastre parcerias com comércios locais: nome, benefício, cupom e link.",
-          "No app do aluno vira um cartão com o cupom de copiar e o botão pro site do parceiro.",
-        ], fig: ajFig(ajLinha("Suplementos do Zé", "15% off em creatina", "") + "<span style='display:inline-flex;gap:6px;margin-top:8px;'>" + ajBt("TORQUE15 · copiar") + ajFoco(ajBt("Ir pro site do parceiro"), "o link que você colou") + "</span>") },
-        { t: "Loja no app", p: [
-          "Em <b>Personalização → Loja</b>, cadastre produtos e serviços com preço e foto.",
-          "Sem gateway, o <b>Quero esse</b> cai no seu WhatsApp; com gateway próprio ligado, vira <b>Comprar</b> com pagamento dentro do app e baixa automática.",
-        ] },
-        { t: "Banco de imagens", p: [
+          "As fotos de progresso do aluno ficam na ficha dele (aba Avaliações)."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marca",
+    "t": "Nome, marca e aparência do aluno",
+    "d": "Seu nome ou o estúdio em destaque, sem poluir o topo",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Escolher o nome em destaque",
+        "p": [
+          "Abra <b>Personalização → Identidade, cores e logo → Identidade da marca</b>.",
+          "Em <b>Nome em destaque</b>, escolha <b>Meu nome</b> ou <b>Nome do estúdio / marca</b> e preencha o nome correspondente.",
+          "A escolha controla a identidade comercial exibida no template. Ela não troca o nome nem a foto do aluno."
+        ]
+      },
+      {
+        "t": "Mostrar o nome do personal abaixo é opcional?",
+        "p": [
+          "<b>Sim. Mostrar nome do personal abaixo da marca vem desligado por padrão.</b> Deixe desligado para aparecer somente o nome principal, sem segunda linha nem espaço vazio.",
+          "Ative apenas se desejar a identificação menor abaixo. Quando o profissional é o destaque, a opção permite mostrar o estúdio na segunda linha.",
+          "Uma combinação já salva é preservada ao reabrir. Trocar o nome principal desliga a segunda linha, para você decidir novamente."
+        ]
+      },
+      {
+        "t": "Nome curto, slogan, cores e logo",
+        "p": [
+          "<b>Nome curto e slogan são opcionais.</b> Para um topo mais simples, mantenha o slogan vazio e o nome secundário desligado.",
+          "A prévia usa as cores e o logo já configurados. <b>Editar logo</b> abre o controle existente; não é necessário cadastrar outra marca em outro menu.",
+          "Confira nomes longos na prévia do celular. O nome curto é usado nos espaços reduzidos; o nome principal continua identificado na configuração."
+        ]
+      },
+      {
+        "t": "Salvar identidade e publicar para os alunos",
+        "p": [
+          "Digitar altera <b>somente a prévia</b>. Toque em <b>Salvar identidade</b> e confira a mensagem de salvamento.",
+          "Depois use <b>Publicar</b>, no topo da Personalização, para atualizar os apps. Campos ainda não salvos impedem essa publicação.",
+          "Se outra sessão alterou a marca ou houve falha, mantenha o rascunho e confira os campos atuais. Salvo no painel não significa publicado na nuvem do aluno."
+        ]
+      },
+      {
+        "t": "O que muda e o que não muda?",
+        "p": [
+          "A identidade segue para o cabeçalho do aluno e para os textos, compartilhamentos e documentos que usam a marca do acompanhamento. Nos recibos, a pessoa responsável continua identificada na assinatura.",
+          "<b>Nome de login, dados fiscais, recebedor/chave Pix e registros anteriores não são substituídos</b> pelo nome fantasia.",
+          "Antes de identificar o aluno, o login genérico permanece neutro. Notificações agendadas no servidor, e-mails transacionais, ícones e nomes nas lojas não são renomeados por essa configuração.",
+          "Um atalho já instalado pode conservar o nome antigo. Essa preferência não garante renomear o ícone do app no sistema do celular."
+        ]
+      }
+    ],
+    "k": "nome fantasia marca identidade branding personalização personalizacao template estúdio estudio logo nome personal secundário abaixo opcional poluição visual"
+  },
+  {
+    "id": "appaluno",
+    "t": "O app dos seus alunos",
+    "d": "Publicar, personalizar, clube e loja",
+    "ic": "<rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/>",
+    "subs": [
+      {
+        "t": "Salvar conteúdo, publicar e receber atualizações",
+        "p": [
+          "Use <b>Salvar e publicar</b> no treino ou <b>Publicar</b> na Personalização, conforme a mudança. Confira a conclusão e eventuais pendências.",
+          "Atualização do sistema e publicação do conteúdo do aluno são diferentes. Uma marca ou prescrição salva apenas no painel não chega ao aluno só porque o site ganhou versão nova.",
+          "Para buscar a atualização, reabra o app conectado depois de preservar as edições. Não apague os dados do navegador como primeira tentativa."
+        ]
+      },
+      {
+        "t": "Nome do personal ou estúdio no template",
+        "p": [
+          "Escolha em <b>Personalização → Identidade, cores e logo → Identidade da marca</b>. O nome menor abaixo é opcional e começa desligado.",
+          "Salvar a identidade não publica automaticamente os apps. Confira a prévia, salve e use Publicar.",
+          "<button type='button' class='btn sec mini' data-ajtopico='marca'>Configurar nome e marca</button>"
+        ]
+      },
+      {
+        "t": "Foto grande, capas e aparência",
+        "p": [
+          "A foto no topo do aluno permanece grande no celular, com os controles sobrepostos. A identidade não substitui o nome ou a foto do aluno.",
+          "Em <b>Personalização</b>, escolha cores, logo e fotos por tipo de treino. No banco de <b>Imagens</b>, use a galeria existente para reutilizar as fotos."
+        ]
+      },
+      {
+        "t": "Clube de vantagens",
+        "p": [
+          "Em <b>Personalização → Benefícios e loja → Clube de vantagens</b>, cadastre nome, benefício, cupom e link do parceiro.",
+          "Confira e publique antes de orientar o aluno a usar o cartão do benefício. A disponibilidade da oferta é definida pelo parceiro."
+        ]
+      },
+      {
+        "t": "Loja no app",
+        "p": [
+          "Cadastre os produtos ou serviços no controle de loja da Personalização e confira como a compra será atendida.",
+          "Sem integração de pagamento, a ação pode encaminhar o contato pelo WhatsApp. Com integração, confira o fluxo e a confirmação do provedor.",
+          "O registro de devolução manual no Financeiro não é um estorno automático dessa compra."
+        ]
+      },
+      {
+        "t": "Banco de imagens",
+        "p": [
           "A aba <b>Imagens</b> guarda as fotos que você usa no app (capas de treino, fotos do studio).",
           "Mande 1080 × 1350 com o assunto no meio — o corte 4:5 e a compressão são automáticos.",
-          "Depois é só escolher da galeria na Personalização ou em cada ficha, sem reenviar do celular.",
-        ] },
-        { t: "Cortar o acesso", p: [
-          "Ao encerrar um aluno, o painel oferece <b>revogar o app</b> dele — o acesso morre na hora, em todos os aparelhos.",
-        ] },
-      ] },
-    { id: "zap", t: "WhatsApp e mensagens automáticas", d: "A fila, as mensagens automáticas e o número oficial",
-      ic: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/><path d='M9 10c.5 2 2.5 4 4.5 4.5'/>",
-      subs: [
-        { t: "Automações que caem na fila", p: [
-          "Em <b>Configurações → WhatsApp → Mensagens automáticas de WhatsApp</b>: boas-vindas, aniversário, aluno sumido, pacote acabando e mais.",
-          "Nada sai sozinho: tudo cai na <b>fila do Início</b> e você toca Enviar em cada um.",
-          "Registrou um pagamento? O <b>recibo pronto</b> entra na fila também — um toque e o aluno recebe o comprovante.",
-        ] },
-        { t: "WhatsApp oficial (opcional)", p: [
-          "Quem tem conta na API oficial da Meta cola o próprio Phone ID e token em <b>Configurações → WhatsApp</b>.",
-          "Aí as mensagens saem sozinhas do SEU número — cada professor paga o seu na Meta.",
-        ] },
-      ] },
-    { id: "sitepro", t: "Minha página", d: "Seu site de vendas com agendamento",
-      ic: "<circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/>",
-      subs: [
-        { t: "Publicar sua página", p: [
+          "Depois é só escolher da galeria na Personalização ou em cada ficha, sem reenviar do celular."
+        ]
+      },
+      {
+        "t": "Revogar o acesso é uma operação separada",
+        "p": [
+          "Abra a ficha e confira <b>App e acesso</b> para usar o controle de revogação.",
+          "<b>Cancelar atendimento não revoga automaticamente o app</b>. Confirme cada ação separadamente.",
+          "A revogação depende da atualização do acesso e da comunicação com o servidor. Ela não é uma promessa de apagar remotamente dados já baixados em aparelhos offline."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "medalhas",
+    "t": "Medalhas e evolução no app",
+    "d": "Selecionar conquistas e acompanhar o próximo objetivo",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Escolher medalhas para os alunos",
+        "p": [
+          "Abra <b>Personalização → Medalhas</b>. Pesquise ou filtre as trilhas por modalidade e selecione as que deseja usar.",
+          "Confira nomes, critérios e metas antes de salvar. A seleção precisa ser publicada para atualizar o app dos alunos.",
+          "A criação de conquistas por total de treinos continua disponível. Personalizar o título não muda automaticamente o critério da medalha."
+        ]
+      },
+      {
+        "t": "O que o aluno vê?",
+        "p": [
+          "Cada trilha mostra o nível alcançado e o próximo objetivo. O aluno pode fixar uma meta e expandir a lista de medalhas.",
+          "O visual em relevo e o compartilhamento usam os registros disponíveis. Abrir ou girar uma medalha não registra atividade nem aumenta pontos.",
+          "Metas e resultados da demonstração são fictícios. Conquistas do aplicativo não certificam provas ou benchmarks oficiais; históricos limitados não são totais vitalícios."
+        ]
+      }
+    ],
+    "k": "medalha medalhas conquista conquistas evolução evolucao objetivo próxima meta 3d relevo ranking"
+  },
+  {
+    "id": "financeiro",
+    "t": "Financeiro",
+    "d": "Recebimentos, correções, cancelamentos e devoluções",
+    "ic": "<circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/>",
+    "subs": [
+      {
+        "t": "Cobrar quem está devendo",
+        "p": [
+          "O bloco vermelho <b>Atrasados</b> fica no topo, com a ação dentro da linha.",
+          "<b>Recebi</b> registra na mão; <b>Pix</b> mostra o QR da sua chave; <b>Link</b> gera o link de cartão/boleto.",
+          "<b>Cobrar todos</b> abre o WhatsApp de cada um com a mensagem pronta."
+        ],
+        "fig": "<div class='ajfig'><span class='ajfig-cab'>como aparece na tela</span><div class='ajfig-mio'><span style='display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px 12px;border:1px solid var(--tk-bd2);border-radius:12px;background:var(--tk-sup2);'><span style='flex:1;min-width:0;text-align:left;'><b style='display:block;font-size:13px;color:var(--tk-tx);'>Marina · venceu dia 5</b><span style='font-size:11px;color:var(--tk-tx4);'>R$ 240,00</span></span><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Recebi</span><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--tk-sup2);border:1px solid var(--tk-bd2);color:var(--tk-tx2);'>Pix</span><span class='ajfoco'><span style='display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:10px;font-size:12.5px;font-weight:800;background:var(--pt-roxo);border:1px solid var(--pt-roxo);color:#fff;'>Link</span><i class='ajfoco-rot'>link de pagamento</i></span></span></div></div>"
+      },
+      {
+        "t": "Cobrança integrada e recebimento manual",
+        "p": [
+          "O financeiro diferencia o registro manual de uma cobrança emitida por integração. Confira em <b>Configurações → Receber dos alunos</b> o provedor e a situação da conexão.",
+          "Para um pagamento integrado, confira o status retornado pelo provedor. Registrar manualmente um recebimento não faz a transferência bancária.",
+          "Não registre outra entrada apenas porque a atualização ainda não apareceu. Recebimentos manuais semelhantes podem gerar aviso de possível duplicidade."
+        ]
+      },
+      {
+        "t": "Planos, pacotes e despesas",
+        "p": [
+          "Cadastre seus planos (mensal, pacote de aulas, por sessão) — a régua de cobrança segue o plano de cada aluno.",
+          "Pacote desconta aula a aula quando você marca <b>Feita</b> na Agenda, e avisa quando zera.",
+          "As <b>Despesas</b> fecham a conta do mês: o Relatório mostra quanto sobrou de verdade."
+        ]
+      },
+      {
+        "t": "Editar, anular ou devolver: qual a diferença?",
+        "p": [
+          "<b>Editar</b> corrige dados do recebimento com motivo e histórico. <b>Anular</b> retira um lançamento incorreto dos totais, preservando o registro.",
+          "<b>Devolução</b> registra dinheiro devolvido ao cliente, total ou parcialmente, vinculado ao pagamento original. Não use anulação para esconder uma devolução.",
+          "Um recebimento com histórico de devolução tem edição e anulação bloqueadas nesses controles. Confira o histórico antes de confirmar qualquer operação.",
+          "<button type='button' class='btn sec mini' data-ajtopico='cancelamentos'>Passo a passo das devoluções</button>"
+        ]
+      },
+      {
+        "t": "Bruto, devolvido, líquido e Movimento de hoje",
+        "p": [
+          "<b>Bruto</b> é o total de recebimentos válidos. <b>Devolvido</b> considera as devoluções confirmadas manualmente. <b>Líquido</b> desconta essas saídas.",
+          "Uma solicitação pendente reserva o saldo disponível para devolver, mas ainda não é uma saída de caixa realizada.",
+          "A devolução aparece na <b>data informada para a devolução</b>, sem reescrever o mês da venda. No dia, confira <b>Entrou hoje, Devolvido hoje e Saldo líquido</b>.",
+          "As despesas continuam separadas. Receita líquida de devoluções não é, sozinha, lucro do negócio."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cancelamentos",
+    "t": "Cancelamentos e devoluções",
+    "d": "Encerrar o atendimento e registrar estorno total ou parcial",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Cancelar o atendimento, com ou sem devolução",
+        "p": [
+          "Abra o aluno pelo nome e vá a <b>Financeiro → Cancelar atendimento</b>. Informe o motivo e revise os efeitos.",
+          "O cancelamento encerra acompanhamento, contratos ativos e renovação local do pacote. Sessões futuras não realizadas são arquivadas; aulas feitas, faltas, treinos, avaliações e recebimentos ficam preservados.",
+          "Escolha cancelar sem devolução ou criar uma <b>devolução pendente</b> ligada a um recebimento. Confira cliente e valor antes da confirmação.",
+          "O aplicativo não calcula automaticamente multa, proporcionalidade ou direito ao reembolso. Informe o valor acordado e não confunda esta operação com a assinatura do próprio Torque Personal."
+        ]
+      },
+      {
+        "t": "E as próximas cobranças e o acesso ao app?",
+        "p": [
+          "Se houver assinatura automática vinculada, o cancelamento do atendimento é bloqueado. Cancele primeiro pelo fluxo de cobrança existente e <b>aguarde a confirmação do provedor</b>.",
+          "O cancelamento local <b>não cancela links de pagamento já emitidos nem agendamentos externos</b>. Confira esses canais separadamente.",
+          "Também <b>não revoga automaticamente o acesso ao app</b> e não envia mensagem de cancelamento. Revise App e acesso e comunique o aluno pelo seu canal quando necessário."
+        ]
+      },
+      {
+        "t": "Pedir devolução total ou parcial",
+        "p": [
+          "No recebimento do aluno, toque em <b>Devolução</b>. Confira o valor original e o saldo disponível.",
+          "Informe o valor total ou parcial e o motivo. Use até duas casas decimais, sem separador de milhares.",
+          "O limite desconta devoluções já realizadas <b>e pendentes</b>, impedindo novo registro acima do saldo. É possível registrar mais de uma devolução parcial.",
+          "Ao salvar, a situação fica <b>Pendente</b>. Isso não significa que o dinheiro saiu da conta."
+        ]
+      },
+      {
+        "t": "Confirmar uma devolução já feita pelo personal",
+        "p": [
+          "<b>Esta função não envia Pix, não faz transferência e não estorna cartão automaticamente.</b> Registre a conclusão somente depois de ter realizado e conferido a devolução fora do aplicativo.",
+          "Na solicitação pendente, toque em <b>Já devolvi o dinheiro</b>. Informe data, forma da devolução e referência do comprovante ou recibo.",
+          "Confirme a declaração de que o dinheiro já foi devolvido. Se o pagamento veio de integração, confira também o provedor para não devolver duas vezes.",
+          "Revise o aluno e o valor na confirmação final. A situação passa a <b>Devolvido manualmente</b>; não é confirmação bancária automática."
+        ]
+      },
+      {
+        "t": "Desistir de uma solicitação ou conferir o histórico",
+        "p": [
+          "Uma solicitação ainda <b>Pendente</b> pode ser cancelada com motivo. Isso libera o saldo reservado e mantém a trilha do pedido.",
+          "Uma devolução marcada como realizada não pode ser editada por esse fluxo. Pagamento original, motivos, responsáveis e transições ficam no histórico administrativo.",
+          "Se houver conflito, erro de gravação ou valor inconsistente, pare e confira o registro atual. Não repita a operação para tentar forçar o salvamento."
+        ]
+      },
+      {
+        "t": "Declaração e comprovante",
+        "p": [
+          "Depois do registro, use a declaração disponível para baixar e imprimir a identificação da devolução e a referência informada.",
+          "A declaração é um <b>registro administrativo: não é comprovante bancário nem confirmação de estorno no cartão</b>.",
+          "Nesta versão, o app guarda a referência do comprovante, <b>não o anexo</b>. Conserve o comprovante original pelo procedimento do seu negócio."
+        ]
+      },
+      {
+        "t": "Quando a devolução entra no caixa?",
+        "p": [
+          "Somente a devolução confirmada manualmente gera a saída, na sua data. O recebimento original permanece no histórico.",
+          "Confira os totais bruto, devolvido e líquido e o <b>Movimento de hoje</b>. Uma solicitação pendente não reduz a receita realizada.",
+          "Cancelar atendimento, cancelar uma solicitação de devolução e anular um recebimento são três operações diferentes."
+        ]
+      }
+    ],
+    "k": "estorno extorno reembolso devolução devolucao parcial total pix cartão dinheiro cancelamento cancelou pendente comprovante"
+  },
+  {
+    "id": "automacoes",
+    "t": "Automações e providências",
+    "d": "Acompanhar tarefas sem confundir com envios automáticos",
+    "ic": "<path d='M5 4h14v16H5zM8 8h8M8 12h8M8 16h5'/>",
+    "subs": [
+      {
+        "t": "Onde ficam as automações?",
+        "p": [
+          "No <b>Início</b>, toque em <b>Automações</b> ou abra <b>Automações e providências</b>. A Central Pro não é necessária.",
+          "Entre na sua conta e mantenha a conexão para carregar as automações compartilhadas e a fila.",
+          "O quadro apresenta as regras cadastradas e as providências pendentes disponíveis para a sua conta."
+        ]
+      },
+      {
+        "t": "O que faz Ativar automações recomendadas?",
+        "p": [
+          "O botão cadastra as recomendações que ainda não existem: <b>Revisar questionário respondido, Acompanhar novo aluno e Recuperar sessão cancelada</b>.",
+          "Essas regras organizam tarefas de acompanhamento. A fila depende dos eventos recebidos pela integração; ativar regras não recria todos os eventos antigos.",
+          "Não confunda o cadastro de uma regra com execução de contato, diagnóstico ou mudança automática de prescrição."
+        ]
+      },
+      {
+        "t": "Atualizar fila e concluir uma providência",
+        "p": [
+          "Use <b>Atualizar fila</b> para consultar novamente. Revise o aluno e realize a tarefa necessária no fluxo correspondente.",
+          "Toque em <b>Concluir</b> somente depois de conferir a providência. O botão marca a tarefa como concluída; <b>não envia mensagem nem altera o treino</b>.",
+          "As mensagens preparadas para WhatsApp e as notificações são outros fluxos. Confira o status de cada canal, não apenas o estado da providência."
+        ]
+      }
+    ],
+    "k": "automação automacao automacoes providência providencia fila gatilho central pro novos alunos questionario sessão cancelada"
+  },
+  {
+    "id": "chat",
+    "t": "Chat",
+    "d": "Conversa com cada aluno, dentro do painel",
+    "ic": "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/>",
+    "subs": [
+      {
+        "t": "Como funciona",
+        "p": [
+          "A lista mostra as conversas com a última mensagem e o contador de novas; toque num aluno pra abrir.",
+          "O chip do topo traz o contexto (próxima sessão, treino do dia) e o atalho <b>Abrir ficha</b>.",
+          "As <b>respostas rápidas</b> agilizam o dia a dia; o chat precisa da conta na nuvem."
+        ]
+      },
+      {
+        "t": "Robô de boas-vindas",
+        "p": [
+          "O <b>assistente</b> responde perguntas comuns do aluno (horário, endereço, plano) quando você não está.",
+          "Você configura as respostas dele na própria aba do Chat."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "comunidade",
+    "t": "Comunidade e Desafio",
+    "d": "O feed da turma e o placar do mês",
+    "ic": "<path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/>",
+    "subs": [
+      {
+        "t": "Ligar a Comunidade",
+        "p": [
+          "Vem DESLIGADA. Ligue em <b>Configurações → Comunidade</b> e publique os apps.",
+          "Os alunos postam treino, curtem e comentam; a turma puxa a turma."
+        ]
+      },
+      {
+        "t": "Moderar",
+        "p": [
+          "Em <b>Desafio → Comunidade</b> você vê cada post e pode apagar o que não couber."
+        ]
+      },
+      {
+        "t": "Desafio do mês",
+        "p": [
+          "Crie um desafio com meta e prêmio; o placar conta os treinos e o app mostra o ranking."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "relatorios",
+    "t": "Relatórios",
+    "d": "O mês fechado, a retenção e quanto vale sua hora",
+    "ic": "<path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/>",
+    "subs": [
+      {
+        "t": "Do dia a dia",
+        "p": [
+          "A primeira sub-aba junta KPIs do mês, movimentação, indicadores, aniversários e os alertas do studio.",
+          "<b>Mandar no WhatsApp</b> abre o resumo do mês pronto pra enviar; <b>Mandar pro meu e-mail</b> manda pra sua caixa — e o fechamento do mês anterior pode ir sozinho (Sua ilha)."
+        ]
+      },
+      {
+        "t": "Radar de acompanhamento e retenção",
+        "p": [
+          "Use o Radar para revisar frequência registrada, check-ins e contatos. Os sinais ajudam a escolher quem acompanhar.",
+          "Uma indicação de ausência de registros não comprova que o aluno parou de se exercitar. Confira os dados e faça o contato pelo fluxo apropriado."
+        ]
+      },
+      {
+        "t": "Receita, devoluções e quanto vale sua hora",
+        "p": [
+          "Os relatórios diferenciam recebimentos válidos, devoluções realizadas e saldo líquido; uma devolução pendente ainda não é saída realizada.",
+          "<b>Sua hora rendeu</b> usa os movimentos vinculados às aulas e as sessões dadas; serviços avulsos permanecem separados.",
+          "Confira o período e a data da devolução antes de comparar meses. Saldo líquido de recebimentos não substitui a análise das despesas."
+        ]
+      },
+      {
+        "t": "O mês de UM aluno",
+        "p": [
+          "O <b>relatório mensal</b> de um aluno específico (e o <b>card pra postar</b> no Instagram, com sua cor e logo) saem da FICHA dele, aba Avaliações."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "assessoria",
+    "t": "Assessoria a distância",
+    "d": "Acompanhar quem treina longe de você",
+    "ic": "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/>",
+    "subs": [
+      {
+        "t": "Acompanhar consultoria online",
+        "p": [
+          "A aba <b>Assessoria</b> reúne os alunos acompanhados a distância e os registros disponíveis no app.",
+          "Confira a frequência registrada, os questionários e as mensagens antes de decidir o próximo contato. Sem registro não significa necessariamente sem atividade.",
+          "Atendimento online é separado da forma de cobrança. Treinos e alterações no planejamento continuam precisando ser salvos e publicados."
+        ]
+      },
+      {
+        "t": "Atalhos de acompanhamento",
+        "p": [
+          "Abra a ficha do aluno e use o <b>Aluno 360°</b> para chegar ao treino, questionário, avaliação ou nutrição.",
+          "Os atalhos não enviam automaticamente uma orientação. Revise antes de aplicar, publicar ou entrar em contato."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zap",
+    "t": "WhatsApp e mensagens automáticas",
+    "d": "A fila, as mensagens automáticas e o número oficial",
+    "ic": "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/><path d='M9 10c.5 2 2.5 4 4.5 4.5'/>",
+    "subs": [
+      {
+        "t": "Mensagens preparadas para WhatsApp",
+        "p": [
+          "Em <b>Configurações → WhatsApp</b>, confira as mensagens automáticas configuradas e a fila do Início.",
+          "No fluxo que abre o WhatsApp, revise o destinatário e a mensagem e confirme o envio no próprio canal.",
+          "Mensagem preparada, link aberto e mensagem recebida são etapas diferentes. Não trate um recibo preparado como entrega comprovada."
+        ]
+      },
+      {
+        "t": "Integração oficial e tarefas de acompanhamento",
+        "p": [
+          "Quem utiliza a integração oficial deve conferir a configuração e o retorno do envio. Sem conexão ou confirmação, não presuma que a mensagem foi entregue.",
+          "<b>Automações e providências</b> no Início é uma fila de tarefas. Concluir uma providência não dispara contato ou reembolso.",
+          "Não cole senhas, tokens ou chaves privadas em conversas de suporte para relatar uma falha."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sitepro",
+    "t": "Minha página",
+    "d": "Seu site de vendas com agendamento",
+    "ic": "<circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/>",
+    "subs": [
+      {
+        "t": "Publicar sua página",
+        "p": [
           "Em <b>Minha página</b>, preencha headline, bio, planos e depoimentos — a prévia mostra na hora.",
           "Publique e compartilhe o endereço no Instagram e no WhatsApp.",
-          "O interessado agenda a <b>aula experimental</b> ali mesmo, e o pedido cai na sua Agenda.",
-        ] },
-        { t: "Depoimentos", p: [
-          "Peça o depoimento pelo botão da ficha do aluno — ele escreve no próprio app e você aprova antes de ir pro ar.",
-        ] },
-      ] },
-    { id: "conta", t: "Conta, dados e aparência", d: "Modo claro, exportar dados e assinatura",
-      ic: "<circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/>",
-      subs: [
-        { t: "Modo claro", p: [
-          "O interruptor <b>Modo claro</b> fica no pé do menu lateral.",
-        ] },
-        { t: "Seus dados são seus", p: [
-          "Em <b>Sua ilha</b>, <b>Baixar backup (.json)</b> leva tudo num arquivo só; <b>Baixar em Excel (CSV)</b> abre no Excel.",
-          "Chaves de gateway e tokens NUNCA voltam pra tela — o painel só mostra se existem.",
-        ] },
-        { t: "Avisos no seu celular", p: [
+          "O interessado agenda a <b>aula experimental</b> ali mesmo, e o pedido cai na sua Agenda."
+        ]
+      },
+      {
+        "t": "Depoimentos",
+        "p": [
+          "Peça o depoimento pelo botão da ficha do aluno — ele escreve no próprio app e você aprova antes de ir pro ar."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "conta",
+    "t": "Conta, dados e aparência",
+    "d": "Modo claro, exportar dados e assinatura",
+    "ic": "<circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/>",
+    "subs": [
+      {
+        "t": "Modo claro",
+        "p": [
+          "O interruptor <b>Modo claro</b> fica no pé do menu lateral."
+        ]
+      },
+      {
+        "t": "Backup, exportação e restauração",
+        "p": [
+          "Em <b>Sua ilha</b>, use <b>Baixar backup (.json)</b> para guardar uma cópia e <b>Baixar em Excel (CSV)</b> para consultar os dados exportados.",
+          "Confira o arquivo e o período antes de restaurar. Restaurar um backup antigo não é uma forma de atualizar dados de outro aparelho.",
+          "Em um conflito, preserve o rascunho antes de carregar a nuvem. Não limpe o navegador para tentar resolver a divergência."
+        ]
+      },
+      {
+        "t": "Avisos no seu celular",
+        "p": [
           "Ative as <b>notificações</b> e o painel te avisa no celular quando chega mensagem no chat, pedido de horário ou pagamento.",
-          "É o mesmo tipo de aviso que o aluno recebe do app — só que no seu aparelho.",
-        ] },
-        { t: "Assinatura", p: [
-          "O teste grátis dura 14 dias; a assinatura é gerida em <b>Sua ilha</b>.",
-        ] },
-      ] },
-  ];
+          "É o mesmo tipo de aviso que o aluno recebe do app — só que no seu aparelho."
+        ]
+      },
+      {
+        "t": "Assinatura do Torque Personal",
+        "p": [
+          "A assinatura do próprio sistema é gerida em <b>Sua ilha</b>; confira as condições e os valores apresentados no canal da contratação.",
+          "<b>Cancelar atendimento</b> no Financeiro trata da relação com o aluno. Não cancela a assinatura do personal no Torque nem executa estorno bancário."
+        ]
+      },
+      {
+        "t": "Relatar um problema sem perder dados",
+        "p": [
+          "Na Ajuda, abra <b>Falar com o suporte</b> e descreva o que tentou fazer, o resultado esperado, a mensagem de erro e a versão exibida.",
+          "Use um print sem senhas ou dados bancários sensíveis. O chamado permite acompanhar o protocolo; não apaga o rascunho nem força sincronização.",
+          "A ajuda pode ser consultada com o conteúdo já carregado. Abrir e acompanhar chamados depende da conta e da conexão."
+        ]
+      }
+    ]
+  }
+];
   var ajAberto = null; // id do tópico aberto (null = índice; "_chamado" = suporte)
   var ajBuscaTermo = "", ajSuporteEl = null, ajSuporteConta = "";
   function filtraAjuda() {
     var busca = alTextoBusca(ajBuscaTermo), encontrados = 0;
     document.querySelectorAll("#vAjuda .ajgrid [data-ajtopico]").forEach(function (bt) {
       var tp = AJUDA_PT.find(function (x) { return x.id === bt.getAttribute("data-ajtopico"); });
-      var conteudo = tp ? [tp.t, tp.d].concat(tp.subs.map(function (s) { return s.t + " " + s.p.join(" "); })).join(" ").replace(/<[^>]*>/g, " ") : "";
-      bt.hidden = !!busca && !alTextoBusca(conteudo).includes(busca);
+      var conteudo = tp ? [tp.t, tp.d, tp.k || ""].concat(tp.subs.map(function (s) { return s.t + " " + s.p.join(" "); })).join(" ").replace(/<[^>]*>/g, " ") : "";
+      var normalizado = alTextoBusca(conteudo);
+      bt.hidden = !!busca && busca.split(/\s+/).some(function (termo) { return !normalizado.includes(termo); });
       if (!bt.hidden) encontrados++;
     });
     if ($("ajBuscaVazia")) $("ajBuscaVazia").hidden = encontrados > 0;
@@ -4770,9 +5510,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     if (!ajAberto) {
-      mio = "<div class='altopo'><div><div class='alk'>Central de ajuda</div><div class='alh'>Como usar cada área</div></div></div>" +
-        "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Toque num tópico pra ver o passo a passo — com figuras mostrando onde tocar.</p>" +
-        "<div class='ptf-help-search'><label class='ptf-field' for='ajBusca'>O que você quer fazer?<input id='ajBusca' type='search' placeholder='Ex.: cobrar, publicar treino, senha' value='" + esc(ajBuscaTermo) + "'></label><p id='ajBuscaTotal' class='muted' role='status' style='font-size:12px;margin:8px 0;'></p></div>" +
+      mio = "<div class='altopo'><div><div class='alk'>Central de ajuda</div><div class='alh'>Dúvidas e novidades</div></div></div>" +
+        "<p class='muted' style='margin:0 0 14px;font-size:13px;'>Veja o que mudou ou busque um passo a passo. Abra só o tópico que precisa; as ilustrações são orientativas.</p>" +
+        "<div class='ptf-help-search'><label class='ptf-field' for='ajBusca'>O que você quer fazer?<input id='ajBusca' type='search' placeholder='Ex.: estorno, nome fantasia, aluno no celular' value='" + esc(ajBuscaTermo) + "'></label><p id='ajBuscaTotal' class='muted' role='status' style='font-size:12px;margin:8px 0;'></p></div>" +
         // o chamado é a porta mais importante da Ajuda: fica em cima, destacado
         "<button type='button' class='ajcard ajsup' data-ajtopico='_chamado' style='width:100%;margin-bottom:12px;border-color:var(--pt-roxo);'>" +
         "<span class='ajic'><svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 6.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z'/><path d='m4.5 7 7.5 6 7.5-6'/></svg></span>" +
