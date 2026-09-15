@@ -1,4 +1,4 @@
-/* Regenera demo-aluno.html: app novo (redesenho) + bloco de dados fake antigo.
+/* Regenera as três demos do aluno pelo builder canônico; a principal abre direto.
  *
  * Uso (precisa do servidor de teste rodando na 8765 — ver CLAUDE.md):
  *   node tools/demo-aluno/regen-demo.js
@@ -21,11 +21,17 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
 
 (async () => {
   const br = await chromium.launch({ executablePath: fs.existsSync(EXEC) ? EXEC : undefined, args: ["--no-sandbox"] });
-  const p = await (await br.newContext()).newPage();
+  const base = new URL(process.env.BASE_URL || "http://127.0.0.1:8765");
+  if (!['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname)) { await br.close(); throw new Error("Geração de demo exige servidor local de teste."); }
+  const context = await br.newContext({ serviceWorkers: 'block' });
+  await context.route('**/*', function (route) {
+    return new URL(route.request().url()).origin === base.origin ? route.continue() : route.abort();
+  });
+  const p = await context.newPage();
   p.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
-  await p.goto((process.env.BASE_URL || "http://127.0.0.1:8765") + "/personal.html");
+  await p.goto(base.origin + "/personal.html");
   await p.waitForTimeout(800);
-  const html = await p.evaluate(({ CAPAS, NUTRICAO_DEMO }) => {
+  const apps = await p.evaluate(({ CAPAS, NUTRICAO_DEMO }) => {
     const S = window.MTStore;
     const snap = JSON.stringify(S.read("ptStudio", {}));
     const st = S.read("ptStudio", {});
@@ -214,20 +220,32 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     };
     st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
-    const out = window.__montaAppAluno(alex, new Date().toISOString());
+    const stamp = new Date().toISOString();
+    const comCadastro = window.__montaAppAluno(alex, stamp);
+    // Apenas o aluno FICTÍCIO da demonstração dispensa a entrada inicial.
+    // Cada HTML vem do mesmo builder. Não forja aceite, não oculta overlay
+    // por CSS e não acrescenta uma opção de bypass ao aplicativo real.
+    const direto = Object.assign({}, alex, {
+      onboardingConsultoria: Object.assign({}, alex.onboardingConsultoria, { requerido: false })
+    });
+    const semCadastro = window.__montaAppAluno(direto, stamp);
     window.MTStore.write("ptStudio", JSON.parse(snap));
-    return out;
+    return { comCadastro, semCadastro };
   }, { CAPAS, NUTRICAO_DEMO });
   await br.close();
-  if (!html || html.length < 50000) { console.log("ERRO: html curto", html && html.length); process.exit(1); }
-
-  // pós-processo: localStorage → __demoLS, título, bloco demo depois do <body>
+  // O simulador e os dados de acompanhamento são os mesmos nas duas entradas.
   const bloco = fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";");
-  let out = html.replace(/localStorage/g, "__demoLS");
-  out = out.replace(/<title>[^<]*<\/title>/, "<title>Alex · Studio TORQUE Demo</title>");
-  const ib = out.indexOf("<body");
-  const ib2 = out.indexOf(">", ib);
-  out = out.slice(0, ib2 + 1) + bloco + out.slice(ib2 + 1);
-  fs.writeFileSync(path.join(RAIZ, "demo-aluno.html"), out);
-  console.log("demo regenerada:", out.length, "bytes; skin:", /MT_APP_SKIN|heroCarr/.test(out), "; __demoLS:", (out.match(/__demoLS/g) || []).length);
-})();
+  function prepara(html) {
+    if (!html || html.length < 50000) throw new Error("Builder retornou uma demo incompleta.");
+    let out = html.replace(/localStorage/g, "__demoLS");
+    const ib = out.indexOf("<body"), ib2 = out.indexOf(">", ib);
+    if (ib < 0 || ib2 < 0) throw new Error("Builder retornou HTML sem body.");
+    return out.slice(0, ib2 + 1) + bloco + out.slice(ib2 + 1);
+  }
+  const { gerarVariantes } = require("./regen-demos.js");
+  const demos = gerarVariantes({ comCadastro: prepara(apps.comCadastro), semCadastro: prepara(apps.semCadastro) });
+  for (const [arquivo, out] of [["demo-aluno.html", demos.semCadastro], ["demo-aluno-sem-cadastro.html", demos.semCadastro], ["demo-aluno-cadastro.html", demos.comCadastro]]) {
+    fs.writeFileSync(path.join(RAIZ, arquivo), out);
+    console.log(arquivo + ": " + out.length + " caracteres; builder canônico; armazenamento simulado");
+  }
+})().catch(function (e) { console.error(e); process.exitCode = 1; });

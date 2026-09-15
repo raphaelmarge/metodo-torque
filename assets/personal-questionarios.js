@@ -215,6 +215,7 @@
     // Captura o rascunho ANTES do handler canônico, que pode limpar os campos
     // mesmo quando o armazenamento recusa a gravação. Só ele continua gravando;
     // aqui confirmamos um ID novo e restauramos apenas a interface em caso de falha.
+    var finishQuestionnaireSave = null;
     qsave.addEventListener('click', function (event) {
       if (qsave.disabled) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       var pendingName = qname.value;
@@ -224,7 +225,7 @@
       var previousIds = read().qs.map(function (q) { return q.id; });
       qerror.hidden = true; qsave.disabled = true;
       delete qsave.dataset.qqResult;
-      setTimeout(function () {
+      finishQuestionnaireSave = function () {
         try {
           var added = read().qs.some(function (q) {
             return (pendingEdit ? q.id === pendingEdit && qsave.dataset.qqResult === 'salvo' : previousIds.indexOf(q.id) < 0) && q.nome === pendingName.trim() &&
@@ -243,8 +244,15 @@
           }
           updateSelection();
         } finally { qsave.disabled = false; }
-      });
+      };
     }, true);
+    // O handler canônico salva de forma síncrona. Este listener foi instalado
+    // depois dele: finaliza a interface no MESMO clique, antes de outro rascunho.
+    // Não deixa um timer antigo fechar/limpar o editor reaberto pelo professor.
+    qsave.addEventListener('click', function () {
+      var finish = finishQuestionnaireSave; finishQuestionnaireSave = null;
+      if (finish) finish();
+    });
     function decorateQuestions() {
       var data = read(), counts = {}; data.ps.forEach(function (p) { var key = normalize(p.sigla); counts[key] = (counts[key] || 0) + 1; });
       $('qpLista').querySelectorAll('[data-qp-row]').forEach(function (row) {
