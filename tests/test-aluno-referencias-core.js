@@ -41,4 +41,8 @@ ok(mixed.form().includes('reps não anotadas · 20 kg'),'Carga antiga sem reps n
 const tie=setup([row('2026-09-14',15,8),row('2026-09-14',20,8)]);ok(tie.ctx.SR.anterior(tie.it,0).kg===20,'Empate de data preserva a última anotação');
 const hostile=setup();hostile.it.seriesDetalhadas[0].reps='<img src=x onerror=alert(1)>';ok(!hostile.form().includes('<img src=x'),'Texto de prescrição não é executado como HTML');
 const final=setup();final.ctx.gv.fim=true;ok(final.form().includes('Salvar uma anotação não confirma a execução.'),'Fim do player mantém distinção de anotação e execução');
+const calendar=setup([row('2026-01-31',10,8),row('2026-02-31',999,8),row('2026-02-29',999,8)]);
+ok(calendar.ctx.SR.anterior(calendar.it,0).kg===10,'Data normalizada pelo JavaScript não transforma dia inexistente em referência');
+const leap=setup([row('2024-02-28',10,8),row('2024-02-29',12,8)]);
+ok(leap.ctx.SR.anterior(leap.it,0).kg===12,'Dia válido de ano bissexto continua aceito');
 console.log(n+' verificações do contexto por série passaram.');
