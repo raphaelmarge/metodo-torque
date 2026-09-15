@@ -63,8 +63,12 @@ function eq(a,b,message) { assert.deepEqual(a,b,message); checks++; console.log(
       for (const id of ['novidades','marca','cancelamentos','sincronizacao','nutricao','presencial']) {
         await p.evaluate(id=>__ajudaPT.abre(id),id);
         eq(await p.locator('#vAjuda details[open]').count(),1,'Recolhimento em '+id+' '+width+' '+light);
+        // Os cartões têm animação de entrada. Medir após a geometria final,
+        // sem desativar estilos nem ignorar conteúdo que exceda a tela.
+        await p.locator('#vAjuda').evaluate(e=>Promise.all(e.getAnimations({subtree:true}).filter(a=>Number.isFinite(a.effect.getComputedTiming().endTime)).map(a=>a.finished.catch(()=>{}))));
         const fits = await p.locator('#vAjuda').evaluate(e=>e.scrollWidth<=e.clientWidth+1);
         if (!fits) {
+          console.error('Dimensões da ajuda', await p.locator('#vAjuda').evaluate(e=>({client:e.clientWidth,scroll:e.scrollWidth,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,before:getComputedStyle(e,'::before').content,after:getComputedStyle(e,'::after').content,children:Array.from(e.children).map(x=>({tag:x.tagName,cls:x.className,client:x.clientWidth,scroll:x.scrollWidth,rect:x.getBoundingClientRect().toJSON()}))})));
           console.error('Elementos excedentes', await p.locator('#vAjuda').evaluate(e=>{
             const r=e.getBoundingClientRect();
             return Array.from(e.querySelectorAll('*')).map(x=>({tag:x.tagName,cls:x.className,text:x.textContent.slice(0,80),r:x.getBoundingClientRect().toJSON()})).filter(x=>x.r.width>0&&(x.r.right>r.right+1||x.r.left<r.left-1));
