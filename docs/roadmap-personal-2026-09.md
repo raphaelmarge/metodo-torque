@@ -1,0 +1,12 @@
+# Evolução do Personal — sequência aprovada em 15/09/2026
+
+Sem nova Central Pro, sem duplicar o dashboard, sem reescrever o app ou expandir as abas para cada melhoria. Cada lote deve preservar a navegação, as marcas, os dados reais e os contratos existentes. Os itens abaixo são trabalho planejado, não funcionalidades já entregues.
+
+1. **Publicação e demonstração (lote mt-v835):** corrigir o bloqueio, executar o CI completo, confirmar Pages/SHA; demo principal com entrada direta e alternativa com cadastro/contrato. Não mudar o onboarding de clientes reais.
+2. **Execução do treino:** conferir o que já existe no builder; separar prescrito, resultado anterior e realizado; registro explícito por série; retomar de onde parou por conta/aluno/ficha sem inventar séries ou progresso. Testar recarga, navegação, falta de conexão, datas, carga zero e ausência de carga.
+3. **Aluno 360°:** unificar sessões e conclusão efetiva de treinos, preservando origem e evitando contar a mesma atividade duas vezes. Registros parciais não são um treino concluído. Consultas paginadas com escopo de academia/token; estados de carregamento, falha e ausência distintos; configuração dos critérios de acompanhamento, pausas e plano do aluno.
+4. **Salvar versus publicar:** mostrar rascunho salvo, sincronização e publicação como etapas distintas; conferência das alterações e destinatário com prévia. Só marcar publicado após confirmação, preservando conflito e falha parcial. Nome secundário continua opcional e desligado por padrão.
+5. **Providências e comunicação:** tarefa concluída não significa mensagem enviada. Começar pelo canal já integrado; revisão, consentimento, horário de silêncio, limites, deduplicação, tentativa e confirmação de envio. Não simular WhatsApp nem prometer entrega sem integração.
+6. **Encerramento:** conferir serviço, sessões, assinatura externa, devolução e data de acesso, sem apagar histórico. Estorno automático somente depois de identificar e testar o gateway real. Nenhuma movimentação financeira de produção é autorizada por este roteiro de desenvolvimento.
+
+Proteção transversal: checks do HEAD exato, PRs pequenos, artefatos de teste e confirmação da versão efetivamente publicada. Proteção administrativa da main e alertas devem usar permissões próprias; não presumir que a instalação GitHub concede administração. Medidas de usabilidade/erros somente com escopo mínimo e sem conteúdo pessoal nas métricas.

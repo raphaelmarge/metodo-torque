@@ -24,9 +24,11 @@ function mount(dados) {
   const seed = '<script>var __heroTestLS=(function(){var d={pttour:\'{"como":"teste"}\',ptonb:\'{"feito":true}\'};return {getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]}}})();</script>';
   return global.MT_APP_ALUNO.monta(dados).replace(/localStorage/g, '__heroTestLS').replace(/(<body[^>]*>)/, '$1' + seed);
 }
-const demoOriginal = fs.readFileSync(path.join(ROOT, 'demo-aluno.html'), 'utf8');
-// Simula apenas o Alex que já concluiu a entrada, como na tela solicitada.
-const demo = demoOriginal.replace('var __demoOnboardingAceite=null;', "var __demoOnboardingAceite={id:'teste-demo',aceito_em:'2026-09-09T12:00:00Z',documento_hash:'demo'};");
+const demo = fs.readFileSync(path.join(ROOT, 'demo-aluno.html'), 'utf8');
+const cadastroOriginal = fs.readFileSync(path.join(ROOT, 'demo-aluno-cadastro.html'), 'utf8');
+// Somente a fixture da entrada COM cadastro simula a aceitação prévia.
+// A demo principal precisa entrar diretamente, sem fabricar aceite ou clicar num gate.
+const cadastro = cadastroOriginal.replace('var __demoOnboardingAceite=null;', "var __demoOnboardingAceite={id:'teste-demo',aceito_em:'2026-09-09T12:00:00Z',documento_hash:'demo'};");
 let browser, count = 0;
 function ok(value, label) { assert.ok(value, label); count++; console.log('OK ' + label); }
 async function open(html, width = 390, height = 844) {
@@ -37,7 +39,11 @@ async function open(html, width = 390, height = 844) {
   await page.setContent(html, {waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => window.__inicioAtualiza);
   const entrar = page.getByRole('button', {name: 'Entrar no meu app', exact: true});
-  if (html === demo) { await entrar.waitFor({state: 'visible'}); await entrar.click(); }
+  if (html === cadastro) { await entrar.waitFor({state: 'visible'}); await entrar.click(); }
+  if (html === demo) {
+    ok(await page.locator('#ocOverlay').count() === 0 && await entrar.count() === 0, 'demo principal: início direto sem gate ou botão de primeiro acesso');
+    ok(await page.evaluate(() => window.__demoOnboardingAceite === null), 'demo principal: não fabrica aceite para mostrar a foto');
+  }
   await page.evaluate(() => { window.__trocaSec('inicio'); window.scrollTo(0, 0); });
   return {ctx, page, errors};
 }
@@ -55,7 +61,7 @@ async function geometry(page) {
 }
 (async () => {
   browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined), args: ['--no-sandbox']});
-  for (const [name, html] of [['builder', mount(D)], ['demo', demo]]) {
+  for (const [name, html] of [['builder', mount(D)], ['demo direto', demo], ['demo cadastro concluído', cadastro]]) {
     const {ctx,page,errors} = await open(html);
     try {
       for (const [width,height] of [[320,568],[360,740],[390,844],[430,932],[640,360],[800,600]]) {

@@ -1,80 +1,34 @@
-const assert = require('assert/strict');
-const fs = require('fs');
-const path = require('path');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
-const cadastro = fs.readFileSync(path.join(ROOT, 'demo-aluno-cadastro.html'), 'utf8');
-const semCadastro = fs.readFileSync(path.join(ROOT, 'demo-aluno-sem-cadastro.html'), 'utf8');
-const canon = fs.readFileSync(path.join(ROOT, 'demo-aluno.html'), 'utf8');
-const arquivos = ['demo-aluno.html', 'demo-aluno-cadastro.html', 'demo-aluno-sem-cadastro.html'];
-const modificadosEm = arquivos.map(arquivo => fs.statSync(path.join(ROOT, arquivo), {bigint: true}).mtimeNs);
+const files = ['demo-aluno.html', 'demo-aluno-cadastro.html', 'demo-aluno-sem-cadastro.html'];
+const originals = files.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'));
+const times = files.map(f => fs.statSync(path.join(ROOT, f), {bigint:true}).mtimeNs);
+const [principal, comCadastro, semCadastro] = originals;
 const { gerarVariantes } = require('../tools/demo-aluno/regen-demos.js');
 const marker = 'var __demoOnboardingAceite=null;';
-const aceite = "var __demoOnboardingAceite={id:'demo-aceite-concluido',aceito_em:'2026-09-10T12:00:00Z',documento_hash:'demo-concluido'};";
-const titulo = html => (html.match(/<title>([^<]*)<\/title>/) || [])[1];
-const normalizaTitulo = html => html.replace(/<title>[^<]*<\/title>/, '<title>X</title>');
-let verificacoes = 0;
-function verifica(nome, fn) {
-  fn();
-  verificacoes++;
-  console.log('OK — ' + nome);
+let n=0;
+function ok(value, label) { assert.ok(value, label); n++; console.log('OK '+label); }
+const demos=gerarVariantes({comCadastro,semCadastro});
+ok(principal===semCadastro, 'Link principal abre a mesma demo de acesso direto');
+ok(demos.comCadastro===comCadastro&&demos.semCadastro===semCadastro,'Derivação reproduz as duas saídas canônicas');
+for(const [label,html,gate] of [['com cadastro',comCadastro,true],['direta',semCadastro,false]]){
+ ok(html.includes(gate?'com cadastro inicial</title>':'acesso direto</title>'),label+': título identifica a entrada');
+ ok(html.split(marker).length===2&&!html.includes('demo-aceite-concluido'),label+': não fabrica uma assinatura nem pagamento');
+ ok(html.includes('function runtime(cfg, api)')===gate,label+': bloqueio inicial presente somente quando solicitado');
+ ok(html.includes('var QUESTAPP=')&&html.includes('Como você está?'),label+': questionário normal de acompanhamento permanece');
+ ok(html.includes('id=\'heroTopo\'')||html.includes('id="heroTopo"'),label+': mantém o início do app');
+ ok(html.includes('var __demoLS=')||html.includes('var __demoLS ='),label+': usa armazenamento simulado');
 }
-// Comparar o conteúdo inteiro, mas não despejar megabytes de HTML no log de erro.
-function identicos(atual, esperado, mensagem) {
-  assert.ok(atual === esperado, mensagem);
+const minimal=(gate)=>'<title>Demo</title><script>'+marker+(gate?'function runtime(cfg, api) {}':'')+'</script><main>Fixture</main>';
+const input={comCadastro:minimal(true),semCadastro:minimal(false)},before=JSON.stringify(input);
+const a=gerarVariantes(input),b=gerarVariantes(input);
+ok(JSON.stringify(a)===JSON.stringify(b)&&JSON.stringify(input)===before,'Derivação determinística sem alterar as entradas');
+for(const bad of [null,{}, {comCadastro:minimal(true),semCadastro:minimal(true)}, {comCadastro:minimal(false),semCadastro:minimal(false)}, {comCadastro:minimal(true)+marker,semCadastro:minimal(false)}, {comCadastro:minimal(true),semCadastro:minimal(false)+'<title>Duplicado</title>'}]){
+ assert.throws(()=>gerarVariantes(bad));n++;console.log('OK Recusa fonte ausente, ambígua ou com bloqueio no modo errado');
 }
-
-verifica('título da demo com cadastro', () => {
-  assert.equal(titulo(cadastro), 'Alex · Demo do aluno — com cadastro inicial');
-});
-verifica('título publicado de acesso direto', () => {
-  assert.equal(titulo(semCadastro), 'Alex · Demo do aluno — acesso direto');
-});
-verifica('cadastro começa com exatamente um aceite pendente', () => {
-  assert.equal(cadastro.split(marker).length - 1, 1);
-  assert.equal(cadastro.split('var __demoOnboardingAceite=').length - 1, 1);
-});
-verifica('acesso direto começa com exatamente um aceite concluído', () => {
-  assert.equal(semCadastro.split(aceite).length - 1, 1);
-  assert.equal(semCadastro.split('var __demoOnboardingAceite=').length - 1, 1);
-  assert.ok(!semCadastro.includes(marker), 'demo de acesso direto não pode voltar ao onboarding');
-});
-verifica('cadastro preserva todo o conteúdo canônico fora do título', () => {
-  identicos(normalizaTitulo(cadastro), normalizaTitulo(canon), 'demo com cadastro divergiu da canônica');
-});
-verifica('acesso direto difere somente pelo título e aceite inicial', () => {
-  identicos(normalizaTitulo(semCadastro).replace(aceite, marker), normalizaTitulo(canon), 'demo de acesso direto alterou conteúdo além do título e aceite');
-});
-const geradas = gerarVariantes(canon);
-verifica('gerador reproduz exatamente a demo com cadastro publicada', () => {
-  identicos(geradas.comCadastro, cadastro, 'regen-demos.js geraria uma demo com cadastro diferente do arquivo versionado');
-});
-verifica('gerador reproduz exatamente a demo de acesso direto publicada', () => {
-  identicos(geradas.semCadastro, semCadastro, 'regen-demos.js geraria uma demo de acesso direto diferente do arquivo versionado');
-});
-verifica('derivação repetida é determinística', () => {
-  const repetidas = gerarVariantes(canon);
-  identicos(repetidas.comCadastro, geradas.comCadastro, 'cadastro mudou na segunda derivação');
-  identicos(repetidas.semCadastro, geradas.semCadastro, 'acesso direto mudou na segunda derivação');
-});
-verifica('importar e derivar não regrava a fonte nem as demos', () => {
-  assert.deepEqual(arquivos.map(arquivo => fs.statSync(path.join(ROOT, arquivo), {bigint: true}).mtimeNs), modificadosEm);
-  for (const [arquivo, esperado] of [['demo-aluno.html', canon], ['demo-aluno-cadastro.html', cadastro], ['demo-aluno-sem-cadastro.html', semCadastro]]) {
-    identicos(fs.readFileSync(path.join(ROOT, arquivo), 'utf8'), esperado, arquivo + ' foi regravado durante a verificação');
-  }
-});
-const minimo = '<!doctype html><title>Canônica</title><script>' + marker + '</script><main>Conteúdo preservado</main>';
-verifica('derivação funciona sem depender dos dados atuais do Alex', () => {
-  const resultado = gerarVariantes(minimo);
-  identicos(resultado.comCadastro, minimo.replace('Canônica', 'Alex · Demo do aluno — com cadastro inicial'), 'cadastro mínimo foi alterado indevidamente');
-  identicos(resultado.semCadastro, minimo.replace('Canônica', 'Alex · Demo do aluno — acesso direto').replace(marker, aceite), 'acesso direto mínimo foi alterado indevidamente');
-});
-for (const [nome, entrada, erro] of [
-  ['fonte sem estado inicial', minimo.replace(marker, ''), /exatamente um estado inicial/],
-  ['fonte com estado inicial duplicado', minimo + marker, /exatamente um estado inicial/],
-  ['fonte sem título', minimo.replace('<title>Canônica</title>', ''), /exatamente um título/],
-  ['fonte com título duplicado', minimo + '<title>Duplicado</title>', /exatamente um título/],
-  ['fonte que não é HTML textual', null, /deve ser texto HTML/]
-]) {
-  verifica('recusa ' + nome, () => assert.throws(() => gerarVariantes(entrada), erro));
-}
-console.log(verificacoes + ' verificações passaram — duas demos isoladas e sincronizadas com a canônica e seu gerador.');
+ok(files.every((f,i)=>fs.readFileSync(path.join(ROOT,f),'utf8')===originals[i]&&fs.statSync(path.join(ROOT,f),{bigint:true}).mtimeNs===times[i]),'Conferir não regrava demos nem fonte');
+const regen=fs.readFileSync(path.join(ROOT,'tools/demo-aluno/regen-demo.js'),'utf8');
+ok(regen.includes('window.__montaAppAluno(alex, stamp)')&&regen.includes('window.__montaAppAluno(direto, stamp)'),'Duas entradas geradas pelo builder canônico, sem fork manual');
+console.log(n+' verificações das demos passaram.');
