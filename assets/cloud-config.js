@@ -69,10 +69,16 @@ self.MT_FN_APELIDO = {};
 // acento: true mantém os acentos no nome do arquivo; false tira (padrão)
 // ext: extensão dos arquivos ("gif", "webp", "mp4"...)
 self.MT_GIFS = {
-  bucket: "",
+  bucket: "exercicios",
   padrao: "traco",
   acento: false,
   ext: "gif",
+  // Exceções do acervo legado. A chave é o nome normalizado do exercício e o
+  // valor é o caminho real no bucket; assim não precisamos renomear arquivos.
+  aliases: {
+    "supino-reto": "supino-reto-barra.gif",
+    "supino-reto-com-barra": "supino-reto-barra.gif",
+  },
 };
 
 // Assinatura pelas lojas (RevenueCat) — chaves PÚBLICAS do SDK, uma por

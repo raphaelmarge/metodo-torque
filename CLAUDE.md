@@ -6,6 +6,27 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v840 — Banco de GIFs dos exercícios
+
+- Em **Treinos → Exercícios → Abrir**, o personal pode manter o GIF automático,
+  pesquisar o acervo global, escolher um arquivo, enviar um GIF da própria
+  equipe ou marcar explicitamente que o exercício não terá GIF.
+- `ex.gif` guarda somente o caminho do objeto; `ex.semGif` impede o fallback
+  automático. Os dois estados chegam a `fichasApp[].itens[].gif` e
+  `guiaFichasP[].it[].m`. O app valida e codifica o caminho antes de montar a
+  URL. `Supino reto` e `Supino reto com barra` usam o alias
+  `supino-reto-barra.gif`.
+- Pacotes anteriores, sem `D.gif`, usam a configuração pública carregada pelo
+  `/app/` e ganham o acervo automático ao abrir. Caminho escolhido/sem GIF são
+  dados do exercício e continuam dependendo de salvar e publicar o aluno.
+- O acervo curado permanece na raiz do bucket público `exercicios`. Uploads vão
+  para `<academia_uuid>/`, sem sobrescrita, limitados a GIF de 8 MB. A migração
+  `20260916160659_exercise_gif_bank.sql` permite listar a raiz e a própria pasta,
+  inserir/excluir apenas na pasta de uma academia vinculada e não cria UPDATE.
+- A migração precisa de autorização para ser aplicada. O teste
+  `tests/test-gifs-sql.js` executa 13 cenários com duas academias no PGlite
+  isolado; não substitui a suíte Playwright, o CI ou a validação de produção.
+
 ## v817 — Foto grande no destaque do aluno
 
 - A foto do treino no topo do Início voltou às proporções anteriores: 420px de
