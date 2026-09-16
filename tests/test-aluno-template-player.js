@@ -90,7 +90,9 @@ async function main(){
   ok(await resumed.p.inputValue('#gRpe')==='6,5','novo documento recupera checkpoint sem transferir esforço para outra série');
   await resumed.ctx.close();
   await click('#gPularEx');ok(await p.evaluate(()=>__gvDe().e===1)&&await completed()===1,'próximo exercício preserva pendências sem fabricar conclusão');
-  await p.fill('#gKg','');await p.fill('#gReps','');await p.fill('#gRpe','');await click('#gSerie');await click('#gPularEx');
+  await p.fill('#gKg','');await p.fill('#gReps','');await p.fill('#gRpe','');await click('#gSerie');
+  ok(await p.isVisible('#gFecharTreino'),'última série mantém Terminar treino visível na revisão');
+  await click('#gFecharTreino');
   ok(await p.isVisible('#gRevisaoSeries'),'último exercício abre resumo canônico');
   await click('#gRevisaoSeries summary');await click('[data-grever="1"][data-ge="0"]');
   ok(await p.isVisible('#gRpe'),'resumo permite rever esforço da série exata');
@@ -106,6 +108,14 @@ async function main(){
    ok(await q.evaluate(()=>{const a=document.getElementById('gSerie').getBoundingClientRect(),n=document.getElementById('gTemplateBottom').getBoundingClientRect();return a.top>=0&&a.bottom<=n.top+1&&n.bottom<=innerHeight+1;}),width+' '+theme+': ação fixa não fica sob a navegação');
    await q.fill('#gRpe','8');await x.click('#gSerie');
    ok(await q.isVisible('#gTemplateSuccess'),width+' '+theme+': feedback após confirmação');
+   await x.click('#gPularEx');
+   await q.fill('#gKg','0');await q.fill('#gReps','12');await x.click('#gSerie');
+   ok(await q.isVisible('#gFecharTreino'),width+' '+theme+': término disponível sem sair da revisão');
+   ok(await q.locator('#gFecharTreino').evaluate(b=>{const r=b.getBoundingClientRect();return r.height>=44&&r.top>=0&&r.bottom<=innerHeight+1;}),width+' '+theme+': término alcançável na tela');
+   await x.click('#gFecharTreino');
+   ok(await q.isVisible('#gFim') && await q.locator('#gFim').evaluate(b=>b.getBoundingClientRect().height>=58),width+' '+theme+': recibo preserva fechamento destacado');
+   ok(await q.locator('#gMiolo .wtile2').first().isVisible() && await q.locator('#gMiolo .rperow').isVisible() && /Séries feitas aqui.*Cargas anotadas.*Tempo de treino/s.test(await q.locator('#gMiolo').innerText()),width+' '+theme+': recibo mostra de fato os dados, resumo e esforço');
+   ok(!await q.isVisible('#gTemplateHero') && !await q.isVisible('#gMiolo2'),width+' '+theme+': conclusão não deixa cartões vazios do exercício');
    ok(x.errors.length===0,width+' '+theme+': nenhuma exceção');
    if(OUT){fs.mkdirSync(OUT,{recursive:true});await q.screenshot({path:path.join(OUT,'template-'+width+'-'+(theme||'escuro')+'.png')});}
    await x.ctx.close();
