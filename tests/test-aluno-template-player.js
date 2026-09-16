@@ -114,7 +114,9 @@ async function main(){
    ok(await q.locator('#gFecharTreino').evaluate(b=>{const r=b.getBoundingClientRect();return r.height>=44&&r.top>=0&&r.bottom<=innerHeight+1;}),width+' '+theme+': término alcançável na tela');
    await x.click('#gFecharTreino');
    ok(await q.isVisible('#gFim') && await q.locator('#gFim').evaluate(b=>b.getBoundingClientRect().height>=58),width+' '+theme+': recibo preserva fechamento destacado');
-   ok(await q.locator('#gMiolo .wtile2').first().isVisible() && await q.locator('#gMiolo .rperow').isVisible() && /Séries feitas aqui.*Cargas anotadas.*Tempo de treino/s.test(await q.locator('#gMiolo').innerText()),width+' '+theme+': recibo mostra de fato os dados, resumo e esforço');
+   ok(await q.locator('#gMiolo .fim-celebracao').isVisible() && await q.locator('#gMiolo .wtile2').count()===2 && await q.locator('#gMiolo .rperow').isVisible(),width+' '+theme+': conclusão destaca a conquista, só dois números e o esforço');
+   ok(await q.locator('#gMiolo .fim-detalhes').evaluate(d=>!d.open&&/Séries feitas aqui/.test(d.textContent)&&/Cargas anotadas/.test(d.textContent)&&/Tempo de treino/.test(d.textContent)),width+' '+theme+': recibo técnico permanece recolhido e disponível');
+   ok(!await q.isVisible('.gpt-top') && !await q.isVisible('.gpt-progress'),width+' '+theme+': conclusão remove cabeçalho de progresso redundante');
    ok(!await q.isVisible('#gTemplateHero') && !await q.isVisible('#gMiolo2'),width+' '+theme+': conclusão não deixa cartões vazios do exercício');
    ok(x.errors.length===0,width+' '+theme+': nenhuma exceção');
    if(OUT){fs.mkdirSync(OUT,{recursive:true});await q.screenshot({path:path.join(OUT,'template-'+width+'-'+(theme||'escuro')+'.png')});}

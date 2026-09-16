@@ -130,14 +130,15 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
     const rb=btn.getBoundingClientRect(),cb=getComputedStyle(btn);
     return {festa:box.classList.contains('festa'),recibo:card.classList.contains('recibo'),
       titulo:/Treino concluído|Meta da semana batida/.test(document.getElementById('gMiolo').textContent),
+      celebracao:!!card.querySelector('.fim-celebracao'),detalhesFechados:!card.querySelector('.fim-detalhes').open,
       tiles:card.querySelectorAll('.wtile2').length,rpes:card.querySelectorAll('[data-rpe]').length,
       rpeGrade:getComputedStyle(card.querySelector('.rperow')).display,
       botaoAlto:rb.height,botaoDentro:rb.top>=0&&rb.bottom<=innerHeight+1,botaoCor:cb.backgroundColor,
       semX:box.scrollWidth<=box.clientWidth+1&&card.scrollWidth<=card.clientWidth+1,
       rolagem:getComputedStyle(card).overflowY,fundo:getComputedStyle(box).backgroundImage};
   });
-  ok(fimVisual.festa&&fimVisual.recibo&&fimVisual.titulo&&fimVisual.tiles>=2&&fimVisual.rpes===3,
-    'recibo final reúne celebração, resumo, esforço e fechamento');
+  ok(fimVisual.festa&&fimVisual.recibo&&fimVisual.titulo&&fimVisual.celebracao&&fimVisual.detalhesFechados&&fimVisual.tiles===2&&fimVisual.rpes===3,
+    'conclusão reúne conquista, dois números essenciais, detalhes recolhidos e esforço');
   ok(fimVisual.rpeGrade==='grid'&&fimVisual.botaoAlto>=58&&fimVisual.botaoDentro&&fimVisual.botaoCor==='rgb(255, 255, 255)',
     'ações finais mantêm três alvos iguais e Fechar destacado no alcance do polegar');
   ok(fimVisual.semX&&fimVisual.rolagem==='auto'&&fimVisual.fundo.includes('radial-gradient'),
