@@ -180,10 +180,10 @@ async function main() {
       localStorage.setItem('ptcardio', JSON.stringify([{ d, km: 5, min: 30, mod: 'corrida', fc: 126, fcx: 150 }]));
     } });
     ok((await semCardio.p.textContent('#esfBox')).includes('máxima estimada 180 bpm') && (await semCardio.p.textContent('#esfBox')).includes('Z3 moderado'), 'histórico de FC mantém estimativa e zona sem habilitar corrida');
-    await semCardio.p.click('#gVoz'); await semCardio.p.click('[data-gserie="1"]');
+    await clicarControle(semCardio.p, '#gVoz');await semCardio.p.locator('.gpt-options > summary').click(); await semCardio.p.click('[data-gserie="1"]');
     ok(await semCardio.p.evaluate(() => window.__falas.some(f => f.lang==='pt-BR' && f.text.includes('Série 2 de 3. 8 repetições'))), 'voz compartilhada narra a série selecionada com corrida desativada');
     ok(await semCardio.p.evaluate(() => !window.__fc && !document.getElementById('cardCardio')), 'helpers compartilhados não inicializam corrida nem conexão de FC');
-    await semCardio.p.click('#gVoz'); await semCardio.p.click('[data-gserie="0"]');
+    await clicarControle(semCardio.p, '#gVoz');await semCardio.p.locator('.gpt-options > summary').click(); await semCardio.p.click('[data-gserie="0"]');
     for (let i=0;i<3;i++) { await clicarControle(semCardio.p, '#gSerie'); await semCardio.p.evaluate(() => window.__zeraDescanso()); }
     await clicarControle(semCardio.p, '#gSerie'); await semCardio.p.click('#gFecharTreino');
     ok(await semCardio.p.isVisible('#gRevisaoSeries') && semCardio.errors.length===0, 'musculação abre e finaliza sem depender do módulo opcional de corrida/FC');

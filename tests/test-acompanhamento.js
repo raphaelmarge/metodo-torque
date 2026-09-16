@@ -98,7 +98,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   // O botão do treino é a entrada real do player.
   await pa.evaluate(()=>document.querySelector('.guiabtn').click());
   await pa.waitForFunction(()=>getComputedStyle(document.getElementById('guiaBox')).display==='flex');
-  await pa.click('#gTemplateTab-instructions');
+  await pa.click('#gTemplateTab-instructions');await pa.locator('#gTemplatePanel-instructions .galt .altbtn').click();
   ok((await pa.locator('#gTemplatePanel-instructions .galt').innerText()).includes('aprovadas'),'alternativa do professor tem origem explícita na aba de instruções');
   await clicarControle(pa, '#gSerie');
   const saved=await pa.evaluate(()=>window.__acSessao.ler());

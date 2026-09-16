@@ -446,6 +446,8 @@
         });
       }
       function steppers() {
+        var kg=$('gKg'),rp=$('gReps'),kl=kg&&kg.closest('label'),rl=rp&&rp.closest('label');
+        if(kl&&rl&&kl.parentNode===rl.parentNode&&!(kl.compareDocumentPosition(rl)&Node.DOCUMENT_POSITION_FOLLOWING))kl.parentNode.insertBefore(kl,rl);
         ['gKg','gReps','gRpe'].forEach(function(id){var input=$(id);if(!input||input.closest('.gpt-stepper'))return;
           var wrap=el('div','gpt-stepper'),caption=id==='gKg'?'carga':id==='gReps'?'repetições':'RPE';input.parentNode.insertBefore(wrap,input);
           [-1,1].forEach(function(d){var b=el('button','',d<0?'−':'+');b.type='button';b.dataset.gptStep=id;b.dataset.delta=d;b.setAttribute('aria-label',(d<0?'Diminuir ':'Aumentar ')+caption);wrap.appendChild(b);});wrap.insertBefore(input,wrap.lastChild);
