@@ -7,7 +7,7 @@ const {chromium} = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/nod
 const {dados} = require('./test-aluno-player-experiencia');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 const PREVIEW=process.env.TORQUE_PREVIEW_MEMORY==='1';
-const OUT=process.env.TORQUE_SCREENSHOTS;
+const OUT=process.env.TORQUE_SCREENSHOTS||(process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'torque-testes','conclusao'):null);
 let passed=0;
 function ok(v,label){assert.ok(v,label);passed++;console.log('OK '+label);}
 function fixture(){const d=dados();d.guiaFichasP[0].it[0].rpe=8;d.fichasApp[0].itens[0].rpe=8;return d;}
