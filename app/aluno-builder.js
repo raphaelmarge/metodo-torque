@@ -6282,37 +6282,39 @@
       // volume do dia (kg × reps × séries do que teve carga anotada) — vale pros
       // tiles E pra arte do post
       "var vol9=SR.volume(gv.f,hjR);" +
-      // a festa (tela 48): troféu, meta da semana, tiles e a régua de XP
+      // a festa (tela 48): uma conquista principal, dois números essenciais e
+      // o restante recolhido. O fim do treino precisa parecer celebração antes
+      // de parecer recibo.
       "var f9=L('ptfeitos',{});var naS=0;var sg9=new Date();sg9.setDate(sg9.getDate()-((sg9.getDay()+6)%7));" +
       "for(var i9=0;i9<7;i9++){var d9=new Date(sg9);d9.setDate(d9.getDate()+i9);if(f9[isoLoc(d9)])naS++;}" +
       "if(!f9[hjR])naS++;" + // o dia de hoje conta mesmo se o registro ainda não caiu
-      "var diasC=((new Date().getDay()+6)%7)+1;var bateu=naS>=META;var stk9=streakSem(f9);" +
+      "var bateu=naS>=META;var stk9=streakSem(f9);" +
       "var xp9=xpDados();var nv9=nivelDe(xp9);var alvoN=nvXpAte(nv9+1);var falta9=Math.max(0,alvoN-xp9);" +
       "var pctN=Math.min(100,Math.round(100*(xp9-nvXpAte(nv9))/Math.max(1,alvoN-nvXpAte(nv9))));" +
-      "var m=\"<div style='text-align:center;color:#fff;'>\"+" +
-      "\"<div style='width:84px;height:84px;margin:2px auto 0;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;color:#fde047;'>\"+icx(ICO.trofeu,40)+'</div>'+" +
-      "\"<div style='font-size:10.5px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-top:12px;'>\"+(bateu?'Meta da semana batida':'Treino concluído')+'</div>'+" +
-      "\"<div style='font-size:clamp(28px,9vw,38px);font-weight:900;line-height:1.05;margin-top:6px;'>\"+naS+(naS===1?' treino':' treinos')+' em '+diasC+(diasC===1?' dia':' dias')+'</div>'+" +
-      "(stk9>0?\"<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:8px;'>\"+(stk9===1?'Primeira semana batendo a meta':stk9+'ª semana seguida batendo a meta')+'. Orgulho define.</div>':'')+'</div>'+" +
-      "\"<div style='display:flex;gap:8px;margin-top:16px;'>\"+" +
-      "\"<div class='wtile2' style='flex:1;'><b>\"+gmmss((Date.now()-gv.t0)/1000)+'</b><i>no treino</i></div>'+" +
-      "(vol9>0?\"<div class='wtile2' style='flex:1;'><b>\"+Math.round(vol9).toLocaleString('pt-BR')+'</b><i>kg no total</i></div>':'')+" +
-      "\"<div class='wtile2' style='flex:1;'><b>\"+marc+'</b><i>séries</i></div></div>'+volCompara(vol9,hjR)+" +
-      "\"<div style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 16px;margin-top:10px;color:#fff;'>\"+" +
-      "\"<div style='display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:800;'><span>\"+xp9+' XP</span>'+" +
-      "\"<span style='color:rgba(255,255,255,.8);font-weight:700;'>faltam \"+falta9+' pro Nv '+(nv9+1)+'</span></div>'+" +
-      "\"<div style='height:8px;background:rgba(255,255,255,.22);border-radius:99px;overflow:hidden;margin-top:8px;'><div style='height:100%;width:\"+pctN+\"%;background:#fff;border-radius:99px;'></div></div></div>\";" +
-      // o detalhe do dia (o recibo de sempre, agora discreto)
-      "m+=\"<div class='gdica' style='margin-top:12px;font-size:13.5px;color:rgba(255,255,255,.85);text-align:center;'>\"+" +
-      "'Séries feitas aqui · '+marc+' de '+pres+\" — Cargas anotadas · \"+anot+' de '+f.it.length+" +
-      "' — Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+(fcR9?' \u2014 Batimentos \u00b7 '+fcR9.m+' bpm m\u00e9dio \u00b7 '+fcR9.x+' m\u00e1x':'')+'</div>';" +
+      "var dur9=gmmss((Date.now()-gv.t0)/1000);" +
+      "var m=\"<section class='fim-celebracao' aria-labelledby='fimTitulo'>\"+" +
+      "\"<div class='fim-confete' aria-hidden='true'><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>\"+" +
+      "\"<div class='fim-medalha' aria-hidden='true'><span>\"+icx(ICO.trofeu,46)+\"</span></div>\"+" +
+      "\"<p class='fim-selo'>\"+(bateu?'Meta da semana batida':'Treino concluído')+\"</p>\"+" +
+      "\"<h2 id='fimTitulo'>Você concluiu o \"+esc2(f.n)+\"</h2>\"+" +
+      "\"<p class='fim-mensagem'>\"+(bateu?'Boa! Você cumpriu sua meta da semana.':'Boa! Mais uma sessão concluída.')+\"</p>\"+" +
+      "(stk9>0?\"<p class='fim-sequencia'>\"+(stk9===1?'Primeira semana cumprindo a meta':stk9+' semanas seguidas cumprindo a meta')+\"</p>\":'')+\"</section>\"+" +
+      "\"<div class='fim-resumo' aria-label='Resumo principal do treino'>\"+" +
+      "\"<div class='wtile2'><b>\"+dur9+\"</b><i>de treino</i></div>\"+" +
+      "\"<div class='wtile2'><b>\"+marc+\"</b><i>\"+(marc===1?'série feita':'séries feitas')+\"</i></div></div>\"+" +
+      "\"<section class='fim-semana' aria-label='Progresso da semana'><div><strong>\"+naS+(naS===1?' treino':' treinos')+\" nesta semana</strong><span>Meta: \"+META+\"</span></div><div class='fim-semana-barra' aria-hidden='true'><i style='width:\"+Math.min(100,Math.round(100*naS/Math.max(1,META)))+\"%'></i></div></section>\";" +
+      // o recibo técnico continua disponível, mas sem competir com a conquista
+      "m+=\"<details class='fim-detalhes'><summary>Detalhes do treino</summary><div class='fim-detalhes-corpo'>\"+" +
+      "\"<dl><div><dt>Séries feitas aqui</dt><dd>\"+marc+' de '+pres+\"</dd></div><div><dt>Cargas anotadas</dt><dd>\"+anot+' de '+f.it.length+\"</dd></div><div><dt>Tempo de treino</dt><dd>\"+dur9+\"</dd></div>\"+" +
+      "(vol9>0?\"<div><dt>Volume total</dt><dd>\"+Math.round(vol9).toLocaleString('pt-BR')+\" kg</dd></div>\":'')+" +
+      "(fcR9?\"<div><dt>Batimentos</dt><dd>\"+fcR9.m+\" bpm médio · \"+fcR9.x+\" máx.</dd></div>\":'')+\"</dl>\"+volCompara(vol9,hjR)+" +
+      "\"<div class='fim-xp'><div><strong>\"+xp9+\" XP</strong><span>\"+(falta9?falta9+' para o nível '+(nv9+1):'Próximo nível alcançado')+\"</span></div><div aria-hidden='true'><i style='width:\"+pctN+\"%'></i></div></div></div></details>\";" +
       // emenda: o dia so acaba depois da parte 2 (A2 — cardio e alongamento)
-      "if(f.p2&&f.p2.l&&f.p2.l.length){m+=\"<div class='gcglab' style='margin-top:16px;'>Ainda falta \"+esc2(f.p2.k)+'</div>'+" +
-      "\"<div style='background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:6px 14px;color:#fff;font-size:13.5px;'>\"+" +
-      "f.p2.l.map(function(ln){return \"<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;'><span>\"+esc2(ln.t)+\"</span><b style='color:#bfdbfe;white-space:nowrap;'>\"+esc2(ln.v||'')+'</b></div>';}).join('')+'</div>';}" +
+      "if(f.p2&&f.p2.l&&f.p2.l.length){m+=\"<details class='fim-pendente'><summary><span><small>Próximo passo</small>\"+esc2(f.p2.k)+\"</span><b>\"+f.p2.l.length+\" itens</b></summary><div class='fim-pendente-lista'>\"+" +
+      "f.p2.l.map(function(ln){return \"<div><span>\"+esc2(ln.t)+\"</span><b>\"+esc2(ln.v||'')+'</b></div>';}).join('')+'</div></details>';}" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:16px;'>\"+rpeHtml()+'</div>';" +
-      "m+=notaBox('musc');" +
+      "m+=\"<details class='fim-nota'><summary>Quer deixar uma observação? <span>Opcional</span></summary>\"+notaBox('musc')+'</details>';" +
       "m+=GP.revisao(f);" +
       // R4: compartilhar o treino com a foto — o gatilho mora no recibo
       "m+=arteBtns('gShareArq','gShareSem');" +

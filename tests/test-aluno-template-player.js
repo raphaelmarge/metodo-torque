@@ -7,7 +7,7 @@ const {chromium} = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/nod
 const {dados} = require('./test-aluno-player-experiencia');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 const PREVIEW=process.env.TORQUE_PREVIEW_MEMORY==='1';
-const OUT=process.env.TORQUE_SCREENSHOTS;
+const OUT=process.env.TORQUE_SCREENSHOTS||(process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'torque-testes','conclusao'):null);
 let passed=0;
 function ok(v,label){assert.ok(v,label);passed++;console.log('OK '+label);}
 function fixture(){const d=dados();d.guiaFichasP[0].it[0].rpe=8;d.fichasApp[0].itens[0].rpe=8;return d;}
@@ -114,7 +114,9 @@ async function main(){
    ok(await q.locator('#gFecharTreino').evaluate(b=>{const r=b.getBoundingClientRect();return r.height>=44&&r.top>=0&&r.bottom<=innerHeight+1;}),width+' '+theme+': término alcançável na tela');
    await x.click('#gFecharTreino');
    ok(await q.isVisible('#gFim') && await q.locator('#gFim').evaluate(b=>b.getBoundingClientRect().height>=58),width+' '+theme+': recibo preserva fechamento destacado');
-   ok(await q.locator('#gMiolo .wtile2').first().isVisible() && await q.locator('#gMiolo .rperow').isVisible() && /Séries feitas aqui.*Cargas anotadas.*Tempo de treino/s.test(await q.locator('#gMiolo').innerText()),width+' '+theme+': recibo mostra de fato os dados, resumo e esforço');
+   ok(await q.locator('#gMiolo .fim-celebracao').isVisible() && await q.locator('#gMiolo .wtile2').count()===2 && await q.locator('#gMiolo .rperow').isVisible(),width+' '+theme+': conclusão destaca a conquista, só dois números e o esforço');
+   ok(await q.locator('#gMiolo .fim-detalhes').evaluate(d=>!d.open&&/Séries feitas aqui/.test(d.textContent)&&/Cargas anotadas/.test(d.textContent)&&/Tempo de treino/.test(d.textContent)),width+' '+theme+': recibo técnico permanece recolhido e disponível');
+   ok(!await q.isVisible('.gpt-top') && !await q.isVisible('.gpt-progress'),width+' '+theme+': conclusão remove cabeçalho de progresso redundante');
    ok(!await q.isVisible('#gTemplateHero') && !await q.isVisible('#gMiolo2'),width+' '+theme+': conclusão não deixa cartões vazios do exercício');
    ok(x.errors.length===0,width+' '+theme+': nenhuma exceção');
    if(OUT){fs.mkdirSync(OUT,{recursive:true});await q.screenshot({path:path.join(OUT,'template-'+width+'-'+(theme||'escuro')+'.png')});}
