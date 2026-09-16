@@ -1,4 +1,4 @@
-/* v794: sugestões por campo nunca são execução sem confirmação explícita. */
+/* v838: sugestões por campo nunca são execução sem confirmação explícita; contrato visual acompanha o player aprovado. */
 process.env.TZ = 'America/Sao_Paulo';
 const assert = require('assert/strict');
 const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
@@ -21,9 +21,9 @@ async function main() {
   async function caso(D,init) {const x=await abrir(browser,{D,init});casos.push(x);return x.p;}
   try {
     const p=await caso(ficha());
-    ok(await p.evaluate(() => {const a=document.getElementById('gReps'),b=document.getElementById('gKg');return !!(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING)&&a.getBoundingClientRect().x<b.getBoundingClientRect().x;}),'repetições vêm primeiro no DOM e à esquerda no celular');
+    ok(await p.evaluate(() => {const carga=document.getElementById('gKg'),reps=document.getElementById('gReps');return !!(carga.compareDocumentPosition(reps)&Node.DOCUMENT_POSITION_FOLLOWING)&&carga.getBoundingClientRect().x<reps.getBoundingClientRect().x;}),'carga vem primeiro e à esquerda no registro aprovado');
     ok(await p.inputValue('#gReps')==='5'&&await p.inputValue('#gKg')==='60','primeira série traz reps e carga prescritas');
-    ok((await p.textContent('#gSerie')).includes('Série feita')&&(await p.textContent('#gCgLab'))==='Ajuste se precisar','ação principal confirma a série em um toque');
+    ok((await p.textContent('#gSerie')).includes('Registrar série')&&(await p.textContent('#gCgLab'))==='Ajuste se precisar','ação principal registra a série no contrato aprovado');
     await p.click('[data-gserie="1"]');await p.click('[data-gserie="2"]');await p.click('[data-gserie="0"]');
     await p.click('.gserie-ajustes summary');await p.waitForTimeout(150);
     ok(await p.evaluate(() => !window.__gvDe().sujo&&document.getElementById('gWRep').compareDocumentPosition(document.getElementById('gWKg'))&Node.DOCUMENT_POSITION_FOLLOWING),'réguas seguem reps/carga; abrir opções não altera sugestão');
@@ -109,13 +109,13 @@ async function main() {
     await draft.reload();await draft.waitForFunction(()=>window.__acSessao);await voltar(draft);
     ok(await draft.inputValue('#gKg')==='42'&&await draft.inputValue('#gReps')==='5','retomada após reload restaura os dois valores e suas origens');
     await draft.click('#gSerie');
-    rows=await registro(draft);ok(rows[0].kg===42&&rows[0].r===5&&rows[0].feito,'Série feita confirma os valores do draft retomado');
+    rows=await registro(draft);ok(rows[0].kg===42&&rows[0].r===5&&rows[0].feito,'Registrar série confirma os valores do draft retomado');
     const soReps=await caso(ficha());await soReps.fill('#gReps','4');await soReps.click('#gFechar');
     rows=await registro(soReps);ok(rows[0].r===4&&rows[0].kg===null,'alterar apenas reps não confirma a carga sugerida ao sair');
 
     const faixa=await caso(ficha([null,null,null],['8–12','até falha','30s']));
     for(let i=0;i<3;i++){await faixa.click('[data-gserie="'+i+'"]');ok(await faixa.inputValue('#gReps')===''&&await faixa.inputValue('#gKg')==='','alvo não numérico e carga desconhecida ficam vazios: '+['8–12','até falha','30s'][i]);}
-    ok((await faixa.locator('.gserie-context').textContent()).includes('carga não informada'),'ausência de carga tem indicação honesta');
+    ok((await faixa.locator('#gTemplatePrescription').textContent()).includes('—'),'ausência de carga é apresentada sem inventar valor no card de prescrição');
     await faixa.click('#gSerie');
     rows=await registro(faixa);ok(rows[0].feito&&rows[0].kg===null&&!rows[0].r,'confirmar campo vazio não inventa execução numérica');
     for(const x of casos)ok(x.errors.length===0,'cenário sem erro JavaScript');
