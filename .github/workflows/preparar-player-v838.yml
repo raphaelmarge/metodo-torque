@@ -52,10 +52,10 @@ jobs:
         run: |
           set -uo pipefail
           failures=0
-          for file in tests/test-aluno-template-player.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-acompanhamento.js tests/test-series-prescricao.js tests/test-aluno-player-referencias.js tests/test-sync-cas.js tests/test-versao.js; do
+          for file in tests/test-aluno-template-player.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-acompanhamento.js tests/test-series-prescricao.js tests/test-aluno-referencias-core.js tests/test-aluno-referencias-ui.js tests/test-demo-aluno-variantes.js tests/test-sync-cas.js tests/test-versao.js; do
             name=$(basename "$file" .js)
             echo "===== $file ====="
-            timeout 240 node "$file" > "$RUNNER_TEMP/player-v838/$name.log" 2>&1
+            timeout 180 node "$file" > "$RUNNER_TEMP/player-v838/$name.log" 2>&1
             status=$?
             cat "$RUNNER_TEMP/player-v838/$name.log"
             echo "$name exit=$status" | tee -a "$RUNNER_TEMP/player-v838/resultados.txt"
