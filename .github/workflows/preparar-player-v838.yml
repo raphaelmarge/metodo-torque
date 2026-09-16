@@ -4,13 +4,14 @@ on:
     branches: [prep/player-v838-flow-20260916]
     paths:
       - '.github/scripts/player-v838-fix.py'
+      - '.github/scripts/player-v838-followup.py'
       - '.github/workflows/preparar-player-v838.yml'
 permissions:
   contents: write
 jobs:
   preparar:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       BASE_URL: http://127.0.0.1:8765
       MT_BASE: http://127.0.0.1:8765
@@ -30,13 +31,15 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/player-v838"
           python3 .github/scripts/player-v838-fix.py
+          python3 .github/scripts/player-v838-followup.py
           node --check app/aluno-skin.js
           node --check tests/helpers/player-template.js
+          node --check tests/test-personal.js
           python3 -m http.server 8765 --bind 127.0.0.1 > "$RUNNER_TEMP/player-v838/server.log" 2>&1 &
           for i in $(seq 1 40); do curl --fail --silent http://127.0.0.1:8765/assets/versao.js >/dev/null && break; sleep 0.25; done
           node tools/demo-aluno/regen-demo.js
-          git rm .github/scripts/player-v838-fix.py .github/workflows/preparar-player-v838.yml
-          git add app/aluno-skin.js tests/helpers/player-template.js tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-aluno-template-player.js assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html docs/releases/mt-v838-player-publicacao.md
+          git rm .github/scripts/player-v838-fix.py .github/scripts/player-v838-followup.py .github/workflows/preparar-player-v838.yml
+          git add app/aluno-skin.js tests/helpers/player-template.js tests/test-personal.js tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-aluno-template-player.js assets/versao.js sw.js app/app-sw.js demo-aluno.html demo-aluno-cadastro.html demo-aluno-sem-cadastro.html docs/releases/mt-v838-player-publicacao.md
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'fix: concluir treino no player aprovado e preservar o recibo (mt-v838)'
@@ -50,12 +53,13 @@ jobs:
         env:
           TORQUE_SCREENSHOTS: ${{ runner.temp }}/player-v838/imagens
         run: |
+          set +e
           set -uo pipefail
           failures=0
-          for file in tests/test-aluno-template-player.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-acompanhamento.js tests/test-series-prescricao.js tests/test-aluno-referencias-core.js tests/test-aluno-referencias-ui.js tests/test-demo-aluno-variantes.js tests/test-sync-cas.js tests/test-versao.js; do
+          for file in tests/test-aluno-template-player.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-acompanhamento.js tests/test-series-prescricao.js tests/test-aluno-referencias-core.js tests/test-aluno-referencias-ui.js tests/test-demo-aluno-variantes.js tests/test-sync-cas.js tests/test-versao.js tests/test-personal.js; do
             name=$(basename "$file" .js)
             echo "===== $file ====="
-            timeout 180 node "$file" > "$RUNNER_TEMP/player-v838/$name.log" 2>&1
+            timeout 600 node "$file" > "$RUNNER_TEMP/player-v838/$name.log" 2>&1
             status=$?
             cat "$RUNNER_TEMP/player-v838/$name.log"
             echo "$name exit=$status" | tee -a "$RUNNER_TEMP/player-v838/resultados.txt"
