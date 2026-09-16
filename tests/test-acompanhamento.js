@@ -2,6 +2,7 @@
  * Tudo usa alunos sintéticos e intercepta a nuvem, sem dados de produção. */
 process.env.TZ = 'America/Sao_Paulo';
 const assert = require('assert/strict');
+const { abrirRegistro, clicarControle, preencherRegistro } = require('./helpers/player-template.js');
 const fs = require('fs');
 let chromium;
 try { chromium = require('playwright').chromium; }
@@ -97,8 +98,9 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   // O botão do treino é a entrada real do player.
   await pa.evaluate(()=>document.querySelector('.guiabtn').click());
   await pa.waitForFunction(()=>getComputedStyle(document.getElementById('guiaBox')).display==='flex');
-  ok((await pa.textContent('#gMiolo')).includes('aprovadas'),'alternativa do professor tem origem explícita');
-  await pa.click('#gSerie');
+  await pa.click('#gTemplateTab-instructions');await pa.locator('#gTemplatePanel-instructions .galt .altbtn').click();
+  ok((await pa.locator('#gTemplatePanel-instructions .galt').innerText()).includes('aprovadas'),'alternativa do professor tem origem explícita na aba de instruções');
+  await clicarControle(pa, '#gSerie');
   const saved=await pa.evaluate(()=>window.__acSessao.ler());
   ok(saved.s===1 && saved.desc>Date.now(),'série e prazo do descanso salvos');
   ok(await pa.evaluate(()=>{const k='ptguiaSessao',raw=localStorage.getItem(k),x=JSON.parse(raw);x.token='outro';localStorage.setItem(k,JSON.stringify(x));const bloqueou=!window.__acSessao.ler();localStorage.setItem(k,raw);return bloqueou;}),'retomada não atravessa o acesso de outro aluno');
@@ -107,7 +109,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   ok(await pa.isVisible('#acRetomar'),'app oferece continuar depois de recarregar');
   await pa.click('#acRetomar button');
   ok(await pa.evaluate(()=>window.__gvDe().s===1 && window.__gvDe().timer!==null),'retomada mantém série e descanso');
-  await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#acRelatar');
+  await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#gTemplateTab-tips');await pa.click('#acRelatar');
   await pa.fill('.ac-feedback textarea','Preciso confirmar a pegada.');await pa.click('[data-ac-save]');
   const nota=await pa.evaluate(()=>JSON.parse(localStorage.getItem('ptnotas')).slice(-1)[0]);
   ok(nota.ex==='Supino teste' && nota.serie===2 && nota.ficha==='A — Teste','relato preserva exercício, ficha e série');
@@ -117,7 +119,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   fail=false;await pa.evaluate(()=>document.querySelector('#acSync button').click());
   await pa.waitForFunction(()=>!window.__acSync.pendente(),null,{timeout:10000});
   ok(await pa.evaluate(()=>!!JSON.parse(localStorage.getItem('ptenvioUlt')) && document.getElementById('acSync').hidden && document.querySelector('#acSync span').textContent==='') && posted.some(x=>x.p_dados.notas.length),'confirmação do servidor quita a pendência e envia o relato sem deixar aviso no Início');
-  await pa.click('#gSerie');await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#gSerie');
+  await clicarControle(pa, '#gSerie');await pa.evaluate(()=>window.__zeraDescanso());await clicarControle(pa, '#gSerie');
   await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#navApp [data-msec="treino"]');await pa.click('#acRetomar button');
   ok(await pa.isVisible('#gFecharTreino') && await pa.locator('#gSerie').count()===0,'última série retoma na confirmação, sem série extra');
   await pa.click('#gFecharTreino');
@@ -160,7 +162,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   D.fichasApp[0].itens[0].descanso=0;D.guiaFichasP[0].it[0].d=0;
   await ca.route(BASE+'/acomp-zero.html',route=>route.fulfill({contentType:'text/html',body:global.MT_APP_ALUNO.monta(D)}));
   await pa.goto(BASE+'/acomp-zero.html');await pa.waitForFunction(()=>window.__acSessao);
-  await pa.evaluate(()=>document.querySelector('.guiabtn').click());await pa.click('#gSerie');
+  await pa.evaluate(()=>document.querySelector('.guiabtn').click());await clicarControle(pa, '#gSerie');
   ok(await pa.evaluate(()=>window.__gvDe().s===1 && window.__gvDe().timer===null),'descanso zero entre séries avança sem inventar 60 segundos');
   ok(errors.length===0,'nenhum erro de JavaScript: '+errors.join('; '));
   await ca.close();
