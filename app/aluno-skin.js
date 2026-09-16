@@ -519,5 +519,6 @@
 
   var js = "(" + playerTemplate.toString() + ")();";
 
+  css += "html.claro #guiaBox.player-template #gPe #gSerie,html.claro #guiaBox.player-template #gPe .prin{color:#fff!important}#guiaBox.player-template #gGif{border:0!important}";
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);
