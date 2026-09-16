@@ -6,48 +6,87 @@ on:
       - .github/workflows/player-publicacao-v838.yml
       - tools/player-v838/**
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: player-v838-candidate
+  cancel-in-progress: true
 jobs:
-  diagnostico:
+  corrigir:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_PASSWORD: torque-test-only
+        ports: [55432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGTESTURL: postgresql://postgres:torque-test-only@127.0.0.1:55432/postgres
+      TZ: America/Sao_Paulo
+      TORQUE_SCREENSHOTS: ${{ runner.temp }}/player-v838/imagens
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Guardar fonte exata antes dos testes
+      - name: Aplicar alterações exatas e registrar candidato
         run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           mkdir -p "$RUNNER_TEMP/player-v838"
-          git rev-parse HEAD > "$RUNNER_TEMP/player-v838/commit.txt"
-          git archive --format=tar HEAD > "$RUNNER_TEMP/player-v838/source.tar"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: player-v838-fonte-${{ github.run_id }}
-          path: ${{ runner.temp }}/player-v838/
-          retention-days: 7
+          python3 tools/player-v838/apply.py
+          node --check app/aluno-skin.js
+          node tests/test-versao.js
+          git diff --check
+          git diff > "$RUNNER_TEMP/player-v838/candidate.patch"
       - run: bash .github/scripts/setup-tests.sh
-      - name: Reproduzir os cinco bloqueios e o template
+      - name: Regenerar demos canônicas e validar os bloqueios
         env:
-          TZ: America/Sao_Paulo
           BASE_URL: http://127.0.0.1:8765
           MT_BASE: http://127.0.0.1:8765
-          TORQUE_SCREENSHOTS: ${{ runner.temp }}/player-v838/imagens
         run: |
-          set -uo pipefail
+          set -euo pipefail
           python3 -m http.server 8765 --bind 127.0.0.1 > "$RUNNER_TEMP/player-v838/server.log" 2>&1 &
           SRV=$!
           trap 'kill "$SRV" 2>/dev/null || true' EXIT
           for i in $(seq 1 40); do curl -fsS "$BASE_URL/assets/versao.js" >/dev/null && break; sleep .25; done
+          node tools/demo-aluno/regen-demo.js
           failed=0
-          for t in tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-series-prescricao.js tests/test-aluno-template-player.js; do
+          for t in tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-series-prescricao.js tests/test-aluno-template-player.js tests/test-aluno-template-fechamento.js; do
             echo "===== $t =====" | tee -a "$RUNNER_TEMP/player-v838/targeted.log"
             timeout 300 node "$t" 2>&1 | tee -a "$RUNNER_TEMP/player-v838/targeted.log" || failed=$((failed+1))
           done
           echo "Suítes com falha: $failed" | tee -a "$RUNNER_TEMP/player-v838/targeted.log"
+          git diff > "$RUNNER_TEMP/player-v838/candidate.patch"
           exit "$failed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-v838-targeted-${{ github.run_id }}
+          path: ${{ runner.temp }}/player-v838/
+          retention-days: 7
+      - name: Rodar a suíte completa sem remover verificações
+        run: |
+          set -euo pipefail
+          bash tests/run.sh 2>&1 | tee "$RUNNER_TEMP/player-v838/suites.log"
+      - name: Versionar somente o candidato aprovado
+        run: |
+          set -euo pipefail
+          git diff --check
+          git add app/aluno-skin.js assets/versao.js app/app-sw.js sw.js tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-aluno-template-player.js demo-aluno.html demo-aluno-sem-cadastro.html demo-aluno-cadastro.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: liberar player aprovado sem esconder registro ou conclusão (mt-v838)'
+          git push origin HEAD:fix/player-template-publicacao-v838
+          git rev-parse HEAD > "$RUNNER_TEMP/player-v838/approved-commit.txt"
+          git archive --format=tar HEAD > "$RUNNER_TEMP/player-v838/source.tar"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
