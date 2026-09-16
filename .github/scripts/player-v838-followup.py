@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import subprocess
 
 def replace(path, old, new):
     p=Path(path);s=p.read_text()
@@ -8,8 +9,9 @@ def replace(path, old, new):
 
 # Inclui as páginas de cenários guardadas em objetos (pulado.p, novo.p, erro.p).
 p=Path('tests/test-aluno-player-experiencia.js');s=p.read_text()
-s=re.sub(r"await ([\w.]+)\.click\('(\#(?:gSerie|gSemRegistro|gSalvar|gDesfazSerie|gPulaEx2))'\)",r"await clicarControle(\1, '\2')",s)
+s=re.sub(r"await ([\w.]+)\.click\('(\#(?:gSerie|gSemRegistro|gSalvar|gDesfazSerie|gPulaEx2|gVoz))'\)",r"await clicarControle(\1, '\2')",s)
 s=re.sub(r"await ([\w.]+)\.fill\('(\#(?:gKg|gReps))',\s*([^;]+?)\)",r"await preencherRegistro(\1, '\2', \3)",s)
+s=s.replace("await clicarControle(semCardio.p, '#gVoz');", "await clicarControle(semCardio.p, '#gVoz');await semCardio.p.locator('.gpt-options > summary').click();")
 p.write_text(s)
 
 # O teste de ponta a ponta do Personal também precisa abrir a série antes de
@@ -30,3 +32,21 @@ old="   ok(await q.isVisible('#gFim') && await q.locator('#gFim').evaluate(b=>b.
 new=old+"\n   ok(await q.locator('#gMiolo .wtile2').first().isVisible() && await q.locator('#gMiolo .rperow').isVisible() && /Séries feitas aqui.*Cargas anotadas.*Tempo de treino/s.test(await q.locator('#gMiolo').innerText()),width+' '+theme+': recibo mostra de fato os dados, resumo e esforço');\n   ok(!await q.isVisible('#gTemplateHero') && !await q.isVisible('#gMiolo2'),width+' '+theme+': conclusão não deixa cartões vazios do exercício');"
 replace('tests/test-aluno-template-player.js',old,new)
 p=Path('docs/releases/mt-v838-player-publicacao.md');p.write_text(p.read_text()+ '\nO recibo final também deixa de herdar o ocultamento dos blocos do exercício. Seu resumo não é transferido para a aba de instruções; os testes verificam visibilidade real dos dados, do esforço e ausência de cartões vazios em seis tamanhos/temas.\n')
+
+# A ordem de leitura/foco deve corresponder à ordem visual, não só ao CSS.
+replace('app/aluno-skin.js', '      function steppers() {', """      function steppers() {
+        var kg=$('gKg'),rp=$('gReps'),kl=kg&&kg.closest('label'),rl=rp&&rp.closest('label');
+        if(kl&&rl&&kl.parentNode===rl.parentNode&&!(kl.compareDocumentPosition(rl)&Node.DOCUMENT_POSITION_FOLLOWING))kl.parentNode.insertBefore(kl,rl);""")
+# As alternativas existem, mas começam recolhidas. Exercitar o botão real antes
+# de exigir a origem visível da alternativa aprovada pelo professor.
+replace('tests/test-acompanhamento.js', "await pa.click('#gTemplateTab-instructions');", "await pa.click('#gTemplateTab-instructions');await pa.locator('#gTemplatePanel-instructions .galt .altbtn').click();")
+
+# A suíte por série conserva todas as verificações de prescrição/volume e passa
+# a abrir o registro/opções antes de usar controles que o template recolhe.
+p=Path('tests/test-series-prescricao.js');s=p.read_text()
+s="const { abrirRegistro, clicarControle, preencherRegistro } = require('./helpers/player-template.js');\n"+s
+s=re.sub(r"await ([\w.]+)\.click\('(\#(?:gSerie|gSemRegistro|gSalvar|gDesfazSerie|gPulaEx2))'\)",r"await clicarControle(\1, '\2')",s)
+s=re.sub(r"await ([\w.]+)\.fill\('(\#(?:gKg|gReps))',\s*([^;]+?)\)",r"await preencherRegistro(\1, '\2', \3)",s)
+p.write_text(s)
+# Este arquivo foi acrescentado depois da lista inicial da preparação.
+subprocess.run(['git','add','tests/test-series-prescricao.js'],check=True)
