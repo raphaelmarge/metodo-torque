@@ -1,0 +1,56 @@
+name: Validar correção do player aprovado
+on:
+  push:
+    branches: [fix/player-template-publicacao-v838]
+    paths:
+      - .github/workflows/player-publicacao-v838.yml
+      - tools/player-v838/**
+permissions:
+  contents: read
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Guardar fonte exata antes dos testes
+        run: |
+          mkdir -p "$RUNNER_TEMP/player-v838"
+          git rev-parse HEAD > "$RUNNER_TEMP/player-v838/commit.txt"
+          git archive --format=tar HEAD > "$RUNNER_TEMP/player-v838/source.tar"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: player-v838-fonte-${{ github.run_id }}
+          path: ${{ runner.temp }}/player-v838/
+          retention-days: 7
+      - run: bash .github/scripts/setup-tests.sh
+      - name: Reproduzir os cinco bloqueios e o template
+        env:
+          TZ: America/Sao_Paulo
+          BASE_URL: http://127.0.0.1:8765
+          MT_BASE: http://127.0.0.1:8765
+          TORQUE_SCREENSHOTS: ${{ runner.temp }}/player-v838/imagens
+        run: |
+          set -uo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 > "$RUNNER_TEMP/player-v838/server.log" 2>&1 &
+          SRV=$!
+          trap 'kill "$SRV" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS "$BASE_URL/assets/versao.js" >/dev/null && break; sleep .25; done
+          failed=0
+          for t in tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-series-prescricao.js tests/test-aluno-template-player.js; do
+            echo "===== $t =====" | tee -a "$RUNNER_TEMP/player-v838/targeted.log"
+            timeout 300 node "$t" 2>&1 | tee -a "$RUNNER_TEMP/player-v838/targeted.log" || failed=$((failed+1))
+          done
+          echo "Suítes com falha: $failed" | tee -a "$RUNNER_TEMP/player-v838/targeted.log"
+          exit "$failed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-v838-evidencias-${{ github.run_id }}
+          path: ${{ runner.temp }}/player-v838/
+          retention-days: 7
