@@ -42,6 +42,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/player-v838"
           echo "TORQUE_SCREENSHOTS=$RUNNER_TEMP/player-v838/imagens" >> "$GITHUB_ENV"
           python3 tools/player-v838/apply.py
+          python3 tools/player-v838/followup.py
           node --check app/aluno-skin.js
           node tests/test-versao.js
           git diff --check
@@ -80,7 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          git add app/aluno-skin.js assets/versao.js app/app-sw.js sw.js tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-aluno-template-player.js demo-aluno.html demo-aluno-sem-cadastro.html demo-aluno-cadastro.html
+          git add app/aluno-skin.js assets/versao.js app/app-sw.js sw.js tests/test-acompanhamento.js tests/test-aluno-player-experiencia.js tests/test-aluno-series-praticas.js tests/test-aluno-template-player.js tests/test-series-prescricao.js tests/test-aluno-template-fechamento.js demo-aluno.html demo-aluno-sem-cadastro.html demo-aluno-cadastro.html
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'fix: liberar player aprovado sem esconder registro ou conclusão (mt-v838)'
