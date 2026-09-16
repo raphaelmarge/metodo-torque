@@ -2,6 +2,7 @@
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
+const { abrirRegistro } = require("./helpers/player-template.js");
 const { testaBotBuilder } = require("./_bot-builder.js"); // v756: robô testado num lugar só
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
@@ -11562,7 +11563,7 @@ async function novaExecucaoAluno(p) {
       "tocar em ‹ no primeiro exercício não trava o descanso nem sai do lugar");
 
     // pula até o fim do exercício pra chegar no registro da carga
-    const carga = await pApp.evaluate(async () => {
+    await pApp.evaluate(async () => {
       const bt = () => document.getElementById("gPular");
       for (let i = 0; i < 12; i++) {
         if (window.__gvDe().pend || window.__gvDe().fim) break;
@@ -11570,6 +11571,9 @@ async function novaExecucaoAluno(p) {
         else if (document.getElementById("gSerie")) document.getElementById("gSerie").click();
         await new Promise((r) => setTimeout(r, 220));
       }
+    });
+    await abrirRegistro(pApp);
+    const carga = await pApp.evaluate(async () => {
       if (!document.getElementById("gKg")) return null;
       const ajuste = document.getElementById('gWKg').closest('details');
       if (ajuste && !ajuste.open) ajuste.querySelector('summary').click();
