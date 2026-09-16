@@ -19,7 +19,7 @@ jobs:
         image: postgres:17.11
         env:
           POSTGRES_PASSWORD: torque-test-only
-        ports: [55432:5432]
+        ports: ['55432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -28,7 +28,6 @@ jobs:
     env:
       PGTESTURL: postgresql://postgres:torque-test-only@127.0.0.1:55432/postgres
       TZ: America/Sao_Paulo
-      TORQUE_SCREENSHOTS: ${{ runner.temp }}/player-v838/imagens
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +40,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           mkdir -p "$RUNNER_TEMP/player-v838"
+          echo "TORQUE_SCREENSHOTS=$RUNNER_TEMP/player-v838/imagens" >> "$GITHUB_ENV"
           python3 tools/player-v838/apply.py
           node --check app/aluno-skin.js
           node tests/test-versao.js
