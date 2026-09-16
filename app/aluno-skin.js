@@ -369,6 +369,8 @@
     '#cqPalco:has(.cq-medal3d){margin-bottom:0}',
     '@media(prefers-reduced-motion:reduce){.cq-medal3d,#cqMed.cq-medal3d{transition:none!important}}'
   ].join('');
+  // Referências compactas; reutiliza o espaço de ajuda e as cores do player.
+  css += "#guiaBox .gserie-referencias{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid var(--gline);text-align:left}#guiaBox .gserie-referencias>div{min-width:0}#guiaBox .gserie-referencias dt{color:var(--gmuted);font-size:11.5px;font-weight:600;line-height:1.4;margin:0 0 3px}#guiaBox .gserie-referencias dd{color:var(--gfg);font-size:13px;font-weight:650;line-height:1.4;margin:0;overflow-wrap:anywhere}#guiaBox #gOrigemSerie{margin-top:5px}";
   var js = "";
 
   raiz.MT_APP_SKIN = { css: css, js: js };
