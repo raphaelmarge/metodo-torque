@@ -1036,6 +1036,17 @@ async function novaExecucaoAluno(p) {
   await p.fill("#catBusca", "Supino reto com barra");
   await p.waitForTimeout(200);
   await p.click('[data-exedit="' + supinoId + '"]');
+  const gifEditor = await p.evaluate(() => ({
+    titulo: document.getElementById("dxGifNome").textContent,
+    src: (document.querySelector("#dxGifPreview img") || {}).src || "",
+    banco: document.querySelector("#dxGifBanco summary").textContent,
+    upload: document.getElementById("dxGifUpload").textContent,
+    arquivo: document.getElementById("dxGifFile").accept,
+  }));
+  ok(/Automático/.test(gifEditor.titulo) && /supino-reto-barra\.gif$/.test(gifEditor.src),
+    "o editor do exercício abre com a prévia automática do Supino existente");
+  ok(/banco de GIFs/i.test(gifEditor.banco) && /Enviar GIF/.test(gifEditor.upload) && /gif/i.test(gifEditor.arquivo),
+    "o caminho Treinos → Exercícios → Abrir oferece banco e upload somente de GIF");
   await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
   await p.click('#dlgEx button[value="ok"]');
   await p.waitForFunction(() => !document.getElementById("dlgEx").open);
@@ -11494,23 +11505,27 @@ async function novaExecucaoAluno(p) {
     ok(/×/.test(st1.chips) && /descanso/.test(st1.chips), "os chips mostram séries × reps e o descanso");
     ok(+st1.zi >= 62, "o player fica ACIMA da gaveta do menu (z-index " + st1.zi + ")");
 
-    /* Banco de GIFs do dono: o app monta o endereço na hora, a partir do nome do
-     * exercício — nada de 1619 links dentro do registro de cada aluno. */
+    /* Banco de GIFs: o app monta o endereço na hora e aceita o caminho escolhido
+     * pelo personal — o arquivo nunca entra no registro de cada aluno. */
     {
-      const semGif = await pApp.evaluate(() => {
-        const g = document.getElementById("gGif");
-        return { existe: !!g, escondido: !g || g.style.display === "none" };
-      });
-      ok(semGif.existe && semGif.escondido,
-        "sem banco de GIF configurado, a moldura da demonstração fica escondida (nada de buraco na tela)");
+      const urls = await pApp.evaluate(() => ({
+        supino: gifUrl("Supino reto"),
+        barra: gifUrl("Supino reto com barra"),
+        proprio: gifUrl("Qualquer exercício", "academia-1/meu-gif.gif"),
+        desligado: gifUrl("Supino reto", false),
+      }));
+      ok(/\/supino-reto-barra\.gif$/.test(urls.supino) && urls.supino === urls.barra,
+        "o alias do acervo liga Supino reto e Supino reto com barra ao GIF que já existe");
+      ok(/\/academia-1\/meu-gif\.gif$/.test(urls.proprio) && urls.desligado === "",
+        "o caminho escolhido vence o automático e a opção sem GIF é respeitada");
       const regra = await p.evaluate(() => {
         const antes = self.MT_GIFS;
-        self.MT_GIFS = { bucket: "gifs", padrao: "traco", acento: false, ext: "gif" };
+        self.MT_GIFS = { bucket: "gifs", padrao: "traco", acento: false, ext: "gif", aliases: { "supino-reto": "supino-legado.gif" } };
         const r = window.__gifRegra();
         self.MT_GIFS = antes;
         return r;
       });
-      ok(regra && /\/storage\/v1\/object\/public\/gifs\/$/.test(regra.b) && regra.p === "traco",
+      ok(regra && /\/storage\/v1\/object\/public\/gifs\/$/.test(regra.b) && regra.p === "traco" && regra.m["supino-reto"] === "supino-legado.gif",
         "a regra do banco de GIFs vira UM endereço base no pacote (" + (regra || {}).b + ")");
       const semBucket = await p.evaluate(() => {
         const antes = self.MT_GIFS;
@@ -11526,6 +11541,22 @@ async function novaExecucaoAluno(p) {
         return { temFuncao: /function gifUrl/.test(document.documentElement.innerHTML) };
       });
       ok(url.temFuncao, "o app carrega o montador de endereço do GIF");
+      const pacoteGif = await p.evaluate(() => {
+        const S = window.MTStore, st = S.read("ptStudio", {}), a = st.alunos[0];
+        const ficha = st.treinosV2[a.id].fichas[0], ex = st.exercicios.find((x) => x.id === ficha.itens[0].exId);
+        const antes = { gif: ex.gif, semGif: ex.semGif };
+        ex.gif = "00000000-0000-0000-0000-000000000001/supino-especial.gif"; ex.semGif = false; S.write("ptStudio", st);
+        const com = window.__dadosApp(a, new Date().toISOString());
+        ex.gif = ""; ex.semGif = true; S.write("ptStudio", st);
+        const sem = window.__dadosApp(a, new Date().toISOString());
+        ex.gif = antes.gif; ex.semGif = antes.semGif; S.write("ptStudio", st);
+        return { ficha: com.fichasApp[0].itens[0].gif, guia: com.guiaFichasP[0].it[0].m,
+          fichaSem: sem.fichasApp[0].itens[0].gif, guiaSem: sem.guiaFichasP[0].it[0].m };
+      });
+      ok(/supino-especial\.gif$/.test(pacoteGif.ficha) && pacoteGif.guia === pacoteGif.ficha,
+        "o caminho escolhido viaja na ficha e no player guiado");
+      ok(pacoteGif.fichaSem === false && pacoteGif.guiaSem === false,
+        "a escolha sem GIF também viaja até o player, sem ressuscitar o automático");
     }
 
     // uma série -> descanso com número grande; a última -> registro da carga

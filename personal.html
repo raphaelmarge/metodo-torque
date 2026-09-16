@@ -2685,7 +2685,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </dialog>
 
   <dialog id="dlgEx">
-    <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+    <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 640px; max-width: 100%;">
       <h2 id="dlgExTitulo" style="text-transform: none; letter-spacing: 0; font-size: 16px;">Exercício</h2>
       <div class="campo"><label>Nome *</label><input id="dxNome" required></div>
       <div class="grid-2">
@@ -2694,6 +2694,30 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div class="campo"><label>Descrição / execução (o aluno vê no app)</label>
         <textarea id="dxDesc" rows="5" placeholder="Ex.: Pegada na largura dos ombros, desça controlando até o peito, suba explosivo. Cotovelos a 45°."></textarea></div>
+      <fieldset class="gif-editor">
+        <legend>GIF do exercício</legend>
+        <div class="gif-current">
+          <div class="gif-preview" id="dxGifPreview" aria-label="Prévia do GIF"><span aria-hidden="true">◇</span></div>
+          <div class="gif-current-info">
+            <b id="dxGifNome">Automático pelo nome</b>
+            <small id="dxGifOrigem">O app procura a demonstração correspondente no banco.</small>
+            <div class="gif-actions">
+              <button class="btn sec mini" type="button" id="dxGifAuto">Usar automático</button>
+              <button class="btn sec mini" type="button" id="dxGifUpload">Enviar GIF</button>
+              <button class="btn sec mini" type="button" id="dxGifSem">Sem GIF</button>
+              <button class="btn sec mini" type="button" id="dxGifExcluir" hidden>Excluir enviado</button>
+            </div>
+          </div>
+        </div>
+        <input id="dxGifFile" type="file" accept="image/gif,.gif" hidden>
+        <details id="dxGifBanco" class="gif-bank">
+          <summary>Escolher no banco de GIFs</summary>
+          <label for="dxGifBusca">Buscar por exercício</label>
+          <input id="dxGifBusca" type="search" placeholder="Ex.: supino reto" autocomplete="off">
+          <div id="dxGifLista" class="gif-bank-list"></div>
+        </details>
+        <p id="dxGifStatus" class="gif-status" role="status" aria-live="polite"></p>
+      </fieldset>
       <div class="linha-flex" style="justify-content: flex-end;">
         <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
         <button class="btn" value="ok">Salvar</button>
@@ -18967,6 +18991,186 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   // ---------- favoritos do professor (os que ele mais passa) ----------
   // guardados por NOME em st.exFav — vale pro catálogo TORQUE e pros exercícios dele
+  // ---------- banco de GIFs dos exercícios ----------
+  // O acervo curado fica na raiz do bucket. Uploads do personal usam a pasta
+  // <academia>/ e o exercício guarda somente esse caminho, nunca o arquivo.
+  var gifEscolhido = "", gifSemEscolhido = false, gifBancoCache = null, gifBancoAid = "", gifBancoSeq = 0;
+  function gifSlug(nome) {
+    var g = self.MT_GIFS || {}, t = String(nome || "").trim().toLowerCase();
+    if (!g.acento) t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    t = t.replace(/[^a-z0-9\u00c0-\u024f ]+/g, " ").replace(/\s+/g, " ").trim();
+    if (g.padrao === "sublinha") return t.replace(/ /g, "_");
+    if (g.padrao === "junto") return t.replace(/ /g, "");
+    if (g.padrao === "espaco") return t;
+    return t.replace(/ /g, "-");
+  }
+  function gifAliasChave(nome) {
+    var t = String(nome || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return t.replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim().replace(/ /g, "-");
+  }
+  function gifCaminhoOk(caminho) {
+    var p = String(caminho || "");
+    return !!p && p.length <= 320 && p.charAt(0) !== "/" && p.indexOf("..") < 0 &&
+      !/[?#<>"'\\\u0000-\u001f]/.test(p) && /\.gif$/i.test(p);
+  }
+  function gifCaminhoAuto(nome) {
+    var g = self.MT_GIFS || {}, aliases = g.aliases || {};
+    var a = aliases[gifAliasChave(nome)];
+    if (gifCaminhoOk(a)) return a;
+    var s = gifSlug(nome);
+    return s ? s + "." + (g.ext || "gif") : "";
+  }
+  function gifUrlPainel(nome, caminho, semGif) {
+    var g = self.MT_GIFS || {}, c = self.MT_CLOUD || {};
+    if (semGif || !g.bucket || !c.url) return "";
+    var p = gifCaminhoOk(caminho) ? caminho : gifCaminhoAuto(nome);
+    if (!gifCaminhoOk(p)) return "";
+    return c.url.replace(/\/+$/, "") + "/storage/v1/object/public/" + encodeURIComponent(g.bucket) + "/" +
+      p.split("/").map(encodeURIComponent).join("/");
+  }
+  function gifRotulo(caminho) {
+    var n = String(caminho || "").split("/").pop().replace(/\.gif$/i, "").replace(/[-_]+/g, " ").trim();
+    return n ? n.charAt(0).toUpperCase() + n.slice(1) : "GIF";
+  }
+  function gifExAtual() {
+    var st = load();
+    return exEditando ? exPorId(st, exEditando) : null;
+  }
+  function gifPintaAtual() {
+    var ex = gifExAtual(); if (!ex) return;
+    var nome = $("dxNome").value.trim() || ex.nome, preview = $("dxGifPreview");
+    var url = gifUrlPainel(nome, gifEscolhido, gifSemEscolhido);
+    preview.innerHTML = "";
+    if (url) {
+      var img = document.createElement("img"); img.src = url; img.alt = "Demonstração de " + nome;
+      img.addEventListener("error", function () {
+        /* Conserva o endereço escolhido no DOM: além de facilitar o diagnóstico,
+         * evita perder a origem da prévia quando o painel está momentaneamente
+         * offline. Só troca o que a pessoa vê pelo marcador neutro. */
+        img.style.display = "none";
+        if (!preview.querySelector("[data-gif-falhou]")) {
+          var vazio = document.createElement("span"); vazio.setAttribute("data-gif-falhou", "");
+          vazio.setAttribute("aria-hidden", "true"); vazio.textContent = "◇"; preview.appendChild(vazio);
+        }
+      });
+      preview.appendChild(img);
+    } else preview.innerHTML = '<span aria-hidden="true">◇</span>';
+    if (gifSemEscolhido) {
+      $("dxGifNome").textContent = "Sem GIF";
+      $("dxGifOrigem").textContent = "O aluno verá somente vídeo e instruções deste exercício.";
+    } else if (gifEscolhido) {
+      $("dxGifNome").textContent = gifRotulo(gifEscolhido);
+      $("dxGifOrigem").textContent = gifEscolhido.indexOf("/") >= 0 ? "GIF enviado pela sua equipe." : "Selecionado no banco TORQUE.";
+    } else {
+      $("dxGifNome").textContent = "Automático pelo nome";
+      $("dxGifOrigem").textContent = "Arquivo procurado: " + gifCaminhoAuto(nome);
+    }
+    var nuvem = S.cloud && S.cloud();
+    $("dxGifExcluir").hidden = !(nuvem && gifEscolhido.indexOf(nuvem.aid + "/") === 0);
+    if (gifBancoCache) gifPintaLista();
+  }
+  function gifTermos(q) {
+    var fora = { com: 1, de: 1, da: 1, do: 1, das: 1, dos: 1, no: 1, na: 1, para: 1 };
+    return alTextoBusca(q || "").split(/\s+/).filter(function (t) { return t && !fora[t]; });
+  }
+  function gifPintaLista() {
+    var box = $("dxGifLista"); if (!box) return;
+    if (!gifBancoCache) { box.innerHTML = '<p class="gif-bank-empty">Carregando o banco…</p>'; return; }
+    var termos = gifTermos($("dxGifBusca").value || $("dxNome").value);
+    var vistos = {}, itens = gifBancoCache.filter(function (it) {
+      if (!gifCaminhoOk(it.path) || vistos[it.path]) return false;
+      vistos[it.path] = 1;
+      var hay = alTextoBusca(it.rotulo + " " + it.path);
+      return !termos.length || termos.every(function (t) { return hay.indexOf(t) >= 0; });
+    }).slice(0, 36);
+    box.innerHTML = itens.map(function (it) {
+      return '<button class="gif-bank-item" type="button" data-gifpath="' + esc(it.path) + '" aria-pressed="' + (gifEscolhido === it.path && !gifSemEscolhido ? "true" : "false") + '">' +
+        '<img src="' + esc(gifUrlPainel("", it.path, false)) + '" alt="" loading="lazy"><span>' + esc(it.rotulo) + "</span></button>";
+    }).join("") || '<p class="gif-bank-empty">Nenhum GIF com essa busca. Tente menos palavras ou envie um arquivo.</p>';
+  }
+  function gifCarregaBanco() {
+    var nuvem = S.cloud && S.cloud(), status = $("dxGifStatus");
+    if (!nuvem || !nuvem.aid || !nuvem.client || !nuvem.client.storage) {
+      gifBancoCache = [];
+      status.textContent = "Entre na sua conta para buscar e enviar GIFs. O modo automático continua disponível.";
+      gifPintaLista(); return;
+    }
+    if (gifBancoCache && gifBancoAid === nuvem.aid) { gifPintaLista(); return; }
+    var seq = ++gifBancoSeq, balde = nuvem.client.storage.from((self.MT_GIFS || {}).bucket || "exercicios");
+    status.textContent = "Carregando banco de GIFs…"; gifBancoCache = null; gifPintaLista();
+    Promise.all([
+      balde.list("", { limit: 1000, offset: 0, sortBy: { column: "name", order: "asc" } }),
+      balde.list(nuvem.aid, { limit: 1000, offset: 0, sortBy: { column: "name", order: "asc" } }),
+    ]).then(function (res) {
+      if (seq !== gifBancoSeq) return;
+      var raiz = res[0] && !res[0].error ? (res[0].data || []) : [];
+      var meus = res[1] && !res[1].error ? (res[1].data || []) : [];
+      gifBancoCache = raiz.filter(function (x) { return x && /\.gif$/i.test(x.name || ""); })
+        .map(function (x) { return { path: x.name, rotulo: gifRotulo(x.name), proprio: false }; })
+        .concat(meus.filter(function (x) { return x && /\.gif$/i.test(x.name || ""); })
+          .map(function (x) { return { path: nuvem.aid + "/" + x.name, rotulo: gifRotulo(x.name) + " · sua equipe", proprio: true }; }));
+      gifBancoAid = nuvem.aid;
+      status.textContent = gifBancoCache.length ? gifBancoCache.length + " GIFs disponíveis." : "O banco ainda não pôde ser listado.";
+      gifPintaLista(); gifPintaAtual();
+    }).catch(function () {
+      if (seq !== gifBancoSeq) return;
+      gifBancoCache = []; status.textContent = "Não foi possível abrir o banco agora. Tente novamente em instantes."; gifPintaLista();
+    });
+  }
+  function gifAbreEditor(ex) {
+    gifEscolhido = gifCaminhoOk(ex.gif) ? ex.gif : "";
+    gifSemEscolhido = ex.semGif === true;
+    $("dxGifBusca").value = ex.nome || "";
+    $("dxGifBanco").open = false;
+    $("dxGifStatus").textContent = "";
+    gifPintaAtual();
+  }
+  $("dxGifAuto").addEventListener("click", function () { gifEscolhido = ""; gifSemEscolhido = false; gifPintaAtual(); });
+  $("dxGifSem").addEventListener("click", function () { gifEscolhido = ""; gifSemEscolhido = true; gifPintaAtual(); });
+  $("dxGifUpload").addEventListener("click", function () { $("dxGifFile").click(); });
+  $("dxGifBanco").addEventListener("toggle", function () { if (this.open) gifCarregaBanco(); });
+  $("dxGifBusca").addEventListener("input", gifPintaLista);
+  $("dxNome").addEventListener("input", function () { if (!gifEscolhido && !gifSemEscolhido) gifPintaAtual(); });
+  $("dxGifLista").addEventListener("click", function (e) {
+    var bt = e.target.closest && e.target.closest("[data-gifpath]"); if (!bt) return;
+    var p = bt.getAttribute("data-gifpath"); if (!gifCaminhoOk(p)) return;
+    gifEscolhido = p; gifSemEscolhido = false; gifPintaAtual();
+    $("dxGifStatus").textContent = "GIF selecionado. Toque em Salvar para aplicar aos alunos.";
+  });
+  $("dxGifFile").addEventListener("change", function () {
+    var arq = this.files && this.files[0]; this.value = ""; if (!arq) return;
+    var status = $("dxGifStatus"), nuvem = S.cloud && S.cloud();
+    if (!/\.gif$/i.test(arq.name || "") || (arq.type && arq.type !== "image/gif")) { status.textContent = "Escolha um arquivo GIF."; return; }
+    if (arq.size > 8 * 1024 * 1024) { status.textContent = "Esse GIF passa de 8 MB. Comprima o arquivo e tente de novo."; return; }
+    if (!nuvem || !nuvem.aid || !nuvem.client || !nuvem.client.storage) { status.textContent = "Entre na sua conta para enviar o GIF."; return; }
+    var base = gifSlug($("dxNome").value) || "exercicio";
+    var caminho = nuvem.aid + "/" + base.slice(0, 80) + "-" + String(S.uid()).replace(/[^a-z0-9-]/gi, "").slice(0, 48) + ".gif";
+    var bt = $("dxGifUpload"); bt.disabled = true; status.textContent = "Enviando GIF…";
+    nuvem.client.storage.from((self.MT_GIFS || {}).bucket || "exercicios")
+      .upload(caminho, arq, { contentType: "image/gif", cacheControl: "31536000", upsert: false })
+      .then(function (r) {
+        if (r && r.error) throw r.error;
+        gifEscolhido = caminho; gifSemEscolhido = false;
+        if (gifBancoCache) gifBancoCache.unshift({ path: caminho, rotulo: ($("dxNome").value || gifRotulo(caminho)) + " · sua equipe", proprio: true });
+        status.textContent = "GIF enviado e selecionado. Toque em Salvar para aplicar aos alunos."; gifPintaAtual();
+      }).catch(function (err) { status.textContent = "Não foi possível enviar o GIF" + (err && err.message ? ": " + err.message : "."); })
+      .then(function () { bt.disabled = false; });
+  });
+  $("dxGifExcluir").addEventListener("click", function () {
+    var nuvem = S.cloud && S.cloud(), caminho = gifEscolhido;
+    if (!nuvem || caminho.indexOf(nuvem.aid + "/") !== 0) return;
+    if (!confirm("Excluir este GIF enviado da sua biblioteca? Outros exercícios que usam o mesmo arquivo ficarão sem a demonstração.")) return;
+    var bt = this; bt.disabled = true; $("dxGifStatus").textContent = "Excluindo GIF…";
+    nuvem.client.storage.from((self.MT_GIFS || {}).bucket || "exercicios").remove([caminho]).then(function (r) {
+      if (r && r.error) throw r.error;
+      if (gifBancoCache) gifBancoCache = gifBancoCache.filter(function (x) { return x.path !== caminho; });
+      gifEscolhido = ""; gifSemEscolhido = false;
+      $("dxGifStatus").textContent = "GIF excluído. O modo automático voltou a valer."; gifPintaAtual();
+    }).catch(function () { $("dxGifStatus").textContent = "Não foi possível excluir o GIF agora."; })
+      .then(function () { bt.disabled = false; });
+  });
+  window.__gifBancoPT = { slug: gifSlug, automatico: gifCaminhoAuto, url: gifUrlPainel, valido: gifCaminhoOk };
+
   function favMapa(st) {
     var m = {};
     (st.exFav || []).forEach(function (n) { m[String(n).toLowerCase()] = 1; });
@@ -18995,7 +19199,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * exercícios DO PROFESSOR e os favoritos entram nela. */
   var listaUniCache = { chave: null, itens: null };
   function chaveListaUnificada(st) {
-    return ((st.exercicios || []).length + "|" + (st.exercicios || []).map(function (e) { return e.id + "" + e.nome + "" + (e.grupo || "") + "" + (e.video || "") + "" + (e.descricao ? 1 : 0); }).join("") +
+    var gifChave = (st.exercicios || []).map(function (e) { return (e.gif || "") + ":" + (e.semGif ? 1 : 0); }).join("|");
+    return (gifChave + "|" + (st.exercicios || []).length + "|" + (st.exercicios || []).map(function (e) { return e.id + "" + e.nome + "" + (e.grupo || "") + "" + (e.video || "") + "" + (e.descricao ? 1 : 0); }).join("") +
       "|" + (st.exFav || []).join("") + "|" + (self.MT_EXERCICIOS || []).length);
   }
   function listaUnificada(st) {
@@ -19014,7 +19219,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     (self.MT_EXERCICIOS || []).forEach(function (c) { catPorNome[c.n.toLowerCase()] = c; });
     var fav = favMapa(st);
     var itens = (st.exercicios || []).map(function (e) {
-      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || (catPorNome[e.nome.toLowerCase()] || {}).v || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo), fav: !!fav[e.nome.toLowerCase()] };
+      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || (catPorNome[e.nome.toLowerCase()] || {}).v || "", gif: e.semGif ? false : (e.gif || ""), id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo), fav: !!fav[e.nome.toLowerCase()] };
     });
     (self.MT_EXERCICIOS || []).forEach(function (c) {
       if (meus[c.n.toLowerCase()]) return;
@@ -19140,6 +19345,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // senão apagar o campo não tem como significar "não quero vídeo aqui"
       $("dxVideo").value = ex.semVideo ? "" : videoDoEx(ex); $("dxDesc").value = ex.descricao || "";
       $("dxVideo").setCustomValidity("");
+      gifAbreEditor(ex);
       $("dlgEx").showModal();
     }
     if (rm) {
@@ -19182,6 +19388,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ex.video = vidNovo;
     ex.semVideo = !vidNovo && tinhaVideo;
     ex.descricao = $("dxDesc").value.trim();
+    ex.gif = gifSemEscolhido ? "" : gifEscolhido;
+    ex.semGif = gifSemEscolhido;
     exAlunosAfetados(st, exEditando).ids.forEach(function (aid) { marcaAppPendente(st, aid); });
     S.write("ptStudio", st);
     renderBiblioteca(); renderFichas();
@@ -22531,7 +22739,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         var linhas = MT_APP_ALUNO.normalizaSeries(it);
-        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
+        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
           carga: MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? linhas : undefined, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
@@ -22557,7 +22765,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
+        return { e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
           carga: it.carga == null ? null : it.carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? MT_APP_ALUNO.normalizaSeries(it) : undefined,
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
@@ -22787,12 +22995,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * {html, stamp}, então o fallback do /app/ continua existindo pra ele. */
   /* Regra do banco de GIFs (assets/cloud-config.js). Sai daqui pro pacote do
    * aluno como UM objeto pequeno; o app usa isso pra montar o endereço do GIF
-   * de qualquer um dos 1619 exercícios sem carregar lista nenhuma. */
+   * de qualquer exercício sem carregar a lista inteira no pacote. */
   function gifRegra() {
     var g = self.MT_GIFS || {}, c = self.MT_CLOUD || {};
     if (!g.bucket || !c.url) return null;
+    var aliases = {};
+    Object.keys(g.aliases || {}).slice(0, 100).forEach(function (k) {
+      if (gifCaminhoOk(g.aliases[k])) aliases[k] = g.aliases[k];
+    });
     return { b: c.url.replace(/\/+$/, "") + "/storage/v1/object/public/" + g.bucket + "/",
-      p: g.padrao || "traco", a: !!g.acento, e: g.ext || "gif" };
+      p: g.padrao || "traco", a: !!g.acento, e: g.ext || "gif", m: aliases };
   }
   window.__gifRegra = gifRegra; // testes
 

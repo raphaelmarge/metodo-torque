@@ -221,6 +221,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
     const stamp = new Date().toISOString();
+    /* As demos são arquivos autocontidos e deliberadamente offline. O produto
+     * real recebe a regra do acervo remoto; aqui ela fica vazia para o HTML de
+     * demonstração não fazer nenhuma requisição externa ao ser aberto. */
+    const gifsProduto = self.MT_GIFS;
+    self.MT_GIFS = {};
     const comCadastro = window.__montaAppAluno(alex, stamp);
     // Apenas o aluno FICTÍCIO da demonstração dispensa a entrada inicial.
     // Cada HTML vem do mesmo builder. Não forja aceite, não oculta overlay
@@ -229,6 +234,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       onboardingConsultoria: Object.assign({}, alex.onboardingConsultoria, { requerido: false })
     });
     const semCadastro = window.__montaAppAluno(direto, stamp);
+    self.MT_GIFS = gifsProduto;
     window.MTStore.write("ptStudio", JSON.parse(snap));
     return { comCadastro, semCadastro };
   }, { CAPAS, NUTRICAO_DEMO });

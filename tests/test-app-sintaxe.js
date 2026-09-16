@@ -90,6 +90,51 @@ scripts.forEach((s, i) => {
   ok(!erro, "script " + (i + 1) + " tem sintaxe válida" + (erro ? " — " + erro : ""));
 });
 
+// Banco de GIFs (v840): a URL automática usa aliases do acervo, o caminho
+// escolhido pelo personal vence o automático e `false` desliga a mídia.
+// Executamos exatamente as funções que viajaram no HTML final do aluno.
+{
+  const fichasGif = D.fichasApp.map((f, fi) => Object.assign({}, f, {
+    itens: f.itens.map((it, ii) => Object.assign({}, it,
+      fi === 0 && ii === 0 ? { gif: "academia-1/supino especial.gif" } :
+      fi === 0 && ii === 1 ? { gif: false } : {})),
+  }));
+  const htmlGif = self.MT_APP_ALUNO.monta(Object.assign({}, D, {
+    gif: { b: "https://exemplo.supabase.co/storage/v1/object/public/exercicios/", p: "traco", a: false, e: "gif",
+      m: { "supino-reto": "supino-reto-barra.gif" } },
+    fichasApp: fichasGif,
+  }));
+  const scriptGif = [...htmlGif.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1])
+    .find((s) => s.includes("function gifUrl"));
+  let apiGif = null;
+  try {
+    const ini = scriptGif.indexOf("var GIF="), fim = scriptGif.indexOf("function vidHtml", ini);
+    apiGif = new Function(scriptGif.slice(ini, fim) + ";return {gifUrl:gifUrl,gifPath:gifPath};")();
+  } catch (_) {}
+  ok(!!apiGif, "🎞️ o app final expõe a regra executável do banco de GIFs");
+  if (apiGif) {
+    ok(/\/supino-reto-barra\.gif$/.test(apiGif.gifUrl("Supino reto")),
+      "🎞️ alias do Supino reto aponta para o arquivo existente do acervo");
+    ok(/\/academia-1\/meu%20gif\.gif$/.test(apiGif.gifUrl("Outro", "academia-1/meu gif.gif")),
+      "🎞️ caminho escolhido pelo personal é validado e codificado por segmento");
+    ok(apiGif.gifUrl("Supino reto", false) === "" && apiGif.gifPath("../segredo.gif") === "",
+      "🎞️ 'sem GIF' é respeitado e caminho relativo inseguro é rejeitado");
+  }
+  const guiaGif = htmlGif.slice(htmlGif.indexOf("var GUIA="), htmlGif.indexOf("var TECS_G="));
+  ok(/"m":"academia-1\/supino especial\.gif"/.test(guiaGif) && /"m":false/.test(guiaGif),
+    "🎞️ escolha e bloqueio do personal chegam ao player guiado");
+
+  const cloudAntes = self.MT_CLOUD, gifsAntes = self.MT_GIFS;
+  self.MT_CLOUD = { url: "https://legado.supabase.co" };
+  self.MT_GIFS = { bucket: "exercicios", padrao: "traco", acento: false, ext: "gif",
+    aliases: { "supino-reto": "supino-reto-barra.gif" } };
+  const htmlLegado = self.MT_APP_ALUNO.monta(Object.assign({}, D, { gif: null }));
+  self.MT_CLOUD = cloudAntes; self.MT_GIFS = gifsAntes;
+  ok(/var GIF=\{"b":"https:\/\/legado\.supabase\.co\/storage\/v1\/object\/public\/exercicios\/"/.test(htmlLegado) &&
+    /"supino-reto":"supino-reto-barra\.gif"/.test(htmlLegado),
+    "🎞️ pacote antigo recebe a configuração atual do acervo sem republicação em massa");
+}
+
 // cronômetros de descanso contam pelo RELÓGIO (v666): decremento resta-- trava
 // quando o navegador estrangula a aba em segundo plano — o deadline não
 const tmrSrc = html.slice(html.indexOf("function iniciaTmr"), html.indexOf("function iniciaTmr") + 900);

@@ -479,7 +479,7 @@
           $('gTemplatePosition').textContent=(parts.length>1?parts.slice(1).join(' · ')+' · ':'')+(c.s.e+1)+' de '+c.f.it.length+' exercícios';
           var total=0,done=0;c.f.it.forEach(function(it,ei){total+=it.s;done+=window.GP.conta(it,ei);});var pc=total?Math.round(100*done/total):0;
           $('gTemplateProgress').querySelector('progress').value=pc;$('gTemplateProgress').lastChild.textContent=pc+'%';
-          var thumb=$('gTemplateThumb'),src=window.gifUrl(c.it.e);if(thumb.dataset.src!==src){thumb.innerHTML='';thumb.dataset.src=src;if(src){var img=el('img');img.src=src;img.alt='';img.addEventListener('error',function(){thumb.textContent='◇';});thumb.appendChild(img);}else thumb.textContent='◇';}
+          var thumb=$('gTemplateThumb'),src=window.gifUrl(c.it.e,c.it.m);if(thumb.dataset.src!==src){thumb.innerHTML='';thumb.dataset.src=src;if(src){var img=el('img');img.src=src;img.alt='';img.addEventListener('error',function(){thumb.textContent='◇';});thumb.appendChild(img);}else thumb.textContent='◇';}
           var badge=$('gTemplateHero').querySelector('.gpt-group');badge.textContent=c.it.g||'';badge.hidden=!c.it.g;
           var conf=window.L('ptconf',{}),fav=Array.isArray(conf.playerFavoritos)?conf.playerFavoritos:[],on=fav.indexOf(c.it.e)>=0;
           $('gTemplateFavorite').setAttribute('aria-pressed',String(on));$('gTemplateFavorite').textContent=on?'★':'☆';
@@ -513,7 +513,7 @@
         if(b.id==='gTemplateFavorite'){var c=current(),conf=window.L('ptconf',{}),list=Array.isArray(conf.playerFavoritos)?conf.playerFavoritos.slice():[],i=list.indexOf(c.it.e);if(i<0)list.push(c.it.e);else list.splice(i,1);conf.playerFavoritos=list.slice(-150);if(window.Sv('ptconf',conf)!==false){b.textContent=i<0?'★':'☆';b.setAttribute('aria-pressed',String(i<0));}return;}
       });
       $('gTemplateTabs').addEventListener('keydown',function(e){var names=['video','instructions','tips'],i=names.indexOf(tab),n=e.key==='ArrowRight'?(i+1)%3:e.key==='ArrowLeft'?(i+2)%3:e.key==='Home'?0:e.key==='End'?2:-1;if(n>=0){e.preventDefault();selectTab(names[n],true);}});
-      window.__playerTemplate={version:'mt-v839',render:render,entry:function(){mode='entry';updateView();}};
+      window.__playerTemplate={version:'mt-v840',render:render,entry:function(){mode='entry';updateView();}};
       render();
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();

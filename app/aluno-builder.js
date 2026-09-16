@@ -1327,7 +1327,22 @@
     var repetidosApp = {};
     (fichasApp || []).forEach(function (f) { (f.itens || []).forEach(function (it) { var n = String(it.nome || "").replace(/'/g, ""); repetidosApp[n] = (repetidosApp[n] || 0) + 1; }); });
     function chaveSeries(nome, fi, ei) { var n = String(nome || "").replace(/'/g, ""); return repetidosApp[n] > 1 ? "@" + fi + ":" + ei : n; }
+    // Pacotes anteriores à v839 não tinham D.gif. Como o construtor é a fonte
+    // única e cloud-config já é carregado pelo /app/, eles ganham o acervo
+    // automático na próxima abertura sem exigir republicação em massa.
     var GIF = D.gif || null;
+    if (!GIF) {
+      var gifCfg = raiz.MT_GIFS || {}, gifCloud = raiz.MT_CLOUD || {}, gifAliases = {};
+      Object.keys(gifCfg.aliases || {}).slice(0, 100).forEach(function (k) {
+        var p = String(gifCfg.aliases[k] || "");
+        if (p && p.length <= 320 && p.charAt(0) !== "/" && p.indexOf("..") < 0 &&
+          !/[?#<>"'\\\u0000-\u001f]/.test(p) && /\.gif$/i.test(p)) gifAliases[k] = p;
+      });
+      if (gifCfg.bucket && gifCloud.url) GIF = {
+        b: String(gifCloud.url).replace(/\/+$/, "") + "/storage/v1/object/public/" + encodeURIComponent(gifCfg.bucket) + "/",
+        p: gifCfg.padrao || "traco", a: !!gifCfg.acento, e: gifCfg.ext || "gif", m: gifAliases,
+      };
+    }
     var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || []; // v747: [] — com null o .length derrubava o monta() inteiro
     var wodsApp = D.wodsApp || [], cardiosApp = D.cardiosApp || [];
     // v768: semana do aluno — dia → LISTA de {tp, i, n, h}, já resolvida e
@@ -3279,18 +3294,20 @@
       // arquivo de vídeo direto (mp4/webm...). Link estranho ganha aviso honesto.
       "function ytId(u){var m=String(u||'').match(/(?:youtube\\.com\\/(?:watch\\?(?:.*&)?v=|shorts\\/|embed\\/)|youtu\\.be\\/)([\\w-]{6,20})/);return m?m[1]:'';}" +
       "function vidMolde(src){return \"<iframe src='\"+src+\"' title='Vídeo do exercício' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px;display:block;background:#000;'></iframe>\";}" +
-      // Banco de GIFs do dono: em vez de guardar 1619 links, o app monta o
+      // Banco de GIFs: em vez de guardar um link por item do catálogo, o app monta o
       // endereço na hora a partir do nome do exercício. Se o arquivo não
       // existir, o <img> falha e a demonstração some sem barulho nenhum.
       "var GIF=" + jsonApp(GIF) + ";" +
-      "function gifUrl(nome){if(!GIF||!GIF.b||!nome)return '';" +
+      "function gifPath(p){p=String(p||'');if(!p||p.length>320||p.charAt(0)==='/'||p.indexOf('..')>=0||p.indexOf('?')>=0||p.indexOf('#')>=0||p.indexOf('<')>=0||p.indexOf('>')>=0||p.indexOf(String.fromCharCode(39))>=0||p.indexOf(String.fromCharCode(34))>=0||p.indexOf('\\\\')>=0||!/\.gif$/i.test(p))return '';for(var pi=0;pi<p.length;pi++){var pc=p.charCodeAt(pi);if(pc<32||pc===127)return '';}return p;}" +
+      "function gifUrl(nome,arquivo){if(!GIF||!GIF.b||(!nome&&!arquivo))return '';if(arquivo===false)return '';" +
       "var t=String(nome).trim().toLowerCase();" +
       "if(!GIF.a)t=t.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');" +
       "t=t.replace(/[^a-z0-9\\u00c0-\\u024f ]+/g,' ').replace(/\\s+/g,' ').trim();" +
-      "if(GIF.p==='sublinha')t=t.replace(/ /g,'_');" +
+      "var chave=t.replace(/ /g,'-'),caminho=gifPath(arquivo);if(!caminho&&GIF.m)caminho=gifPath(GIF.m[chave]);" +
+      "if(!caminho){if(GIF.p==='sublinha')t=t.replace(/ /g,'_');" +
       "else if(GIF.p==='junto')t=t.replace(/ /g,'');" +
-      "else if(GIF.p!=='espaco')t=t.replace(/ /g,'-');" +
-      "return GIF.b+encodeURIComponent(t)+'.'+(GIF.e||'gif');}" +
+      "else if(GIF.p!=='espaco')t=t.replace(/ /g,'-');caminho=t+'.'+(GIF.e||'gif');}" +
+      "return GIF.b+caminho.split('/').map(function(parte){return encodeURIComponent(parte);}).join('/');}" +
       "function vidHtml(u){u=String(u||'');var id=ytId(u);" +
       // GIF/imagem animada não é <video>: é <img>, sem controles e em loop
       "if(/^https?:\\/\\/[^'\\\"<>\\s]+\\.(gif|webp|png|jpe?g)([?#][^'\\\"<>]*)?$/i.test(u))" +
@@ -5858,7 +5875,7 @@
       "var GUIA=" + jsonApp((function () {
         var extra = (fichasApp || []).map(function (f) {
           return (f.itens || []).map(function (it) {
-            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "", al: (it.alts || []).slice(0, 2), ap: !!it.altsAprovadas, seriesDetalhadas: it.seriesDetalhadas, carga: it.carga, rpe: it.rpe };
+            return { g: it.grupo || "", m: it.gif === false ? false : (it.gif || ""), dc: it.desc || "", ob: it.obs || "", tc: it.tec || "", al: (it.alts || []).slice(0, 2), ap: !!it.altsAprovadas, seriesDetalhadas: it.seriesDetalhadas, carga: it.carga, rpe: it.rpe };
           });
         });
         // parte 2 do dia: entra no recibo do fim do treino ("ainda falta o A2")
@@ -5876,7 +5893,7 @@
           // propósito: o teste de escape do GUIA olha os 500 primeiros chars
           return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
-            var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas, rpe: it.rpe != null ? it.rpe : x.rpe };
+            var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, m: (it.m === false || x.m === false) ? false : (it.m || x.m || ""), g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas, rpe: it.rpe != null ? it.rpe : x.rpe };
             item.rpePorSerie = (item.seriesDetalhadas || []).map(function(s){return s && s.rpe != null ? s.rpe : null;});
             var sd = normalizaSeries(item); item.s = sd.length; item.d = sd[0].descanso; item.r = sd[0].reps;
             if (item.seriesDetalhadas) item.seriesDetalhadas = sd;
@@ -6107,7 +6124,7 @@
       "gEl('gHist').textContent=gHistTxt(it.e);gEl('gHist').style.display=uv?'none':'';" +
       // demonstração: o GIF do banco aparece sozinho (é leve e mudo); o vídeo do
       // professor continua atrás do botão, porque tem som e pesa
-      "var gg=gEl('gGif');if(gg){var gu=gifUrl(it.e);" +
+      "var gg=gEl('gGif');if(gg){var gu=gifUrl(it.e,it.m);" +
       "gg.innerHTML=gu?\"<img src='\"+gu+\"' alt='' loading='lazy' onerror='this.parentNode.style.display=\\\"none\\\"'>\":'';" +
       "gg.style.display=gu?'block':'none';}" +
       "var gvd=gEl('gVideo');if(gvd){gvd.dataset.v=it.v||'';gvd.style.display=it.v?'inline-block':'none';gvd.textContent='Como fazer';" +
