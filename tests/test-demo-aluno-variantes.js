@@ -20,6 +20,8 @@ for(const [label,html,gate] of [['com cadastro',comCadastro,true],['direta',semC
  ok(html.includes('var QUESTAPP=')&&html.includes('Como você está?'),label+': questionário normal de acompanhamento permanece');
  ok(html.includes('id=\'heroTopo\'')||html.includes('id="heroTopo"'),label+': mantém o início do app');
  ok(html.includes('var __demoLS=')||html.includes('var __demoLS ='),label+': usa armazenamento simulado');
+ ok(html.includes('/storage/v1/object/public/exercicios/'),label+': leva a configuração do banco público de GIFs');
+ ok(html.includes('supino-reto-barra.gif')&&html.includes('cadeira-abdutora.gif'),label+': exercícios da fixture levam caminhos reais do acervo');
 }
 const minimal=(gate)=>'<title>Demo</title><script>'+marker+(gate?'function runtime(cfg, api) {}':'')+'</script><main>Fixture</main>';
 const input={comCadastro:minimal(true),semCadastro:minimal(false)},before=JSON.stringify(input);

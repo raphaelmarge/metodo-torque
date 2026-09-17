@@ -5,6 +5,7 @@ const fs = require("fs");
 const { abrirRegistro } = require("./helpers/player-template.js");
 const { testaBotBuilder } = require("./_bot-builder.js"); // v756: robô testado num lugar só
 const EXEC = process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
+const EXEC_ARGS = process.env.CHROMIUM_ARGS_JSON ? JSON.parse(process.env.CHROMIUM_ARGS_JSON) : [];
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 
 const { diaISO, comDiaISO } = require("./_dia.js"); // v756: dia LOCAL + fuso cravado, num lugar so
@@ -73,7 +74,7 @@ async function novaExecucaoAluno(p) {
   // ninguém, então o semáforo fica vermelho — é isso que a gente quer conferir)
   const b = await chromium.launch({
     executablePath: EXEC,
-    args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+    args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"].concat(EXEC_ARGS),
   });
   navegador = b;
   comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO (dia LOCAL)
@@ -14298,8 +14299,11 @@ async function novaExecucaoAluno(p) {
     await pF.close();
   }
   {
-    // app do aluno: o botão Ver como faz desenha a animação SEM pedir nada pra internet
+    // app do aluno: dados continuam simulados; apenas os GIFs públicos podem
+    // sair do host local, sempre por GET e no caminho fechado do acervo.
     const ctxA = await b.newContext({ viewport: { width: 390, height: 844 } });
+    await ctxA.route("https://hdcufkaalxfhwmfwoiqp.supabase.co/storage/v1/object/public/exercicios/**", (r) =>
+      r.fulfill({ status: 200, contentType: "image/gif", body: Buffer.from("R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=", "base64") }));
     const pA = await ctxA.newPage();
     const externas = [];
     pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
@@ -14494,7 +14498,8 @@ async function novaExecucaoAluno(p) {
     // o demo regenerado também não traz nenhum resto dela
     ok(await pA.evaluate(() => !document.querySelector(".animbtn, .animbox")),
       "o demo do aluno não tem resto da demonstração de bonequinho");
-    ok(externas.length === 0, "o demo não busca NADA na internet (offline de verdade)" + (externas.length ? " — " + externas[0] : ""));
+    ok(externas.every((u) => /^https:\/\/hdcufkaalxfhwmfwoiqp\.supabase\.co\/storage\/v1\/object\/public\/exercicios\/[^?#]+\.gif(?:[?#].*)?$/i.test(u)),
+      "o demo limita a rede externa aos GIFs públicos do acervo" + (externas.length ? " — " + externas[0] : ""));
 
     // 🆙 no demo, o feed mostra o nível de cada autor e as conquistas do
     // professor aparecem junto das padrão

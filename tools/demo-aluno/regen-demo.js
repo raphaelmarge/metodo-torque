@@ -11,7 +11,8 @@ const fs = require("fs");
 const path = require("path");
 const PW = "/opt/node22/lib/node_modules/playwright";
 const { chromium } = require(fs.existsSync(PW) ? PW : "playwright");
-const EXEC = "/opt/pw-browsers/chromium";
+const EXEC = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
+const EXEC_ARGS = process.env.CHROMIUM_ARGS_JSON ? JSON.parse(process.env.CHROMIUM_ARGS_JSON) : [];
 const RAIZ = path.join(__dirname, "..", "..");
 const NUTRICAO_DEMO = JSON.parse(fs.readFileSync(path.join(__dirname, "nutricao-demo.json"), "utf8"));
 
@@ -20,7 +21,7 @@ const capa = (arq) => "data:image/jpeg;base64," + fs.readFileSync(path.join(__di
 const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.jpg"), corrida: capa("capa-corrida.jpg") };
 
 (async () => {
-  const br = await chromium.launch({ executablePath: fs.existsSync(EXEC) ? EXEC : undefined, args: ["--no-sandbox"] });
+  const br = await chromium.launch({ executablePath: fs.existsSync(EXEC) ? EXEC : undefined, args: ["--no-sandbox"].concat(EXEC_ARGS) });
   const base = new URL(process.env.BASE_URL || "http://127.0.0.1:8765");
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname)) { await br.close(); throw new Error("Geração de demo exige servidor local de teste."); }
   const context = await br.newContext({ serviceWorkers: 'block' });
@@ -79,9 +80,42 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     ];
     st.config.capaTreino = CAPAS.treino; // leg press: capa de qualquer ficha sem foto própria
     st.exercicios = st.exercicios || [];
+    // Arquivos reais conferidos no bucket público `exercicios`. O demo fixa a
+    // correspondência para que cada um dos 26 exercícios mostre uma execução
+    // válida, inclusive quando o nome amigável difere do nome do arquivo.
+    const GIFS_DEMO = {
+      "Supino reto": "supino-reto-barra.gif",
+      "Supino inclinado com halteres": "supino-inclinado-com-halteres.gif",
+      "Crucifixo na máquina": "crucifixo-maquina.gif",
+      "Tríceps na corda": "triceps-corda.gif",
+      "Francês com halter": "triceps-frances.gif",
+      "Remada curvada": "remada-curvada-com-barra.gif",
+      "Puxada aberta": "puxada-alta-pegada-aberta.gif",
+      "Remada baixa": "remada-baixa-no-pulley-triangulo.gif",
+      "Rosca direta": "rosca-direta-com-barra.gif",
+      "Rosca martelo": "rosca-martelo-com-halteres.gif",
+      "Agachamento livre": "agachamento-livre-com-barra.gif",
+      "Leg press 45": "leg-press-45.gif",
+      "Stiff com halteres": "stiff-com-halteres.gif",
+      "Panturrilha em pé": "panturrilha-em-pe.gif",
+      "Prancha": "prancha.gif",
+      "Desenvolvimento com halteres": "desenvolvimento-com-halteres.gif",
+      "Elevação lateral": "elevacao-lateral-com-halteres.gif",
+      "Face pull": "face-pull.gif",
+      "Elevação frontal": "elevacao-frontal-com-halteres.gif",
+      "Abdominal na polia (crunch)": "abdominal-polia-alta.gif",
+      "Elevação de pernas na barra": "elevacao-de-joelhos-suspenso.gif",
+      "Levantamento terra": "levantamento-terra.gif",
+      "Hip thrust": "hip-thrust.gif",
+      "Mesa flexora": "mesa-flexora.gif",
+      "Cadeira abdutora": "cadeira-abdutora.gif",
+      "Panturrilha sentado": "panturrilha-sentado.gif",
+    };
     const mk = (nome, grupo, desc) => {
       let e = st.exercicios.find((x) => x.nome === nome);
       if (!e) { e = { id: "dmx" + nome.replace(/\W/g, ""), nome, grupo, descricao: desc || "" }; st.exercicios.push(e); }
+      e.gif = GIFS_DEMO[nome] || "";
+      delete e.semGif;
       return e.id;
     };
     st.questPerguntas = (st.questPerguntas || []).filter((x) => !/^demoOc/.test(x.id || "")).concat([
@@ -221,11 +255,10 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
     const stamp = new Date().toISOString();
-    /* As demos são arquivos autocontidos e deliberadamente offline. O produto
-     * real recebe a regra do acervo remoto; aqui ela fica vazia para o HTML de
-     * demonstração não fazer nenhuma requisição externa ao ser aberto. */
-    const gifsProduto = self.MT_GIFS;
-    self.MT_GIFS = {};
+    /* Os dados continuam totalmente simulados. A única leitura externa
+     * permitida no demo são os GIFs públicos do bucket `exercicios`; nenhuma
+     * sessão, resposta do aluno ou dado do painel sai do navegador. */
+    if (!self.MT_GIFS || self.MT_GIFS.bucket !== "exercicios") throw new Error("Configuração do banco de GIFs ausente no gerador da demo.");
     const comCadastro = window.__montaAppAluno(alex, stamp);
     // Apenas o aluno FICTÍCIO da demonstração dispensa a entrada inicial.
     // Cada HTML vem do mesmo builder. Não forja aceite, não oculta overlay
@@ -234,7 +267,6 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       onboardingConsultoria: Object.assign({}, alex.onboardingConsultoria, { requerido: false })
     });
     const semCadastro = window.__montaAppAluno(direto, stamp);
-    self.MT_GIFS = gifsProduto;
     window.MTStore.write("ptStudio", JSON.parse(snap));
     return { comCadastro, semCadastro };
   }, { CAPAS, NUTRICAO_DEMO });
@@ -252,6 +284,6 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
   const demos = gerarVariantes({ comCadastro: prepara(apps.comCadastro), semCadastro: prepara(apps.semCadastro) });
   for (const [arquivo, out] of [["demo-aluno.html", demos.semCadastro], ["demo-aluno-sem-cadastro.html", demos.semCadastro], ["demo-aluno-cadastro.html", demos.comCadastro]]) {
     fs.writeFileSync(path.join(RAIZ, arquivo), out);
-    console.log(arquivo + ": " + out.length + " caracteres; builder canônico; armazenamento simulado");
+    console.log(arquivo + ": " + out.length + " caracteres; builder canônico; GIFs públicos; armazenamento simulado");
   }
 })().catch(function (e) { console.error(e); process.exitCode = 1; });
