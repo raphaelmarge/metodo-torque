@@ -40,6 +40,32 @@ async function main() {
     const series = () => p.evaluate(() => JSON.parse(localStorage.getItem('ptdc') || '{}')['Supino teste'] || []);
     const state = () => p.evaluate(() => window.__acSessao.ler());
     const vol = () => p.evaluate(() => window.__seriesAluno.volume(0, new Date().toLocaleDateString('en-CA')));
+    const marcaPlayer = await p.evaluate(() => {
+      const cor = (seletor, prop) => getComputedStyle(document.querySelector(seletor))[prop];
+      const box = getComputedStyle(document.getElementById('guiaBox'));
+      return {
+        accent: box.getPropertyValue('--gpt-accent').trim(),
+        apoio: box.getPropertyValue('--gpt-teal').trim(),
+        botao: cor('#gSerie', 'backgroundColor'),
+        textoBotao: cor('#gSerie', 'color'),
+        aba: cor('#gTemplateTab-video', 'color'),
+        grupo: cor('.gpt-group', 'color'),
+        historico: cor('[data-gpt-history]', 'color')
+      };
+    });
+    ok(marcaPlayer.accent === '#7651ce' && marcaPlayer.apoio === '#956fe5' &&
+      marcaPlayer.botao === 'rgb(118, 81, 206)' && marcaPlayer.textoBotao === 'rgb(255, 255, 255)' &&
+      [marcaPlayer.aba, marcaPlayer.grupo, marcaPlayer.historico].every(c => c === 'rgb(149, 111, 229)'),
+      'player inteiro herda a cor personalizada; verde fica restrito aos estados positivos');
+    const marcaClara = await p.evaluate(() => {
+      document.documentElement.classList.add('claro');
+      const cor = (seletor, prop) => getComputedStyle(document.querySelector(seletor))[prop];
+      const out = { botao: cor('#gSerie', 'backgroundColor'), aba: cor('#gTemplateTab-video', 'color'), historico: cor('[data-gpt-history]', 'color') };
+      document.documentElement.classList.remove('claro');
+      return out;
+    });
+    ok(marcaClara.botao === 'rgb(118, 81, 206)' && marcaClara.aba === 'rgb(83, 49, 156)' && marcaClara.historico === 'rgb(83, 49, 156)',
+      'modo claro também conserva a paleta publicada pelo personal');
     ok((await p.locator('[data-gserie]').allTextContents()).join('|').includes('1ª5 reps|2ª8 reps|3ª10 reps'), 'seletor apresenta a prescrição de cada série');
     ok(await p.inputValue('#gKg') === '60' && await p.inputValue('#gReps') === '5' && (await series()).length === 0, 'prescrição preenche os campos sem criar execução antes da confirmação');
     ok(await p.inputValue('#gKg') === '60' && (await p.locator('#gTemplatePrescription dd').nth(3).innerText()) === '90 s', 'carga prescrita fica no campo e o descanso continua visível');

@@ -104,7 +104,7 @@ async function main(){
    const x=await open(browser,width,theme),q=x.p;
    ok(await q.evaluate(()=>{const b=document.getElementById('guiaBox'),c=document.getElementById('gCard');return b.scrollWidth<=b.clientWidth+1&&c.scrollWidth<=c.clientWidth+1;}),width+' '+theme+': sem corte horizontal');
    ok(await q.locator('#gTemplateTabs [role=tab]').count()===3,width+' '+theme+': três abas únicas');
-   ok(await q.locator('#gSerie').evaluate((b,theme)=>getComputedStyle(b).color===(theme==='claro'?'rgb(255, 255, 255)':'rgb(6, 37, 26)'),theme),width+' '+theme+': texto da ação principal com contraste');
+   ok(await q.locator('#gSerie').evaluate(b=>getComputedStyle(b).color==='rgb(255, 255, 255)'),width+' '+theme+': texto da ação principal com contraste');
    ok(await q.evaluate(()=>{const a=document.getElementById('gSerie').getBoundingClientRect(),n=document.getElementById('gTemplateBottom').getBoundingClientRect();return a.top>=0&&a.bottom<=n.top+1&&n.bottom<=innerHeight+1;}),width+' '+theme+': ação fixa não fica sob a navegação');
    await q.fill('#gRpe','8');await x.click('#gSerie');
    ok(await q.isVisible('#gTemplateSuccess'),width+' '+theme+': feedback após confirmação');

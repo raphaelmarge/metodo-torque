@@ -13,6 +13,10 @@ function ok(value, label) { assert.ok(value, label); n++; console.log('OK '+labe
 const demos=gerarVariantes({comCadastro,semCadastro});
 ok(principal===semCadastro, 'Link principal abre a mesma demo de acesso direto');
 ok(demos.comCadastro===comCadastro&&demos.semCadastro===semCadastro,'Derivação reproduz as duas saídas canônicas');
+global.self=global;
+require('../app/aluno-skin.js');
+ok(originals.every(html=>html.includes(global.MT_APP_SKIN.css)&&html.includes(global.MT_APP_SKIN.js)),
+  'As três demos levam exatamente o skin e o template atuais do builder canônico');
 for(const [label,html,gate] of [['com cadastro',comCadastro,true],['direta',semCadastro,false]]){
  ok(html.includes(gate?'com cadastro inicial</title>':'acesso direto</title>'),label+': título identifica a entrada');
  ok(html.split(marker).length===2&&!html.includes('demo-aceite-concluido'),label+': não fabrica uma assinatura nem pagamento');

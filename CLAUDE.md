@@ -6,6 +6,19 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v841 — Player respeita a cor do personal
+
+- O player guiado não possui mais verde/turquesa fixos nos elementos de marca.
+  Botão principal, progresso, categoria, aba selecionada, controles e link de
+  histórico herdam `--cor`, `--corc` e `--cor2` do pacote publicado pelo
+  personal, nos temas escuro e claro.
+- Verde permanece somente nos estados positivos, como série concluída e aviso
+  de registro salvo. Layout, GIFs, prescrição, histórico e registro por série
+  permanecem iguais.
+- `tests/test-aluno-player-experiencia.js` abre o player com uma paleta
+  personalizada e confere as cores computadas dos dois temas. As três demos do
+  aluno precisam ser regeneradas pelo builder canônico após mudanças no skin.
+
 ## v840 — Banco de GIFs dos exercícios
 
 - Em **Treinos → Exercícios → Abrir**, o personal pode manter o GIF automático,
