@@ -35,6 +35,8 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   ok(A.diferencas(antes,A.snapshot(st,'a')).some(x=>x.includes('Flexão')),'comparação inclui alternativas aprovadas');
   st.treinosV2.a.plano.dias[2]=[{tp:'ficha'}];
   ok(!antes.plano.dias[2],'referência publicada é independente de edições posteriores');
+  const builderSrc=fs.readFileSync(require.resolve('../app/aluno-builder.js'),'utf8');
+  ok(builderSrc.includes("!cards.length&&b.firstElementChild&&b.firstElementChild!==h"),'reajuste do hero tolera bloco temporariamente vazio sem acessar style de null');
 
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium')?'/opt/pw-browsers/chromium':undefined),args:['--no-sandbox']});
   const ctx=await browser.newContext({viewport:{width:390,height:844},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});

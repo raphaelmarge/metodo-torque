@@ -1223,6 +1223,14 @@
   };
   // "#7c3aed" -> "124,58,237" — deixa rgba(var(--x),.18) funcionar
   function rgbDe(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }
+  function textoSobre(hex) {
+    var n = parseInt(String(hex).slice(1), 16);
+    var canal = function (v) { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    var lum = .2126 * canal((n >> 16) & 255) + .7152 * canal((n >> 8) & 255) + .0722 * canal(n & 255);
+    var comBranco = 1.05 / (lum + .05);
+    var comPreto = (lum + .05) / .05;
+    return comPreto >= comBranco ? "#000" : "#fff";
+  }
   var MT_CQICONS = {
     corrida: "<circle cx='15' cy='4' r='2'/><path d='m9 21 3-5-3-4 4-5 3 4 4-1M4 12h5m3 4 5 5'/>",
     bike: "<circle cx='5' cy='16' r='4'/><circle cx='19' cy='16' r='4'/><path d='m5 16 5-8 5 8H5m8-12h3l3 12M7 8h5'/>",
@@ -1587,7 +1595,7 @@
       "<link rel='stylesheet' href='/assets/fonts/archivo.css'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
       "<style>:root{" +
-      "--cor:" + COR + ";--cor2:" + COR2 + ";--corc:" + CORC + ";" +
+      "--cor:" + COR + ";--cor2:" + COR2 + ";--corc:" + CORC + ";--cor-on:" + textoSobre(COR) + ";" +
       "--cor-esc:" + CORE + ";--cor-cl1:" + CORCL1 + ";--cor-cl2:" + CORCL2 + ";" +
       "--cor-rgb:" + rgbDe(COR) + ";--corc-rgb:" + rgbDe(CORC) + ";--bg0-rgb:" + rgbDe(PAL[0]) + ";" +
       PAL.map(function (c, i) { return "--bg" + i + ":" + c + ";"; }).join("") +
@@ -7669,7 +7677,7 @@
       // Nomes completos não são truncados; o espaço do hero cresce quando necessário.
       "(function(){var h=document.getElementById('heroTopo'),b=document.getElementById('blocoHoje');if(!h||!b||!h.querySelector('.al-brand'))return;" +
       "function ajusta(){var px=Math.ceil(h.getBoundingClientRect().height);if(!px)return;var cards=b.querySelectorAll('#heroCarr>div');" +
-      "for(var i=0;i<cards.length;i++)cards[i].style.minHeight=(px+260)+'px';if(!cards.length&&b.firstElementChild!==h)b.firstElementChild.style.minHeight=(px+18)+'px';}" +
+      "for(var i=0;i<cards.length;i++)cards[i].style.minHeight=(px+260)+'px';if(!cards.length&&b.firstElementChild&&b.firstElementChild!==h)b.firstElementChild.style.minHeight=(px+18)+'px';}" +
       "ajusta();if(window.ResizeObserver){new ResizeObserver(ajusta).observe(h);}else window.addEventListener('resize',ajusta);})();" +
       "var inicioCarrossel=(" + runtimeCarrossel.toString() + ")();" +
       // pintaProgresso saiu com o card Progresso do Início: agora quem mostra
