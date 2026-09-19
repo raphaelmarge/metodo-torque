@@ -6133,7 +6133,8 @@
       // demonstração: o GIF do banco aparece sozinho (é leve e mudo); o vídeo do
       // professor continua atrás do botão, porque tem som e pesa
       "var gg=gEl('gGif');if(gg){var gu=gifUrl(it.e,it.m);" +
-      "gg.innerHTML=gu?\"<img src='\"+gu+\"' alt='' loading='lazy' onerror='this.parentNode.style.display=\\\"none\\\"'>\":'';" +
+      // A resposta do GIF anterior pode chegar depois da troca de série.
+      "gg.innerHTML=gu?\"<img src='\"+gu+\"' alt='' loading='lazy' onerror='if(this.parentNode)this.parentNode.style.display=\\\"none\\\"'>\":'';" +
       "gg.style.display=gu?'block':'none';}" +
       "var gvd=gEl('gVideo');if(gvd){gvd.dataset.v=it.v||'';gvd.style.display=it.v?'inline-block':'none';gvd.textContent='Como fazer';" +
       "var gbx=gvd.nextElementSibling;if(gbx&&gbx.classList.contains('vidbox')){gbx.innerHTML='';gbx.style.display='none';}}" +

@@ -6,6 +6,23 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v843 — Aplicação do treino com retorno visível
+
+- Aplicar uma proposta de IA atualiza a lista já aberta da mesma modalidade e
+  aluno. O render geral não atualizava Fichas/Circuito/Corrida: a prescrição era
+  salva, mas a navegação comum continuava mostrando o conteúdo anterior.
+- Sucesso e erro ficam junto ao botão de aplicação, com foco e anúncio
+  acessível. Ajustar e publicar permanecem ações explícitas; falha conserva o
+  rascunho e não oferece ajustar uma prescrição que não foi salva.
+- O CI também revelou uma falha intermitente do player: o erro de um GIF
+  removido pela troca de série acessava `parentNode.style` sem conferir o
+  elemento. O tratador agora ignora essa resposta tardia; a falha de uma imagem
+  ainda presente continua ocultando seu quadro. Há regressão determinística.
+- A revisão do PDF de 18/09 também reconfirmou os cenários de sincronização da
+  v832 e o atendimento por nome da v833. Não restaurar a Central Pro nem
+  enfraquecer o CAS para contornar o aviso de conflito.
+- Evidência e limites: `docs/releases/mt-v843-revisao-treinos.md`.
+
 ## v842 — Contraste seguro e player estável
 
 - Ações do player que usam a cor do personal escolhem texto branco ou escuro

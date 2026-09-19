@@ -102,6 +102,16 @@ const ok = (v, name) => { assert.ok(v, name); checks++; console.log('OK: ' + nam
   eq(applied.treinosV2['tr-a'].mes, JSON.parse(initial)['tr-a'].mes, 'Aplicar musculação conserva planos do mês das outras modalidades');
   eq(applied.treinosV2['tr-b'], JSON.parse(initial)['tr-b'], 'Aplicação não altera outro aluno');
   const afterApply = await snap();
+  ok((await p.locator('#fichasBox .td-sheet-title').allTextContents()).includes('Séries revisadas'), 'Aplicar atualiza a lista de fichas já aberta, sem trocar aluno ou recarregar');
+  const appliedNotice = p.locator('#taAplicacaoStatus');
+  ok(await appliedNotice.isVisible() && /Proposta aplicada.*Ágata/.test(await appliedNotice.innerText()), 'Aplicação confirma o aluno junto às ações da revisão');
+  ok(await appliedNotice.evaluate(e => { const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }), 'Confirmação fica dentro da tela após tocar em Aplicar no celular');
+  await area('fichas');
+  ok((await p.locator('#fichasBox').innerText()).includes('Séries revisadas'), 'Voltar pela navegação comum mostra o treino aplicado');
+  await area('auto'); await p.locator('#taAbrirTreino').click();
+  eq(await p.locator('#tAluno').inputValue(), 'tr-a', 'Ajustar treino aplicado abre o destinatário correto');
+  ok((await p.locator('#fichasBox').innerText()).includes('Séries revisadas'), 'Atalho de ajuste abre a prescrição salva');
+  await area('auto');
   ok(await p.evaluate(() => !!window.__iaRevisao.aplica(window.__trDraftAplicado).erro), 'Reaplicar o mesmo rascunho é recusado'); eq(await snap(), afterApply, 'Reaplicação não duplica nem sobrescreve');
   ok(await p.locator('#taAbrirTreino').isVisible(), 'Aplicação oferece ajuste e publicação explícitos');
 
@@ -122,7 +132,7 @@ const ok = (v, name) => { assert.ok(v, name); checks++; console.log('OK: ' + nam
   await p.evaluate(() => { const S = window.MTStore, st = S.read('ptStudio', {}); st.treinosV2['tr-a'].fichas[0].titulo = 'Alteração manual depois da proposta'; S.write('ptStudio', st); });
   const manual = await snap(); await p.locator('#taAplicar').click();
   eq(await snap(), manual, 'Conflito com edição manual mantém a versão salva');
-  ok(/mudaram desde a geração/.test(await p.locator('#taStatus').textContent()), 'Conflito pede nova proposta antes de substituir');
+  ok(/mudaram desde a geração/.test(await p.locator('#taAplicacaoStatus').textContent()), 'Conflito pede nova proposta antes de substituir');
   await p.locator('#taDescartar').click();
   await p.evaluate(() => { window.__trError = true; }); await p.locator('#taIA').click();
   await p.waitForFunction(() => !window.__iaRevisao.estado().gerando);
@@ -132,11 +142,13 @@ const ok = (v, name) => { assert.ok(v, name); checks++; console.log('OK: ' + nam
   await p.evaluate(() => { window.__trWriteOriginal = window.MTStore.write; window.MTStore.write = () => false; });
   await p.locator('#taAplicar').click(); eq(await snap(), manual, 'Falha de armazenamento mantém a prescrição anterior');
   ok(await p.locator('#taAplicar').isEnabled(), 'Falha de armazenamento mantém rascunho para tentar novamente');
+  ok(/Não foi possível salvar/.test(await p.locator('#taAplicacaoStatus').innerText()), 'Falha de aplicação aparece ao lado do botão, sem anunciar sucesso');
+  ok(await p.locator('#taAbrirTreino').isHidden(), 'Falha de aplicação não oferece ajustar um treino que não foi salvo');
   await p.evaluate(() => { window.MTStore.write = window.__trWriteOriginal; }); await p.locator('#taDescartar').click();
   await p.locator('#taIA').click(); await p.waitForFunction(() => !document.getElementById('taRevisao').hidden);
   await p.evaluate(() => { const S = window.MTStore, st = S.read('ptStudio', {}); window.__trNomeOriginal = st.exercicios[0].nome; st.exercicios[0].nome = 'Nome alterado após revisar'; S.write('ptStudio', st); });
   await p.locator('#taAplicar').click();
-  ok(/renomeado na biblioteca/.test(await p.locator('#taStatus').textContent()), 'Renomear exercício após revisão exige gerar novamente');
+  ok(/renomeado na biblioteca/.test(await p.locator('#taAplicacaoStatus').textContent()), 'Renomear exercício após revisão exige gerar novamente');
   eq(await snap(), manual, 'Nome alterado na biblioteca não aplica um movimento diferente');
   await p.locator('#taDescartar').click();
   await p.evaluate(() => { const S = window.MTStore, st = S.read('ptStudio', {}); st.exercicios[0].nome = window.__trNomeOriginal; S.write('ptStudio', st); });
@@ -250,7 +262,33 @@ const ok = (v, name) => { assert.ok(v, name); checks++; console.log('OK: ' + nam
   eq((await data()).videoteca.at(-1).titulo, 'Último legado editado', 'Conteúdo legado excedente continua editável');
   const dlgBefore = dialogs.length; await p.locator('[data-vtprm="legacy-30"]').click();
   ok(dialogs.slice(dlgBefore).some(x => /Excluir este conteúdo/.test(x)), 'Exclusão de conteúdo exige confirmação'); eq((await data()).videoteca.length, 30, 'Excluir remove somente conteúdo confirmado');
+  // As listas de Circuito e Corrida também podem estar abertas antes da IA.
+  for (const [tipo, areaId, prefix, width, resposta] of [
+    ['wod', 'wod', 'wp', 320, { wods: [{ nome: 'Circuito revisado pela IA', tipo: 'amrap', min: 12, movs: [{ q: '10', n: 'Agachamento livre' }] }] }],
+    ['corrida', 'cardio', 'cb', 1280, { cardio: [{ nome: 'Corrida revisada pela IA', mod: 'corrida', tipo: 'continuo', dist: 5 }] }],
+  ]) {
+    await p.setViewportSize({ width, height: 844 });
+    await area(areaId); await student(prefix + 'Aluno', 'tr-a'); await open('#' + prefix + 'Nome');
+    await p.locator('#' + prefix + 'Nome').fill('Rascunho manual mantido');
+    await area('auto'); await student('taAluno', 'tr-a'); await p.locator('#taTipo').selectOption(tipo);
+    const outroAluno = (await data()).treinosV2['tr-b'];
+    await p.evaluate(resposta => { window.__trResposta = resposta; }, resposta);
+    await p.locator('#taIA').click(); await p.waitForFunction(() => !document.getElementById('taRevisao').hidden);
+    await p.locator('#taAplicar').click();
+    ok((await p.locator('#' + prefix + 'Lista').textContent()).includes('revisad'), tipo + ': lista já aberta recebe a proposta aplicada');
+    eq(await p.locator('#' + prefix + 'Nome').inputValue(), 'Rascunho manual mantido', tipo + ': atualizar a lista conserva o formulário não salvo');
+    eq((await data()).treinosV2['tr-b'], outroAluno, tipo + ': aplicação conserva o outro aluno');
+    ok(await p.locator('#taAplicacaoStatus').evaluate(e => { const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }), width + 'px: resultado da aplicação fica visível');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), width + 'px: aplicação sem rolagem horizontal');
+    await area(areaId);
+    ok((await p.locator('#' + prefix + 'Lista').innerText()).includes('revisad'), tipo + ': navegação comum mostra a nova prescrição');
+  }
   await p.evaluate(() => { window.MTStore.cloud = window.__trCloudOriginal; window.MT_FUNCAO.chama = window.__trChamaOriginal; });
+  const antesDeReabrir = await snap();
+  await p.reload(); await p.waitForFunction(() => window.__ptStudio && window.__iaRevisao);
+  eq(await snap(), antesDeReabrir, 'Prescrições aplicadas continuam salvas após reabrir o painel');
+  await p.evaluate(() => window.__vaiMontarTreino('tr-a'));
+  ok((await p.locator('#fichasBox .td-sheet-title').allTextContents()).includes('Alteração manual depois da proposta'), 'Treino persistido permanece disponível para revisão e edição');
   eq(network, [], 'Nenhuma chamada chega ao Supabase real'); eq(errors, [], 'Sem erros de JavaScript nos novos fluxos');
   await context.close(); console.log('PASSOU: ' + checks + ' verificações');
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });
