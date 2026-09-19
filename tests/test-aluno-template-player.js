@@ -10,6 +10,16 @@ const PREVIEW=process.env.TORQUE_PREVIEW_MEMORY==='1';
 const OUT=process.env.TORQUE_SCREENSHOTS||(process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'torque-testes','conclusao'):null);
 let passed=0;
 function ok(v,label){assert.ok(v,label);passed++;console.log('OK '+label);}
+function luminance(rgb){return [.2126,.7152,.0722].reduce((sum,w,i)=>{let v=rgb[i]/255;v=v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);return sum+w*v;},0);}
+function contrastRatio(a,b){const la=luminance(a),lb=luminance(b);return (Math.max(la,lb)+.05)/(Math.min(la,lb)+.05);}
+function hexRgb(hex){let s=hex.slice(1);if(s.length===3)s=s.split('').map(x=>x+x).join('');const n=parseInt(s,16);return [(n>>16)&255,(n>>8)&255,n&255];}
+async function contrast(locator){
+ return locator.evaluate(el=>{
+  const rgb=value=>(value.match(/[\d.]+/g)||[]).slice(0,3).map(Number);
+  const lum=c=>[.2126,.7152,.0722].reduce((sum,w,i)=>{let v=c[i]/255;v=v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);return sum+w*v;},0);
+  const css=getComputedStyle(el),a=lum(rgb(css.color)),b=lum(rgb(css.backgroundColor));return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+ });
+}
 function fixture(){const d=dados();d.guiaFichasP[0].it[0].rpe=8;d.fichasApp[0].itens[0].rpe=8;return d;}
 async function open(browser,width=390,theme='',D=fixture(),store){
   global.self=global;global.MT_CLOUD={url:'https://player.invalid',anonKey:'ficticio'};
@@ -40,6 +50,8 @@ async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  try{
   const t=await open(browser),{p,click}=t;
+  const palette=['#7c3aed','#dc2626','#ea580c','#d97706','#16a34a','#0d9488','#2563eb','#db2777'];
+  ok(palette.every(c=>{const d=fixture();d.COR=c;const html=global.MT_APP_ALUNO.monta(d),fg=(html.match(/--cor-on:(#[0-9a-f]{3,6});/i)||[])[1];return fg&&contrastRatio(hexRgb(c),hexRgb(fg))>=4.5;}),'paleta inteira gera texto de ação com contraste WCAG AA');
   const records=()=>p.evaluate(()=>L('ptdc',{})['Supino teste']||[]);
   const completed=()=>p.evaluate(()=>GP.conta(GUIA[0].it[0],0));
   const reference=()=>p.locator('#gTemplatePrescription').innerText();
@@ -104,10 +116,11 @@ async function main(){
    const x=await open(browser,width,theme),q=x.p;
    ok(await q.evaluate(()=>{const b=document.getElementById('guiaBox'),c=document.getElementById('gCard');return b.scrollWidth<=b.clientWidth+1&&c.scrollWidth<=c.clientWidth+1;}),width+' '+theme+': sem corte horizontal');
    ok(await q.locator('#gTemplateTabs [role=tab]').count()===3,width+' '+theme+': três abas únicas');
-   ok(await q.locator('#gSerie').evaluate(b=>getComputedStyle(b).color==='rgb(255, 255, 255)'),width+' '+theme+': texto da ação principal com contraste');
+   ok(await contrast(q.locator('#gSerie'))>=4.5,width+' '+theme+': ação principal mantém contraste WCAG AA');
    ok(await q.evaluate(()=>{const a=document.getElementById('gSerie').getBoundingClientRect(),n=document.getElementById('gTemplateBottom').getBoundingClientRect();return a.top>=0&&a.bottom<=n.top+1&&n.bottom<=innerHeight+1;}),width+' '+theme+': ação fixa não fica sob a navegação');
    await q.fill('#gRpe','8');await x.click('#gSerie');
    ok(await q.isVisible('#gTemplateSuccess'),width+' '+theme+': feedback após confirmação');
+   ok(await contrast(q.locator('#gPularEx'))>=4.5,width+' '+theme+': ação de revisão mantém contraste WCAG AA');
    await x.click('#gPularEx');
    await q.fill('#gKg','0');await q.fill('#gReps','12');await x.click('#gSerie');
    ok(await q.isVisible('#gFecharTreino'),width+' '+theme+': término disponível sem sair da revisão');

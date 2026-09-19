@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v842 — Contraste seguro e player estável
+
+- Ações do player que usam a cor do personal escolhem texto branco ou escuro
+  pelo maior contraste WCAG. As oito cores prontas passam AA sem trocar a cor
+  da marca; a mesma regra cobre cores hexadecimais personalizadas.
+- O reajuste responsivo do hero agora tolera o bloco temporariamente vazio.
+  Isso elimina o acesso a `.style` de um elemento nulo que podia deixar o gate
+  pós-merge vermelho de forma intermitente.
+- `tests/test-aluno-template-player.js` mede a razão de contraste da ação
+  principal e da revisão, e valida toda a paleta. `tests/test-acompanhamento.js`
+  protege a guarda do `ResizeObserver`.
+
 ## v841 — Player respeita a cor do personal
 
 - O player guiado não possui mais verde/turquesa fixos nos elementos de marca.
