@@ -2600,10 +2600,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="trx-heading"><div><h3 id="taRevisaoTitulo">Revisar proposta</h3><p id="taRevisaoMeta"></p></div></div>
         <div id="taRevisaoAvisos" class="trp-review-notes"></div>
         <div id="taPrevia" class="trp-preview"></div>
+        <p id="taAplicacaoStatus" class="trx-status" role="status" aria-live="polite" tabindex="-1"></p>
         <div class="trx-actions"><button class="btn" id="taAplicar">Aplicar ao aluno</button><button class="btn sec" id="taDescartar">Descartar rascunho</button></div>
+        <div class="trx-actions"><button class="btn sec" id="taAbrirTreino" hidden>Ajustar treino aplicado</button><button class="btn" id="taEnviaApp" hidden>Publicar no app do aluno</button></div>
+        <p id="taEnvioStatus" class="trx-status" role="status"></p>
       </section>
-      <div class="trx-actions"><button class="btn sec" id="taAbrirTreino" hidden>Ajustar treino aplicado</button><button class="btn" id="taEnviaApp" hidden>Publicar no app do aluno</button></div>
-      <p id="taEnvioStatus" class="trx-status" role="status"></p>
     </section>
 
     <section class="card trx-section" data-trsec="grupo" hidden>
@@ -18608,6 +18609,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     taRascunho = null; taAplicado = null;
     taEstadoGeracao(false);
     ["taRevisao", "taEnviaApp", "taAbrirTreino"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
+    if ($("taAplicacaoStatus")) $("taAplicacaoStatus").textContent = "";
     if ($("taEnvioStatus")) $("taEnvioStatus").textContent = "";
     if (msg && $("taStatus")) $("taStatus").textContent = msg;
   }
@@ -18760,6 +18762,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   if ($("taDescartar")) $("taDescartar").addEventListener("click", function () {
     limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual.");
   });
+  function informaAplicacaoTreino(mensagem) {
+    $("taStatus").textContent = "";
+    var aviso = $("taAplicacaoStatus");
+    aviso.textContent = mensagem;
+    aviso.focus({ preventScroll: true });
+    aviso.scrollIntoView({ block: "nearest" });
+  }
   if ($("taAplicar")) $("taAplicar").addEventListener("click", function () {
     var d = taRascunho;
     if (!d || d.aplicado) return;
@@ -18767,21 +18776,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       limpaPropostaTreino("O aluno ou a modalidade mudou. Gere outra proposta antes de aplicar."); return;
     }
     var st = load(), a = (st.alunos || []).find(function (x) { return x.id === d.alunoId; });
-    if (!a) { $("taStatus").textContent = "O aluno não está mais disponível."; return; }
+    if (!a) { informaAplicacaoTreino("O aluno não está mais disponível."); return; }
     var atual = (st.treinosV2 || {})[d.alunoId] || {}, existentes = (atual[campoPrescricao(d.tipo)] || []).length;
     if (existentes && !confirm((d.origem === "evolucao" ? "Aplicar a progressão revisada" : "Substituir " + taQuantidade(atual, d.tipo) + " pela proposta revisada") + " de " + a.nome + "? O app só será atualizado quando você publicar.")) return;
     this.disabled = true;
     var r = aplicaRascunhoPrescricao(d);
-    if (r.erro) { this.disabled = false; $("taStatus").textContent = r.erro; return; }
+    if (r.erro) { this.disabled = false; informaAplicacaoTreino(r.erro); return; }
     taAplicado = { alunoId: d.alunoId, tipo: d.tipo };
+    // O render geral não atualiza estas listas. Sem isto, voltar à aba
+    // já aberta mostrava o treino anterior apesar de a gravação ter ocorrido.
+    // Não troca a seleção nem os rascunhos de outro aluno/modalidade.
+    if (d.tipo === "musculacao" && $("tAluno").value === d.alunoId) renderFichas();
+    if (d.tipo === "wod" && $("wpAluno").value === d.alunoId) renderWods();
+    if (d.tipo === "corrida" && $("cbAluno").value === d.alunoId) renderCardios();
     $("taRevisaoTitulo").textContent = "Treino aplicado";
-    $("taStatus").textContent = "Proposta aplicada a " + a.nome + ". Você pode ajustar o treino e publicar quando estiver pronto." +
-      (r.planoAviso ? " Confira os vínculos da Semana do aluno antes de publicar." : "");
     $("taAplicar").hidden = true;
     $("taDescartar").hidden = true;
     $("taAbrirTreino").hidden = false;
     $("taEnviaApp").hidden = false;
     $("taEnviaApp").disabled = false;
+    informaAplicacaoTreino("Proposta aplicada a " + a.nome + ". Treino salvo neste aparelho. Você pode ajustar e publicar quando estiver pronto." +
+      (r.planoAviso ? " Confira os vínculos da Semana do aluno antes de publicar." : ""));
   });
   if ($("taAbrirTreino")) $("taAbrirTreino").addEventListener("click", function () {
     var alvo = taAplicado; if (!alvo) return;
