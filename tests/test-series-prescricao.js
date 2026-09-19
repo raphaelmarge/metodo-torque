@@ -40,7 +40,7 @@ const prescricao = [
   await ctx.route('**://*.supabase.co/**', r => r.abort());
   const p = await ctx.newPage();
   const errors = [];
-  p.on('pageerror', e => errors.push(e.message));
+  p.on('pageerror', e => errors.push(e.stack || e.message));
   await p.goto(BASE + '/demo-personal.html');
   await p.click('#btnDemo');
   await p.waitForURL(/personal\.html/);
@@ -230,11 +230,28 @@ const prescricao = [
     localStorage.setItem('ptonb', JSON.stringify({ feito: true }));
   });
   const pa = await ca.newPage();
-  pa.on('pageerror', e => errors.push(e.message));
+  pa.on('pageerror', e => errors.push(e.stack || e.message));
   await pa.goto(BASE + '/series-integracao.html');
   await pa.waitForFunction(() => window.__acSessao && window.__seriesAluno);
   await pa.evaluate(() => document.querySelector('.guiabtn').click());
   await pa.waitForSelector('#gSerie', { state: 'visible' });
+  // Uma resposta de imagem pode chegar depois de pintaGuia substituir o GIF.
+  // Exercita o tratador real sem depender da velocidade da rede ou do CI.
+  const gifTardio = await pa.evaluate(() => {
+    const caixa = document.getElementById('gGif'), antiga = caixa.querySelector('img');
+    if (!antiga) throw new Error('A fixture precisa do GIF real do player');
+    const atual = antiga.cloneNode(true);
+    atual.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    caixa.replaceChildren(atual); caixa.style.display = 'block';
+    antiga.onerror();
+    const preservaAtual = caixa.firstElementChild === atual && caixa.style.display === 'block';
+    atual.onerror();
+    const escondeFalhaAtual = caixa.style.display === 'none';
+    caixa.style.display = 'block';
+    return { preservaAtual, escondeFalhaAtual };
+  });
+  ok(gifTardio.preservaAtual, 'falha tardia do GIF removido não derruba o player nem esconde a imagem atual');
+  ok(gifTardio.escondeFalhaAtual, 'falha do GIF ainda presente conserva o fallback de ocultar a imagem');
   const repsTela = () => pa.locator('.gtile').first().textContent();
   ok(/5/.test(await repsTela()) && /1/.test(await pa.textContent('#gGrupo')), 'player começa com o alvo da primeira série');
   const salvaAnotacao = async page => {
@@ -295,7 +312,7 @@ const prescricao = [
   await cb.route('**/*', r => r.request().url() === BASE + '/series-duplicadas.html'
     ? r.fulfill({ contentType: 'text/html', body: global.MT_APP_ALUNO.monta(duplicado) }) : r.abort());
   await cb.addInitScript(() => { localStorage.setItem('pttour', '{}'); localStorage.setItem('ptonb', '{"feito":true}'); });
-  const pb = await cb.newPage(); pb.on('pageerror', e => errors.push(e.message));
+  const pb = await cb.newPage(); pb.on('pageerror', e => errors.push(e.stack || e.message));
   await pb.goto(BASE + '/series-duplicadas.html');
   await pb.evaluate(() => document.querySelector('.guiabtn').click());
   await preencherRegistro(pb, '#gKg', '20'); await preencherRegistro(pb, '#gReps', '5'); await salvaAnotacao(pb); await clicarControle(pb, '#gSerie');

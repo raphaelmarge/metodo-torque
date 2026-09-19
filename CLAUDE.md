@@ -14,6 +14,10 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - Sucesso e erro ficam junto ao botão de aplicação, com foco e anúncio
   acessível. Ajustar e publicar permanecem ações explícitas; falha conserva o
   rascunho e não oferece ajustar uma prescrição que não foi salva.
+- O CI também revelou uma falha intermitente do player: o erro de um GIF
+  removido pela troca de série acessava `parentNode.style` sem conferir o
+  elemento. O tratador agora ignora essa resposta tardia; a falha de uma imagem
+  ainda presente continua ocultando seu quadro. Há regressão determinística.
 - A revisão do PDF de 18/09 também reconfirmou os cenários de sincronização da
   v832 e o atendimento por nome da v833. Não restaurar a Central Pro nem
   enfraquecer o CAS para contornar o aviso de conflito.

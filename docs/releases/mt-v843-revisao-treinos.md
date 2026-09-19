@@ -24,7 +24,13 @@ O trabalho atende aos quatro relatos de `Revisao torque 18-09.pdf`.
 - A confirmação informa que o treino foi salvo neste aparelho. Não anuncia
   confirmação da nuvem nem publicação do pacote antes dessas operações.
 - Não altera gravação/CAS, sincronização, esquema, RPCs, dados de produção,
-  prescrição gerada, player do aluno, cores ou demonstrações do aluno.
+  prescrição gerada ou cores.
+- O primeiro CI completo detectou uma falha intermitente no player, em
+  `test-series-prescricao.js`: o erro de um GIF podia chegar depois que a troca
+  de série removia a imagem. O tratador acessava `parentNode.style` nulo.
+  Reproduzida localmente, a falha foi transformada em regressão determinística.
+  O builder agora confere a existência do pai, preservando o fallback quando
+  a imagem ainda existe. As três demos foram regeneradas pelo gerador canônico.
 - Versão/cache alinhados em `assets/versao.js`, `sw.js` e `app/app-sw.js`.
 
 ## Evidência local
@@ -39,8 +45,17 @@ gravação já passarem. Após a mudança:
 - `test-sync-recuperacao-browser.js`: 16 verificações com IndexedDB real.
 - `test-sync-primeira-puxada.js`: 8 verificações com o motor de sync real.
 - `test-personal-fluxo.js`: 24 verificações, incluindo escolha por nome.
+- Após corrigir o GIF: `test-series-prescricao.js`, 77 verificações;
+  `test-aluno-player-experiencia.js`, 63 (incluindo cor personalizada nos
+  temas claro e escuro); `test-demo-aluno-variantes.js`, 28.
 - Suítes de lógica `sync-cas`, `sync-identidade`, `sync-recuperacao-mobile` e
   `sync-conflito-ui`: aprovadas, sem chamadas à produção.
+
+O primeiro CI do PR #853 passou em 112 das 113 suítes, incluindo as 139
+verificações de treinos. A única falha foi o GIF removido, descrito acima;
+ela não foi ignorada nem tratada como autorização para publicar. O novo teste
+falhou antes da proteção no builder. A validação posterior deve ser conferida
+no HEAD atualizado do PR.
 
 O navegador local usa Chromium 153 em ambiente isolado e Playwright 1.63.
 O CI usa a instalação canônica do repositório. Fixtures e respostas da IA/nuvem
