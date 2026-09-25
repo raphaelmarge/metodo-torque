@@ -58,6 +58,14 @@ Nenhuma migração das contas existentes, ficha, pacote, agenda ou registro.
 - Com PGTESTURL local, a suíte SQL também usa duas conexões PostgreSQL reais
   e exige um único consumo bem-sucedido do mesmo link.
 
+## Primeiro CI e correção
+
+O primeiro CI (36082490655) aprovou 115 das 116 suítes, inclusive consumo
+concorrente do link em PostgreSQL real. A nova suíte de navegador encontrou
+que abrir outro link de recuperação na mesma aba só mudava o fragmento e
+não reiniciava o formulário. A entrada agora recarrega quando recebe um novo
+fragmento de recuperação. A asserção original foi preservada.
+
 ## Sequência de implantação
 
 1. CI completo aprovado no commit revisado.

@@ -184,6 +184,11 @@
     mostraRec(true);
     if (!/^[a-f0-9]{64}$/.test(segredo)) { segredo = ""; $("recSenhaGrupo").hidden = true; $("recEnviar").hidden = true; $("recNovo").hidden = false; statusRec("Link inválido. Solicite outro link de recuperação."); }
   }
+  // Um segundo link aberto na mesma aba pode ser navegação só de fragmento.
+  // Recomeça a entrada para não reutilizar segredo/formulário do link anterior.
+  window.addEventListener("hashchange", function () {
+    if (new URLSearchParams(location.hash.slice(1)).has("recuperar")) location.reload();
+  });
   window.__alunoLogin = true; // testes
 })();
 </script>
