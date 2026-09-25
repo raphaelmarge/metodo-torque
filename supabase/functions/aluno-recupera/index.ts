@@ -1,7 +1,8 @@
 // Recuperação do login próprio do aluno (não é uma conta Supabase Auth).
 // Sem SDK/dependências. O segredo aleatório só segue por e-mail; o banco recebe SHA-256.
 const CORS = {
-  'Access-Control-Allow-Origin': 'https://www.torqueon.com.br',
+  // Sem cookies/credenciais implícitas; atende também o WebView nativo.
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };

@@ -22,6 +22,7 @@ let n=0;const ok=(c,m)=>{assert.ok(c,m);console.log('OK '+m);n++};
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(BASE+'/aluno-login.html?sair=1');await page.click('#esqueci');
   ok(await page.locator('#recEmail').isVisible()&&!await page.locator('#frm').isVisible(),width+': recuperação acessível na entrada');
+  if(width===390 && process.env.RUNNER_TEMP)await page.screenshot({path:require('node:path').join(process.env.RUNNER_TEMP,'torque-testes','recuperacao-aluno.png'),fullPage:true});
   await page.fill('#recEmail','aluno@example.invalid');await page.click('#recEnviar');
   await page.waitForFunction(()=>document.querySelector('#recStatus').textContent.includes('Se este e-mail'));
   ok(requests.length===1&&requests[0].acao==='solicitar'&&!('senha' in requests[0]),'pedido não envia senha');
