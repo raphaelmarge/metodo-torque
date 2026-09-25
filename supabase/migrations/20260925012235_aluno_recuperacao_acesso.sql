@@ -18,6 +18,8 @@ alter table torque_private.aluno_recuperacao enable row level security;
 alter table torque_private.aluno_recuperacao_limite enable row level security;
 revoke all on torque_private.aluno_recuperacao, torque_private.aluno_recuperacao_limite from public, anon, authenticated;
 grant usage on schema torque_private to service_role;
+-- Uma recuperação comprovada libera somente o contador do login recuperado.
+grant select, delete on torque_private.aluno_login_limite to service_role;
 grant select, insert, update, delete on torque_private.aluno_recuperacao, torque_private.aluno_recuperacao_limite to service_role;
 
 -- SECURITY INVOKER: apenas service_role pode chamar, com privilégios próprios.
@@ -71,6 +73,8 @@ begin
     where token=v.app_token and login=v.login and senha=v.senha_anterior and revogado_em is null and v.expira>clock_timestamp()
     returning token into v_token;
   if not found then return jsonb_build_object('ok',false); end if;
+  delete from torque_private.aluno_login_limite
+    where chave=encode(extensions.digest(lower(trim(v.login)),'sha256'),'hex');
   delete from torque_private.aluno_recuperacao where app_token=v_token;
   return jsonb_build_object('ok',true);
 end;

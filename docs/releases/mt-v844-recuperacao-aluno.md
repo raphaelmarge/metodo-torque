@@ -26,6 +26,7 @@ Nenhuma migração das contas existentes, ficha, pacote, agenda ou registro.
 - Nova senha: mínimo de 8 caracteres e máximo de 72 bytes (bcrypt).
 - Comparação atômica com a senha/login anteriores impede repetição, inclusive
   concorrente, e invalida links após alteração da senha/login ou revogação.
+- A troca comprovada limpa somente o contador de tentativas do login recuperado.
 - 60 segundos entre pedidos, até três links/hora por login e teto global
   conservador de 100 pedidos/dia. Resposta pública genérica para conta ausente,
   limite atingido e envio recusado, sem expor cadastro ou token do app.
@@ -41,7 +42,7 @@ Nenhuma migração das contas existentes, ficha, pacote, agenda ou registro.
 
 ## Evidência local
 
-- PGlite com pgcrypto: 21 verificações aprovadas, incluindo permissões,
+- PGlite com pgcrypto: 22 verificações aprovadas, incluindo permissões,
   expiração, repetição, revogação, mudança de senha e preservação de dados.
 - Handler da Edge com serviços fictícios: 12 verificações aprovadas.
 - Versão/precache: 17 verificações aprovadas; versão nos três marcadores.

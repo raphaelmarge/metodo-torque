@@ -63,7 +63,7 @@ Deno.serve(async req => {
     if (body.acao === 'concluir') {
       const segredo = typeof body.segredo === 'string' ? body.segredo : '';
       const senha = typeof body.senha === 'string' ? body.senha : '';
-      if (!/^[a-f0-9]{64}$/.test(segredo) || senha.length<8 || new TextEncoder().encode(senha).length>72) return json({erro:'Use o link do e-mail e uma senha de 8 a 72 bytes.'},400);
+      if (!/^[a-f0-9]{64}$/.test(segredo) || senha.length<8 || new TextEncoder().encode(senha).length>72) return json({erro:'Use o link do e-mail e uma senha com pelo menos 8 caracteres. Se for muito longa, use uma menor.'},400);
       const result = await rpc('aluno_recuperacao_conclui',{p_hash:await hash(segredo),p_senha:senha});
       return result.ok ? json({ok:true}) : json({erro:'Este link expirou ou já foi usado. Solicite outro.'},400);
     }
