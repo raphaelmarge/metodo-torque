@@ -6,6 +6,16 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v844 — Recuperação do acesso do aluno
+
+- `aluno-login.html` oferece recuperação por e-mail, link de uso único e
+  confirmação da nova senha. Entrada normal e sessões locais são preservadas.
+- Não usar Supabase Auth para esse fluxo: alunos usam `app_aluno.login/senha`.
+- Backend aditivo: Edge `aluno-recupera` e migração de recuperação privada.
+  A interface exige backend implantado; não publicar apenas o botão.
+- Evidências, ordem de implantação e limites (incluindo links antigos e aceite
+  físico no iPhone): `docs/releases/mt-v844-recuperacao-aluno.md`.
+
 ## v843 — Aplicação do treino com retorno visível
 
 - Aplicar uma proposta de IA atualiza a lista já aberta da mesma modalidade e

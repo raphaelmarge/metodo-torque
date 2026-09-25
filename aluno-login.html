@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>Entrar — Aluno · TORQUE ON</title>
 <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
@@ -14,12 +15,16 @@
   h1 { font-size: 24px; text-align: center; margin: 8px 0 6px; }
   .sub { color: #b9b3c6; font-size: 13.5px; text-align: center; line-height: 1.55; margin-bottom: 20px; }
   label { display: block; font-size: 12.5px; font-weight: 700; color: #b9b3c6; margin: 14px 0 5px; }
-  input { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-size: 15px; font-family: inherit; }
+  input { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-size: 16px; font-family: inherit; }
   input:focus { outline: none; border-color: #7c3aed; }
   button { width: 100%; margin-top: 20px; padding: 15px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; }
   button:disabled { opacity: .6; }
   .erro { display: none; background: rgba(220,38,38,.12); border: 1px solid rgba(220,38,38,.4); color: #fca5a5; font-size: 13px; padding: 10px 12px; border-radius: 10px; margin-top: 14px; line-height: 1.5; }
   .nota { color: #8a8695; font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.6; }
+  [hidden] { display: none !important; }
+  .sec { background: transparent; color: #c4b5fd; border: 1px solid #514366; margin-top: 12px; min-height: 44px; }
+  #recStatus { margin-top: 16px; line-height: 1.5; font-size: 14px; color: #ded7eb; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -33,16 +38,41 @@
     <input id="lg" autocomplete="username" placeholder="voce@email.com" required>
     <label for="sn">Senha</label>
     <input id="sn" type="password" autocomplete="current-password" placeholder="a senha que chegou no seu e-mail" required minlength="6">
-    <p class="erro" id="erro"></p>
+    <p class="erro" id="erro" role="alert"></p>
     <button id="btn">Entrar →</button>
   </form>
-  <p class="nota">Primeira vez? Quando sua academia, personal ou nutricionista te cadastra, o acesso chega no seu e-mail: o login é o próprio e-mail e a senha temporária vai junto — troque a senha dentro do app, no card <b>Meu login</b>. Não recebeu (olhe o spam)? Peça pra te reenviarem o acesso. Também dá pra entrar com o celular cadastrado no app.</p>
+  <button type="button" class="sec" id="esqueci" aria-expanded="false" aria-controls="recuperacao">Esqueci minha senha</button>
+  <section id="recuperacao" hidden aria-labelledby="recTitulo">
+    <h2 id="recTitulo" style="font-size:20px;margin-top:20px">Recuperar acesso</h2>
+    <form id="recForm">
+      <div id="recEmailGrupo">
+        <label for="recEmail">E-mail usado como login</label>
+        <input id="recEmail" type="email" autocomplete="email" maxlength="254" required>
+        <p class="nota">Se você entra com o celular, peça ao seu personal ou à academia um novo acesso.</p>
+      </div>
+      <div id="recSenhaGrupo" hidden>
+        <label for="recSenha">Nova senha (pelo menos 8 caracteres)</label>
+        <input id="recSenha" type="password" autocomplete="new-password" minlength="8" maxlength="72">
+        <label for="recConfirma">Confirme a nova senha</label>
+        <input id="recConfirma" type="password" autocomplete="new-password" minlength="8" maxlength="72">
+      </div>
+      <p id="recStatus" role="status" aria-live="polite" tabindex="-1"></p>
+      <button id="recEnviar">Enviar link de recuperação</button>
+    </form>
+    <button type="button" class="sec" id="recNovo" hidden>Solicitar outro link</button>
+    <button type="button" class="sec" id="recVoltar">Voltar para entrar</button>
+  </section>
+  <p class="nota" id="notaInicio">Primeira vez? Quando sua academia, personal ou nutricionista te cadastra, o acesso chega no seu e-mail: o login é o próprio e-mail e a senha temporária vai junto — troque a senha dentro do app, no card <b>Meu login</b>. Não recebeu (olhe o spam)? Peça pra te reenviarem o acesso. Também dá pra entrar com o celular cadastrado no app.</p>
 </div>
 
 <script src="assets/cloud-config.js"></script>
 <script>
 (function () {
   "use strict";
+  var fragmento = new URLSearchParams(location.hash.slice(1));
+  var recuperando = fragmento.has("recuperar");
+  var segredo = fragmento.get("recuperar") || "";
+  if (recuperando) history.replaceState(null, "", location.pathname + location.search);
   var $ = function (id) { return document.getElementById(id); };
   function erro(m) { $("erro").textContent = m; $("erro").style.display = "block"; }
   $("frm").addEventListener("submit", function (e) {
@@ -77,15 +107,88 @@
   try {
     var t = localStorage.getItem("mt_aluno_token");
     var quisSair = new URLSearchParams(location.search).get("sair") !== null;
-    if (t && !quisSair) {
+    if (t && !quisSair && !recuperando) {
       location.replace("app/index.html?t=" + encodeURIComponent(t));
-    } else if (t) {
+    } else if (t && !recuperando) {
       var aviso = document.createElement("p");
       aviso.className = "nota";
       aviso.innerHTML = "Você já entrou neste aparelho — <a href='app/index.html?t=" + encodeURIComponent(t) + "' style='color:#a78bfa;font-weight:700;'>abrir meu app →</a>";
       document.querySelector(".cartao").appendChild(aviso);
     }
   } catch (err) {}
+  var ocupado = false, podeReenviarEm = 0, contador = null;
+  function statusRec(m) { $("recStatus").textContent = m; $("recStatus").focus(); }
+  function mostraRec(troca) {
+    $("frm").hidden = true; $("esqueci").hidden = true; $("notaInicio").hidden = true;
+    $("recuperacao").hidden = false; $("esqueci").setAttribute("aria-expanded", "true");
+    $("recEmailGrupo").hidden = troca; $("recEmail").required = !troca;
+    $("recSenhaGrupo").hidden = !troca; $("recSenha").required = troca; $("recConfirma").required = troca;
+    $("recTitulo").textContent = troca ? "Criar nova senha" : "Recuperar acesso";
+    $("recEnviar").textContent = troca ? "Salvar nova senha" : "Enviar link de recuperação";
+    $("recEnviar").hidden = false; $("recNovo").hidden = true;
+    $("recStatus").textContent = "";
+    (troca ? $("recSenha") : $("recEmail")).focus();
+  }
+  function pedirOutro() { segredo = ""; $("recSenha").value = $("recConfirma").value = ""; mostraRec(false); }
+  $("esqueci").addEventListener("click", function () {
+    if ($("lg").value.indexOf("@") > 0) $("recEmail").value = $("lg").value;
+    pedirOutro();
+  });
+  $("recNovo").addEventListener("click", pedirOutro);
+  $("recVoltar").addEventListener("click", function () {
+    if (ocupado) return;
+    segredo = ""; $("recSenha").value = $("recConfirma").value = "";
+    $("recuperacao").hidden = true; $("frm").hidden = false; $("esqueci").hidden = false; $("notaInicio").hidden = false;
+    $("esqueci").setAttribute("aria-expanded", "false"); $("sn").focus();
+  });
+  function atualizaEspera() {
+    var falta = Math.max(0, Math.ceil((podeReenviarEm - Date.now()) / 1000));
+    if (!segredo) { $("recEnviar").disabled = ocupado || falta > 0; $("recEnviar").textContent = falta ? "Reenviar em " + falta + " s" : "Enviar link de recuperação"; }
+    if (!falta && contador) { clearInterval(contador); contador = null; }
+  }
+  $("recForm").addEventListener("submit", async function (e) {
+    e.preventDefault(); if (ocupado) return;
+    var troca = !!segredo, cfg = self.MT_CLOUD || {}, senha = $("recSenha").value;
+    if (!troca && Date.now() < podeReenviarEm) return;
+    if (troca && (senha !== $("recConfirma").value || senha.length < 8 || new TextEncoder().encode(senha).length > 72)) {
+      statusRec("Confirme senhas iguais, com pelo menos 8 caracteres. Use uma senha mais curta se houver muitos acentos ou emojis."); return;
+    }
+    if (!cfg.url || !cfg.anonKey) { statusRec("A recuperação está indisponível agora. Peça o acesso ao seu personal."); return; }
+    if (!navigator.onLine) { statusRec("Você está sem internet. Conecte-se para recuperar a senha."); return; }
+    ocupado = true; $("recEnviar").disabled = true; $("recVoltar").disabled = true; $("recNovo").disabled = true;
+    statusRec(troca ? "Salvando sua nova senha…" : "Solicitando link…");
+    var abort = new AbortController(), timeout = setTimeout(function () { abort.abort(); }, 15000);
+    try {
+      var r = await fetch(cfg.url + "/functions/v1/aluno-recupera", {
+        method: "POST", headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify(troca ? { acao: "concluir", segredo: segredo, senha: senha } : { acao: "solicitar", email: $("recEmail").value.trim() }),
+        signal: abort.signal, cache: "no-store"
+      });
+      var d = await r.json();
+      if (!r.ok || !d.ok) { statusRec(d.erro || "Não foi possível concluir agora. Tente novamente."); if (troca) $("recNovo").hidden = false; return; }
+      if (troca) {
+        segredo = ""; $("recSenha").value = $("recConfirma").value = $("sn").value = "";
+        $("recSenhaGrupo").hidden = true; $("recEnviar").hidden = true;
+        statusRec("Senha atualizada. Volte para entrar com seu e-mail e a nova senha.");
+      } else {
+        statusRec(d.mensagem || "Se este e-mail estiver cadastrado como login, você receberá um link. Confira também o spam.");
+        podeReenviarEm = Date.now() + 60000; contador = setInterval(atualizaEspera, 1000);
+      }
+    } catch (err) { statusRec("Não foi possível confirmar a operação. Confira a conexão e tente novamente."); }
+    finally {
+      clearTimeout(timeout); ocupado = false; $("recEnviar").disabled = false; $("recVoltar").disabled = false; $("recNovo").disabled = false;
+      if (!troca) atualizaEspera();
+    }
+  });
+  if (recuperando) {
+    mostraRec(true);
+    if (!/^[a-f0-9]{64}$/.test(segredo)) { segredo = ""; $("recSenhaGrupo").hidden = true; $("recEnviar").hidden = true; $("recNovo").hidden = false; statusRec("Link inválido. Solicite outro link de recuperação."); }
+  }
+  // Um segundo link aberto na mesma aba pode ser navegação só de fragmento.
+  // Recomeça a entrada para não reutilizar segredo/formulário do link anterior.
+  window.addEventListener("hashchange", function () {
+    if (new URLSearchParams(location.hash.slice(1)).has("recuperar")) location.reload();
+  });
   window.__alunoLogin = true; // testes
 })();
 </script>
