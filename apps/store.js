@@ -435,7 +435,7 @@
     return out;
   }
   function backupAllowed(k) { return k.indexOf(PREFIX)===0 && BACKUP_KEYS.indexOf(k.slice(PREFIX.length))>=0 || /^mtpf:[a-zA-Z0-9_-]+$/.test(k); }
-  function backupCanRestore() { return !sync.emEnvio && !Object.keys(sync.sujas).length && !Object.keys(sync.conflitos||{}).length && (!sync.client || sync.reconciliou); }
+  function backupCanRestore() { return !localStorage.getItem('mtbackup:restauracao') && !sync.emEnvio && !Object.keys(sync.sujas).length && !Object.keys(sync.conflitos||{}).length && (!sync.client || sync.reconciliou); }
   function backupCommit(after) {
     Object.keys(after).forEach(function(k){if(!backupAllowed(k))throw new Error('Chave de backup inválida.');localStorage.setItem(k,after[k]);if(localStorage.getItem(k)!==after[k])throw new Error('A gravação não foi confirmada.');});
   }

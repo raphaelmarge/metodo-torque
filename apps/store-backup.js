@@ -68,7 +68,7 @@
     if (!cfg || !cfg.url || !s.academia) return null;
     var prefix = cfg.url.replace(/\/$/, '') + '/storage/v1/object/public/';
     if (value.indexOf(prefix) === 0) {
-      var rest = value.slice(prefix.length), slash = rest.indexOf('/'), bucket = rest.slice(0,slash), path;
+      var rest = value.slice(prefix.length).split(/[?#]/)[0], slash = rest.indexOf('/'), bucket = rest.slice(0,slash), path;
       try { path = decodeURIComponent(rest.slice(slash+1)); } catch (_) { return null; }
       if (['galeria','exercicios'].indexOf(bucket) >= 0 && path.indexOf(s.academia + '/') === 0 && !/[\\?#]/.test(path) && !path.split('/').some(function(p){return !p||p==='.'||p==='..';}) && !/[?#]/.test(rest)) return {original:value,url:value,bucket:bucket};
     }
@@ -154,7 +154,19 @@
     var url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})), a=document.createElement('a');
     a.href=url;a.download='torque-backup-'+data.exportado.slice(0,10)+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(url);},60000);
   }
+  var restoring=false;
   async function restore(file, api, options) {
+    if(options&&options.preview)return restoreLocked(file,api,options);
+    if(restoring)fail('Já existe uma restauração em andamento. Aguarde a conclusão.');
+    restoring=true;
+    try {
+      if(root.navigator&&root.navigator.locks)return await root.navigator.locks.request('torque-backup-restauracao',{ifAvailable:true},function(lock){
+        if(!lock)fail('Outra aba está restaurando dados. Aguarde a conclusão.');return restoreLocked(file,api,options);
+      });
+      return await restoreLocked(file,api,options);
+    }finally{restoring=false;}
+  }
+  async function restoreLocked(file, api, options) {
     var initial=scope(api), data=await inspect(file,api);same(api,initial);
     if(options && options.preview)return {versao:data.versao,fotos:data.fotos.length,posturais:data.postural.length,midias:data.midias.length,exportado:data.exportado};
     if(!confirm('Restaurar o backup de '+String(data.exportado||'data não informada').slice(0,10)+'?\n\n'+data.fotos.length+' foto(s), '+data.postural.length+' avaliação(ões) postural(is) e '+data.midias.length+' imagem(ns) da nuvem.\nOs dados atuais serão preservados numa cópia de recuperação.'+(data.versao===1?'\nEste backup antigo não contém fotos.':'')))return {cancelado:true};

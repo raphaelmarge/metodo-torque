@@ -27,6 +27,10 @@ let count=0;function ok(c,m){assert.ok(c,m);console.log('OK '+engine+': '+m);cou
  ok(captured.data.fotos.length===1&&captured.data.fotos[0].key===captured.photo,'leva a foto referenciada e não a foto sem vínculo');
  ok(captured.data.postural.length===1&&captured.data.postural[0].value.scope==='local','inclui postural próprio e exclui outra conta');
  ok(!JSON.stringify(captured.data).includes('segredo-ficticio'),'não inclui a sessão de autenticação');
+ const busy=await page.evaluate(async()=>{
+  let release,entered;const ready=new Promise(r=>entered=r),held=navigator.locks.request('torque-backup-restauracao',async()=>{entered();await new Promise(r=>release=r);});
+  await ready;let error;try{await MTStore.importBackup(new File([JSON.stringify(backupOriginal)],'b.json'));}catch(e){error=e.message;}finally{release();await held;}return error;
+ });ok(busy&&busy.includes('Outra aba'),'restaurações concorrentes são recusadas antes de gravar');
  const restored=await page.evaluate(async()=>{
   const S=MTStore;let st=S.read('ptStudio');st.alunos[0].nome='Estado antes de restaurar';S.write('ptStudio',st);S.write('config',{exemplo:'atual'});
   const result=await S.importBackup(new File([JSON.stringify(backupOriginal)],'backup.json'));
@@ -66,6 +70,31 @@ let count=0;function ok(c,m){assert.ok(c,m);console.log('OK '+engine+': '+m);cou
  });ok(interrupted.locked&&interrupted.blocked,'restauração interrompida bloqueia novas gravações');
  await page.reload();await page.waitForFunction(()=>!localStorage.getItem('mtbackup:restauracao'));
  ok(await page.evaluate(()=>MTStore.read('ptStudio').alunos[0].nome==='Proteger'&&MTStore.read('config').exemplo==='proteger'),'reabertura recupera o estado anterior pelo diário persistido');
+ const mediaOrigin='https://backup-ficticio.invalid',mediaRequests=[];
+ await page.route(mediaOrigin+'/**',async r=>{
+  mediaRequests.push(r.request().url());
+  if(!r.request().url().startsWith(mediaOrigin+'/storage/v1/object/public/galeria/academia-ficticia/'))return r.abort();
+  return r.fulfill({contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:Buffer.from(captured.data.fotos[0].value.split(',')[1],'base64')});
+ });
+ const media=await page.evaluate(async origin=>{
+  const original=MTStore.cloud,cfg=window.MT_CLOUD,oldIdentity=localStorage.getItem('mtsync:identidade'),uploads=[];
+  let uploadFail=true;
+  const c=mockNuvem({aid:'academia-ficticia',tabelas:q=>{
+   if(q.tabela==='personal_postural'&&(q.filtros.academia_id!=='academia-ficticia'||q.filtros.autor_id!=='pessoa-ficticia'))throw Error('Consulta postural sem escopo');return [];
+  },storage:{from:bucket=>({upload:async(path,blob,opts)=>{uploads.push({path,upsert:opts.upsert,type:blob.type});return uploadFail?{error:{message:'Falha fictícia'}}:{data:{path}};},
+   getPublicUrl:path=>({data:{publicUrl:origin+'/storage/v1/object/public/'+bucket+'/'+path}}),remove:async()=>({data:[]})})}});
+  try{
+   MTStore.cloud=()=>c;window.MT_CLOUD={url:origin};localStorage.setItem('mtsync:identidade',JSON.stringify({academia_id:c.aid,user_id:'pessoa-ficticia'}));
+   MTStore.write('ptImagens',[{url:origin+'/storage/v1/object/public/galeria/academia-ficticia/foto.png?v=1'},{url:origin+'/storage/v1/object/public/galeria/outra/foto.png'}]);
+   const data=await MTStore.exportBackup({dataOnly:true}),file=new File([JSON.stringify(data)],'midia.json'),before=localStorage.getItem('mtapp:ptImagens');
+   let error;try{await MTStore.importBackup(file);}catch(e){error=e.message;}
+   const unchanged=before===localStorage.getItem('mtapp:ptImagens');uploadFail=false;
+   const restored=await MTStore.importBackup(file);return {count:data.midias.length,error,unchanged,restored,uploads,url:MTStore.read('ptImagens')[0].url};
+  }finally{MTStore.cloud=original;window.MT_CLOUD=cfg;localStorage.removeItem('mtapp:ptImagens');if(oldIdentity===null)localStorage.removeItem('mtsync:identidade');else localStorage.setItem('mtsync:identidade',oldIdentity);}
+ },mediaOrigin);
+ ok(media.count===1&&mediaRequests.length>0&&mediaRequests.every(url=>url.includes('/academia-ficticia/')),'backup baixa imagem própria com cache e não busca mídia de outra conta');
+ ok(media.error&&media.unchanged,'upload recusado preserva os dados atuais');
+ ok(media.restored.ok&&media.url.includes('/backup-')&&media.uploads.every(x=>x.path.startsWith('academia-ficticia/backup-')&&x.upsert===false),'restaura mídia em caminho novo sem sobrescrever o original');
  await page.evaluate(()=>{
   window.cloudOriginal=MTStore.cloud;
   const c=mockNuvem({aid:'academia-ficticia',rpc:async(name,args)=>{
