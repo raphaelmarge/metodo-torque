@@ -6,6 +6,21 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v845 — Confiabilidade interna
+
+- Backup v2 com integridade, fotos referenciadas, avaliações posturais da própria
+  conta e imagens próprias da galeria. Importação preserva cópia anterior em
+  IndexedDB, reverte falhas e recupera interrupções na próxima abertura.
+- Sincronização incremental por aluno/ficha; CAS continua como fallback seguro
+  quando não há conteúdo-base confirmado. Histórico transacional com antes/depois,
+  autor e recuperação seletiva que recusa alterações posteriores.
+- Sua ilha → Acesso e equipe → Segurança e manutenção: diagnóstico, sessões
+  próprias, revogação de acesso de aluno e cópias anteriores.
+- Migração aditiva `20260926232430_confiabilidade_interna.sql`: aplicar antes
+  de publicar o frontend. RLS do painel exige sessão Supabase ainda ativa.
+- Gate inclui Chromium, WebKit e concorrência PostgreSQL isolada. Detalhes e limites
+  em `docs/releases/mt-v845-confiabilidade.md`. Não equivale a teste físico no iPhone.
+
 ## v844 — Recuperação do acesso do aluno
 
 - `aluno-login.html` oferece recuperação por e-mail, link de uso único e

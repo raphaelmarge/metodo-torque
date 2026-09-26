@@ -10564,6 +10564,7 @@ async function novaExecucaoAluno(p) {
       } }) }),
       rpc: (nome, args) => {
         (window.__rpcs = window.__rpcs || []).push([nome, args]);
+        if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
         if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
         return Promise.resolve({ data: null, error: null });
       },
@@ -13779,7 +13780,7 @@ async function novaExecucaoAluno(p) {
     URL.createObjectURL = () => "blob:mock";
     try { document.getElementById("btnBackup").click(); } finally { URL.createObjectURL = orig; }
   });
-  await p.waitForTimeout(250);
+  await p.waitForFunction(() => !document.getElementById('btnBackup').disabled && !!(JSON.parse(localStorage.getItem('mtapp:ptStudio')).config || {}).backupEm);
   ok(await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).config || {}).backupEm === diaISO(new Date()) &&
     /Último backup/.test(document.getElementById("bkAviso").textContent)), "baixar backup grava a data e o aviso passa a mostrar");
   ok(await p.evaluate(() => {
@@ -14028,6 +14029,7 @@ async function novaExecucaoAluno(p) {
       window.MT_supabase = {
         auth: { getSession: async () => ({ data: { session: { user: { id: "user-sync-ficticio", email: "r@t.br" } } } }) },
         rpc: (nome, args) => {
+          if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
           if (nome === "dados_cas") envios.push({ chave: args.p_chave, valor: args.p_valor });
           if (nome === "dados_grava") envios.push(...(args.p_linhas || []));
           return Promise.resolve({ data: null });

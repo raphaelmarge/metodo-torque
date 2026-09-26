@@ -212,6 +212,7 @@
   window.__zerouTudo = zerouTudo; // testes
 
   function write(key, value) {
+    if (localStorage.getItem('mtbackup:restauracao')) return false; // recuperação antes de novas edições
     if (key === 'ptStudio' && leituras && leituras.has(value) && leituras.get(value) !== localStorage.getItem(PREFIX + key)) {
       sinalizaConflito(PREFIX + key, 'Este formulário foi aberto antes de outra alteração. O salvamento foi bloqueado para preservar as duas versões.', JSON.stringify(value), true);
       return false;
@@ -414,52 +415,48 @@
     "matriculaOnline", "copiloto"];
   var DOC_PREFIX = "mtpf:"; // respostas dos documentos preenchíveis (docs/preenchivel.js)
 
-  function exportBackup() {
-    var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString(),
-      // dito no próprio arquivo, pra ninguém descobrir só na hora de restaurar
-      aviso: "As fotos guardadas no IndexedDB (avaliações/progresso) NÃO vão neste arquivo." };
-    BACKUP_KEYS.forEach(function (k) { data[k] = read(k, null); });
-    // v747: os documentos preenchidos (mtpf:<slug>) vão juntos, num mapa só
-    var docs = {};
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var kd = localStorage.key(i);
-        if (kd && kd.indexOf(DOC_PREFIX) === 0) {
-          try { docs[kd.slice(DOC_PREFIX.length)] = JSON.parse(localStorage.getItem(kd)); }
-          catch (e) { docs[kd.slice(DOC_PREFIX.length)] = localStorage.getItem(kd); }
-        }
-      }
-    } catch (e) {}
-    data._preenchiveis = docs;
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "metodo-torque-backup-" + todayISO() + ".json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  function importBackup(file) {
-    return file.text().then(function (txt) {
-      var data = JSON.parse(txt);
-      if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do TORQUE ON");
-      window.__MT_IMPORTANDO = true;
-      try {
-        BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); });
-        var docs = data._preenchiveis;
-        if (docs && typeof docs === "object") {
-          Object.keys(docs).forEach(function (slug) {
-            try {
-              localStorage.setItem(DOC_PREFIX + slug, JSON.stringify(docs[slug]));
-              marcaTs(DOC_PREFIX + slug); agendaEnvio(DOC_PREFIX + slug);
-            } catch (e) {}
-          });
-        }
-      }
-      finally { window.__MT_IMPORTANDO = false; }
-      // um registro só na trilha, em vez de sessenta iguais no mesmo minuto
-      auditoria("backup restaurado (" + (data.exportado || "").slice(0, 10) + ")", true);
+  // Os módulos de suporte são locais e carregados apenas quando necessários.
+  var suporteBase = (document.currentScript && document.currentScript.src || '').replace(/[^/]*$/, '') || (location.pathname.indexOf('/apps/') >= 0 ? '' : 'apps/');
+  var suportePromessas = {};
+  function suporte(arquivo, global) {
+    if (window[global]) return Promise.resolve(window[global]);
+    if (!suportePromessas[arquivo]) suportePromessas[arquivo] = new Promise(function (resolve, reject) {
+      var script = document.createElement('script'); script.src = suporteBase + arquivo;
+      script.onload = function () { window[global] ? resolve(window[global]) : reject(new Error('Módulo de segurança indisponível.')); };
+      script.onerror = function () { delete suportePromessas[arquivo]; reject(new Error('Não foi possível abrir o módulo. Conecte-se e tente novamente.')); };
+      document.head.appendChild(script);
     });
+    return suportePromessas[arquivo];
+  }
+  function backupSnapshot() {
+    var out = {};
+    BACKUP_KEYS.forEach(function (k) { var raw=localStorage.getItem(PREFIX+k); if(raw!=null)out[PREFIX+k]=raw; });
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf(DOC_PREFIX)===0)out[k]=localStorage.getItem(k);}
+    return out;
+  }
+  function backupAllowed(k) { return k.indexOf(PREFIX)===0 && BACKUP_KEYS.indexOf(k.slice(PREFIX.length))>=0 || /^mtpf:[a-zA-Z0-9_-]+$/.test(k); }
+  function backupCanRestore() { return !sync.emEnvio && !Object.keys(sync.sujas).length && !Object.keys(sync.conflitos||{}).length && (!sync.client || sync.reconciliou); }
+  function backupCommit(after) {
+    Object.keys(after).forEach(function(k){if(!backupAllowed(k))throw new Error('Chave de backup inválida.');localStorage.setItem(k,after[k]);if(localStorage.getItem(k)!==after[k])throw new Error('A gravação não foi confirmada.');});
+  }
+  function backupRollback(before, after) {
+    // Não substituir uma edição de outra aba com um rollback antigo.
+    Object.keys(after).forEach(function(k){var v=localStorage.getItem(k);if(v!==after[k] && v!==(before[k]===undefined?null:before[k]))throw new Error('Outra aba alterou dados durante a restauração. A cópia anterior foi preservada para revisão.');});
+    Object.keys(after).forEach(function(k){if(before[k]===undefined)localStorage.removeItem(k);else localStorage.setItem(k,before[k]);});
+  }
+  function backupCompleted(keys) {
+    keys.forEach(function(k){delete contagem[k];delete gentes[k];marcaTs(k);agendaEnvio(k);if(k.indexOf(PREFIX)===0)notificaChave(k);});
+    auditoria('backup restaurado com conferência',true);
+  }
+  var backupAPI={snapshot:backupSnapshot,keys:function(){return BACKUP_KEYS.slice();},allowed:backupAllowed,
+    cloud:function(){return window.MTStore.cloud();},canRestore:backupCanRestore,commit:backupCommit,rollback:backupRollback,completed:backupCompleted,
+    loadPostural:function(){return suporte('../assets/postural-core.js','MT_POSTURAL_CORE').then(function(){return suporte('../assets/postural-store.js','MT_POSTURAL_STORE');});}};
+  function exportBackup(options) {
+    return suporte('store-backup.js','MT_BACKUP').then(function(b){return b.capture(backupAPI).then(function(data){if(!(options&&options.dataOnly))b.download(data);return data;});})
+      .catch(function(e){if(options&&options.dataOnly)throw e;alert('Backup não concluído: '+e.message);return false;});
+  }
+  function importBackup(file,options) {
+    return suporte('store-backup.js','MT_BACKUP').then(function(b){return b.restore(file,backupAPI,options);});
   }
 
   // Notifica mudanças: no mesmo contexto (write) e entre abas/iframes (storage).
@@ -544,7 +541,7 @@
     (sync.emEnvio || []).forEach(function (k) { sync.sujas[k] = true; });
     sync.emEnvio = null;
     sync.ciclo++; sync.client = null; sync.email = ""; sync.reconciliou = false;
-    sync.marca = ""; clearTimeout(sync.timer); avisaStatus();
+    sync.marca = ""; sync.conteudos = {}; sync.saude={}; clearTimeout(sync.timer); avisaStatus();
   }
 
   function sincronizavel(chaveFull) {
@@ -561,7 +558,7 @@
   }
 
   function enviaSujas() {
-    if (!sync.client) return Promise.resolve();
+    if (!sync.client || localStorage.getItem('mtbackup:restauracao')) return Promise.resolve();
     if (sync.emEnvio) return sync.promessaEnvio || Promise.resolve();
     var ciclo = sync.ciclo;
     // regra de ferro: só envia depois da primeira puxada da sessão. A fila
@@ -589,53 +586,75 @@
     var comuns = linhas.filter(function (l) { return !chaveProtegida(l.chave); });
     var protegidas = linhas.filter(function (l) { return chaveProtegida(l.chave); });
     var envios = protegidas.map(function (l) {
-      return sync.client.rpc("dados_cas", {
+      var helper=window.MT_STUDIO_PATCHES, base=sync.conteudos && sync.conteudos[l.chave];
+      var ops=helper && base && base.revisao===baseDe(l.chave) ? helper.diff(base.valor,l.valor) : null;
+      if(ops && (ops.length>500 || JSON.stringify(ops).length>8*1024*1024))ops=null;
+      var envio=ops ? sync.client.rpc('dados_personal_patch',{p_academia:l.academia_id,p_operacoes:ops}) : sync.client.rpc("dados_cas", {
         p_academia: l.academia_id, p_chave: l.chave, p_valor: l.valor,
         p_base_atualizado: baseDe(l.chave)
-      }).then(function (r) {
+      });
+      return envio.then(function (r) {
+        if(r)r=Object.assign({},r);
         if (r && !r.error && r.data && !Array.isArray(r.data)) r.data = [r.data];
-        return r || { data: [] };
+        r=r || {error:{message:'A nuvem não confirmou o salvamento.'}};
+        r._chaves=[l.chave];r._enviado=l.valor;r._patch=!!ops;
+        return r;
       });
     });
     if (comuns.length) {
       envios.push(sync.client.rpc("dados_grava", { p_linhas: comuns }).then(function (r) {
+        if(r)r=Object.assign({},r);
         if (r && !r.error && r.data && !Array.isArray(r.data)) r.data = [r.data];
-        return r || { data: [] };
+        r=r || {error:{message:'A nuvem não confirmou o salvamento.'}};r._chaves=comuns.map(function(l){return l.chave;});return r;
       }));
     }
     sync.promessaEnvio = Promise.all(envios).then(function (rs) {
       if (ciclo !== sync.ciclo || !sync.client) return;
       sync.emEnvio = null;
-      var falha = rs.find(function (r) { return r && r.error; });
-      if (falha) {
-        // devolve à fila para tentar de novo no próximo ciclo
-        chaves.forEach(function (k) { sync.sujas[k] = true; });
-        if (falha.error.code === 'PT409') chaves.filter(chaveProtegida).forEach(function (k) { sinalizaConflito(k, falha.error.message); });
-        avisaStatus();
-      } else {
-        var respostas = [];
-        rs.forEach(function (r) { respostas = respostas.concat(Array.isArray(r && r.data) ? r.data : []); });
-        respostas.forEach(function (row) {
-          // só se a chave não foi escrita DE NOVO enquanto o envio viajava
-          if (row && row.chave && row.atualizado) {
-            if (chaveProtegida(row.chave)) { try { guardaBase(row.chave, row.atualizado); } catch (e) { sinalizaConflito(row.chave); } }
-            if (!sync.sujas[row.chave]) marcaTs(row.chave, row.atualizado);
+      var primeiraFalha=null;
+      rs.forEach(function(r){
+        if(r._patch && (!r.data || !r.data[0] || !r.data[0].valor))r.error=r.error||{message:'Resposta incompleta da sincronização.'};
+        if(r.error){
+          (r._chaves||chaves).forEach(function(k){sync.sujas[k]=true;});
+          if(r.error.code==='PT409')(r._chaves||chaves).filter(chaveProtegida).forEach(function(k){sinalizaConflito(k,r.error.message);});
+          primeiraFalha=primeiraFalha||r.error;return;
+        }
+        (Array.isArray(r.data)?r.data:[]).forEach(function(row){
+          if(!row||!row.chave||!row.atualizado)return;
+          if(r._patch){incorporaConfirmacao(row,r._enviado);return;}
+          if(chaveProtegida(row.chave)){
+            try {guardaBase(row.chave,row.atualizado);guardaConteudo(row.chave,r._enviado,row.atualizado);}catch(e){sinalizaConflito(row.chave);}
           }
+          if(!sync.sujas[row.chave])marcaTs(row.chave,row.atualizado);
         });
-        avisaStatus();
-      }
+      });
+      diagnostico('sincronizacao',!primeiraFalha,primeiraFalha&&primeiraFalha.code);
+      avisaStatus();
     }, function () {
       if (ciclo !== sync.ciclo || !sync.client) return;
       sync.emEnvio = null;
       chaves.forEach(function (k) { sync.sujas[k] = true; });
+      diagnostico('sincronizacao',false,'rede');
       avisaStatus();
     });
     return sync.promessaEnvio;
   }
 
   function puxa() {
+    if (localStorage.getItem('mtbackup:restauracao')) return Promise.resolve();
     if (!sync.client) return Promise.resolve();
     var ciclo = sync.ciclo;
+    if(window.MT_STUDIO_PATCHES && sync.client.rpc) {
+      return sync.client.rpc('personal_sessao_ativa',{}).then(function(r){
+        if(ciclo!==sync.ciclo||!sync.client)return;
+        if(r&&r.data===false){paraSync();try{self.dispatchEvent(new CustomEvent('mt:sessao-caiu'));}catch(e){}return;}
+        if(!r||r.error||r.data!==true){diagnostico('consulta',false,'sessao');return;}
+        return puxaConta(ciclo);
+      },function(){if(ciclo===sync.ciclo)diagnostico('consulta',false,'rede');});
+    }
+    return puxaConta(ciclo);
+  }
+  function puxaConta(ciclo) {
     // A sessão pode continuar válida depois que o dono remove o membro.
     // Revalida o vínculo a cada reconexão/ciclo antes de ler ou enviar a fila.
     if (sync.user_id) {
@@ -663,8 +682,9 @@
     var consulta = sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid);
     if (!primeira) consulta = consulta.gt("atualizado", sync.marca);
     return consulta.then(function (r) {
-      if (ciclo !== sync.ciclo || !sync.client) return;
-      if (r.error || !r.data) return;
+      if (ciclo !== sync.ciclo || !sync.client || localStorage.getItem('mtbackup:restauracao')) return;
+      if (r.error || !r.data) {diagnostico('consulta',false,r.error&&r.error.code);return;}
+      diagnostico('consulta',true);
       var m = tsMap();
       var mudou = [];
       var maxTs = sync.marca || "", pulouOcupada = false;
@@ -762,7 +782,7 @@
           });
         });
       }
-    }, function () {});
+    }, function () {if(ciclo===sync.ciclo)diagnostico('consulta',false,'rede');});
   }
 
   /* v806: revisão da cópia que foi realmente lida, não o relógio do aparelho.
@@ -869,6 +889,24 @@
     delete contagem[k]; delete gentes[k];
     ouvintes.forEach(function (cb) { try { cb(k.slice(PREFIX.length)); } catch (e) {} });
   }
+  function guardaConteudo(k,valor,revisao) {
+    if(!window.MT_STUDIO_PATCHES || valor===undefined)return;
+    sync.conteudos=sync.conteudos||{};
+    sync.conteudos[k]={valor:JSON.parse(JSON.stringify(valor)),revisao:revisao};
+  }
+  function incorporaConfirmacao(row,enviado) {
+    var k=row.chave,original=localStorage.getItem(k),helper=window.MT_STUDIO_PATCHES;
+    try {
+      var delta=helper.diff(enviado,JSON.parse(original)),merged=delta&&helper.apply(row.valor,delta);
+      if(!merged)throw Error('Não foi possível conferir a edição local.');
+      if(!aplicaProtegida({chave:k,valor:merged,atualizado:row.atualizado},true))return false;
+      guardaConteudo(k,row.valor,row.atualizado);
+      if(helper.equal(merged,row.valor))delete sync.sujas[k];
+      else {sync.sujas[k]=true;marcaTs(k);}
+      if(localStorage.getItem(k)!==original)notificaChave(k);
+      return true;
+    } catch(e) {sinalizaConflito(k,e.message);return false;}
+  }
   function aplicaProtegida(row, silencioso) {
     var k = row.chave, raw = JSON.stringify(row.valor), anterior = localStorage.getItem(k);
     var bk = baseKey(), tsAnterior = localStorage.getItem(TSKEY), baseAnterior = localStorage.getItem(bk);
@@ -885,6 +923,7 @@
       sinalizaConflito(k, 'A memória do aparelho está cheia. A cópia da nuvem não foi aplicada.');
       return false;
     }
+    guardaConteudo(k,row.valor,row.atualizado);
     if (anterior !== raw && !silencioso) notificaChave(k);
     return true;
   }
@@ -1010,7 +1049,9 @@
       return;
     }
     if (editado && raw) {
-      if (b && b === row.atualizado) { sync.sujas[k] = true; return; }
+      if (b && b === row.atualizado) { guardaConteudo(k,row.valor,row.atualizado);sync.sujas[k] = true; return; }
+      var base=sync.conteudos&&sync.conteudos[k];
+      if(window.MT_STUDIO_PATCHES&&base&&base.revisao===b) {incorporaConfirmacao(row,base.valor);return;}
       sinalizaConflito(k); return;
     }
     aplicaProtegida(row);
@@ -1043,21 +1084,60 @@
       p_academia: sync.aid, p_source_atualizado: preparo.revisao, p_linhas: seguras
     }).then(function (r) {
       if (r && r.error && r.error.code === 'PT409') sinalizaConflito(k, r.error.message);
+      diagnostico('publicacao',!!(r&&!r.error),r&&r.error&&r.error.code);
       return r;
-    });
+    },function(e){diagnostico('publicacao',false,'rede');throw e;});
   }
   function publicaApps(linhas, nuvem) {
     var cliente = nuvem && nuvem.client ? nuvem.client : sync.client;
     var aid = nuvem && nuvem.aid ? nuvem.aid : sync.aid;
     if (!cliente || !aid) return Promise.resolve({ error: { message: 'Entre na nuvem antes de publicar.' } });
-    return cliente.rpc('app_aluno_publica', { p_academia: aid, p_linhas: linhas });
+    return cliente.rpc('app_aluno_publica', { p_academia: aid, p_linhas: linhas }).then(function(r){diagnostico('publicacao',!!(r&&!r.error),r&&r.error&&r.error.code);return r;},function(e){diagnostico('publicacao',false,'rede');throw e;});
   }
 
-  function avisaStatus() {
-    if (window.MT_syncInfo) {
-      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima, pendentes: Object.keys(Object.assign({}, sync.sujas, sync.conflitos || {})).length }); } catch (e) {}
+  function diagnostico(tipo,ok,codigo) {
+    sync.saude=sync.saude||{};
+    if(ok)delete sync.saude[tipo];
+    else {
+      var anterior=sync.saude[tipo];
+      sync.saude[tipo]={desde:anterior&&anterior.desde||Date.now(),tentativas:(anterior&&anterior.tentativas||0)+1,codigo:/^[A-Z0-9_-]{1,20}$/i.test(codigo||'')?codigo:'indisponivel'};
+      if(!anterior)reportaErro('Falha de '+tipo+': '+sync.saude[tipo].codigo,'Diagnóstico automático');
     }
+    avisaStatus();
   }
+  function saudeSync() {
+    var pendentes=Object.keys(Object.assign({},sync.sujas,sync.conflitos||{})).length+(sync.emEnvio||[]).filter(function(k){return !sync.sujas[k];}).length;
+    if(pendentes&&!sync.pendenteDesde)sync.pendenteDesde=Date.now();
+    if(!pendentes)sync.pendenteDesde=null;
+    return {ativa:!!sync.client,ultima:sync.ultima,pendentes:pendentes,reconciliou:!!sync.reconciliou,
+      enviando:!!sync.emEnvio,desde:sync.pendenteDesde,conflitos:Object.keys(sync.conflitos||{}).length,
+      falhas:JSON.parse(JSON.stringify(sync.saude||{}))};
+  }
+  function avisaStatus() {
+    var info=saudeSync();
+    if (window.MT_syncInfo) {
+      try { window.MT_syncInfo(info); } catch (e) {}
+    }
+    try {self.dispatchEvent(new CustomEvent('mt:sync-saude',{detail:info}));}catch(e){}
+  }
+
+  function acaoPersonal(rpc,args) {
+    return preparaAppsSeguros().then(function(prep){
+      if(prep.error)throw Error(prep.error.message);
+      if(!window.MT_STUDIO_PATCHES)throw Error('Atualize o painel antes de recuperar o histórico.');
+      var aid=sync.aid,client=sync.client;
+      return client.rpc(rpc,Object.assign({},args,{p_academia:aid},rpc==='personal_acesso_revoga'?{p_revisao:prep.revisao}:{})).then(function(r){
+        if(r.error)throw Error(r.error.message);
+        if(sync.ciclo!==prep.ciclo||sync.aid!==aid||sync.client!==client)throw Error('A conta mudou. Reabra o histórico na conta original.');
+        var row=Array.isArray(r.data)?r.data[0]:r.data;
+        if(!row||!row.valor||!row.atualizado)throw Error('A recuperação não foi confirmada.');
+        if(!incorporaConfirmacao(row,JSON.parse(prep.raw)))throw Error('A operação foi confirmada na nuvem, mas há uma edição local para revisar.');
+        avisaStatus();return true;
+      });
+    });
+  }
+  function restauraAlteracao(id) {return acaoPersonal('personal_alteracao_restaura',{p_id:id});}
+  function revogaAcessoSeguro(id) {return acaoPersonal('personal_acesso_revoga',{p_aluno:id});}
 
   /* Sessão derrubada pela nuvem: o painel não pode seguir dizendo "conectado
    * como fulano" com o crachá morto — senão o botão que aparece é Sair, e não
@@ -1065,6 +1145,7 @@
   self.addEventListener("mt:sessao-caiu", paraSync);
 
   function iniciaSync() {
+    if(localStorage.getItem('mtbackup:restauracao')) { suporte('store-backup.js','MT_BACKUP').then(function(b){return b.recover(backupAPI);}).then(iniciaSync).catch(function(e){console.warn('Recuperação de backup pendente');alert(e.message);});return; }
     var cfg = self.MT_CLOUD;
     if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client || sync.iniciando) return;
     sync.iniciando = true;
@@ -1300,6 +1381,9 @@
     savePhoto: savePhoto, savePhotoData: savePhotoData, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange, equipeDatalist: equipeDatalist,
+    copiasAnteriores: function(id){return suporte('store-backup.js','MT_BACKUP').then(function(b){return b.previousCopies(backupAPI,id);});},
+    saude: saudeSync, sincronizaAgora: function(){return puxa().then(function(){return enviaSujas();});},
+    restauraAlteracao: restauraAlteracao, revogaAcessoSeguro: revogaAcessoSeguro,
     iniciaSync: iniciaSync, preparaAppsSeguros: preparaAppsSeguros,
     publicaAppsSeguros: publicaAppsSeguros, publicaApps: publicaApps,
     // acesso à conexão da nuvem (para publicações como o App do Aluno)

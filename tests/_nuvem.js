@@ -76,7 +76,9 @@ const MOCK_NUVEM = `
     }
     var cli = {
       from: function (tb) { if (opts.onFrom) opts.onFrom(tb); return consulta(tb); },
-      rpc: opts.rpc || function (nome, args) {
+      rpc: function (nome, args) {
+        if (nome === "personal_sessao_ativa") return Promise.resolve({data:true,error:null});
+        if (opts.rpc) return opts.rpc(nome,args);
         if (nome === "app_aluno_publica" || nome === "app_aluno_publica_cas") {
           if (opts.onEscreve) opts.onEscreve({ tabela: "app_aluno", acao: "upsert", corpo: (args || {}).p_linhas || [], rpc: nome });
           return Promise.resolve({ data: { ok: true, publicados: ((args || {}).p_linhas || []).length }, error: null });
