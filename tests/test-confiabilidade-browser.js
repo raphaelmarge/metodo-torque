@@ -16,7 +16,8 @@ let count=0;function ok(c,m){assert.ok(c,m);console.log('OK '+engine+': '+m);cou
   const photo=await S.savePhotoData(png),unrelated=await S.savePhotoData(png);
   S.write('ptStudio',{alunos:[{id:'a',nome:'Antes',foto:photo}],treinosV2:{a:{fichas:[{id:'f1',nome:'A'}]}},config:{}});
   S.write('config',{exemplo:'anterior'});localStorage.setItem('mtpf:contrato',JSON.stringify({campo:'antes'}));localStorage.setItem('sb-ficticio-auth-token','segredo-ficticio');
-  const documento=MT_POSTURAL_CORE.create({width:1,height:1,data:png});
+  const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;
+  const documento=MT_POSTURAL_CORE.create({width:1,height:1,data:canvas.toDataURL('image/jpeg')});
   await MT_POSTURAL_STORE.localPut({id:'postural-local',scope:'local',alunoId:'a',data:'2026-09-01',vista:'frente',documento});
   await MT_POSTURAL_STORE.localPut({id:'postural-outra-conta',scope:'account:outra:pessoa',alunoId:'a',data:'2026-09-01',vista:'frente',documento});
   window.backupOriginal=await S.exportBackup({dataOnly:true});

@@ -88,6 +88,7 @@
       var expected = initial.demo ? 'demo' : initial.academia && initial.usuario ? 'account:'+initial.academia+':'+initial.usuario : 'local';
       postural = (await scan('torque-postural-v1','records')).filter(function (x) { return x.value && x.value.scope === expected; });
     } else if (!databases) fail('Este navegador não permite conferir as bases de fotos. Atualize o navegador antes de exportar o backup completo.');
+    if(postural.length){await api.loadPostural();postural.forEach(function(x){root.MT_POSTURAL_CORE.validate(x.value.documento);});}
     var c=api.cloud();
     if(c && initial.academia && initial.usuario && !initial.demo) {
       await api.loadPostural();
