@@ -141,6 +141,7 @@
     panes.contato.appendChild(fields); panes.contato.appendChild($("ilhaSalvo")); panes.contato.appendChild(mural);
     var note = node("p", "muted ptf-intro", "Contato, Pix e mural são salvos ao sair do campo. Publique os apps após mudar informações que os alunos veem."); panes.contato.prepend(note);
     panes.acesso.appendChild(actions); panes.acesso.appendChild($("syncInfoPt")); panes.backup.appendChild(backup); backup.classList.add("ptf-content");
+    if($("ptConfiabilidade"))panes.acesso.appendChild($("ptConfiabilidade"));
     var link = node("button", "btn sec mini", "Abrir personalização"); link.type = "button"; link.addEventListener("click", function () { document.querySelector('#abas [data-a="pers"]').click(); }); panes.contato.appendChild(link);
     var stale = Array.from(root.querySelectorAll(":scope > p")).find(function (p) { return p.textContent.includes("Cores e logo"); }); if (stale) stale.remove();
   }

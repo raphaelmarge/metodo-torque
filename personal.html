@@ -3773,6 +3773,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         <input type="file" id="bkArquivo" accept=".json,application/json" hidden>
       </div>
     </div>
+    <section id="ptConfiabilidade" style="margin-top:18px;padding:14px;border:1px solid var(--tk-bd4);border-radius:12px;"></section>
   </div>
 <section id="vNutricao" hidden>
   <header class="pn-head"><div><span class="alk">ACOMPANHAMENTO</span><h2>Nutrição</h2><p class="muted">Plano alimentar, biblioteca e registros do aluno.</p></div></header>
@@ -3946,6 +3947,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/erro-funcao.js"></script>
 <script src="assets/funcao-nuvem.js"></script>
 <script src="assets/vendor/supabase.js"></script>
+<script src="assets/studio-patches.js"></script>
 <script src="apps/store.js"></script>
 <!-- simulador de nuvem do demo publico: so liga com as duas marcas do demo-personal.html -->
 <script src="assets/demo-nuvem.js"></script>
@@ -23918,17 +23920,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var bkEm = (st.config || {}).backupEm || "";
     var bkDias = bkEm ? Math.floor((new Date(S.todayISO()) - new Date(bkEm)) / 864e5) : null;
     $("bkAviso").textContent = !bkEm
-      ? "Você ainda não baixou um backup. Ele é um arquivo com TUDO (alunos, fichas, pagamentos) — guarda um por mês, por segurança."
+      ? "Você ainda não baixou um backup. Ele inclui os dados deste aparelho, as fotos referenciadas e as imagens da sua galeria. Guarde uma cópia em local seguro."
       : bkDias > 30
-        ? "Atenção: seu último backup foi há " + bkDias + " dias (" + S.fmtData(bkEm) + "). Baixa um novo agora — leva 2 segundos."
+        ? "Atenção: seu último backup foi há " + bkDias + " dias (" + S.fmtData(bkEm) + "). Baixe uma cópia atualizada com conexão para incluir as imagens da nuvem."
         : "Último backup: " + S.fmtData(bkEm) + ". Baixa um novo de vez em quando, por segurança.";
   }
+  // O HTML chega pela rede antes de o service worker trocar os scripts antigos.
+  function backupDisponivel() {
+    if (typeof S.copiasAnteriores === "function") return true;
+    alert("A atualização do painel está em andamento. Aguarde a página atualizar antes de fazer ou restaurar um backup. Seus dados foram mantidos.");
+    return false;
+  }
   $("btnBackup").addEventListener("click", function () {
-    S.exportBackup();
-    var st = load();
-    st.config = st.config || {};
-    st.config.backupEm = S.todayISO();
-    S.write("ptStudio", st);
+    if (!backupDisponivel()) return;
+    var button=this;button.disabled=true;
+    S.exportBackup().then(function(result){
+      if(!result)return;
+      var st=load();st.config=st.config||{};st.config.backupEm=S.todayISO();
+      if(S.write("ptStudio",st)===false)alert("Backup gerado. Não foi possível atualizar a data no painel.");
+    }).finally(function(){button.disabled=false;});
   });
   // "seus dados são seus" de verdade: alunos e pagamentos em CSV que o Excel
   // brasileiro abre direto (BOM + ponto-e-vírgula). O backup .json continua
@@ -23969,7 +23979,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     baixaCsv("pagamentos", pgs);
   });
-  $("btnBackupRestaura").addEventListener("click", function () { $("bkArquivo").click(); });
+  $("btnBackupRestaura").addEventListener("click", function () { if (backupDisponivel()) $("bkArquivo").click(); });
   (function () {
     var cb = $("cfgFchAuto");
     if (!cb) return;
@@ -23985,8 +23995,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var f = this.files && this.files[0];
     this.value = "";
     if (!f) return;
-    if (!confirm("Restaurar o backup SUBSTITUI os dados deste aparelho pelos do arquivo. Continuar?")) return;
-    S.importBackup(f).then(function () {
+    if (!backupDisponivel()) return;
+    S.importBackup(f).then(function (resultado) {
+      if(resultado && resultado.cancelado)return;
       alert("Backup restaurado! A página vai recarregar.");
       location.reload();
     }, function (e) {
@@ -24000,7 +24011,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!el) return;
     if (!info || !info.ativa) { el.hidden = true; return; }
     el.hidden = false;
-    el.textContent = info.pendentes
+    el.textContent = info.conflitos ? 'Há um conflito para revisar; seu rascunho foi preservado.' : Object.keys(info.falhas||{}).length ? 'Há uma falha de conexão ou publicação. Confira Segurança e manutenção abaixo.' : info.reconciliou===false ? 'Conferindo a nuvem…' : info.pendentes
       ? info.pendentes + " alteração(ões) esperando pra subir pra nuvem — não fecha a página agora."
       : "Nuvem em dia" + (info.ultima ? " — última sincronização às " + String(info.ultima.getHours()).padStart(2, "0") + ":" + String(info.ultima.getMinutes()).padStart(2, "0") : "") + ".";
   };
@@ -24172,7 +24183,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // os dados continuam sendo dele, travado ou não
   var btBk = $("taBackup");
-  if (btBk) btBk.addEventListener("click", function () { S.exportBackup(); });
+  if (btBk) btBk.addEventListener("click", function () { if (backupDisponivel()) S.exportBackup(); });
 
   renderAssinatura();
   aplicaTrava();   // v761: abriu travado? mostra a tela antes de qualquer coisa
@@ -25211,5 +25222,6 @@ addEventListener('load',function(){document.querySelectorAll('.kpi-pt .n').forEa
   window.__faixaSessao = function () { return !!document.getElementById("faixaSessao"); }; // testes
 })();
 </script>
+<script src="assets/personal-confiabilidade.js"></script>
 </body>
 </html>

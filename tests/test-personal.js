@@ -10564,6 +10564,7 @@ async function novaExecucaoAluno(p) {
       } }) }),
       rpc: (nome, args) => {
         (window.__rpcs = window.__rpcs || []).push([nome, args]);
+        if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
         if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
         return Promise.resolve({ data: null, error: null });
       },
@@ -13774,12 +13775,22 @@ async function novaExecucaoAluno(p) {
   await abaPt(p, "conta");
   ok(await p.evaluate(() => !!document.getElementById("btnBackup") && !!document.getElementById("btnBackupRestaura") &&
     /backup/i.test(document.getElementById("bkAviso").textContent)), "card da ilha tem o bloco de backup com aviso");
+  ok(await p.evaluate(() => {
+    const S=MTStore,previous=S.copiasAnteriores,exp=S.exportBackup,imp=S.importBackup,alerta=window.alert;
+    const old=localStorage.getItem('mtapp:ptStudio'),messages=[];let called=0;
+    try{
+      delete S.copiasAnteriores;S.exportBackup=()=>{called++;};S.importBackup=()=>{called++;};window.alert=s=>messages.push(s);
+      document.getElementById('btnBackup').click();document.getElementById('taBackup').click();document.getElementById('btnBackupRestaura').click();
+      const input=document.getElementById('bkArquivo'),transfer=new DataTransfer();transfer.items.add(new File(['{}'],'backup.json'));input.files=transfer.files;input.dispatchEvent(new Event('change'));
+      return called===0&&messages.length===4&&messages.every(s=>/atualização/.test(s))&&!document.getElementById('btnBackup').disabled&&old===localStorage.getItem('mtapp:ptStudio');
+    }finally{S.copiasAnteriores=previous;S.exportBackup=exp;S.importBackup=imp;window.alert=alerta;}
+  }), "página nova com núcleo antigo aguarda atualização sem executar backup incompleto nem restaurar dados");
   await p.evaluate(() => {
     const orig = URL.createObjectURL;
     URL.createObjectURL = () => "blob:mock";
     try { document.getElementById("btnBackup").click(); } finally { URL.createObjectURL = orig; }
   });
-  await p.waitForTimeout(250);
+  await p.waitForFunction(() => !document.getElementById('btnBackup').disabled && !!(JSON.parse(localStorage.getItem('mtapp:ptStudio')).config || {}).backupEm);
   ok(await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).config || {}).backupEm === diaISO(new Date()) &&
     /Último backup/.test(document.getElementById("bkAviso").textContent)), "baixar backup grava a data e o aviso passa a mostrar");
   ok(await p.evaluate(() => {
@@ -14028,6 +14039,7 @@ async function novaExecucaoAluno(p) {
       window.MT_supabase = {
         auth: { getSession: async () => ({ data: { session: { user: { id: "user-sync-ficticio", email: "r@t.br" } } } }) },
         rpc: (nome, args) => {
+          if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
           if (nome === "dados_cas") envios.push({ chave: args.p_chave, valor: args.p_valor });
           if (nome === "dados_grava") envios.push(...(args.p_linhas || []));
           return Promise.resolve({ data: null });
