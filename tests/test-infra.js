@@ -388,6 +388,7 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
   t(r6.ultimo === "incluído (3 → 4)" && r6.cache === 4, "logGeral diz 'incluído (3 → 4)' usando a contagem em memória");
 
   // backup: chaves que faltavam + documentos preenchíveis + auditoria única
+  p.once("dialog", (dialog) => dialog.accept()); // a restauração agora confirma dentro do módulo
   const r7 = await p.evaluate(async () => {
     const S = window.MTStore;
     const keys = S.backupKeys();

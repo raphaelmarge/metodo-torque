@@ -11,6 +11,17 @@
   function ensure(c,id){var now=S.cloud();if(!now||now.client!==c.client||now.aid!==c.aid||identity()!==id)throw Error('A conta mudou. Consulte novamente.');}
   var status=el('p','','muted');status.id='ptConfiabilidadeStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   host.appendChild(el('h3','Segurança e manutenção'));host.appendChild(status);
+  // Durante a troca de versão, o HTML pode chegar antes do novo store.js.
+  // Aguarda o atualizador existente; não apaga cache nem força recarga com rascunho.
+  if(['saude','sincronizaAgora','copiasAnteriores','restauraAlteracao','revogaAcessoSeguro'].some(function(name){return typeof S[name]!=='function';})){
+    status.textContent='Atualização do painel em andamento. As novas opções ficarão disponíveis quando a página atualizar. Seus dados foram mantidos.';
+    host.appendChild(button('Conferir atualização',async function(){
+      var reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+      if(reg)await reg.update();
+      status.textContent='Mantenha a conexão e termine de salvar suas alterações. A página atualizará quando estiver pronta. Se o aviso continuar, feche e abra o painel novamente.';
+    }));
+    return;
+  }
   var health=el('p','','muted');health.id='ptSaude';host.appendChild(health);
   var actions=el('div',undefined,'linha-flex');actions.style.cssText='gap:8px;flex-wrap:wrap';host.appendChild(actions);
   actions.appendChild(button('Conferir sincronização',async function(){await S.sincronizaAgora();renderHealth();}));

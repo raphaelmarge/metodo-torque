@@ -10,6 +10,7 @@ on:
       - supabase/migrations/*confiabilidade_interna.sql
       - tests/*confiabilidade*
       - tests/test-studio-patches.js
+      - tests/test-infra.js
       - tests/fixtures/confiabilidade.html
       - .github/scripts/setup-tests.sh
       - .github/workflows/confiabilidade.yml
@@ -56,6 +57,7 @@ jobs:
             sleep 0.25
           done
           node tests/test-studio-patches.js
+          node tests/test-infra.js
           node tests/test-confiabilidade-sql.js
           node tests/test-confiabilidade-browser.js
           node tests/test-confiabilidade-webkit.js

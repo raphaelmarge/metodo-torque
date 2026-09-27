@@ -13775,6 +13775,16 @@ async function novaExecucaoAluno(p) {
   await abaPt(p, "conta");
   ok(await p.evaluate(() => !!document.getElementById("btnBackup") && !!document.getElementById("btnBackupRestaura") &&
     /backup/i.test(document.getElementById("bkAviso").textContent)), "card da ilha tem o bloco de backup com aviso");
+  ok(await p.evaluate(() => {
+    const S=MTStore,previous=S.copiasAnteriores,exp=S.exportBackup,imp=S.importBackup,alerta=window.alert;
+    const old=localStorage.getItem('mtapp:ptStudio'),messages=[];let called=0;
+    try{
+      delete S.copiasAnteriores;S.exportBackup=()=>{called++;};S.importBackup=()=>{called++;};window.alert=s=>messages.push(s);
+      document.getElementById('btnBackup').click();document.getElementById('taBackup').click();document.getElementById('btnBackupRestaura').click();
+      const input=document.getElementById('bkArquivo'),transfer=new DataTransfer();transfer.items.add(new File(['{}'],'backup.json'));input.files=transfer.files;input.dispatchEvent(new Event('change'));
+      return called===0&&messages.length===4&&messages.every(s=>/atualização/.test(s))&&!document.getElementById('btnBackup').disabled&&old===localStorage.getItem('mtapp:ptStudio');
+    }finally{S.copiasAnteriores=previous;S.exportBackup=exp;S.importBackup=imp;window.alert=alerta;}
+  }), "página nova com núcleo antigo aguarda atualização sem executar backup incompleto nem restaurar dados");
   await p.evaluate(() => {
     const orig = URL.createObjectURL;
     URL.createObjectURL = () => "blob:mock";

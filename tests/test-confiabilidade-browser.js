@@ -1,5 +1,5 @@
 // Chromium/WebKit reais; IndexedDB real; nuvem fictícia e rede externa bloqueada.
-const assert=require('node:assert/strict'),path=require('node:path');
+const assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
 const pw=require(process.env.TORQUE_PLAYWRIGHT||'/opt/node22/lib/node_modules/playwright');
 const {comMockNuvem}=require('./_nuvem.js');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765',engine=process.env.TORQUE_BROWSER||'chromium';
@@ -115,6 +115,11 @@ let count=0;function ok(c,m){assert.ok(c,m);console.log('OK '+engine+': '+m);cou
  await page.evaluate(()=>{MTStore.cloud=cloudOriginal;localStorage.removeItem('mtsync:identidade');});
  ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'manutenção cabe na largura do iPhone');
  ok(errors.length===0,'sem erros JavaScript: '+errors.join('; '));
+ const legacy=await ctx.newPage(),legacyErrors=[];legacy.on('pageerror',e=>legacyErrors.push(e.message));
+ await legacy.route('**/apps/store.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.join(__dirname,'../apps/store.js'),'utf8')+'\ndelete MTStore.saude;delete MTStore.copiasAnteriores;'}));
+ await legacy.goto(BASE+'/tests/fixtures/confiabilidade.html');
+ ok(await legacy.getByRole('button',{name:'Conferir atualização',exact:true}).isVisible()&&await legacy.getByRole('button',{name:'Conferir sincronização',exact:true}).count()===0,'scripts antigos mostram atualização pendente sem oferecer operações indisponíveis');
+ ok(legacyErrors.length===0,'transição de versão não gera erro de inicialização');await legacy.close();
  await ctx.close();console.log(count+' verificações de confiabilidade no '+engine+' aprovadas.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

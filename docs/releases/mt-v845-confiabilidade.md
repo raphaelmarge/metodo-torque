@@ -39,6 +39,9 @@ remoção de históricos, fotos ou registros de treino existentes.
   não dispara mensagens/e-mails para pessoas.
 - Modularização: backup, diferenças do estúdio e interface de manutenção em
   módulos separados. Sem reescrever a aplicação ou criar um framework.
+- Atualização instalada: HTML novo detecta o núcleo antigo ainda no cache e
+  aguarda a troca de versão para liberar os novos backups e a manutenção.
+  Não executa a exportação antiga como se incluísse fotos nem força recarga.
 
 ## Origem e estados da interface
 

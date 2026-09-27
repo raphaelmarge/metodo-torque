@@ -23925,7 +23925,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? "Atenção: seu último backup foi há " + bkDias + " dias (" + S.fmtData(bkEm) + "). Baixe uma cópia atualizada com conexão para incluir as imagens da nuvem."
         : "Último backup: " + S.fmtData(bkEm) + ". Baixa um novo de vez em quando, por segurança.";
   }
+  // O HTML chega pela rede antes de o service worker trocar os scripts antigos.
+  function backupDisponivel() {
+    if (typeof S.copiasAnteriores === "function") return true;
+    alert("A atualização do painel está em andamento. Aguarde a página atualizar antes de fazer ou restaurar um backup. Seus dados foram mantidos.");
+    return false;
+  }
   $("btnBackup").addEventListener("click", function () {
+    if (!backupDisponivel()) return;
     var button=this;button.disabled=true;
     S.exportBackup().then(function(result){
       if(!result)return;
@@ -23972,7 +23979,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     baixaCsv("pagamentos", pgs);
   });
-  $("btnBackupRestaura").addEventListener("click", function () { $("bkArquivo").click(); });
+  $("btnBackupRestaura").addEventListener("click", function () { if (backupDisponivel()) $("bkArquivo").click(); });
   (function () {
     var cb = $("cfgFchAuto");
     if (!cb) return;
@@ -23988,6 +23995,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var f = this.files && this.files[0];
     this.value = "";
     if (!f) return;
+    if (!backupDisponivel()) return;
     S.importBackup(f).then(function (resultado) {
       if(resultado && resultado.cancelado)return;
       alert("Backup restaurado! A página vai recarregar.");
@@ -24175,7 +24183,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // os dados continuam sendo dele, travado ou não
   var btBk = $("taBackup");
-  if (btBk) btBk.addEventListener("click", function () { S.exportBackup(); });
+  if (btBk) btBk.addEventListener("click", function () { if (backupDisponivel()) S.exportBackup(); });
 
   renderAssinatura();
   aplicaTrava();   // v761: abriu travado? mostra a tela antes de qualquer coisa
