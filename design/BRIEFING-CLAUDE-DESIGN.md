@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v844** |
-| Estado do repo em | 2026-09-24 (commit `a2fa5fa`) |
+| App em | **mt-v845** |
+| Estado do repo em | 2026-09-26 (commit `d8b8b69`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 238 |
+| Lançamentos no histórico | 239 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **(fora de um lote de versão)** (2026-09-19), e o app está em **mt-v844**.
+vez em **(fora de um lote de versão)** (2026-09-19), e o app está em **mt-v845**.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v845 | backup, histórico e confiabilidade interna ([#856](https://github.com/raphaelmarge/metodo-torque/pull/856)) |
 | mt-v775 | quatro frentes pra segurar o aluno no app — tour do primeiro uso, progresso da semana, recordes do mês e resgate de quem sumiu no servidor |
 | mt-v776 | o pacote do aluno para de levar o app inteiro (502 KB por aluno que ninguem lia) |
 | mt-v775 | sobe a versão nos três lugares (versao.js, sw.js, app/app-sw.js) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v766 | regera as demos com o codigo novo (a do aluno estava no mt-v754) |
 | mt-v765 | a gamificacao premiava um botao e ninguem olhava |
 | mt-v764 | pedir o GPS na hora certa (e religar quando o aluno volta pro app) |
-| mt-v763 | pedir o push no primeiro dia (e o chat volta a descer pra mensagem nova) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
