@@ -1,9 +1,10 @@
-/* Central Pro — dados fictícios v831, exclusivos da demonstração.
+/* Central Pro — dados fictícios da Central Pro, exclusivos da demonstração.
  * Implementa somente o contrato usado por personal-pro-suite.js.
  * As oito coleções vivem nesta closure e desaparecem ao recarregar a página.
  */
 (function () {
   'use strict';
+  if (!document.documentElement || document.documentElement.dataset.demo !== 'central-pro') return;
   var academia = 'demo-academia', profissional = 'demo-prof-marina', sequencia = 0;
   var alunos = [
     { id: 'demo-ana', nome: 'Ana Beatriz Souza' },
@@ -41,6 +42,61 @@
   function id() { sequencia++; return 'demo-registro-' + String(sequencia).padStart(5, '0'); }
   function dataOffset(n) { var d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   var carimbo = dataOffset(0) + 'T12:00:00.000Z';
+  // Contrato de leitura do PTProContext. Valores de carga em kg, descanso em
+  // segundos, datas locais. Nenhum desses dados vem do painel ou da nuvem.
+  function exercicio(id, nome, reps, cargas, anterior, descanso) {
+    return { id: id, name: nome, sets: reps.map(function (r, i) {
+      return { reps: String(r), load: cargas[i], rest: descanso };
+    }), lastLoad: anterior, lastLoadDate: dataOffset(-4) };
+  }
+  var estudantes = [
+    { id: 'demo-ana', name: 'Ana Beatriz Souza', phone: '', photo: '', active: true,
+      objective: 'Ganhar força e manter uma rotina de três treinos por semana.',
+      workouts: [
+        { id: 'demo-ana-a', name: 'A · Inferiores e core', exercises: [
+          exercicio('ana-agachamento', 'Agachamento livre', [12, 10, 8], [20, 22, 24], 22, 90),
+          exercicio('ana-legpress', 'Leg press 45°', [12, 12, 10], [60, 60, 70], 60, 90),
+          exercicio('ana-flexora', 'Mesa flexora', [12, 12, 12], [20, 20, 20], 18, 60),
+          exercicio('ana-deadbug', 'Dead bug', ['10 por lado', '10 por lado'], [0, 0], 0, 45)
+        ] },
+        { id: 'demo-ana-b', name: 'B · Superiores', exercises: [
+          exercicio('ana-supino', 'Supino com halteres', [12, 10, 10], [8, 10, 10], 8, 75),
+          exercicio('ana-remada', 'Remada baixa', [12, 12, 10], [25, 25, 30], 25, 75),
+          exercicio('ana-lateral', 'Elevação lateral', [12, 12, 12], [4, 4, 4], 4, 60)
+        ] }
+      ],
+      checkin: { summary: 'Boa disposição para o treino de hoje.', date: dataOffset(0), details: 'Sono: 7 horas. Sem dor relatada no check-in fictício.' },
+      nutrition: { pendingReviews: 2, summary: 'Duas refeições registradas aguardam sua revisão.' },
+      nextSession: { date: dataOffset(0), time: '18:00', studentName: 'Ana Beatriz Souza', workoutName: 'A · Inferiores e core' }
+    },
+    { id: 'demo-bruno', name: 'Bruno Ferraz', phone: '', photo: '', active: true,
+      objective: 'Retomar a constância e desenvolver força com técnica.',
+      workouts: [{ id: 'demo-bruno-a', name: 'A · Corpo inteiro', exercises: [
+        exercicio('bruno-goblet', 'Agachamento goblet', [12, 12, 10], [12, 12, 14], 12, 90),
+        exercicio('bruno-supino', 'Supino reto', [10, 10, 8], [30, 30, 32], 30, 90),
+        exercicio('bruno-remada', 'Remada unilateral', [12, 12, 12], [14, 14, 14], 12, 75)
+      ] }],
+      checkin: { summary: 'Prefere manter a carga e revisar a execução.', date: dataOffset(-1), details: 'Sono: 6 horas. Disposição moderada no exemplo.' },
+      nutrition: { pendingReviews: 0, summary: 'Registros alimentares revisados; nenhuma pendência.' },
+      nextSession: { date: dataOffset(1), time: '07:00', studentName: 'Bruno Ferraz', workoutName: 'A · Corpo inteiro' }
+    },
+    { id: 'demo-carla', name: 'Carla Menezes', phone: '', photo: '', active: true,
+      objective: 'Conciliar dois treinos de força com a prática de corrida.',
+      workouts: [{ id: 'demo-carla-a', name: 'A · Força para corrida', exercises: [
+        exercicio('carla-terra', 'Levantamento terra romeno', [10, 10, 8], [24, 24, 28], 24, 90),
+        exercicio('carla-step', 'Subida no banco', ['10 por lado', '10 por lado', '10 por lado'], [6, 6, 6], 6, 75),
+        exercicio('carla-panturrilha', 'Panturrilha em pé', [15, 15, 15], [20, 20, 20], 20, 60)
+      ] }],
+      checkin: { summary: 'Ainda não respondeu ao check-in de hoje.', date: '', details: 'O último treino pode ser consultado pelas cargas anteriores.' },
+      nutrition: { pendingReviews: null, summary: 'Acompanhamento nutricional ainda não iniciado.' },
+      nextSession: { date: dataOffset(1), time: '08:00', studentName: 'Carla Menezes', workoutName: 'A · Força para corrida' }
+    }
+  ];
+  var contextoDemo = { demo: 'central-pro', academia_id: academia, userId: profissional,
+    students: estudantes,
+    agenda: estudantes.map(function (a) { return Object.assign({ studentId: a.id }, a.nextSession); })
+  };
+
   var tabelas = {
     membros: [
       { academia_id: academia, user_id: profissional, papel: 'dono', nome: 'Marina Costa', email: 'marina@example.invalid' },
@@ -149,7 +205,7 @@
         }
       });
     }
-    function aceita(r) { return filtros.every(function (f) { return r[f[0]] === f[1]; }); }
+    function aceita(r) { return filtros.every(function (f) { return (f[0] === 'dados->>origem' ? r.dados && r.dados.origem : r[f[0]]) === f[1]; }); }
     function projeta(r) { if (!selecao) return copia(r); var p = {}; selecao.forEach(function (c) { p[c] = copia(r[c] === undefined ? null : r[c]); }); return p; }
     function executa() {
       try {
@@ -185,7 +241,7 @@
     }
     var api = {
       select: function (cs) { return tenta(function () { exige(tem(campos, t), 'Tabela indisponível nesta demonstração.'); exige(cs === undefined || typeof cs === 'string', 'Seleção de campos inválida.'); if (cs && cs !== '*') { selecao = cs.split(',').map(function (c) { return c.trim(); }); selecao.forEach(function (c) { coluna(t, c); }); } else selecao = null; }); },
-      eq: function (c, v) { return tenta(function () { coluna(t, c); exige(v === null || ['string', 'boolean', 'number'].indexOf(typeof v) >= 0 && (typeof v !== 'number' || Number.isFinite(v)), 'Valor de filtro inválido.'); filtros.push([c, v]); }); },
+      eq: function (c, v) { return tenta(function () { if (c !== 'dados->>origem' || t !== 'personal_sessoes') coluna(t, c); exige(v === null || ['string', 'boolean', 'number'].indexOf(typeof v) >= 0 && (typeof v !== 'number' || Number.isFinite(v)), 'Valor de filtro inválido.'); filtros.push([c, v]); }); },
       order: function (c, opts) { return tenta(function () { coluna(t, c); exige(!opts || opts.ascending === undefined || typeof opts.ascending === 'boolean', 'Ordenação inválida.'); ordens.push({ campo: c, asc: !opts || opts.ascending !== false }); }); },
       limit: function (n) { return tenta(function () { exige(Number.isSafeInteger(n) && n >= 0, 'Limite inválido.'); limite = n; }); },
       insert: function (v) { return escrita('insert', v); },
@@ -218,5 +274,9 @@
       } catch (e) { return erro(e); }
     });
   }
-  window.MT_CENTRAL_PRO_DEMO = Object.freeze({ client: client, alunos: copia(alunos), snapshot: function () { return copia(tabelas); }, simulate: simulate });
+  var demo = { client: client, alunos: copia(alunos), snapshot: function () { return copia(tabelas); }, simulate: simulate };
+  // O adapter só reconhece este contexto na rota marcada data-demo=central-pro.
+  // Cada leitura devolve uma cópia: editar a sessão não altera a prescrição.
+  Object.defineProperty(demo, 'context', { enumerable: true, get: function () { return copia(contextoDemo); } });
+  window.MT_CENTRAL_PRO_DEMO = Object.freeze(demo);
 })();

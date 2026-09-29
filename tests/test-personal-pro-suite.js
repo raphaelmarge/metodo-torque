@@ -31,8 +31,8 @@ ok(js.includes("from('personal_aluno_equipe')"), 'equipe usa tabela dedicada');
 ok(js.includes('window.MT_supabase'), 'reutiliza cliente Supabase existente');
 ok(!js.includes('service_role'), 'frontend nunca contém service_role');
 ok(!js.includes('data-a="'), 'módulo não cria/substitui rotas data-a do Personal');
-ok(!shell.includes('assets/personal-pro-suite.js'), 'shell do Personal não carrega a Central Pro');
-ok(!shell.includes('ptProSuite'), 'shell não recria o ponto de entrada da Central Pro');
+ok(shell.includes('assets/personal-pro-context.js') && shell.includes('assets/personal-pro-suite.js'), 'shell carrega contexto e Central Pro de forma isolada');
+ok(shell.includes('ptProSuite'), 'shell fornece uma entrada explícita para a Central Pro');
 ok(sw.includes('assets/personal-pro-suite.js'), 'JS entra no precache');
 ok(sw.includes('assets/personal-pro-suite.css'), 'CSS entra no precache');
 const version = read('assets/versao.js').match(/MT_VERSAO\s*=\s*["'](mt-v(\d+))["']/);
@@ -43,7 +43,7 @@ ok(read('app/app-sw.js').match(/var VERSION\s*=\s*["']([^"']+)["']/)?.[1] === ve
 ['--pt-fundo','--pt-card','--pt-borda','--pt-txt','--pt-one-primary'].forEach(token =>
   ok(css.includes(token), `visual deve herdar token ${token}`)
 );
-ok(css.includes('@media(max-width:860px)'), 'layout possui adaptação mobile');
+ok(/@media\s*\(max-width:\s*960px\)/.test(css) && /@media\s*\(max-width:\s*700px\)/.test(css), 'layout adapta contexto e séries para tablet e celular');
 ok(css.includes('min-height:44px'), 'controles preservam alvo mínimo de toque');
 
 const tables = ['personal_importacoes','personal_sessoes','personal_automacoes','personal_automacao_fila','personal_lista_espera','personal_creditos','personal_aluno_equipe'];
@@ -68,5 +68,31 @@ ok(auto.includes("new.status = 'recusado'"), 'gatilho da agenda respeita o estad
 ok(auto.includes('after update of status on public.app_agenda'), 'agenda reage somente a mudança de status');
 ok(auto.includes('revoke all on function torque_private.personal_automacao_enfileira_aluno_novo() from public, anon, authenticated'), 'executor de aluno novo não é RPC pública');
 ok(auto.includes('revoke all on function torque_private.personal_automacao_enfileira_agenda_cancelada() from public, anon, authenticated'), 'executor de agenda não é RPC pública');
+
+// Exercita o hook canônico de navegação com identidades e destinos sintéticos.
+const vm = require('node:vm');
+const hook = read('personal.html').match(/window\.PTProPersonal = \{[\s\S]*?\n  \};/);
+ok(hook, 'Personal oferece a navegação contextual da Central Pro');
+let cloud = {aid:'studio-a'}, identity = {academia_id:'studio-a',user_id:'prof-a'}, calls=[];
+const host = {window:{}, perfilId:'ana', $:()=>({hidden:false}),
+  S:{cloud:()=>cloud,read:()=>({alunos:[{id:'ana'}]})},
+  localStorage:{getItem:()=>JSON.stringify(identity)},
+  abrePerfil:id=>calls.push(['perfil',id]), mostraPfAba:area=>calls.push(['aba',area]),
+  abreAgendaDoPerfil:()=>calls.push(['agenda'])};
+vm.runInNewContext(hook[0],host);
+const open=host.window.PTProPersonal.openArea, owner={academia_id:'studio-a',userId:'prof-a'};
+ok(open('nutricao','ana',owner), 'nutrição abre no aluno autorizado');
+ok(JSON.stringify(calls)===JSON.stringify([['perfil','ana'],['aba','alimentacao']]), 'nutrição preserva o aluno e usa a aba existente');
+calls=[];ok(open('questionarios','ana',owner), 'questionários abre no aluno autorizado');
+ok(JSON.stringify(calls)===JSON.stringify([['perfil','ana'],['aba','quest']]), 'Ver respostas abre histórico, sem enviar questionário');
+calls=[];ok(open('agenda','ana',owner), 'agenda contextual abre pelo perfil');
+ok(JSON.stringify(calls)===JSON.stringify([['perfil','ana'],['agenda']]), 'agenda usa o fluxo do aluno selecionado');
+calls=[];
+ok(!open('nutricao','outro',owner), 'aluno ausente do cache validado não é aberto');
+ok(!open('financeiro','ana',owner), 'hook recusa destino não previsto');
+ok(!open('agenda','ana',{academia_id:'outro',userId:'prof-a'}), 'tenant diferente não é aberto');
+ok(!open('agenda','ana',{academia_id:'studio-a',userId:'outro'}), 'usuário diferente não reutiliza contexto');
+cloud=null;ok(!open('agenda','ana',owner), 'sem conta conectada a navegação contextual é recusada');
+ok(calls.length===0, 'operações recusadas não acionam perfil nem outras abas');
 
 console.log(`personal-pro-suite: ${n} verificações passaram`);

@@ -6304,6 +6304,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- perfil completo do aluno ----------
   var perfilId = null;
+  // Central Pro: navegação contextual autorizada, sem gravar ou publicar o aluno.
+  window.PTProPersonal = {
+    selectedStudentId: function () { return $("vPerfil") && !$("vPerfil").hidden ? perfilId || "" : ""; },
+    openArea: function (area, alunoId, identity) {
+      if (["nutricao", "questionarios", "agenda"].indexOf(area) < 0 || !identity) return false;
+      var current = S.cloud && S.cloud(), local;
+      try { local = JSON.parse(localStorage.getItem("mtsync:identidade")); } catch (_) { return false; }
+      if (!current || !local || current.aid !== identity.academia_id || local.academia_id !== identity.academia_id || local.user_id !== identity.userId) return false;
+      var snapshot = S.read("ptStudio", {});
+      if (!Array.isArray(snapshot.alunos) || !snapshot.alunos.some(function (a) { return a.id === alunoId; })) return false;
+      abrePerfil(alunoId);
+      if (area === "nutricao") mostraPfAba("alimentacao");
+      else if (area === "questionarios") mostraPfAba("quest");
+      else abreAgendaDoPerfil();
+      return true;
+    }
+  };
   function barrasMes(mapa, cor) {
     // mapa: {"2026-03": n, ...} → últimas 6 barras
     var hj = new Date();

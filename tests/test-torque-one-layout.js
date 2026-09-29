@@ -9,10 +9,19 @@ let browser,checks=0;function ok(v,label){assert.ok(v,label);checks++;console.lo
   const ctx=await browser.newContext({viewport:{width:1280,height:900},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
   await ctx.route('**://*.supabase.co/**',r=>r.abort());const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.goto(BASE+'/demo-personal.html');await p.locator('#btnDemo').click();await p.waitForURL(/personal.html/);await p.waitForFunction(()=>document.getElementById('oneBreadcrumb'));
-  ok(await p.locator('script[data-pt-pro-suite]').count()===0,'Personal não carrega a Central Pro');
-  ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===0,'Central Pro não aparece como destino no painel');
+  await p.waitForFunction(()=>window.PTProContext&&document.getElementById('ptProSuiteBtn'));
+  ok(await p.locator('script[data-pt-pro-suite="1"]').count()===1,'Personal carrega uma única instância da Central Pro');
+  ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===1,'Central Pro possui entrada explícita, sem duplicação');
   const routes=await p.locator('#abas [data-a]').evaluateAll(els=>els.map(e=>e.dataset.a));
   ok(routes.length===18&&new Set(routes).size===18,'18 áreas originais, sem navegação paralela');
+  await p.getByRole('button',{name:'Central Pro',exact:true}).click();
+  ok(await p.locator('#ptProSuite').isVisible(),'Entrada abre a nova Central Pro');
+  for(const area of ['import','presencial','automacoes','agenda','equipe']){
+    await p.locator('[data-ptpro-tab="'+area+'"]').click();
+    ok(await p.locator('[data-ptpro-view="'+area+'"]').isVisible(),'Central Pro preserva a aba '+area);
+  }
+  await p.locator('#ptProClose').click();
+  ok(!await p.locator('#ptProSuite').isVisible()&&await p.locator('#vDash').isVisible(),'Voltar ao Personal restaura o dashboard existente');
   for(const [width,sidebar] of [[801,200],[1024,200],[1100,200],[1101,234],[1440,234]]){
     await p.setViewportSize({width,height:900});await p.waitForTimeout(280);
     const rect=await p.locator('#abas').boundingBox();ok(rect.x===0&&rect.width===sidebar,'Sidebar fixa Torque One em '+width+'px');

@@ -1,4 +1,4 @@
-/* Fluxo diário integrado ao Personal: sem Central Pro, sem IDs na rotina. */
+/* Fluxo diário integrado ao Personal coexiste com a Central Pro, sem IDs na rotina. */
 const assert=require('assert/strict'),fs=require('fs');
 const {chromium}=require('/opt/node22/lib/node_modules/playwright');
 const {comMockNuvem}=require('./_nuvem');
@@ -8,7 +8,7 @@ let browser,checks=0;function ok(v,label){assert.ok(v,label);checks++;console.lo
   const js=fs.readFileSync('assets/personal-fluxo.js','utf8'),css=fs.readFileSync('assets/personal-fluxo.css','utf8'),html=fs.readFileSync('personal.html','utf8'),sw=fs.readFileSync('sw.js','utf8');
   ok(html.includes('assets/personal-fluxo.css')&&html.includes('assets/personal-fluxo.js'),'Personal carrega a camada integrada do fluxo');
   ok(html.includes('window.__perfilAtualPT'),'Perfil expõe apenas o identificador interno para integração, sem mostrar ID na tela');
-  ok(!js.includes('Central Pro'),'Nova experiência não recria a Central Pro');
+  ok(!js.includes('ptProSuiteBtn')&&!js.includes('data-ptpro-tab'),'Fluxo diário não duplica a entrada nem as abas da Central Pro');
   ok(js.includes("personal_sessoes")&&js.includes("personal_automacoes")&&js.includes("personal_automacao_fila"),'Fluxo reaproveita contratos reais de sessão e automação');
   ok(js.includes("app_treino_log")&&js.includes("app_quest")&&js.includes("app_agenda"),'Aluno 360 usa registros reais do app quando a nuvem está disponível');
   ok(js.includes('ptflow:fila:v1')&&js.includes("window.addEventListener('online'"),'Sessão presencial possui fila offline e retoma ao voltar a conexão');
@@ -23,7 +23,15 @@ let browser,checks=0;function ok(v,label){assert.ok(v,label);checks++;console.lo
   await p.waitForFunction(()=>document.getElementById('ptFlowHoje')&&window.__PT_FLUXO__);
   ok(await p.locator('#ptFlowHoje').isVisible(),'Próxima melhor ação aparece dentro do Início');
   ok(await p.locator('#ptFlowHoje').getByText('Próxima melhor ação').isVisible(),'Dashboard usa linguagem de fluxo, não módulo paralelo');
-  ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===0,'Central Pro continua ausente');
+  await p.waitForFunction(()=>document.getElementById('ptProSuiteBtn'));
+  ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===1,'Fluxo diário mantém uma entrada própria para a Central Pro');
+  await p.locator('#btnMenuPt').click();
+  await p.getByRole('button',{name:'Central Pro',exact:true}).click();
+  ok(await p.locator('#ptProSuite').isVisible(),'Central Pro abre pelo menu móvel');
+  ok(await p.locator('[data-ptpro-tab]').count()===5,'Cinco abas da Central Pro coexistem com o fluxo diário');
+  await p.locator('#ptProClose').click();
+  if(await p.locator('#fecharMenuPt').isVisible())await p.locator('#fecharMenuPt').click();
+  ok(await p.locator('#ptFlowHoje').isVisible(),'Ao sair da Central Pro a próxima ação do dashboard permanece disponível');
   ok(await p.locator('#buscaAluno').getAttribute('placeholder').then(x=>/exercício.*questionário.*treino/i.test(x)),'Busca do topo virou busca universal');
   await p.locator('#buscaAluno').fill('agachamento');await p.waitForTimeout(80);
   ok(await p.locator('[data-ptf-search="exercise"]').count()>0,'Busca universal encontra exercício');
