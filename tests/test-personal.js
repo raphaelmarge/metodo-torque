@@ -2569,11 +2569,11 @@ async function novaExecucaoAluno(p) {
     const bld = await p.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
     ok(/DEV_KS=\['ptpeso'[^\]]*'ptconf'[^\]]*\]/.test(bld) && /if\(!temAlgo\)return;/.test(bld),
       "📤 v743: a trava do 'celular limpo' olha TODAS as chaves do retorno (termo, presença, depoimento, corrida…)");
-    ok(/crFim'\)\.click\(\);if\(!cr\.resumo\)fechaCrFull\(\);/.test(bld), "🏃 v743: Terminei! da tela cheia não esconde o resumo da corrida");
+    ok(/crFim'\)\.click\(\);if\(!cr\.resumo&&crEl\('crSalvarErro'\)\.hidden\)fechaCrFull\(\);/.test(bld), "🏃 v847: Terminei! mantém o resumo ou a falha de salvamento acessível na tela cheia");
     ok(/havKm\(ur9,pt\)>=0\.005/.test(bld) && /cr\.rota\.length>12000/.test(bld) && !/cr\.rota\.length>600\)cr\.rota\.shift/.test(bld),
       "🗺️ v743: o trajeto guarda a corrida INTEIRA (afinado por distância), não os últimos 600 pontos");
-    ok(/var fF9=L\('ptfeitos',\{\}\);if\(!fF9\[hjR\]&&f\.it\.length\)\{fF9\[hjR\]=1;Sv\('ptfeitos',fF9\)/.test(bld),
-      "✅ v743: terminar a ficha pelo player marca o dia (com ABC o automático nunca disparava)");
+    ok(/if\(realizadas&&!window\.__acRegistraConclusao\(\{tipo:'musc',data:isoHj\(\)\}\)\)/.test(bld),
+      "✅ v847: concluir pelo player registra o dia somente se houve série realizada; erro e repetição são cobertos em test-aluno-execucao-clareza");
     ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /if\(!rd\._interacao\|\|\(rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)\)return;/.test(bld),
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
     ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
@@ -2608,8 +2608,8 @@ async function novaExecucaoAluno(p) {
     ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:durReal/.test(bld),
       "⏱️ v747: AMRAP encerrado antes da hora grava o tempo REAL (e diz 'parou antes')");
     ok(/function crFinaliza/.test(bld) && /__acRegistraConclusao\(\{tipo:'corrida',id:reg.id,data:reg.d\}\)/.test(bld),
-      "🏃 v846: conclusão da corrida registra o dia original pelo helper idempotente; falhas e duplicatas cobertas em test-corrida-retomada");
-    ok(/>Descartar<\/button>/.test(bld) && /wpVoltar'\)\{if\(!confirm\(/.test(bld), "🗑️ v747: o 'Voltar' do placar virou 'Descartar' com confirmação");
+      "🏃 v847: conclusão da corrida registra o dia original pelo helper idempotente; falhas e duplicatas cobertas em test-corrida-retomada");
+    ok(/>Descartar<\/button>/.test(bld) && /if\(t.id==='wpVoltar'\)\{if\(wodR.registrado\(\)\)/.test(bld) && /if\(!confirm\('Descartar este resultado e a sessão em andamento\?'\)\)return;ov.remove\(\);wodR.limpa\(\)/.test(bld), "🗑️ v847: descartar exige confirmação e não apaga resultado já salvo com registro do dia pendente");
     ok(!/prompt\('Reps do round/.test(bld) && !/prompt\('Corrige o tempo/.test(bld) && !/prompt\('Reps da volta/.test(bld) && /function wpEdita\(/.test(bld) && /class='wpin'/.test(bld),
       "⌨️ v747: reps por round, tempo e reps extras se editam num campo dentro do tile — sem prompt() do navegador");
     ok(/if\(!nm\)\{if\(fb0\)/.test(bld), "🎁 v747: indicação sem nome não é registrada");
@@ -6520,8 +6520,8 @@ async function novaExecucaoAluno(p) {
       "🛰️ v764: a janelinha do navegador só sai no toque em 'Ligar o GPS'");
     ok(/crGpsAgora\(\);abreCrFull\(0\)/.test(appHtml),
       "🛰️ v764: no 'Iniciar' o pedido vai direto — a tela cheia abriria por cima do card e ele não seria visto");
-    ok(/visibilitychange[^]{0,140}!cr\.run\)return[^]{0,120}cr\.watch==null&&!crGpsNeg\)crGpsLiga\(true\)/.test(appHtml),
-      "🛰️ v764: voltando pro app com a corrida rodando, o GPS e a tela acesa religam (o navegador suspende os dois)");
+    ok(/document.addEventListener\('visibilitychange', function \(\) \{ if \(document.hidden\) interrompe\(\); \}\)/.test(appHtml) && /C.pausa\(\); s.interrompida = true; salva\(true\); C.atualiza\(\)/.test(appHtml),
+      "🛰️ v847: ocultar o app pausa a corrida e protege o último progresso; retomada sem lacuna é coberta em test-corrida-retomada");
     ok(/err&&err\.code===2\)\?'A localiza/.test(appHtml),
       "🛰️ v764: localização do APARELHO desligada tem recado próprio — não é 'procurando o sinal'");
   }
@@ -7634,7 +7634,7 @@ async function novaExecucaoAluno(p) {
       const st = window.MTStore.read("ptStudio", {});
       const a = st.alunos.find((x) => x.id === sel.value);
       return {
-        qa: a.questApp, futIso,
+        qa: a.questApp, futIso, token: a.appTokenP,
         tb: upsert && upsert.tb,
         temDados: !!(upsert && upsert.row.dados && upsert.row.dados.dados),
         // v776: o pacote não leva html; o app que a página abaixo navega é montado
@@ -7647,8 +7647,14 @@ async function novaExecucaoAluno(p) {
     ok(envio.qa && envio.qa.desde === envio.futIso && envio.qa.repete === true && envio.qa.ps.length === 2, "📲 mandar pro app salva o questionário no aluno com data e repetição semanal");
     ok(envio.tb === "app_aluno" && envio.temDados && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado (dados na nuvem) e o app montado pelo site leva o questionário embutido");
     ok(/libera dia/.test(envio.aviso) && /toda semana/.test(envio.aviso), "aviso confirma data de liberação e repetição");
+    // O HTML direto substitui o loader: contexto do aluno isolado e seu token.
+    // Os cenários anteriores de /app/ deixam outro token no contexto do painel.
+    const ctxQuestApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxQuestApp.addInitScript(token => {
+      if (token && !localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
+    }, envio.token);
     // no app, antes da data: card TRANCADO 🔒
-    const pTrava = await ctx.newPage();
+    const pTrava = await ctxQuestApp.newPage();
     pTrava.on("pageerror", (e) => erros.push("app-quest: " + e));
     await pTrava.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
     await pTrava.route("**/app-quest-travado.html", (r) => r.fulfill({ contentType: "text/html", body: envio.html }));
@@ -7665,7 +7671,7 @@ async function novaExecucaoAluno(p) {
       window.MTStore.write("ptStudio", st);
       return window.__montaAppAluno(a, new Date().toISOString());
     });
-    const pLivre = await ctx.newPage();
+    const pLivre = await ctxQuestApp.newPage();
     pLivre.on("pageerror", (e) => erros.push("app-quest2: " + e));
     let postadoApp = null;
     await pLivre.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
@@ -7700,6 +7706,7 @@ async function novaExecucaoAluno(p) {
     ok(depois.telaOk && /Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
     ok(Object.keys(depois.ptqa).length === 1, "período respondido fica marcado no aparelho (não responde duas vezes)");
     await pLivre.close();
+    await ctxQuestApp.close();
   }
   // busca de aluno no topo abre o perfil
   await p.fill("#buscaAluno", "joão");
@@ -7890,7 +7897,14 @@ async function novaExecucaoAluno(p) {
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
   ok(/Meu login/.test(appHtml2) && /aluno_define_login/.test(appHtml2), "app com token ganha o card pra criar login e senha");
-  const pApp = await ctx.newPage();
+  // HTML direto: reproduz o token atribuído pelo loader sem herdar outro aluno.
+  const ctxApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  const studioApp = await p.evaluate(() => localStorage.getItem('mtapp:ptStudio'));
+  await ctxApp.addInitScript(studio => {
+    if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', 'tok-teste-chat');
+    if (!localStorage.getItem('mtapp:ptStudio')) localStorage.setItem('mtapp:ptStudio', studio);
+  }, studioApp);
+  const pApp = await ctxApp.newPage();
   const errosApp = [];
   pApp.on("pageerror", (e) => errosApp.push(String(e)));
   const chatDB = [];
@@ -12693,6 +12707,7 @@ async function novaExecucaoAluno(p) {
   ok(temaSnap.hojeTxt === "rgb(33, 27, 45)" && temaSnap.hojeToken === "#211b2d" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
     "no modo claro o dia de hoje aparece no calendário (texto escuro sobre um véu da cor, não branco no vazio)");
   await pApp.close();
+  await ctxApp.close();
 
   // ---------- 🎨 tema do studio: cor principal + logo ----------
   console.log("Tema do studio (cor + logo):");

@@ -5,6 +5,8 @@
 O aluno confere e ajusta a série perto do botão de confirmação, recebe orientação
 da próxima série durante o descanso e vê um encerramento completo ou parcial.
 Fechar uma ficha sem realizar séries não registra um dia de treino.
+O aceite do termo também só fecha a tela depois de confirmar a gravação local;
+falha de espaço ou troca de identidade conserva o termo com aviso e nova tentativa.
 
 Corrida e circuito preservam a sessão localmente por identidade. Ao reabrir,
 retomam pausados, conservando etapa/movimento, tempo observado e resultados.
@@ -46,7 +48,8 @@ permanecem consultáveis, sem nova afirmação de comparação.
 ## Validação
 
 Novas suítes: `test-aluno-execucao-clareza.js`, `test-corrida-retomada.js`,
-`test-circuito-retomada.js` e `test-aluno-loader-retomada.js`. Exercitam o HTML
+`test-circuito-retomada.js`, `test-aluno-loader-retomada.js` e
+`test-aluno-termo-salvamento.js`. Exercitam o HTML
 gerado e a entrada real `/app/` com dados fictícios e rede
 externa bloqueada: armazenamento cheio, retomada/recarregamento, troca de aluno,
 repetição de conclusão, etapas puladas, sessões parciais e meia-noite.

@@ -3312,9 +3312,10 @@
       "var tx=document.createElement('div');tx.style.cssText='flex:1;overflow-y:auto;margin:14px 0;background:var(--bg2);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:16px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;';tx.textContent=TERMO.t;" +
       "var bt=document.createElement('button');bt.type='button';bt.textContent='Li e aceito';bt.style.cssText='min-height:52px;background:var(--cor);color:#fff;border:none;border-radius:14px;font-family:inherit;font-weight:900;font-size:15px;cursor:pointer;';" +
       "var dp=document.createElement('button');dp.type='button';dp.textContent='Deixar pra depois';dp.style.cssText='min-height:44px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:13px;cursor:pointer;margin-top:6px;';" +
-      "bt.addEventListener('click',function(){Sv('ptaceite',{v:TERMO.v,em:isoHj()});ov.remove();});" +
+      "var av=document.createElement('div');av.id='termoAviso';av.hidden=true;av.setAttribute('role','alert');av.style.cssText='font-size:13px;line-height:1.5;margin-bottom:12px;';bt.setAttribute('aria-describedby','termoAviso');" +
+      "bt.addEventListener('click',function(){if(Sv('ptaceite',{v:TERMO.v,em:isoHj()})===false){av.textContent=acIdentidadeAtual()?'Não foi possível salvar seu aceite neste aparelho. Libere espaço e tente novamente.':'O acesso do aluno mudou. Reabra seu link para aceitar este termo.';av.hidden=false;return;}ov.remove();});" +
       "dp.addEventListener('click',function(){ov.remove();});" +
-      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);};" +
+      "ov.appendChild(h);ov.appendChild(tx);ov.appendChild(av);ov.appendChild(bt);ov.appendChild(dp);document.body.appendChild(ov);};" +
       (D.onboardingApp ? "" : "window.__abreTermoResponsabilidade();") +
       "window.__termo={v:TERMO&&TERMO.v||null};" +
       /* Depoimento (v694): o card do Início só aparece quando o PROFESSOR pediu
