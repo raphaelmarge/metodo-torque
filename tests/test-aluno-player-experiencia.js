@@ -34,6 +34,10 @@ async function abrir(browser, { width = 390, height = 844, tema = '', D = dados(
 async function main() {
   let total = 0;
   const ok = (v, t) => { assert.ok(v, t); total++; console.log('  ✅ ' + t); };
+  const abrirReguas = async page => {
+    const details = page.locator('#gWRep').locator('xpath=ancestor::details').first();
+    if (!await details.evaluate(node => node.open)) await details.locator(':scope > summary').click();
+  };
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   try {
     const { p, ctx, errors } = await abrir(browser);
@@ -68,11 +72,11 @@ async function main() {
       'modo claro também conserva a paleta publicada pelo personal');
     ok((await p.locator('[data-gserie]').allTextContents()).join('|').includes('1ª5 reps|2ª8 reps|3ª10 reps'), 'seletor apresenta a prescrição de cada série');
     ok(await p.inputValue('#gKg') === '60' && await p.inputValue('#gReps') === '5' && (await series()).length === 0, 'prescrição preenche os campos sem criar execução antes da confirmação');
-    ok(await p.inputValue('#gKg') === '60' && (await p.locator('#gTemplatePrescription dd').nth(3).innerText()) === '90 s', 'carga prescrita fica no campo e o descanso continua visível');
+    ok(await p.inputValue('#gKg') === '60' && await p.locator('#gTemplateRestPrescription').isVisible() && /90 s/.test(await p.locator('#gTemplateRestPrescription').innerText()), 'carga prescrita fica no campo e o descanso continua visível');
     ok(!await p.isVisible('.gtiles') && !await p.isVisible('#gGrupo'), 'meta e posição redundantes deixam de ocupar o player');
     await preencherRegistro(p, '#gKg', '42,5'); await preencherRegistro(p, '#gReps', '4');
     await p.click('[data-gserie="1"]');
-    ok(await p.inputValue('#gKg') === '70' && (await p.locator('#gTemplatePrescription dd').nth(3).innerText()) === '75 s', 'mudar série atualiza carga no campo e seu descanso visível');
+    ok(await p.inputValue('#gKg') === '70' && await p.locator('#gTemplateRestPrescription').isVisible() && /75 s/.test(await p.locator('#gTemplateRestPrescription').innerText()), 'mudar série atualiza carga no campo e seu descanso visível');
     ok(await p.inputValue('#gKg') === '70' && await p.inputValue('#gReps') === '8' && (await series()).length === 0, 'trocar série mostra sua prescrição sem copiar o rascunho anterior nem gravar execução');
     await preencherRegistro(p, '#gKg', '70'); await preencherRegistro(p, '#gReps', '7');
     await p.click('[data-gserie="0"]');
@@ -97,6 +101,7 @@ async function main() {
     await p.evaluate(() => window.__zeraDescanso());
     await clicarControle(p, '#gSerie'); await p.evaluate(() => window.__zeraDescanso());
     ok((await state()).s === 2, 'avanço ignora a segunda série já concluída');
+    await clicarControle(p, '#gTemplateTab-video');
     ok((await p.locator('#gTemplatePrescription dd').nth(3).innerText()) === '0 s' && (await p.locator('#gTemplatePrescription dd').nth(0).innerText()) === '—', 'descanso zero e ausência de carga prescrita são apresentados sem inventar valores');
     await clicarControle(p, '#gSemRegistro');
     const r3 = (await series()).find(r => r.serie === 3);
@@ -120,8 +125,9 @@ async function main() {
     for (let i = 0; i < 2; i++) { await clicarControle(pf, '#gSerie'); await pf.evaluate(() => window.__zeraDescanso()); }
     await clicarControle(pf, '#gSerie');
     await abrirRegistro(pf);
-    ok(await pf.isVisible('#gWRep') && await pf.isVisible('#gWKg') && await pf.isVisible('#gSalvar'), 'editar a série do exercício intermediário expõe as duas réguas e Salvar sem abrir Mais opções');
-    ok(await pf.evaluate(() => ['gWRep','gWKg','gSalvar'].every(id => document.querySelectorAll('#'+id).length===1 && !document.getElementById(id).closest('details'))), 'registro de fechamento tem controles únicos e fora da seção recolhida');
+    await abrirReguas(pf);
+    ok(await pf.isVisible('#gWRep') && await pf.isVisible('#gWKg') && await pf.isVisible('#gSalvar'), 'editar a série do exercício intermediário mantém as duas réguas acessíveis em Mais opções e Salvar disponível');
+    ok(await pf.evaluate(() => ['gWRep','gWKg','gSalvar'].every(id => document.querySelectorAll('#'+id).length===1) && ['gWRep','gWKg'].every(id=>document.getElementById(id).closest('details').open) && !document.getElementById('gSalvar').closest('details')), 'registro de fechamento mantém controles únicos, réguas disponíveis e Salvar fora da seção recolhida');
     ok(await pf.inputValue('#gReps')==='10' && await pf.inputValue('#gKg')==='0' && (await registrosFecho('Supino teste'))[2].kg===0, 'fechamento mostra os valores realizados da última série, inclusive carga zero');
     ok(await pf.evaluate(() => document.getElementById('gWRep').compareDocumentPosition(document.getElementById('gWKg'))&Node.DOCUMENT_POSITION_FOLLOWING) && await pf.isVisible('#gDesc') && await pf.evaluate(() => window.__gDescVivo()), 'repetições vêm antes da carga e o descanso permanece ativo no fechamento');
     await pf.locator('#gWRep').hover(); await pf.mouse.wheel(36,0);
@@ -138,18 +144,21 @@ async function main() {
     await clicarControle(pf, '#gSalvar');
     ok((await registrosFecho('Supino teste')).length===3 && await volumeFecho()===volumeEditado, 'salvar novamente não duplica séries nem volume');
     await pf.click('[data-gserie="0"]');
+    await abrirReguas(pf);
     ok(await pf.isVisible('#gWRep') && await pf.isVisible('#gWKg') && await pf.inputValue('#gReps')==='5' && await pf.inputValue('#gKg')==='60', 'revisar a primeira série do exercício concluído mantém réguas abertas e seus próprios valores');
     await preencherRegistro(pf, '#gReps', '4'); await preencherRegistro(pf, '#gKg', '42,5'); await clicarControle(pf, '#gSalvar');
     rf = await registrosFecho('Supino teste');
     ok(rf[0].r===4 && rf[0].kg===42.5 && rf[2].r===editado.reps && rf[2].kg===editado.kg && await volumeFecho()===170+560+editado.kg*editado.reps, 'corrigir outra série preserva o registro da última e troca apenas sua parcela do volume');
     await pf.click('#gPular'); await clicarControle(pf, '#gSemRegistro');
     await abrirRegistro(pf);
+    await abrirReguas(pf);
     ok(await pf.isVisible('#gWRep') && await pf.isVisible('#gWKg') && await pf.isVisible('#gSalvar') && await pf.isVisible('#gFecharTreino'), 'último exercício oferece registro exposto antes de terminar o treino');
     ok(await pf.inputValue('#gReps')==='' && await pf.inputValue('#gKg')==='' && (await registrosFecho('Remada teste'))[0].kg===null, 'concluir sem anotar mantém campos vazios no fechamento, sem preencher sugestões retroativas');
     await preencherRegistro(pf, '#gReps', '12'); await preencherRegistro(pf, '#gKg', '0'); await clicarControle(pf, '#gSalvar');
     ok((await registrosFecho('Remada teste')).length===1 && (await registrosFecho('Remada teste'))[0].kg===0 && (await registrosFecho('Remada teste'))[0].r===12, 'registro tardio de peso do corpo preserva zero na série concluída');
     await pf.click('#gFecharTreino'); await pf.click('#gRevisaoSeries summary');
     await pf.click('[data-grever="0"][data-ge="1"]');
+    await abrirReguas(pf);
     ok(await pf.isVisible('#gWRep') && await pf.isVisible('#gWKg') && await pf.isVisible('#gSalvar') && await pf.inputValue('#gKg')==='0', 'revisão no recibo final mantém réguas e Salvar acessíveis com o registro correto');
     ok(fecho.errors.length===0, 'fechamentos intermediário e final sem erros JavaScript');
     await fecho.ctx.close();
@@ -157,6 +166,7 @@ async function main() {
     const pulado = await abrir(browser);
     await clicarControle(pulado.p, '#gPulaEx2'); await clicarControle(pulado.p, '#gSemRegistro'); await pulado.p.click('#gFecharTreino');
     await pulado.p.click('#gRevisaoSeries summary'); await pulado.p.click('[data-grever="1"][data-ge="0"]');
+    await abrirReguas(pulado.p);
     ok(await pulado.p.isVisible('#gWRep') && await pulado.p.isVisible('#gWKg') && await pulado.p.isVisible('#gSalvar'), 'recibo final expõe réguas e Salvar também para uma série pulada');
     ok(await pulado.p.evaluate(() => !JSON.parse(localStorage.getItem('ptdc')||'{}')['Supino teste'] && !window.__gvDe().feitas[0]), 'abrir revisão de série pulada não cria registro nem conclusão');
     await preencherRegistro(pulado.p, '#gReps', '6'); await preencherRegistro(pulado.p, '#gKg', '40'); await clicarControle(pulado.p, '#gSalvar');

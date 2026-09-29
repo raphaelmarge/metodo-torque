@@ -15,7 +15,11 @@ async function main() {
         const field=document.getElementById('gKg').getBoundingClientRect(), reps=document.getElementById('gReps').getBoundingClientRect(), action=document.getElementById('gSerie').getBoundingClientRect();
         return field.top>=0&&reps.top>=0&&field.bottom<=action.top&&reps.bottom<=action.top&&action.bottom<=innerHeight;
       }),width+' '+tema+': valores realizados e confirmação cabem juntos antes de rolar');
-      ok(await p.locator('[data-gpt-step]').evaluateAll(buttons=>buttons.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),width+' '+tema+': ajustes de carga, reps e esforço têm alvos de 44 px');
+      ok(await p.locator('[data-gpt-step]:visible').evaluateAll(buttons=>buttons.length===4&&buttons.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),width+' '+tema+': ajustes principais de carga e reps têm alvos de 44 px');
+      const effortDetails=p.locator('#gRpe').locator('xpath=ancestor::details').first();
+      await effortDetails.locator(':scope > summary').click();
+      ok(await p.locator('[data-gpt-step="gRpe"]').evaluateAll(buttons=>buttons.length===2&&buttons.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),width+' '+tema+': esforço opcional também tem alvos de 44 px quando aberto');
+      await effortDetails.locator(':scope > summary').click();
       ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.getElementById('guiaBox').scrollWidth<=document.getElementById('guiaBox').clientWidth+1),width+' '+tema+': sem corte horizontal');
       await p.locator('#gKg').fill('42'); await clicarControle(p,'#gSerie');
       ok(await p.locator('#gResta').isVisible()&&(await p.locator('#gTemplateRestNext').innerText()).includes('série 2 de 3'),width+' '+tema+': descanso orienta próxima série');
