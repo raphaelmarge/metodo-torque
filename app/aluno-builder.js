@@ -8234,13 +8234,14 @@
       // ---- Ajustes: baixar meus dados (LGPD na prática — arquivo local) ----
       /* v751: portabilidade de verdade — faltavam fotos (o dado mais sensivel),
        * chat, questionarios, check-ins, metas, volume e o termo aceito. Alem
-       * dos campos nomeados, TUDO que o app guarda no aparelho (chaves pt*). */
+       * dos campos nomeados, os registros locais (chaves pt*). Checkpoints de
+       * execução são internos: podem pertencer a outro aluno e levam token. */
       "function montaExport(){var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO," +
       "peso:L('ptpeso',{}),cargas:L('ptdc',{}),treinos_feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
       "como_foi_o_treino:L('ptrpe',{}),circuitos:L('ptwodres',{}),corridas:L('ptcardio',[]),batimentos:L('ptfc',{}),marcas:L('ptmarcas',[])," +
       "agua:L('ptaguaCfg',null),avaliacoes:AVS,volume_por_treino:L('ptvol',{})," +
       "fotos_progresso:L('ptfotos',[]),foto_perfil:L('ptfotoperfil',''),chat:L('ptchat',[]),assistente:L('ptbotmsgs',[]),questionarios:L('ptqa',{}),checkins:L('ptck',{}),termo_aceito:L('ptaceite',null)};" +
-      "var tudo={};for(var i9=0;i9<localStorage.length;i9++){var k9=localStorage.key(i9);if(!/^pt/.test(k9))continue;var raw=localStorage.getItem(k9);try{tudo[k9]=JSON.parse(raw);}catch(e){tudo[k9]=raw;}}dados.tudo_no_aparelho=tudo;return dados;}" +
+      "var tudo={};for(var i9=0;i9<localStorage.length;i9++){var k9=localStorage.key(i9);if(!/^pt/.test(k9)||/^pt(?:corrida|wod)Sessao:/.test(k9))continue;var raw=localStorage.getItem(k9);try{tudo[k9]=JSON.parse(raw);}catch(e){tudo[k9]=raw;}}dados.tudo_no_aparelho=tudo;return dados;}" +
       "window.__exportaDados=montaExport;" +
       "(function(){var b=document.getElementById('ajBaixa');if(!b)return;b.addEventListener('click',function(){" +
       "var dados=montaExport();" +

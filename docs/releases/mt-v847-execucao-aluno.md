@@ -14,6 +14,9 @@ O intervalo fora do aplicativo não vira tempo de exercício nem distância.
 Trocar de aluno pela entrada `/app/?t=` preserva somente os checkpoints já
 separados por identidade. Voltar ao aluno original permite retomá-los; registros
 compartilhados continuam limpos na troca, e revogação/exclusão limpa as sessões.
+O arquivo de exportação exclui os checkpoints internos de corrida/circuito,
+que contêm a identidade na chave. Resultados concluídos do aluno continuam
+exportados normalmente; a sessão de outro aluno no aparelho não entra no arquivo.
 Falhas de armazenamento conservam a sessão/revisão e permitem tentar novamente.
 A gravação do resultado e do dia é idempotente: falhar na segunda operação não
 duplica a primeira ao repetir. O dia é o de início da sessão, inclusive à meia-noite.

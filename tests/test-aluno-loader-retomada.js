@@ -109,6 +109,9 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   eq([s.wod.sid, s.wod.run, s.wod.tempo, s.wod.gi, s.wod.voltas], [a.circuito.sid, false, 83, 1, 2], 'circuito de A retorna pausado com progresso e duração próprios');
   eq([s.cardio, s.placares, s.shared], [[], {}, [null, null, null, null, null]], 'voltar a A não carrega históricos nem campos compartilhados de B');
   ok(await page.evaluate(b => !!localStorage.getItem(b.crKey) && !!localStorage.getItem(b.wodKey), b), 'os checkpoints isolados de B também sobrevivem ao retorno para A');
+  const exportPendente = await page.evaluate(() => window.__exportaDados());
+  eq(Object.keys(exportPendente.tudo_no_aparelho).filter(k => /^pt(?:corrida|wod)Sessao:/.test(k)), [], 'exportação exclui checkpoints internos tanto do aluno atual quanto do outro aluno');
+  ok(!JSON.stringify(exportPendente).includes(tokens.a) && !JSON.stringify(exportPendente).includes(tokens.b) && !JSON.stringify(exportPendente).includes(b.corrida.sid) && !JSON.stringify(exportPendente).includes(b.circuito.sid), 'exportação com sessões pendentes não inclui tokens nem dados de B');
   const devolvido = page.waitForResponse(r => r.url().endsWith('/rpc/app_aluno_devolve') && r.request().postDataJSON().t === tokens.a);
   await page.evaluate(() => { document.getElementById('crFim').click(); document.getElementById('wodTermina').click(); document.getElementById('wpSalvar').click(); });
   await devolvido;
@@ -117,6 +120,10 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   eq(Object.values(s.placares).flat().map(x => x.sid), [a.circuito.sid], 'conclusão restaurada registra apenas o circuito da identidade A');
   const envio = calls.filter(x => x.fn === 'app_aluno_devolve' && x.body.t === tokens.a).at(-1);
   ok(envio && JSON.stringify(envio.body).includes(a.corrida.sid) && JSON.stringify(envio.body).includes(a.circuito.sid) && !JSON.stringify(envio.body).includes('exclusivo-b') && !JSON.stringify(envio.body).includes(b.corrida.sid), 'devolução simulada de A contém seus resultados e nenhum registro de B');
+  const exportFinal = await page.evaluate(() => window.__exportaDados());
+  eq([exportFinal.corridas, exportFinal.circuitos], [s.cardio, s.placares], 'exportação conserva os resultados finalizados de corrida e circuito de A');
+  eq([exportFinal.tudo_no_aparelho.ptcardio, exportFinal.tudo_no_aparelho.ptwodres], [s.cardio, s.placares], 'coleções finalizadas atuais também permanecem no formato completo de exportação');
+  ok(!JSON.stringify(exportFinal).includes(tokens.a) && !JSON.stringify(exportFinal).includes(tokens.b) && !JSON.stringify(exportFinal).includes(b.corrida.sid) && !JSON.stringify(exportFinal).includes(b.circuito.sid) && !JSON.stringify(exportFinal).includes('exclusivo-b'), 'exportação após concluir A continua sem tokens ou dados de B');
 
   // A palavra do servidor continua invalidando inclusive os checkpoints isolados.
   for (const motivo of ['revogado', 'sem_registro']) {
