@@ -10,7 +10,11 @@ falha de espaço ou troca de identidade conserva o termo com aviso e nova tentat
 
 Corrida e circuito preservam a sessão localmente por identidade. Ao reabrir,
 retomam pausados, conservando etapa/movimento, tempo observado e resultados.
-O intervalo fora do aplicativo não vira tempo de exercício nem distância.
+A corrida publicada usa o token estável: mudar o nome da marca ou do aluno
+não esconde uma sessão pendente. O modo local mantém isolamento por aluno/studio.
+Ao recarregar e retomar a sessão salva, a lacuna não é acrescentada ao tempo
+de exercício nem à distância. Com o circuito ainda aberto, minimizar mantém
+o cronômetro, conforme o aviso mostrado na própria tela.
 Trocar de aluno pela entrada `/app/?t=` preserva somente os checkpoints já
 separados por identidade. Voltar ao aluno original permite retomá-los; registros
 compartilhados continuam limpos na troca, e revogação/exclusão limpa as sessões.

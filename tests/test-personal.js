@@ -9195,9 +9195,11 @@ async function contextoAppAluno(browser, html, options = {}) {
     t: document.getElementById("crTempo").textContent,
     pace: document.getElementById("crPaceMed").textContent,
     dist: document.getElementById("crDist").textContent,
+    dots: document.getElementById("crDotsF").children.length,
   }));
   ok(/0:0[5-9]/.test(cardioRun.t) && cardioRun.dist === "0,02" && /^\d+:\d\d$/.test(cardioRun.pace),
     "cronômetro de cardio marca tempo, distância e pace (min/km)");
+  ok(cardioRun.dots === 4, "corrida livre mantém as quatro métricas sem inventar uma etapa prescrita");
   await pCr.evaluate(() => document.getElementById("crFim").click());
   await pCr.waitForTimeout(300);
   const cardioReg = await pCr.evaluate(() => ({
@@ -9218,6 +9220,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const cardioTiro = await pCr.evaluate(() => document.getElementById("crFase").textContent);
   ok(/TIRO \d DE 2/.test(cardioTiro), "tiros mostram FORTE/LEVE com o tiro atual na tela");
   await pCr.waitForTimeout(4200);
+  // 2×1s/1s encosta no mínimo de 5 s para salvar; aguarda o tick de conclusão.
+  await pCr.waitForFunction(() => !window.__cr.run && JSON.parse(localStorage.getItem('ptcardio') || '[]').length === 2, null, { timeout: 3000 });
   const cardioFim = await pCr.evaluate(() => ({
     fase: document.getElementById("crFase").textContent,
     lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"),
@@ -9704,7 +9708,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     out.termineiCedo = document.getElementById("crFimF").style.display;
     window.__cr.t0 -= 6000; window.__pintaCr();
     out.terminei = document.getElementById("crFimF").style.display !== "none";
-    // métrica gigante paginada: um toque troca, as bolinhas mostram a página
+    // A corrida guiada também oferece a etapa atual além das quatro métricas.
+    out.guiado = !!window.__cr.blocos;
     out.gigaL = document.getElementById("crGigaL").textContent;
     document.getElementById("crPainelF").click();
     out.gigaL2 = document.getElementById("crGigaL").textContent;
@@ -9732,7 +9737,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   ok(full.abriuAoIniciar && full.painel && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
     "iniciar a corrida abre o painel de cor chapada com botão Pausar gigante (estilo NRC)");
   ok(full.termineiCedo === "none", "🏃 v751: com menos de 5 s o Terminei! da tela cheia ainda não aparece (toque sem querer não vira 'botão que não funciona')");
-  ok(full.gigaL !== full.gigaL2 && full.dots === 4, "a métrica gigante troca com um toque e as 4 bolinhas mostram a página");
+  ok(full.guiado && full.gigaL !== full.gigaL2 && full.dots === 5, "a métrica gigante troca com um toque e as 5 bolinhas incluem a etapa da corrida guiada");
   ok(full.lock && full.destravou, "o cadeado bloqueia a tela na corrida e destrava segurando 1 segundo");
   ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
     "pausar mostra o mapa com a grade de métricas e o botão Continuar");
@@ -11166,6 +11171,13 @@ async function contextoAppAluno(browser, html, options = {}) {
     geolocation: { latitude: -19.9245, longitude: -43.9352, accuracy: 10 },
     permissions: ["geolocation"],
   });
+  await ctxGps.addInitScript(() => {
+    const watch = navigator.geolocation.watchPosition.bind(navigator.geolocation);
+    navigator.geolocation.watchPosition = function (sucesso, erro, options) {
+      window.__gpsTesteSucesso = sucesso; window.__gpsTesteErro = erro;
+      return watch(sucesso, erro, options);
+    };
+  });
   const pGps = await ctxGps.newPage();
   pGps.on("dialog", (d) => d.accept());
   await pGps.route("**/app-teste-gps.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
@@ -11179,12 +11191,21 @@ async function contextoAppAluno(browser, html, options = {}) {
   await pGps.evaluate(() => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 })));
   await pGps.evaluate(() => document.getElementById("crGo").click());
   await pGps.waitForTimeout(300);
-  await ctxGps.setGeolocation({ latitude: -19.9254, longitude: -43.9352, accuracy: 10 });
+  // setGeolocation emite POSITION_UNAVAILABLE antes de cada posição nova no
+  // Chromium. Aqui medimos sinal contínuo; a interrupção é exercitada abaixo.
+  await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9254, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
-  await ctxGps.setGeolocation({ latitude: -19.9263, longitude: -43.9352, accuracy: 10 });
+  await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9263, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
   const gpsKm = await pGps.evaluate(() => window.__cr.km);
   ok(gpsKm > 0.15 && gpsKm < 0.26, "GPS mede a distância sozinho com o treino rodando (" + gpsKm.toFixed(2) + " km)");
+  const gpsLacuna = await pGps.evaluate(() => {
+    const antes = window.__cr.km;
+    window.__gpsTesteErro({ code: 2, message: 'Sinal sintético indisponível' });
+    window.__gpsTesteSucesso({ coords: { latitude: -19.94, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() });
+    return { antes, depois: window.__cr.km };
+  });
+  ok(gpsLacuna.depois === gpsLacuna.antes, "GPS que volta após perder o sinal não soma a distância desconhecida da lacuna");
   await pGps.evaluate(() => { document.getElementById("crZera").click(); window.__trocaSec("inicio"); });
   await pGps.waitForTimeout(300);
   ok(await pGps.evaluate(() => window.__cr.watch === null && !window.__cr.gpsOn), "sair da área desliga o GPS pra poupar bateria");
@@ -12524,6 +12545,17 @@ async function contextoAppAluno(browser, html, options = {}) {
   });
   ok(/É só enviar/.test(ckZap.txt) && ckZap.temEnviei && ckZap.semPtck && ckZap.depois,
     "📲 v747: check-in pelo WhatsApp NÃO fecha a semana sozinho — só no 'Enviei' (" + (ckZap.semPtck ? "esperou" : "fechou antes") + ")");
+  // Este app tem armazenamento próprio: responde seu questionário aqui em vez
+  // de herdar o ptqa de pLivre, que pertence a outro cenário de navegação.
+  await pApp.route("**/rest/v1/rpc/app_quest_responde", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await pApp.evaluate(() => window.__qaFluxo());
+  await pApp.click("#qaFluxo [data-qj='0']");
+  await pApp.waitForSelector("#qaFluxo [data-qv='8']");
+  await pApp.click("#qaFluxo [data-qv='8']");
+  await pApp.click("#qaProx");
+  await pApp.waitForSelector("#qaVoltaIni");
+  await pApp.click("#qaVoltaIni");
+  ok(await pApp.evaluate(() => window.__qaPend() === 0), "o próprio aluno confirma seu questionário antes de conferir a área vazia");
   await pApp.evaluate(() => window.__trocaSec("quest"));
   // o card some na semana seguinte (pedido do Raphael): a área não pode ficar
   // só com a faixa roxa e mais nada

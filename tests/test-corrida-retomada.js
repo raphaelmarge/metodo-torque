@@ -114,7 +114,13 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   await start(); await advance(24, .2);
 
   await p.evaluate(() => __crSessao.salva(true)); const keyA = await p.evaluate(() => __crSessao.chave);
-  html = MT_APP_ALUNO.monta({ ...D, a: { ...D.a, id: 'corredor-b', appTokenP: 'corrida-token-sintetico-b' } }); await load();
+  const antesDaMarca = (await state()).snapshot;
+  const renomeado = { ...D, studio: 'Marca atualizada do mesmo personal', a: { ...D.a, nome: 'Nome atualizado do mesmo aluno' } };
+  html = MT_APP_ALUNO.monta(renomeado); await load();
+  eq(await p.evaluate(() => __crSessao.chave), keyA, 'renomear studio e aluno não muda o escopo do token publicado');
+  await p.evaluate(() => document.getElementById('crRetomar').click()); s = await state();
+  eq([s.sid, s.run, s.tempo, s.km], [antesDaMarca.sid, false, antesDaMarca.tempo, antesDaMarca.km], 'sessão publicada sobrevive à mudança de marca e retoma pausada');
+  html = MT_APP_ALUNO.monta({ ...renomeado, a: { ...renomeado.a, appTokenP: 'corrida-token-sintetico-b' } }); await load();
   ok(!(await state()).snapshot && !await p.locator('#crRetoma').isVisible(), 'outro aluno/token não recebe a sessão anterior');
   ok(await p.evaluate(key => !!localStorage.getItem(key), keyA), 'trocar de aluno não apaga a sessão original');
   html = MT_APP_ALUNO.monta(D); await load(); await p.evaluate(() => __crSessao.restaura());
@@ -146,6 +152,16 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
     ok(!geo.overflow && geo.acao.bottom <= height && geo.acao.left >= 0 && geo.acao.right <= width, 'controle principal cabe na tela de' + width + '×' + height);
     ok(geo.topo.bottom <= geo.valor.top && geo.alvo.bottom <= geo.acao.top, 'etapa e alvo não sobrepõem avisos nem controles em' + width + '×' + height + ' ' + JSON.stringify(geo));
   }
+  const local = { ...D, a: { ...D.a, appTokenP: '', id: 'aluno-local-estavel' } };
+  html = MT_APP_ALUNO.monta(local); await load(); await start(); await advance(18, .14);
+  await p.evaluate(() => __crSessao.salva(true)); const localAntes = (await state()).snapshot;
+  html = MT_APP_ALUNO.monta({ ...local, a: { ...local.a, nome: 'Outro nome do mesmo aluno local' } }); await load();
+  await p.evaluate(() => document.getElementById('crRetomar').click()); s = await state();
+  eq([s.sid, s.run, s.tempo, s.km], [localAntes.sid, false, localAntes.tempo, localAntes.km], 'sem token, o ID do aluno prevalece sobre seu nome na retomada');
+  html = MT_APP_ALUNO.monta({ ...local, a: { ...local.a, id: 'outro-aluno-local' } }); await load();
+  ok(!(await state()).snapshot, 'fallback local isola IDs de alunos mesmo com nome e studio iguais');
+  html = MT_APP_ALUNO.monta({ ...local, studio: 'Outro studio local' }); await load();
+  ok(!(await state()).snapshot, 'fallback local isola studios quando não existe token publicado');
   eq(errors, [], 'retomada, GPS, falhas e finalização sem erros deJavaScript');
   await ctx.close(); console.log(n + ' verificações de retomada da corrida passaram.');
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

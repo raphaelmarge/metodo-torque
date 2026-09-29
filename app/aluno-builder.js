@@ -6040,7 +6040,9 @@
       "crUnB.addEventListener('mousedown',crSeg);crUnB.addEventListener('mouseup',crSolta);crUnB.addEventListener('mouseleave',crSolta);" +
       "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos){crPulaBloco();return;}" +
       "if(cr.plano&&cr.plano.t==='misto'&&cr.run&&!cr.mistoVai){cr.mistoVai=true;pintaCr();}});" +
-      "CRSESS=(" + runtimeCorridaSessao.toString() + ")({estado:cr,escopo:" + jsonApp(JSON.stringify([a.appTokenP || '', a.id || a.nome, studio])) + ",ativo:acIdentidadeAtual,hoje:isoHj,tempo:crTempoAtual,km:crKmAtual,pausa:crPausaSegura,atualiza:pintaCr,erro:crErroSalva," +
+      // O token publicado é estável mesmo quando o personal muda sua marca.
+      // Sem token, mantém separação local por aluno (ID antes do nome) e studio.
+      "CRSESS=(" + runtimeCorridaSessao.toString() + ")({estado:cr,escopo:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",ativo:acIdentidadeAtual,hoje:isoHj,tempo:crTempoAtual,km:crKmAtual,pausa:crPausaSegura,atualiza:pintaCr,erro:crErroSalva," +
       "registro:function(id){return L('ptcardio',[]).filter(function(x){return x.id===id;})[0];},hr:function(){return {mx:HR.mx,soma:HR.soma,n:HR.n};}," +
       "restaurou:function(x){if(x.hr){HR.mx=x.hr.mx||0;HR.soma=x.hr.soma||0;HR.n=x.hr.n||0;}cr.gigaF=cr.blocos?GIGAS.length:0;crEl('crKm').value=String(cr.km);crEl('crGo').textContent=cr.regGravado?'Concluir registro':'Continuar';crChips();abreCrFull(0);pintaCr();if(cr.regGravado)crErroSalva('Sua atividade já foi salva. Conclua o registro do dia sem repetir a corrida.');}});" +
       "crEl('crSalvarRetry').onclick=function(){crFinaliza(null);};window.__crSessao=CRSESS;" +
