@@ -2605,10 +2605,10 @@ async function novaExecucaoAluno(p) {
       "🙋 v747: 'Avisei que vou' só pinta quando o recado do chat chegou de verdade");
     ok(/wod\.estourou=1;wodFim\('TEMPO! '[^;]*,cap\);/.test(bld) && /nf:\(tipo==='fortime'&&wod\.estourou\)\?1:0/.test(bld),
       "⏲️ v747: For Time que bate o limite leva o tempo do cap e nasce 'não terminei' — nada de 'tempo 0:00'");
-    ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:undefined/.test(bld),
+    ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:durReal/.test(bld),
       "⏱️ v747: AMRAP encerrado antes da hora grava o tempo REAL (e diz 'parou antes')");
-    ok(/id='crRsFeito'[^>]*>Registrar treino de hoje/.test(bld) && /bfe\.addEventListener\('click',function\(\)\{document\.getElementById\('btnFeito'\)\.click\(\)/.test(bld),
-      "🏃 v747: o resumo da corrida oferece o MESMO 'Registrar treino de hoje' do circuito");
+    ok(/function crFinaliza/.test(bld) && /__acRegistraConclusao\(\{tipo:'corrida',id:reg.id,data:reg.d\}\)/.test(bld),
+      "🏃 v846: conclusão da corrida registra o dia original pelo helper idempotente; falhas e duplicatas cobertas em test-corrida-retomada");
     ok(/>Descartar<\/button>/.test(bld) && /wpVoltar'\)\{if\(!confirm\(/.test(bld), "🗑️ v747: o 'Voltar' do placar virou 'Descartar' com confirmação");
     ok(!/prompt\('Reps do round/.test(bld) && !/prompt\('Corrige o tempo/.test(bld) && !/prompt\('Reps da volta/.test(bld) && /function wpEdita\(/.test(bld) && /class='wpin'/.test(bld),
       "⌨️ v747: reps por round, tempo e reps extras se editam num campo dentro do tile — sem prompt() do navegador");

@@ -324,7 +324,8 @@ console.log("v751 — regras estáticas:");
   ok(html.indexOf("function crLeFoto") > -1 && !/readAsDataURL/.test(corr) && (html.match(/crLeFoto\(f,function\(im\)/g) || []).length === 2,
     "🏃 as duas leituras de foto da corrida passam pelo mesmo crLeFoto (com onerror)");
   const fin = html.slice(html.indexOf("function crFinaliza"), html.indexOf("function crImporta"));
-  ok(fin.indexOf("var km=crKmAtual()") > -1 && fin.indexOf("var km=crKmAtual()") < fin.indexOf("crGpsPara()"),
+  const kmAntesDePausar = fin.indexOf("var km=crKmAtual()");
+  ok(kmAntesDePausar > -1 && fin.indexOf("crPausaSegura()", kmAntesDePausar) > kmAntesDePausar,
     "🏃 crFinaliza lê o km ANTES de desligar o GPS (senão o 'km na mão' esquecido vencia o GPS na hora de gravar)");
   const gps = html.slice(html.indexOf("cr.watch=navigator.geolocation.watchPosition"), html.indexOf("function crAutoGps"));
   ok(!/Ligar GPS/.test(gps) && /GPS\\u2026/.test(gps), "🏃 erro de GPS que não é permissão não escreve 'Ligar GPS' com o watch vivo");
@@ -375,7 +376,7 @@ console.log("v751 — regras estáticas:");
   ok(/var mp=null,mpV=0/.test(html) && !/x\.p<mp\.p/.test(html), "🏅 'Melhor pace' compara segundos por km, não texto");
   ok(/function treinoHojeTitulo\(/.test(html) && /trHoje=\(typeof treinoHojeTitulo==='function'&&treinoHojeTitulo\(\)\)\|\|'Treinou hoje'/.test(html),
     "👥 o post da Comunidade leva o treino do DIA (plano ou rodízio), não a ficha A");
-  ok(/function Sv\(k,v\)\{var ok9=true;/.test(html) && /if\(!Sv\('ptfotos',fs\)\)\{alert\('Memória de fotos cheia/.test(html),
+  ok(/function Sv\(k,v\)\{/.test(html) && /var ok9=true;try\{localStorage.setItem\(k,JSON.stringify\(v\)\);\}catch\(e\)\{ok9=false;\}/.test(html) && /return ok9;\}/.test(html) && /if\(!Sv\('ptfotos',fs\)\)\{alert\('Memória de fotos cheia/.test(html),
     "📷 Sv diz se gravou, e a foto de progresso só entra quando coube");
   ok(/data-ex='Farmer&#39;s walk'/.test(html), "🏋️ o nome com apóstrofo continua escapado no atributo (o esc() protege)");
 }

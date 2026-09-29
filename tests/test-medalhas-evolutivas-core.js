@@ -16,5 +16,8 @@ p=M.progresso(M.pacote(['corrida-registros'])[0],{corridas:30});ok(p.limiteHisto
 p=M.progresso(selected[0],{wodPorNome:{fran:5}});ok(p.limiteHistorico&&p.proxima===null,'benchmark conclui seus marcos disponíveis sem fabricar registros antigos');
 const changed=JSON.parse(JSON.stringify(s));changed.nutricao.registros.r2.id='r2';changed.nutricao.registros.r2.titulo='Editado';eq(M.metricas(changed).nutriRegistros,3,'editar refeição não gera novo progresso');changed.nutricao.registros.r2.apagado=true;eq(M.metricas(changed).nutriRegistros,2,'exclusão atualiza a fonte de progresso');
 eq(M.progresso(M.pacote(['hyrox-registros-0'])[0],m).valor,0,'Fran não vira conclusão de HYROX');const hy=JSON.parse(JSON.stringify(s));hy.wodres.a.push({d:'2026-09-11',n:'HYROX',r:'Sessão registrada'});eq(M.progresso(M.pacote(['hyrox-registros-0'])[0],M.metricas(hy)).valor,1,'HYROX mede só circuito explicitamente nomeado, sem certificação de prova');
+const partial=JSON.parse(JSON.stringify(s));partial.wodres.a.push({d:'2026-09-11',n:'Fran',r:'Encerrado antes',tp:'fortime',parcial:true});
+eq(M.metricas(partial).circuitos,m.circuitos,'sessão parcial não recebe medalha de circuito concluído');
+eq(M.metricas(partial).wodPorNome.fran,m.wodPorNome.fran,'benchmark não conta encerramento antecipado');
 const independent=M.runtime();ok(!independent.catalogo.some(d=>d.id==='crossfit-fran'),'runtime do aluno não inclui catálogo externo inteiro');eq(independent.progresso(selected[0],m).valor,2,'runtime isolado aceita definição completa do snapshot');
 console.log(n+' verificações do core de medalhas evolutivas passaram.');

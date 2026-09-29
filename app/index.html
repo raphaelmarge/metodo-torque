@@ -55,7 +55,9 @@
       var fora0 = [];
       for (var i0 = 0; i0 < localStorage.length; i0++) {
         var k0 = localStorage.key(i0);
-        if (k0 && /^(pt|nt)[a-z]/.test(k0) && !/^ptnutri(?:cao|Fila|Rascunho):/.test(k0) && !/^ptonbconsult(?:fila)?:/.test(k0)) fora0.push(k0);
+        // Sessões de execução já têm dono na chave e no conteúdo. Trocar de
+        // aluno preserva a retomada; revogação/exclusão continua apagando tudo.
+        if (k0 && /^(pt|nt)[a-z]/.test(k0) && !/^ptnutri(?:cao|Fila|Rascunho):/.test(k0) && !/^ptonbconsult(?:fila)?:/.test(k0) && !/^pt(?:corrida|wod)Sessao:.+/.test(k0)) fora0.push(k0);
       }
       fora0.forEach(function (k) { localStorage.removeItem(k); });
       ["tq_app_pacote", "tq_app_html", "tq_app_stamp", "tq_app_visto"].forEach(function (k) { localStorage.removeItem(k); });

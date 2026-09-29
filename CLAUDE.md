@@ -6,6 +6,24 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v847 — Execução e retomada no app do aluno
+
+- Musculação mantém carga/repetições/esforço junto da confirmação; alvos de toque
+  de 44 px, descanso com próxima série e resumo que distingue execução parcial.
+- Corrida e circuito guardam checkpoint local por identidade. Reabertura retoma
+  pausada, sem contar a lacuna; resultado só confirma após gravação bem-sucedida.
+  IDs de sessão impedem duplicação ao repetir um salvamento parcialmente concluído.
+- Conclusão integra `ptfeitos` no dia original pelo helper idempotente. Os resultados
+  por modalidade continuam nas coleções existentes; não contam dois dias por
+  treinar duas modalidades na mesma data. Sessão vazia de musculação não marca dia.
+- GPS usa o mesmo limite de precisão para status e distância e avisa sinal antigo.
+  Corrida pausa ao ocultar a página; não promete GPS em segundo plano. Histórico
+  novo não descarta automaticamente a primeira atividade ao ultrapassar 30.
+- Circuito oferece preparo, próxima ação e desfazer; encerramento antecipado
+  preserva duração real e não gera medalha de conclusão ou comparação de recorde.
+- Demos regeneradas pelo gerador canônico. Testes e limitações em
+  `docs/releases/mt-v847-execucao-aluno.md`. Nenhuma mudança de banco ou lojas.
+
 ## v846 — Nova Central Pro, ao lado do fluxo diário
 
 - Por novo pedido explícito do proprietário, a Central Pro volta a ter uma
