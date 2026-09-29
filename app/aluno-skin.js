@@ -414,7 +414,8 @@
         var presc=el('section','gpt-card gpt-prescription');presc.id='gTemplatePrescription';card.appendChild(presc);
         var hist=el('section','gpt-card gpt-history');hist.id='gTemplateHistory';card.appendChild(hist);
         var success=el('div','gpt-success');success.id='gTemplateSuccess';success.setAttribute('role','status');card.appendChild(success);
-        box.appendChild($('gPe')); card.appendChild($('gResta'));
+        box.appendChild($('gMiolo2')); box.appendChild($('gPe')); card.appendChild($('gResta'));
+        var nextSet=el('p','gpt-rest-next'); nextSet.id='gTemplateRestNext'; $('gResta').appendChild(nextSet);
         var nav=el('nav','gpt-bottom');nav.id='gTemplateBottom';nav.setAttribute('aria-label','Navegar entre exercícios');
         nav.appendChild($('gVoltaEx'));nav.appendChild($('gPularEx'));box.appendChild(nav);
       }
@@ -454,9 +455,11 @@
         });
         var form=box.querySelector('.gserie-form');if(!form)return;
         var h=el('header','gpt-entry-head');h.innerHTML='<h2>Registrar série</h2><span></span>';form.insertBefore(h,form.firstChild);
-        var c=current();h.lastChild.textContent='Série '+((c.s.fim && c.s.formSerie ? c.s.formSerie.si : window.SR.indice(c.it))+1)+' de '+c.it.s;
+        var c=current(),si=c.s.fim && c.s.formSerie ? c.s.formSerie.si : window.SR.indice(c.it);h.lastChild.textContent='Série '+(si+1)+' de '+c.it.s;
+        var last=window.SR.anterior(c.it,si),reference=el('p','gpt-entry-reference');reference.textContent=last?'Última vez nesta série: '+number(last.kg,' kg')+(last.r!=null?' · '+number(last.r,' reps'):''):'Confira os valores da série antes de registrar.';form.insertBefore(reference,h.nextSibling);
         var refs=form.querySelector('.gserie-referencias');if(refs){refs.hidden=true;refs.setAttribute('aria-hidden','true');}
-        var re=$('gRpe');if(re)re.oninput=window.GP.entrada;
+        var origin=$('gOrigemSerie');if(origin)form.insertBefore(origin,form.querySelector('.gserie-fields'));
+        var re=$('gRpe');if(re){re.oninput=window.GP.entrada;var label=re.closest('label');if(label&&label.firstChild.nodeType===3)label.firstChild.textContent='Esforço (1–10) ';}
       }
       function updateView() {
         var c=current();if(!c.it)return;
@@ -468,6 +471,8 @@
         $('gVoltaEx').textContent='←  Exercício anterior';$('gVoltaEx').disabled=c.s.e===0;
         var n=window.GP.conta(c.it),msg=$('gTemplateSuccess');msg.hidden=!n||finished;
         msg.innerHTML=n?'<span class="gpt-trophy" aria-hidden="true">🏆</span><div><strong>Mandou bem!</strong><p>'+(n>=c.it.s?'Exercício concluído. Seus registros estão salvos.':'Série registrada. Continue no seu ritmo.')+'</p></div>':'';
+        var upcoming=window.GP.proxima(c.it,c.ei),a=window.SR.alvo(c.it,upcoming),rest=$('gTemplateRestNext');
+        rest.textContent=n>=c.it.s?'Séries deste exercício concluídas. Confira os registros antes de seguir.':'A seguir: série '+(upcoming+1)+' de '+c.it.s+' · '+a.reps+(String(a.reps).match(/^\d+$/)?' repetições':'');
       }
       function render() {
         if(rendering)return;var c=current();if(!c.it)return;rendering=true;
@@ -513,7 +518,7 @@
         if(b.id==='gTemplateFavorite'){var c=current(),conf=window.L('ptconf',{}),list=Array.isArray(conf.playerFavoritos)?conf.playerFavoritos.slice():[],i=list.indexOf(c.it.e);if(i<0)list.push(c.it.e);else list.splice(i,1);conf.playerFavoritos=list.slice(-150);if(window.Sv('ptconf',conf)!==false){b.textContent=i<0?'★':'☆';b.setAttribute('aria-pressed',String(i<0));}return;}
       });
       $('gTemplateTabs').addEventListener('keydown',function(e){var names=['video','instructions','tips'],i=names.indexOf(tab),n=e.key==='ArrowRight'?(i+1)%3:e.key==='ArrowLeft'?(i+2)%3:e.key==='Home'?0:e.key==='End'?2:-1;if(n>=0){e.preventDefault();selectTab(names[n],true);}});
-      window.__playerTemplate={version:'mt-v842',render:render,entry:function(){mode='entry';updateView();}};
+      window.__playerTemplate={version:'mt-v847',render:render,entry:function(){mode='entry';updateView();}};
       render();
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
@@ -585,6 +590,87 @@
 @keyframes fimConfete{0%{opacity:0;transform:translate3d(0,-10px,0) rotate(0)}14%{opacity:1}100%{opacity:0;transform:translate3d(var(--fim-x),270px,0) rotate(var(--fim-r))}}
 @media(max-height:700px){.fim-celebracao{min-height:225px;padding-top:16px}.fim-medalha{width:82px;height:82px;margin-bottom:13px}.fim-medalha span{width:58px;height:58px}.fim-medalha svg{width:38px;height:38px}.fim-celebracao h2{font-size:clamp(25px,7vw,33px)}}
 @media(prefers-reduced-motion:reduce){.fim-confete i,.fim-medalha span,.fim-medalha:before,.fim-medalha:after{animation:none!important}.fim-confete{display:none}}
+`;
+  css += `
+/* v847: valores e confirmação juntos; o conteúdo do exercício rola por cima. */
+#guiaBox.player-template>#gMiolo2{order:18;flex:none;max-height:48dvh;overflow:auto;overscroll-behavior:contain;margin-top:8px!important;padding:10px 12px!important;border:1px solid var(--gpt-line)}
+#guiaBox.player-template .gpt-entry-head{margin-bottom:4px}
+#guiaBox.player-template .gpt-entry-reference{margin:0 0 7px;font-size:11px;line-height:1.4;color:var(--gpt-muted)}
+#guiaBox.player-template .gserie-fields{grid-template-columns:1fr 1fr;gap:7px 10px}
+#guiaBox.player-template .gserie-fields>label[for=gRpe]{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;font-size:11px}
+#guiaBox.player-template .gserie-fields>label[for=gRpe]>span{grid-column:1;grid-row:2;font-size:10px!important}
+#guiaBox.player-template label[for=gRpe] .gpt-stepper{grid-column:2;grid-row:1/3;width:136px;margin-top:0}
+#guiaBox.player-template .gpt-stepper{grid-template-columns:44px minmax(0,1fr) 44px}
+#guiaBox.player-template .gpt-stepper button{width:44px;min-width:44px;min-height:44px}
+#guiaBox.player-template .gpt-stepper input{font-size:17px;min-height:44px!important;height:44px;max-height:44px}
+#guiaBox.player-template .gserie-ajustes>summary{min-height:44px;line-height:44px;font-size:12px}
+#guiaBox.player-template .gserie-ajustes{margin-top:2px}
+#guiaBox.player-template #gOrigemSerie{margin:0 0 7px;font-size:10px}
+#guiaBox.player-template .gpt-hero{grid-template-columns:62px minmax(0,1fr) 44px;min-height:86px;gap:10px}
+#guiaBox.player-template .gpt-thumb{height:64px;width:62px}
+#guiaBox.player-template .gpt-favorite{width:44px}
+#guiaBox.player-template .gpt-favorite:before{display:none}
+#guiaBox.player-template #gResta{position:static;order:-1;display:none;flex-direction:column;align-items:stretch;padding:12px!important}
+#guiaBox.player-template.resta #gResta{display:flex}
+#guiaBox.player-template #gResta>div:first-child{flex-wrap:wrap}
+#guiaBox.player-template #gResta button{min-height:44px}
+#guiaBox.player-template .gpt-rest-next{margin:10px 0 0;color:var(--gpt-muted);font-size:12px;line-height:1.45}
+#guiaBox.player-template #gFimAviso{order:19;flex:none;margin:7px 0;color:var(--gpt-text);font-size:12px;line-height:1.4}
+.ac-conclusao-status{font-size:12px;line-height:1.5;color:inherit;opacity:.9}
+#crRetoma[hidden],#wodRetomar[hidden],.exec-aviso[hidden],#crSalvarErro[hidden],#crEtapaF[hidden]{display:none!important}
+.cr-retoma,.exec-retomar,.exec-preparo{border:1px solid var(--bg8);border-radius:16px;background:var(--bg3);padding:16px;margin:12px 0;color:#f4f4f8;line-height:1.5}
+.cr-retoma,.exec-retomar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-color:var(--corc)}
+.cr-retoma>b,.cr-retoma>p,.exec-retomar>b,.exec-retomar>span{flex-basis:100%;margin:0}
+.cr-retoma>p,.exec-retomar>span{font-size:13px}
+.cr-retoma>button,.exec-retomar>button,.exec-preferencias button,.exec-desfazer{min-height:44px;border:1px solid var(--bg8);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:600;line-height:1.3;color:inherit;background:var(--bg4);cursor:pointer}
+.cr-retoma>.btnx,.exec-retomar>.btnx{background:var(--cor);color:var(--cor-on,#fff)}
+.exec-preparo h3{font-size:15px;margin:0 0 8px}.exec-preparo b{font-size:12px}.exec-preparo p{font-size:13px;margin:4px 0 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.exec-preparo p:last-child{margin-bottom:0}.exec-preferencias{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;font-size:13px;align-items:center}
+.exec-preferencias label{display:flex;gap:8px;align-items:center;min-height:44px}.exec-preferencias input{width:22px;height:22px;min-height:22px;accent-color:var(--cor)}
+.exec-aviso,.cr-salvar-erro{border:1px solid #e5aa55;border-radius:12px;padding:12px 14px;background:#32240f;color:#ffe4b9;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.exec-estado{display:inline-block;font-size:12px;padding:7px 10px;border-radius:99px;background:var(--bg4);margin-top:12px;color:#f4f4f8}
+.exec-proximo{margin-top:12px;border-top:1px solid var(--bg7);padding-top:10px;font-size:14px;line-height:1.5;color:#c8c6d4}
+.exec-desfazer{width:100%;margin-top:10px;color:#c8c6d4}.exec-desfazer:disabled{opacity:.45;cursor:default}
+.exec-resultado-estado{font-size:14px;line-height:1.5;margin:12px 0;font-weight:700}
+#wfMin{padding:0 12px!important;border-radius:12px!important}#wfNome{white-space:normal!important;overflow-wrap:anywhere}
+.cr-sinal{font-size:12px;line-height:1.45;padding:9px 12px;border-radius:10px;margin:10px 0 0;background:var(--bg5);color:#d9d6e1}
+.cr-sinal[data-estado=bom]{color:#b9f3d0}.cr-sinal[data-estado=fraco]{color:#ffe4b9;background:#32240f}
+.cr-limite{font-size:12px;line-height:1.5;color:#b8b3c2;margin:10px 0 0}
+#crSinalF{background:rgba(0,0,0,.56);color:#fff;font-size:12px;text-align:center}
+#crSinalF[data-estado=fraco]{background:#32240f;color:#ffe4b9}
+.cr-etapa-alvo{max-width:430px;margin:14px 0 0;text-align:center;font-size:15px;font-weight:600;line-height:1.5;color:#fff;overflow-wrap:anywhere}
+#crPulaF{min-height:44px}#crGigaL{max-width:100%;text-align:center;overflow-wrap:anywhere}
+#crFull:not([style*="display: none"]):not([style*="display:none"]){display:grid!important;grid-template-rows:auto minmax(0,1fr) auto;height:100dvh;overflow:hidden}
+#crTopoF{position:relative!important;top:auto!important;left:auto!important;right:auto!important;grid-row:1;margin:calc(8px + env(safe-area-inset-top,0px)) 60px 0 12px}
+#crPainelF{position:relative!important;inset:auto!important;grid-row:2;padding:16px 20px!important;min-height:0;overflow:auto;justify-content:safe center!important;border-radius:18px;margin:8px 12px}
+#crControlesF{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;grid-row:3;padding:6px 14px calc(12px + env(safe-area-inset-bottom,0px))!important}
+#crTopoF,#crPainelF,#crControlesF{min-width:0}
+#crGigaV{font-size:clamp(46px,12vh,108px)!important}
+#crEtapaF{flex-shrink:0}
+@media(max-height:650px){
+ #crInfoF{display:none}#crTopoF{padding:7px 10px!important}
+ #crSinalF{font-size:11px;padding:6px 8px;margin-top:6px}
+ #crGoF{width:88px!important;height:88px!important;font-size:16px!important}
+ #crControlesF{gap:7px!important}
+ #crPainelF{padding:8px 14px!important;margin:5px 12px}
+ #crGigaV{font-size:56px!important}#crGigaL{font-size:12px!important;letter-spacing:.08em!important}
+ #crDotsF{margin-top:8px!important}#crEtapaF{font-size:12px;margin-top:8px}
+ #crPausaF{padding:9px!important}#crPausaF>div{gap:6px!important}
+}
+.cr-salvar-erro{position:absolute;z-index:20;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:460px;margin:auto;box-shadow:0 12px 80px #0008}
+.cr-salvar-erro p{margin:0 0 12px}.cr-salvar-erro button{min-height:48px;width:100%}
+.cr-registro-status,.cr-etapas-resumo{font-size:13px;line-height:1.6}.cr-etapas-resumo{text-align:left;padding:14px;border:1px solid var(--bg7);border-radius:14px;margin:12px 0}.cr-etapas-resumo ol{padding-left:20px;margin:8px 0 0}
+html.claro :is(.cr-retoma,.exec-retomar,.exec-preparo,.exec-estado){color:#282333}
+html.claro :is(.exec-proximo,.exec-desfazer,.cr-limite){color:#575062}
+html.claro .cr-sinal{color:#51475f}html.claro .cr-sinal[data-estado=bom]{color:#175f37}
+html.claro .cr-sinal[data-estado=fraco],html.claro .exec-aviso,html.claro .cr-salvar-erro{color:#603907;background:#fff0d9}
+html.claro #crSinalF{color:#fff}html.claro #crSinalF[data-estado=fraco]{color:#ffe4b9;background:#32240f}
+#guiaBox.player-template.gpt-finished>#gMiolo2:empty{display:none}
+@media(max-height:600px){
+ #guiaBox.player-template:focus-within>.gpt-top,#guiaBox.player-template:focus-within>.gpt-progress{display:none}
+ #guiaBox.player-template:focus-within>#gMiolo2{max-height:calc(100dvh - 140px)}
+ #guiaBox.player-template .gpt-bottom{padding:6px 0 max(6px,env(safe-area-inset-bottom,0px))}
+}
 `;
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

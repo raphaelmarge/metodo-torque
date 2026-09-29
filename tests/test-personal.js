@@ -66,6 +66,22 @@ async function novaExecucaoAluno(p) {
   });
 }
 
+// O loader define a identidade antes de executar o HTML do aluno. Fixtures de
+// HTML direto precisam reproduzir esse passo num contexto próprio: reaproveitar
+// o painel herda o token deixado por outros testes de /app/ e bloqueia gravações.
+async function contextoAppAluno(browser, html, options = {}) {
+  const match = html.match(/,TOKEN=("(?:[^"\\]|\\.)*"),ZAPP=/);
+  if (!match) throw new Error('Fixture do app sem token no HTML canônico');
+  const token = JSON.parse(match[1]);
+  const context = await browser.newContext({ viewport: { width: 1360, height: 900 }, ...options });
+  await context.addInitScript(token => {
+    if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
+  }, token);
+  // Um mock específico da página tem precedência; nenhuma fixture envia dados reais.
+  await context.route('**/rest/v1/rpc/**', route => route.abort());
+  return context;
+}
+
 
 
 
@@ -2569,11 +2585,11 @@ async function novaExecucaoAluno(p) {
     const bld = await p.evaluate(async () => await (await fetch("app/aluno-builder.js")).text());
     ok(/DEV_KS=\['ptpeso'[^\]]*'ptconf'[^\]]*\]/.test(bld) && /if\(!temAlgo\)return;/.test(bld),
       "📤 v743: a trava do 'celular limpo' olha TODAS as chaves do retorno (termo, presença, depoimento, corrida…)");
-    ok(/crFim'\)\.click\(\);if\(!cr\.resumo\)fechaCrFull\(\);/.test(bld), "🏃 v743: Terminei! da tela cheia não esconde o resumo da corrida");
+    ok(/crFim'\)\.click\(\);if\(!cr\.resumo&&crEl\('crSalvarErro'\)\.hidden\)fechaCrFull\(\);/.test(bld), "🏃 v847: Terminei! mantém o resumo ou a falha de salvamento acessível na tela cheia");
     ok(/havKm\(ur9,pt\)>=0\.005/.test(bld) && /cr\.rota\.length>12000/.test(bld) && !/cr\.rota\.length>600\)cr\.rota\.shift/.test(bld),
       "🗺️ v743: o trajeto guarda a corrida INTEIRA (afinado por distância), não os últimos 600 pontos");
-    ok(/var fF9=L\('ptfeitos',\{\}\);if\(!fF9\[hjR\]&&f\.it\.length\)\{fF9\[hjR\]=1;Sv\('ptfeitos',fF9\)/.test(bld),
-      "✅ v743: terminar a ficha pelo player marca o dia (com ABC o automático nunca disparava)");
+    ok(/if\(realizadas&&!window\.__acRegistraConclusao\(\{tipo:'musc',data:isoHj\(\)\}\)\)/.test(bld),
+      "✅ v847: concluir pelo player registra o dia somente se houve série realizada; erro e repetição são cobertos em test-aluno-execucao-clareza");
     ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /if\(!rd\._interacao\|\|\(rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)\)return;/.test(bld),
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");
     ok(/mesmo9\.length>12\)fs\.splice\(mesmo9\[1\],1\)/.test(bld), "📸 v743: teto de 12 fotos POR ÂNGULO, e a primeira (o antes) nunca sai");
@@ -2605,11 +2621,11 @@ async function novaExecucaoAluno(p) {
       "🙋 v747: 'Avisei que vou' só pinta quando o recado do chat chegou de verdade");
     ok(/wod\.estourou=1;wodFim\('TEMPO! '[^;]*,cap\);/.test(bld) && /nf:\(tipo==='fortime'&&wod\.estourou\)\?1:0/.test(bld),
       "⏲️ v747: For Time que bate o limite leva o tempo do cap e nasce 'não terminei' — nada de 'tempo 0:00'");
-    ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:undefined/.test(bld),
+    ok(/wod\.fimEl=Math\.round\(el9\)/.test(bld) && /'terminou em '\+duT/.test(bld) && /\(parou antes\)/.test(bld) && /du:tipo==='amrap'\?durA:durReal/.test(bld),
       "⏱️ v747: AMRAP encerrado antes da hora grava o tempo REAL (e diz 'parou antes')");
-    ok(/id='crRsFeito'[^>]*>Registrar treino de hoje/.test(bld) && /bfe\.addEventListener\('click',function\(\)\{document\.getElementById\('btnFeito'\)\.click\(\)/.test(bld),
-      "🏃 v747: o resumo da corrida oferece o MESMO 'Registrar treino de hoje' do circuito");
-    ok(/>Descartar<\/button>/.test(bld) && /wpVoltar'\)\{if\(!confirm\(/.test(bld), "🗑️ v747: o 'Voltar' do placar virou 'Descartar' com confirmação");
+    ok(/function crFinaliza/.test(bld) && /__acRegistraConclusao\(\{tipo:'corrida',id:reg.id,data:reg.d\}\)/.test(bld),
+      "🏃 v847: conclusão da corrida registra o dia original pelo helper idempotente; falhas e duplicatas cobertas em test-corrida-retomada");
+    ok(/>Descartar<\/button>/.test(bld) && /if\(t.id==='wpVoltar'\)\{if\(wodR.registrado\(\)\)/.test(bld) && /if\(!confirm\('Descartar este resultado e a sessão em andamento\?'\)\)return;ov.remove\(\);wodR.limpa\(\)/.test(bld), "🗑️ v847: descartar exige confirmação e não apaga resultado já salvo com registro do dia pendente");
     ok(!/prompt\('Reps do round/.test(bld) && !/prompt\('Corrige o tempo/.test(bld) && !/prompt\('Reps da volta/.test(bld) && /function wpEdita\(/.test(bld) && /class='wpin'/.test(bld),
       "⌨️ v747: reps por round, tempo e reps extras se editam num campo dentro do tile — sem prompt() do navegador");
     ok(/if\(!nm\)\{if\(fb0\)/.test(bld), "🎁 v747: indicação sem nome não é registrada");
@@ -6262,7 +6278,8 @@ async function novaExecucaoAluno(p) {
       window.MTStore.write("ptStudio", st);
       return html;
     });
-    const pCapa = await p.context().newPage();
+    const ctxCapa = await contextoAppAluno(b, appCapa);
+    const pCapa = await ctxCapa.newPage();
     await pCapa.addInitScript(() => localStorage.setItem("pttema", JSON.stringify(1)));
     await pCapa.route("**/app-teste-capa.html", (r) => r.fulfill({ contentType: "text/html", body: appCapa }));
     await pCapa.goto(BASE + "/app-teste-capa.html", { waitUntil: "domcontentloaded" });
@@ -6279,6 +6296,7 @@ async function novaExecucaoAluno(p) {
     // tema aqui, os testes seguintes nasceriam no modo claro
     await pCapa.evaluate(() => localStorage.removeItem("pttema"));
     await pCapa.close();
+    await ctxCapa.close();
     ok(hero.claro && hero.foto === "block" && hero.comfoto,
       "o card do dia com foto se marca como 'comfoto' pro tema não mandar no texto");
     ok(hero.tit === "rgb(255, 255, 255)" && hero.sub === "rgb(214, 210, 223)",
@@ -6520,8 +6538,8 @@ async function novaExecucaoAluno(p) {
       "🛰️ v764: a janelinha do navegador só sai no toque em 'Ligar o GPS'");
     ok(/crGpsAgora\(\);abreCrFull\(0\)/.test(appHtml),
       "🛰️ v764: no 'Iniciar' o pedido vai direto — a tela cheia abriria por cima do card e ele não seria visto");
-    ok(/visibilitychange[^]{0,140}!cr\.run\)return[^]{0,120}cr\.watch==null&&!crGpsNeg\)crGpsLiga\(true\)/.test(appHtml),
-      "🛰️ v764: voltando pro app com a corrida rodando, o GPS e a tela acesa religam (o navegador suspende os dois)");
+    ok(/document.addEventListener\('visibilitychange', function \(\) \{ if \(document.hidden\) interrompe\(\); \}\)/.test(appHtml) && /C.pausa\(\); s.interrompida = true; salva\(true\); C.atualiza\(\)/.test(appHtml),
+      "🛰️ v847: ocultar o app pausa a corrida e protege o último progresso; retomada sem lacuna é coberta em test-corrida-retomada");
     ok(/err&&err\.code===2\)\?'A localiza/.test(appHtml),
       "🛰️ v764: localização do APARELHO desligada tem recado próprio — não é 'procurando o sinal'");
   }
@@ -7634,7 +7652,7 @@ async function novaExecucaoAluno(p) {
       const st = window.MTStore.read("ptStudio", {});
       const a = st.alunos.find((x) => x.id === sel.value);
       return {
-        qa: a.questApp, futIso,
+        qa: a.questApp, futIso, token: a.appTokenP,
         tb: upsert && upsert.tb,
         temDados: !!(upsert && upsert.row.dados && upsert.row.dados.dados),
         // v776: o pacote não leva html; o app que a página abaixo navega é montado
@@ -7647,8 +7665,14 @@ async function novaExecucaoAluno(p) {
     ok(envio.qa && envio.qa.desde === envio.futIso && envio.qa.repete === true && envio.qa.ps.length === 2, "📲 mandar pro app salva o questionário no aluno com data e repetição semanal");
     ok(envio.tb === "app_aluno" && envio.temDados && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado (dados na nuvem) e o app montado pelo site leva o questionário embutido");
     ok(/libera dia/.test(envio.aviso) && /toda semana/.test(envio.aviso), "aviso confirma data de liberação e repetição");
+    // O HTML direto substitui o loader: contexto do aluno isolado e seu token.
+    // Os cenários anteriores de /app/ deixam outro token no contexto do painel.
+    const ctxQuestApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxQuestApp.addInitScript(token => {
+      if (token && !localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
+    }, envio.token);
     // no app, antes da data: card TRANCADO 🔒
-    const pTrava = await ctx.newPage();
+    const pTrava = await ctxQuestApp.newPage();
     pTrava.on("pageerror", (e) => erros.push("app-quest: " + e));
     await pTrava.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
     await pTrava.route("**/app-quest-travado.html", (r) => r.fulfill({ contentType: "text/html", body: envio.html }));
@@ -7665,7 +7689,7 @@ async function novaExecucaoAluno(p) {
       window.MTStore.write("ptStudio", st);
       return window.__montaAppAluno(a, new Date().toISOString());
     });
-    const pLivre = await ctx.newPage();
+    const pLivre = await ctxQuestApp.newPage();
     pLivre.on("pageerror", (e) => erros.push("app-quest2: " + e));
     let postadoApp = null;
     await pLivre.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
@@ -7700,6 +7724,7 @@ async function novaExecucaoAluno(p) {
     ok(depois.telaOk && /Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
     ok(Object.keys(depois.ptqa).length === 1, "período respondido fica marcado no aparelho (não responde duas vezes)");
     await pLivre.close();
+    await ctxQuestApp.close();
   }
   // busca de aluno no topo abre o perfil
   await p.fill("#buscaAluno", "joão");
@@ -7890,7 +7915,14 @@ async function novaExecucaoAluno(p) {
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
   ok(/Meu login/.test(appHtml2) && /aluno_define_login/.test(appHtml2), "app com token ganha o card pra criar login e senha");
-  const pApp = await ctx.newPage();
+  // HTML direto: reproduz o token atribuído pelo loader sem herdar outro aluno.
+  const ctxApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  const studioApp = await p.evaluate(() => localStorage.getItem('mtapp:ptStudio'));
+  await ctxApp.addInitScript(studio => {
+    if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', 'tok-teste-chat');
+    if (!localStorage.getItem('mtapp:ptStudio')) localStorage.setItem('mtapp:ptStudio', studio);
+  }, studioApp);
+  const pApp = await ctxApp.newPage();
   const errosApp = [];
   pApp.on("pageerror", (e) => errosApp.push(String(e)));
   const chatDB = [];
@@ -8834,7 +8866,8 @@ async function novaExecucaoAluno(p) {
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
       return window.__montaAppAluno(a, new Date().toISOString());
     });
-    const pW = await ctx.newPage();
+    const ctxW = await contextoAppAluno(b, wodApp);
+    const pW = await ctxW.newPage();
     pW.on("dialog", (d) => d.accept());
     await pW.route("**/app-teste-wod.html", (r) => r.fulfill({ contentType: "text/html", body: wodApp }));
     await pW.goto(BASE + "/app-teste-wod.html", { waitUntil: "domcontentloaded" });
@@ -8881,6 +8914,7 @@ async function novaExecucaoAluno(p) {
       "tocar num movimento pula pra ele, e o que ficou pra trás aparece riscado");
     ok(gw.zerou.gi === 0 && gw.zerou.voltas === 0, "zerar o circuito volta pro primeiro movimento");
     await pW.close();
+    await ctxW.close();
     await p.evaluate((snap) => localStorage.setItem("mtapp:ptStudio", snap), snapWod);
   }
   // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
@@ -8898,7 +8932,8 @@ async function novaExecucaoAluno(p) {
       if (antes === undefined) delete al.questApp; else al.questApp = antes;
       return h;
     });
-    const pQ = await ctx.newPage();
+    const ctxQ = await contextoAppAluno(b, qaHtml);
+    const pQ = await ctxQ.newPage();
     const errosQ = [];
     pQ.on("pageerror", (e) => errosQ.push(String(e)));
     let envio = null;
@@ -8923,8 +8958,7 @@ async function novaExecucaoAluno(p) {
       "📝 e nada além disso — sem a lista de perguntas nem a caixa de explicação");
     const fluxo = await pQ.evaluate(async () => {
       const out = {};
-      // as páginas da suíte dividem o MESMO localStorage — guarda pra devolver
-      // no fim (uma chave a mais em ptqa mudaria o XP dos testes seguintes)
+      // Mede a nova resposta contra o estado inicial deste aluno isolado.
       const qa0 = localStorage.getItem("ptqa");
       const dr0 = localStorage.getItem("ptqadraft");
       window.__qaFluxo();
@@ -8960,6 +8994,7 @@ async function novaExecucaoAluno(p) {
       "Enviar manda a MESMA lista de sempre (sigla/pontos/menos + pontuação) e a tela Respondido aparece");
     ok(errosQ.length === 0, "fluxo do questionário sem erro de JS" + (errosQ.length ? " — " + errosQ[0] : ""));
     await pQ.close();
+    await ctxQ.close();
   }
   // --- R4: compartilhar com arte por cima da foto (telas 26-30) ---
   {
@@ -9127,7 +9162,8 @@ async function novaExecucaoAluno(p) {
   });
   ok(cardioProf.abaVisivel && cardioProf.salvos === 2 && /Rodagem de terça/.test(cardioProf.lista) && /2× 1s forte/.test(cardioProf.lista),
     "aba Corrida e bike do professor prescreve contínuo e tiros (intervalado)");
-  const pCr = await ctx.newPage();
+  const ctxCr = await contextoAppAluno(b, cardioProf.appHtml);
+  const pCr = await ctxCr.newPage();
   // Esta aba exercita o navegador SEM cinta. O Chrome do Windows expõe
   // Web Bluetooth mesmo em headless; a ausência deve ser explícita na fixture.
   await pCr.addInitScript(() => Object.defineProperty(navigator, "bluetooth", { configurable: true, writable: true, value: undefined }));
@@ -9159,9 +9195,11 @@ async function novaExecucaoAluno(p) {
     t: document.getElementById("crTempo").textContent,
     pace: document.getElementById("crPaceMed").textContent,
     dist: document.getElementById("crDist").textContent,
+    dots: document.getElementById("crDotsF").children.length,
   }));
   ok(/0:0[5-9]/.test(cardioRun.t) && cardioRun.dist === "0,02" && /^\d+:\d\d$/.test(cardioRun.pace),
     "cronômetro de cardio marca tempo, distância e pace (min/km)");
+  ok(cardioRun.dots === 4, "corrida livre mantém as quatro métricas sem inventar uma etapa prescrita");
   await pCr.evaluate(() => document.getElementById("crFim").click());
   await pCr.waitForTimeout(300);
   const cardioReg = await pCr.evaluate(() => ({
@@ -9182,12 +9220,16 @@ async function novaExecucaoAluno(p) {
   const cardioTiro = await pCr.evaluate(() => document.getElementById("crFase").textContent);
   ok(/TIRO \d DE 2/.test(cardioTiro), "tiros mostram FORTE/LEVE com o tiro atual na tela");
   await pCr.waitForTimeout(4200);
+  // 2×1s/1s encosta no mínimo de 5 s para salvar; aguarda o tick de conclusão.
+  await pCr.waitForFunction(() => !window.__cr.run && JSON.parse(localStorage.getItem('ptcardio') || '[]').length === 2, null, { timeout: 3000 });
   const cardioFim = await pCr.evaluate(() => ({
     fase: document.getElementById("crFase").textContent,
     lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"),
   }));
-  ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
-    "treino de tiros completa sozinho e registra o resultado");
+  const tirosCompletos = /TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 &&
+    /Tiros de quinta/.test(cardioFim.lst[1].n) && cardioFim.lst[1].status === 'completo';
+  ok(tirosCompletos, "treino de tiros completa sozinho e registra o resultado" +
+    (tirosCompletos ? '' : ' — ' + JSON.stringify({ fase: cardioFim.fase, registros: cardioFim.lst })));
   {
     // tela de resumo no fim da corrida (v602): tiles grandes, medalhas e postar
     const rs = await pCr.evaluate(async () => {
@@ -9668,7 +9710,8 @@ async function novaExecucaoAluno(p) {
     out.termineiCedo = document.getElementById("crFimF").style.display;
     window.__cr.t0 -= 6000; window.__pintaCr();
     out.terminei = document.getElementById("crFimF").style.display !== "none";
-    // métrica gigante paginada: um toque troca, as bolinhas mostram a página
+    // A corrida guiada também oferece a etapa atual além das quatro métricas.
+    out.guiado = !!window.__cr.blocos;
     out.gigaL = document.getElementById("crGigaL").textContent;
     document.getElementById("crPainelF").click();
     out.gigaL2 = document.getElementById("crGigaL").textContent;
@@ -9696,7 +9739,7 @@ async function novaExecucaoAluno(p) {
   ok(full.abriuAoIniciar && full.painel && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
     "iniciar a corrida abre o painel de cor chapada com botão Pausar gigante (estilo NRC)");
   ok(full.termineiCedo === "none", "🏃 v751: com menos de 5 s o Terminei! da tela cheia ainda não aparece (toque sem querer não vira 'botão que não funciona')");
-  ok(full.gigaL !== full.gigaL2 && full.dots === 4, "a métrica gigante troca com um toque e as 4 bolinhas mostram a página");
+  ok(full.guiado && full.gigaL !== full.gigaL2 && full.dots === 5, "a métrica gigante troca com um toque e as 5 bolinhas incluem a etapa da corrida guiada");
   ok(full.lock && full.destravou, "o cadeado bloqueia a tela na corrida e destrava segurando 1 segundo");
   ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
     "pausar mostra o mapa com a grade de métricas e o botão Continuar");
@@ -9990,8 +10033,10 @@ async function novaExecucaoAluno(p) {
     ok(c751.zerou, "🏃 v751: Zerar limpa mistoT0/mistoVai e o rumo (refazer o misto não mostra 'TIRO -1')");
   }
   await pCr.close();
+  await ctxCr.close();
   // com a ponte do app de loja (window.MTNativo.fc) tudo acende e a corrida guarda o resumo
-  const pFc = await ctx.newPage();
+  const ctxFc = await contextoAppAluno(b, cardioProf.appHtml);
+  const pFc = await ctxFc.newPage();
   pFc.on("dialog", (d) => d.accept());
   await pFc.addInitScript(() => {
     window.MTNativo = { fc: { conectar: function (cb) { window.__cbFc = cb; }, parar: function () { window.__fcParou = true; } } };
@@ -10039,6 +10084,7 @@ async function novaExecucaoAluno(p) {
   ok(/fc:L\('ptfc',\{\}\),idade:\+L\('ptidade',0\)/.test(cardioProf.appHtml) && /batimentos:L\('ptfc',\{\}\)/.test(cardioProf.appHtml),
     "o resumo de batimentos (e a idade, pras zonas) viaja pro professor no retorno, e entra no arquivo de dados do aluno");
   await pFc.close();
+  await ctxFc.close();
   // --- WhatsApp de hoje: fila de mensagens prontas + modelos editáveis ---
   const stSnapZap = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   await p.evaluate(() => {
@@ -11127,6 +11173,13 @@ async function novaExecucaoAluno(p) {
     geolocation: { latitude: -19.9245, longitude: -43.9352, accuracy: 10 },
     permissions: ["geolocation"],
   });
+  await ctxGps.addInitScript(() => {
+    const watch = navigator.geolocation.watchPosition.bind(navigator.geolocation);
+    navigator.geolocation.watchPosition = function (sucesso, erro, options) {
+      window.__gpsTesteSucesso = sucesso; window.__gpsTesteErro = erro;
+      return watch(sucesso, erro, options);
+    };
+  });
   const pGps = await ctxGps.newPage();
   pGps.on("dialog", (d) => d.accept());
   await pGps.route("**/app-teste-gps.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
@@ -11140,12 +11193,21 @@ async function novaExecucaoAluno(p) {
   await pGps.evaluate(() => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 })));
   await pGps.evaluate(() => document.getElementById("crGo").click());
   await pGps.waitForTimeout(300);
-  await ctxGps.setGeolocation({ latitude: -19.9254, longitude: -43.9352, accuracy: 10 });
+  // setGeolocation emite POSITION_UNAVAILABLE antes de cada posição nova no
+  // Chromium. Aqui medimos sinal contínuo; a interrupção é exercitada abaixo.
+  await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9254, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
-  await ctxGps.setGeolocation({ latitude: -19.9263, longitude: -43.9352, accuracy: 10 });
+  await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9263, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
   const gpsKm = await pGps.evaluate(() => window.__cr.km);
   ok(gpsKm > 0.15 && gpsKm < 0.26, "GPS mede a distância sozinho com o treino rodando (" + gpsKm.toFixed(2) + " km)");
+  const gpsLacuna = await pGps.evaluate(() => {
+    const antes = window.__cr.km;
+    window.__gpsTesteErro({ code: 2, message: 'Sinal sintético indisponível' });
+    window.__gpsTesteSucesso({ coords: { latitude: -19.94, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() });
+    return { antes, depois: window.__cr.km };
+  });
+  ok(gpsLacuna.depois === gpsLacuna.antes, "GPS que volta após perder o sinal não soma a distância desconhecida da lacuna");
   await pGps.evaluate(() => { document.getElementById("crZera").click(); window.__trocaSec("inicio"); });
   await pGps.waitForTimeout(300);
   ok(await pGps.evaluate(() => window.__cr.watch === null && !window.__cr.gpsOn), "sair da área desliga o GPS pra poupar bateria");
@@ -11221,7 +11283,8 @@ async function novaExecucaoAluno(p) {
     "aba Configurações salva a tolerância e as áreas do app (e pede pra republicar)");
   ok(!/data-trsub='wod'/.test(cfgSalvo.appHtml) && !/id='cardWod'/.test(cfgSalvo.appHtml) && !/id='cardCardio'/.test(cfgSalvo.appHtml) && !/Modo circuito \(WOD\)/.test(cfgSalvo.appHtml),
     "app do aluno some com o WOD e o cardio quando o professor desliga");
-  const pCfg = await ctx.newPage();
+  const ctxCfg = await contextoAppAluno(b, cfgSalvo.appHtml);
+  const pCfg = await ctxCfg.newPage();
   pCfg.on("dialog", (d) => d.accept());
   await pCfg.route("**/app-teste-cfg.html", (r) => r.fulfill({ contentType: "text/html", body: cfgSalvo.appHtml }));
   await pCfg.goto(BASE + "/app-teste-cfg.html", { waitUntil: "domcontentloaded" });
@@ -11233,6 +11296,7 @@ async function novaExecucaoAluno(p) {
   ok(!cfgApp.itens.some((t) => /Utilidades|Plano/.test(t)) && cfgApp.treinoOk,
     "menu do app respeita as chaves (sem Utilidades/Plano) e o treino segue funcionando sem erros");
   await pCfg.close();
+  await ctxCfg.close();
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCfg);
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCr);
   await pApp.evaluate(() => window.__trocaSec("inicio"));
@@ -12483,6 +12547,17 @@ async function novaExecucaoAluno(p) {
   });
   ok(/É só enviar/.test(ckZap.txt) && ckZap.temEnviei && ckZap.semPtck && ckZap.depois,
     "📲 v747: check-in pelo WhatsApp NÃO fecha a semana sozinho — só no 'Enviei' (" + (ckZap.semPtck ? "esperou" : "fechou antes") + ")");
+  // Este app tem armazenamento próprio: responde seu questionário aqui em vez
+  // de herdar o ptqa de pLivre, que pertence a outro cenário de navegação.
+  await pApp.route("**/rest/v1/rpc/app_quest_responde", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await pApp.evaluate(() => window.__qaFluxo());
+  await pApp.click("#qaFluxo [data-qj='0']");
+  await pApp.waitForSelector("#qaFluxo [data-qv='8']");
+  await pApp.click("#qaFluxo [data-qv='8']");
+  await pApp.click("#qaProx");
+  await pApp.waitForSelector("#qaVoltaIni");
+  await pApp.click("#qaVoltaIni");
+  ok(await pApp.evaluate(() => window.__qaPend() === 0), "o próprio aluno confirma seu questionário antes de conferir a área vazia");
   await pApp.evaluate(() => window.__trocaSec("quest"));
   // o card some na semana seguinte (pedido do Raphael): a área não pode ficar
   // só com a faixa roxa e mais nada
@@ -12693,6 +12768,7 @@ async function novaExecucaoAluno(p) {
   ok(temaSnap.hojeTxt === "rgb(33, 27, 45)" && temaSnap.hojeToken === "#211b2d" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
     "no modo claro o dia de hoje aparece no calendário (texto escuro sobre um véu da cor, não branco no vazio)");
   await pApp.close();
+  await ctxApp.close();
 
   // ---------- 🎨 tema do studio: cor principal + logo ----------
   console.log("Tema do studio (cor + logo):");
