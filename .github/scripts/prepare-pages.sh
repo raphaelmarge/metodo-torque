@@ -15,13 +15,20 @@ if [[ -n "${GITHUB_SHA:-}" && "$commit" != "$GITHUB_SHA" ]]; then
 fi
 dest=$(mktemp -d "$RUNNER_TEMP/torque-pages.XXXXXX")
 git archive --format=tar HEAD | tar -xf - -C "$dest"
+node tools/mapa-config/gera.js "$dest"
 python3 - "$dest" "$commit" <<'PY'
-import json, pathlib, re, sys
+import hashlib, json, os, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 version = re.search(r'MT_VERSAO\s*=\s*"(mt-v\d+)"', (root / 'assets/versao.js').read_text())
 if not version:
     raise SystemExit('Versão do artefato ausente; publicação bloqueada.')
-(root / 'release-info.json').write_text(json.dumps({'commit': sys.argv[2], 'version': version[1]}) + '\n')
+map_config = (root / 'assets/mapa-config.js').read_bytes()
+info = {'commit': sys.argv[2], 'version': version[1],
+        'mapbox_configured': bool(re.search(rb'mapboxToken\s*=\s*"pk\.', map_config)),
+        'mapbox_config_sha256': hashlib.sha256(map_config).hexdigest()}
+(root / 'release-info.json').write_text(json.dumps(info) + '\n')
+with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
+    output.write('mapbox_config_sha256=' + info['mapbox_config_sha256'] + '\n')
 PY
 printf 'path=%s\n' "$dest" >> "$GITHUB_OUTPUT"
 printf 'Artefato aprovado: %s\n' "$commit"

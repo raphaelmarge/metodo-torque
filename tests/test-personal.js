@@ -6540,8 +6540,8 @@ async function contextoAppAluno(browser, html, options = {}) {
       "🛰️ v764: no 'Iniciar' o pedido vai direto — a tela cheia abriria por cima do card e ele não seria visto");
     ok(/document.addEventListener\('visibilitychange', function \(\) \{ if \(document.hidden\) interrompe\(\); \}\)/.test(appHtml) && /C.pausa\(\); s.interrompida = true; salva\(true\); C.atualiza\(\)/.test(appHtml),
       "🛰️ v847: ocultar o app pausa a corrida e protege o último progresso; retomada sem lacuna é coberta em test-corrida-retomada");
-    ok(/err&&err\.code===2\)\?'A localiza/.test(appHtml),
-      "🛰️ v764: localização do APARELHO desligada tem recado próprio — não é 'procurando o sinal'");
+    ok(/err&&err\.code===2\)\?'Localiza/.test(appHtml),
+      "🛰️ GPS indisponível tem orientação própria para conferir sinal e localização; não afirma que o aparelho foi desligado");
   }
 
   /* v765: o placar do app. Medido no banco em 2026-09-03: os CINCO alunos que
@@ -11195,12 +11195,19 @@ async function contextoAppAluno(browser, html, options = {}) {
   await pGps.waitForTimeout(300);
   // setGeolocation emite POSITION_UNAVAILABLE antes de cada posição nova no
   // Chromium. Aqui medimos sinal contínuo; a interrupção é exercitada abaixo.
+  // A primeira leitura após largar é a âncora. Depois percorremos100m em10s,
+  // não100m em800ms (que deve ser filtrado como salto de GPS).
+  await pGps.clock.setFixedTime(new Date(Date.now() + 1000));
+  await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9245, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
+  await pGps.clock.setFixedTime(new Date(await pGps.evaluate(() => Date.now() + 10000)));
   await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9254, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
+  await pGps.clock.setFixedTime(new Date(await pGps.evaluate(() => Date.now() + 10000)));
   await pGps.evaluate(() => window.__gpsTesteSucesso({ coords: { latitude: -19.9263, longitude: -43.9352, accuracy: 10 }, timestamp: Date.now() }));
   await pGps.waitForTimeout(800);
   const gpsKm = await pGps.evaluate(() => window.__cr.km);
   ok(gpsKm > 0.15 && gpsKm < 0.26, "GPS mede a distância sozinho com o treino rodando (" + gpsKm.toFixed(2) + " km)");
+  await pGps.clock.setFixedTime(new Date(await pGps.evaluate(() => Date.now() + 1000)));
   const gpsLacuna = await pGps.evaluate(() => {
     const antes = window.__cr.km;
     window.__gpsTesteErro({ code: 2, message: 'Sinal sintético indisponível' });

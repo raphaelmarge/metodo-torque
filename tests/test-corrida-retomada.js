@@ -91,7 +91,11 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
   s = await state(); eq([s.run, s.tempo, s.km], [false, 24, .12], 'voltar ao app não adiciona a lacuna nem reinicia sozinho');
   await p.evaluate(() => document.getElementById('crGo').click());
-  async function gps(lat, accuracy) { await p.evaluate(({ lat, accuracy }) => { const cb = __gpsCallbacks[__cr.watch]; if (!cb) throw new Error('GPS não iniciou'); cb({ coords: { latitude: lat, longitude: -44, accuracy, speed: 2, heading: 0 }, timestamp: Date.now() }); }, { lat, accuracy }); }
+  async function gps(lat, accuracy) {
+    // Pontos distintos levam tempo real de percurso; não simulamos 55m em0s.
+    await p.clock.setFixedTime(new Date(await p.evaluate(() => Date.now() + 5000)));
+    await p.evaluate(({ lat, accuracy }) => { const cb = __gpsCallbacks[__cr.watch]; if (!cb) throw new Error('GPS não iniciou'); cb({ coords: { latitude: lat, longitude: -44, accuracy, speed: 2, heading: 0 }, timestamp: Date.now() }); }, { lat, accuracy });
+  }
   await gps(-20, 50);
   eq(await p.locator('#crSinalF').getAttribute('data-estado'), 'fraco', 'precisão de50m é fraca, de acordo com o filtro de40m');
   eq((await state()).km, .12, 'leitura fraca não altera a distância');

@@ -14,7 +14,7 @@
  * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
  * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
  * este número bate com o do assets/versao.js e o do sw.js. */
-var VERSION = "mt-v847";
+var VERSION = "mt-v848";
 var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
@@ -37,6 +37,7 @@ var ESQUELETO = [
   "nutri-skin.js",
   "manifest.webmanifest",
   "../assets/cloud-config.js",
+  "../assets/mapa-config.js",
   "../assets/versao.js",
   "../assets/identidade-marca.js",
   "../assets/nutricao-core.js",

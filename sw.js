@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v847";
+var VERSION = "mt-v848";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -82,6 +82,7 @@ var CORE = [
   "assets/access-config.js",
   "assets/access.js",
   "assets/cloud-config.js",
+  "assets/mapa-config.js",
   "assets/erro-funcao.js",
   "assets/funcao-nuvem.js",
   "assets/vendor/supabase.js",
@@ -267,6 +268,7 @@ self.addEventListener("fetch", function (event) {
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
       url.pathname.indexOf("supabase-setup.sql") > -1 ||
       url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
+      url.pathname.endsWith("/assets/mapa-config.js") ||
       url.pathname.indexOf("/app/aluno-skin.js") > -1 ||
       url.pathname.indexOf("/app/medalhas-core.js") > -1 ||
       url.pathname.indexOf("/app/medalhas-catalogo.js") > -1 ||

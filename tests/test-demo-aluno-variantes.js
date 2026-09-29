@@ -26,6 +26,9 @@ for(const [label,html,gate] of [['com cadastro',comCadastro,true],['direta',semC
  ok(html.includes('var __demoLS=')||html.includes('var __demoLS ='),label+': usa armazenamento simulado');
  ok(html.includes('/storage/v1/object/public/exercicios/'),label+': leva a configuração do banco público de GIFs');
  ok(html.includes('supino-reto-barra.gif')&&html.includes('cadeira-abdutora.gif'),label+': exercícios da fixture levam caminhos reais do acervo');
+ const mapa = [...html.matchAll(/<script\b[^>]*\bsrc=['"]\/?assets\/mapa-config\.js['"][^>]*>/g)];
+ ok(mapa.length === 1,label+': mapas usam o mesmo arquivo de configuração pública do produto');
+ ok(mapa[0].index < html.search(/var\s+__demoLS\s*=/) && !/self\.MT_MAPA\s*=\s*\{\s*["']?mapboxToken/.test(html),label+': configuração antecede a demo sem incorporar cópia do token no HTML');
 }
 const minimal=(gate)=>'<title>Demo</title><script>'+marker+(gate?'function runtime(cfg, api) {}':'')+'</script><main>Fixture</main>';
 const input={comCadastro:minimal(true),semCadastro:minimal(false)},before=JSON.stringify(input);
