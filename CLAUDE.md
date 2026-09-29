@@ -6,6 +6,30 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v849 — Treino conforme a referência do proprietário
+
+- A execução mostra ficha e exercício, demonstração ampla em 16:9 com a mídia
+  inteira, dica e seletor horizontal de séries. Prescrito e anterior acompanham
+  os campos de repetições e carga; RPE e ajustes ficam em um disclosure.
+- A reorganização está em `app/aluno-skin.js`; GP/SR, armazenamento, valores
+  sugeridos, zero/vazio, registro, edição, descanso e retomada continuam canônicos.
+  Histórico, instruções, técnicas e navegação permanecem acessíveis nos detalhes.
+- Preservar a marca do profissional, contraste nas cores personalizadas e nos
+  dois temas. Com teclado aberto, campo focado e confirmação precisam caber.
+- Não restaurar o formulário grande fixo da composição anterior. O conteúdo
+  compartilha a rolagem e a confirmação fica acessível junto do descanso.
+- As três demos são geradas pelo script canônico. Evidências e limites em
+  `docs/releases/mt-v849-treino-referencia.md`.
+
+## v848 — Mapbox na corrida
+
+- Mapa com posição, trajeto segmentado, marcos e relevo. Uma instância acompanha
+  os modos compacto e tela cheia. Falha do fornecedor mantém a alternativa local.
+- Token público vem da variável Actions `MAPBOX_PUBLIC_TOKEN` para o artefato;
+  `assets/mapa-config.js` no Git é um stub vazio. Nunca versionar a chave real.
+- GPS rejeita amostras antigas, imprecisas e saltos incompatíveis. A web continua
+  pausando oculta. Detalhes em `docs/corrida-mapbox.md`.
+
 ## v847 — Execução e retomada no app do aluno
 
 - Musculação mantém carga/repetições/esforço junto da confirmação; alvos de toque

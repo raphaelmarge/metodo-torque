@@ -22,9 +22,9 @@ async function main() {
   async function caso(D,init) {const x=await abrir(browser,{D,init});casos.push(x);return x.p;}
   try {
     const p=await caso(ficha());
-    ok(await p.evaluate(() => {const carga=document.getElementById('gKg'),reps=document.getElementById('gReps');return !!(carga.compareDocumentPosition(reps)&Node.DOCUMENT_POSITION_FOLLOWING)&&carga.getBoundingClientRect().x<reps.getBoundingClientRect().x;}),'carga vem primeiro e à esquerda no registro aprovado');
+    ok(await p.evaluate(() => {const carga=document.getElementById('gKg'),reps=document.getElementById('gReps');return !!(reps.compareDocumentPosition(carga)&Node.DOCUMENT_POSITION_FOLLOWING)&&reps.getBoundingClientRect().x<carga.getBoundingClientRect().x;}),'repetições vêm primeiro e à esquerda no registro aprovado');
     ok(await p.inputValue('#gReps')==='5'&&await p.inputValue('#gKg')==='60','primeira série traz reps e carga prescritas');
-    ok((await p.textContent('#gSerie')).includes('Registrar série')&&(await p.textContent('#gCgLab'))==='Ajuste se precisar','ação principal registra a série no contrato aprovado');
+    ok((await p.textContent('#gSerie')).includes('Registrar série')&&await p.locator('#gSerie').isVisible()&&await p.locator('.gserie-referencias').isVisible(),'ação principal registra a série com a referência prescrita acessível');
     await p.click('[data-gserie="1"]');await p.click('[data-gserie="2"]');await p.click('[data-gserie="0"]');
     await p.click('.gserie-ajustes summary');await p.waitForTimeout(150);
     ok(await p.evaluate(() => !window.__gvDe().sujo&&document.getElementById('gWRep').compareDocumentPosition(document.getElementById('gWKg'))&Node.DOCUMENT_POSITION_FOLLOWING),'réguas seguem reps/carga; abrir opções não altera sugestão');
@@ -97,7 +97,7 @@ async function main() {
     await clicarControle(sem, '#gSemRegistro');
     ok((await registro(sem))[0].feito&&(await registro(sem))[0].kg===null&&!(await registro(sem))[0].r,'Concluir sem anotar ignora sugestões intocadas sem exigir apagar os campos');
     await preencherRegistro(sem, '#gKg', '42');await clicarControle(sem, '#gSemRegistro');
-    ok(!(await registro(sem)).some(r=>r.serie===2&&r.feito)&&(await sem.textContent('#gCgLab')).includes('preenchimento'),'Concluir sem anotar protege ajuste manual pendente');
+    ok(!(await registro(sem)).some(r=>r.serie===2&&r.feito)&&await sem.locator('#gCgLab').isVisible()&&(await sem.locator('#gCgLab').innerText()).includes('preenchimento')&&await sem.inputValue('#gKg')==='42','Concluir sem anotar mantém ajuste manual e aviso visível sem concluir a série');
     await preencherRegistro(sem, '#gKg', '');await clicarControle(sem, '#gSemRegistro');
     ok((await registro(sem)).find(r=>r.serie===2).kg===null&&!(await registro(sem)).find(r=>r.serie===2).r,'limpar só o ajuste manual permite ignorar a sugestão restante');
 
@@ -116,6 +116,7 @@ async function main() {
 
     const faixa=await caso(ficha([null,null,null],['8–12','até falha','30s']));
     for(let i=0;i<3;i++){await faixa.click('[data-gserie="'+i+'"]');ok(await faixa.inputValue('#gReps')===''&&await faixa.inputValue('#gKg')==='','alvo não numérico e carga desconhecida ficam vazios: '+['8–12','até falha','30s'][i]);}
+    await clicarControle(faixa, '#gTemplateTab-video');
     ok((await faixa.locator('#gTemplatePrescription dd').nth(0).innerText())==='—','ausência de carga é apresentada sem inventar valor no card de prescrição');
     await clicarControle(faixa, '#gSerie');
     rows=await registro(faixa);ok(rows[0].feito&&rows[0].kg===null&&!rows[0].r,'confirmar campo vazio não inventa execução numérica');

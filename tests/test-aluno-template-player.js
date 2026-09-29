@@ -15,19 +15,23 @@ function contrastRatio(a,b){const la=luminance(a),lb=luminance(b);return (Math.m
 function hexRgb(hex){let s=hex.slice(1);if(s.length===3)s=s.split('').map(x=>x+x).join('');const n=parseInt(s,16);return [(n>>16)&255,(n>>8)&255,n&255];}
 async function contrast(locator){
  return locator.evaluate(el=>{
-  const rgb=value=>(value.match(/[\d.]+/g)||[]).slice(0,3).map(Number);
+  const rgba=value=>{const n=(value.match(/[\d.]+/g)||[]).map(Number);return [n[0]||0,n[1]||0,n[2]||0,n.length>3?n[3]:1];};
+  const composite=(fg,bg)=>fg.slice(0,3).map((v,i)=>v*fg[3]+bg[i]*(1-fg[3]));
   const lum=c=>[.2126,.7152,.0722].reduce((sum,w,i)=>{let v=c[i]/255;v=v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);return sum+w*v;},0);
-  const css=getComputedStyle(el),a=lum(rgb(css.color)),b=lum(rgb(css.backgroundColor));return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  const ancestors=[];for(let node=el;node;node=node.parentElement)ancestors.unshift(node);
+  const bg=ancestors.reduce((color,node)=>composite(rgba(getComputedStyle(node).backgroundColor),color),[255,255,255]);
+  const a=lum(composite(rgba(getComputedStyle(el).color),bg)),b=lum(bg);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
  });
 }
 function fixture(){const d=dados();d.guiaFichasP[0].it[0].rpe=8;d.fichasApp[0].itens[0].rpe=8;return d;}
-async function open(browser,width=390,theme='',D=fixture(),store){
+async function open(browser,width=390,theme='',D=fixture(),store,options={}){
   global.self=global;global.MT_CLOUD={url:'https://player.invalid',anonKey:'ficticio'};
   require('../app/aluno-skin');require('../app/aluno-builder');
   let html=global.MT_APP_ALUNO.monta(D);
   for(const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g))new Function(script[1]);
-  const ctx=await browser.newContext({viewport:{width,height:1000},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+  const ctx=await browser.newContext({viewport:{width,height:options.height||1000},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
   await ctx.route('**/*',r=>r.request().url().startsWith(BASE)?r.continue():r.abort());
+  if(options.media)await ctx.route(BASE+'/__reference-fixture/*.gif',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640"><rect width="640" height="640" fill="#d8e3ed"/><rect x="8" y="8" width="624" height="624" rx="24" fill="none" stroke="#1e3a5f" stroke-width="16"/><circle cx="320" cy="140" r="54" fill="#235a83"/><path d="M320 204V442M320 242L134 314M320 242L506 314M320 442L224 578M320 442L416 578" fill="none" stroke="#235a83" stroke-width="38" stroke-linecap="round"/><text x="320" y="45" text-anchor="middle" font-family="sans-serif" font-size="24">Demonstração sintética</text></svg>'}));
   await ctx.route(BASE+'/template-player-test.html',r=>r.fulfill({contentType:'text/html',body:html}));
   const init={pttour:JSON.stringify({como:'teste'}),ptonb:JSON.stringify({feito:true}),...store};
   const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
@@ -43,19 +47,31 @@ async function open(browser,width=390,theme='',D=fixture(),store){
   await p.waitForFunction(()=>window.__playerTemplate&&window.__acSessao);
   if(theme)await p.evaluate(theme=>document.documentElement.classList.add(theme),theme);
   await p.evaluate(()=>abreGuia(0));
-  const click=async selector=>{await p.locator(selector).evaluate(n=>{for(let a=n.parentElement;a;a=a.parentElement)if(a.tagName==='DETAILS')a.open=true;});await p.click(selector);};
-  return {p,ctx,errors,click};
+  const reveal=async selector=>{
+    const details=p.locator(selector).locator('xpath=ancestor::details');
+    for(let i=0;i<await details.count();i++){const parent=details.nth(i);if(!await parent.evaluate(n=>n.open))await parent.locator(':scope > summary').click();}
+  };
+  const click=async selector=>{await reveal(selector);await p.click(selector);};
+  const fill=async(selector,value)=>{await reveal(selector);await p.fill(selector,value);};
+  return {p,ctx,errors,click,fill,reveal};
 }
 async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});
  try{
-  const t=await open(browser),{p,click}=t;
+  const t=await open(browser),{p,click,fill}=t;
   const palette=['#7c3aed','#dc2626','#ea580c','#d97706','#16a34a','#0d9488','#2563eb','#db2777'];
   ok(palette.every(c=>{const d=fixture();d.COR=c;const html=global.MT_APP_ALUNO.monta(d),fg=(html.match(/--cor-on:(#[0-9a-f]{3,6});/i)||[])[1];return fg&&contrastRatio(hexRgb(c),hexRgb(fg))>=4.5;}),'paleta inteira gera texto de ação com contraste WCAG AA');
+  for(const color of palette)for(const theme of ['', 'claro']){
+   const d=fixture();d.COR=color;
+   const sample=await open(browser,390,theme,d);
+   ok(await contrast(sample.p.locator('#gSerie'))>=4.5,color+' '+(theme||'escuro')+': CSS renderizado preserva contraste AA da ação personalizada');
+   await sample.ctx.close();
+  }
   const records=()=>p.evaluate(()=>L('ptdc',{})['Supino teste']||[]);
   const completed=()=>p.evaluate(()=>GP.conta(GUIA[0].it[0],0));
-  const reference=()=>p.locator('#gTemplatePrescription').innerText();
-  ok(await p.isVisible('#gTemplateHero')&&await p.isVisible('#gTemplateTabs'),'hero e três abas pertencem ao executor real');
+  const reference=async()=>{await t.reveal('#gTemplatePrescription');return p.locator('#gTemplatePrescription').innerText();};
+  ok(await p.isVisible('#gTemplateHero')&&await p.isVisible('#gTemplatePanel-video'),'título e demonstração pertencem ao executor real');
+  ok(await p.locator('#gTemplateGuidance').evaluate(d=>!d.open)&&!await p.isVisible('#gRpe'),'orientações e esforço opcional começam recolhidos');
   ok(await p.isVisible('#gSerie'),'ação de registro acessível ao abrir');
   ok((await records()).length===0&&await p.inputValue('#gRpe')==='','abrir não registra série nem preenche esforço realizado com o prescrito');
   const before=await reference();ok(before.includes('60 kg')&&before.includes('90 s')&&before.includes('8'),'prescrição exibe dados reais, incluindo alvo de esforço');
@@ -66,32 +82,34 @@ async function main(){
   await click('#gTemplateTab-video');
   await click('[data-gpt-step="gKg"][data-delta="1"]');
   ok(await p.inputValue('#gKg')==='61'&&(await records()).length===0,'stepper altera só o rascunho');
-  await p.fill('#gReps','6');await p.fill('#gRpe','8,5');
+  await p.fill('#gReps','6');await fill('#gRpe','8,5');
   await click('[data-gserie="1"]');await click('[data-gserie="0"]');
   ok(await p.inputValue('#gRpe')==='8,5'&&await p.inputValue('#gKg')==='61','RPE e carga retomam na série correta');
   ok(await reference()===before,'editar resultado não altera prescrição');
-  await p.fill('#gRpe','11');await click('#gSerie');
+  await fill('#gRpe','11');await click('#gSerie');
   ok(await completed()===0&&(await records()).length===0,'RPE inválido impede gravação e conclusão');
   ok((await p.locator('#gCgLab').innerText()).includes('RPE'),'erro identifica o campo de esforço opcional');
-  await p.fill('#gRpe','8,5');await click('#gSerie');
+  ok(await p.isVisible('#gRpe')&&await p.inputValue('#gRpe')==='11','erro de esforço mantém o campo e o valor acessíveis para correção');
+  await fill('#gRpe','8,5');await click('#gSerie');
   let r=(await records())[0];ok(r.feito&&r.kg===61&&r.r===6&&r.rpe===8.5,'confirmar grava um resultado por série com esforço informado');
-  ok(await p.isVisible('#gTemplateSuccess')&&!await p.isVisible('#gMiolo2'),'confirmação abre tabela e feedback sem duplicar formulário');
+  ok(await p.isVisible('#gTemplateSuccess')&&await p.isVisible('#gMiolo2'),'confirmação mantém feedback e campos disponíveis sem duplicar formulário');
+  await t.reveal('[data-gpt-row="0"]');
   ok((await p.locator('[data-gpt-row="0"]').innerText()).includes('61 kg'),'tabela usa carga realizada');
   ok((await p.locator('[data-gpt-row="1"]').innerText()).includes('— kg'),'série pendente não recebe a carga prescrita na tabela');
   await click('[data-gpt-edit="0"]');await p.fill('#gKg','59');await click('#gSerie');
   r=(await records())[0];ok(await completed()===1&&(await records()).length===1&&r.kg===59&&r.rpe===8.5,'editar não duplica execução e conserva esforço');
   await p.evaluate(()=>__gGrava('Supino teste','58','6','0:0:0'));
   ok((await records())[0].rpe===8.5,'chamada antiga sem argumento RPE conserva dado já salvo');
-  await click('[data-gserie="0"]');await p.fill('#gRpe','');await click('#gSerie');
+  await click('[data-gserie="0"]');await fill('#gRpe','');await click('#gSerie');
   ok(!Object.hasOwn((await records())[0],'rpe'),'limpar RPE explicitamente remove só esse campo');
   await click('#gDesfazSerie');ok(await completed()===0&&(await records())[0].kg===58,'desfazer mantém anotação e remove conclusão');
   await click('#gTemplateFavorite');ok(await p.evaluate(()=>L('ptconf',{}).playerFavoritos.includes('Supino teste')),'favorito salva preferência sem criar execução');
   await click('#gTemplateFavorite');ok(await completed()===0,'remover favorito não toca séries');
-  await p.fill('#gKg','0');await p.fill('#gReps','5');await p.fill('#gRpe','7');await click('#gSerie');
+  await p.fill('#gKg','0');await p.fill('#gReps','5');await fill('#gRpe','7');await click('#gSerie');
   ok((await records())[0].kg===0&&(await records())[0].rpe===7,'zero explícito preservado e distinto de ausência');
   await p.evaluate(()=>__zeraDescanso());
   ok(await p.isVisible('#gKg')&&await p.inputValue('#gKg')==='70','fim de descanso apresenta próxima série e seu alvo');
-  await p.fill('#gKg','64');await p.fill('#gRpe','6,5');await click('#gFechar');
+  await p.fill('#gKg','64');await fill('#gRpe','6,5');await click('#gFechar');
   await p.evaluate(()=>abreGuia(0));
   ok(await p.inputValue('#gRpe')==='6,5','fechar e retomar recupera esforço sem marcar execução');
   ok(await completed()===1,'retomada não conclui série pendente');
@@ -102,23 +120,23 @@ async function main(){
   ok(await resumed.p.inputValue('#gRpe')==='6,5','novo documento recupera checkpoint sem transferir esforço para outra série');
   await resumed.ctx.close();
   await click('#gPularEx');ok(await p.evaluate(()=>__gvDe().e===1)&&await completed()===1,'próximo exercício preserva pendências sem fabricar conclusão');
-  await p.fill('#gKg','');await p.fill('#gReps','');await p.fill('#gRpe','');await click('#gSerie');
+  await p.fill('#gKg','');await p.fill('#gReps','');await fill('#gRpe','');await click('#gSerie');
   ok(await p.isVisible('#gFecharTreino'),'última série mantém Terminar treino visível na revisão');
   await click('#gFecharTreino');
   ok(await p.isVisible('#gRevisaoSeries'),'último exercício abre resumo canônico');
   await click('#gRevisaoSeries summary');await click('[data-grever="1"][data-ge="0"]');
-  ok(await p.isVisible('#gRpe'),'resumo permite rever esforço da série exata');
-  await p.fill('#gRpe','4');await click('#gSalvar');
+  await t.reveal('#gRpe');ok(await p.isVisible('#gRpe'),'resumo permite abrir e rever esforço da série exata');
+  await fill('#gRpe','4');await click('#gSalvar');
   ok((await records()).find(x=>x.serie===2).rpe===4&&await completed()===1,'anotação tardia de esforço não conclui série pendente');
   await click('#gVoltaFim');ok(await p.isVisible('#gRevisaoSeries'),'voltar ao resumo mantém recibo legível');
   ok(t.errors.length===0,'ciclo sem exceções JavaScript: '+t.errors.join('; '));await t.ctx.close();
   for(const width of [320,390,1280])for(const theme of ['', 'claro']){
    const x=await open(browser,width,theme),q=x.p;
    ok(await q.evaluate(()=>{const b=document.getElementById('guiaBox'),c=document.getElementById('gCard');return b.scrollWidth<=b.clientWidth+1&&c.scrollWidth<=c.clientWidth+1;}),width+' '+theme+': sem corte horizontal');
-   ok(await q.locator('#gTemplateTabs [role=tab]').count()===3,width+' '+theme+': três abas únicas');
+   ok(await q.locator('#gTemplateTabs [role=tab]').count()===3,width+' '+theme+': orientações mantêm três destinos únicos');
    ok(await contrast(q.locator('#gSerie'))>=4.5,width+' '+theme+': ação principal mantém contraste WCAG AA');
-   ok(await q.evaluate(()=>{const a=document.getElementById('gSerie').getBoundingClientRect(),n=document.getElementById('gTemplateBottom').getBoundingClientRect();return a.top>=0&&a.bottom<=n.top+1&&n.bottom<=innerHeight+1;}),width+' '+theme+': ação fixa não fica sob a navegação');
-   await q.fill('#gRpe','8');await x.click('#gSerie');
+   ok(await q.evaluate(()=>{const a=document.getElementById('gSerie').getBoundingClientRect(),n=document.getElementById('gTemplateBottom').getBoundingClientRect();return a.top>=0&&a.bottom<=innerHeight+1&&(n.bottom<=a.top+1||n.top>=a.bottom-1);}),width+' '+theme+': ação fixa permanece na tela sem sobrepor a navegação');
+   await x.fill('#gRpe','8');await x.click('#gSerie');
    ok(await q.isVisible('#gTemplateSuccess'),width+' '+theme+': feedback após confirmação');
    ok(await contrast(q.locator('#gPularEx'))>=4.5,width+' '+theme+': ação de revisão mantém contraste WCAG AA');
    await x.click('#gPularEx');

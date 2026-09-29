@@ -23,6 +23,11 @@ async function clicarControle(page, selector) {
 }
 async function preencherRegistro(page, selector, value) {
   await abrirRegistro(page);
+  const parents = page.locator(selector).locator('xpath=ancestor::details');
+  for (let i = 0; i < await parents.count(); i++) {
+    const parent = parents.nth(i);
+    if (!await parent.evaluate(e => e.open)) await parent.locator(':scope > summary').click();
+  }
   await page.fill(selector, value);
 }
 module.exports = { abrirRegistro, clicarControle, preencherRegistro };

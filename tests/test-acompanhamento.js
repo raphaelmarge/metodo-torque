@@ -100,7 +100,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   // O botão do treino é a entrada real do player.
   await pa.evaluate(()=>document.querySelector('.guiabtn').click());
   await pa.waitForFunction(()=>getComputedStyle(document.getElementById('guiaBox')).display==='flex');
-  await pa.click('#gTemplateTab-instructions');await pa.locator('#gTemplatePanel-instructions .galt .altbtn').click();
+  await clicarControle(pa,'#gTemplateTab-instructions');await pa.locator('#gTemplatePanel-instructions .galt .altbtn').click();
   ok((await pa.locator('#gTemplatePanel-instructions .galt').innerText()).includes('aprovadas'),'alternativa do professor tem origem explícita na aba de instruções');
   await clicarControle(pa, '#gSerie');
   const saved=await pa.evaluate(()=>window.__acSessao.ler());
@@ -111,7 +111,7 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   ok(await pa.isVisible('#acRetomar'),'app oferece continuar depois de recarregar');
   await pa.click('#acRetomar button');
   ok(await pa.evaluate(()=>window.__gvDe().s===1 && window.__gvDe().timer!==null),'retomada mantém série e descanso');
-  await pa.evaluate(()=>window.__zeraDescanso());await pa.click('#gTemplateTab-tips');await pa.click('#acRelatar');
+  await pa.evaluate(()=>window.__zeraDescanso());await clicarControle(pa,'#gTemplateTab-tips');await pa.click('#acRelatar');
   await pa.fill('.ac-feedback textarea','Preciso confirmar a pegada.');await pa.click('[data-ac-save]');
   const nota=await pa.evaluate(()=>JSON.parse(localStorage.getItem('ptnotas')).slice(-1)[0]);
   ok(nota.ex==='Supino teste' && nota.serie===2 && nota.ficha==='A — Teste','relato preserva exercício, ficha e série');
