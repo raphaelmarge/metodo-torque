@@ -15,13 +15,14 @@ O app do aluno passa a usar Mapbox GL JS 3.30.0 quando há token público config
 
 - Teste Mapbox isolado: 88 verificações, incluindo falhas de CSS/SDK/WebGL/autorização, ciclo de vida, câmera, marcos, estilos e 3D. Nenhum acesso à conta nesse teste.
 - GPS: 44 verificações; recuperação de sessão: 56 verificações. Coordenadas, identidade e armazenamento são fictícios.
+- Configuração de publicação: 58 verificações; pipeline de release: 59; variantes das demos: 32. O pós-deploy rejeita uma configuração antiga mesmo quando o commit é o mesmo.
 - SDK real com estilo isolado: geometrias em 320, 390, 768 e 1440 pixels, controles por teclado e créditos visíveis.
 - Mapbox real: estilo HTTP 200, ruas vetoriais e relevo carregados com a conta configurada, quatro larguras, nenhum erro de JavaScript ou resposta de erro do Mapbox. Usado somente um percurso fictício.
 - A publicação depende do gate completo do commit final; o resultado do CI e o commit servido devem ser registrados na entrega.
 
 ## Configuração no artefato publicado
 
-`assets/mapa-config.js` é carregado depois de `assets/cloud-config.js` no app, no Personal e nas demos. O arquivo versionado não contém token. A publicação gera seu conteúdo a partir de `MAPBOX_PUBLIC_TOKEN`, sem alterar outras configurações, e exige um valor público válido com `REQUIRE_MAPBOX_PUBLIC_TOKEN=true`. A variável foi criada por API (HTTP 201) e conferida sem exposição do valor.
+`assets/mapa-config.js` é carregado depois de `assets/cloud-config.js` no app e no Personal. As demos carregam a mesma configuração antes de inicializar seu runtime simulado. O arquivo versionado não contém token. A publicação gera seu conteúdo a partir de `MAPBOX_PUBLIC_TOKEN`, sem alterar outras configurações, e exige um valor público válido com `REQUIRE_MAPBOX_PUBLIC_TOKEN=true`. A variável foi criada por API (HTTP 201) e conferida sem exposição do valor.
 
 O artefato registra o SHA-256 da configuração gerada em `release-info.json`, junto de commit e versão. Na conferência do site, os demais arquivos de produto devem coincidir com o commit aprovado; a configuração deve coincidir com seu hash no artefato. O metadado de release é também gerado. Nenhuma outra divergência de conteúdo fica autorizada por essa exceção. O procedimento completo está em [Conferência da publicação](../corrida-mapbox.md#conferência-da-publicação).
 

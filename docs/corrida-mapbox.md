@@ -8,7 +8,7 @@ O mapa é uma camada de visualização da corrida. O registro dos pontos, a dist
 
 `runtimeMapaMapbox(C)` fica em `app/aluno-builder.js` e é incorporado ao documento gerado pelo construtor. O SDK externo Mapbox GL JS 3.30.0 é carregado sob demanda. A integração utiliza uma instância de mapa, reaproveitada entre os modos compacto e ampliado. A configuração gerada na publicação preenche `MT_MAPA.mapboxToken`; o mapa anterior permanece como alternativa durante falhas do mapa ao vivo.
 
-`assets/mapa-config.js` é carregado depois de `assets/cloud-config.js` no app, no Personal e nas demos. A cópia versionada é um arquivo sem token; a publicação gera sua configuração a partir da variável Actions. `cloud-config.js` preserva as demais configurações e não recebe o token Mapbox. Falta ou falha da configuração, SDK, estilos e mapas remotos não deve bloquear a execução ou o salvamento da corrida.
+`assets/mapa-config.js` é carregado depois de `assets/cloud-config.js` no app e no Personal. As demos carregam a mesma configuração antes do runtime simulado. A cópia versionada é um arquivo sem token; a publicação gera sua configuração a partir da variável Actions. `cloud-config.js` preserva as demais configurações e não recebe o token Mapbox. Falta ou falha da configuração, SDK, estilos e mapas remotos não deve bloquear a execução ou o salvamento da corrida.
 
 ## Configuração e manutenção
 

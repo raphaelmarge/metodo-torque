@@ -673,6 +673,8 @@ html.claro #crSinalF{color:#fff}html.claro #crSinalF[data-estado=fraco]{color:#f
 #crMapboxHost.cr-mapbox-cheio .mapboxgl-ctrl-bottom-right{bottom:env(safe-area-inset-bottom,0px)}
 #crFull.cr-mapbox-ativo #crControlesF{bottom:calc(42px + env(safe-area-inset-bottom,0px))!important}
 #crMapboxHost .mapboxgl-ctrl-attrib{font-size:11px;color:#222}
+#crMapboxHost .mapboxgl-ctrl-bottom-right,#cr3D .mapboxgl-ctrl-bottom-right{max-width:calc(100% - 106px)}
+#crMapboxHost .mapboxgl-ctrl-attrib.mapboxgl-compact-show,#cr3D .mapboxgl-ctrl-attrib.mapboxgl-compact-show{max-width:calc(100% - 10px);box-sizing:border-box;white-space:normal}
 @media(max-height:600px){
  #guiaBox.player-template:focus-within>.gpt-top,#guiaBox.player-template:focus-within>.gpt-progress{display:none}
  #guiaBox.player-template:focus-within>#gMiolo2{max-height:calc(100dvh - 140px)}
