@@ -1337,8 +1337,10 @@
         if (!itens[s.bi]) { etapa('parcial'); itens = clone(s.etapas || []); }
       } else {
         var p = s.plano || {}, d = +p.d || +s.metaD || 0, t = (+p.tp || +s.metaT || 0) * 60;
-        if (p.t === 'intervalado') t = (+p.r || 0) * ((+p.ti || 0) + (+p.de || 0));
-        if (p.t === 'misto') completo = s.mistoT0 != null && C.tempo() - s.mistoT0 >= (+p.r || 0) * ((+p.ti || 0) + (+p.de || 0));
+        // Distância/tempo do contínuo podem permanecer no DTO ao mudar o tipo.
+        // Intervalado termina pela duração dos tiros, como o seu cronômetro.
+        if (p.t === 'intervalado') completo = C.tempo() >= (+p.r || 0) * ((+p.ti || 0) + (+p.de || 0));
+        else if (p.t === 'misto') completo = s.mistoT0 != null && C.tempo() - s.mistoT0 >= (+p.r || 0) * ((+p.ti || 0) + (+p.de || 0));
         else completo = d ? C.km() + 1e-9 >= d : t ? C.tempo() >= t : true;
       }
       return { status: completo ? 'completo' : 'parcial', etapas: itens.filter(Boolean) };
@@ -5186,7 +5188,9 @@
        * dois caminhos tinham prioridade oposta e ligar/desligar a moldura de
        * aquecimento mudava em silencio a hora em que os tiros comecavam. */
       "function crFimContinua(dKm,sg,kmF,elF){if(dKm&&cr.gpsOn)return kmF+1e-9>=dKm;if(sg)return elF>=sg;if(dKm)return kmF+1e-9>=dKm;return false;}" +
-      "function pintaCr(){" +
+      // Uma atualização tardia não substitui o resultado por uma fase ativa.
+      // Fechar o resumo, zerar ou escolher outro treino libera a renderização.
+      "function pintaCr(){if(cr.resumo)return;" +
       "crSinalPinta();if(CRSESS)CRSESS.salva(false);" +
       // pausa automática (estilo app de corrida): parou de andar com GPS ligado → o relógio pausa sozinho
       "if(cr.run&&cr.gpsOn&&cr.gpsFix&&Date.now()-cr.gpsFix<5000&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&(cr.plano.t==='intervalado'||cr.plano.t==='misto'))){" +

@@ -27,6 +27,11 @@ duplica a primeira ao repetir. O dia é o de início da sessão, inclusive à me
 
 Corrida destaca o restante da etapa e a orientação prescrita. Precisão acima de
 40 metros e ausência de leitura recente não são apresentadas como GPS pronto.
+Tiros legados são classificados pela duração das repetições prescritas; uma
+distância residual de corrida contínua no pacote não transforma tiros completos
+em atividade parcial. Encerramento antes do tempo dos tiros continua parcial.
+Atualizações tardias preservam a mensagem final enquanto o resumo está aberto;
+fechar o resumo ou iniciar outra sessão libera a atualização normal da tela.
 O primeiro ponto após uma lacuna não liga posições distantes como um deslocamento.
 Ao ocultar a página, a corrida pausa e interrompe a largada que ainda estiver em
 contagem. O cadeado interno bloqueia toques; não habilita GPS em segundo plano.

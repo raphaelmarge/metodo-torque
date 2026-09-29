@@ -51,6 +51,9 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   eq([s.registros[0].status, s.registros[0].d, s.registros[0].etapas.map(e => e.status)], ['completo', '2026-09-29', ['completo', 'completo']], 'resultado guarda etapas e data original ao atravessar meia-noite');
   eq(s.dias, { '2026-09-29': 1 }, 'a conclusão registra o dia original sem exigir um segundo botão');
   ok(!s.snapshot && s.resumo, 'checkpoint só é liberado depois do registro confirmado');
+  const faseConcluida = await p.locator('#crFase').textContent();
+  await p.evaluate(() => __pintaCr());
+  eq(await p.locator('#crFase').textContent(), faseConcluida, 'repintura tardia não troca conclusão por uma etapa ativa enquanto o resumo está aberto');
   await p.evaluate(() => { document.getElementById('crFim').click(); document.getElementById('crFim').click(); });
   eq((await state()).registros.length, 1, 'duplo toque no fim não duplica atividade');
 
@@ -162,6 +165,24 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   ok(!(await state()).snapshot, 'fallback local isola IDs de alunos mesmo com nome e studio iguais');
   html = MT_APP_ALUNO.monta({ ...local, studio: 'Outro studio local' }); await load();
   ok(!(await state()).snapshot, 'fallback local isola studios quando não existe token publicado');
+
+  // O editor conserva a distância de uma rodagem ao trocar o formato para tiros.
+  // A duração dos tiros é seu alvo; campos ocultos do contínuo não os tornam parciais.
+  const tiros = { id: 'tiros-residuo', nome: 'Tiros de quinta', mod: 'corrida', tipo: 'intervalado', dist: 5, tempo: 30, pace: '6:30', reps: 2, tiro: 1, desc: 1 };
+  html = MT_APP_ALUNO.monta({ ...D, cardiosApp: [tiros] }); await load(); await start(); await advance(6, 0);
+  s = await state();
+  eq([s.run, s.resumo, s.registros.at(-1).status, s.registros.at(-1).n, s.registros.at(-1).s], [false, true, 'completo', 'Tiros de quinta', 6], 'tiros completam automaticamente pelo tempo mesmo com distância e tempo contínuo residuais');
+  const tirosCount = s.registros.length;
+  await p.evaluate(() => __pintaCr());
+  eq([await p.locator('#crFase').textContent(), (await state()).registros.length], ['TIROS COMPLETOS — 2×!', tirosCount], 'nova repintura mantém a conclusão dos tiros sem duplicar o resultado');
+  html = MT_APP_ALUNO.monta({ ...D, cardiosApp: [{ ...tiros, tiro: 10, desc: 10 }] }); await load(); await start(); await advance(6, 5);
+  await p.evaluate(() => document.getElementById('crFim').click()); s = await state();
+  eq([s.registros.at(-1).status, s.registros.at(-1).s], ['parcial', 6], 'encerrar tiros antes da duração prescrita é parcial mesmo atingindo distância residual');
+  html = MT_APP_ALUNO.monta({ ...D, cardiosApp: [{ ...tiros, tipo: 'continuo', tempo: 0 }] }); await load(); await start(); await advance(10, 4);
+  await p.evaluate(() => document.getElementById('crFim').click());
+  eq((await state()).registros.at(-1).status, 'parcial', 'contínuo de 5 km continua parcial quando termina com 4 km');
+  await start(); await advance(10, 5); await p.evaluate(() => document.getElementById('crFim').click());
+  eq((await state()).registros.at(-1).status, 'completo', 'nova seleção e novo treino continuam disponíveis e contínuo conclui ao atingir seus 5 km');
   eq(errors, [], 'retomada, GPS, falhas e finalização sem erros deJavaScript');
   await ctx.close(); console.log(n + ' verificações de retomada da corrida passaram.');
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); });

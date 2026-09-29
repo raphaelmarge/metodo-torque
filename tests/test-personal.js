@@ -9226,8 +9226,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     fase: document.getElementById("crFase").textContent,
     lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"),
   }));
-  ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
-    "treino de tiros completa sozinho e registra o resultado");
+  const tirosCompletos = /TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 &&
+    /Tiros de quinta/.test(cardioFim.lst[1].n) && cardioFim.lst[1].status === 'completo';
+  ok(tirosCompletos, "treino de tiros completa sozinho e registra o resultado" +
+    (tirosCompletos ? '' : ' — ' + JSON.stringify({ fase: cardioFim.fase, registros: cardioFim.lst })));
   {
     // tela de resumo no fim da corrida (v602): tiles grandes, medalhas e postar
     const rs = await pCr.evaluate(async () => {
