@@ -6,6 +6,21 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v846 — Nova Central Pro, ao lado do fluxo diário
+
+- Por novo pedido explícito do proprietário, a Central Pro volta a ter uma
+  entrada própria no Personal. Esta decisão substitui a retirada da v832 e a
+  orientação histórica da v843 somente quanto à disponibilidade da Central Pro.
+- Busca por nome/telefone, fichas prescritas por série, registro de atendimento,
+  rascunho e contexto de check-in, nutrição e agenda. As cinco abas permanecem.
+- O atendimento integrado de `personal-fluxo.js`, sua fila offline, RPE e agenda
+  continuam disponíveis. A Central Pro não assume sessões abertas desse fluxo.
+- Preservar integralmente CAS, sincronização incremental, backup e histórico da
+  v845. Não mudar banco, domínio ou funcionalidades dos outros produtos.
+- A demo continua fictícia, em memória e sem questionário/login. A origem do
+  redesenho é o repositório independente `torque-one`; só a camada Central Pro
+  foi portada sobre a produção atual. Ver `docs/releases/mt-v846-central-pro.md`.
+
 ## v845 — Confiabilidade interna
 
 - Backup v2 com integridade, fotos referenciadas, avaliações posturais da própria
