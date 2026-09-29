@@ -65,6 +65,9 @@ jobs:
           bash tests/run.sh 2>&1 | tee "$RUNNER_TEMP/torque-testes/suites.log"
       - name: Empacotar somente o código versionado e aprovado
         id: pacote
+        env:
+          MAPBOX_PUBLIC_TOKEN: ${{ vars.MAPBOX_PUBLIC_TOKEN }}
+          REQUIRE_MAPBOX_PUBLIC_TOKEN: ${{ inputs.upload_pages }}
         run: bash .github/scripts/prepare-pages.sh
       - name: Registrar evidências, inclusive em falhas
         if: always()

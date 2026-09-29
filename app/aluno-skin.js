@@ -666,6 +666,13 @@ html.claro .cr-sinal{color:#51475f}html.claro .cr-sinal[data-estado=bom]{color:#
 html.claro .cr-sinal[data-estado=fraco],html.claro .exec-aviso,html.claro .cr-salvar-erro{color:#603907;background:#fff0d9}
 html.claro #crSinalF{color:#fff}html.claro #crSinalF[data-estado=fraco]{color:#ffe4b9;background:#32240f}
 #guiaBox.player-template.gpt-finished>#gMiolo2:empty{display:none}
+/* Mapbox deixa os controles e créditos do provedor acessíveis. */
+#crMapboxHost .mapboxgl-ctrl button{min-width:29px;min-height:29px}
+#crMapboxHost.cr-mapbox-cheio .cr-mapbox-centro{top:45%!important}
+#crMapboxHost.cr-mapbox-cheio .mapboxgl-ctrl-bottom-left,
+#crMapboxHost.cr-mapbox-cheio .mapboxgl-ctrl-bottom-right{bottom:env(safe-area-inset-bottom,0px)}
+#crFull.cr-mapbox-ativo #crControlesF{bottom:calc(42px + env(safe-area-inset-bottom,0px))!important}
+#crMapboxHost .mapboxgl-ctrl-attrib{font-size:11px;color:#222}
 @media(max-height:600px){
  #guiaBox.player-template:focus-within>.gpt-top,#guiaBox.player-template:focus-within>.gpt-progress{display:none}
  #guiaBox.player-template:focus-within>#gMiolo2{max-height:calc(100dvh - 140px)}

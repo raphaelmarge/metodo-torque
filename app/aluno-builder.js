@@ -1359,6 +1359,147 @@
     return { ensure: ensure, salva: salva, limpa: limpa, le: le, restaura: restaura, etapa: etapa, resultado: resultado, interrompe: interrompe, pinta: pinta, chave: key };
   }
 
+  // Embutido no app gerado. O provedor do mapa nunca controla o GPS nem os registros.
+  // Uma instância acompanha os dois tamanhos; falhas liberam o canvas independente.
+  function runtimeMapaMapbox(C) {
+    var mapa = null, host = null, cv = null, ultimo = null, pronto = false, seguindo = true;
+    var promessa = null, pendente = false, geracao = 0, timer = null, retry = 0, bloqueado = '';
+    var chaveAtual = '', estiloAtual = '', cameraAnterior = '', dadosAnteriores = '', aviso = '', btn = null;
+    var estilos = { escuro: 'dark-v11', claro: 'light-v11', colorido: 'outdoors-v12', satelite: 'satellite-streets-v12', ruas: 'streets-v12' };
+    function token() { var k = String((C.config() || {}).mapboxToken || '').trim(); return /^pk\.[A-Za-z0-9._-]+$/.test(k) ? k : ''; }
+    function estilo(id) { return 'mapbox://styles/mapbox/' + (estilos[id] || estilos.escuro); }
+    function valido(p) { return !!p && typeof p.lat === 'number' && typeof p.lng === 'number' && isFinite(p.lat) && isFinite(p.lng) && Math.abs(p.lat) <= 85.051129 && Math.abs(p.lng) <= 180; }
+    function visivel(c) { if (!c || !c.isConnected || document.hidden) return false; var r = c.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth; }
+    function repinta() { Promise.resolve().then(function () { try { C.repaint(); } catch (_) {} }); }
+    function sdk() {
+      var existente = document.getElementById('crMapboxCss');
+      if (window.mapboxgl && existente && existente.sheet) return Promise.resolve(window.mapboxgl);
+      if (promessa) return promessa;
+      promessa = new Promise(function (ok, nao) {
+        var css = existente || document.createElement('link'), sc = null, feito = false, cssOk = !!css.sheet, jsOk = !!window.mapboxgl;
+        var prazo = setTimeout(function () { termina(new Error('mapa demorou')); }, 12000);
+        function termina(erro) { if (feito || (!erro && !(cssOk && jsOk))) return; feito = true; clearTimeout(prazo); css.onload = css.onerror = null; if (sc) sc.onload = sc.onerror = null; if (erro) { if (sc) sc.remove(); if (!cssOk) css.remove(); nao(erro); } else ok(window.mapboxgl); }
+        css.onload = function () { cssOk = true; termina(); }; css.onerror = function () { termina(new Error('estilo do mapa indisponivel')); };
+        if (!existente) { css.id = 'crMapboxCss'; css.rel = 'stylesheet'; css.href = 'https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css'; css.referrerPolicy = 'strict-origin'; document.head.appendChild(css); }
+        if (!jsOk) { sc = document.createElement('script'); sc.src = 'https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js'; sc.referrerPolicy = 'strict-origin';
+          sc.onload = function () { jsOk = !!window.mapboxgl; termina(jsOk ? null : new Error('mapa indisponivel')); };
+          sc.onerror = function () { termina(new Error('mapa indisponivel')); }; document.head.appendChild(sc);
+        }
+        termina();
+      });
+      promessa.catch(function () { promessa = null; });
+      return promessa;
+    }
+    function mostra(on) {
+      // visibility mantém o tamanho disponível ao WebGL durante o carregamento.
+      if (host) { host.style.visibility = on ? 'visible' : 'hidden'; host.style.pointerEvents = on ? 'auto' : 'none'; }
+      if (cv) { cv.style.opacity = on ? '0' : ''; if (cv.id === 'crMapaFull') cv.parentElement.classList.toggle('cr-mapbox-ativo', on); }
+    }
+    function suspende() { ultimo = null; geracao++; pendente = false; mostra(false); if (mapa) mapa.stop(); }
+    function destroi() { suspende(); clearTimeout(timer); timer = null; var m = mapa; mapa = null; pronto = false; if (m) { try { m.remove(); } catch (_) {} } if (host) host.remove(); host = null; cv = null; cameraAnterior = dadosAnteriores = ''; }
+    function falha(erro) {
+      var codigo = erro && (erro.status || erro.statusCode);
+      if (codigo === 401 || codigo === 403) bloqueado = chaveAtual;
+      retry = Date.now() + 60000; aviso = 'indisponivel'; destroi(); repinta();
+    }
+    function montaHost(c) {
+      if (cv !== c) { mostra(false); cv = c; cameraAnterior = ''; }
+      var cheio = c.id === 'crMapaFull', pai = c.parentElement;
+      if (!cheio && !pai.classList.contains('cr-mapa-mini')) { var w = document.createElement('div'); w.className = 'cr-mapa-mini'; w.style.cssText = 'position:relative;border-radius:14px;overflow:hidden;'; pai.insertBefore(w, c); w.appendChild(c); pai = w; }
+      if (!host) {
+        host = document.createElement('div'); host.id = 'crMapboxHost'; host.className = 'cr-mapbox-host'; host.style.cssText = 'position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;';
+        host.setAttribute('aria-label', 'Mapa do percurso');
+      }
+      if (host.parentElement !== pai) { pai.insertBefore(host, c.nextSibling); if (mapa) mapa.resize(); }
+      host.classList.toggle('cr-mapbox-cheio', cheio);
+      host.style.display = 'block';
+      if (mapa) ['dragPan', 'scrollZoom', 'boxZoom', 'dragRotate', 'keyboard', 'doubleClickZoom', 'touchZoomRotate'].forEach(function (n) { if (mapa[n]) mapa[n][cheio ? 'enable' : 'disable'](); });
+      if (btn) { btn.textContent = cheio ? 'Centralizar' : 'Ampliar'; btn.setAttribute('aria-label', cheio ? 'Centralizar na sua posição' : 'Ampliar mapa'); }
+    }
+    function distancia(a, b) {
+      var r = Math.PI / 180, x = Math.sin((b.lat - a.lat) * r / 2), y = Math.sin((b.lng - a.lng) * r / 2);
+      return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(x * x + Math.cos(a.lat * r) * Math.cos(b.lat * r) * y * y)));
+    }
+    function geo(s) {
+      var partes = [], parte = [], pontos = [], anterior = null, km = 0, marco = 1;
+      (s.rota || []).forEach(function (p) {
+        if (!valido(p)) { if (parte.length > 1) partes.push(parte); parte = []; anterior = null; return; }
+        if (p.quebra) { if (parte.length > 1) partes.push(parte); parte = []; anterior = null; }
+        if (anterior) { var d = distancia(anterior, p); while (d > 0 && km + d >= marco && marco <= 500) { var f = (marco - km) / d; pontos.push({ type: 'Feature', properties: { texto: String(marco) }, geometry: { type: 'Point', coordinates: [anterior.lng + (p.lng - anterior.lng) * f, anterior.lat + (p.lat - anterior.lat) * f] } }); marco++; } km += d; }
+        parte.push([p.lng, p.lat]); anterior = p;
+      });
+      if (parte.length > 1) partes.push(parte);
+      var pos = valido(s.posicao) ? s.posicao : anterior;
+      return { rota: { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: partes } }, marcos: { type: 'FeatureCollection', features: pontos }, posicao: { type: 'FeatureCollection', features: pos ? [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [pos.lng, pos.lat] } }] : [] } };
+    }
+    function fonte(id, data) { var f = mapa.getSource(id); if (f) f.setData(data); else mapa.addSource(id, { type: 'geojson', data: data }); }
+    function camada(l) { if (!mapa.getLayer(l.id)) mapa.addLayer(l); }
+    function atualiza() {
+      if (!mapa || !pronto || !ultimo || !cv || !visivel(cv)) return;
+      var s = ultimo, r = (s.rota || []).filter(valido), p = valido(s.posicao) ? s.posicao : r[r.length - 1];
+      if (!p) return;
+      var cor = C.cor(), assinatura = JSON.stringify([r, p, cor]);
+      if (assinatura !== dadosAnteriores) {
+        var g = geo(s); fonte('torque-rota', g.rota); fonte('torque-km', g.marcos); fonte('torque-posicao', g.posicao);
+        camada({ id: 'torque-contorno', type: 'line', source: 'torque-rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 8, 'line-opacity': 0.9 } });
+        camada({ id: 'torque-tracado', type: 'line', source: 'torque-rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cor, 'line-width': 5 } });
+        camada({ id: 'torque-marcos', type: 'circle', source: 'torque-km', paint: { 'circle-radius': 11, 'circle-color': cor, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } });
+        camada({ id: 'torque-km-texto', type: 'symbol', source: 'torque-km', layout: { 'text-field': ['get', 'texto'], 'text-size': 11, 'text-allow-overlap': false }, paint: { 'text-color': '#ffffff' } });
+        camada({ id: 'torque-voce', type: 'circle', source: 'torque-posicao', paint: { 'circle-radius': 7, 'circle-color': '#2563eb', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 } });
+        if (mapa.setPaintProperty) { mapa.setPaintProperty('torque-tracado', 'line-color', cor); mapa.setPaintProperty('torque-marcos', 'circle-color', cor); }
+        dadosAnteriores = assinatura;
+      }
+      var camera = JSON.stringify([p.lat, p.lng, !!s.ativo, r.length, cv.id]);
+      if (seguindo && camera !== cameraAnterior) {
+        if (s.ativo || r.length < 2) mapa.easeTo({ center: [p.lng, p.lat], zoom: 16, pitch: 0, bearing: 0, duration: 450, essential: false });
+        else { var xs = r.map(function (v) { return v.lng; }), ys = r.map(function (v) { return v.lat; }); mapa.fitBounds([[Math.min.apply(null, xs), Math.min.apply(null, ys)], [Math.max.apply(null, xs), Math.max.apply(null, ys)]], { padding: cv.id === 'crMapaFull' ? { top: 160, bottom: Math.min(330, innerHeight * 0.43), left: 35, right: 35 } : 28, maxZoom: 16, duration: 0 }); }
+        cameraAnterior = camera;
+      }
+      mostra(true);
+    }
+    function pinta(s) {
+      var k = token(), alvo = s && s.canvas;
+      if (chaveAtual !== k) { destroi(); chaveAtual = k; bloqueado = ''; retry = 0; }
+      if (!k || bloqueado === k || navigator.onLine === false || !visivel(alvo) || !s || !(valido(s.posicao) || (s.rota || []).some(valido))) { suspende(); return false; }
+      if (Date.now() < retry) return false;
+      ultimo = s; montaHost(alvo);
+      if (!mapa) {
+        mostra(false);
+        if (pendente) return false;
+        pendente = true; var vez = ++geracao;
+        sdk().then(function (gl) {
+          if (vez !== geracao) return;
+          pendente = false;
+          if (!ultimo || !visivel(ultimo.canvas)) return;
+          if (gl.supported && !gl.supported()) { bloqueado = k; falha(); return; }
+          var p = valido(ultimo.posicao) ? ultimo.posicao : ultimo.rota.filter(valido).slice(-1)[0];
+          estiloAtual = estilo(ultimo.estilo); aviso = ''; seguindo = true;
+          mapa = new gl.Map({ container: host, accessToken: k, style: estiloAtual, center: [p.lng, p.lat], zoom: 16, attributionControl: true, logoPosition: 'bottom-left', preserveDrawingBuffer: false });
+          var m = mapa;
+          btn = document.createElement('button'); btn.type = 'button'; btn.className = 'cr-mapbox-centro'; btn.style.cssText = 'position:absolute;right:12px;top:12px;z-index:1;min-height:44px;padding:8px 12px;border-radius:12px;background:#fff;color:#16131c;border:1px solid #ddd;font:700 12px system-ui;'; btn.textContent = cv.id === 'crMapaFull' ? 'Centralizar' : 'Ampliar'; btn.setAttribute('aria-label', cv.id === 'crMapaFull' ? 'Centralizar na sua posição' : 'Ampliar mapa'); host.appendChild(btn);
+          btn.onclick = function () { if (cv.id !== 'crMapaFull') { C.abrir(); return; } seguindo = true; cameraAnterior = ''; atualiza(); };
+          m.on('dragstart', function () { seguindo = false; });
+          m.on('zoomstart', function (e) { if (e && e.originalEvent) seguindo = false; });
+          m.on('style.load', function () { if (mapa !== m) return; pronto = true; dadosAnteriores = ''; clearTimeout(timer); timer = null; try { atualiza(); } catch (_) { falha(); } });
+          m.on('error', function (e) { if (mapa === m) falha(e && e.error); });
+          m.on('webglcontextlost', function () { if (mapa === m) falha(); });
+          clearTimeout(timer); timer = setTimeout(function () { if (mapa === m && !pronto) falha(); }, 15000);
+          pendente = false;
+        }).catch(function (e) { if (vez === geracao) { pendente = false; falha(e); } });
+        return false;
+      }
+      var novo = estilo(s.estilo);
+      if (novo !== estiloAtual) { estiloAtual = novo; pronto = false; dadosAnteriores = ''; mostra(false); mapa.setStyle(novo); clearTimeout(timer); timer = setTimeout(function () { if (!pronto) falha(); }, 15000); }
+      if (pronto) { try { atualiza(); } catch (_) { falha(); } } else mostra(false);
+      return pronto;
+    }
+    window.addEventListener('offline', function () { destroi(); });
+    window.addEventListener('online', function () { retry = 0; repinta(); });
+    window.addEventListener('pagehide', destroi);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) suspende(); else repinta(); });
+    return { pinta: pinta, suspende: suspende, destroi: destroi, sdk: sdk, token: token, estilo: estilo, estado: function () { return { configurado: !!token(), pronto: pronto, pendente: pendente, seguindo: seguindo, canvas: cv && cv.id, aviso: aviso }; } };
+  }
+
   function monta(D) {
     D = D || {};
     /* Tudo o que muda de aluno pra aluno chega por aqui. Os nomes são os mesmos
@@ -5094,7 +5235,11 @@
       "function crDim(cv){if(!cv)return;var r=cv.getBoundingClientRect();var d=crDpr();" +
       "if(r.width>0&&Math.abs(cv.width-Math.round(r.width*d))>4){cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);}}" +
       "function crFullDim(){crDim(crEl('crMapaFull'));}" +
-      "function desenhaRota(){crDim(crEl('crMapa'));desenhaCv(crEl('crMapa'));if(crFullAberto()){crFullDim();desenhaCv(crEl('crMapaFull'));}}" +
+      "var crMB=(" + runtimeMapaMapbox.toString() + ")({config:function(){return self.MT_MAPA||{};},cor:function(){return CV('cor');},repaint:function(){desenhaRota();},abrir:function(){abreCrFull(1);}});window.__crMapbox=crMB;" +
+      "function desenhaRota(){var full=crFullAberto(),vis=full&&crEl('crPainelF').style.display==='none'&&!cr.resumo,cv=vis?crEl('crMapaFull'):(!full?crEl('crMapa'):null);if(crEl('cr3D'))cv=null;" +
+      "var on=false;if(cv)on=crMB.pinta({canvas:cv,rota:cr.rota,posicao:cr.rota.length?cr.rota[cr.rota.length-1]:cr.lastPos,ativo:cr.run,estilo:crEstiloId(),rumo:crRumo()});else crMB.suspende();" +
+      "if(crMB.token()){if(!cv||on)return;crDim(cv);desenhaCv(cv);return;}" +
+      "if(!on||cv!==crEl('crMapa')){crDim(crEl('crMapa'));desenhaCv(crEl('crMapa'));}if(full&&(!on||cv!==crEl('crMapaFull'))){crFullDim();desenhaCv(crEl('crMapaFull'));}}" +
       "function desenhaCv(cv){if(!cv)return;var g=cv.getContext('2d');var dp=crDpr();" +
       "var W=cv.width/dp,H=cv.height/dp;g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,W,H);" +
       "var CLR=document.documentElement.classList.contains('claro');" +
@@ -5427,7 +5572,7 @@
       "function crResTile(v,r){return \"<div style='background:var(--bg1);border-radius:18px;padding:14px 10px;text-align:center;'>\"+" +
       "\"<b style='display:block;font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;'>\"+v+'</b>'+" +
       "\"<span style='display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-top:3px;'>\"+r+'</span></div>';}" +
-      /* ===== TRAJETO EM 3D (MapLibre) =====
+      /* ===== TRAJETO EM 3D (Mapbox configurado; MapLibre como alternativa) =====
        *
        * Fica na tela de RESUMO e no historico, nunca durante a corrida. Tres
        * motivos, nessa ordem: (1) relevo so aparece com a camera inclinada, e
@@ -5439,8 +5584,8 @@
        * botao. Quem nunca abrir o 3D nao baixa 1 byte a mais, e a demo publica
        * segue sem pedir nada pra fora.
        *
-       * O mapa da CORRIDA continua sendo o canvas de sempre. Nao existe troca
-       * de motor: existe uma tela nova. */
+       * A chave pública habilita o mesmo provedor no mapa ao vivo e no 3D.
+       * Sem configuração, a alternativa já existente permanece disponível. */
       "var crGLp=null;" +
       /* Tres travas, iguais as do scanner-visao.js: o global ja existe, a
        * promessa ja esta em voo, e zerar a promessa no erro (senao uma falha de
@@ -5451,7 +5596,7 @@
        * onerror nunca dispara.
        * ⚠️ caminho ABSOLUTO: o mesmo HTML roda em /app/, em /demo-aluno.html e
        * nos testes — caminho relativo acerta num e da 404 nos outros. */
-      "function crGL(){if(window.maplibregl)return Promise.resolve(window.maplibregl);" +
+      "function crGL(){if(crMB.token())return crMB.sdk();if(window.maplibregl)return Promise.resolve(window.maplibregl);" +
       "if(crGLp)return crGLp;" +
       "crGLp=new Promise(function(ok,nao){" +
       "try{" +
@@ -5474,7 +5619,7 @@
        * chave. "terrarium" tem de ser minusculo exato.
        * terrain vai DENTRO do estilo de proposito: setTerrain solto estoura se
        * a fonte de altitude ainda nao entrou. */
-      "function cr3DEstilo(){var e9=crEstilo(),dp9=crDpr()>1.4?'@2x':'';" +
+      "function cr3DEstilo(){if(crMB.token())return crMB.estilo(crEstiloId());var e9=crEstilo(),dp9=crDpr()>1.4?'@2x':'';" +
       "var urls=[];var ss=(e9.s||'a').split('');" +
       "for(var i=0;i<ss.length;i++)urls.push(crChave(String(e9.u).replace('{s}',ss[i]).replace('{r}',e9.hd?dp9:'')));" +
       "return {version:8,sources:{" +
@@ -5489,10 +5634,10 @@
        * ceu sai da paleta do studio e o teste do fundo do app reprova. */
       "sky:{'sky-color':CV('bg0'),'horizon-color':CV('cor2')||CV('cor'),'fog-color':CV('bg2'),'fog-ground-blend':0.5}};}" +
       "function cr3DFecha(){var o=document.getElementById('cr3D');if(!o)return;" +
-      "try{if(o.__mapa)o.__mapa.remove();}catch(e){}o.__mapa=null;o.remove();}" +
+      "clearTimeout(o.__timer);try{if(o.__mapa)o.__mapa.remove();}catch(e){}o.__mapa=null;o.remove();}" +
       /* Abre a tela do 3D pra uma rota ja codificada (o campo r do registro). */
       "function cr3DAbre(cod,titulo){var partes=(Array.isArray(cod)?cod:[cod]).map(function(s){return crDecPoly(s||'');}).filter(function(p){return p.length>1;});var rt=[].concat.apply([],partes);if(rt.length<2)return;" +
-      "cr3DFecha();" +
+      "cr3DFecha();crMB.suspende();" +
       "var o=document.createElement('div');o.id='cr3D';" +
       "o.style.cssText='position:fixed;inset:0;z-index:99;background:var(--bg0);';" +
       "o.innerHTML=\"<div id='cr3Dm' style='position:absolute;inset:0;'></div>\"+" +
@@ -5505,7 +5650,7 @@
       "var bx=document.getElementById('cr3Dx');if(bx)bx.addEventListener('click',cr3DFecha);" +
       "var av=function(t){var e=document.getElementById('cr3Dav');if(e)e.textContent=t;};" +
       "crGL().then(function(gl){" +
-      "if(!document.getElementById('cr3D'))return;" +
+      "if(document.getElementById('cr3D')!==o)return;" +
       /* 1 worker: no iPhone o padrao sobe ate 3, e isso disputa CPU com o resto
        * do celular numa tela que e so pra olhar. */
       "try{if(gl.setWorkerCount)gl.setWorkerCount(1);}catch(e){}" +
@@ -5513,9 +5658,9 @@
       "rt.forEach(function(q){if(q.lat<la1)la1=q.lat;if(q.lat>la2)la2=q.lat;if(q.lng<ln1)ln1=q.lng;if(q.lng>ln2)ln2=q.lng;});" +
       "var mapa=new gl.Map({container:'cr3Dm',style:cr3DEstilo()," +
       "center:[(ln1+ln2)/2,(la1+la2)/2],zoom:14,pitch:62,bearing:-18," +
-      "attributionControl:false,preserveDrawingBuffer:false});" +
+      "accessToken:crMB.token()||undefined,attributionControl:!!crMB.token(),preserveDrawingBuffer:false});" +
       "o.__mapa=mapa;" +
-      "var cr9=document.getElementById('cr3Dcr');if(cr9)cr9.textContent=crEstilo().a||'\\u00a9 OpenStreetMap';" +
+      "var cr9=document.getElementById('cr3Dcr');if(cr9){if(crMB.token())cr9.hidden=true;else cr9.textContent=crEstilo().a||'\\u00a9 OpenStreetMap';}" +
       /* COMO SABER SE AS RUAS VIERAM.
        *
        * Nao da pra perguntar isso ao MapLibre: medido aqui, o evento 'data' com
@@ -5532,16 +5677,19 @@
        *
        * Enquanto a sonda nao respondeu, __ruasOk fica indefinido e o cronometro
        * nao acusa nada — sinal lento nao merece recado de erro. */
-      "o.__erros=0;mapa.on('error',function(){o.__erros++;});" +
-      "try{var so9=new Image();so9.crossOrigin='anonymous';" +
+      "function fallback3D(){if(document.getElementById('cr3D')!==o||o.__mapboxFallback)return;o.__mapboxFallback=true;o.__ruasOk=0;mapa.setStyle({version:8,sources:{},layers:[{id:'fundo-local',type:'background',paint:{'background-color':CV('bg0')}}]});}" +
+      "o.__erros=0;mapa.on('error',function(){o.__erros++;if(crMB.token())fallback3D();});" +
+      "mapa.on('load',function(){if(crMB.token()&&!o.__mapboxFallback)o.__ruasOk=1;});" +
+      "try{if(!crMB.token()){var so9=new Image();so9.crossOrigin='anonymous';" +
       "so9.onload=function(){o.__ruasOk=1;};so9.onerror=function(){o.__ruasOk=0;};" +
       "var e8=crEstilo(),cm9=merc((la1+la2)/2,(ln1+ln2)/2,14);" +
-      "so9.src=crUrlK(e8.u,e8,14,Math.floor(cm9.x),Math.floor(cm9.y));}catch(e){}" +
+      "so9.src=crUrlK(e8.u,e8,14,Math.floor(cm9.x),Math.floor(cm9.y));}}catch(e){}" +
       /* Passou o tempo e a sonda disse que as ruas NAO vem: fala a verdade em
        * vez de deixar a tela escura calada. O trajeto ja esta desenhado a essa
        * altura (ele entra no style.load), entao o aluno nao fica sem nada. */
-      "setTimeout(function(){try{if(!document.getElementById('cr3D'))return;" +
-      "if(o.__ruasOk===0){var e9=document.getElementById('cr3Dav');if(e9){" +
+      "o.__timer=setTimeout(function(){try{if(document.getElementById('cr3D')!==o)return;" +
+      "if(crMB.token()&&!o.__rotaOk)fallback3D();" +
+      "if(o.__ruasOk===0&&!crMB.token()){var e9=document.getElementById('cr3Dav');if(e9){" +
       "e9.style.cssText='position:absolute;left:0;right:0;bottom:64px;text-align:center;color:#cfcbdb;font-size:12.5px;padding:0 24px;';" +
       "e9.innerHTML=\"N\\u00e3o deu pra carregar as ruas<br><span style='color:#8a8695;font-size:11.5px;'>seu trajeto est\\u00e1 a\\u00ed do mesmo jeito</span>\";}}}catch(e){}},9000);" +
       /* style.load, NAO load: o 'load' so dispara quando o mapa inteiro esta
@@ -5550,13 +5698,16 @@
        * estilo existe, entao a rota aparece mesmo que nenhuma rua carregue.
        * A rota e o que importa: as ruas sao o pano de fundo. */
       "mapa.on('style.load',function(){try{" +
-      "av('');" +
+      "av(o.__mapboxFallback?'Ruas e relevo indisponíveis. Exibindo apenas seu percurso.':'');" +
+      "if(o.__mapboxFallback){var af=crEl('cr3Dav');af.style.cssText='position:absolute;left:0;right:0;bottom:60px;text-align:center;color:var(--tx2,#cfcbdb);font-size:12px;padding:0 24px;';}" +
+      "if(crMB.token()&&!o.__mapboxFallback){mapa.addSource('torque-relevo',{type:'raster-dem',url:'mapbox://mapbox.mapbox-terrain-dem-v1',tileSize:512,maxzoom:14});mapa.setTerrain({source:'torque-relevo',exaggeration:1});}" +
       "mapa.addSource('trj',{type:'geojson',data:{type:'Feature',properties:{}," +
       "geometry:partes.length>1?{type:'MultiLineString',coordinates:partes.map(function(p){return p.map(function(q){return [q.lng,q.lat];});})}:{type:'LineString',coordinates:rt.map(function(q){return [q.lng,q.lat];})}}});" +
       "mapa.addLayer({id:'trjB',type:'line',source:'trj',layout:{'line-join':'round','line-cap':'round'}," +
       "paint:{'line-color':'#ffffff','line-width':9,'line-opacity':.85}});" +
       "mapa.addLayer({id:'trjA',type:'line',source:'trj',layout:{'line-join':'round','line-cap':'round'}," +
       "paint:{'line-color':CV('cor'),'line-width':5}});" +
+      "o.__rotaOk=true;" +
       /* O enquadramento e feito com a camera RETA e a inclinacao entra depois:
        * o fitBounds com pitch cabe o trajeto dentro do tronco de visao
        * inclinado, que e bem maior que a tela, e o desenho sai pequeno no
@@ -5697,20 +5848,35 @@
       "var f=this.files&&this.files[0];this.value='';if(!f)return;" +
       "var rd=new FileReader();rd.onload=function(){crImporta(String(rd.result||''),f.name.replace(/\\.(gpx|tcx|xml)$/i,''));};" +
       "rd.readAsText(f);});})();" +
-      "function crGpsPara(){if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;cr.gpsFix=0;" +
+      "function crGpsPara(){crGpsCiclo++;if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;cr.gpsFix=0;cr.gpsStamp=0;cr.jan=[];" +
       "var b=crEl('crGps');b.innerHTML='Ligar<br>GPS';b.style.borderColor='var(--bg11)';b.style.color='#a9a4b5';try{desenhaRota();}catch(e){}}" +
       // GPS sempre ativo: liga sozinho ao entrar na área de cardio (preferência ptgpsAuto, padrão ligado)
-      "var crGpsNeg=false;" +
+      "var crGpsNeg=false,crGpsCiclo=0;" +
       "function crGpsLiga(auto){if(cr.watch!=null)return;if(auto&&crGpsNeg)return;" +
       "if(!navigator.geolocation){if(!auto)crEl('crInfo').textContent='Esse aparelho n\\u00e3o tem GPS dispon\\u00edvel \\u2014 digite os km na m\\u00e3o.';return;}" +
-      "var b=crEl('crGps');b.innerHTML='GPS\\u2026';" +
+      "var b=crEl('crGps'),ciclo9=++crGpsCiclo;b.innerHTML='GPS\\u2026';" +
       "cr.watch=navigator.geolocation.watchPosition(function(pos){" +
-      // tela 51: o botão vira o TERMÔMETRO do sinal (bom/ok/fraco pela precisão)
-      "crGpsNeg=false;var ac9=pos.coords?pos.coords.accuracy:null;cr.gpsAccuracy=ac9;" +
-      "b.innerHTML=ac9!=null&&ac9<=40?'GPS<br>bom':'GPS<br>fraco';" +
-      "var cq9=ac9==null||ac9>40?'#fbbf24':'#4ade80';b.style.borderColor=cq9;b.style.color=cq9;" +
-      // v751: só um fix que PASSOU no filtro conta como GPS ligado — antes gpsOn virava true com sinal de 150 m e o km na mão era ignorado
-      "if(ac9==null||!isFinite(ac9)||ac9>40){cr.lastPos=null;crSinalPinta();return;}if(cr.gpsFix&&Date.now()-cr.gpsFix>15000)cr.lastPos=null;cr.gpsFix=Date.now();cr.gpsOn=true;var pt={lat:pos.coords.latitude,lng:pos.coords.longitude};" +
+      // Um callback já enfileirado pode chegar depois de pausar, trocar de
+      // identidade ou iniciar outro watch. Ele não pertence à corrida atual.
+      "if(ciclo9!==crGpsCiclo||document.hidden||!acIdentidadeAtual())return;" +
+      "var agora9=Date.now(),co9=pos&&pos.coords,ts9=pos&&pos.timestamp;" +
+      // O relógio da posição, não o instante do callback, determina se o ponto
+      // é novo. Duplicatas e respostas fora de ordem não movem a âncora atual.
+      "if(Number.isFinite(ts9)&&cr.gpsStamp&&ts9<=cr.gpsStamp){crSinalPinta();return;}" +
+      "var ac9=co9&&co9.accuracy,val9=!!co9&&Number.isFinite(co9.latitude)&&Math.abs(co9.latitude)<=90&&Number.isFinite(co9.longitude)&&Math.abs(co9.longitude)<=180&&Number.isFinite(ac9)&&ac9>=0&&ac9<=40&&Number.isFinite(ts9)&&ts9>0&&agora9-ts9<=15000&&ts9-agora9<=1000;" +
+      "if(Number.isFinite(ts9)&&ts9>0&&ts9<=agora9+1000)cr.gpsStamp=ts9;" +
+      "crGpsNeg=false;cr.gpsAccuracy=ac9;" +
+      "if(!val9){cr.gpsFix=0;cr.lastPos=null;cr.jan=[];b.innerHTML='GPS<br>fraco';b.style.borderColor='#fbbf24';b.style.color='#fbbf24';crSinalPinta();return;}" +
+      "if(cr.gpsFix&&agora9-cr.gpsFix>15000){cr.lastPos=null;cr.jan=[];}" +
+      "var pt={lat:co9.latitude,lng:co9.longitude,t:ts9,ativa:!!(cr.run||cr.autoP)};" +
+      // Pontos anteriores à largada e lacunas de GPS não viram distância.
+      "if(cr.lastPos&&(ts9-cr.lastPos.t>15000||(!cr.lastPos.ativa&&pt.ativa))){cr.lastPos=null;cr.jan=[];}" +
+      "var novoTrecho=!cr.lastPos,dK=cr.lastPos?havKm(cr.lastPos,pt):0,dt9=cr.lastPos?(ts9-cr.lastPos.t)/1000:0;" +
+      // Limites amplos evitam teletransporte sem cortar tiros ou descidas de
+      // bike. Não corrigimos/snapamos pontos na rua: o trecho desconhecido fica
+      // separado e o próximo ponto válido inicia uma nova âncora.
+      "if(cr.lastPos&&(!(dt9>0)||dK*1000/dt9>(cr.mod==='bike'?30:12))){cr.gpsFix=0;cr.lastPos=null;cr.jan=[];b.innerHTML='GPS<br>fraco';b.style.borderColor='#fbbf24';b.style.color='#fbbf24';crSinalPinta();return;}" +
+      "cr.gpsFix=Math.min(agora9,ts9);cr.gpsOn=true;b.innerHTML='GPS<br>bom';b.style.borderColor='#4ade80';b.style.color='#4ade80';" +
       /* rumo do proprio aparelho, quando ele da: so vale em movimento
        * (speed acima de 0,7 m/s, ~2,5 km/h). Parado o heading do GPS gira
        * sozinho e a seta ficaria rodopiando no semaforo. Sem isso, o
@@ -5718,11 +5884,10 @@
       "var hd9=pos.coords.heading,sp9=pos.coords.speed;" +
       "if(hd9!=null&&isFinite(hd9)&&sp9!=null&&sp9>0.7)cr.rumo=hd9;" +
       "else if(sp9!=null&&sp9<=0.3)cr.rumo=null;" +
-      "var novoTrecho=!cr.lastPos;var dK=cr.lastPos?havKm(cr.lastPos,pt):0;if(dK>=0.15)novoTrecho=true;" +
-      "if(dK>0.004&&dK<0.15){cr.lastMove=Date.now();" +
+      "if(dK>0.004){cr.lastMove=Date.now();" +
       "if(cr.autoP){cr.autoP=false;cr.run=true;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';bip(880,110);}}" +
       // v751: soma DEPOIS de retomar a pausa automática — o trecho que acordou o relógio contava zero
-      "if(cr.lastPos&&cr.run&&dK<0.15)cr.km+=dK;" +
+      "if(cr.lastPos&&cr.run)cr.km+=dK;" +
       /* v743: o teto de 600 pontos descartava o COMEÇO — a ~1 fix/s, toda
        * corrida acima de 10 min chegava ao fim só com o último terço no mapa,
        * na arte e no 3D. Agora só entra ponto que andou ≥ 5 m do último
@@ -5732,16 +5897,15 @@
       "cr.lastPos=pt;if(cr.run){var ur9=cr.rota.length?cr.rota[cr.rota.length-1]:null;" +
       "if(!ur9||novoTrecho||havKm(ur9,pt)>=0.005){cr.rota.push({lat:pt.lat,lng:pt.lng,quebra:!!ur9&&novoTrecho});" +
       "if(cr.rota.length>12000){var anterior=false;cr.rota=cr.rota.filter(function(p,i9){if(p.quebra)anterior=true;if(i9%2)return false;if(anterior){p.quebra=true;anterior=false;}return true;});}}" +
-      "cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();}" +
+      "cr.jan.push({t:ts9,km:cr.km});while(cr.jan.length&&agora9-cr.jan[0].t>60000)cr.jan.shift();}" +
       "try{desenhaRota();}catch(e){}pintaCr();" +
       /* v751: timeout/indisponivel deixam o watch VIVO — o botao dizia 'Ligar
        * GPS' e o toque desligava (e ainda gravava ptgpsAuto=0 pra sempre). */
-      "},function(err){cr.gpsFix=0;cr.lastPos=null;if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').innerHTML='GPS\\u2026';}crSinalPinta();" +
+      "},function(err){if(ciclo9!==crGpsCiclo||document.hidden||!acIdentidadeAtual())return;cr.gpsFix=0;cr.lastPos=null;cr.jan=[];if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').innerHTML='GPS\\u2026';}crSinalPinta();" +
       "if(err&&err.code===1)try{crGpsCard();}catch(e9){}" +
-      /* v764: codigo 2 e "posicao indisponivel" — quase sempre a chavinha de
-       * localizacao do proprio celular desligada. Dizer "procurando o sinal"
-       * nesse caso deixa o aluno esperando por uma coisa que nao vem. */
-      "crEl('crInfo').textContent=(err&&err.code===1)?'Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.':(err&&err.code===2)?'A localiza\\u00e7\\u00e3o do celular parece desligada \\u2014 ligue a chavinha de GPS do aparelho, ou digite os km na m\\u00e3o.':'Procurando o sinal do GPS \\u2014 ou digite os km na m\\u00e3o.';" +
+      // Posição indisponível também pode ser falta de sinal: o código2 não
+      // comprova que o aluno desligou a localização do aparelho.
+      "crEl('crInfo').textContent=(err&&err.code===1)?'Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.':(err&&err.code===2)?'Localiza\\u00e7\\u00e3o indispon\\u00edvel. Confira se o GPS est\\u00e1 ligado e procure um local aberto, ou digite os km na m\\u00e3o.':'Procurando o sinal do GPS \\u2014 ou digite os km na m\\u00e3o.';" +
       "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}" +
       /* v764: o GPS era pedido CALADO — a janelinha do navegador pulava assim
        * que o aluno entrava na area de corrida, sem ninguem explicar pra que.
@@ -5769,7 +5933,7 @@
       "if(st==null){c.style.display='none';crGpsLiga(true);return;}" +
       "if(crGpsAdiado){c.style.display='none';return;}" +
       "crEl('crGpsTit').textContent='Ligue o GPS pra contar seus km';" +
-      "crEl('crGpsTxt').textContent='Sem ele o app n\u00e3o desenha o trajeto, n\u00e3o conta a dist\u00e2ncia e n\u00e3o calcula o pace. A localiza\u00e7\u00e3o s\u00f3 \u00e9 usada enquanto voc\u00ea corre, e o trajeto vai pro seu professor junto com o treino.';" +
+      "crEl('crGpsTxt').textContent='Com GPS, o app mede a dist\u00e2ncia e desenha o trajeto. Voc\u00ea tamb\u00e9m pode informar os km manualmente. A localiza\u00e7\u00e3o \u00e9 ativada nesta \u00e1rea para encontrar o sinal; o percurso s\u00f3 \u00e9 registrado depois de iniciar o treino e vai para seu professor ao salvar.';" +
       "crEl('crGpsOk').style.display='';crEl('crGpsNao').textContent='Agora n\u00e3o';c.style.display='block';});}" +
       "crEl('crGpsOk').addEventListener('click',function(){crGpsCardOff();Sv('ptgpsAuto',1);crGpsNeg=false;crGpsLiga(false);});" +
       "crEl('crGpsNao').addEventListener('click',function(){crGpsAdiado=true;crGpsCardOff();});" +
@@ -5918,7 +6082,7 @@
       "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;var cb9=crEl('crBlocoBox');if(cb9)cb9.style.display='none';" +
       // v751: Zerar/Descartar não limpavam mistoT0 — refazer o misto mostrava 'TIRO -1 DE 6'
       "cr.mistoT0=null;cr.mistoVai=false;cr.rumo=null;" +
-      "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
+      "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();crMB.destroi();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
       "var bS7=crEl('crShare');if(bS7)bS7.style.display='none';desenhaRota();pintaCr();});" +
       "crEl('crKm').addEventListener('input',function(){pintaCr();});" +
@@ -5968,7 +6132,7 @@
       // da seção (transform) prende o position:fixed e a tela cheia sai clipada
       "function abreCrFull(pg){var f=crEl('crFull');if(!f)return;if(f.parentElement!==document.body)document.body.appendChild(f);" +
       "if(pg===0||pg===1)cr.pagF=pg;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
-      "function fechaCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='none';cr.lockF=false;crEl('crLockOverF').style.display='none';}" +
+      "function fechaCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='none';cr.lockF=false;crEl('crLockOverF').style.display='none';crMB.suspende();try{desenhaRota();}catch(e){}}" +
       "var GIGAS=[['km','QUIL\\u00d4METROS'],['tempo','TEMPO'],['pace','PACE M\\u00c9DIO'],['kcal','CALORIAS']];" +
       "function crGigas(){return cr.blocos?GIGAS.concat([['etapa','ETAPA ATUAL']]):GIGAS;}" +
       /* Tela por zona de batimento: com a cinta ligada, o fundo da tela cheia

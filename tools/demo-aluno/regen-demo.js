@@ -255,9 +255,9 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
     const stamp = new Date().toISOString();
-    /* Os dados continuam totalmente simulados. A única leitura externa
-     * permitida no demo são os GIFs públicos do bucket `exercicios`; nenhuma
-     * sessão, resposta do aluno ou dado do painel sai do navegador. */
+    /* Os registros continuam simulados. GIFs públicos e mapas externos são
+     * recursos de apresentação; nenhuma resposta ou ficha da demo é gravada
+     * em uma conta real. O mapa mantém seus eventos técnicos de utilização. */
     if (!self.MT_GIFS || self.MT_GIFS.bucket !== "exercicios") throw new Error("Configuração do banco de GIFs ausente no gerador da demo.");
     const comCadastro = window.__montaAppAluno(alex, stamp);
     // Apenas o aluno FICTÍCIO da demonstração dispensa a entrada inicial.
@@ -272,7 +272,8 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
   }, { CAPAS, NUTRICAO_DEMO });
   await br.close();
   // O simulador e os dados de acompanhamento são os mesmos nas duas entradas.
-  const bloco = fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";");
+  const mapa = '<script src="assets/mapa-config.js"><\/script>';
+  const bloco = mapa + fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";");
   function prepara(html) {
     if (!html || html.length < 50000) throw new Error("Builder retornou uma demo incompleta.");
     let out = html.replace(/localStorage/g, "__demoLS");

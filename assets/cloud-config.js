@@ -35,6 +35,7 @@ self.MT_CLOUD = {
 // e nunca são carimbados.
 self.MT_MAPA = {
   cartoKey: "",
+  // Mapbox é configurado por assets/mapa-config.js no artefato de publicação.
 };
 
 // Apelido de função: quando uma Edge Function tem que atender por OUTRO nome.
