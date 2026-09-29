@@ -66,6 +66,22 @@ async function novaExecucaoAluno(p) {
   });
 }
 
+// O loader define a identidade antes de executar o HTML do aluno. Fixtures de
+// HTML direto precisam reproduzir esse passo num contexto próprio: reaproveitar
+// o painel herda o token deixado por outros testes de /app/ e bloqueia gravações.
+async function contextoAppAluno(browser, html, options = {}) {
+  const match = html.match(/,TOKEN=("(?:[^"\\]|\\.)*"),ZAPP=/);
+  if (!match) throw new Error('Fixture do app sem token no HTML canônico');
+  const token = JSON.parse(match[1]);
+  const context = await browser.newContext({ viewport: { width: 1360, height: 900 }, ...options });
+  await context.addInitScript(token => {
+    if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
+  }, token);
+  // Um mock específico da página tem precedência; nenhuma fixture envia dados reais.
+  await context.route('**/rest/v1/rpc/**', route => route.abort());
+  return context;
+}
+
 
 
 
@@ -6262,7 +6278,8 @@ async function novaExecucaoAluno(p) {
       window.MTStore.write("ptStudio", st);
       return html;
     });
-    const pCapa = await p.context().newPage();
+    const ctxCapa = await contextoAppAluno(b, appCapa);
+    const pCapa = await ctxCapa.newPage();
     await pCapa.addInitScript(() => localStorage.setItem("pttema", JSON.stringify(1)));
     await pCapa.route("**/app-teste-capa.html", (r) => r.fulfill({ contentType: "text/html", body: appCapa }));
     await pCapa.goto(BASE + "/app-teste-capa.html", { waitUntil: "domcontentloaded" });
@@ -6279,6 +6296,7 @@ async function novaExecucaoAluno(p) {
     // tema aqui, os testes seguintes nasceriam no modo claro
     await pCapa.evaluate(() => localStorage.removeItem("pttema"));
     await pCapa.close();
+    await ctxCapa.close();
     ok(hero.claro && hero.foto === "block" && hero.comfoto,
       "o card do dia com foto se marca como 'comfoto' pro tema não mandar no texto");
     ok(hero.tit === "rgb(255, 255, 255)" && hero.sub === "rgb(214, 210, 223)",
@@ -8848,7 +8866,8 @@ async function novaExecucaoAluno(p) {
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
       return window.__montaAppAluno(a, new Date().toISOString());
     });
-    const pW = await ctx.newPage();
+    const ctxW = await contextoAppAluno(b, wodApp);
+    const pW = await ctxW.newPage();
     pW.on("dialog", (d) => d.accept());
     await pW.route("**/app-teste-wod.html", (r) => r.fulfill({ contentType: "text/html", body: wodApp }));
     await pW.goto(BASE + "/app-teste-wod.html", { waitUntil: "domcontentloaded" });
@@ -8895,6 +8914,7 @@ async function novaExecucaoAluno(p) {
       "tocar num movimento pula pra ele, e o que ficou pra trás aparece riscado");
     ok(gw.zerou.gi === 0 && gw.zerou.voltas === 0, "zerar o circuito volta pro primeiro movimento");
     await pW.close();
+    await ctxW.close();
     await p.evaluate((snap) => localStorage.setItem("mtapp:ptStudio", snap), snapWod);
   }
   // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
@@ -8912,7 +8932,8 @@ async function novaExecucaoAluno(p) {
       if (antes === undefined) delete al.questApp; else al.questApp = antes;
       return h;
     });
-    const pQ = await ctx.newPage();
+    const ctxQ = await contextoAppAluno(b, qaHtml);
+    const pQ = await ctxQ.newPage();
     const errosQ = [];
     pQ.on("pageerror", (e) => errosQ.push(String(e)));
     let envio = null;
@@ -8937,8 +8958,7 @@ async function novaExecucaoAluno(p) {
       "📝 e nada além disso — sem a lista de perguntas nem a caixa de explicação");
     const fluxo = await pQ.evaluate(async () => {
       const out = {};
-      // as páginas da suíte dividem o MESMO localStorage — guarda pra devolver
-      // no fim (uma chave a mais em ptqa mudaria o XP dos testes seguintes)
+      // Mede a nova resposta contra o estado inicial deste aluno isolado.
       const qa0 = localStorage.getItem("ptqa");
       const dr0 = localStorage.getItem("ptqadraft");
       window.__qaFluxo();
@@ -8974,6 +8994,7 @@ async function novaExecucaoAluno(p) {
       "Enviar manda a MESMA lista de sempre (sigla/pontos/menos + pontuação) e a tela Respondido aparece");
     ok(errosQ.length === 0, "fluxo do questionário sem erro de JS" + (errosQ.length ? " — " + errosQ[0] : ""));
     await pQ.close();
+    await ctxQ.close();
   }
   // --- R4: compartilhar com arte por cima da foto (telas 26-30) ---
   {
@@ -9141,7 +9162,8 @@ async function novaExecucaoAluno(p) {
   });
   ok(cardioProf.abaVisivel && cardioProf.salvos === 2 && /Rodagem de terça/.test(cardioProf.lista) && /2× 1s forte/.test(cardioProf.lista),
     "aba Corrida e bike do professor prescreve contínuo e tiros (intervalado)");
-  const pCr = await ctx.newPage();
+  const ctxCr = await contextoAppAluno(b, cardioProf.appHtml);
+  const pCr = await ctxCr.newPage();
   // Esta aba exercita o navegador SEM cinta. O Chrome do Windows expõe
   // Web Bluetooth mesmo em headless; a ausência deve ser explícita na fixture.
   await pCr.addInitScript(() => Object.defineProperty(navigator, "bluetooth", { configurable: true, writable: true, value: undefined }));
@@ -10004,8 +10026,10 @@ async function novaExecucaoAluno(p) {
     ok(c751.zerou, "🏃 v751: Zerar limpa mistoT0/mistoVai e o rumo (refazer o misto não mostra 'TIRO -1')");
   }
   await pCr.close();
+  await ctxCr.close();
   // com a ponte do app de loja (window.MTNativo.fc) tudo acende e a corrida guarda o resumo
-  const pFc = await ctx.newPage();
+  const ctxFc = await contextoAppAluno(b, cardioProf.appHtml);
+  const pFc = await ctxFc.newPage();
   pFc.on("dialog", (d) => d.accept());
   await pFc.addInitScript(() => {
     window.MTNativo = { fc: { conectar: function (cb) { window.__cbFc = cb; }, parar: function () { window.__fcParou = true; } } };
@@ -10053,6 +10077,7 @@ async function novaExecucaoAluno(p) {
   ok(/fc:L\('ptfc',\{\}\),idade:\+L\('ptidade',0\)/.test(cardioProf.appHtml) && /batimentos:L\('ptfc',\{\}\)/.test(cardioProf.appHtml),
     "o resumo de batimentos (e a idade, pras zonas) viaja pro professor no retorno, e entra no arquivo de dados do aluno");
   await pFc.close();
+  await ctxFc.close();
   // --- WhatsApp de hoje: fila de mensagens prontas + modelos editáveis ---
   const stSnapZap = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   await p.evaluate(() => {
@@ -11235,7 +11260,8 @@ async function novaExecucaoAluno(p) {
     "aba Configurações salva a tolerância e as áreas do app (e pede pra republicar)");
   ok(!/data-trsub='wod'/.test(cfgSalvo.appHtml) && !/id='cardWod'/.test(cfgSalvo.appHtml) && !/id='cardCardio'/.test(cfgSalvo.appHtml) && !/Modo circuito \(WOD\)/.test(cfgSalvo.appHtml),
     "app do aluno some com o WOD e o cardio quando o professor desliga");
-  const pCfg = await ctx.newPage();
+  const ctxCfg = await contextoAppAluno(b, cfgSalvo.appHtml);
+  const pCfg = await ctxCfg.newPage();
   pCfg.on("dialog", (d) => d.accept());
   await pCfg.route("**/app-teste-cfg.html", (r) => r.fulfill({ contentType: "text/html", body: cfgSalvo.appHtml }));
   await pCfg.goto(BASE + "/app-teste-cfg.html", { waitUntil: "domcontentloaded" });
@@ -11247,6 +11273,7 @@ async function novaExecucaoAluno(p) {
   ok(!cfgApp.itens.some((t) => /Utilidades|Plano/.test(t)) && cfgApp.treinoOk,
     "menu do app respeita as chaves (sem Utilidades/Plano) e o treino segue funcionando sem erros");
   await pCfg.close();
+  await ctxCfg.close();
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCfg);
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCr);
   await pApp.evaluate(() => window.__trocaSec("inicio"));
