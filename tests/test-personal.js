@@ -75,6 +75,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const token = JSON.parse(match[1]);
   const context = await browser.newContext({ viewport: { width: 1360, height: 900 }, ...options });
   await context.addInitScript(token => {
+    // A identidade simulada pertence ao app, não aos iframes de vídeo.
+    if (window !== window.top) return;
     if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
   }, token);
   // Um mock específico da página tem precedência; nenhuma fixture envia dados reais.
@@ -7919,6 +7921,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const ctxApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
   const studioApp = await p.evaluate(() => localStorage.getItem('mtapp:ptStudio'));
   await ctxApp.addInitScript(studio => {
+    // A identidade simulada pertence ao app, não aos iframes de vídeo.
+    if (window !== window.top) return;
     if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', 'tok-teste-chat');
     if (!localStorage.getItem('mtapp:ptStudio')) localStorage.setItem('mtapp:ptStudio', studio);
   }, studioApp);
