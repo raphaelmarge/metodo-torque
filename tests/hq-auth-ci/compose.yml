@@ -9,8 +9,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: hq_auth_ci_postgres_test_only
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
-    ports:
-      - "127.0.0.1:55433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db-init.sql:/docker-entrypoint-initdb.d/00-hq-ci.sql:ro
@@ -27,8 +25,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "127.0.0.1:59999:9999"
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: "9999"
@@ -66,8 +62,6 @@ services:
         condition: service_healthy
       auth:
         condition: service_healthy
-    ports:
-      - "127.0.0.1:53000:3000"
     environment:
       PGRST_DB_URI: postgres://authenticator:hq_auth_ci_rest_test_only@db:5432/hq_auth_ci
       PGRST_DB_SCHEMAS: public
@@ -88,6 +82,9 @@ services:
 
 networks:
   default:
+    # Docker may omit published ports when this is the only attached network.
+    # run.sh forwards exactly three loopback ports to validated container IPs;
+    # services stay exclusively on this internal bridge without Internet egress.
     internal: true
 
 volumes:

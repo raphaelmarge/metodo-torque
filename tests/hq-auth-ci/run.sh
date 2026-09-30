@@ -30,6 +30,7 @@ unset COMPOSE_FILE COMPOSE_PROJECT_NAME COMPOSE_ENV_FILES
 unset PGSERVICE PGSERVICEFILE PGPASSFILE PGOPTIONS DATABASE_URL
 docker_local=(docker --host unix:///var/run/docker.sock)
 compose=("${docker_local[@]}" compose --env-file /dev/null --project-name "$project" --file "$infra/compose.yml")
+proxy_pid=''
 mkdir -p "$HQ_AUTH_CI_ARTIFACT_DIR"
 
 if [[ -n "$("${docker_local[@]}" ps -aq --filter "label=com.docker.compose.project=$project")" ||
@@ -69,6 +70,10 @@ cleanup() {
   local code=$?
   trap - EXIT INT TERM
   collect_metadata || code=1
+  if [[ -n "$proxy_pid" ]]; then
+    kill "$proxy_pid" 2>/dev/null || true
+    wait "$proxy_pid" 2>/dev/null || true
+  fi
   local cleanup_status=completed
   if ! "${compose[@]}" down --volumes --remove-orphans --timeout 10; then
     cleanup_status=failed
@@ -115,6 +120,103 @@ printf '%s\n' 'Starting disposable PostgreSQL, real Auth and PostgREST.'
 "${compose[@]}" up --detach --pull never --wait --wait-timeout 180
 test "$("${docker_local[@]}" network inspect "${project}_default" --format '{{.Internal}}')" = true
 printf '%s\n' 'All services healthy; container network is internal.'
+
+# Docker does not reliably publish host ports on an exclusively internal bridge
+# (moby/moby#36174). The Linux host can reach that bridge directly. Keep it
+# internal and forward only the three fixed test ports through this child process.
+# No arbitrary target, hostname, environment endpoint or traffic log is accepted.
+HQ_AUTH_CI_PROJECT="$project" HQ_AUTH_CI_COMPOSE="$infra/compose.yml" node <<'NODE' &
+'use strict';
+const net = require('node:net');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const project = process.env.HQ_AUTH_CI_PROJECT;
+const file = path.join(process.env.HQ_AUTH_CI_ARTIFACT_DIR, 'transport.json');
+const ports = [['db', 55433, 5432], ['auth', 59999, 9999], ['rest', 53000, 3000]];
+const servers = [], sockets = new Set();
+let stopping = false;
+let checking = 'internal network identity';
+const write = status => fs.writeFileSync(file, JSON.stringify({ status, host: '127.0.0.1', ports: ports.map(x => x[1]) }) + '\n');
+const stop = code => {
+  if (stopping) return;
+  stopping = true;
+  for (const socket of sockets) socket.destroy();
+  for (const server of servers) server.close();
+  process.exit(code);
+};
+process.on('SIGTERM', () => stop(0));
+process.on('SIGINT', () => stop(0));
+const docker = args => execFileSync('docker', ['--host', 'unix:///var/run/docker.sock', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000 }).trim();
+const check = (condition, label) => { if (!condition) throw new Error(label); };
+const ipv4 = value => value.split('.').reduce((sum, part) => sum * 256 + Number(part), 0) >>> 0;
+const inSubnet = (ip, cidr) => {
+  if (typeof cidr !== 'string') return false;
+  const [base, prefix] = cidr.split('/');
+  if (!net.isIPv4(base) || !/^\d+$/.test(prefix || '') || Number(prefix) < 8 || Number(prefix) > 30) return false;
+  const mask = (0xffffffff << (32 - Number(prefix))) >>> 0;
+  return (ipv4(ip) & mask) === (ipv4(base) & mask);
+};
+const probe = (host, port) => new Promise((resolve, reject) => {
+  const socket = net.connect({ host, port });
+  socket.setTimeout(3000);
+  socket.once('connect', () => { socket.destroy(); resolve(); });
+  socket.once('timeout', () => { socket.destroy(); reject(new Error('tcp_timeout')); });
+  socket.once('error', () => { socket.destroy(); reject(new Error('tcp_unavailable')); });
+});
+(async () => {
+  write('starting');
+  check(/^hq-auth-ci-\d+-\d+$/.test(project), 'project_identity');
+  const networkName = project + '_default';
+  const network = JSON.parse(docker(['network', 'inspect', networkName, '--format', '{"id":{{json .Id}},"internal":{{.Internal}},"driver":{{json .Driver}},"project":{{json (index .Labels "com.docker.compose.project")}},"ipam":{{json .IPAM.Config}}}']));
+  check(network.internal === true && network.driver === 'bridge' && network.project === project && /^[a-f0-9]{64}$/.test(network.id), 'internal_network_identity');
+  const compose = ['compose', '--env-file', '/dev/null', '--project-name', project, '--file', process.env.HQ_AUTH_CI_COMPOSE];
+  for (const [service, localPort, targetPort] of ports) {
+    checking = service + ' 127.0.0.1:' + localPort;
+    const id = docker([...compose, 'ps', '--quiet', service]);
+    check(/^[a-f0-9]{12,64}$/.test(id), 'container_identity');
+    const container = JSON.parse(docker(['inspect', '--format', '{"project":{{json (index .Config.Labels "com.docker.compose.project")}},"service":{{json (index .Config.Labels "com.docker.compose.service")}},"networks":{{json .NetworkSettings.Networks}}}', id]));
+    check(container.project === project && container.service === service, 'container_scope');
+    check(Object.keys(container.networks).length === 1 && container.networks[networkName]?.NetworkID === network.id, 'exclusive_internal_network');
+    const target = container.networks[networkName].IPAddress;
+    check(net.isIPv4(target) && /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(target), 'private_ipv4');
+    check(Array.isArray(network.ipam) && network.ipam.some(x => inSubnet(target, x.Subnet)), 'network_subnet');
+    await probe(target, targetPort);
+    const server = net.createServer(client => {
+      const upstream = net.connect({ host: target, port: targetPort });
+      sockets.add(client); sockets.add(upstream);
+      client.on('close', () => { sockets.delete(client); upstream.destroy(); });
+      upstream.on('close', () => { sockets.delete(upstream); client.destroy(); });
+      client.on('error', () => upstream.destroy());
+      upstream.on('error', () => client.destroy());
+      client.pipe(upstream); upstream.pipe(client);
+    });
+    servers.push(server);
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(localPort, '127.0.0.1', resolve);
+    });
+    check(server.address().address === '127.0.0.1' && server.address().port === localPort, 'loopback_binding');
+    await probe('127.0.0.1', localPort);
+    console.log('CI transport ' + service + ': 127.0.0.1:' + localPort + ' ready');
+  }
+  write('ready');
+})().catch(() => { write('failed'); console.error('CI loopback transport failed: ' + checking); stop(1); });
+NODE
+proxy_pid=$!
+transport_ready=false
+for attempt in {1..30}; do
+  if ! kill -0 "$proxy_pid" 2>/dev/null; then
+    printf '%s\n' 'Loopback transport exited before readiness.' >&2
+    exit 1
+  fi
+  if node -e 'const fs=require("node:fs"),path=require("node:path");const p=path.join(process.env.HQ_AUTH_CI_ARTIFACT_DIR,"transport.json");process.exit(fs.existsSync(p)&&JSON.parse(fs.readFileSync(p,"utf8")).status==="ready"?0:1)' >/dev/null 2>&1; then
+    transport_ready=true
+    break
+  fi
+  sleep 1
+done
+test "$transport_ready" = true
 
 # Existing concurrency tests make and drop their own random database. Their Auth
 # stubs never touch hq_auth_ci, whose auth schema belongs to real GoTrue.
