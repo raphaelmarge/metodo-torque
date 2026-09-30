@@ -2,7 +2,7 @@
 
 Inventário e execução: **30/09/2026**, checkout `torque-hq-implementation`, branch `local/hq-operational-center`, base `7019199b27d60068c581a8dd83c08a6df2d7f83d` com alterações locais. Este documento não declara aplicação de SQL, autenticação HTTP homologada ou gateway conectado em produção.
 
-**Resultado:** testes locais em PostgreSQL/WASM e navegador com serviços substituídos passaram. O teste novo de concorrência real está pronto para o PostgreSQL descartável já existente no CI, mas **a execução real permanece pendente até evidência do CI**. Não foi instalado nem iniciado serviço novo; nenhum banco remoto foi acessado nesta etapa.
+**Resultado atualizado:** os testes locais em PostgreSQL/WASM e navegador passaram. A concorrência real também passou: **49 verificações no PostgreSQL 17.11** do CI, commit `d91f128ef482df0b91a7eb7d44745a78bd56b58d`, [job 110095279017](https://github.com/raphaelmarge/metodo-torque/actions/runs/36776397887/job/110095279017), em 30/09/2026 às 21:07 UTC. Foram comprovados locks entre conexões, idempotência, rollback, limites AR/AP e revogação. O CI geral desse commit teve falhas separadas; esta evidência não o declara aprovado. HTTP/JWT/MFA continuam pendentes. Nenhum banco de produção foi acessado nem serviço novo instalado neste Windows.
 
 ## Ambiente encontrado
 
@@ -35,7 +35,7 @@ Essa busca cobre locais usuais e recursos em execução, não uma varredura exau
 | Fixture exportada do novo runner + três SQL canônicos | Aplicaram em PGlite | Valida o setup, não locks concorrentes reais |
 | `node tests/test-hq-concurrency-pg.js` | **Não executado contra PostgreSQL: exit 1 por `PGTESTURL` ausente** | Nenhum PASS de concorrência foi emitido |
 
-Os resultados da suíte geral e de `test-saas.js` são registrados pelo responsável pela integração; esta nota não os substitui. Guardar o SHA e o log do CI que realmente executar o novo runner antes de alterar a situação de pendente.
+Os resultados da suíte geral e de `test-saas.js` são registrados pelo responsável pela integração. As linhas acima descrevem a execução no Windows; a evidência de concorrência real no CI está registrada no início desta nota. O commit final da publicação ainda precisa passar todos os gates.
 
 ## Runner PostgreSQL real entregue
 

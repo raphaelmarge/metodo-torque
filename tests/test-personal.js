@@ -6632,7 +6632,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     ok(/não montou/.test(fumaca.erro || "") && !fumaca.chamouUpsert,
       "publicaPacotes devolve {erro} nesse caso (nunca rejeita) e não chama o upsert");
 
-    const pLoader = await ctx.newPage();
+    // Estes cenarios simulam a primeira abertura via page.route. O contexto
+    // do painel ja registrou sw.js: fetches do worker contornam esses mocks.
+    const ctxLoader = await b.newContext({ viewport: { width: 1360, height: 900 }, serviceWorkers: "block" });
+    const pLoader = await ctxLoader.newPage();
     const errosL = [];
     pLoader.on("pageerror", (e) => errosL.push(e.message));
     // a app_aluno_estado é derrubada de propósito: no GitHub a internet é
@@ -6658,7 +6661,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     ok(montou.guardou && montou.semHtmlGuardado,
       "o aparelho guarda os DADOS (não o html), então na próxima vez o código vem novo do site");
     ok(errosL.length === 0, "abrir pelo /app/ não gera erro de JS" + (errosL.length ? " — " + errosL[0] : ""));
-    await pLoader.close();
+    await ctxLoader.close();
   }
   // v776: o pacote não traz mais o html de reserva — então o loader precisa
   // segurar sozinho o cenário que o html cobria: o construtor (700 KB, <script>
@@ -6672,7 +6675,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     });
     const envelope = (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, dados: { html: "", dados: pac.dados, ver: pac.ver, stamp: pac.stamp } }) });
     // (1) cai na primeira, vem na segunda: o app abre
-    const pR = await ctx.newPage();
+    const ctxR = await b.newContext({ viewport: { width: 1360, height: 900 }, serviceWorkers: "block" });
+    const pR = await ctxR.newPage();
     let pedidos = 0;
     await pR.route("**/app/aluno-builder.js", (r) => { pedidos++; if (pedidos === 1) r.abort(); else r.continue(); });
     await pR.route("**/rest/v1/rpc/app_aluno_estado", envelope);
@@ -6681,9 +6685,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     const rec = await pR.evaluate(() => ({ nav: !!document.getElementById("navApp"), titulo: (document.querySelector(".topo h1") || {}).textContent || "" }));
     ok(pedidos >= 2 && rec.nav && rec.titulo === pac.nome,
       "construtor que caiu na primeira abertura é baixado de novo e o app abre (" + pedidos + " pedidos)");
-    await pR.close();
+    await ctxR.close();
     // (2) cai sempre: o recado é de INTERNET, com Tentar de novo — nunca "não respondeu"
-    const pF = await ctx.newPage();
+    const ctxF = await b.newContext({ viewport: { width: 1360, height: 900 }, serviceWorkers: "block" });
+    const pF = await ctxF.newPage();
     await pF.route("**/app/aluno-builder.js", (r) => r.abort());
     await pF.route("**/rest/v1/rpc/app_aluno_estado", envelope);
     await pF.goto(BASE + "/app/?t=tok-sem-construtor");
@@ -6696,7 +6701,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       "sem o construtor de jeito nenhum, o app diz que é a internet (e oferece Tentar de novo), não culpa o servidor" +
       (semConstrutorOk ? "" : " — a tela dizia: " + falhou.texto.replace(/\s+/g, " ").slice(0, 160)));
     ok(!falhou.guardou, "e não guarda pacote no aparelho sem ter montado o app");
-    await pF.close();
+    await ctxF.close();
   }
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");

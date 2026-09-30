@@ -26,3 +26,15 @@ node tools/hq-ops/compare-saas.cjs . block
 ```
 
 O terceiro comando é um ensaio diagnóstico e espera reproduzir a interferência, não é gate de aprovação. O gate funcional usa o arquivo corrigido e a suíte real de cache. Nenhuma chamada ou credencial de produção foi usada.
+
+## Outros simuladores identificados pelo CI completo
+
+O primeiro CI do pacote integrado (`d91f128`, run `36776397887`) executou 151 suítes e encontrou cinco com falha. A higiene dos testes foi corrigida em `ab8b5f9`; os ícones das duas novas páginas foram adicionados sem alterar os critérios de `test-lojas.js`. As outras três falhas tinham a mesma origem de interceptação pelo worker:
+
+| Suíte | Comparação equivalente da base e candidato | Correção |
+|---|---|---|
+| `test-elite5.js` | Base: mock 200, fora do worker, `__trocaSec` presente. Candidato: worker devolve 404 para URL virtual, função ausente. | Contexto que serve documentos simulados bloqueia workers; todas as 29 verificações foram preservadas. |
+| `test-nutricao.js` | Base com worker permitido passa. Candidato com worker permitido recebe 404 na fixture Pix; base e candidato com worker bloqueado passam nas 258 verificações anteriores. | Contextos de documentos/RPCs simulados bloqueiam workers; nova assertion confirma interceptação, HTTP 200 e resposta fora do worker. Runtime Nutri intacto. |
+| `test-personal.js` | Base com builder indisponível faz duas requisições, mostra falha de internet e não guarda pacote. Candidato no contexto compartilhado recebe builder do cache, faz zero requisições simuladas e abre o app. Contextos novos e bloqueados reproduzem corretamente retry e falha em ambas as versões. | Só os três contextos de primeira abertura, retry e ausência de builder foram isolados. As assertions e os outros contextos permanecem. |
+
+Esses ensaios usam Chrome, servidor loopback e fixtures sintéticas equivalentes; nenhum backend real foi acessado. Bloquear workers nos mocks não comprova comportamento offline: a suíte dedicada `test-personal-sales-cache.js` continua usando os workers reais. O resultado final de todas as suítes deve ser conferido no SHA final do PR antes da publicação.
