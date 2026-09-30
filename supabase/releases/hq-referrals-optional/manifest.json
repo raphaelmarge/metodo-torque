@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "mode": "referrals-optional-separate-approval",
+  "baseCommit": "b05222a2852bd1e96d9a91804d3cd5bdd4f59d22",
+  "targetProjectRef": "hdcufkaalxfhwmfwoiqp",
+  "status": "local-preparation-not-applied",
+  "approvalRequired": true,
+  "encoding": "UTF-8",
+  "lineEndings": "LF",
+  "hashAlgorithm": "SHA-256",
+  "approvalSeparate": true,
+  "activationBlocked": true,
+  "frontendReleaseRequired": true,
+  "campaignEnabled": false,
+  "migrations": [
+    {
+      "file": "migrations/20260930193716_hq_referrals_ledger.sql",
+      "source": "supabase/migrations/20260930193716_hq_referrals_ledger.sql",
+      "sha256": "b98a9a3933b6a8fab8c0ed0d938e5ea0d6dd48cc34fcaf95d1f9164acc7957d7"
+    },
+    {
+      "file": "migrations/20260930225240_hq_referrals_payment_contract.sql",
+      "source": "supabase/hq-referrals-payment-contract-proposal.sql",
+      "sha256": "c17f7781b914f9719b7751e3ae40c2d544b46018e8a885c1b99f62e1dc7183b7"
+    }
+  ],
+  "rollback": {
+    "suspend": {
+      "file": "rollback/hq-referrals-suspend.sql",
+      "source": "supabase/rollback/hq-referrals-suspend.sql",
+      "sha256": "9a628e0aba4105ece19ef864294fbf338c833b7015e1e842d176a51021359fb1"
+    },
+    "resume": {
+      "file": "rollback/hq-referrals-resume.sql",
+      "source": "supabase/rollback/hq-referrals-resume.sql",
+      "sha256": "31a4c250e04c2360d2085208916f8addb50bd500c3fde5241fedfcb9439b3473"
+    }
+  },
+  "migrationAllowlist": [
+    "migrations/20260930193716_hq_referrals_ledger.sql",
+    "migrations/20260930225240_hq_referrals_payment_contract.sql"
+  ],
+  "rollbackOrder": {
+    "suspend": [
+      "influencer-if-installed",
+      "referrals"
+    ],
+    "resume": [
+      "referrals",
+      "influencer-if-approved"
+    ]
+  },
+  "effects": [
+    "Empacota a migration historica imutavel e a correcao aditiva do contrato de primeiro pagamento.",
+    "Mantem a campanha desligada; nao gera pagamento nem transferencia."
+  ],
+  "dependencies": [
+    "Revisao do historico real de migrations antes de qualquer aplicacao.",
+    "Supabase Auth, public.saas_admins e public.academias conforme fontes canonicas."
+  ],
+  "blocked": [
+    "Nao faz parte da ativacao minima.",
+    "Nao reaplicar a migration historica onde ja estiver instalada.",
+    "Contrato novo exige publicacao futura dos consumidores frontend corrigidos e homologacao HTTP/Auth.",
+    "Gateway, atribuicao confiavel, compra antes do fim do trial e ativacao comercial exigem decisoes separadas.",
+    "Portal influencer e convites nao estao incluidos."
+  ]
+}

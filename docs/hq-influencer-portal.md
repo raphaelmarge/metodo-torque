@@ -36,9 +36,21 @@ RPCs propostas:
 | `influencer_accept_invite()` | Usuário Auth com e-mail confirmado, sessão ativa e convite pendente correspondente. Não recebe parceiro ou e-mail do navegador. |
 | `influencer_portal_snapshot()` | Vínculo ativo derivado de `auth.uid()`, convite aceito, e-mail ainda correspondente e parceiro ativo. Sem argumentos. |
 
-O adaptador JS usa `{p_input: input}` nas RPCs com entrada. Não faz consultas diretas a tabelas. O snapshot do parceiro contém somente `version`, `asOf`, `partner`, `campaign`, `counts`, `balances`, `coupons`, `commissions`, `payments`, `limits` e `availability`. Campos extras ou capacidades inesperadas são recusados antes da renderização.
+O adaptador JS usa `{p_input: input}` nas RPCs com entrada. Não faz consultas diretas a tabelas. O snapshot v2 contém somente `version`, `asOf`, `partner`, `campaign`, `counts`, `firstPayments`, `balances`, `coupons`, `commissions`, `payments`, `limits` e `availability`. Campos extras ou capacidades inesperadas são recusados antes da renderização.
 
-`counts.firstPaymentsAfterTrial` conta as comissões únicas já projetadas pelo núcleo financeiro validado. Não conta cadastros, cliques ou um `firstPaidAt` do navegador. É acumulado histórico, separado dos ajustes/reversões atuais. Não usar essa quantidade para calcular conversão entre coortes sem acrescentar período e denominador apropriados.
+`counts.firstPaymentsAfterTrial` conta fatos históricos de primeiro recebimento confirmado após o trial, exclusivamente para as indicações do parceiro. Reutiliza `hq_referrals_private.first_payment_json(customers)` de `supabase/hq-referrals-payment-contract-proposal.sql`: histórico canônico verificado e evento de recebimento corroborado. Não conta linhas de comissão ou repasse nem aceita `firstPaidAt` isolado como prova. Um recebimento comprovado pode existir com campanha inativa e sem comissão. O fato histórico é distinto de assinatura ativa, conversão, MRR, receita líquida e elegibilidade de comissão; ajustes não são recalculados no portal.
+
+`firstPayments` contém `status`, `scope: historical_first_payment`, `source`, `verifiedAfterTrialCount` e `unknownCount`. A fonte é `verified_ledger_events`; sem helper é `unavailable`; ao receber v1, é `legacy_unverified`.
+
+| Cobertura | Contador e apresentação |
+|---|---|
+| `ready` | Todas as indicações têm fato classificável; contador total igual ao número pós-trial comprovado. Consulta pronta com conjunto vazio confirma zero. |
+| `partial` | Total `counts.firstPaymentsAfterTrial: null`; quantidade comprovada exibida como “N confirmados”, com número de indicações sem prova suficiente. |
+| `unavailable` | Total e quantidade comprovada `null`; mostra “Indisponível”. Ausência de helper ou de qualquer prova válida não vira zero. |
+
+Trials e registros legados sem prova continuam desconhecidos. A UI aceita payload v1 para preservar comissões/repasses, mas descarta seu antigo contador derivado de comissões, normalizando-o para v2 indisponível. A demonstração v2 contém cobertura parcial sintética e continua identificada como fictícia. O agregado não expõe IDs, datas ou eventos individuais de clientes.
+
+O helper complementar é opcional para a consulta geral, mas necessário para esse KPI. Sua ausência mantém a métrica indisponível. Nenhuma migration original foi alterada. Testes adicionais cobrem helper ausente, comissão/repasse “pago” sem prova, recebimento sem comissão e com campanha OFF, cobertura parcial/completa/vazia, recebimento anterior ao fim do trial, isolamento A/B, v1 com contador enganoso e cobertura v2 inconsistente.
 
 ## Autorização e limites
 

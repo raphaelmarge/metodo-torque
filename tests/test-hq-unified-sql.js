@@ -1,4 +1,5 @@
-/* Integration of all three LOCAL SQL proposals in one ephemeral PostgreSQL/WASM.
+/* Integration of the three LOCAL domains and the ledger contract correction in
+ * one ephemeral PostgreSQL/WASM.
  * No network, Supabase URL, credentials, migrations in production or real users.
  * Historical ledger fixtures are inserted only by this disposable DB's owner;
  * the actual campaign remains OFF throughout. PGlite does not verify HTTP Auth
@@ -15,6 +16,7 @@ const sessions = Object.fromEntries(Object.keys(users).map((name,i) => [name,uid
 const accountA = uid(101), accountB = uid(102), customerA = uid(201), customerB = uid(202);
 const files = [
   '../supabase/migrations/20260930193716_hq_referrals_ledger.sql',
+  '../supabase/hq-referrals-payment-contract-proposal.sql',
   '../supabase/hq-ops-proposal.sql',
   '../supabase/hq-influencer-portal-proposal.sql'
 ];
@@ -78,13 +80,14 @@ async function denied(run, code) { await assert.rejects(run, error => error.code
     await db.query("insert into public.academias(id,nome,assinatura_status) values($1,'Conta Exemplo A','trial'),($2,'Conta Exemplo B','ativa')", [accountA, accountB]);
     await db.query("insert into public.saas_clientes values($1,'personal','trial'),($2,'personal','ativo')", [accountA, accountB]);
 
-    await test('Três arquivos aplicam juntos sem substituir contratos anteriores', async () => {
+    await test('Propostas e correcao incremental aplicam juntas sem substituir contratos de outros modulos', async () => {
       const gateBefore = await scalar("select md5(pg_get_functiondef('public.hq_sou_admin()'::regprocedure))");
       await db.exec(fs.readFileSync(path.join(__dirname, files[0]), 'utf8'));
-      ledgerDefinition = await definition('hq_referrals_private');
       await db.exec(fs.readFileSync(path.join(__dirname, files[1]), 'utf8'));
-      opsDefinition = await definition('torque_hq');
+      ledgerDefinition = await definition('hq_referrals_private');
       await db.exec(fs.readFileSync(path.join(__dirname, files[2]), 'utf8'));
+      opsDefinition = await definition('torque_hq');
+      await db.exec(fs.readFileSync(path.join(__dirname, files[3]), 'utf8'));
       assert.deepEqual(await definition('hq_referrals_private'), ledgerDefinition);
       assert.deepEqual(await definition('torque_hq'), opsDefinition);
       assert.equal(await scalar("select md5(pg_get_functiondef('public.hq_sou_admin()'::regprocedure))"), gateBefore);
@@ -93,11 +96,22 @@ async function denied(run, code) { await assert.rejects(run, error => error.code
       assert.equal(await scalar('select count(*)::int from auth.users'), Object.keys(users).length);
     });
     for (const role of ['finance','support','sales','engineering','viewer']) await db.query('insert into torque_hq.staff(user_id,role,enabled) values($1,$2,true)', [users[role], role]);
+    await test('Instalacao minima nega staff mesmo se uma linha habilitada existir', async () => {
+      assert.equal(await scalar('select staff_enabled from torque_hq.settings where id'), false);
+      for (const name of ['finance','support','sales','engineering','viewer']) {
+        await actor(name); await denied(() => rpc('hq_ops_snapshot'), '42501');
+        await denied(() => ops('lead.create', { name: 'Nao deve existir' }), '42501');
+      }
+      await actor('admin'); assert.equal((await rpc('hq_ops_snapshot')).role, 'admin');
+      await actor(null, 'owner');
+      // Optional staff mode is enabled only in this disposable fixture, never by installation.
+      await db.exec('update torque_hq.settings set staff_enabled=true where id');
+    });
 
     await test('Schemas continuam privados, todas as tabelas têm RLS e nenhum papel API ganha escrita direta', async () => {
       const tables = (await db.query(`select n.nspname,c.relname,c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace
         where n.nspname in ('torque_hq','hq_referrals_private','hq_influencer_private') and c.relkind='r'`)).rows;
-      assert.equal(tables.length, 25); assert.ok(tables.every(t => t.relrowsecurity));
+      assert.equal(tables.length, 27); assert.ok(tables.every(t => t.relrowsecurity));
       for (const role of ['anon','authenticated','service_role']) for (const table of tables) {
         const name = table.nspname + '.' + table.relname;
         assert.equal(await scalar('select has_table_privilege($1,$2,$3)', [role, name, 'SELECT,INSERT,UPDATE,DELETE']), false, role + ' / ' + name);
@@ -192,6 +206,10 @@ async function denied(run, code) { await assert.rejects(run, error => error.code
       assert.deepEqual(a.coupons.map(x => x.code), ['UNIFIED_A']); assert.deepEqual(b.coupons.map(x => x.code), ['UNIFIED_B']);
       assert.deepEqual([a.counts.attributed,a.balances.paidCents,a.payments.length], [1,1996,1]);
       assert.deepEqual([b.counts.attributed,b.balances.pendingCents,b.payments.length], [1,1996,0]);
+      assert.equal(a.counts.firstPaymentsAfterTrial, null);
+      assert.equal(b.counts.firstPaymentsAfterTrial, null);
+      assert.equal(a.firstPayments.unknownCount, 1);
+      assert.equal(b.firstPayments.unknownCount, 1);
       assert.equal(a.campaign.enabled, false); assert.equal(b.campaign.enabled, false);
       const serialized = JSON.stringify(a) + JSON.stringify(b);
       for (const forbidden of ['PRIVATE',customerA,customerB,accountA,accountB,invoiceId,expenseId,'example.test','customerLabel','customerId','partnerId']) assert.equal(serialized.includes(forbidden), false, forbidden);
@@ -287,6 +305,6 @@ async function denied(run, code) { await assert.rejects(run, error => error.code
       assert.equal(await scalar('select bool_and(actor_id=$1) from torque_hq.audit', [users.finance]), true);
       assert.equal(await scalar('select enabled from hq_referrals_private.campaign'), false);
     });
-    console.log(`PASS ${checks} grupos de integração SQL unificada; três arquivos reais, banco efêmero e zero acesso remoto.`);
+    console.log(`PASS ${checks} grupos de integração SQL unificada; quatro arquivos reais, banco efêmero e zero acesso remoto.`);
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

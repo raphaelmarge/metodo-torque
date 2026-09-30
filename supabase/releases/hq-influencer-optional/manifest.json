@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "mode": "influencer-optional-blocked",
+  "baseCommit": "b05222a2852bd1e96d9a91804d3cd5bdd4f59d22",
+  "targetProjectRef": "hdcufkaalxfhwmfwoiqp",
+  "status": "local-preparation-not-applied",
+  "approvalRequired": true,
+  "encoding": "UTF-8",
+  "lineEndings": "LF",
+  "hashAlgorithm": "SHA-256",
+  "approvalSeparate": true,
+  "activationBlocked": true,
+  "externalPrereqsAuth": true,
+  "frontendReleaseRequired": true,
+  "uiEnabled": false,
+  "campaignEnabled": false,
+  "migration": {
+    "file": "migrations/20260930225318_hq_influencer_portal_contract.sql",
+    "source": "supabase/hq-influencer-portal-proposal.sql",
+    "sha256": "36cf73082ca23596aac8741529ec7fee35ca4455fdefad5da0a35a6ec5840b59"
+  },
+  "rollback": {
+    "suspend": {
+      "file": "rollback/hq-influencer-suspend.sql",
+      "source": "supabase/rollback/hq-influencer-suspend.sql",
+      "sha256": "dce058534ee36bbc6a496250b7220e4256bb93138fa31ee5ba7c3b60138b641b"
+    },
+    "resume": {
+      "file": "rollback/hq-influencer-resume.sql",
+      "source": "supabase/rollback/hq-influencer-resume.sql",
+      "sha256": "1b1f52ea2230580538ef4c4df5491039d85f0480fd7f8a02cca799b81ed7b2f8"
+    }
+  },
+  "migrationAllowlist": [
+    "migrations/20260930225318_hq_influencer_portal_contract.sql"
+  ],
+  "rollbackOrder": {
+    "suspend": [
+      "influencer",
+      "referrals-if-requested"
+    ],
+    "resume": [
+      "referrals",
+      "influencer-if-approved"
+    ]
+  },
+  "effects": [
+    "Empacota a proposta do portal sem instalar suas dependencias nem conectar a UI."
+  ],
+  "dependencies": [
+    "Ledger historico 20260930193716_hq_referrals_ledger.sql",
+    "Correcao canonica supabase/hq-referrals-payment-contract-proposal.sql; pacote/aprovacao separados."
+  ],
+  "blocked": [
+    "Nao faz parte da ativacao minima nem do pacote ledger.",
+    "Contrato novo exige publicacao futura dos consumidores frontend corrigidos.",
+    "Auth real, sessao, e-mail confirmado, aceite/revogacao e isolamento A/B precisam de homologacao HTTP.",
+    "Criacao de usuarios, envio de convites, servico de e-mail e conexao da UI nao sao executados.",
+    "Nenhuma dependencia e copiada/aplicada automaticamente; nenhuma campanha e ativada."
+  ]
+}

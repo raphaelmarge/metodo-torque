@@ -1,0 +1,2 @@
+# Release manifests hash the distributed SQL bytes; keep them stable on Windows.
+/supabase/releases/** text eol=lf

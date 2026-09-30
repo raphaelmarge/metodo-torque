@@ -14,6 +14,7 @@ const sessions = { admin: uid(1001), finance: uid(1002), finance2: uid(1003), ou
 const account = uid(101);
 const sources = [
   '../supabase/migrations/20260930193716_hq_referrals_ledger.sql',
+  '../supabase/hq-referrals-payment-contract-proposal.sql',
   '../supabase/hq-ops-proposal.sql',
   '../supabase/hq-influencer-portal-proposal.sql'
 ];
@@ -151,6 +152,11 @@ async function main() {
     }
     const payment = (kind,id,amountCents,reference,key) => envelope(kind+'.recordPayment',{id,amountCents,paidAt:'2020-01-01',reference},key);
 
+    await actor(left,'finance');
+    await denied(()=>snapshot(left),'42501','Instalacao minima nega staff habilitado enquanto gate esta desligado');
+    await actor(left,'admin');
+    equal((await snapshot(left)).role,'admin','Instalacao minima preserva admin existente');
+    await observer.query('update torque_hq.settings set staff_enabled=true where id'); // Explicit extended-mode fixture.
     await actor(left,'admin','anon');
     await denied(() => snapshot(left),'42501','Anon nao chama snapshot mesmo com sub de admin controlado');
     await actor(left,null); await denied(() => snapshot(left),'42501','Authenticated sem sub bloqueado');
