@@ -63,7 +63,9 @@ async function appFixture(overrides={}, initial={}, state={}) {
     metaSemana:3,cfg:{},fichasApp:[],guiaFichasP:[],fexs:[],sessApp:[],wodsApp:[],cardiosApp:[],nutricaoApp:plan(),atualizador:'',...overrides};
   const html=global.MT_APP_ALUNO.monta(D),ctx=await browser.newContext({viewport:{width:390,height:844},locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
   const nk=nutriKeys(D.a.appTokenP),seed={...initial};if(Object.prototype.hasOwnProperty.call(seed,'ptnutricao')){seed[nk.estado]=seed.ptnutricao;delete seed.ptnutricao;}if(Object.prototype.hasOwnProperty.call(seed,'ptnutriFila')){seed[nk.fila]=seed.ptnutriFila;delete seed.ptnutriFila;}if(Object.prototype.hasOwnProperty.call(seed,'ptnutriRascunho')){seed[nk.rascunho]=seed.ptnutriRascunho;delete seed.ptnutriRascunho;}
-  const p=await ctx.newPage();attachErrors(p);await p.clock.setFixedTime(new Date(STAMP));
+  const p=await ctx.newPage();attachErrors(p);
+  if(state.controlClock)await p.clock.install({time:new Date(STAMP)});
+  await p.clock.setFixedTime(new Date(STAMP));
   state.calls=[];state.records=state.records||{};
   await ctx.route('**/*',async route=>{
     const u=new URL(route.request().url());
@@ -109,10 +111,10 @@ const getRecords=p=>p.evaluate(()=>window.__nutriAluno.estado().registros);
 const getQueue=p=>p.evaluate(()=>JSON.parse(localStorage.getItem(window.__nutriAluno.chaves.fila)||'{}'));
 const field=(p,i,name)=>p.locator('#ntpItens [data-ntp-item="'+i+'"] [data-ncampo="'+name+'"]');
 async function synced(p){await p.waitForFunction(()=>Object.keys(JSON.parse(localStorage.getItem(window.__nutriAluno.chaves.fila)||'{}')).length===0);}
-async function until(check,label){const end=Date.now()+10000;while(!check()){if(Date.now()>end)throw new Error('Tempo excedido: '+label);await new Promise(resolve=>setTimeout(resolve,25));}}
+async function until(check,label){const end=Date.now()+10000;while(!await check()){if(Date.now()>end)throw new Error('Tempo excedido: '+label);await new Promise(resolve=>setTimeout(resolve,25));}}
 async function testApp() {
   const training={ptdc:{Supino:[{d:DAY,kg:30,r:10,g:2,i:'0:0:0',serie:1,feito:true}]},ptfeitos:{[DAY]:true},pthab:{[DAY]:[1,0,0,0]}};
-  const {p,ctx,D,state}=await appFixture({},training,{fail:true});
+  const {p,ctx,D,state}=await appFixture({},training,{fail:true,controlClock:true});
   await openNutrition(p);
   eq(await getRecords(p),{},'Abrir plano não cria refeição realizada');
   eq(await p.evaluate(()=>window.__nutriAluno.xp()),0,'Refeição planejada não concede XP');
@@ -144,7 +146,20 @@ async function testApp() {
   await p.locator('#ntpTabDiario').click();await p.locator('[data-ntp-edita="'+id+'"]').click();await p.locator('#ntpTitulo').fill('Almoço editado após novo plano');await p.locator('#ntpSalvar').click();
   eq(Object.keys(await getRecords(p)),[id],'Editar registro de plano antigo conserva seu ID após publicar outro plano');
   eq((await getRecords(p))[id].titulo,'Almoço editado após novo plano','Revisão altera o snapshot existente sem duplicar a refeição');
-  state.fail=false;await p.locator('#ntpTentar').click();await synced(p);
+  // Date fixa não suspende os envios de 700 ms nem a hidratação de 1200 ms.
+  // Termine essas tentativas ainda em falha antes de testar o clique manual.
+  const ultimaRevisao=(await getRecords(p))[id];
+  await p.clock.pauseAt(await p.evaluate(()=>performance.timeOrigin+performance.now()+2000));
+  try{
+    await until(()=>p.evaluate(()=>{const b=document.getElementById('ntpTentar');return !b.hidden&&!b.disabled&&document.getElementById('ntpSync').textContent.includes('offline de teste');}),'última tentativa automática falhou e liberou o botão');
+    eq(await getQueue(p),{[id]:ultimaRevisao.atualizadoEm},'Falha mantém a última revisão pendente antes da tentativa manual');
+    const tentativas=state.calls.filter(x=>x.rpc==='app_nutricao_salva');
+    ok(tentativas.some(x=>x.body.p_registros.some(r=>r.id===id&&r.atualizadoEm===ultimaRevisao.atualizadoEm&&r.titulo===ultimaRevisao.titulo)),'Última revisão foi tentada com o servidor ainda em falha');
+    state.fail=false;await p.locator('#ntpTentar').click();
+    await until(async()=>Object.keys(await getQueue(p)).length===0,'confirmação da tentativa manual');
+    eq(state.calls.filter(x=>x.rpc==='app_nutricao_salva').length,tentativas.length+1,'Clique manual envia uma nova tentativa sem depender do temporizador');
+    eq(state.records[id],ultimaRevisao,'Tentativa manual entrega exatamente o snapshot da última revisão');
+  }finally{await p.clock.resume();}
   eq(state.records[id].itens[0].qtd,.5,'Retentar entrega a última edição ao servidor simulado');
   ok(state.calls.filter(x=>x.rpc==='app_nutricao_salva').every(x=>x.body.t==='token-nutricao-a'&&x.body.p_registros.length<=20),'RPC dedicada recebe token correto e lote limitado');
   ok(!state.calls.filter(x=>x.rpc==='app_aluno_devolve').some(x=>'nutricaoV1' in (x.body.p_dados||{})||'nutricao' in (x.body.p_dados||{})),'Retorno geral de treino não transporta a alimentação');
