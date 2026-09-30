@@ -75,6 +75,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const token = JSON.parse(match[1]);
   const context = await browser.newContext({ viewport: { width: 1360, height: 900 }, ...options });
   await context.addInitScript(token => {
+    // A identidade simulada pertence ao app, não aos iframes de vídeo.
+    if (window !== window.top) return;
     if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', token);
   }, token);
   // Um mock específico da página tem precedência; nenhuma fixture envia dados reais.
@@ -7924,6 +7926,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const ctxApp = await b.newContext({ viewport: { width: 1360, height: 900 } });
   const studioApp = await p.evaluate(() => localStorage.getItem('mtapp:ptStudio'));
   await ctxApp.addInitScript(studio => {
+    // A identidade simulada pertence ao app, não aos iframes de vídeo.
+    if (window !== window.top) return;
     if (!localStorage.getItem('tq_app_token')) localStorage.setItem('tq_app_token', 'tok-teste-chat');
     if (!localStorage.getItem('mtapp:ptStudio')) localStorage.setItem('mtapp:ptStudio', studio);
   }, studioApp);
@@ -7969,11 +7973,12 @@ async function contextoAppAluno(browser, html, options = {}) {
     const secVisivel = (s) => !!document.querySelector("[data-sec='" + s + "']:not([data-sec-off])");
     const antes = { inicio: secVisivel("inicio"), treino: secVisivel("treino") };
     document.querySelector("#navApp .nitem[data-msec='treino']").click();
-    return { itens, antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
+    return { itens, alimentacao: !!document.querySelector("[data-sec='alimentacao']"), antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
   });
-  // telas finais: 4 botões embaixo (Hoje, Treinos, Evolução, Menu) — o resto vive na gaveta
-  ok(navAbas.itens.length >= 4 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
-  ok(await pApp.evaluate(() => document.querySelectorAll("#navApp .nitem svg").length >= 4 && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent)), "abas com ícones de traço (SVG), sem emoji");
+  // Hoje, Treinos, Evolução e Menu permanecem; Alimentação entra quando a seção está disponível.
+  const destinosEsperados = navAbas.alimentacao ? ["inicio", "treino", "evolucao", "alimentacao", null] : ["inicio", "treino", "evolucao", null];
+  ok(JSON.stringify(navAbas.itens) === JSON.stringify(destinosEsperados), "barra preserva os destinos anteriores e inclui Alimentação quando disponível (" + navAbas.itens.length + " abas)");
+  ok(await pApp.evaluate(n => document.querySelectorAll("#navApp .nitem svg").length === n && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent), destinosEsperados.length), "todas as abas têm ícones de traço (SVG), sem emoji");
   ok(navAbas.antes.inicio && !navAbas.antes.treino && !navAbas.depois.inicio && navAbas.depois.treino && /Treino/.test(navAbas.tit), "tocar na aba troca a seção e o título do topo");
   // recado do personal ainda não visto acende a bolinha 🔴 no Chat
   const dotChat = await pApp.evaluate(() => {

@@ -23,7 +23,18 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - Referências: `docs/HQ-ENTREGA-LOCAL-20260930.md`, `docs/HQ-HOMOLOGACAO-LOCAL.md`
   e `docs/HQ-VALIDACAO-BASELINE-20260930.md`. A prévia é fictícia e isolada.
 
-## v849 - Treino conforme a referência do proprietário
+## v850 — Alimentação na navegação principal do aluno
+
+- A barra mantém Hoje, Treinos, Evolução e Menu e acrescenta Alimentação antes
+  de Menu quando a seção está disponível. O atalho deixa de ficar na gaveta.
+- Preservar o filtro de áreas ocultadas pelo profissional e o comportamento
+  sem pacote/histórico alimentar. A navegação não cria plano nem registros.
+- No celular, Alimentação recebe espaço extra para o nome completo; os cinco
+  atalhos continuam visíveis e com área de toque de pelo menos 44 px.
+- As três demos acompanham o builder canônico; nutrição, treinos e dados não
+  tiveram seus contratos alterados.
+
+## v849 — Treino conforme a referência do proprietário
 
 - A execução mostra ficha e exercício, demonstração ampla em 16:9 com a mídia
   inteira, dica e seletor horizontal de séries. Prescrito e anterior acompanham
