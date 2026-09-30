@@ -6,6 +6,23 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v851 - Central operacional, relatórios e indicações
+
+- `apps/hq.html` reúne visão geral e oito áreas operacionais, incluindo Relatórios.
+  Dados indisponíveis não viram zero; caixa, competência, projeção e MRR são distintos.
+- Sem os novos contratos no banco, usa somente leituras legadas autorizadas e
+  mantém acesso explícito aos controles anteriores em `?legacy=1`. A rota nova
+  não utiliza o armazenamento geral `apps/store.js`.
+- Cupons/comissões usam um único ledger e campanha inativa. Portal influencer
+  está desconectado por padrão; convite preparado não cria usuário nem envia e-mail.
+- As propostas SQL e os testes não significam migração aplicada. Gateway,
+  integração do suporte antigo, convites Auth e homologação HTTP continuam separados.
+- O lote incorpora o patch local de vendas mt-v850. Regra comercial: R$ 49,90/mês,
+  14 dias grátis e comissão única após primeiro pagamento elegível pós-trial;
+  compra antes do trial e finalização da atribuição permanecem pendentes.
+- Referências: `docs/HQ-ENTREGA-LOCAL-20260930.md`, `docs/HQ-HOMOLOGACAO-LOCAL.md`
+  e `docs/HQ-VALIDACAO-BASELINE-20260930.md`. A prévia é fictícia e isolada.
+
 ## v850 — Alimentação na navegação principal do aluno
 
 - A barra mantém Hoje, Treinos, Evolução e Menu e acrescenta Alimentação antes

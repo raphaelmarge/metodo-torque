@@ -1951,7 +1951,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <div id="faixaTeste" hidden style="background: rgba(124,58,237,.14); border: 1px solid #7c3aed; border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; line-height: 1.6; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
     <span id="faixaTesteTxt" style="flex: 1; min-width: 200px;"></span>
-    <a id="faixaTesteZap" class="btn mini" target="_blank" rel="noopener" href="#">Assinar — R$ 49/mês</a>
+    <a id="faixaTesteZap" class="btn mini" href="personal-assinatura.html">Ver assinatura - R$ 49,90/mês</a>
     <button class="btn sec mini" id="faixaTesteEntrar" type="button">Já tenho conta</button>
   </div>
   <div id="faixaAssinatura" hidden style="border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; line-height: 1.6; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1971,8 +1971,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <li>✓ IA de treino, avaliação física e automações de WhatsApp</li>
         <li>✓ Sua página na internet pra atrair alunos novos</li>
       </ul>
-      <p style="font-size: 28px; font-weight: 800; margin: 0;">R$ 49<span style="font-size: 14px; font-weight: 600; color: var(--pt-txt-4);">/mês</span></p>
-      <p class="muted" style="margin: 4px 0 16px; font-size: 12.5px;">A assinatura é cobrada pela loja do seu celular e renova sozinha. Cancela quando quiser, direto na loja — sem multa.</p>
+      <p style="font-size: 28px; font-weight: 800; margin: 0;"><span id="taPreco">R$ 49</span><span style="font-size: 14px; font-weight: 600; color: var(--pt-txt-4);">/mês</span></p>
+      <p id="taCondicoes" class="muted" style="margin: 4px 0 16px; font-size: 12.5px;">A assinatura é cobrada pela loja do seu celular e renova sozinha. Cancela quando quiser, direto na loja — sem multa.</p>
       <button class="btn" id="taAssinar" style="width: 100%;">Assinar agora</button>
       <button class="btn sec" id="taDepois" style="width: 100%; margin-top: 8px;">Continuar no teste grátis</button>
       <!-- v761: modo TRAVADO. Os dois botões abaixo são a promessa que a trava
@@ -24062,7 +24062,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("faixaTesteTxt").innerHTML = dia > 14
       ? "<b>Seu teste grátis de 14 dias terminou.</b> Gostou? Assine e ganhe a sua ilha na nuvem: sincroniza entre aparelhos e libera o app online dos alunos."
       : "<b>Modo teste — dia " + dia + " de 14.</b> Use tudo à vontade; seus dados ficam neste aparelho e viram a sua conta quando você assinar.";
-    $("faixaTesteZap").href = "https://wa.me/5521994429198?text=" + encodeURIComponent("Oi! Testei o TORQUE PERSONAL e quero assinar 💪");
+    $("faixaTesteZap").href = "personal-assinatura.html" + (dia > 14 ? "?origem=trial-vencido" : "");
     // regra das lojas (Apple/Google): dentro do app nativo não pode oferta com
     // preço/pagamento por fora — lá a assinatura é feita pela própria loja
     $("faixaTesteZap").hidden = ehAppNativo();
@@ -24085,6 +24085,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function leAssinatura() {
     try { return JSON.parse(localStorage.getItem("mtapp:ptAssinatura") || "null"); } catch (e) { return null; }
+  }
+  function configuraOfertaAssinatura() {
+    var nativo = ehAppNativo();
+    $("taPreco").textContent = nativo ? "R$ 49" : "R$ 49,90";
+    $("taCondicoes").textContent = nativo
+      ? "A assinatura é cobrada pela loja do seu celular e renova sozinha. Cancela quando quiser, direto na loja — sem multa."
+      : "Assinatura mensal por cartão recorrente no site. O pagamento online ainda está indisponível; veja as condições na página da assinatura. Seus dados continuam guardados.";
+    $("taAssinar").textContent = nativo ? "Assinar agora" : "Ver assinatura no site";
   }
   function renderAssinatura() {
     var ass = leAssinatura();
@@ -24176,6 +24184,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function aplicaTrava() {
     var tela = $("telaAssinatura");
     if (!tela || !estaTravado()) return false;
+    configuraOfertaAssinatura();
     var h = tela.querySelector("h2");
     if (h) h.textContent = "Seu teste grátis acabou";
     $("taDepois").hidden = true;      // não há "depois": é isto que trava
@@ -24221,10 +24230,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (vista === hoje) return;
     }
     try { localStorage.setItem("mtapp:ptAssinaturaVista", hoje); } catch (e) {}
+    configuraOfertaAssinatura();
     $("taErro").hidden = true;
     $("telaAssinatura").hidden = false;
   }
   function compraAssinatura() {
+    // Navegar nunca confirma pagamento nem altera o veredito do servidor.
+    // O fluxo nativo continua na loja; a web não tenta inicializar RevenueCat.
+    if (!ehAppNativo()) {
+      location.assign("personal-assinatura.html" + (estaTravado() ? "?origem=trial-vencido" : ""));
+      return;
+    }
     var mostraErro = function (m) { var el = $("taErro"); el.textContent = m; el.hidden = false; };
     $("taErro").hidden = true;
     var acad = null;

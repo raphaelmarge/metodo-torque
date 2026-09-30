@@ -21,6 +21,9 @@ function crcNode(s) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  // Esta suite simula navegacao com page.route. SW ativo contorna esses mocks.
+  // O cache real e exercitado separadamente por test-personal-sales-cache.js.
+  const newContext=b.newContext.bind(b);b.newContext=async function(opts){const context=await newContext({...opts,serviceWorkers:'block'});await context.route('**/*',route=>new URL(route.request().url()).origin===new URL(BASE).origin?route.continue():route.abort());return context;};
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
   await ctx.addInitScript(() => {
     if (window !== window.top) return;
@@ -144,7 +147,7 @@ function crcNode(s) {
       // páginas do DONO ficam de fora: elas existem justamente pra ele mexer no
       // servidor. sql.html/funcoes.html/diagnostico.html moram na raiz (nem
       // entram nesta lista); apps/hq.html é o painel SaaS, trancado por hq_sou_admin
-      return /\.html$/.test(f) && f !== "hq.html";
+      return /\.html$/.test(f) && !["hq.html", "hq-ops-preview.html"].includes(f);
     }).map(function (f) { return "apps/" + f; }));
   /* Os .js que o cliente carrega junto com as telas. É onde mora o recado de
    * erro — o lugar em que ele MAIS lê texto nosso quando algo dá errado. */
@@ -400,7 +403,7 @@ function crcNode(s) {
       rpc: async () => ({ data: null }),
     };
   });
-  await p.goto(BASE + "/apps/hq.html");
+  await p.goto(BASE + "/apps/hq.html?legacy=1");
   await p.waitForTimeout(900);
   ok(/hq\.html/.test(await p.evaluate(() => location.pathname)), "HQ abre direto SEM cadastro no portal (não redireciona mais)");
   const trava = await p.evaluate(() => ({
@@ -482,7 +485,7 @@ function crcNode(s) {
       },
     };
   });
-  await p.goto(BASE + "/apps/hq.html");
+  await p.goto(BASE + "/apps/hq.html?legacy=1");
   await p.waitForFunction(() => !document.getElementById("hqPainel").hidden, null, { timeout: 8000 });
   const kpis = await p.evaluate(() => document.getElementById("hqKpis").textContent);
   ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUE ON (R$ 443)");

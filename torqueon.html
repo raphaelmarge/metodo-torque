@@ -120,7 +120,7 @@
         <li>Pix copia-e-cola gerado na hora</li>
         <li>Assessoria online a distância</li>
       </ul>
-      <a class="btn" href="personal.html">Começar meu TORQUE PERSONAL</a>
+      <a class="btn" data-personal-trial href="personal.html?entrada=criar">Testar o Personal por 14 dias</a>
       <a class="btn sec" href="personal-vendas.html">Ver a página do Personal →</a>
     </div>
     <div class="seg" id="segNutri">
@@ -181,14 +181,16 @@
   <div class="planos">
     <div class="plano">
       <h3>Personal</h3>
-      <div class="preco">R$ 49<small>/mês</small></div>
+      <div class="preco">R$ 49,90<small>/mês</small></div>
       <ul>
         <li>Módulo TORQUE PERSONAL completo</li>
         <li>App para todos os seus alunos</li>
         <li>Pix na hora + assessoria online</li>
         <li>Sua ilha na nuvem</li>
       </ul>
-      <a class="btn" href="personal.html">Começar agora</a>
+      <a class="btn" data-personal-trial href="personal.html?entrada=criar">Testar 14 dias grátis</a>
+      <a class="btn sec" data-sales-link href="personal-assinatura.html">Assinar agora</a>
+      <p class="nota">Personal: 14 dias sem cartão. Assinatura mensal por cartão no site.</p>
     </div>
     <div class="plano destaque">
       <div class="tag-pop">Mais vendido</div>
@@ -218,7 +220,7 @@
 
   <h2 class="sec">Como funciona</h2>
   <div class="passos">
-    <div class="passo"><b>Crie a conta da sua empresa</b><p>E-mail e senha no portal (ou direto no módulo Personal). Sua ilha nasce na hora, com 7 dias grátis pra testar tudo.</p></div>
+    <div class="passo"><b>Crie a conta da sua empresa</b><p>E-mail e senha no portal (ou direto no módulo Personal). Sua ilha nasce na hora. Para academias, 7 dias grátis; no TORQUE PERSONAL, 14 dias sem cartão.</p></div>
     <div class="passo"><b>Configure em minutos</b><p>Importe os alunos por CSV, cadastre os planos e monte a grade. O Central de Ajuda tem tutorial passo a passo de tudo — e uma IA que responde.</p></div>
     <div class="passo"><b>Chame a equipe</b><p>Cada funcionário entra com o código da equipe e cai na SUA empresa, com permissões por função.</p></div>
     <div class="passo"><b>Entregue o app aos alunos</b><p>Link do app do aluno no WhatsApp: carteirinha QR, treinos, agendamento e mural. Pronto — o sistema roda sozinho.</p></div>
@@ -230,7 +232,7 @@
   <details class="faq"><summary>Consigo migrar do meu sistema atual?</summary><div>Sim — exporte os alunos em CSV no sistema antigo e importe no TORQUE ON em Gestão de Alunos → Importar. Planos e valores vêm juntos.</div></details>
   <details class="faq"><summary>Sou personal e atendo em várias academias. Funciona?</summary><div>Perfeitamente: o TORQUE PERSONAL é a SUA ilha, independente de qualquer academia. Seus alunos, seus treinos, seus pagamentos — e o app de cada aluno com seu nome.</div></details>
   <details class="faq"><summary>Sou ALUNO de uma academia (ou de um personal) que usa o TORQUE ON. Como entro?</summary><div>De dois jeitos: ① pelo <b>link do app do aluno</b> que a academia ou o seu personal te manda no WhatsApp (abra e toque em "Adicionar à tela inicial"); ② com <b>login e senha</b> na <a href="aluno-login.html" style="color:#a78bfa;font-weight:700;">página de entrada do aluno</a> — você cria a sua senha dentro do próprio app, no card <b>Meu login</b>, e depois entra de qualquer aparelho. O login desta página aqui em cima é só para o DONO e a EQUIPE da empresa.</div></details>
-  <details class="faq"><summary>Como pago o TORQUE ON?</summary><div>Assinatura mensal por Pix ou cartão, direto com a gente no WhatsApp. Sem fidelidade: cancelou, seus dados são seus (dá pra exportar tudo).</div></details>
+  <details class="faq"><summary>Como pago o TORQUE ON?</summary><div>Para o TORQUE PERSONAL, a oferta é R$ 49,90/mês por cartão recorrente no site. Você também pode começar com 14 dias grátis sem cartão. <a data-sales-link href="personal-assinatura.html">Veja a assinatura do Personal</a>. Para outros produtos, consulte Pix ou cartão no WhatsApp. Sem fidelidade: cancelou, seus dados são seus (dá pra exportar tudo).</div></details>
 
   <a class="btn" id="ctaZap" href="#" target="_blank" rel="noopener" style="margin-top:34px;font-size:17px;padding:17px;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-4px;margin-right:8px;"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-4 3V11.5A8.5 8.5 0 0 1 11.5 3h1A8.5 8.5 0 0 1 21 11.5Z"/></svg>Falar com a gente no WhatsApp</a>
   <p class="nota">TORQUE ON · feito por quem vive academia todos os dias.</p>
@@ -251,5 +253,6 @@
   window.__torqueon = { zap: zap }; // testes
 })();
 </script>
+<script src="assets/personal-sales-intent.js" defer></script>
 </body>
 </html>

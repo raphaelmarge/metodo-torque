@@ -65,7 +65,7 @@ ok_(!/assets\/vendor\/(maplibre|mediapipe)/.test(precacheSw),
   "nenhum arquivo do MapLibre/MediaPipe entrou na lista de precache do sw.js");
 ok_(/indexOf\("mt-app-"\) === 0\) return null/.test(sw),
   "o sw.js da raiz preserva a cache offline do app do aluno (mt-app-*)");
-ok_(/req\.mode === "navigate"\) return caches\.match\("index\.html"\)/.test(appSw) && /Response\.error\(\)/.test(appSw),
+ok_(/req\.mode === "navigate"\) return caches\.match\("index\.html", \{ cacheName: CACHE \}\)/.test(appSw) && /Response\.error\(\)/.test(appSw),
   "offline, o app-sw só devolve index.html pra navegação — sub-recurso que falta falha de verdade");
 ok_(/cache: "no-cache"/.test(sw.split("addEventListener(\"install\"")[1].split("addEventListener(\"activate\"")[0]),
   "o precache revalida com no-cache (304 pelo ETag) em vez de rebaixar tudo com reload");

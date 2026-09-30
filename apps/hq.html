@@ -7,6 +7,10 @@
 <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps.css" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).get('legacy')!=='1')document.documentElement.dataset.hqOps='1';</script>
+<link href="../assets/hq-ops.css" rel="stylesheet">
+<link href="../assets/hq-influencer-portal.css" rel="stylesheet">
+<link href="../assets/hq-referrals.css" rel="stylesheet">
 <script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
@@ -64,6 +68,7 @@
   <div id="hqPainel" hidden>
 
     <div class="kpis" id="hqKpis"></div>
+    <section id="hqReferrals" class="card hqr" hidden aria-labelledby="hqrTitle"></section>
 
     <!-- v760: o "Resolver hoje" do DONO. Antes só dava pra saber que um cliente
          estava indo embora quando ele mandava áudio no WhatsApp. Isto é leitura
@@ -223,10 +228,12 @@
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="../assets/vendor/qrcode.js"></script>
-<script src="store.js"></script>
+<script>if(new URLSearchParams(location.search).get('legacy')==='1')document.write('<script src="store.js"><\/script>');</script>
+<script src="../assets/hq-referrals.js"></script>
 <script>
 (function () {
   "use strict";
+  if(document.documentElement.dataset.hqOps==='1')return;
   var $ = function (id) { return document.getElementById(id); };
   var S = window.MTStore;
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -293,6 +300,7 @@
         if (r2.data !== true) { lock("A conta <b>" + esc(sess.user && sess.user.email) + "</b> não é administradora do TORQUE ON. Veja abaixo como se cadastrar."); return; }
         $("hqLock").hidden = true;
         $("hqPainel").hidden = false;
+        if (window.MT_HQ_REFERRALS) window.MT_HQ_REFERRALS.mount($("hqReferrals"), cli);
         carrega();
         setInterval(function () { carregaTickets(); carregaErros(); }, 60000); // tickets/erros sempre frescos
       });
@@ -756,5 +764,11 @@
   initHQ();
 })();
 </script>
+<script src="../assets/hq-ops-metrics.js"></script>
+<script src="../assets/hq-ops-data.js"></script>
+<script src="../assets/hq-ops-sections.js"></script>
+<script src="../assets/hq-ops-reports.js"></script>
+<script src="../assets/hq-influencer-portal.js"></script>
+<script src="../assets/hq-ops-app.js"></script>
 </body>
 </html>

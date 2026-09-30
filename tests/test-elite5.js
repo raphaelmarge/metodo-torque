@@ -19,7 +19,10 @@ function ok(cond, nome) {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
   navegadorV756 = b;
   comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
-  const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  // Os documentos app-teste-*.html abaixo existem apenas no page.route.
+  // Um SW ativo atende essas navegacoes antes do mock e devolve 404 do servidor;
+  // este contexto verifica as funcionalidades geradas, nao o cache/offline.
+  const ctx = await b.newContext({ viewport: { width: 1360, height: 900 }, serviceWorkers: "block" });
   const hoje = diaISO(new Date());
   const mesAtual = hoje.slice(0, 7);
   await ctx.addInitScript(([hoje, mesAtual]) => {

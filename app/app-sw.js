@@ -14,7 +14,7 @@
  * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
  * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
  * este número bate com o do assets/versao.js e o do sw.js. */
-var VERSION = "mt-v850";
+var VERSION = "mt-v851";
 var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
@@ -53,15 +53,20 @@ var ESQUELETO = [
 ];
 
 self.addEventListener("install", function (e) {
-  self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ESQUELETO); }).catch(function () {}));
+  // Se um arquivo falhar, manter o worker/cache anterior. Ativar um esqueleto
+  // incompleto apagava a copia offline boa durante a atualizacao.
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.addAll(ESQUELETO.map(function (u) {
+      return new Request(u, { cache: "no-cache" });
+    }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
     return Promise.all(ks.map(function (k) {
       if (k === MAPA) return null;                       // a do mapa sobrevive à troca de versão
-      return k !== CACHE && k.indexOf("mt-app-") === 0 ? caches.delete(k) : null;
+      return k !== CACHE && /^mt-app-mt-v\d+$/.test(k) ? caches.delete(k) : null;
     }));
   }).then(function () { return self.clients.claim(); }));
 });
@@ -70,6 +75,13 @@ self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
+  // Mesma fronteira do portal: nao armazenar API, autenticacao ou core financeiro.
+  if (url.origin === location.origin && (req.headers.has("authorization") ||
+      /^\/(?:api|auth\/v1|rest\/v1|functions\/v1|realtime\/v1)(?:\/|$)/.test(url.pathname) ||
+      url.pathname.indexOf("/supabase/functions/_shared/") > -1)) {
+    e.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
   if (url.origin !== location.origin) return; // nuvem e vídeos passam direto
 
   // motor do mapa 3D: cache primeiro, cache própria, atravessa as versões
@@ -93,16 +105,16 @@ self.addEventListener("fetch", function (e) {
        * devolvendo HTML com 200 pra um .js não passa aqui — mas 4xx/5xx sim)
        * era entregue ao <script> como se fosse o arquivo. Com cópia boa no
        * cache, a cópia vale mais que o erro. Sem cópia, o erro segue. */
-      return caches.match(req).then(function (c) { return c || r; });
+      return caches.match(req, { cacheName: CACHE }).then(function (c) { return c || r; });
     }).catch(function () {
-      return caches.match(req).then(function (c) {
+      return caches.match(req, { cacheName: CACHE }).then(function (c) {
         if (c) return c;
         /* v747: o index.html só serve de reserva pra NAVEGAÇÃO. Antes qualquer
          * arquivo que faltasse offline (script, imagem, JSON) recebia HTML com
          * status 200: o onerror nunca disparava e o erro aparecia longe
          * ("SyntaxError", "window.X is undefined"). Sub-recurso que falta
          * falha de verdade, como a rede falharia. */
-        if (req.mode === "navigate") return caches.match("index.html");
+        if (req.mode === "navigate") return caches.match("index.html", { cacheName: CACHE });
         return Response.error();
       });
     })

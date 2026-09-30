@@ -28,6 +28,15 @@ async function abaNt(p, a) {
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  // page.route supplies synthetic patient documents and RPCs in this suite.
+  // An active service worker bypasses those routes and requests a real 404.
+  // Worker installation and offline cache remain covered by test-personal-sales-cache.js.
+  const newContext = b.newContext.bind(b);
+  b.newContext = async function (opts) {
+    const context = await newContext({ ...opts, serviceWorkers: "block" });
+    await context.route("**/*", route => new URL(route.request().url()).origin === new URL(BASE).origin ? route.continue() : route.abort());
+    return context;
+  };
   comDiaISO(b);   // v756: todo contexto nasce com o window.diaISO
   comMockNuvem(b); // v756: … e com o window.mockNuvem (teto de 20 s por ação junto)
   navegador = b;
@@ -303,8 +312,10 @@ async function abaNt(p, a) {
     const pApp2 = await ctx.newPage();
     const errosApp2 = [];
     pApp2.on("pageerror", (e) => errosApp2.push(String(e)));
-    await pApp2.route("**/app-teste-nutri.html", (r) => r.fulfill({ contentType: "text/html", body: appPix }));
-    await pApp2.goto(BASE + "/app-teste-nutri.html", { waitUntil: "domcontentloaded" });
+    let appPixRouteHits = 0;
+    await pApp2.route("**/app-teste-nutri.html", (r) => { appPixRouteHits++; return r.fulfill({ contentType: "text/html", body: appPix }); });
+    const appPixResponse = await pApp2.goto(BASE + "/app-teste-nutri.html", { waitUntil: "domcontentloaded" });
+    ok(appPixRouteHits === 1 && appPixResponse.status() === 200 && !appPixResponse.fromServiceWorker(), "app Pix usa o documento sintetico da rota, sem interceptacao de service worker");
     await pApp2.waitForTimeout(600);
     const fotoUi = await pApp2.evaluate(() => ({
       temFoto: !!document.getElementById("fotoInput"),

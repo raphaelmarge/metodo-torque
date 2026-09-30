@@ -9,6 +9,20 @@ self.MT_moduloConta = function (cfg) {
   var S = window.MTStore;
   var aba = "entrar";
   var recuperando = /(?:^|[&#])type=recovery(?:&|$)/.test(location.hash || "");
+  // A landing pode escolher a primeira aba, nunca autorizar acesso ou assinatura.
+  // Consome somente a intencao exata e unica; recuperacao e sessao ainda prevalecem.
+  var entradaCriar = false;
+  if (cfg.marca === "PERSONAL") {
+    try {
+      var parametrosEntrada = new URLSearchParams(location.search || "");
+      entradaCriar = parametrosEntrada.getAll("entrada").length === 1 && parametrosEntrada.get("entrada") === "criar";
+      if (entradaCriar && window.history && typeof window.history.replaceState === "function") {
+        var urlEntrada = new URL(location.href);
+        urlEntrada.searchParams.delete("entrada");
+        window.history.replaceState(window.history.state, "", urlEntrada.pathname + urlEntrada.search + urlEntrada.hash);
+      }
+    } catch (e) {}
+  }
   var contaConhecida = false;
   try {
     var perfilConta = JSON.parse(localStorage.getItem("mtapp:perfil"));
@@ -71,9 +85,9 @@ self.MT_moduloConta = function (cfg) {
     $("mgBtn").textContent = nova ? "Salvar nova senha" : recuperar ? "Enviar link de recuperação" : criar ? "Criar minha conta →" : "Entrar →";
     $("mgErro").hidden = true;
   }
-  $("mgAbaEntrar").addEventListener("click", function () { aba = "entrar"; aplica(); });
-  $("mgAbaCriar").addEventListener("click", function () { aba = "criar"; aplica(); });
-  $("mgEsqueci").addEventListener("click", function () { aba = "recuperar"; aplica(); $("mgEmail").focus(); });
+  $("mgAbaEntrar").addEventListener("click", function () { entradaCriar = false; aba = "entrar"; aplica(); });
+  $("mgAbaCriar").addEventListener("click", function () { entradaCriar = false; aba = "criar"; aplica(); });
+  $("mgEsqueci").addEventListener("click", function () { entradaCriar = false; aba = "recuperar"; aplica(); $("mgEmail").focus(); });
   self.addEventListener("mt:sessao-caiu", function () {
     // Uma função indisponível no demo não encerra uma sessão que nunca existiu.
     if (!NUVEM || recuperando || !contaConhecida) return;
@@ -81,6 +95,7 @@ self.MT_moduloConta = function (cfg) {
     erro("Sua sessão terminou. Entre novamente para sincronizar. O trabalho salvo neste aparelho foi preservado.");
   });
   self.addEventListener("mt:conta-divergente", function () {
+    entradaCriar = false;
     aba = "entrar"; aplica(); div.hidden = false; $("mgLocal").hidden = true;
     erro("Este aparelho contém dados de outra conta. Entre na conta anterior para sincronizá-los ou use outro perfil do navegador para a nova conta.");
   });
@@ -241,7 +256,7 @@ self.MT_moduloConta = function (cfg) {
   });
 
   var api = {
-    abre: function (qualAba) { if (!NUVEM) { alert("A nuvem não está configurada neste site."); return; } aba = qualAba === "criar" ? "criar" : "entrar"; aplica(); div.hidden = false; },
+    abre: function (qualAba) { if (!NUVEM) { alert("A nuvem não está configurada neste site."); return; } entradaCriar = false; aba = qualAba === "criar" ? "criar" : "entrar"; aplica(); div.hidden = false; },
     criaColaborador: function () {
       if (!confirm("O colaborador terá acesso aos dados da equipe, inclusive financeiros. As telas ocultas não tornam esses dados privados.\n\nEsta pessoa está autorizada a receber esses dados?")) return;
       var nome = prompt("Nome do colaborador:"); if (!nome) return;
@@ -296,6 +311,8 @@ self.MT_moduloConta = function (cfg) {
       }
     });
     sb.auth.getSession().then(function (r) {
+      var criarNaEntrada = entradaCriar;
+      entradaCriar = false;
       var sess = r.data && r.data.session;
       if (recuperando) {
         aba = sess ? "novaSenha" : "recuperar"; aplica(); div.hidden = false;
@@ -305,8 +322,12 @@ self.MT_moduloConta = function (cfg) {
       if (sess && sess.user) { vincula(sess.user, true); return; }
       var pulou = false;
       try { pulou = !!localStorage.getItem(cfg.flag); } catch (e) {}
-      if (!pulou) { aplica(); div.hidden = false; }
+      if (!pulou || criarNaEntrada) {
+        if (criarNaEntrada && !contaConhecida) aba = "criar";
+        aplica(); div.hidden = false;
+      }
     }, function () {
+      entradaCriar = false;
       aplica(); div.hidden = false;
       erro("Não foi possível verificar sua sessão. Confira a conexão e tente entrar novamente.");
     });
