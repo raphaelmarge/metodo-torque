@@ -7964,11 +7964,12 @@ async function contextoAppAluno(browser, html, options = {}) {
     const secVisivel = (s) => !!document.querySelector("[data-sec='" + s + "']:not([data-sec-off])");
     const antes = { inicio: secVisivel("inicio"), treino: secVisivel("treino") };
     document.querySelector("#navApp .nitem[data-msec='treino']").click();
-    return { itens, antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
+    return { itens, alimentacao: !!document.querySelector("[data-sec='alimentacao']"), antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
   });
-  // telas finais: 4 botões embaixo (Hoje, Treinos, Evolução, Menu) — o resto vive na gaveta
-  ok(navAbas.itens.length >= 4 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
-  ok(await pApp.evaluate(() => document.querySelectorAll("#navApp .nitem svg").length >= 4 && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent)), "abas com ícones de traço (SVG), sem emoji");
+  // Hoje, Treinos, Evolução e Menu permanecem; Alimentação entra quando a seção está disponível.
+  const destinosEsperados = navAbas.alimentacao ? ["inicio", "treino", "evolucao", "alimentacao", null] : ["inicio", "treino", "evolucao", null];
+  ok(JSON.stringify(navAbas.itens) === JSON.stringify(destinosEsperados), "barra preserva os destinos anteriores e inclui Alimentação quando disponível (" + navAbas.itens.length + " abas)");
+  ok(await pApp.evaluate(n => document.querySelectorAll("#navApp .nitem svg").length === n && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent), destinosEsperados.length), "todas as abas têm ícones de traço (SVG), sem emoji");
   ok(navAbas.antes.inicio && !navAbas.antes.treino && !navAbas.depois.inicio && navAbas.depois.treino && /Treino/.test(navAbas.tit), "tocar na aba troca a seção e o título do topo");
   // recado do personal ainda não visto acende a bolinha 🔴 no Chat
   const dotChat = await pApp.evaluate(() => {

@@ -98,8 +98,7 @@ async function appFixture(overrides={}, initial={}, state={}) {
   return {p,ctx,D,state};
 }
 async function openNutrition(p) {
-  if(!await p.locator('#menuApp').isVisible())await p.locator('#navMenuApp').click();
-  await p.locator('#menuApp [data-msec="alimentacao"]').click();
+  await p.locator('#navApp [data-msec="alimentacao"]').click();
   ok(await p.locator('#nutriAluno').isVisible(),'Alimentação abre pela navegação real do aluno');
 }
 async function reveal(p, selector) {
