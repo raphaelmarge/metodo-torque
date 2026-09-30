@@ -39,7 +39,7 @@ async function fixture(overrides={},state={}){
   });
   await p.goto(BASE+'/aluno-nutricao-completa-test.html');await p.waitForFunction(()=>window.__nutriAluno);await open(p);return{p,ctx,D,state};
 }
-async function open(p){await p.locator('#navMenuApp').click();await p.locator('#menuApp [data-msec=alimentacao]').click();}
+async function open(p){await p.locator('#navApp [data-msec=alimentacao]').click();}
 async function area(p,id){await p.locator('[role=tab][aria-controls="'+id+'"]').click();}
 async function details(p,id){const el=p.locator(id);const panel=await el.evaluate(x=>x.closest('[role=tabpanel]')?.id);if(panel)await area(p,panel);if(!await el.evaluate(x=>x.open))await el.locator(':scope>summary').click();}
 const records=p=>p.evaluate(()=>window.__nutriAluno.estado().registros);

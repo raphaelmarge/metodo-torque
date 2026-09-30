@@ -29,16 +29,19 @@ async function mount(plan=DEMO, seed={}) {
   const html = global.MT_APP_ALUNO.monta(D).replace(/localStorage/g,'__ntUiLS').replace(/(<body[^>]*>)/,'$1'+inject);
   await p.setContent(html,{waitUntil:'domcontentloaded'});
   await p.waitForFunction(()=>window.__inicioAtualiza);
-  await p.locator('#navMenuApp').click();
-  if(plan) {await p.locator('#menuApp [data-msec=alimentacao]').click();await p.waitForFunction(()=>window.__nutriAluno);}
+  if(plan) {await p.locator('#navApp [data-msec=alimentacao]').click();await p.waitForFunction(()=>window.__nutriAluno);}
   return {p,ctx};
 }
 async function tab(p,id){await p.locator('#'+id).click();}
+async function activeDestination(p){return p.locator('#navApp .nitem').evaluateAll(items=>items.filter(item=>{const color=getComputedStyle(item).backgroundColor;return color!=='transparent'&&!/rgba\([^)]*,\s*0\)$/.test(color);}).map(item=>item.getAttribute('data-msec')||'menu'));}
 async function snapshot(p){return p.evaluate(()=>({records:window.__nutriAluno.estado(),xp:window.__nutriAluno.xp(),train:__ntUiLS.getItem('ptdc'),habits:__ntUiLS.getItem('pthab')}));}
 async function run(){
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium')?'/opt/pw-browsers/chromium':undefined),args:['--no-sandbox']});
   const {p,ctx}=await mount();
-  ok(await p.locator('#nutriAluno').isVisible(),'abre Alimentação pelo menu existente');
+  ok(await p.locator('#nutriAluno').isVisible()&&!await p.locator('#menuApp').isVisible(),'abre Alimentação diretamente pela barra, sem abrir a gaveta');
+  eq(await p.locator('#navApp .nitem').evaluateAll(items=>items.map(item=>item.getAttribute('data-msec')||'menu')),['inicio','treino','evolucao','alimentacao','menu'],'barra reúne cinco destinos com Hoje, Treinos, Evolução e Menu preservados');
+  eq(await activeDestination(p),['alimentacao'],'entrada em Alimentação destaca somente seu botão');
+  eq(await p.locator('#menuApp [data-msec=alimentacao]').count(),0,'destino fixo não fica duplicado na gaveta');
   eq(await p.locator('#nutriAluno [role=tabpanel]:visible').count(),1,'só um painel visível');
   eq(await p.locator('#nutriAluno [role=tab][aria-selected=true]').getAttribute('id'),'ntpTabRefeicoes','entrada no plano de refeições');
   eq(await p.locator('#ntpNovo').count(),1,'um único botão Registrar refeição');
@@ -46,6 +49,17 @@ async function run(){
   const action=await p.locator('[data-ntp-comi]').first().boundingBox(),nav=await p.locator('#navApp').boundingBox();
   ok(action.y+action.height<=nav.y,'primeira ação cabe acima da barra inferior em 390x844');
   const before=await snapshot(p);
+  for(const destination of ['inicio','treino','evolucao','alimentacao']){
+    await p.locator('#navApp [data-msec="'+destination+'"]').click();
+    ok(await p.locator('[data-sec="'+destination+'"]:not([data-sec-off])').count()>0,'atalho preserva a seção '+destination);
+    eq(await activeDestination(p),[destination],'destaque acompanha somente '+destination);
+  }
+  await p.locator('#navMenuApp').click();
+  ok(await p.locator('#menuApp').isVisible(),'Menu continua abrindo as demais áreas');
+  eq(await activeDestination(p),['menu'],'abrir a gaveta destaca somente Menu');
+  await p.locator('#navMenuApp').click();
+  eq(await activeDestination(p),['alimentacao'],'fechar o Menu restaura o destaque de Alimentação');
+  eq(await snapshot(p),before,'trocar destinos principais não modifica alimentação, XP, treino ou hábitos');
   for(const id of ['ntpTabDiario','ntpTabPlanejar','ntpTabRefeicoes']){
     await tab(p,id);eq(await p.locator('#nutriAluno [role=tabpanel]:visible').count(),1,'uma tarefa visível ao trocar para '+id);
     eq(await p.locator('#'+id).getAttribute('aria-selected'),'true','seleção anunciada em '+id);
@@ -82,6 +96,7 @@ async function run(){
     await p.setViewportSize({width,height:844});
     for(const light of [false,true]){
       await p.evaluate(v=>document.documentElement.classList.toggle('claro',v),light);
+      ok(await p.locator('#navApp .nitem').evaluateAll(items=>items.length===5&&items.every(item=>{const r=item.getBoundingClientRect(),label=item.querySelector('span:nth-child(2)').getBoundingClientRect();return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&label.left>=r.left-1&&label.right<=r.right+1;})),'cinco destinos preservam toque e rótulos dentro da barra em '+width+' '+light);
       for(const id of ['ntpTabRefeicoes','ntpTabDiario','ntpTabPlanejar']){
         await tab(p,id);
         ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'sem rolagem lateral '+width+' '+light+' '+id);
@@ -101,7 +116,9 @@ async function run(){
   }
   await ctx.close();
   const paused=await mount({...DEMO,ativo:false});eq(await paused.p.locator('#ntpTabDiario').getAttribute('aria-selected'),'true','plano pausado inicia na consulta do Diário');ok(!await paused.p.locator('#ntpNovo').isVisible(),'plano pausado não oferece novo registro');await tab(paused.p,'ntpTabRefeicoes');eq(await paused.p.locator('[data-ntp-comi]').count(),0,'navegação não libera confirmação em plano pausado');await paused.ctx.close();
-  const absent=await mount(null);eq(await absent.p.locator('#nutriAluno').count(),0,'sem plano nem histórico não inventa conteúdo');await absent.ctx.close();
+  const absent=await mount(null);eq(await absent.p.locator('#nutriAluno').count(),0,'sem plano nem histórico não inventa conteúdo');
+  eq(await absent.p.locator('#navApp .nitem').evaluateAll(items=>items.map(item=>item.getAttribute('data-msec')||'menu')),['inicio','treino','evolucao','menu'],'sem Alimentação disponível permanecem os quatro destinos anteriores');
+  await absent.ctx.close();
   eq(errors,[],'sem erros JavaScript');console.log('Navegação da alimentação: '+checks+' verificações passaram.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});

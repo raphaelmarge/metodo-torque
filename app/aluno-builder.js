@@ -8195,15 +8195,17 @@
       "(" + runtimeResumo.toString() + ")();" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
-      // 3 abas fixas embaixo + o Menu no canto direito com TODAS as áreas
-      // (as telas finais do redesenho têm 4 botões: Hoje, Treinos, Evolução, Menu)
+      // Preserva os atalhos existentes e acrescenta Alimentação quando disponível.
+      // Menu continua no canto direito com as demais áreas autorizadas.
       "var fixos=itens.slice(0,3);" +
+      "var comida=itens.find(function(m){return m[0]==='alimentacao';});if(comida&&!fixos.some(function(m){return m[0]==='alimentacao';}))fixos.push(comida);" +
       "function btnNav(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
       "\"<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
       "(m[0]==='chat'?\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid var(--bg0);'></span>\":'')+'</button>';}" +
       "var nav=document.getElementById('navApp');" +
+      "nav.setAttribute('data-items',String(fixos.length+1));" +
       "nav.innerHTML=fixos.map(btnNav).join('')+" +
       "\"<button class='nitem' id='navMenuApp' aria-label='Abrir o menu com todas as áreas' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(\"<path d='M4 6.5h16M4 12h16M4 17.5h16'/>\")+\"</span>\"+" +
@@ -8286,7 +8288,7 @@
       "cb.style.display=n9?'flex':'none';cb.textContent=n9>9?'9+':n9;var cv9=cb.parentElement.querySelector('.mgchev');if(cv9)cv9.style.display=n9?'none':'';}}" +
       "window.__menuBadges=pintaMB;pintaMB();" +
       "var gavAberta=false;" +
-      // pinta as 4 abas de baixo num lugar só: com o menu aberto, só o MENU acende
+      // pinta as abas de baixo num lugar só: com o menu aberto, só o MENU acende
       "function pintaAbas(s){var CLARO=document.documentElement.classList.contains('claro');" +
       "document.querySelectorAll('#navApp .nitem').forEach(function(mi){var on=!gavAberta&&mi.getAttribute('data-msec')===s;" +
       "mi.style.background=on?'rgba(var(--cor-rgb),.16)':'none';mi.style.color=on?(CLARO?'var(--cor)':'var(--corc)'):(CLARO?'#6c6678':'#8a8695');});" +

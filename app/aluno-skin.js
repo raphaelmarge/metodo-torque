@@ -787,5 +787,7 @@ html.claro #guiaBox.player-template:not(.festa){--gpt-bg:#f8f8fb;--gpt-card:#fff
 @media(max-width:359px){#guiaBox.player-template:not(.festa){padding-left:12px;padding-right:12px}#guiaBox.player-template #gEx{font-size:28px}#guiaBox.player-template .gserie-fields{gap:8px}#guiaBox.player-template .gserie-fields>label{padding:9px 6px 10px}#guiaBox.player-template .gpt-stepper input{font-size:20px}#guiaBox.player-template .gpt-prescription dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-height:600px){#guiaBox.player-template:focus-within>.gpt-top{display:none}#guiaBox.player-template #gCard{padding-bottom:8px!important}#guiaBox.player-template .gpt-confirm-help{display:none}#guiaBox.player-template>.gpt-rest-prescription{padding:5px 0;font-size:11px}#guiaBox.player-template>#gPe{padding-bottom:max(6px,env(safe-area-inset-bottom,0px))!important}#guiaBox.player-template #gResta{max-height:30dvh}}
 `;
+  // Cinco atalhos visíveis: espaço extra para o nome completo, sem reduzir o toque.
+  css += "@media(max-width:800px){body.aluno-v793 #navApp[data-items='5'] [data-msec='alimentacao']{flex:1.45!important}}";
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);
