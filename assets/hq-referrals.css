@@ -1,0 +1,59 @@
+/* Indicações no HQ existente. Herda os tokens e os controles de apps.css. */
+.hqr { margin-top:16px; min-width:0; }
+.hqr [hidden], .hqr-dialog [hidden] { display:none!important; }
+.hqr-head, .hqr-section-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.hqr-head h2, .hqr-section-head h3 { margin:0 0 6px; }
+.hqr-head h2 { font-size:24px; letter-spacing:-.02em; text-transform:none; color:var(--texto); }
+.hqr p { line-height:1.6; }
+.hqr-head p { max-width:72ch; margin:0; }
+.hqr-notice { padding:14px 16px; background:rgba(245,158,11,.08); border:1px solid var(--linha); border-radius:12px; margin:18px 0; }
+.hqr-notice p { margin:5px 0 0; }
+.hqr-policy { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.hqr-policy div, .hqr-total { min-width:0; border:1px solid var(--linha); border-radius:12px; padding:12px; }
+.hqr-policy dt { font-size:12px; color:var(--cinza); line-height:1.45; }
+.hqr-policy dd { margin:6px 0 0; font-size:20px; font-weight:800; }
+.hqr-summary { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:18px 0; }
+.hqr-total span { display:block; font-size:12px; color:var(--cinza); }
+.hqr-total strong { display:block; margin-top:5px; font-size:22px; }
+.hqr-nav { margin:22px 0 18px; }
+.hqr-nav button { min-height:44px; }
+.hqr-section-head { align-items:center; margin-bottom:12px; }
+.hqr-table-wrap { max-width:100%; overflow-x:auto; border:1px solid var(--linha); border-radius:12px; }
+.hqr table { width:100%; min-width:800px; border-collapse:collapse; font-size:13px; }
+.hqr th:first-child, .hqr td:first-child { min-width:170px; }
+.hqr-scroll-hint { display:none; }
+.hqr th { text-align:left; color:var(--cinza); font-size:12px; font-weight:700; }
+.hqr th, .hqr td { padding:12px; border-bottom:1px solid var(--linha); vertical-align:top; line-height:1.5; overflow-wrap:anywhere; }
+.hqr tr:last-child td { border-bottom:0; }
+.hqr td small { display:block; color:var(--cinza); }
+.hqr td .btn { min-height:40px; margin:2px; }
+.hqr td.hqr-money { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.hqr-empty { padding:22px 0; color:var(--cinza); line-height:1.6; }
+.hqr-status { min-height:20px; font-size:13px; color:var(--cinza); margin-top:12px; }
+.hqr-status[data-error="true"] { color:var(--erro); }
+.hqr-badge { display:inline-block; padding:3px 9px; border-radius:99px; background:rgba(124,58,237,.13); color:var(--lilas); font-size:11px; font-weight:700; white-space:nowrap; }
+.hqr-error { border-left:3px solid var(--alerta); padding-left:14px; margin:20px 0; }
+dialog.hqr-dialog { width:min(560px,calc(100vw - 24px)); max-width:calc(100vw - 24px); max-height:calc(100dvh - 32px); overflow:auto; padding:22px; background:var(--card); color:var(--texto); }
+.hqr-dialog h2 { margin:0 0 8px; font-size:22px; }
+.hqr-dialog p { line-height:1.6; font-size:13px; }
+.hqr-dialog label { color:var(--cinza); margin:14px 0 5px; }
+.hqr-dialog :is(input,select,textarea) { font-size:16px; min-height:44px; max-width:100%; }
+.hqr-dialog .hqr-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
+.hqr-dialog .hqr-actions .btn { flex:1; }
+.hqr-dialog .hqr-check { display:flex; gap:10px; align-items:flex-start; line-height:1.55; font-size:14px; color:var(--texto); }
+.hqr-dialog .hqr-check input { flex:none; width:20px; height:20px; min-height:20px; margin-top:2px; }
+.hqr-dialog .hqr-confirm-summary { background:rgba(124,58,237,.08); border:1px solid var(--linha); border-radius:12px; padding:14px; overflow-wrap:anywhere; }
+.hqr-dialog .hqr-confirm-summary strong { display:block; font-size:24px; margin:6px 0; }
+.hqr-dialog .hqr-reference { white-space:pre-wrap; overflow-wrap:anywhere; }
+.hqr button:disabled, .hqr-dialog button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+@media(max-width:700px) {
+  .hqr-policy { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hqr-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hqr-policy dd, .hqr-total strong { font-size:19px; }
+  .hqr th, .hqr td { padding:10px; }
+  .hqr-scroll-hint { display:block; margin:8px 0 0; color:var(--cinza); font-size:12px; }
+  .hqr-nav { gap:5px; }
+  .hqr-nav button { flex:1; padding:9px 11px; }
+  .hqr-dialog .hqr-actions { flex-direction:column; }
+  .hqr-dialog .hqr-actions .btn { width:100%; }
+}

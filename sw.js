@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v849";
+var VERSION = "mt-v851";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -116,12 +116,27 @@ var CORE = [
   "assets/pagarme-cartao.js",
   "personal.html",
   "personal-vendas.html",
+  // Somente a apresentacao estatica: nao valida cupom nem executa pagamento.
+  "personal-assinatura.html",
+  "assets/personal-sales-intent.js",
+  "assets/personal-sales.css",
   "assets/landing-personal.css",
   "assets/landing-personal.js",
   "manifest-personal.webmanifest",
   "torqueon.html",
   "torquesys.html",
   "apps/hq.html",
+  "assets/hq-referrals.js",
+  "assets/hq-referrals.css",
+  "assets/hq-ops.css",
+  "assets/hq-ops-metrics.js",
+  "assets/hq-ops-data.js",
+  "assets/hq-ops-sections.js",
+  "assets/hq-ops-reports.js",
+  "assets/hq-ops-app.js",
+  "apps/influencer.html",
+  "assets/hq-influencer-portal.js",
+  "assets/hq-influencer-portal.css",
   "aluno-login.html",
   "pagina.html",
   "nutricao.html",
@@ -176,7 +191,10 @@ self.addEventListener("install", function (event) {
        * v747: era "reload", que ignora até o ETag: os 7,8 MB do precache
        * (fontes, react, bancos de dados, 152 páginas do curso) eram baixados
        * de novo a cada mt-vNNN — e saíram 12 versões num único dia. */
-      return cache.addAll(CORE.concat(DOC_PAGES).map(function (u) {
+      // MT_APPS tambem pode listar personal.html; addAll rejeita URLs repetidas
+      // no mesmo lote, mesmo quando todos os arquivos respondem com sucesso.
+      var urls = CORE.concat(DOC_PAGES).filter(function (u, i, list) { return list.indexOf(u) === i; });
+      return cache.addAll(urls.map(function (u) {
         return new Request(u, { cache: "no-cache" });
       }));
     }).then(function () { return self.skipWaiting(); })
@@ -192,7 +210,10 @@ self.addEventListener("activate", function (event) {
         // também abriu o portal perdia a cópia offline até a próxima abertura
         // online. Quem cuida das mt-app-* é o app-sw.js.
         if (k.indexOf("mt-app-") === 0) return null;
-        if (k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
+        // Apagar apenas caches de codigo deste SW; dados/outros produtos nao
+        // pertencem a esta atualizacao (mapa e visao tambem permanecem).
+        if (/^(precache|runtime)-mt-v\d+$/.test(k) &&
+            k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -218,11 +239,28 @@ self.addEventListener("notificationclick", function (event) {
   }));
 });
 
+// caches.match sem cacheName poderia devolver JS antigo do cache preservado
+// do aluno. Cada worker consulta somente suas copias da versao ativa.
+function matchPortalCache(request) {
+  return caches.match(request, { cacheName: RUNTIME, ignoreSearch: true }).then(function (hit) {
+    return hit || caches.match(request, { cacheName: PRECACHE, ignoreSearch: true });
+  });
+}
+
 self.addEventListener("fetch", function (event) {
   var req = event.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
+
+  // Pagamento/autenticacao e codigo financeiro nunca ganham fallback
+  // offline. A rota personal-assinatura.html e apenas uma tela estatica.
+  if (req.headers.has("authorization") ||
+      /^\/(?:api|auth\/v1|rest\/v1|functions\/v1|realtime\/v1)(?:\/|$)/.test(url.pathname) ||
+      url.pathname.indexOf("/supabase/functions/_shared/") > -1) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
 
   // motor do mapa 3D: cache própria, que atravessa as trocas de versão do site
   if (url.pathname.indexOf("/assets/vendor/maplibre/") > -1) {
@@ -282,7 +320,7 @@ self.addEventListener("fetch", function (event) {
         }
         return res;
       }).catch(function () {
-        return caches.match(req, { ignoreSearch: true }).then(function (hit) {
+        return matchPortalCache(req).then(function (hit) {
           return hit || Response.error();
         });
       })
@@ -302,8 +340,8 @@ self.addEventListener("fetch", function (event) {
         }
         return res;
       }).catch(function () {
-        return caches.match(req, { ignoreSearch: true }).then(function (hit) {
-          return hit || caches.match("./");
+        return matchPortalCache(req).then(function (hit) {
+          return hit || matchPortalCache("./");
         });
       })
     );
@@ -312,7 +350,7 @@ self.addEventListener("fetch", function (event) {
 
   // demais arquivos (css/js/fontes/imagens): cache primeiro (rápido/offline)
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then(function (hit) {
+    matchPortalCache(req).then(function (hit) {
       if (hit) return hit;
       return fetch(req).then(function (res) {
         if (res && res.ok) {

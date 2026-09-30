@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Assinatura — TORQUE PERSONAL</title>
+  <meta name="description" content="TORQUE PERSONAL: 14 dias grátis sem cartão. Conheça a assinatura de R$ 49,90 por mês.">
+  <link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/fonts/archivo.css">
+  <link rel="stylesheet" href="assets/personal-sales.css">
+  <script src="assets/personal-sales-intent.js" defer></script>
+</head>
+<body class="sales-page">
+  <a class="sales-skip" href="#contratacao">Pular para a assinatura</a>
+  <header class="sales-header">
+    <a class="sales-brand" href="personal-vendas.html">TORQUE <strong>PERSONAL</strong></a>
+    <a href="personal.html">Já tenho conta</a>
+  </header>
+  <main id="contratacao" class="sales-main">
+    <div class="sales-intro">
+      <p class="sales-eyebrow">Sua assinatura do Torque</p>
+      <h1>Seu atendimento,<br>num só lugar.</h1>
+      <p id="salesIntroCopy">Teste por <strong>14 dias grátis, sem cartão</strong>. Sua conta e seus treinos continuam com você ao contratar a assinatura.</p>
+    </div>
+    <div class="sales-grid">
+      <section class="sales-card" aria-labelledby="oferta-titulo">
+        <h2 id="oferta-titulo">TORQUE PERSONAL</h2>
+        <p class="sales-price"><strong>R$ 49,90</strong><span>/mês</span></p>
+        <p>Assinatura mensal por cartão recorrente no site.</p>
+        <dl class="sales-summary">
+          <div><dt>Teste grátis</dt><dd>14 dias, sem cartão</dd></div>
+          <div><dt>Mensalidade regular</dt><dd>R$ 49,90</dd></div>
+          <div><dt>Renovações seguintes</dt><dd>R$ 49,90/mês</dd></div>
+        </dl>
+        <p class="sales-note">Um eventual desconto por cupom vale apenas para a primeira mensalidade. O valor e a validade precisam ser confirmados antes da contratação.</p>
+        <div class="sales-notice" role="status">
+          <strong>Pagamento online ainda indisponível.</strong>
+          <p id="salesAvailabilityCopy">Você pode iniciar o teste grátis. Nenhuma cobrança é feita nesta página.</p>
+        </div>
+        <button class="sales-button sales-button-disabled" id="salesCheckout" type="button" disabled aria-describedby="salesCheckoutHelp">Pagamento indisponível</button>
+        <p class="sales-note" id="salesCheckoutHelp">A contratação será liberada quando for possível confirmar o pagamento e o acesso com segurança.</p>
+        <a id="salesTrialAction" class="sales-button" data-personal-trial href="personal.html?entrada=criar">Começar meus 14 dias grátis</a>
+        <a class="sales-back" href="personal-vendas.html">Voltar para conhecer o sistema</a>
+      </section>
+      <section class="sales-card" aria-labelledby="indicacao-titulo">
+        <h2 id="indicacao-titulo">Tem um código de indicação?</h2>
+        <p>Você pode guardar o código nesta sessão do navegador e conferir as condições quando a contratação estiver disponível.</p>
+        <form id="salesCouponForm" novalidate hidden>
+          <label for="salesCoupon">Código do influenciador</label>
+          <input id="salesCoupon" name="cupom" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="salesCouponHelp salesCouponStatus">
+          <p class="sales-note" id="salesCouponHelp">Use de 3 a 40 letras, números, traços ou sublinhados. Salvar não valida o cupom nem aplica desconto.</p>
+          <div class="sales-form-actions">
+            <button class="sales-button" type="submit">Guardar código nesta sessão</button>
+            <button class="sales-button sales-button-secondary" id="salesCouponClear" type="button">Remover código</button>
+          </div>
+          <p class="sales-status" id="salesCouponStatus" role="status" aria-live="polite"></p>
+        </form>
+        <noscript><p>Para guardar um código nesta sessão, ative o JavaScript. O teste grátis continua disponível pelo link ao lado.</p></noscript>
+        <p class="sales-note" id="salesReferralStatus" hidden></p>
+        <p class="sales-note">O código ainda precisa ser reconhecido pelo Torque. Ele não reserva desconto, não confirma indicação e não gera comissão. A informação guardada pode se perder ao fechar esta sessão, trocar de aparelho ou limpar o navegador.</p>
+        <a href="privacidade.html">Política de privacidade</a>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

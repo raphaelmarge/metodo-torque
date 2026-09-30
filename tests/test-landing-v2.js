@@ -96,7 +96,7 @@ async function landingBrand(page) {
     for (const id of ['app', 'recursos', 'sobre', 'duvidas', 'sua-marca', 'journey']) assert.equal(await page.locator(`[id="${id}"]`).count(), 1, `âncora antiga ${id}`);
     assert(await page.locator('a[href="demo-personal.html"], a[href="demo-aluno.html"]').evaluateAll(links => links.every(link => link.target === '_blank' && link.rel.includes('noopener') && link.rel.includes('noreferrer'))));
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://www.torqueon.com.br/personal-vendas.html');
-    assert.equal(await page.locator('.price strong').textContent(), '49');
+    assert.equal(await page.locator('.price strong').textContent(), '49,90');
     assert.match(await page.locator('.hero-actions').innerText(), /14 dias grátis/);
     assert.match(await page.locator('.microproof').innerText(), /Sem cartão/);
     assert(await page.locator('html').evaluate(el => el.classList.contains('motion-off')), 'respeita reduzir movimento');
@@ -199,11 +199,11 @@ async function landingBrand(page) {
     await page.locator('#studentRange').focus();
     await page.keyboard.press('End');
     assert.match(await page.locator('#studentCount').innerText(), /200/);
-    assert.match(await page.locator('#sliderCaption').innerText(), /R\$\s*49\/mês/);
-    assert.equal(await page.locator('.price strong').textContent(), '49');
+    assert.match(await page.locator('#sliderCaption').innerText(), /R\$\s*49,90\/mês/);
+    assert.equal(await page.locator('.price strong').textContent(), '49,90');
     await page.keyboard.press('Home');
     assert.match(await page.locator('#studentCount').innerText(), /\b5\b/);
-    assert.match(await page.locator('#sliderCaption').innerText(), /R\$\s*49\/mês/);
+    assert.match(await page.locator('#sliderCaption').innerText(), /R\$\s*49,90\/mês/);
 
     if (width <= 860) {
       await page.locator('#journey h2').click();
@@ -280,7 +280,7 @@ async function landingBrand(page) {
   await fallback.goto(base + '/personal-vendas.html');
   assert(await fallback.locator('.hero-title').isVisible());
   assert(await fallback.locator('.price').isVisible());
-  assert(await fallback.locator('.hero-actions a[href="personal.html"]').isVisible());
+  assert(await fallback.locator('.hero-actions a[href="personal.html?entrada=criar"]').isVisible());
   assert(await fallback.locator('a[href="demo-personal.html"]').first().isVisible());
   assert(await fallback.locator('#journey').isVisible());
   assert(await fallback.locator('#productVideo').evaluate(video => video.controls && !video.autoplay));

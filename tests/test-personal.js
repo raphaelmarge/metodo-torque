@@ -171,7 +171,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     return { visivel: !f.hidden, txt: f.textContent, zap: document.getElementById("faixaTesteZap").href, desde: localStorage.getItem("mtapp:ptTesteDesde") };
   });
   ok(faixa.visivel && /dia 1 de 14/.test(faixa.txt), "faixa do teste grátis aparece no modo sem conta (dia 1 de 14)");
-  ok(/wa\.me\/5521994429198/.test(faixa.zap) && /R\$ 49/.test(faixa.txt), "faixa tem o botão de assinar por R$ 49 no WhatsApp");
+  ok(/\/personal-assinatura\.html$/.test(faixa.zap) && /R\$ 49,90/.test(faixa.txt), "faixa leva à assinatura web de R$ 49,90 sem passar pelo WhatsApp");
   ok(!!faixa.desde, "início do teste fica registrado no aparelho");
 
   // a aba inicial agora é o Dashboard — vai pra lista de alunos primeiro

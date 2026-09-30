@@ -539,7 +539,7 @@
   var studentRange = document.getElementById("studentRange");
   studentRange.addEventListener("input", function () {
     document.getElementById("studentCount").textContent = studentRange.value;
-    document.getElementById("sliderCaption").textContent = "Com " + studentRange.value + " alunos, continua R$ 49/mês.";
+    document.getElementById("sliderCaption").textContent = "Com " + studentRange.value + " alunos, continua R$ 49,90/mês.";
   });
 
   var mobileCta = document.getElementById("mobileCta");
