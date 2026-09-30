@@ -2,6 +2,7 @@
 // Nao compra, autentica ou modifica acesso em servidor.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const { comMockNuvem } = require('./_nuvem.js');
 let chromium;
 try { chromium = require('playwright').chromium; }
 catch (_) { try { chromium = require('./ci/node_modules/playwright').chromium; } catch (_) { chromium = require('/opt/node22/lib/node_modules/playwright').chromium; } }
@@ -40,7 +41,7 @@ async function snapshot(page) {
     academia:localStorage.getItem('mtapp:academia'),intent:sessionStorage.getItem('torque:sales:intent:v1')}));
 }
 (async()=>{
-  browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});
+  browser=comMockNuvem(await chromium.launch({headless:true,executablePath,args:['--no-sandbox']}));
   for (const width of [390,1440]) {
     const {context,page,errors}=await contextFor({width});
     assert(await page.locator('#telaAssinatura').isVisible());
@@ -76,9 +77,15 @@ async function snapshot(page) {
   {
     const {context,page}=await contextFor();
     const before=await snapshot(page);
+    try {
     await page.evaluate(()=>{
       window.__salesRpc=[];
-      window.MTStore.cloud=()=>({client:{rpc:name=>{window.__salesRpc.push(name);return Promise.reject(new Error('fixture offline'));}}});
+      const original=window.MTStore.cloud;
+      window.__salesRestoreCloud=()=>{window.MTStore.cloud=original;delete window.__salesRestoreCloud;};
+      window.MTStore.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>{
+        if(name!=='minha_assinatura')return Promise.resolve({data:null,error:null});
+        window.__salesRpc.push(name);return Promise.reject(new Error('fixture offline'));
+      }});
     });
     await page.locator('#taRever').click();
     assert(await page.locator('#taRever').isDisabled());
@@ -95,14 +102,20 @@ async function snapshot(page) {
       localStorage.setItem('mtapp:ptAssinatura',JSON.stringify({status:'vitalicia',travado:false}));T.aplica();const lifetime=dialog.hidden;
       // A reconsulta so altera o status se o servidor fornece um envelope valido.
       localStorage.setItem('mtapp:ptAssinatura',JSON.stringify({status:'trial',travado:true}));T.aplica();
-      S.cloud=()=>({client:{rpc:()=>Promise.reject(new Error('fixture offline'))}});
+      S.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>name==='minha_assinatura'
+        ?Promise.reject(new Error('fixture offline')):Promise.resolve({data:null,error:null})});
       T.consulta();await new Promise(r=>setTimeout(r,0));const failureKeepsLock=T.travado();
-      S.cloud=()=>({client:{rpc:()=>Promise.resolve({data:{status:'ativa',travado:false}})}});
+      S.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>Promise.resolve({
+        data:name==='minha_assinatura'?{status:'ativa',travado:false}:null,error:null})});
       T.consulta();await new Promise(r=>setTimeout(r,0));const unlockedByServer=!T.travado();
       return {noStatus,legacy,lifetime,failureKeepsLock,unlockedByServer};
     });
     assert.deepEqual(result,{noStatus:true,legacy:true,lifetime:true,failureKeepsLock:true,unlockedByServer:true});
-    checks++;await context.close();
+    checks++;
+    } finally {
+      await page.evaluate(()=>{if(window.__salesRestoreCloud)window.__salesRestoreCloud();});
+      await context.close();
+    }
   }
   for (const platform of ['android','ios']) {
     const {context,page,errors}=await contextFor({native:true,platform});

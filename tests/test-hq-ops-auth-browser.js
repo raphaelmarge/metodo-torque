@@ -12,9 +12,11 @@ const PRIVATE_MESSAGE = 'Mensagem interna confidencial de teste';
 let checks = 0;
 function ok(value, label) { assert.ok(value, label); checks++; console.log('OK ' + label); }
 async function run() {
-  const server = createServer();
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const base = 'http://127.0.0.1:' + server.address().port;
+  // CI may supply its own server; otherwise this suite owns an ephemeral one.
+  const server = process.env.BASE_URL ? null : createServer();
+  if (server) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = (process.env.BASE_URL || 'http://127.0.0.1:' + server.address().port).replace(/\/+$/, '');
+  const origin = new URL(base).origin;
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['C:/Program Files/Google/Chrome/Application/chrome.exe','/opt/pw-browsers/chromium'].find(p=>require('node:fs').existsSync(p)), headless: true, args: ['--no-sandbox'] });
   const demo = Data.createDemoStore({ now: '2026-09-30T15:00:00Z' });
   const admin = await demo.load();
@@ -27,7 +29,7 @@ async function run() {
   const contexts = [], external = [], pageErrors = [];
   async function page(options = {}) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, serviceWorkers: 'block' }); contexts.push(context);
-    await context.route('**/*', route => { const url=route.request().url(); if(new URL(url).origin!==base) {external.push(url); return route.abort();} return route.continue(); });
+    await context.route('**/*', route => { const url=route.request().url(); if(new URL(url).origin!==origin) {external.push(url); return route.abort();} return route.continue(); });
     await context.addInitScript(({admin,finance,options,userA}) => {
       const state = window.__hqAuthTest = {user:userA,role:'admin',denyRead:!!options.denyRead,denyCommand:false,legacyAdmin:options.legacyAdmin!==false,listeners:[],calls:[]};
       state.emit = (event,id) => { if(id)state.user=id; const session=event==='SIGNED_OUT'?null:{user:{id:state.user}}; state.listeners.slice().forEach(fn=>fn(event,session)); };
@@ -106,7 +108,7 @@ async function run() {
     ok(pageErrors.length===0,'nenhuma excecao de pagina durante revogacao e descarte');
     console.log(`PASS ${checks} verificacoes HQ auth browser; nenhum backend remoto acessado.`);
   } finally {
-    demo.dispose(); for(const context of contexts)await context.close(); await browser.close(); await new Promise(resolve=>server.close(resolve));
+    demo.dispose(); for(const context of contexts)await context.close(); await browser.close(); if(server)await new Promise(resolve=>server.close(resolve));
   }
 }
 run().catch(error=>{console.error(error);process.exitCode=1;});

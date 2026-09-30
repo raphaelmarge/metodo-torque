@@ -6,9 +6,11 @@ const { chromium } = require('./ci/node_modules/playwright');
 const { createServer } = require('../tools/hq-ops/serve.cjs');
 
 async function run() {
-  const server = createServer();
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const origin = 'http://127.0.0.1:' + server.address().port;
+  // Honor the shared CI server without taking ownership of its lifecycle.
+  const server = process.env.BASE_URL ? null : createServer();
+  if (server) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = (process.env.BASE_URL || 'http://127.0.0.1:' + server.address().port).replace(/\/+$/, '');
+  const origin = new URL(base).origin;
   const launch = { headless: true, args: ['--no-sandbox'] };
   const localChrome = process.env.CHROMIUM_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
   if (fs.existsSync(localChrome)) launch.executablePath = localChrome;
@@ -84,7 +86,7 @@ async function run() {
     }
     let leadId, caseId, incidentId, invoiceId, expenseId, accountId;
     await test('preview loads actual shell and adapter without external requests', async () => {
-      await page.goto(origin + '/apps/hq-ops-preview.html');
+      await page.goto(base + '/apps/hq-ops-preview.html');
       await page.locator('.hq-stats .hq-stat').first().waitFor();
       const s = await snapshot(); accountId = s.accounts[0].id;
       assert.equal(s.meta.mode, 'demo'); assert.equal(s.meta.synthetic, true); assert.deepEqual(external, []);
@@ -216,7 +218,7 @@ async function run() {
     await test('selected UTC civil day agrees with financial due-today filter near midnight', async () => {
       const midnight = await context.newPage(); midnight.on('pageerror', e => errors.push(e.message));
       await midnight.addInitScript(() => { window.__hqBrowserNow = '2026-10-01T01:30:00Z'; });
-      await midnight.goto(origin + '/apps/hq-ops-preview.html'); await midnight.locator('.hq-stats .hq-stat').first().waitFor();
+      await midnight.goto(base + '/apps/hq-ops-preview.html'); await midnight.locator('.hq-stats .hq-stat').first().waitFor();
       await midnight.locator('#hqFilters [name="timeZone"]').selectOption('UTC'); await midnight.locator('#hqFilters button').click();
       await midnight.locator('.hq-nav [data-nav="finance"]').click(); await midnight.locator('[data-hq-filter="due"]').selectOption('today');
       const dueDates = await midnight.locator('.hq-table tbody tr').evaluateAll(rows => rows.map(row => row.cells[2].textContent.trim()));
@@ -256,7 +258,7 @@ async function run() {
     });
     await test('changing authenticated user clears old data and open details immediately', async () => {
       const lp = await live.newPage(); lp.setDefaultTimeout(7000); lp.on('pageerror', e => errors.push(e.message));
-      await lp.goto(origin + '/apps/hq.html'); await lp.locator('.hq-nav [data-nav="customers"]').click();
+      await lp.goto(base + '/apps/hq.html'); await lp.locator('.hq-nav [data-nav="customers"]').click();
       await lp.getByRole('button', { name: 'Conta sentinela fictícia', exact: true }).click(); await lp.locator('dialog[open]').waitFor();
       await lp.evaluate(() => { window.__hqAuthUser = '00000000-0000-4000-8000-000000009001'; [...window.__hqAuthListeners].forEach(fn => fn('SIGNED_IN', { user: { id: window.__hqAuthUser } })); });
       await lp.getByText(/Acesso indisponível/).waitFor();
@@ -265,7 +267,7 @@ async function run() {
     });
     await test('server authorization denial clears the operational form and sensitive data', async () => {
       const lp = await live.newPage(); lp.setDefaultTimeout(7000); lp.on('pageerror', e => errors.push(e.message));
-      await lp.goto(origin + '/apps/hq.html'); await lp.locator('.hq-nav [data-nav="sales"]').click();
+      await lp.goto(base + '/apps/hq.html'); await lp.locator('.hq-nav [data-nav="sales"]').click();
       await lp.locator('[data-hq-action="lead.create"]').click(); const d = lp.locator('dialog[open]');
       await d.locator('[name="name"]').fill('Tentativa fictícia negada'); await d.locator('[name="nextActionAt"]').fill('2026-10-01');
       await d.locator('[name="reason"]').fill('Verificação de revogação de acesso.');
@@ -283,7 +285,7 @@ async function run() {
     console.log('HQ integrated workflows: ' + checks + ' groups passed. Synthetic session only; external network blocked.');
   } finally {
     if (browser) await browser.close();
-    await new Promise(resolve => server.close(resolve));
+    if (server) await new Promise(resolve => server.close(resolve));
   }
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

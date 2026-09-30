@@ -159,15 +159,17 @@ async function browserChecks(){
   '/assets/hq-influencer-portal.js':['application/javascript','../assets/hq-influencer-portal.js'],
   '/assets/hq-influencer-portal.css':['text/css','../assets/hq-influencer-portal.css']
  };
- const server=http.createServer((req,res)=>{const route=routes[new URL(req.url,'http://localhost').pathname];if(!route){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':route[0],'Cache-Control':'no-store'});res.end(fs.readFileSync(path.join(__dirname,route[1])));});
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const base='http://127.0.0.1:'+server.address().port;
+ // A supplied BASE_URL uses the CI server; the fallback stays self-contained.
+ const server=process.env.BASE_URL?null:http.createServer((req,res)=>{const route=routes[new URL(req.url,'http://localhost').pathname];if(!route){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':route[0],'Cache-Control':'no-store'});res.end(fs.readFileSync(path.join(__dirname,route[1])));});
+ if(server)await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const base=(process.env.BASE_URL||'http://127.0.0.1:'+server.address().port).replace(/\/+$/,'');
+ const origin=new URL(base).origin;
  const windowsChrome='C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:fs.existsSync(windowsChrome)?{executablePath:windowsChrome}:{})});
  try{
   await test('navegador: demo explícita, mobile320 e zero consultas externas',async()=>{
    const context=await browser.newContext({viewport:{width:320,height:850},serviceWorkers:'block'}),outside=[];
-   await context.route('**/*',route=>{if(!route.request().url().startsWith(base+'/')){outside.push(route.request().url());return route.abort();}return route.continue();});
+   await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==origin){outside.push(route.request().url());return route.abort();}return route.continue();});
    const page=await context.newPage();await page.goto(base+'/apps/influencer.html');await page.getByRole('heading',{name:'Seu portal está em preparação'}).waitFor();
    assert.equal(await page.locator('input[type=password]').count(),0);await page.getByRole('button',{name:'Conhecer a demonstração'}).click();
    await page.getByRole('heading',{name:'Parceiro de demonstração'}).waitFor();assert.match(await page.locator('body').innerText(),/valores fictícios/);
@@ -176,7 +178,7 @@ async function browserChecks(){
    await context.close();
   });
   await test('navegador: admin prepara vínculo local e envio permanece indisponível',async()=>{
-   const context=await browser.newContext({serviceWorkers:'block'});await context.route('**/*',r=>r.request().url().startsWith(base+'/')?r.continue():r.abort());
+   const context=await browser.newContext({serviceWorkers:'block'});await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
    const page=await context.newPage();await page.goto(base+'/apps/influencer.html');
    await page.evaluate(()=>{
     const partnerId='10000000-0000-4000-8000-000000000001',invites=[];window.__calls=[];
@@ -223,5 +225,5 @@ async function browserChecks(){
    const refreshed=await page.evaluate(()=>{window.__listeners.forEach(fn=>fn('TOKEN_REFRESHED',{user:{id:'B'}}));return !document.body.textContent.includes('PARCEIRO A')&&!document.body.textContent.includes('ADMIN A ONLY');});assert.equal(refreshed,true);
    await context.close();
   });
- }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+ }finally{await browser.close();if(server)await new Promise(resolve=>server.close(resolve));}
 }

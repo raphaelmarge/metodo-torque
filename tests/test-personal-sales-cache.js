@@ -1,12 +1,19 @@
 /* Browser real, HTTP somente loopback e perfil efemero. Nao usa o servidor do
  * desenvolvedor, credenciais, dados reais, gateways nem banco. A fixture de SW
  * legado reproduz caches mt-v849; a instalacao/atualizacao usa os SWs reais.
+ * BASE_URL seleciona o host loopback; a porta desta fixture continua efemera
+ * para nao instalar workers no servidor compartilhado de tests/run.sh.
  * Executar: node tests/test-personal-sales-cache.js (CHROMIUM_PATH opcional).
  */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+const fixtureAddress = new URL(process.env.BASE_URL || 'http://127.0.0.1:8765');
+assert.equal(fixtureAddress.protocol, 'http:', 'cache fixture requires local HTTP');
+assert.ok(['127.0.0.1', 'localhost'].includes(fixtureAddress.hostname), 'cache fixture accepts only loopback BASE_URL');
+assert.ok(!fixtureAddress.username && !fixtureAddress.password && fixtureAddress.pathname === '/' && !fixtureAddress.search && !fixtureAddress.hash,
+  'BASE_URL must be a loopback origin without credentials or path');
 let chromium;
 try { chromium = require('playwright').chromium; }
 catch (_) { try { chromium = require('./ci/node_modules/playwright').chromium; }
@@ -145,8 +152,9 @@ async function verifySensitiveRequests(page) {
   assert.equal(current, source('sw.js').match(/^var VERSION = "(mt-v\d+)";/m)[1]);
   assert.equal(current, source('app/app-sw.js').match(/^var VERSION = "(mt-v\d+)";/m)[1]);
   server = http.createServer(respond);
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  base = 'http://127.0.0.1:' + server.address().port;
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, fixtureAddress.hostname, resolve); });
+  fixtureAddress.port = String(server.address().port);
+  base = fixtureAddress.origin;
   const executablePath = process.env.CHROMIUM_PATH || ['/opt/pw-browsers/chromium',
     'C:/Program Files/Google/Chrome/Application/chrome.exe'].find(candidate => fs.existsSync(candidate));
   browser = await chromium.launch({ headless: true, executablePath, args: ['--no-sandbox', '--disable-background-networking',
