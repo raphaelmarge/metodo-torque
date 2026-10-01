@@ -54,6 +54,8 @@ jobs:
           node tests/test-hq-backend-activation.js
           node tests/test-hq-optional-suspension.js
           node tests/test-hq-unified-sql.js
+          node tests/test-hq-team-registry-sql.js
+          node tests/test-hq-team-activation.js
       - name: Homologar PostgreSQL concorrente e Auth/PostgREST reais
         shell: bash
         run: bash tests/hq-auth-ci/run.sh

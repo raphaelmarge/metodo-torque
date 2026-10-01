@@ -51,9 +51,9 @@ const command = (user, value) => rpc(user, 'hq_ops_command', { p_command: value 
 const scalar = async (sql, values = []) => Object.values((await client.query(sql, values)).rows[0])[0];
 async function check(label, fn) { phase = label; await fn(); summary.checks.push({ name: label, status: 'pass' }); console.log('OK ' + summary.checks.length + ' ' + label); }
 function observe(name, value) { summary.observations.push({ name, value }); console.log('OBS ' + name + ': ' + value); }
-async function waitRPC(user, name, predicate) {
+async function waitRPC(user, name, predicate, body = {}) {
   const limit = Date.now() + 15000;
-  do { const result = await rpc(user, name); if (predicate(result)) return result; await new Promise(resolve => setTimeout(resolve, 200)); } while (Date.now() < limit);
+  do { const result = await rpc(user, name, body); if (predicate(result)) return result; await new Promise(resolve => setTimeout(resolve, 200)); } while (Date.now() < limit);
   throw Object.assign(new Error('Schema reload timeout'), { code: 'SCHEMA_RELOAD_TIMEOUT' });
 }
 async function login(user) {
@@ -322,6 +322,217 @@ async function main() {
     assert.equal(good(await rpc(partnerA, 'influencer_portal_snapshot')).firstPayments.verifiedAfterTrialCount, 1);
     rejected(await rpc(partnerB, 'influencer_portal_snapshot'), 'IP403');
     await privateBoundary();
+  });
+  // Team is installed only now: the existing OPS recovery check has restored
+  // staff_enabled=false. These extra checks do not change the earlier modules.
+  const teamCommand = (user, value) => rpc(user, 'hq_team_command', { p_input: value });
+  const teamSnapshot = async user => good(await rpc(user, 'hq_team_snapshot'));
+  async function protectedTeamAccess() {
+    // Synthetic identities only, projected to authority fields. Password hashes,
+    // sessions, tokens and metadata bodies are never read or placed in evidence.
+    return scalar(`select jsonb_build_object(
+      'identities',(select jsonb_agg(jsonb_build_object('id',id,'role',role) order by id) from auth.users),
+      'admins',(select jsonb_agg(to_jsonb(a) order by user_id) from public.saas_admins a),
+      'staff',(select jsonb_agg(to_jsonb(s) order by user_id) from torque_hq.staff s),
+      'scope',(select jsonb_agg(to_jsonb(s) order by user_id,account_id) from torque_hq.staff_account_scope s),
+      'gate',(select staff_enabled from torque_hq.settings where id),
+      'roleGrants',(select jsonb_agg(jsonb_build_array(roleid,member,grantor,admin_option) order by roleid,member,grantor) from pg_catalog.pg_auth_members),
+      'invitations',(select count(*) from hq_influencer_private.invites))`);
+  }
+  const teamFunctionState = async () => (await client.query(`select p.oid,n.nspname,p.proname,p.proowner,p.proacl::text acl,
+    p.proconfig,md5(p.prosrc) body_hash,p.proargtypes::text arguments
+    from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+    where (n.nspname='public' and left(p.proname,8)='hq_team_')
+       or (n.nspname='torque_hq' and (left(p.proname,15)='suspended_team_' or left(p.proname,8)='hq_team_'))
+    order by p.oid`)).rows;
+  let teamNotifications = 0;
+  client.on('notification', event => { if (event.channel === 'pgrst' && event.payload === 'reload schema') teamNotifications++; });
+  await client.query('listen pgrst');
+  async function refusedTeamScript(sql) {
+    const data = await storedData(), authority = await protectedTeamAccess(), functions = await teamFunctionState();
+    const notifications = teamNotifications;
+    await assert.rejects(() => client.query(sql), error => error.code === '55000');
+    await client.query('rollback');
+    assert.deepEqual(await storedData(), data); assert.deepEqual(await protectedTeamAccess(), authority);
+    assert.deepEqual(await teamFunctionState(), functions); assert.equal(teamNotifications, notifications);
+  }
+  await check('team versioned migration adds only an empty administrative registry', async () => {
+    const authority = await protectedTeamAccess();
+    assert.equal(authority.gate, false);
+    assert.equal(await scalar("select to_regclass('torque_hq.team_registry') is null"), true);
+    for (const sql of packages.team.migrations) await client.query(sql);
+    await waitRPC(admin, 'hq_team_snapshot', result => result.ok);
+    const s = await teamSnapshot(admin);
+    assert.equal(s.schemaVersion, 1); assert.equal(s.currentUserId, admin.id);
+    assert.deepEqual(s.permissions, ['team.read', 'team.write', 'team.review']);
+    assert.deepEqual(s.team, []); assert.deepEqual(s.audit, []);
+    assert.equal(s.sources.team.scope, 'administrativeRegistryOnly');
+    assert.equal(s.meta.staffGateEnabled, false); assert.equal(s.meta.accessProvisioningAvailable, false);
+    assert.equal(s.meta.externalEffect, false); assert.equal(s.meta.roleMatrixKind, 'referenceOnly');
+    assert(s.meta.roleMatrix.every(row => row.effectiveAccess === false));
+    assert.deepEqual(await protectedTeamAccess(), authority);
+  });
+  let teamCreate, teamId, teamAuthority;
+  await check('team anonymous, outsider, forged metadata, staff and service key are denied', async () => {
+    teamAuthority = await protectedTeamAccess();
+    const deniedCreate = envelope('team.create', { name: 'Denied synthetic team record', proposedRole: 'admin' });
+    for (const actor of [undefined, anonKey, outsider, supportA, supportB, finance, partnerA, partnerB, serviceKey]) {
+      rejected(await rpc(actor, 'hq_team_snapshot'), '42501');
+      rejected(await teamCommand(actor, deniedCreate), '42501');
+    }
+    assert.equal(claims(outsider.token).user_metadata.role, 'admin');
+    await client.query('update torque_hq.settings set staff_enabled=true where id'); // Explicit test fixture only.
+    for (const role of ['finance', 'sales', 'support', 'engineering', 'viewer']) {
+      await client.query('update torque_hq.staff set role=$1 where user_id=$2', [role, finance.id]);
+      assert.equal((await snap(finance)).role, role);
+      rejected(await rpc(finance, 'hq_team_snapshot'), '42501');
+      rejected(await teamCommand(finance, deniedCreate), '42501');
+    }
+    await client.query("update torque_hq.staff set role='finance' where user_id=$1", [finance.id]);
+    await client.query('update torque_hq.settings set staff_enabled=false where id');
+    assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+    assert.deepEqual((await teamSnapshot(admin)).team, []);
+  });
+  await check('team admin creation is idempotent and proposed administrator never gains access', async () => {
+    teamCreate = envelope('team.create', { name: 'Synthetic administrative member', contact: outsider.email, proposedRole: 'admin' });
+    const first = good(await teamCommand(admin, teamCreate)); teamId = first.id;
+    assert(first.ok); assert.equal(first.externalEffect, false); assert.equal(first.accessGranted, false);
+    assert.equal(first.member.effectiveAccess, false); assert.equal(first.member.createdBy, admin.id);
+    assert.equal(first.member.version, 1); assert.equal(first.member.reviewStatus, 'pending');
+    assert.equal(first.member.accessState, 'accessPending'); assert.equal(Object.hasOwn(first.member, 'authUserId'), false);
+    const replay = good(await teamCommand(admin, teamCreate)); assert.equal(replay.id, teamId); assert.equal(replay.replayed, true);
+    rejected(await teamCommand(admin, { ...teamCreate, payload: { ...teamCreate.payload, proposedRole: 'finance' } }), '22023');
+    assert.equal(Number(await scalar('select count(*) from torque_hq.team_registry')), 1);
+    assert.equal(Number(await scalar('select count(*) from torque_hq.team_registry_audit')), 1);
+    assert.equal(Number(await scalar('select count(*) from torque_hq.team_registry_commands')), 1);
+    assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+    rejected(await rpc(outsider, 'hq_team_snapshot'), '42501'); rejected(await rpc(outsider, 'hq_ops_snapshot'), '42501');
+  });
+  await check('team review, edit, status and version rules persist without provisioning any access', async () => {
+    let r = good(await teamCommand(admin, envelope('team.review', { id: teamId, expectedVersion: 1, reviewStatus: 'approved' })));
+    assert.equal(r.member.reviewedBy, admin.id); assert.equal(r.member.version, 2); assert.equal(r.member.reviewStatus, 'approved');
+    assert.equal(r.accessGranted, false); rejected(await rpc(outsider, 'hq_team_snapshot'), '42501');
+    const beforeConflict = await storedData();
+    rejected(await teamCommand(admin, envelope('team.update', { id: teamId, expectedVersion: 1, name: 'Stale synthetic edit' })), '40001');
+    assert.deepEqual(await storedData(), beforeConflict);
+    r = good(await teamCommand(admin, envelope('team.update', { id: teamId, expectedVersion: 2, contact: '', proposedRole: 'support' })));
+    assert.equal(r.member.contact, ''); assert.equal(r.member.version, 3); assert.equal(r.member.reviewStatus, 'pending'); assert.equal(r.member.reviewedAt, null);
+    r = good(await teamCommand(admin, envelope('team.setStatus', { id: teamId, expectedVersion: 3, status: 'inactive' })));
+    assert.equal(r.member.accessState, 'disabled'); assert.equal(r.member.version, 4);
+    rejected(await teamCommand(admin, envelope('team.review', { id: teamId, expectedVersion: 4, reviewStatus: 'approved' })), '22023');
+    r = good(await teamCommand(admin, envelope('team.setStatus', { id: teamId, expectedVersion: 4, status: 'active' })));
+    assert.equal(r.member.version, 5); assert.equal(r.member.accessState, 'accessPending'); assert.equal(r.member.reviewStatus, 'pending');
+    r = good(await teamCommand(admin, envelope('team.review', { id: teamId, expectedVersion: 5, reviewStatus: 'rejected' })));
+    assert.equal(r.member.version, 6); assert.equal(r.member.reviewStatus, 'rejected'); assert.equal(r.member.effectiveAccess, false);
+    const s = await teamSnapshot(admin); assert.equal(s.team.length, 1); assert.equal(s.team[0].version, 6); assert.equal(s.audit.length, 6);
+    assert(s.audit.every(row => row.actorId === admin.id && row.reason && row.changedFields.length));
+    assert(s.audit.every(row => !Object.hasOwn(row.after, 'name') && !Object.hasOwn(row.after, 'contact')));
+    assert.equal(good(await teamCommand(admin, teamCreate)).replayed, true);
+    assert.equal((await teamSnapshot(admin)).team[0].version, 6); // Replay is a historical receipt, not a reset.
+    assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+  });
+  await check('team rejects injected authority, unsupported delete/invite and malformed versions atomically', async () => {
+    const before = await storedData();
+    for (const injected of [{ userId: outsider.id }, { effectiveAccess: true }, { permissions: ['team.write'] }, { staff_enabled: true }]) {
+      rejected(await teamCommand(admin, envelope('team.create', { name: 'Invalid synthetic record', proposedRole: 'viewer', ...injected })), '22023');
+    }
+    for (const type of ['team.delete', 'team.invite', 'staff.grant', 'settings.enableStaff']) rejected(await teamCommand(admin, envelope(type, { id: teamId })), '22023');
+    for (const expectedVersion of [null, '6', 0, -1, 1.5, 2147483647]) rejected(await teamCommand(admin, envelope('team.setStatus', { id: teamId, expectedVersion, status: 'inactive' })), '22023');
+    rejected(await teamCommand(admin, { ...envelope('team.create', { name: 'Invalid reason', proposedRole: 'viewer' }), reason: '' }), '22023');
+    rejected(await teamCommand(admin, { ...envelope('team.create', { name: 'Invalid envelope role', proposedRole: 'viewer' }), role: 'admin' }), '22023');
+    rejected(await teamCommand(outsider, envelope('team.update', { id: teamId, expectedVersion: 6, name: 'Known ID attack' })), '42501');
+    rejected(await teamCommand(outsider, envelope('team.review', { id: teamId, expectedVersion: 6, reviewStatus: 'approved' })), '42501');
+    assert.deepEqual(await storedData(), before); assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+  });
+  await check('team admin revocation precedes replay even while the Auth session stays valid', async () => {
+    const before = await storedData();
+    await client.query('delete from public.saas_admins where user_id=$1', [admin.id]);
+    assert.equal(good(await request(AUTH, '/user', { token: admin.token, method: 'GET' })).id, admin.id);
+    rejected(await rpc(admin, 'hq_team_snapshot'), '42501'); rejected(await teamCommand(admin, teamCreate), '42501');
+    await client.query('insert into public.saas_admins(user_id) values($1)', [admin.id]);
+    assert.equal(good(await teamCommand(admin, teamCreate)).replayed, true);
+    assert.deepEqual(await storedData(), before); assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+  });
+  async function teamPrivateBoundary(parked = false) {
+    for (const actor of [anonKey, admin.token, outsider.token, serviceKey]) {
+      for (const table of ['team_registry', 'team_registry_commands', 'team_registry_audit']) {
+        rejected(await request(REST, '/' + table + '?select=*', { token: actor, method: 'GET', headers: { 'Accept-Profile': 'torque_hq' } }), 'PGRST106', 406);
+        rejected(await request(REST, '/' + table, { token: actor, body: {}, headers: { 'Content-Profile': 'torque_hq' } }), 'PGRST106', 406);
+      }
+      rejected(await request(REST, '/rpc/team_require_admin', { token: actor, headers: { 'Content-Profile': 'torque_hq' } }), 'PGRST106', 406);
+    }
+    for (const role of ['anon', 'authenticated', 'service_role']) {
+      const state = (await client.query(`select
+        has_schema_privilege($1,'torque_hq','usage') schema_usage,
+        has_function_privilege($1,'torque_hq.team_require_admin()','execute') helper,
+        has_function_privilege($1,$2,'execute') snapshot,
+        has_function_privilege($1,$3,'execute') command`, [role,
+        parked ? 'torque_hq.suspended_team_snapshot()' : 'public.hq_team_snapshot()',
+        parked ? 'torque_hq.suspended_team_command(jsonb)' : 'public.hq_team_command(jsonb)'])).rows[0];
+      assert.equal(state.schema_usage, false); assert.equal(state.helper, false);
+      assert.equal(state.snapshot, !parked && role === 'authenticated'); assert.equal(state.command, !parked && role === 'authenticated');
+    }
+    await privateBoundary(); // Includes RLS and table privilege checks for the new three tables.
+  }
+  await check('team private registry, command receipts and audit are denied by HTTP schema boundary and ACL', () => teamPrivateBoundary());
+  // Controlled DDL drift is created only inside this disposable test database.
+  // It is an admin-guarded legacy-shaped overload, not an authorization bypass.
+  const teamOverload = `create function public.hq_team_snapshot(p_filter text) returns jsonb
+    language plpgsql security definer set search_path='' as $$ begin
+      perform torque_hq.team_require_admin();
+      return jsonb_build_object('syntheticLegacy',true,'count',(select count(*) from torque_hq.team_registry));
+    end $$;
+    revoke all on function public.hq_team_snapshot(text) from public,anon,authenticated,service_role;
+    grant execute on function public.hq_team_snapshot(text) to authenticated;
+    notify pgrst,'reload schema';`;
+  await check('team install and suspension reject callable legacy overload without changing data, ACL or endpoints', async () => {
+    await client.query(teamOverload);
+    await waitRPC(admin, 'hq_team_snapshot', result => result.ok && result.data?.syntheticLegacy === true, { p_filter: '' });
+    await refusedTeamScript(packages.team.migrations[0]);
+    await refusedTeamScript(packages.team.rollback.suspend);
+    assert.equal(good(await rpc(admin, 'hq_team_snapshot', { p_filter: '' })).syntheticLegacy, true);
+    assert.equal((await teamSnapshot(admin)).team[0].version, 6);
+    await client.query("drop function public.hq_team_snapshot(text); notify pgrst,'reload schema'");
+    await waitRPC(admin, 'hq_team_snapshot', result => result.status === 404 && result.data?.code === 'PGRST202', { p_filter: '' });
+  });
+  await check('team suspension reloads PostgREST, denies reads and writes and preserves OIDs and stored records', async () => {
+    const before = await storedData(), functions = await teamFunctionState();
+    await client.query(packages.team.rollback.suspend);
+    await waitRPC(admin, 'hq_team_snapshot', result => result.status === 404 && result.data?.code === 'PGRST202');
+    rejected(await teamCommand(admin, teamCreate), 'PGRST202', 404);
+    await teamPrivateBoundary(true);
+    const paused = await teamFunctionState();
+    assert.deepEqual(paused.map(f => [f.oid, f.proowner, f.body_hash]), functions.map(f => [f.oid, f.proowner, f.body_hash]));
+    await client.query(packages.team.rollback.suspend);
+    assert.deepEqual(await storedData(), before); assert.deepEqual(await teamFunctionState(), paused);
+    assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+  });
+  await check('team resume rejects an exposed overload and suspended OPS dependency atomically', async () => {
+    await client.query(teamOverload);
+    await waitRPC(admin, 'hq_team_snapshot', result => result.ok && result.data?.syntheticLegacy === true, { p_filter: '' });
+    await refusedTeamScript(packages.team.rollback.resume);
+    assert.equal(good(await rpc(admin, 'hq_team_snapshot', { p_filter: '' })).syntheticLegacy, true);
+    await client.query("drop function public.hq_team_snapshot(text); notify pgrst,'reload schema'");
+    await waitRPC(admin, 'hq_team_snapshot', result => result.status === 404 && result.data?.code === 'PGRST202', { p_filter: '' });
+    await client.query(packages.ops.rollback.suspend);
+    await waitRPC(admin, 'hq_ops_snapshot', result => result.status === 404 && result.data?.code === 'PGRST202');
+    await refusedTeamScript(packages.team.rollback.resume);
+    await client.query(packages.ops.rollback.resume); await waitRPC(admin, 'hq_ops_snapshot', result => result.ok);
+  });
+  await check('team resume restores only admin HTTP functionality, with identical OIDs, data and no staff activation', async () => {
+    const before = await storedData(), paused = await teamFunctionState();
+    await client.query(packages.team.rollback.resume); await waitRPC(admin, 'hq_team_snapshot', result => result.ok);
+    const resumed = await teamFunctionState();
+    assert.deepEqual(resumed.map(f => [f.oid, f.proowner, f.body_hash]), paused.map(f => [f.oid, f.proowner, f.body_hash]));
+    await client.query(packages.team.rollback.resume);
+    assert.deepEqual(await teamFunctionState(), resumed); assert.deepEqual(await storedData(), before);
+    assert.equal((await teamSnapshot(admin)).team[0].version, 6);
+    assert.equal(good(await teamCommand(admin, teamCreate)).replayed, true);
+    rejected(await rpc(outsider, 'hq_team_snapshot'), '42501'); rejected(await rpc(finance, 'hq_team_snapshot'), '42501');
+    await teamPrivateBoundary(); assert.deepEqual(await protectedTeamAccess(), teamAuthority);
+    assert(teamNotifications >= 6);
+    observe('team', 'Versioned administrative registry tested via real Auth JWTs and direct PostgREST; no Auth users, staff, invitations, scopes or access grants are provisioned by team operations.');
+    observe('team_recovery', 'Real HTTP disappearance/restoration confirms PostgREST cache reload; synthetic legacy overload is refused atomically, preserved until its explicit fixture cleanup.');
   });
   observe('scope', 'Direct official Auth + PostgREST only. Kong/Envoy gateway, hosted project configuration, SMTP, frontend browser, MFA and production are outside this run.');
   summary.status = 'pass'; console.log('PASS ' + summary.checks.length + ' real Auth/PostgREST HTTP groups');
