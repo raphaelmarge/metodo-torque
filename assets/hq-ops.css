@@ -19,15 +19,20 @@ html[data-hq-ops="1"] body{margin:0;background:#f5f5f9}
 .hq-app .hq-card,.hq-app .hq-section,.hq-app .hq-stat,.hq-app .hq-card-head>div{min-width:0;overflow-wrap:anywhere}
 .hq-app .hq-table{overflow-wrap:normal}
 .hq-app .hq-toolbar>.hq-field{flex:1 1 160px;min-width:min(100%,160px)}
-.hq-app #hqFilters,.hq-app [data-hqr-filters]{display:grid;grid-template-columns:repeat(4,minmax(140px,180px)) max-content;gap:12px;align-items:end}
+.hq-app #hqFilters,.hq-app [data-hqr-filters]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) max-content;gap:12px;align-items:end}
 .hq-app #hqFilters>.hq-field,.hq-app [data-hqr-filters]>.hq-field{min-width:0}
 .hq-app #hqFilters>.hq-definition{grid-column:1/-1}
 .hq-app #hqFilters>.hq-btn,.hq-app [data-hqr-filters]>.hq-btn{justify-self:start}
 .hq-app .hq-report-stat>.hq-report-bar{margin-top:auto;flex-shrink:0;width:100%}
 .hq-app .hq-reports-catalog,.hq-app .hq-integration-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr))}
 .hq-app .hq-reports-catalog button>span:last-child{margin-top:auto}
+/* The real HQ also loads apps.css: its disabled button colors are not report text. */
+.hq-app .hq-report-stat{color:var(--ink);-webkit-text-fill-color:currentColor;-webkit-appearance:none;appearance:none}
+.hq-app .hq-report-stat:disabled{opacity:1;color:#4b4560;-webkit-text-fill-color:currentColor;background:#f3f1f7;border-color:#d7d1e2;cursor:not-allowed}
+.hq-app .hq-report-stat:disabled strong,.hq-app .hq-report-stat:disabled span,.hq-app .hq-report-stat:disabled small{color:inherit;-webkit-text-fill-color:currentColor}
+.hq-app .hq-report-stat:disabled strong{font-size:18px;line-height:1.45}
 @media(max-width:1100px){
-  .hq-app #hqFilters,.hq-app [data-hqr-filters]{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+  .hq-app #hqFilters,.hq-app [data-hqr-filters]{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:780px){
   .hq-app .hq-field input,.hq-app .hq-field select,.hq-app .hq-field textarea,.hq-app .hq-search{font-size:16px}
@@ -36,11 +41,11 @@ html[data-hq-ops="1"] body{margin:0;background:#f5f5f9}
   .hq-app .hq-card-head{flex-wrap:wrap}
   .hq-app .hq-list .hq-btn{flex-shrink:0}
 }
-@media(max-width:410px){
-  .hq-app [data-hqr-filters]{grid-template-columns:minmax(0,1fr)}
-  .hq-app [data-hqr-filters]>.hq-btn{width:100%}
-}
-@media(max-width:360px){
-  .hq-app #hqFilters{grid-template-columns:minmax(0,1fr)}
-  .hq-app #hqFilters>.hq-btn{width:100%}
+@media(max-width:600px){
+  /* Explicit single track avoids intrinsic date/month sizing and narrow implicit tracks in WebKit. */
+  .hq-app #hqFilters,.hq-app [data-hqr-filters]{grid-template-columns:minmax(0,1fr)}
+  .hq-app #hqFilters>.hq-field,.hq-app [data-hqr-filters]>.hq-field{width:100%;max-width:100%;min-width:0}
+  .hq-app #hqFilters>.hq-btn,.hq-app [data-hqr-filters]>.hq-btn{width:100%;max-width:100%;white-space:normal}
+  .hq-app .hq-field input[type="date"],.hq-app .hq-field input[type="month"]{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+  .hq-app .hq-field input::-webkit-date-and-time-value{min-width:0;text-align:left}
 }
