@@ -11,7 +11,7 @@ const PG = 'postgresql://postgres:hq_auth_ci_postgres_test_only@127.0.0.1:55433/
 const AUTH = 'http://127.0.0.1:59999';
 const REST = 'http://127.0.0.1:53000';
 const summary = { schemaVersion: 1, scope: 'disposable-direct-auth-postgrest', checks: [], observations: [], status: 'running' };
-let phase = 'disposable environment guard', client, packages;
+let phase = 'disposable environment guard', operation = 'none', client, packages;
 const safeCode = value => typeof value === 'string' && /^[A-Za-z0-9_]{1,48}$/.test(value) ? value : 'UNCLASSIFIED';
 function guard() {
   assert.equal(process.env.CI, 'true');
@@ -28,6 +28,15 @@ let serviceKey, anonKey;
 async function request(base, route, { token, method = 'POST', body = {}, headers = {} } = {}) {
   assert([AUTH, REST].includes(base));
   assert(route.startsWith('/') && !route.includes('://'));
+  // Diagnostics contain only fixed route/command names and a nonidentifying
+  // version number. Never log bodies, URLs with user IDs, credentials or JWTs.
+  const routeLabel = /^\/rpc\/[a-z_]+$/.test(route) ? route : '/redacted-resource';
+  operation = (base === AUTH ? 'auth' : 'rest') + ':' + method + ':' + routeLabel;
+  const teamInput = body?.p_input;
+  if (route === '/rpc/hq_team_command' && ['team.create', 'team.update', 'team.setStatus', 'team.review'].includes(teamInput?.type)) {
+    operation += ':' + teamInput.type;
+    if (Number.isInteger(teamInput.payload?.expectedVersion)) operation += ':version=' + teamInput.payload.expectedVersion;
+  }
   const response = await fetch(base + route, { method, redirect: 'error', signal: AbortSignal.timeout(15000),
     headers: { 'Content-Type': 'application/json', apikey: anonKey, ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
     ...(method === 'GET' ? {} : { body: JSON.stringify(body) }) });
@@ -413,7 +422,9 @@ async function main() {
     assert.equal(r.member.reviewedBy, admin.id); assert.equal(r.member.version, 2); assert.equal(r.member.reviewStatus, 'approved');
     assert.equal(r.accessGranted, false); rejected(await rpc(outsider, 'hq_team_snapshot'), '42501');
     const beforeConflict = await storedData();
-    rejected(await teamCommand(admin, envelope('team.update', { id: teamId, expectedVersion: 1, name: 'Stale synthetic edit' })), '40001');
+    // A business-version conflict must return once, not ask PostgREST to retry
+    // the transaction as SQLSTATE 40001 would on the pinned PostgREST 14.
+    rejected(await teamCommand(admin, envelope('team.update', { id: teamId, expectedVersion: 1, name: 'Stale synthetic edit' })), 'PT409', 409);
     assert.deepEqual(await storedData(), beforeConflict);
     r = good(await teamCommand(admin, envelope('team.update', { id: teamId, expectedVersion: 2, contact: '', proposedRole: 'support' })));
     assert.equal(r.member.contact, ''); assert.equal(r.member.version, 3); assert.equal(r.member.reviewStatus, 'pending'); assert.equal(r.member.reviewedAt, null);
@@ -546,7 +557,7 @@ function writeSummary() {
   fs.writeFileSync(path.join(permitted, 'checks.json'), JSON.stringify(summary, null, 2) + '\n');
 }
 main().catch(error => {
-  summary.status = 'fail'; summary.failure = { check: phase, code: safeCode(error.code || error.name) };
+  summary.status = 'fail'; summary.failure = { check: phase, operation, code: safeCode(typeof error.code === 'string' ? error.code : error.name) };
   // Never print arbitrary errors, stack traces, HTTP bodies, user identities, or JWTs.
-  console.error('FAIL ' + phase + ' [' + summary.failure.code + ']'); process.exitCode = 1;
+  console.error('FAIL ' + phase + ' [' + summary.failure.code + '] operation=' + operation); process.exitCode = 1;
 }).finally(async () => { if (client) await client.end().catch(() => {}); writeSummary(); });

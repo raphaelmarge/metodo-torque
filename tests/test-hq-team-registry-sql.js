@@ -148,7 +148,7 @@ async function main() {
     await actor('admin');
     await denies(()=>command('team.review',{id:first.id,expectedVersion:2,reviewStatus:'approved'}),'22023','approved proposal cannot be reviewed again without editing');
     const beforeConflict = await count('team_registry_commands');
-    await denies(()=>command('team.update',{id:first.id,expectedVersion:1,name:'Versao antiga'}),'40001','optimistic version rejects stale edits');
+    await denies(()=>command('team.update',{id:first.id,expectedVersion:1,name:'Versao antiga'}),'PT409','optimistic version rejects stale edits with HTTP conflict code');
     check(await count('team_registry_commands')===beforeConflict,'stale edit rolls back idempotency reservation');
     result=await command('team.update',{id:first.id,expectedVersion:2,contact:'',proposedRole:'finance'});
     check(result.member.version===3 && result.member.contact==='' && result.member.reviewStatus==='pending' && result.member.reviewedAt===null,'editing clears contact and invalidates previous approval');

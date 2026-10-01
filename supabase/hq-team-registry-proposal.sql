@@ -225,7 +225,7 @@ begin
   else
     select * into old_row from torque_hq.team_registry where id=target for update;
     if not found then raise exception using errcode='P0002',message='Cadastro inexistente'; end if;
-    if old_row.version<>expected then raise exception using errcode='40001',message='Cadastro alterado; atualize antes de reenviar'; end if;
+    if old_row.version<>expected then raise exception using errcode='PT409',message='Cadastro alterado; atualize antes de reenviar'; end if;
     if typ='team.update' then
       member_name:=coalesce(member_name,old_row.name);
       member_contact:=coalesce(member_contact,old_row.contact);

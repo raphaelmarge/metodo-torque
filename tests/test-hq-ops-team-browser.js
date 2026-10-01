@@ -28,7 +28,7 @@ let checks=0;function ok(value,label){assert.ok(value,label);checks++;console.lo
     if(name==='hq_team_snapshot'||name==='hq_team_command'){
       if(state.user!==A||!state.admin||state.role!=='admin'||state.denyTeam||name==='hq_team_command'&&state.denyCommand)return {error:{code:'42501',message:'fixture denied'}};
       if(state.missing)return {error:{code:'PGRST202',message:'fixture missing'}};
-      if(name==='hq_team_command'&&state.conflict)return {error:{code:'40001',message:'version_conflict'}};
+      if(name==='hq_team_command'&&state.conflict)return {error:{code:'PT409',message:'version_conflict'}};
       if(!delegate)delegate=window.HQOpsTeam.createDemoClient({permissions});
       const result=await delegate.rpc(name,args);
       if(name==='hq_team_snapshot'&&result.data){delete result.data.meta.synthetic;result.data.currentUserId=state.user;if(options.invalidContract)result.data.meta.accessProvisioningAvailable=true;}
@@ -83,7 +83,7 @@ let checks=0;function ok(value,label){assert.ok(value,label);checks++;console.lo
   const {page:validation}=await setup();await validation.locator('[data-hqt-action="create"]').click();await validation.locator('.hqt-dialog [name="name"]').fill('A');await validation.locator('.hqt-dialog [name="reason"]').fill('Motivo suficiente');
   await validation.locator('.hqt-dialog form').evaluate(el=>el.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
   ok(await validation.evaluate(()=>__teamTest.calls.filter(c=>c.name==='hq_team_command').length)===0,'bypass HTML não salva nome inválido');await validation.locator('[data-hqt-cancel]').click();await create(validation,'Versão fictícia');await validation.locator('[data-hqt-action="edit"]').click();await validation.locator('.hqt-dialog [name="reason"]').fill('Revisão de versão');await validation.evaluate(()=>__teamTest.conflict=true);await validation.locator('.hqt-dialog [type="submit"]').click();await validation.getByText('Este cadastro mudou desde a consulta.',{exact:false}).waitFor();
-  ok(await validation.locator('.hqt-dialog').count()===1,'conflito40001 não é apresentado como sucesso');await validation.locator('[data-hqt-cancel]').click();
+  ok(await validation.locator('.hqt-dialog').count()===1,'conflito PT409 não é apresentado como sucesso');await validation.locator('[data-hqt-cancel]').click();
 
   const {page:denied}=await setup();await create(denied,'Cadastro privado A');await denied.locator('[data-hqt-action="edit"]').first().click();await denied.locator('.hqt-dialog [name="reason"]').fill('Revisão de teste');await denied.evaluate(()=>__teamTest.denyCommand=true);await denied.locator('.hqt-dialog [type="submit"]').click();
   await denied.getByText('Seu acesso administrativo não foi confirmado.',{exact:false}).waitFor();ok(await denied.locator('.hqt-dialog').count()===0&&!((await denied.locator('body').innerText()).includes('Cadastro privado A')),'comando negado remove dados e formulário');

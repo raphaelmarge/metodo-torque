@@ -10,7 +10,7 @@
   "migration": {
     "file": "migrations/20260930232737_hq_team_registry.sql",
     "source": "supabase/hq-team-registry-proposal.sql",
-    "sha256": "c28a08b1149c8bc3017317bea152ee8b5e9e1a9d871c853447aae74536ff49aa"
+    "sha256": "8c292d836891c5e8c0227201dab5707f549985c1c063d287a9e8aec86d176e6c"
   },
   "rollback": {
     "suspend": {

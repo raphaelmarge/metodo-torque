@@ -270,7 +270,7 @@ async function main() {
     const teamEditA = envelope('team.update',{id:memberId,expectedVersion:1,name:'Edicao vencedora sintetica'},'team-version-winner');
     const teamEditB = envelope('team.update',{id:memberId,expectedVersion:1,name:'Edicao concorrente sintetica'},'team-version-loser');
     race = await compete(teamEditA,teamEditB,{send:teamCommand,label:'Equipe dois administradores editam a mesma versao'});
-    equal(race.error?.code,'40001','Equipe segunda edicao rejeita versao desatualizada');
+    equal(race.error?.code,'PT409','Equipe segunda edicao rejeita versao desatualizada');
     equal((await observer.query('select version,name,updated_by from torque_hq.team_registry where id=$1',[memberId])).rows[0],
       {version:2,name:teamEditA.payload.name,updated_by:users.admin},'Equipe conserva os campos, versao e ator vencedores');
     equal(await teamCounts(teamEditA.idempotencyKey),{commands:1,audit:1},'Equipe edicao vencedora tem uma auditoria');
@@ -284,7 +284,7 @@ async function main() {
     const teamReview = envelope('team.review',{id:memberId,expectedVersion:3,reviewStatus:'approved'},'team-review-winner');
     const teamStatus = envelope('team.setStatus',{id:memberId,expectedVersion:3,status:'inactive'},'team-status-loser');
     race = await compete(teamReview,teamStatus,{send:teamCommand,label:'Equipe revisao e inativacao disputam mesma versao'});
-    equal(race.error?.code,'40001','Equipe inativacao concorrente nao sobrescreve revisao confirmada');
+    equal(race.error?.code,'PT409','Equipe inativacao concorrente nao sobrescreve revisao confirmada');
     ok(race.winner.member.reviewStatus==='approved' && race.winner.member.version===4 && race.winner.member.effectiveAccess===false && race.winner.accessGranted===false,'Equipe aprovacao concorrente registra revisao sem conceder acesso');
     equal(await teamCounts(teamReview.idempotencyKey),{commands:1,audit:1},'Equipe revisao confirmada e auditada uma vez');
     equal(await teamCounts(teamStatus.idempotencyKey,users.admin2),{commands:0,audit:0},'Equipe inativacao rejeitada nao reserva chave nem auditoria');

@@ -90,9 +90,11 @@ Edições usam bloqueio da linha e comparam `expectedVersion` antes de alterar, 
 | --- | --- |
 | `42501` | Identidade ausente, não administrador ou chamada sem privilégio. A autorização ocorre antes de buscar registros ou replay. |
 | `22023` | Entrada, transição ou chave reutilizada inválida; alteração sem efeito. |
-| `40001` | Registro alterado desde a versão apresentada. Atualizar a interface e solicitar nova ação do operador. |
+| `PT409` (HTTP 409) | Registro alterado desde a versão apresentada. Atualizar a interface e solicitar nova ação do operador. |
 | `P0002` | UUID de cadastro inexistente, verificado após autorização. |
 | `55000` | Dependência/estado de instalação incompatível ou comando reservado sem resultado confirmado. |
+
+O conflito de versão é uma decisão de negócio, não uma falha transitória de serialização. Não usar SQLSTATE `40001`: o PostgREST 14 pode repetir essa transação indefinidamente; `PT409` encerra a chamada com HTTP 409, preservando o rollback e exigindo nova ação do operador ([referência Supabase](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b)).
 
 ## Isolamento e auditoria
 
