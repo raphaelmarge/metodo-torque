@@ -137,8 +137,12 @@ const linhas = [
   await adicionar();
   const salvo = await itens();
   ok(salvo.length === 1 && salvo[0].exId === 'ad-supino' && salvo[0].series === 3, 'adicionar confirma um único exercício com três séries');
+  ok(await p.locator('body').evaluate(el => el.classList.contains('tela-escolher')) && await form.isVisible(),
+    'adicionar com sucesso mantém o formulário aberto para continuar a sequência');
+  igual(await draft(), linhas, 'a próxima inclusão conserva os parâmetros individuais preenchidos');
+  await p.locator('[data-esq="' + fid + '"] .td-pick-done').click();
   ok(!await p.locator('body').evaluate(el => el.classList.contains('tela-escolher')) && !await form.isVisible(),
-    'adicionar com sucesso fecha o formulário e libera a navegação da ficha');
+    'Concluir libera a navegação da ficha');
   igual(salvo[0].seriesDetalhadas, linhas, 'a ficha recebe somente a prescrição do modo por série ativo');
   ok(salvo[0].obs === 'Descer com controle.' && salvo[0].tec === 'drop', 'observação e técnica acompanham o exercício adicionado');
   ok(await p.getAttribute('[data-exab="' + fid + ':0"]', 'aria-expanded') === 'true', 'o exercício adicionado já abre para conferência');
@@ -147,10 +151,13 @@ const linhas = [
     'fechar e reabrir o exercício conserva a segunda série com peso zero');
 
   await abrirAdicao();
-  ok(await form.locator('[data-exmode="uniform"]').getAttribute('aria-pressed') === 'true', 'a próxima adição volta ao modo simples');
-  igual(await Promise.all(['ser', 'rep', 'carga', 'des'].map(c => uniforme(c).inputValue())), ['3', '12', '', '60'],
-    'a próxima adição começa em 3×12, carga opcional vazia e 60 segundos');
-  ok(await p.inputValue('[data-exobs="' + fid + '"]') === '' && await p.inputValue('[data-extec="' + fid + '"]') === '', 'observação e técnica não vazam para o próximo exercício');
+  ok(await form.locator('[data-exmode="individual"]').getAttribute('aria-pressed') === 'true', 'reabrir a adição preserva o modo escolhido');
+  ok(await p.inputValue('[data-exobs="' + fid + '"]') === 'Descer com controle.' && await p.inputValue('[data-extec="' + fid + '"]') === 'drop', 'observação e técnica continuam disponíveis para a próxima inclusão');
+  await modo('uniform');
+  igual(await Promise.all(['ser', 'rep', 'carga', 'des'].map(c => uniforme(c).inputValue())), ['4', '15', '55', '120'],
+    'o modo simples também conserva os parâmetros anteriores');
+  await uniforme('rep').fill('12'); await uniforme('carga').fill(''); await uniforme('des').fill('60');
+  await p.fill('[data-exobs="' + fid + '"]', ''); await p.selectOption('[data-extec="' + fid + '"]', '');
   await escolhe('Remada teste adicionar séries');
   await uniforme('ser').fill('31'); await adicionar();
   ok((await itens()).length === 1 && await uniforme('ser').inputValue() === '31', 'mais de 30 séries no modo simples não adiciona nem normaliza silenciosamente');

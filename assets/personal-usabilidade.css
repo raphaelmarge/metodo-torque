@@ -674,6 +674,27 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
 #dlgEx .gif-current-info{min-width:0}
 #dlgEx .gif-current-info>b{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
 #dlgEx .gif-current-info>small{display:block;margin-top:4px;font-size:12px;line-height:1.45;color:var(--tk-tx3)}
+
+/* Prescrição: aluno, montagem e revisão no mesmo contexto. */
+#vTreinos .td-guia{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;width:100%;min-width:0}
+#vTreinos .td-guia>.trx-steps,#vTreinos #tdSalvoStatus{flex-basis:100%;margin:0}
+#vTreinos .td-guia-aluno{flex:1 1 100%;max-width:560px;min-width:0}
+#vTreinos .td-guia-criar{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;width:100%;min-width:0}
+#vTreinos .td-guia-criar[hidden],#vTreinos #tdRevisaoAcoes[hidden]{display:none}
+#vTreinos #tdIA[hidden]{display:none}
+#vTreinos .td-guia>#tdRevisaoAcoes{width:100%;margin-left:0;justify-content:flex-start}
+#vTreinos .td-guia-criar>.trx-details{margin:0;flex:1 1 240px;min-width:0}
+#vTreinos .td-guia-modelo-campos{display:flex;flex-wrap:wrap;align-items:end;gap:10px;padding:12px}
+#vTreinos .td-guia-modelo-campos>.trx-field{flex:1 1 200px;min-width:0}
+#vTreinos .td-guia-modelo-campos select,#vTreinos .td-guia-modelo-campos input{max-width:100%;box-sizing:border-box}
+#vTreinos .td-guia .trx-steps{white-space:normal;flex-wrap:wrap}
+#taAjustes fieldset{min-width:0;margin:12px 0;padding:12px;border:1px solid var(--pt-borda);border-radius:10px}
+#taAjustes legend{padding:0 6px;font-weight:600}
+@media(max-width:600px){
+  #vTreinos .td-guia-criar>.trx-details{flex-basis:100%}
+  #vTreinos .td-guia .trx-steps{gap:8px;font-size:12px}
+  #vTreinos .td-guia-modelo-campos>.trx-field{flex-basis:100%}
+}
 #dlgEx .gif-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 #dlgEx .gif-actions .btn{min-height:38px;padding:7px 10px;font-size:12px}
 #dlgEx .gif-bank{margin-top:12px;border-top:1px solid var(--linha);padding-top:4px}
@@ -688,6 +709,15 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
 #dlgEx .gif-bank-empty{grid-column:1/-1;margin:0;padding:10px 0;font-size:12px;line-height:1.5;color:var(--tk-tx3)}
 #dlgEx .gif-status{min-height:18px;margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--tk-tx3)}
 #dlgEx .gif-status:empty{display:none}
+/* Inclusão contínua e troca contextual na ficha. */
+#fichasBox .tdesq [hidden]{display:none!important}
+#fichasBox .td-pick-status{font-size:13px;line-height:1.5;color:var(--texto);margin:14px 0}
+#fichasBox .td-pick-status:empty,#fichasBox .td-troca-retorno:empty{display:none}
+#fichasBox .td-pick-done{width:100%;min-height:44px;margin-top:8px}
+#fichasBox .td-troca-aviso{padding:12px;margin:0 0 14px;border:1px solid var(--linha);border-radius:10px;background:var(--tk-sup)}
+#fichasBox .td-troca-aviso p{font-size:13px;line-height:1.5;margin:0 0 10px}
+#fichasBox .td-troca-retorno{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0;font-size:13px;line-height:1.5}
+#fichasBox .tdac button{min-height:44px}
 @media(max-width:900px){
   #vTreinos #trAbas{display:none}
   #vTreinos .trx-mobile-nav{display:flex;align-items:center;gap:12px;padding:0 0 24px;margin:0 0 24px;border-bottom:1px solid var(--linha)}
