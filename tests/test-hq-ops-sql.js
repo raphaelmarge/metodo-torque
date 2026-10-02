@@ -30,7 +30,9 @@ async function main() {
   }
   async function rejects(fn, pattern, label) { await assert.rejects(fn, pattern, label); checks++; console.log('OK ' + label); }
   try {
-    await db.exec(`create role anon nologin; create role authenticated nologin;
+    await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
+      alter default privileges grant execute on functions to service_role;
+      alter default privileges grant all on tables to service_role;
       create schema auth; create table auth.users(id uuid primary key);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema public,auth to anon,authenticated; grant execute on function auth.uid() to anon,authenticated;
@@ -46,11 +48,24 @@ async function main() {
     await db.query("insert into public.saas_clientes values($1,'personal','trial'),($2,'academia','ativo')", [accountA, accountB]);
     await db.exec(schema);
     check((await db.query('select count(*)::int n from torque_hq.staff')).rows[0].n === 0, 'proposta nao cria acesso administrativo');
+    check((await db.query('select count(*)::int n from torque_hq.staff_account_scope')).rows[0].n === 0, 'proposta nao concede escopo de conta');
+    check((await db.query('select id,staff_enabled from torque_hq.settings')).rows.every(r=>r.id===true && r.staff_enabled===false), 'instalacao nasce somente para admins existentes');
     for (const role of ['finance','sales','support','engineering','viewer']) await db.query('insert into torque_hq.staff(user_id,role,enabled) values($1,$2,true)', [users[role], role]);
     for (const [name, role] of [['sales2','sales'],['support2','support'],['disabled','finance']]) await db.query('insert into torque_hq.staff(user_id,role,enabled) values($1,$2,$3)', [users[name], role, name !== 'disabled']);
     const secure = (await db.query(`select c.relname,c.relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='torque_hq' and c.relkind='r'`)).rows;
-    check(secure.length === 12 && secure.every(t => t.relrowsecurity), '12 tabelas privadas com RLS');
+    check(secure.length === 14 && secure.every(t => t.relrowsecurity), '14 tabelas privadas com RLS incluindo config e escopo');
     check((await db.query("select has_function_privilege('anon','public.hq_ops_snapshot()','execute') a,has_function_privilege('anon','public.hq_ops_command(jsonb)','execute') b")).rows.every(r => !r.a && !r.b), 'anon sem EXECUTE nas RPCs');
+    check((await db.query("select has_schema_privilege('service_role','torque_hq','usage') a,has_function_privilege('service_role','public.hq_ops_snapshot()','execute') b,has_function_privilege('service_role','public.hq_ops_command(jsonb)','execute') c,has_table_privilege('service_role','torque_hq.staff_account_scope','select') d,has_function_privilege('service_role','torque_hq.actor_role()','execute') e")).rows.every(r=>!r.a&&!r.b&&!r.c&&!r.d&&!r.e), 'service_role perde grants padrao explicitamente em todos os niveis');
+    for (const role of ['finance','sales','support','engineering','viewer']) {
+      await actor(role); await rejects(snapshot,/Equipe operacional desativada/,`modo minimo bloqueia ${role} mesmo com staff.enabled=true`);
+    }
+    await actor('admin');
+    check((await snapshot()).role==='admin' && (await snapshot()).meta.commandsAvailable, 'modo minimo preserva admin existente e comandos');
+    await rejects(()=>command('settings.enableStaff',{}),/nao permitida/,'nenhum comando permite ativar equipe');
+    await rejects(()=>db.query('update torque_hq.settings set staff_enabled=true'),/permission denied/,'cliente admin nao muda gate diretamente');
+    await actor('admin','service_role'); await rejects(snapshot,/permission denied/,'service_role com sub de admin nao executa RPC');
+    await actor('admin');
+    await owner('update torque_hq.settings set staff_enabled=true where id'); // Explicit extended-mode fixture only.
     await actor('outsider');
     await rejects(snapshot, /restrito/, 'usuario comum nao abre HQ');
     await rejects(() => command('lead.create',{ name:'Nao deve existir' }), /restrito/, 'usuario comum nao grava');
@@ -116,11 +131,40 @@ async function main() {
     await actor('admin');
     const case1=await command('case.create',{accountId:accountA,subject:'Duvida sintetica',owner:users.support,incidentId:incident.id});
     const case2=await command('case.create',{accountId:accountB,subject:'Reservado',owner:users.support2});
+    const unassignedB=await command('case.create',{accountId:accountB,subject:'Conta B sem responsavel'});
+    const unassignedNull=await command('case.create',{subject:'Triagem restrita ao admin'});
+    await actor('support');
+    check((await snapshot()).cases.length===0 && (await snapshot()).accounts.length===0,'owner ou falta de owner nao substitui escopo explicito');
+    await rejects(()=>command('case.create',{accountId:accountB,subject:'UUID conhecido'}),/fora do escopo/,'atendente nao adquire conta por criar chamado');
+    await rejects(()=>command('case.message',{id:case1.id,text:'Sem scope'}),/autorizado/,'atribuicao de chamado sem scope nao autoriza mensagens');
+    await rejects(()=>command('case.message',{id:unassignedB.id,text:'Sem owner'}),/autorizado/,'caso sem responsavel continua protegido pelo scope');
+    await rejects(()=>command('case.update',{id:unassignedNull.id,owner:users.support}),/autorizado/,'caso sem conta e sem dono nao pode ser apropriado');
+    await rejects(()=>command('support.scope.grant',{userId:users.support,accountId:accountB}),/Somente administrador/,'atendente nao concede seu proprio escopo');
+    await rejects(()=>db.query('insert into torque_hq.staff_account_scope(user_id,account_id,granted_by) values($1,$2,$1)',[users.support,accountB]),/permission denied/,'atendente nao escreve escopo diretamente');
+    await actor('admin');
+    await rejects(()=>command('support.scope.grant',{userId:users.finance,accountId:accountA}),/Atendente cadastrado/,'scope exige staff de support existente');
+    await rejects(()=>command('support.scope.grant',{userId:uid(999),accountId:accountA}),/Atendente cadastrado/,'scope nao cria usuario');
+    await rejects(()=>command('support.scope.grant',{userId:users.support,accountId:uid(999)}),/Conta inexistente/,'scope exige conta real');
+    const scopeGrant=await command('support.scope.grant',{userId:users.support,accountId:accountA},'scope-grant-support-a');
+    const scopeReplay=await command('support.scope.grant',{userId:users.support,accountId:accountA},'scope-grant-support-a');
+    check(scopeReplay.replayed && scopeReplay.id===scopeGrant.id,'grant de scope usa idempotencia auditada');
+    await rejects(()=>command('support.scope.grant',{userId:users.support,accountId:accountB},'scope-grant-support-a'),/outro conteudo/,'scope nao reutiliza chave para conta diferente');
+    await command('support.scope.grant',{userId:users.support2,accountId:accountB});
     await actor('support'); snap=await snapshot();
-    check(snap.cases.length===1 && snap.accounts.length===1 && snap.accounts[0].id===accountA, 'atendente recebe apenas casos atribuidos e contas vinculadas');
+    check(snap.cases.length===1 && snap.accounts.length===1 && snap.accounts[0].id===accountA, 'atendente recebe casos e contas dentro do escopo concedido');
+    await rejects(()=>command('case.update',{id:case1.id,accountId:accountB}),/fora do escopo/,'relink nao amplia acesso para UUID conhecido');
+    const personalCase=await command('case.create',{subject:'Intake sem conta',owner:null});
+    check((await snapshot()).cases.find(c=>c.id===personalCase.id).owner===users.support,'caso sem conta pertence ao proprio atendente');
+    await command('case.message',{id:personalCase.id,text:'Nota de intake privada'});
+    await actor('support2'); check(!(await snapshot()).cases.some(c=>c.id===personalCase.id),'outro atendente nao le intake sem conta');
+    await actor('support');
+    await command('case.update',{id:personalCase.id,accountId:accountA});
+    await rejects(()=>command('case.update',{id:personalCase.id,accountId:accountB}),/fora do escopo/,'intake so pode vincular conta preconcedida');
+    await command('case.update',{id:personalCase.id,accountId:null,owner:null});
+    check((await snapshot()).cases.find(c=>c.id===personalCase.id).owner===users.support,'remover conta nao torna mensagens uma fila publica');
     await rejects(() => command('case.update',{id:case2.id,status:'resolvido'}), /autorizado/, 'atendente nao modifica caso alheio');
     await rejects(() => command('case.message',{id:case2.id,text:'Invasao'}), /autorizado/, 'mensagem respeita propriedade do caso');
-    await command('case.message',{id:case1.id,text:'Nota interna',visibility:'internal'});
+    await command('case.message',{id:case1.id,text:'Nota interna',visibility:'internal'},'message-before-scope-revoke');
     await command('case.message',{id:case1.id,text:'Resposta para revisao',visibility:'customer'});
     snap=await snapshot();
     check(snap.cases[0].messages.length===2 && snap.cases[0].messages.some(m=>m.delivery==='not_sent'), 'resposta externa e rascunho nao enviado');
@@ -129,6 +173,20 @@ async function main() {
     check(!!(await snapshot()).cases[0].resolvedAt, 'resolucao recebe horario servidor');
     await command('case.update',{id:case1.id,status:'em_andamento'});
     check((await snapshot()).cases[0].resolvedAt===null, 'reabertura limpa resolucao corrente');
+    await actor('admin');
+    await command('support.scope.revoke',{userId:users.support,accountId:accountA},'scope-revoke-support-a');
+    await actor('support'); snap=await snapshot();
+    check(snap.accounts.length===0 && !snap.cases.some(c=>c.id===case1.id) && !JSON.stringify(snap).includes('Resposta para revisao'),'revogacao retira conta, chamado e mensagens na proxima leitura');
+    await rejects(()=>command('case.message',{id:case1.id,text:'Apos revogacao'}),/autorizado/,'revogacao bloqueia novas mensagens');
+    await rejects(()=>command('case.message',{id:case1.id,text:'Nota interna',visibility:'internal'},'message-before-scope-revoke'),/autorizado/,'revogacao bloqueia replay antigo de chamado fora do escopo');
+    await rejects(()=>command('case.update',{id:case1.id,accountId:null}),/autorizado/,'revogado nao remove vinculo para contornar scope');
+    await actor('admin');
+    const scopeAudit=(await snapshot()).audit.filter(a=>a.action==='support.scope.grant' || a.action==='support.scope.revoke');
+    check(scopeAudit.length===3 && scopeAudit.every(a=>a.actorId===users.admin && a.reason && a.payloadHash),'grants e revoke registram administrador motivo e hash sem duplicar replay');
+    await owner('update torque_hq.settings set staff_enabled=false where id');
+    await actor('support'); await rejects(snapshot,/Equipe operacional desativada/,'desativacao global bloqueia equipe ja habilitada');
+    await actor('admin'); check((await snapshot()).role==='admin','desativacao global preserva admin existente');
+    await owner('update torque_hq.settings set staff_enabled=true where id');
     await actor('viewer'); snap=await snapshot();
     check(snap.accounts.every(a=>a.name==='Conta') && snap.payments.length===0 && !snap.permissions.includes('reports.export'), 'viewer recebe contas mascaradas sem financeiro/exportacao');
     await rejects(() => command('case.create',{subject:'Nao permitido'}), /Permissao/, 'viewer nao grava');

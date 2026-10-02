@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "mode": "existing-admin-only",
+  "baseCommit": "b05222a2852bd1e96d9a91804d3cd5bdd4f59d22",
+  "targetProjectRef": "hdcufkaalxfhwmfwoiqp",
+  "status": "local-preparation-not-applied",
+  "approvalRequired": true,
+  "encoding": "UTF-8",
+  "lineEndings": "LF",
+  "hashAlgorithm": "SHA-256",
+  "migration": {
+    "file": "migrations/20260930225233_hq_ops_admin_minimal.sql",
+    "source": "supabase/hq-ops-proposal.sql",
+    "sha256": "74fa28ef7e8436e746aae291fa5a8dac86fe57c600f6c1a6c9c412de4e707357"
+  },
+  "rollback": {
+    "suspend": {
+      "file": "rollback/hq-ops-suspend.sql",
+      "source": "supabase/rollback/hq-ops-suspend.sql",
+      "sha256": "d78821b027d213b44c640056aeda4cc85509d4d98cc0252ac09cbffd298c107d"
+    },
+    "resume": {
+      "file": "rollback/hq-ops-resume.sql",
+      "source": "supabase/rollback/hq-ops-resume.sql",
+      "sha256": "f82bfebb42829218aab718600286dcb0355b52bf680da8ffe0393c5837c73949"
+    }
+  },
+  "migrationAllowlist": [
+    "migrations/20260930225233_hq_ops_admin_minimal.sql"
+  ],
+  "staffEnabled": false,
+  "effects": [
+    "Instala o schema privado torque_hq e suas tabelas de operacao/auditoria.",
+    "Disponibiliza somente hq_ops_snapshot e hq_ops_command para administradores existentes autorizados pelo servidor.",
+    "Registros financeiros sao manuais; respostas ao cliente sao rascunhos e cancelamentos sao pedidos."
+  ],
+  "dependencies": [
+    "Supabase Auth e auth.uid()",
+    "public.saas_admins",
+    "public.academias",
+    "public.saas_clientes",
+    "Papeis PostgreSQL anon, authenticated e service_role"
+  ],
+  "blocked": [
+    "Aplicacao remota nao autorizada por este pacote.",
+    "Nenhum cadastro de administrador/staff nem habilitacao de staff.",
+    "Sem ledger, portal influencer, campanha, convite Auth, envio externo ou gateway.",
+    "JWT/sessao/MFA e revogacao HTTP requerem homologacao separada.",
+    "Historico de suporte legado e integracoes financeiras continuam pendentes."
+  ]
+}

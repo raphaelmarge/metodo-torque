@@ -9,6 +9,7 @@ const {PGlite}=require('./runtime/node_modules/@electric-sql/pglite');
 const Portal=require('../assets/hq-influencer-portal.js');
 const proposal=fs.readFileSync(path.join(__dirname,'../supabase/hq-influencer-portal-proposal.sql'),'utf8');
 const ledger=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20260930193716_hq_referrals_ledger.sql'),'utf8');
+const paymentContract=fs.readFileSync(path.join(__dirname,'../supabase/hq-referrals-payment-contract-proposal.sql'),'utf8');
 let checks=0;
 async function test(name,fn){await fn();console.log('ok '+(++checks)+' - '+name);}
 async function rejects(fn,code){await assert.rejects(fn,e=>e.code===code);}
@@ -82,8 +83,46 @@ async function rejects(fn,code){await assert.rejects(fn,e=>e.code===code);}
    assert.equal(a.partner.displayName,'Parceiro A fictício');assert.equal(b.partner.displayName,'Parceiro B fictício');
    assert.equal(a.balances.paidCents,1996);assert.equal(b.balances.paidCents,0);assert.equal(b.balances.pendingCents,1996);
    assert.deepEqual(a.coupons.map(c=>c.code),['EXAMPLE_A']);assert.deepEqual(b.coupons.map(c=>c.code),['EXAMPLE_B']);
-   assert.equal(a.counts.attributed,1);assert.equal(a.counts.firstPaymentsAfterTrial,1);assert.equal(a.payments.length,1);assert.equal(b.payments.length,0);
+    assert.equal(a.version,2);assert.equal(a.counts.attributed,1);assert.equal(a.counts.firstPaymentsAfterTrial,null);assert.equal(a.firstPayments.status,'unavailable');assert.equal(a.firstPayments.source,'unavailable');assert.equal(a.payments.length,1);assert.equal(b.payments.length,0);
    const serialized=JSON.stringify(a)+JSON.stringify(b);for(const forbidden of ['SECRET','PRIVATE CONTACT',customerA,customerB,'example.test','customerLabel','customerId','partnerId','actor_id'])assert.equal(serialized.includes(forbidden),false,forbidden);
+  });
+  await test('comissão paga e repasse sem prova de recebimento deixam KPI indisponível',async()=>{
+   await who(null,'owner');await db.exec(paymentContract);
+   await who('a');const a=Portal.validateSnapshot(await rpc('influencer_portal_snapshot'));
+   assert.equal(a.commissions[0].status,'paid');assert.equal(a.balances.paidCents,1996);
+   assert.equal(a.counts.firstPaymentsAfterTrial,null);assert.equal(a.firstPayments.verifiedAfterTrialCount,null);
+   assert.equal(a.firstPayments.status,'unavailable');assert.equal(a.firstPayments.unknownCount,1);
+   assert.equal(a.firstPayments.source,'verified_ledger_events');
+   assert.match(Portal.renderSnapshot(a,false),/Prova histórica de recebimentos indisponível/);
+  });
+  await test('recebimentos comprovados são independentes de repasse, com cobertura parcial e isolamento A/B',async()=>{
+   await who(null,'owner');
+   const unknown=randomUUID(),withoutCommission=randomUUID();
+   async function receipt(customer,paidAt,invoice,create){
+    const account={trusted:true,customerId:customer,provider:'pagarme',merchantAccountId:'synthetic-merchant',subscriptionId:'synthetic-'+customer,paymentHistoryVerified:true,firstPaidInvoiceId:invoice,firstPaidAt:paidAt,trialStartedAt:'2026-09-01T12:00:00Z',trialEndsAt:'2026-09-15T12:00:00Z'};
+    const context={account,customerLabel:'SECRET CUSTOMER RECEIPT',email:'secret@example.test'};
+    if(create)await db.query("insert into hq_referrals_private.customers(id,revision,context,core_state,partner_id,coupon_id,status) values($1,1,$2,'{}',$3,$4,'pending')",[customer,context,partnerA.id,couponA.id]);
+    else await db.query('update hq_referrals_private.customers set context=$1 where id=$2',[context,customer]);
+    const event={kind:'payment_confirmed',verified:true,verification:{source:'provider_api',checkedAt:paidAt},customerId:customer,provider:account.provider,merchantAccountId:account.merchantAccountId,subscriptionId:account.subscriptionId,invoiceId:invoice,paidAt,occurredAt:paidAt,currency:'BRL',amountCents:2994,billingCycle:2};
+    await db.query("insert into hq_referrals_private.events(provider,merchant_id,event_id,customer_id,body,fingerprint,outcome) values('pagarme','synthetic-merchant',$1,$2,$3,'{}','campaign_disabled')",['synthetic-'+customer,customer,event]);
+   }
+   await receipt(customerA,'2026-09-20T12:00:00Z','synthetic-invoice-a',false);
+   await receipt(withoutCommission,'2026-09-21T12:00:00Z','synthetic-invoice-no-commission',true);
+   await db.query("insert into hq_referrals_private.customers(id,revision,context,core_state,partner_id,coupon_id,status) values($1,1,'{}','{}',$2,$3,'trial')",[unknown,partnerA.id,couponA.id]);
+   await who('a');const a=Portal.validateSnapshot(await rpc('influencer_portal_snapshot'));
+   assert.equal(a.counts.firstPaymentsAfterTrial,null);assert.equal(a.firstPayments.status,'partial');
+   assert.equal(a.firstPayments.verifiedAfterTrialCount,2);assert.equal(a.firstPayments.unknownCount,1);
+   assert.equal(a.counts.commissions,1);assert.equal(a.counts.payments,1);assert.equal(a.campaign.enabled,false);
+   assert.match(Portal.renderSnapshot(a,false),/<strong>2<\/strong><span>Confirmados · parcial<\/span>/);assert.match(Portal.renderSnapshot(a,false),/Cobertura parcial: 1/);
+   await who('b');const b=Portal.validateSnapshot(await rpc('influencer_portal_snapshot'));
+   assert.equal(b.counts.attributed,1);assert.equal(b.firstPayments.status,'unavailable');assert.equal(b.counts.firstPaymentsAfterTrial,null);
+   const serialized=JSON.stringify(a)+JSON.stringify(b);
+   for(const forbidden of ['SECRET',unknown,withoutCommission,customerA,customerB,'synthetic-invoice','example.test','customerId','paidAt','invoiceId'])assert.equal(serialized.includes(forbidden),false,forbidden);
+   await who(null,'owner');await receipt(unknown,'2026-09-10T12:00:00Z','synthetic-invoice-before-trial',false);
+   await who('a');const complete=Portal.validateSnapshot(await rpc('influencer_portal_snapshot'));
+   assert.equal(complete.firstPayments.status,'ready');assert.equal(complete.firstPayments.unknownCount,0);
+   assert.equal(complete.counts.firstPaymentsAfterTrial,2);assert.equal(complete.counts.attributed,3);
+   assert.match(Portal.renderSnapshot(complete,false),/Cobertura completa/);
   });
   await test('parceiro não lê/escreve tabelas, convites ou funções privadas de identidade',async()=>{
    await who('a');
@@ -129,6 +168,23 @@ async function rejects(fn,code){await assert.rejects(fn,e=>e.code===code);}
    await who(null,'service_role');await rejects(()=>rpc('influencer_portal_snapshot'),'42501');
    await who(null,'owner');assert.equal(await scalar("select bool_and(relrowsecurity) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='hq_influencer_private' and c.relkind='r'"),true);
   });
+  await test('zero só aparece com consulta pronta e conjunto verificado vazio',async()=>{
+   await who('admin');const empty=await rpc('hq_referrals_save_partner',{name:'Parceiro vazio fictício',contact:'',status:'active'});
+   await rpc('hq_influencer_prepare_invite',{partnerId:empty.id,email:'other@example.test',expiresAt:expiry,reason:'Fixture vazia autorizada'});
+   await who('other');await rpc('influencer_accept_invite');const s=Portal.validateSnapshot(await rpc('influencer_portal_snapshot'));
+   assert.equal(s.firstPayments.status,'ready');assert.equal(s.firstPayments.unknownCount,0);
+   assert.equal(s.counts.attributed,0);assert.equal(s.counts.firstPaymentsAfterTrial,0);
+  });
+  await test('compatibilidade v1 descarta KPI de comissões e recusa cobertura inconsistente v2',async()=>{
+   const legacy=Portal.demoSnapshot();legacy.version=1;delete legacy.firstPayments;legacy.counts.firstPaymentsAfterTrial=987;
+   const normalized=Portal.validateSnapshot(legacy);
+   assert.equal(normalized.version,2);assert.equal(normalized.firstPayments.source,'legacy_unverified');
+   assert.equal(normalized.counts.firstPaymentsAfterTrial,null);assert.equal(normalized.firstPayments.status,'unavailable');
+   assert.equal(normalized.balances.paidCents,1996);assert.equal(legacy.counts.firstPaymentsAfterTrial,987);
+   assert.equal(Portal.renderSnapshot(legacy,false).includes('987'),false);
+   const invalid=Portal.demoSnapshot();invalid.counts.firstPaymentsAfterTrial=3;assert.throws(()=>Portal.validateSnapshot(invalid),/invalid_payment_coverage/);
+   const extra=Portal.demoSnapshot();extra.firstPayments.customerIds=['PRIVATE'];assert.throws(()=>Portal.validateSnapshot(extra),/unexpected_payload_fields/);
+  });
   await test('cliente browser recusa payload inesperado do publicador/servidor',async()=>{
    const valid=Portal.demoSnapshot();const extra=structuredClone(valid);extra.customers=[{name:'SECRET'}];assert.throws(()=>Portal.validateSnapshot(extra),/unexpected_payload/);
    const nested=structuredClone(valid);nested.commissions[0].customerId='SECRET';assert.throws(()=>Portal.validateSnapshot(nested),/unexpected_payload/);
@@ -173,6 +229,8 @@ async function browserChecks(){
    const page=await context.newPage();await page.goto(base+'/apps/influencer.html');await page.getByRole('heading',{name:'Seu portal está em preparação'}).waitFor();
    assert.equal(await page.locator('input[type=password]').count(),0);await page.getByRole('button',{name:'Conhecer a demonstração'}).click();
    await page.getByRole('heading',{name:'Parceiro de demonstração'}).waitFor();assert.match(await page.locator('body').innerText(),/valores fictícios/);
+   assert.match(await page.locator('.ip-kpis article').nth(1).innerText(),/Primeiros recebimentos pós-trial[\s\S]*3[\s\S]*Confirmados · parcial/);
+   assert.match(await page.locator('[data-ip-payment-coverage=partial]').innerText(),/5 indicações sem prova histórica/);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
    assert.deepEqual(outside,[]);await page.getByRole('button',{name:'Sair da demonstração'}).click();await page.getByRole('heading',{name:'Seu portal está em preparação'}).waitFor();
    await context.close();

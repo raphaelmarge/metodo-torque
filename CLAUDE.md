@@ -6,7 +6,19 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
-## v851 - Central operacional, relatórios e indicações
+## v852 — Equipe e relatórios mobile no HQ
+
+- Administração apresenta o cadastro de Equipe, perfis propostos, revisão e
+  auditoria. O cadastro não cria identidade Auth nem concede acesso efetivo.
+- Datas, status, coorte e botão de filtros cabem no celular; cartões de fontes
+  indisponíveis mantêm texto legível e não exibem zeros fictícios.
+- Esta publicação atualiza somente os arquivos do site. Os pacotes SQL ficam
+  versionados para revisão, sem instalação remota; staff, convites e campanha
+  permanecem desligados. Sem RPCs, a interface informa backend pendente.
+- A versão e o precache incluem os arquivos de Equipe para atualização do PWA.
+  Não incorpora a nova série de implementação do Personal.
+
+## v851 — Central operacional, relatórios e indicações
 
 - `apps/hq.html` reúne visão geral e oito áreas operacionais, incluindo Relatórios.
   Dados indisponíveis não viram zero; caixa, competência, projeção e MRR são distintos.

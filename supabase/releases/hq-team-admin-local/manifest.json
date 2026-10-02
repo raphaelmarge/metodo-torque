@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "mode": "existing-admin-team-registry-only",
+  "baseCommit": "fe49263d36afc88dbcf853e327c43ab3a936a3de",
+  "status": "local-preparation-not-applied",
+  "approvalRequired": true,
+  "encoding": "UTF-8",
+  "lineEndings": "LF",
+  "hashAlgorithm": "SHA-256",
+  "migration": {
+    "file": "migrations/20260930232737_hq_team_registry.sql",
+    "source": "supabase/hq-team-registry-proposal.sql",
+    "sha256": "8c292d836891c5e8c0227201dab5707f549985c1c063d287a9e8aec86d176e6c"
+  },
+  "rollback": {
+    "suspend": {
+      "file": "rollback/hq-team-suspend.sql",
+      "source": "supabase/rollback/hq-team-suspend.sql",
+      "sha256": "97fe5d78bce01c35b2dd7048ff81eaa0b725bea6b5265631c66282402da02551"
+    },
+    "resume": {
+      "file": "rollback/hq-team-resume.sql",
+      "source": "supabase/rollback/hq-team-resume.sql",
+      "sha256": "49d92f571865b56b1099c663fb113c8ab50a524954a390ca7f0f87b61d24dded"
+    }
+  },
+  "migrationAllowlist": [
+    "migrations/20260930232737_hq_team_registry.sql"
+  ],
+  "staffEnabled": false,
+  "accessProvisioningAvailable": false,
+  "dependencies": [
+    "OPS previously installed and both public RPCs active, with staff_enabled=false",
+    "public.saas_admins, Supabase Auth/auth.uid(), roles anon/authenticated/service_role"
+  ],
+  "effects": [
+    "Adds only team registry/command/audit tables and two admin-only RPCs.",
+    "Administrative approval never creates Auth users, staff, scopes, invitations or effective permissions."
+  ],
+  "blocked": [
+    "No remote installation, push, deployment or invitations authorized by this package.",
+    "Real HTTP/Auth and independent-connection concurrency remain separate validation.",
+    "Does not install OPS, ledger, payment contract or influencer portal."
+  ],
+  "order": {
+    "install": [
+      "OPS",
+      "team registry"
+    ],
+    "suspend": [
+      "team registry",
+      "OPS"
+    ],
+    "resume": [
+      "OPS",
+      "team registry"
+    ]
+  },
+  "locks": [
+    [
+      714882,
+      1
+    ],
+    [
+      714882,
+      3
+    ]
+  ],
+  "cliTemplate": {
+    "file": "20260930232737_hq_team_registry.sql",
+    "generator": "Supabase CLI 2.118",
+    "unchanged": true,
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
