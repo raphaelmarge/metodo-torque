@@ -688,6 +688,8 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
 #vTreinos .td-guia-modelo-campos>.trx-field{flex:1 1 200px;min-width:0}
 #vTreinos .td-guia-modelo-campos select,#vTreinos .td-guia-modelo-campos input{max-width:100%;box-sizing:border-box}
 #vTreinos .td-guia .trx-steps{white-space:normal;flex-wrap:wrap}
+#taAjustes fieldset{min-width:0;margin:12px 0;padding:12px;border:1px solid var(--pt-borda);border-radius:10px}
+#taAjustes legend{padding:0 6px;font-weight:600}
 @media(max-width:600px){
   #vTreinos .td-guia-criar>.trx-details{flex-basis:100%}
   #vTreinos .td-guia .trx-steps{gap:8px;font-size:12px}
