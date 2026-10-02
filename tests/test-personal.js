@@ -10543,20 +10543,21 @@ async function contextoAppAluno(browser, html, options = {}) {
     try {
       S.usuario = () => ({ logado: true, email: "pt@teste.com" });
       let pediu = "";
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } }); // v756
+      let assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } });
+      S.cloud = () => assinaturaCloud; // cliente estavel, como o Store real
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.pediu = pediu;
       out.tarjaAtras = !document.getElementById("faixaAssinatura").hidden;
       out.txtAtras = document.getElementById("faixaAssinaturaTxt").textContent;
       // o webhook marcou bloqueada (assinatura venceu de vez)
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) }); // v756
+      assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) });
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.txtBloq = document.getElementById("faixaAssinaturaTxt").textContent;
       out.btnBloq = document.getElementById("faixaAssinaturaBtn").textContent;
       // pagou de novo: ativa — tarja some e o card Sua ilha mostra a loja
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) }); // v756
+      assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) });
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.tarjaAtiva = !document.getElementById("faixaAssinatura").hidden;
