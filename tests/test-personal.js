@@ -1028,7 +1028,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   ]);
   ok(movs[0] === "Empurrar" && movs[1] === "Puxar" && movs[2] === "Dobradiça e quadril" && movs[3] === "Agachar e pernas" && movs[4] === "Core e estabilidade",
     "classificador: supino=Empurrar, remada=Puxar, terra=Dobradiça, búlgaro=Agachar, prancha=Core");
-  // Abrir num item do catálogo cria a cópia personalizada (SEU) e abre o editor
+  // Abrir só prepara a cópia; cancelar não grava e Salvar confirma uma única cópia SEU.
   await p.fill("#catBusca", "kettlebell");
   await p.waitForTimeout(150);
   const antesUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
@@ -1038,9 +1038,19 @@ async function contextoAppAluno(browser, html, options = {}) {
     n: JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length,
     dlg: document.getElementById("dlgEx").open,
   }));
-  ok(depoisUsa.n === antesUsa + 1 && depoisUsa.dlg, "Abrir no catálogo vira exercício SEU (com dica) e abre o editor");
-  await p.evaluate(() => document.getElementById("dlgEx").close());
-  ok(await p.evaluate(() => /SEU/.test(document.getElementById("exLista").textContent)), "item personalizado ganha etiqueta SEU na lista");
+  ok(depoisUsa.n === antesUsa && depoisUsa.dlg, "Abrir no catálogo prepara o editor sem criar uma cópia pessoal");
+  await p.locator('#dlgEx').getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await p.waitForFunction(() => !document.getElementById('dlgEx').open);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length) === antesUsa,
+    "Cancelar o catálogo conserva a biblioteca sem criar uma cópia pessoal");
+  await p.click('#exLista [data-exabrir]');
+  await p.locator('#dlgEx').getByRole('button', { name: 'Salvar', exact: true }).click();
+  // O diálogo fecha antes de disparar o evento close que confirma a gravação.
+  await p.waitForFunction(n => !document.getElementById('dlgEx').open &&
+    JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length === n + 1, antesUsa);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length) === antesUsa + 1,
+    "Salvar confirma exatamente uma cópia pessoal do exercício de catálogo");
+  ok(await p.evaluate(() => /SEU/.test(document.getElementById("exLista").textContent)), "item confirmado ganha etiqueta SEU na lista");
   await p.fill("#catBusca", "");
   await p.waitForTimeout(150);
 
@@ -1327,6 +1337,9 @@ async function contextoAppAluno(browser, html, options = {}) {
 
   // cascata da ficha: tipo de treino → grupamento → exercício (catálogo inteiro filtrado)
   const casc = await p.evaluate((fid) => {
+    const busca = document.querySelector('[data-exbusca="' + fid + '"]');
+    busca.value = "";
+    busca.dispatchEvent(new Event("input", { bubbles: true }));
     const total = document.querySelector('[data-exsel="' + fid + '"]').options.length;
     const mov = document.querySelector('[data-exmov="' + fid + '"]');
     mov.value = "Dobradiça e quadril";
@@ -1541,6 +1554,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   ok(gtSel.campoLimpo, "v755: criado o treino de disparo, o campo do nome volta vazio pro próximo");
   ok(/^gt/.test(gtSel.valor) && /Hipertrofia Agosto/.test(gtSel.rotulo), "criar treino de disparo já abre ele no montador de fichas");
   ok(/Hipertrofia Agosto/.test(gtSel.lista) && /0 ficha/.test(gtSel.lista), "treino de disparo aparece na lista do card");
+  if (!(await p.locator("#tdModelos").evaluate(e => e.open))) await p.locator("#tdModelos > summary").click();
   await p.selectOption("#tplSel", "abc");
   await p.click("#tplAplicar");
   await p.waitForTimeout(300);
@@ -1583,6 +1597,7 @@ async function contextoAppAluno(browser, html, options = {}) {
 
   // 🗂 meus modelos: salvar as fichas do João como modelo e aplicar na Bia
   await p.evaluate(() => { window.prompt = () => "Meu ABC teste"; window.confirm = () => true; });
+  if (!(await p.locator(".td-guia-opcoes").evaluate(e => e.open))) await p.locator(".td-guia-opcoes > summary").click();
   await p.click("#tplSalvar");
   await p.waitForTimeout(200);
   const modSalvo = await p.evaluate(() => {

@@ -2457,7 +2457,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="alk">Montando pra</div>
         <div class="alh" id="tdNome">Escolha o aluno</div>
       </div>
-      <div class="tdacoes">
+      <div class="tdacoes" id="tdRevisaoAcoes" hidden>
         <button type="button" class="dbt sec" id="tdIA"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5 13.6 9l5.4 1.6-5.4 1.6L12 17.6l-1.6-5.4L5 10.6 10.4 9z'/><path d='M18.5 16.5l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z'/></svg> Gerar com IA</button>
         <button type="button" class="dbt" id="tdPrevia">Prévia e alterações</button>
         <button type="button" class="dbt" id="tdPublica"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Salvar e publicar</button>
@@ -2466,16 +2466,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
            viviam num card separado logo abaixo, que repetia o nome do aluno e
            trazia um segundo botao de publicar — o painel dizia a mesma coisa
            duas vezes e o professor nao sabia qual era o caminho. -->
-      <div class="tdlinha">
-        <select id="tAluno" style="min-width: 200px;"></select>
-        <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
-        <select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select>
-        <button class="btn sec" id="tplAplicar">Aplicar</button>
-        <button class="btn sec" id="tplSalvar" title="guarda as fichas deste aluno como um modelo seu, pra aplicar em outros alunos com 1 clique">Salvar como modelo</button>
-        <button class="btn sec" id="tplApagar" hidden title="apaga o modelo escolhido (as fichas já aplicadas nos alunos continuam)">✕ modelo</button>
-        <button class="btn sec" id="tZap">WhatsApp</button>
-        <label class="muted tdvale">⏰ vale até
-          <input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
+      <div class="tdlinha td-guia">
+        <ol class="trx-steps" aria-label="Etapas da prescrição"><li><span>1</span> Escolher aluno</li><li><span>2</span> Montar e ajustar</li><li><span>3</span> Revisar e publicar</li></ol>
+        <div class="trx-field td-guia-aluno"><label for="tAlunoBusca">Para qual aluno?</label><select id="tAluno" style="min-width: 0;"></select></div>
+        <div id="tdComecar" class="td-guia-criar" hidden>
+          <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
+          <details class="trx-details td-guia-modelo" id="tdModelos"><summary>Usar modelo ou reutilizar</summary><div class="td-guia-modelo-campos">
+            <label class="trx-field" for="tplSel">Modelo pronto ou salvo<select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select></label>
+            <button class="btn sec" id="tplAplicar">Aplicar</button>
+            <button class="btn sec" id="tplApagar" hidden title="apaga o modelo escolhido (as fichas já aplicadas nos alunos continuam)">✕ modelo</button>
+          </div></details>
+          <details class="trx-details td-guia-opcoes"><summary>Mais opções</summary><div class="td-guia-modelo-campos">
+            <button class="btn sec" id="tplSalvar" title="guarda as fichas deste aluno como um modelo seu, pra aplicar em outros alunos com 1 clique">Salvar como modelo</button>
+            <button class="btn sec" id="tZap">WhatsApp</button>
+            <label class="trx-field tdvale" for="tValidade">Válido até<input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
+          </div></details>
+        </div>
+        <p id="tdSalvoStatus" class="trx-note" role="status">Escolha o aluno para começar ou continuar a prescrição.</p>
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-trsec="fichas">
@@ -14066,7 +14073,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!av || !nm) return;
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === $("tAluno").value; });
-    if (!a) { av.textContent = "—"; nm.textContent = "Escolha o aluno"; return; }
+    var grupo = !a && (st.treinosGrupo || []).find(function (g) { return g.id === $("tAluno").value; });
+    if ($("tdComecar")) $("tdComecar").hidden = !a && !grupo;
+    if ($("tdRevisaoAcoes")) $("tdRevisaoAcoes").hidden = !a;
+    if ($("tdIA")) $("tdIA").hidden = !a;
+    if ($("tdSalvoStatus")) {
+      var temFicha = a && (st.treinosV2 || {})[a.id] && (st.treinosV2[a.id].fichas || []).length;
+      var pendente = a && (!a.appPubEm || (Date.parse(a.appEditEm || "") || 0) > (Date.parse(a.appPubEm || "") || 0));
+      $("tdSalvoStatus").textContent = grupo ? "Ajuste o treino de disparo e confira os destinatários em Em grupo." : !a ? "Escolha o aluno para começar ou continuar a prescrição." :
+        !temFicha ? "Comece do zero, use um modelo ou configure uma proposta com IA." :
+        pendente ? "Edições salvas neste navegador. Revise e publique para atualizar o app do aluno." :
+        "Prescrição salva. Confira a prévia antes de publicar novas alterações.";
+    }
+    if (!a) { av.textContent = "—"; nm.textContent = grupo ? grupo.nome + " · treino de disparo" : "Escolha o aluno"; return; }
     av.textContent = String(a.nome || "?").trim().slice(0, 2).toUpperCase();
     var t = (st.treinosV2 || {})[a.id];
     var n = t && t.fichas ? t.fichas.length : 0;
@@ -14710,6 +14729,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     acPrevia($("tAluno").value, true);
   });
   if ($("tAluno")) $("tAluno").addEventListener("change", pintaTdTopo);
+  // O aluno vem antes das opções da área; cada controle mantém seu listener original.
+  var topoTreino = document.querySelector("#vTreinos .tdtopo");
+  if (topoTreino) $("vTreinos").insertBefore(topoTreino, $("vTreinos").firstElementChild);
+  $("tdComecar").insertBefore($("tdIA"), $("tdModelos"));
+  document.querySelector("#vTreinos .td-guia").appendChild($("tdRevisaoAcoes"));
   mostraTrAba("fichas");
 
   // ---------- circuito (WOD): prescrição pro app do aluno ----------
