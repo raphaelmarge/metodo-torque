@@ -27,12 +27,33 @@
   function money(c) { integer(c); return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(c/100); }
   function date(s) { return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeZone:'America/Sao_Paulo'}).format(new Date(s)); }
   function validateSnapshot(s) {
-    keys(s,['version','asOf','partner','campaign','counts','balances','coupons','commissions','payments','limits','availability']);
-    assert(s.version===1,'unsupported_portal_version'); iso(s.asOf);
+    assert(s && (s.version===1 || s.version===2),'unsupported_portal_version');
+    keys(s,['version','asOf','partner','campaign','counts','balances','coupons','commissions','payments','limits','availability'].concat(s.version===2?['firstPayments']:[]));
+    s=JSON.parse(JSON.stringify(s)); iso(s.asOf);
     keys(s.partner,['displayName','status']); text(s.partner.displayName,120); assert(s.partner.status==='active','partner_access_unavailable');
     keys(s.campaign,['enabled','monthlyCents','firstPaymentCents','commissionCents','trialDays']);
     assert(typeof s.campaign.enabled==='boolean' && s.campaign.monthlyCents===4990 && s.campaign.firstPaymentCents===2994 && s.campaign.commissionCents===1996 && s.campaign.trialDays===14,'unexpected_campaign');
-    keys(s.counts,['attributed','firstPaymentsAfterTrial','commissions','payments']); Object.keys(s.counts).forEach(function(k) {integer(s.counts[k]);});
+    keys(s.counts,['attributed','firstPaymentsAfterTrial','commissions','payments']);
+    ['attributed','commissions','payments'].forEach(function(k) {integer(s.counts[k]);});
+    if(s.version===1) {
+      integer(s.counts.firstPaymentsAfterTrial);
+      // v1 counted commission rows. Preserve the statement, discard that KPI.
+      s.counts.firstPaymentsAfterTrial=null;
+      s.firstPayments={status:'unavailable',scope:'historical_first_payment',source:'legacy_unverified',verifiedAfterTrialCount:null,unknownCount:s.counts.attributed};
+      s.version=2;
+    }
+    keys(s.firstPayments,['status','scope','source','verifiedAfterTrialCount','unknownCount']);
+    var fp=s.firstPayments;
+    assert(['ready','partial','unavailable'].indexOf(fp.status)>=0 && fp.scope==='historical_first_payment','invalid_payment_provenance');
+    assert(['verified_ledger_events','unavailable','legacy_unverified'].indexOf(fp.source)>=0,'invalid_payment_provenance');
+    integer(fp.unknownCount); assert(fp.unknownCount<=s.counts.attributed,'invalid_payment_coverage');
+    if(fp.status==='unavailable') assert(fp.verifiedAfterTrialCount===null && s.counts.firstPaymentsAfterTrial===null && fp.unknownCount===s.counts.attributed,'invalid_unavailable_payment_count');
+    else {
+      assert(fp.source==='verified_ledger_events','invalid_payment_provenance'); integer(fp.verifiedAfterTrialCount);
+      assert(fp.verifiedAfterTrialCount<=s.counts.attributed-fp.unknownCount,'invalid_payment_coverage');
+      if(fp.status==='ready') assert(fp.unknownCount===0 && s.counts.firstPaymentsAfterTrial===fp.verifiedAfterTrialCount,'invalid_payment_coverage');
+      else assert(fp.unknownCount>0 && fp.unknownCount<s.counts.attributed && s.counts.firstPaymentsAfterTrial===null,'invalid_payment_coverage');
+    }
     keys(s.balances,['pendingCents','eligibleCents','suspendedCents','paidCents','atRiskCents','recoverableCents']); Object.keys(s.balances).forEach(function(k) {integer(s.balances[k]);});
     keys(s.limits,['commissions','payments']); assert(s.limits.commissions===100 && s.limits.payments===100,'invalid_limits');
     keys(s.availability,['invitationDelivery','payoutDetails','automaticTransfer']);
@@ -76,9 +97,10 @@
     });
   }
   function demoSnapshot() {
-    return validateSnapshot({version:1,asOf:'2026-09-30T15:00:00Z',partner:{displayName:'Parceiro de demonstração',status:'active'},
+    return validateSnapshot({version:2,asOf:'2026-09-30T15:00:00Z',partner:{displayName:'Parceiro de demonstração',status:'active'},
       campaign:{enabled:false,monthlyCents:4990,firstPaymentCents:2994,commissionCents:1996,trialDays:14},
-      counts:{attributed:8,firstPaymentsAfterTrial:3,commissions:3,payments:1},
+      counts:{attributed:8,firstPaymentsAfterTrial:null,commissions:3,payments:1},
+      firstPayments:{status:'partial',scope:'historical_first_payment',source:'verified_ledger_events',verifiedAfterTrialCount:3,unknownCount:5},
       balances:{pendingCents:1996,eligibleCents:1996,suspendedCents:0,paidCents:1996,atRiskCents:0,recoverableCents:0},
       coupons:[{code:'DEMO40',status:'ready'}],commissions:[
         {reference:'EXEMPLO-3',createdAt:'2026-09-29T12:00:00Z',status:'pending',amountCents:1996,payableCents:0,paidCents:0,atRiskCents:0,recoverableCents:0},
@@ -91,11 +113,15 @@
   }
   function renderSnapshot(s,demo) {
     s=validateSnapshot(s);
-    var cards=[['Cadastros atribuídos',s.counts.attributed,false],['Primeiros pagamentos pós-trial',s.counts.firstPaymentsAfterTrial,false],['Em apuração',s.balances.pendingCents,true],['Elegível para repasse',s.balances.eligibleCents,true],['Repasses registrados',s.balances.paidCents,true],['Suspenso',s.balances.suspendedCents,true]];
+    var fp=s.firstPayments, received=fp.status==='unavailable'?'—':fp.verifiedAfterTrialCount;
+    var receivedLabel=fp.status==='unavailable'?'Indisponível':fp.status==='partial'?'Confirmados · parcial':'Histórico verificado';
+    var coverage=fp.status==='unavailable'?'Prova histórica de recebimentos indisponível.':fp.status==='partial'?'Cobertura parcial: '+fp.unknownCount+' indicações sem prova histórica suficiente.':'Cobertura completa das indicações registradas.';
+    var cards=[['Cadastros atribuídos',s.counts.attributed,false],['Primeiros recebimentos pós-trial',received,false,receivedLabel],['Em apuração',s.balances.pendingCents,true],['Elegível para repasse',s.balances.eligibleCents,true],['Repasses registrados',s.balances.paidCents,true],['Suspenso',s.balances.suspendedCents,true]];
     return (demo?'<div class="ip-notice">Demonstração local · valores fictícios · sem conexão ou movimentação financeira</div>':'')+
       '<div class="ip-heading"><div><span class="ip-eyebrow">SEU PORTAL DE PARCERIAS</span><h1>'+esc(s.partner.displayName)+'</h1><p>Atualizado em '+esc(date(s.asOf))+' · valores em reais</p></div></div>'+
       (!s.campaign.enabled?'<div class="ip-notice"><strong>Campanha inativa</strong><p>Os cupons estão em preparação. Não anuncie desconto ou disponibilidade de compra antes da confirmação da Torque.</p></div>':'')+
-      '<div class="ip-kpis">'+cards.map(function(c){return '<article><span>'+esc(c[0])+'</span><strong>'+esc(c[2]?money(c[1]):c[1])+'</strong></article>';}).join('')+
+      '<div class="ip-kpis">'+cards.map(function(c){return '<article><span>'+esc(c[0])+'</span><strong>'+esc(c[2]?money(c[1]):c[1])+'</strong>'+(c[3]?'<span>'+esc(c[3])+'</span>':'')+'</article>';}).join('')+
+      '<p class="ip-explain" data-ip-payment-coverage="'+esc(fp.status)+'">'+esc(coverage)+' Escopo: primeiros recebimentos históricos das indicações. Este número não mede assinaturas ativas, conversão ou receita líquida; comissões e repasses têm apuração própria.</p>'+
       '<p class="ip-explain">Cadastro e trial não geram comissão. A comissão única aprovada é de R$ 19,96 após o primeiro pagamento elegível pós-trial; renovações não geram nova comissão.</p>'+
       '<section class="ip-card"><h2>Seus cupons</h2>'+table(['Código','Situação'],s.coupons.map(function(c){return '<tr><td><code>'+esc(c.code)+'</code></td><td>'+esc(labels[c.status])+'</td></tr>';}),'Nenhum cupom preparado para sua parceria.')+'</section>'+
       '<section class="ip-card"><h2>Comissões</h2><p>Até 100 registros mais recentes, de '+s.counts.commissions+'. Referências internas não identificam os clientes.</p>'+table(['Referência','Data','Situação','Comissão','A pagar'],s.commissions.map(function(c){return '<tr><td>'+esc(c.reference)+'</td><td>'+esc(date(c.createdAt))+'</td><td>'+esc(labels[c.status])+'</td><td>'+esc(money(c.amountCents))+'</td><td>'+esc(money(c.payableCents))+'</td></tr>';}),'Ainda não há comissões apuradas.')+'</section>'+

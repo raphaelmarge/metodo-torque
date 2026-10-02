@@ -5,8 +5,8 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
 const output = path.resolve(process.argv[2] || path.join(root, '../TORQUE-HQ-PREVIA-LOCAL.html'));
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const scripts = ['hq-ops-metrics', 'hq-ops-data', 'hq-ops-sections', 'hq-ops-reports', 'hq-influencer-portal', 'hq-ops-app'];
-const styles = ['hq-ops.css', 'hq-influencer-portal.css'].map(file => read('assets/' + file)).join('\n');
+const scripts = ['hq-ops-metrics', 'hq-ops-data', 'hq-ops-sections', 'hq-ops-reports', 'hq-influencer-portal', 'hq-ops-team', 'hq-ops-app'];
+const styles = ['hq-ops.css', 'hq-influencer-portal.css', 'hq-ops-team.css'].map(file => read('assets/' + file)).join('\n');
 const fonts = [400, 500, 600, 700, 800].map(weight => {
   const data = fs.readFileSync(path.join(root, 'assets/fonts/files/archivo-latin-' + weight + '-normal.woff2')).toString('base64');
   return '@font-face{font-family:Archivo;font-style:normal;font-weight:' + weight + ';font-display:swap;src:url(data:font/woff2;base64,' + data + ') format("woff2")}';

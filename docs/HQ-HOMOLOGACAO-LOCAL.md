@@ -1,10 +1,16 @@
 # Homologação local do HQ: evidências e pendências
 
+**30/09/2026 — preparação posterior a `b052` / `local/hq-backend-preparation`:** a CLI portátil está disponível. Docker, PostgreSQL local e a pilha Auth/PostgREST continuam indisponíveis; não houve consulta remota nem novo inventário de configurações nesta revisão. Os 49 testes anteriores do CI são evidência histórica e não comprovam esta nova revisão. O runner integrado agora aplica quatro fontes SQL, incluindo o contrato de pagamento após o ledger; isso não amplia o pacote mínimo de ativação, que contém somente OPS.
+
+**Validação desta preparação:** `node --check tests/test-hq-concurrency-pg.js` passou. A fixture exportada e as quatro entradas de `sources`, na ordem abaixo, aplicaram em PGlite descartável; foram confirmados `staff_enabled=false`, o helper `first_payment_json`, as duas RPCs OPS e zero usuários Auth criados. Não foi executado o runner contra PostgreSQL real; esse resultado não comprova concorrência entre conexões, autenticação HTTP/JWT nem recarga efetiva do cache PostgREST.
+
+## Histórico da entrega anterior
+
 Inventário e execução: **30/09/2026**, checkout `torque-hq-implementation`, branch `local/hq-operational-center`, base `7019199b27d60068c581a8dd83c08a6df2d7f83d` com alterações locais. Este documento não declara aplicação de SQL, autenticação HTTP homologada ou gateway conectado em produção.
 
-**Resultado atualizado:** os testes locais em PostgreSQL/WASM e navegador passaram. A concorrência real também passou: **49 verificações no PostgreSQL 17.11** do CI, commit `d91f128ef482df0b91a7eb7d44745a78bd56b58d`, [job 110095279017](https://github.com/raphaelmarge/metodo-torque/actions/runs/36776397887/job/110095279017), em 30/09/2026 às 21:07 UTC. Foram comprovados locks entre conexões, idempotência, rollback, limites AR/AP e revogação. O CI geral desse commit teve falhas separadas; esta evidência não o declara aprovado. HTTP/JWT/MFA continuam pendentes. Nenhum banco de produção foi acessado nem serviço novo instalado neste Windows.
+**Resultado histórico:** os testes locais em PostgreSQL/WASM e navegador passaram. A concorrência real também passou: **49 verificações no PostgreSQL 17.11** do CI, commit `d91f128ef482df0b91a7eb7d44745a78bd56b58d`, [job 110095279017](https://github.com/raphaelmarge/metodo-torque/actions/runs/36776397887/job/110095279017), em 30/09/2026 às 21:07 UTC. Foram comprovados locks entre conexões, idempotência, rollback, limites AR/AP e revogação. O CI geral desse commit teve falhas separadas; esta evidência não o declara aprovado. HTTP/JWT/MFA continuam pendentes. Nenhum banco de produção foi acessado nem serviço novo instalado naquele inventário do Windows.
 
-## Ambiente encontrado
+## Ambiente encontrado no inventário histórico
 
 O inventário usou `Get-Command`, diretórios comuns de programas, nomes de processos/serviços e portas locais em escuta. Não procurou credenciais nem abriu dados de serviços.
 
@@ -21,7 +27,7 @@ O inventário usou `Get-Command`, diretórios comuns de programas, nomes de proc
 
 Essa busca cobre locais usuais e recursos em execução, não uma varredura exaustiva do disco. Não há `supabase/config.toml` local preparado para uma pilha Auth completa nesta entrega.
 
-## O que foi efetivamente verificado
+## O que foi efetivamente verificado na entrega anterior
 
 | Verificação | Resultado observado | Limite |
 | --- | --- | --- |
@@ -35,7 +41,7 @@ Essa busca cobre locais usuais e recursos em execução, não uma varredura exau
 | Fixture exportada do novo runner + três SQL canônicos | Aplicaram em PGlite | Valida o setup, não locks concorrentes reais |
 | `node tests/test-hq-concurrency-pg.js` | **Não executado contra PostgreSQL: exit 1 por `PGTESTURL` ausente** | Nenhum PASS de concorrência foi emitido |
 
-Os resultados da suíte geral e de `test-saas.js` são registrados pelo responsável pela integração. As linhas acima descrevem a execução no Windows; a evidência de concorrência real no CI está registrada no início desta nota. O commit final da publicação ainda precisa passar todos os gates.
+Os resultados da suíte geral e de `test-saas.js` são registrados pelo responsável pela integração. As linhas acima descrevem a execução histórica no Windows; a evidência de concorrência real no CI está registrada no início desta nota. Naquela etapa, o commit final da publicação ainda precisava passar todos os gates. Esses registros não validam alterações posteriores a `b052`.
 
 ## Runner PostgreSQL real entregue
 
@@ -46,8 +52,11 @@ Requer PostgreSQL 15+ (CI: 17.11), Node e `pg@8.23.0`. O usuário da fixture pre
 O banco recebe tabelas públicas mínimas e substitutos explícitos de `auth.uid()`/`auth.jwt()`, depois os arquivos canônicos, sem copiar suas funções para o teste:
 
 1. `supabase/migrations/20260930193716_hq_referrals_ledger.sql`;
-2. `supabase/hq-ops-proposal.sql`;
-3. `supabase/hq-influencer-portal-proposal.sql`.
+2. `supabase/hq-referrals-payment-contract-proposal.sql`;
+3. `supabase/hq-ops-proposal.sql`;
+4. `supabase/hq-influencer-portal-proposal.sql`.
+
+Essa lista atual descreve exclusivamente a fixture integrada descartável. O pacote mínimo `hq-admin-minimal` contém apenas a migração OPS; ledger, contrato de pagamento e portal permanecem opcionais separados.
 
 As conexões A, B e observadora têm PIDs distintos. A mantém uma transação aberta; B disputa a mesma operação; a observadora comprova o bloqueio por `pg_blocking_pids` antes do commit/rollback de A. O pequeno intervalo de polling não é usado como prova de concorrência. Os cenários financeiros usam o isolamento padrão `READ COMMITTED` declarado no setup.
 
@@ -119,9 +128,9 @@ try {
 }
 ```
 
-Para a camada HTTP, preparar futuramente uma versão fixada da Supabase CLI e suas imagens locais. Antes de usar, ler `supabase --help`, `supabase init --help`, `supabase start --help` e `supabase stop --help`. A CLI requer Docker/configuração e recomenda pelo menos 7 GB de RAM para a pilha completa. Usar **diretório vazio e isolado**, pois `start` pode aplicar migrations/seeds do diretório. Não iniciar a pilha na raiz deste repositório nem apontá-la para configuração de produção. [CLI do Supabase](https://supabase.com/docs/reference/cli/supabase-start).
+A CLI portátil está disponível nesta preparação; as imagens locais e a pilha HTTP continuam por preparar. Antes de usar, ler `supabase --help`, `supabase init --help`, `supabase start --help` e `supabase stop --help`. A CLI requer Docker/configuração e recomenda pelo menos 7 GB de RAM para a pilha completa. Usar **diretório vazio e isolado**, pois `start` pode aplicar migrations/seeds do diretório. Não iniciar a pilha na raiz deste repositório nem apontá-la para configuração de produção. [CLI do Supabase](https://supabase.com/docs/reference/cli/supabase-start).
 
-Sequência proposta: `supabase --workdir <diretório-descartável> init`; revisar `config.toml`, identificador/portas exclusivos, exposição somente local, schemas públicos permitidos e provedores externos desabilitados; então `supabase --workdir <diretório-descartável> start`. Aplicar somente o baseline mínimo e os três SQL revisados **à instância local**, criando fixtures por Auth local. Nenhum `login`, `link`, `db push`, `--all` ou segredo remoto é necessário. Ao terminar, `supabase --workdir <diretório-descartável> stop` limita o encerramento ao projeto de teste. Esses comandos não foram executados e o futuro setup ainda requer revisão antes de rodar.
+Sequência proposta: `supabase --workdir <diretório-descartável> init`; revisar `config.toml`, identificador/portas exclusivos, exposição somente local, schemas públicos permitidos e provedores externos desabilitados; então `supabase --workdir <diretório-descartável> start`. Para a homologação integrada, aplicar o baseline de teste e os quatro SQL revisados **somente à instância local descartável**, criando fixtures por Auth local. Esse cenário ampliado não é o pacote mínimo de ativação OPS. Nenhum `login`, `link`, `db push`, `--all` ou segredo remoto é necessário. Ao terminar, `supabase --workdir <diretório-descartável> stop` limita o encerramento ao projeto de teste. Esses comandos não foram executados e o futuro setup ainda requer revisão antes de rodar.
 
 ## Critério de encerramento
 

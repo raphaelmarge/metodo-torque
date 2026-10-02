@@ -9,6 +9,7 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { PGlite } = require('./runtime/node_modules/@electric-sql/pglite');
 const migration = fs.readFileSync(path.join(__dirname, '../supabase/migrations/20260930193716_hq_referrals_ledger.sql'), 'utf8');
+const paymentContract = fs.readFileSync(path.join(__dirname, '../supabase/hq-referrals-payment-contract-proposal.sql'), 'utf8');
 const ADMIN = '10000000-0000-4000-8000-000000000001', OTHER = '10000000-0000-4000-8000-000000000002';
 const start = '2026-01-01T12:00:00.000Z', end = '2026-01-15T12:00:00.000Z';
 const paidAt = '2026-01-15T12:01:00.000Z', now = '2026-01-16T12:00:00.000Z';
@@ -58,7 +59,7 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
    create table public.saas_admins(user_id uuid primary key); alter table public.saas_admins enable row level security;
    create function public.hq_sou_admin() returns boolean language sql security definer set search_path='' as $$ select exists(select 1 from public.saas_admins where user_id=auth.uid()) $$;`);
-  await db.exec(migration); await db.query('insert into public.saas_admins values($1)', [ADMIN]);
+  await db.exec(migration); await db.exec(paymentContract); await db.query('insert into public.saas_admins values($1)', [ADMIN]);
   await check('migration cria politica comercial aprovada e campanha operacional inativa', async () => {
    await who(); const s = await snapshot(); assert.equal(s.campaign.approved, true); assert.equal(s.campaign.enabled, false);
    assert.deepEqual([s.campaign.basePriceCents,s.campaign.discountBps,s.campaign.commissionBps,s.campaign.reserveBps,s.campaign.torqueBps], [4990,4000,4000,1000,1000]);
@@ -81,6 +82,9 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
    await fails(() => rpc('hq_referrals_save_coupon', {code:'INVALIDO',partnerId:partner.id,status:'ready',discountBps:10000}), 'HQ400');
    await fails(() => rpc('hq_referrals_save_coupon', {code:'TESTE_40',partnerId:partner.id,status:'ready'}), 'HQ409');
    await fails(() => rpc('hq_referrals_save_coupon', {code:'_INVALIDO',partnerId:partner.id,status:'ready'}), 'HQ400');
+   assert.equal((await rpc('hq_referrals_save_coupon', {code:'X'.repeat(40),partnerId:partner.id,status:'draft'})).code.length,40);
+   assert.equal((await rpc('hq_referrals_save_coupon', {code:'XYZ',partnerId:partner.id,status:'draft'})).code.length,3);
+   for(const code of ['XX','X'.repeat(41),'X'.repeat(48)]) await fails(() => rpc('hq_referrals_save_coupon',{code,partnerId:partner.id,status:'draft'}),'HQ400');
   });
   await check('revisao otimista impede sobrescrita de catalogo e valida limites', async () => {
    partner = await rpc('hq_referrals_save_partner', {id:partner.id,name:'Parceiro revisto',contact:'',status:'active',expectedRevision:partner.revision});
@@ -102,6 +106,14 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
   });
   await check('mesmo evento com payload diferente falha sem retry/segunda escrita', async () => {
    await who('service_role',''); await fails(() => processReferralEvent(store, {customerKey:key,context:bound(key),event:event(key,{amountCents:1}),serverNow:now}), 'HQ409','event_payload_conflict');
+  });
+  await check('primeiro recebimento verificado independe da campanha e do status de repasse', async () => {
+   await who(); const s=await snapshot(),r=s.referrals.find(x=>x.id===key);
+   assert.equal(s.contractVersion,2); assert.equal(r.status,'needs_review'); assert.equal(r.referralStatus,r.status);
+   assert.deepEqual(r.firstPayment,{status:'verified',scope:'historical_first_payment',paidAt,amountCents:2994,afterTrial:true,
+    adjustments:{status:'unknown',refundedCents:null,disputeStatus:null},reason:null});
+   assert.equal(s.commissions.filter(x=>x.referralId===key).length,0);
+   await who('service_role','');
   });
   await check('CAS de primeira gravacao e revisao concorrente nao sobrescrevem estado', async () => {
    const loaded = await store.loadCustomer(key);
@@ -168,6 +180,8 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
    assert.deepEqual(await rpc('hq_referrals_record_payment',paymentRequest),payment);
    await fails(() => rpc('hq_referrals_record_payment',{...paymentRequest,reference:'OUTRO'}),'HQ409');
    const s=await snapshot(); assert.equal(s.payments.length,1); assert.equal(s.commissions.find(c=>c.id===paid.id).paidCents,1996);
+   const first=s.referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'unknown'); assert.equal(first.paidAt,null); assert.equal(first.amountCents,null);
   });
   await check('tabelas financeiras e auditoria nao podem ter registro reescrito ou apagado', async () => {
    await who('owner'); for(const sql of ["update hq_referrals_private.payments set reference='ALTERADO'",'delete from hq_referrals_private.payment_items','delete from hq_referrals_private.audit','delete from hq_referrals_private.commissions']) await fails(() => db.query(sql),'HQ422');
@@ -176,10 +190,15 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
    await who('service_role',''); const result=await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'retry-charge',chargeId:'replacement-charge'}),serverNow:now});
    assert.equal(result.outcome,'duplicate_cycle'); await who(); const s=await snapshot(); assert.equal(s.commissions.filter(c=>c.referralId===paid.key).length,1); assert.equal(s.payments.length,1);
    assert.equal(s.commissions.find(c=>c.id===paid.id).status,'paid');
+   const first=s.referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.equal(first.amountCents,2994);
+   assert.deepEqual(first.adjustments,{status:'recorded',refundedCents:0,disputeStatus:'none'});
   });
   await check('disputa aberta depois do repasse gera risco, sem divida definitiva nem novo payable', async () => {
    await who('service_role',''); await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'open-dispute',kind:'dispute_opened',occurredAt:'2026-01-16T10:00:00.000Z'}),serverNow:now});
    await who(); const c=(await snapshot()).commissions.find(c=>c.id===paid.id); assert.deepEqual([c.status,c.paidCents,c.payableCents,c.recoverableCents,c.atRiskCents],['suspended',1996,0,0,1996]);
+   const first=(await snapshot()).referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.equal(first.adjustments.disputeStatus,'open');
   });
   await check('saldo em risco de outro item bloqueia novo registro do mesmo parceiro sem compensar', async () => {
    const f=await fixture(); await who(); await fails(() => rpc('hq_referrals_record_payment',{...paymentRequest,operationId:randomUUID(),commissionIds:[f.id],expectedRevisions:{[f.id]:1}}),'HQ422','partner_balance_requires_reconciliation');
@@ -187,14 +206,35 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
   await check('vitoria na disputa restaura situacao ja paga sem criar novo saldo', async () => {
    await who('service_role',''); await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'won-dispute',kind:'dispute_won',occurredAt:'2026-01-16T11:00:00.000Z'}),serverNow:now});
    await who(); const c=(await snapshot()).commissions.find(c=>c.id===paid.id); assert.deepEqual([c.status,c.paidCents,c.payableCents,c.recoverableCents,c.atRiskCents],['paid',1996,0,0,0]);
+   assert.equal((await snapshot()).referrals.find(r=>r.id===paid.key).firstPayment.adjustments.disputeStatus,'won');
   });
   await check('estorno parcial e integral apos pago preservam comprovante e geram recuperavel', async () => {
    await who('service_role',''); await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'refund-partial',kind:'refund_confirmed',refundedCents:1497,occurredAt:'2026-01-16T11:20:00.000Z'}),serverNow:now});
    await who(); let s=await snapshot(),c=s.commissions.find(c=>c.id===paid.id); assert.deepEqual([c.paidCents,c.payableCents,c.recoverableCents,c.atRiskCents],[1996,0,998,0]); assert.equal(s.payments[0].reference,payment.reference);
+   assert.equal(s.referrals.find(r=>r.id===paid.key).firstPayment.adjustments.refundedCents,1497);
    const financialAudit=s.audit.find(a=>a.details.commissionId===paid.id && a.details.recoverableDeltaCents===998);
    assert.ok(financialAudit); assert.deepEqual([financialAudit.details.claimableDeltaCents,financialAudit.details.paidOutCents,financialAudit.details.recoverableCents],[-998,1996,998]);
    await who('service_role',''); await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'refund-full',kind:'refund_confirmed',refundedCents:2994,occurredAt:'2026-01-16T11:30:00.000Z'}),serverNow:now});
    await who(); s=await snapshot(); c=s.commissions.find(c=>c.id===paid.id); assert.deepEqual([c.status,c.paidCents,c.payableCents,c.recoverableCents],['reversed',1996,0,1996]); assert.deepEqual(s.payments,[payment]);
+   const first=s.referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.equal(first.amountCents,2994); assert.equal(first.adjustments.refundedCents,2994);
+  });
+  await check('ajuste fora de ordem preserva estorno cumulativo e primeira confirmacao', async () => {
+   await who('service_role','');
+   const lower=await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'older-refund',kind:'refund_confirmed',refundedCents:100,occurredAt:'2026-01-16T11:10:00.000Z'}),serverNow:now});
+   assert.equal(lower.outcome,'ignored_stale_adjustment');
+   const older=await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'older-dispute',kind:'dispute_opened',occurredAt:'2026-01-16T09:00:00.000Z'}),serverNow:now});
+   assert.equal(older.outcome,'ignored_stale_adjustment');
+   await who(); const first=(await snapshot()).referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.deepEqual(first.adjustments,{status:'recorded',refundedCents:2994,disputeStatus:'won'});
+  });
+  await check('perda de disputa e comprovada sem transformar recebimento historico em assinatura ativa', async () => {
+   const f=await fixture(); await who('service_role','');
+   await processReferralEvent(store,{customerKey:f.key,context:f.ctx,event:event(f.key,{id:'verified-first-'+f.key}),serverNow:now});
+   await processReferralEvent(store,{customerKey:f.key,context:f.ctx,event:event(f.key,{id:'lost-dispute-'+f.key,kind:'dispute_lost',occurredAt:'2026-01-16T11:00:00.000Z'}),serverNow:now});
+   await who(); const s=await snapshot(),first=s.referrals.find(r=>r.id===f.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.deepEqual(first.adjustments,{status:'recorded',refundedCents:0,disputeStatus:'lost'});
+   assert.equal(s.commissions.find(c=>c.id===f.id).status,'reversed');
   });
   await check('estado pago nao pode desaparecer do core ou trocar policy/partner em commit', async () => {
    await who('service_role',''); const loaded=await store.loadCustomer(paid.key),st=structuredClone(loaded.coreState); st.commissions=[];
@@ -209,6 +249,58 @@ async function fails(fn, code, message) { await assert.rejects(fn, error => erro
   await check('snapshot HQ omite payloads de provedor e dados de contexto e mantem campanha OFF', async () => {
    await who(); const s=await snapshot(); assert.equal(s.campaign.enabled,false); assert.ok(s.audit.length>0);
    const text=JSON.stringify(s); for(const forbidden of ['merchantAccountId','verification','coreState','trialStartedAt','chargeIds']) assert.ok(!text.includes(forbidden),forbidden);
+  });
+  await check('cancelamento e renovacao nao substituem primeiro recebimento nem criam comissao', async () => {
+   await who(); const before=(await snapshot()).referrals.find(r=>r.id===key).firstPayment;
+   await who('service_role','');
+   await processReferralEvent(store,{customerKey:key,context:bound(key),event:event(key,{id:'cancel-first',kind:'subscription_canceled',occurredAt:now}),serverNow:now});
+   await processReferralEvent(store,{customerKey:key,context:bound(key),event:event(key,{id:'renew-first',cycleIndex:2,invoiceId:'renewal-'+key,amountCents:4990,paidAt:now,occurredAt:now}),serverNow:now});
+   await who(); const s=await snapshot(); assert.deepEqual(s.referrals.find(r=>r.id===key).firstPayment,before);
+   assert.equal(s.commissions.filter(c=>c.referralId===key).length,0);
+  });
+  await check('primeiro recebimento em ciclo posterior ou antes do trial continua fato historico sem elegibilidade', async () => {
+   for(const earlier of [false,true]) {
+    const k=randomUUID(),c=bound(k),at=earlier?'2026-01-10T12:00:00.000Z':paidAt;
+    c.account.firstPaidAt=at;
+    await who('service_role','');
+    await processReferralEvent(store,{customerKey:k,context:c,event:event(k,{cycleIndex:earlier?1:2,amountCents:earlier?2994:4990,paidAt:at,occurredAt:at}),serverNow:now});
+    await who(); const s=await snapshot(),first=s.referrals.find(r=>r.id===k).firstPayment;
+    assert.equal(first.status,'verified'); assert.equal(first.afterTrial,!earlier); assert.equal(first.amountCents,earlier?2994:4990);
+    assert.equal(s.commissions.filter(x=>x.referralId===k).length,0); assert.equal(s.campaign.enabled,false);
+   }
+  });
+  await check('contrato falha fechado para prova legada ausente, divergente ou nao verificada', async () => {
+   // Owner insere dados artificiais incompletos para testar o leitor, nao a ingestao.
+   async function legacy(patchEvent={},patchAccount={},withEvent=true) {
+    const k=randomUUID(),c=bound(k); Object.assign(c.account,patchAccount);
+    const ev=event(k,patchEvent); await who('owner');
+    await db.query("insert into hq_referrals_private.customers(id,revision,context,core_state,partner_id,coupon_id,status) values($1,1,$2,$3,$4,$5,'paid')",[k,c,emptySalesState(),partner.id,coupon.id]);
+    if(withEvent) await db.query("insert into hq_referrals_private.events(provider,merchant_id,event_id,customer_id,body,fingerprint,outcome) values($1,$2,$3,$4,$5,$5,'needs_review')",['pagarme','merchant-test',ev.id,k,ev]);
+    await who(); return {k,ev,first:(await snapshot()).referrals.find(r=>r.id===k).firstPayment};
+   }
+   for(const [ev,account,exists] of [[{}, {},false],[{verified:false},{},true],[{}, {paymentHistoryVerified:false},true],
+    [{invoiceId:'different'},{},true],[{subscriptionId:'different'},{},true],[{customerId:OTHER},{},true],
+    [{currency:'USD'},{},true],[{amountCents:0},{},true],[{amountCents:'2994'},{},true],
+    [{verification:{source:'untrusted',checkedAt:now}},{},true],
+    [{verification:{source:'provider_api',checkedAt:'2999-01-01T00:00:00.000Z'}},{},true]]) {
+    const result=await legacy(ev,account,exists); assert.equal(result.first.status,'unknown'); assert.equal(result.first.amountCents,null);
+   }
+   const {k,ev,first}=await legacy(); assert.equal(first.status,'verified');
+   await who('owner'); await db.query("insert into hq_referrals_private.events(provider,merchant_id,event_id,customer_id,body,fingerprint,outcome) values('pagarme','merchant-test','conflicting-proof',$1,$2,$2,'needs_review')",[k,{...ev,id:'conflicting-proof',amountCents:4990}]);
+   await who(); assert.equal((await snapshot()).referrals.find(r=>r.id===k).firstPayment.reason,'conflicting_first_payment_evidence');
+  });
+  await check('ajuste pendente nao inventa estorno zero e helper nao amplia acesso API', async () => {
+   await who('service_role','');
+   await processReferralEvent(store,{customerKey:paid.key,context:paid.ctx,event:event(paid.key,{id:'unknown-charge-adjustment',kind:'dispute_opened',chargeId:'unreconciled-charge',occurredAt:'2026-01-16T11:50:00.000Z'}),serverNow:now});
+   await who(); const first=(await snapshot()).referrals.find(r=>r.id===paid.key).firstPayment;
+   assert.equal(first.status,'verified'); assert.deepEqual(first.adjustments,{status:'unknown',refundedCents:null,disputeStatus:null});
+   for(const role of ['anon','authenticated','service_role']) {
+    await who(role,role==='authenticated'?ADMIN:'');
+    await fails(() => db.query('select hq_referrals_private.first_payment_json(null::hq_referrals_private.customers)'),'42501');
+   }
+   await who('owner'); const before=await scalar('select count(*)::int from hq_referrals_private.audit');
+   await who(); await snapshot(); await snapshot(); await who('owner');
+   assert.equal(await scalar('select count(*)::int from hq_referrals_private.audit'),before);
   });
   await check('revogar saas_admins retira permissao na proxima RPC sem confiar em cache cliente', async () => {
    await who('owner'); await db.query('delete from public.saas_admins where user_id=$1',[ADMIN]); await who(); await fails(snapshot,'HQ403');

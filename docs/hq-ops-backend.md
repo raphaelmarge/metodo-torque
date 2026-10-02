@@ -1,23 +1,27 @@
 # Backend operacional HQ — proposta local
 
-Estado: **SQL preparado e testado apenas em PostgreSQL/WASM descartável. Não aplicado ao Supabase.** Base do checkout: `7019199b27d60068c581a8dd83c08a6df2d7f83d`. Esta entrega não cria usuário, credencial, assinatura, pagamento externo, permissão real, webhook ou migração remota.
+Estado: **preparacao local, nao aplicada ao Supabase**. Esta revisao parte de `b05222a2852bd1e96d9a91804d3cd5bdd4f59d22` e acrescenta modo minimo para administradores existentes, gate privado de equipe e escopo explicito de atendimento. Nao cria usuario, credencial, staff, vinculo de conta, assinatura, pagamento externo, webhook ou migracao remota. Aplicar o SQL concede novas capacidades operacionais aos administradores existentes; nao e uma alteracao apenas estrutural.
 
 O arquivo `supabase/hq-ops-proposal.sql` é uma proposta explícita, fora de `supabase/migrations`. Ele pressupõe as tabelas existentes `public.academias`, `public.saas_admins`, `public.saas_clientes` e Supabase Auth. Deve ser revisado e convertido em migração versionada somente após autorização de aplicação. Executar o arquivo novamente após sucesso falha nas tabelas existentes; não é um instalador idempotente e não deve ser incluído em deploy automático.
 
 ## Separação e autorização
 
-Os dados internos ficam no schema `torque_hq`: `staff`, `leads`, `invoices`, `payments`, `expenses`, `expense_payments`, `incidents`, `cases`, `case_messages`, `subscription_requests`, `commands` e `audit`. Todas as tabelas têm RLS e nenhum acesso direto de `anon`/`authenticated`; o schema não recebe `USAGE` desses papéis. As funções auxiliares também não são APIs. Não existe leitura de `dados`, pacotes de alunos, prontuários ou conteúdo de treino.
+Os dados internos ficam no schema `torque_hq`: `settings`, `staff`, `staff_account_scope`, `leads`, `invoices`, `payments`, `expenses`, `expense_payments`, `incidents`, `cases`, `case_messages`, `subscription_requests`, `commands` e `audit`. As 14 tabelas tem RLS; grants de schema, tabelas, sequencias e auxiliares sao explicitamente revogados de `PUBLIC`, `anon`, `authenticated` e `service_role`. Nao ha policies nem `FORCE RLS`: o proprietario confiavel das funcoes executa as operacoes autorizadas. Revokes diretos nao removem eventual heranca de outros papeis; verificar ACLs efetivas antes da instalacao. Nao ha leitura de `dados`, pacotes de alunos, prontuarios ou treinos.
 
-Somente `public.hq_ops_snapshot()` e `public.hq_ops_command(p_command jsonb)` recebem `EXECUTE` de `authenticated`; `PUBLIC` e `anon` são revogados. Ambas usam `SECURITY DEFINER`, `search_path=''`, referências qualificadas e guarda de identidade no servidor. O proprietário de instalação precisa ser um papel de banco confiável; clientes nunca recebem esse papel.
+Somente `public.hq_ops_snapshot()` e `public.hq_ops_command(p_command jsonb)` recebem `EXECUTE` de `authenticated`; `PUBLIC`, `anon` e `service_role` sao explicitamente revogados. Ambas usam `SECURITY DEFINER`, `search_path=''`, referencias qualificadas e guarda no servidor. O proprietario de instalacao deve ser um papel confiavel, nunca entregue a clientes. A transacao emite `NOTIFY pgrst,'reload schema'`; emitir a notificacao nao comprova que PostgREST recarregou ou que Auth HTTP foi homologado.
 
-`auth.uid()` é o ator. A presença em `public.saas_admins` concede o papel administrativo existente. Os demais papéis dependem de `torque_hq.staff(user_id,role,enabled)`; a proposta não insere nenhuma linha e `enabled` nasce falso. Não existe comando cliente para conceder acesso. A remoção/desabilitação é consultada em cada RPC, inclusive antes de replay idempotente.
+`auth.uid()` e o ator. A presenca em `public.saas_admins` concede o papel administrativo antes do gate. `torque_hq.settings` recebe um unico seed `id=true,staff_enabled=false`. Mesmo um staff com `enabled=true` nao entra enquanto o gate estiver falso ou ausente. Os outros papeis exigem simultaneamente `settings.staff_enabled=true` e `staff.enabled=true`. Nenhum staff e inserido. Nenhum comando cliente cria/habilita staff ou muda o gate. Revogacao e desabilitacao valem na proxima RPC, inclusive antes de replay. Esta revisao nao acrescenta MFA nem verificacao de sessao ativa.
+
+O atendimento usa `torque_hq.staff_account_scope(user_id,account_id,granted_by,created_at)`, com chave composta `(user_id,account_id)`. Somente admin existente concede/remove scope pelos comandos auditados `support.scope.grant/revoke`. O alvo deve ser staff de papel `support`, com usuario Auth e conta existentes. O comando nao cria usuario, nao habilita staff e nao liga o gate; pode preparar escopo com equipe desligada. Nao ha nova tela de gestao de papeis/escopos.
+
+Conhecer o UUID ou ser responsavel pelo chamado nao concede a conta. O atendente ve contas preconcedidas e, entre elas, chamados proprios/sem responsavel. Chamado sem conta fica privado ao seu responsavel; criar intake ou remover o vinculo fixa o owner no atendente atual. Caso sem conta e sem owner fica restrito ao admin. Vincular/revincular exige scope preconcedido para a conta de destino. Revogar scope remove conta, chamados e mensagens da proxima leitura e bloqueia comandos/replays antigos, preservando historico. Isso nao promete cancelar operacao ja autorizada e em andamento.
 
 | Papel | Dados e operações autorizados |
 |---|---|
 | `admin` | Todos os domínios e comandos da allowlist; auditoria e `reports.export` |
 | `finance` | Contas, contas a pagar/receber, registros manuais, solicitações de cancelamento e `reports.export`; sem leads, atendimento, incidentes ou auditoria global |
 | `sales` | Apenas leads próprios; cria atribuídos a si, sem transferir para outra pessoa; sem listar clientes globais |
-| `support` | Chamados próprios ou sem responsável e contas vinculadas a esses chamados; pode assumir, criar, atualizar, anotar e preparar respostas |
+| `support` | Contas explicitamente concedidas; dentro delas, chamados proprios ou sem responsavel; intake sem conta somente proprio; pode criar, assumir, atualizar, anotar e preparar respostas dentro desse escopo |
 | `engineering` | Incidentes e UUIDs de contas afetadas, sem nomes de clientes, mensagens ou financeiro |
 | `viewer` | Somente fatos básicos de contas, com nome substituído por `Conta`; sem escrita ou exportação |
 
@@ -96,6 +100,8 @@ O motivo tem 3–500 caracteres; o payload total não pode ultrapassar 20 KB. Ca
 | `case.create` | `subject`; opcionais `accountId,channel,priority,status,owner,nextActionAt,incidentId` |
 | `case.update` | `id`; opcionais `accountId,subject,priority,status,owner,nextActionAt,incidentId`; o canal de origem é preservado |
 | `case.message` | `id,text`; opcional `visibility` |
+| `support.scope.grant` | `userId,accountId`; somente admin existente, sem ativar staff |
+| `support.scope.revoke` | `userId,accountId`; somente admin existente, preserva casos/mensagens |
 | `incident.create` | `title`; opcionais `severity,status,owner,release,accountIds` |
 | `incident.update` | `id`; opcionais `title,severity,status,owner,release,accountIds` |
 | `subscription.requestCancel` | `accountId`; opcionais `id` (referência externa informativa), `effectiveAt,note` |
@@ -124,16 +130,16 @@ node tests/test-hq-ops-sql.js
 node tests/test-hq-ops-auth-browser.js
 ```
 
-O teste usa a dependência fixada `@electric-sql/pglite` de `tests/runtime` e uma base em memória. Cria somente fixtures sintéticas. Em 30/09/2026: **67 verificações passaram**, cobrindo RLS/grants, anonimato, usuário comum, staff desabilitado, acesso por papel, propriedade de leads/chamados, ator real, idempotência, payload diferente, centavos, datas, referências, parcial/saldo AP/AR, ausência de efeitos externos, auditoria atômica, revogação e declaração da cobertura incompleta de atendimento.
+O teste usa `@electric-sql/pglite` fixado em `tests/runtime`, banco em memoria e fixtures sinteticas. Nesta revisao local, **103 verificacoes passaram**: gate minimo negando todos os papeis staff mesmo habilitados; admin existente preservado; revogacao explicita de grants padrao de `service_role`; escopo sem autoatribuicao; relink protegido; intake privado; revogacao antes de leitura/comando/replay; grant/revoke auditados; e os cenarios financeiros/operacionais anteriores. As fixtures ligam a equipe por SQL administrativo explicito apenas no banco descartavel para testar os demais papeis. A instalacao real continua com gate falso.
 
-PGlite verifica SQL real, mas não substitui testes de sessões concorrentes no PostgreSQL remoto, PostgREST, JWT real, MFA, backups, volume, índices sob carga, envio externo ou gateway. O desenho usa locks de linha e chave única; o teste ainda não demonstra contenção entre conexões independentes.
+A versao anterior passou 49 verificacoes de concorrencia em PostgreSQL 17.11 no CI, com locks observados entre conexoes independentes. `tests/test-hq-concurrency-pg.js` agora tambem testa o modo minimo e liga o gate explicitamente apenas na fixture; a execucao real desta revisao esta pendente. PGlite nao substitui essa execucao, PostgREST, JWT real, MFA, restauracao, volume, indices sob carga, envio externo ou gateway. Nenhum servico novo precisa ser instalado/iniciado como efeito colateral desta preparacao.
 
 O teste de autorização no navegador abre a rota real `apps/hq.html` com cliente e respostas sintéticos, servidor em loopback e toda rede externa bloqueada. **22 verificações passaram**: ausência do store genérico de academia, troca de usuário, redução de papel na mesma sessão, remoção de detalhes/mensagens do DOM, leitura e comando negados, limpeza de diálogos e ausência de fallback privilegiado. O teste exige Playwright de `tests/ci` e Chrome local (ou `CHROMIUM_PATH`). Ele valida integração da interface; não autentica um usuário real nem acessa o Supabase.
 
 ## Dependências antes de aplicação e lançamento
 
 1. Revisar a proposta e gerar uma migração versionada após autorização explícita, com cópia/restauração testada. Não incluir o schema `torque_hq` nos schemas expostos pelo Data API.
-2. Escolher responsáveis e conceder staff por operação administrativa auditável; nenhum acesso é presumido ou criado nesta entrega. Definir MFA e sessão revogada para HQ antes de uso por equipe; a guarda atual usa `auth.uid` e vínculo administrativo, não exige `aal2` nem consulta `auth.sessions`.
+2. Manter `settings.staff_enabled=false` na ativacao minima. Uma futura abertura da equipe exige autorizacao separada para gate, staff habilitado, escopos e responsaveis. Definir MFA e sessao revogada antes do uso por equipe; a guarda atual usa `auth.uid` e vinculo administrativo, nao exige `aal2` nem consulta `auth.sessions`.
 3. Decidir importação dos leads/configuração antiga sem sincronizá-los pelo `dados` das academias. A proposta não migra `hqLeads`, `hqConfig`, tickets ou recebimentos históricos.
 4. Concluir Pagar.me e validar vínculo de cada objeto ao cliente, assinatura de webhook, idempotência, estorno, conciliação e segregação da cobrança SaaS. Asaas continua alternativa não conectada.
 5. Associar o módulo influencers existente por identificadores e contrato de eventos, sem criar cadastro paralelo. Regra aprovada: R$ 49,90 mensais, 14 dias grátis, primeira cobrança com cupom R$ 29,94, comissão única R$ 19,96 após pagamento, reserva R$ 4,99 e saldo Torque R$ 4,99; renovação sem comissão. Nenhum desses pagamentos é executado nesta proposta. Compra antes do trial permanece decisão pendente.

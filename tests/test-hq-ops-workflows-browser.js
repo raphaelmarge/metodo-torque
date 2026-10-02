@@ -59,7 +59,7 @@ async function run() {
     page.on('pageerror', e => errors.push(e.message));
     page.setDefaultTimeout(7000);
     async function test(name, fn) { await fn(); checks++; console.log('ok ' + checks + ' - ' + name); }
-    async function nav(area) { await page.locator('.hq-nav [data-nav="' + area + '"]').click(); await page.locator('#hqArea [data-hq-area="' + area + '"]').waitFor(); }
+    async function nav(area) { await page.locator('.hq-nav [data-nav="' + area + '"]').click(); if(area==='admin')await page.getByRole('button',{name:'Auditoria operacional',exact:true}).click(); await page.locator('#hqArea [data-hq-area="' + area + '"]').waitFor(); }
     const dialog = () => page.locator('dialog[open]');
     async function field(name, value) {
       const el = dialog().locator('[name="' + name + '"]');

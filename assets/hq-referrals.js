@@ -7,6 +7,29 @@
   var money = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'});
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function cents(value) { return Number.isSafeInteger(value) && value >= 0; }
+  // Compatibilidade: status/firstPaymentAt legados nao comprovam recebimento.
+  // firstPayment e historico, nunca assinatura ativa, MRR ou saldo atual.
+  function verifiedFirstPayment(r) {
+    var p = r && r.firstPayment;
+    return p && p.status === 'verified' && p.scope === 'historical_first_payment' &&
+      typeof p.paidAt === 'string' && Number.isFinite(Date.parse(p.paidAt)) &&
+      cents(p.amountCents) && p.amountCents > 0 && typeof p.afterTrial === 'boolean' ? p : null;
+  }
+  function firstPaymentCell(r) {
+    var p = verifiedFirstPayment(r);
+    if (!p) return 'Desconhecido<small>Sem evidência verificada do primeiro recebimento.</small>';
+    return 'Recebimento histórico verificado<small>' + date(p.paidAt) + ' · ' + brl(p.amountCents) +
+      '</small><small>' + (p.afterTrial ? 'Após o teste grátis.' : 'Antes do fim do teste: regra comercial pendente.') + '</small>';
+  }
+  function firstPaymentAdjustmentsCell(r) {
+    var p = verifiedFirstPayment(r), a = p && p.adjustments;
+    if (!a || a.status !== 'recorded' || !cents(a.refundedCents) || a.refundedCents > p.amountCents ||
+      ['none','open','won','lost'].indexOf(a.disputeStatus) < 0) return 'Desconhecidos';
+    var refund = a.refundedCents === 0 ? 'Sem estorno registrado' :
+      (a.refundedCents === p.amountCents ? 'Estorno integral' : 'Estorno parcial') + ': ' + brl(a.refundedCents);
+    var dispute = {none:'Sem disputa registrada',open:'Disputa aberta',won:'Disputa ganha',lost:'Disputa perdida'}[a.disputeStatus];
+    return esc(refund) + '<small>' + esc(dispute) + '</small>';
+  }
   function brl(value) { return cents(value) ? money.format(value / 100) : 'Indisponível'; }
   function date(value) { if (!value) return 'Não informada'; var d = new Date(value); return Number.isFinite(d.getTime()) ? d.toLocaleDateString('pt-BR') : 'Não informada'; }
   function dateTime(value) { if (!value) return 'Não informada'; var d = new Date(value); return Number.isFinite(d.getTime()) ? d.toLocaleString('pt-BR') : 'Não informada'; }
@@ -85,8 +108,8 @@
         rows = snapshot.coupons.map(function (c) { return '<tr><td><b>' + esc(c.code) + '</b></td><td>' + esc(partnerName(c.partnerId)) + '</td><td>' + badge(c.status) + '</td><td><button type="button" class="btn sec mini" data-hqr-action="coupon-edit" data-id="' + esc(c.id) + '">Editar</button></td></tr>'; });
         body += table(['Código','Parceiro','Preparação','Ação'],rows,'Nenhum cupom cadastrado. Cadastre um influenciador antes de preparar seu código.');
       } else if (tab === 'referrals') {
-        rows = snapshot.referrals.map(function (r) { return '<tr><td>' + esc(r.customerLabel || r.id) + '</td><td>' + esc(partnerName(r.partnerId)) + '</td><td>' + badge(r.status,r.status === 'paid' ? 'Pagamento confirmado' : '') + (r.reason ? '<small>' + esc(reasons[r.reason] || r.reason) + '</small>' : '') + '</td><td>' + date(r.createdAt) + '</td><td>' + date(r.firstPaymentAt) + '</td></tr>'; });
-        body = '<h3>Indicações recebidas</h3>' + table(['Referência da conta','Parceiro','Situação','Indicação','Primeiro pagamento'],rows,'Nenhuma indicação registrada pelo servidor. Visitas e códigos guardados no navegador não são vendas confirmadas.');
+        rows = snapshot.referrals.map(function (r) { return '<tr><td>' + esc(r.customerLabel || r.id) + '</td><td>' + esc(partnerName(r.partnerId)) + '</td><td>' + badge(r.referralStatus || r.status,(r.referralStatus || r.status) === 'paid' ? 'Repasse pago' : '') + (r.reason ? '<small>' + esc(reasons[r.reason] || r.reason) + '</small>' : '') + '</td><td>' + date(r.createdAt) + '</td><td>' + firstPaymentCell(r) + '</td><td>' + firstPaymentAdjustmentsCell(r) + '</td></tr>'; });
+        body = '<p class="muted">O fluxo da indicação trata da apuração/repasse. Primeiro recebimento é um fato histórico; não comprova assinatura ativa.</p><h3>Indicações recebidas</h3>' + table(['Referência da conta','Parceiro','Situação','Indicação','Primeiro recebimento do cliente','Ajustes do recebimento'],rows,'Nenhuma indicação registrada pelo servidor. Visitas e códigos guardados no navegador não são vendas confirmadas.');
       } else if (tab === 'commissions') {
         rows = snapshot.commissions.map(function (c) { return '<tr><td>' + esc(partnerName(c.partnerId)) + '<small>' + esc(c.referralId || c.id) + '</small></td><td>' + badge(c.status) + '</td><td class="hqr-money">' + brl(c.amountCents) + '</td><td class="hqr-money">' + brl(c.payableCents) + '</td><td class="hqr-money">' + brl(c.atRiskCents) + '</td><td class="hqr-money">' + brl(c.recoverableCents) + '</td><td>' + date(c.eligibleAt) + '</td><td>' + (['pending','eligible','suspended'].indexOf(c.status) >= 0 ? '<button type="button" class="btn sec mini" data-hqr-action="review" data-id="' + esc(c.id) + '">Revisar</button>' : 'Histórico preservado') + '</td></tr>'; });
         body = '<h3>Livro de comissões</h3>' + table(['Parceiro / indicação','Situação','Comissão','A pagar','Em disputa','A recuperar','Elegível a partir de','Ação'],rows,'Nenhuma comissão registrada. Não há saldo a liberar por visita, cadastro ou teste grátis.');
@@ -153,9 +176,9 @@
     function couponDialog(id) {
       var c = snapshot.coupons.find(function (x) { return x.id === id; });
       if (!snapshot.partners.length) return;
-      openDialog(c ? 'Editar cupom' : 'Cadastrar cupom','<p>A campanha continua inativa. Este cadastro não aplica desconto.</p><label for="hqrCode">Código</label><input id="hqrCode" required minlength="3" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,47}" value="' + esc(c && c.code) + '"><label for="hqrCouponPartner">Influenciador</label><select id="hqrCouponPartner">' + snapshot.partners.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>'; }).join('') + '</select><label for="hqrCouponStatus">Preparação</label><select id="hqrCouponStatus"><option value="draft">Rascunho</option><option value="ready">Preparado · campanha inativa</option><option value="paused">Pausado</option></select>' + actions('Salvar cupom'),function () {
+      openDialog(c ? 'Editar cupom' : 'Cadastrar cupom','<p>A campanha continua inativa. Este cadastro não aplica desconto.</p><label for="hqrCode">Código</label><input id="hqrCode" required minlength="3" maxlength="40" pattern="[A-Za-z0-9](?:[A-Za-z0-9_]|-){2,39}" value="' + esc(c && c.code) + '"><label for="hqrCouponPartner">Influenciador</label><select id="hqrCouponPartner">' + snapshot.partners.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>'; }).join('') + '</select><label for="hqrCouponStatus">Preparação</label><select id="hqrCouponStatus"><option value="draft">Rascunho</option><option value="ready">Preparado · campanha inativa</option><option value="paused">Pausado</option></select>' + actions('Salvar cupom'),function () {
         var input = {code:$('hqrCode').value.trim().toUpperCase(),partnerId:$('hqrCouponPartner').value,status:$('hqrCouponStatus').value};
-        if (!/^[A-Z0-9][A-Z0-9_-]{2,47}$/.test(input.code)) { dialogError('Use de 3 a 48 letras, números, traços ou sublinhados.'); return; }
+        if (!/^[A-Z0-9][A-Z0-9_-]{2,39}$/.test(input.code)) { dialogError('Use de 3 a 40 letras, números, traços ou sublinhados.'); return; }
         if (c) { input.id = c.id; input.expectedRevision = c.revision; }
         mutate('hq_referrals_save_coupon',input,'Cupom salvo. A campanha permanece inativa.');
       });

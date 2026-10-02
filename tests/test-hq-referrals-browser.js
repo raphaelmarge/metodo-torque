@@ -145,6 +145,46 @@ async function paymentReview(x) {
   assert.match(await reasonCase.page.locator('#hqrPanel').innerText(),/Aguardando confirmação/);
   assert.match(await reasonCase.page.locator('#hqrPanel').innerText(),/Pagamento anterior ao fim do teste grátis/);
   groups++;await reasonCase.context.close();
+  const paymentFacts=fixture(), legacy=paymentFacts.referrals[0];
+  function fact(id,adjustments,extra={}) { return {...legacy,id,status:'pending',referralStatus:'pending',firstPayment:{
+    status:'verified',scope:'historical_first_payment',paidAt:'2026-09-15T10:30:00Z',amountCents:2994,afterTrial:true,adjustments,...extra}}; }
+  paymentFacts.referrals=[legacy,
+    fact(ids[16],{status:'recorded',refundedCents:1497,disputeStatus:'open'}),
+    fact(ids[17],{status:'recorded',refundedCents:2994,disputeStatus:'lost'}),
+    fact(ids[18],{status:'unknown',refundedCents:null,disputeStatus:null},{afterTrial:false}),
+    fact(ids[19],{status:'recorded',refundedCents:0,disputeStatus:'none'},{amountCents:'2994'})];
+  const facts=await setup({data:paymentFacts,width:390});await facts.page.locator('[data-hqr-tab="referrals"]').click();
+  const factRows=facts.page.locator('#hqrPanel tbody tr');
+  assert.match(await factRows.nth(0).innerText(),/Repasse pago/);
+  assert.match(await factRows.nth(0).innerText(),/Desconhecido/);
+  assert.doesNotMatch(await factRows.nth(0).innerText(),/Pagamento confirmado|15\/09\/2026|Recebimento histórico verificado/);
+  assert.match(await factRows.nth(1).innerText(),/Recebimento histórico verificado/);
+  assert.match(await factRows.nth(1).innerText(),/Estorno parcial:.*14,97/);
+  assert.match(await factRows.nth(1).innerText(),/Disputa aberta/);
+  assert.match(await factRows.nth(2).innerText(),/Estorno integral:.*29,94/);
+  assert.match(await factRows.nth(2).innerText(),/Disputa perdida/);
+  assert.match(await factRows.nth(3).innerText(),/Antes do fim do teste: regra comercial pendente/);
+  assert.match(await factRows.nth(3).innerText(),/Desconhecidos/);
+  assert.match(await factRows.nth(4).innerText(),/Desconhecido/);
+  assert.match(await facts.page.locator('#hqrPanel').innerText(),/não comprova assinatura ativa/);
+  assert(await facts.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert.deepEqual(facts.errors,[]);assert.deepEqual(facts.outside,[]);groups++;await facts.context.close();
+  const limits=await setup();await limits.page.locator('[data-hqr-tab="coupons"]').click();
+  await limits.page.locator('[data-hqr-action="coupon-new"]').click();
+  assert.equal(await limits.page.locator('#hqrCode').getAttribute('maxlength'),'40');
+  for(const code of ['AB','X'.repeat(41)]) {
+    const valid=await limits.page.locator('#hqrCode').evaluate((el,value)=>{el.value=value;return el.checkValidity();},code);
+    assert.equal(valid,false,'validacao HTML rejeita limites');
+    await limits.page.locator('#hqrForm').evaluate(el=>el.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+    assert.match(await limits.page.locator('#hqrDialogStatus').innerText(),/3 a 40/);
+    assert.equal(limits.calls.filter(c=>c.name==='hq_referrals_save_coupon').length,0,'bypass HTML ainda valida no JS');
+  }
+  for(const code of ['ABC','A_B-C','X'.repeat(40)]) {
+    assert(await limits.page.locator('#hqrCode').evaluate((el,value)=>{el.value=value;return el.checkValidity();},code));
+  }
+  await limits.page.locator('#hqrSubmit').click();await limits.page.waitForFunction(()=>!document.getElementById('hqrDialog').open);
+  assert.equal(limits.calls.find(c=>c.name==='hq_referrals_save_coupon').args.p_input.code,'X'.repeat(40));
+  assert.equal(limits.data.campaign.enabled,false);assert.deepEqual(limits.errors,[]);groups++;await limits.context.close();
   const empty=await setup({data:fixture(true)});
   assert.match(await empty.page.locator('#hqrPanel').innerText(),/Nenhum influenciador/);
   assert.equal(await empty.page.locator('.hqr-total').count(),5);

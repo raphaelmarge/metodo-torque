@@ -9,11 +9,12 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { setTimeout: pause } = require('node:timers/promises');
 const uid = n => `60000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
-const users = { admin: uid(1), finance: uid(2), finance2: uid(3), outsider: uid(4) };
-const sessions = { admin: uid(1001), finance: uid(1002), finance2: uid(1003), outsider: uid(1004) };
+const users = { admin: uid(1), finance: uid(2), finance2: uid(3), outsider: uid(4), admin2: uid(5) };
+const sessions = { admin: uid(1001), finance: uid(1002), finance2: uid(1003), outsider: uid(1004), admin2: uid(1005) };
 const account = uid(101);
 const sources = [
   '../supabase/migrations/20260930193716_hq_referrals_ledger.sql',
+  '../supabase/hq-referrals-payment-contract-proposal.sql',
   '../supabase/hq-ops-proposal.sql',
   '../supabase/hq-influencer-portal-proposal.sql'
 ];
@@ -65,6 +66,10 @@ const fixtureSQL = `
 
 async function main() {
   const options = connectionOptions();
+  // A missing or changed Equipe release must fail closed, without falling back
+  // to proposal SQL. The shared loader validates its exact allowlist/LF/hashes.
+  const teamPackage = require('./hq-auth-ci/package-input.cjs').loadPackages().team;
+  assert.ok(teamPackage && teamPackage.migrations.length === 1, 'Pacote versionado Equipe obrigatorio');
   let pg;
   try { pg = require('./sql/node_modules/pg'); }
   catch { throw new Error('Cliente SQL ausente: npm ci --prefix tests/sql --ignore-scripts --no-audit --no-fund'); }
@@ -91,11 +96,14 @@ async function main() {
       await observer.query("insert into auth.users(id,email,email_confirmed_at) values($1,$2,'2020-01-01')", [users[name], name + '@example.test']);
       await observer.query('insert into auth.sessions(id,user_id) values($1,$2)', [sessions[name], users[name]]);
     }
-    await observer.query('insert into public.saas_admins values($1)', [users.admin]);
+    await observer.query('insert into public.saas_admins values($1),($2)', [users.admin,users.admin2]);
     await observer.query("insert into public.academias(id,nome,assinatura_status) values($1,'Conta sintetica','trial')", [account]);
     await observer.query("insert into public.saas_clientes values($1,'personal','trial')", [account]);
     for (const source of sources) await observer.query(fs.readFileSync(path.join(__dirname, source), 'utf8'));
     equal((await observer.query('select count(*)::int n from torque_hq.staff')).rows[0].n, 0, 'Instalacao nao concede staff');
+    for (const migration of teamPackage.migrations) await observer.query(migration);
+    equal((await observer.query('select staff_enabled from torque_hq.settings where id')).rows[0].staff_enabled,false,'Pacote Equipe preserva gate desligado');
+    equal((await observer.query('select count(*)::int n from torque_hq.team_registry')).rows[0].n,0,'Pacote Equipe nao inventa cadastros');
     await observer.query("insert into torque_hq.staff(user_id,role,enabled) values($1,'finance',true),($2,'finance',true)", [users.finance, users.finance2]);
     const left = await connect(database, 'torque-hq-test-left');
     const right = await connect(database, 'torque-hq-test-right');
@@ -134,11 +142,11 @@ async function main() {
       }
       throw new Error(label + ': bloqueio nao observado no servidor');
     }
-    async function compete(first,second,{ rollback=false,label }) {
+    async function compete(first,second,{ rollback=false,label,send=command }) {
       await left.query('begin');
       try {
-        const winner = await command(left,first);
-        const work = pending(() => command(right,second));
+        const winner = await send(left,first);
+        const work = pending(() => send(right,second));
         await blocked(work,label);
         await left.query(rollback ? 'rollback' : 'commit');
         return { winner, ...(await work.result) };
@@ -151,6 +159,11 @@ async function main() {
     }
     const payment = (kind,id,amountCents,reference,key) => envelope(kind+'.recordPayment',{id,amountCents,paidAt:'2020-01-01',reference},key);
 
+    await actor(left,'finance');
+    await denied(()=>snapshot(left),'42501','Instalacao minima nega staff habilitado enquanto gate esta desligado');
+    await actor(left,'admin');
+    equal((await snapshot(left)).role,'admin','Instalacao minima preserva admin existente');
+    await observer.query('update torque_hq.settings set staff_enabled=true where id'); // Explicit extended-mode fixture.
     await actor(left,'admin','anon');
     await denied(() => snapshot(left),'42501','Anon nao chama snapshot mesmo com sub de admin controlado');
     await actor(left,null); await denied(() => snapshot(left),'42501','Authenticated sem sub bloqueado');
@@ -210,6 +223,91 @@ async function main() {
       ok(result.ok,'Documentos independentes nao esperam uma transacao financeira global');
       await left.query('commit');
     } catch(error) { await left.query('rollback').catch(()=>{}); throw error; }
+
+    // Equipe is only an administrative registry. Test its own idempotency and
+    // row-version locks using the same independent backend connections, while
+    // the staff gate is explicitly off. Auth below is still this DB's SQL stub.
+    await observer.query('update torque_hq.settings set staff_enabled=false where id');
+    const teamCommand = async (client,input) => (await client.query('select public.hq_team_command($1::jsonb) value',[JSON.stringify(input)])).rows[0].value;
+    const teamSnapshot = async client => (await client.query('select public.hq_team_snapshot() value')).rows[0].value;
+    const teamCounts = async (key,who=users.admin) => (await observer.query(`select
+      (select count(*)::int from torque_hq.team_registry_commands where actor_id=$2 and idempotency_key=$1) commands,
+      (select count(*)::int from torque_hq.team_registry_audit where actor_id=$2 and idempotency_key=$1) audit`,[key,who])).rows[0];
+    const protectedState = async () => scalar(`select jsonb_build_object(
+      'authUsers',(select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'[]')) from auth.users t),
+      'authSessions',(select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'[]')) from auth.sessions t),
+      'admins',(select md5(coalesce(jsonb_agg(to_jsonb(t) order by user_id)::text,'[]')) from public.saas_admins t),
+      'gate',(select md5(jsonb_agg(to_jsonb(t))::text) from torque_hq.settings t),
+      'staff',(select md5(coalesce(jsonb_agg(to_jsonb(t) order by user_id)::text,'[]')) from torque_hq.staff t),
+      'scope',(select md5(coalesce(jsonb_agg(to_jsonb(t) order by user_id,account_id)::text,'[]')) from torque_hq.staff_account_scope t),
+      'opsCommands',(select count(*) from torque_hq.commands),'opsAudit',(select count(*) from torque_hq.audit),
+      'commissions',(select count(*) from hq_referrals_private.commissions)
+    )`);
+    const protectedBefore = await protectedState();
+    await actor(left,'admin'); await actor(right,'admin');
+    const teamSame = envelope('team.create',{name:'Pessoa sintetica concorrente',proposedRole:'viewer'},'team-same-key');
+    race = await compete(teamSame,teamSame,{send:teamCommand,label:'Equipe mesmo ator e chave'});
+    assert.ifError(race.error);
+    ok(race.value.replayed && race.value.id===race.winner.id && race.value.member.version===1,'Equipe replay concorrente preserva ID e versao');
+    equal(await teamCounts(teamSame.idempotencyKey),{commands:1,audit:1},'Equipe replay confirma exatamente um comando e uma auditoria');
+    equal(await scalar('select count(*)::int from torque_hq.team_registry where id=$1',[race.winner.id]),1,'Equipe replay cria somente um cadastro');
+    const memberId = race.winner.id;
+
+    const teamDifferent = {...teamSame,idempotencyKey:'team-divergent-key'};
+    race = await compete(teamDifferent,{...teamDifferent,payload:{...teamDifferent.payload,name:'Outro cadastro sintetico'}},{send:teamCommand,label:'Equipe chave igual e conteudo divergente'});
+    equal(race.error?.code,'22023','Equipe payload divergente falha apos commit vencedor');
+    equal(await teamCounts(teamDifferent.idempotencyKey),{commands:1,audit:1},'Equipe divergencia nao duplica comando nem auditoria');
+    equal(await scalar('select name from torque_hq.team_registry where id=$1',[race.winner.id]),teamDifferent.payload.name,'Equipe divergencia nao sobrescreve cadastro vencedor');
+
+    const teamRollback = {...teamSame,idempotencyKey:'team-rollback-key'};
+    race = await compete(teamRollback,teamRollback,{send:teamCommand,rollback:true,label:'Equipe aguardando rollback da mesma chave'});
+    assert.ifError(race.error);
+    ok(!race.value.replayed && race.value.id!==race.winner.id,'Equipe rollback libera chave sem reaproveitar cadastro desfeito');
+    equal(await scalar('select count(*)::int from torque_hq.team_registry where id=$1',[race.winner.id]),0,'Equipe cadastro desfeito nao sobrevive ao rollback');
+    equal(await teamCounts(teamRollback.idempotencyKey),{commands:1,audit:1},'Equipe so audita o comando confirmado apos rollback');
+
+    await actor(right,'admin2');
+    const teamEditA = envelope('team.update',{id:memberId,expectedVersion:1,name:'Edicao vencedora sintetica'},'team-version-winner');
+    const teamEditB = envelope('team.update',{id:memberId,expectedVersion:1,name:'Edicao concorrente sintetica'},'team-version-loser');
+    race = await compete(teamEditA,teamEditB,{send:teamCommand,label:'Equipe dois administradores editam a mesma versao'});
+    equal(race.error?.code,'PT409','Equipe segunda edicao rejeita versao desatualizada');
+    equal((await observer.query('select version,name,updated_by from torque_hq.team_registry where id=$1',[memberId])).rows[0],
+      {version:2,name:teamEditA.payload.name,updated_by:users.admin},'Equipe conserva os campos, versao e ator vencedores');
+    equal(await teamCounts(teamEditA.idempotencyKey),{commands:1,audit:1},'Equipe edicao vencedora tem uma auditoria');
+    equal(await teamCounts(teamEditB.idempotencyKey,users.admin2),{commands:0,audit:0},'Equipe conflito reverte reserva idempotente e auditoria');
+    equal(await scalar('select count(*)::int from torque_hq.team_registry_audit where object_id=$1',[memberId]),2,'Equipe cadastro e unica edicao confirmada produzem duas auditorias');
+    const teamRetriedEdit = {...teamEditB,payload:{...teamEditB.payload,expectedVersion:2}};
+    const updated = await teamCommand(right,teamRetriedEdit);
+    ok(!updated.replayed && updated.member.version===3,'Equipe chave de edicao rejeitada pode ser reenviada com versao atual');
+    equal(await teamCounts(teamRetriedEdit.idempotencyKey,users.admin2),{commands:1,audit:1},'Equipe reenvio corrigido confirma exatamente uma vez');
+
+    const teamReview = envelope('team.review',{id:memberId,expectedVersion:3,reviewStatus:'approved'},'team-review-winner');
+    const teamStatus = envelope('team.setStatus',{id:memberId,expectedVersion:3,status:'inactive'},'team-status-loser');
+    race = await compete(teamReview,teamStatus,{send:teamCommand,label:'Equipe revisao e inativacao disputam mesma versao'});
+    equal(race.error?.code,'PT409','Equipe inativacao concorrente nao sobrescreve revisao confirmada');
+    ok(race.winner.member.reviewStatus==='approved' && race.winner.member.version===4 && race.winner.member.effectiveAccess===false && race.winner.accessGranted===false,'Equipe aprovacao concorrente registra revisao sem conceder acesso');
+    equal(await teamCounts(teamReview.idempotencyKey),{commands:1,audit:1},'Equipe revisao confirmada e auditada uma vez');
+    equal(await teamCounts(teamStatus.idempotencyKey,users.admin2),{commands:0,audit:0},'Equipe inativacao rejeitada nao reserva chave nem auditoria');
+
+    // Revocation takes effect after its commit, on the next RPC, including a
+    // previously successful command's replay. It does not cancel in-flight RPCs.
+    const teamBeforeRevoke = await scalar('select count(*)::int from torque_hq.team_registry_commands');
+    await observer.query('delete from public.saas_admins where user_id=$1',[users.admin2]);
+    await denied(()=>teamSnapshot(right),'42501','Equipe administrador revogado perde leitura na conexao existente');
+    await denied(()=>teamCommand(right,teamRetriedEdit),'42501','Equipe administrador revogado nao obtem replay antigo');
+    await denied(()=>teamCommand(right,envelope('team.update',{id:memberId,expectedVersion:4,name:'Tentativa negada'})),'42501','Equipe administrador revogado nao envia comando novo');
+    equal(await scalar('select count(*)::int from torque_hq.team_registry_commands'),teamBeforeRevoke,'Equipe revogacao nao deixa reserva de comando');
+    equal((await teamSnapshot(left)).currentUserId,users.admin,'Equipe revogacao preserva outro administrador autorizado');
+    await observer.query('insert into public.saas_admins values($1)',[users.admin2]); // Restore only the test's own authority fixture.
+    equal(await protectedState(),protectedBefore,'Equipe preserva Auth, autoridades, staff, scopes, gate e dados OPS/ledger');
+    equal(await scalar(`select count(*)::int from (
+      select c.actor_id,c.idempotency_key from torque_hq.team_registry_commands c
+      left join torque_hq.team_registry_audit a using(actor_id,idempotency_key)
+      group by c.actor_id,c.idempotency_key having count(a.id)<>1
+    ) inconsistent`),0,'Equipe cada comando confirmado possui exatamente uma auditoria');
+    ok(await scalar('select bool_and(result is not null) from torque_hq.team_registry_commands'),'Equipe nenhuma reserva idempotente permanece incompleta');
+    await observer.query('update torque_hq.settings set staff_enabled=true where id'); // Restore prior OPS extended-mode fixture only.
+    await actor(left,'finance'); await actor(right,'finance2');
 
     // This boundary is deliberately AFTER revocation commits, not cancellation of
     // a command already authorized/in flight before that commit.

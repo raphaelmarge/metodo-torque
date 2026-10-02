@@ -3,9 +3,10 @@
 Série isolada em `codex/personal-treinos-20261002`, iniciada em
 `49440858b2318885281d132b9d936f24dd23e701`. A referência publicada informada
 na análise foi mt-v851 (`b05222a2852bd1e96d9a91804d3cd5bdd4f59d22`).
-A verificação remota durante o fechamento manteve main em `4944085`; a
-branch de HQ avançou separadamente para `8838be1`. Esta entrega não publica o site. O PR 863 e sua branch de HQ/Equipe são
-independentes e não foram modificados ou mesclados.
+Durante o fechamento, a outra frente integrou o PR 863 (HQ mt-v852) na main.
+Esta branch incorporou a main `e115092` sem conflitos e preservou as mudanças
+de HQ e suas correções de fixture. Não houve escrita na branch de HQ.
+Esta série do Personal continua em rascunho, sem merge na main ou publicação.
 
 ## Sequência implementada
 

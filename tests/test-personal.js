@@ -4170,7 +4170,8 @@ async function contextoAppAluno(browser, html, options = {}) {
   const cig = await p.evaluate(async () => {
     const S = window.MTStore, st = S.read("ptStudio", {});
     const j = st.alunos.find((a) => a.nome === "João Cliente");
-    const mes = new Date().toISOString().slice(0, 7);
+    // A arte escolhe o mês local; UTC pode já estar no mês seguinte.
+    const mes = window.diaISO(new Date()).slice(0, 7);
     const retSnap = JSON.stringify(j.retorno || null);
     const peso = {}; peso[mes + "-02"] = 82; peso[mes + "-20"] = 79.5;
     const feitos = {}; for (let i = 1; i <= 9; i++) feitos[mes + "-0" + i] = true;
@@ -13932,7 +13933,8 @@ async function contextoAppAluno(browser, html, options = {}) {
         { id: "fp1", nome: "Paula Pagou", valor: 300, modo: "mes", ativo: true },
         { id: "fd1", nome: "Davi Devendo", valor: 300, modo: "mes", ativo: true },
       ];
-      const mes = new Date().toISOString().slice(0, 7);
+      // Pagamentos e filtros compartilham o mês local do aplicativo.
+      const mes = window.diaISO(new Date()).slice(0, 7);
       st.pagamentos = [{ id: "pg1", alunoId: "fp1", valor: 300, data: mes + "-05" }];
       window.MTStore.write("ptStudio", st);
       const nomes = () => document.getElementById("listaAlunos").textContent;
@@ -13975,7 +13977,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     // com todo mundo pago, o filtro 'Sem pagamento' comemora em vez de ficar vazio
     const zerado = await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
-      st.pagamentos.push({ id: "pg2", alunoId: "fd1", valor: 300, data: new Date().toISOString().slice(0, 7) + "-06" });
+      st.pagamentos.push({ id: "pg2", alunoId: "fd1", valor: 300, data: window.diaISO(new Date()).slice(0, 7) + "-06" });
       window.MTStore.write("ptStudio", st);
       window.__alFiltro("devendo");
       return document.getElementById("listaAlunos").textContent;
