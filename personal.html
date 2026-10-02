@@ -17515,7 +17515,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
     }
     marcaTreinoMudou(st, alunoId);
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) return { erro: "Não foi possível aplicar o modelo. As fichas anteriores foram mantidas. Tente novamente após resolver o aviso de salvamento." };
     return { ok: true, qtd: qtd };
   }
   $("tplAplicar").addEventListener("click", function () {
@@ -17556,7 +17556,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.modelosPT = st.modelosPT || [];
     var mod = { id: S.uid(), nome: nome, fichas: fichas };
     st.modelosPT.push(mod);
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) return { erro: "Não foi possível salvar o modelo. As fichas do aluno continuam como estavam. Tente novamente após resolver o aviso de salvamento." };
     populaTplSel();
     return { ok: true, id: mod.id, fichas: fichas.length };
   }
@@ -18954,7 +18954,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
 
   // ---------- exercícios: catálogo TORQUE + os seus, uma lista só ----------
-  var exEditando = null;
+  var exEditando = null, exRascunhoNovo = null, exRascunhoIds = [];
   // tipo de movimento derivado do nome (com reforço da zona/grupo)
   function movimentoDe(nome, grupo) {
     var n = " " + String(nome).toLowerCase() + " ";
@@ -19069,7 +19069,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function gifExAtual() {
     var st = load();
-    return exEditando ? exPorId(st, exEditando) : null;
+    return exEditando ? exPorId(st, exEditando) || exRascunhoNovo : null;
   }
   function gifPintaAtual() {
     var ex = gifExAtual(); if (!ex) return;
@@ -19360,18 +19360,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // estrela: entra/sai dos favoritos e some da lista se o filtro "só favoritos" estiver ligado
     var fv = e.target.getAttribute && e.target.getAttribute("data-exfav");
     if (fv) { alternaFav(fv); renderBiblioteca(); renderFichas(); return; }
-    // Abrir num item do catálogo: vira cópia personalizada (SEU) e abre o editor
+    // Abrir o catálogo prepara uma cópia em memória; apenas Salvar confirma.
     var abrir = e.target.getAttribute && e.target.getAttribute("data-exabrir");
+    exRascunhoNovo = null; exRascunhoIds = [];
     if (abrir) {
       var stAb = load();
+      var exAntes = stAb.exercicios.slice();
       var exAb = exercicioPorNome(stAb, abrir);
-      S.write("ptStudio", stAb);
-      renderBiblioteca(); renderFichas();
+      // A cópia só passa a existir no armazenamento ao confirmar Salvar.
+      if (exAntes.indexOf(exAb) < 0) { exRascunhoNovo = exAb; exRascunhoIds = exAntes.map(function (item) { return item.id; }); }
       ed = exAb.id;
     }
     if (ed) {
       var st = load();
-      var ex = exPorId(st, ed);
+      var ex = exPorId(st, ed) || exRascunhoNovo;
       if (!ex) return;
       exEditando = ed;
       $("dlgExTitulo").textContent = ex.nome;
@@ -19381,6 +19383,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("dxVideo").value = ex.semVideo ? "" : videoDoEx(ex); $("dxDesc").value = ex.descricao || "";
       $("dxVideo").setCustomValidity("");
       gifAbreEditor(ex);
+      $("dlgEx").returnValue = "";
       $("dlgEx").showModal();
     }
     if (rm) {
@@ -19405,9 +19408,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("dxVideo").addEventListener("input", function () { this.setCustomValidity(""); });
   $("dlgEx").addEventListener("close", function () {
-    if ($("dlgEx").returnValue !== "ok" || !exEditando) return;
+    if ($("dlgEx").returnValue !== "ok" || !exEditando) {
+      exEditando = null; exRascunhoNovo = null; exRascunhoIds = [];
+      return;
+    }
     var st = load();
-    var ex = exPorId(st, exEditando);
+    if (exRascunhoNovo) {
+      var origem = alTextoBusca(exRascunhoNovo.nome).trim();
+      var nomeNovo = alTextoBusca($("dxNome").value.trim() || exRascunhoNovo.nome).trim();
+      var outraCopia = st.exercicios.some(function (item) {
+        if (item.id === exEditando || exRascunhoIds.indexOf(item.id) >= 0) return false;
+        var nomeAtual = alTextoBusca(item.nome).trim(), cat = catalogoAcha(item.nome);
+        return nomeAtual === origem || nomeAtual === nomeNovo || (cat && alTextoBusca(cat.n).trim() === origem);
+      });
+      if (outraCopia) {
+        alert("Já existe uma cópia deste exercício salva após a abertura. Sua edição continua aberta. Copie os ajustes, cancele e reabra a cópia existente antes de salvar.");
+        $("dlgEx").returnValue = "";
+        $("dlgEx").showModal();
+        return;
+      }
+    }
+    var ex = exPorId(st, exEditando) || (exRascunhoNovo && JSON.parse(JSON.stringify(exRascunhoNovo)));
     if (!ex) return;
     ex.nome = $("dxNome").value.trim() || ex.nome;
     ex.grupo = $("dxGrupo").value.trim();
@@ -19425,8 +19446,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ex.descricao = $("dxDesc").value.trim();
     ex.gif = gifSemEscolhido ? "" : gifEscolhido;
     ex.semGif = gifSemEscolhido;
+    if (exRascunhoNovo && !exPorId(st, exEditando)) st.exercicios.push(ex);
     exAlunosAfetados(st, exEditando).ids.forEach(function (aid) { marcaAppPendente(st, aid); });
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) {
+      alert("Não foi possível salvar o exercício. Sua edição continua aberta para tentar novamente.");
+      $("dlgEx").returnValue = "";
+      $("dlgEx").showModal();
+      return;
+    }
+    exEditando = null; exRascunhoNovo = null; exRascunhoIds = [];
     renderBiblioteca(); renderFichas();
   });
   var vtpEditando = null;
