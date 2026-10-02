@@ -688,6 +688,15 @@ html[data-tema="claro"] .sp-modes .btn[aria-pressed=true]{background:var(--roxo)
 #dlgEx .gif-bank-empty{grid-column:1/-1;margin:0;padding:10px 0;font-size:12px;line-height:1.5;color:var(--tk-tx3)}
 #dlgEx .gif-status{min-height:18px;margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--tk-tx3)}
 #dlgEx .gif-status:empty{display:none}
+/* Inclusão contínua e troca contextual na ficha. */
+#fichasBox .tdesq [hidden]{display:none!important}
+#fichasBox .td-pick-status{font-size:13px;line-height:1.5;color:var(--texto);margin:14px 0}
+#fichasBox .td-pick-status:empty,#fichasBox .td-troca-retorno:empty{display:none}
+#fichasBox .td-pick-done{width:100%;min-height:44px;margin-top:8px}
+#fichasBox .td-troca-aviso{padding:12px;margin:0 0 14px;border:1px solid var(--linha);border-radius:10px;background:var(--tk-sup)}
+#fichasBox .td-troca-aviso p{font-size:13px;line-height:1.5;margin:0 0 10px}
+#fichasBox .td-troca-retorno{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0;font-size:13px;line-height:1.5}
+#fichasBox .tdac button{min-height:44px}
 @media(max-width:900px){
   #vTreinos #trAbas{display:none}
   #vTreinos .trx-mobile-nav{display:flex;align-items:center;gap:12px;padding:0 0 24px;margin:0 0 24px;border-bottom:1px solid var(--linha)}

@@ -14081,6 +14081,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderFichas() {
     var el = $("fichasBox");
+    // Reutiliza o formulário do mesmo aluno: incluir ou reordenar não perde
+    // busca, filtros, séries individuais, mensagens de validação nem rolagem.
+    var seletores = {}, alunoAtual = $("tAluno").value;
+    var focoSeletor = document.activeElement && document.activeElement.closest('[data-esq]') ? document.activeElement : null;
+    if (el.dataset.alunoRenderizado === alunoAtual) {
+      el.querySelectorAll('[data-esq]').forEach(function (box) { seletores[box.getAttribute('data-esq')] = { el: box, scroll: box.scrollTop }; });
+    } else {
+      trocaExercicio = null;
+      chipsAbertos = {};
+      document.body.classList.remove('tela-escolher');
+    }
+    el.dataset.alunoRenderizado = alunoAtual;
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
     // antes de reconstruir, senão um re-render rápido perde o que abriu/fechou
     document.querySelectorAll("#fichasBox details[data-fdet]").forEach(function (d) {
@@ -14125,6 +14137,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdesqcab"><button type="button" class="btn sec mini" data-exfechar="' + f.id + '" aria-label="voltar pra ficha">‹ Voltar</button>' +
         '<b>Adicionar em ' + esc(letraF) + "</b></div>" +
         '<div class="tdrot">Escolher exercício</div>' +
+        '<div class="td-troca-aviso" data-extrocaaviso="' + f.id + '" hidden><p></p><button type="button" class="btn sec mini" data-extrocacancelar="' + f.id + '">Cancelar troca</button></div>' +
         '<div class="tdcasc">' +
         '<label>Tipo de treino<select data-exmov="' + f.id + '"><option value="">Todos…</option>' +
         '<option value="' + FAV_FILTRO + '">' + FAV_FILTRO + "</option>" +
@@ -14133,7 +14146,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<label>Tipo de série<select data-extec="' + f.id + '">' + opcoesTec("") + "</select></label>" +
         '<label>Grupamento<select data-exzona="' + f.id + '"><option value="">Todos…</option></select></label>' +
         "</div>" +
-        '<div class="tdbusca"><input data-exbusca="' + f.id + '" placeholder="Buscar nos exercícios" autocomplete="off">' +
+        '<div class="tdbusca"><input data-exbusca="' + f.id + '" aria-label="Buscar exercícios da ficha" placeholder="Buscar nos exercícios" autocomplete="off">' +
         '<span class="tdn" data-exn="' + f.id + '"></span></div>' +
         '<div class="tdchips" data-exchips="' + f.id + '"></div>' +
         // o select de verdade continua existindo (e a fonte da verdade de quem foi
@@ -14149,6 +14162,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdaac">' +
         '<button class="btn sec mini" data-exfavsel="' + f.id + '" title="marcar/desmarcar o exercício escolhido como favorito">☆ favorito</button>' +
         '<button class="btn" data-additem="' + f.id + '">+ Adicionar</button></div></div>' +
+        '<p class="td-pick-status" data-exstatus="' + f.id + '" role="status" aria-live="polite"></p>' +
+        '<button type="button" class="btn sec td-pick-done" data-exfechar="' + f.id + '">Concluir e ver ficha</button>' +
         "</div>" +
 
         /* ---------- coluna da direita: a ficha que esta sendo montada ---------- */
@@ -14187,6 +14202,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (videoDoEx(ex) || it.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + '</span><span class="td-edit-label">' + (aberto ? "Concluir edição" : "Editar séries") + "</span></button>" +
             MT_PRESCRICAO.editor(it, chave, aberto, opcoesTec) +
             '<span class="tdac">' +
+            '<button type="button" data-trocaitem="' + chave + '" aria-label="Trocar ' + esc(ex.nome) + '">Trocar exercício</button>' +
             (i > 0 ? '<button type="button" data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">Subir</button>' : "") +
             (i < f.itens.length - 1 ? '<button type="button" data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">Descer</button>' : "") +
             '<button type="button" data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">Remover</button></span></div>';
@@ -14194,6 +14210,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
          * tela cheia. No computador o escolher ja esta ao lado, entao o botao
          * some e fica so a frase. */
+        '<div class="td-troca-retorno" data-extrocaretorno="' + f.id + '" role="status" aria-live="polite"></div>' +
         '<button type="button" class="btn tdaddbt" data-exadd="' + f.id + '">+ Adicionar exercício</button>' +
         (f.itens.length ? "" : '<div class="tdvazio">Ficha vazia — comece pelo <b>+ Adicionar exercício</b></div>') + "</div>" +
         /* Parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de
@@ -14217,7 +14234,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdnota">' + esc(notaPublica(st, alunoId)) + "</div>" +
         "</div></div></div></details>";
     }).join("");
-    t.fichas.forEach(function (f) { populaCascata(f.id, st); });
+    t.fichas.forEach(function (f) {
+      var anterior = seletores[f.id], novo = el.querySelector('[data-esq="' + f.id + '"]');
+      if (anterior && novo) { novo.replaceWith(anterior.el); anterior.el.scrollTop = anterior.scroll; }
+      populaCascata(f.id, st);
+      pintaTrocaExercicio(f.id);
+    });
+    document.body.classList.toggle('tela-escolher', !!el.querySelector('.tdesq.abrir'));
+    if (focoSeletor && focoSeletor.isConnected) focoSeletor.focus({ preventScroll: true });
   }
   // cascata da ficha: tipo de treino filtra os grupamentos, que filtram o exercício.
   // Na tela 2d quem aparece sao os CHIPS; o <select data-exsel> continua existindo,
@@ -14241,9 +14265,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * render porque renderFichas() reconstroi a lista inteira a cada troca de
    * campo — sem isso o editor fechava na cara do professor a cada digito. */
   var exAberto = {};
-  /* a tela cheia de escolher exercicio (celular) vive numa classe no DOM, nao
-   * no estado: renderFichas() reconstroi a lista e ela fecha sozinha — que e
-   * justamente o que tem de acontecer depois de "+ Adicionar". */
+  // O seletor permanece aberto até Concluir/Voltar; uma troca usa o mesmo
+  // catálogo, mas só altera a ficha depois de uma confirmação explícita.
+  var trocaExercicio = null, desfazerTrocaExercicio = null;
+  function avisoSeletor(fid, mensagem) {
+    var el = document.querySelector('[data-exstatus="' + fid + '"]');
+    if (el) el.textContent = mensagem;
+  }
+  function pintaTrocaExercicio(fid) {
+    var box = document.querySelector('[data-esq="' + fid + '"]');
+    if (!box) return;
+    var troca = trocaExercicio && trocaExercicio.alunoId === $("tAluno").value && trocaExercicio.fid === fid;
+    box.classList.toggle('trocando', !!troca);
+    var aviso = box.querySelector('[data-extrocaaviso]');
+    aviso.hidden = !troca;
+    if (troca) aviso.querySelector('p').textContent = 'Trocar ' + trocaExercicio.nome + '. Mantém posição, séries, carga, descanso, técnica e observação. Revise a adequação ao novo exercício. Vídeo próprio e alternativas anteriores não serão transferidos.';
+    box.querySelector('[data-additem]').textContent = troca ? 'Confirmar troca' : '+ Adicionar';
+    var cabecalho = box.querySelector('.tdesqcab b');
+    if (!cabecalho.dataset.adicao) cabecalho.dataset.adicao = cabecalho.textContent;
+    cabecalho.textContent = troca ? 'Trocar exercício' : cabecalho.dataset.adicao;
+    box.querySelector('[data-exprescricao]').hidden = !!troca;
+    box.querySelector('[data-exobs]').closest('label').hidden = !!troca;
+    box.querySelector('[data-extec]').closest('label').hidden = !!troca;
+    var retorno = document.querySelector('[data-extrocaretorno="' + fid + '"]');
+    var desfazer = desfazerTrocaExercicio;
+    if (retorno && desfazer && desfazer.alunoId === $("tAluno").value && desfazer.fid === fid) {
+      retorno.innerHTML = '<span>Exercício trocado. Confira a prescrição.</span> <button type="button" class="btn sec mini" data-exdesfazertroca="' + esc(fid) + '">Desfazer troca</button>';
+    }
+  }
+  function fechaSeletor(fid) {
+    var box = document.querySelector('[data-esq="' + fid + '"]');
+    if (box) box.classList.remove('abrir');
+    document.body.classList.remove('tela-escolher');
+    if (trocaExercicio && trocaExercicio.fid === fid) { trocaExercicio = null; pintaTrocaExercicio(fid); }
+    var alvo = document.querySelector('[data-tdex^="' + fid + ':"] [data-exab]') || document.querySelector('[data-exadd="' + fid + '"]');
+    if (alvo) alvo.focus();
+  }
   function populaCascata(fid, stJa) {
     var movSel = document.querySelector('[data-exmov="' + fid + '"]');
     var zonaSel = document.querySelector('[data-exzona="' + fid + '"]');
@@ -14266,8 +14323,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var lista = itens.filter(function (x) { return !zonaAtual || x.grupo === zonaAtual; });
     // a busca so peneira o que a cascata ja escolheu — nao atropela o filtro
     var bs = document.querySelector('[data-exbusca="' + fid + '"]');
-    var termo = bs ? bs.value.trim().toLowerCase() : "";
-    if (termo) lista = lista.filter(function (x) { return x.nome.toLowerCase().indexOf(termo) >= 0; });
+    var termo = bs ? alTextoBusca(bs.value).trim() : "";
+    if (termo) lista = lista.filter(function (x) { return alTextoBusca(x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).indexOf(termo) >= 0; });
     lista.sort(function (a, b) {
       if (a.fav !== b.fav) return a.fav ? -1 : 1;
       if (a.seu !== b.seu) return a.seu ? -1 : 1;
@@ -14289,7 +14346,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var mostra = lista.slice(0, teto);
       box.innerHTML = (lista.length ? mostra.map(function (x) {
         var on = x.nome === exSel.value;
-        return '<button type="button" class="tdchip' + (on ? " on" : "") + '" data-exchip="' + fid + '" data-nome="' + esc(x.nome) + '">' +
+        return '<button type="button" class="tdchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-exchip="' + fid + '" data-nome="' + esc(x.nome) + '">' +
           (on ? "+ " : "") + esc(x.nome) + (x.fav ? " ★" : "") + "</button>";
       }).join("") : '<span class="muted" style="font-size:12.5px;">Nada com esse filtro — limpe a busca ou troque o grupamento.</span>') +
         (lista.length > mostra.length ? '<button type="button" class="tdchip mais" data-exmais="' + fid + '">+' + (lista.length - mostra.length) + "</button>" : "") +
@@ -14396,6 +14453,52 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // toque no chip = escolher o exercicio (o <select> escondido continua a fonte da verdade)
   $("fichasBox").addEventListener("click", function (e) {
+    var trocar = e.target.closest && e.target.closest('[data-trocaitem]');
+    if (trocar) {
+      if (!MT_PRESCRICAO.valida()) return;
+      var partes = trocar.getAttribute('data-trocaitem').split(':'), alunoTroca = $("tAluno").value;
+      var stTroca = load(), fTroca = treinoDe(stTroca, alunoTroca).fichas.find(function (f) { return f.id === partes[0]; });
+      var itemTroca = fTroca && fTroca.itens[+partes[1]];
+      if (!itemTroca) return;
+      if (trocaExercicio) { var anteriorTroca = trocaExercicio.fid; trocaExercicio = null; pintaTrocaExercicio(anteriorTroca); }
+      trocaExercicio = { alunoId: alunoTroca, fid: fTroca.id, indice: +partes[1], antes: JSON.stringify(itemTroca), itensAntes: JSON.stringify(fTroca.itens), nome: (exPorId(stTroca, itemTroca.exId) || {}).nome || 'exercício' };
+      var seletorTroca = document.querySelector('[data-esq="' + fTroca.id + '"]');
+      seletorTroca.querySelector('[data-exsel]').value = '';
+      seletorTroca.classList.add('abrir');
+      document.body.classList.add('tela-escolher');
+      populaCascata(fTroca.id, stTroca); pintaTrocaExercicio(fTroca.id);
+      avisoSeletor(fTroca.id, 'Escolha o exercício que entrará nesta posição.');
+      seletorTroca.querySelector('[data-exbusca]').focus();
+      return;
+    }
+    var cancelarTroca = e.target.closest && e.target.closest('[data-extrocacancelar]');
+    if (cancelarTroca) { fechaSeletor(cancelarTroca.getAttribute('data-extrocacancelar')); return; }
+    var desfazer = e.target.closest && e.target.closest('[data-exdesfazertroca]');
+    if (desfazer) {
+      if (!MT_PRESCRICAO.valida()) return;
+      var d = desfazerTrocaExercicio, alunoDesfazer = $("tAluno").value;
+      if (!d || d.alunoId !== alunoDesfazer || d.fid !== desfazer.getAttribute('data-exdesfazertroca')) return;
+      var stDesfazer = load(), fDesfazer = treinoDe(stDesfazer, alunoDesfazer).fichas.find(function (f) { return f.id === d.fid; });
+      var retornoTroca = document.querySelector('[data-extrocaretorno="' + d.fid + '"]');
+      if (!fDesfazer || JSON.stringify(fDesfazer.itens) !== d.depois) {
+        retornoTroca.textContent = 'A ficha mudou depois da troca. Para preservar os ajustes, escolha Trocar exercício novamente.';
+        desfazerTrocaExercicio = null; return;
+      }
+      var itemAnterior = JSON.parse(d.antes);
+      if (!exPorId(stDesfazer, itemAnterior.exId)) {
+        retornoTroca.textContent = 'O exercício anterior foi removido da biblioteca. Escolha Trocar exercício para selecionar outro.';
+        desfazerTrocaExercicio = null; return;
+      }
+      fDesfazer.itens[d.indice] = itemAnterior;
+      marcaTreinoMudou(stDesfazer, alunoDesfazer);
+      if (S.write('ptStudio', stDesfazer) === false) {
+        retornoTroca.querySelector('span').textContent = 'Não foi possível desfazer. Tente novamente.'; return;
+      }
+      desfazerTrocaExercicio = null; renderFichas();
+      document.querySelector('[data-extrocaretorno="' + d.fid + '"]').textContent = 'Troca desfeita. Prescrição anterior restaurada.';
+      document.querySelector('[data-exab="' + d.fid + ':' + d.indice + '"]').focus();
+      return;
+    }
     /* tocar na linha do exercicio abre (ou fecha) o editor dele. E o UNICO
      * caminho pra mexer em serie, repeticao, descanso, tipo de serie e
      * observacao — o resto da linha sao so as acoes de posicao. */
@@ -14423,6 +14526,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var abrirEsq = e.target.closest && e.target.closest("[data-exadd]");
     if (abrirEsq) {
+      if (trocaExercicio) { var fidAnterior = trocaExercicio.fid; trocaExercicio = null; pintaTrocaExercicio(fidAnterior); }
       var esqEl = document.querySelector('[data-esq="' + abrirEsq.getAttribute("data-exadd") + '"]');
       if (esqEl) {
         esqEl.classList.add("abrir");
@@ -14434,9 +14538,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var fecharEsq = e.target.closest && e.target.closest("[data-exfechar]");
     if (fecharEsq) {
-      var esqF = document.querySelector('[data-esq="' + fecharEsq.getAttribute("data-exfechar") + '"]');
-      if (esqF) esqF.classList.remove("abrir");
-      document.body.classList.remove("tela-escolher");
+      fechaSeletor(fecharEsq.getAttribute('data-exfechar'));
       return;
     }
     var chip = e.target.closest && e.target.closest("[data-exchip]");
@@ -14447,6 +14549,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var nomeC = chip.getAttribute("data-nome");
         selC.value = selC.value === nomeC ? "" : nomeC; // tocar de novo desmarca
         populaCascata(fidC);
+        var chipAtual = Array.from(document.querySelectorAll('[data-exchip="' + fidC + '"]')).find(function (el) { return el.getAttribute('data-nome') === nomeC; });
+        if (chipAtual) chipAtual.focus({ preventScroll: true });
       }
       return;
     }
@@ -18895,12 +18999,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
+    var trocaConfirmada = null;
     if (add) {
       var sel = document.querySelector('[data-exsel="' + add + '"]');
       var nomeSel = (sel.value || "").trim();
-      if (!nomeSel) { alert("Escolha o exercício nas listas (tipo de treino → grupamento → exercício)."); return; }
-      var prescricaoNova = MT_PRESCRICAO.lerNovo(add);
-      if (!prescricaoNova) return;
+      if (!nomeSel) { avisoSeletor(add, 'Escolha um exercício para continuar.'); return; }
+      var emTroca = trocaExercicio && trocaExercicio.alunoId === alunoId && trocaExercicio.fid === add ? trocaExercicio : null;
+      var prescricaoNova = emTroca ? null : MT_PRESCRICAO.lerNovo(add);
+      if (!emTroca && !prescricaoNova) return;
       // resolve pelo nome exato: seu personalizado primeiro, senão o catálogo (cria a cópia na hora)
       var achadoSel = (st.exercicios || []).find(function (x) { return x.nome.toLowerCase() === nomeSel.toLowerCase(); });
       var catSel = achadoSel ? null : (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nomeSel.toLowerCase(); });
@@ -18908,12 +19014,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var exIdSel = achadoSel ? achadoSel.id : exercicioPorNome(st, catSel.n).id;
       var f = t.fichas.find(function (x) { return x.id === add; });
       if (!f) return;
-      f.itens.push(Object.assign(prescricaoNova, {
-        exId: exIdSel,
-        obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
-        tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
-      }));
-      exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
+      if (emTroca) {
+        if (!MT_PRESCRICAO.valida()) return;
+        if (JSON.stringify(f.itens) !== emTroca.itensAntes) { avisoSeletor(add, 'A ficha mudou enquanto você escolhia. Cancele e abra a troca novamente.'); return; }
+        if (f.itens[emTroca.indice].exId === exIdSel) { avisoSeletor(add, 'Escolha um exercício diferente para trocar.'); return; }
+        var substituto = JSON.parse(emTroca.antes);
+        substituto.exId = exIdSel;
+        delete substituto.video; delete substituto.alternativas;
+        f.itens[emTroca.indice] = substituto;
+        trocaConfirmada = { alunoId: alunoId, fid: f.id, indice: emTroca.indice, antes: emTroca.antes, depois: JSON.stringify(f.itens) };
+        exAberto = {}; exAberto[f.id + ':' + emTroca.indice] = 1;
+      } else {
+        f.itens.push(Object.assign(prescricaoNova, {
+          exId: exIdSel,
+          obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
+          tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
+        }));
+        exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
+      }
     }
     if (rmF) {
       if (!confirm("Remover esta ficha inteira?")) return;
@@ -18940,10 +19058,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     marcaTreinoMudou(st, alunoId);
     if (S.write("ptStudio", st) === false) {
       if (add) document.querySelector('[data-exprescricao="' + add + '"] .sp-status').textContent = 'Não foi possível salvar. Confira o espaço do dispositivo e tente novamente.';
+      if (add) avisoSeletor(add, 'Não foi possível salvar. Confira o espaço do dispositivo e tente novamente.');
       return;
     }
-    if (add) document.body.classList.remove('tela-escolher');
+    if (add) document.querySelector('[data-exsel="' + add + '"]').value = '';
+    if (trocaConfirmada) { desfazerTrocaExercicio = trocaConfirmada; trocaExercicio = null; }
     renderFichas();
+    if (trocaConfirmada) {
+      fechaSeletor(add);
+      document.querySelector('[data-exab="' + add + ':' + trocaConfirmada.indice + '"]').focus();
+    } else if (add) {
+      avisoSeletor(add, nomeSel + ' adicionado. ' + f.itens.length + ' exercícios na ficha. Escolha o próximo ou conclua.');
+      if (e.detail === 0) {
+        var buscaProximo = document.querySelector('[data-exbusca="' + add + '"]');
+        buscaProximo.focus({ preventScroll: true }); buscaProximo.select();
+      }
+    }
   });
   $("tZap").addEventListener("click", function () {
     var st = load();
