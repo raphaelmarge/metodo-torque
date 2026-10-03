@@ -324,6 +324,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   // a visao Mes e onde moram o calendario do mes e a lista do dia (v635)
   await p.evaluate(() => { window.__agAba("sessoes"); window.__agVis.troca("mes"); });
   await p.waitForTimeout(300);
@@ -358,20 +359,22 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "08:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   const rec = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(rec === 4, "🔁 repetir toda semana gera as 4 sessões de uma vez");
   await p.evaluate(() => window.__agDia(diaISO(new Date(Date.now() + 864e5))));
   ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "clicar no dia de amanhã no calendário mostra o cabeçalho Amanhã");
   ok(await p.evaluate(() => /08:00/.test(document.getElementById("listaSessoes").textContent)), "detalhe do dia lista horário e aluno da sessão");
 
-  // choque de horário: agendar amanhã às 08:00 de novo pede confirmação
+  // Mesma sessão é duplicata; não pode ser liberada pelo aviso de choque.
   await p.uncheck("#sRep");
   await p.evaluate(() => {
     window.confirm = (m) => { window.__choqueMsg = m; return false; };
   });
   await p.click("#sAdd");
-  const choque = await p.evaluate(() => window.__choqueMsg || "");
-  ok(/mesmo horário/.test(choque) && /08:00/.test(choque) && /João Cliente/.test(choque), "choque de horário avisa antes de agendar");
+  await p.evaluate(() => window.__agendamentoPendente);
+  const choque = await p.textContent("#sAgStatus");
+  ok(choque === "Você já possui um agendamento para esta sessão.", "mesma sessão informa duplicata antes de agendar");
   const aposChoque = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(aposChoque === 4, "cancelar no aviso de choque não duplica a sessão");
   await p.evaluate(() => { window.confirm = () => true; });
@@ -398,6 +401,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "09:15");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   const multi = await p.evaluate(() => {
     const ses = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "09:15");
     return { n: ses.length, dows: [...new Set(ses.map((x) => new Date(x.data + "T12:00").getDay()))].sort().join(",") };
@@ -1669,6 +1673,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   });
   await p.fill("#sHora", "07:30");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
 
   /* ---- Agenda repaginada (tela 2c): a semana em grade ---- */
   {
@@ -3124,16 +3129,16 @@ async function contextoAppAluno(browser, html, options = {}) {
       const antesRm = le().sessoes;
       document.getElementById("sHora").value = "10:00";
       let choqueRm = ""; window.confirm = (m) => { choqueRm = m; return false; };
-      document.getElementById("sAdd").click();
-      out.remarcaRecusa = /mesmo horário/.test(choqueRm) && window.__agRemarca.id() === "v787-rm" &&
+      document.getElementById("sAdd").click(); await window.__agendamentoPendente;
+      out.remarcaRecusa = (choqueRm === "" && document.getElementById("sAgStatus").textContent === "Você já possui um agendamento para esta sessão.") && window.__agRemarca.id() === "v787-rm" &&
         !document.getElementById("sEditAviso").hidden && document.getElementById("sAdd").textContent === "Salvar remarcação" &&
         JSON.stringify(le().sessoes) === JSON.stringify(antesRm);
       document.getElementById("sHora").value = "10:30";
-      window.confirm = () => true; document.getElementById("sAdd").click(); window.confirm = cOrig;
+      window.confirm = () => true; document.getElementById("sAdd").click(); await window.__agendamentoPendente; window.confirm = cOrig;
       const depoisRm = le().sessoes, sessaoRm = depoisRm.find((x) => x.id === "v787-rm");
       out.remarcaCorrige = depoisRm.length === antesRm.length && depoisRm.filter((x) => x.id === "v787-rm").length === 1 &&
         !!sessaoRm && sessaoRm.data === iso(5) && sessaoRm.hora === "10:30" && sessaoRm.fixaId === "fixa-preservada" &&
-        window.__agRemarca.id() === null && document.getElementById("sAdd").textContent === "Agendar sessão";
+        window.__agRemarca.id() === null && document.getElementById("sAdd").textContent === "Sessão já agendada";
       // A16. o badge da Agenda acompanha a faixa de pedidos na hora; hora fora de HH:MM vira "a combinar"
       window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
         app_agenda: [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }],
@@ -3832,6 +3837,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "20:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(diaISO(new Date())); });
   await p.evaluate(() => {
     const linhas = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).filter((x) => x.querySelector("[data-feita]"));
@@ -4195,7 +4201,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     window.__agDia(diaISO(new Date())); // repinta a agenda com o aluno semeado
   });
   await p.waitForTimeout(300);
-  const turma = await p.evaluate(() => {
+  const turma = await p.evaluate(async () => {
     window.alert = () => {}; window.confirm = () => true;
     const j = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente");
     document.getElementById("sTurmaBt").click();
@@ -4207,7 +4213,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     document.getElementById("sData").value = iso;
     document.getElementById("sHora").value = "07:30";
     const antesN = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.length;
-    document.getElementById("sAdd").click();
+    document.getElementById("sAdd").click(); await window.__agendamentoPendente;
     const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const novas = st2.sessoes.filter((s) => s.data === iso && s.hora === "07:30");
     const out = { chips: chips.length >= 2, criadas: st2.sessoes.length - antesN,
