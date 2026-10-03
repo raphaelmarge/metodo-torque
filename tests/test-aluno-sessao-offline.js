@@ -4,6 +4,9 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const path = require('node:path');
 const core = require('../nativo/aluno/sessao');
+const fixtureURL = new URL('/session-offline-synthetic.html', process.env.BASE_URL || 'http://127.0.0.1:8765').href;
+// Também falha se um callback escapar da promessa acompanhada por node:test.
+process.on('unhandledRejection', error => { console.error(error); process.exitCode = 1; });
 const clone = x => JSON.parse(JSON.stringify(x));
 const header = () => ({ v: 1, scopeId: 'synthetic-student', sessionId: 'synthetic-session', deviceId: 'watch-a', plan: { id: 'plan-a', revision: 'r1', activity: 'run', steps: [{ id: 'step-a', label: 'Trecho sintético', durationMs: 60000, distanceM: null }] } });
 const event = (seq, type, data = {}) => ({ v: 1, id: 'event-' + seq, seq, deviceId: 'watch-a', type, at: '2026-10-03T12:00:00.000Z', data });
@@ -63,8 +66,8 @@ test('IndexedDB real: reabertura offline, concorrência, rollback, ACK e retry a
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   try {
     const context = await browser.newContext();
-    await context.route('**/*', route => route.request().url() === 'https://session.test/' ? route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Synthetic session</title>' }) : route.abort());
-    const page = await context.newPage(); await page.goto('https://session.test/');
+    await context.route('**/*', route => route.request().url() === fixtureURL ? route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Synthetic session</title>' }) : route.abort());
+    const page = await context.newPage(); await page.goto(fixtureURL);
     await page.addScriptTag({ path: path.join(__dirname, '../nativo/aluno/sessao.js') });
     await page.addScriptTag({ path: path.join(__dirname, '../nativo/aluno/indexeddb.js') });
     await context.setOffline(true);
