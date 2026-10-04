@@ -114,3 +114,10 @@ permanece trabalho pendente, não funcionalidade entregue no app.
 - Nenhum dado de aluno, captura ou credencial entrou no Git ou nos testes.
 - Histórico completo anterior à adoção não pode ser reconstruído quando não
   foi persistido. A introdução deste núcleo não recupera dados descartados.
+
+## Continuação em branch exclusiva
+
+A integração local posterior dos players/editor e seus limites estão em
+[treino-historico-recuperacao.md](treino-historico-recuperacao.md). Esta nota
+original continua registrando o escopo isolado do PR #867; não implica que SQL
+foi aplicado ou que a publicação da continuação ocorreu.

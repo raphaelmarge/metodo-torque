@@ -3,17 +3,19 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
+const FIXTURE = new URL('/history-fixture', BASE).href;
 const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   try {
     const ctx = await browser.newContext({ serviceWorkers: 'block' });
-    await ctx.route('**/*', r => r.request().url() === 'http://127.0.0.1:8765/history-fixture'
+    await ctx.route('**/*', r => r.request().url() === FIXTURE
       ? r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Fixture fictícia</title><button id="cancel">Cancelar</button>' }) : r.abort());
     await ctx.addInitScript({ content: fs.readFileSync(path.join(__dirname, '../app/treino-historico-core.js'), 'utf8') });
     const pages = await Promise.all([ctx.newPage(), ctx.newPage()]);
     async function init(p, actor) {
-      await p.goto('http://127.0.0.1:8765/history-fixture');
+      await p.goto(FIXTURE);
       await p.evaluate(actor => {
         window.allowed = true;
         window.journal = MT_TREINO_HISTORICO.createLocked({ storage: localStorage, locks: navigator.locks, scope: 'synthetic-only', actor, active: () => allowed });
