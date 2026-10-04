@@ -98,7 +98,7 @@ mesma versão instalada e o executável Chromium do sistema. Assertions intactas
 | Histórico SQL PGlite | 9 cenários aprovados |
 | Histórico browser | 6 cenários aprovados, duas abas reais |
 | Bundle incorporado | igualdade exata aprovada |
-| Histórico players/editor | 37 verificações aprovadas: consulta meses depois, revisão durante os três players, original, XP/conclusão, etapas, carga/reps, quota, rascunho obsoleto, legado, `tempoBase` e duas abas |
+| Histórico players/editor | 41 verificações aprovadas: consulta meses depois, revisão durante os três players, original, XP/conclusão, etapas, carga/reps, quota, recuperação após falha entre revisão/checkpoint, rascunho obsoleto, legado, `tempoBase` e duas abas |
 | Player experiência | 63 verificações aprovadas, incluindo rollback e retry |
 | Séries práticas | 50 verificações aprovadas |
 | Corrida retomada | 56 verificações aprovadas |

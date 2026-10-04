@@ -35,6 +35,16 @@ function ok(a,m){assert.ok(a,m);console.log('OK '+m);count++;}
   await p.locator('[data-th-live=corrida]').click();
   const liveRun=p.locator('.th-session[data-kind=corrida]');await liveRun.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await liveRun.locator('input[name=s]').fill('12');await liveRun.locator('input[name=reason]').fill('Corrigir medição durante corrida');await liveRun.getByRole('button',{name:'Salvar correção',exact:true}).click();
   eq(await p.evaluate(()=>({run:__cr.run,time:__cr.acum,finished:__treinoHistorico.list().find(s=>s.kind==='corrida').finished})),{run:false,time:12,finished:false},'corrida corrige durante execução pausada sem encerrar sessão');
+  await liveRun.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await liveRun.locator('input[name=s]').fill('13');await liveRun.locator('input[name=reason]').fill('Correção com falha de checkpoint');
+  await p.evaluate(()=>{window.savedCheckpointWrite=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('ptcorridaSessao:'))throw new DOMException('Quota','QuotaExceededError');return savedCheckpointWrite.call(this,k,v);};});
+  await liveRun.getByRole('button',{name:'Salvar correção',exact:true}).click();
+  ok((await liveRun.locator('form [role=alert]').innerText()).includes('checkpoint não foi salvo'),'falha entre revisão e checkpoint mantém erro e formulário');
+  eq(await p.evaluate(()=>__treinoHistorico.list().find(s=>s.kind==='corrida').targets.progress.value.s),13,'revisão sobrevive mesmo quando checkpoint falha');
+  await p.reload();await p.waitForFunction(()=>__treinoHistorico.ready());await p.evaluate(()=>{__trocaSec('treino');__trSub('cardio');document.getElementById('crRetomar').click();});
+  eq(await p.evaluate(()=>__cr.acum),12,'reload conserva o checkpoint anterior sem inventar atualização');
+  await p.evaluate(()=>document.getElementById('crGo').click());
+  eq(await p.evaluate(()=>Math.round(__cr.acum)),13,'retomada reaplica revisão durável pendente antes de iniciar cronômetro');
+  await p.evaluate(()=>document.getElementById('crGo').click());
   await p.evaluate(()=>{__trSub('cardio');document.getElementById('crGo').click();document.getElementById('crFim').click();});
   sessions=await p.evaluate(()=>__treinoHistorico.list());
   const run=sessions.find(s=>s.kind==='corrida');ok(run&&run.finished,'player de corrida grava sessão e encerramento no journal');
