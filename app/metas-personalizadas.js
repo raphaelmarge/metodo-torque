@@ -10,12 +10,13 @@
       if(typeof d.nome!=='string'||!d.nome.trim()||d.nome.length>80)throw Error('Dê um nome à meta (até 80 caracteres).');
       var out={id:d.id,nome:d.nome.trim(),tipo:d.tipo,alvo:d.alvo,inicio:d.inicio,criadaDia:d.criadaDia,encerrada:d.encerrada===true,icone:['halter','mapa','bandeira','alvo','montanha','bike','corrida'].includes(d.icone)?d.icone:'alvo'};
       if(d.tipo==='distancia'){if(!['corrida','bike','caminhada'].includes(d.modalidade))throw Error('Escolha a modalidade.');out.modalidade=d.modalidade;out.unidade='km';}
-      else{if(typeof d.exercicio!=='string'||!d.exercicio.trim()||d.exercicio.length>160)throw Error('Escolha um exercício.');out.exercicio=d.exercicio;out.unidade='kg';}
+      else{if(typeof d.exercicio!=='string'||!d.exercicio.trim()||d.exercicio.length>160)throw Error('Escolha um exercício.');out.exercicio=d.exercicio;out.exercicioId=typeof d.exercicioId==='string'&&d.exercicioId.trim()&&d.exercicioId.length<=160?d.exercicioId:'';out.unidade='kg';}
       return out;
     }
     function list(ds){if(ds==null)return [];if(!Array.isArray(ds)||ds.length>40)throw Error('Máximo de 40 metas, incluindo encerradas.');var seen={};return ds.map(function(d){var x=definition(d);if(seen[x.id])throw Error('Meta duplicada.');seen[x.id]=1;return x;});}
+    function loads(s){return Object.keys(s.cargas||{}).reduce(function(a,k){var rows=s.cargas[k];return Array.isArray(rows)?a.concat(rows):a;},[]);}
     function records(d,s){
-      var out=Object.create(null),bad=new Set(),raw=d.tipo==='distancia'?(Array.isArray(s.cardio)?s.cardio:[]):((s.cargas||{})[d.exercicio]||[]);
+      var out=Object.create(null),bad=new Set(),raw=d.tipo==='distancia'?(Array.isArray(s.cardio)?s.cardio:[]):loads(s);
       if(!Array.isArray(raw))raw=[];
       raw.forEach(function(r){
         if(!r||!day(r.d)||r.d<d.inicio||r.d>s.hoje)return;
@@ -24,8 +25,8 @@
           if(typeof r.id!=='string'||!r.id||r.m!==d.modalidade||r.status!=='completo'||r.parcial||!positive(r.k)||r.k>1000000||Number(r.k.toFixed(2))!==r.k||!positive(r.s))return;
           id='cardio:'+r.id;value=r.k;fingerprint=JSON.stringify([r.d,r.m,r.k,r.s,r.status]);
         }else{
-          if(r.g!==2||r.feito!==true||typeof r.i!=='string'||!r.i||!positive(r.kg))return;
-          id='carga:'+r.d+':'+r.i;value=r.kg;fingerprint=JSON.stringify([r.d,r.i,r.kg,r.serie,r.feito]);
+          if(!d.exercicioId||r.exercicioId!==d.exercicioId||r.g!==2||r.feito!==true||typeof r.i!=='string'||!r.i||!positive(r.kg))return;
+          id='carga:'+r.d+':'+r.i;value=r.kg;fingerprint=JSON.stringify([r.d,r.i,r.kg,r.serie,r.feito,r.exercicioId]);
         }
         if(out[id]&&out[id].fingerprint!==fingerprint)bad.add(id);
         out[id]={value:value,fingerprint:fingerprint};
@@ -34,8 +35,8 @@
     function evaluate(def,s,previous,now){
       var d=definition(def);if(!day(s.hoje))throw Error('Data atual inválida.');
       var state=previous?JSON.parse(JSON.stringify(previous)):{history:[]};if(!state||typeof state!=='object'||!Array.isArray(state.history)||state.history.length>100||(state.award&&(!state.award.evidence||typeof state.award.evidence!=='object'||Array.isArray(state.award.evidence))))throw Error('Histórico de metas inválido.');
-      var signature=JSON.stringify([d.tipo,d.alvo,d.inicio,d.exercicio||d.modalidade]),evidence=records(d,s);
-      if(!previous){var original=d.tipo==='distancia'?(Array.isArray(s.cardio)?s.cardio:[]):((s.cargas||{})[d.exercicio]||[]);state.baselineIds=Array.from(new Set((Array.isArray(original)?original:[]).filter(function(r){return r&&(d.tipo==='distancia'?typeof r.id==='string'&&r.id:typeof r.i==='string'&&r.i&&typeof r.d==='string');}).map(function(r){return d.tipo==='distancia'?'cardio:'+r.id:'carga:'+r.d+':'+r.i;})));state.history.push({tipo:'inicio',em:now,motivo:'Meta recebida neste aparelho; registros já presentes não concedem esta conquista.'});}
+      var signature=JSON.stringify([d.tipo,d.alvo,d.inicio,d.tipo==='carga'?d.exercicioId:d.modalidade]),evidence=records(d,s);
+      if(!previous){var original=d.tipo==='distancia'?(Array.isArray(s.cardio)?s.cardio:[]):loads(s);state.baselineIds=Array.from(new Set((Array.isArray(original)?original:[]).filter(function(r){return r&&(d.tipo==='distancia'?typeof r.id==='string'&&r.id:typeof r.i==='string'&&r.i&&typeof r.d==='string');}).map(function(r){return d.tipo==='distancia'?'cardio:'+r.id:'carga:'+r.d+':'+r.i;})));state.history.push({tipo:'inicio',em:now,motivo:'Meta recebida neste aparelho; registros já presentes não concedem esta conquista.'});}
       if(!Array.isArray(state.baselineIds))throw Error('Referência inicial da meta inválida.');
       state.baselineIds.forEach(function(id){delete evidence[id];});
       var keys=Object.keys(evidence).sort(),value=d.tipo==='distancia'?keys.reduce(function(n,k){return n+Math.round(evidence[k].value*100);},0)/100:keys.reduce(function(n,k){return Math.max(n,evidence[k].value);},0);

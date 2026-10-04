@@ -23,10 +23,10 @@ ok(run([r('one',5),r('two',5)],earned.state,{...base,alvo:20}).state.status==='r
 const futureBaseline=M.evaluate(base,{hoje:'2026-10-04',cardio:[r('future-present',20,'2026-10-06')]},null,'now').state;ok(run([r('future-present',20,'2026-10-06')],futureBaseline).state.status==='sem_dados');
 ok(run([r('one',5),r('two',5)],earned.state,{...base,encerrada:true}).state.status==='alcancada');
 ok(run([r('one',10)],null,{...base,encerrada:true}).state.status==='encerrada');
-const strength={...base,tipo:'carga',exercicio:'Supino',alvo:50};
+const strength={...base,tipo:'carga',exercicio:'Supino',exercicioId:'ex-a',alvo:50};
 const evaluate=(cargas,prior)=>M.evaluate(strength,{hoje:'2026-10-06',cargas},prior||initial(strength),'2026-10-06T12:00:00Z');
-const carga={d:'2026-10-05',g:2,i:'0:0:0',kg:50,serie:1,feito:true};
-ok(evaluate({Outro:[carga]}).state.status==='sem_dados');
+const carga={exercicioId:'ex-a',d:'2026-10-05',g:2,i:'0:0:0',kg:50,serie:1,feito:true};
+ok(evaluate({Outro:[carga]}).state.status==='alcancada'); // Rename keeps stable identity.
 ok(evaluate({Supino:[{...carga,feito:false},{...carga,g:1}]}).state.status==='sem_dados');
 const e=evaluate({Supino:[carga]});ok(e.state.status==='alcancada');ok(!('recorde' in e.state));
 ok(evaluate({Supino:[{...carga,kg:40}]},e.state).state.status==='revisao');
@@ -34,3 +34,28 @@ ok(evaluate({Supino:[carga,carga]}).registros===1);
 assert.throws(()=>M.list([base,base]));checks++;
 const isolated=eval('('+M.runtime.toString()+')')();ok(isolated.evaluate(base,{hoje:'2026-10-06',cardio:[r('a',10)]},initial(base),'now').state.status==='alcancada');
 console.log(checks+' verificações: prospectividade, fontes, dedupe, revisão persistente, encerramento e carga sem PR');
+
+const old={...carga};delete old.exercicioId;
+ok(evaluate({Supino:[old]}).state.status==='sem_dados');
+ok(evaluate({Supino:[{...carga,exercicioId:'ex-b'}]}).state.status==='sem_dados');
+ok(evaluate({Supino:[{...carga,exercicioId:'ex-b',kg:99},{...carga,kg:40}]}).valor===40);
+ok(evaluate({Supino:[{...carga,exercicioId:'ex-b'}]},e.state).state.status==='revisao');
+const legacyDef={...strength};delete legacyDef.exercicioId;
+ok(M.list([legacyDef])[0].nome===strength.nome);
+ok(M.evaluate(legacyDef,{hoje:'2026-10-06',cargas:{Supino:[carga]}},initial(legacyDef),'now').state.status==='sem_dados');
+const received=M.evaluate(strength,{hoje:'2026-10-04',cargas:{Supino:[old]}},null,'now').state;
+ok(evaluate({Supino:[carga]},received).state.status==='sem_dados'); // No identity retrofit bypasses baseline.
+const unchanged=JSON.stringify({legacyDef,old});evaluate({Supino:[old]});M.list([legacyDef]);ok(JSON.stringify({legacyDef,old})===unchanged);
+console.log(checks+' verificações totais, incluindo homônimos, renomeação e legado sem migração');
+// Exercise the actual series writer: legacy records must never acquire guessed identity.
+const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync(require('node:path').join(__dirname,'../app/aluno-builder.js'),'utf8');
+const code=source.slice(source.indexOf('  function normalizaSeries('),source.indexOf('  // v821: agenda única'));
+const memory={ptdc:{}},it={e:'Supino',exercicioId:'ex-a'},ctx={gv:{f:0,e:0},L:(k,d)=>JSON.parse(JSON.stringify(memory[k]||d)),Sv:(k,v)=>{memory[k]=v;return true;},isoHj:()=> '2026-10-06'};
+vm.createContext(ctx);vm.runInContext(code+'\nvar SR=runtimeSeries();',ctx);
+ctx.SR.marca(it,0,true);ok(memory.ptdc.Supino[0].exercicioId==='ex-a');
+ctx.SR.marca(it,0,false);ok(memory.ptdc.Supino[0].exercicioId==='ex-a');
+ctx.SR.marca({...it,exercicioId:'ex-b'},0,true);ok(!memory.ptdc.Supino[0].exercicioId);
+ctx.SR.marca(it,0,true);ok(!memory.ptdc.Supino[0].exercicioId);
+console.log(checks+' verificações totais; gravador real preserva identidade e não migra legado por nome');
+
+const oldAward={...e.state,signature:JSON.stringify(['carga',50,strength.inicio,'Supino'])};const oldAudit=JSON.stringify(oldAward);ok(evaluate({Supino:[old]},oldAward).state.status==='revisao');ok(JSON.stringify(oldAward)===oldAudit);console.log(checks+' verificações finais; histórico anterior preservado em revisão');

@@ -22777,7 +22777,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         var linhas = MT_APP_ALUNO.normalizaSeries(it);
-        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
+        return { exercicioId: typeof ex.id === "string" ? ex.id : "", nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
           carga: MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? linhas : undefined, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
@@ -22803,7 +22803,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
+        return { exercicioId: it.exercicioId || "", e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
           carga: it.carga == null ? null : it.carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? MT_APP_ALUNO.normalizaSeries(it) : undefined,
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
