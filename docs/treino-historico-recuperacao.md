@@ -94,7 +94,7 @@ A captura de evidência da nova tela usa exclusivamente dados sintéticos.
 
 ## Verificação local
 
-As verificações iniciais usaram Node 24.19.0. A continuação prepara Node
+As verificações iniciais usaram Node 24.19.0. A continuação usou Node
 **22.22.0**, Playwright **1.63.0** do lock e PostgreSQL **17.11** descartável em
 `127.0.0.1:55439`, em `/tmp`. Nenhuma instalação ou consulta de banco remoto.
 Chromium do sistema **151.0.7922.173** foi usado para os testes disponíveis.
@@ -119,6 +119,11 @@ mesma versão instalada e o executável Chromium do sistema. Assertions intactas
 | PostgreSQL real | 3 cenários aprovados com duas conexões e observador: lock/idempotência, revisões concorrentes e revogação |
 | Múltiplas sessões | 32 verificações aprovadas: várias execuções na mesma data nas três modalidades, edição offline, nova prescrição e recuperação após quota |
 | HTTP/replay | 7 cenários aprovados: negação/rede/RPC/servidor/JSON e replay de seis execuções na mesma data |
+| Concessão/loader | 13 verificações: concessão pendente, substituição do documento, escritor descartado e pagehide/pageshow durante aquisição |
+| Prévia visual | 100 verificações aprovadas; documento sem origem segura continua renderizando, sem liberar escrita sem Web Locks |
+| Acompanhamento | 33 verificações aprovadas; segunda execução pelo controle explícito preserva as duas prescrições |
+| Loader real | 25 verificações aprovadas: troca de aluno, retomada e revogação |
+| Referências por série | 20 verificações aprovadas sem gravar ao renderizar |
 | Bundle incorporado | igualdade exata aprovada |
 | Histórico players/editor | 41 verificações aprovadas: consulta meses depois, revisão durante os três players, original, XP/conclusão, etapas, carga/reps, quota, recuperação após falha entre revisão/checkpoint, rascunho obsoleto, legado, `tempoBase` e duas abas |
 | Player experiência | 63 verificações aprovadas, incluindo rollback e retry |
@@ -128,23 +133,64 @@ mesma versão instalada e o executável Chromium do sistema. Assertions intactas
 | Template player | 136 verificações aprovadas, múltiplas larguras/temas |
 | Infra | 74 aprovadas, incluindo regra `BASE_URL` |
 
+A concessão assíncrona é aguardada no preparo do teste do loader, mantendo todas
+as assertions. Um runtime descartado não pode recuperar o lock nem escrever;
+a substituição do documento aguarda sua liberação antes da nova concessão.
+Consultas isoladas por série continuam somente leitura sem depender do journal;
+as rotas de escrita continuam exigindo a concessão. A geração de UUID usa
+`crypto.getRandomValues` quando `randomUUID` não está disponível, permitindo a
+prévia somente leitura em documento sem origem segura, sem fallback inseguro
+para a exclusão mútua.
+
 O teste `test-treino-historico-browser.js` agora usa `BASE_URL` para a origem da
 fixture, sem mudar suas assertions. A regra que bloqueava o CI do PR #867 passou
 localmente em `test-infra.js`; não foi solicitado rerun ou alteração daquele PR.
 
-### Gates pendentes — sem fullpass
+### Resultado final local — sem fullpass
 
-1. O gate de PostgreSQL real anteriormente bloqueado foi resolvido localmente:
-   os três cenários passaram no PostgreSQL 17.11, sem substituir por PGlite.
-2. `bash tests/run.sh` foi iniciado com Node 22 e PostgreSQL local. O resultado
-   final do lote deve ser anexado antes de qualquer alegação de fullpass.
-   Não foi disparado CI remoto nem declarada validação de produção.
-3. Os navegadores exatos do CI estão bloqueados pelo HTTP 403 acima. Os testes
-   com Chromium do sistema são evidência adicional, não equivalência desse gate.
-4. RPCs/proposta SQL do PR #867 precisam de aprovação e homologação próprias.
-   Nenhuma chamada ao serviço remoto foi feita para testar token/acesso.
-5. A alteração visual dos sliders continua pendente; as duas falhas oficiais da
-   Library não foram repetidas na continuação.
+Código congelado e testado: `6b1fe2d100abe683da423f1cd2c986de4725320d`.
+Os commits posteriores de entrega alteram somente esta documentação.
+
+As **168 suítes** foram executadas em dois lotes de 84, com servidores separados
+nas portas 8896/8897, mesmas variáveis de ambiente e o mesmo comando
+`timeout 600 node "$test"` de `tests/run.sh`. O resultado por suíte foi gravado:
+**163 passaram e 5 falharam**. Todas as dez suítes `test-treino-historico-*.js`
+passaram nesse código congelado, inclusive PostgreSQL real e as 13 verificações
+da concessão. Nenhuma assertion foi enfraquecida.
+
+| Gate local que falhou | Evidência e limite |
+| --- | --- |
+| `test-confiabilidade-webkit.js` | Binário WebKit ausente; download oficial negado com HTTP 403 / Domain forbidden |
+| `test-hq-mobile-webkit.js` | Mesmo bloqueio de WebKit |
+| `test-personal-sales-trial.js:95` | Duas chamadas `minha_assinatura`, esperando uma; falha idêntica na base exata do PR #867, extraída por `git archive` e servida separadamente |
+| `test-personal-planejamento-mensal.js:134` | Rascunho de cópia não encerrou no lote concorrente; repetição individual passou 79 verificações no head e na base. Causa da intermitência não comprovada; falha original mantida no relatório |
+| `test-personal.js` | Quatro assertions: desempenho de 1000 alunos/12 mil pagamentos em 1032 ms, limite 900 ms; limpeza local; duas assertions de onboarding/push. Os três cenários funcionais falharam também na base em blocos extraídos sem mudar assertions, helpers ou opções do browser. O cenário de desempenho exige nova medição no ambiente do CI |
+
+A execução exploratória de `bash tests/run.sh` terminou antes com 167 suítes e
+12 falhas, incluindo oito suítes que passaram após as correções, os dois gates
+WebKit, sales-trial e timeout de Personal. Essa execução atravessou correções e
+**não** é evidência de um único SHA. Os logs exploratórios e finais estão
+separados; os dois lotes finais acima incluem a nova suíte de concessão.
+
+Permanecem necessários para integração/publicação:
+
+1. Reexecutar o CI no SHA que o coordenador integrar, com Chromium
+   153.0.8010.12/v1243 e WebKit 26.6/v2359. Chromium 151 local não substitui
+   esse gate. Nenhum rerun remoto foi solicitado.
+2. Tratar/revalidar as falhas locais listadas acima. Não foi alterado código
+   de vendas, exclusão de conta, onboarding ou seus limites de desempenho.
+3. Aprovar e homologar separadamente as RPCs/proposta SQL do PR #867.
+   Nenhuma RPC remota foi chamada: acesso em produção continua desconhecido.
+   Os testes distinguem leitura/envio negados, rede e serviço indisponível;
+   a negação observada neste executor foi a do download dos browsers.
+4. Materializar a referência visual pelo fluxo autorizado antes de remover
+   sliders. As duas falhas oficiais da Library não foram repetidas nesta
+   continuação. Os sliders e controles principais continuam preservados.
+
+Evidência complementar fora do repositório: `/workspace/torque-history-evidence/`
+contém logs finais por lote, reexecuções, comparações com a base e o runner usado.
+O bundle e o patch ficam em `/workspace/torque-history-recovery.bundle` e
+`/workspace/torque-history-recovery.patch`, com pré-requisito no SHA base do #867.
 
 ## Proposta de draft separado
 
