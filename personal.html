@@ -3981,6 +3981,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="app/aluno-builder.js"></script>
 <link rel="stylesheet" href="assets/personal-medalhas.css">
 <script src="assets/personal-medalhas.js"></script>
+<script src="assets/personal-commerce-images.js"></script>
 <script src="assets/prescricao-series.js"></script>
 <link rel="stylesheet" href="assets/relatorio-0809.css">
 <link rel="stylesheet" href="assets/personal-planejamento.css">
@@ -16851,8 +16852,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var box = $("clubeLista"); if (!box) return;
     var lst = (st.config || {}).clube || [];
     box.innerHTML = lst.length ? lst.map(function (p, i) {
-      return '<div class="sessao-pt"><b>' + esc(p.n) + "</b>" +
+      return '<div class="sessao-pt">' + (MT_COMMERCE_IMAGES.safe(p.f) ? '<img src="' + p.f + '" alt="" style="width:64px;height:48px;object-fit:contain;flex:none;">' : '') + '<b>' + esc(p.n) + "</b>" +
         '<span class="muted" style="font-size:12px;flex:1;min-width:0;">' + esc(p.b) + (p.c ? " · cupom " + esc(p.c) : "") + "</span>" +
+        '<button class="btn sec mini" data-commerce-image="clube" data-index="' + i + '">' + (p.f ? 'Trocar logo' : 'Logo') + '</button>' +
         '<button class="btn sec mini" data-clubex="' + i + '">Tirar</button></div>';
     }).join("") : '<div class="muted" style="font-size:12.5px;">Nenhuma parceria ainda.</div>';
   }
@@ -16861,12 +16863,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var c = $("clubeCupom").value.trim(), u = $("clubeLink").value.trim();
     if (!n || !b9) { $("clubeStatus").textContent = "Preencha o parceiro e o benefício."; return; }
     if (u && !/^https?:\/\//i.test(u)) { $("clubeStatus").textContent = "O link precisa começar com https://"; return; }
-    var st = load(); st.config = st.config || {};
+    if (MT_COMMERCE_IMAGES.busy("clube")) { $("clubeStatus").textContent = "Aguarde a imagem terminar de carregar."; return; }
+    var st = JSON.parse(JSON.stringify(load())); st.config = st.config || {};
     var lst = st.config.clube = st.config.clube || [];
     if (lst.length >= 20) { $("clubeStatus").textContent = "Máximo de 20 parcerias — tire uma antes."; return; }
     lst.push({ id: S.uid(), n: n.slice(0, 60), b: b9.slice(0, 90), c: c.slice(0, 30), u: u.slice(0, 200) });
     st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
-    save(st);
+    if (MT_COMMERCE_IMAGES.draft("clube")) lst[lst.length - 1].f = MT_COMMERCE_IMAGES.draft("clube");
+    if (!save(st)) { $("clubeStatus").textContent = "Não foi possível salvar. Os campos e a imagem foram mantidos."; return; }
+    MT_COMMERCE_IMAGES.reset("clube");
+    pintaClube(st); pintaLoja(st);
     ["clubeNome", "clubeBen", "clubeCupom", "clubeLink"].forEach(function (id) { $(id).value = ""; });
     $("clubeStatus").textContent = "Adicionada! Toque em Publicar lá em cima pra chegar no app dos alunos.";
   });
@@ -16893,7 +16899,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (logoOk(p.f) ? '<img src="' + p.f + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex:none;">' : "") +
         "<b>" + esc(p.n) + "</b>" +
         '<span class="muted" style="font-size:12px;flex:1;min-width:0;">' + (p.d ? esc(p.d) + " · " : "") + S.fmtBRL(+p.v) + "</span>" +
-        '<button class="btn sec mini" data-lojafoto="' + i + '">' + (p.f ? "Trocar foto" : "Foto") + "</button>" +
+        '<button class="btn sec mini" data-commerce-image="loja" data-lojafoto="' + i + '" data-index="' + i + '">' + (p.f ? "Trocar foto" : "Foto") + "</button>" +
         '<button class="btn sec mini" data-lojax="' + i + '">Tirar</button></div>';
     }).join("") : '<div class="muted" style="font-size:12.5px;">Nenhum produto próprio ainda' +
       ((st.servicosPT || []).length && !cfg.lojaServOff ? " — os " + (st.servicosPT || []).length + " serviços do cadastro já entram sozinhos." : ".") + "</div>";
@@ -16904,12 +16910,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("lojaAdd").addEventListener("click", function () {
     var n = $("lojaNome").value.trim(), d9 = $("lojaDesc").value.trim(), v = +String($("lojaValor").value).replace(",", ".");
     if (!n || !(v > 0)) { $("lojaStatus").textContent = "Preencha o produto e um preço maior que zero."; return; }
-    var st = load(); st.config = st.config || {};
+    if (MT_COMMERCE_IMAGES.busy("loja")) { $("lojaStatus").textContent = "Aguarde a imagem terminar de carregar."; return; }
+    var st = JSON.parse(JSON.stringify(load())); st.config = st.config || {};
     var lst = st.config.lojaItens = st.config.lojaItens || [];
     if (lst.length >= 30) { $("lojaStatus").textContent = "Máximo de 30 produtos — tire um antes."; return; }
     lst.push({ id: S.uid(), n: n.slice(0, 60), d: d9.slice(0, 90), v: Math.round(v * 100) / 100 });
     lojaMarcaTodos(st);
-    save(st);
+    if (MT_COMMERCE_IMAGES.draft("loja")) lst[lst.length - 1].f = MT_COMMERCE_IMAGES.draft("loja");
+    if (!save(st)) { $("lojaStatus").textContent = "Não foi possível salvar. Os campos e a imagem foram mantidos."; return; }
+    MT_COMMERCE_IMAGES.reset("loja");
+    pintaClube(st); pintaLoja(st);
     ["lojaNome", "lojaDesc", "lojaValor"].forEach(function (id) { $(id).value = ""; });
     $("lojaStatus").textContent = "Adicionado! Toque em Publicar lá em cima pra chegar no app dos alunos.";
   });
@@ -16928,40 +16938,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     save(st);
     $("lojaStatus").textContent = "Tirado — publique de novo pra sumir do app.";
   });
-  /* Foto do produto (v700): cortada em quadrado no centro e reduzida pra
-   * 320 px aqui mesmo (a original nunca sai do computador) — mesmo desenho da
-   * foto do aluno. Ela viaja no pacote do app, então leve importa. */
-  var lojaFotoIdx = null;
-  document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-lojafoto]"); if (!b) return;
-    lojaFotoIdx = +b.getAttribute("data-lojafoto");
-    $("lojaFotoFile").click();
-  });
-  $("lojaFotoFile").addEventListener("change", function () {
-    var f = this.files && this.files[0];
-    this.value = "";
-    if (!f || lojaFotoIdx == null) return;
-    var rd = new FileReader();
-    rd.onload = function () {
-      var im = new Image();
-      im.onload = function () {
-        var lado = Math.min(im.width, im.height), cv = document.createElement("canvas");
-        cv.width = cv.height = Math.min(320, lado);
-        cv.getContext("2d").drawImage(im, (im.width - lado) / 2, (im.height - lado) / 2, lado, lado, 0, 0, cv.width, cv.height);
-        var dado = cv.toDataURL("image/jpeg", .8);
-        var st = load();
-        var it = ((st.config || {}).lojaItens || [])[lojaFotoIdx];
-        lojaFotoIdx = null;
-        if (!it) return;
-        it.f = dado;
-        lojaMarcaTodos(st);
-        save(st);
-        $("lojaStatus").textContent = "Foto guardada! Publique pra chegar no app.";
-      };
-      im.src = rd.result;
-    };
-    rd.readAsDataURL(f);
-  });
+  MT_COMMERCE_IMAGES.init({load:load, save:save, mark:lojaMarcaTodos, render:function(st){pintaClube(st);pintaLoja(st);}});
   window.__lojaPT = pintaLoja; // testes
   $("persPre").addEventListener("click", function (e) {
     var b = e.target.closest("[data-perscor]");
@@ -23002,7 +22979,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       playlistApp: /^https?:\/\//i.test(String((st.config || {}).playlistUrl || "")) ? String(st.config.playlistUrl).slice(0, 300) : "",
       // v697: clube de vantagens — parcerias viram cupons no app (link só http)
       clubeApp: ((st.config || {}).clube || []).slice(0, 20).map(function (p) {
-        return { n: p.n, b: p.b, c: p.c || "", u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
+        return { n: p.n, b: p.b, c: p.c || "", f: MT_COMMERCE_IMAGES.safe(p.f), u: /^https?:\/\//i.test(p.u || "") ? p.u : "" };
       }),
       // v698: loja do app — produtos manuais + serviços do cadastro (desligáveis)
       // v700: a foto do produto viaja junto (só data:image validada, até 120 KB)
@@ -24751,6 +24728,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     Object.keys(cfg.capasTipo || {}).forEach(function (k) { soma(cfg.capasTipo[k]); });
     soma(cfg.capaTreino); soma(cfg.logo); soma((cfg.sitePro || {}).logo);
     (cfg.lojaItens || []).forEach(function (it) { soma(it && it.f); });
+    (cfg.clube || []).forEach(function (it) { soma(it && it.f); });
     var tv = (st || {}).treinosV2 || {};
     Object.keys(tv).forEach(function (aid) {
       var tr = tv[aid] || {};
