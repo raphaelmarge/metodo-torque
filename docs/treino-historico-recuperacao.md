@@ -146,10 +146,11 @@ O teste `test-treino-historico-browser.js` agora usa `BASE_URL` para a origem da
 fixture, sem mudar suas assertions. A regra que bloqueava o CI do PR #867 passou
 localmente em `test-infra.js`; não foi solicitado rerun ou alteração daquele PR.
 
-### Resultado final local — sem fullpass
+### Execução ampla anterior — sem fullpass
 
 Código congelado e testado: `6b1fe2d100abe683da423f1cd2c986de4725320d`.
-Os commits posteriores de entrega alteram somente esta documentação.
+Essa é a revisão dos dois lotes abaixo. O fechamento posterior das três suítes
+locais está descrito adiante e não alterou código de produção.
 
 As **168 suítes** foram executadas em dois lotes de 84, com servidores separados
 nas portas 8896/8897, mesmas variáveis de ambiente e o mesmo comando
@@ -172,13 +173,78 @@ WebKit, sales-trial e timeout de Personal. Essa execução atravessou correçõe
 **não** é evidência de um único SHA. Os logs exploratórios e finais estão
 separados; os dois lotes finais acima incluem a nova suíte de concessão.
 
+### Fechamento das três falhas locais — 04/10/2026
+
+Revisão dos testes corrigidos: `8230496f3c498b29d8c75160b70828593790d555`.
+Alterados somente `tests/test-personal-sales-trial.js`,
+`tests/test-personal-planejamento-mensal.js` e `tests/test-personal.js`.
+Todas as assertions anteriores foram mantidas e seis foram acrescentadas.
+Nenhuma funcionalidade ou código de produção mudou nesta etapa.
+
+| Falha | Causa observada / base versus head | Fechamento |
+| --- | --- | --- |
+| Sales-trial | O mock começa a oferecer nuvem enquanto o timer de boot de 3 s ainda está pendente. O stack identifica uma chamada no clique e outra em `personal.html:24163`, na consulta automática. Além disso, o boot pode gravar a régua e a migração do catálogo no snapshot integral do studio. O teste original falha também na base #867. | Aguardar o boot, verificar que ele conserva a assinatura, zerar somente o contador de chamadas e capturar o snapshot antes do clique. Data fixa instalada antes do carregamento evita troca de minuto e preserva handles dos timers. A igualdade integral do snapshot e a assertion de exatamente uma RPC no clique permanecem. **5 grupos passaram no head e na base com a fixture corrigida.** |
+| Planejamento mensal | `dialog.close()` fecha o modal, mas a remoção do nó é feita pelo evento assíncrono `close` em `assets/relatorio-0809.js:153`. `locator.count()` não espera esse evento: a assertion imediata era intermitente. O módulo é idêntico ao da base. | Aguardar `detached`, manter a assertion original e conferir também os dados efetivamente copiados. **80 verificações passaram no head e na base.** |
+| Personal — exclusão | O sleep de 600 ms podia atravessar o redirecionamento de 1200 ms sob carga. O `addInitScript` da própria fixture recriava o perfil no novo documento. Uma reprodução com espera maior mostrou perfil/studio reaparecendo; os mesmos blocos falhavam na base. | Semear uma única vez por contexto, esperar o recibo da limpeza e manter a assertion original de ausência. Depois do reload, verificar também que perfil e aluno apagado não voltam. |
+| Personal — onboarding/push | O cenário exige `Notification.permission === 'default'`, mas o Chromium disponível devolve `denied`; `__pushMostra` corretamente nem é definido. As duas assertions falhavam igualmente na base. | Fixture explícita de `default`, sem conceder permissão real, mais cenário separado de `denied` e contador que comprova ausência de solicitação automática. Os blocos originais corrigidos passaram contra o código da base. |
+| Personal — benchmark | O limite permaneceu **900 ms**. Na execução concorrente anterior houve 1032 ms. Três amostras isoladas do bloco original: base **869/764/884 ms**; head **856/1254/878 ms**. A amostra alta foi mantida como evidência de variação temporal local, sem atribuir uma causa de produção não demonstrada. | Na suíte **Personal completa, executada sozinha**, o bloco passou em **729 ms** e o processo terminou com **TUDO PASSOU / exit 0**. Nenhum limite, assertion ou trecho de produção medido foi alterado. |
+
+`personal.html`, `assets/relatorio-0809.js`, `assets/excluir-conta.js` e os
+helpers `_dia.js` / `_nuvem.js` continuam byte a byte iguais à base #867.
+A comparação usou `git archive` em diretório temporário, sem checkout ou escrita
+na branch do PR #867. Para os cenários corrigidos, cópias dos testes atuais foram
+executadas contra esse código de produção da base; os arquivos originais da
+base também foram preservados. Não foi alegado fullpass da suíte Personal
+inteira na base: ali foram comparados seus blocos funcionais e de benchmark.
+
+**Resultado do fechamento:** as três suítes locais passaram; infra passou
+**74/74**. Não foi repetido o lote integral de 168 após essas alterações de teste.
+Os logs anteriores de 163/168 são históricos; não foram sobrescritos nem
+convertidos artificialmente em um novo fullpass. Permanecem os dois gates WebKit
+indisponíveis e a necessidade do CI com os browsers exatos.
+
+Comandos da validação no head (servidor local do worktree na porta 8894):
+
+```bash
+export PATH=/tmp/torque-node22/node_modules/node-linux-x64/bin:$PATH
+export NODE_PATH=/workspace/torque-history-recovery/tests/ci/node_modules
+export NODE_OPTIONS=--require=/tmp/torque-test-preload.js
+export CHROMIUM_PATH=/usr/bin/chromium
+export BASE_URL=http://127.0.0.1:8894
+node tests/test-personal-sales-trial.js
+node tests/test-personal-planejamento-mensal.js
+timeout 600 node tests/test-personal.js
+node tests/test-infra.js
+```
+
+Comparação de base, em servidor local separado na porta 8898:
+
+```bash
+mkdir -p /tmp/torque-base-trial
+git archive b2e306736ae5dd86a6daebb988578f82418a9457 | tar -x -C /tmp/torque-base-trial
+# Servir /tmp/torque-base-trial em 127.0.0.1:8898 em outro terminal.
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/test-personal-sales-trial.js
+cp tests/test-personal-sales-trial.js /tmp/torque-base-trial/tests/.fixed-sales-trial.js
+cp tests/test-personal-planejamento-mensal.js /tmp/torque-base-trial/tests/.fixed-planejamento.js
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/.fixed-sales-trial.js
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/.fixed-planejamento.js
+```
+
+O extrator dos blocos de Personal, os blocos efetivamente executados, as medições
+e os logs ficam em `torque-history-evidence/local-gates-closure/` no pacote de
+evidências. O extrator conserva os blocos e suas assertions, acrescentando só
+o lançamento do navegador e o ambiente sintético necessário para executá-los.
+Não houve nova tentativa de baixar WebKit, mudança de permissões reais ou
+alteração remota.
+
 Permanecem necessários para integração/publicação:
 
 1. Reexecutar o CI no SHA que o coordenador integrar, com Chromium
    153.0.8010.12/v1243 e WebKit 26.6/v2359. Chromium 151 local não substitui
    esse gate. Nenhum rerun remoto foi solicitado.
-2. Tratar/revalidar as falhas locais listadas acima. Não foi alterado código
-   de vendas, exclusão de conta, onboarding ou seus limites de desempenho.
+2. Confirmar no CI o fechamento local descrito acima. Os três gates locais
+   passaram em reexecução, sem alterar código de vendas, exclusão de conta,
+   onboarding ou o limite de desempenho; a variação do benchmark foi registrada.
 3. Aprovar e homologar separadamente as RPCs/proposta SQL do PR #867.
    Nenhuma RPC remota foi chamada: acesso em produção continua desconhecido.
    Os testes distinguem leitura/envio negados, rede e serviço indisponível;
