@@ -32,6 +32,8 @@ async function contextFor({width=390, native=false, platform='android'}={}) {
   },{native,platform,locked});
   const page = await context.newPage(), errors=[];
   page.on('pageerror', e=>errors.push(e.message));
+  // Instalar antes do boot preserva os handles dos timers criados pelo painel.
+  await page.clock.setFixedTime(new Date('2026-09-12T12:00:00Z'));
   await page.goto(base+'/personal.html');
   await page.waitForFunction(()=>window.__assinatura && window.__telaAssinatura);
   return {context,page,errors};
@@ -76,7 +78,7 @@ async function snapshot(page) {
   }
   {
     const {context,page}=await contextFor();
-    const before=await snapshot(page);
+    const initial=await snapshot(page);
     try {
     await page.evaluate(()=>{
       window.__salesRpc=[];
@@ -87,6 +89,16 @@ async function snapshot(page) {
         window.__salesRpc.push(name);return Promise.reject(new Error('fixture offline'));
       }});
     });
+    // A consulta automática de boot usa o mesmo mock assim que a nuvem aparece.
+    // Espere sua conclusão antes de medir exclusivamente o clique do usuário.
+    await page.waitForFunction(()=>window.__salesRpc.length===1);
+    assert.deepEqual(await page.evaluate(()=>window.__salesRpc),['minha_assinatura']);
+    // A nuvem fictícia também libera as migrações e a régua de boot do painel.
+    // Capture o estado antes do clique só depois dessas tarefas legítimas.
+    await page.waitForFunction(()=>{const s=JSON.parse(localStorage.getItem('mtapp:ptStudio'));return s._exSeed2===1&&s.pushLog&&s.config.reguaRodouEm;});
+    assert.equal((await snapshot(page)).ass,initial.ass,'consulta automática sem resposta conserva a assinatura');
+    await page.evaluate(()=>{window.__salesRpc=[];});
+    const before=await snapshot(page);
     await page.locator('#taRever').click();
     assert(await page.locator('#taRever').isDisabled());
     await page.waitForFunction(()=>!document.getElementById('taRever').disabled);
