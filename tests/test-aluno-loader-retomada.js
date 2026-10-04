@@ -51,7 +51,8 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   await page.clock.setFixedTime(new Date('2026-09-29T10:00:00-03:00'));
   async function abrir(aluno) {
     await page.goto(BASE + '/app/?t=' + tokens[aluno]);
-    await page.waitForFunction(() => window.__crSessao && window.__wodSessao);
+    // Os players dependem da concessão assíncrona de escrita antes da largada.
+    await page.waitForFunction(() => window.__crSessao && window.__wodSessao && window.__treinoHistorico.ready());
   }
   async function iniciar(aluno, segundos, km, circuito) {
     await page.evaluate(({ aluno, segundos, km, circuito }) => {

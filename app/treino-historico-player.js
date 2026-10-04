@@ -4,17 +4,18 @@
  * Fonte incorporada no builder por tools/treino-historico/regen-runtime.js. */
 (function (root) {
   'use strict';
-  function create(C) {
-    var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false;
+  function makePlayer(C) {
+    var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false, disposed = false, leaseRequest = null, waiting = !!C.waitFor, epoch = 0;
     var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '';
     function uid() { return crypto.randomUUID(); }
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function same(a, b) { return core.canonical(a) === core.canonical(b); }
     function raw(k, d) { var v = C.storage.getItem(k); return v === null ? d : JSON.parse(v); }
-    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error('OTHER_TAB'); }
-    function status(s) { message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
+    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (disposed) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error((acquiring||waiting)?'LOCK_PENDING':'OTHER_TAB'); }
+    function status(s) { if(disposed)return;message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
     function error(e) {
-      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
+      if(disposed)return false;
+      var m = { LOCK_PENDING: 'Preparando o histórico. Aguarde um instante antes de iniciar.', OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
       status(m[e.code || e.message] || 'Não foi possível salvar o histórico. Seus registros anteriores foram mantidos; libere espaço e tente novamente.');
       if (C.error) C.error(message);
       return false;
@@ -33,23 +34,26 @@
     }
     if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
     function acquire() {
-      if (lease || acquiring) return;
+      if (disposed || waiting || lease || acquiring) return;
       if (!navigator.locks) { error(new Error('LOCKS_UNAVAILABLE')); return; }
-      acquiring = true;
-      navigator.locks.request('tqWorkoutJournal:' + encodeURIComponent(C.scope), { ifAvailable: true }, function (lock) {
+      acquiring = true;var acquisition=epoch;
+      leaseRequest = navigator.locks.request('tqWorkoutJournal:' + encodeURIComponent(C.scope), { ifAvailable: true }, function (lock) {
+        if(disposed||acquisition!==epoch)return;
         acquiring = false;
         if (!lock) { error(new Error('OTHER_TAB')); return; }
-        if (!C.active()) return;
+        if (disposed || !C.active()) return;
         lease = true; status('Histórico salvo neste aparelho.'); schedule();
         return new Promise(function (resolve) { release = resolve; });
       }).catch(error);
     }
-    function stop() { lease = false; clearTimeout(timer); if (release) release(); release = null; }
+    function stop() { epoch++;acquiring=false;lease = false; clearTimeout(timer); if (release) release(); release = null; }
     window.addEventListener('pagehide', stop);
     window.addEventListener('pageshow', acquire);
     window.addEventListener('online', schedule);
-    window.addEventListener('storage', function () { if (!C.active()) { stop(); error(new Error('IDENTITY_CHANGED')); } });
-    acquire();
+    function identityChanged() { if (!C.active()) { stop(); error(new Error('IDENTITY_CHANGED')); } }
+    window.addEventListener('storage', identityChanged);
+    function dispose() { disposed=true;stop();window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',acquire);window.removeEventListener('online',schedule);window.removeEventListener('storage',identityChanged);return leaseRequest||Promise.resolve(); }
+    if(C.waitFor)Promise.resolve(C.waitFor).then(function(){waiting=false;acquire();});else acquire();
     function begin(kind, id, date, prescribed, legacy) {
       try { check(); journal.start({ id: id, kind: kind, date: date, prescribed: legacy ? {} : clone(prescribed), legacy: !!legacy }); return true; } catch (e) { return error(e); }
     }
@@ -264,7 +268,7 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
   }
-  root.MT_TREINO_HISTORICO_PLAYER={create:create};
+  root.MT_TREINO_HISTORICO_PLAYER={create:makePlayer};
 })(typeof self!=='undefined'?self:this);

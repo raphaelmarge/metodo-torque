@@ -99,7 +99,7 @@
     function indice(it) { return Math.max(0, Math.min(it.s - 1, gv.sel == null ? gv.s : gv.sel)); }
     function registro(it, si, fi, ei) {
       var id = slot(fi == null ? gv.f : fi, ei == null ? gv.e : ei, si);
-      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id && TH.belongs(r,fi == null ? gv.f : fi,isoHj()); }).pop() || null;
+      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id && (typeof TH==='undefined'||TH.belongs(r,fi == null ? gv.f : fi,isoHj())); }).pop() || null;
     }
     function anterior(it, si) {
       // A ordem de chegada/sincronização não é a ordem da execução.
@@ -126,11 +126,11 @@
     function feitas(fi, ei) {
       var it = GUIA[fi] && GUIA[fi].it[ei], ids = {};
       if (!it) return 0;
-      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s && TH.belongs(r,fi,isoHj())) ids[r.i] = 1; });
+      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s && (typeof TH==='undefined'||TH.belongs(r,fi,isoHj()))) ids[r.i] = 1; });
       return Object.keys(ids).length;
     }
     function volume(fi, dia) {
-      var f = GUIA[fi], h = L("ptdc", {}), total = TH.volume(fi,dia), vistos = {};
+      var f = GUIA[fi], h = L("ptdc", {}), total = typeof TH==='undefined'?0:TH.volume(fi,dia), vistos = {};
       if (!f) return 0;
       f.it.forEach(function (it, ei) {
         var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia && !r.hid; });
@@ -267,7 +267,7 @@
     function sugestao(it, si, ei, a, u) {
       var r = /^\d+$/.test(a.reps) && +a.reps >= 1 && +a.reps <= 1000 ? String(+a.reps) : '';
       var kg = a.carga, pref = gv.f + ':' + ei + ':', leg = gv.f + ':' + ei;
-      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g !== 2 || TH.belongs(x,gv.f,isoHj())) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
+      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g !== 2 || typeof TH==='undefined' || TH.belongs(x,gv.f,isoHj())) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
       var hoje = feitasHoje.filter(function (x) { return x.g === 2 && x.serie === si; }).pop() || feitasHoje[feitasHoje.length - 1];
       var mesmaCarga = hoje && (hoje.g === 2 ? SR.alvo(it, hoje.serie - 1).carga === a.carga : !it.seriesDetalhadas);
       if (hoje && (kg == null || mesmaCarga)) kg = +hoje.kg;
@@ -302,7 +302,7 @@
       if (draft) { v = draft.kg; r = draft.reps; sug = Object.assign({}, draft.sugeridos || {}); }
       else if (!reg && !done) { var proposto = sugestao(it, si, ei, a, u); v = proposto.kg; r = proposto.reps; sug = { kg: v !== '', reps: r !== '' }; }
       gv.formSerie.sugeridos = sug;
-      gv.formSerie.historyHeads = TH.heads(gv.f, isoHj(), id);
+      gv.formSerie.historyHeads = typeof TH==='undefined'?[]:TH.heads(gv.f, isoHj(), id);
       var reguas = '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div>';
       return '<div class="gcg gserie-form' + (fechamento ? ' gserie-fechamento' : '') + '"><div class="gserie-context"><span id="gCgLab" role="status">' + (fechamento ? (done && si === it.s - 1 ? 'Repetições e carga da última série' : 'Revise o que você realizou') : done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
         referencias(a, u) + '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série" aria-describedby="gOrigemSerie"></label>' +
@@ -1709,7 +1709,7 @@
  */
 (function (root) {
   'use strict';
-  function create(C) {
+  function makeSync(C) {
     var running = null, prefix = 'tqWorkoutSync:' + encodeURIComponent(C.scope) + ':';
     function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); }
     function bytes(v) { return new TextEncoder().encode(JSON.stringify(v)).length; }
@@ -1793,7 +1793,7 @@
       return result;
     };
   }
-  var api = { create: create, http: http };
+  var api = { create: makeSync, http: http };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MT_TREINO_HISTORICO_SYNC = api;
 })(typeof self !== 'undefined' ? self : this);
@@ -1804,17 +1804,18 @@
  * Fonte incorporada no builder por tools/treino-historico/regen-runtime.js. */
 (function (root) {
   'use strict';
-  function create(C) {
-    var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false;
+  function makePlayer(C) {
+    var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false, disposed = false, leaseRequest = null, waiting = !!C.waitFor, epoch = 0;
     var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '';
     function uid() { return crypto.randomUUID(); }
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function same(a, b) { return core.canonical(a) === core.canonical(b); }
     function raw(k, d) { var v = C.storage.getItem(k); return v === null ? d : JSON.parse(v); }
-    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error('OTHER_TAB'); }
-    function status(s) { message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
+    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (disposed) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error((acquiring||waiting)?'LOCK_PENDING':'OTHER_TAB'); }
+    function status(s) { if(disposed)return;message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
     function error(e) {
-      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
+      if(disposed)return false;
+      var m = { LOCK_PENDING: 'Preparando o histórico. Aguarde um instante antes de iniciar.', OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
       status(m[e.code || e.message] || 'Não foi possível salvar o histórico. Seus registros anteriores foram mantidos; libere espaço e tente novamente.');
       if (C.error) C.error(message);
       return false;
@@ -1833,23 +1834,26 @@
     }
     if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
     function acquire() {
-      if (lease || acquiring) return;
+      if (disposed || waiting || lease || acquiring) return;
       if (!navigator.locks) { error(new Error('LOCKS_UNAVAILABLE')); return; }
-      acquiring = true;
-      navigator.locks.request('tqWorkoutJournal:' + encodeURIComponent(C.scope), { ifAvailable: true }, function (lock) {
+      acquiring = true;var acquisition=epoch;
+      leaseRequest = navigator.locks.request('tqWorkoutJournal:' + encodeURIComponent(C.scope), { ifAvailable: true }, function (lock) {
+        if(disposed||acquisition!==epoch)return;
         acquiring = false;
         if (!lock) { error(new Error('OTHER_TAB')); return; }
-        if (!C.active()) return;
+        if (disposed || !C.active()) return;
         lease = true; status('Histórico salvo neste aparelho.'); schedule();
         return new Promise(function (resolve) { release = resolve; });
       }).catch(error);
     }
-    function stop() { lease = false; clearTimeout(timer); if (release) release(); release = null; }
+    function stop() { epoch++;acquiring=false;lease = false; clearTimeout(timer); if (release) release(); release = null; }
     window.addEventListener('pagehide', stop);
     window.addEventListener('pageshow', acquire);
     window.addEventListener('online', schedule);
-    window.addEventListener('storage', function () { if (!C.active()) { stop(); error(new Error('IDENTITY_CHANGED')); } });
-    acquire();
+    function identityChanged() { if (!C.active()) { stop(); error(new Error('IDENTITY_CHANGED')); } }
+    window.addEventListener('storage', identityChanged);
+    function dispose() { disposed=true;stop();window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',acquire);window.removeEventListener('online',schedule);window.removeEventListener('storage',identityChanged);return leaseRequest||Promise.resolve(); }
+    if(C.waitFor)Promise.resolve(C.waitFor).then(function(){waiting=false;acquire();});else acquire();
     function begin(kind, id, date, prescribed, legacy) {
       try { check(); journal.start({ id: id, kind: kind, date: date, prescribed: legacy ? {} : clone(prescribed), legacy: !!legacy }); return true; } catch (e) { return error(e); }
     }
@@ -2064,9 +2068,9 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
   }
-  root.MT_TREINO_HISTORICO_PLAYER={create:create};
+  root.MT_TREINO_HISTORICO_PLAYER={create:makePlayer};
 })(typeof self!=='undefined'?self:this);
 
   }
@@ -3938,7 +3942,7 @@
       // Uma conclusão marca o dia uma vez. As modalidades mantêm os próprios resultados.
       "var acTokenInicial='';try{acTokenInicial=localStorage.getItem('tq_app_token')||'';}catch(e){}" +
       "function acIdentidadeAtual(){try{var t=localStorage.getItem('tq_app_token')||'';return t===TOKEN||(!t&&!acTokenInicial);}catch(e){return false;}}" +
-      "var TH=window.__treinoHistorico=MT_TREINO_HISTORICO_PLAYER.create({storage:localStorage,scope:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,resetMuscle:function(fi,date){var f=GUIA[fi],st=L('ptsets_'+date,{});if(!f)return false;f.it.forEach(function(it){st[it.k||exKey(it.e)]=0;});if(Sv('ptsets_'+date,st)===false)return false;try{var x=L('ptguiaSessao',null);if(x&&x.f===fi&&x.d===date&&x.token===TOKEN)localStorage.removeItem('ptguiaSessao');return true;}catch(e){return false;}},rpc:NUVEM?MT_TREINO_HISTORICO_SYNC.http({url:NUVEM.u,key:NUVEM.k,fetch:window.fetch.bind(window)}):null,navigate:function(){if(window.__trocaSec)window.__trocaSec('treino');},applyLive:function(kind,id,v){if(kind==='corrida'){if(cr.sid!==id)return null;if(cr.run)crPausaSegura();cr.acum=v.s;cr.km=v.k;crEl('crKm').value=String(v.k);cr.etapas=v.etapas||[];pintaCr();return CRSESS.salva(true);}if(kind==='circuito'){if(wod.sid!==id)return null;if(wod.run)document.getElementById('wodGo').click();wod.acum=v.du;wod.voltas=v.voltas;var d=wodR.rascunho()||{v:0,ex:0,cf:'',reps:[],ob:'',nf:0,t:null};d.v=v.voltas;d.ex=v.ex||0;d.reps=v.rp||[];d.ob=v.ob||'';if(v.kg!=null)d.kg=v.kg;wodR.rascunho(d);wodR.pinta();return wodR.salva(true);}return false;},error:function(m){['gCgLab','wodAviso','crSalvarErro'].forEach(function(id){var el=document.getElementById(id);if(el){var text=el.querySelector('p')||el;text.textContent=m;el.hidden=false;}});},legacy:function(d){var out=[];var h=L('ptdc',{});Object.keys(h).forEach(function(ex){(h[ex]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'musculacao',exercise:ex},r));});});L('ptcardio',[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'corrida'},r));});var wr=L('ptwodres',{});Object.keys(wr).forEach(function(k){(wr[k]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'circuito'},r));});});return out;}});" +
+      "var thDisposed=window.__treinoHistorico?window.__treinoHistorico.dispose():null;var TH=window.__treinoHistorico=MT_TREINO_HISTORICO_PLAYER.create({waitFor:thDisposed,storage:localStorage,scope:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,resetMuscle:function(fi,date){var f=GUIA[fi],st=L('ptsets_'+date,{});if(!f)return false;f.it.forEach(function(it){st[it.k||exKey(it.e)]=0;});if(Sv('ptsets_'+date,st)===false)return false;try{var x=L('ptguiaSessao',null);if(x&&x.f===fi&&x.d===date&&x.token===TOKEN)localStorage.removeItem('ptguiaSessao');return true;}catch(e){return false;}},rpc:NUVEM?MT_TREINO_HISTORICO_SYNC.http({url:NUVEM.u,key:NUVEM.k,fetch:window.fetch.bind(window)}):null,navigate:function(){if(window.__trocaSec)window.__trocaSec('treino');},applyLive:function(kind,id,v){if(kind==='corrida'){if(cr.sid!==id)return null;if(cr.run)crPausaSegura();cr.acum=v.s;cr.km=v.k;crEl('crKm').value=String(v.k);cr.etapas=v.etapas||[];pintaCr();return CRSESS.salva(true);}if(kind==='circuito'){if(wod.sid!==id)return null;if(wod.run)document.getElementById('wodGo').click();wod.acum=v.du;wod.voltas=v.voltas;var d=wodR.rascunho()||{v:0,ex:0,cf:'',reps:[],ob:'',nf:0,t:null};d.v=v.voltas;d.ex=v.ex||0;d.reps=v.rp||[];d.ob=v.ob||'';if(v.kg!=null)d.kg=v.kg;wodR.rascunho(d);wodR.pinta();return wodR.salva(true);}return false;},error:function(m){['gCgLab','wodAviso','crSalvarErro'].forEach(function(id){var el=document.getElementById(id);if(el){var text=el.querySelector('p')||el;text.textContent=m;el.hidden=false;}});},legacy:function(d){var out=[];var h=L('ptdc',{});Object.keys(h).forEach(function(ex){(h[ex]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'musculacao',exercise:ex},r));});});L('ptcardio',[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'corrida'},r));});var wr=L('ptwodres',{});Object.keys(wr).forEach(function(k){(wr[k]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'circuito'},r));});});return out;}});" +
       "window.__acRegistraConclusao=function(sessao){if(!acIdentidadeAtual())return false;var dia=sessao&&sessao.data||isoHj();if(typeof dia!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||dia>isoHj()||!isFinite(Date.parse(dia+'T12:00:00Z'))||new Date(dia+'T12:00:00Z').toISOString().slice(0,10)!==dia)return false;var f=L('ptfeitos',{});if(!f[dia]){f[dia]=1;if(Sv('ptfeitos',f)===false)return false;}try{pintaSemana();pintaConquistas();pintaCqTiles();mostraRpe();}catch(e){}return true;};" +
       "window.__acStatusSalvo=function(){return !NUVEM?'Salvo neste aparelho.':L('ptenvioPendente',false)?(navigator.onLine===false?'Salvo neste aparelho · aguardando conexão.':'Salvo neste aparelho · envio pendente.'):L('ptenvioUlt','')?'Registros sincronizados.':'Salvo neste aparelho.';};" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
@@ -6594,7 +6598,7 @@
       "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
       "return true;}" +
       // v751: só a LARGADA zera o batimento — 'Continuar' depois da pausa também cai aqui e apagava a média da corrida inteira
-      "function crLarga(){CRSESS.ensure();if(!TH.resume('corrida',cr.sid))return;if(!TH.begin('corrida',cr.sid,cr.dia,{plano:cr.plano||null,mod:cr.mod,blocos:crMontaBlocos(cr.plano),metaD:cr.metaD||null,metaT:cr.metaT||null},cr.acum>0))return;if(cr.acum<1)hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
+      "function crLarga(){if(cr.acum<1)hrZera();CRSESS.ensure();if(!TH.resume('corrida',cr.sid))return;if(!TH.begin('corrida',cr.sid,cr.dia,{plano:cr.plano||null,mod:cr.mod,blocos:crMontaBlocos(cr.plano),metaD:cr.metaD||null,metaT:cr.metaT||null},cr.acum>0))return;cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "CRSESS.ensure();cr.interrompida=false;cr.regGravado=null;crEl('crSalvarErro').hidden=true;" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
       "if(!cr.blocos&&cr.acum<1){cr.blocos=crMontaBlocos(cr.plano);cr.bi=0;cr.bt0=0;cr.bkm0=0;" +

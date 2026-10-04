@@ -3,7 +3,7 @@
  */
 (function (root) {
   'use strict';
-  function create(C) {
+  function makeSync(C) {
     var running = null, prefix = 'tqWorkoutSync:' + encodeURIComponent(C.scope) + ':';
     function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); }
     function bytes(v) { return new TextEncoder().encode(JSON.stringify(v)).length; }
@@ -87,7 +87,7 @@
       return result;
     };
   }
-  var api = { create: create, http: http };
+  var api = { create: makeSync, http: http };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MT_TREINO_HISTORICO_SYNC = api;
 })(typeof self !== 'undefined' ? self : this);
