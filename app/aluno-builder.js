@@ -3379,6 +3379,7 @@
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
       "var cqVisual=(" + runtimeMedalhaVisual.toString() + ")();" +
       "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
+      ((D.metasPersonalizadasApp || []).length && raiz.MT_METAS_PESSOAIS && raiz.MT_METAS_ALUNO ? "window.__metasAluno=(" + raiz.MT_METAS_ALUNO.runtime.toString() + ")((" + raiz.MT_METAS_PESSOAIS.runtime.toString() + ")()," + jsonApp(D.metasPersonalizadasApp || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[])};}}," + jsonApp(MT_CQICONS) + ");" : "") +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN||!acIdentidadeAtual())return;clearTimeout(devT);devT=setTimeout(function(){if(!acIdentidadeAtual())return;" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
        * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
@@ -4358,7 +4359,7 @@
       "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}if(window.__metasAluno)window.__metasAluno.pinta();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
       /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364
