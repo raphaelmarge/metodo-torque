@@ -99,7 +99,7 @@
     function indice(it) { return Math.max(0, Math.min(it.s - 1, gv.sel == null ? gv.s : gv.sel)); }
     function registro(it, si, fi, ei) {
       var id = slot(fi == null ? gv.f : fi, ei == null ? gv.e : ei, si);
-      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id; }).pop() || null;
+      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id && TH.belongs(r,fi == null ? gv.f : fi,isoHj()); }).pop() || null;
     }
     function anterior(it, si) {
       // A ordem de chegada/sincronização não é a ordem da execução.
@@ -113,7 +113,7 @@
     }
     function marca(it, si, feito) {
       var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = isoHj(), n = -1;
-      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id) n = i; });
+      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id && TH.belongs(r,gv.f,hj)) n = i; });
       var r = n < 0 ? { d: hj, g: 2, i: id, serie: si + 1, kg: null } : Object.assign({}, l[n]);
       r.feito = feito !== false;
       if (!TH.muscle(r, it.e, n < 0 ? null : l[n])) return false;
@@ -126,14 +126,14 @@
     function feitas(fi, ei) {
       var it = GUIA[fi] && GUIA[fi].it[ei], ids = {};
       if (!it) return 0;
-      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s) ids[r.i] = 1; });
+      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s && TH.belongs(r,fi,isoHj())) ids[r.i] = 1; });
       return Object.keys(ids).length;
     }
     function volume(fi, dia) {
-      var f = GUIA[fi], h = L("ptdc", {}), total = 0, vistos = {};
+      var f = GUIA[fi], h = L("ptdc", {}), total = TH.volume(fi,dia), vistos = {};
       if (!f) return 0;
       f.it.forEach(function (it, ei) {
-        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia; });
+        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia && !r.hid; });
         var atuais = registros.filter(function (r) { return r.g === 2 && r.i && r.i.indexOf(prefixo) === 0 && r.feito && r.serie <= it.s; });
         // Registros antigos contêm uma anotação real, sem detalhamento por série.
         // Contam UMA vez: repetir a última carga/reps fabricaria o volume restante.
@@ -246,7 +246,7 @@
     }
     function falhaContador(anterior, antes) {
       var itRollback = GUIA[gv.f].it[gv.e], targetRollback = SR.slot(gv.f,gv.e,SR.indice(itRollback));
-      var oldRollback = (anterior[itRollback.e] || []).filter(function(r){return r.d===isoHj()&&r.i===targetRollback;}).pop();
+      var oldRollback = (anterior[itRollback.e] || []).filter(function(r){return r.d===isoHj()&&r.i===targetRollback&&TH.belongs(r,gv.f,isoHj());}).pop();
       var journalRollback = !oldRollback || TH.muscle(Object.assign({},oldRollback),itRollback.e,null);
       if (gv.formSerie) gv.formSerie.historyHeads=TH.heads(gv.f,isoHj(),targetRollback);
       var rollback = journalRollback && Sv('ptdc', anterior) !== false;
@@ -267,7 +267,7 @@
     function sugestao(it, si, ei, a, u) {
       var r = /^\d+$/.test(a.reps) && +a.reps >= 1 && +a.reps <= 1000 ? String(+a.reps) : '';
       var kg = a.carga, pref = gv.f + ':' + ei + ':', leg = gv.f + ':' + ei;
-      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
+      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g !== 2 || TH.belongs(x,gv.f,isoHj())) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
       var hoje = feitasHoje.filter(function (x) { return x.g === 2 && x.serie === si; }).pop() || feitasHoje[feitasHoje.length - 1];
       var mesmaCarga = hoje && (hoje.g === 2 ? SR.alvo(it, hoje.serie - 1).carga === a.carga : !it.seriesDetalhadas);
       if (hoje && (kg == null || mesmaCarga)) kg = +hoje.kg;
@@ -1777,7 +1777,23 @@
       return running;
     } };
   }
-  var api = { create: create };
+  // Keep permission refusal distinct from transport failure. Neither permits
+  // deleting local data, moving the cursor, sending after a denied read, or
+  // pretending that a proposed RPC is installed.
+  function http(C) {
+    return async function(name,args) {
+      var response,result,operation=name==='app_treino_eventos_lista'?'read':'write';
+      function fail(code){var e=new Error(code);e.code=code;e.operation=operation;throw e;}
+      try {response=await C.fetch(C.url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:C.key,Authorization:'Bearer '+C.key,'Content-Type':'application/json'},body:JSON.stringify(args)});}catch(_){fail('NETWORK_ERROR');}
+      try {result=await response.json();}catch(_){result=null;}
+      if(response.status===401||response.status===403||result&&result.erro==='sem_acesso')fail('REMOTE_DENIED');
+      if(response.status===404||result&&result.code==='PGRST202')fail('RPC_UNAVAILABLE');
+      if(!response.ok)fail('REMOTE_HTTP_ERROR');
+      if(!result)fail('INVALID_SYNC_RESPONSE');
+      return result;
+    };
+  }
+  var api = { create: create, http: http };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MT_TREINO_HISTORICO_SYNC = api;
 })(typeof self !== 'undefined' ? self : this);
@@ -1798,7 +1814,7 @@
     function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error('OTHER_TAB'); }
     function status(s) { message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
     function error(e) {
-      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte e corrija esta sessão no histórico pela data original.' };
+      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
       status(m[e.code || e.message] || 'Não foi possível salvar o histórico. Seus registros anteriores foram mantidos; libere espaço e tente novamente.');
       if (C.error) C.error(message);
       return false;
@@ -1810,7 +1826,10 @@
     function schedule() { clearTimeout(timer); if (sync) timer = setTimeout(function () { synchronize(); }, 1800); }
     function synchronize() {
       if (!sync || !lease || !C.active()) return Promise.resolve(false);
-      return sync.run().then(function () { return true; }).catch(function () { status('Histórico salvo neste aparelho. Envio pendente: conexão ou serviço de histórico indisponível.'); return false; });
+      return sync.run().then(function () { return true; }).catch(function (e) {
+        var messages={NETWORK_ERROR:'Falha de rede. Tente novamente quando houver conexão.',REMOTE_DENIED:(e.operation==='read'?'Leitura':'Envio')+' do histórico negado pelo serviço. Confira o acesso do aluno.',RPC_UNAVAILABLE:'Serviço de histórico indisponível. As RPCs precisam de homologação.',REMOTE_HTTP_ERROR:'O serviço de histórico respondeu com erro.',INVALID_SYNC_RESPONSE:'O serviço devolveu uma resposta inválida.'};
+        status('Histórico preservado neste aparelho. '+(messages[e.code||e.message]||'Sincronização pendente; tente novamente.'));return false;
+      });
     }
     if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
     function acquire() {
@@ -1836,16 +1855,45 @@
     }
     function muscleKey(fi, date) { return prefix + 'muscle:' + date + ':' + fi; }
     function muscleId(fi, date) { return C.storage.getItem(muscleKey(fi,date)); }
+    function pendingMuscleKey(fi,date) { return prefix+'newMuscle:'+date+':'+fi; }
+    function prepareMuscle(fi,date) {
+      var key=pendingMuscleKey(fi,date), pending=raw(key,null);if(!pending)return true;
+      check();
+      if(!begin('musculacao',pending.id,date,pending.prescribed,false))return false;
+      guarded.setItem(muscleKey(fi,date),pending.id);
+      if(!C.resetMuscle||C.resetMuscle(fi,date)===false)throw new Error('CHECKPOINT_PENDING');
+      check();C.storage.removeItem(key);if(C.storage.getItem(key)!==null)throw new Error('CHECKPOINT_PENDING');return true;
+    }
+    function newMuscle(fi,prescribed,date) {
+      try {
+        check();var key=pendingMuscleKey(fi,date);
+        // A operação fica pendente até o snapshot, apontador e contadores serem
+        // confirmados. Reload/retry reutiliza o mesmo UUID, sem apagar a sessão anterior.
+        if(!raw(key,null))guarded.setItem(key,JSON.stringify({id:uid(),prescribed:clone(prescribed)}));
+        return prepareMuscle(fi,date);
+      }catch(e){return error(e);}
+    }
     function beginMuscle(fi, prescribed, date) {
       try {
-        check(); var id = muscleId(fi,date), events=journal.read(), s=id&&events['start:'+id]?journal.session(id):null;
-        if (s && !s.legacy && !same(s.prescribed, clone(prescribed))) throw new Error('SNAPSHOT_CHANGED');
-        // Persistir a identidade primeiro mantém o MESMO ID após falha de quota
-        // entre o apontador e o evento start, sem sessões órfãs a cada retry.
-        if (!id) { id = uid(); C.storage.setItem(muscleKey(fi,date),id); }
-        var legacy=s?s.legacy:!!(C.legacy&&C.legacy(date).some(function(r){return r._kind==='musculacao'&&r.g===2&&typeof r.i==='string'&&r.i.indexOf(fi+':')===0;}));
+        check();if(!prepareMuscle(fi,date))return false;
+        var id=muscleId(fi,date),events=journal.read(),s=id&&events['start:'+id]?journal.session(id):null;
+        if(s&&!s.legacy&&!same(s.prescribed,clone(prescribed)))throw new Error('SNAPSHOT_CHANGED');
+        if(!id){id=uid();guarded.setItem(muscleKey(fi,date),id);}
+        var legacy=s?s.legacy:!!(C.legacy&&C.legacy(date).some(function(r){return r._kind==='musculacao'&&r.g===2&&typeof r.i==='string'&&r.i.indexOf(fi+':')===0&&!r.hid;}));
         return begin('musculacao',id,date,prescribed,legacy);
-      } catch (e) { return error(e); }
+      }catch(e){return error(e);}
+    }
+    function belongs(reg,fi,date) {
+      var id=muscleId(fi,date);if(!id)return !reg.hid;
+      if(reg.hid)return reg.hid===id;
+      var event=journal.read()['start:'+id];return !!(event&&event.legacy);
+    }
+    function volume(fi,date) {
+      var total=0;
+      list(date).filter(function(s){return s.kind==='musculacao';}).forEach(function(s){Object.keys(s.targets).forEach(function(target){
+        var t=s.targets[target],v=t.value;if(!v||t.conflict||!v.feito||!v.i||target!==v.i||v.i.indexOf(fi+':')!==0)return;
+        if(v.kg!=null&&Number.isFinite(+v.kg)&&+v.kg>=0&&v.r!=null&&Number.isFinite(+v.r)&&+v.r>0)total+=+v.kg*+v.r;
+      });});return total;
     }
     function heads(fi, date, target) { var id = muscleId(fi,date); if (!id) return []; var t = journal.session(id).targets[target]; return t ? t.heads : []; }
     function record(sid, target, value, expected, reason) {
@@ -1965,7 +2013,7 @@
         sessions.forEach(function(s){
           var article=node('article',null,results);article.className='th-session';article.dataset.kind=s.kind;article.dataset.session=s.id;
           node('h3',s.date.split('-').reverse().join('/')+' · '+({musculacao:'Musculação',corrida:'Corrida',circuito:'Circuito'}[s.kind]),article);
-          node('p',s.finished?'Sessão encerrada':'Sessão iniciada · encerramento não registrado',article);
+          node('p',(s.finished?'Sessão encerrada':'Sessão iniciada · encerramento não registrado')+' · início '+new Date(s.startedAt).toLocaleTimeString('pt-BR'),article);
           var prescribed=node('details',null,article);node('summary','Prescrição daquela data',prescribed);
           if(s.legacy)node('p','Prescrição histórica não registrada. O plano atual não foi usado para preencher esta sessão.',prescribed);else show(s.prescribed,prescribed,{kind:s.kind,prescribed:true});
           Object.keys(s.targets).forEach(function(target){var t=s.targets[target];
@@ -2016,7 +2064,7 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
   }
   root.MT_TREINO_HISTORICO_PLAYER={create:create};
 })(typeof self!=='undefined'?self:this);
@@ -3890,7 +3938,7 @@
       // Uma conclusão marca o dia uma vez. As modalidades mantêm os próprios resultados.
       "var acTokenInicial='';try{acTokenInicial=localStorage.getItem('tq_app_token')||'';}catch(e){}" +
       "function acIdentidadeAtual(){try{var t=localStorage.getItem('tq_app_token')||'';return t===TOKEN||(!t&&!acTokenInicial);}catch(e){return false;}}" +
-      "var TH=window.__treinoHistorico=MT_TREINO_HISTORICO_PLAYER.create({storage:localStorage,scope:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,rpc:NUVEM?rpcApp:null,navigate:function(){if(window.__trocaSec)window.__trocaSec('treino');},applyLive:function(kind,id,v){if(kind==='corrida'){if(cr.sid!==id)return null;if(cr.run)crPausaSegura();cr.acum=v.s;cr.km=v.k;crEl('crKm').value=String(v.k);cr.etapas=v.etapas||[];pintaCr();return CRSESS.salva(true);}if(kind==='circuito'){if(wod.sid!==id)return null;if(wod.run)document.getElementById('wodGo').click();wod.acum=v.du;wod.voltas=v.voltas;var d=wodR.rascunho()||{v:0,ex:0,cf:'',reps:[],ob:'',nf:0,t:null};d.v=v.voltas;d.ex=v.ex||0;d.reps=v.rp||[];d.ob=v.ob||'';if(v.kg!=null)d.kg=v.kg;wodR.rascunho(d);wodR.pinta();return wodR.salva(true);}return false;},error:function(m){['gCgLab','wodAviso','crSalvarErro'].forEach(function(id){var el=document.getElementById(id);if(el){var text=el.querySelector('p')||el;text.textContent=m;el.hidden=false;}});},legacy:function(d){var out=[];var h=L('ptdc',{});Object.keys(h).forEach(function(ex){(h[ex]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'musculacao',exercise:ex},r));});});L('ptcardio',[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'corrida'},r));});var wr=L('ptwodres',{});Object.keys(wr).forEach(function(k){(wr[k]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'circuito'},r));});});return out;}});" +
+      "var TH=window.__treinoHistorico=MT_TREINO_HISTORICO_PLAYER.create({storage:localStorage,scope:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,resetMuscle:function(fi,date){var f=GUIA[fi],st=L('ptsets_'+date,{});if(!f)return false;f.it.forEach(function(it){st[it.k||exKey(it.e)]=0;});if(Sv('ptsets_'+date,st)===false)return false;try{var x=L('ptguiaSessao',null);if(x&&x.f===fi&&x.d===date&&x.token===TOKEN)localStorage.removeItem('ptguiaSessao');return true;}catch(e){return false;}},rpc:NUVEM?MT_TREINO_HISTORICO_SYNC.http({url:NUVEM.u,key:NUVEM.k,fetch:window.fetch.bind(window)}):null,navigate:function(){if(window.__trocaSec)window.__trocaSec('treino');},applyLive:function(kind,id,v){if(kind==='corrida'){if(cr.sid!==id)return null;if(cr.run)crPausaSegura();cr.acum=v.s;cr.km=v.k;crEl('crKm').value=String(v.k);cr.etapas=v.etapas||[];pintaCr();return CRSESS.salva(true);}if(kind==='circuito'){if(wod.sid!==id)return null;if(wod.run)document.getElementById('wodGo').click();wod.acum=v.du;wod.voltas=v.voltas;var d=wodR.rascunho()||{v:0,ex:0,cf:'',reps:[],ob:'',nf:0,t:null};d.v=v.voltas;d.ex=v.ex||0;d.reps=v.rp||[];d.ob=v.ob||'';if(v.kg!=null)d.kg=v.kg;wodR.rascunho(d);wodR.pinta();return wodR.salva(true);}return false;},error:function(m){['gCgLab','wodAviso','crSalvarErro'].forEach(function(id){var el=document.getElementById(id);if(el){var text=el.querySelector('p')||el;text.textContent=m;el.hidden=false;}});},legacy:function(d){var out=[];var h=L('ptdc',{});Object.keys(h).forEach(function(ex){(h[ex]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'musculacao',exercise:ex},r));});});L('ptcardio',[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'corrida'},r));});var wr=L('ptwodres',{});Object.keys(wr).forEach(function(k){(wr[k]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'circuito'},r));});});return out;}});" +
       "window.__acRegistraConclusao=function(sessao){if(!acIdentidadeAtual())return false;var dia=sessao&&sessao.data||isoHj();if(typeof dia!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||dia>isoHj()||!isFinite(Date.parse(dia+'T12:00:00Z'))||new Date(dia+'T12:00:00Z').toISOString().slice(0,10)!==dia)return false;var f=L('ptfeitos',{});if(!f[dia]){f[dia]=1;if(Sv('ptfeitos',f)===false)return false;}try{pintaSemana();pintaConquistas();pintaCqTiles();mostraRpe();}catch(e){}return true;};" +
       "window.__acStatusSalvo=function(){return !NUVEM?'Salvo neste aparelho.':L('ptenvioPendente',false)?(navigator.onLine===false?'Salvo neste aparelho · aguardando conexão.':'Salvo neste aparelho · envio pendente.'):L('ptenvioUlt','')?'Registros sincronizados.':'Salvo neste aparelho.';};" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
@@ -6829,6 +6877,7 @@
       "window.addEventListener('pagehide',function(){if(acAtiva)gSalvaSeSujo();acCheckpoint();});\n" +
       "acSessaoPinta();\n" +
       "window.__acSessao={ler:acSessao,salvar:acCheckpoint};TH.mount(document.getElementById('trTopo'));\n" +
+      "document.querySelectorAll('.guiabtn').forEach(function(b){var n=document.createElement('button');n.type='button';n.className='btnx';n.dataset.thNewMuscle=b.dataset.g;n.textContent='Novo treino desta ficha';n.style.marginTop='8px';b.after(n);});document.addEventListener('click',function(e){var b=e.target.closest('[data-th-new-muscle]');if(!b||b.disabled)return;b.disabled=true;var fi=+b.dataset.thNewMuscle;var pending=GP.antesAbrir(fi,0);if(pending){b.disabled=false;abreGuia(pending.f);return;}if(!TH.newMuscle(fi,GUIA[fi],isoHj())){b.disabled=false;return;}abreGuia(fi,0);});" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-th-live]');if(!b)return;if(b.dataset.thLive==='corrida'){if(!cr.sid||cr.resumo)return;crPausaSegura();if(!CRSESS.salva(true))return;fechaCrFull();TH.live('corrida',cr.sid,cr.dia,{s:cr.acum,k:crKmAtual(),etapas:JSON.parse(JSON.stringify(cr.etapas||[]))});}else{if(!wod.sid||wod.finished)return;if(wod.run)document.getElementById('wodGo').click();if(!wodR.salva(true))return;fechaWodFull();var d=wodR.rascunho()||{};var v={voltas:wod.voltas,du:wodR.tempo()};if(d.reps)v.rp=d.reps;if(d.ex!=null)v.ex=d.ex;if(d.ob!=null)v.ob=d.ob;if(d.kg!=null)v.kg=d.kg;TH.live('circuito',wod.sid,wod.dia,v);}});" +
       "function gEl(i){return document.getElementById(i);}" +
       "function g2(n){return (n<10?'0':'')+n;}" +
@@ -6865,7 +6914,7 @@
       "var reg={d:hj,kg:kg,g:porSerie?2:1};if(slot)reg.i=slot;if(porSerie)reg.serie=+ps[2]+1;if(!semReps&&isFinite(reps)&&reps>=0)reg.r=reps;" +
       // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
       // continua sendo append puro — lá o aluno anota quantas linhas quiser.
-      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot){i=k;break;}}" +
+      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot&&(!porSerie||TH.belongs(l[k],+ps[0],hj))){i=k;break;}}" +
       // recorde compara com TUDO que veio antes, menos a anotação de hoje que
       // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
       "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&cargaConcluida(l[k9])&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
@@ -6908,7 +6957,7 @@
       // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
       "if(typeof hrZera==='function')hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();if(gv._retomada&&gv.descAte){var left=Math.max(0,Math.ceil((gv.descAte-Date.now())/1000));if(left)gDescanso(left,gv.pend);else gFimDesc();}else if(gv._retomada&&gv.e===f.it.length-1&&gv.s>=f.it[gv.e].s){acUltimaCarga(f.it[gv.e]);}if(antG){gEl('gCgLab').textContent='Confira este rascunho antes de trocar de treino. Seu preenchimento foi mantido.';gEl('gCgLab').setAttribute('role','alert');}}" +
-      "function fechaGuia(){if(gSalvaSeSujo()===false||!GP.salvaPendentes())return false;acCheckpoint();acAtiva=false;clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
+      "function fechaGuia(){document.querySelectorAll('[data-th-new-muscle]').forEach(function(b){b.disabled=false;});if(gSalvaSeSujo()===false||!GP.salvaPendentes())return false;acCheckpoint();acAtiva=false;clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
       "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
       "gEl('guiaBox').style.display='none';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='';soltaTela();}" +

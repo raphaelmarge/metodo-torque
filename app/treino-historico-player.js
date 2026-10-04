@@ -14,7 +14,7 @@
     function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error('OTHER_TAB'); }
     function status(s) { message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
     function error(e) {
-      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte e corrija esta sessão no histórico pela data original.' };
+      var m = { OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
       status(m[e.code || e.message] || 'Não foi possível salvar o histórico. Seus registros anteriores foram mantidos; libere espaço e tente novamente.');
       if (C.error) C.error(message);
       return false;
@@ -26,7 +26,10 @@
     function schedule() { clearTimeout(timer); if (sync) timer = setTimeout(function () { synchronize(); }, 1800); }
     function synchronize() {
       if (!sync || !lease || !C.active()) return Promise.resolve(false);
-      return sync.run().then(function () { return true; }).catch(function () { status('Histórico salvo neste aparelho. Envio pendente: conexão ou serviço de histórico indisponível.'); return false; });
+      return sync.run().then(function () { return true; }).catch(function (e) {
+        var messages={NETWORK_ERROR:'Falha de rede. Tente novamente quando houver conexão.',REMOTE_DENIED:(e.operation==='read'?'Leitura':'Envio')+' do histórico negado pelo serviço. Confira o acesso do aluno.',RPC_UNAVAILABLE:'Serviço de histórico indisponível. As RPCs precisam de homologação.',REMOTE_HTTP_ERROR:'O serviço de histórico respondeu com erro.',INVALID_SYNC_RESPONSE:'O serviço devolveu uma resposta inválida.'};
+        status('Histórico preservado neste aparelho. '+(messages[e.code||e.message]||'Sincronização pendente; tente novamente.'));return false;
+      });
     }
     if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
     function acquire() {
@@ -52,16 +55,45 @@
     }
     function muscleKey(fi, date) { return prefix + 'muscle:' + date + ':' + fi; }
     function muscleId(fi, date) { return C.storage.getItem(muscleKey(fi,date)); }
+    function pendingMuscleKey(fi,date) { return prefix+'newMuscle:'+date+':'+fi; }
+    function prepareMuscle(fi,date) {
+      var key=pendingMuscleKey(fi,date), pending=raw(key,null);if(!pending)return true;
+      check();
+      if(!begin('musculacao',pending.id,date,pending.prescribed,false))return false;
+      guarded.setItem(muscleKey(fi,date),pending.id);
+      if(!C.resetMuscle||C.resetMuscle(fi,date)===false)throw new Error('CHECKPOINT_PENDING');
+      check();C.storage.removeItem(key);if(C.storage.getItem(key)!==null)throw new Error('CHECKPOINT_PENDING');return true;
+    }
+    function newMuscle(fi,prescribed,date) {
+      try {
+        check();var key=pendingMuscleKey(fi,date);
+        // A operação fica pendente até o snapshot, apontador e contadores serem
+        // confirmados. Reload/retry reutiliza o mesmo UUID, sem apagar a sessão anterior.
+        if(!raw(key,null))guarded.setItem(key,JSON.stringify({id:uid(),prescribed:clone(prescribed)}));
+        return prepareMuscle(fi,date);
+      }catch(e){return error(e);}
+    }
     function beginMuscle(fi, prescribed, date) {
       try {
-        check(); var id = muscleId(fi,date), events=journal.read(), s=id&&events['start:'+id]?journal.session(id):null;
-        if (s && !s.legacy && !same(s.prescribed, clone(prescribed))) throw new Error('SNAPSHOT_CHANGED');
-        // Persistir a identidade primeiro mantém o MESMO ID após falha de quota
-        // entre o apontador e o evento start, sem sessões órfãs a cada retry.
-        if (!id) { id = uid(); C.storage.setItem(muscleKey(fi,date),id); }
-        var legacy=s?s.legacy:!!(C.legacy&&C.legacy(date).some(function(r){return r._kind==='musculacao'&&r.g===2&&typeof r.i==='string'&&r.i.indexOf(fi+':')===0;}));
+        check();if(!prepareMuscle(fi,date))return false;
+        var id=muscleId(fi,date),events=journal.read(),s=id&&events['start:'+id]?journal.session(id):null;
+        if(s&&!s.legacy&&!same(s.prescribed,clone(prescribed)))throw new Error('SNAPSHOT_CHANGED');
+        if(!id){id=uid();guarded.setItem(muscleKey(fi,date),id);}
+        var legacy=s?s.legacy:!!(C.legacy&&C.legacy(date).some(function(r){return r._kind==='musculacao'&&r.g===2&&typeof r.i==='string'&&r.i.indexOf(fi+':')===0&&!r.hid;}));
         return begin('musculacao',id,date,prescribed,legacy);
-      } catch (e) { return error(e); }
+      }catch(e){return error(e);}
+    }
+    function belongs(reg,fi,date) {
+      var id=muscleId(fi,date);if(!id)return !reg.hid;
+      if(reg.hid)return reg.hid===id;
+      var event=journal.read()['start:'+id];return !!(event&&event.legacy);
+    }
+    function volume(fi,date) {
+      var total=0;
+      list(date).filter(function(s){return s.kind==='musculacao';}).forEach(function(s){Object.keys(s.targets).forEach(function(target){
+        var t=s.targets[target],v=t.value;if(!v||t.conflict||!v.feito||!v.i||target!==v.i||v.i.indexOf(fi+':')!==0)return;
+        if(v.kg!=null&&Number.isFinite(+v.kg)&&+v.kg>=0&&v.r!=null&&Number.isFinite(+v.r)&&+v.r>0)total+=+v.kg*+v.r;
+      });});return total;
     }
     function heads(fi, date, target) { var id = muscleId(fi,date); if (!id) return []; var t = journal.session(id).targets[target]; return t ? t.heads : []; }
     function record(sid, target, value, expected, reason) {
@@ -181,7 +213,7 @@
         sessions.forEach(function(s){
           var article=node('article',null,results);article.className='th-session';article.dataset.kind=s.kind;article.dataset.session=s.id;
           node('h3',s.date.split('-').reverse().join('/')+' · '+({musculacao:'Musculação',corrida:'Corrida',circuito:'Circuito'}[s.kind]),article);
-          node('p',s.finished?'Sessão encerrada':'Sessão iniciada · encerramento não registrado',article);
+          node('p',(s.finished?'Sessão encerrada':'Sessão iniciada · encerramento não registrado')+' · início '+new Date(s.startedAt).toLocaleTimeString('pt-BR'),article);
           var prescribed=node('details',null,article);node('summary','Prescrição daquela data',prescribed);
           if(s.legacy)node('p','Prescrição histórica não registrada. O plano atual não foi usado para preencher esta sessão.',prescribed);else show(s.prescribed,prescribed,{kind:s.kind,prescribed:true});
           Object.keys(s.targets).forEach(function(target){var t=s.targets[target];
@@ -232,7 +264,7 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
   }
   root.MT_TREINO_HISTORICO_PLAYER={create:create};
 })(typeof self!=='undefined'?self:this);

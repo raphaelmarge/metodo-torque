@@ -71,7 +71,23 @@
       return running;
     } };
   }
-  var api = { create: create };
+  // Keep permission refusal distinct from transport failure. Neither permits
+  // deleting local data, moving the cursor, sending after a denied read, or
+  // pretending that a proposed RPC is installed.
+  function http(C) {
+    return async function(name,args) {
+      var response,result,operation=name==='app_treino_eventos_lista'?'read':'write';
+      function fail(code){var e=new Error(code);e.code=code;e.operation=operation;throw e;}
+      try {response=await C.fetch(C.url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:C.key,Authorization:'Bearer '+C.key,'Content-Type':'application/json'},body:JSON.stringify(args)});}catch(_){fail('NETWORK_ERROR');}
+      try {result=await response.json();}catch(_){result=null;}
+      if(response.status===401||response.status===403||result&&result.erro==='sem_acesso')fail('REMOTE_DENIED');
+      if(response.status===404||result&&result.code==='PGRST202')fail('RPC_UNAVAILABLE');
+      if(!response.ok)fail('REMOTE_HTTP_ERROR');
+      if(!result)fail('INVALID_SYNC_RESPONSE');
+      return result;
+    };
+  }
+  var api = { create: create, http: http };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MT_TREINO_HISTORICO_SYNC = api;
 })(typeof self !== 'undefined' ? self : this);

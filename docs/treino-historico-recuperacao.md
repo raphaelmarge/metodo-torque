@@ -48,11 +48,19 @@ coleções legadas não são uma transação única. O journal conserva os event
 confirmados, e a repetição da finalização não substitui uma correção posterior.
 O rollback do contador também é uma revisão, sem apagar o evento anterior.
 
-A musculação conserva a organização diária herdada: uma sessão por ficha/data.
-Se a ficha muda no mesmo dia, o início é recusado para não misturar prescrições;
-a sessão antiga continua acessível por data. Não foi criado um novo fluxo para
-reiniciar a mesma ficha com outra prescrição no mesmo dia. Corrida/circuito
-mantêm IDs por execução. **Revisar registros** pausa o player, captura somente
+As três modalidades usam UUIDs por execução. Na musculação, a chave ficha/data
+é apenas um apontador local para a execução selecionada, nunca a identidade do
+histórico. **Novo treino desta ficha** cria outra execução e zera somente seus
+contadores; retomar/revisar mantém o UUID. Duplo toque é bloqueado. Uma operação
+pendente persiste o novo UUID antes de preparar snapshot/apontador/contadores;
+quota e reload repetem a mesma operação sem apagar a anterior.
+
+Registros de série são distinguidos por sessão + slot, inclusive nas coleções
+compatíveis. O volume soma os valores efetivamente registrados de cada execução,
+sem colapsar slots iguais nem consultar a ficha atual para os eventos capturados.
+Uma ficha alterada só entra por uma nova execução explícita. As sessões anteriores
+mantêm seus snapshots, inclusive duas ou mais na mesma data. Corrida/circuito
+mantêm seus IDs por execução. **Revisar registros** pausa o player, captura somente
 valores observados e abre a correção por data durante o treino. A revisão é
 registrada antes de aplicar os ajustes ao checkpoint; um recibo local permite
 retomar/reaplicar a mesma revisão após falha entre essas etapas, sem outra
@@ -60,8 +68,12 @@ conclusão. Corrida preserva etapas/rota; circuito transporta reps/carga corrigi
 para seu placar final. A retomada continua explicitamente pausada.
 
 O transporte do PR #867 foi conectado às RPCs propostas, com paginação, ACK,
-identidade e retry já testados. Sem as RPCs instaladas, o histórico permanece
-local e o app informa envio pendente. **Restauração entre aparelhos depende da
+identidade e retry já testados. Sem as RPCs disponíveis, o histórico permanece
+local. HTTP 401/403 ou `sem_acesso` são negação de acesso; rejeição do fetch é
+falha de rede; 404/PGRST202 sinalizam RPC indisponível. Falha de servidor e JSON
+inválido têm categorias distintas. Nenhuma dessas falhas avança cursor/ACK ou
+permite envio depois de leitura recusada. Não foi feita consulta à RPC remota:
+a situação de acesso em produção não foi inferida desses testes sintéticos. **Restauração entre aparelhos depende da
 instalação/homologação separada dessas RPCs; não está comprovada em produção.**
 Não houve backfill remoto, alteração do merge geral nem migração aplicada.
 
@@ -82,9 +94,16 @@ A captura de evidência da nova tela usa exclusivamente dados sintéticos.
 
 ## Verificação local
 
-Ambiente: Node **24.19.0**, Playwright **1.63.0** do lock do repositório,
-Chromium do sistema **151.0.7922.173**, servidor exclusivo de loopback na porta
-8894. O CI usa Node 22; esta execução não substitui esse gate.
+As verificações iniciais usaram Node 24.19.0. A continuação prepara Node
+**22.22.0**, Playwright **1.63.0** do lock e PostgreSQL **17.11** descartável em
+`127.0.0.1:55439`, em `/tmp`. Nenhuma instalação ou consulta de banco remoto.
+Chromium do sistema **151.0.7922.173** foi usado para os testes disponíveis.
+O download oficial do Chromium 153.0.8010.12/v1243 e do WebKit 26.6/v2359
+retornou **HTTP 403, Domain forbidden**, inclusive nas tentativas automáticas do
+instalador. Não foi classificado como falha de rede, nem contornado por outro
+canal. A equivalência exata dos browsers do CI continua pendente.
+O servidor das verificações dirigidas usa porta 8894; o lote completo local usa
+porta 8895, com Node 22 e o PostgreSQL acima.
 
 As dependências foram instaladas com `npm ci --ignore-scripts`, usando um cache
 em `/tmp`, sem alterar lockfiles. Testes com caminho absoluto legado de
@@ -97,6 +116,9 @@ mesma versão instalada e o executável Chromium do sistema. Assertions intactas
 | Histórico sync | 7 cenários aprovados |
 | Histórico SQL PGlite | 9 cenários aprovados |
 | Histórico browser | 6 cenários aprovados, duas abas reais |
+| PostgreSQL real | 3 cenários aprovados com duas conexões e observador: lock/idempotência, revisões concorrentes e revogação |
+| Múltiplas sessões | 32 verificações aprovadas: várias execuções na mesma data nas três modalidades, edição offline, nova prescrição e recuperação após quota |
+| HTTP/replay | 7 cenários aprovados: negação/rede/RPC/servidor/JSON e replay de seis execuções na mesma data |
 | Bundle incorporado | igualdade exata aprovada |
 | Histórico players/editor | 41 verificações aprovadas: consulta meses depois, revisão durante os três players, original, XP/conclusão, etapas, carga/reps, quota, recuperação após falha entre revisão/checkpoint, rascunho obsoleto, legado, `tempoBase` e duas abas |
 | Player experiência | 63 verificações aprovadas, incluindo rollback e retry |
@@ -112,16 +134,17 @@ localmente em `test-infra.js`; não foi solicitado rerun ou alteração daquele 
 
 ### Gates pendentes — sem fullpass
 
-1. `test-treino-historico-postgres.js` foi executado e falhou por ausência de
-   `PGTESTURL`; não há binários/servidor PostgreSQL local. PGlite não substitui
-   as duas conexões e o observador desse teste.
-2. `bash tests/run.sh` completo e CI em Node 22 não foram concluídos nesta entrega.
+1. O gate de PostgreSQL real anteriormente bloqueado foi resolvido localmente:
+   os três cenários passaram no PostgreSQL 17.11, sem substituir por PGlite.
+2. `bash tests/run.sh` foi iniciado com Node 22 e PostgreSQL local. O resultado
+   final do lote deve ser anexado antes de qualquer alegação de fullpass.
    Não foi disparado CI remoto nem declarada validação de produção.
-3. RPCs/proposta SQL do PR #867 precisam de aprovação e homologação próprias.
-4. A alteração visual dos sliders exige materialização e inspeção da imagem.
-5. A musculação mantém uma sessão por ficha/data e recusa misturar uma ficha
-   alterada no mesmo dia. Um fluxo adicional de reinício no mesmo dia não foi
-   criado. A correção continua disponível tanto no player quanto por data.
+3. Os navegadores exatos do CI estão bloqueados pelo HTTP 403 acima. Os testes
+   com Chromium do sistema são evidência adicional, não equivalência desse gate.
+4. RPCs/proposta SQL do PR #867 precisam de aprovação e homologação próprias.
+   Nenhuma chamada ao serviço remoto foi feita para testar token/acesso.
+5. A alteração visual dos sliders continua pendente; as duas falhas oficiais da
+   Library não foram repetidas na continuação.
 
 ## Proposta de draft separado
 
