@@ -1807,7 +1807,7 @@
   function makePlayer(C) {
     var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false, disposed = false, leaseRequest = null, waiting = !!C.waitFor, epoch = 0;
     var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '';
-    function uid() { return crypto.randomUUID(); }
+    function uid() { if(crypto.randomUUID)return crypto.randomUUID();var bytes=new Uint8Array(16);crypto.getRandomValues(bytes);bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;var hex=Array.from(bytes,function(b){return b.toString(16).padStart(2,'0');}).join('');return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20); }
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function same(a, b) { return core.canonical(a) === core.canonical(b); }
     function raw(k, d) { var v = C.storage.getItem(k); return v === null ? d : JSON.parse(v); }
