@@ -52,6 +52,25 @@ pelo app; nenhuma mudança de interface ou de persistência atual está ativa.
   tempo e carga). O núcleo não fabrica campos ausentes nem recalcula métricas.
 - Legado é marcado explicitamente e não aceita uma prescrição inventada.
 
+## Persistência e transporte preparados localmente
+
+A proposta `supabase/proposals/treino-historico.sql` e o adaptador
+`app/treino-historico-sync.js` acrescentam leitura paginada e escrita de eventos.
+São código para revisão/teste, ainda sem migração aplicada nem chamada pelo app.
+A tabela tem RLS e nenhum grant de acesso direto ao aluno; RPCs autorizam pelo
+token ativo, como o contrato atual do aplicativo. O ID do dispositivo/actor
+é declarado pelo cliente, não uma identidade de profissional verificada.
+
+A escrita serializa por aluno, recusa colisões, valida pais e ciclos, e reverte
+o lote inteiro quando inválido. A leitura limita quantidade e bytes, com
+cursor textual bigint. A sincronização só avança cursor depois da persistência
+local e só confirma envios com ACK explícito. Eventos ficam locais em erros
+ou se as RPCs não existirem. Não há backfill de prescrição antiga.
+
+SQL validado em PGlite descartável, não em duas conexões PostgreSQL reais.
+A proposta deve ser promovida a migration pela CLI e revista antes de qualquer
+rollout. Nada foi executado no Supabase remoto.
+
 ## Fases restantes e critérios
 
 1. **Concluída nesta entrega:** núcleo isolado, testes de estado e duas abas.
@@ -63,8 +82,8 @@ pelo app; nenhuma mudança de interface ou de persistência atual está ativa.
 3. **Ainda não implementada:** consulta por sessão/data, prescrito versus
    realizado e editor por modalidade com original, revisões/horário, conflitos
    e limites de legado. Corrigir não deve chamar rotinas de conclusão/recompensa.
-4. **Ainda não implementada:** transporte autenticado de leitura/escrita e
-   restauração em outro aparelho. Não ligar `packet()` ao merge genérico como
+4. **Preparada e testada localmente, ainda não integrada:** proposta SQL e
+   transporte autenticado de leitura/escrita e restauração em outro aparelho. Não ligar `packet()` ao merge genérico como
    se isso sozinho fosse um contrato completo: falta leitura, validação no
    servidor, isolamento, limites e confirmação. Projetar/testar SQL local se
    necessário; aplicar SQL remoto permanece fora da autorização.
@@ -77,8 +96,8 @@ pelo app; nenhuma mudança de interface ou de persistência atual está ativa.
    player, SQL local e CI. A fase isolada não altera demos ou cache.
 
 A ausência da referência bloqueia a alteração visual dependente da imagem;
-não constitui bloqueio técnico para toda a integração funcional. As fases 2–4
-permanecem trabalho pendente, não funcionalidades entregues.
+não constitui bloqueio técnico para toda a integração funcional. A integração das fases 2–4
+permanece trabalho pendente, não funcionalidade entregue no app.
 
 ## Verificação desta fase
 
@@ -86,6 +105,8 @@ permanecem trabalho pendente, não funcionalidades entregues.
 - `tests/test-treino-historico-browser.js`: 6 cenários em Chromium, incluindo
   duas abas reais, locks, 40 gravações concorrentes, duplo encerramento,
   reload/cancelar, quota offline e troca de identidade.
+- `tests/test-treino-historico-sql.js`: 9 cenários SQL locais em PGlite.
+- `tests/test-treino-historico-sync.js`: 7 cenários de transporte simulado.
 - Nenhum dado de aluno, captura ou credencial entrou no Git ou nos testes.
 - Histórico completo anterior à adoção não pode ser reconstruído quando não
   foi persistido. A introdução deste núcleo não recupera dados descartados.
