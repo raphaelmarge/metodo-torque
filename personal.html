@@ -3980,6 +3980,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="app/metas-personalizadas.js"></script>
 <script src="app/metas-aluno.js"></script>
 <script src="assets/personal-metas.js"></script>
+<script src="app/conquistas-avancadas.js"></script>
+<script src="assets/personal-conquistas-avancadas.js"></script>
 <script src="app/medalhas-catalogo.js"></script>
 <script src="app/aluno-builder.js"></script>
 <link rel="stylesheet" href="assets/personal-medalhas.css">
@@ -22943,6 +22945,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      conquistasAvancadasApp: self.MT_CONQUISTAS_AVANCADAS ? {metas:self.MT_CONQUISTAS_AVANCADAS.list((a.conquistasAvancadas||{}).metas),manuais:((a.conquistasAvancadas||{}).manuais||[]).map(self.MT_CONQUISTAS_AVANCADAS.manual)} : {metas:[],manuais:[]},
       metasPersonalizadasApp: self.MT_METAS_PESSOAIS ? self.MT_METAS_PESSOAIS.list((st.config || {}).metasPersonalizadas) : [],
       medalhasApp: self.MT_MEDALHAS ? self.MT_MEDALHAS.pacote((st.config || {}).medalhasEvolutivas) : undefined,
       planoDatas: R809.pacoteDatas(t2),
@@ -25133,6 +25136,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     permitido: function () { var b = document.querySelector('#abas [data-a="pers"]'); return !(b && b.style.display === "none") && !(S.usuario && (S.usuario() || {}).papel === "funcionario"); }
   });
   if (self.MT_PERSONAL_MEDALHAS) self.MT_PERSONAL_MEDALHAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
+  if (self.MT_PERSONAL_CONQUISTAS_AVANCADAS) self.MT_PERSONAL_CONQUISTAS_AVANCADAS.init({load:load,save:save,onChange:function(fn){S.onChange(fn);}});
   if (self.MT_PERSONAL_METAS) self.MT_PERSONAL_METAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
   if (self.MT_ESTORNOS) self.MT_ESTORNOS.init({
     load: load, save: save, marca: marcaAppPendente, financeiro: alFinanceiroPermitido,

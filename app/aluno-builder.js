@@ -3363,7 +3363,7 @@
       // Atualiza o resumo de evolução ao registrar uma carga.
       "if(k==='ptdc'){try{if(typeof acEvolucao==='function')acEvolucao();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
-      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&window.__meAluno&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
+      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&(window.__meAluno||window.__conquistasAvancadas)&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
       // Uma conclusão marca o dia uma vez. As modalidades mantêm os próprios resultados.
       "var acTokenInicial='';try{acTokenInicial=localStorage.getItem('tq_app_token')||'';}catch(e){}" +
       "function acIdentidadeAtual(){try{var t=localStorage.getItem('tq_app_token')||'';return t===TOKEN||(!t&&!acTokenInicial);}catch(e){return false;}}" +
@@ -3381,6 +3381,7 @@
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
       "var cqVisual=(" + runtimeMedalhaVisual.toString() + ")();" +
       "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
+      (D.conquistasAvancadasApp && ((D.conquistasAvancadasApp.metas||[]).length || (D.conquistasAvancadasApp.manuais||[]).length) && raiz.MT_CONQUISTAS_AVANCADAS ? "window.__conquistasAvancadas=(" + raiz.MT_CONQUISTAS_AVANCADAS.student.toString() + ")((" + raiz.MT_CONQUISTAS_AVANCADAS.runtime.toString() + ")()," + jsonApp(D.conquistasAvancadasApp.metas || []) + "," + jsonApp(D.conquistasAvancadasApp.manuais || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[]),wodres:L('ptwodres',{})};}});" : "") +
       ((D.metasPersonalizadasApp || []).length && raiz.MT_METAS_PESSOAIS && raiz.MT_METAS_ALUNO ? "window.__metasAluno=(" + raiz.MT_METAS_ALUNO.runtime.toString() + ")((" + raiz.MT_METAS_PESSOAIS.runtime.toString() + ")()," + jsonApp(D.metasPersonalizadasApp || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[])};}}," + jsonApp(MT_CQICONS) + ");" : "") +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN||!acIdentidadeAtual())return;clearTimeout(devT);devT=setTimeout(function(){if(!acIdentidadeAtual())return;" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
@@ -4361,7 +4362,7 @@
       "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}if(window.__metasAluno)window.__metasAluno.pinta();}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}if(window.__metasAluno)window.__metasAluno.pinta();if(window.__conquistasAvancadas)window.__conquistasAvancadas.pinta();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
       /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364
@@ -5779,7 +5780,7 @@
       "if(el2<5){crEl('crFase').textContent='Corrida curta demais pra salvar';crEl('crInfo').textContent='continua correndo ou toca em Zerar';return;}" +
       "CRSESS.ensure();var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
       "var med=km>0.015?(el2/60)/km:null;" +
-      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,etapas:resultado.etapas};" +
+      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,tempoBase:'ativo',etapas:resultado.etapas};" +
       "var fcR=hrResumo();if(fcR&&!cr.regGravado){reg.fc=fcR.m;reg.fcx=fcR.x;}" +
       // recordes pessoais e medalhas: compara o histórico antes e depois do registro
       "var lst=L('ptcardio',[]);var ja=lst.filter(function(x){return x.id===reg.id;})[0];var extras=ja?[]:crRecordes(lst,reg,med);" +
