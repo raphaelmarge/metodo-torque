@@ -67,7 +67,11 @@ cursor textual bigint. A sincronização só avança cursor depois da persistên
 local e só confirma envios com ACK explícito. Eventos ficam locais em erros
 ou se as RPCs não existirem. Não há backfill de prescrição antiga.
 
-SQL validado em PGlite descartável, não em duas conexões PostgreSQL reais.
+SQL validado localmente em PGlite descartável. A suíte
+`tests/test-treino-historico-postgres.js` usa duas conexões PostgreSQL e um
+observador para comprovar lock/idempotência, revisões concorrentes e revogação.
+Ela exige `PGTESTURL` de loopback e falha quando o serviço não está disponível;
+este executor não tem esse serviço, enquanto o CI fornece PostgreSQL 17.11.
 A proposta deve ser promovida a migration pela CLI e revista antes de qualquer
 rollout. Nada foi executado no Supabase remoto.
 
