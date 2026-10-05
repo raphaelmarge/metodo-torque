@@ -18,7 +18,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     for (let i=0;i<3;i++) { const c = new Client({ ...opts, database: name, application_name: name + '_' + i }); await c.connect(); clients.push(c); }
     const [a,b,watch] = clients;
     await a.query("DO $$ BEGIN CREATE ROLE anon; EXCEPTION WHEN duplicate_object THEN NULL; END $$; DO $$ BEGIN CREATE ROLE authenticated; EXCEPTION WHEN duplicate_object THEN NULL; END $$; CREATE TABLE public.app_aluno(token text primary key,revogado_em timestamptz); INSERT INTO public.app_aluno VALUES('synthetic-a',null);");
-    await a.query(fs.readFileSync(require('node:path').join(__dirname,'../supabase/proposals/treino-historico.sql'),'utf8'));
+    await a.query(fs.readFileSync(require('node:path').join(__dirname,'../supabase/migrations/20261005150945_treino_historico_eventos.sql'),'utf8'));
     const start = {v:1,id:'start:s-a',session:'s-a',type:'start',actor:'device-a',at:'2026-10-03T12:00:00.000Z',date:'2026-09-03',kind:'musculacao',prescribed:{name:'Ficha fictícia'},legacy:false};
     const r = {v:1,id:'r-a',session:'s-a',type:'result',actor:'device-a',at:start.at,target:'set-a',parents:[],value:{reps:8}};
     const save = (c,es) => c.query("SELECT public.app_treino_eventos_grava('synthetic-a',$1::jsonb) as v",[JSON.stringify(es)]);

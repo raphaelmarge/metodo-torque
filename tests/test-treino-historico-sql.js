@@ -15,8 +15,8 @@ const H = require('../app/treino-historico-core');
   async function read(token, cursor = '0') { return (await db.query('select public.app_treino_eventos_lista($1,$2::bigint) as v', [token, cursor])).rows[0].v; }
   try {
     await db.exec("create role anon; create role authenticated; create table public.app_aluno(token text primary key,revogado_em timestamptz); insert into public.app_aluno values('synthetic-a',null),('synthetic-b',null),('synthetic-revoked',now());");
-    const sql = fs.readFileSync(path.join(__dirname, '../supabase/proposals/treino-historico.sql'), 'utf8');
-    await db.exec(sql); await db.exec(sql); // proposta reaplicável no banco descartável
+    const sql = fs.readFileSync(path.join(__dirname, '../supabase/migrations/20261005150945_treino_historico_eventos.sql'), 'utf8');
+    await db.exec(sql); await db.exec(sql); // migração reaplicável no banco descartável
     await test('tabela RLS e acesso direto negado aos dois papéis', async () => {
       assert.equal((await db.query("select relrowsecurity from pg_class where oid='public.app_treino_eventos'::regclass")).rows[0].relrowsecurity, true);
       for (const role of ['anon','authenticated']) {
