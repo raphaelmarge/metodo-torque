@@ -82,10 +82,11 @@ async function snapshot(page) {
       window.__salesRpc=[];
       const original=window.MTStore.cloud;
       window.__salesRestoreCloud=()=>{window.MTStore.cloud=original;delete window.__salesRestoreCloud;};
-      window.MTStore.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>{
+      const offlineCloud=window.mockNuvem({aid:'fixture-academia',rpc:name=>{
         if(name!=='minha_assinatura')return Promise.resolve({data:null,error:null});
         window.__salesRpc.push(name);return Promise.reject(new Error('fixture offline'));
       }});
+      window.MTStore.cloud=()=>offlineCloud;
     });
     await page.locator('#taRever').click();
     assert(await page.locator('#taRever').isDisabled());
@@ -102,10 +103,11 @@ async function snapshot(page) {
       localStorage.setItem('mtapp:ptAssinatura',JSON.stringify({status:'vitalicia',travado:false}));T.aplica();const lifetime=dialog.hidden;
       // A reconsulta so altera o status se o servidor fornece um envelope valido.
       localStorage.setItem('mtapp:ptAssinatura',JSON.stringify({status:'trial',travado:true}));T.aplica();
-      S.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>name==='minha_assinatura'
+      let assinaturaCloud=window.mockNuvem({aid:'fixture-academia',rpc:name=>name==='minha_assinatura'
         ?Promise.reject(new Error('fixture offline')):Promise.resolve({data:null,error:null})});
+      S.cloud=()=>assinaturaCloud; // cliente estavel, como o Store real
       T.consulta();await new Promise(r=>setTimeout(r,0));const failureKeepsLock=T.travado();
-      S.cloud=()=>window.mockNuvem({aid:'fixture-academia',rpc:name=>Promise.resolve({
+      assinaturaCloud=window.mockNuvem({aid:'fixture-academia',rpc:name=>Promise.resolve({
         data:name==='minha_assinatura'?{status:'ativa',travado:false}:null,error:null})});
       T.consulta();await new Promise(r=>setTimeout(r,0));const unlockedByServer=!T.travado();
       return {noStatus,legacy,lifetime,failureKeepsLock,unlockedByServer};
