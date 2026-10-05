@@ -161,6 +161,7 @@ var CORE = [
   "app/medalhas-core.js",
   "app/medalhas-catalogo.js",
   "assets/personal-medalhas.js",
+  "assets/personal-commerce-images.js",
   "assets/personal-medalhas.css",
   // skin do redesenho: a camada visual que o builder embute no app publicado
   "app/aluno-skin.js",

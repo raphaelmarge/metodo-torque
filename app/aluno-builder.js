@@ -3082,6 +3082,7 @@
         "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(STUDIO_CURTO) + " pra quem treina aqui:</div>" +
         clubeApp.map(function (p) {
           return "<div style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+            (typeof p.f === 'string' && p.f.length <= 120000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.f) ? "<img src='" + p.f + "' alt='Logo de " + esc(p.n) + "' style='display:block;width:96px;height:64px;object-fit:contain;margin-bottom:8px;'>" : "") +
             "<b style='font-size:14.5px;'>" + esc(p.n) + "</b>" +
             "<div style='font-size:13px;color:#cfcbdb;margin-top:2px;'>" + esc(p.b) + "</div>" +
             (p.c ? "<button class='cupbt' data-cup='" + esc(p.c) + "' style='margin-top:9px;background:var(--bg2);border:1px dashed var(--cor);color:var(--corc);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;letter-spacing:.06em;'>" + esc(p.c) + " · copiar</button>" : "") +
