@@ -64,7 +64,7 @@ implantada nem recuperação de informação que nunca foi salva.
 ## Verificação e limites
 
 Testes sintéticos cobrem núcleo (19), duas abas reais (6), transporte simulado
-(7), SQL PGlite (9) e integração nos três players (15). Há suíte PostgreSQL
+(7), SQL PGlite (10) e integração nos três players (19). Há suíte PostgreSQL
 com duas conexões e observador para locks, idempotência e revogação, executada
 no CI; o executor local não dispõe de PostgreSQL/PGTESTURL. Regressões dos
 players de musculação, corrida e circuito também foram executadas.

@@ -72,6 +72,14 @@ const H = require('../app/treino-historico-core');
       const b = await read('synthetic-a', a.cursor); assert.equal(b.eventos.length, 3); assert.equal(b.mais, false);
       await save('synthetic-a',more); const end = await read('synthetic-a',b.cursor); assert.equal(end.eventos.length, 0); assert.equal(end.cursor,b.cursor);
     });
+    await test('legado sem horário atravessa SQL sem fabricar execução; correção precisa de horário', async () => {
+      const old={...e,id:'start:legacy-null',session:'legacy-null',at:null,actor:'legacy-import',legacyImport:true,legacy:true,prescribed:{}};
+      const oldResult={...r,id:'legacy-result-null',session:old.session,at:null,actor:'legacy-import',legacyImport:true};
+      await save('synthetic-b',[old,oldResult]);
+      const all=(await read('synthetic-b')).eventos,view=H.project(Object.fromEntries(all.map(x=>[x.id,x])),old.session);
+      assert.equal(view.startedAt,null);assert.equal(view.targets['set-a'].original[0].at,null);
+      await assert.rejects(save('synthetic-b',[{...oldResult,id:'legacy-bad-edit',type:'correction',parents:[oldResult.id],reason:'Correção fictícia'}]),/INVALID_EVENT/);
+    });
     console.log(checks + ' cenários SQL locais passaram. Não testa concorrência de conexões PostgreSQL reais.');
   } finally { await db.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });
