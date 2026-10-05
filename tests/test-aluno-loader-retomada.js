@@ -2,6 +2,7 @@
  * Todos os dados/RPCs são fictícios em localhost; rede externa é bloqueada. */
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 let chromium; try { chromium = require('playwright').chromium; } catch (_) { chromium = require('/opt/node22/lib/node_modules/playwright').chromium; }
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
 const CLOUD = BASE + '/__loader_mock';
@@ -11,6 +12,9 @@ function pacote(aluno) {
     a: { id: 'sintetico-' + aluno, nome: 'Aluno Sintético ' + aluno.toUpperCase(), appTokenP: tokens[aluno] },
     studio: 'Teste isolado do loader', cfg: {},
     COR: '#7c3aed', COR2: '#5925ba', CORC: '#b395ff', CORE: '#33155c', CORCL1: '#d6c4ff', CORCL2: '#e8ddff',
+    fichasApp: [{ titulo: 'Musculação de ' + aluno, itens: [{ nome: 'Movimento do loader', series: 1, reps: '8', descanso: 0 }] }],
+    guiaFichasP: [{ n: 'Musculação de ' + aluno, it: [{ e: 'Movimento do loader', s: 1, r: '8', d: 0 }] }],
+    fexs: [{ n: 'Movimento do loader', s: 1 }],
     cardiosApp: [{ id: 'corrida-' + aluno, nome: 'Corrida de ' + aluno, mod: 'corrida', tipo: 'continuo', blocos: [{ tipo: 'ativo', alvo: { acao: 'correr', valor: 600, unidade: 's' } }] }],
     wodsApp: [{ id: 'circuito-' + aluno, nome: 'Circuito de ' + aluno, tipo: 'amrap', min: 12, movs: [{ q: '10', n: 'Movimento sintético um' }, { q: '8', n: 'Movimento sintético dois' }] }]
   } };
@@ -21,7 +25,7 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
 (async () => {
   browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', timezoneId: 'America/Sao_Paulo' });
-  const calls = [], errors = [], externalBackend = [];
+  const calls = [], errors = [], externalBackend = [], dialogs = [];
   let denied = '';
   await ctx.route('**/*', route => {
     const url = new URL(route.request().url());
@@ -47,7 +51,7 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   });
   const page = await ctx.newPage();
   page.on('pageerror', error => errors.push(error.message));
-  page.on('dialog', dialog => dialog.accept());
+  page.on('dialog', dialog => { dialogs.push(dialog.message()); return dialog.accept(); });
   await page.clock.setFixedTime(new Date('2026-09-29T10:00:00-03:00'));
   async function abrir(aluno) {
     await page.goto(BASE + '/app/?t=' + tokens[aluno]);
@@ -87,8 +91,12 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
     }, aluno);
   }
   async function prepararHistoricoInterno(aluno) {
-    return page.evaluate(token => {
-      if (!__treinoHistorico.beginMuscle(9, { n: 'Ficha sintética da limpeza', it: [] }, isoHj())) throw Error('Histórico sintético não criado');
+    return page.evaluate(({ token, aluno }) => {
+      const exercise = 'Movimento histórico exclusivo ' + aluno;
+      if (!__treinoHistorico.beginMuscle(9, { n: 'Ficha histórica exclusiva ' + aluno, it: [{ e: exercise, s: 1, r: '8', d: 0 }] }, isoHj())) throw Error('Histórico sintético não criado');
+      const original = { i: '9:0:0', d: isoHj(), g: 2, feito: true, serie: 1, r: 8, kg: 20, exercicioId: 'exercicio-historico-' + aluno };
+      if (!__treinoHistorico.muscle(original, exercise)) throw Error('Resultado sintético não criado');
+      if (!__treinoHistorico.muscle({ ...original, kg: 22 }, exercise, original)) throw Error('Revisão sintética não criada');
       const scope = encodeURIComponent(JSON.stringify(['token', token]));
       localStorage.setItem('tqWorkoutSync:' + scope + ':cursor', '0');
       localStorage.setItem('torque-preferencia-ficticia', 'preservar');
@@ -97,7 +105,7 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
         if (['tqWorkoutJournal:', 'tqWorkoutSync:', 'tqWorkoutPlayer:'].some(prefix => key.startsWith(prefix + scope + ':'))) rows[key] = localStorage.getItem(key);
       }
       return rows;
-    }, tokens[aluno]);
+    }, { token: tokens[aluno], aluno });
   }
 
   await abrir('a'); await iniciar('a', 45, .42, 83); await marcarCompartilhados('a');
@@ -113,6 +121,7 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   ok(await page.evaluate(a => !!localStorage.getItem(a.crKey) && !!localStorage.getItem(a.wodKey), a), 'trocar para B preserva somente os checkpoints isolados de A');
   eq(await page.evaluate(rows => Object.fromEntries(Object.keys(rows).map(k => [k, localStorage.getItem(k)])), historyA), historyA, 'troca de aluno conserva o histórico, cursor e apontador isolados de A');
   await iniciar('b', 17, .11, 33); await marcarCompartilhados('b');
+  await prepararHistoricoInterno('b');
   const b = await estado();
   ok(a.crKey !== b.crKey && a.wodKey !== b.wodKey, 'corrida e circuito usam chaves distintas para cada aluno');
   // Sair antes de avançar a hora evita atribuir a lacuna ao evento pagehide.
@@ -126,8 +135,24 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   eq([s.wod.sid, s.wod.run, s.wod.tempo, s.wod.gi, s.wod.voltas], [a.circuito.sid, false, 83, 1, 2], 'circuito de A retorna pausado com progresso e duração próprios');
   eq([s.cardio, s.placares, s.shared], [[], {}, [null, null, null, null, null]], 'voltar a A não carrega históricos nem campos compartilhados de B');
   ok(await page.evaluate(b => !!localStorage.getItem(b.crKey) && !!localStorage.getItem(b.wodKey), b), 'os checkpoints isolados de B também sobrevivem ao retorno para A');
-  const exportPendente = await page.evaluate(() => window.__exportaDados());
+  const muscleCheckpoint = await page.evaluate(() => {
+    document.querySelector('.guiabtn').click(); __acSessao.salvar(); fechaGuia();
+    return __acSessao.ler();
+  });
+  ok(muscleCheckpoint && muscleCheckpoint.token === tokens.a, 'player muscular real produz checkpoint de retomada com a identidade do aluno');
+  const exportAudit = await page.evaluate(() => {
+    const snapshot = () => Object.fromEntries(Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)]));
+    const before = snapshot(), dados = window.__exportaDados();
+    return { before, after: snapshot(), dados, packet: __treinoHistorico.packet() };
+  });
+  const exportPendente = exportAudit.dados;
+  eq(exportAudit.after, exportAudit.before, 'exportar é somente leitura e não altera registros, cursor ou checkpoints');
+  eq(exportPendente.historico_treinos, exportAudit.packet, 'exportação inclui o journal canônico completo da identidade ativa');
+  const history = Object.values(exportPendente.historico_treinos).map(event => JSON.parse(event));
+  ok(history.some(e => e.type === 'result' && e.value.kg === 20) && history.some(e => e.type === 'correction' && e.value.kg === 22), 'exportação conserva resultado original e correção do treino de A');
+  ok(!JSON.stringify(exportPendente).includes('histórico exclusivo b') && !JSON.stringify(exportPendente.historico_treinos).includes('tqWorkout') && !JSON.stringify(exportPendente.historico_treinos).includes('cursor'), 'journal exportado não inclui dados de B, namespaces internos nem cursor');
   eq(Object.keys(exportPendente.tudo_no_aparelho).filter(k => /^pt(?:corrida|wod)Sessao:/.test(k)), [], 'exportação exclui checkpoints internos tanto do aluno atual quanto do outro aluno');
+  ok(!Object.hasOwn(exportPendente.tudo_no_aparelho, 'ptguiaSessao'), 'exportação exclui também o checkpoint muscular que contém a credencial de acesso');
   ok(!JSON.stringify(exportPendente).includes(tokens.a) && !JSON.stringify(exportPendente).includes(tokens.b) && !JSON.stringify(exportPendente).includes(b.corrida.sid) && !JSON.stringify(exportPendente).includes(b.circuito.sid), 'exportação com sessões pendentes não inclui tokens nem dados de B');
   const devolvido = page.waitForResponse(r => r.url().endsWith('/rpc/app_aluno_devolve') && r.request().postDataJSON().t === tokens.a);
   await page.evaluate(() => { document.getElementById('crFim').click(); document.getElementById('wodTermina').click(); document.getElementById('wpSalvar').click(); });
@@ -141,6 +166,24 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   eq([exportFinal.corridas, exportFinal.circuitos], [s.cardio, s.placares], 'exportação conserva os resultados finalizados de corrida e circuito de A');
   eq([exportFinal.tudo_no_aparelho.ptcardio, exportFinal.tudo_no_aparelho.ptwodres], [s.cardio, s.placares], 'coleções finalizadas atuais também permanecem no formato completo de exportação');
   ok(!JSON.stringify(exportFinal).includes(tokens.a) && !JSON.stringify(exportFinal).includes(tokens.b) && !JSON.stringify(exportFinal).includes(b.corrida.sid) && !JSON.stringify(exportFinal).includes(b.circuito.sid) && !JSON.stringify(exportFinal).includes('exclusivo-b'), 'exportação após concluir A continua sem tokens ou dados de B');
+  const downloaded = page.waitForEvent('download');
+  await page.evaluate(() => document.getElementById('ajBaixa').click());
+  const download = await downloaded;
+  eq(download.suggestedFilename(), 'meus-dados-torque.json', 'botão baixa o arquivo de portabilidade previsto');
+  const saved = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+  eq(saved.historico_treinos, exportFinal.historico_treinos, 'JSON efetivamente baixado conserva todo o histórico e suas revisões');
+  eq([saved.corridas, saved.circuitos], [s.cardio, s.placares], 'download continua incluindo os resultados atuais sem alterar os campos anteriores');
+  const previousDialogs = dialogs.length;
+  const invalidExport = await page.evaluate(token => {
+    const createURL = URL.createObjectURL; let blobs = 0;
+    URL.createObjectURL = function () { blobs++; return createURL.apply(this, arguments); };
+    localStorage.setItem('tq_app_token', token);
+    try { document.getElementById('ajBaixa').click(); return blobs; }
+    finally { URL.createObjectURL = createURL; }
+  }, tokens.b);
+  eq(invalidExport, 0, 'aba de outra identidade não cria arquivo parcial de exportação');
+  ok(dialogs.length === previousDialogs + 1 && dialogs.at(-1).includes('Não foi possível baixar'), 'acesso inválido apresenta explicação visível ao tentar exportar');
+  await page.evaluate(token => localStorage.setItem('tq_app_token', token), tokens.a);
 
   // A palavra do servidor continua invalidando inclusive os checkpoints isolados.
   for (const motivo of ['revogado', 'sem_registro']) {

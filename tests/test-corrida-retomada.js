@@ -110,8 +110,14 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   eq((await state()).km, measured, 'primeiro ponto após lacuna não inventa um trajeto em linha reta');
   await gps(-20.0015, 20);
   eq(await p.evaluate(() => __cr.rota.filter(p => p.quebra).length), 1, 'trajeto marca uma interrupção após perder o sinal');
+  await p.evaluate(() => {
+    const input = document.getElementById('crKm'); input.value = '99'; input.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('crGo').click();
+  });
+  ok(await p.evaluate(() => __cr.distanciaManual === false && __crKmAtual() < 1), 'campo manual ignorado pelo GPS não muda a distância nem sua origem ao pausar');
   await p.evaluate(() => document.getElementById('crFimF').click());
   s = await state(); eq(s.registros.at(-1).rpartes.length, 2, 'salvamento mantém dois trechos separados e uma polyline compatível');
+  eq(s.registros.at(-1).origem, 'gps', 'distância medida pelo GPS mantém sua origem no resultado');
   await p.evaluate(() => {
     window.maplibregl = { Map: function () { this.on = (name, cb) => { if (name === 'style.load') cb(); }; this.addSource = (_, data) => { window.__geoTeste = data.data.geometry; }; this.addLayer = () => {}; this.fitBounds = () => {}; this.easeTo = () => {}; this.remove = () => {}; } };
     document.getElementById('crRs3D').click();
@@ -119,7 +125,26 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   await p.waitForFunction(() => window.__geoTeste);
   eq(await p.evaluate(() => [__geoTeste.type, __geoTeste.coordinates.length]), ['MultiLineString', 2], 'mapa3D não desenha ligação entre trechos sem sinal');
   await p.evaluate(() => document.getElementById('cr3Dx').click());
+  await start(); await advance(10, 0); await gps(-20, 20);
+  await p.evaluate(() => {
+    const input = document.getElementById('crKm'); input.value = '0.5'; input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  ok(await p.evaluate(() => __cr.gpsOn && __cr.km === 0 && __crSessao.le().distanciaManual === true),
+    'digitar distância sem deslocamento GPS identifica e protege a origem manual no checkpoint');
+  await p.evaluate(() => document.getElementById('crFim').click());
+  s = await state();
+  eq([s.registros.at(-1).k, s.registros.at(-1).origem, s.registros.at(-1).tempoBase], [.5, 'manual', 'ativo'],
+    'GPS ligado sem km observados não transforma distância digitada em medição GPS');
+  await start(); await advance(10, 0);
+  await p.evaluate(() => {
+    const input = document.getElementById('crKm'); input.value = '0.7'; input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await load(); await p.evaluate(() => __crSessao.restaura());
+  ok(await p.evaluate(() => __cr.distanciaManual === true && !__cr.run), 'reabrir a corrida mantém a origem manual e o cronômetro pausado');
+  await p.evaluate(() => document.getElementById('crFim').click());
+  eq((await state()).registros.at(-1).origem, 'manual', 'finalizar após reabertura conserva a distância manual');
   await start(); await advance(24, .2);
+  ok(await p.evaluate(() => __cr.distanciaManual === false), 'nova corrida não herda a indicação manual da sessão anterior');
 
   await p.evaluate(() => __crSessao.salva(true)); const keyA = await p.evaluate(() => __crSessao.chave);
   const antesDaMarca = (await state()).snapshot;

@@ -34,6 +34,27 @@ O teste reproduziu o resíduo antes da correção e passou em 31 verificações 
 o ajuste, preservando os bytes na troca normal de aluno e preferências genéricas.
 A suíte de ciclo de vida/concessão de aba passou em 13 verificações.
 
+## Consolidação do histórico
+
+A proposta #867 recebeu uma implementação alternativa durante esta integração,
+até `88e7fee`. A release mantém a integração dos três players de #871: sessão
+por execução, recuperação, concessão exclusiva de aba e runtime incorporado para
+uso offline. A alternativa de carregar outro controlador em paralelo foi
+substituída por esse contrato único. O atalho já permanece na seção Treinos e
+as verificações fortes de encerramento, edição obsoleta e quota foram preservadas.
+
+Foram incorporadas as correções relevantes da revisão posterior: horário antigo
+desconhecido sem timestamp inventado, origem da distância manual/GPS e prazo
+exato do descanso durante a troca de série. A exportação inclui o journal e suas
+revisões somente da identidade ativa, sem exportar credenciais ou outros alunos.
+O SQL rejeita horário nulo em eventos que não sejam os originais legados
+expressamente permitidos; revisões continuam com a hora real da correção.
+
+Após esses ajustes passaram corrida/retomada (65), séries e descanso (81),
+loader/exportação (42), editor dos players (49), sintaxe e bundle. O download
+real contém originais e revisões da identidade ativa; exclui checkpoints com
+token, inclusive `ptguiaSessao`, e não gera arquivo parcial se o acesso mudou.
+
 O histórico passou em núcleo, transporte, navegador, três players, múltiplas
 sessões, concessão de aba, SQL e concorrência. O gerador aceita LF/CRLF sem
 duplicação e preserva o restante do builder. Ver

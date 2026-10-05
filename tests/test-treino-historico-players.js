@@ -31,10 +31,11 @@ function ok(a,m){assert.ok(a,m);console.log('OK '+m);count++;}
   eq(sessions[0].targets['0:0:0'].value.kg,23,'correção durante treino atualiza apenas a série escolhida');
   await p.evaluate(()=>fechaGuia());
   await p.evaluate(()=>{document.querySelector('[data-cbstart]').click();document.getElementById('crGo').click();});
-  await p.clock.runFor(10000);await p.evaluate(()=>document.getElementById('crKm').value='0.5');
+  await p.clock.runFor(10000);await p.evaluate(()=>{document.getElementById('crKm').value='0.5';__cr.gpsOn=true;__cr.km=0.5;__cr.rota=[{lat:-20,lng:-44},{lat:-20.001,lng:-44.001}];});
   await p.locator('[data-th-live=corrida]').click();
-  const liveRun=p.locator('.th-session[data-kind=corrida]');await liveRun.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await liveRun.locator('input[name=s]').fill('12');await liveRun.locator('input[name=reason]').fill('Corrigir medição durante corrida');await liveRun.getByRole('button',{name:'Salvar correção',exact:true}).click();
+  const liveRun=p.locator('.th-session[data-kind=corrida]');await liveRun.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await liveRun.locator('input[name=s]').fill('12');await liveRun.locator('input[name=k]').fill('0.6');await liveRun.locator('input[name=reason]').fill('Corrigir medição durante corrida');await liveRun.getByRole('button',{name:'Salvar correção',exact:true}).click();
   eq(await p.evaluate(()=>({run:__cr.run,time:__cr.acum,finished:__treinoHistorico.list().find(s=>s.kind==='corrida').finished})),{run:false,time:12,finished:false},'corrida corrige durante execução pausada sem encerrar sessão');
+  eq(await p.evaluate(()=>{const x=__crSessao.le();return [x.origem,x.origemCorrecao,x.km,x.rota.length];}),['gps','manual',0.6,2],'revisão em andamento mantém origem GPS, marca correção manual e conserva trajeto no checkpoint');
   await liveRun.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await liveRun.locator('input[name=s]').fill('13');await liveRun.locator('input[name=reason]').fill('Correção com falha de checkpoint');
   await p.evaluate(()=>{window.savedCheckpointWrite=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('ptcorridaSessao:'))throw new DOMException('Quota','QuotaExceededError');return savedCheckpointWrite.call(this,k,v);};});
   await liveRun.getByRole('button',{name:'Salvar correção',exact:true}).click();
@@ -49,6 +50,8 @@ function ok(a,m){assert.ok(a,m);console.log('OK '+m);count++;}
   sessions=await p.evaluate(()=>__treinoHistorico.list());
   const run=sessions.find(s=>s.kind==='corrida');ok(run&&run.finished,'player de corrida grava sessão e encerramento no journal');
   eq(run.prescribed.plano.n,'Corrida original','corrida conserva a receita capturada na largada');
+  eq([run.targets.result.value.origem,run.targets.result.value.origemCorrecao,run.targets.result.value.k,run.targets.result.value.tempoBase],['gps','manual',0.6,'ativo'],'reabrir e finalizar corrida corrigida preserva origem, correção, km e base de tempo');
+  ok(typeof run.targets.result.value.r==='string'&&run.targets.result.value.r.length>0,'finalização conserva o trajeto observado após a correção manual');
   await p.click('#crRsFechar');
   await p.evaluate(()=>{document.querySelector('[data-wodstart]').click();document.getElementById('wodGo').click();});
   await p.clock.runFor(6000);await p.locator('[data-th-live=circuito]').click();
