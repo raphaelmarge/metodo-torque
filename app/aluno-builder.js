@@ -5781,7 +5781,7 @@
        * batia com o que estava na tela um segundo antes. */
       "function crFinaliza(msg){if(cr.resumo||cr.salvando)return false;if(!acIdentidadeAtual()){crPausaSegura();crErroSalva('Este app foi trocado de aluno. Abra novamente o seu acesso antes de registrar a corrida.');return false;}var el2=crTempoAtual();" +
       "if(el2<5){crEl('crFase').textContent='Corrida curta demais pra salvar';crEl('crInfo').textContent='continua correndo ou toca em Zerar';return;}" +
-      "if(!CRSESS.ensure()){crPausaSegura();CRSESS.salva(true);return false;}var origem=cr.gpsOn?'gps':cr.distanciaManual?'manual':(cr.rota&&cr.rota.length?'gps':'manual');var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
+      "if(!CRSESS.ensure()){crPausaSegura();CRSESS.salva(true);return false;}var origem=cr.gpsOn&&cr.km>0?'gps':cr.distanciaManual?'manual':(cr.rota&&cr.rota.length?'gps':'manual');var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
       "var med=km>0.015?(el2/60)/km:null;" +
       "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,etapas:resultado.etapas,origem:origem};" +
       "var fcR=hrResumo();if(fcR&&!cr.regGravado){reg.fc=fcR.m;reg.fcx=fcR.x;}" +
