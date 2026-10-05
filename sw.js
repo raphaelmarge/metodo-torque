@@ -159,6 +159,9 @@ var CORE = [
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
   "app/medalhas-core.js",
+  "app/metas-personalizadas.js",
+  "app/metas-aluno.js",
+  "assets/personal-metas.js",
   "app/medalhas-catalogo.js",
   "assets/personal-medalhas.js",
   "assets/personal-commerce-images.js",

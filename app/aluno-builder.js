@@ -115,6 +115,8 @@
       var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = isoHj(), n = -1;
       l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id) n = i; });
       var r = n < 0 ? { d: hj, g: 2, i: id, serie: si + 1, kg: null } : Object.assign({}, l[n]);
+      if (n < 0 && it.exercicioId) r.exercicioId = it.exercicioId;
+      else if (r.exercicioId !== it.exercicioId) delete r.exercicioId;
       r.feito = feito !== false;
       if (n < 0) l.push(r); else l[n] = r;
       h[it.e] = l.slice(-600);
@@ -3380,6 +3382,7 @@
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
       "var cqVisual=(" + runtimeMedalhaVisual.toString() + ")();" +
       "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
+      ((D.metasPersonalizadasApp || []).length && raiz.MT_METAS_PESSOAIS && raiz.MT_METAS_ALUNO ? "window.__metasAluno=(" + raiz.MT_METAS_ALUNO.runtime.toString() + ")((" + raiz.MT_METAS_PESSOAIS.runtime.toString() + ")()," + jsonApp(D.metasPersonalizadasApp || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[])};}}," + jsonApp(MT_CQICONS) + ");" : "") +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN||!acIdentidadeAtual())return;clearTimeout(devT);devT=setTimeout(function(){if(!acIdentidadeAtual())return;" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
        * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
@@ -4359,7 +4362,7 @@
       "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}if(window.__metasAluno)window.__metasAluno.pinta();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
       /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364
@@ -6271,6 +6274,7 @@
           return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
             var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, m: (it.m === false || x.m === false) ? false : (it.m || x.m || ""), g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas, rpe: it.rpe != null ? it.rpe : x.rpe };
+            if (typeof it.exercicioId === "string" && it.exercicioId) item.exercicioId = it.exercicioId;
             item.rpePorSerie = (item.seriesDetalhadas || []).map(function(s){return s && s.rpe != null ? s.rpe : null;});
             var sd = normalizaSeries(item); item.s = sd.length; item.d = sd[0].descanso; item.r = sd[0].reps;
             if (item.seriesDetalhadas) item.seriesDetalhadas = sd;
@@ -6342,6 +6346,7 @@
       "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot){i=k;break;}}" +
       // recorde compara com TUDO que veio antes, menos a anotação de hoje que
       // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
+      "if(porSerie){var source=GUIA[+ps[0]]&&GUIA[+ps[0]].it[+ps[1]];if(source&&source.e===ex&&source.exercicioId&&(i<0||l[i].exercicioId===source.exercicioId))reg.exercicioId=source.exercicioId;}" +
       "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&cargaConcluida(l[k9])&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
       "if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
       "h[ex]=l.slice(-600);if(Sv('ptdc',h)===false)return false;" +

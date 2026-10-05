@@ -31,7 +31,7 @@ var ESQUELETO = [
   "./",
   "index.html",
   "aluno-builder.js",
-  "medalhas-core.js",
+  "medalhas-core.js", "metas-personalizadas.js", "metas-aluno.js",
   "aluno-skin.js",     // v776: faltava — o app abria offline sem a cara do redesenho
   "nutri-builder.js",
   "nutri-skin.js",

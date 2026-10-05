@@ -3988,6 +3988,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/personal-marca.js"></script>
 <script src="app/aluno-skin.js"></script>
 <script src="app/medalhas-core.js"></script>
+<script src="app/metas-personalizadas.js"></script>
+<script src="app/metas-aluno.js"></script>
+<script src="assets/personal-metas.js"></script>
 <script src="app/medalhas-catalogo.js"></script>
 <script src="app/aluno-builder.js"></script>
 <link rel="stylesheet" href="assets/personal-medalhas.css">
@@ -23219,7 +23222,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         var linhas = MT_APP_ALUNO.normalizaSeries(it);
-        return { nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
+        return { exercicioId: typeof ex.id === "string" ? ex.id : "", nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
           carga: MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? linhas : undefined, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
@@ -23245,7 +23248,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
+        return { exercicioId: it.exercicioId || "", e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
           carga: it.carga == null ? null : it.carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? MT_APP_ALUNO.normalizaSeries(it) : undefined,
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
@@ -23385,6 +23388,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      metasPersonalizadasApp: self.MT_METAS_PESSOAIS ? self.MT_METAS_PESSOAIS.list((st.config || {}).metasPersonalizadas) : [],
       medalhasApp: self.MT_MEDALHAS ? self.MT_MEDALHAS.pacote((st.config || {}).medalhasEvolutivas) : undefined,
       planoDatas: R809.pacoteDatas(t2),
       onboardingApp: self.MT_ONBOARDING_CONSULTORIA ? self.MT_ONBOARDING_CONSULTORIA.pacote(st, a, { contrato: ctApp, plano: plApp }) : null,
@@ -25575,6 +25579,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     permitido: function () { var b = document.querySelector('#abas [data-a="pers"]'); return !(b && b.style.display === "none") && !(S.usuario && (S.usuario() || {}).papel === "funcionario"); }
   });
   if (self.MT_PERSONAL_MEDALHAS) self.MT_PERSONAL_MEDALHAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
+  if (self.MT_PERSONAL_METAS) self.MT_PERSONAL_METAS.init({load:load, save:save, onChange:function(fn){S.onChange(fn);}});
   if (self.MT_ESTORNOS) self.MT_ESTORNOS.init({
     load: load, save: save, marca: marcaAppPendente, financeiro: alFinanceiroPermitido,
     conta: function () { var nuv=S.cloud&&S.cloud(); return JSON.stringify([nuv&&nuv.aid||"",(S.usuario&&S.usuario().email)||"local"]); },
