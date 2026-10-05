@@ -2457,7 +2457,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="alk">Montando pra</div>
         <div class="alh" id="tdNome">Escolha o aluno</div>
       </div>
-      <div class="tdacoes">
+      <div class="tdacoes" id="tdRevisaoAcoes" hidden>
         <button type="button" class="dbt sec" id="tdIA"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5 13.6 9l5.4 1.6-5.4 1.6L12 17.6l-1.6-5.4L5 10.6 10.4 9z'/><path d='M18.5 16.5l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z'/></svg> Gerar com IA</button>
         <button type="button" class="dbt" id="tdPrevia">Prévia e alterações</button>
         <button type="button" class="dbt" id="tdPublica"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Salvar e publicar</button>
@@ -2466,16 +2466,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
            viviam num card separado logo abaixo, que repetia o nome do aluno e
            trazia um segundo botao de publicar — o painel dizia a mesma coisa
            duas vezes e o professor nao sabia qual era o caminho. -->
-      <div class="tdlinha">
-        <select id="tAluno" style="min-width: 200px;"></select>
-        <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
-        <select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select>
-        <button class="btn sec" id="tplAplicar">Aplicar</button>
-        <button class="btn sec" id="tplSalvar" title="guarda as fichas deste aluno como um modelo seu, pra aplicar em outros alunos com 1 clique">Salvar como modelo</button>
-        <button class="btn sec" id="tplApagar" hidden title="apaga o modelo escolhido (as fichas já aplicadas nos alunos continuam)">✕ modelo</button>
-        <button class="btn sec" id="tZap">WhatsApp</button>
-        <label class="muted tdvale">⏰ vale até
-          <input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
+      <div class="tdlinha td-guia">
+        <ol class="trx-steps" aria-label="Etapas da prescrição"><li><span>1</span> Escolher aluno</li><li><span>2</span> Montar e ajustar</li><li><span>3</span> Revisar e publicar</li></ol>
+        <div class="trx-field td-guia-aluno"><label for="tAlunoBusca">Para qual aluno?</label><select id="tAluno" style="min-width: 0;"></select></div>
+        <div id="tdComecar" class="td-guia-criar" hidden>
+          <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
+          <details class="trx-details td-guia-modelo" id="tdModelos"><summary>Usar modelo ou reutilizar</summary><div class="td-guia-modelo-campos">
+            <label class="trx-field" for="tplSel">Modelo pronto ou salvo<select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select></label>
+            <button class="btn sec" id="tplAplicar">Aplicar</button>
+            <button class="btn sec" id="tplApagar" hidden title="apaga o modelo escolhido (as fichas já aplicadas nos alunos continuam)">✕ modelo</button>
+          </div></details>
+          <details class="trx-details td-guia-opcoes"><summary>Mais opções</summary><div class="td-guia-modelo-campos">
+            <button class="btn sec" id="tplSalvar" title="guarda as fichas deste aluno como um modelo seu, pra aplicar em outros alunos com 1 clique">Salvar como modelo</button>
+            <button class="btn sec" id="tZap">WhatsApp</button>
+            <label class="trx-field tdvale" for="tValidade">Válido até<input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
+          </div></details>
+        </div>
+        <p id="tdSalvoStatus" class="trx-note" role="status">Escolha o aluno para começar ou continuar a prescrição.</p>
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-trsec="fichas">
@@ -2569,6 +2576,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <ol class="trx-steps" aria-label="Etapas da criação"><li><span>1</span> Configurar</li><li><span>2</span> Revisar</li><li><span>3</span> Aplicar</li></ol>
       <label class="trx-field trx-student" for="taAluno">Para qual aluno?<select id="taAluno"></select></label>
       <div id="taContexto" class="trx-context"></div>
+      <div id="taRecuperacao" class="trx-note" hidden><p id="taRecuperacaoTexto"></p><button type="button" class="btn sec" id="taRecuperar">Retomar proposta salva</button></div>
       <div class="trx-fields">
         <label class="trx-field" for="taTipo">Modalidade<select id="taTipo"><option value="musculacao">Musculação</option><option value="wod">Circuito (WOD)</option><option value="corrida">Corrida</option></select></label>
         <label class="trx-field" id="taObjetivoCampo" for="taObjetivo">Objetivo<select id="taObjetivo"><option value="hipertrofia">Hipertrofia</option><option value="forca">Força</option><option value="emagrecimento">Emagrecimento</option><option value="condicionamento">Condicionamento geral</option></select></label>
@@ -2600,6 +2608,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="trx-heading"><div><h3 id="taRevisaoTitulo">Revisar proposta</h3><p id="taRevisaoMeta"></p></div></div>
         <div id="taRevisaoAvisos" class="trp-review-notes"></div>
         <div id="taPrevia" class="trp-preview"></div>
+        <details id="taAjustes" class="trx-details"><summary>Ajustar proposta antes de aplicar</summary><p class="trx-help">Os ajustes ficam somente nesta proposta. Carga vazia significa carga ainda não definida; zero continua valendo.</p><div id="taAjustesCampos"></div></details>
+        <p id="taRascunhoStatus" class="trx-status" role="status" aria-live="polite"></p><button type="button" class="btn sec" id="taSalvarRascunho" hidden>Tentar salvar rascunho</button>
         <p id="taAplicacaoStatus" class="trx-status" role="status" aria-live="polite" tabindex="-1"></p>
         <div class="trx-actions"><button class="btn" id="taAplicar">Aplicar ao aluno</button><button class="btn sec" id="taDescartar">Descartar rascunho</button></div>
         <div class="trx-actions"><button class="btn sec" id="taAbrirTreino" hidden>Ajustar treino aplicado</button><button class="btn" id="taEnviaApp" hidden>Publicar no app do aluno</button></div>
@@ -14066,7 +14076,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!av || !nm) return;
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === $("tAluno").value; });
-    if (!a) { av.textContent = "—"; nm.textContent = "Escolha o aluno"; return; }
+    var grupo = !a && (st.treinosGrupo || []).find(function (g) { return g.id === $("tAluno").value; });
+    if ($("tdComecar")) $("tdComecar").hidden = !a && !grupo;
+    if ($("tdRevisaoAcoes")) $("tdRevisaoAcoes").hidden = !a;
+    if ($("tdIA")) $("tdIA").hidden = !a;
+    if ($("tdSalvoStatus")) {
+      var temFicha = a && (st.treinosV2 || {})[a.id] && (st.treinosV2[a.id].fichas || []).length;
+      var pendente = a && (!a.appPubEm || (Date.parse(a.appEditEm || "") || 0) > (Date.parse(a.appPubEm || "") || 0));
+      $("tdSalvoStatus").textContent = grupo ? "Ajuste o treino de disparo e confira os destinatários em Em grupo." : !a ? "Escolha o aluno para começar ou continuar a prescrição." :
+        !temFicha ? "Comece do zero, use um modelo ou configure uma proposta com IA." :
+        pendente ? "Edições salvas neste navegador. Revise e publique para atualizar o app do aluno." :
+        "Prescrição salva. Confira a prévia antes de publicar novas alterações.";
+    }
+    if (!a) { av.textContent = "—"; nm.textContent = grupo ? grupo.nome + " · treino de disparo" : "Escolha o aluno"; return; }
     av.textContent = String(a.nome || "?").trim().slice(0, 2).toUpperCase();
     var t = (st.treinosV2 || {})[a.id];
     var n = t && t.fichas ? t.fichas.length : 0;
@@ -14081,6 +14103,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderFichas() {
     var el = $("fichasBox");
+    // Reutiliza o formulário do mesmo aluno: incluir ou reordenar não perde
+    // busca, filtros, séries individuais, mensagens de validação nem rolagem.
+    var seletores = {}, alunoAtual = $("tAluno").value;
+    var focoSeletor = document.activeElement && document.activeElement.closest('[data-esq]') ? document.activeElement : null;
+    if (el.dataset.alunoRenderizado === alunoAtual) {
+      el.querySelectorAll('[data-esq]').forEach(function (box) { seletores[box.getAttribute('data-esq')] = { el: box, scroll: box.scrollTop }; });
+    } else {
+      trocaExercicio = null;
+      chipsAbertos = {};
+      document.body.classList.remove('tela-escolher');
+    }
+    el.dataset.alunoRenderizado = alunoAtual;
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
     // antes de reconstruir, senão um re-render rápido perde o que abriu/fechou
     document.querySelectorAll("#fichasBox details[data-fdet]").forEach(function (d) {
@@ -14125,6 +14159,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdesqcab"><button type="button" class="btn sec mini" data-exfechar="' + f.id + '" aria-label="voltar pra ficha">‹ Voltar</button>' +
         '<b>Adicionar em ' + esc(letraF) + "</b></div>" +
         '<div class="tdrot">Escolher exercício</div>' +
+        '<div class="td-troca-aviso" data-extrocaaviso="' + f.id + '" hidden><p></p><button type="button" class="btn sec mini" data-extrocacancelar="' + f.id + '">Cancelar troca</button></div>' +
         '<div class="tdcasc">' +
         '<label>Tipo de treino<select data-exmov="' + f.id + '"><option value="">Todos…</option>' +
         '<option value="' + FAV_FILTRO + '">' + FAV_FILTRO + "</option>" +
@@ -14133,7 +14168,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<label>Tipo de série<select data-extec="' + f.id + '">' + opcoesTec("") + "</select></label>" +
         '<label>Grupamento<select data-exzona="' + f.id + '"><option value="">Todos…</option></select></label>' +
         "</div>" +
-        '<div class="tdbusca"><input data-exbusca="' + f.id + '" placeholder="Buscar nos exercícios" autocomplete="off">' +
+        '<div class="tdbusca"><input data-exbusca="' + f.id + '" aria-label="Buscar exercícios da ficha" placeholder="Buscar nos exercícios" autocomplete="off">' +
         '<span class="tdn" data-exn="' + f.id + '"></span></div>' +
         '<div class="tdchips" data-exchips="' + f.id + '"></div>' +
         // o select de verdade continua existindo (e a fonte da verdade de quem foi
@@ -14149,6 +14184,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdaac">' +
         '<button class="btn sec mini" data-exfavsel="' + f.id + '" title="marcar/desmarcar o exercício escolhido como favorito">☆ favorito</button>' +
         '<button class="btn" data-additem="' + f.id + '">+ Adicionar</button></div></div>' +
+        '<p class="td-pick-status" data-exstatus="' + f.id + '" role="status" aria-live="polite"></p>' +
+        '<button type="button" class="btn sec td-pick-done" data-exfechar="' + f.id + '">Concluir e ver ficha</button>' +
         "</div>" +
 
         /* ---------- coluna da direita: a ficha que esta sendo montada ---------- */
@@ -14187,6 +14224,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (videoDoEx(ex) || it.video ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + '</span><span class="td-edit-label">' + (aberto ? "Concluir edição" : "Editar séries") + "</span></button>" +
             MT_PRESCRICAO.editor(it, chave, aberto, opcoesTec) +
             '<span class="tdac">' +
+            '<button type="button" data-trocaitem="' + chave + '" aria-label="Trocar ' + esc(ex.nome) + '">Trocar exercício</button>' +
             (i > 0 ? '<button type="button" data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">Subir</button>' : "") +
             (i < f.itens.length - 1 ? '<button type="button" data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">Descer</button>' : "") +
             '<button type="button" data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">Remover</button></span></div>';
@@ -14194,6 +14232,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         /* No celular ESTE botao e a porta do "escolher exercicio": ele abre a
          * tela cheia. No computador o escolher ja esta ao lado, entao o botao
          * some e fica so a frase. */
+        '<div class="td-troca-retorno" data-extrocaretorno="' + f.id + '" role="status" aria-live="polite"></div>' +
         '<button type="button" class="btn tdaddbt" data-exadd="' + f.id + '">+ Adicionar exercício</button>' +
         (f.itens.length ? "" : '<div class="tdvazio">Ficha vazia — comece pelo <b>+ Adicionar exercício</b></div>') + "</div>" +
         /* Parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de
@@ -14217,7 +14256,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="tdnota">' + esc(notaPublica(st, alunoId)) + "</div>" +
         "</div></div></div></details>";
     }).join("");
-    t.fichas.forEach(function (f) { populaCascata(f.id, st); });
+    t.fichas.forEach(function (f) {
+      var anterior = seletores[f.id], novo = el.querySelector('[data-esq="' + f.id + '"]');
+      if (anterior && novo) { novo.replaceWith(anterior.el); anterior.el.scrollTop = anterior.scroll; }
+      populaCascata(f.id, st);
+      pintaTrocaExercicio(f.id);
+    });
+    document.body.classList.toggle('tela-escolher', !!el.querySelector('.tdesq.abrir'));
+    if (focoSeletor && focoSeletor.isConnected) focoSeletor.focus({ preventScroll: true });
   }
   // cascata da ficha: tipo de treino filtra os grupamentos, que filtram o exercício.
   // Na tela 2d quem aparece sao os CHIPS; o <select data-exsel> continua existindo,
@@ -14241,9 +14287,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * render porque renderFichas() reconstroi a lista inteira a cada troca de
    * campo — sem isso o editor fechava na cara do professor a cada digito. */
   var exAberto = {};
-  /* a tela cheia de escolher exercicio (celular) vive numa classe no DOM, nao
-   * no estado: renderFichas() reconstroi a lista e ela fecha sozinha — que e
-   * justamente o que tem de acontecer depois de "+ Adicionar". */
+  // O seletor permanece aberto até Concluir/Voltar; uma troca usa o mesmo
+  // catálogo, mas só altera a ficha depois de uma confirmação explícita.
+  var trocaExercicio = null, desfazerTrocaExercicio = null;
+  function avisoSeletor(fid, mensagem) {
+    var el = document.querySelector('[data-exstatus="' + fid + '"]');
+    if (el) el.textContent = mensagem;
+  }
+  function pintaTrocaExercicio(fid) {
+    var box = document.querySelector('[data-esq="' + fid + '"]');
+    if (!box) return;
+    var troca = trocaExercicio && trocaExercicio.alunoId === $("tAluno").value && trocaExercicio.fid === fid;
+    box.classList.toggle('trocando', !!troca);
+    var aviso = box.querySelector('[data-extrocaaviso]');
+    aviso.hidden = !troca;
+    if (troca) aviso.querySelector('p').textContent = 'Trocar ' + trocaExercicio.nome + '. Mantém posição, séries, carga, descanso, técnica e observação. Revise a adequação ao novo exercício. Vídeo próprio e alternativas anteriores não serão transferidos.';
+    box.querySelector('[data-additem]').textContent = troca ? 'Confirmar troca' : '+ Adicionar';
+    var cabecalho = box.querySelector('.tdesqcab b');
+    if (!cabecalho.dataset.adicao) cabecalho.dataset.adicao = cabecalho.textContent;
+    cabecalho.textContent = troca ? 'Trocar exercício' : cabecalho.dataset.adicao;
+    box.querySelector('[data-exprescricao]').hidden = !!troca;
+    box.querySelector('[data-exobs]').closest('label').hidden = !!troca;
+    box.querySelector('[data-extec]').closest('label').hidden = !!troca;
+    var retorno = document.querySelector('[data-extrocaretorno="' + fid + '"]');
+    var desfazer = desfazerTrocaExercicio;
+    if (retorno && desfazer && desfazer.alunoId === $("tAluno").value && desfazer.fid === fid) {
+      retorno.innerHTML = '<span>Exercício trocado. Confira a prescrição.</span> <button type="button" class="btn sec mini" data-exdesfazertroca="' + esc(fid) + '">Desfazer troca</button>';
+    }
+  }
+  function fechaSeletor(fid) {
+    var box = document.querySelector('[data-esq="' + fid + '"]');
+    if (box) box.classList.remove('abrir');
+    document.body.classList.remove('tela-escolher');
+    if (trocaExercicio && trocaExercicio.fid === fid) { trocaExercicio = null; pintaTrocaExercicio(fid); }
+    var alvo = document.querySelector('[data-tdex^="' + fid + ':"] [data-exab]') || document.querySelector('[data-exadd="' + fid + '"]');
+    if (alvo) alvo.focus();
+  }
   function populaCascata(fid, stJa) {
     var movSel = document.querySelector('[data-exmov="' + fid + '"]');
     var zonaSel = document.querySelector('[data-exzona="' + fid + '"]');
@@ -14266,8 +14345,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var lista = itens.filter(function (x) { return !zonaAtual || x.grupo === zonaAtual; });
     // a busca so peneira o que a cascata ja escolheu — nao atropela o filtro
     var bs = document.querySelector('[data-exbusca="' + fid + '"]');
-    var termo = bs ? bs.value.trim().toLowerCase() : "";
-    if (termo) lista = lista.filter(function (x) { return x.nome.toLowerCase().indexOf(termo) >= 0; });
+    var termo = bs ? alTextoBusca(bs.value).trim() : "";
+    if (termo) lista = lista.filter(function (x) { return alTextoBusca(x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).indexOf(termo) >= 0; });
     lista.sort(function (a, b) {
       if (a.fav !== b.fav) return a.fav ? -1 : 1;
       if (a.seu !== b.seu) return a.seu ? -1 : 1;
@@ -14289,7 +14368,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var mostra = lista.slice(0, teto);
       box.innerHTML = (lista.length ? mostra.map(function (x) {
         var on = x.nome === exSel.value;
-        return '<button type="button" class="tdchip' + (on ? " on" : "") + '" data-exchip="' + fid + '" data-nome="' + esc(x.nome) + '">' +
+        return '<button type="button" class="tdchip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-exchip="' + fid + '" data-nome="' + esc(x.nome) + '">' +
           (on ? "+ " : "") + esc(x.nome) + (x.fav ? " ★" : "") + "</button>";
       }).join("") : '<span class="muted" style="font-size:12.5px;">Nada com esse filtro — limpe a busca ou troque o grupamento.</span>') +
         (lista.length > mostra.length ? '<button type="button" class="tdchip mais" data-exmais="' + fid + '">+' + (lista.length - mostra.length) + "</button>" : "") +
@@ -14396,6 +14475,52 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // toque no chip = escolher o exercicio (o <select> escondido continua a fonte da verdade)
   $("fichasBox").addEventListener("click", function (e) {
+    var trocar = e.target.closest && e.target.closest('[data-trocaitem]');
+    if (trocar) {
+      if (!MT_PRESCRICAO.valida()) return;
+      var partes = trocar.getAttribute('data-trocaitem').split(':'), alunoTroca = $("tAluno").value;
+      var stTroca = load(), fTroca = treinoDe(stTroca, alunoTroca).fichas.find(function (f) { return f.id === partes[0]; });
+      var itemTroca = fTroca && fTroca.itens[+partes[1]];
+      if (!itemTroca) return;
+      if (trocaExercicio) { var anteriorTroca = trocaExercicio.fid; trocaExercicio = null; pintaTrocaExercicio(anteriorTroca); }
+      trocaExercicio = { alunoId: alunoTroca, fid: fTroca.id, indice: +partes[1], antes: JSON.stringify(itemTroca), itensAntes: JSON.stringify(fTroca.itens), nome: (exPorId(stTroca, itemTroca.exId) || {}).nome || 'exercício' };
+      var seletorTroca = document.querySelector('[data-esq="' + fTroca.id + '"]');
+      seletorTroca.querySelector('[data-exsel]').value = '';
+      seletorTroca.classList.add('abrir');
+      document.body.classList.add('tela-escolher');
+      populaCascata(fTroca.id, stTroca); pintaTrocaExercicio(fTroca.id);
+      avisoSeletor(fTroca.id, 'Escolha o exercício que entrará nesta posição.');
+      seletorTroca.querySelector('[data-exbusca]').focus();
+      return;
+    }
+    var cancelarTroca = e.target.closest && e.target.closest('[data-extrocacancelar]');
+    if (cancelarTroca) { fechaSeletor(cancelarTroca.getAttribute('data-extrocacancelar')); return; }
+    var desfazer = e.target.closest && e.target.closest('[data-exdesfazertroca]');
+    if (desfazer) {
+      if (!MT_PRESCRICAO.valida()) return;
+      var d = desfazerTrocaExercicio, alunoDesfazer = $("tAluno").value;
+      if (!d || d.alunoId !== alunoDesfazer || d.fid !== desfazer.getAttribute('data-exdesfazertroca')) return;
+      var stDesfazer = load(), fDesfazer = treinoDe(stDesfazer, alunoDesfazer).fichas.find(function (f) { return f.id === d.fid; });
+      var retornoTroca = document.querySelector('[data-extrocaretorno="' + d.fid + '"]');
+      if (!fDesfazer || JSON.stringify(fDesfazer.itens) !== d.depois) {
+        retornoTroca.textContent = 'A ficha mudou depois da troca. Para preservar os ajustes, escolha Trocar exercício novamente.';
+        desfazerTrocaExercicio = null; return;
+      }
+      var itemAnterior = JSON.parse(d.antes);
+      if (!exPorId(stDesfazer, itemAnterior.exId)) {
+        retornoTroca.textContent = 'O exercício anterior foi removido da biblioteca. Escolha Trocar exercício para selecionar outro.';
+        desfazerTrocaExercicio = null; return;
+      }
+      fDesfazer.itens[d.indice] = itemAnterior;
+      marcaTreinoMudou(stDesfazer, alunoDesfazer);
+      if (S.write('ptStudio', stDesfazer) === false) {
+        retornoTroca.querySelector('span').textContent = 'Não foi possível desfazer. Tente novamente.'; return;
+      }
+      desfazerTrocaExercicio = null; renderFichas();
+      document.querySelector('[data-extrocaretorno="' + d.fid + '"]').textContent = 'Troca desfeita. Prescrição anterior restaurada.';
+      document.querySelector('[data-exab="' + d.fid + ':' + d.indice + '"]').focus();
+      return;
+    }
     /* tocar na linha do exercicio abre (ou fecha) o editor dele. E o UNICO
      * caminho pra mexer em serie, repeticao, descanso, tipo de serie e
      * observacao — o resto da linha sao so as acoes de posicao. */
@@ -14423,6 +14548,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var abrirEsq = e.target.closest && e.target.closest("[data-exadd]");
     if (abrirEsq) {
+      if (trocaExercicio) { var fidAnterior = trocaExercicio.fid; trocaExercicio = null; pintaTrocaExercicio(fidAnterior); }
       var esqEl = document.querySelector('[data-esq="' + abrirEsq.getAttribute("data-exadd") + '"]');
       if (esqEl) {
         esqEl.classList.add("abrir");
@@ -14434,9 +14560,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var fecharEsq = e.target.closest && e.target.closest("[data-exfechar]");
     if (fecharEsq) {
-      var esqF = document.querySelector('[data-esq="' + fecharEsq.getAttribute("data-exfechar") + '"]');
-      if (esqF) esqF.classList.remove("abrir");
-      document.body.classList.remove("tela-escolher");
+      fechaSeletor(fecharEsq.getAttribute('data-exfechar'));
       return;
     }
     var chip = e.target.closest && e.target.closest("[data-exchip]");
@@ -14447,6 +14571,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var nomeC = chip.getAttribute("data-nome");
         selC.value = selC.value === nomeC ? "" : nomeC; // tocar de novo desmarca
         populaCascata(fidC);
+        var chipAtual = Array.from(document.querySelectorAll('[data-exchip="' + fidC + '"]')).find(function (el) { return el.getAttribute('data-nome') === nomeC; });
+        if (chipAtual) chipAtual.focus({ preventScroll: true });
       }
       return;
     }
@@ -14606,6 +14732,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     acPrevia($("tAluno").value, true);
   });
   if ($("tAluno")) $("tAluno").addEventListener("change", pintaTdTopo);
+  // O aluno vem antes das opções da área; cada controle mantém seu listener original.
+  var topoTreino = document.querySelector("#vTreinos .tdtopo");
+  if (topoTreino) $("vTreinos").insertBefore(topoTreino, $("vTreinos").firstElementChild);
+  $("tdComecar").insertBefore($("tdIA"), $("tdModelos"));
+  document.querySelector("#vTreinos .td-guia").appendChild($("tdRevisaoAcoes"));
   mostraTrAba("fichas");
 
   // ---------- circuito (WOD): prescrição pro app do aluno ----------
@@ -17515,7 +17646,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
     }
     marcaTreinoMudou(st, alunoId);
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) return { erro: "Não foi possível aplicar o modelo. As fichas anteriores foram mantidas. Tente novamente após resolver o aviso de salvamento." };
     return { ok: true, qtd: qtd };
   }
   $("tplAplicar").addEventListener("click", function () {
@@ -17556,7 +17687,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.modelosPT = st.modelosPT || [];
     var mod = { id: S.uid(), nome: nome, fichas: fichas };
     st.modelosPT.push(mod);
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) return { erro: "Não foi possível salvar o modelo. As fichas do aluno continuam como estavam. Tente novamente após resolver o aviso de salvamento." };
     populaTplSel();
     return { ok: true, id: mod.id, fichas: fichas.length };
   }
@@ -17662,6 +17793,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       r.rascunho = { id: S.uid(), alunoId: id, tipo: tipo, origem: origem, base: base,
         treino: copiaPrescricao(t), exercicios: copiaPrescricao((st.exercicios || []).filter(function (ex) { return usados[ex.id]; })),
         params: copiaPrescricao(params || {}), resultado: copiaPrescricao(r), aplicado: false, cancelado: false };
+      // A evolução pode trazer formatos legados. Normalize somente a proposta,
+      // pelo mesmo contrato do player, antes de guardá-la ou permitir ajustes.
+      if (tipo === "musculacao") (r.rascunho.treino.fichas || []).forEach(function (f) {
+        (f.itens || []).forEach(function (it) {
+          var individuais = Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length;
+          var linhas = MT_APP_ALUNO.normalizaSeries(it);
+          if (individuais) it.seriesDetalhadas = linhas;
+          it.series = linhas.length; it.reps = linhas[0].reps;
+          it.descanso = linhas[0].descanso; it.carga = linhas[0].carga;
+        });
+      });
       return r;
     }
     marcaTreinoMudou(st, id);
@@ -17688,6 +17830,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function aplicaRascunhoPrescricao(d) {
     if (!d || d.cancelado) return { erro: "Este rascunho foi descartado. Gere uma nova proposta." };
+    if (d.contaLocal && d.contaLocal !== taContaLocal()) return { erro: "A conta mudou. Retome a proposta na conta original antes de aplicar." };
+    if (Object.prototype.hasOwnProperty.call(d, "revisaoLocal") && taRevisaoLocal(d.alunoId, d.tipo) !== d.revisaoLocal) return { erro: "Outra aba salvou ou descartou esta proposta. Retome a versão salva antes de aplicar." };
     if (d.aplicado) return { erro: "Este rascunho já foi aplicado." };
     var st = load(), a = (st.alunos || []).find(function (x) { return x.id === d.alunoId; });
     if (!a || a.ativo === false) return { erro: "O aluno não está mais ativo. O treino não foi alterado." };
@@ -18612,6 +18756,128 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
   }
   var taRascunho = null, taGeracaoSeq = 0, taGerando = false, taAplicado = null;
+  // Rascunhos locais não entram no ptStudio, no pacote do aluno ou na sincronização.
+  function taContaLocal() {
+    var nuvem = S.cloud && S.cloud(), academia = S.read("academia", {});
+    return String(nuvem && nuvem.aid || academia && academia.id || "local");
+  }
+  function taChaveLocal(id, tipo, conta) {
+    return "mtlocal:treino-proposta:v1:" + [conta || taContaLocal(), id, tipo].map(encodeURIComponent).join(":");
+  }
+  function taRevisaoLocal(id, tipo) {
+    try { var salvo = JSON.parse(localStorage.getItem(taChaveLocal(id, tipo)) || "null"); return salvo ? salvo.revisao || (salvo.rascunho || {}).id || "invalido" : null; }
+    catch (e) { return "invalido"; }
+  }
+  function taEstruturaValida(d) {
+    function obj(x) { return x && typeof x === "object" && !Array.isArray(x); }
+    function texto(x) { return typeof x === "string"; }
+    function serie(x) { return obj(x) && texto(x.reps) && x.reps.trim() && x.reps.length <= 40 && (x.carga == null || typeof x.carga === "number" && isFinite(x.carga) && x.carga >= 0 && x.carga <= 2000) && typeof x.descanso === "number" && isFinite(x.descanso) && x.descanso >= 0 && x.descanso <= 1800; }
+    if (!obj(d) || ["musculacao", "wod", "corrida"].indexOf(d.tipo) < 0 || !obj(d.treino) || !obj(d.params) || !obj(d.resultado) || !Array.isArray(d.exercicios) || !d.exercicios.every(function (x) { return obj(x) && texto(x.id) && texto(x.nome); })) return false;
+    var lista = d.treino[campoPrescricao(d.tipo)];
+    if (!Array.isArray(lista) || !lista.length || !lista.every(function (f) {
+      if (!obj(f)) return false;
+      if (d.tipo === "musculacao") return texto(f.titulo) && Array.isArray(f.itens) && f.itens.length && f.itens.every(function (it) {
+        if (!obj(it) || !texto(it.exId) || !d.exercicios.some(function (ex) { return ex.id === it.exId; })) return false;
+        return Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? it.seriesDetalhadas.length <= 30 && it.seriesDetalhadas.every(serie) : Number.isInteger(it.series) && it.series >= 1 && it.series <= 30 && serie(it);
+      });
+      if (!texto(f.nome)) return false;
+      return d.tipo !== "wod" || Array.isArray(f.movs) && f.movs.every(function (m) { return obj(m) && texto(m.n) && (m.q == null || texto(m.q) || typeof m.q === "number"); });
+    })) return false;
+    var mes = (d.treino.mes || {})[d.tipo];
+    if (mes && (!obj(mes) || !Array.isArray(mes.semanas) || !mes.semanas.every(obj))) return false;
+    return ["cortesTxt", "nomesFora"].every(function (k) { return d.resultado[k] == null || Array.isArray(d.resultado[k]) && d.resultado[k].every(texto); });
+  }
+  function taLeRascunho(id, tipo) {
+    try {
+      var salvo = JSON.parse(localStorage.getItem(taChaveLocal(id, tipo)) || "null"), d = salvo && salvo.rascunho;
+      if (!salvo || salvo.versao !== 1 || !d || d.alunoId !== id || d.tipo !== tipo || d.contaLocal !== taContaLocal() ||
+          !d.id || typeof d.base !== "string" || !d.treino || !Array.isArray(d.treino[campoPrescricao(tipo)]) ||
+          !Array.isArray(d.exercicios) || !d.params || d.aplicado || d.cancelado || !taEstruturaValida(d)) return null;
+      previaPrescricaoHtml(d); // Também recusa estruturas opcionais que a prévia não consiga apresentar.
+      d.revisaoLocal = salvo.revisao || d.id;
+      return salvo;
+    } catch (e) { return null; }
+  }
+  function taGuardaRascunho() {
+    var d = taRascunho;
+    if (!d || d.aplicado || d.cancelado || d.contaLocal !== taContaLocal()) return false;
+    var anterior = d.revisaoLocal == null ? null : d.revisaoLocal;
+    if (taRevisaoLocal(d.alunoId, d.tipo) !== anterior) {
+      $("taRascunhoStatus").textContent = "Outra aba salvou ou descartou esta proposta. Seus ajustes estão apenas nesta tela. Retome a versão salva antes de continuar.";
+      $("taSalvarRascunho").hidden = true;
+      $("taRecuperacao").hidden = !taLeRascunho(d.alunoId, d.tipo);
+      $("taRecuperacaoTexto").textContent = "Há outra versão salva para este aluno. Ao retomá-la, os ajustes apenas desta tela serão descartados.";
+      return false;
+    }
+    try {
+      d.revisaoLocal = S.uid();
+      localStorage.setItem(taChaveLocal(d.alunoId, d.tipo, d.contaLocal), JSON.stringify({ versao: 1, revisao: d.revisaoLocal, salvoEm: new Date().toISOString(), rascunho: d }));
+      $("taRascunhoStatus").textContent = "Rascunho salvo neste aparelho. Ainda não aplicado nem publicado.";
+      $("taSalvarRascunho").hidden = true;
+      return true;
+    } catch (e) {
+      d.revisaoLocal = anterior;
+      $("taRascunhoStatus").textContent = "Não foi possível guardar o rascunho neste aparelho. Ele está apenas nesta tela; mantenha-a aberta e tente salvar novamente.";
+      $("taSalvarRascunho").hidden = false;
+      return false;
+    }
+  }
+  function taRemoveRascunho(d) {
+    if (!d) return true;
+    try {
+      var chave = taChaveLocal(d.alunoId, d.tipo, d.contaLocal), salvo = JSON.parse(localStorage.getItem(chave) || "null");
+      // Outra aba pode ter criado uma proposta mais recente para o mesmo aluno.
+      if (salvo && salvo.rascunho && salvo.rascunho.id === d.id && (!d.revisaoLocal || (salvo.revisao || salvo.rascunho.id) === d.revisaoLocal)) localStorage.removeItem(chave);
+      return true;
+    } catch (e) { return false; }
+  }
+  function taAtualizaRecuperacao() {
+    if (!$("taRecuperacao")) return;
+    var id = $("taAluno").value, tipo = $("taTipo").value || "musculacao", salvo = id && taLeRascunho(id, tipo);
+    var a = (load().alunos || []).find(function (x) { return x.id === id && x.ativo !== false; });
+    $("taRecuperacao").hidden = !salvo || !a || !!taRascunho || taGerando;
+    if (!$("taRecuperacao").hidden) $("taRecuperacaoTexto").textContent = "Há uma proposta de " + taTipoNome(tipo) + " para " + a.nome + " salva neste aparelho. Retome para conferir antes de aplicar.";
+  }
+  function taDescartaRascunho() {
+    if (!taRemoveRascunho(taRascunho)) { $("taRascunhoStatus").textContent = "Não foi possível descartar a cópia salva. Tente novamente."; return; }
+    limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual.");
+  }
+  function taCampoAjuste(label, path, value, field, max) {
+    var numerico = ["series", "carga", "descanso"].indexOf(field) >= 0;
+    var regras = field === "series" ? ' min="1" max="30" step="1"' : field === "descanso" ? ' min="0" max="1800" step="1"' : ' min="0" max="2000" step="any"';
+    return '<label class="trx-field' + (["titulo", "nome", "obs"].indexOf(field) >= 0 ? ' trx-wide' : '') + '">' + esc(label) + '<input data-taajuste="' + esc(path.join(":")) + '" data-tafield="' + field + '" value="' + esc(value == null ? "" : value) + '"' +
+      (numerico ? ' type="number" inputmode="' + (field === "carga" ? "decimal" : "numeric") + '"' + regras : ' maxlength="' + (max || 120) + '"') +
+      (["series", "descanso", "reps", "titulo", "nome"].indexOf(field) >= 0 ? " required" : "") + '></label>';
+  }
+  function taPintaAjustes() {
+    var d = taRascunho; if (!d) return;
+    var mapa = {}; (d.exercicios || []).forEach(function (ex) { mapa[ex.id] = ex.nome; });
+    var campo = campoPrescricao(d.tipo);
+    $("taAjustesCampos").innerHTML = (d.treino[campo] || []).map(function (f, fi) {
+      var nome = d.tipo === "musculacao" ? "titulo" : "nome", html = '<details class="trx-details"><summary>' + esc(f[nome]) + '</summary><div class="trx-fields">' + taCampoAjuste("Nome do treino", [campo, fi, nome], f[nome], nome, 60) + '</div>';
+      if (d.tipo === "musculacao") html += (f.itens || []).map(function (it, ii) {
+        var path = [campo, fi, "itens", ii], linhas = MT_PRESCRICAO.series(it), ind = MT_PRESCRICAO.individual(it);
+        var corpo = '<p><strong>' + esc((ii + 1) + ". " + (mapa[it.exId] || "Exercício")) + '</strong></p>';
+        if (ind) corpo += linhas.map(function (serie, si) {
+          return '<fieldset class="trx-fields"><legend>Série ' + (si + 1) + '</legend>' + ["reps", "carga", "descanso"].map(function (k) {
+            return taCampoAjuste({ reps: "Reps ou tempo", carga: "Carga (kg)", descanso: "Descanso (s)" }[k], path.concat(["seriesDetalhadas", si, k]), serie[k], k, 40);
+          }).join("") + '</fieldset>';
+        }).join("");
+        else corpo += '<div class="trx-fields">' + ["series", "reps", "carga", "descanso"].map(function (k) {
+          return taCampoAjuste({ series: "Séries", reps: "Reps ou tempo", carga: "Carga (kg)", descanso: "Descanso (s)" }[k], path.concat(k), k === "series" ? linhas.length : linhas[0][k], k, 40);
+        }).join("") + '</div>';
+        return corpo + taCampoAjuste("Orientação para o aluno", path.concat("obs"), it.obs, "obs", 120);
+      }).join("");
+      else html += taCampoAjuste("Orientação para o aluno", [campo, fi, "obs"], f.obs, "obs", 120);
+      return html + '</details>';
+    }).join("");
+  }
+  function taValidaAjustes() {
+    var invalido = $("taAjustesCampos").querySelector('[aria-invalid="true"]');
+    if (!invalido) return true;
+    for (var el = invalido.parentElement; el && el !== $("taRevisao"); el = el.parentElement) if (el.tagName === "DETAILS") el.open = true;
+    invalido.focus(); invalido.reportValidity(); return false;
+  }
   function taTipoNome(tipo) { return tipo === "wod" ? "Circuito" : tipo === "corrida" ? "Corrida" : "Musculação"; }
   function taQuantidade(t, tipo) {
     var n = ((t || {})[campoPrescricao(tipo)] || []).length;
@@ -18622,6 +18888,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ["taIA", "taGerar", "taEvoluir"].forEach(function (id) { if ($(id)) $(id).disabled = gerando; });
     if ($("taCancelarGeracao")) $("taCancelarGeracao").hidden = !gerando;
     if ($("taStatus")) $("taStatus").setAttribute("aria-busy", gerando ? "true" : "false");
+    taAtualizaRecuperacao();
   }
   function limpaPropostaTreino(msg) {
     taGeracaoSeq++;
@@ -18634,6 +18901,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (msg && $("taStatus")) $("taStatus").textContent = msg;
   }
   function atualizaContextoIA() {
+    taAtualizaRecuperacao();
     var box = $("taContexto"); if (!box) return;
     var a = (load().alunos || []).find(function (x) { return x.id === $("taAluno").value; });
     if (!a) { box.textContent = "Escolha o aluno para ver as informações que orientam a proposta."; return; }
@@ -18693,10 +18961,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (mes && (mes.semanas || []).length) html += bloco("Plano do mês", "4 semanas", mes.semanas.map(function (s) { return linha("Semana " + s.n + (s.foco ? " · " + s.foco : ""), s.ajuste); }).join(""), false);
     return html;
   }
-  function mostraPropostaTreino(r) {
+  function mostraPropostaTreino(r, recuperado) {
     var d = r.rascunho, a = (load().alunos || []).find(function (x) { return x.id === d.alunoId; });
     if (!a || a.ativo === false) { $("taStatus").textContent = "O aluno não está mais ativo. Nenhum treino foi alterado."; return; }
     taRascunho = d;
+    d.contaLocal = d.contaLocal || taContaLocal();
+    if (!recuperado) { d.configLocal = {}; ["taObjetivo", "taProva", "taEquip", "taDias", "taDuracao"].forEach(function (id) { d.configLocal[id] = $(id).value; }); }
     var atual = (load().treinosV2 || {})[d.alunoId] || {};
     var origem = r.simulado ? "Exemplo de demonstração" : d.origem === "ia" ? "Proposta da IA" : d.origem === "evolucao" ? "Progressão da semana " + r.semana : "Proposta do catálogo";
     $("taRevisaoTitulo").textContent = "Revise antes de aplicar";
@@ -18705,7 +18975,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (d.params.dias ? " " + S.plural(d.params.dias, "dia solicitado por semana", "dias solicitados por semana") + "." : "") +
       (d.params.duracao ? " Duração desejada: " + d.params.duracao + " min." : "");
     $("taPrevia").innerHTML = previaPrescricaoHtml(d);
+    $("taAjustes").hidden = false; $("taAjustes").open = false; taPintaAjustes();
+    taAtualizaRecuperacao();
+    if (recuperado) { $("taRascunhoStatus").textContent = "Rascunho recuperado deste aparelho. Ainda não aplicado nem publicado."; $("taSalvarRascunho").hidden = true; }
+    else taGuardaRascunho();
     var avisos = [];
+    if (recuperado) avisos.push("Proposta recuperada deste aparelho. Confira o destinatário e os ajustes antes de aplicar.");
+    if (assinaturaPrescricao(load(), d.alunoId, d.tipo) !== d.base) avisos.push("O treino ou os dados do aluno mudaram desde esta proposta. Ela pode ser consultada, mas será preciso gerar outra antes de aplicar.");
     if (r.resumo) avisos.push(r.resumo);
     if (r.ignorados) avisos.push(S.plural(r.ignorados, "exercício ficou de fora", "exercícios ficaram de fora") + " por não corresponder ao catálogo" + ((r.nomesFora || []).length ? ": " + r.nomesFora.join(", ") : "") + ".");
     if ((r.cortesTxt || []).length) avisos.push("Limites aplicados: " + r.cortesTxt.join("; ") + ".");
@@ -18730,13 +19006,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var objetivo = tipo === "corrida" ? $("taProva").value : $("taObjetivo").value, equip = $("taEquip").value;
     var op = { preview: true, dias: $("taDias") ? $("taDias").value : "", duracao: $("taDuracao") ? $("taDuracao").value : "" };
     limpaPropostaTreino();
-    var seq = taGeracaoSeq;
-    function vigente() { return seq === taGeracaoSeq && $("taAluno").value === id && $("taTipo").value === tipo; }
+    var seq = taGeracaoSeq, conta = taContaLocal(), revisaoInicio = taRevisaoLocal(id, tipo);
+    function vigente() { return seq === taGeracaoSeq && taContaLocal() === conta && $("taAluno").value === id && $("taTipo").value === tipo; }
     function recebe(r) {
       if (seq !== taGeracaoSeq) return;
       if (!vigente() || r.cancelado) { limpaPropostaTreino("O aluno ou a configuração mudou. A resposta foi ignorada e o treino salvo continua igual."); return; }
       taEstadoGeracao(false);
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
+      if (r.rascunho) { r.rascunho.contaLocal = conta; r.rascunho.revisaoLocal = revisaoInicio; }
       mostraPropostaTreino(r);
     }
     if (origem === "catalogo") { recebe(geraTreinoAuto(id, objetivo, equip, op)); return; }
@@ -18749,7 +19026,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__iaRevisao = { aplica: aplicaRascunhoPrescricao, estado: function () {
     return { gerando: taGerando, rascunho: taRascunho ? copiaPrescricao(taRascunho) : null, aplicado: taAplicado ? copiaPrescricao(taAplicado) : null };
-  }, descarta: function () { limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual."); } };
+  }, descarta: taDescartaRascunho, recuperacao: taAtualizaRecuperacao };
   window.__iaTreino = geraTreinoIA; // testes e integrações legadas; a UI usa preview:true
   window.__iaParse = parseFichasIA; // testes
   // O tipo troca campos e qualquer mudança invalida uma proposta ainda não aplicada.
@@ -18780,7 +19057,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     limpaPropostaTreino("Espera cancelada. A resposta será ignorada e o treino salvo continua igual.");
   });
   if ($("taDescartar")) $("taDescartar").addEventListener("click", function () {
-    limpaPropostaTreino("Rascunho descartado. O treino salvo continua igual.");
+    taDescartaRascunho();
+  });
+  if ($("taRecuperar")) $("taRecuperar").addEventListener("click", function () {
+    var salvo = taLeRascunho($("taAluno").value, $("taTipo").value || "musculacao");
+    if (!salvo) { taAtualizaRecuperacao(); $("taStatus").textContent = "A proposta não está mais disponível neste aparelho."; return; }
+    if (taRascunho && !confirm("Retomar a versão salva e descartar os ajustes que estão apenas nesta tela?")) return;
+    limpaPropostaTreino();
+    var d = salvo.rascunho;
+    ["taObjetivo", "taProva", "taEquip", "taDias", "taDuracao"].forEach(function (id) { if (d.configLocal && d.configLocal[id] != null) $(id).value = d.configLocal[id]; });
+    mostraPropostaTreino(Object.assign({}, d.resultado, { rascunho: d }), true);
+  });
+  if ($("taSalvarRascunho")) $("taSalvarRascunho").addEventListener("click", function () { if (taValidaAjustes()) taGuardaRascunho(); });
+  if ($("taAjustesCampos")) $("taAjustesCampos").addEventListener("input", function (e) {
+    var input = e.target, path = input.getAttribute("data-taajuste"), field = input.getAttribute("data-tafield"), d = taRascunho;
+    if (!path || !d || d.aplicado || d.cancelado) return;
+    if (d.contaLocal !== taContaLocal() || $("taAluno").value !== d.alunoId || $("taTipo").value !== d.tipo) return;
+    var value = input.value.trim(), erro = "";
+    if (["series", "reps", "carga", "descanso"].indexOf(field) >= 0) {
+      var v = MT_PRESCRICAO.valor(input, field); value = v.value; erro = v.mensagem;
+    } else {
+      if (input.required && !value) erro = "Informe o nome do treino.";
+      if (value.length > input.maxLength) erro = "Use até " + input.maxLength + " caracteres.";
+      input.setCustomValidity(erro); input.setAttribute("aria-invalid", erro ? "true" : "false");
+    }
+    if (erro) { $("taRascunhoStatus").textContent = erro + " Este ajuste ainda não foi salvo."; return; }
+    var parts = path.split(":"), target = d.treino;
+    for (var i = 0; i < parts.length - 1; i++) { target = target[parts[i]]; if (!target) return; }
+    target[parts[parts.length - 1]] = value;
+    if (parts.indexOf("seriesDetalhadas") >= 0) {
+      var it = d.treino.fichas[+parts[1]].itens[+parts[3]];
+      it.series = it.seriesDetalhadas.length; it.reps = it.seriesDetalhadas[0].reps; it.descanso = it.seriesDetalhadas[0].descanso;
+    }
+    $("taPrevia").innerHTML = previaPrescricaoHtml(d);
+    taGuardaRascunho();
+    if ($("taAjustesCampos").querySelector('[aria-invalid="true"]')) $("taRascunhoStatus").textContent = "Há um ajuste inválido que ainda não foi salvo. Corrija antes de aplicar.";
   });
   function informaAplicacaoTreino(mensagem) {
     $("taStatus").textContent = "";
@@ -18791,7 +19102,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   if ($("taAplicar")) $("taAplicar").addEventListener("click", function () {
     var d = taRascunho;
-    if (!d || d.aplicado) return;
+    if (!d || d.aplicado || !taValidaAjustes()) return;
     if ($("taAluno").value !== d.alunoId || $("taTipo").value !== d.tipo) {
       limpaPropostaTreino("O aluno ou a modalidade mudou. Gere outra proposta antes de aplicar."); return;
     }
@@ -18803,6 +19114,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var r = aplicaRascunhoPrescricao(d);
     if (r.erro) { this.disabled = false; informaAplicacaoTreino(r.erro); return; }
     taAplicado = { alunoId: d.alunoId, tipo: d.tipo };
+    var removeuRascunho = taRemoveRascunho(d);
+    $("taAjustes").hidden = true; $("taSalvarRascunho").hidden = true;
+    $("taRascunhoStatus").textContent = removeuRascunho ? "" : "O treino foi salvo, mas não foi possível limpar a cópia local da proposta. Ela não poderá ser aplicada novamente.";
     // O render geral não atualiza estas listas. Sem isto, voltar à aba
     // já aberta mostrava o treino anterior apesar de a gravação ter ocorrido.
     // Não troca a seleção nem os rascunhos de outro aluno/modalidade.
@@ -18895,12 +19209,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
+    var trocaConfirmada = null;
     if (add) {
       var sel = document.querySelector('[data-exsel="' + add + '"]');
       var nomeSel = (sel.value || "").trim();
-      if (!nomeSel) { alert("Escolha o exercício nas listas (tipo de treino → grupamento → exercício)."); return; }
-      var prescricaoNova = MT_PRESCRICAO.lerNovo(add);
-      if (!prescricaoNova) return;
+      if (!nomeSel) { avisoSeletor(add, 'Escolha um exercício para continuar.'); return; }
+      var emTroca = trocaExercicio && trocaExercicio.alunoId === alunoId && trocaExercicio.fid === add ? trocaExercicio : null;
+      var prescricaoNova = emTroca ? null : MT_PRESCRICAO.lerNovo(add);
+      if (!emTroca && !prescricaoNova) return;
       // resolve pelo nome exato: seu personalizado primeiro, senão o catálogo (cria a cópia na hora)
       var achadoSel = (st.exercicios || []).find(function (x) { return x.nome.toLowerCase() === nomeSel.toLowerCase(); });
       var catSel = achadoSel ? null : (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nomeSel.toLowerCase(); });
@@ -18908,12 +19224,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var exIdSel = achadoSel ? achadoSel.id : exercicioPorNome(st, catSel.n).id;
       var f = t.fichas.find(function (x) { return x.id === add; });
       if (!f) return;
-      f.itens.push(Object.assign(prescricaoNova, {
-        exId: exIdSel,
-        obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
-        tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
-      }));
-      exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
+      if (emTroca) {
+        if (!MT_PRESCRICAO.valida()) return;
+        if (JSON.stringify(f.itens) !== emTroca.itensAntes) { avisoSeletor(add, 'A ficha mudou enquanto você escolhia. Cancele e abra a troca novamente.'); return; }
+        if (f.itens[emTroca.indice].exId === exIdSel) { avisoSeletor(add, 'Escolha um exercício diferente para trocar.'); return; }
+        var substituto = JSON.parse(emTroca.antes);
+        substituto.exId = exIdSel;
+        delete substituto.video; delete substituto.alternativas;
+        f.itens[emTroca.indice] = substituto;
+        trocaConfirmada = { alunoId: alunoId, fid: f.id, indice: emTroca.indice, antes: emTroca.antes, depois: JSON.stringify(f.itens) };
+        exAberto = {}; exAberto[f.id + ':' + emTroca.indice] = 1;
+      } else {
+        f.itens.push(Object.assign(prescricaoNova, {
+          exId: exIdSel,
+          obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
+          tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
+        }));
+        exAberto = {}; exAberto[f.id + ":" + (f.itens.length - 1)] = 1;
+      }
     }
     if (rmF) {
       if (!confirm("Remover esta ficha inteira?")) return;
@@ -18940,10 +19268,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     marcaTreinoMudou(st, alunoId);
     if (S.write("ptStudio", st) === false) {
       if (add) document.querySelector('[data-exprescricao="' + add + '"] .sp-status').textContent = 'Não foi possível salvar. Confira o espaço do dispositivo e tente novamente.';
+      if (add) avisoSeletor(add, 'Não foi possível salvar. Confira o espaço do dispositivo e tente novamente.');
       return;
     }
-    if (add) document.body.classList.remove('tela-escolher');
+    if (add) document.querySelector('[data-exsel="' + add + '"]').value = '';
+    if (trocaConfirmada) { desfazerTrocaExercicio = trocaConfirmada; trocaExercicio = null; }
     renderFichas();
+    if (trocaConfirmada) {
+      fechaSeletor(add);
+      document.querySelector('[data-exab="' + add + ':' + trocaConfirmada.indice + '"]').focus();
+    } else if (add) {
+      avisoSeletor(add, nomeSel + ' adicionado. ' + f.itens.length + ' exercícios na ficha. Escolha o próximo ou conclua.');
+      if (e.detail === 0) {
+        var buscaProximo = document.querySelector('[data-exbusca="' + add + '"]');
+        buscaProximo.focus({ preventScroll: true }); buscaProximo.select();
+      }
+    }
   });
   $("tZap").addEventListener("click", function () {
     var st = load();
@@ -18954,7 +19294,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
 
   // ---------- exercícios: catálogo TORQUE + os seus, uma lista só ----------
-  var exEditando = null;
+  var exEditando = null, exRascunhoNovo = null, exRascunhoIds = [];
   // tipo de movimento derivado do nome (com reforço da zona/grupo)
   function movimentoDe(nome, grupo) {
     var n = " " + String(nome).toLowerCase() + " ";
@@ -19069,7 +19409,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function gifExAtual() {
     var st = load();
-    return exEditando ? exPorId(st, exEditando) : null;
+    return exEditando ? exPorId(st, exEditando) || exRascunhoNovo : null;
   }
   function gifPintaAtual() {
     var ex = gifExAtual(); if (!ex) return;
@@ -19360,18 +19700,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // estrela: entra/sai dos favoritos e some da lista se o filtro "só favoritos" estiver ligado
     var fv = e.target.getAttribute && e.target.getAttribute("data-exfav");
     if (fv) { alternaFav(fv); renderBiblioteca(); renderFichas(); return; }
-    // Abrir num item do catálogo: vira cópia personalizada (SEU) e abre o editor
+    // Abrir o catálogo prepara uma cópia em memória; apenas Salvar confirma.
     var abrir = e.target.getAttribute && e.target.getAttribute("data-exabrir");
+    exRascunhoNovo = null; exRascunhoIds = [];
     if (abrir) {
       var stAb = load();
+      var exAntes = stAb.exercicios.slice();
       var exAb = exercicioPorNome(stAb, abrir);
-      S.write("ptStudio", stAb);
-      renderBiblioteca(); renderFichas();
+      // A cópia só passa a existir no armazenamento ao confirmar Salvar.
+      if (exAntes.indexOf(exAb) < 0) { exRascunhoNovo = exAb; exRascunhoIds = exAntes.map(function (item) { return item.id; }); }
       ed = exAb.id;
     }
     if (ed) {
       var st = load();
-      var ex = exPorId(st, ed);
+      var ex = exPorId(st, ed) || exRascunhoNovo;
       if (!ex) return;
       exEditando = ed;
       $("dlgExTitulo").textContent = ex.nome;
@@ -19381,6 +19723,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("dxVideo").value = ex.semVideo ? "" : videoDoEx(ex); $("dxDesc").value = ex.descricao || "";
       $("dxVideo").setCustomValidity("");
       gifAbreEditor(ex);
+      $("dlgEx").returnValue = "";
       $("dlgEx").showModal();
     }
     if (rm) {
@@ -19405,9 +19748,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("dxVideo").addEventListener("input", function () { this.setCustomValidity(""); });
   $("dlgEx").addEventListener("close", function () {
-    if ($("dlgEx").returnValue !== "ok" || !exEditando) return;
+    if ($("dlgEx").returnValue !== "ok" || !exEditando) {
+      exEditando = null; exRascunhoNovo = null; exRascunhoIds = [];
+      return;
+    }
     var st = load();
-    var ex = exPorId(st, exEditando);
+    if (exRascunhoNovo) {
+      var origem = alTextoBusca(exRascunhoNovo.nome).trim();
+      var nomeNovo = alTextoBusca($("dxNome").value.trim() || exRascunhoNovo.nome).trim();
+      var outraCopia = st.exercicios.some(function (item) {
+        if (item.id === exEditando || exRascunhoIds.indexOf(item.id) >= 0) return false;
+        var nomeAtual = alTextoBusca(item.nome).trim(), cat = catalogoAcha(item.nome);
+        return nomeAtual === origem || nomeAtual === nomeNovo || (cat && alTextoBusca(cat.n).trim() === origem);
+      });
+      if (outraCopia) {
+        alert("Já existe uma cópia deste exercício salva após a abertura. Sua edição continua aberta. Copie os ajustes, cancele e reabra a cópia existente antes de salvar.");
+        $("dlgEx").returnValue = "";
+        $("dlgEx").showModal();
+        return;
+      }
+    }
+    var ex = exPorId(st, exEditando) || (exRascunhoNovo && JSON.parse(JSON.stringify(exRascunhoNovo)));
     if (!ex) return;
     ex.nome = $("dxNome").value.trim() || ex.nome;
     ex.grupo = $("dxGrupo").value.trim();
@@ -19425,8 +19786,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ex.descricao = $("dxDesc").value.trim();
     ex.gif = gifSemEscolhido ? "" : gifEscolhido;
     ex.semGif = gifSemEscolhido;
+    if (exRascunhoNovo && !exPorId(st, exEditando)) st.exercicios.push(ex);
     exAlunosAfetados(st, exEditando).ids.forEach(function (aid) { marcaAppPendente(st, aid); });
-    S.write("ptStudio", st);
+    if (S.write("ptStudio", st) === false) {
+      alert("Não foi possível salvar o exercício. Sua edição continua aberta para tentar novamente.");
+      $("dlgEx").returnValue = "";
+      $("dlgEx").showModal();
+      return;
+    }
+    exEditando = null; exRascunhoNovo = null; exRascunhoIds = [];
     renderBiblioteca(); renderFichas();
   });
   var vtpEditando = null;

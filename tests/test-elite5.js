@@ -193,6 +193,7 @@ function ok(cond, nome) {
   if (await p.locator("#btnMenuPt").isVisible()) await p.click("#btnMenuPt");
   await p.click('#abas [data-a="treinos"]');
   await p.selectOption("#tAluno", { index: 1 });
+  if (!(await p.locator("#tdModelos").evaluate(e => e.open))) await p.locator("#tdModelos > summary").click();
   await p.selectOption("#tplSel", "abc");
   await p.click("#tplAplicar");
   await p.waitForTimeout(300);
