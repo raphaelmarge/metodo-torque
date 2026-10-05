@@ -50,12 +50,25 @@ console.log(checks+' verificações totais, incluindo homônimos, renomeação e
 // Exercise the actual series writer: legacy records must never acquire guessed identity.
 const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync(require('node:path').join(__dirname,'../app/aluno-builder.js'),'utf8');
 const code=source.slice(source.indexOf('  function normalizaSeries('),source.indexOf('  // v821: agenda única'));
-const memory={ptdc:{}},it={e:'Supino',exercicioId:'ex-a'},ctx={gv:{f:0,e:0},L:(k,d)=>JSON.parse(JSON.stringify(memory[k]||d)),Sv:(k,v)=>{memory[k]=v;return true;},isoHj:()=> '2026-10-06'};
-vm.createContext(ctx);vm.runInContext(code+'\nvar SR=runtimeSeries();',ctx);
+const memory={ptdc:{}},it={e:'Supino',exercicioId:'ex-a'},history=new Map();
+// O gravador agora depende do journal. Executa os módulos canônicos, com
+// armazenamento e concessão de uma única aba sintéticos, sem confirmar writes por mock.
+const storage={get length(){return history.size;},key:i=>[...history.keys()][i]||null,getItem:k=>history.has(k)?history.get(k):null,setItem:(k,v)=>history.set(k,v),removeItem:k=>history.delete(k)};
+const ctx={gv:{f:0,e:0},L:(k,d)=>JSON.parse(JSON.stringify(memory[k]||d)),Sv:(k,v)=>{memory[k]=v;return true;},isoHj:()=> '2026-10-06',storage,
+  crypto:require('node:crypto').webcrypto,clearTimeout,setTimeout,
+  navigator:{locks:{request:(name,options,callback)=>Promise.resolve(callback({name}))}},
+  document:{getElementById:()=>null},window:{addEventListener(){},removeEventListener(){}}};
+ctx.self=ctx;
+vm.createContext(ctx);
+for(const file of ['treino-historico-core.js','treino-historico-player.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../app',file),'utf8'),ctx);
+vm.runInContext(code+'\nvar TH=MT_TREINO_HISTORICO_PLAYER.create({storage:storage,scope:"synthetic-series-meta",active:()=>true});var SR=runtimeSeries();',ctx);
+ok(ctx.TH.ready());
 ctx.SR.marca(it,0,true);ok(memory.ptdc.Supino[0].exercicioId==='ex-a');
 ctx.SR.marca(it,0,false);ok(memory.ptdc.Supino[0].exercicioId==='ex-a');
 ctx.SR.marca({...it,exercicioId:'ex-b'},0,true);ok(!memory.ptdc.Supino[0].exercicioId);
 ctx.SR.marca(it,0,true);ok(!memory.ptdc.Supino[0].exercicioId);
+ok(ctx.TH.list()[0].targets['0:0:0'].value.exercicioId===undefined);
+ctx.TH.dispose();
 console.log(checks+' verificações totais; gravador real preserva identidade e não migra legado por nome');
 
 const oldAward={...e.state,signature:JSON.stringify(['carga',50,strength.inicio,'Supino'])};const oldAudit=JSON.stringify(oldAward);ok(evaluate({Supino:[old]},oldAward).state.status==='revisao');ok(JSON.stringify(oldAward)===oldAudit);console.log(checks+' verificações finais; histórico anterior preservado em revisão');

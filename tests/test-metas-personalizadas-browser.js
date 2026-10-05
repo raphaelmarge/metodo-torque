@@ -31,9 +31,24 @@ for(const width of [320,390,1440]){await p.setViewportSize({width,height:1000});
 // Builder actually embeds both modules in the published student HTML.
 const html=await p.evaluate(d=>MT_APP_ALUNO.monta(d),dto);assert.match(html,/window.__metasAluno=/);assert.match(html,/ptmetasAudit:/);const real=await ctx.newPage();real.on('pageerror',e=>errors.push(e.message));
 const generated=await p.evaluate(d=>{d.a.appTokenP='';const old=window.MT_CLOUD;window.MT_CLOUD=null;try{return MT_APP_ALUNO.monta(d);}finally{window.MT_CLOUD=old;}},dto);
-await real.route('**/metas-test.html',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:generated}));await real.goto(base+'/metas-test.html');await real.waitForFunction(()=>window.__metasAluno&&document.querySelector('#mpAluno'));
+await real.route('**/metas-test.html',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:generated}));await real.goto(base+'/metas-test.html');await real.waitForFunction(()=>window.__metasAluno&&document.querySelector('#mpAluno')&&__treinoHistorico.ready());
 assert.equal(await real.locator('#mpAluno article').count(),2);
-const writer=await real.evaluate(item=>{localStorage.setItem('ptdc','{}');__gGrava(item.e,50,8,'0:0:0');let rows=JSON.parse(localStorage.getItem('ptdc'))[item.e];const first=rows[0].exercicioId;__gGrava(item.e,60,8,'0:0:0');rows=JSON.parse(localStorage.getItem('ptdc'))[item.e];const corrected=rows[0].exercicioId;delete rows[0].exercicioId;localStorage.setItem('ptdc',JSON.stringify({[item.e]:rows}));__gGrava(item.e,70,8,'0:0:0');const legacy=JSON.parse(localStorage.getItem('ptdc'))[item.e][0];return {first,corrected,legacy};},dto.guiaFichasP[0].it[0]);assert.equal(writer.first,dto.guiaFichasP[0].it[0].exercicioId);assert.equal(writer.corrected,writer.first);assert.equal(writer.legacy.kg,70);assert.equal(writer.legacy.exercicioId,undefined);
+const writer=await real.evaluate(item=>{localStorage.setItem('ptdc','{}');__gGrava(item.e,50,8,'0:0:0');let rows=JSON.parse(localStorage.getItem('ptdc'))[item.e];const first=rows[0].exercicioId;__gGrava(item.e,60,8,'0:0:0');rows=JSON.parse(localStorage.getItem('ptdc'))[item.e];return {first,corrected:rows[0].exercicioId};},dto.guiaFichasP[0].it[0]);assert.equal(writer.first,dto.guiaFichasP[0].it[0].exercicioId);assert.equal(writer.corrected,writer.first);
+// Legado real começa antes do primeiro journal, em outro armazenamento. Apagar
+// somente a projeção de um registro moderno não remove sua identidade histórica.
+const legacyCtx=await b.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+await legacyCtx.route('**/*',r=>{if(new URL(r.request().url()).origin===new URL(base).origin)return r.continue();if(new URL(r.request().url()).pathname==='/rest/v1/rpc/app_aluno_busca')return r.fulfill({status:200,contentType:'application/json',body:'[]'});outside.push(r.request().url());return r.abort();});
+await legacyCtx.route('**/metas-legacy-test.html',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:generated}));
+await legacyCtx.addInitScript(({exercise,date})=>{if(window!==window.top||localStorage.getItem('ptdc')!==null)return;localStorage.setItem('ptdc',JSON.stringify({[exercise]:[{d:date,g:2,i:'0:0:0',serie:1,kg:50,r:8,feito:true}]}));},{exercise:dto.guiaFichasP[0].it[0].e,date:await real.evaluate(()=>isoHj())});
+const legacyPage=await legacyCtx.newPage();legacyPage.on('pageerror',e=>errors.push(e.message));
+await legacyPage.clock.setFixedTime(new Date(await real.evaluate(()=>Date.now())));
+await legacyPage.goto(base+'/metas-legacy-test.html');await legacyPage.waitForFunction(()=>window.__treinoHistorico&&__treinoHistorico.ready());
+assert.equal(await legacyPage.evaluate(()=>__treinoHistorico.list().length),0);
+const legacyRow=await legacyPage.evaluate(item=>{__gGrava(item.e,70,8,'0:0:0');return JSON.parse(localStorage.getItem('ptdc'))[item.e][0];},dto.guiaFichasP[0].it[0]);assert.equal(legacyRow.kg,70);assert.equal(legacyRow.exercicioId,undefined);
+await legacyPage.reload();await legacyPage.waitForFunction(()=>window.__treinoHistorico&&__treinoHistorico.ready());
+const reloaded=await legacyPage.evaluate(exercise=>({row:L('ptdc',{})[exercise][0],record:__treinoHistorico.list()[0].targets['0:0:0'].value}),dto.guiaFichasP[0].it[0].e);
+assert.equal(reloaded.row.kg,70);assert.equal(reloaded.row.exercicioId,undefined);assert.equal(reloaded.record.exercicioId,undefined);
+await legacyCtx.close();
 
 assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
 console.log('OK metas: editor, prospective dates, save failure, load/modality, legacy, DTO, student award/review, token isolation and mobile');
