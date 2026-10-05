@@ -8,7 +8,7 @@ function ok(v,m){assert.ok(v,m);n++;console.log('OK '+m);}
 function setup(rows=[]){
  const it={e:'Exercício fictício',s:2,r:'8',d:0,seriesDetalhadas:[{reps:'8',carga:30,descanso:0},{reps:'6',carga:0,descanso:0}]};
  const memory={ptdc:{[it.e]:rows}},label={textContent:''};let writes=0;
- const ctx={gv:{f:0,e:0,s:0,formSerie:{fi:0,ei:0,si:0},baseFeitas:{},rascunhos:{},fim:false,sujo:false},GUIA:[{it:[it]}],
+ const ctx={HS:null,hsDia:()=> '2026-09-15',hsAtual:()=>true,gv:{f:0,e:0,s:0,formSerie:{fi:0,ei:0,si:0},baseFeitas:{},rascunhos:{},fim:false,sujo:false},GUIA:[{it:[it]}],
   L:(k,d)=>memory[k]||d,Sv:()=>{writes++;return true;},isoHj:()=> '2026-09-15',
   gEl:id=>id==='gOrigemSerie'?label:null,
   esc2:v=>String(v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),

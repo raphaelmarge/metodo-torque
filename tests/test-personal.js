@@ -63,6 +63,8 @@ async function novaExecucaoAluno(p) {
     Object.keys(dc).forEach(n => { dc[n] = dc[n].filter(r => !(r.g === 2 && r.d === hoje)); });
     localStorage.setItem('ptdc', JSON.stringify(dc));
     localStorage.removeItem('ptsets_' + hoje);localStorage.removeItem('ptguiaSessao');
+    // Isola também as sessões imutáveis criadas pelos cenários anteriores.
+    Object.keys(localStorage).filter(k => /^(tqWorkoutJournal:|tqWorkoutActive:)/.test(k)).forEach(k => localStorage.removeItem(k));
   });
 }
 
@@ -2590,7 +2592,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     ok(/crFim'\)\.click\(\);if\(!cr\.resumo&&crEl\('crSalvarErro'\)\.hidden\)fechaCrFull\(\);/.test(bld), "🏃 v847: Terminei! mantém o resumo ou a falha de salvamento acessível na tela cheia");
     ok(/havKm\(ur9,pt\)>=0\.005/.test(bld) && /cr\.rota\.length>12000/.test(bld) && !/cr\.rota\.length>600\)cr\.rota\.shift/.test(bld),
       "🗺️ v743: o trajeto guarda a corrida INTEIRA (afinado por distância), não os últimos 600 pontos");
-    ok(/if\(realizadas&&!window\.__acRegistraConclusao\(\{tipo:'musc',data:isoHj\(\)\}\)\)/.test(bld),
+    ok(/if\(realizadas&&!jaFim&&!window\.__acRegistraConclusao\(\{tipo:'musc',data:hsDia\(\)\}\)\)/.test(bld),
       "✅ v847: concluir pelo player registra o dia somente se houve série realizada; erro e repetição são cobertos em test-aluno-execucao-clareza");
     ok(/GW=\{kg:\{min:0,max:300,p:\.5,px:18,lab:10\}/.test(bld) && /if\(!rd\._interacao\|\|\(rd\._progPx!=null&&Math\.abs\(rd\.scrollLeft-rd\._progPx\)<1\)\)return;/.test(bld),
       "⚖️ v743: régua de carga em 0,5 kg e o scroll programático não reescreve o campo");

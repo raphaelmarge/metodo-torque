@@ -99,7 +99,7 @@
     function indice(it) { return Math.max(0, Math.min(it.s - 1, gv.sel == null ? gv.s : gv.sel)); }
     function registro(it, si, fi, ei) {
       var id = slot(fi == null ? gv.f : fi, ei == null ? gv.e : ei, si);
-      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id; }).pop() || null;
+      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === hsDia() && r.g === 2 && r.i === id && hsAtual(r, fi == null ? gv.f : fi); }).pop() || null;
     }
     function anterior(it, si) {
       // A ordem de chegada/sincronização não é a ordem da execução.
@@ -112,12 +112,13 @@
       }, null);
     }
     function marca(it, si, feito) {
-      var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = isoHj(), n = -1;
-      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id) n = i; });
+      var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = hsDia(), n = -1;
+      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id && hsAtual(r, gv.f)) n = i; });
       var r = n < 0 ? { d: hj, g: 2, i: id, serie: si + 1, kg: null } : Object.assign({}, l[n]);
       r.feito = feito !== false;
+      if (HS) { r.sid = HS.id(); if (!HS.series(gv.e, si, Object.assign({name:it.e}, r))) return false; }
       if (n < 0) l.push(r); else l[n] = r;
-      h[it.e] = l.slice(-600);
+      h[it.e] = l;
       if (Sv("ptdc", h) === false) return false;
       if (cargaConcluida(r) && r.kg > 0) { var max = 0; l.forEach(function (x) { if (x !== r && cargaConcluida(x) && x.kg > max) max = x.kg; }); try { gFesteja(it.e, r.kg, max, l); } catch (e) {} }
       return true;
@@ -125,14 +126,14 @@
     function feitas(fi, ei) {
       var it = GUIA[fi] && GUIA[fi].it[ei], ids = {};
       if (!it) return 0;
-      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s) ids[r.i] = 1; });
+      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === hsDia() && hsAtual(r, fi) && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s) ids[r.i] = 1; });
       return Object.keys(ids).length;
     }
     function volume(fi, dia) {
       var f = GUIA[fi], h = L("ptdc", {}), total = 0, vistos = {};
       if (!f) return 0;
       f.it.forEach(function (it, ei) {
-        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia; });
+        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia && (dia !== hsDia() || hsAtual(r, fi)); });
         var atuais = registros.filter(function (r) { return r.g === 2 && r.i && r.i.indexOf(prefixo) === 0 && r.feito && r.serie <= it.s; });
         // Registros antigos contêm uma anotação real, sem detalhamento por série.
         // Contam UMA vez: repetir a última carga/reps fabricaria o volume restante.
@@ -322,7 +323,7 @@
       gv.sel = si; gv.sujo = false; gv.reg = ''; gv.regi = '';
       if (!gEl('gSerie')) gEl('gPe').innerHTML = '<button class="prin" id="gSerie">Salvar alteração da série</button><button class="sec" id="gFecharTreino">Terminar treino</button>';
       pintaGuia();
-      if (desc) { gDescanso(Math.max(0, Math.ceil((desc - Date.now()) / 1000)), pend); gv.mexe = true; }
+      if (desc) { gDescanso(Math.max(0, Math.ceil((desc - Date.now()) / 1000)), pend, desc); gv.mexe = true; }
       var b = gEl('gSerie'); if (b && feita(it, si)) b.style.display = 'block';
       var foco = gEl('gMiolo').querySelector('[data-gserie="' + si + '"]'); if (foco) foco.focus({ preventScroll: true });
       acCheckpoint();
@@ -1279,7 +1280,7 @@
   // tempo/distância inventados: a retomada sempre começa pausada.
   function runtimeCorridaSessao(C) {
     var s = C.estado, key = 'ptcorridaSessao:' + encodeURIComponent(C.escopo), ultimo = 0;
-    var campos = ['sid', 'dia', 'plano', 'mod', 'blocos', 'bi', 'bt0', 'bkm0', 'mistoT0', 'mistoVai', 'metaD', 'metaT', 'etapas'];
+    var campos = ['sid', 'dia', 'plano', 'mod', 'blocos', 'bi', 'bt0', 'bkm0', 'mistoT0', 'mistoVai', 'metaD', 'metaT', 'etapas', 'distanciaManual'];
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function le() {
       try {
@@ -1302,7 +1303,10 @@
       if (x) document.getElementById('crRetomaTexto').textContent = (x.plano && x.plano.n || 'Corrida livre') + ' · ' + Math.floor(x.tempo / 60) + ' min registrados. Continue do último ponto salvo, com o cronômetro pausado.';
     }
     function ensure() {
-      if (!s.sid) { s.sid = 'cr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); s.dia = C.hoje(); s.etapas = []; }
+      var nova = !s.sid || s.historyNew === true;
+      if (!s.sid) { s.historyNew = true; s.sid = 'cr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); s.dia = C.hoje(); s.etapas = []; }
+      if (typeof HS !== 'undefined' && HS && !HS.start(s.sid,'corrida',s.dia,{name:s.plano?s.plano.n:'Corrida livre',plan:s.plano||{},blocks:s.blocos||(C.planned?C.planned():[]),mode:s.mod,metaD:s.metaD||null,metaT:s.metaT||null},!nova)) { C.erro('Não foi possível preservar a prescrição. Libere espaço e tente novamente.'); return false; }
+      s.historyNew = false; return true;
     }
     function salva(force) {
       if (!C.ativo()) return false;
@@ -1313,7 +1317,7 @@
       try { localStorage.setItem(key, JSON.stringify(x)); return true; }
       catch (_) { C.erro('Não foi possível proteger esta corrida no aparelho. Libere espaço e tente salvar novamente.'); return false; }
     }
-    function limpa() { try { localStorage.removeItem(key); } catch (_) {} s.sid = null; s.etapas = []; s.regGravado = null; ultimo = 0; pinta(); }
+    function limpa() { try { localStorage.removeItem(key); } catch (_) {} s.sid = null; s.distanciaManual = false; s.etapas = []; s.regGravado = null; ultimo = 0; pinta(); }
     function restaura() {
       var x = le(); if (!x) return false;
       C.pausa(); campos.forEach(function (k) { s[k] = x[k]; });
@@ -3310,6 +3314,7 @@
       "</div>" +
       "</div>" +
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
+      "<script src='/app/treino-historico-core.js'><\/script><script src='/app/treino-historico-sync.js'><\/script><script src='/app/treino-historico-app.js'><\/script>" +
       "<script>var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) +
@@ -3363,6 +3368,7 @@
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
       "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&window.__meAluno&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
       // Uma conclusão marca o dia uma vez. As modalidades mantêm os próprios resultados.
+      "var HS=null;function hsAtual(r,fi){return !HS||HS.match(r,fi);}function hsDia(){return HS?HS.date():isoHj();}" +
       "var acTokenInicial='';try{acTokenInicial=localStorage.getItem('tq_app_token')||'';}catch(e){}" +
       "function acIdentidadeAtual(){try{var t=localStorage.getItem('tq_app_token')||'';return t===TOKEN||(!t&&!acTokenInicial);}catch(e){return false;}}" +
       "window.__acRegistraConclusao=function(sessao){if(!acIdentidadeAtual())return false;var dia=sessao&&sessao.data||isoHj();if(typeof dia!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||dia>isoHj()||!isFinite(Date.parse(dia+'T12:00:00Z'))||new Date(dia+'T12:00:00Z').toISOString().slice(0,10)!==dia)return false;var f=L('ptfeitos',{});if(!f[dia]){f[dia]=1;if(Sv('ptfeitos',f)===false)return false;}try{pintaSemana();pintaConquistas();pintaCqTiles();mostraRpe();}catch(e){}return true;};" +
@@ -4696,7 +4702,7 @@
         function tempo() { return Math.max(0, wod.run ? (Date.now() - wod.t0) / 1000 : +wod.acum || 0); }
         function receita() { return wod.receita || WODS.find(function (x) { return x.id === wod.wodId; }) || {}; }
         function config() { var out = {}; ['wodCap', 'wodMin', 'wodRounds', 'wodWork', 'wodRest'].forEach(function (id) { var el = document.getElementById(id); if (el) out[id] = el.value; }); return out; }
-        function ensure() { if (!wod.sid) { wod.sid = 'wod-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); wod.dia = isoHj(); } }
+        function ensure() { var nova=!wod.sid||wod.historyNew===true; if (!wod.sid) { wod.historyNew=true; wod.sid = 'wod-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); wod.dia = isoHj(); } if(typeof HS!=='undefined'&&HS&&!HS.start(wod.sid,'circuito',wod.dia,{name:wod.wodNome||'Circuito livre',receita:receita(),config:config(),type:wod.tipo},!nova)){aviso('Não foi possível preservar a prescrição. Libere espaço e tente novamente.');return false;}wod.historyNew=false;return true; }
         function salva(force) {
           if (!wod.sid || !contexto()) return false;
           if (!force && Date.now() - ultimaGravacao < 1000) return true;
@@ -4952,7 +4958,7 @@
       // o timer livre continua com a caixinha de sempre
       "if(wod.wodId){wodPlacar(msg,val);return;}" +
       "wodConfirmaLivre(msg);}" +
-      "function wodConfirmaLivre(msg){if(!wodR.contexto())return;wodR.ensure();var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst.slice(-20);if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'));}" +
+      "function wodConfirmaLivre(msg){if(!wodR.contexto()||!wodR.ensure())return;var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst;if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(HS&&(!HS.record(wod.sid,'activity',lst.find(function(x){return x.sid===wod.sid;}))||!HS.finish(wod.sid,{partial:!!wod.parcial}))){wodR.aviso('Resultado mantido. Falta preservar o histórico; tente novamente.');return;}if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'));}" +
       /* ---------- R2: placar de circuito por tipo ----------
        * AMRAP: voltas confirmadas + reps da última volta + tempo de cada volta
        * (dos toques no cronômetro) + comparação com a vez anterior.
@@ -5059,8 +5065,8 @@
       "if(ant2&&v!=null&&ant2.v!=null&&!st.nf&&!wod.parcial&&!ant2.parcial&&(ant2.cf||'')===(st.cf||'')&&ant2.prescricao===JSON.stringify(wm)&&(tipo!=='amrap'||ant2.du===durA)){if(tipo==='fortime'?v<ant2.v:v>ant2.v)r+=' — BATEU o resultado anterior!';}" +
       "if(!lst2.some(function(x){return x.sid===wod.sid;})){lst2.push({sid:wod.sid,d:wod.dia||isoHj(),n:wod.wodNome,r:r,v:v==null?null:Math.round(v),tp:tipo,cf:st.cf||'',ex:st.ex||0,nf:st.nf?1:0,parcial:!!wod.parcial||!!st.nf,prescricao:JSON.stringify(wm),rodadas:(tipo==='emom'||tipo==='tabata')?Math.min(rd,rodadasFeitas):undefined," +
       "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300),du:tipo==='amrap'?durA:durReal});" +
-      "if(lst2.length>20)lst2.shift();wr2[wod.wodId]=lst2;if(!Sv('ptwodres',wr2)){wodR.aviso('Não foi possível salvar o resultado. Sua revisão continua aberta; libere espaço e tente novamente.');return;}}" +
-      "if(durReal>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente salvar novamente; o placar não será duplicado.');return;}ov.dataset.salvo='1';pintaWodRes();wodR.limpa();wodR.aviso('');" +
+      "wr2[wod.wodId]=lst2;if(!Sv('ptwodres',wr2)){wodR.aviso('Não foi possível salvar o resultado. Sua revisão continua aberta; libere espaço e tente novamente.');return;}}" +
+      "if(HS&&(!HS.record(wod.sid,'activity',lst2.find(function(x){return x.sid===wod.sid;}))||!HS.finish(wod.sid,{partial:!!wod.parcial||!!st.nf}))){wodR.aviso('Resultado mantido. Falta preservar o histórico; tente salvar novamente.');return;}if(durReal>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente salvar novamente; o placar não será duplicado.');return;}ov.dataset.salvo='1';pintaWodRes();wodR.limpa();wodR.aviso('');" +
       // R4: o fim do circuito oferece o post com a foto (números do placar)
       "var stW=tipo==='amrap'?[[st.v+(st.ex?'+'+st.ex:''),'voltas'],[wodFmt(durA),'tempo']]:" +
       "tipo==='fortime'?[[wodFmt(st.t||0),'tempo']].concat(st.cf?[[{rx:'RX',esc:'ESCALADO',adp:'ADAPTADO'}[st.cf],'como fez']]:[]):" +
@@ -5076,7 +5082,7 @@
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(!wodR.contexto())return;if(wod.finished){if(wod.sid){wodR.aviso('Confira o resultado ou descarte a sessão antes de iniciar outra.');return;}wodR.nova();wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';wod.estourou=0;}" +
-      "if(wod.run){wod.acum=wodR.tempo();clearInterval(wod.iv);wod.iv=null;wod.run=false;this.textContent='Continuar';soltaTela();wodR.salva(true);wodR.pinta();return;}wodR.ensure();" +
+      "if(wod.run){wod.acum=wodR.tempo();clearInterval(wod.iv);wod.iv=null;wod.run=false;this.textContent='Continuar';soltaTela();wodR.salva(true);wodR.pinta();return;}if(!wodR.ensure())return;" +
       "wod.run=true;wod.t0=Date.now()-wod.acum*1000;if(wod.acum<1)wod.gi=0;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wodR.salva(true);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
       "document.getElementById('wodZera').addEventListener('click',function(){if(!wodR.contexto())return;if(wodR.registrado()){wodR.aviso('O resultado já foi salvo. Reabra a revisão e tente concluir o registro do dia.');return;}if(wod.sid&&!confirm('Descartar a sessão em andamento e zerar o cronômetro?'))return;clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';wod.estourou=0;wod.fimEl=0;soltaTela();fechaWodFull();wodR.nova();var op=document.getElementById('wodPlacar');if(op)op.remove();" +
@@ -5326,6 +5332,7 @@
       /* v751: com o GPS ligado mas ainda sem quilometro (esteira, ginasio, sinal
        * que nao passa no filtro de precisao) o que o aluno DIGITOU vence — antes
        * gpsOn=true bastava pra ignorar o campo e a corrida saia com 0 km. */
+      "crEl('crKm').addEventListener('input',function(){cr.distanciaManual=true;if(CRSESS)CRSESS.salva(true);});" +
       "function crKmAtual(){if(cr.gpsOn&&cr.km>0)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
       /* v751: UMA regra pra "a parte continua acabou" — nos blocos e sem eles.
        * Distancia quando o GPS esta ligado, senao tempo, senao a distancia que o
@@ -5774,15 +5781,15 @@
        * batia com o que estava na tela um segundo antes. */
       "function crFinaliza(msg){if(cr.resumo||cr.salvando)return false;if(!acIdentidadeAtual()){crPausaSegura();crErroSalva('Este app foi trocado de aluno. Abra novamente o seu acesso antes de registrar a corrida.');return false;}var el2=crTempoAtual();" +
       "if(el2<5){crEl('crFase').textContent='Corrida curta demais pra salvar';crEl('crInfo').textContent='continua correndo ou toca em Zerar';return;}" +
-      "CRSESS.ensure();var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
+      "if(!CRSESS.ensure()){crPausaSegura();CRSESS.salva(true);return false;}var origem=cr.gpsOn?'gps':cr.distanciaManual?'manual':(cr.rota&&cr.rota.length?'gps':'manual');var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
       "var med=km>0.015?(el2/60)/km:null;" +
-      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,etapas:resultado.etapas};" +
+      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,etapas:resultado.etapas,origem:origem};" +
       "var fcR=hrResumo();if(fcR&&!cr.regGravado){reg.fc=fcR.m;reg.fcx=fcR.x;}" +
       // recordes pessoais e medalhas: compara o histórico antes e depois do registro
       "var lst=L('ptcardio',[]);var ja=lst.filter(function(x){return x.id===reg.id;})[0];var extras=ja?[]:crRecordes(lst,reg,med);" +
       "if(ja)reg=ja;else{try{var trechos=crRotaTrechos(cr.rota);if(trechos.length){var maior=trechos.reduce(function(a,b){return a.length>=b.length?a:b;});reg.r=crRotaSalva(maior);if(cr.rota.some(function(p){return p.quebra;}))reg.rpartes=trechos.map(crRotaSalva);}}catch(e){}lst.push(reg);" +
       "if(!Sv('ptcardio',lst)){cr.salvando=false;CRSESS.salva(true);pintaCr();crErroSalva('Não foi possível salvar. Mantenha o app aberto: a corrida está pausada. Libere espaço e tente novamente.');return false;}}" +
-      "cr.regGravado=reg;CRSESS.salva(true);" +
+      "cr.regGravado=reg;CRSESS.salva(true);if(HS&&(!HS.record(reg.id,'activity',reg)||!HS.finish(reg.id,{status:reg.status}))){cr.salvando=false;crErroSalva('Resultado mantido. Falta preservar o histórico; tente salvar novamente.');return false;}" +
       "if(window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'corrida',id:reg.id,data:reg.d})){cr.salvando=false;pintaCr();crErroSalva('A atividade foi salva. Falta registrar o dia de treino; tente novamente sem repetir a corrida.');return false;}" +
       "CRSESS.limpa();cr.salvando=false;crEl('crSalvarErro').hidden=true;cr.blocos=null;cr.bi=0;cr.mistoT0=null;cr.mistoVai=false;cr.acum=0;cr.interrompida=false;hrZera();var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
       "if(fcR)extras.push('Batimentos \\u00b7 '+fcR.m+' bpm m\\u00e9dio \\u00b7 '+fcR.x+' m\\u00e1x');" +
@@ -6021,7 +6028,7 @@
       "return true;}" +
       // v751: só a LARGADA zera o batimento — 'Continuar' depois da pausa também cai aqui e apagava a média da corrida inteira
       "function crLarga(){if(cr.acum<1)hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
-      "CRSESS.ensure();cr.interrompida=false;cr.regGravado=null;crEl('crSalvarErro').hidden=true;" +
+      "if(!CRSESS.ensure()){crPausaSegura();return;}cr.interrompida=false;cr.regGravado=null;crEl('crSalvarErro').hidden=true;" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
       "if(!cr.blocos&&cr.acum<1){cr.blocos=crMontaBlocos(cr.plano);cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
       "if(cr.blocos){cr.gigaF=GIGAS.length;crAvisaBloco(crBlocoAtual());}}" +
@@ -6211,7 +6218,7 @@
       // O token publicado é estável mesmo quando o personal muda sua marca.
       // Sem token, mantém separação local por aluno (ID antes do nome) e studio.
       "CRSESS=(" + runtimeCorridaSessao.toString() + ")({estado:cr,escopo:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",ativo:acIdentidadeAtual,hoje:isoHj,tempo:crTempoAtual,km:crKmAtual,pausa:crPausaSegura,atualiza:pintaCr,erro:crErroSalva," +
-      "registro:function(id){return L('ptcardio',[]).filter(function(x){return x.id===id;})[0];},hr:function(){return {mx:HR.mx,soma:HR.soma,n:HR.n};}," +
+      "planned:function(){return crMontaBlocos(cr.plano)||[];},registro:function(id){return L('ptcardio',[]).filter(function(x){return x.id===id;})[0];},hr:function(){return {mx:HR.mx,soma:HR.soma,n:HR.n};}," +
       "restaurou:function(x){if(x.hr){HR.mx=x.hr.mx||0;HR.soma=x.hr.soma||0;HR.n=x.hr.n||0;}cr.gigaF=cr.blocos?GIGAS.length:0;crEl('crKm').value=String(cr.km);crEl('crGo').textContent=cr.regGravado?'Concluir registro':'Continuar';crChips();abreCrFull(0);pintaCr();if(cr.regGravado)crErroSalva('Sua atividade já foi salva. Conclua o registro do dia sem repetir a corrida.');}});" +
       "crEl('crSalvarRetry').onclick=function(){crFinaliza(null);};window.__crSessao=CRSESS;" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crKmAtual=crKmAtual;window.__crFimContinua=crFimContinua;window.__crRecordes=crRecordes;window.__crRota=desenhaRota;" +
@@ -6334,17 +6341,17 @@
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
       // e a guarda de valor igual fazia o aluno achar que salvou sem salvar.
       "function gGrava(ex,kg,reps,slot,rpe){if(!ex)return false;var informouRpe=arguments.length>=5,semRpe=rpe==null||String(rpe).trim()==='';if(informouRpe&&!semRpe){if(typeof rpe==='boolean')return false;rpe=Number(String(rpe).replace(',','.'));if(!isFinite(rpe)||rpe<1||rpe>10)return false;}slot=slot||'';var ps=slot.split(':'),porSerie=ps.length===3;var semKg=kg==null||String(kg).trim()==='';kg=semKg?null:Number(String(kg).replace(',','.'));reps=reps==null||String(reps).trim()===''?0:Number(reps);if(!isFinite(reps)||reps<0||reps>1000||Math.floor(reps)!==reps)return false;if(!semKg&&(!isFinite(kg)||kg<0||kg>2000))return false;if(!porSerie&&(kg==null||kg<=0))return false;" +
-      "var h=L('ptdc',{}),l=h[ex]||[],hj=isoHj();slot=slot||'';" +
+      "if(porSerie&&HS&&!HS.id()&&GUIA[+ps[0]]&&!HS.muscle(+ps[0],GUIA[+ps[0]]))return false;var h=L('ptdc',{}),l=h[ex]||[],hj=hsDia();slot=slot||'';" +
       "var reg={d:hj,kg:kg,g:porSerie?2:1};if(slot)reg.i=slot;if(porSerie)reg.serie=+ps[2]+1;if(isFinite(reps)&&reps>0)reg.r=reps;" +
       // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
       // continua sendo append puro — lá o aluno anota quantas linhas quiser.
-      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot){i=k;break;}}" +
+      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot&&(!porSerie||hsAtual(l[k],+ps[0]))){i=k;break;}}" +
       // recorde compara com TUDO que veio antes, menos a anotação de hoje que
       // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
       "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&cargaConcluida(l[k9])&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
-      "if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
-      "h[ex]=l.slice(-600);if(Sv('ptdc',h)===false)return false;" +
-      "if(reg.kg!=null)gv.cargas[ex]=reg.kg;if(reg.feito&&typeof GP!=='undefined')GP.atualizaVolume();try{if(cargaConcluida(reg)&&reg.kg>0)gFesteja(ex,reg.kg,maxA,l);}catch(e2){}return true;}" +
+      "var editando=i>=0&&l[i].feito;if(porSerie&&HS)reg.sid=HS.id();if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
+      "if(porSerie&&HS&&!HS.series(+ps[1],+ps[2],Object.assign({name:ex},reg)))return false;h[ex]=l;if(Sv('ptdc',h)===false)return false;" +
+      "if(reg.kg!=null)gv.cargas[ex]=reg.kg;if(reg.feito&&typeof GP!=='undefined')GP.atualizaVolume();try{if(!editando&&cargaConcluida(reg)&&reg.kg>0)gFesteja(ex,reg.kg,maxA,l);}catch(e2){}return true;}" +
       "window.__gGrava=gGrava;" +
       // festinha do recorde e sugestão de progressão — vinham do diário manual
       // (removido a pedido do Raphael); agora acompanham quem salva pelo player
@@ -6369,7 +6376,7 @@
       "var c=gEl('gKg'),r=gEl('gReps');if(!c||!gv.reg)return;" +
       "GP.guarda();var ok=GP.salvaDraft(gv.reg,gv.rascunhos[gv.regi]||{kg:c.value,reps:r?r.value:''},gv.regi);if(ok){gv.sujo=false;GP.limpa(false);}else{var lab=gEl('gCgLab');if(lab){lab.textContent='Confira os valores antes de sair. Seu preenchimento foi mantido.';lab.setAttribute('role','alert');}}return ok;}" +
       // ---------- abrir / fechar ----------
-      "function abreGuia(fi,ei){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "function abreGuia(fi,ei){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}var f=GUIA[fi];if(!f||!f.it.length)return;if(HS&&!HS.muscle(fi,f))return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
       /* v751: as series ja marcadas HOJE pela ficha (ptsets_<dia>) semeiam o
        * player — 'Iniciar exercicio' no meio mostrava 'Serie 1 de 3' com a
@@ -6380,7 +6387,7 @@
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
       // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
-      "if(typeof hrZera==='function')hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();if(gv._retomada&&gv.descAte){var left=Math.max(0,Math.ceil((gv.descAte-Date.now())/1000));if(left)gDescanso(left,gv.pend);else gFimDesc();}else if(gv._retomada&&gv.e===f.it.length-1&&gv.s>=f.it[gv.e].s){acUltimaCarga(f.it[gv.e]);}if(antG){gEl('gCgLab').textContent='Confira este rascunho antes de trocar de treino. Seu preenchimento foi mantido.';gEl('gCgLab').setAttribute('role','alert');}}" +
+      "if(typeof hrZera==='function')hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();if(gv._retomada&&gv.descAte){var left=Math.max(0,Math.ceil((gv.descAte-Date.now())/1000));if(left)gDescanso(left,gv.pend,gv.descAte);else gFimDesc();}else if(gv._retomada&&gv.e===f.it.length-1&&gv.s>=f.it[gv.e].s){acUltimaCarga(f.it[gv.e]);}if(antG){gEl('gCgLab').textContent='Confira este rascunho antes de trocar de treino. Seu preenchimento foi mantido.';gEl('gCgLab').setAttribute('role','alert');}}" +
       "function fechaGuia(){if(gSalvaSeSujo()===false||!GP.salvaPendentes())return false;acCheckpoint();acAtiva=false;clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
       "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
@@ -6531,7 +6538,7 @@
       "if(gv.pend){gv.descAte=0;gv.feitas[gv.e]=GP.conta(GUIA[gv.f].it[gv.e]);gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
       "if(gv.e>=GUIA[gv.f].it.length){gConclui();return;}}" +
       "gv.s=GP.proxima(GUIA[gv.f].it[gv.e]);pintaGuia();}" +
-      "function gDescanso(sg,trocaEx){if(sg<=0&&!trocaEx){gv.pend=false;gFimDesc();return;}gv.descAte=Date.now()+sg*1000;gv.pend=trocaEx;acCheckpoint();gv.mexe=false;var fim=Date.now()+sg*1000,tot=sg||1,ult=sg,meuId=null;" +
+      "function gDescanso(sg,trocaEx,ate){if(sg<=0&&!trocaEx){gv.pend=false;gFimDesc();return;}gv.descAte=ate||Date.now()+sg*1000;gv.pend=trocaEx;acCheckpoint();gv.mexe=false;var fim=gv.descAte,tot=sg||1,ult=sg,meuId=null;" +
       "var pu0=gEl('gPular');if(pu0){pu0.textContent='Pular descanso';pu0.classList.remove('prin');pu0.classList.add('sec');}" +
       "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
@@ -6646,12 +6653,12 @@
       "return '';}" +
       "window.__vol=volCompara;" +
       // ---------- fim do treino: recibo, repescagem e RPE ----------
-      "function gConclui(){if(!acIdentidadeAtual()){var bloqueio=gEl('gFimAviso');if(!bloqueio){bloqueio=document.createElement('p');bloqueio.id='gFimAviso';bloqueio.setAttribute('role','alert');gEl('gPe').before(bloqueio);}bloqueio.textContent='O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.';return;}if(gSalvaSeSujo()===false||!GP.salvaPendentes())return;var realizadas=GUIA[gv.f].it.some(function(it,i){return GP.conta(it,i)>0;});if(realizadas&&!window.__acRegistraConclusao({tipo:'musc',data:isoHj()})){var aviso=gEl('gFimAviso');if(!aviso){aviso=document.createElement('p');aviso.id='gFimAviso';aviso.setAttribute('role','alert');gEl('gPe').before(aviso);}aviso.textContent='Seus resultados foram mantidos. Não foi possível registrar o dia; libere espaço e toque em concluir novamente.';acCheckpoint();return;}var aviso=gEl('gFimAviso');if(aviso)aviso.remove();clearInterval(gv.timer);gv.timer=null;gDescTick=null;clearInterval(gv.relo);gv.fim=true;acFim();gv.reg='';gv.regi='';soltaTela();" +
+      "function gConclui(){var jaFim=gv.fim;if(!acIdentidadeAtual()){var bloqueio=gEl('gFimAviso');if(!bloqueio){bloqueio=document.createElement('p');bloqueio.id='gFimAviso';bloqueio.setAttribute('role','alert');gEl('gPe').before(bloqueio);}bloqueio.textContent='O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.';return;}if(gSalvaSeSujo()===false||!GP.salvaPendentes())return;var realizadas=GUIA[gv.f].it.some(function(it,i){return GP.conta(it,i)>0;});if(realizadas&&!jaFim&&HS&&!HS.completeMuscle({partial:GUIA[gv.f].it.some(function(it,i){return GP.conta(it,i)<it.s;}),seconds:Math.max(0,Math.round((Date.now()-gv.t0)/1000))}))return;if(realizadas&&!jaFim&&!window.__acRegistraConclusao({tipo:'musc',data:hsDia()})){var aviso=gEl('gFimAviso');if(!aviso){aviso=document.createElement('p');aviso.id='gFimAviso';aviso.setAttribute('role','alert');gEl('gPe').before(aviso);}aviso.textContent='Seus resultados foram mantidos. Não foi possível registrar o dia; libere espaço e toque em concluir novamente.';acCheckpoint();return;}var aviso=gEl('gFimAviso');if(aviso)aviso.remove();clearInterval(gv.timer);gv.timer=null;gDescTick=null;clearInterval(gv.relo);gv.fim=true;if(!jaFim)acFim();gv.reg='';gv.regi='';soltaTela();" +
       "var f=GUIA[gv.f];gv.feitas[gv.e]=Math.max(gv.feitas[gv.e]||0,gv.s);" +
       // o recibo conta o DIA, nao so o que passou pelo player: quem marcou series
       // pela ficha (ptsets_<hoje>, a fonte de verdade do dia) ou entrou pelo
       // Iniciar exercicio no meio via 3 de 10 num treino que o app ja deu por feito
-      "var hjR=isoHj(),stR=L('ptsets_'+hjR,{}),dcR=L('ptdc',{});" +
+      "var hjR=hsDia(),stR=L('ptsets_'+hjR,{}),dcR=L('ptdc',{});" +
       // resumo dos batimentos do treino (media e maximo) — 90 dias de historico
       "var fcR9=typeof hrResumo==='function'?hrResumo():null;if(fcR9){var fcH=L('ptfc',{});fcH[hjR]=fcR9;" +
       "var kf9=Object.keys(fcH).sort();if(kf9.length>90)delete fcH[kf9[0]];Sv('ptfc',fcH);}" +
@@ -8573,6 +8580,7 @@
       "window.__tour={abre:function(){return tourAbre(true);},fim:tourFim,vai:tourVai,tenta:tourTenta,on:function(){return tour.on;},pend:function(){return tour.pend;},passo:function(){return tour.i;},passos:function(){return tour.passos.slice();},alvo:function(){return tour.el;}};" +
       "tour.pend=true;setTimeout(function(){try{tourTenta();}catch(e9){}},900);" +
       "})();" +
+      "try{if(window.MT_TREINO_HISTORICO_APP){HS=window.MT_TREINO_HISTORICO_APP.create({scope:TOKEN||\"local:\"+" + jsonApp(JSON.stringify([a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,read:L,save:Sv,series:normalizaSeries,exKey:exKey,rpc:rpcApp});window.__treinoHistorico=HS;HS.mount();}}catch(e){var he=document.createElement('p');he.setAttribute('role','alert');he.textContent='O histórico por sessão não pôde abrir. Seus registros anteriores foram mantidos. Reabra o app antes de iniciar outro treino.';document.getElementById('acRetomar').after(he);}" +
       "(" + runtimeInicio.toString() + ")();" +
       atualizador +
       "</" + "script>" +

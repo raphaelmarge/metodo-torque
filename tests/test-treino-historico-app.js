@@ -1,0 +1,66 @@
+/* Integração canônica nas três modalidades, sem backend ou dados reais. */
+'use strict';
+const assert=require('node:assert/strict');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'/opt/node22/lib/node_modules/playwright');
+// BASE_URL é respeitada pelo helper canônico abrir(), importado abaixo.
+const {abrir,dados}=require('./test-aluno-player-experiencia');
+const {clicarControle,preencherRegistro}=require('./helpers/player-template');
+(async()=>{
+  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});let count=0;
+  function ok(v,m){assert.ok(v,m);count++;console.log('OK '+m);}
+  try{
+    const D=dados();D.cardiosApp=[{id:'run-test',nome:'Corrida fictícia original',mod:'corrida',tipo:'continuo',blocos:[{tipo:'ativo',alvo:{acao:'correr',valor:60,unidade:'s'}}]}];
+    D.wodsApp=[{id:'wod-test',nome:'Circuito fictício original',tipo:'amrap',min:12,movs:[{q:'10',n:'Movimento fictício'}]}];
+    const {p,ctx,errors}=await abrir(browser,{D,init:()=>{localStorage.setItem('ptcrCfg',JSON.stringify({cd:0,fb:'off',ap:0,bl:0}));Object.defineProperty(navigator,'geolocation',{configurable:true,value:{watchPosition:()=>1,clearWatch:()=>{}}});}});
+    p.on('dialog',d=>d.accept());
+    await p.waitForFunction(()=>window.__treinoHistorico&&window.__treinoHistorico.id());
+    const sid=await p.evaluate(()=>__treinoHistorico.id());
+    await preencherRegistro(p,'#gKg','42');await preencherRegistro(p,'#gReps','4');await clicarControle(p,'#gSerie');
+    const deadline=await p.evaluate(()=>__gvDe().descAte);
+    await p.click('[data-gserie="0"]');await preencherRegistro(p,'#gReps','5');await clicarControle(p,'#gSerie');
+    ok(await p.evaluate(d=>__gvDe().descAte===d,deadline),'revisar série durante descanso preserva o prazo');
+    let view=await p.evaluate(id=>__treinoHistorico.journal.session(id),sid);
+    ok(view.targets['set:0:0'].value.r===5&&view.targets['set:0:0'].original[0].value.r===4,'série corrigida conserva a primeira repetição registrada');
+    await p.evaluate(()=>gConclui());
+    const rewards=await p.evaluate(()=>({feitos:localStorage.getItem('ptfeitos'),uso:localStorage.getItem('ptuso'),count:__treinoHistorico.journal.list().length}));
+    await p.evaluate(()=>gConclui());
+    ok(await p.evaluate(old=>localStorage.getItem('ptfeitos')===old.feitos&&localStorage.getItem('ptuso')===old.uso&&__treinoHistorico.journal.list().length===old.count,rewards),'duplo encerramento não duplica dia, métricas ou sessão');
+    await p.evaluate(id=>__treinoHistorico.open().then(()=>{const d=document.getElementById('hsDialog');Array.from(d.querySelectorAll('button')).find(b=>b.textContent.includes('A — Teste')).click();}),sid);
+    await p.locator('#hsDialog').getByRole('button',{name:'Corrigir resultado',exact:true}).first().click();
+    await p.locator('#hsDialog').getByLabel('Repetições',{exact:true}).fill('9');
+    await p.locator('#hsDialog').getByRole('button',{name:'Salvar correção',exact:true}).click();
+    view=await p.evaluate(id=>__treinoHistorico.journal.session(id),sid);
+    ok(view.targets['set:0:0'].value.r===9&&view.targets['set:0:0'].original[0].value.r===4&&view.finished,'correção após finalizar mantém original e encerramento');
+    ok(await p.evaluate(old=>localStorage.getItem('ptfeitos')===old.feitos&&localStorage.getItem('ptuso')===old.uso,rewards),'editor de histórico não gera conclusão, check-in ou recompensa');
+    await p.evaluate(()=>{GUIA[0].n='Ficha alterada';GUIA[0].it[0].seriesDetalhadas[0].reps='99';});
+    view=await p.evaluate(id=>__treinoHistorico.journal.session(id),sid);
+    ok(view.prescribed.name==='A — Teste'&&view.prescribed.sets[0].prescribed.reps==='5','trocar ficha atual não reconstrói prescrição antiga');
+    await p.locator('#hsDialog').getByRole('button',{name:'Corrigir resultado',exact:true}).first().click();
+    await p.locator('#hsDialog').getByLabel('Repetições',{exact:true}).fill('55');
+    await p.locator('#hsDialog').getByRole('button',{name:'Cancelar',exact:true}).click();
+    ok(await p.evaluate(id=>__treinoHistorico.journal.session(id).targets['set:0:0'].value.r===9,sid),'cancelar não grava edição');
+    await p.evaluate(()=>{document.getElementById('hsDialog').close();document.getElementById('gFechar').click();document.getElementById('crZera').click();document.querySelector('[data-cbstart]').click();document.getElementById('crGo').click();});
+    await p.waitForFunction(()=>__cr.run);
+    const runid=await p.evaluate(()=>__cr.sid);
+    await p.evaluate(()=>{__cr.t0=Date.now()-65000;document.getElementById('crKm').value='0.5';document.getElementById('crKm').dispatchEvent(new Event('input'));document.getElementById('crFim').click();});
+    const run=await p.evaluate(id=>__treinoHistorico.journal.session(id),runid);
+    ok(run.finished&&run.prescribed.name==='Corrida fictícia original'&&run.targets.activity.value.k===0.5&&run.targets.activity.value.origem==='manual','corrida captura prescrição, resultado e origem real');
+    ok(run.prescribed.plan.bl.length>0&&Array.isArray(run.targets.activity.value.etapas),'intervalos prescritos e etapas realizadas preservados');
+    await p.evaluate(()=>{document.querySelector('[data-wodstart]').click();document.getElementById('wodGo').click();});
+    const wodid=await p.evaluate(()=>__wod.sid);
+    await p.evaluate(()=>{__wod.acum=30;__wod.t0=Date.now()-30000;document.getElementById('wfFim').click();});
+    await p.waitForSelector('#wodPlacar');await p.evaluate(()=>document.getElementById('wpSalvar').click());
+    const wod=await p.evaluate(id=>__treinoHistorico.journal.session(id),wodid);
+    ok(wod.finished&&wod.prescribed.receita.ms[0].n==='Movimento fictício'&&Array.isArray(wod.targets.activity.value.rp),'circuito preserva movimentos, placar e reps efetivamente anotadas');
+    await p.evaluate(()=>{localStorage.setItem('ptcardio',JSON.stringify([{id:'legacy-run',d:'2026-09-03',n:'Corrida antiga',s:300,k:1,p:'5:00'}]));});
+    await p.evaluate(()=>__treinoHistorico.open('2026-09-03'));
+    ok((await p.locator('#hsDialog').innerText()).includes('registro antigo'),'consulta por data encontra legado sem fingir snapshot');
+    await p.locator('#hsDialog').getByRole('button',{name:/Corrida.*registro antigo/}).click();
+    ok((await p.locator('#hsDialog').innerText()).includes('a prescrição completa não foi salva'),'limitação histórica aparece no detalhe');
+    ok(await p.evaluate(()=>__treinoHistorico.journal.list().filter(s=>s.legacy).every(s=>s.startedAt===null)),'legado sem horário não recebe horário inventado');
+    await p.reload();await p.waitForFunction(()=>window.__treinoHistorico);
+    ok(await p.evaluate(id=>__treinoHistorico.journal.session(id).targets['set:0:0'].value.r===9,sid),'reload preserva correção e snapshot');
+    ok(errors.length===0,'integração sem erro JavaScript: '+errors.join('; '));await ctx.close();
+    console.log(count+' cenários da integração no app passaram.');
+  }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

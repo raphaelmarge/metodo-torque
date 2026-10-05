@@ -158,6 +158,9 @@ var CORE = [
   "assets/demo-nuvem.js",
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
+  "app/treino-historico-core.js",
+  "app/treino-historico-sync.js",
+  "app/treino-historico-app.js",
   "app/medalhas-core.js",
   "app/medalhas-catalogo.js",
   "assets/personal-medalhas.js",
@@ -308,6 +311,7 @@ self.addEventListener("fetch", function (event) {
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
       url.pathname.indexOf("supabase-setup.sql") > -1 ||
       url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
+      url.pathname.indexOf("/app/treino-historico-") > -1 ||
       url.pathname.endsWith("/assets/mapa-config.js") ||
       url.pathname.indexOf("/app/aluno-skin.js") > -1 ||
       url.pathname.indexOf("/app/medalhas-core.js") > -1 ||

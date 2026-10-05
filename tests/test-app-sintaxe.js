@@ -141,7 +141,7 @@ const tmrSrc = html.slice(html.indexOf("function iniciaTmr"), html.indexOf("func
 const gdSrc = html.slice(html.indexOf("function gDescanso"), html.indexOf("function gRegua"));
 ok(/fim=Date\.now\(\)\+sg\*1000/.test(tmrSrc) && !/resta--/.test(tmrSrc),
   "⏱ o cronômetro avulso é ancorado em Date.now (deadline), sem resta--");
-ok(/fim=Date\.now\(\)\+sg\*1000/.test(gdSrc) && !/resta--/.test(gdSrc),
+ok(/gv\.descAte=ate\|\|Date\.now\(\)\+sg\*1000/.test(gdSrc) && /fim=gv\.descAte/.test(gdSrc) && !/resta--/.test(gdSrc),
   "⏱ o descanso do treino guiado idem — e recalcula ao voltar do 2º plano");
 ok(html.indexOf("function avisaFim") > -1 && /avisaFim\(/.test(gdSrc),
   "🔔 fim de descanso com o app escondido dispara a notificação local (avisaFim)");

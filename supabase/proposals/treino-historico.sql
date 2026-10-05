@@ -18,8 +18,10 @@ revoke all on sequence public.app_treino_eventos_sequencia_seq from public, anon
 
 create or replace function public.app_treino_evento_valido(e jsonb)
 returns boolean language plpgsql immutable security invoker set search_path = '' as $$
-declare k text; d date; ts timestamptz;
+declare k text; d date; ts timestamptz; unknown_ts boolean;
 begin
+  unknown_ts := e->'legacyImport'='true'::jsonb and e->'at'='null'::jsonb and e->>'actor'='legacy-import' and
+    ((e->>'type'='start' and e->'legacy'='true'::jsonb) or (e->>'type'='result' and e->'parents'='[]'::jsonb));
   if e is null or jsonb_typeof(e) <> 'object' or e->'v' is distinct from '1'::jsonb
      or jsonb_typeof(e->'id') is distinct from 'string'
      or jsonb_typeof(e->'session') is distinct from 'string'
@@ -27,10 +29,12 @@ begin
      or coalesce(e->>'id','') !~ '^[a-zA-Z0-9:_-]{1,180}$'
      or coalesce(e->>'session','') !~ '^[a-zA-Z0-9:_-]{1,180}$'
      or coalesce(e->>'actor','') !~ '^[a-zA-Z0-9:_-]{1,180}$'
-     or coalesce(e->>'at','') !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+     or (not coalesce(unknown_ts,false) and coalesce(e->>'at','') !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')
      or octet_length(e::text)>2000000 then return false; end if;
+  if not coalesce(unknown_ts,false) then
   ts := (e->>'at')::timestamptz;
   if to_char(ts at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') <> e->>'at' then return false; end if;
+  end if;
   if e->>'type' = 'start' then
     if e->>'id' <> 'start:' || (e->>'session')
        or coalesce(e->>'kind','') not in ('musculacao','corrida','circuito')

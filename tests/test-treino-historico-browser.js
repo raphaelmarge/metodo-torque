@@ -4,16 +4,17 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   try {
     const ctx = await browser.newContext({ serviceWorkers: 'block' });
-    await ctx.route('**/*', r => r.request().url() === 'http://127.0.0.1:8765/history-fixture'
+    await ctx.route('**/*', r => r.request().url() === BASE + '/history-fixture'
       ? r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Fixture fictícia</title><button id="cancel">Cancelar</button>' }) : r.abort());
     await ctx.addInitScript({ content: fs.readFileSync(path.join(__dirname, '../app/treino-historico-core.js'), 'utf8') });
     const pages = await Promise.all([ctx.newPage(), ctx.newPage()]);
     async function init(p, actor) {
-      await p.goto('http://127.0.0.1:8765/history-fixture');
+      await p.goto(BASE + '/history-fixture');
       await p.evaluate(actor => {
         window.allowed = true;
         window.journal = MT_TREINO_HISTORICO.createLocked({ storage: localStorage, locks: navigator.locks, scope: 'synthetic-only', actor, active: () => allowed });
@@ -33,8 +34,9 @@ const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || '/opt/node22/lib/n
     assert.equal(await pages[0].evaluate(async () => Object.keys((await journal.session('session-a')).targets).length), 41);
     console.log('OK 40 gravações em alvos diferentes preservadas entre abas');
     await Promise.all(pages.map((p, i) => p.evaluate(i => journal.finish({ id: 'finish-' + i, session: 'session-a', value: { partial: true } }), i)));
-    assert.equal(await pages[0].evaluate(async () => (await journal.session('session-a')).finishes.length), 1);
-    console.log('OK duplo encerramento simultâneo com locks preserva uma conclusão');
+    assert.equal(await pages[0].evaluate(async () => (await journal.list()).filter(s => s.finished).length), 1);
+    assert.equal(await pages[1].evaluate(async () => (await journal.session('session-a')).finished), true);
+    console.log('OK duplo encerramento simultâneo preserva uma única sessão concluída');
     const before = await pages[0].evaluate(() => journal.packet());
     await init(pages[0], 'tab-0');
     assert.deepEqual(await pages[0].evaluate(() => journal.packet()), before);
