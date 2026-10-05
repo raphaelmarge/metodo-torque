@@ -48,6 +48,7 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   eq((await state()).bi, 1, 'retomada avança a etapa no tempo original');
   await advance(90, .7); s = await state();
   eq(s.registros.length, 1, 'concluir a sequência grava uma única atividade');
+  eq(s.registros[0].tempoBase, 'ativo', 'registro nativo identifica a base do cronômetro para comparações futuras');
   eq([s.registros[0].status, s.registros[0].d, s.registros[0].etapas.map(e => e.status)], ['completo', '2026-09-29', ['completo', 'completo']], 'resultado guarda etapas e data original ao atravessar meia-noite');
   eq(s.dias, { '2026-09-29': 1 }, 'a conclusão registra o dia original sem exigir um segundo botão');
   ok(!s.snapshot && s.resumo, 'checkpoint só é liberado depois do registro confirmado');
@@ -142,6 +143,7 @@ function eq(v, want, text) { assert.deepEqual(v, want, text); n++; console.log('
   await start(); await advance(20, .2); await p.evaluate(() => document.getElementById('crFim').click());
   s = await state(); eq(s.registros.length, 32, 'histórico preserva atividades além das últimas30');
   eq(s.registros[0].id, 'historico-0', 'atividade mais antiga continua disponível');
+  eq(s.registros[0].tempoBase, undefined, 'histórico antigo não recebe base de tempo presumida');
   await start(); await advance(15, .1);
   eq(await p.evaluate(() => {
     __crSessao.salva(true); const key = __crSessao.chave, original = localStorage.getItem(key), good = JSON.parse(original), result = [];

@@ -162,6 +162,8 @@ var CORE = [
   "app/metas-personalizadas.js",
   "app/metas-aluno.js",
   "assets/personal-metas.js",
+  "app/conquistas-avancadas.js",
+  "assets/personal-conquistas-avancadas.js",
   "app/medalhas-catalogo.js",
   "assets/personal-medalhas.js",
   "assets/personal-commerce-images.js",
