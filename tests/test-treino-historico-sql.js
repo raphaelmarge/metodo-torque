@@ -72,6 +72,21 @@ const H = require('../app/treino-historico-core');
       const b = await read('synthetic-a', a.cursor); assert.equal(b.eventos.length, 3); assert.equal(b.mais, false);
       await save('synthetic-a',more); const end = await read('synthetic-a',b.cursor); assert.equal(end.eventos.length, 0); assert.equal(end.cursor,b.cursor);
     });
+    await test('horário nulo só identifica original legado; revisão e encerramento exigem horário real', async () => {
+      const old={...e,id:'start:legacy-null',session:'legacy-null',at:null,actor:'legacy-import',legacyImport:true,legacy:true,prescribed:{}};
+      const oldResult={...r,id:'legacy-result-null',session:old.session,at:null,actor:'legacy-import',legacyImport:true};
+      await save('synthetic-b',[old,oldResult]);await save('synthetic-b',[old,oldResult]);
+      const edit={...oldResult,id:'legacy-edit',type:'correction',at:e.at,actor:'device-b',legacyImport:false,parents:[oldResult.id],reason:'Correção de anotação',value:{reps:9}};
+      await save('synthetic-b',[edit]);
+      const all=(await read('synthetic-b')).eventos,view=H.project(Object.fromEntries(all.map(x=>[x.id,x])),old.session);
+      assert.equal(view.startedAt,null);assert.equal(view.targets['set-a'].original[0].at,null);assert.equal(view.targets['set-a'].revisions[1].at,e.at);assert.equal(view.finished,false);
+      for(const invalid of [{...old,id:'start:bad',session:'bad',legacy:false},{...oldResult,id:'bad-flag',legacyImport:false},{...oldResult,id:'bad-actor',actor:'device'}, {...oldResult,id:'bad-parents',parents:[oldResult.id]},{...edit,id:'bad-edit',at:null,legacyImport:true,actor:'legacy-import'},{...oldResult,id:'bad-finish',type:'finish'}]) {
+        await assert.rejects(save('synthetic-b',[invalid]),/INVALID_EVENT/);
+      }
+      const absent={...oldResult,id:'absent-at'};delete absent.at;await assert.rejects(save('synthetic-b',[absent]),/INVALID_EVENT/);
+      await assert.rejects(save('synthetic-a',[{...oldResult,id:'wrong-session',session:e.session}]),/INVALID_LEGACY_SESSION/);
+      assert.equal((await read('synthetic-b')).eventos.length,3);
+    });
     console.log(checks + ' cenários SQL locais passaram. Não testa concorrência de conexões PostgreSQL reais.');
   } finally { await db.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

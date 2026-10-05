@@ -55,7 +55,18 @@
     function dispose() { disposed=true;stop();window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',acquire);window.removeEventListener('online',schedule);window.removeEventListener('storage',identityChanged);return leaseRequest||Promise.resolve(); }
     if(C.waitFor)Promise.resolve(C.waitFor).then(function(){waiting=false;acquire();});else acquire();
     function begin(kind, id, date, prescribed, legacy) {
-      try { check(); journal.start({ id: id, kind: kind, date: date, prescribed: legacy ? {} : clone(prescribed), legacy: !!legacy }); return true; } catch (e) { return error(e); }
+      try {
+        check();
+        if(legacy&&!journal.read()['start:'+id]) {
+          var event={v:1,id:'start:'+id,session:id,type:'start',at:null,actor:'legacy-import',legacyImport:true,date:date,kind:kind,prescribed:{},legacy:true},packet={};packet[event.id]=event;journal.ingest(packet);
+        } else journal.start({ id: id, kind: kind, date: date, prescribed: legacy ? {} : clone(prescribed), legacy: !!legacy });
+        return true;
+      } catch (e) { return error(e); }
+    }
+    function legacyResult(sid,target,value) {
+      check();var previous=journal.session(sid).targets[target];if(previous)return previous.heads;
+      var event={v:1,id:'legacy-result:'+sid+':'+target,session:sid,type:'result',at:null,actor:'legacy-import',legacyImport:true,target:target,parents:[],value:clone(value)},packet={};packet[event.id]=event;journal.ingest(packet);
+      return journal.session(sid).targets[target].heads;
     }
     function muscleKey(fi, date) { return prefix + 'muscle:' + date + ':' + fi; }
     function muscleId(fi, date) { return C.storage.getItem(muscleKey(fi,date)); }
@@ -113,7 +124,7 @@
         if (!id) { id = uid(); C.storage.setItem(muscleKey(fi,reg.d),id); }
         if (!journal.read()['start:'+id] && !begin('musculacao',id,reg.d,{},true)) return false;
         var value = Object.assign({},clone(reg),{ exercise: exercise }); delete value.hid;
-        if (previous && !journal.session(id).targets[reg.i]) { var old = Object.assign({},clone(previous),{ exercise: exercise }); delete old.hid; record(id,reg.i,old); expected = null; }
+        if (previous && !journal.session(id).targets[reg.i]) { var old = Object.assign({},clone(previous),{ exercise: exercise }); delete old.hid; legacyResult(id,reg.i,old); expected = null; }
         record(id,reg.i,value,expected); reg.hid = id; return true;
       } catch (e) { return error(e); }
     }
@@ -143,9 +154,10 @@
       var out={};Object.keys(data).forEach(function(k){out[k]=Array.isArray(data[k])?data[k].map(row):data[k];});return out;
     }
     function list(date) { return journal.list().filter(function (s) { return !date || s.date === date; }); }
+    function packet() { check();return journal.packet(); }
     function node(tag,text,parent) { var el=document.createElement(tag); if(text!=null) el.textContent=text; if(parent) parent.appendChild(el); return el; }
     function button(text,parent,click) { var b=node('button',text,parent); b.type='button'; b.className='sec'; b.onclick=click; return b; }
-    var labels = { voltas:'Voltas concluídas', kg:'Carga (kg)', r:'Repetições', rpe:'RPE', s:'Tempo (segundos)', k:'Distância (km)', p:'Ritmo informado', du:'Duração (segundos)', v:'Resultado', ex:'Repetições extras', rp:'Repetições por rodada', ob:'Observação', tempoBase:'Base do tempo', n:'Nome', e:'Exercício', exercise:'Exercício', feito:'Concluída', serie:'Série', etapas:'Etapas', rodadas:'Rodadas', tp:'Modalidade de circuito', prescricao:'Prescrição registrada', rpartes:'Trechos da rota', fc:'FC média', fcx:'FC máxima' };
+    var labels = { voltas:'Voltas concluídas', kg:'Carga (kg)', r:'Repetições', rpe:'RPE', s:'Tempo (segundos)', k:'Distância (km)', p:'Ritmo informado', du:'Duração (segundos)', v:'Resultado', ex:'Repetições extras', rp:'Repetições por rodada', ob:'Observação', tempoBase:'Base do tempo', origem:'Origem da medição', origemCorrecao:'Origem da correção', n:'Nome', e:'Exercício', exercise:'Exercício', feito:'Concluída', serie:'Série', etapas:'Etapas', rodadas:'Rodadas', tp:'Modalidade de circuito', prescricao:'Prescrição registrada', rpartes:'Trechos da rota', fc:'FC média', fcx:'FC máxima' };
     function show(value,parent,context) {
       context=context||{};
       function scalar(v){return v==null?'Não registrado':typeof v==='boolean'?(v?'Sim':'Não'):v===''?'Não anotado':String(v);}
@@ -195,7 +207,8 @@
           intervals.forEach(function(field){var str=field.input.value.trim(),n=Number(str.replace(',','.'));if(!str||!Number.isFinite(n)||n<0)throw new Error('Confira os valores das etapas.');updated.etapas[field.i][field.k]=n;});
           // Distância/tempo corrigidos não recalculam etapas, GPS, FC nem a
           // semântica tempoBase recebida do player (incluindo PR #870).
-          if(s.kind==='corrida' && (updated.s!==value.s||updated.k!==value.k)) updated.p=updated.s!=null&&updated.k>0?(Math.floor(Math.round(updated.s/updated.k)/60)+':'+String(Math.round(updated.s/updated.k)%60).padStart(2,'0')):null;
+          if(s.kind==='corrida' && (updated.s!==value.s||updated.k!==value.k)) { updated.origemCorrecao='manual'; updated.p=updated.s!=null&&updated.k>0?(Math.floor(Math.round(updated.s/updated.k)/60)+':'+String(Math.round(updated.s/updated.k)%60).padStart(2,'0')):null; }
+          if(s.kind==='corrida' && !same(updated.etapas||[],value.etapas||[])) updated.origemCorrecao='manual';
           if(target==='progress'&&journal.session(s.id).finished)throw new Error('A sessão foi encerrada. Reabra o resultado final para corrigir.');
           journal.record({id:operation,session:s.id,target:target,expected:expected,correction:true,reason:reason.value.trim(),value:updated});
           if(target==='progress'&&C.applyLive){
@@ -217,7 +230,7 @@
         sessions.forEach(function(s){
           var article=node('article',null,results);article.className='th-session';article.dataset.kind=s.kind;article.dataset.session=s.id;
           node('h3',s.date.split('-').reverse().join('/')+' · '+({musculacao:'Musculação',corrida:'Corrida',circuito:'Circuito'}[s.kind]),article);
-          node('p',(s.finished?'Sessão encerrada':'Sessão iniciada · encerramento não registrado')+' · início '+new Date(s.startedAt).toLocaleTimeString('pt-BR'),article);
+          node('p',(s.finished?'Sessão encerrada':s.startedAt===null?'Registro anterior · encerramento não registrado':'Sessão iniciada · encerramento não registrado')+' · '+(s.startedAt===null?'horário não preservado no registro antigo':'início '+new Date(s.startedAt).toLocaleTimeString('pt-BR')),article);
           var prescribed=node('details',null,article);node('summary','Prescrição daquela data',prescribed);
           if(s.legacy)node('p','Prescrição histórica não registrada. O plano atual não foi usado para preencher esta sessão.',prescribed);else show(s.prescribed,prescribed,{kind:s.kind,prescribed:true});
           Object.keys(s.targets).forEach(function(target){var t=s.targets[target];
@@ -226,7 +239,7 @@
             if(t.conflict)node('p','Conflito: há versões diferentes. Compare as revisões e escolha uma para corrigir.',box);
             if(t.value)show(t.value,box,{kind:s.kind});
             var details=node('details',null,box);node('summary','Original e revisões ('+t.revisions.length+')',details);
-            t.revisions.forEach(function(r){var b=node('div',null,details);node('p',(r.parents.length?'Revisão':'Original')+' · '+r.at+(r.reason?' · '+r.reason:''),b);show(r.value,b,{kind:s.kind});if(t.conflict&&t.heads.indexOf(r.id)>=0)button('Usar esta versão e corrigir',b,function(){edit(s,target,r,box);});});
+            t.revisions.forEach(function(r){var b=node('div',null,details);node('p',(r.parents.length?'Revisão':'Original')+' · '+(r.at===null?'horário não preservado no registro antigo':r.at)+(r.reason?' · '+r.reason:''),b);show(r.value,b,{kind:s.kind});if(t.conflict&&t.heads.indexOf(r.id)>=0)button('Usar esta versão e corrigir',b,function(){edit(s,target,r,box);});});
             if(!t.conflict)button('Corrigir resultado',box,function(){if(!box.querySelector('form'))edit(s,target,t.revisions.find(function(r){return r.id===t.heads[0];}),box);});
           });
           if(!Object.keys(s.targets).length)node('p','Sem resultados confirmados.',article);
@@ -242,7 +255,7 @@
               check();var digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(core.canonical({kind:kind,value:original})));
               check();var id='legacy-'+Array.from(new Uint8Array(digest)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
               if(!begin(kind,id,original.d,{},true))return;
-              record(id,'result',original);
+              legacyResult(id,'result',original);
               // Importar um resultado existente não chama conclusão/check-in/XP.
               render();
             }catch(e){error(e);}
@@ -268,7 +281,7 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,packet:packet,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
   }
   root.MT_TREINO_HISTORICO_PLAYER={create:makePlayer};
 })(typeof self!=='undefined'?self:this);

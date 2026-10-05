@@ -125,6 +125,21 @@ test('legado não inventa prescrição, mantém somente resultados realmente dis
   assert.equal(j.session('legacy-a').legacy, true); assert.deepEqual(j.session('legacy-a').prescribed, {});
   assert.throws(() => j.start({ ...start, id: 'legacy-b', legacy: true }), /LEGACY_PRESCRIPTION_UNKNOWN/);
 });
+test('importação legada conserva horário desconhecido e correção mantém seu horário real', () => {
+  const j=make();
+  const old={v:1,id:'start:legacy-unknown',session:'legacy-unknown',type:'start',at:null,actor:'legacy-import',legacyImport:true,date:start.date,kind:'corrida',prescribed:{},legacy:true};
+  const result={v:1,id:'legacy-result',session:old.session,type:'result',at:null,actor:'legacy-import',legacyImport:true,target:'result',parents:[],value:{k:1,s:100}};
+  j.ingest({[old.id]:old,[result.id]:result});j.ingest(j.packet());j.start({...start,id:'known-time'});
+  assert.equal(j.session(old.session).startedAt,null);assert.equal(j.session(old.session).targets.result.original[0].at,null);
+  assert.equal(j.list().length,2);assert.equal(j.session(old.session).finished,false);
+  j.record({id:'edit-legacy',session:old.session,target:'result',expected:[result.id],correction:true,reason:'Distância conferida',value:{k:1.1,s:100}});
+  assert.equal(j.session(old.session).targets.result.revisions[1].at,'2026-10-03T12:00:00.000Z');
+  for(const invalid of [{...old,legacy:false},{...old,legacyImport:false},{...old,actor:'device'}, {...result,legacyImport:false},{...result,parents:['unknown']},{...result,type:'correction',reason:'Sem horário'}, {...result,type:'finish'}]) {
+    assert.throws(()=>H.merge({}, {[invalid.id]:invalid}),/INVALID_EVENT/);
+  }
+  const absent={...result};delete absent.at;assert.throws(()=>H.merge({}, {[absent.id]:absent}),/INVALID_EVENT/);
+  assert.throws(()=>j.ingest({another:{...result,id:'another',session:'known-time'}}),/INVALID_LEGACY_SESSION/);
+});
 test('corrida preserva intervalos, distância, tempo, ritmo, rota e origem separadamente', () => {
   const j = make(); const p = { name: 'Corrida fictícia', intervals: [{ id: 'interval-a', distanceM: 200, restSeconds: 60 }] };
   const result = { intervals: [{ id: 'interval-a', distanceM: 198, seconds: 55 }], distanceKm: 1.1, seconds: 360, pace: '5:27', route: [{ lat: 0, lng: 0 }], source: 'gps' };

@@ -23,9 +23,10 @@
     function id(x) { return typeof x === 'string' && /^[a-zA-Z0-9:_-]{1,180}$/.test(x); }
     function date(x) { return typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x) && Number.isFinite(Date.parse(x + 'T12:00:00Z')) && new Date(x + 'T12:00:00Z').toISOString().slice(0,10) === x; }
     function instant(x) { return typeof x === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x) && Number.isFinite(Date.parse(x)) && new Date(x).toISOString() === x; }
+    function legacyTime(e) { return e.legacyImport === true && e.at === null && e.actor === 'legacy-import' && ((e.type === 'start' && e.legacy === true) || (e.type === 'result' && Array.isArray(e.parents) && e.parents.length === 0)); }
     function unique(list) { return Array.from(new Set(list)).sort(); }
     function validate(e) {
-      if (!plain(e) || e.v !== VERSION || !id(e.id) || !id(e.session) || !instant(e.at) || !id(e.actor)) fail('INVALID_EVENT');
+      if (!plain(e) || e.v !== VERSION || !id(e.id) || !id(e.session) || !(instant(e.at) || legacyTime(e)) || !id(e.actor)) fail('INVALID_EVENT');
       if (['start', 'result', 'correction', 'finish'].indexOf(e.type) < 0) fail('INVALID_TYPE');
       if (e.type === 'start') {
         if (e.id !== 'start:' + e.session || !date(e.date) || kinds.indexOf(e.kind) < 0 || !plain(e.prescribed) || typeof e.legacy !== 'boolean') fail('INVALID_START');
@@ -83,6 +84,7 @@
         return good;
       }
       revisions.forEach(function (e) {
+        if (e.at === null && !start.legacy) fail('INVALID_LEGACY_SESSION');
         if (!ready(e)) { waiting.push(e.id); return; }
         if (!targets[e.target]) targets[e.target] = { revisions: [], heads: [], original: [] };
         targets[e.target].revisions.push(e);
@@ -90,7 +92,7 @@
       Object.keys(targets).forEach(function (key) {
         var t = targets[key], replaced = new Set();
         t.revisions.forEach(function (e) { e.parents.forEach(function (p) { replaced.add(p); }); });
-        t.revisions.sort(function (a, b) { return depths[a.id] - depths[b.id] || a.at.localeCompare(b.at) || a.id.localeCompare(b.id); });
+        t.revisions.sort(function (a, b) { return depths[a.id] - depths[b.id] || String(a.at || '').localeCompare(String(b.at || '')) || a.id.localeCompare(b.id); });
         t.original = t.revisions.filter(function (e) { return !e.parents.length; });
         t.heads = t.revisions.filter(function (e) { return !replaced.has(e.id); }).map(function (e) { return e.id; }).sort();
         t.conflict = t.heads.length > 1;
@@ -169,7 +171,7 @@
       function list() {
         var all = read();
         return Object.values(all).filter(function (e) { return e.type === 'start'; }).map(function (e) { return project(all, e.session); })
-          .sort(function (a, b) { return b.date.localeCompare(a.date) || b.startedAt.localeCompare(a.startedAt) || a.id.localeCompare(b.id); });
+          .sort(function (a, b) { return b.date.localeCompare(a.date) || String(b.startedAt || '').localeCompare(String(a.startedAt || '')) || a.id.localeCompare(b.id); });
       }
       function packet() { var all = read(), out = Object.create(null); Object.keys(all).sort().forEach(function (k) { out[k] = canonical(all[k]); }); return out; }
       return { start: start, record: record, finish: finish, ingest: ingest, list: list, read: read, packet: packet, session: function (sid) { return project(read(), sid); } };

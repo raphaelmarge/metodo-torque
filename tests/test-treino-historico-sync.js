@@ -57,5 +57,12 @@ function device(server, actor) {
     const c=device(async()=>null,'c');c.j.start(start);const before=H.canonical(c.j.read());await assert.rejects(c.sync.run(),/SYNC_UNAVAILABLE/);
     assert.equal(H.canonical(c.j.read()),before);assert.equal(c.statuses.at(-1)[0],'pendente');
   });
+  await test('outro aparelho restaura legado sem inventar horário e mantém o horário da correção',async()=>{
+    const old={v:1,id:'start:legacy-null',session:'legacy-null',type:'start',at:null,actor:'legacy-import',legacyImport:true,date:'2026-01-01',kind:'corrida',prescribed:{},legacy:true};
+    const result={v:1,id:'legacy-result',session:old.session,type:'result',at:null,actor:'legacy-import',legacyImport:true,target:'result',parents:[],value:{k:1,s:100}};
+    a.j.ingest({[old.id]:old,[result.id]:result});a.j.record({id:'legacy-edit',session:old.session,target:'result',expected:[result.id],correction:true,reason:'Conferência posterior',value:{k:1.1,s:100}});
+    const expected=a.j.session(old.session);await a.sync.run();await b.sync.run();await a.sync.run();
+    assert.deepEqual(b.j.session(old.session),expected);assert.equal(expected.startedAt,null);assert.equal(expected.targets.result.original[0].at,null);assert.match(expected.targets.result.revisions[1].at,/^\d{4}-\d{2}-\d{2}T/);
+  });
   console.log(checks+' cenários de transporte passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

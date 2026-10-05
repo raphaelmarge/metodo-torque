@@ -64,3 +64,30 @@ foram removidos.
 Documentação oficial consultada: [funções e privilégios](https://supabase.com/docs/guides/database/functions)
 e [changelog](https://supabase.com/changelog). A alteração de PostgreSQL
 15.19/17.11 trata extensões e operadores que esta migração não utiliza.
+
+## Complemento após avanço do PR #867
+
+O PR #867 recebeu uma integração alternativa até `88e7fee` durante esta
+preparação. O player do #871 foi conservado (concessão exclusiva, várias
+sessões na mesma data e revisão durante execução). Foram aproveitados os
+contratos que faltavam, sem substituir essa implementação:
+
+- Importação antiga mantém `at: null`, `legacyImport: true` e autoria
+  `legacy-import` somente no início legado e no resultado original sem pais.
+  Revisões e encerramentos continuam exigindo horário real. Um resultado de
+  horário desconhecido não pode ser associado a uma sessão não legada.
+  A consulta explica que o horário não foi preservado, em vez de usar a hora
+  da importação como início do treino. A migração canônica ainda não aplicada
+  foi ampliada com essa mesma validação.
+- Correções manuais de tempo/distância/etapas na corrida ficam identificadas
+  em `origemCorrecao`, conservando a origem anterior quando disponível,
+  `tempoBase`, percurso e etapas que o aluno não editou. Legado sem origem
+  continua sem uma origem inventada.
+- `packet()` permite exportar o journal apenas da identidade atual, após a
+  mesma verificação de contexto/concessão do player, sem tokens ou cursores.
+
+Validação complementar: core **20**, SQL **10**, concorrência PostgreSQL **3**,
+transporte **8** e players/editor **46**. O teste dos players usou as fontes
+novas compiladas em memória pelo gerador canônico; builder e demos do checkout
+foram preservados para a regeneração única do coordenador. O CI final precisa
+confirmar esses testes com o bundle efetivamente regenerado.

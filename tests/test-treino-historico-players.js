@@ -83,10 +83,11 @@ function ok(a,m){assert.ok(a,m);console.log('OK '+m);count++;}
   eq(circuitEdited.targets.result.value.rp,[8,6],'editor de circuito corrige repetições por rodada');eq(circuitEdited.targets.result.value.kg,12.5,'editor de circuito registra carga informada sem preencher ausências');
   eq(circuitEdited.targets.result.original[0].value,circuit.targets.result.original[0].value,'circuito preserva original e encerramento ao corrigir');
   // Simula um resultado de versão futura pelo contrato já usado pelo player.
-  await p.evaluate(()=>{__treinoHistorico.begin('corrida','future-run','2026-01-05',{name:'Futura'},false);__treinoHistorico.finish('corrida','future-run','2026-01-05',{id:'future-run',d:'2026-01-05',n:'Futura',s:120,k:1,tempoBase:'ativo',etapas:[{segundos:120,km:1}],r:'rota-original'});__treinoHistorico.render();});
+  await p.evaluate(()=>{__treinoHistorico.begin('corrida','future-run','2026-01-05',{name:'Futura'},false);__treinoHistorico.finish('corrida','future-run','2026-01-05',{id:'future-run',d:'2026-01-05',n:'Futura',s:120,k:1,tempoBase:'ativo',origem:'gps',etapas:[{segundos:120,km:1}],r:'rota-original'});__treinoHistorico.render();});
   const future=p.locator('.th-session').filter({hasText:'Futura'});await future.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await future.locator('input[name=k]').fill('1.2');await future.locator('input[name=reason]').fill('Distância da esteira');await future.getByRole('button',{name:'Salvar correção',exact:true}).click();
   const futureResult=await p.evaluate(()=>__treinoHistorico.list().find(s=>s.id==='future-run').targets.result.value);
   eq(futureResult.tempoBase,'ativo','editor conserva tempoBase ativo do contrato futuro PR #870');eq(futureResult.etapas,[{segundos:120,km:1}],'correção de distância total não fabrica nem substitui etapas observadas');eq(futureResult.r,'rota-original','correção conserva rota original');
+  eq({origem:futureResult.origem,origemCorrecao:futureResult.origemCorrecao},{origem:'gps',origemCorrecao:'manual'},'distância corrigida é manual e conserva a origem da medição original');
   await future.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await future.locator('input[name=etapa-0-segundos]').fill('110');await future.locator('input[name=reason]').fill('Corrigir etapa');await future.getByRole('button',{name:'Salvar correção',exact:true}).click();
   eq(await p.evaluate(()=>__treinoHistorico.list().find(s=>s.id==='future-run').targets.result.value.etapas[0].segundos),110,'corrida permite revisar a etapa real sem reconstruir pela prescrição');
   ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'histórico e editor cabem na largura móvel');
@@ -115,6 +116,13 @@ function ok(a,m){assert.ok(a,m);console.log('OK '+m);count++;}
   ok((await p.locator('#thHistory').innerText()).includes('Prescrição histórica e revisões não registradas'),'legado informa ausência da prescrição');
   await p.getByRole('button',{name:'Corrigir este registro',exact:true}).click();await p.waitForFunction(()=>__treinoHistorico.list('2025-08-01').length===1);
   eq(await p.evaluate(()=>__treinoHistorico.list('2025-08-01')[0].prescribed),{},'edição do legado não inventa receita a partir do programa atual');
+  const legacy=await p.evaluate(()=>__treinoHistorico.list('2025-08-01')[0]);
+  eq({inicio:legacy.startedAt,original:legacy.targets.result.original[0].at,concluido:legacy.finished},{inicio:null,original:null,concluido:false},'importar legado não fabrica horário de execução nem encerramento');
+  ok((await p.locator('#thHistory').innerText()).includes('horário não preservado no registro antigo'),'consulta explica o horário desconhecido sem apresentar a hora da importação');
+  const legacyBox=p.locator('.th-session[data-session="'+legacy.id+'"]');await legacyBox.getByRole('button',{name:'Corrigir resultado',exact:true}).click();await legacyBox.locator('input[name=k]').fill('1.1');await legacyBox.locator('input[name=reason]').fill('Conferência de distância antiga');await legacyBox.getByRole('button',{name:'Salvar correção',exact:true}).click();
+  const legacyEdited=await p.evaluate(()=>__treinoHistorico.list('2025-08-01')[0]);
+  eq({inicio:legacyEdited.startedAt,original:legacyEdited.targets.result.original[0].at,revisao:legacyEdited.targets.result.revisions[1].at},{inicio:null,original:null,revisao:'2026-04-10T12:00:00.000Z'},'a correção guarda seu horário real e preserva o horário desconhecido do original');
+  eq({origem:legacyEdited.targets.result.value.origem||null,correcao:legacyEdited.targets.result.value.origemCorrecao},{origem:null,correcao:'manual'},'correção manual não inventa origem GPS nem manual para o legado original');
   eq(errors,[],'integração dos três players e editor sem erros JavaScript');
   await ctx.close();console.log(count+' verificações do histórico integrado aprovadas.');
  }finally{await browser.close();}
