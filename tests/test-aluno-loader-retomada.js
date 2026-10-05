@@ -86,8 +86,23 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
       ['ptcorridaSessao', 'ptwodSessao', 'ptcorridaSessao:', 'ptwodSessaoSemDono:a'].forEach(k => localStorage.setItem(k, 'sem dono verificável'));
     }, aluno);
   }
+  async function prepararHistoricoInterno(aluno) {
+    return page.evaluate(token => {
+      if (!__treinoHistorico.beginMuscle(9, { n: 'Ficha sintética da limpeza', it: [] }, isoHj())) throw Error('Histórico sintético não criado');
+      const scope = encodeURIComponent(JSON.stringify(['token', token]));
+      localStorage.setItem('tqWorkoutSync:' + scope + ':cursor', '0');
+      localStorage.setItem('torque-preferencia-ficticia', 'preservar');
+      const rows = {};
+      for (const key of Object.keys(localStorage)) {
+        if (['tqWorkoutJournal:', 'tqWorkoutSync:', 'tqWorkoutPlayer:'].some(prefix => key.startsWith(prefix + scope + ':'))) rows[key] = localStorage.getItem(key);
+      }
+      return rows;
+    }, tokens[aluno]);
+  }
 
   await abrir('a'); await iniciar('a', 45, .42, 83); await marcarCompartilhados('a');
+  const historyA = await prepararHistoricoInterno('a');
+  ok(['tqWorkoutJournal:', 'tqWorkoutSync:', 'tqWorkoutPlayer:'].every(prefix => Object.keys(historyA).some(k => k.startsWith(prefix))), 'A possui eventos, cursor e apontador nos três namespaces novos');
   const a = await estado();
   ok(a.corrida && a.circuito && a.cr.run && a.wod.run, 'o loader real monta os dois executores e guarda sessões em andamento de A');
   await abrir('b');
@@ -96,6 +111,7 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
   eq([s.corrida, s.circuito, s.cr.sid, s.wod.sid], [null, null, null, null], 'B não recebe checkpoints nem sessões de A');
   eq([s.cardio, s.placares, s.shared], [[], {}, [null, null, null, null, null]], 'históricos compartilhados e chaves sem dono continuam sendo limpos');
   ok(await page.evaluate(a => !!localStorage.getItem(a.crKey) && !!localStorage.getItem(a.wodKey), a), 'trocar para B preserva somente os checkpoints isolados de A');
+  eq(await page.evaluate(rows => Object.fromEntries(Object.keys(rows).map(k => [k, localStorage.getItem(k)])), historyA), historyA, 'troca de aluno conserva o histórico, cursor e apontador isolados de A');
   await iniciar('b', 17, .11, 33); await marcarCompartilhados('b');
   const b = await estado();
   ok(a.crKey !== b.crKey && a.wodKey !== b.wodKey, 'corrida e circuito usam chaves distintas para cada aluno');
@@ -131,11 +147,14 @@ function ok(value, message) { assert.ok(value, message); total++; console.log('O
     denied = '';
     await abrir('b');
     if (!(await estado()).circuito) await iniciar('b', 12, .1, 20);
+    const historyB = await prepararHistoricoInterno('b');
+    ok(['tqWorkoutJournal:', 'tqWorkoutSync:', 'tqWorkoutPlayer:'].every(prefix => Object.keys(historyB).some(k => k.startsWith(prefix))), 'há eventos, cursor e apontador antes do corte ' + motivo);
     ok(await page.evaluate(() => Object.keys(localStorage).some(k => /^pt(?:corrida|wod)Sessao:/.test(k))), 'há checkpoint antes do corte ' + motivo);
     denied = motivo;
     await page.goto(BASE + '/app/?t=' + tokens.b);
     await page.waitForFunction(() => /acesso foi encerrado|não existe mais/.test(document.body.textContent));
-    eq(await page.evaluate(() => ({ token: localStorage.getItem('tq_app_token'), pacote: localStorage.getItem('tq_app_pacote'), treino: Object.keys(localStorage).filter(k => /^(pt|nt)[a-z]/.test(k)) })), { token: null, pacote: null, treino: [] }, 'corte ' + motivo + ' continua limpando token, cópia e todos os registros/checkpoints');
+    eq(await page.evaluate(() => ({ token: localStorage.getItem('tq_app_token'), pacote: localStorage.getItem('tq_app_pacote'), treino: Object.keys(localStorage).filter(k => /^(pt|nt)[a-z]/.test(k)), historico: Object.keys(localStorage).filter(k => /^tqWorkout(?:Journal|Sync|Player):/.test(k)) })), { token: null, pacote: null, treino: [], historico: [] }, 'corte ' + motivo + ' limpa token, cópia, checkpoints e todos os escopos do histórico');
+    eq(await page.evaluate(() => localStorage.getItem('torque-preferencia-ficticia')), 'preservar', 'corte ' + motivo + ' preserva preferência não específica do aluno');
   }
   eq(externalBackend, [], 'nenhuma RPC aponta para backend externo ao mock local');
   eq(errors, [], 'fluxo real do loader sem erros de JavaScript');

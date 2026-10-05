@@ -28,6 +28,12 @@ tempo ativo, etapas e rota. As duas fixtures de metas foram adaptadas ao journal
 executam o núcleo real e criam legado antes do primeiro histórico, conferindo
 ausência de identidade inventada após salvar e recarregar.
 
+A revisão integrada também corrigiu a limpeza definitiva do loader: revogação
+ou registro removido eliminam os três novos namespaces locais do histórico.
+O teste reproduziu o resíduo antes da correção e passou em 31 verificações após
+o ajuste, preservando os bytes na troca normal de aluno e preferências genéricas.
+A suíte de ciclo de vida/concessão de aba passou em 13 verificações.
+
 O histórico passou em núcleo, transporte, navegador, três players, múltiplas
 sessões, concessão de aba, SQL e concorrência. O gerador aceita LF/CRLF sem
 duplicação e preserva o restante do builder. Ver
