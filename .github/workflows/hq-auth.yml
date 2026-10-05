@@ -9,6 +9,8 @@ on:
       - supabase/releases/**
       - supabase/rollback/**
       - supabase/migrations/*hq_referrals*.sql
+      - supabase/migrations/*personal_cortesia*.sql
+      - tests/test-personal-cortesia-sql.js
       - tests/test-hq-*.js
       - tests/hq-auth-ci/**
       - tests/sql/**

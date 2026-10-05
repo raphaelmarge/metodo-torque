@@ -24,6 +24,8 @@ O teste PostgreSQL concorrente também instala o pacote Equipe após validar man
 
 O contrato do harness é `CI=true`, `HQ_AUTH_CI_DISPOSABLE=1`, `HQ_AUTH_CI_PG_URL` no banco `hq_auth_ci`, `HQ_AUTH_CI_AUTH_URL=http://127.0.0.1:59999`, `HQ_AUTH_CI_REST_URL=http://127.0.0.1:53000` e a chave sintética definida em `run.sh`. A URL Auth aponta diretamente para GoTrue, sem prefixo `/auth/v1`.
 
+A migração de cortesia temporária também é aplicada somente nesse banco descartável. Dois usuários emitidos pelo Auth consultam suas assinaturas por HTTP: prazo futuro, vencido, ausente/infinito, assinatura paga/vitalícia, vínculo revogado, acesso anônimo e JWT inválido/expirado. As tabelas de dependências são fixtures do aplicativo; os helpers e as identidades Auth continuam reais. O teste SQL de cortesia roda antes em seu próprio banco aleatório. Nenhum desses testes concede benefício a contas do projeto hospedado.
+
 `artifacts/hq-auth-ci/infra.json` contém somente commit, imagem/digest, estado/saúde/exit code dos containers e resultado da limpeza. `checks.json` é o resumo sanitizado do harness. Não coletar Docker logs, inspect completo, variáveis, JWTs, refresh tokens, corpos de login ou tabelas Auth como artefatos. A rotina de saída executa `down --volumes --remove-orphans` apenas para este projeto, inclusive após falha. Cancelamento forçado ainda depende do descarte do runner efêmero pelo GitHub.
 
 Depois da limpeza, o runner publica no `GITHUB_STEP_SUMMARY` somente uma projeção validada de estado/saúde/exit code, resultado da limpeza e IDs/digests das três imagens. Não faz upload de artefatos nem publica o JSON completo.
