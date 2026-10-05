@@ -15177,6 +15177,9 @@ async function contextoAppAluno(browser, html, options = {}) {
     console.log("Excluir minha conta:");
     const ctxX = await b.newContext({ viewport: { width: 1360, height: 900 } });
     await ctxX.addInitScript(() => {
+      // A fixture não deve recriar o perfil quando o fluxo real recarrega após apagar.
+      if (window !== window.top || sessionStorage.getItem('fixture:exclusao:seeded')) return;
+      sessionStorage.setItem('fixture:exclusao:seeded', '1');
       localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
       localStorage.setItem("mtapp:ptSemConta", "1");
     });
@@ -15215,8 +15218,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     // confirmando as duas etapas, apaga
     digitado = "EXCLUIR";
     await abreDetalhes(pX, "#cfgExcluir");
+    const excluiuNavegacao = pX.waitForEvent('framenavigated', {predicate: frame => frame === pX.mainFrame()});
     await pX.click("#cfgExcluir");
-    await pX.waitForTimeout(600);
+    // Aguarde o recibo de limpeza, não um sleep que pode atravessar o reload.
+    await pX.waitForFunction(() => document.getElementById('cfgExcluirStatus').textContent.startsWith('Conta apagada.'));
     const depois = await pX.evaluate(() => ({
       studio: localStorage.getItem("mtapp:ptStudio"),
       perfil: localStorage.getItem("mtapp:perfil"),
@@ -15224,6 +15229,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     }));
     ok(!depois.studio && !depois.perfil, "confirmando as duas etapas, os dados do aparelho vão embora");
     ok(depois.alheio === "1", "e nada que não seja do TORQUE ON é tocado no aparelho");
+    await excluiuNavegacao;
+    await pX.waitForLoadState('domcontentloaded');
+    ok(await pX.evaluate(() => !localStorage.getItem('mtapp:perfil') && !(JSON.parse(localStorage.getItem('mtapp:ptStudio') || '{}').alunos || []).some(a => a.id === 'x1')),
+      "reload não recria o perfil da fixture nem restaura os alunos apagados");
     await ctxX.close();
 
     // a página pública que a Play exige (dá pra pedir exclusão sem instalar o app)
@@ -16422,8 +16431,14 @@ async function contextoAppAluno(browser, html, options = {}) {
       const termo = window.__montaAppAluno(S.read("ptStudio", {}).alunos[0], new Date().toISOString());
       return { com, sem, termo };
     });
-    const abreApp = async (html, nome, init) => {
+    const abreApp = async (html, nome, init, permission = 'default') => {
       const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+      // Estado sintético: não solicita nem concede permissões reais do navegador.
+      await c.addInitScript(permission => {
+        window.__tourPermissionRequests = 0;
+        Object.defineProperty(Notification, 'permission', {configurable:true,get:()=> permission});
+        Notification.requestPermission = async () => { window.__tourPermissionRequests++; return 'denied'; };
+      }, permission);
       if (init) await c.addInitScript(init);
       const p = await c.newPage();
       p.on("pageerror", (e) => erros.push("v775 app " + nome + ": " + e.message));
@@ -16633,7 +16648,15 @@ async function contextoAppAluno(browser, html, options = {}) {
       "🧭 v775: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
     ok(t8c.notifVeio,
       "🧭 v775: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
+    ok(await pB.evaluate(() => window.__tourPermissionRequests === 0),
+      "tour e pedido visual não solicitam permissão real sem ação do aluno");
     await cB.close();
+
+    // Permissão negada é outro estado: não deve oferecer o pedido de novo.
+    const negado = await abreApp(apps.sem, 'permissao-negada', null, 'denied');
+    ok(await negado.p.evaluate(() => !window.__pushMostra && getComputedStyle(document.getElementById('cardNotif')).display === 'none' && window.__tourPermissionRequests === 0),
+      "permissão negada mantém o pedido oculto sem solicitar novamente");
+    await negado.c.close();
 
     // ---- F) veterano (é também a regra que segura a demo) ----
     const { c: cC, p: pC } = await abreApp(apps.com, "vet", () => { localStorage.setItem("ptfeitos", JSON.stringify({ "2026-01-05": 1 })); });
