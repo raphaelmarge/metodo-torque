@@ -1,0 +1,3 @@
+-- Proposta promovida a supabase/migrations/20261005150945_treino_historico_eventos.sql.
+-- O arquivo versionado é a fonte canônica validada pelas suítes SQL e PostgreSQL.
+-- Criada pela CLI Supabase em 05/10/2026; sua presença no Git não comprova implantação.

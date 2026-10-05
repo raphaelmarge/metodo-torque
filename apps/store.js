@@ -1067,6 +1067,15 @@
       return { raw: localStorage.getItem(k), revisao: baseDe(k), ciclo: ciclo };
     });
   }
+  // Recibo do painel: só conteúdo recebido da nuvem, nunca a cópia otimista.
+  function confirmaPersonal() {
+    return preparaAppsSeguros().then(function (prep) {
+      var base = sync.conteudos && sync.conteudos['mtapp:ptStudio'];
+      if (!prep || prep.error || prep.ciclo !== sync.ciclo || !base || base.revisao !== prep.revisao)
+        return { error: { message: 'A nuvem ainda não confirmou o painel.' } };
+      return { valor: JSON.parse(JSON.stringify(base.valor)), revisao: base.revisao };
+    });
+  }
   function publicaAppsSeguros(linhas, preparo) {
     var k = 'mtapp:ptStudio';
     if (!preparo || preparo.error) return Promise.resolve(preparo || { error: { message: 'Prepare a publicação a partir da versão sincronizada.' } });
@@ -1384,7 +1393,7 @@
     copiasAnteriores: function(id){return suporte('store-backup.js','MT_BACKUP').then(function(b){return b.previousCopies(backupAPI,id);});},
     saude: saudeSync, sincronizaAgora: function(){return puxa().then(function(){return enviaSujas();});},
     restauraAlteracao: restauraAlteracao, revogaAcessoSeguro: revogaAcessoSeguro,
-    iniciaSync: iniciaSync, preparaAppsSeguros: preparaAppsSeguros,
+    iniciaSync: iniciaSync, preparaAppsSeguros: preparaAppsSeguros, confirmaPersonal: confirmaPersonal,
     publicaAppsSeguros: publicaAppsSeguros, publicaApps: publicaApps,
     // acesso à conexão da nuvem (para publicações como o App do Aluno)
     cloud: function () { return sync.client ? { client: sync.client, aid: sync.aid } : null; },

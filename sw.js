@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v852";
+var VERSION = "mt-v853";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -159,8 +159,14 @@ var CORE = [
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
   "app/medalhas-core.js",
+  "app/metas-personalizadas.js",
+  "app/metas-aluno.js",
+  "assets/personal-metas.js",
+  "app/conquistas-avancadas.js",
+  "assets/personal-conquistas-avancadas.js",
   "app/medalhas-catalogo.js",
   "assets/personal-medalhas.js",
+  "assets/personal-commerce-images.js",
   "assets/personal-medalhas.css",
   // skin do redesenho: a camada visual que o builder embute no app publicado
   "app/aluno-skin.js",

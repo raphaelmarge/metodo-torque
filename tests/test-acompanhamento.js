@@ -156,16 +156,12 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
     'tela 375×667 mantém Fechar visível e o recibo inteiro alcançável por rolagem');
   await pa.click('#gFim');ok(!await pa.isVisible('#guiaBox'),'Fechar encerra o resumo do treino');
   await pa.setViewportSize({width:390,height:844});
-  // O descanso zero começa uma execução nova; a anterior foi concluída e
-  // agora o player preserva corretamente seus slots g2 no mesmo dia.
-  await pa.evaluate(()=>{
-    ['ptdc','ptfeitos','ptguiaSessao'].concat(Object.keys(localStorage).filter(k=>k.startsWith('ptsets_')))
-      .forEach(k=>localStorage.removeItem(k));
-  });
+  // Nova execução explícita: conservar o histórico e sua prescrição anterior.
   D.fichasApp[0].itens[0].descanso=0;D.guiaFichasP[0].it[0].d=0;
   await ca.route(BASE+'/acomp-zero.html',route=>route.fulfill({contentType:'text/html',body:global.MT_APP_ALUNO.monta(D)}));
-  await pa.goto(BASE+'/acomp-zero.html');await pa.waitForFunction(()=>window.__acSessao);
-  await pa.evaluate(()=>document.querySelector('.guiabtn').click());await clicarControle(pa, '#gSerie');
+  await pa.goto(BASE+'/acomp-zero.html');await pa.waitForFunction(()=>window.__acSessao&&window.__treinoHistorico.ready());
+  await pa.evaluate(()=>document.querySelector('[data-th-new-muscle="0"]').click());
+  ok(await pa.evaluate(()=>{var sessions=__treinoHistorico.list();return sessions.length===2&&sessions.some(s=>s.prescribed.it[0].d===60)&&sessions.some(s=>s.prescribed.it[0].d===0);}), 'nova execução preserva a sessão concluída e ambas as prescrições');await clicarControle(pa, '#gSerie');
   ok(await pa.evaluate(()=>window.__gvDe().s===1 && window.__gvDe().timer===null),'descanso zero entre séries avança sem inventar 60 segundos');
   ok(errors.length===0,'nenhum erro de JavaScript: '+errors.join('; '));
   await ca.close();

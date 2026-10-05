@@ -324,6 +324,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   // a visao Mes e onde moram o calendario do mes e a lista do dia (v635)
   await p.evaluate(() => { window.__agAba("sessoes"); window.__agVis.troca("mes"); });
   await p.waitForTimeout(300);
@@ -358,20 +359,22 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "08:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   const rec = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(rec === 4, "🔁 repetir toda semana gera as 4 sessões de uma vez");
   await p.evaluate(() => window.__agDia(diaISO(new Date(Date.now() + 864e5))));
   ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "clicar no dia de amanhã no calendário mostra o cabeçalho Amanhã");
   ok(await p.evaluate(() => /08:00/.test(document.getElementById("listaSessoes").textContent)), "detalhe do dia lista horário e aluno da sessão");
 
-  // choque de horário: agendar amanhã às 08:00 de novo pede confirmação
+  // Mesma sessão é duplicata; não pode ser liberada pelo aviso de choque.
   await p.uncheck("#sRep");
   await p.evaluate(() => {
     window.confirm = (m) => { window.__choqueMsg = m; return false; };
   });
   await p.click("#sAdd");
-  const choque = await p.evaluate(() => window.__choqueMsg || "");
-  ok(/mesmo horário/.test(choque) && /08:00/.test(choque) && /João Cliente/.test(choque), "choque de horário avisa antes de agendar");
+  await p.evaluate(() => window.__agendamentoPendente);
+  const choque = await p.textContent("#sAgStatus");
+  ok(choque === "Você já possui um agendamento para esta sessão.", "mesma sessão informa duplicata antes de agendar");
   const aposChoque = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(aposChoque === 4, "cancelar no aviso de choque não duplica a sessão");
   await p.evaluate(() => { window.confirm = () => true; });
@@ -398,6 +401,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "09:15");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   const multi = await p.evaluate(() => {
     const ses = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "09:15");
     return { n: ses.length, dows: [...new Set(ses.map((x) => new Date(x.data + "T12:00").getDay()))].sort().join(",") };
@@ -1028,7 +1032,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   ]);
   ok(movs[0] === "Empurrar" && movs[1] === "Puxar" && movs[2] === "Dobradiça e quadril" && movs[3] === "Agachar e pernas" && movs[4] === "Core e estabilidade",
     "classificador: supino=Empurrar, remada=Puxar, terra=Dobradiça, búlgaro=Agachar, prancha=Core");
-  // Abrir num item do catálogo cria a cópia personalizada (SEU) e abre o editor
+  // Abrir só prepara a cópia; cancelar não grava e Salvar confirma uma única cópia SEU.
   await p.fill("#catBusca", "kettlebell");
   await p.waitForTimeout(150);
   const antesUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
@@ -1038,9 +1042,19 @@ async function contextoAppAluno(browser, html, options = {}) {
     n: JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length,
     dlg: document.getElementById("dlgEx").open,
   }));
-  ok(depoisUsa.n === antesUsa + 1 && depoisUsa.dlg, "Abrir no catálogo vira exercício SEU (com dica) e abre o editor");
-  await p.evaluate(() => document.getElementById("dlgEx").close());
-  ok(await p.evaluate(() => /SEU/.test(document.getElementById("exLista").textContent)), "item personalizado ganha etiqueta SEU na lista");
+  ok(depoisUsa.n === antesUsa && depoisUsa.dlg, "Abrir no catálogo prepara o editor sem criar uma cópia pessoal");
+  await p.locator('#dlgEx').getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await p.waitForFunction(() => !document.getElementById('dlgEx').open);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length) === antesUsa,
+    "Cancelar o catálogo conserva a biblioteca sem criar uma cópia pessoal");
+  await p.click('#exLista [data-exabrir]');
+  await p.locator('#dlgEx').getByRole('button', { name: 'Salvar', exact: true }).click();
+  // O diálogo fecha antes de disparar o evento close que confirma a gravação.
+  await p.waitForFunction(n => !document.getElementById('dlgEx').open &&
+    JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length === n + 1, antesUsa);
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length) === antesUsa + 1,
+    "Salvar confirma exatamente uma cópia pessoal do exercício de catálogo");
+  ok(await p.evaluate(() => /SEU/.test(document.getElementById("exLista").textContent)), "item confirmado ganha etiqueta SEU na lista");
   await p.fill("#catBusca", "");
   await p.waitForTimeout(150);
 
@@ -1327,6 +1341,9 @@ async function contextoAppAluno(browser, html, options = {}) {
 
   // cascata da ficha: tipo de treino → grupamento → exercício (catálogo inteiro filtrado)
   const casc = await p.evaluate((fid) => {
+    const busca = document.querySelector('[data-exbusca="' + fid + '"]');
+    busca.value = "";
+    busca.dispatchEvent(new Event("input", { bubbles: true }));
     const total = document.querySelector('[data-exsel="' + fid + '"]').options.length;
     const mov = document.querySelector('[data-exmov="' + fid + '"]');
     mov.value = "Dobradiça e quadril";
@@ -1541,6 +1558,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   ok(gtSel.campoLimpo, "v755: criado o treino de disparo, o campo do nome volta vazio pro próximo");
   ok(/^gt/.test(gtSel.valor) && /Hipertrofia Agosto/.test(gtSel.rotulo), "criar treino de disparo já abre ele no montador de fichas");
   ok(/Hipertrofia Agosto/.test(gtSel.lista) && /0 ficha/.test(gtSel.lista), "treino de disparo aparece na lista do card");
+  if (!(await p.locator("#tdModelos").evaluate(e => e.open))) await p.locator("#tdModelos > summary").click();
   await p.selectOption("#tplSel", "abc");
   await p.click("#tplAplicar");
   await p.waitForTimeout(300);
@@ -1583,6 +1601,7 @@ async function contextoAppAluno(browser, html, options = {}) {
 
   // 🗂 meus modelos: salvar as fichas do João como modelo e aplicar na Bia
   await p.evaluate(() => { window.prompt = () => "Meu ABC teste"; window.confirm = () => true; });
+  if (!(await p.locator(".td-guia-opcoes").evaluate(e => e.open))) await p.locator(".td-guia-opcoes > summary").click();
   await p.click("#tplSalvar");
   await p.waitForTimeout(200);
   const modSalvo = await p.evaluate(() => {
@@ -1669,6 +1688,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   });
   await p.fill("#sHora", "07:30");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
 
   /* ---- Agenda repaginada (tela 2c): a semana em grade ---- */
   {
@@ -3124,16 +3144,16 @@ async function contextoAppAluno(browser, html, options = {}) {
       const antesRm = le().sessoes;
       document.getElementById("sHora").value = "10:00";
       let choqueRm = ""; window.confirm = (m) => { choqueRm = m; return false; };
-      document.getElementById("sAdd").click();
-      out.remarcaRecusa = /mesmo horário/.test(choqueRm) && window.__agRemarca.id() === "v787-rm" &&
+      document.getElementById("sAdd").click(); await window.__agendamentoPendente;
+      out.remarcaRecusa = (choqueRm === "" && document.getElementById("sAgStatus").textContent === "Você já possui um agendamento para esta sessão.") && window.__agRemarca.id() === "v787-rm" &&
         !document.getElementById("sEditAviso").hidden && document.getElementById("sAdd").textContent === "Salvar remarcação" &&
         JSON.stringify(le().sessoes) === JSON.stringify(antesRm);
       document.getElementById("sHora").value = "10:30";
-      window.confirm = () => true; document.getElementById("sAdd").click(); window.confirm = cOrig;
+      window.confirm = () => true; document.getElementById("sAdd").click(); await window.__agendamentoPendente; window.confirm = cOrig;
       const depoisRm = le().sessoes, sessaoRm = depoisRm.find((x) => x.id === "v787-rm");
       out.remarcaCorrige = depoisRm.length === antesRm.length && depoisRm.filter((x) => x.id === "v787-rm").length === 1 &&
         !!sessaoRm && sessaoRm.data === iso(5) && sessaoRm.hora === "10:30" && sessaoRm.fixaId === "fixa-preservada" &&
-        window.__agRemarca.id() === null && document.getElementById("sAdd").textContent === "Agendar sessão";
+        window.__agRemarca.id() === null && document.getElementById("sAdd").textContent === "Sessão já agendada";
       // A16. o badge da Agenda acompanha a faixa de pedidos na hora; hora fora de HH:MM vira "a combinar"
       window.MTStore.cloud = () => window.mockNuvem({ aid: "a1", tabelas: { // v756
         app_agenda: [{ id: "p1", token: "tok-v748", dia: iso(3), hora: "10:00" }, { id: "p2", token: "tok-v748", dia: iso(4), hora: "x\"><b" }],
@@ -3832,6 +3852,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "20:00");
   await p.click("#sAdd");
+  await p.evaluate(() => window.__agendamentoPendente);
   await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(diaISO(new Date())); });
   await p.evaluate(() => {
     const linhas = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).filter((x) => x.querySelector("[data-feita]"));
@@ -4195,7 +4216,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     window.__agDia(diaISO(new Date())); // repinta a agenda com o aluno semeado
   });
   await p.waitForTimeout(300);
-  const turma = await p.evaluate(() => {
+  const turma = await p.evaluate(async () => {
     window.alert = () => {}; window.confirm = () => true;
     const j = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente");
     document.getElementById("sTurmaBt").click();
@@ -4207,7 +4228,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     document.getElementById("sData").value = iso;
     document.getElementById("sHora").value = "07:30";
     const antesN = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.length;
-    document.getElementById("sAdd").click();
+    document.getElementById("sAdd").click(); await window.__agendamentoPendente;
     const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const novas = st2.sessoes.filter((s) => s.data === iso && s.hora === "07:30");
     const out = { chips: chips.length >= 2, criadas: st2.sessoes.length - antesN,
@@ -10543,20 +10564,21 @@ async function contextoAppAluno(browser, html, options = {}) {
     try {
       S.usuario = () => ({ logado: true, email: "pt@teste.com" });
       let pediu = "";
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } }); // v756
+      let assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } });
+      S.cloud = () => assinaturaCloud; // cliente estavel, como o Store real
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.pediu = pediu;
       out.tarjaAtras = !document.getElementById("faixaAssinatura").hidden;
       out.txtAtras = document.getElementById("faixaAssinaturaTxt").textContent;
       // o webhook marcou bloqueada (assinatura venceu de vez)
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) }); // v756
+      assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) });
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.txtBloq = document.getElementById("faixaAssinaturaTxt").textContent;
       out.btnBloq = document.getElementById("faixaAssinaturaBtn").textContent;
       // pagou de novo: ativa — tarja some e o card Sua ilha mostra a loja
-      S.cloud = () => window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) }); // v756
+      assinaturaCloud = window.mockNuvem({ aid: "acad-1", rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) });
       window.__assinatura.consulta();
       await new Promise((r) => setTimeout(r, 50));
       out.tarjaAtiva = !document.getElementById("faixaAssinatura").hidden;
@@ -15155,6 +15177,9 @@ async function contextoAppAluno(browser, html, options = {}) {
     console.log("Excluir minha conta:");
     const ctxX = await b.newContext({ viewport: { width: 1360, height: 900 } });
     await ctxX.addInitScript(() => {
+      // A fixture não deve recriar o perfil quando o fluxo real recarrega após apagar.
+      if (window !== window.top || sessionStorage.getItem('fixture:exclusao:seeded')) return;
+      sessionStorage.setItem('fixture:exclusao:seeded', '1');
       localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
       localStorage.setItem("mtapp:ptSemConta", "1");
     });
@@ -15193,8 +15218,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     // confirmando as duas etapas, apaga
     digitado = "EXCLUIR";
     await abreDetalhes(pX, "#cfgExcluir");
+    const excluiuNavegacao = pX.waitForEvent('framenavigated', {predicate: frame => frame === pX.mainFrame()});
     await pX.click("#cfgExcluir");
-    await pX.waitForTimeout(600);
+    // Aguarde o recibo de limpeza, não um sleep que pode atravessar o reload.
+    await pX.waitForFunction(() => document.getElementById('cfgExcluirStatus').textContent.startsWith('Conta apagada.'));
     const depois = await pX.evaluate(() => ({
       studio: localStorage.getItem("mtapp:ptStudio"),
       perfil: localStorage.getItem("mtapp:perfil"),
@@ -15202,6 +15229,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     }));
     ok(!depois.studio && !depois.perfil, "confirmando as duas etapas, os dados do aparelho vão embora");
     ok(depois.alheio === "1", "e nada que não seja do TORQUE ON é tocado no aparelho");
+    await excluiuNavegacao;
+    await pX.waitForLoadState('domcontentloaded');
+    ok(await pX.evaluate(() => !localStorage.getItem('mtapp:perfil') && !(JSON.parse(localStorage.getItem('mtapp:ptStudio') || '{}').alunos || []).some(a => a.id === 'x1')),
+      "reload não recria o perfil da fixture nem restaura os alunos apagados");
     await ctxX.close();
 
     // a página pública que a Play exige (dá pra pedir exclusão sem instalar o app)
@@ -16400,8 +16431,14 @@ async function contextoAppAluno(browser, html, options = {}) {
       const termo = window.__montaAppAluno(S.read("ptStudio", {}).alunos[0], new Date().toISOString());
       return { com, sem, termo };
     });
-    const abreApp = async (html, nome, init) => {
+    const abreApp = async (html, nome, init, permission = 'default') => {
       const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+      // Estado sintético: não solicita nem concede permissões reais do navegador.
+      await c.addInitScript(permission => {
+        window.__tourPermissionRequests = 0;
+        Object.defineProperty(Notification, 'permission', {configurable:true,get:()=> permission});
+        Notification.requestPermission = async () => { window.__tourPermissionRequests++; return 'denied'; };
+      }, permission);
       if (init) await c.addInitScript(init);
       const p = await c.newPage();
       p.on("pageerror", (e) => erros.push("v775 app " + nome + ": " + e.message));
@@ -16611,7 +16648,15 @@ async function contextoAppAluno(browser, html, options = {}) {
       "🧭 v775: Treinei hoje! ANTES das perguntinhas — o pedido de push (mesmo forçado) espera e as perguntinhas ficam sozinhas na tela");
     ok(t8c.notifVeio,
       "🧭 v775: respondidas as perguntinhas, o push vem em seguida — um pedido por tela: tour → perguntinhas → push");
+    ok(await pB.evaluate(() => window.__tourPermissionRequests === 0),
+      "tour e pedido visual não solicitam permissão real sem ação do aluno");
     await cB.close();
+
+    // Permissão negada é outro estado: não deve oferecer o pedido de novo.
+    const negado = await abreApp(apps.sem, 'permissao-negada', null, 'denied');
+    ok(await negado.p.evaluate(() => !window.__pushMostra && getComputedStyle(document.getElementById('cardNotif')).display === 'none' && window.__tourPermissionRequests === 0),
+      "permissão negada mantém o pedido oculto sem solicitar novamente");
+    await negado.c.close();
 
     // ---- F) veterano (é também a regra que segura a demo) ----
     const { c: cC, p: pC } = await abreApp(apps.com, "vet", () => { localStorage.setItem("ptfeitos", JSON.stringify({ "2026-01-05": 1 })); });

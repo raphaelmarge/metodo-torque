@@ -1,0 +1,273 @@
+# Histórico integrado — recuperação de 04/10/2026
+
+Implementação local sobre o head `b2e306736ae5dd86a6daebb988578f82418a9457`
+do draft [PR #867](https://github.com/raphaelmarge/metodo-torque/pull/867).
+Branch exclusiva: `codex/history-players-recovery-20261004`.
+O PR #867 e sua branch não foram modificados. Publicação cabe ao coordenador.
+Não houve push, criação de PR remoto, merge, deploy, SQL remoto ou alteração de permissões.
+
+## Comportamento implementado
+
+- Os players de musculação, corrida e circuito capturam a prescrição antes da
+  execução e registram resultados no journal preparado no PR #867.
+- A seleção/edição de série na musculação mantém o original e as revisões.
+  As confirmações e o rollback de contador mantêm journal e fluxo do player
+  coerentes; correção não inicia outro descanso nem outra conclusão.
+- Em Treinos, **Consultar e corrigir treino por data** mostra as sessões,
+  prescrição capturada, resultados, original e revisões com horário e motivo.
+  O editor modifica reps/carga/RPE na musculação; tempo/distância e etapas
+  efetivamente registradas na corrida; resultado, reps por rodada, carga,
+  duração e observação no circuito. Não reconstrói etapas a partir do plano.
+- A correção pelo editor grava somente um evento de revisão. Não chama rotinas
+  de conclusão, XP, check-in ou placar. Campos não editados são preservados,
+  incluindo rota, FC e `tempoBase: 'ativo'` quando recebido do PR #870.
+- As coleções de compatibilidade são lidas com a revisão projetada quando
+  possuem a identidade da sessão. A gravação original permanece no journal.
+  O resumo textual antigo do circuito é identificado como resumo do encerramento;
+  não é tratado como um recálculo dos valores corrigidos.
+- Legado é exibido a partir dos valores realmente armazenados. A ação de
+  corrigir primeiro preserva esse original numa sessão explicitamente legada,
+  com ID determinístico SHA-256. A prescrição fica vazia, sem usar a ficha atual.
+- Removidos os cortes automáticos de 600 registros nos dois caminhos de série
+  e de 20 resultados nos caminhos encontrados de circuito/livre. Quota passa
+  a ser uma falha explícita, sem descarte automático de resultados anteriores.
+- Os controles de réguas, os campos principais +/− e RPE foram preservados.
+
+## Escrita, recuperação e sincronização
+
+A API síncrona do núcleo só escreve sob uma concessão exclusiva de Web Lock
+por identidade. Usa o mesmo nome de lock de `createLocked`. O armazenamento
+protegido confere a concessão e a identidade em cada escrita, inclusive depois
+de respostas de rede. Uma segunda aba pode consultar; precisa fechar a primeira
+aba e tocar em **Habilitar edição** para assumir a escrita. Navegadores sem
+Web Locks falham explicitamente; não há fallback para CAS fictício.
+
+O início da musculação persiste primeiro a identidade, depois o snapshot: uma
+falha entre essas etapas reutiliza o mesmo ID no retry. Resultado/revisão e
+coleções legadas não são uma transação única. O journal conserva os eventos já
+confirmados, e a repetição da finalização não substitui uma correção posterior.
+O rollback do contador também é uma revisão, sem apagar o evento anterior.
+
+As três modalidades usam UUIDs por execução. Na musculação, a chave ficha/data
+é apenas um apontador local para a execução selecionada, nunca a identidade do
+histórico. **Novo treino desta ficha** cria outra execução e zera somente seus
+contadores; retomar/revisar mantém o UUID. Duplo toque é bloqueado. Uma operação
+pendente persiste o novo UUID antes de preparar snapshot/apontador/contadores;
+quota e reload repetem a mesma operação sem apagar a anterior.
+
+Registros de série são distinguidos por sessão + slot, inclusive nas coleções
+compatíveis. O volume soma os valores efetivamente registrados de cada execução,
+sem colapsar slots iguais nem consultar a ficha atual para os eventos capturados.
+Uma ficha alterada só entra por uma nova execução explícita. As sessões anteriores
+mantêm seus snapshots, inclusive duas ou mais na mesma data. Corrida/circuito
+mantêm seus IDs por execução. **Revisar registros** pausa o player, captura somente
+valores observados e abre a correção por data durante o treino. A revisão é
+registrada antes de aplicar os ajustes ao checkpoint; um recibo local permite
+retomar/reaplicar a mesma revisão após falha entre essas etapas, sem outra
+conclusão. Corrida preserva etapas/rota; circuito transporta reps/carga corrigidas
+para seu placar final. A retomada continua explicitamente pausada.
+
+O transporte do PR #867 foi conectado às RPCs propostas, com paginação, ACK,
+identidade e retry já testados. Sem as RPCs disponíveis, o histórico permanece
+local. HTTP 401/403 ou `sem_acesso` são negação de acesso; rejeição do fetch é
+falha de rede; 404/PGRST202 sinalizam RPC indisponível. Falha de servidor e JSON
+inválido têm categorias distintas. Nenhuma dessas falhas avança cursor/ACK ou
+permite envio depois de leitura recusada. Não foi feita consulta à RPC remota:
+a situação de acesso em produção não foi inferida desses testes sintéticos. **Restauração entre aparelhos depende da
+instalação/homologação separada dessas RPCs; não está comprovada em produção.**
+Não houve backfill remoto, alteração do merge geral nem migração aplicada.
+
+`tools/treino-historico/regen-runtime.js` incorpora as três fontes de histórico
+no builder. O HTML gerado continua autossuficiente/offline, sem novo carregamento
+externo. `test-treino-historico-bundle.js` exige igualdade exata com as fontes.
+As três demos devem ser regeneradas depois de cada alteração nesse runtime.
+A versão de release e os checks do commit publicado pertencem ao coordenador.
+
+## Referência visual bloqueada
+
+Foi usada a skill oficial Library para o arquivo
+`libfile_c5e713d7e9d48191b9712a1e29210636`, `IMG_0514.jpeg`, com destino próprio
+`/workspace/torque-history-reference/IMG_0514.jpeg`. O download oficial falhou
+na tentativa e na única repetição. O arquivo não ficou legível neste executor.
+Nenhum pixel foi presumido; a remoção dos sliders **não foi feita**.
+A captura de evidência da nova tela usa exclusivamente dados sintéticos.
+
+## Verificação local
+
+As verificações iniciais usaram Node 24.19.0. A continuação usou Node
+**22.22.0**, Playwright **1.63.0** do lock e PostgreSQL **17.11** descartável em
+`127.0.0.1:55439`, em `/tmp`. Nenhuma instalação ou consulta de banco remoto.
+Chromium do sistema **151.0.7922.173** foi usado para os testes disponíveis.
+O download oficial do Chromium 153.0.8010.12/v1243 e do WebKit 26.6/v2359
+retornou **HTTP 403, Domain forbidden**, inclusive nas tentativas automáticas do
+instalador. Não foi classificado como falha de rede, nem contornado por outro
+canal. A equivalência exata dos browsers do CI continua pendente.
+O servidor das verificações dirigidas usa porta 8894; o lote completo local usa
+porta 8895, com Node 22 e o PostgreSQL acima.
+
+As dependências foram instaladas com `npm ci --ignore-scripts`, usando um cache
+em `/tmp`, sem alterar lockfiles. Testes com caminho absoluto legado de
+Playwright usaram um preload local que redireciona apenas esse caminho para a
+mesma versão instalada e o executável Chromium do sistema. Assertions intactas.
+
+| Suíte | Evidência local |
+| --- | --- |
+| Histórico core | 19 cenários aprovados |
+| Histórico sync | 7 cenários aprovados |
+| Histórico SQL PGlite | 9 cenários aprovados |
+| Histórico browser | 6 cenários aprovados, duas abas reais |
+| PostgreSQL real | 3 cenários aprovados com duas conexões e observador: lock/idempotência, revisões concorrentes e revogação |
+| Múltiplas sessões | 32 verificações aprovadas: várias execuções na mesma data nas três modalidades, edição offline, nova prescrição e recuperação após quota |
+| HTTP/replay | 7 cenários aprovados: negação/rede/RPC/servidor/JSON e replay de seis execuções na mesma data |
+| Concessão/loader | 13 verificações: concessão pendente, substituição do documento, escritor descartado e pagehide/pageshow durante aquisição |
+| Prévia visual | 100 verificações aprovadas; documento sem origem segura continua renderizando, sem liberar escrita sem Web Locks |
+| Acompanhamento | 33 verificações aprovadas; segunda execução pelo controle explícito preserva as duas prescrições |
+| Loader real | 25 verificações aprovadas: troca de aluno, retomada e revogação |
+| Referências por série | 20 verificações aprovadas sem gravar ao renderizar |
+| Bundle incorporado | igualdade exata aprovada |
+| Histórico players/editor | 41 verificações aprovadas: consulta meses depois, revisão durante os três players, original, XP/conclusão, etapas, carga/reps, quota, recuperação após falha entre revisão/checkpoint, rascunho obsoleto, legado, `tempoBase` e duas abas |
+| Player experiência | 63 verificações aprovadas, incluindo rollback e retry |
+| Séries práticas | 50 verificações aprovadas |
+| Corrida retomada | 56 verificações aprovadas |
+| Circuito retomada | 43 verificações aprovadas |
+| Template player | 136 verificações aprovadas, múltiplas larguras/temas |
+| Infra | 74 aprovadas, incluindo regra `BASE_URL` |
+
+A concessão assíncrona é aguardada no preparo do teste do loader, mantendo todas
+as assertions. Um runtime descartado não pode recuperar o lock nem escrever;
+a substituição do documento aguarda sua liberação antes da nova concessão.
+Consultas isoladas por série continuam somente leitura sem depender do journal;
+as rotas de escrita continuam exigindo a concessão. A geração de UUID usa
+`crypto.getRandomValues` quando `randomUUID` não está disponível, permitindo a
+prévia somente leitura em documento sem origem segura, sem fallback inseguro
+para a exclusão mútua.
+
+O teste `test-treino-historico-browser.js` agora usa `BASE_URL` para a origem da
+fixture, sem mudar suas assertions. A regra que bloqueava o CI do PR #867 passou
+localmente em `test-infra.js`; não foi solicitado rerun ou alteração daquele PR.
+
+### Execução ampla anterior — sem fullpass
+
+Código congelado e testado: `6b1fe2d100abe683da423f1cd2c986de4725320d`.
+Essa é a revisão dos dois lotes abaixo. O fechamento posterior das três suítes
+locais está descrito adiante e não alterou código de produção.
+
+As **168 suítes** foram executadas em dois lotes de 84, com servidores separados
+nas portas 8896/8897, mesmas variáveis de ambiente e o mesmo comando
+`timeout 600 node "$test"` de `tests/run.sh`. O resultado por suíte foi gravado:
+**163 passaram e 5 falharam**. Todas as dez suítes `test-treino-historico-*.js`
+passaram nesse código congelado, inclusive PostgreSQL real e as 13 verificações
+da concessão. Nenhuma assertion foi enfraquecida.
+
+| Gate local que falhou | Evidência e limite |
+| --- | --- |
+| `test-confiabilidade-webkit.js` | Binário WebKit ausente; download oficial negado com HTTP 403 / Domain forbidden |
+| `test-hq-mobile-webkit.js` | Mesmo bloqueio de WebKit |
+| `test-personal-sales-trial.js:95` | Duas chamadas `minha_assinatura`, esperando uma; falha idêntica na base exata do PR #867, extraída por `git archive` e servida separadamente |
+| `test-personal-planejamento-mensal.js:134` | Rascunho de cópia não encerrou no lote concorrente; repetição individual passou 79 verificações no head e na base. Causa da intermitência não comprovada; falha original mantida no relatório |
+| `test-personal.js` | Quatro assertions: desempenho de 1000 alunos/12 mil pagamentos em 1032 ms, limite 900 ms; limpeza local; duas assertions de onboarding/push. Os três cenários funcionais falharam também na base em blocos extraídos sem mudar assertions, helpers ou opções do browser. O cenário de desempenho exige nova medição no ambiente do CI |
+
+A execução exploratória de `bash tests/run.sh` terminou antes com 167 suítes e
+12 falhas, incluindo oito suítes que passaram após as correções, os dois gates
+WebKit, sales-trial e timeout de Personal. Essa execução atravessou correções e
+**não** é evidência de um único SHA. Os logs exploratórios e finais estão
+separados; os dois lotes finais acima incluem a nova suíte de concessão.
+
+### Fechamento das três falhas locais — 04/10/2026
+
+Revisão dos testes corrigidos: `8230496f3c498b29d8c75160b70828593790d555`.
+Alterados somente `tests/test-personal-sales-trial.js`,
+`tests/test-personal-planejamento-mensal.js` e `tests/test-personal.js`.
+Todas as assertions anteriores foram mantidas e seis foram acrescentadas.
+Nenhuma funcionalidade ou código de produção mudou nesta etapa.
+
+| Falha | Causa observada / base versus head | Fechamento |
+| --- | --- | --- |
+| Sales-trial | O mock começa a oferecer nuvem enquanto o timer de boot de 3 s ainda está pendente. O stack identifica uma chamada no clique e outra em `personal.html:24163`, na consulta automática. Além disso, o boot pode gravar a régua e a migração do catálogo no snapshot integral do studio. O teste original falha também na base #867. | Aguardar o boot, verificar que ele conserva a assinatura, zerar somente o contador de chamadas e capturar o snapshot antes do clique. Data fixa instalada antes do carregamento evita troca de minuto e preserva handles dos timers. A igualdade integral do snapshot e a assertion de exatamente uma RPC no clique permanecem. **5 grupos passaram no head e na base com a fixture corrigida.** |
+| Planejamento mensal | `dialog.close()` fecha o modal, mas a remoção do nó é feita pelo evento assíncrono `close` em `assets/relatorio-0809.js:153`. `locator.count()` não espera esse evento: a assertion imediata era intermitente. O módulo é idêntico ao da base. | Aguardar `detached`, manter a assertion original e conferir também os dados efetivamente copiados. **80 verificações passaram no head e na base.** |
+| Personal — exclusão | O sleep de 600 ms podia atravessar o redirecionamento de 1200 ms sob carga. O `addInitScript` da própria fixture recriava o perfil no novo documento. Uma reprodução com espera maior mostrou perfil/studio reaparecendo; os mesmos blocos falhavam na base. | Semear uma única vez por contexto, esperar o recibo da limpeza e manter a assertion original de ausência. Depois do reload, verificar também que perfil e aluno apagado não voltam. |
+| Personal — onboarding/push | O cenário exige `Notification.permission === 'default'`, mas o Chromium disponível devolve `denied`; `__pushMostra` corretamente nem é definido. As duas assertions falhavam igualmente na base. | Fixture explícita de `default`, sem conceder permissão real, mais cenário separado de `denied` e contador que comprova ausência de solicitação automática. Os blocos originais corrigidos passaram contra o código da base. |
+| Personal — benchmark | O limite permaneceu **900 ms**. Na execução concorrente anterior houve 1032 ms. Três amostras isoladas do bloco original: base **869/764/884 ms**; head **856/1254/878 ms**. A amostra alta foi mantida como evidência de variação temporal local, sem atribuir uma causa de produção não demonstrada. | Na suíte **Personal completa, executada sozinha**, o bloco passou em **729 ms** e o processo terminou com **TUDO PASSOU / exit 0**. Nenhum limite, assertion ou trecho de produção medido foi alterado. |
+
+`personal.html`, `assets/relatorio-0809.js`, `assets/excluir-conta.js` e os
+helpers `_dia.js` / `_nuvem.js` continuam byte a byte iguais à base #867.
+A comparação usou `git archive` em diretório temporário, sem checkout ou escrita
+na branch do PR #867. Para os cenários corrigidos, cópias dos testes atuais foram
+executadas contra esse código de produção da base; os arquivos originais da
+base também foram preservados. Não foi alegado fullpass da suíte Personal
+inteira na base: ali foram comparados seus blocos funcionais e de benchmark.
+
+**Resultado do fechamento:** as três suítes locais passaram; infra passou
+**74/74**. Não foi repetido o lote integral de 168 após essas alterações de teste.
+Os logs anteriores de 163/168 são históricos; não foram sobrescritos nem
+convertidos artificialmente em um novo fullpass. Permanecem os dois gates WebKit
+indisponíveis e a necessidade do CI com os browsers exatos.
+
+Comandos da validação no head (servidor local do worktree na porta 8894):
+
+```bash
+export PATH=/tmp/torque-node22/node_modules/node-linux-x64/bin:$PATH
+export NODE_PATH=/workspace/torque-history-recovery/tests/ci/node_modules
+export NODE_OPTIONS=--require=/tmp/torque-test-preload.js
+export CHROMIUM_PATH=/usr/bin/chromium
+export BASE_URL=http://127.0.0.1:8894
+node tests/test-personal-sales-trial.js
+node tests/test-personal-planejamento-mensal.js
+timeout 600 node tests/test-personal.js
+node tests/test-infra.js
+```
+
+Comparação de base, em servidor local separado na porta 8898:
+
+```bash
+mkdir -p /tmp/torque-base-trial
+git archive b2e306736ae5dd86a6daebb988578f82418a9457 | tar -x -C /tmp/torque-base-trial
+# Servir /tmp/torque-base-trial em 127.0.0.1:8898 em outro terminal.
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/test-personal-sales-trial.js
+cp tests/test-personal-sales-trial.js /tmp/torque-base-trial/tests/.fixed-sales-trial.js
+cp tests/test-personal-planejamento-mensal.js /tmp/torque-base-trial/tests/.fixed-planejamento.js
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/.fixed-sales-trial.js
+BASE_URL=http://127.0.0.1:8898 node /tmp/torque-base-trial/tests/.fixed-planejamento.js
+```
+
+O extrator dos blocos de Personal, os blocos efetivamente executados, as medições
+e os logs ficam em `torque-history-evidence/local-gates-closure/` no pacote de
+evidências. O extrator conserva os blocos e suas assertions, acrescentando só
+o lançamento do navegador e o ambiente sintético necessário para executá-los.
+Não houve nova tentativa de baixar WebKit, mudança de permissões reais ou
+alteração remota.
+
+Permanecem necessários para integração/publicação:
+
+1. Reexecutar o CI no SHA que o coordenador integrar, com Chromium
+   153.0.8010.12/v1243 e WebKit 26.6/v2359. Chromium 151 local não substitui
+   esse gate. Nenhum rerun remoto foi solicitado.
+2. Confirmar no CI o fechamento local descrito acima. Os três gates locais
+   passaram em reexecução, sem alterar código de vendas, exclusão de conta,
+   onboarding ou o limite de desempenho; a variação do benchmark foi registrada.
+3. Aprovar e homologar separadamente as RPCs/proposta SQL do PR #867.
+   Nenhuma RPC remota foi chamada: acesso em produção continua desconhecido.
+   Os testes distinguem leitura/envio negados, rede e serviço indisponível;
+   a negação observada neste executor foi a do download dos browsers.
+4. Materializar a referência visual pelo fluxo autorizado antes de remover
+   sliders. As duas falhas oficiais da Library não foram repetidas nesta
+   continuação. Os sliders e controles principais continuam preservados.
+
+Evidência complementar fora do repositório: `/workspace/torque-history-evidence/`
+contém logs finais por lote, reexecuções, comparações com a base e o runner usado.
+O bundle e o patch ficam em `/workspace/torque-history-recovery.bundle` e
+`/workspace/torque-history-recovery.patch`, com pré-requisito no SHA base do #867.
+
+## Proposta de draft separado
+
+Título: **Aluno: integrar players e editor por data ao histórico de sessões**
+
+Base de revisão: PR #867 no SHA `b2e3067`. Ao abrir contra `main`, declarar que
+o diff contém a dependência #867; ao empilhar, usar a branch desse PR como base,
+sem modificá-la. Não marcar como pronto para merge antes dos gates acima.
+
+Descrição sugerida: o aluno pode consultar a prescrição capturada e os resultados
+por data e corrigir registros mantendo original/revisões. Os três players gravam
+no journal; o editor não chama conclusão, XP ou check-in. A integração preserva
+`tempoBase` do PR #870. Demos regeneradas; sliders preservados porque a referência
+não foi materializada. Listar a matriz de testes e os gates pendentes desta nota.

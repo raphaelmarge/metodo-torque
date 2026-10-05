@@ -128,6 +128,8 @@ async function main() {
     for (const actor of [undefined, anonKey, outsider, serviceKey]) rejected(await rpc(actor, 'hq_ops_snapshot'), '42501');
     rejected(await command(outsider, envelope('lead.create', { name: 'Must never exist' })), '42501');
   });
+  await require('./test-cortesia-http.cjs')({ client, check, rpc, good, rejected, waitRPC,
+    users, accountA, accountB, anonKey, serviceKey });
   await check('client-editable metadata cannot forge administrator or staff role', async () => {
     good(await request(AUTH, '/user', { token: outsider.token, method: 'PUT', body: { data: { role: 'admin', super_admin: true, app_metadata: { role: 'service_role' }, permissions: ['finance.write'], staff_enabled: true } } }));
     const refreshed = good(await request(AUTH, '/token?grant_type=refresh_token', { body: { refresh_token: outsider.refreshToken } }));
@@ -204,7 +206,10 @@ async function main() {
     const badSignature = parts.slice(0, 2).join('.') + '.' + (parts[2][0] === 'A' ? 'B' : 'A') + parts[2].slice(1);
     const none = Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url') + '.' + parts[1] + '.';
     const expired = sign({ ...claims(admin.token), iat: seconds() - 7200, exp: seconds() - 3600 });
-    for (const token of ['not-a-jwt', badSignature, none, expired]) rejected(await rpc(token, 'hq_ops_snapshot'), undefined, 401);
+    for (const token of ['not-a-jwt', badSignature, none, expired]) {
+      rejected(await rpc(token, 'hq_ops_snapshot'), undefined, 401);
+      rejected(await rpc(token, 'minha_assinatura'), undefined, 401);
+    }
   });
   async function privateBoundary() {
     for (const schema of ['torque_hq', 'hq_referrals_private', 'hq_influencer_private']) for (const actor of [admin.token, outsider.token, serviceKey]) {

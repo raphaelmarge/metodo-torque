@@ -274,19 +274,29 @@ const prescricao = [
   ok(await pa.evaluate(() => window.__maxPorExercicio().length === 0), 'anotação ainda não concluída fica fora dos recordes do aluno');
   await clicarControle(pa, '#gSerie');
   const checkpoint = await pa.evaluate(() => window.__acSessao.ler());
-  ok(checkpoint.s === 1 && checkpoint.desc - Date.now() > 85000 && checkpoint.desc - Date.now() <= 90000,
+  const agoraPrimeira = await pa.evaluate(() => Date.now());
+  ok(checkpoint.s === 1 && checkpoint.desc - agoraPrimeira > 85000 && checkpoint.desc - agoraPrimeira <= 90000,
     'primeira série salva checkpoint e usa seus 90 segundos de descanso');
   ok(await volume() === 100, 'primeira série concluída contabiliza 20 kg × 5 reps');
+  // Toques entre segundos inteiros não podem arredondar o fim do descanso para frente.
+  for (const [passo, serie] of [[1, 0], [2, 2], [3, 1]]) {
+    await pa.clock.setFixedTime(new Date(agoraPrimeira + passo * 137));
+    await pa.locator('[data-gserie="' + serie + '"]').click();
+    igual(await pa.evaluate(() => [window.__gvDe().descAte, window.__acSessao.ler().desc]),
+      [checkpoint.desc, checkpoint.desc], 'selecionar outra série mantém o prazo absoluto do descanso, toque ' + passo);
+  }
   await pa.reload();
   await pa.click('#navApp [data-msec="treino"]');
   await pa.waitForSelector('#acRetomar button');
   await pa.click('#acRetomar button');
   ok(await pa.evaluate(() => window.__gvDe().s === 1 && window.__gvDe().timer !== null), 'retomada restaura a segunda série e o descanso em andamento');
+  igual(await pa.evaluate(() => window.__gvDe().descAte), checkpoint.desc, 'reabrir o player não acrescenta fração de segundo ao descanso salvo');
   await pa.evaluate(() => window.__zeraDescanso());
   ok(/8/.test(await repsTela()), 'após descanso o alvo passa para oito repetições');
   await realizado(25, 7); await clicarControle(pa, '#gSerie');
   const segundo = await pa.evaluate(() => window.__acSessao.ler());
-  ok(segundo.s === 2 && segundo.desc - Date.now() > 70000 && segundo.desc - Date.now() <= 75000,
+  const agoraSegunda = await pa.evaluate(() => Date.now());
+  ok(segundo.s === 2 && segundo.desc - agoraSegunda > 70000 && segundo.desc - agoraSegunda <= 75000,
     'segunda série usa 75 segundos, sem herdar os 90 da primeira');
   ok(await volume() === 275, 'volume soma as sete repetições realizadas, sem substituir pelas oito prescritas');
   await pa.evaluate(() => window.__zeraDescanso());

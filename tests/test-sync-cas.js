@@ -104,5 +104,31 @@ async function test(name,fn){await fn(); passed++; console.log('  OK '+name);}
     const code=fs.readFileSync(path.join(__dirname,f),'utf8');assert.doesNotMatch(code,/from\(["']app_aluno["']\)\.upsert/);
   }
  });
+ await test('recibo do Personal espera o servidor e não usa o painel otimista',async()=>{
+  const wait=deferred(), opts={rows:[dataRow({...initial(),sessoes:[]})],rpc:name=>name==='personal_sessao_ativa'?{data:true}:wait.promise},x=await setup(opts);
+  x.ctx.MT_STUDIO_PATCHES=require('../assets/studio-patches');await x.start();
+  const st=x.ctx.MTStore.read('ptStudio');st.sessoes.push({id:'synthetic-session',alunoId:'aluno-ficticio',data:'2030-10-04',hora:'09:00'});
+  x.ctx.MTStore.write('ptStudio',st);
+  let settled=false;const receipt=x.ctx.MTStore.confirmaPersonal().then(r=>{settled=true;return r;});await x.flush();
+  assert.equal(settled,false);
+  wait.resolve({data:[dataRow(st,B)]});const r=await receipt;
+  assert.ok(!r.error);assert.equal(r.valor.sessoes[0].id,'synthetic-session');
+  r.valor.sessoes.length=0;assert.equal((await x.ctx.MTStore.confirmaPersonal()).valor.sessoes.length,1);
+ });
+ await test('recibo recusa resposta vazia, falha e conflito, conservando rascunho',async()=>{
+  for(const response of [{data:[]},{error:{code:'NETWORK'}},{error:{code:'PT409'}}]){
+   const opts={rows:[dataRow({...initial(),sessoes:[]})],rpc:name=>name==='personal_sessao_ativa'?{data:true}:response},x=await setup(opts);
+   x.ctx.MT_STUDIO_PATCHES=require('../assets/studio-patches');await x.start();
+   const st=x.ctx.MTStore.read('ptStudio');st.sessoes.push({id:'synthetic-session'});x.ctx.MTStore.write('ptStudio',st);
+   assert.ok((await x.ctx.MTStore.confirmaPersonal()).error);assert.equal(x.ctx.MTStore.read('ptStudio').sessoes.length,1);
+  }
+ });
+ await test('troca de conta durante confirmação não emite recibo da conta antiga',async()=>{
+  const wait=deferred(),opts={rows:[dataRow({...initial(),sessoes:[]})],rpc:name=>name==='personal_sessao_ativa'?{data:true}:wait.promise},x=await setup(opts);
+  x.ctx.MT_STUDIO_PATCHES=require('../assets/studio-patches');await x.start();
+  const st=x.ctx.MTStore.read('ptStudio');st.sessoes.push({id:'synthetic-session'});x.ctx.MTStore.write('ptStudio',st);
+  const receipt=x.ctx.MTStore.confirmaPersonal();await x.flush();await x.logout();wait.resolve({data:[dataRow(st,B)]});
+  assert.ok((await receipt).error);
+ });
  console.log(passed+' cenários de concorrência passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

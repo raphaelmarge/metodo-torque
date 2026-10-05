@@ -221,6 +221,7 @@ test "$transport_ready" = true
 # Existing concurrency tests make and drop their own random database. Their Auth
 # stubs never touch hq_auth_ci, whose auth schema belongs to real GoTrue.
 node tests/test-hq-concurrency-pg.js
+node tests/test-personal-cortesia-sql.js --postgres
 "${compose[@]}" exec -T db psql -X -q -U postgres -d hq_auth_ci -v ON_ERROR_STOP=1 < "$infra/public-fixtures.sql"
 printf '%s\n' 'Minimal public fixtures installed after real Auth migrations.'
 node tests/hq-auth-ci/test-auth-http.cjs

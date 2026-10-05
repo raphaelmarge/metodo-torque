@@ -131,6 +131,9 @@ function ok(v, label) { assert.ok(v, label); n++; console.log('OK ' + label); }
   await p.evaluate(() => {document.getElementById('plnAluno').value='plm-b';MT_RELATORIO_0809.plano();}); await dlg.locator('[type=submit]').click();
   ok((await dlg.locator('[role=status]').innerText()).includes('conta ou o aluno mudou'),'cópia bloqueia troca de aluno enquanto diálogo está aberto');
   await p.evaluate(() => {document.getElementById('plnAluno').value='plm-a';MT_RELATORIO_0809.plano();}); await dlg.locator('[type=submit]').click();
+  // close() fecha imediatamente, mas o evento close que remove o nó é assíncrono.
+  await dlg.waitFor({state:'detached'});
+  eq((await store()).treinosV2['plm-a'].plano.datas['2026-11-02'],(await store()).treinosV2['plm-a'].plano.datas['2026-09-14'],'retry da cópia grava os dados antes de remover o diálogo');
   ok(!await p.locator('dialog.plm-dialog').count(),'mesmo rascunho de cópia pode ser salvo após voltar ao aluno');
   await p.locator('#r809CopiaSemana').click(); dlg=p.locator('dialog.plm-dialog');
   await dlg.locator('[name=destino]').fill('2026-09-20'); await dlg.locator('[data-plm-preview]').click();

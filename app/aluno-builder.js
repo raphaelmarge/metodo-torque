@@ -99,7 +99,7 @@
     function indice(it) { return Math.max(0, Math.min(it.s - 1, gv.sel == null ? gv.s : gv.sel)); }
     function registro(it, si, fi, ei) {
       var id = slot(fi == null ? gv.f : fi, ei == null ? gv.e : ei, si);
-      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id; }).pop() || null;
+      return (L("ptdc", {})[it.e] || []).filter(function (r) { return r.d === isoHj() && r.g === 2 && r.i === id && (typeof TH==='undefined'||TH.belongs(r,fi == null ? gv.f : fi,isoHj())); }).pop() || null;
     }
     function anterior(it, si) {
       // A ordem de chegada/sincronização não é a ordem da execução.
@@ -113,11 +113,14 @@
     }
     function marca(it, si, feito) {
       var h = L("ptdc", {}), l = h[it.e] || [], id = slot(gv.f, gv.e, si), hj = isoHj(), n = -1;
-      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id) n = i; });
+      l.forEach(function (r, i) { if (r.d === hj && r.g === 2 && r.i === id && TH.belongs(r,gv.f,hj)) n = i; });
       var r = n < 0 ? { d: hj, g: 2, i: id, serie: si + 1, kg: null } : Object.assign({}, l[n]);
+      if (n < 0 && it.exercicioId) r.exercicioId = it.exercicioId;
+      else if (r.exercicioId !== it.exercicioId) delete r.exercicioId;
       r.feito = feito !== false;
+      if (!TH.muscle(r, it.e, n < 0 ? null : l[n])) return false;
       if (n < 0) l.push(r); else l[n] = r;
-      h[it.e] = l.slice(-600);
+      h[it.e] = l;
       if (Sv("ptdc", h) === false) return false;
       if (cargaConcluida(r) && r.kg > 0) { var max = 0; l.forEach(function (x) { if (x !== r && cargaConcluida(x) && x.kg > max) max = x.kg; }); try { gFesteja(it.e, r.kg, max, l); } catch (e) {} }
       return true;
@@ -125,14 +128,14 @@
     function feitas(fi, ei) {
       var it = GUIA[fi] && GUIA[fi].it[ei], ids = {};
       if (!it) return 0;
-      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s) ids[r.i] = 1; });
+      (L("ptdc", {})[it.e] || []).forEach(function (r) { if (r.g === 2 && r.feito && r.d === isoHj() && r.i && r.i.indexOf(fi + ":" + ei + ":") === 0 && r.serie <= it.s && (typeof TH==='undefined'||TH.belongs(r,fi,isoHj()))) ids[r.i] = 1; });
       return Object.keys(ids).length;
     }
     function volume(fi, dia) {
-      var f = GUIA[fi], h = L("ptdc", {}), total = 0, vistos = {};
+      var f = GUIA[fi], h = L("ptdc", {}), total = typeof TH==='undefined'?0:TH.volume(fi,dia), vistos = {};
       if (!f) return 0;
       f.it.forEach(function (it, ei) {
-        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia; });
+        var prefixo = fi + ":" + ei + ":", registros = (h[it.e] || []).filter(function (r) { return r.d === dia && !r.hid; });
         var atuais = registros.filter(function (r) { return r.g === 2 && r.i && r.i.indexOf(prefixo) === 0 && r.feito && r.serie <= it.s; });
         // Registros antigos contêm uma anotação real, sem detalhamento por série.
         // Contam UMA vez: repetir a última carga/reps fabricaria o volume restante.
@@ -244,7 +247,11 @@
       if (Object.prototype.hasOwnProperty.call(h, d)) { h[d] = Math.round(SR.volume(gv.f, d)); Sv('ptvol', h); }
     }
     function falhaContador(anterior, antes) {
-      var rollback = Sv('ptdc', anterior) !== false;
+      var itRollback = GUIA[gv.f].it[gv.e], targetRollback = SR.slot(gv.f,gv.e,SR.indice(itRollback));
+      var oldRollback = (anterior[itRollback.e] || []).filter(function(r){return r.d===isoHj()&&r.i===targetRollback&&TH.belongs(r,gv.f,isoHj());}).pop();
+      var journalRollback = !oldRollback || TH.muscle(Object.assign({},oldRollback),itRollback.e,null);
+      if (gv.formSerie) gv.formSerie.historyHeads=TH.heads(gv.f,isoHj(),targetRollback);
+      var rollback = journalRollback && Sv('ptdc', anterior) !== false;
       gv.feitas[gv.e] = antes;
       var lab = gEl('gCgLab');
       if (lab) { lab.textContent = rollback ? 'Não foi possível atualizar a conclusão. Seu registro foi mantido; tente novamente.' : 'A série foi registrada, mas o contador não foi atualizado. Reabra o treino para conferir.'; lab.setAttribute('role', 'alert'); }
@@ -262,7 +269,7 @@
     function sugestao(it, si, ei, a, u) {
       var r = /^\d+$/.test(a.reps) && +a.reps >= 1 && +a.reps <= 1000 ? String(+a.reps) : '';
       var kg = a.carga, pref = gv.f + ':' + ei + ':', leg = gv.f + ':' + ei;
-      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
+      var feitasHoje = (L('ptdc', {})[it.e] || []).filter(function (x) { return x.d === isoHj() && cargaConcluida(x) && (x.g !== 2 || typeof TH==='undefined' || TH.belongs(x,gv.f,isoHj())) && (x.g === 2 ? x.feito === true && x.i && x.i.indexOf(pref) === 0 : x.i === leg); });
       var hoje = feitasHoje.filter(function (x) { return x.g === 2 && x.serie === si; }).pop() || feitasHoje[feitasHoje.length - 1];
       var mesmaCarga = hoje && (hoje.g === 2 ? SR.alvo(it, hoje.serie - 1).carga === a.carga : !it.seriesDetalhadas);
       if (hoje && (kg == null || mesmaCarga)) kg = +hoje.kg;
@@ -297,6 +304,7 @@
       if (draft) { v = draft.kg; r = draft.reps; sug = Object.assign({}, draft.sugeridos || {}); }
       else if (!reg && !done) { var proposto = sugestao(it, si, ei, a, u); v = proposto.kg; r = proposto.reps; sug = { kg: v !== '', reps: r !== '' }; }
       gv.formSerie.sugeridos = sug;
+      gv.formSerie.historyHeads = typeof TH==='undefined'?[]:TH.heads(gv.f, isoHj(), id);
       var reguas = '<div class="gserie-rulers"><span>Repetições</span>' + gRegua('gWRep', GW.rep, r || 0) + '<span>Carga em kg</span>' + gRegua('gWKg', GW.kg, v || 0) + '</div>';
       return '<div class="gcg gserie-form' + (fechamento ? ' gserie-fechamento' : '') + '"><div class="gserie-context"><span id="gCgLab" role="status">' + (fechamento ? (done && si === it.s - 1 ? 'Repetições e carga da última série' : 'Revise o que você realizou') : done ? 'Série concluída · editar registro' : 'Ajuste se precisar') + '</span><span>' + a.descanso + ' s de descanso' + (!reg && !draft && !done && v === '' ? ' · carga não informada' : '') + '</span></div>' +
         referencias(a, u) + '<div class="gserie-fields"><label for="gReps">Repetições<input id="gReps" inputmode="numeric" autocomplete="off" value="' + atributo(r) + '" placeholder="—" aria-label="Repetições desta série" aria-describedby="gOrigemSerie"></label>' +
@@ -322,7 +330,7 @@
       gv.sel = si; gv.sujo = false; gv.reg = ''; gv.regi = '';
       if (!gEl('gSerie')) gEl('gPe').innerHTML = '<button class="prin" id="gSerie">Salvar alteração da série</button><button class="sec" id="gFecharTreino">Terminar treino</button>';
       pintaGuia();
-      if (desc) { gDescanso(Math.max(0, Math.ceil((desc - Date.now()) / 1000)), pend); gv.mexe = true; }
+      if (desc) { gDescanso(Math.max(0, Math.ceil((desc - Date.now()) / 1000)), pend, desc); gv.mexe = true; }
       var b = gEl('gSerie'); if (b && feita(it, si)) b.style.display = 'block';
       var foco = gEl('gMiolo').querySelector('[data-gserie="' + si + '"]'); if (foco) foco.focus({ preventScroll: true });
       acCheckpoint();
@@ -1279,7 +1287,7 @@
   // tempo/distância inventados: a retomada sempre começa pausada.
   function runtimeCorridaSessao(C) {
     var s = C.estado, key = 'ptcorridaSessao:' + encodeURIComponent(C.escopo), ultimo = 0;
-    var campos = ['sid', 'dia', 'plano', 'mod', 'blocos', 'bi', 'bt0', 'bkm0', 'mistoT0', 'mistoVai', 'metaD', 'metaT', 'etapas'];
+    var campos = ['sid', 'dia', 'plano', 'mod', 'blocos', 'bi', 'bt0', 'bkm0', 'mistoT0', 'mistoVai', 'metaD', 'metaT', 'etapas', 'distanciaManual', 'origem', 'origemCorrecao'];
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function le() {
       try {
@@ -1313,7 +1321,7 @@
       try { localStorage.setItem(key, JSON.stringify(x)); return true; }
       catch (_) { C.erro('Não foi possível proteger esta corrida no aparelho. Libere espaço e tente salvar novamente.'); return false; }
     }
-    function limpa() { try { localStorage.removeItem(key); } catch (_) {} s.sid = null; s.etapas = []; s.regGravado = null; ultimo = 0; pinta(); }
+    function limpa() { try { localStorage.removeItem(key); } catch (_) {} s.sid = null; s.etapas = []; s.regGravado = null; s.distanciaManual = false; delete s.origem; delete s.origemCorrecao; ultimo = 0; pinta(); }
     function restaura() {
       var x = le(); if (!x) return false;
       C.pausa(); campos.forEach(function (k) { s[k] = x[k]; });
@@ -1499,6 +1507,591 @@
     document.addEventListener('visibilitychange', function () { if (document.hidden) suspende(); else repinta(); });
     return { pinta: pinta, suspende: suspende, destroi: destroi, sdk: sdk, token: token, estilo: estilo, estado: function () { return { configurado: !!token(), pronto: pronto, pendente: pendente, seguindo: seguindo, canvas: cv && cv.id, aviso: aviso }; } };
   }
+
+  // BEGIN GENERATED WORKOUT HISTORY
+  function runtimeHistorico() {
+/* Histórico de sessões: núcleo independente de DOM, cronômetros e recompensas.
+ * Eventos imutáveis; o armazenamento escreve uma chave por operação, nunca
+ * substitui o documento inteiro de outra aba. Nenhum dado real neste módulo.
+ */
+(function (root) {
+  'use strict';
+  function runtime() {
+    var VERSION = 1, kinds = ['musculacao', 'corrida', 'circuito'];
+    function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+    function fail(code) { var e = new Error(code); e.code = code; throw e; }
+    function plain(x) { return x !== null && typeof x === 'object' && !Array.isArray(x); }
+    function canonical(x) {
+      if (x === null || typeof x === 'string' || typeof x === 'boolean') return JSON.stringify(x);
+      if (typeof x === 'number' && Number.isFinite(x)) return JSON.stringify(x);
+      if (Array.isArray(x)) return '[' + x.map(canonical).join(',') + ']';
+      if (!plain(x)) fail('INVALID_JSON');
+      return '{' + Object.keys(x).sort().map(function (k) {
+        if (['__proto__', 'constructor', 'prototype'].indexOf(k) >= 0) fail('UNSAFE_KEY');
+        return JSON.stringify(k) + ':' + canonical(x[k]);
+      }).join(',') + '}';
+    }
+    function copy(x) { return JSON.parse(canonical(x)); }
+    function id(x) { return typeof x === 'string' && /^[a-zA-Z0-9:_-]{1,180}$/.test(x); }
+    function date(x) { return typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x) && Number.isFinite(Date.parse(x + 'T12:00:00Z')) && new Date(x + 'T12:00:00Z').toISOString().slice(0,10) === x; }
+    function instant(x) { return typeof x === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x) && Number.isFinite(Date.parse(x)) && new Date(x).toISOString() === x; }
+    function legacyTime(e) { return e.legacyImport === true && e.at === null && e.actor === 'legacy-import' && ((e.type === 'start' && e.legacy === true) || (e.type === 'result' && Array.isArray(e.parents) && e.parents.length === 0)); }
+    function unique(list) { return Array.from(new Set(list)).sort(); }
+    function validate(e) {
+      if (!plain(e) || e.v !== VERSION || !id(e.id) || !id(e.session) || !(instant(e.at) || legacyTime(e)) || !id(e.actor)) fail('INVALID_EVENT');
+      if (['start', 'result', 'correction', 'finish'].indexOf(e.type) < 0) fail('INVALID_TYPE');
+      if (e.type === 'start') {
+        if (e.id !== 'start:' + e.session || !date(e.date) || kinds.indexOf(e.kind) < 0 || !plain(e.prescribed) || typeof e.legacy !== 'boolean') fail('INVALID_START');
+        if (e.legacy && Object.keys(e.prescribed).length) fail('LEGACY_PRESCRIPTION_UNKNOWN');
+      } else if (e.type === 'finish') {
+        if (!plain(e.value)) fail('INVALID_FINISH');
+      } else {
+        if (!id(e.target) || !plain(e.value) || !Array.isArray(e.parents) || e.parents.some(function (p) { return !id(p) || p === e.id; }) || unique(e.parents).length !== e.parents.length) fail('INVALID_REVISION');
+        if (e.type === 'correction' && (typeof e.reason !== 'string' || !e.reason.trim() || e.reason.length > 500)) fail('CORRECTION_REASON_REQUIRED');
+      }
+      if (canonical(e).length > 2000000) fail('EVENT_TOO_LARGE');
+      return copy(e);
+    }
+    function parse(events) {
+      if (!plain(events)) fail('INVALID_JOURNAL');
+      var out = Object.create(null);
+      Object.keys(events).sort().forEach(function (key) {
+        var e = validate(typeof events[key] === 'string' ? JSON.parse(events[key]) : events[key]);
+        if (key !== e.id) fail('EVENT_ID_MISMATCH');
+        out[key] = e;
+      });
+      return out;
+    }
+    // A união é comutativa, associativa e idempotente. Mesmo ID com conteúdo
+    // diferente é corrupção/conflito, nunca "última gravação vence".
+    function merge(a, b) {
+      var left = parse(a), right = parse(b);
+      Object.keys(right).forEach(function (key) {
+        if (own(left, key) && canonical(left[key]) !== canonical(right[key])) fail('EVENT_ID_COLLISION');
+        left[key] = right[key];
+      });
+      return left;
+    }
+    function project(events, session) {
+      var all = parse(events), start = all['start:' + session];
+      if (!start) fail('SESSION_NOT_FOUND');
+      var targets = Object.create(null), waiting = [];
+      var finishes = Object.values(all).filter(function (e) { return e.session === session && e.type === 'finish'; })
+        .sort(function (a, b) { return a.at.localeCompare(b.at) || a.id.localeCompare(b.id); });
+      var finish = finishes[0] || null;
+      var revisions = Object.values(all).filter(function (e) { return e.session === session && (e.type === 'result' || e.type === 'correction'); });
+      var valid = Object.create(null), visiting = Object.create(null), depths = Object.create(null);
+      function ready(e) {
+        if (own(valid, e.id)) return valid[e.id];
+        if (visiting[e.id]) fail('REVISION_CYCLE');
+        visiting[e.id] = true;
+        var good = e.parents.every(function (p) {
+          var parent = all[p];
+          if (!parent) return false;
+          if (parent.session !== session || parent.target !== e.target || ['result', 'correction'].indexOf(parent.type) < 0) fail('INVALID_PARENT');
+          return ready(parent);
+        });
+        delete visiting[e.id]; valid[e.id] = good;
+        if (good) depths[e.id] = e.parents.length ? 1 + Math.max.apply(null, e.parents.map(function (p) { return depths[p]; })) : 0;
+        return good;
+      }
+      revisions.forEach(function (e) {
+        if (e.at === null && !start.legacy) fail('INVALID_LEGACY_SESSION');
+        if (!ready(e)) { waiting.push(e.id); return; }
+        if (!targets[e.target]) targets[e.target] = { revisions: [], heads: [], original: [] };
+        targets[e.target].revisions.push(e);
+      });
+      Object.keys(targets).forEach(function (key) {
+        var t = targets[key], replaced = new Set();
+        t.revisions.forEach(function (e) { e.parents.forEach(function (p) { replaced.add(p); }); });
+        t.revisions.sort(function (a, b) { return depths[a.id] - depths[b.id] || String(a.at || '').localeCompare(String(b.at || '')) || a.id.localeCompare(b.id); });
+        t.original = t.revisions.filter(function (e) { return !e.parents.length; });
+        t.heads = t.revisions.filter(function (e) { return !replaced.has(e.id); }).map(function (e) { return e.id; }).sort();
+        t.conflict = t.heads.length > 1;
+        t.value = t.heads.length === 1 ? copy(all[t.heads[0]].value) : null;
+      });
+      return { id: session, date: start.date, kind: start.kind, prescribed: copy(start.prescribed), legacy: start.legacy,
+        startedAt: start.at, finished: !!finish, finish: finish && copy(finish), finishes: finishes.map(copy), targets: targets, pendingParents: waiting.sort() };
+    }
+    function create(options) {
+      var storage = options.storage, scope = options.scope, actor = options.actor;
+      if (!storage || typeof scope !== 'string' || !scope || !id(actor) || typeof options.active !== 'function') fail('INVALID_STORE');
+      var prefix = 'tqWorkoutJournal:' + encodeURIComponent(scope) + ':';
+      function active() { if (!options.active()) fail('IDENTITY_CHANGED'); }
+      function read() {
+        active(); var out = Object.create(null);
+        for (var i = 0; i < storage.length; i++) {
+          var k = storage.key(i);
+          if (k && k.indexOf(prefix) === 0) {
+            var e = validate(JSON.parse(storage.getItem(k)));
+            if (k !== prefix + e.id) fail('EVENT_ID_MISMATCH');
+            out[e.id] = e;
+          }
+        }
+        return out;
+      }
+      function write(event) {
+        active(); var e = validate(event), encoded = canonical(e), key = prefix + e.id, previous = storage.getItem(key);
+        if (previous !== null) {
+          if (canonical(JSON.parse(previous)) !== encoded) fail('EVENT_ID_COLLISION');
+          return copy(e);
+        }
+        // Single atomic setItem: quota failure leaves previous events intact.
+        storage.setItem(key, encoded);
+        if (storage.getItem(key) !== encoded) fail('WRITE_NOT_CONFIRMED');
+        if (options.changed) options.changed();
+        return copy(e);
+      }
+      function at() { return (options.now ? options.now() : new Date()).toISOString(); }
+      function base(type, eventId, session) { return { v: VERSION, id: eventId, session: session, type: type, at: at(), actor: actor }; }
+      function start(input) {
+        var previous = read()['start:' + input.id];
+        if (previous) {
+          // Retrying cannot replace a prescription with today's program.
+          if (previous.kind !== input.kind || previous.date !== input.date) fail('SESSION_ID_COLLISION');
+          return project(read(), input.id);
+        }
+        write(Object.assign(base('start', 'start:' + input.id, input.id), { date: input.date, kind: input.kind, prescribed: copy(input.prescribed || {}), legacy: input.legacy === true }));
+        return project(read(), input.id);
+      }
+      function record(input) {
+        var events = read(), duplicate = events[input.id];
+        if (duplicate) {
+          if (duplicate.session !== input.session || duplicate.target !== input.target || canonical(duplicate.value) !== canonical(input.value) || duplicate.type !== (input.correction ? 'correction' : 'result') || (duplicate.reason || '') !== (input.correction ? input.reason : '')) fail('EVENT_ID_COLLISION');
+          return copy(duplicate);
+        }
+        var view = project(events, input.session), t = view.targets[input.target], heads = t ? t.heads : [];
+        if (!Array.isArray(input.expected) || canonical(unique(input.expected)) !== canonical(heads)) fail('STALE_REVISION');
+        if (view.finished && !input.correction) fail('SESSION_FINISHED');
+        var event = Object.assign(base(input.correction ? 'correction' : 'result', input.id, input.session), { target: input.target, parents: heads, value: copy(input.value) });
+        if (input.correction) event.reason = input.reason;
+        return write(event);
+      }
+      function finish(input) {
+        var events = read(), view = project(events, input.session);
+        if (view.finish) return copy(view.finish);
+        return write(Object.assign(base('finish', input.id, input.session), { value: copy(input.value) }));
+      }
+      function ingest(remote) {
+        // Validate the entire batch before the first write. Quota can interrupt
+        // the batch; retry safely fills the missing events without deletions.
+        var merged = merge(read(), remote);
+        Object.values(merged).filter(function (e) { return e.type === 'start'; }).forEach(function (e) { project(merged, e.session); });
+        Object.keys(merged).sort().forEach(function (key) { write(merged[key]); });
+        return read();
+      }
+      function list() {
+        var all = read();
+        return Object.values(all).filter(function (e) { return e.type === 'start'; }).map(function (e) { return project(all, e.session); })
+          .sort(function (a, b) { return b.date.localeCompare(a.date) || String(b.startedAt || '').localeCompare(String(a.startedAt || '')) || a.id.localeCompare(b.id); });
+      }
+      function packet() { var all = read(), out = Object.create(null); Object.keys(all).sort().forEach(function (k) { out[k] = canonical(all[k]); }); return out; }
+      return { start: start, record: record, finish: finish, ingest: ingest, list: list, read: read, packet: packet, session: function (sid) { return project(read(), sid); } };
+    }
+    // All writers sharing a browser origin must use this serialized adapter.
+    // Fail closed if locks are absent; do not pretend localStorage has CAS.
+    function createLocked(options) {
+      if (!options.locks || typeof options.locks.request !== 'function') fail('LOCKS_UNAVAILABLE');
+      var store = create(options), out = {};
+      Object.keys(store).forEach(function (method) {
+        out[method] = function () {
+          var args = Array.prototype.slice.call(arguments);
+          return options.locks.request('tqWorkoutJournal:' + encodeURIComponent(options.scope), function () { return store[method].apply(store, args); });
+        };
+      });
+      return out;
+    }
+    return { create: create, createLocked: createLocked, merge: merge, project: project, validate: validate, canonical: canonical, version: VERSION };
+  }
+  var api = runtime(); api.runtime = runtime;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.MT_TREINO_HISTORICO = api;
+})(typeof self !== 'undefined' ? self : this);
+
+/* Transporte do journal; sem ativação automática, conclusão ou recompensas.
+ * RPCs correspondem exclusivamente à proposta SQL local de histórico.
+ */
+(function (root) {
+  'use strict';
+  function makeSync(C) {
+    var running = null, prefix = 'tqWorkoutSync:' + encodeURIComponent(C.scope) + ':';
+    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); }
+    function bytes(v) { return new TextEncoder().encode(JSON.stringify(v)).length; }
+    function ordered(events) {
+      var out = [], visiting = new Set(), done = new Set();
+      function visit(e) {
+        if (done.has(e.id)) return;
+        if (visiting.has(e.id)) throw new Error('REVISION_CYCLE');
+        visiting.add(e.id);
+        if (e.type !== 'start') {
+          var start = events['start:' + e.session]; if (!start) throw new Error('SESSION_NOT_FOUND'); visit(start);
+        }
+        (e.parents || []).forEach(function (id) { if (!events[id]) throw new Error('MISSING_PARENT'); visit(events[id]); });
+        visiting.delete(e.id); done.add(e.id); out.push(e);
+      }
+      Object.keys(events).sort().forEach(function (key) { visit(events[key]); }); return out;
+    }
+    async function rpc(name, args) {
+      check(); var result = await C.rpc(name, args); check();
+      if (!result || result.ok !== true) throw new Error(result && result.erro || 'SYNC_UNAVAILABLE');
+      return result;
+    }
+    async function pull() {
+      check(); var cursor = C.storage.getItem(prefix + 'cursor') || '0';
+      if (!/^\d+$/.test(cursor)) throw new Error('INVALID_CURSOR');
+      while (true) {
+        var result = await rpc('app_treino_eventos_lista', { t: C.token, p_apos: cursor });
+        if (!Array.isArray(result.eventos) || typeof result.cursor !== 'string' || !/^\d+$/.test(result.cursor) || typeof result.mais !== 'boolean' || BigInt(result.cursor) < BigInt(cursor) || (result.mais && BigInt(result.cursor) <= BigInt(cursor))) throw new Error('INVALID_SYNC_RESPONSE');
+        var events = Object.create(null);
+        result.eventos.forEach(function (e) { if (!e || typeof e.id !== 'string' || Object.prototype.hasOwnProperty.call(events, e.id)) throw new Error('INVALID_SYNC_RESPONSE'); events[e.id] = e; });
+        await C.journal.ingest(events); check();
+        Object.keys(events).forEach(function (id) { C.storage.setItem(prefix + 'ack:' + id, '1'); });
+        // No cursor advance before every event has been persisted locally.
+        C.storage.setItem(prefix + 'cursor', result.cursor); cursor = result.cursor;
+        if (!result.mais) return;
+      }
+    }
+    async function send(batch) {
+      var result = await rpc('app_treino_eventos_grava', { t: C.token, p_eventos: batch });
+      if (!Array.isArray(result.ids) || result.ids.length !== batch.length || result.ids.some(function (id, i) { return id !== batch[i].id; })) throw new Error('INVALID_SYNC_ACK');
+      // Receipts are optimizations only. Losing one causes an idempotent resend.
+      batch.forEach(function (event) { check(); C.storage.setItem(prefix + 'ack:' + event.id, '1'); });
+    }
+    async function run() {
+      check(); if (C.status) C.status('enviando');
+      try {
+        await pull();
+        var events = await C.journal.read(), queue = ordered(events), batch = [];
+        for (var i = 0; i < queue.length; i++) {
+          check(); var e = queue[i]; if (C.storage.getItem(prefix + 'ack:' + e.id) === '1') continue;
+          if (bytes([e]) > 4000000) throw new Error('EVENT_TOO_LARGE');
+          if (batch.length && (batch.length === 50 || bytes(batch.concat([e])) > 3900000)) { await send(batch); batch = []; }
+          batch.push(e);
+        }
+        if (batch.length) await send(batch);
+        await pull(); check();
+        var latest = await C.journal.read(); check();
+        var pending = Object.keys(latest).some(function (id) { return C.storage.getItem(prefix + 'ack:' + id) !== '1'; });
+        if (C.status) C.status(pending ? 'pendente' : 'sincronizado');
+        return { ok: true, pending: pending };
+      } catch (e) { if (C.status) C.status('pendente', e.message); throw e; }
+    }
+    return { run: function () {
+      if (!running) running = run().finally(function () { running = null; });
+      return running;
+    } };
+  }
+  // Keep permission refusal distinct from transport failure. Neither permits
+  // deleting local data, moving the cursor, sending after a denied read, or
+  // pretending that a proposed RPC is installed.
+  function http(C) {
+    return async function(name,args) {
+      var response,result,operation=name==='app_treino_eventos_lista'?'read':'write';
+      function fail(code){var e=new Error(code);e.code=code;e.operation=operation;throw e;}
+      try {response=await C.fetch(C.url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:C.key,Authorization:'Bearer '+C.key,'Content-Type':'application/json'},body:JSON.stringify(args)});}catch(_){fail('NETWORK_ERROR');}
+      try {result=await response.json();}catch(_){result=null;}
+      if(response.status===401||response.status===403||result&&result.erro==='sem_acesso')fail('REMOTE_DENIED');
+      if(response.status===404||result&&result.code==='PGRST202')fail('RPC_UNAVAILABLE');
+      if(!response.ok)fail('REMOTE_HTTP_ERROR');
+      if(!result)fail('INVALID_SYNC_RESPONSE');
+      return result;
+    };
+  }
+  var api = { create: makeSync, http: http };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.MT_TREINO_HISTORICO_SYNC = api;
+})(typeof self !== 'undefined' ? self : this);
+
+/* Integração síncrona dos players. Toda escrita ocorre com uma concessão
+ * exclusiva do MESMO Web Lock usado por createLocked. A concessão termina
+ * ao sair da página; outra aba consulta, mas não escreve enquanto isso.
+ * Fonte incorporada no builder por tools/treino-historico/regen-runtime.js. */
+(function (root) {
+  'use strict';
+  function makePlayer(C) {
+    var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false, disposed = false, leaseRequest = null, waiting = !!C.waitFor, epoch = 0;
+    var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '';
+    function uid() { if(crypto.randomUUID)return crypto.randomUUID();var bytes=new Uint8Array(16);crypto.getRandomValues(bytes);bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;var hex=Array.from(bytes,function(b){return b.toString(16).padStart(2,'0');}).join('');return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20); }
+    function clone(v) { return JSON.parse(JSON.stringify(v)); }
+    function same(a, b) { return core.canonical(a) === core.canonical(b); }
+    function raw(k, d) { var v = C.storage.getItem(k); return v === null ? d : JSON.parse(v); }
+    function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (disposed) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error((acquiring||waiting)?'LOCK_PENDING':'OTHER_TAB'); }
+    function status(s) { if(disposed)return;message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
+    function error(e) {
+      if(disposed)return false;
+      var m = { LOCK_PENDING: 'Preparando o histórico. Aguarde um instante antes de iniciar.', OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
+      status(m[e.code || e.message] || 'Não foi possível salvar o histórico. Seus registros anteriores foram mantidos; libere espaço e tente novamente.');
+      if (C.error) C.error(message);
+      return false;
+    }
+    // Leituras são permitidas sem concessão; o proxy impede qualquer escritor
+    // de usar a primitiva síncrona fora do lock, incluindo respostas da rede.
+    var guarded = { get length() { return C.storage.length; }, key: function (i) { return C.storage.key(i); }, getItem: function (k) { return C.storage.getItem(k); }, setItem: function (k,v) { check(); C.storage.setItem(k,v); } };
+    var journal = core.create({ storage: guarded, scope: C.scope, actor: uid(), active: C.active, changed: function () { status(sync?'Histórico salvo neste aparelho · sincronização pendente.':'Histórico salvo neste aparelho.'); schedule(); } });
+    function schedule() { clearTimeout(timer); if (sync) timer = setTimeout(function () { synchronize(); }, 1800); }
+    function synchronize() {
+      if (!sync || !lease || !C.active()) return Promise.resolve(false);
+      return sync.run().then(function () { return true; }).catch(function (e) {
+        var messages={NETWORK_ERROR:'Falha de rede. Tente novamente quando houver conexão.',REMOTE_DENIED:(e.operation==='read'?'Leitura':'Envio')+' do histórico negado pelo serviço. Confira o acesso do aluno.',RPC_UNAVAILABLE:'Serviço de histórico indisponível. As RPCs precisam de homologação.',REMOTE_HTTP_ERROR:'O serviço de histórico respondeu com erro.',INVALID_SYNC_RESPONSE:'O serviço devolveu uma resposta inválida.'};
+        status('Histórico preservado neste aparelho. '+(messages[e.code||e.message]||'Sincronização pendente; tente novamente.'));return false;
+      });
+    }
+    if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
+    function acquire() {
+      if (disposed || waiting || lease || acquiring) return;
+      if (!navigator.locks) { error(new Error('LOCKS_UNAVAILABLE')); return; }
+      acquiring = true;var acquisition=epoch;
+      leaseRequest = navigator.locks.request('tqWorkoutJournal:' + encodeURIComponent(C.scope), { ifAvailable: true }, function (lock) {
+        if(disposed||acquisition!==epoch)return;
+        acquiring = false;
+        if (!lock) { error(new Error('OTHER_TAB')); return; }
+        if (disposed || !C.active()) return;
+        lease = true; status('Histórico salvo neste aparelho.'); schedule();
+        return new Promise(function (resolve) { release = resolve; });
+      }).catch(error);
+    }
+    function stop() { epoch++;acquiring=false;lease = false; clearTimeout(timer); if (release) release(); release = null; }
+    window.addEventListener('pagehide', stop);
+    window.addEventListener('pageshow', acquire);
+    window.addEventListener('online', schedule);
+    function identityChanged() { if (!C.active()) { stop(); error(new Error('IDENTITY_CHANGED')); } }
+    window.addEventListener('storage', identityChanged);
+    function dispose() { disposed=true;stop();window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',acquire);window.removeEventListener('online',schedule);window.removeEventListener('storage',identityChanged);return leaseRequest||Promise.resolve(); }
+    if(C.waitFor)Promise.resolve(C.waitFor).then(function(){waiting=false;acquire();});else acquire();
+    function begin(kind, id, date, prescribed, legacy) {
+      try {
+        check();
+        if(legacy&&!journal.read()['start:'+id]) {
+          var event={v:1,id:'start:'+id,session:id,type:'start',at:null,actor:'legacy-import',legacyImport:true,date:date,kind:kind,prescribed:{},legacy:true},packet={};packet[event.id]=event;journal.ingest(packet);
+        } else journal.start({ id: id, kind: kind, date: date, prescribed: legacy ? {} : clone(prescribed), legacy: !!legacy });
+        return true;
+      } catch (e) { return error(e); }
+    }
+    function legacyResult(sid,target,value) {
+      check();var previous=journal.session(sid).targets[target];if(previous)return previous.heads;
+      var event={v:1,id:'legacy-result:'+sid+':'+target,session:sid,type:'result',at:null,actor:'legacy-import',legacyImport:true,target:target,parents:[],value:clone(value)},packet={};packet[event.id]=event;journal.ingest(packet);
+      return journal.session(sid).targets[target].heads;
+    }
+    function muscleKey(fi, date) { return prefix + 'muscle:' + date + ':' + fi; }
+    function muscleId(fi, date) { return C.storage.getItem(muscleKey(fi,date)); }
+    function pendingMuscleKey(fi,date) { return prefix+'newMuscle:'+date+':'+fi; }
+    function prepareMuscle(fi,date) {
+      var key=pendingMuscleKey(fi,date), pending=raw(key,null);if(!pending)return true;
+      check();
+      if(!begin('musculacao',pending.id,date,pending.prescribed,false))return false;
+      guarded.setItem(muscleKey(fi,date),pending.id);
+      if(!C.resetMuscle||C.resetMuscle(fi,date)===false)throw new Error('CHECKPOINT_PENDING');
+      check();C.storage.removeItem(key);if(C.storage.getItem(key)!==null)throw new Error('CHECKPOINT_PENDING');return true;
+    }
+    function newMuscle(fi,prescribed,date) {
+      try {
+        check();var key=pendingMuscleKey(fi,date);
+        // A operação fica pendente até o snapshot, apontador e contadores serem
+        // confirmados. Reload/retry reutiliza o mesmo UUID, sem apagar a sessão anterior.
+        if(!raw(key,null))guarded.setItem(key,JSON.stringify({id:uid(),prescribed:clone(prescribed)}));
+        return prepareMuscle(fi,date);
+      }catch(e){return error(e);}
+    }
+    function beginMuscle(fi, prescribed, date) {
+      try {
+        check();if(!prepareMuscle(fi,date))return false;
+        var id=muscleId(fi,date),events=journal.read(),s=id&&events['start:'+id]?journal.session(id):null;
+        if(s&&!s.legacy&&!same(s.prescribed,clone(prescribed)))throw new Error('SNAPSHOT_CHANGED');
+        if(!id){id=uid();guarded.setItem(muscleKey(fi,date),id);}
+        var legacy=s?s.legacy:!!(C.legacy&&C.legacy(date).some(function(r){return r._kind==='musculacao'&&r.g===2&&typeof r.i==='string'&&r.i.indexOf(fi+':')===0&&!r.hid;}));
+        return begin('musculacao',id,date,prescribed,legacy);
+      }catch(e){return error(e);}
+    }
+    function belongs(reg,fi,date) {
+      var id=muscleId(fi,date);if(!id)return !reg.hid;
+      if(reg.hid)return reg.hid===id;
+      var event=journal.read()['start:'+id];return !!(event&&event.legacy);
+    }
+    function volume(fi,date) {
+      var total=0;
+      list(date).filter(function(s){return s.kind==='musculacao';}).forEach(function(s){Object.keys(s.targets).forEach(function(target){
+        var t=s.targets[target],v=t.value;if(!v||t.conflict||!v.feito||!v.i||target!==v.i||v.i.indexOf(fi+':')!==0)return;
+        if(v.kg!=null&&Number.isFinite(+v.kg)&&+v.kg>=0&&v.r!=null&&Number.isFinite(+v.r)&&+v.r>0)total+=+v.kg*+v.r;
+      });});return total;
+    }
+    function heads(fi, date, target) { var id = muscleId(fi,date); if (!id) return []; var t = journal.session(id).targets[target]; return t ? t.heads : []; }
+    function record(sid, target, value, expected, reason) {
+      check(); var s = journal.session(sid), t = s.targets[target];
+      if (t && !t.conflict && same(t.value,value)) return t.heads;
+      if (t && t.conflict) throw new Error('CONFLICT');
+      journal.record({ id: uid(), session: sid, target: target, value: clone(value), expected: expected || (t ? t.heads : []), correction: !!t || s.finished, reason: reason || 'Correção durante o treino' });
+      return journal.session(sid).targets[target].heads;
+    }
+    function muscle(reg, exercise, previous, expected) {
+      try {
+        check(); var fi = +reg.i.split(':')[0], id = muscleId(fi,reg.d);
+        if (!id) { id = uid(); C.storage.setItem(muscleKey(fi,reg.d),id); }
+        if (!journal.read()['start:'+id] && !begin('musculacao',id,reg.d,{},true)) return false;
+        var value = Object.assign({},clone(reg),{ exercise: exercise }); delete value.hid;
+        if (previous && !journal.session(id).targets[reg.i]) { var old = Object.assign({},clone(previous),{ exercise: exercise }); delete old.hid; legacyResult(id,reg.i,old); expected = null; }
+        record(id,reg.i,value,expected); reg.hid = id; return true;
+      } catch (e) { return error(e); }
+    }
+    function finishMuscle(fi, date) {
+      try { check(); var id = muscleId(fi,date); if (id) journal.finish({ id: 'finish:' + id, session: id, value: { date: date } }); return true; } catch (e) { return error(e); }
+    }
+    function finish(kind, id, date, value) {
+      try {
+        check(); var events = journal.read();
+        if (!events['start:' + id] && !begin(kind,id,date,{},true)) return false;
+        if (!journal.session(id).targets.result) record(id,'result',clone(value)); journal.finish({ id: 'finish:' + id, session: id, value: { date: date } }); return true;
+      } catch (e) { return error(e); }
+    }
+    function current(sid, target, fallback) {
+      try { var t = journal.session(sid).targets[target]; return t && !t.conflict ? clone(t.value) : fallback; } catch (_) { return fallback; }
+    }
+    function project(key, data) {
+      if (!['ptdc','ptcardio','ptwodres'].includes(key)) return data;
+      var sessions=null;
+      function row(r) {
+        var sid=r.hid||r.id||r.sid;if(!sid)return r;
+        if(!sessions){sessions={};journal.list().forEach(function(s){sessions[s.id]=s;});}
+        var s=sessions[sid],t=s&&s.targets[key==='ptdc'?r.i:'result'];
+        if(!t||t.conflict||!t.value)return r;var v=clone(t.value);delete v.exercise;if(r.hid)v.hid=r.hid;return v;
+      }
+      if(Array.isArray(data))return data.map(row);
+      var out={};Object.keys(data).forEach(function(k){out[k]=Array.isArray(data[k])?data[k].map(row):data[k];});return out;
+    }
+    function list(date) { return journal.list().filter(function (s) { return !date || s.date === date; }); }
+    function packet() { check();return journal.packet(); }
+    function node(tag,text,parent) { var el=document.createElement(tag); if(text!=null) el.textContent=text; if(parent) parent.appendChild(el); return el; }
+    function button(text,parent,click) { var b=node('button',text,parent); b.type='button'; b.className='sec'; b.onclick=click; return b; }
+    var labels = { voltas:'Voltas concluídas', kg:'Carga (kg)', r:'Repetições', rpe:'RPE', s:'Tempo (segundos)', k:'Distância (km)', p:'Ritmo informado', du:'Duração (segundos)', v:'Resultado', ex:'Repetições extras', rp:'Repetições por rodada', ob:'Observação', tempoBase:'Base do tempo', origem:'Origem da medição', origemCorrecao:'Origem da correção', n:'Nome', e:'Exercício', exercise:'Exercício', feito:'Concluída', serie:'Série', etapas:'Etapas', rodadas:'Rodadas', tp:'Modalidade de circuito', prescricao:'Prescrição registrada', rpartes:'Trechos da rota', fc:'FC média', fcx:'FC máxima' };
+    function show(value,parent,context) {
+      context=context||{};
+      function scalar(v){return v==null?'Não registrado':typeof v==='boolean'?(v?'Sim':'Não'):v===''?'Não anotado':String(v);}
+      if(value===null||typeof value!=='object'){node('span',scalar(value),parent);return;}
+      if(Array.isArray(value)){value.forEach(function(v,i){var item=node('section',null,parent);node('h5',(context.item||'Item')+' '+(i+1),item);show(v,item,context);});if(!value.length)node('p','Sem registros.',parent);return;}
+      var names={d:'Data',m:'Modalidade',cf:'Como fez',nf:'Não terminou',parcial:'Encerrado antes',status:'Situação',sp:'Tempos das voltas (s)',ms:'Movimentos',it:'Exercícios',q:'Repetições prescritas',reps:'Repetições',carga:'Carga (kg)',descanso:'Descanso (s)',seriesDetalhadas:'Prescrição por série',receita:'Circuito prescrito',plano:'Plano prescrito',blocos:'Etapas prescritas',config:'Configuração da sessão',tipo:'Tipo',segundos:'Tempo (s)',km:'Distância (km)',nome:'Nome',indice:'Número da etapa (a partir de zero)',alvoSegundos:'Tempo prescrito (s)',alvoKm:'Distância prescrita (km)',mod:'Modalidade',metaD:'Meta de distância',metaT:'Meta de tempo',aq:'Aquecimento',obs:'Orientação',cap:'Limite de tempo',min:'Minutos',rd:'Rodadas',wk:'Trabalho (s)',rs:'Descanso (s)',mv:'Quantidade de movimentos',s:'Tempo (s)',t:'Tipo de treino',tp:'Meta de tempo (min)',ti:'Duração do tiro (s)',de:'Recuperação (s)',dt:'Orientação',series:'Séries',wodMin:'Duração (min)',wodCap:'Limite (min)',wodRounds:'Rodadas',wodWork:'Trabalho (s)',wodRest:'Descanso (s)'};
+      var dl=node('dl',null,parent);dl.className='th-values';
+      Object.keys(value).forEach(function(k){
+        if(['hid','id','sid','i','g','_kind','indice'].indexOf(k)>=0||context.prescribed&&k==='k')return;
+        var v=value[k],label=names[k]||labels[k]||k;
+        if(k==='d'&&typeof v==='number')label='Descanso (s)';
+        if(k==='s'&&context.prescribed&&context.kind==='musculacao')label='Séries';
+        if(k==='r')label=context.kind==='corrida'&&!context.prescribed?'Trajeto registrado':context.kind==='circuito'&&!context.prescribed?'Resumo do encerramento':'Repetições';
+        if(k==='tp'&&context.kind==='circuito')label='Tipo de circuito';
+        if(k==='prescricao'&&typeof v==='string'){try{v=JSON.parse(v);}catch(_){}}
+        if(v&&typeof v==='object'){
+          var dd=node('dd',null,dl);dd.className='th-structured';var details=node('details',null,dd);node('summary',label,details);
+          show(v,details,{kind:context.kind,prescribed:context.prescribed||k==='prescricao',item:{etapas:'Etapa',blocos:'Etapa',rp:'Rodada',sp:'Volta',ms:'Movimento',it:'Exercício',seriesDetalhadas:'Série'}[k]||'Item'});
+        }else{node('dt',label,dl);node('dd',scalar(v),dl);}
+      });
+    }
+    function edit(s,target,revision,parent) {
+      var t=s.targets[target], value=clone(revision.value), expected=t.heads.slice();
+      var operation=uid();
+      var form=node('form',null,parent); form.className='th-edit';
+      node('h4','Corrigir resultado',form);
+      var fields=s.kind==='musculacao'?['r','kg','rpe']:s.kind==='corrida'?['s','k']:(target==='progress'?['voltas','ex','du','rp','kg','ob']:['v','ex','du','rp','kg','ob']);
+      var inputs={}; fields.forEach(function(k){var lab=node('label',labels[k],form),inp=node('input',null,lab); inputs[k]=inp; inp.name=k; inp.value=value[k]==null?'':Array.isArray(value[k])?value[k].map(function(x){return x==null?'':x;}).join(','):String(value[k]); inp.inputMode=k==='ob'?'text':'decimal';});
+      var intervals=[];
+      if(s.kind==='corrida'&&Array.isArray(value.etapas))value.etapas.forEach(function(step,i){
+        if(!step)return;var fieldset=node('fieldset',null,form);node('legend','Etapa '+(i+1)+' · '+(step.nome||''),fieldset);
+        ['segundos','km'].forEach(function(k){if(!Object.prototype.hasOwnProperty.call(step,k))return;var label=node('label',k==='km'?'Distância da etapa (km)':'Tempo da etapa (segundos)',fieldset),input=node('input',null,label);input.name='etapa-'+i+'-'+k;input.value=String(step[k]);input.inputMode='decimal';intervals.push({i:i,k:k,input:input});});
+      });
+      var reasonLabel=node('label','Motivo da correção',form),reason=node('input',null,reasonLabel);reason.required=true;reason.maxLength=500;reason.name='reason';
+      var err=node('p','',form);err.setAttribute('role','alert');
+      var save=node('button','Salvar correção',form);save.type='submit';save.className='prin';button('Cancelar',form,function(){form.remove();});
+      form.onsubmit=function(e){e.preventDefault();save.disabled=true;
+        try {
+          check(); if(!reason.value.trim())throw new Error('Informe o motivo.');
+          var updated=clone(value);
+          fields.forEach(function(k){var str=inputs[k].value.trim();
+            if(k==='ob'){updated[k]=str.slice(0,300);return;}
+            if(k==='rp'){if(!str){delete updated[k];return;}updated[k]=str.split(',').map(function(x){if(!x.trim())return null;var n=Number(x);if(!Number.isInteger(n)||n<0||n>10000)throw new Error('Confira as repetições por rodada.');return n;});return;}
+            if(!str){if(target==='progress'&&['s','k','du','voltas'].indexOf(k)>=0)throw new Error('Preencha tempo, distância e voltas observadas para retomar.');if(k==='kg')updated[k]=null;else delete updated[k];return;}
+            var n=Number(str.replace(',','.')); if(!Number.isFinite(n)||n<0||n>1000000||(k==='r'&&(!Number.isInteger(n)||n>1000))||(k==='voltas'&&!Number.isInteger(n))||(k==='kg'&&n>2000)||(k==='rpe'&&(n<1||n>10)))throw new Error('Confira os valores informados.');updated[k]=n;
+          });
+          intervals.forEach(function(field){var str=field.input.value.trim(),n=Number(str.replace(',','.'));if(!str||!Number.isFinite(n)||n<0)throw new Error('Confira os valores das etapas.');updated.etapas[field.i][field.k]=n;});
+          // Distância/tempo corrigidos não recalculam etapas, GPS, FC nem a
+          // semântica tempoBase recebida do player (incluindo PR #870).
+          if(s.kind==='corrida' && (updated.s!==value.s||updated.k!==value.k)) { updated.origemCorrecao='manual'; updated.p=updated.s!=null&&updated.k>0?(Math.floor(Math.round(updated.s/updated.k)/60)+':'+String(Math.round(updated.s/updated.k)%60).padStart(2,'0')):null; }
+          if(s.kind==='corrida' && !same(updated.etapas||[],value.etapas||[])) updated.origemCorrecao='manual';
+          if(target==='progress'&&journal.session(s.id).finished)throw new Error('A sessão foi encerrada. Reabra o resultado final para corrigir.');
+          journal.record({id:operation,session:s.id,target:target,expected:expected,correction:true,reason:reason.value.trim(),value:updated});
+          if(target==='progress'&&C.applyLive){
+            var latest=journal.session(s.id).targets[target];if(latest.heads.length!==1||latest.heads[0]!==operation)throw new Error('O registro mudou. Reabra o editor.');
+            var applied=C.applyLive(s.kind,s.id,updated);if(applied===false)throw new Error('A revisão foi preservada, mas o checkpoint não foi salvo. Mantenha a sessão pausada e tente novamente.');
+            if(applied===true)guarded.setItem(prefix+'liveAck:'+s.id,JSON.stringify(operation));
+          }
+          render();
+        }catch(ex){err.textContent=ex.code==='STALE_REVISION'?'O registro mudou. Cancele e abra novamente antes de corrigir.':ex.message==='OTHER_TAB'?'Feche a outra aba e habilite a edição.':ex.message;save.disabled=false;}
+      };
+      reason.focus();
+    }
+    var panel,dateInput,results;
+    function render() {
+      if(!results)return; results.replaceChildren();
+      try {
+        var sessions=list(dateInput.value);
+        if(!sessions.length)node('p','Nenhuma sessão com histórico registrada nesta data.',results);
+        sessions.forEach(function(s){
+          var article=node('article',null,results);article.className='th-session';article.dataset.kind=s.kind;article.dataset.session=s.id;
+          node('h3',s.date.split('-').reverse().join('/')+' · '+({musculacao:'Musculação',corrida:'Corrida',circuito:'Circuito'}[s.kind]),article);
+          node('p',(s.finished?'Sessão encerrada':s.startedAt===null?'Registro anterior · encerramento não registrado':'Sessão iniciada · encerramento não registrado')+' · '+(s.startedAt===null?'horário não preservado no registro antigo':'início '+new Date(s.startedAt).toLocaleTimeString('pt-BR')),article);
+          var prescribed=node('details',null,article);node('summary','Prescrição daquela data',prescribed);
+          if(s.legacy)node('p','Prescrição histórica não registrada. O plano atual não foi usado para preencher esta sessão.',prescribed);else show(s.prescribed,prescribed,{kind:s.kind,prescribed:true});
+          Object.keys(s.targets).forEach(function(target){var t=s.targets[target];
+            if(target==='progress'&&s.finished){var past=node('details',null,article);node('summary','Revisões durante a execução',past);t.revisions.forEach(function(r){node('p',r.at+(r.reason?' · '+r.reason:''),past);show(r.value,past,{kind:s.kind});});return;}
+            var box=node('section',null,article);node('h4',s.kind==='musculacao'?((t.value&&t.value.exercise)||'Exercício')+' · série '+((t.value&&t.value.serie)||target):'Resultado',box);
+            if(t.conflict)node('p','Conflito: há versões diferentes. Compare as revisões e escolha uma para corrigir.',box);
+            if(t.value)show(t.value,box,{kind:s.kind});
+            var details=node('details',null,box);node('summary','Original e revisões ('+t.revisions.length+')',details);
+            t.revisions.forEach(function(r){var b=node('div',null,details);node('p',(r.parents.length?'Revisão':'Original')+' · '+(r.at===null?'horário não preservado no registro antigo':r.at)+(r.reason?' · '+r.reason:''),b);show(r.value,b,{kind:s.kind});if(t.conflict&&t.heads.indexOf(r.id)>=0)button('Usar esta versão e corrigir',b,function(){edit(s,target,r,box);});});
+            if(!t.conflict)button('Corrigir resultado',box,function(){if(!box.querySelector('form'))edit(s,target,t.revisions.find(function(r){return r.id===t.heads[0];}),box);});
+          });
+          if(!Object.keys(s.targets).length)node('p','Sem resultados confirmados.',article);
+        });
+        // Legado somente leitura: valores reais, sem reconstrução de receita.
+        var legacy=C.legacy?C.legacy(dateInput.value):[];
+        legacy.forEach(function(r){
+          var kind=r._kind, original=clone(r);delete original._kind;
+          if(r.hid||sessions.some(function(s){return s.id===r.id||s.id===r.sid||s.legacy&&Object.values(s.targets).some(function(t){return t.original.some(function(o){return same(o.value,original);});});}))return;
+          var a=node('article',null,results);node('h3','Registro anterior · '+(r.exercise||r.n||'Treino'),a);node('p','Prescrição histórica e revisões não registradas. Resultado original disponível:',a);show(original,a,{kind:kind});
+          button('Corrigir este registro',a,async function(){
+            try {
+              check();var digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(core.canonical({kind:kind,value:original})));
+              check();var id='legacy-'+Array.from(new Uint8Array(digest)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+              if(!begin(kind,id,original.d,{},true))return;
+              legacyResult(id,'result',original);
+              // Importar um resultado existente não chama conclusão/check-in/XP.
+              render();
+            }catch(e){error(e);}
+          });
+        });
+      }catch(e){node('p','Não foi possível ler o histórico. Os dados locais foram preservados.',results);error(e);}
+    }
+    function resume(kind,id) {
+      try {check();var events=journal.read();if(!events['start:'+id])return true;var session=journal.session(id),t=session.targets.progress;if(!t||session.finished)return true;if(t.conflict)throw new Error('CONFLICT');if(raw(prefix+'liveAck:'+id,null)===t.heads[0])return true;
+        if(!C.applyLive||C.applyLive(kind,id,clone(t.value))!==true)throw new Error('CHECKPOINT_PENDING');guarded.setItem(prefix+'liveAck:'+id,JSON.stringify(t.heads[0]));return true;
+      }catch(e){return error(e);}
+    }
+    function live(kind,id,date,value) {
+      try {check();var written=record(id,'progress',clone(value),null,'Progresso conferido no player');guarded.setItem(prefix+'liveAck:'+id,JSON.stringify(written[0]));if(C.navigate)C.navigate();dateInput.value=date;panel.open=true;render();panel.scrollIntoView({block:'start'});return true;}catch(e){return error(e);}
+    }
+    function mount(parent) {
+      if(!parent)return;
+      panel=node('details',null,parent);panel.id='thHistory';node('summary','Consultar e corrigir treino por data',panel);
+      var lab=node('label','Data da sessão',panel);dateInput=node('input',null,lab);dateInput.type='date';dateInput.value=C.today();dateInput.onchange=render;
+      var st=node('p',message,panel);st.id='thStatus';st.setAttribute('role','status');
+      button('Habilitar edição',panel,acquire);if(sync)button('Sincronizar histórico',panel,function(){synchronize().then(render);});button('Atualizar consulta',panel,render);
+      node('p','Correções preservam o original e não concluem outro treino. Registros antigos sem prescrição permanecem identificados.',panel);
+      results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
+      var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
+    }
+    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,packet:packet,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+  }
+  root.MT_TREINO_HISTORICO_PLAYER={create:makePlayer};
+})(typeof self!=='undefined'?self:this);
+
+  }
+  // END GENERATED WORKOUT HISTORY
 
   function monta(D) {
     D = D || {};
@@ -2955,6 +3548,7 @@
       "<button id='crGpsF' aria-label='GPS' style='width:54px;height:54px;border-radius:50%;background:rgba(var(--bg0-rgb),.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:10.5px;font-weight:800;font-family:inherit;line-height:1.2;'>GPS</button>" +
       "<button id='crMapBtnF' aria-label='Ver o mapa' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(var(--bg0-rgb),.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;align-items:center;justify-content:center;'>" + CRICO_MAPA + "</button></div>" +
       "<button id='crMetaBtnF' style='background:rgba(var(--bg0-rgb),.82);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:11px 24px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
+      "<button type='button' data-th-live='corrida' style='min-height:44px;padding:8px 12px;border-radius:12px;background:var(--bg4);color:inherit;border:1px solid #777;'>Revisar registros</button>" +
       "<button id='crFimF' style='display:none;background:rgba(var(--bg0-rgb),.82);border:1px solid #4ade80;border-radius:99px;padding:11px 24px;color:#4ade80;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Terminei!</button>" +
       "</div>" +
       "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:6;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
@@ -3082,6 +3676,7 @@
         "<div class='vz' style='text-align:left;padding:2px 0 8px;'>Parcerias de " + esc(STUDIO_CURTO) + " pra quem treina aqui:</div>" +
         clubeApp.map(function (p) {
           return "<div style='border:1px solid var(--bg11);border-radius:14px;padding:12px 14px;margin-bottom:8px;'>" +
+            (typeof p.f === 'string' && p.f.length <= 120000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.f) ? "<img src='" + p.f + "' alt='Logo de " + esc(p.n) + "' style='display:block;width:96px;height:64px;object-fit:contain;margin-bottom:8px;'>" : "") +
             "<b style='font-size:14.5px;'>" + esc(p.n) + "</b>" +
             "<div style='font-size:13px;color:#cfcbdb;margin-top:2px;'>" + esc(p.b) + "</div>" +
             (p.c ? "<button class='cupbt' data-cup='" + esc(p.c) + "' style='margin-top:9px;background:var(--bg2);border:1px dashed var(--cor);color:var(--corc);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;letter-spacing:.06em;'>" + esc(p.c) + " · copiar</button>" : "") +
@@ -3310,7 +3905,7 @@
       "</div>" +
       "</div>" +
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
-      "<script>var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
+      "<script>(" + runtimeHistorico.toString() + ")();var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) +
       ",MEULOGIN=" + jsonApp(a.acessoEm ? String(a.email || "").trim().toLowerCase() : "") + ";" +
@@ -3343,7 +3938,7 @@
       "var ln=document.querySelector(\"link[rel='manifest']\")||document.createElement('link');ln.rel='manifest';" +
       "ln.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(man));" +
       "if(!ln.parentNode)document.head.appendChild(ln);window.__manApp=man;}catch(e){}})();" +
-      "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
+      "function L(k,f){try{var v=JSON.parse(localStorage.getItem(k))||f;return typeof TH!=='undefined'&&TH?TH.project(k,v):v;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "// Estado local de envio: sucesso só depois da confirmação do servidor.\n" +
@@ -3361,10 +3956,11 @@
       // Atualiza o resumo de evolução ao registrar uma carga.
       "if(k==='ptdc'){try{if(typeof acEvolucao==='function')acEvolucao();}catch(e){}}" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'||k==='ptckh'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}" +
-      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&window.__meAluno&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
+      "try{if(typeof pintaAgHoje==='function')pintaAgHoje();}catch(e){}}if(ok9&&(window.__meAluno||window.__conquistasAvancadas)&&['ptfeitos','pthab','ptpeso','ptqa','ptckh','ptdc','ptwodres','ptcardio'].indexOf(k)>=0){try{pintaConquistas();}catch(e){}}return ok9;}" +
       // Uma conclusão marca o dia uma vez. As modalidades mantêm os próprios resultados.
       "var acTokenInicial='';try{acTokenInicial=localStorage.getItem('tq_app_token')||'';}catch(e){}" +
       "function acIdentidadeAtual(){try{var t=localStorage.getItem('tq_app_token')||'';return t===TOKEN||(!t&&!acTokenInicial);}catch(e){return false;}}" +
+      "var thDisposed=window.__treinoHistorico?window.__treinoHistorico.dispose():null;var TH=window.__treinoHistorico=MT_TREINO_HISTORICO_PLAYER.create({waitFor:thDisposed,storage:localStorage,scope:" + jsonApp(JSON.stringify(a.appTokenP ? ['token', a.appTokenP] : ['local', a.id || a.nome, studio])) + ",token:TOKEN,active:acIdentidadeAtual,today:isoHj,resetMuscle:function(fi,date){var f=GUIA[fi],st=L('ptsets_'+date,{});if(!f)return false;f.it.forEach(function(it){st[it.k||exKey(it.e)]=0;});if(Sv('ptsets_'+date,st)===false)return false;try{var x=L('ptguiaSessao',null);if(x&&x.f===fi&&x.d===date&&x.token===TOKEN)localStorage.removeItem('ptguiaSessao');return true;}catch(e){return false;}},rpc:NUVEM?MT_TREINO_HISTORICO_SYNC.http({url:NUVEM.u,key:NUVEM.k,fetch:window.fetch.bind(window)}):null,navigate:function(){if(window.__trocaSec)window.__trocaSec('treino');},applyLive:function(kind,id,v){if(kind==='corrida'){if(cr.sid!==id)return null;if(cr.run)crPausaSegura();cr.acum=v.s;cr.km=v.k;crEl('crKm').value=String(v.k);cr.etapas=v.etapas||[];cr.origem=v.origem;cr.origemCorrecao=v.origemCorrecao;pintaCr();return CRSESS.salva(true);}if(kind==='circuito'){if(wod.sid!==id)return null;if(wod.run)document.getElementById('wodGo').click();wod.acum=v.du;wod.voltas=v.voltas;var d=wodR.rascunho()||{v:0,ex:0,cf:'',reps:[],ob:'',nf:0,t:null};d.v=v.voltas;d.ex=v.ex||0;d.reps=v.rp||[];d.ob=v.ob||'';if(v.kg!=null)d.kg=v.kg;wodR.rascunho(d);wodR.pinta();return wodR.salva(true);}return false;},error:function(m){['gCgLab','wodAviso','crSalvarErro'].forEach(function(id){var el=document.getElementById(id);if(el){var text=el.querySelector('p')||el;text.textContent=m;el.hidden=false;}});},legacy:function(d){var out=[];var h=L('ptdc',{});Object.keys(h).forEach(function(ex){(h[ex]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'musculacao',exercise:ex},r));});});L('ptcardio',[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'corrida'},r));});var wr=L('ptwodres',{});Object.keys(wr).forEach(function(k){(wr[k]||[]).forEach(function(r){if(r.d===d)out.push(Object.assign({_kind:'circuito'},r));});});return out;}});" +
       "window.__acRegistraConclusao=function(sessao){if(!acIdentidadeAtual())return false;var dia=sessao&&sessao.data||isoHj();if(typeof dia!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||dia>isoHj()||!isFinite(Date.parse(dia+'T12:00:00Z'))||new Date(dia+'T12:00:00Z').toISOString().slice(0,10)!==dia)return false;var f=L('ptfeitos',{});if(!f[dia]){f[dia]=1;if(Sv('ptfeitos',f)===false)return false;}try{pintaSemana();pintaConquistas();pintaCqTiles();mostraRpe();}catch(e){}return true;};" +
       "window.__acStatusSalvo=function(){return !NUVEM?'Salvo neste aparelho.':L('ptenvioPendente',false)?(navigator.onLine===false?'Salvo neste aparelho · aguardando conexão.':'Salvo neste aparelho · envio pendente.'):L('ptenvioUlt','')?'Registros sincronizados.':'Salvo neste aparelho.';};" +
       /* v751: medalhas de corrida — os seis criterios num lugar so. Ficam AQUI
@@ -3379,6 +3975,8 @@
       "(" + runtimeNutricao.toString() + ")(" + jsonApp(D.nutricaoApp || null) + "," + (raiz.MT_NUTRICAO && raiz.MT_NUTRICAO.runtime ? "(" + raiz.MT_NUTRICAO.runtime.toString() + ")()" : "null") + ");" +
       "var cqVisual=(" + runtimeMedalhaVisual.toString() + ")();" +
       "(" + runtimeMedalhas.toString() + ")(" + (raiz.MT_MEDALHAS && raiz.MT_MEDALHAS.runtime ? "(" + raiz.MT_MEDALHAS.runtime.toString() + ")()" : "null") + "," + jsonApp(D.medalhasApp == null ? null : D.medalhasApp) + "," + jsonApp(MT_CQICONS) + ");" +
+      (D.conquistasAvancadasApp && ((D.conquistasAvancadasApp.metas||[]).length || (D.conquistasAvancadasApp.manuais||[]).length) && raiz.MT_CONQUISTAS_AVANCADAS ? "window.__conquistasAvancadas=(" + raiz.MT_CONQUISTAS_AVANCADAS.student.toString() + ")((" + raiz.MT_CONQUISTAS_AVANCADAS.runtime.toString() + ")()," + jsonApp(D.conquistasAvancadasApp.metas || []) + "," + jsonApp(D.conquistasAvancadasApp.manuais || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[]),wodres:L('ptwodres',{})};}});" : "") +
+      ((D.metasPersonalizadasApp || []).length && raiz.MT_METAS_PESSOAIS && raiz.MT_METAS_ALUNO ? "window.__metasAluno=(" + raiz.MT_METAS_ALUNO.runtime.toString() + ")((" + raiz.MT_METAS_PESSOAIS.runtime.toString() + ")()," + jsonApp(D.metasPersonalizadasApp || []) + ",{token:TOKEN,identity:acIdentidadeAtual,snapshot:function(){return {hoje:isoHj(),cargas:L('ptdc',{}),cardio:L('ptcardio',[])};}}," + jsonApp(MT_CQICONS) + ");" : "") +
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN||!acIdentidadeAtual())return;clearTimeout(devT);devT=setTimeout(function(){if(!acIdentidadeAtual())return;" +
       /* v711: o painel recebia só o antes/depois de FRENTE — o professor via
        * as fotos de lado e costas sumirem. Agora vai o par (primeira e última)
@@ -4358,7 +4956,7 @@
       "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();if(window.__meAluno){var meContagem=window.__meAluno.pinta();if(meContagem){CQGANHAS.n+=meContagem.n;CQGANHAS.tot+=meContagem.tot;}}if(window.__metasAluno)window.__metasAluno.pinta();if(window.__conquistasAvancadas)window.__conquistasAvancadas.pinta();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
       /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364
@@ -4696,7 +5294,7 @@
         function tempo() { return Math.max(0, wod.run ? (Date.now() - wod.t0) / 1000 : +wod.acum || 0); }
         function receita() { return wod.receita || WODS.find(function (x) { return x.id === wod.wodId; }) || {}; }
         function config() { var out = {}; ['wodCap', 'wodMin', 'wodRounds', 'wodWork', 'wodRest'].forEach(function (id) { var el = document.getElementById(id); if (el) out[id] = el.value; }); return out; }
-        function ensure() { if (!wod.sid) { wod.sid = 'wod-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); wod.dia = isoHj(); } }
+        function ensure() { if (!TH.ready()) { TH.error(new Error('OTHER_TAB')); return false; } var resumed=!!wod.sid; if (!wod.sid) { wod.sid = 'wod-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); wod.dia = isoHj(); } return TH.begin('circuito',wod.sid,wod.dia,{receita:copia(receita()),config:config(),tipo:wod.tipo},resumed && tempo()>0) && TH.resume('circuito',wod.sid); }
         function salva(force) {
           if (!wod.sid || !contexto()) return false;
           if (!force && Date.now() - ultimaGravacao < 1000) return true;
@@ -4838,7 +5436,7 @@
       "\"<div style='padding:10px 18px 0;'>\"+" +
       "\"<button id='wfVolta' class='btnx' style='display:none;width:100%;min-height:62px;font-size:19px;'>Fechei a volta</button>\"+" +
       "\"<button id='wfDesfazer' class='exec-desfazer' type='button'>Desfazer último avanço</button>\"+" +
-      "\"<button id='wfFim' style='display:block;width:100%;min-height:48px;margin-top:8px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>Terminar agora</button></div></div>\";" +
+      "\"<button type='button' data-th-live='circuito' style='min-height:44px;width:100%;background:none;color:inherit;border:1px solid #777;border-radius:12px;'>Revisar registros</button><button id='wfFim' style='display:block;width:100%;min-height:48px;margin-top:8px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>Terminar agora</button></div></div>\";" +
       "document.body.appendChild(wodF);" +
       "wodF.addEventListener('click',function(e){var b=e.target.closest('button,[data-wfmov]');if(!b)return;" +
       "if(!wodR.contexto())return;if(b.id==='wfMin'){wodF.style.display='none';wodR.salva(true);wodR.pinta();document.getElementById('wodRetomar').querySelector('button').focus();return;}" +
@@ -4952,7 +5550,7 @@
       // o timer livre continua com a caixinha de sempre
       "if(wod.wodId){wodPlacar(msg,val);return;}" +
       "wodConfirmaLivre(msg);}" +
-      "function wodConfirmaLivre(msg){if(!wodR.contexto())return;wodR.ensure();var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst.slice(-20);if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'));}" +
+      "function wodConfirmaLivre(msg){if(!wodR.contexto())return;wodR.ensure();var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst;if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(!TH.finish('circuito',wod.sid,wod.dia,lst.filter(function(x){return x.sid===wod.sid;})[0]))return;if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'));}" +
       /* ---------- R2: placar de circuito por tipo ----------
        * AMRAP: voltas confirmadas + reps da última volta + tempo de cada volta
        * (dos toques no cronômetro) + comparação com a vez anterior.
@@ -5058,9 +5656,9 @@
       "var wr2=L('ptwodres',{});var lst2=wr2[wod.wodId]||[];var ant2=lst2.length?lst2[lst2.length-1]:null;" +
       "if(ant2&&v!=null&&ant2.v!=null&&!st.nf&&!wod.parcial&&!ant2.parcial&&(ant2.cf||'')===(st.cf||'')&&ant2.prescricao===JSON.stringify(wm)&&(tipo!=='amrap'||ant2.du===durA)){if(tipo==='fortime'?v<ant2.v:v>ant2.v)r+=' — BATEU o resultado anterior!';}" +
       "if(!lst2.some(function(x){return x.sid===wod.sid;})){lst2.push({sid:wod.sid,d:wod.dia||isoHj(),n:wod.wodNome,r:r,v:v==null?null:Math.round(v),tp:tipo,cf:st.cf||'',ex:st.ex||0,nf:st.nf?1:0,parcial:!!wod.parcial||!!st.nf,prescricao:JSON.stringify(wm),rodadas:(tipo==='emom'||tipo==='tabata')?Math.min(rd,rodadasFeitas):undefined," +
-      "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300),du:tipo==='amrap'?durA:durReal});" +
-      "if(lst2.length>20)lst2.shift();wr2[wod.wodId]=lst2;if(!Sv('ptwodres',wr2)){wodR.aviso('Não foi possível salvar o resultado. Sua revisão continua aberta; libere espaço e tente novamente.');return;}}" +
-      "if(durReal>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente salvar novamente; o placar não será duplicado.');return;}ov.dataset.salvo='1';pintaWodRes();wodR.limpa();wodR.aviso('');" +
+      "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,kg:st.kg==null?undefined:st.kg,ob:st.ob.slice(0,300),du:tipo==='amrap'?durA:durReal});" +
+      "wr2[wod.wodId]=lst2;if(!Sv('ptwodres',wr2)){wodR.aviso('Não foi possível salvar o resultado. Sua revisão continua aberta; libere espaço e tente novamente.');return;}}" +
+      "if(!TH.finish('circuito',wod.sid,wod.dia,lst2.filter(function(x){return x.sid===wod.sid;})[0]))return;if(durReal>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente salvar novamente; o placar não será duplicado.');return;}ov.dataset.salvo='1';pintaWodRes();wodR.limpa();wodR.aviso('');" +
       // R4: o fim do circuito oferece o post com a foto (números do placar)
       "var stW=tipo==='amrap'?[[st.v+(st.ex?'+'+st.ex:''),'voltas'],[wodFmt(durA),'tempo']]:" +
       "tipo==='fortime'?[[wodFmt(st.t||0),'tempo']].concat(st.cf?[[{rx:'RX',esc:'ESCALADO',adp:'ADAPTADO'}[st.cf],'como fez']]:[]):" +
@@ -5076,7 +5674,7 @@
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(!wodR.contexto())return;if(wod.finished){if(wod.sid){wodR.aviso('Confira o resultado ou descarte a sessão antes de iniciar outra.');return;}wodR.nova();wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';wod.estourou=0;}" +
-      "if(wod.run){wod.acum=wodR.tempo();clearInterval(wod.iv);wod.iv=null;wod.run=false;this.textContent='Continuar';soltaTela();wodR.salva(true);wodR.pinta();return;}wodR.ensure();" +
+      "if(wod.run){wod.acum=wodR.tempo();clearInterval(wod.iv);wod.iv=null;wod.run=false;this.textContent='Continuar';soltaTela();wodR.salva(true);wodR.pinta();return;}if(!wodR.ensure())return;" +
       "wod.run=true;wod.t0=Date.now()-wod.acum*1000;if(wod.acum<1)wod.gi=0;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wodR.salva(true);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
       "document.getElementById('wodZera').addEventListener('click',function(){if(!wodR.contexto())return;if(wodR.registrado()){wodR.aviso('O resultado já foi salvo. Reabra a revisão e tente concluir o registro do dia.');return;}if(wod.sid&&!confirm('Descartar a sessão em andamento e zerar o cronômetro?'))return;clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';wod.estourou=0;wod.fimEl=0;soltaTela();fechaWodFull();wodR.nova();var op=document.getElementById('wodPlacar');if(op)op.remove();" +
@@ -5122,7 +5720,7 @@
       "function crEl(id){return document.getElementById(id);}" +
       "function crTempoAtual(){return cr.run?Math.max(0,(Date.now()-cr.t0)/1000):cr.acum;}" +
       "function crErroSalva(txt){var bx=crEl('crSalvarErro');if(bx){bx.hidden=false;bx.querySelector('p').textContent=txt;}crEl('crInfo').textContent=txt;}" +
-      "function crPausaSegura(){if(cr.run)cr.acum=crTempoAtual();var km=crKmAtual();clearInterval(cr.iv);cr.iv=null;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';crEl('crContagemF').style.display='none';}cr.run=false;cr.autoP=false;cr.lastPos=null;cr.km=km;crEl('crKm').value=String(km);crEl('crGo').textContent=cr.acum>0?'Continuar':'Iniciar';crGpsPara();soltaTela();}" +
+      "function crPausaSegura(){if(cr.run)cr.acum=crTempoAtual();var km=crKmAtual();cr.distanciaManual=crOrigemDistancia()==='manual';clearInterval(cr.iv);cr.iv=null;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';crEl('crContagemF').style.display='none';}cr.run=false;cr.autoP=false;cr.lastPos=null;cr.km=km;crEl('crKm').value=String(km);crEl('crGo').textContent=cr.acum>0?'Continuar':'Iniciar';crGpsPara();soltaTela();}" +
       "function crSinalPinta(){var st,txt;if(cr.interrompida){st='pausado';txt='Corrida pausada ao sair do app. Continue quando estiver pronto; a pausa não soma tempo nem distância.';}" +
       "else if(!cr.run&&cr.acum>0){st='pausado';txt='Corrida pausada · tempo e distância preservados.';}" +
       "else if(cr.watch==null){st='manual';txt='Sem GPS · use a distância da esteira ou registre os km manualmente.';}" +
@@ -5327,6 +5925,7 @@
        * que nao passa no filtro de precisao) o que o aluno DIGITOU vence — antes
        * gpsOn=true bastava pra ignorar o campo e a corrida saia com 0 km. */
       "function crKmAtual(){if(cr.gpsOn&&cr.km>0)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
+      "function crOrigemDistancia(){if(cr.origemCorrecao)return cr.origem;return cr.gpsOn&&cr.km>0?'gps':cr.distanciaManual?'manual':cr.rota&&cr.rota.length?'gps':'manual';}" +
       /* v751: UMA regra pra "a parte continua acabou" — nos blocos e sem eles.
        * Distancia quando o GPS esta ligado, senao tempo, senao a distancia que o
        * aluno digitou; sem alvo nenhum so o toque dele (Pular) fecha. Antes os
@@ -5772,17 +6371,17 @@
        * ANTES de desligar o GPS: crGpsPara zera gpsOn e o crKmAtual passava a
        * preferir um numero esquecido no 'km na mao' — a corrida salva nao
        * batia com o que estava na tela um segundo antes. */
-      "function crFinaliza(msg){if(cr.resumo||cr.salvando)return false;if(!acIdentidadeAtual()){crPausaSegura();crErroSalva('Este app foi trocado de aluno. Abra novamente o seu acesso antes de registrar a corrida.');return false;}var el2=crTempoAtual();" +
+      "function crFinaliza(msg){if(cr.resumo||cr.salvando)return false;if(!acIdentidadeAtual()){crPausaSegura();crErroSalva('Este app foi trocado de aluno. Abra novamente o seu acesso antes de registrar a corrida.');return false;}if(!cr.run&&cr.sid&&!TH.resume('corrida',cr.sid))return false;var el2=crTempoAtual();" +
       "if(el2<5){crEl('crFase').textContent='Corrida curta demais pra salvar';crEl('crInfo').textContent='continua correndo ou toca em Zerar';return;}" +
-      "CRSESS.ensure();var km=crKmAtual(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
+      "CRSESS.ensure();var km=crKmAtual(),origem=crOrigemDistancia(),resultado=CRSESS.resultado();crPausaSegura();cr.salvando=true;CRSESS.salva(true);" +
       "var med=km>0.015?(el2/60)/km:null;" +
-      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,etapas:resultado.etapas};" +
+      "var reg=cr.regGravado||{id:cr.sid,d:cr.dia||isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null,status:resultado.status,tempoBase:'ativo',etapas:resultado.etapas,origem:origem};if(!cr.regGravado&&cr.origemCorrecao)reg.origemCorrecao=cr.origemCorrecao;" +
       "var fcR=hrResumo();if(fcR&&!cr.regGravado){reg.fc=fcR.m;reg.fcx=fcR.x;}" +
       // recordes pessoais e medalhas: compara o histórico antes e depois do registro
       "var lst=L('ptcardio',[]);var ja=lst.filter(function(x){return x.id===reg.id;})[0];var extras=ja?[]:crRecordes(lst,reg,med);" +
       "if(ja)reg=ja;else{try{var trechos=crRotaTrechos(cr.rota);if(trechos.length){var maior=trechos.reduce(function(a,b){return a.length>=b.length?a:b;});reg.r=crRotaSalva(maior);if(cr.rota.some(function(p){return p.quebra;}))reg.rpartes=trechos.map(crRotaSalva);}}catch(e){}lst.push(reg);" +
       "if(!Sv('ptcardio',lst)){cr.salvando=false;CRSESS.salva(true);pintaCr();crErroSalva('Não foi possível salvar. Mantenha o app aberto: a corrida está pausada. Libere espaço e tente novamente.');return false;}}" +
-      "cr.regGravado=reg;CRSESS.salva(true);" +
+      "if(!TH.finish('corrida',reg.id,reg.d,reg)){cr.salvando=false;CRSESS.salva(true);return false;}cr.regGravado=reg;CRSESS.salva(true);" +
       "if(window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'corrida',id:reg.id,data:reg.d})){cr.salvando=false;pintaCr();crErroSalva('A atividade foi salva. Falta registrar o dia de treino; tente novamente sem repetir a corrida.');return false;}" +
       "CRSESS.limpa();cr.salvando=false;crEl('crSalvarErro').hidden=true;cr.blocos=null;cr.bi=0;cr.mistoT0=null;cr.mistoVai=false;cr.acum=0;cr.interrompida=false;hrZera();var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
       "if(fcR)extras.push('Batimentos \\u00b7 '+fcR.m+' bpm m\\u00e9dio \\u00b7 '+fcR.x+' m\\u00e1x');" +
@@ -6020,7 +6619,7 @@
       "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
       "return true;}" +
       // v751: só a LARGADA zera o batimento — 'Continuar' depois da pausa também cai aqui e apagava a média da corrida inteira
-      "function crLarga(){if(cr.acum<1)hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
+      "function crLarga(){if(cr.acum<1)hrZera();CRSESS.ensure();if(!TH.resume('corrida',cr.sid))return;if(!TH.begin('corrida',cr.sid,cr.dia,{plano:cr.plano||null,mod:cr.mod,blocos:crMontaBlocos(cr.plano),metaD:cr.metaD||null,metaT:cr.metaT||null},cr.acum>0))return;cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "CRSESS.ensure();cr.interrompida=false;cr.regGravado=null;crEl('crSalvarErro').hidden=true;" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
       "if(!cr.blocos&&cr.acum<1){cr.blocos=crMontaBlocos(cr.plano);cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
@@ -6085,7 +6684,7 @@
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();crMB.destroi();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
       "var bS7=crEl('crShare');if(bS7)bS7.style.display='none';desenhaRota();pintaCr();});" +
-      "crEl('crKm').addEventListener('input',function(){pintaCr();});" +
+      "crEl('crKm').addEventListener('input',function(){var km=parseFloat(String(this.value||'').replace(',','.'));cr.distanciaManual=!(cr.gpsOn&&cr.km>0)&&isFinite(km)&&km>0;if(CRSESS)CRSESS.salva(true);pintaCr();});" +
       // arte da corrida (1080x1350): trajeto em branco sobre a cor da marca,
       // km gigante, tempo/pace e o nome do studio — share nativo ou download
       /* A arte da corrida sai em dois sabores: sobre a FOTO que o aluno escolher
@@ -6270,6 +6869,7 @@
           return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
             var item = { e: it.e, k: chaveSeries(it.e,fi,ii), s: it.s, r: it.r, d: it.d, v: it.v, m: (it.m === false || x.m === false) ? false : (it.m || x.m || ""), g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "", al: x.al || [], ap: !!x.ap, carga: it.carga != null ? it.carga : x.carga, seriesDetalhadas: it.seriesDetalhadas || x.seriesDetalhadas, rpe: it.rpe != null ? it.rpe : x.rpe };
+            if (typeof it.exercicioId === "string" && it.exercicioId) item.exercicioId = it.exercicioId;
             item.rpePorSerie = (item.seriesDetalhadas || []).map(function(s){return s && s.rpe != null ? s.rpe : null;});
             var sd = normalizaSeries(item); item.s = sd.length; item.d = sd[0].descanso; item.r = sd[0].reps;
             if (item.seriesDetalhadas) item.seriesDetalhadas = sd;
@@ -6302,7 +6902,9 @@
       "document.addEventListener('visibilitychange',function(){if(document.hidden){if(acAtiva)gSalvaSeSujo();acCheckpoint();}});\n" +
       "window.addEventListener('pagehide',function(){if(acAtiva)gSalvaSeSujo();acCheckpoint();});\n" +
       "acSessaoPinta();\n" +
-      "window.__acSessao={ler:acSessao,salvar:acCheckpoint};\n" +
+      "window.__acSessao={ler:acSessao,salvar:acCheckpoint};TH.mount(document.getElementById('trTopo'));\n" +
+      "document.querySelectorAll('.guiabtn').forEach(function(b){var n=document.createElement('button');n.type='button';n.className='btnx';n.dataset.thNewMuscle=b.dataset.g;n.textContent='Novo treino desta ficha';n.style.marginTop='8px';b.after(n);});document.addEventListener('click',function(e){var b=e.target.closest('[data-th-new-muscle]');if(!b||b.disabled)return;b.disabled=true;var fi=+b.dataset.thNewMuscle;var pending=GP.antesAbrir(fi,0);if(pending){b.disabled=false;abreGuia(pending.f);return;}if(!TH.newMuscle(fi,GUIA[fi],isoHj())){b.disabled=false;return;}abreGuia(fi,0);});" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-th-live]');if(!b)return;if(b.dataset.thLive==='corrida'){if(!cr.sid||cr.resumo)return;var origem=crOrigemDistancia();crPausaSegura();if(!CRSESS.salva(true))return;fechaCrFull();TH.live('corrida',cr.sid,cr.dia,{s:cr.acum,k:crKmAtual(),etapas:JSON.parse(JSON.stringify(cr.etapas||[])),origem:origem,origemCorrecao:cr.origemCorrecao});}else{if(!wod.sid||wod.finished)return;if(wod.run)document.getElementById('wodGo').click();if(!wodR.salva(true))return;fechaWodFull();var d=wodR.rascunho()||{};var v={voltas:wod.voltas,du:wodR.tempo()};if(d.reps)v.rp=d.reps;if(d.ex!=null)v.ex=d.ex;if(d.ob!=null)v.ob=d.ob;if(d.kg!=null)v.kg=d.kg;TH.live('circuito',wod.sid,wod.dia,v);}});" +
       "function gEl(i){return document.getElementById(i);}" +
       "function g2(n){return (n<10?'0':'')+n;}" +
       "function gmmss(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+g2(sg%60);}" +
@@ -6333,18 +6935,19 @@
       // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
       // e a guarda de valor igual fazia o aluno achar que salvou sem salvar.
-      "function gGrava(ex,kg,reps,slot,rpe){if(!ex)return false;var informouRpe=arguments.length>=5,semRpe=rpe==null||String(rpe).trim()==='';if(informouRpe&&!semRpe){if(typeof rpe==='boolean')return false;rpe=Number(String(rpe).replace(',','.'));if(!isFinite(rpe)||rpe<1||rpe>10)return false;}slot=slot||'';var ps=slot.split(':'),porSerie=ps.length===3;var semKg=kg==null||String(kg).trim()==='';kg=semKg?null:Number(String(kg).replace(',','.'));reps=reps==null||String(reps).trim()===''?0:Number(reps);if(!isFinite(reps)||reps<0||reps>1000||Math.floor(reps)!==reps)return false;if(!semKg&&(!isFinite(kg)||kg<0||kg>2000))return false;if(!porSerie&&(kg==null||kg<=0))return false;" +
+      "function gGrava(ex,kg,reps,slot,rpe){if(!ex)return false;var informouRpe=arguments.length>=5,semRpe=rpe==null||String(rpe).trim()==='';if(informouRpe&&!semRpe){if(typeof rpe==='boolean')return false;rpe=Number(String(rpe).replace(',','.'));if(!isFinite(rpe)||rpe<1||rpe>10)return false;}slot=slot||'';var ps=slot.split(':'),porSerie=ps.length===3;var semKg=kg==null||String(kg).trim()==='';kg=semKg?null:Number(String(kg).replace(',','.'));var semReps=reps==null||String(reps).trim()==='';reps=semReps?0:Number(reps);if(!isFinite(reps)||reps<0||reps>1000||Math.floor(reps)!==reps)return false;if(!semKg&&(!isFinite(kg)||kg<0||kg>2000))return false;if(!porSerie&&(kg==null||kg<=0))return false;" +
       "var h=L('ptdc',{}),l=h[ex]||[],hj=isoHj();slot=slot||'';" +
-      "var reg={d:hj,kg:kg,g:porSerie?2:1};if(slot)reg.i=slot;if(porSerie)reg.serie=+ps[2]+1;if(isFinite(reps)&&reps>0)reg.r=reps;" +
+      "var reg={d:hj,kg:kg,g:porSerie?2:1};if(slot)reg.i=slot;if(porSerie)reg.serie=+ps[2]+1;if(!semReps&&isFinite(reps)&&reps>=0)reg.r=reps;" +
       // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
       // continua sendo append puro — lá o aluno anota quantas linhas quiser.
-      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot){i=k;break;}}" +
+      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===reg.g&&(l[k].i||'')===slot&&(!porSerie||TH.belongs(l[k],+ps[0],hj))){i=k;break;}}" +
       // recorde compara com TUDO que veio antes, menos a anotação de hoje que
       // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
+      "if(porSerie){var source=GUIA[+ps[0]]&&GUIA[+ps[0]].it[+ps[1]];if(source&&source.e===ex&&source.exercicioId&&(i<0||l[i].exercicioId===source.exercicioId))reg.exercicioId=source.exercicioId;}" +
       "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&cargaConcluida(l[k9])&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
-      "if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(i>=0)l[i]=reg;else l.push(reg);" +
-      "h[ex]=l.slice(-600);if(Sv('ptdc',h)===false)return false;" +
-      "if(reg.kg!=null)gv.cargas[ex]=reg.kg;if(reg.feito&&typeof GP!=='undefined')GP.atualizaVolume();try{if(cargaConcluida(reg)&&reg.kg>0)gFesteja(ex,reg.kg,maxA,l);}catch(e2){}return true;}" +
+      "if(porSerie){if(informouRpe&&!semRpe)reg.rpe=rpe;else if(!informouRpe&&i>=0&&l[i].rpe!=null)reg.rpe=l[i].rpe;}if(porSerie)reg.feito=(i>=0&&!!l[i].feito)||!!(+ps[0]===gv.f&&gv.baseFeitas&&gv.baseFeitas[+ps[1]]&&gv.baseFeitas[+ps[1]][+ps[2]]);if(porSerie){var oldReg=i>=0?l[i]:null;if(!TH.muscle(reg,ex,oldReg,gv.formSerie&&SR.slot(gv.formSerie.fi,gv.formSerie.ei,gv.formSerie.si)===slot?gv.formSerie.historyHeads:null))return false;if(gv.formSerie)gv.formSerie.historyHeads=TH.heads(+ps[0],hj,slot);}if(i>=0)l[i]=reg;else l.push(reg);" +
+      "h[ex]=l;if(Sv('ptdc',h)===false)return false;" +
+      "if(reg.kg!=null)gv.cargas[ex]=reg.kg;if(reg.feito&&typeof GP!=='undefined')GP.atualizaVolume();try{if(!oldReg&&cargaConcluida(reg)&&reg.kg>0)gFesteja(ex,reg.kg,maxA,l);}catch(e2){}return true;}" +
       "window.__gGrava=gGrava;" +
       // festinha do recorde e sugestão de progressão — vinham do diário manual
       // (removido a pedido do Raphael); agora acompanham quem salva pelo player
@@ -6369,7 +6972,7 @@
       "var c=gEl('gKg'),r=gEl('gReps');if(!c||!gv.reg)return;" +
       "GP.guarda();var ok=GP.salvaDraft(gv.reg,gv.rascunhos[gv.regi]||{kg:c.value,reps:r?r.value:''},gv.regi);if(ok){gv.sujo=false;GP.limpa(false);}else{var lab=gEl('gCgLab');if(lab){lab.textContent='Confira os valores antes de sair. Seu preenchimento foi mantido.';lab.setAttribute('role','alert');}}return ok;}" +
       // ---------- abrir / fechar ----------
-      "function abreGuia(fi,ei){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "function abreGuia(fi,ei){if(!GUIA[fi]||!TH.beginMuscle(fi,GUIA[fi],isoHj()))return;var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
       /* v751: as series ja marcadas HOJE pela ficha (ptsets_<dia>) semeiam o
        * player — 'Iniciar exercicio' no meio mostrava 'Serie 1 de 3' com a
@@ -6380,8 +6983,8 @@
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
       // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
-      "if(typeof hrZera==='function')hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();if(gv._retomada&&gv.descAte){var left=Math.max(0,Math.ceil((gv.descAte-Date.now())/1000));if(left)gDescanso(left,gv.pend);else gFimDesc();}else if(gv._retomada&&gv.e===f.it.length-1&&gv.s>=f.it[gv.e].s){acUltimaCarga(f.it[gv.e]);}if(antG){gEl('gCgLab').textContent='Confira este rascunho antes de trocar de treino. Seu preenchimento foi mantido.';gEl('gCgLab').setAttribute('role','alert');}}" +
-      "function fechaGuia(){if(gSalvaSeSujo()===false||!GP.salvaPendentes())return false;acCheckpoint();acAtiva=false;clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
+      "if(typeof hrZera==='function')hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();if(gv._retomada&&gv.descAte){var left=Math.max(0,Math.ceil((gv.descAte-Date.now())/1000));if(left)gDescanso(left,gv.pend,gv.descAte);else gFimDesc();}else if(gv._retomada&&gv.e===f.it.length-1&&gv.s>=f.it[gv.e].s){acUltimaCarga(f.it[gv.e]);}if(antG){gEl('gCgLab').textContent='Confira este rascunho antes de trocar de treino. Seu preenchimento foi mantido.';gEl('gCgLab').setAttribute('role','alert');}}" +
+      "function fechaGuia(){document.querySelectorAll('[data-th-new-muscle]').forEach(function(b){b.disabled=false;});if(gSalvaSeSujo()===false||!GP.salvaPendentes())return false;acCheckpoint();acAtiva=false;clearInterval(gv.timer);clearInterval(gv.relo);try{speechSynthesis.cancel();}catch(eV){}" +
       "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
       "gEl('guiaBox').style.display='none';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='';soltaTela();}" +
@@ -6531,7 +7134,7 @@
       "if(gv.pend){gv.descAte=0;gv.feitas[gv.e]=GP.conta(GUIA[gv.f].it[gv.e]);gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
       "if(gv.e>=GUIA[gv.f].it.length){gConclui();return;}}" +
       "gv.s=GP.proxima(GUIA[gv.f].it[gv.e]);pintaGuia();}" +
-      "function gDescanso(sg,trocaEx){if(sg<=0&&!trocaEx){gv.pend=false;gFimDesc();return;}gv.descAte=Date.now()+sg*1000;gv.pend=trocaEx;acCheckpoint();gv.mexe=false;var fim=Date.now()+sg*1000,tot=sg||1,ult=sg,meuId=null;" +
+      "function gDescanso(sg,trocaEx,ate){if(sg<=0&&!trocaEx){gv.pend=false;gFimDesc();return;}gv.descAte=ate||Date.now()+sg*1000;gv.pend=trocaEx;acCheckpoint();gv.mexe=false;var fim=gv.descAte,tot=sg||1,ult=sg,meuId=null;" +
       "var pu0=gEl('gPular');if(pu0){pu0.textContent='Pular descanso';pu0.classList.remove('prin');pu0.classList.add('sec');}" +
       "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
@@ -6646,7 +7249,7 @@
       "return '';}" +
       "window.__vol=volCompara;" +
       // ---------- fim do treino: recibo, repescagem e RPE ----------
-      "function gConclui(){if(!acIdentidadeAtual()){var bloqueio=gEl('gFimAviso');if(!bloqueio){bloqueio=document.createElement('p');bloqueio.id='gFimAviso';bloqueio.setAttribute('role','alert');gEl('gPe').before(bloqueio);}bloqueio.textContent='O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.';return;}if(gSalvaSeSujo()===false||!GP.salvaPendentes())return;var realizadas=GUIA[gv.f].it.some(function(it,i){return GP.conta(it,i)>0;});if(realizadas&&!window.__acRegistraConclusao({tipo:'musc',data:isoHj()})){var aviso=gEl('gFimAviso');if(!aviso){aviso=document.createElement('p');aviso.id='gFimAviso';aviso.setAttribute('role','alert');gEl('gPe').before(aviso);}aviso.textContent='Seus resultados foram mantidos. Não foi possível registrar o dia; libere espaço e toque em concluir novamente.';acCheckpoint();return;}var aviso=gEl('gFimAviso');if(aviso)aviso.remove();clearInterval(gv.timer);gv.timer=null;gDescTick=null;clearInterval(gv.relo);gv.fim=true;acFim();gv.reg='';gv.regi='';soltaTela();" +
+      "function gConclui(){if(!acIdentidadeAtual()){var bloqueio=gEl('gFimAviso');if(!bloqueio){bloqueio=document.createElement('p');bloqueio.id='gFimAviso';bloqueio.setAttribute('role','alert');gEl('gPe').before(bloqueio);}bloqueio.textContent='O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.';return;}if(gSalvaSeSujo()===false||!GP.salvaPendentes())return;var realizadas=GUIA[gv.f].it.some(function(it,i){return GP.conta(it,i)>0;});if(!TH.finishMuscle(gv.f,isoHj()))return;if(realizadas&&!window.__acRegistraConclusao({tipo:'musc',data:isoHj()})){var aviso=gEl('gFimAviso');if(!aviso){aviso=document.createElement('p');aviso.id='gFimAviso';aviso.setAttribute('role','alert');gEl('gPe').before(aviso);}aviso.textContent='Seus resultados foram mantidos. Não foi possível registrar o dia; libere espaço e toque em concluir novamente.';acCheckpoint();return;}var aviso=gEl('gFimAviso');if(aviso)aviso.remove();clearInterval(gv.timer);gv.timer=null;gDescTick=null;clearInterval(gv.relo);gv.fim=true;acFim();gv.reg='';gv.regi='';soltaTela();" +
       "var f=GUIA[gv.f];gv.feitas[gv.e]=Math.max(gv.feitas[gv.e]||0,gv.s);" +
       // o recibo conta o DIA, nao so o que passou pelo player: quem marcou series
       // pela ficha (ptsets_<hoje>, a fonte de verdade do dia) ou entrou pelo
@@ -6916,7 +7519,7 @@
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);if(festa)confete();" +
       "if(festa){var wr=L('ptwodres',{});var lst=wr.livre||[];" +
       "lst.push({d:isoHj(),n:ucNomeTreino(),r:msg,v:uc.tipo==='amrap'?uc.voltas.length:null});" +
-      "if(lst.length>20)lst.shift();wr.livre=lst;Sv('ptwodres',wr);pintaUcHist();}}" +
+      "wr.livre=lst;Sv('ptwodres',wr);pintaUcHist();}}" +
       "function ucPinta(){var el2=uc.run?(Date.now()-uc.t0)/1000:uc.acum;" +
       "var tmp=ucEl('ucTempo'),fs=ucEl('ucFase'),inf=ucEl('ucInfo');" +
       "if(uc.tipo==='crono'){fs.textContent=uc.run?'Correndo':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(el2,true);" +
@@ -8408,15 +9011,15 @@
        * chat, questionarios, check-ins, metas, volume e o termo aceito. Alem
        * dos campos nomeados, os registros locais (chaves pt*). Checkpoints de
        * execução são internos: podem pertencer a outro aluno e levam token. */
-      "function montaExport(){var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO," +
+      "function montaExport(){var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO,historico_treinos:TH.packet()," +
       "peso:L('ptpeso',{}),cargas:L('ptdc',{}),treinos_feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
       "como_foi_o_treino:L('ptrpe',{}),circuitos:L('ptwodres',{}),corridas:L('ptcardio',[]),batimentos:L('ptfc',{}),marcas:L('ptmarcas',[])," +
       "agua:L('ptaguaCfg',null),avaliacoes:AVS,volume_por_treino:L('ptvol',{})," +
       "fotos_progresso:L('ptfotos',[]),foto_perfil:L('ptfotoperfil',''),chat:L('ptchat',[]),assistente:L('ptbotmsgs',[]),questionarios:L('ptqa',{}),checkins:L('ptck',{}),termo_aceito:L('ptaceite',null)};" +
-      "var tudo={};for(var i9=0;i9<localStorage.length;i9++){var k9=localStorage.key(i9);if(!/^pt/.test(k9)||/^pt(?:corrida|wod)Sessao:/.test(k9))continue;var raw=localStorage.getItem(k9);try{tudo[k9]=JSON.parse(raw);}catch(e){tudo[k9]=raw;}}dados.tudo_no_aparelho=tudo;return dados;}" +
+      "var tudo={};for(var i9=0;i9<localStorage.length;i9++){var k9=localStorage.key(i9);if(!/^pt/.test(k9)||k9==='ptguiaSessao'||/^pt(?:corrida|wod)Sessao:/.test(k9))continue;var raw=localStorage.getItem(k9);try{tudo[k9]=JSON.parse(raw);}catch(e){tudo[k9]=raw;}}dados.tudo_no_aparelho=tudo;return dados;}" +
       "window.__exportaDados=montaExport;" +
       "(function(){var b=document.getElementById('ajBaixa');if(!b)return;b.addEventListener('click',function(){" +
-      "var dados=montaExport();" +
+      "var dados;try{dados=montaExport();}catch(e){TH.error(e);alert('Não foi possível baixar seus dados agora. Abra novamente o seu acesso e tente de novo.');return;}" +
       "var bl=new Blob([JSON.stringify(dados,null,1)],{type:'application/json'});" +
       "var a9=document.createElement('a');a9.href=URL.createObjectURL(bl);a9.download='meus-dados-torque.json';" +
       "document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},400);});})();" +

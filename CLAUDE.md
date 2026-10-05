@@ -6,6 +6,25 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v853 — Publicação integrada do Personal e do aluno
+
+- Integra as propostas #864–872: criação e rascunhos de fichas, troca de exercícios,
+  agenda com confirmação de gravação, imagens da loja, metas e conquistas.
+- Os três players gravam eventos por sessão e projetam o histórico existente.
+  Correções conservam identidade do exercício, duração ativa e registros legados;
+  não inventam prescrição ou identificação para dados antigos.
+- Demos regeneradas pela fonte canônica. Alimentação permanece visível na barra
+  inferior e o treino conserva a apresentação da referência do proprietário.
+- Backend desta release: OPS apenas para administradores existentes, cadastro
+  administrativo de Equipe com acesso de colaboradores desligado, histórico de
+  treino e leitura de cortesias previamente atribuídas com prazo no servidor.
+  A instalação precisa ser comprovada separadamente do merge do site.
+- `nativo/aluno` é uma base experimental isolada, sem app de relógio ou GPS em
+  segundo plano. Lojas, campanhas, convites e integrações financeiras externas
+  continuam fora desta publicação. Não conceder cortesias automaticamente.
+- Ordem de implantação, verificações e limites:
+  `docs/releases/mt-v853-publicacao-integrada.md`.
+
 ## v852 — Equipe e relatórios mobile no HQ
 
 - Administração apresenta o cadastro de Equipe, perfis propostos, revisão e
