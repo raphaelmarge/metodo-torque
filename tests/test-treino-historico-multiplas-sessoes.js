@@ -1,7 +1,7 @@
 /* Execuções diferentes na mesma data, revisão offline e retomada transacional. */
 'use strict';
 const assert=require('node:assert/strict');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 global.self=global;global.MT_CLOUD=null;require('../app/aluno-skin');require('../app/aluno-builder');
 function data(load=12){return {a:{id:'multi-student',nome:'Aluno Sintético',appTokenP:'multi-token'},studio:'Teste isolado',cfg:{},fichasApp:[{titulo:'Ficha de teste',itens:[{nome:'Exercício sintético',series:1,reps:'5',descanso:0}]}],guiaFichasP:[{n:'Ficha de teste',it:[{e:'Exercício sintético',s:1,r:'5',d:0,seriesDetalhadas:[{reps:'5',carga:load,descanso:0}]}]}],fexs:[{n:'Exercício sintético',s:1}],cardiosApp:[{id:'run-fixture',nome:'Corrida sintética',mod:'corrida',tipo:'continuo',blocos:[{tipo:'ativo',alvo:{acao:'correr',valor:60,unidade:'s'}}]}],wodsApp:[{id:'wod-fixture',nome:'Circuito sintético',tipo:'amrap',min:12,movs:[{q:'10',n:'Movimento sintético'}]}]};}

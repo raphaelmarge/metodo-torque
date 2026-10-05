@@ -55,6 +55,12 @@ loader/exportação (42), editor dos players (49), sintaxe e bundle. O download
 real contém originais e revisões da identidade ativa; exclui checkpoints com
 token, inclusive `ptguiaSessao`, e não gera arquivo parcial se o acesso mudou.
 
+A primeira execução completa do CI passou em 179/182 suítes e detectou três
+imports de Playwright sem caminho resolvível no runner. Esses testes passaram
+a usar a dependência travada em `tests/ci/node_modules`; os três foram verificados
+sem `NODE_PATH`, `NODE_OPTIONS` ou `TORQUE_PLAYWRIGHT`. O gate continua exigindo
+nova execução completa aprovada no commit final, sem dispensar suítes.
+
 O histórico passou em núcleo, transporte, navegador, três players, múltiplas
 sessões, concessão de aba, SQL e concorrência. O gerador aceita LF/CRLF sem
 duplicação e preserva o restante do builder. Ver

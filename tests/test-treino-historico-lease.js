@@ -1,7 +1,7 @@
 /* Concessão assíncrona, substituição pelo loader e descarte antes do lock. */
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});

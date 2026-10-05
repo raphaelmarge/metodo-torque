@@ -1,7 +1,7 @@
 /* Players canônicos + editor por data. Identidades sintéticas; rede externa bloqueada. */
 'use strict';
 const assert=require('node:assert/strict');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 global.self=global;global.MT_CLOUD=null;require('../app/aluno-skin.js');require('../app/aluno-builder.js');
 const D={a:{id:'history-student',nome:'Aluno Sintético',appTokenP:'history-token'},studio:'Teste isolado',cfg:{},fichasApp:[{titulo:'Ficha original',itens:[{nome:'Supino sintético',series:2,reps:'8',descanso:60}]}],guiaFichasP:[{n:'Ficha original',it:[{e:'Supino sintético',s:2,r:'8',d:60,seriesDetalhadas:[{reps:'8',carga:20,descanso:60},{reps:'6',carga:25,descanso:0}]}]}],fexs:[{n:'Supino sintético',s:2}],cardiosApp:[{id:'run-fixture',nome:'Corrida original',mod:'corrida',tipo:'continuo',blocos:[{tipo:'ativo',alvo:{acao:'correr',valor:60,unidade:'s'}}]}],wodsApp:[{id:'wod-fixture',nome:'Circuito original',tipo:'amrap',min:12,movs:[{q:'10',n:'Movimento sintético'}]}]};
