@@ -2,6 +2,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { chromium } = require('./ci/node_modules/playwright');
+const { comMockNuvem } = require('./_nuvem.js');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8796';
 let browser, checks = 0;
 process.on('unhandledRejection', e => { console.error(e); process.exitCode = 1; });
@@ -29,9 +30,12 @@ const sessions = p => p.evaluate(() => MTStore.read('ptStudio', {}).sessoes);
 const status = p => p.textContent('#sAgStatus');
 (async () => {
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || undefined,args:['--no-sandbox']});
+  comMockNuvem(browser);
   const context = await browser.newContext({serviceWorkers:'block'});
+  const errors = []; context.on('page', p => p.on('pageerror', e => errors.push(e.stack || e.message)));
   await context.route('**/*', r => new URL(r.request().url()).origin === new URL(BASE).origin ? r.continue() : r.abort());
   await context.addInitScript(() => {
+    if (window !== window.top || !/^https?:$/.test(location.protocol)) return;
     if (localStorage.getItem('agenda-fixture')) return;
     localStorage.setItem('agenda-fixture','1');
     localStorage.setItem('mtapp:ptSemConta','1');
@@ -59,7 +63,7 @@ const status = p => p.textContent('#sAgStatus');
   await page.evaluate(() => { MTStore.write = window.__originalWrite; });
   // Nuvem simulada só na fronteira do recibo. A API real do store é testada à parte.
   await page.evaluate(() => {
-    const cloud = {aid:'synthetic-academy',client:{}};
+    const cloud = window.mockNuvem({aid:'synthetic-academy'});
     window.__originalCloud = MTStore.cloud; window.__originalConfirm = MTStore.confirmaPersonal;
     MTStore.cloud = () => cloud;
     MTStore.confirmaPersonal = () => new Promise(resolve => { window.__resolveAgenda = resolve; });
@@ -122,6 +126,7 @@ const status = p => p.textContent('#sAgStatus');
   await page.click('#sTurmaBt');await form(page,'18:00');
   await page.evaluate(()=>{const st=MTStore.read('ptStudio');st.alunos[0].atendimento='online';MTStore.write('ptStudio',st);});await click(page);
   ok(!(await sessions(page)).some(x=>x.hora==='18:00') && !/sucesso/.test(await status(page)), 'modalidade exclusivamente online continua sem sessão presencial');
+  ok(errors.length === 0, 'sem erro JavaScript: '+errors.join('; '));
   await context.close();
   console.log(checks+' verificações de agendamento passaram.');
 })().catch(e => {console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});

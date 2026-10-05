@@ -98,15 +98,27 @@ NODE_PATH=$PWD/tests/ci/node_modules BASE_URL=http://127.0.0.1:8796 CHROMIUM_PAT
 git diff --check
 ```
 
-Resultados focados: 23 verificações de UI; 8 verificações PostgreSQL de agenda;
+Resultados focados: 24 verificações de UI; 8 verificações PostgreSQL de agenda;
 18 cenários CAS/recibo; 13 de identidade/reconexão; 20 contratos da agenda;
 18 SQL de confiabilidade; 47 PostgreSQL de sincronização; 17 de versão/cache.
-Studio patches também aprovado. Todos usam dados sintéticos.
+Studio patches: 9 cenários aprovados. Infraestrutura: 74 verificações aprovadas
+com os dois caminhos de instalação adaptados somente no runner local temporário
+(`/tmp/torque-infra-env.cjs`), sem modificar os asserts. Todos usam dados sintéticos.
 
-A execução ampla de `test-personal.js` parou num timeout do disclosure de
-`#relCSV`, fora da agenda. Comparação com checkout-base e CI serão registradas
-no PR; não se declara a suíte inteira aprovada com base nos testes focados.
-Ambiente local: Node 24 e Chromium do sistema; CI prepara Node 22 e Playwright.
+A primeira execução ampla de `test-personal.js` parou num timeout do disclosure
+`#relCSV`, fora da agenda. Na repetição após restaurar o servidor local, esse
+bloco passou. A suíte original completa, no checkout-base isolado, terminou
+com três falhas: limpeza dos dados locais e duas do tour/perguntas/push. Não se
+atribui o timeout isolado ao código-base; comparação final e CI estão no PR.
+Ambiente local: Node 24.19.0 e Chromium 151; CI prepara Node 22 e Playwright.
+
+O primeiro CI de confiabilidade (run `37257776347`) apontou uma regressão de
+higiene na nova suíte: o mock reduzido de `MTStore.cloud` não usava o helper
+compartilhado. Corrigido usando efetivamente `comMockNuvem`/`window.mockNuvem`,
+sem enfraquecer a verificação. A fixture só inicializa armazenamento no documento
+HTTP principal; páginas vazias e iframes não recebem dados sintéticos do painel.
+A nova suíte verifica também ausência de erros JavaScript. Os 24 cenários e as
+74 verificações de infraestrutura passaram após essa correção.
 
 ## Fora do escopo e entrega
 
@@ -116,6 +128,7 @@ reproduzida localmente e registrada como achado separado; não foi corrigida aqu
 
 Nenhum arquivo de Pontal/HQ, núcleo nativo do PR866 ou branch dos PR864/865 foi
 alterado. Sem merge, deploy, SQL remoto, dados reais ou credenciais novas.
-O CLI GitHub informou token inválido; o conector existente foi validado para
-preparar o draft PR. `.agents/skills` não existe no checkout e `/workspace/.agents`
+`gh auth status` informou token inválido; o conector existente foi validado.
+Na retomada, `git push` funcionou com a configuração existente, sem nova credencial;
+o draft PR foi criado pelo conector: https://github.com/raphaelmarge/metodo-torque/pull/872. `.agents/skills` não existe no checkout e `/workspace/.agents`
 está vazio; foram lidos `AGENTS.md` e contratos pertinentes.
