@@ -2232,7 +2232,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <p class="agp-help" id="agRepAjuda">Sem data final, a sessão fica fixa. Sem dias marcados, repete no dia da data escolhida.</p>
         </div>
       </div>
-      <button class="btn agp-submit" type="button" id="sAdd">Agendar sessão</button>
+      <button class="btn agp-submit" type="button" id="sAdd" aria-describedby="sAgStatus">Agendar sessão</button>
+      <p id="sAgStatus" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
       <div id="agFixasLista"></div>
       <div class="agp-management">
         <button class="agp-action" type="button" id="agGerenciarSessoes"><span class="agp-action-title">Cancelar ou remarcar sessão</span><small>Escolha uma sessão na agenda</small><span class="agp-action-arrow" aria-hidden="true">→</span></button>
@@ -11242,9 +11243,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaAgendamento() {
     $("agRepFields").hidden = !$("sRep").checked;
     $("sRep").disabled = !!agEditId;
-    $("sAdd").textContent = agEditId ? "Salvar remarcação" : "Agendar sessão";
+    $("sAdd").textContent = agSalvando ? "Salvando…" : agEditId ? "Salvar remarcação" : "Agendar sessão";
+    $("sAdd").disabled = !!agSalvando;
+    if (!agSalvando && !agEditId && !$("sRep").checked && $("sTurmaBox").hidden) {
+      var escolhido = { alunoId: $("sAluno").value, data: $("sData").value, hora: $("sHora").value, svId: $("sTipo").value };
+      if ((S.read('ptStudio', {}).sessoes || []).some(function (x) { return agMesmoHorario(x, escolhido); }))
+        $("sAdd").textContent = S.cloud() || localStorage.getItem('mtsync:identidade') ? "Conferir agendamento" : "Sessão já agendada";
+    }
   }
   $("sRep").addEventListener("change", pintaAgendamento);
+  document.querySelector('.agp-compose').addEventListener('change', function () {
+    if (!agSalvando) { agFeedback(''); pintaAgendamento(); }
+  });
   function encerraRemarcacao() {
     agEditId = null;
     $("sEditAviso").hidden = true;
@@ -12150,62 +12160,149 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("sAluno").disabled = on;
     $("sAluno").style.opacity = on ? ".45" : "";
   });
+  // A lista de sessões continua atômica no CAS/patch do store. O lock protege
+  // leitura + validação + escrita entre abas; a nuvem protege outros aparelhos.
+  var agSalvando = false;
+  function agFeedback(texto) {
+    var el = $("sAgStatus"); el.textContent = texto;
+    if (texto && !agSalvando && el.getClientRects().length) el.focus({ preventScroll: true });
+  }
+  function agMesmoHorario(x, y) {
+    return x.alunoId === y.alunoId && x.data === y.data && (x.hora || "") === (y.hora || "") && (x.svId || "") === (y.svId || "");
+  }
+  function agDuplicadas(st, ids, datas, hora, ignoraId, servico) {
+    return st.sessoes.filter(function (x) {
+      return x.id !== ignoraId && ids.indexOf(x.alunoId) >= 0 && datas.indexOf(x.data) >= 0 &&
+        (x.hora || "") === hora && (x.svId || "") === (servico || "");
+    });
+  }
+  function agPrazo(p) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () { reject(Error('A confirmação demorou. Confira o agendamento antes de tentar novamente.')); }, 15000);
+      Promise.resolve(p).then(function (v) { clearTimeout(timer); resolve(v); }, function (e) { clearTimeout(timer); reject(e); });
+    });
+  }
+  async function agConfirma(sess, fixas, nuvem, identidade) {
+    var atual = S.cloud();
+    if (localStorage.getItem('mtsync:identidade') !== identidade || !!atual !== !!nuvem ||
+        (nuvem && (atual.aid !== nuvem.aid || atual.client !== nuvem.client))) throw Error('A conta mudou. Reabra a agenda na conta original.');
+    var doc;
+    if (nuvem) {
+      var r = await agPrazo(S.confirmaPersonal());
+      if (!r || r.error) throw Error('Agendamento aguardando confirmação da nuvem. Confira a conexão e a sincronização antes de tentar novamente.');
+      if (localStorage.getItem('mtsync:identidade') !== identidade || !S.cloud() || S.cloud().aid !== nuvem.aid || S.cloud().client !== nuvem.client)
+        throw Error('A conta mudou. Reabra a agenda na conta original.');
+      doc = r.valor;
+    } else {
+      // Uma identidade conectada sem cliente não vira modo local silenciosamente.
+      if (identidade) throw Error('Aguarde a conexão da conta para confirmar o agendamento.');
+      doc = S.read('ptStudio', {});
+    }
+    if (!doc || !(sess || []).every(function (x) { return (doc.sessoes || []).some(function (y) { return agMesmoHorario(x, y); }); }) ||
+        !(fixas || []).every(function (x) { return (doc.agFixas || []).some(function (y) { return y.id === x.id && !y.fim; }); }))
+      throw Error('O agendamento ainda não foi confirmado. Confira a sincronização e a agenda antes de tentar novamente.');
+  }
+  async function agSalva(st, sess, fixas, mensagem, apos) {
+    var nuvem = S.cloud(), identidade = localStorage.getItem('mtsync:identidade');
+    if (!save(st)) throw Error('Não foi possível salvar o agendamento. Seus dados anteriores foram mantidos.');
+    await agConfirma(sess, fixas, nuvem, identidade);
+    if (apos) apos();
+    agFeedback(mensagem + (!nuvem ? ' Salva neste aparelho.' : ''));
+  }
+  async function agJaExiste(sess, fixas) {
+    await agConfirma(sess, fixas, S.cloud(), localStorage.getItem('mtsync:identidade'));
+    agFeedback('Você já possui um agendamento para esta sessão.');
+  }
   $("sAdd").addEventListener("click", function () {
-    var turmaOn = !$("sTurmaBox").hidden;
-    var ids = turmaOn
-      ? Array.prototype.map.call(document.querySelectorAll("#sTurmaChips .stc:checked"), function (c) { return c.value; })
-      : ($("sAluno").value ? [$("sAluno").value] : []);
-    if (!ids.length || !$("sData").value) {
+    if (agSalvando) return;
+    var turma = !$("sTurmaBox").hidden;
+    var pedido = { turma: turma, ids: turma ? Array.from(document.querySelectorAll('#sTurmaChips .stc:checked')).map(function (c) { return c.value; }) : ($('sAluno').value ? [$('sAluno').value] : []),
+      data: $('sData').value, hora: $('sHora').value || '', editId: agEditId, repetir: $('sRep').checked,
+      ate: $('sRepAte').value, dias: Array.from(document.querySelectorAll('#sRepDias .srd:checked')).map(function (c) { return +c.value; }), servico: $('sTipo').value };
+    agSalvando = true; pintaAgendamento(); agFeedback('Salvando agendamento…');
+    // Preserva os disabled prévios (ex.: aluno desativado no modo turma).
+    var controles = Array.from(document.querySelectorAll('.agp-compose input, .agp-compose select, .agp-compose button'));
+    var anteriores = controles.map(function (el) { return el.disabled; });
+    controles.forEach(function (el) { el.disabled = true; });
+    var identidade = localStorage.getItem('mtsync:identidade');
+    window.__agendamentoPendente = Promise.resolve().then(function () {
+      if (!navigator.locks) throw Error('Este navegador não permite salvar a agenda com segurança entre abas. Atualize o navegador e tente novamente.');
+      return navigator.locks.request('torque-personal-agendamento', function () {
+        if (localStorage.getItem('mtsync:identidade') !== identidade) throw Error('A conta mudou. Reabra a agenda na conta original.');
+        return criaAgendamento(pedido);
+      });
+    }).catch(function (e) { agFeedback(e.message || 'Não foi possível confirmar o agendamento. Confira a agenda antes de tentar novamente.'); })
+      .finally(function () {
+        agSalvando = false;
+        controles.forEach(function (el, i) { el.disabled = anteriores[i]; });
+        pintaAgendamento();
+        if ($('sAgStatus').textContent === 'Salvando agendamento…') agFeedback('');
+        else agFeedback($('sAgStatus').textContent);
+      });
+  });
+  function criaAgendamento(pedido) {
+    var turmaOn = pedido.turma, ids = pedido.ids;
+    if (!ids.length || !pedido.data) {
       alert(turmaOn ? "Toque nos nomes de quem entra na turma e escolha a data." : "Escolha o aluno e a data.");
       return;
     }
     var st = load();
+    if (ids.some(function (id) { return !st.alunos.some(function (a) { return a.id === id; }); })) throw Error('O aluno não está mais nesta agenda. Confira o cadastro antes de agendar.');
     if (ids.some(function (id) { return R809.online(st.alunos.find(function (a) { return a.id === id; })); })) { alert("Consultoria online não permite sessões presenciais. Confira os alunos selecionados."); return; }
-    var alunoId = ids[0], hora = $("sHora").value || "";
-    var datas = [$("sData").value];
+    var alunoId = ids[0], hora = pedido.hora || "";
+    var datas = [pedido.data];
     // v748: Remarcar em andamento — edita a sessão (mesmo id/fixaId), não cria outra
-    if (agEditId) {
-      var xe = st.sessoes.find(function (x) { return x.id === agEditId; });
+    if (pedido.editId) {
+      var xe = st.sessoes.find(function (x) { return x.id === pedido.editId; });
       if (!xe) { encerraRemarcacao(); alert("Essa sessão não existe mais — agende de novo."); return; }
+      var repetidasRm = agDuplicadas(st, [xe.alunoId], datas, hora, xe.id, xe.svId);
+      if (repetidasRm.length) return agJaExiste(repetidasRm);
       if (!confirmaAgendar(st, datas, hora, xe.id)) return;
       xe.data = datas[0]; xe.hora = hora;
-      avisaSessaoMudou(st, xe, "remarcou");
-      encerraRemarcacao();
-      save(st);
-      alert("Sessão remarcada pra " + S.fmtData(xe.data) + (hora ? " às " + hora : "") + " — o aluno foi avisado.");
-      return;
+      marcaAppPendente(st, xe.alunoId);
+      return agSalva(st, [xe], [], "Sessão remarcada com sucesso!", function () {
+        avisaSessaoMudou(st, xe, "remarcou"); encerraRemarcacao();
+      });
     }
     /* v723: repetir marcado SEM data de fim = sessão FIXA. Vira uma REGRA
      * (st.agFixas) e o extensor cria as próximas 4 semanas — e segue criando
      * sozinho, semana após semana, até o professor Encerrar. Cancelar UMA
      * sessão não a ressuscita: o extensor só cria além do geradoAte. */
-    if ($("sRep").checked && !$("sRepAte").value) {
-      var diasSelF = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
-      if (!diasSelF.length) diasSelF = [new Date($("sData").value + "T12:00:00").getDay()];
+    if (pedido.repetir && !pedido.ate) {
+      var diasSelF = pedido.dias.slice();
+      if (!diasSelF.length) diasSelF = [new Date(pedido.data + "T12:00:00").getDay()];
       /* v748: a fixa pulava o aviso de dia bloqueado e o de choque de horário
        * do agendamento normal — simula as 4 semanas e passa pelos MESMOS
        * confirms antes de gravar */
-      var datasF = [], dF = new Date(($("sData").value > S.todayISO() ? $("sData").value : S.todayISO()) + "T12:00");
+      var datasF = [], dF = new Date((pedido.data > S.todayISO() ? pedido.data : S.todayISO()) + "T12:00");
       for (var iF = 0; iF < 29; iF++, dF.setDate(dF.getDate() + 1)) { if (diasSelF.indexOf(dF.getDay()) !== -1) datasF.push(S.todayISO(dF)); }
+      var fixaIgual = (st.agFixas || []).filter(function (fx) {
+        return !fx.fim && fx.desde === pedido.data && (fx.hora || "") === hora &&
+          JSON.stringify((fx.ids || []).slice().sort()) === JSON.stringify(ids.slice().sort()) &&
+          JSON.stringify((fx.diaSem || []).slice().sort()) === JSON.stringify(diasSelF.slice().sort());
+      });
+      if (fixaIgual.length) return agJaExiste([], fixaIgual);
+      var repetidasF = agDuplicadas(st, ids, datasF, hora);
+      if (repetidasF.length) return agJaExiste(repetidasF);
       if (!confirmaAgendar(st, datasF, hora)) return;
       st.agFixas = st.agFixas || [];
-      st.agFixas.push({ id: S.uid(), ids: ids.slice(), diaSem: diasSelF, hora: hora, desde: $("sData").value, geradoAte: "" });
+      st.agFixas.push({ id: S.uid(), ids: ids.slice(), diaSem: diasSelF, hora: hora, desde: pedido.data, geradoAte: "" });
       estendeAgFixas(st);
       ids.forEach(function (aidF) { marcaAppPendente(st, aidF); });
-      save(st);
-      alert("Sessão fixa criada! A agenda cria as próximas 4 semanas sozinha e vai estendendo toda semana. Pra parar, use Encerrar na lista de fixas (aba Agendar).");
-      return;
+      var novaFixa = st.agFixas[st.agFixas.length - 1];
+      return agSalva(st, st.sessoes.filter(function (x) { return x.fixaId === novaFixa.id; }), [novaFixa],
+        "Sessão agendada com sucesso! Sessão fixa criada; a agenda estende as próximas quatro semanas. Para parar, use Encerrar na lista de fixas.");
     }
     // horário fixo: gera as sessões até a data limite (máx. 1 ano / 90 sessões)
-    if ($("sRep").checked && $("sRepAte").value) {
-      var diasSel = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
-      var d = new Date($("sData").value + "T12:00:00");
+    if (pedido.repetir && pedido.ate) {
+      var diasSel = pedido.dias.slice();
+      var d = new Date(pedido.data + "T12:00:00");
       if (diasSel.length) {
         // vários dias da semana de uma vez (ex.: seg/qua/sex)
         datas = [];
         for (var i = 0; i < 370 && datas.length < 90; i++) {
           var iso = d.toISOString().slice(0, 10);
-          if (iso > $("sRepAte").value) break;
+          if (iso > pedido.ate) break;
           if (diasSel.indexOf(d.getDay()) !== -1) datas.push(iso);
           d.setDate(d.getDate() + 1);
         }
@@ -12215,29 +12312,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         for (var i2 = 0; i2 < 52; i2++) {
           d.setDate(d.getDate() + 7);
           var iso2 = d.toISOString().slice(0, 10);
-          if (iso2 > $("sRepAte").value) break;
+          if (iso2 > pedido.ate) break;
           datas.push(iso2);
         }
       }
     }
+    var svSel = (st.servicosPT || []).find(function (x) { return x.id === pedido.servico; }) || null;
+    var repetidas = agDuplicadas(st, ids, datas, hora, null, svSel && svSel.id);
+    if (repetidas.length) return agJaExiste(repetidas);
     if (!confirmaAgendar(st, datas, hora)) return;
     /* v770: a sessão pode ser um SERVIÇO do catálogo (massagem, avaliação…) e
      * não só o personal. Guarda o id e o nome: o id liga no pacote que o aluno
      * comprou (pra dar baixa quando ficar Feita) e o nome sobrevive mesmo que
      * o serviço saia do catálogo depois. */
-    var svSel = svEscolhido(st);
+    var novas = [];
     datas.forEach(function (dt) {
       ids.forEach(function (aid9) {
         var sNova = { id: S.uid(), alunoId: aid9, data: dt, hora: hora, feita: false };
         if (svSel) { sNova.svId = svSel.id; sNova.sv = svSel.nome; }
-        st.sessoes.push(sNova);
+        st.sessoes.push(sNova); novas.push(sNova);
       });
     });
     ids.forEach(function (aid9) { marcaAppPendente(st, aid9); }); // a agenda nova entra no app na próxima publicação
-    save(st);
-    if (ids.length > 1) alert("Turma de " + ids.length + " agendada" + (datas.length > 1 ? " — " + (datas.length * ids.length) + " sessões até " + S.fmtData(datas[datas.length - 1]) : "") + ". Cada aluno tem a própria sessão: presença e cobrança seguem individuais.");
-    else if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
-  });
+    var detalhe = ids.length > 1 ? " Turma de " + ids.length + "; cada aluno mantém sua própria sessão." : "";
+    if (datas.length > 1) detalhe += " " + novas.length + " sessões até " + S.fmtData(datas[datas.length - 1]) + ".";
+    return agSalva(st, novas, [], "Sessão agendada com sucesso!" + detalhe);
+  }
   /* v748: os dois avisos do agendamento (dia bloqueado e choque de horário)
    * viraram UMA função, usada pelo agendar normal, pela fixa e pelo Remarcar.
    * `ignoraId` = a própria sessão sendo remarcada não é choque consigo mesma. */
