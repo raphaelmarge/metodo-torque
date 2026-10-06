@@ -60,6 +60,29 @@ async function observeReceipt(page,selector,label){
   assert.equal(state.globalState,'sincronizado');assert.equal(state.globalText,'Registros sincronizados.');
   assert.equal(state.receiptCount,1);assert.equal(state.receiptState,state.globalState);assert.equal(state.receiptText,state.globalText);
 }
+async function assertCircuitControls(page){
+  assert.equal(page.viewportSize().width,390);
+  const group=page.locator('#wodLivre .wod-acoes');await group.scrollIntoViewIfNeeded();
+  const geometry=await group.evaluate(el=>{
+    const box=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
+    return {viewport:{width:innerWidth,height:innerHeight},group:box(el),clientWidth:el.clientWidth,scrollWidth:el.scrollWidth,
+      controls:['wodGo','wodVolta','wodTermina','wodZera'].map(id=>{const b=document.getElementById(id),r=box(b),cs=getComputedStyle(b);
+        return {id,...r,insideGroup:el.contains(b),visible:cs.display!=='none'&&cs.visibility==='visible',
+          centerUncovered:b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};})};
+  });
+  summary.circuitControls=geometry;await screenshot(page,'15-circuit-controls-390');
+  assert.equal(geometry.controls.length,4);assert(geometry.scrollWidth<=geometry.clientWidth+1,'Circuit actions must not scroll horizontally');
+  for(const b of geometry.controls){
+    assert(b.visible&&b.insideGroup&&b.centerUncovered,'Every circuit control must remain visible and reachable');
+    assert(b.width>=44&&b.height>=44,'Circuit controls need a minimum 44px touch target');
+    assert(b.x>=-0.5&&b.y>=-0.5&&b.right<=geometry.viewport.width+0.5&&b.bottom<=geometry.viewport.height+0.5,'Circuit control outside the viewport');
+    assert(b.x>=geometry.group.x-0.5&&b.y>=geometry.group.y-0.5&&b.right<=geometry.group.right+0.5&&b.bottom<=geometry.group.bottom+0.5,'Circuit control outside its group');
+  }
+  for(let i=0;i<geometry.controls.length;i++)for(let j=i+1;j<geometry.controls.length;j++){
+    const a=geometry.controls[i],b=geometry.controls[j];
+    assert(a.right<=b.x+0.5||b.right<=a.x+0.5||a.bottom<=b.y+0.5||b.bottom<=a.y+0.5,'Circuit controls overlap');
+  }
+}
 async function context(label,viewport){
   const ctx=await browser.newContext({viewport,locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block',permissions:[]});
   // An empty permission override denies geolocation instead of leaving a prompt
@@ -305,6 +328,7 @@ async function main(){
     assert.equal(value.parcial,false);assert.equal(value.nf,0);assert.match(value.r,/2 voltas/);
     assert.equal((await circuitState()).checkpoint,null);await screenshot(pupil,'13-circuit-server-confirmed');
     await observeReceipt(pupil,'#wodFimBox [data-ac-sync-status]','circuit');
+    await assertCircuitControls(pupil);
     summary.circuitEvidence={mode:'free-fortime',lapsPreserved:2,seconds:value.du,pausedReloadPreserved:true,serverFinished:true,prescriptionVerified:false};
   });
   await check('a third empty browser retrieves all three completed histories from the real server',async()=>{
