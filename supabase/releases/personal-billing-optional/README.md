@@ -1,11 +1,14 @@
 # Cobrança SaaS opcional — Pagar.me
 
-Implementação técnica com contratação **desligada por padrão**. Este diretório não pertence à fila automática de migrações. Não foi aplicado em produção e não comprova homologação do lojista.
+Implementação técnica com contratação **desligada por padrão**. Este diretório não pertence à fila automática de migrações. O estado de implantação deve ser conferido no registro da release; código e publicação não comprovam homologação do lojista.
 
 ## Ordem e fronteira
 
 1. `20261006161032_personal_billing_saas_optin.sql`: ledger privado, reserva de tentativa, vínculos, faturas, recibos, reconciliação e fila de cancelamento após exclusão da conta.
 2. `20261006162018_personal_billing_access_optin.sql`: exige a RPC `minha_assinatura`, o diff de confiabilidade de 26/09, `dados` e `app_aluno`. Preserva a implementação anterior em schema privado; o wrapper só substitui a vigência de contas vinculadas ao novo SaaS. Benefícios administrativos prevalecem.
+3. `20261006163141_personal_signup_product.sql`: cadastro atômico de uma nova conta Personal e de sua classificação protegida, sem primeiro aluno e sem reclassificar contas existentes. Deve preceder a publicação do novo `assets/modulo-conta.js`.
+
+`rollback-before-activation.sql` só funciona com ledger financeiro completamente vazio. Restaura o corpo original de `minha_assinatura` e suas permissões, remove os três guards e o schema novo, preservando o cadastro independente. Recusa até um recibo de evento sem conta. Não é um procedimento de cancelamento nem deve ser usado depois de começar a contratar.
 
 O segundo arquivo protege INSERT/UPDATE do documento `mtapp:ptStudio` e das publicações de contas Personal conhecidas, inclusive os caminhos RPC/fallback que escrevem nessas tabelas. Reproduz os estados bloqueados da política existente também para quem nunca iniciou checkout. A coorte Personal é registrada pela presença/criação do documento; apagá-lo não remove essa classificação. Não identifica produto por um campo editável do pacote.
 
@@ -52,7 +55,7 @@ Falha comprovada antes da reserva retorna `error:'checkout_not_started',attemptN
 
 `personal-billing-reconcile`: POST com Bearer de serviço específico. Processa até 20 contas por chamada, ordenadas pela última tentativa, incluindo exclusões pendentes. Tentativas e conferências bem-sucedidas têm instantes distintos; uma falha recorrente não fica eternamente na frente da fila nem fabrica uma conferência concluída. Deve ser agendado e monitorado **antes** da ativação comercial, em intervalo de até cinco minutos, repetindo lotes quando necessário. Nenhum agendamento está criado neste pacote. A validade de acesso é calculada pelo relógio do banco e expira mesmo se esse processo ou o webhook parar.
 
-As três funções fazem sua própria autorização. A configuração de verificação JWT da plataforma precisa permitir os endpoints webhook/reconcile com as credenciais próprias; isso deve ser explícito no deploy, nunca presumido. Nenhuma função foi publicada por estes arquivos.
+As três funções fazem sua própria autorização. A configuração de verificação JWT da plataforma precisa permitir os endpoints webhook/reconcile com as credenciais próprias; isso deve ser explícito no deploy, nunca presumido. Publicar com os gates desligados não habilita contratação.
 
 ## Garantias e recuperação
 
@@ -71,6 +74,6 @@ O ledger implementado mantém uma assinatura por academia. Nova contratação ap
 
 `tests/test-personal-billing-integration.js` usa PostgreSQL descartável real e transportes de Auth/provedor simulados: reserva/timeout, repetição, pagamento/renovação/cancelamento/estorno, ACL operacional, leases, revogação, vigência, preservação do legado e exclusão durante POST. A suíte independente e `tests/hq-auth-ci` acrescentam isolamento e Auth/PostgREST reais no CI. Nenhum teste deste pacote fez cobrança ou enviou mensagem a cliente.
 
-Antes de produção: concluir cadastro do lojista, configurar chaves no cofre, confirmar os campos reais da API e os domínios da tokenização, testar 14 dias completos/virada de data, primeira fatura e renovação, recusa, timeout, cancelamento, estorno e exclusão em voo; homologar a autenticação do webhook; instalar e monitorar o reconciliador e definir a operação de revisão/retencão. Só depois habilitar os dois gates. A abertura de conta não substitui essas evidências.
+Antes da ativação financeira: concluir cadastro do lojista, configurar chaves no cofre, confirmar os campos reais da API e os domínios da tokenização, testar 14 dias completos/virada de data, primeira fatura e renovação, recusa, timeout, cancelamento, estorno e exclusão em voo; homologar a autenticação do webhook; instalar e monitorar o reconciliador e definir a operação de revisão/retencão. Só depois habilitar os dois gates. A abertura de conta não substitui essas evidências.
 
 Fontes primárias consultadas em 06/10/2026: [Auth v5](https://docs.pagar.me/reference/autentica%C3%A7%C3%A3o-2), [cartão por token e endereço](https://docs.pagar.me/reference/criar-cart%C3%A3o), [assinaturas](https://docs.pagar.me/reference/criar-assinatura-de-plano-1), [SDK oficial com card_id/card_token na raiz](https://github.com/pagarme/pagarme-java-sdk/blob/main/doc/models/create-subscription-request.md), [cancelamento](https://docs.pagar.me/reference/cancelar-assinatura-1), [webhooks](https://docs.pagar.me/docs/webhooks). A descrição/OAS de criação de assinatura é incompleta sobre os identificadores alternativos do cartão; a compatibilidade efetiva ainda deve ser confirmada no ambiente do lojista.
