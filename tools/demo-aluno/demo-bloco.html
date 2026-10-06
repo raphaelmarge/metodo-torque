@@ -1,4 +1,11 @@
 <script>/* demonstração: dados fake de 14 meses, só em memória (não gravam no aparelho) */
+window.__TORQUE_DEMO=true;
+document.addEventListener('DOMContentLoaded',function(){
+  var loja=document.getElementById('lojaDestino');if(loja)loja.textContent='Demonstração: veja como o aluno pede ou compra um item. Aqui não há cobrança nem envio de mensagem.';
+  var box=document.createElement('aside');box.id='demoPersonalConvite';box.className='cardx';box.dataset.sec='inicio';
+  box.innerHTML='<strong>Você é personal?</strong><p>Este aluno é fictício. Experimente o painel para montar e publicar treinos para os seus alunos.</p><a class="btnx" href="/personal.html">Testar o TORQUE PERSONAL</a><p>Os registros desta demonstração são simulados nesta visita.</p>';
+  var target=document.getElementById('habWrap')||document.getElementById('blocoHoje');if(target)target.after(box);
+});
 var __demoDados={};
 /* NUTRICAO_DEMO_FIXTURE */
 var __demoNutriRemoto={v:1,registros:{}};

@@ -788,6 +788,8 @@ html.claro #guiaBox.player-template:not(.festa){--gpt-bg:#f8f8fb;--gpt-card:#fff
 @media(max-height:600px){#guiaBox.player-template:focus-within>.gpt-top{display:none}#guiaBox.player-template #gCard{padding-bottom:8px!important}#guiaBox.player-template .gpt-confirm-help{display:none}#guiaBox.player-template>.gpt-rest-prescription{padding:5px 0;font-size:11px}#guiaBox.player-template>#gPe{padding-bottom:max(6px,env(safe-area-inset-bottom,0px))!important}#guiaBox.player-template #gResta{max-height:30dvh}}
 `;
   // Cinco atalhos visíveis: espaço extra para o nome completo, sem reduzir o toque.
+  css += "body.aluno-v793 [data-th-new-muscle]{background:transparent!important;color:var(--corc)!important;border:1px solid var(--corc)!important;box-shadow:none!important}html.claro body.aluno-v793 [data-th-new-muscle]{color:var(--cor)!important;border-color:var(--cor)!important}";
+  css += "body.aluno-v793 #heroCarr .al-outro-treino{background:transparent!important;border:1px solid currentColor!important;box-shadow:none!important}body.aluno-v793 #lojaCard>div{flex-wrap:wrap}body.aluno-v793 #lojaCard .lojabt{min-height:44px;max-width:100%;white-space:normal}#lojaDestino,#lojaStatus,#agPedidoStatus{font-size:13px;line-height:1.5}#demoPersonalConvite .btnx{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}#demoPersonalConvite p,.me-range{display:block;font-size:12px;line-height:1.5;color:var(--one-muted,var(--corcl1));overflow-wrap:anywhere}";
   css += "@media(max-width:800px){body.aluno-v793 #navApp[data-items='5'] [data-msec='alimentacao']{flex:1.45!important}}";
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

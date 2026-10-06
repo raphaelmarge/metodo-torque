@@ -5415,7 +5415,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     const out = {
       itens: (st2.config.lojaItens || []).length,
       pacote: d.lojaApp.length === 2 && d.lojaApp.some((x) => x.n === "Camiseta do studio") && d.lojaApp.some((x) => x.n === "Massagem esportiva"),
-      app: html.indexOf("lojaCard") > -1 && html.indexOf("Quero esse") > -1 && html.indexOf("R$ 79,90") > -1,
+      app: html.indexOf("lojaCard") > -1 && html.indexOf("Pedir pelo WhatsApp") > -1 && html.indexOf("R$ 79,90") > -1,
       // v699: tela própria (fora do Início) e sem emoji na interface — inclusive
       // ESCAPADO (\uD83D...) dentro do handler do Quero esse, que foi por onde
       // o balão de chat escapou da primeira varredura
@@ -5446,7 +5446,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     return out;
   });
   ok(lja.itens === 1 && lja.pacote, "🛍 produto do painel + serviço do cadastro entram juntos na vitrine");
-  ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Quero esse");
+  ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Pedir pelo WhatsApp");
   ok(lja.soProdutos, "🛍 desligar os serviços tira só eles — os produtos ficam");
   ok(lja.semNada, "🛍 vitrine vazia = o card nem nasce no app");
   ok(lja.secao && lja.semEmoji, "🛍 v699: a Loja é tela própria (só pelo menu) e sem emoji na interface");
@@ -5504,10 +5504,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     const html2 = window.__montaAppAluno(st2.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString());
     const out = {
       flag: d.lojaPg === 1,
-      comprar: html.indexOf(">Comprar</button>") > -1 && html.indexOf("var LOJAPG=1") > -1,
+      comprar: html.indexOf(">Ir ao pagamento</button>") > -1 && html.indexOf("var LOJAPG=1") > -1,
       chamaFn: html.indexOf("/functions/v1/pagamentos") > -1 && html.indexOf("acao:'loja'") > -1 &&
         html.indexOf("t:TOKEN,item:it") > -1,
-      semGw: html2.indexOf(">Quero esse</button>") > -1 && html2.indexOf("var LOJAPG=0") > -1,
+      semGw: html2.indexOf(">Pedir pelo " + (d.zapPersonal ? "WhatsApp" : "chat") + "</button>") > -1 && html2.indexOf("var LOJAPG=0") > -1,
     };
     // baixa: evento origem loja vira pagamento COM desc (não quita mensalidade)
     // — religa o gateway antes: o passo de cima desligou pra testar o fallback
@@ -5531,9 +5531,9 @@ async function contextoAppAluno(browser, html, options = {}) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
     return out;
   }, diaISO(new Date()));
-  ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Comprar no app (lojaPg no pacote)");
+  ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Ir ao pagamento no app (lojaPg no pacote)");
   ok(v701.chamaFn, "v701: o Comprar chama a função pagamentos com ação loja — só nome do item, preço é do servidor");
-  ok(v701.semGw, "v701: sem gateway o botão segue Quero esse (WhatsApp)");
+  ok(v701.semGw, "v701: sem gateway o botão informa o canal de contato disponível");
   ok(v701.baixa, "v701: a baixa da compra entra COM desc — venda da loja nunca quita a mensalidade");
 
   // 📅 v702: Agenda — o Mês tem volta pra Semana (no celular era beco sem
@@ -14571,6 +14571,7 @@ async function contextoAppAluno(browser, html, options = {}) {
         const ler = (sel) => Array.from(document.querySelectorAll(sel)).map((d) => ({
           letra: (d.querySelector("summary span") || {}).textContent,
           sub: (d.querySelector("summary span:nth-child(2) span") || {}).textContent || "",
+          dia: (d.querySelector("[data-plano-rotulo]") || {}).textContent || "",
           aberta: d.open,
         }));
         return { wod: ler("[data-wi]"), cardio: ler("[data-cri]") };
@@ -14587,7 +14588,7 @@ async function contextoAppAluno(browser, html, options = {}) {
         "🗂 as corridas e pedais viraram gavetas A/B/C, no mesmo desenho da ficha");
       // o rótulo do dia vem da Semana do aluno; qual deles cai em "hoje" muda
       // conforme o dia em que o teste roda, então a trava é só a de existir
-      ok(gavTr.cardio.concat(gavTr.wod).some((x) => /· (hoje|segunda|terça|quarta|quinta|sexta|sábado|domingo)/.test(x.sub)),
+      ok(gavTr.cardio.concat(gavTr.wod).some((x) => /^(Hoje|Amanhã|segunda-feira|terça-feira|quarta-feira|quinta-feira|sexta-feira|sábado|domingo)$/.test(x.dia)),
         "a tampa da gaveta diz em que dia da semana aquele treino está marcado");
       /* CONTINUO + TIROS na MESMA folha (pedido do Raphael): a tampa mostra as
        * duas partes, e o player guiado enfileira continuo ANTES dos tiros —

@@ -6,13 +6,13 @@
   'use strict';
   function makePlayer(C) {
     var core = root.MT_TREINO_HISTORICO, lease = false, release = null, acquiring = false, disposed = false, leaseRequest = null, waiting = !!C.waitFor, epoch = 0;
-    var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '';
+    var prefix = 'tqWorkoutPlayer:' + encodeURIComponent(C.scope) + ':', sync, timer, message = '', syncState = C.demo ? 'demo' : 'local';
     function uid() { if(crypto.randomUUID)return crypto.randomUUID();var bytes=new Uint8Array(16);crypto.getRandomValues(bytes);bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;var hex=Array.from(bytes,function(b){return b.toString(16).padStart(2,'0');}).join('');return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20); }
     function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function same(a, b) { return core.canonical(a) === core.canonical(b); }
     function raw(k, d) { var v = C.storage.getItem(k); return v === null ? d : JSON.parse(v); }
     function check() { if (!C.active()) throw new Error('IDENTITY_CHANGED'); if (disposed) throw new Error('IDENTITY_CHANGED'); if (!lease) throw new Error((acquiring||waiting)?'LOCK_PENDING':'OTHER_TAB'); }
-    function status(s) { if(disposed)return;message = s; var el = document.getElementById('thStatus'); if (el) el.textContent = s; }
+    function status(s, state) { if(disposed)return;message = s;if(state)syncState=state; var el = document.getElementById('thStatus'); if (el) {el.textContent = s;el.dataset.estado=syncState;}if(C.syncChanged)C.syncChanged(); }
     function error(e) {
       if(disposed)return false;
       var m = { LOCK_PENDING: 'Preparando o histórico. Aguarde um instante antes de iniciar.', OTHER_TAB: 'Outra aba está editando este aluno. Feche-a e toque em Habilitar edição.', LOCKS_UNAVAILABLE: 'Este navegador não oferece o bloqueio necessário para salvar o histórico.', IDENTITY_CHANGED: 'O acesso mudou. Reabra o app deste aluno.', STALE_REVISION: 'O registro mudou. Reabra a série ou o editor para conferir a revisão atual.', CONFLICT: 'Há revisões diferentes. Abra o histórico e escolha a correção.', CHECKPOINT_PENDING: 'Não foi possível preparar a sessão. Libere espaço e tente novamente; a sessão anterior foi preservada.', SNAPSHOT_CHANGED: 'A ficha mudou. Consulte a sessão antiga por data ou use Novo treino desta ficha para outra execução.' };
@@ -23,16 +23,16 @@
     // Leituras são permitidas sem concessão; o proxy impede qualquer escritor
     // de usar a primitiva síncrona fora do lock, incluindo respostas da rede.
     var guarded = { get length() { return C.storage.length; }, key: function (i) { return C.storage.key(i); }, getItem: function (k) { return C.storage.getItem(k); }, setItem: function (k,v) { check(); C.storage.setItem(k,v); } };
-    var journal = core.create({ storage: guarded, scope: C.scope, actor: uid(), active: C.active, changed: function () { status(sync?'Histórico salvo neste aparelho · sincronização pendente.':'Histórico salvo neste aparelho.'); schedule(); } });
+    var journal = core.create({ storage: guarded, scope: C.scope, actor: uid(), active: C.active, changed: function () { status(C.demo?'Demonstração · histórico simulado nesta visita.':sync?'Histórico salvo neste aparelho · sincronização pendente.':'Histórico salvo neste aparelho.',C.demo?'demo':sync?'pendente':'local'); schedule(); } });
     function schedule() { clearTimeout(timer); if (sync) timer = setTimeout(function () { synchronize(); }, 1800); }
     function synchronize() {
       if (!sync || !lease || !C.active()) return Promise.resolve(false);
       return sync.run().then(function () { return true; }).catch(function (e) {
         var messages={NETWORK_ERROR:'Falha de rede. Tente novamente quando houver conexão.',REMOTE_DENIED:(e.operation==='read'?'Leitura':'Envio')+' do histórico negado pelo serviço. Confira o acesso do aluno.',RPC_UNAVAILABLE:'Serviço de histórico indisponível. As RPCs precisam de homologação.',REMOTE_HTTP_ERROR:'O serviço de histórico respondeu com erro.',INVALID_SYNC_RESPONSE:'O serviço devolveu uma resposta inválida.'};
-        status('Histórico preservado neste aparelho. '+(messages[e.code||e.message]||'Sincronização pendente; tente novamente.'));return false;
+        status('Histórico preservado neste aparelho. '+(messages[e.code||e.message]||'Sincronização pendente; tente novamente.'),'erro');return false;
       });
     }
-    if (C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : 'Histórico salvo neste aparelho · envio pendente.'); } });
+    if (!C.demo && C.rpc && C.token) sync = root.MT_TREINO_HISTORICO_SYNC.create({ scope: C.scope, storage: guarded, journal: journal, token: C.token, active: function () { return lease && C.active(); }, rpc: C.rpc, status: function (s) { status(s === 'sincronizado' ? 'Histórico sincronizado.' : s==='enviando'?'Enviando histórico…':'Histórico salvo neste aparelho · envio pendente.',s); } });
     function acquire() {
       if (disposed || waiting || lease || acquiring) return;
       if (!navigator.locks) { error(new Error('LOCKS_UNAVAILABLE')); return; }
@@ -42,7 +42,7 @@
         acquiring = false;
         if (!lock) { error(new Error('OTHER_TAB')); return; }
         if (disposed || !C.active()) return;
-        lease = true; status('Histórico salvo neste aparelho.'); schedule();
+        lease = true; status(C.demo?'Demonstração · histórico simulado nesta visita.':'Histórico salvo neste aparelho.',C.demo?'demo':'local'); schedule();
         return new Promise(function (resolve) { release = resolve; });
       }).catch(error);
     }
@@ -281,7 +281,7 @@
       results=node('div',null,panel);panel.ontoggle=function(){if(panel.open)render();};
       var css=node('style',null,document.head);css.textContent='#thHistory{margin:16px 0;padding:16px;border:1px solid var(--borda,#777);border-radius:12px}#thHistory input{display:block;min-height:44px;font-size:16px;width:100%;box-sizing:border-box}#thHistory button{min-height:44px;margin:6px 6px 6px 0;padding:8px 12px;border:1px solid #777;border-radius:10px;background:var(--bg4);color:inherit;font:inherit;font-size:14px}#thHistory .th-session{padding:12px 0;border-bottom:1px solid #777}#thHistory .th-values{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:6px;overflow-wrap:anywhere}#thHistory dd{margin:0}#thHistory p{margin:10px 0;line-height:1.45}#thHistory h3{margin:14px 0 8px}#thHistory h4{margin:12px 0 8px}#thHistory h5{margin:8px 0}#thHistory summary{min-height:30px;cursor:pointer}#thHistory .th-structured{grid-column:1/-1;padding:4px 0}#thHistory .th-structured details{padding:6px;border-left:2px solid #777}#thHistory .th-edit{padding:12px;border:1px solid #777}';
     }
-    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,packet:packet,mount:mount,render:render,ready:function(){return lease&&C.active();},error:error};
+    return {dispose:dispose,resume:resume,live:live,begin:begin,beginMuscle:beginMuscle,newMuscle:newMuscle,belongs:belongs,volume:volume,muscleId:muscleId,muscle:muscle,heads:heads,finish:finish,finishMuscle:finishMuscle,current:current,project:project,list:list,packet:packet,mount:mount,render:render,syncState:function(){return syncState;},synchronize:synchronize,ready:function(){return lease&&C.active();},error:error};
   }
   root.MT_TREINO_HISTORICO_PLAYER={create:makePlayer};
 })(typeof self!=='undefined'?self:this);
