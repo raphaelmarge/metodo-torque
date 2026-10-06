@@ -78,35 +78,50 @@ async function usuarioValidado(req: Request): Promise<string> {
     });
     if (!r.ok) return "";
     const u = await r.json();
-    return (u && u.id) || "";
+    return u && !u.is_anonymous && typeof u.id === "string" ? u.id : "";
   } catch { return ""; }
 }
 
 
-// descobre a academia do usuário logado (pra etiquetar cobranças no Pagar.me —
-// o webhook usa essa etiqueta pra dar baixa automática no lugar certo)
-async function academiaDoUsuario(req: Request): Promise<string> {
+// A chave do gateway é global e não herda RLS. Toda ação financeira precisa
+// do vínculo de DONO atual no banco, não de um tenant enviado pelo navegador.
+async function academiasDoDono(userId: string): Promise<{ ids: string[]; erro?: string }> {
   try {
-    const sub = await usuarioValidado(req);
-    if (!sub) return "";
     const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const url = Deno.env.get("SUPABASE_URL") || "";
-    if (!srv || !url) return "";
-    const r = await fetch(url + "/rest/v1/membros?select=academia_id&user_id=eq." + encodeURIComponent(sub) + "&limit=1", {
+    if (!srv || !url || !userId) return { ids: [], erro: "Não foi possível conferir a autorização financeira." };
+    const r = await fetch(url + "/rest/v1/membros?select=academia_id,papel&papel=eq.dono&user_id=eq." + encodeURIComponent(userId), {
       headers: { apikey: srv, Authorization: "Bearer " + srv },
     });
-    const rows = await r.json().catch(() => []);
-    return (Array.isArray(rows) && rows[0] && rows[0].academia_id) || "";
+    if (!r.ok) return { ids: [], erro: "Não foi possível conferir a autorização financeira." };
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return { ids: [], erro: "Não foi possível conferir a autorização financeira." };
+    const ids = rows.filter((x: any) => x && x.papel === "dono" && typeof x.academia_id === "string" && x.academia_id.trim())
+      .map((x: any) => x.academia_id);
+    return { ids: [...new Set<string>(ids)] };
   } catch {
-    return "";
+    return { ids: [], erro: "Não foi possível conferir a autorização financeira." };
   }
 }
+
+// A assinatura do TORQUE é outro produto. Esta API legada cobra ALUNOS e não
+// pode ser usada para alterar o acesso SaaS do profissional.
+function produtoSaas(dados: any): boolean {
+  return [dados?.product, dados?.produto, dados?.metadata?.product, dados?.metadata?.produto]
+    .some((p) => String(p || "").trim().toLowerCase() === "torque_personal_saas");
+}
+function pertenceAoDono(dados: any, ids: string[], solicitada: string): boolean {
+  const aid = dados?.metadata?.academia_id;
+  return !produtoSaas(dados) && typeof aid === "string" && !!aid && ids.includes(aid) && (!solicitada || solicitada === aid);
+}
+const SEM_VINCULO = "Não há vínculo de dono autorizado para esta cobrança ou assinatura.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
 
-  if (!(await usuarioValidado(req))) {
+  const userId = await usuarioValidado(req);
+  if (!userId) {
     return json({ erro: "Entre na sua conta do TORQUE ON para usar esta função (a chave pública não basta)." }, 401);
   }
 
@@ -116,11 +131,12 @@ Deno.serve(async (req: Request) => {
   } catch {
     return json({ erro: "JSON inválido" }, 400);
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ erro: "JSON inválido" }, 400);
 
   const chave = Deno.env.get("PAGARME_SECRET_KEY") || "";
 
   if (body.acao === "ping") {
-    return json({ ok: true, chaveConfigurada: !!chave, regras: ["acao-normalizada"] });
+    return json({ ok: true, chaveConfigurada: !!chave, regras: ["acao-normalizada", "dono-e-vinculo-do-gateway", "alunos-sem-saas"] });
   }
   /* v747: o portal (apps/perfil-aluno.html) chama as ações com hífen e o painel
    * com sublinhado — eram QUATRO handlers pra duas ações, com tratamento de
@@ -128,6 +144,21 @@ Deno.serve(async (req: Request) => {
    * aqui e os dois blocos duplicados saíram. */
   if (body.acao === "assinatura-status") body.acao = "assinatura_status";
   if (body.acao === "assinatura-cancelar") body.acao = "assinatura_cancela";
+
+  if (produtoSaas(body)) return json({ erro: "Esta função atende cobranças de alunos, não a assinatura do TORQUE PERSONAL." }, 403);
+  const financeira = ["criar", "assinar", "status", "assinatura_status", "assinatura_cancela"].includes(body.acao);
+  let donos: string[] = [], academiaCriacao = "";
+  const solicitada = String(body.academiaId || body.academia_id || "").trim();
+  if (financeira) {
+    const vinculos = await academiasDoDono(userId);
+    if (vinculos.erro) return json({ erro: vinculos.erro }, 503);
+    donos = vinculos.ids;
+    if (!donos.length || (solicitada && !donos.includes(solicitada))) return json({ erro: SEM_VINCULO }, 403);
+    if (body.acao === "criar" || body.acao === "assinar") {
+      if (!solicitada && donos.length !== 1) return json({ erro: "Escolha a academia antes de criar a cobrança (academiaId)." }, 409);
+      academiaCriacao = solicitada || donos[0];
+    }
+  }
 
   // ---------- chave pública (pra tokenizar o cartão no navegador) ----------
   // Só devolve a chave PÚBLICA (pk_...) — a secreta nunca sai daqui.
@@ -195,7 +226,7 @@ Deno.serve(async (req: Request) => {
         items: [{ amount: valor, description: String(body.descricao || "Mensalidade"), quantity: 1, code: "mensalidade" }],
         customer,
         payments,
-        metadata: { academia_id: await academiaDoUsuario(req) },
+        metadata: { academia_id: academiaCriacao, product: "torque_aluno" },
       }),
     });
     const dados: any = await resp.json().catch(() => ({}));
@@ -250,7 +281,7 @@ Deno.serve(async (req: Request) => {
         pricing_scheme: { scheme_type: "unit", price: valor },
       }],
       customer,
-      metadata: { academia_id: await academiaDoUsuario(req) },
+      metadata: { academia_id: academiaCriacao, product: "torque_aluno" },
     };
     // caller antigo (perfil do aluno) escolhe o dia do vencimento
     const dia = Number(body.diaVencimento) || 0;
@@ -280,9 +311,11 @@ Deno.serve(async (req: Request) => {
   if (body.acao === "assinatura_status") {
     const id = String(body.assinaturaId || "").trim();
     if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
-    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } });
+    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } }).catch(() => null);
+    if (!resp) return json({ erro: "Não foi possível consultar a assinatura no Pagar.me." }, 502);
     const dados: any = await resp.json().catch(() => ({}));
     if (!resp.ok) return json({ erro: "Pagar.me recusou: " + erroPagarme(dados, resp.status) }, 502);
+    if (dados.id !== id || !pertenceAoDono(dados, donos, solicitada)) return json({ erro: SEM_VINCULO }, 403);
     return json({
       ok: true,
       status: dados.status,
@@ -293,10 +326,22 @@ Deno.serve(async (req: Request) => {
   if (body.acao === "assinatura_cancela") {
     const id = String(body.assinaturaId || "").trim();
     if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
+    // Primeiro consulta o objeto canônico. Nunca DELETE só porque o navegador
+    // informou um ID. Objetos antigos sem metadata exigem conciliação manual.
+    const consulta = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } }).catch(() => null);
+    if (!consulta) return json({ erro: "Não foi possível consultar a assinatura no Pagar.me." }, 502);
+    const assinatura: any = await consulta.json().catch(() => ({}));
+    if (!consulta.ok) return json({ erro: "Pagar.me recusou: " + erroPagarme(assinatura, consulta.status) }, 502);
+    if (assinatura.id !== id || !pertenceAoDono(assinatura, donos, solicitada)) return json({ erro: SEM_VINCULO }, 403);
+    // O dono pode ter sido removido enquanto aguardávamos a resposta externa.
+    const atuais = await academiasDoDono(userId);
+    if (atuais.erro) return json({ erro: atuais.erro }, 503);
+    if (!pertenceAoDono(assinatura, atuais.ids, solicitada)) return json({ erro: SEM_VINCULO }, 403);
     const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), {
       method: "DELETE",
       headers: { Authorization: auth },
-    });
+    }).catch(() => null);
+    if (!resp) return json({ erro: "Não foi possível confirmar o cancelamento no Pagar.me." }, 502);
     const dados: any = await resp.json().catch(() => ({}));
     if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + erroPagarme(dados, resp.status) }, 502);
     return json({ ok: true, status: (dados && dados.status) || "canceled" });
@@ -308,9 +353,11 @@ Deno.serve(async (req: Request) => {
     if (!id) return json({ erro: "orderId é obrigatório." }, 400);
     const resp = await fetch(API + "/orders/" + encodeURIComponent(id), {
       headers: { Authorization: auth },
-    });
+    }).catch(() => null);
+    if (!resp) return json({ erro: "Não foi possível consultar a cobrança no Pagar.me." }, 502);
     const dados: any = await resp.json().catch(() => ({}));
     if (!resp.ok) return json({ erro: "Pagar.me recusou: " + (dados?.message || resp.status) }, 502);
+    if (dados.id !== id || !pertenceAoDono(dados, donos, solicitada)) return json({ erro: SEM_VINCULO }, 403);
     const ch = dados.charges?.[0] || {};
     return json({ ok: true, status: ch.status || dados.status, pagoEm: ch.paid_at || null });
   }
