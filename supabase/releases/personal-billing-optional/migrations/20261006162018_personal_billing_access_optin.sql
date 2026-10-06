@@ -3,6 +3,8 @@
 -- restriction is also enforced for professional core writes without a checkout.
 -- Student token reads/writes, backups, DELETE and administrative benefits remain intact.
 begin;
+set local lock_timeout='5s';
+set local statement_timeout='30s';
 do $$ begin
   if to_regprocedure('public.minha_assinatura()') is null
     or to_regprocedure('torque_private.studio_diff(jsonb,jsonb,text[])') is null

@@ -1,6 +1,8 @@
 -- OPTIONAL. Apply only to a disposable test database / explicitly enabled SaaS release.
 -- No legacy account, entitlement, price, campaign or RLS policy is changed.
 begin;
+set local lock_timeout='5s';
+set local statement_timeout='30s';
 create schema if not exists personal_billing;
 revoke all on schema personal_billing from public, anon, authenticated;
 
