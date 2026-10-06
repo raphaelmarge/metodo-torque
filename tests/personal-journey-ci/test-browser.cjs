@@ -220,7 +220,7 @@ async function main(){
     operation='finish prescribed strength session';await pupil.locator('#gFecharTreino').click();
     const {view}=await finishedSession(muscleSession,'musculacao');
     assert.equal(view.targets['0:0:0'].value.feito,true);assert.equal(view.targets['0:0:0'].value.kg,20);assert.equal(view.targets['0:0:0'].value.r,5);
-    await pupil.locator('#gFechar').click();await pupil.locator('#guiaBox').waitFor({state:'hidden'});
+    operation='close strength receipt';await pupil.locator('#gFim').click();await pupil.locator('#guiaBox').waitFor({state:'hidden'});
   });
   await check('free manual running preserves one paused session and its distance across a real reload',async()=>{
     operation='open free running';await trainingTab('cardio');
