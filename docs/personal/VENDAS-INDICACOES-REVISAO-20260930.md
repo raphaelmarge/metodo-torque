@@ -11,7 +11,7 @@ Revisão local concluída, incluindo a extensão do HQ geral e a migração test
 - Com preço cheio de 4990 centavos: desconto 1996, primeira cobrança 2994, comissão 1996, reserva 499 e parcela Torque 499. Reserva de 10% **não é uma tarifa confirmada do gateway**, nem os 499 centavos restantes são lucro garantido; custos reais precisam de apuração.
 - **Campanha aprovada comercialmente e desligada operacionalmente.** A configuração local deve permanecer `approved: true`, `enabled: false`. Não há oferta promocional ativa, cupom validado no checkout real ou gateway integrado. Fixtures históricas não são cupons reais.
 - Cupom só poderá descontar a primeira mensalidade. A partir da segunda, preço normal de 4990, sem outra comissão de aquisição.
-- Pagamento antes de terminar o trial: decisão pendente. O core devolve `needs_review`; ele não presume direito de comissão nem tenta postergar cobrança. É preciso escolher entre manter os 14 dias antes de cobrar ou uma política explícita para compra antecipada.
+- Decisão de 06/10/2026: Pagar.me escolhido pelo responsável e primeira cobrança **somente após os 14 dias grátis**, inclusive ao contratar durante o teste. Cadastro canônico determina o prazo; abrir o checkout não reinicia o trial. O core mantém `needs_review` para pagamento antecipado anômalo. Conta e homologação do gateway continuam pendentes; ver [contrato e gates do Pagar.me](PAGARME-ATIVACAO-20261006.md).
 
 ## Implementação local anterior à extensão do HQ
 
@@ -154,7 +154,7 @@ A atribuição, o cupom e a política ficam imutáveis após a captura canônica
 
 ## Pendências de política e liberação comercial
 
-1. Definir se Assinar agora preserva o fim do trial ou cobra imediatamente e, nesse caso, a elegibilidade antes de 14 dias. Até lá, manter revisão e campanha desligada.
+1. Decidido em 06/10/2026: Assinar agora preserva os 14 dias completos. Homologar essa regra no Pagar.me, escolhido pelo responsável; pagamento anterior ao prazo segue para revisão. Campanha continua desligada até a integração ser concluída.
 2. Fechar janela de atribuição/observação, calendário e responsáveis pelo repasse; definir primeira cobrança paga em ciclo posterior. A proposta de 30 dias de observação não elimina chargeback posterior.
 
 O percentual 40/40/10/10 já está confirmado. Disponibilidade/homologação do gateway, conexão dos eventos e revisão das lojas são verificações técnicas/operacionais pendentes, sem nova escolha de percentual. Nenhuma ação nesta rodada cria credencial ou amplia acesso persistente; nenhum pagamento foi realizado.
