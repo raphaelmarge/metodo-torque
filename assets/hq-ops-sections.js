@@ -119,8 +119,9 @@
     if (!routes[area]) return empty('Seção não disponível.');
     if (!can(c, AREA_PERMISSION[area])) return notice('Seu perfil não possui acesso a esta seção.');
     var required = { sales: ['leads'], customers: ['accounts'], finance: f.tab === 'payable' ? ['expenses', 'expensePayments'] : f.tab === 'movements' ? ['payments'] : ['invoices', 'payments'], support: ['cases'], health: ['incidents'], admin: ['audit'] }[area];
-    var missing = required.map(function (k) { return s.sources && s.sources[k]; }).filter(function (src) { return src && ['unavailable', 'error', 'loading'].indexOf(src.status) >= 0; });
+    var missing = required.map(function (k) { var src = s.sources && s.sources[k]; return !src || src.complete === false || !Array.isArray(s[k]) ? {status:'unavailable',message:'Fonte ausente ou incompleta. Nenhum resultado foi interpretado como zero.'} : src; }).filter(function (src) { return ['ready', 'stale'].indexOf(src.status) < 0; });
     if (missing.length) return shell(area, ({ sales: 'Funil comercial', customers: 'Clientes e assinaturas', finance: 'Financeiro', support: 'Atendimento', health: 'Problemas do app', admin: 'Auditoria' })[area], 'Não há dados suficientes para apresentar esta visão.', '', notice(missing[0].message || 'Fonte indisponível. Nenhum resultado foi interpretado como zero.') + (area === 'support' ? supportCoverage(s) : ''));
+    if (area === 'finance' && required.some(function(k){return s[k].some(function(row){var amount=(k==='invoices'||k==='expenses')&&row.totalCents!=null?row.totalCents:row.amountCents;return !Number.isSafeInteger(amount)||amount<0;});})) return shell(area,'Financeiro','Valores da fonte ainda não confirmados.','',notice('Há valores ausentes ou inválidos. Nenhum saldo foi considerado zero ou quitado. Atualize a consulta.'));
     var stale = required.some(function (k) { return s.sources && s.sources[k] && s.sources[k].status === 'stale'; });
     return (stale ? notice('Dados da última consulta bem-sucedida. A atualização falhou; confira a origem antes de agir.') : '') + routes[area](s, c, f);
   }

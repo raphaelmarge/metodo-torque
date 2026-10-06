@@ -382,6 +382,14 @@
       n.assert(); n.emit(current); return clone(current);
     }
     function load() { n.assert(); if (!inflight) inflight = performLoad().finally(function () { inflight = null; }); return inflight; }
+    async function auditExport(input) {
+      n.assert(); var generation = authGeneration;
+      await authorize();
+      if (!current || current.currentUserId !== currentUser || current.permissions.indexOf('reports.export') < 0 || current.meta.exportAuditAvailable !== true) fail('EXPORT_AUDIT_UNAVAILABLE', 'Auditoria da exportação indisponível. Atualize a central.');
+      var result = await rpc('hq_ops_export_audit', {p_report:input.report,p_filters:input.filters,p_snapshot_at:input.snapshotAt,p_rows:input.rows,p_content_sha256:input.contentSha256,p_idempotency_key:input.idempotencyKey});
+      n.assert(); if (generation !== authGeneration || !result || result.ok !== true) fail('EXPORT_AUDIT_FAILED', 'A exportação não foi autorizada nesta sessão.');
+      return result;
+    }
     function command(raw) {
       var action = commandTail.then(async function () {
         n.assert(); var s = await load();
@@ -399,7 +407,7 @@
       });
       commandTail = action.catch(function () {}); return action;
     }
-    return { load: load, command: command, subscribe: n.subscribe.bind(n), dispose: function () { disposed = true; authGeneration += 1; n.dispose(); if (authSubscription && typeof authSubscription.unsubscribe === 'function') authSubscription.unsubscribe(); current = null; currentUser = null; } };
+    return { load: load, command: command, auditExport: auditExport, subscribe: n.subscribe.bind(n), dispose: function () { disposed = true; authGeneration += 1; n.dispose(); if (authSubscription && typeof authSubscription.unsubscribe === 'function') authSubscription.unsubscribe(); current = null; currentUser = null; } };
   }
   return Object.freeze({ version: 1, permissions: permissions, commandPermissions: Object.freeze(COMMANDS), states: STATES, sampleSnapshot: sampleSnapshot, createDemoStore: createDemoStore, createLiveStore: createLiveStore });
 }));

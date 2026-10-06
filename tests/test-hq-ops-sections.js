@@ -10,8 +10,8 @@ const WRITE = { sales: 'sales.write', customers: 'customers.write', finance: 'fi
 const unsafe = `fixture-"'><img src=x onerror="fixture()">&`;
 const escaped = 'fixture-&quot;&#39;&gt;&lt;img src=x onerror=&quot;fixture()&quot;&gt;&amp;';
 function empty() {
-  const s = { now: NOW, asOf: NOW };
-  for (const key of ['accounts', 'subscriptions', 'leads', 'invoices', 'payments', 'expenses', 'expensePayments', 'cases', 'incidents', 'integrations', 'audit', 'operators']) s[key] = [];
+  const s = { now: NOW, asOf: NOW, sources: {} };
+  for (const key of ['accounts', 'subscriptions', 'leads', 'invoices', 'payments', 'expenses', 'expensePayments', 'cases', 'incidents', 'integrations', 'audit', 'operators']) { s[key] = []; s.sources[key] = {status:'ready',origin:'synthetic',updatedAt:NOW}; }
   return s;
 }
 function fixture() {
@@ -36,6 +36,12 @@ function rows(html) {
 }
 function actionTags(html) { return html.match(/<button\b[^>]*\bdata-hq-action="[^"]*"[^>]*>/g) || []; }
 function frozen(value) { Object.freeze(value); for (const child of Object.values(value)) if (child && typeof child === 'object') frozen(child); return value; }
+
+test('missing sources, partial collections and null financial amounts never certify empty or settled', () => {
+  const s=fixture();delete s.sources.leads;assert.match(render('sales',s),/Fonte ausente/);assert.doesNotMatch(render('sales',s),/<tbody>/);
+  s.sources.invoices.complete=false;assert.doesNotMatch(render('finance',s),/<tbody>/);s.sources.invoices.complete=true;
+  s.invoices[0].totalCents=null;assert.match(render('finance',s),/Nenhum saldo foi considerado zero ou quitado/);
+});
 
 test('all six sections escape text, IDs, states, filters and formatter output', () => {
   const s = fixture();
@@ -99,7 +105,7 @@ test('renders without mutating frozen input and tolerates empty collections', ()
 test('unavailable, error and loading sources never become empty success or zero balances', () => {
   const sources = [['sales', 'leads'], ['customers', 'accounts'], ['finance', 'invoices'], ['finance', 'payments'], ['finance', 'expenses', 'payable'], ['finance', 'expensePayments', 'payable'], ['finance', 'payments', 'movements'], ['support', 'cases'], ['health', 'incidents'], ['admin', 'audit']];
   for (const [area, domain, tab] of sources) for (const status of ['unavailable', 'error', 'loading']) {
-    const s = fixture(); s.sources = { [domain]: { status, message: unsafe } };
+    const s = fixture(); s.sources[domain] = { status, message: unsafe };
     const html = render(area, s, { tab });
     assert.ok(html.includes(escaped), area + '/' + domain + '/' + status);
     assert.doesNotMatch(html, /<tbody>|class="hq-stat"|data-hq-action=|<img\b/);

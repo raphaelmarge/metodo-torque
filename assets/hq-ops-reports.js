@@ -64,7 +64,7 @@
     return metric.unit === 'cents' ? amount(metric.value) : metric.unit === 'percent' ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(metric.value) + '%' : new Intl.NumberFormat('pt-BR').format(metric.value);
   }
   function sourceState(snapshot, domains) {
-    var values = domains.map(function (d) { var s = snapshot.sources && snapshot.sources[d]; return !s ? 'unavailable' : s.status === 'ready' && !Array.isArray(snapshot[d]) ? 'error' : s.status; });
+    var values = domains.map(function (d) { var s = snapshot.sources && snapshot.sources[d]; return !s || s.complete === false ? 'unavailable' : s.status === 'ready' && !Array.isArray(snapshot[d]) ? 'error' : s.status; });
     return values.indexOf('error') >= 0 ? 'error' : values.some(function (s) { return !/^(ready|stale)$/.test(s); }) ? 'unavailable' : values.indexOf('stale') >= 0 ? 'stale' : 'ready';
   }
   function time(value, filters) {
@@ -261,7 +261,7 @@
     if (previous) { container.removeEventListener('click', previous.click); container.removeEventListener('submit', previous.submit); }
     function notice(message) { var target = container.querySelector('[data-hqr-notice]'); if (target) target.textContent = message; if (typeof local.notify === 'function') local.notify(message); }
     function redraw(patch) { local.filters = Object.assign({}, local.filters, patch); if (ctx.filters) Object.assign(ctx.filters, patch); container.innerHTML = render(local.snapshot || {}, local); var heading = container.querySelector('[data-hqr-heading]'); if (heading && heading.focus) heading.focus(); }
-    function click(event) {
+    async function click(event) {
       var target = event.target && event.target.closest ? event.target.closest('button') : null;
       if (!target || !container.contains(target) || target.disabled) return;
       if (target.hasAttribute('data-hqr-report')) return redraw({ report: target.getAttribute('data-hqr-report'), reportMetric: '', rowStatus: '', page: 1 });
@@ -280,10 +280,21 @@
         return notice('A abertura do registro ainda não está disponível.');
       }
       if (target.hasAttribute('data-hqr-export')) {
+        if (target.disabled) return; target.disabled = true;
         try {
-          var csv = exportCsv(local.snapshot || {}, local, local.filters.report), url = root.URL.createObjectURL(new root.Blob([csv], { type: 'text/csv;charset=utf-8' })), link = root.document.createElement('a');
-          link.href = url; link.download = 'torque-relatorio-' + local.filters.report + '-' + local.filters.from + '-' + local.filters.to + '.csv'; link.hidden = true; root.document.body.appendChild(link); link.click(); link.remove(); root.setTimeout(function () { root.URL.revokeObjectURL(url); }, 1000); notice('CSV gerado com os registros filtrados e as definições do relatório.');
-        } catch (_) { notice('Não foi possível exportar. Confira a permissão, os filtros e a atualização dos dados.'); }
+          var csv = exportCsv(local.snapshot || {}, local, local.filters.report), model = buildReport(local.snapshot || {}, local, local.filters.report), isDemo = local.snapshot && local.snapshot.meta && local.snapshot.meta.mode === 'demo';
+          if (!isDemo) {
+            if (typeof local.auditExport !== 'function' || !root.crypto || !root.crypto.subtle) throw Error('Auditoria indisponível');
+            var digest = await root.crypto.subtle.digest('SHA-256', new TextEncoder().encode(csv));
+            var contentSha256 = Array.from(new Uint8Array(digest)).map(function(b){return b.toString(16).padStart(2,'0');}).join(''), filters = {};
+            ['from','to','timeZone','product','metric','rowStatus','cohort'].forEach(function(k){if(typeof model.filters[k]==='string')filters[k]=model.filters[k];});
+            var receipt = await local.auditExport({report:model.report.id,filters:filters,snapshotAt:model.asOf||local.snapshot.now,rows:model.count,contentSha256:contentSha256,idempotencyKey:'export-'+root.crypto.randomUUID()});
+            if (!receipt || receipt.ok !== true) throw Error('Auditoria não confirmada');
+          }
+          var url = root.URL.createObjectURL(new root.Blob([csv], { type: 'text/csv;charset=utf-8' })), link = root.document.createElement('a');
+          link.href = url; link.download = 'torque-relatorio-' + model.report.id + '-' + model.filters.from + '-' + model.filters.to + '.csv'; link.hidden = true; root.document.body.appendChild(link); link.click(); link.remove(); root.setTimeout(function () { root.URL.revokeObjectURL(url); }, 1000); notice(isDemo ? 'CSV da demonstração gerado apenas neste aparelho.' : 'Solicitação de exportação registrada na auditoria. CSV encaminhado para download; confirme o salvamento no aparelho.');
+        } catch (_) { notice('Não foi possível exportar. Confira a permissão, a auditoria e a atualização dos dados. Nenhum download foi iniciado.'); }
+        finally { target.disabled = false; }
       }
     }
     function submit(event) {

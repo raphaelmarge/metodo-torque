@@ -87,6 +87,7 @@
     var states = domains.map(function (d) {
       var s = snapshot.sources && snapshot.sources[d];
       if (!s) return 'unavailable';
+      if (s.complete === false) return 'unavailable';
       if (s.status === 'ready' && !Array.isArray(snapshot[d])) return 'error';
       return /^(ready|unavailable|error|stale)$/.test(s.status) ? s.status : 'unavailable';
     });
@@ -257,8 +258,10 @@
     });
 
     build('trialsExpiring', ['accounts'], 'count', function () {
+      // Missing eligibility or expiry cannot certify that no trial is due.
+      if (accounts.some(function (a) { var status = a.trialStatus || a.status; return !status || status === 'unknown' || status === 'trial' && !a.trialEndsAt; })) return { unavailable: 'trial_expiry_not_recorded' };
       var through = dayStart(nextDay(today, Number.isInteger(options.trialWindowDays) ? options.trialWindowDays : 7), tz);
-      var r = accounts.filter(function (a) { return a.status === 'trial' && a.trialEndsAt && timestamp(a.trialEndsAt, tz) >= now && timestamp(a.trialEndsAt, tz) < through; });
+      var r = accounts.filter(function (a) { return (a.trialStatus || a.status) === 'trial' && a.trialEndsAt && timestamp(a.trialEndsAt, tz) >= now && timestamp(a.trialEndsAt, tz) < through; });
       return { value: r.length, rows: r };
     }, true);
     [['publishedAccounts', PUBLISHED], ['activeAccounts', HUMAN]].forEach(function (rule) {
@@ -278,7 +281,7 @@
       var threshold = now - (options.accessToleranceMinutes === undefined ? 5 : options.accessToleranceMinutes) * 60000;
       var ids = new Set(all.filter(function (r) { return r.accessExpected && timestamp(r.paidAt, tz) <= threshold && (!r.accessExpectedUntil || timestamp(r.accessExpectedUntil, tz) > now); }).map(function (r) { return r.accountId; }));
       var matched = accounts.filter(function (a) { return ids.has(a.id); });
-      if (matched.some(function (a) { return !a.accessStatus; })) return { unavailable: 'access_status_unknown' };
+      if (matched.some(function (a) { return !a.accessStatus || /^(unknown|unavailable|not_monitored)$/.test(a.accessStatus); }) || Array.from(ids).some(function (id) { return !accountIds.has(id); })) return { unavailable: 'access_status_unknown' };
       var r = matched.filter(function (a) { return !/^(active|allowed|granted|ativa|vitalicia)$/.test(a.accessStatus); }); return { value: r.length, rows: r };
     }, true);
 
