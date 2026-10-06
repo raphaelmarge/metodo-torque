@@ -99,7 +99,7 @@ begin
    or p_rows is null or p_rows<0 or p_rows>100000 or p_content_sha256 is null or p_content_sha256 !~ '^[a-f0-9]{64}$'
    or p_idempotency_key is null or p_idempotency_key !~ '^[a-zA-Z0-9:_-]{8,120}$' then raise exception 'Exportacao invalida';end if;
  body:=jsonb_build_object('type','report.export.requested','report',p_report,'filters',p_filters,'snapshotAt',p_snapshot_at,'rows',p_rows,'contentSha256',p_content_sha256);
- hashed:=md5(body::text);
+ hashed:=encode(sha256(convert_to(body::text,'UTF8')),'hex');
  insert into torque_hq.commands(actor_id,idempotency_key,payload_hash) values(who,p_idempotency_key,hashed) on conflict do nothing;
  select * into previous from torque_hq.commands where actor_id=who and idempotency_key=p_idempotency_key for update;
  if previous.payload_hash<>hashed then raise exception using errcode='22023',message='Chave reutilizada com outro conteudo';end if;
