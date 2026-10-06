@@ -79,6 +79,26 @@ async function open(browser,{data=D,demo=false,reply}={}){
     failHistory=false;await sync.p.evaluate(()=>__treinoHistorico.synchronize());await sync.p.evaluate(()=>{Sv('pthab',{[isoHj()]:{0:true}});});await sync.p.clock.runFor(2400);
     await sync.p.waitForFunction(()=>document.getElementById('acSync').dataset.estado==='sincronizado');
     ok((await sync.p.textContent('#acSync')).includes('Registros sincronizados'),'sincronizado só aparece após confirmação dos dois transportes');
+    await sync.p.evaluate(()=>{if(!__treinoHistorico.beginMuscle(0,GUIA[0],isoHj()))throw Error('Fixture não foi salva');});
+    await sync.p.evaluate(()=>__treinoHistorico.synchronize());
+    const savedHistory=await sync.p.evaluate(()=>__treinoHistorico.packet());
+    ok(Object.keys(savedHistory).length>0&&await sync.p.locator('#acSync').getAttribute('data-estado')==='sincronizado','sessão anterior está persistida e sincronizada antes da falha de armazenamento');
+    await sync.p.evaluate(()=>{
+      window.__storageOriginal=Storage.prototype.setItem;
+      Storage.prototype.setItem=function(k,v){if(k.indexOf('tqWorkoutPlayer:')===0)throw new DOMException('Armazenamento cheio','QuotaExceededError');return __storageOriginal.call(this,k,v);};
+      document.querySelector('[data-th-new-muscle="0"]').click();
+    });
+    ok(await sync.p.evaluate(()=>__treinoHistorico.syncState()==='erro-local')&&await sync.p.locator('#acSync').getAttribute('data-estado')==='erro-local'&&(await sync.p.textContent('#acSync')).includes('repita a ação'),'nova sessão recusada por falta de espaço troca sincronizado por erro local');
+    assert.deepEqual(await sync.p.evaluate(()=>__treinoHistorico.packet()),savedHistory,'Falha não descarta nem substitui a sessão anterior');
+    ok(await sync.p.evaluate(()=>__treinoHistorico.beginMuscle(0,GUIA[0],isoHj())===true&&__treinoHistorico.finishMuscle(99,isoHj())===true&&__treinoHistorico.syncState()==='erro-local'),'operações sem escrita não limpam erro local enquanto o armazenamento continua indisponível');
+    await sync.p.evaluate(()=>__treinoHistorico.synchronize());
+    ok(await sync.p.evaluate(()=>__treinoHistorico.syncState()==='erro-local')&&!await sync.p.locator('#acSync button').isVisible()&&(await sync.p.textContent('#thStatus')).includes('Libere espaço'),'confirmação remota posterior não encobre a ação local que falhou nem oferece simples reenvio');
+    await sync.p.evaluate(()=>{Storage.prototype.setItem=__storageOriginal;document.querySelector('[data-th-new-muscle="0"]').click();__devolveApp();});
+    await sync.p.clock.runFor(2400);await sync.p.evaluate(()=>__treinoHistorico.synchronize());
+    await sync.p.waitForFunction(()=>document.getElementById('acSync').dataset.estado==='sincronizado');
+    const recoveredHistory=await sync.p.evaluate(()=>__treinoHistorico.packet());
+    Object.keys(savedHistory).forEach(key=>assert.deepEqual(recoveredHistory[key],savedHistory[key],'Registro anterior preservado após repetir a ação'));
+    ok(Object.keys(recoveredHistory).length>Object.keys(savedHistory).length,'liberar espaço e repetir a ação salva a nova sessão antes de recuperar sincronizado');
     assert.deepEqual(sync.errors,[]);await sync.ctx.close();
 
     const shop=await open(browser);await shop.p.evaluate(()=>document.querySelector('.lojabt').click());
