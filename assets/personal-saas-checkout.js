@@ -77,6 +77,12 @@
       if (e && e.code === 'billing_disabled') return 'A contratação ainda não está disponível. Seu teste e sua conta continuam separados deste pagamento.';
       return 'Não foi possível confirmar a situação. Confira sua conexão e use Atualizar situação. Não faça outra contratação enquanto isso.';
     }
+    function authorityError(e) { return e && ['auth_required','owner_required','session_changed'].includes(e.code); }
+    function invalidateProof() {
+      snapshot = null; unknown = true; stopPoll(); closeForm(); clearCustomer();
+      show('billingDates', false); show('billingCancel', false); show('billingCancelConfirm', false); show('billingRefresh', true);
+      text('billingStatus', 'A situação desta conta não está confirmada para esta sessão.');
+    }
     async function request(url, options) {
       var controller = new w.AbortController(); requests.add(controller);
       var timeout = w.setTimeout(function () { controller.abort(); }, 15000);
@@ -126,7 +132,8 @@
       text('billingTrialEnd', date(s.trialEndsAt)); text('billingAccessEnd', s.accessActive && s.accessKind === 'lifetime' ? 'Sem prazo (benefício vitalício)' : (s.accessKind === 'legacy' && s.accessUntil === null ? 'Prazo da assinatura anterior não informado' : date(s.accessUntil))); show('billingDates', true);
       text('billingChargeNotice', 'R$ 49,90 por mês. A primeira cobrança ocorre somente após os 14 dias completos de teste (a partir de ' + date(s.trialEndsAt) + '). Se o teste já terminou, a cobrança pode ocorrer nesta contratação. Renovação mensal até o cancelamento. Nenhum desconto está aplicado.');
       show('billingRefresh', true);
-      show('billingCancel', !!(config.managementEnabled && s.canCancel === true && !s.renewalCanceled && s.state !== 'cancel_pending'));
+      show('billingCancel', !!(config.managementEnabled && s.canCancel === true && !s.renewalCanceled));
+      text('billingCancel', s.state === 'cancel_pending' ? 'Tentar cancelamento novamente' : 'Cancelar renovação');
       text('salesCheckout', canCheckout() ? 'Contratar por R$ 49,90/mês' : (config.enabled ? 'Confira a situação da assinatura' : 'Pagamento indisponível'));
       if (!canCheckout()) closeForm();
       setBusy(false);
@@ -148,7 +155,7 @@
         render(validStatus(s, aid)); text('billingMessage', 'Situação consultada.');
       } catch (err) {
         if (stale(e)) return;
-        snapshot = null; unknown = true; setBusy(false); show('billingCancel', false); show('billingRefresh', true); text('billingMessage', safeMessage(err));
+        invalidateProof(); setBusy(false); text('billingMessage', safeMessage(err));
       }
     }
     async function boot() {
@@ -200,9 +207,9 @@
     $('billingRefresh').addEventListener('click', function () { refresh(true); });
     $('billingCancel').addEventListener('click', function () {
       if (busy || !snapshot || !config.managementEnabled) return;
-      show('billingCancelConfirm', true); $('billingCancelYes').focus();
+      stopPoll(); show('billingCancelConfirm', true); $('billingCancelYes').focus();
     });
-    $('billingCancelNo').addEventListener('click', function () { show('billingCancelConfirm', false); $('billingCancel').focus(); });
+    $('billingCancelNo').addEventListener('click', function () { show('billingCancelConfirm', false); $('billingCancel').focus(); if (snapshot && snapshot.state === 'cancel_pending') schedule(); });
     $('billingCancelYes').addEventListener('click', async function () {
       if (busy || !snapshot || !config.managementEnabled || $('billingCancel').hidden) return;
       var e = epoch; setBusy(true); stopPoll(); closeForm(); show('billingCancelConfirm', false); text('billingMessage', 'Solicitando o cancelamento da renovação…');
@@ -211,13 +218,13 @@
         render(validStatus(s, aid)); text('billingMessage', s.state === 'canceled' && s.renewalCanceled ? 'Cancelamento confirmado.' : 'Solicitação enviada. Consulte a situação até receber a confirmação.');
       } catch (err) {
         if (stale(e)) return;
-        unknown = true; snapshot = null; setBusy(false); show('billingCancel', false); text('billingMessage', 'O cancelamento ainda não foi confirmado. Atualize a situação antes de tentar novamente.');
+        invalidateProof(); setBusy(false); text('billingMessage', (authorityError(err) ? safeMessage(err) + ' ' : '') + 'O cancelamento ainda não foi confirmado. Atualize a situação antes de tentar novamente.');
       }
     });
     $('billingForm').addEventListener('submit', async function (event) {
       event.preventDefault();
       if (busy || !canCheckout() || !$('billingConsent').checked || !$('billingForm').reportValidity()) return;
-      var e = epoch, dispatched = false, token = '', card = null, attemptKey = '';
+      var e = epoch, dispatched = false, preflight = false, token = '', card = null, attemptKey = '';
       try {
         var customer = {name:$('billingName').value.trim(),email:$('billingEmail').value.trim()};
         var document = $('billingDocument').value.replace(/\D/g, ''), phone = $('billingPhone').value.replace(/\D/g, '');
@@ -229,8 +236,10 @@
         if (customer.address.line_1.length < 3 || !/^\d{8}$/.test(customer.address.zip_code) || customer.address.city.length < 2 || !/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(customer.address.state)) { text('billingMessage', 'Confira o endereço de cobrança, CEP, cidade e estado.'); return; }
         card = cardInput({number:$('billingCardNumber').value,holder:$('billingCardHolder').value,expiry:$('billingCardExpiry').value,cvv:$('billingCardCvv').value});
         setBusy(true); stopPoll(); text('billingMessage', 'Validando o cartão diretamente no Pagar.me…');
+        preflight = true;
         var current = await rpc('status', {academiaId:aid}, e); if (stale(e)) return;
         snapshot = validStatus(current, aid);
+        preflight = false;
         if (!canCheckout()) { render(snapshot); text('billingMessage', 'A situação da conta mudou. Confira os dados antes de continuar.'); return; }
         var attempt = w.crypto.randomUUID();
         // Persistimos exclusivamente o UUID; não persistimos cliente, cartão nem token.
@@ -254,7 +263,9 @@
         // A sessão pode expirar antes de fetch: neste caso sabemos que não houve POST.
         if (err.notSent && attemptKey) { try { w.sessionStorage.removeItem(attemptKey); } catch (_) {} }
         if (stale(e)) return;
-        if (dispatched && err.notSent) {
+        if (authorityError(err) || preflight) {
+          invalidateProof(); text('billingMessage', safeMessage(err) + (dispatched && !err.notSent ? ' O resultado da contratação ainda não foi confirmado; não envie outra tentativa.' : ''));
+        } else if (dispatched && err.notSent) {
           snapshot = null; unknown = false; closeForm(); show('billingRefresh', true); text('billingMessage', safeMessage(err));
         } else if (dispatched && ['invalid_input', 'billing_disabled'].includes(err.code)) {
           // Estes dois códigos são rejeições anteriores à reserva no contrato da Edge.

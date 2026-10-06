@@ -234,5 +234,50 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
     assert.equal(await f.page.evaluate(()=>Object.keys(sessionStorage).filter(x=>x.startsWith('torque:billing:attempt:')).length),0,'falha local antes do POST não deixa tentativa inexistente');
     await f.close();pass('sessão vencida antes do POST não gera compra nem referência impossível');
   }
+  {
+    let revoked=false;
+    const f=await fixture({rpc:async(body,route)=>{if(revoked&&body.action==='status'){await route.fulfill({status:403,json:{ok:false,error:'owner_required'}});return true;}}});
+    await fill(f.page);revoked=true;await submit(f.page);
+    assert.match(await f.page.locator('#billingMessage').innerText(),/responsável/);
+    assert(await f.page.locator('#salesCheckout').isDisabled(),'revogação no preflight invalida snapshot e bloqueia nova contratação');
+    assert(await f.page.locator('#billingForm').isHidden());assert(await f.page.locator('#billingDates').isHidden());
+    assert(!f.calls.some(x=>x.token||x.body.action==='checkout'));await f.close();pass('permissão revogada no preflight remove confirmação antiga e fecha contratação');
+  }
+  {
+    let revoked=false;
+    const f=await fixture({status:{state:'paid',managed:true,canCancel:true,retryAllowed:false,paidThrough:paidEnd,accessUntil:paidEnd},rpc:async(body,route)=>{if(revoked&&body.action==='status'){await route.fulfill({status:401,json:{ok:false,error:'auth_required'}});return true;}}});
+    assert.match(await f.page.locator('#billingStatus').innerText(),/Pagamento confirmado/);
+    revoked=true;await f.page.locator('#billingRefresh').click();await f.page.waitForFunction(()=>document.querySelector('#billingPanel').getAttribute('aria-busy')==='false');
+    assert(!/Pagamento confirmado/.test(await f.page.locator('#billingStatus').innerText()));
+    assert(await f.page.locator('#billingDates').isHidden());assert(await f.page.locator('#billingCancel').isHidden());
+    assert(await f.page.locator('#salesCheckout').isDisabled());await f.close();pass('credencial revogada na consulta não mantém prova antiga de pagamento ou acesso');
+  }
+  {
+    let cancellations=0;
+    const f=await fixture({status:{state:'paid',managed:true,canCancel:true,retryAllowed:false,paidThrough:paidEnd,accessUntil:paidEnd},rpc:async(body,route)=>{
+      if(body.action==='cancel'){
+        cancellations++;
+        await route.fulfill({json:{...status,state:cancellations===1?'cancel_pending':'canceled',managed:true,canCancel:cancellations===1,retryAllowed:false,renewalCanceled:cancellations!==1,paidThrough:paidEnd,accessUntil:paidEnd}});return true;
+      }
+    }});
+    await f.page.locator('#billingCancel').click();await f.page.locator('#billingCancelYes').click();
+    await f.page.waitForFunction(()=>document.querySelector('#billingPanel').getAttribute('aria-busy')==='false');
+    assert.match(await f.page.locator('#billingStatus').innerText(),/ainda não está confirmada/);
+    assert.equal(await f.page.locator('#billingCancel').innerText(),'Tentar cancelamento novamente');
+    assert.equal(cancellations,1,'retentativa não é automática');
+    await f.page.locator('#billingCancel').click();assert.equal(cancellations,1,'abrir confirmação não repete cancelamento');
+    await f.page.locator('#billingCancelYes').click();await f.page.waitForFunction(()=>document.querySelector('#billingMessage').textContent==='Cancelamento confirmado.');
+    assert.equal(cancellations,2);assert(await f.page.locator('#billingCancel').isHidden());
+    assert.notEqual(await f.page.locator('#billingAccessEnd').innerText(),'Não confirmado');await f.close();pass('cancelamento pendente pode ser repetido explicitamente até confirmação canônica');
+  }
+  {
+    const f=await fixture({rpc:async(body,route)=>{if(body.action==='checkout'){await route.fulfill({status:403,json:{ok:false,error:'owner_required'}});return true;}}});
+    await fill(f.page);await submit(f.page);
+    const attempt=f.calls.find(x=>x.body.action==='checkout').body.attemptId;
+    assert.match(await f.page.locator('#billingMessage').innerText(),/responsável.*resultado da contratação ainda não foi confirmado/);
+    assert.equal(await f.page.evaluate(({uid,aid})=>sessionStorage.getItem('torque:billing:attempt:v1:'+uid+':'+aid),{uid,aid}),attempt);
+    assert(await f.page.locator('#salesCheckout').isDisabled());assert(await f.page.locator('#billingForm').isHidden());assert(await f.page.locator('#billingDates').isHidden());
+    await f.close();pass('revogação após envio conserva referência sem afirmar cobrança ou cancelamento');
+  }
   console.log(`PASS personal SaaS checkout browser: ${checks} grupos isolados; nenhum gateway real.`);
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});
