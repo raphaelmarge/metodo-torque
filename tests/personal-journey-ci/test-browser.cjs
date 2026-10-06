@@ -152,9 +152,15 @@ async function main(){
     operation='open published pupil app';await pupil.goto(BASE+'/app/?t='+encodeURIComponent(token),{waitUntil:'domcontentloaded'});
     await pupil.locator('#navApp').waitFor({state:'visible'});
     await until(()=>rows('select visto_em from public.app_aluno where token=$1',[token]),r=>!!r[0]?.visto_em);
-    assert.equal(await pupil.locator('#navApp [data-msec="alimentacao"]').count(),1);
-    assert(await pupil.locator('#navApp [data-msec="alimentacao"]').isVisible());
-    assert.equal(await pupil.locator('#navApp button').count(),5);
+    // The minimum journey deliberately publishes only a workout. The actual
+    // nutrition runtime creates its section only for a plan or past records;
+    // this second context has no past records. Do not fabricate a meal plan.
+    operation='verify pupil navigation against the published package';
+    const nutritionPublished=!!published.dados.dados.nutricaoApp;
+    assert.equal(await pupil.locator('#navApp [data-msec="alimentacao"]').count(),nutritionPublished?1:0);
+    if(nutritionPublished)assert(await pupil.locator('#navApp [data-msec="alimentacao"]').isVisible());
+    assert.equal(await pupil.locator('#navApp button').count(),nutritionPublished?5:4);
+    summary.navigation={nutritionPublished,nutritionJourneyVerified:false,reason:'Workout-only minimum registration; no nutrition plan was created.'};
     assert.equal(await pupil.evaluate(()=>Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k))),false);
     assert(server.events.some(e=>e.route==='rest:POST:/rpc/app_aluno_estado'&&e.status===200));
     await pupil.keyboard.press('Escape');await screenshot(pupil,'06-pupil-home');
@@ -167,10 +173,19 @@ async function main(){
   });
   await check('the pupil records a real set and its event is accepted by the disposable server',async()=>{
     operation='record prescribed set';await pupil.locator('#gSerie').click();
-    const events=await until(()=>rows("select evento from public.app_treino_eventos where token=$1",[token]),r=>r.some(x=>x.evento?.type==='result'&&x.evento?.value?.feito===true),{code:'SET_EVENT_NOT_CONFIRMED'});
-    const result=events.find(x=>x.evento.type==='result'&&x.evento.value.feito===true).evento;
-    assert.equal(result.value.kg,20);assert.equal(result.value.r,5);
-    assert(events.some(x=>x.evento.type==='start'&&x.evento.kind==='musculacao'&&x.evento.session===result.session));
+    // The real player first stores the form (result, still uncompleted), then
+    // marks the set (a correction referencing that result). Prove both events
+    // and their ancestry instead of mistaking a correct revision for a failure.
+    const events=(await until(()=>rows("select evento from public.app_treino_eventos where token=$1",[token]),r=>r.some(x=>x.evento?.type==='correction'&&x.evento?.value?.feito===true),{code:'SET_EVENT_NOT_CONFIRMED'})).map(x=>x.evento);
+    const completed=events.find(e=>e.type==='correction'&&e.value.feito===true);
+    assert.equal(completed.value.kg,20);assert.equal(completed.value.r,5);assert.equal(completed.target,'0:0:0');
+    assert.equal(completed.parents.length,1);
+    const original=events.find(e=>e.id===completed.parents[0]);assert(original);assert.equal(original.type,'result');
+    assert.equal(original.value.feito,false);assert.equal(original.value.kg,20);assert.equal(original.value.r,5);
+    assert.equal(original.target,completed.target);assert.equal(original.session,completed.session);assert.deepEqual(original.parents,[]);
+    assert(!events.some(e=>Array.isArray(e.parents)&&e.parents.includes(completed.id)),'Completed revision must remain the current head');
+    assert(events.some(e=>e.type==='start'&&e.kind==='musculacao'&&e.session===completed.session));
+    summary.seriesEvidence={type:completed.type,originalPreserved:true,parentCount:1,currentHeadCompleted:true,weight:20,repetitions:5};
     assert(server.events.some(e=>e.route==='rest:POST:/rpc/app_treino_eventos_grava'&&e.status===200));
     await screenshot(pupil,'09-pupil-set-recorded');
   });
