@@ -89,7 +89,11 @@
       try {
         var response = await w.fetch(url, Object.assign({}, options, {signal:controller.signal, cache:'no-store', credentials:'omit', referrerPolicy:'no-referrer'}));
         var body; try { body = await response.json(); } catch (_) { throw fail('invalid_response'); }
-        if (!response.ok || !body || body.ok === false) throw fail(body && /^[a-z_]{1,60}$/.test(body.error || '') ? body.error : 'request_failed');
+        if (!response.ok || !body || body.ok === false) {
+          var error = fail(body && /^[a-z_]{1,60}$/.test(body.error || '') ? body.error : 'request_failed');
+          if (error.code === 'checkout_not_started' && body.attemptNotStarted === true && body.retryable === true) error.attemptNotStarted = true;
+          throw error;
+        }
         return body;
       } finally { w.clearTimeout(timeout); requests.delete(controller); }
     }
@@ -267,10 +271,10 @@
           invalidateProof(); text('billingMessage', safeMessage(err) + (dispatched && !err.notSent ? ' O resultado da contratação ainda não foi confirmado; não envie outra tentativa.' : ''));
         } else if (dispatched && err.notSent) {
           snapshot = null; unknown = false; closeForm(); show('billingRefresh', true); text('billingMessage', safeMessage(err));
-        } else if (dispatched && ['invalid_input', 'billing_disabled'].includes(err.code)) {
-          // Estes dois códigos são rejeições anteriores à reserva no contrato da Edge.
+        } else if (dispatched && (['invalid_input', 'billing_disabled'].includes(err.code) || (err.code === 'checkout_not_started' && err.attemptNotStarted === true))) {
+          // Somente rejeições certificadas como anteriores à reserva liberam a referência.
           forget(); snapshot = null; unknown = false; closeForm(); show('billingRefresh', true);
-          text('billingMessage', err.code === 'invalid_input' ? 'Os dados não foram aceitos e a contratação não foi iniciada. Confira os dados e atualize a situação antes de tentar novamente.' : safeMessage(err));
+          text('billingMessage', err.code === 'checkout_not_started' ? 'A contratação não chegou a ser iniciada. Atualize a situação antes de tentar novamente.' : (err.code === 'invalid_input' ? 'Os dados não foram aceitos e a contratação não foi iniciada. Confira os dados e atualize a situação antes de tentar novamente.' : safeMessage(err)));
         } else if (dispatched) {
           unknown = true; snapshot = null; closeForm(); show('billingRefresh', true); show('billingCancel', false);
           text('billingStatus', 'Resultado da contratação ainda não confirmado.');

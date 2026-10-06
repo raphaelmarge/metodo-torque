@@ -279,5 +279,22 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
     assert(await f.page.locator('#salesCheckout').isDisabled());assert(await f.page.locator('#billingForm').isHidden());assert(await f.page.locator('#billingDates').isHidden());
     await f.close();pass('revogação após envio conserva referência sem afirmar cobrança ou cancelamento');
   }
+  {
+    const f=await fixture({rpc:async(body,route)=>{if(body.action==='checkout'){await route.fulfill({status:503,json:{ok:false,error:'checkout_not_started',attemptNotStarted:true,retryable:true}});return true;}}});
+    await fill(f.page);await submit(f.page);
+    assert.match(await f.page.locator('#billingMessage').innerText(),/não chegou a ser iniciada/);
+    assert.equal(await f.page.evaluate(()=>Object.keys(sessionStorage).filter(k=>k.startsWith('torque:billing:attempt:')).length),0);
+    assert(await f.page.locator('#salesCheckout').isDisabled(),'nova contratação exige consulta posterior, não repetição automática');
+    await f.page.locator('#billingRefresh').click();await f.page.waitForFunction(()=>!document.querySelector('#salesCheckout').disabled);
+    assert.equal(f.calls.filter(x=>x.body.action==='checkout').length,1);await f.close();pass('rejeição certificada antes da reserva permite conferir e tentar novamente');
+  }
+  {
+    const f=await fixture({rpc:async(body,route)=>{if(body.action==='checkout'){await route.fulfill({status:503,json:{ok:false,error:'checkout_not_started'}});return true;}}});
+    await fill(f.page);await submit(f.page);await f.page.locator('#billingRefresh').click();
+    await f.page.waitForFunction(()=>document.querySelector('#billingPanel').getAttribute('aria-busy')==='false');
+    assert(await f.page.locator('#salesCheckout').isDisabled(),'código sozinho e status sem tentativa não comprovam ausência de reserva');
+    assert.equal(await f.page.evaluate(()=>Object.keys(sessionStorage).filter(k=>k.startsWith('torque:billing:attempt:')).length),1);
+    assert.equal(f.calls.filter(x=>x.body.action==='checkout').length,1);await f.close();pass('erro sem certificação mantém referência e bloqueia nova contratação');
+  }
   console.log(`PASS personal SaaS checkout browser: ${checks} grupos isolados; nenhum gateway real.`);
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});
