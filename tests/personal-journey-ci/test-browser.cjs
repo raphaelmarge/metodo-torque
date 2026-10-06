@@ -8,6 +8,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {start,AUTH,REST}=require('./local-server.cjs');
 const {verify}=require('./verify-source.cjs');
+const historyCore=require('../../app/treino-historico-core.js');
 const SECRET='hq-auth-ci-only-hs256-secret-never-use-in-production-20260930';
 const PG='postgresql://postgres:hq_auth_ci_postgres_test_only@127.0.0.1:55433/hq_auth_ci';
 const ROOT=path.resolve(__dirname,'../..'),OUT=path.join(ROOT,'artifacts/personal-journey-ci');
@@ -16,6 +17,7 @@ const summary={schemaVersion:1,scope:'real-browser-real-auth-real-postgrest-disp
   limitations:['Auth identity is created confirmed by the local admin API; self-signup, email delivery and email confirmation are not tested.',
     'No hosted Supabase gateway, production database, payment, AI, push, WhatsApp, GPS or external exercise media is used.',
     'Chat/agenda/nutrition background RPCs outside the installed minimum may return real missing-contract errors. Their behavior is not claimed.',
+    'Running and circuit use free activities, a synthetic manually entered distance and short real browser timers; their prescription/publication by the Personal and outdoor GPS are not tested.',
     'This supplements, and never replaces, all 90 preceding Auth/PostgREST checks.'],network:[],externalBlocked:[],dialogs:[]};
 let phase='environment guard',operation='none',client,server,browser,personal,pupil,anonKey,serviceKey;
 const safeCode=v=>typeof v==='string'&&/^[a-zA-Z0-9_]{1,60}$/.test(v)?v:'UNCLASSIFIED';
@@ -44,6 +46,9 @@ async function rows(sql,params=[]){return (await client.query(sql,params)).rows;
 async function screenshot(page,name){await page.screenshot({path:path.join(OUT,name+'.png'),fullPage:false,animations:'disabled'});}
 async function context(label,viewport){
   const ctx=await browser.newContext({viewport,locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block',permissions:[]});
+  // An empty permission override denies geolocation instead of leaving a prompt
+  // that might access the host. Never inject positions or replace browser APIs.
+  await ctx.grantPermissions([],{origin:BASE});
   await ctx.route('**/*',async route=>{
     let url;try{url=new URL(route.request().url());}catch{return route.abort('blockedbyclient');}
     if(url.origin===BASE)return route.continue();
@@ -56,9 +61,10 @@ async function context(label,viewport){
     page.on('pageerror',e=>{summary.browserErrors=summary.browserErrors||[];summary.browserErrors.push({context:label,name:safeCode(e.name)});});
     page.on('dialog',async dialog=>{
       const creating=operation==='create workout sheet'&&dialog.type()==='prompt'&&/^Nome da ficha/.test(dialog.message());
+      const endingCircuit=operation==='finish free circuit'&&dialog.type()==='confirm'&&dialog.message()==='Encerrar este circuito e revisar o resultado?';
       const blocked=dialog.type()==='alert'&&/ainda não tem o app criado/.test(dialog.message());
-      summary.dialogs.push({context:label,type:dialog.type(),expected:creating,code:blocked?'FIRST_PUBLICATION_REQUIRES_ACCESS':creating?'WORKOUT_NAME':'DISMISSED'});
-      if(creating)await dialog.accept('A — Treino isolado');else await dialog.dismiss();
+      summary.dialogs.push({context:label,type:dialog.type(),expected:creating||endingCircuit,code:blocked?'FIRST_PUBLICATION_REQUIRES_ACCESS':creating?'WORKOUT_NAME':endingCircuit?'FINISH_FREE_CIRCUIT':'DISMISSED'});
+      if(creating)await dialog.accept('A — Treino isolado');else if(endingCircuit)await dialog.accept();else await dialog.dismiss();
     });
   });
   return ctx;
@@ -84,7 +90,7 @@ async function main(){
   server=await start({root:ROOT,anonKey});assert.equal(server.origin,BASE);
   const {chromium}=require('../ci/node_modules/playwright');browser=await chromium.launch({args:['--no-sandbox']});
   const pc=await context('personal',{width:1280,height:900});personal=await pc.newPage();
-  let accountId,studentId,token;
+  let accountId,studentId,token,muscleSession,runBefore,circuitBefore;
   await check('browser password sign-in creates a real Auth session and one typed Personal account',async()=>{
     operation='open Personal login';await personal.goto(BASE+'/personal.html',{waitUntil:'domcontentloaded'});
     await personal.locator('#mgEmail').fill(identity.email);await personal.locator('#mgSenha').fill(identity.password);
@@ -178,6 +184,7 @@ async function main(){
     // and their ancestry instead of mistaking a correct revision for a failure.
     const events=(await until(()=>rows("select evento from public.app_treino_eventos where token=$1",[token]),r=>r.some(x=>x.evento?.type==='correction'&&x.evento?.value?.feito===true),{code:'SET_EVENT_NOT_CONFIRMED'})).map(x=>x.evento);
     const completed=events.find(e=>e.type==='correction'&&e.value.feito===true);
+    muscleSession=completed.session;
     assert.equal(completed.value.kg,20);assert.equal(completed.value.r,5);assert.equal(completed.target,'0:0:0');
     assert.equal(completed.parents.length,1);
     const original=events.find(e=>e.id===completed.parents[0]);assert(original);assert.equal(original.type,'result');
@@ -188,6 +195,115 @@ async function main(){
     summary.seriesEvidence={type:completed.type,originalPreserved:true,parentCount:1,currentHeadCompleted:true,weight:20,repetitions:5};
     assert(server.events.some(e=>e.route==='rest:POST:/rpc/app_treino_eventos_grava'&&e.status===200));
     await screenshot(pupil,'09-pupil-set-recorded');
+  });
+  const eventRows=async()=>rows('select evento from public.app_treino_eventos where token=$1',[token]);
+  const journalFrom=rr=>Object.fromEntries(rr.map(r=>[r.evento.id,r.evento]));
+  const finishedSession=async(id,kind)=>{
+    const rr=await until(eventRows,all=>all.some(r=>r.evento.session===id&&r.evento.type==='finish'),{code:'SESSION_FINISH_NOT_CONFIRMED'});
+    const events=rr.map(r=>r.evento).filter(e=>e.session===id),view=historyCore.project(journalFrom(rr),id);
+    assert.equal(events.filter(e=>e.type==='start').length,1);assert.equal(events.filter(e=>e.type==='finish').length,1);
+    assert.equal(view.kind,kind);assert.equal(view.legacy,false);assert.equal(view.finished,true);
+    assert.equal(view.finish.id,'finish:'+id);assert.equal(view.finish.value.date,view.date);
+    assert.deepEqual(view.pendingParents,[]);assert(Object.values(view.targets).every(t=>!t.conflict));
+    return {events,view};
+  };
+  const trainingTab=async tab=>{
+    await pupil.locator('#navApp').waitFor({state:'visible'});await pupil.locator('#navApp [data-msec="treino"]').click();
+    await pupil.locator('[data-trsub="'+tab+'"]').click();
+    await pupil.waitForFunction(()=>window.__treinoHistorico?.ready());
+  };
+  const runState=()=>pupil.evaluate(()=>({sid:window.__cr.sid,run:window.__cr.run,seconds:window.__cr.run?(Date.now()-window.__cr.t0)/1000:window.__cr.acum,
+    km:window.__crKmAtual(),gps:window.__cr.gpsOn,checkpoint:window.__crSessao.le()}));
+  const circuitState=()=>pupil.evaluate(()=>({sid:window.__wod.sid,run:window.__wod.run,seconds:window.__wodSessao.tempo(),
+    laps:window.__wod.voltas,checkpoint:window.__wodSessao.ler()}));
+  await check('the completed strength session is finalized without duplicating its recorded set',async()=>{
+    operation='finish prescribed strength session';await pupil.locator('#gFecharTreino').click();
+    const {view}=await finishedSession(muscleSession,'musculacao');
+    assert.equal(view.targets['0:0:0'].value.feito,true);assert.equal(view.targets['0:0:0'].value.kg,20);assert.equal(view.targets['0:0:0'].value.r,5);
+    await pupil.locator('#gFechar').click();await pupil.locator('#guiaBox').waitFor({state:'hidden'});
+  });
+  await check('free manual running preserves one paused session and its distance across a real reload',async()=>{
+    operation='open free running';await trainingTab('cardio');
+    assert.equal(await pupil.evaluate(async()=> (await navigator.permissions.query({name:'geolocation'})).state),'denied');
+    assert(await pupil.locator('#crLimiteInicio').isVisible());assert.equal(await pupil.locator('[data-cbstart]').count(),0);
+    await pupil.locator('#crKm').fill('0.02');operation='start free manual running';await pupil.locator('#crGo').click();
+    await until(runState,s=>s.run&&s.seconds>=6,{code:'MANUAL_RUN_NOT_STARTED'});
+    await pupil.locator('#crGoF').click();runBefore=await runState();
+    assert.equal(runBefore.run,false);assert.equal(runBefore.gps,false);assert.equal(runBefore.km,0.02);
+    assert.equal(runBefore.checkpoint.sid,runBefore.sid);assert.equal(runBefore.checkpoint.tempo,runBefore.seconds);
+    const starts=(await eventRows()).filter(r=>r.evento.session===runBefore.sid&&r.evento.type==='start');
+    assert.equal(starts.length,1);assert.equal(starts[0].evento.kind,'corrida');assert.equal(starts[0].evento.prescribed.plano,null);
+    assert(!(await eventRows()).some(r=>r.evento.session===runBefore.sid&&r.evento.type==='finish'));
+    operation='reload paused running';await pupil.reload({waitUntil:'domcontentloaded'});await trainingTab('cardio');
+    await pupil.locator('#crRetomar').click();const restored=await runState();
+    assert.equal(restored.sid,runBefore.sid);assert.equal(restored.run,false);assert.equal(restored.gps,false);
+    assert.equal(restored.seconds,runBefore.seconds);assert.equal(restored.km,0.02);
+    await pupil.waitForTimeout(1100);assert.equal((await runState()).seconds,runBefore.seconds);
+    await screenshot(pupil,'10-running-reloaded-paused');
+  });
+  let runResult,circuitResult;
+  await check('resumed free running saves a genuine manual result and exactly one server finish',async()=>{
+    operation='resume free manual running';await pupil.locator('#crGoF').click();
+    await until(runState,s=>s.run&&s.seconds>=runBefore.seconds+2,{code:'MANUAL_RUN_NOT_RESUMED'});
+    await pupil.locator('#crGoF').click();const last=await runState();assert.equal(last.sid,runBefore.sid);
+    operation='finish free manual running';await pupil.locator('#crFimF').click();
+    const {events,view}=await finishedSession(runBefore.sid,'corrida');runResult=view;
+    const results=events.filter(e=>e.target==='result');assert.equal(results.length,1);assert.deepEqual(results[0].parents,[]);
+    const value=view.targets.result.value;assert.equal(value.id,runBefore.sid);assert.equal(value.m,'corrida');
+    assert.equal(value.s,Math.round(last.seconds));assert.equal(value.k,0.02);assert.equal(value.tempoBase,'ativo');
+    assert.equal(value.origem,'manual');assert.equal(value.status,'completo');assert.deepEqual(value.etapas,[]);
+    assert(!value.r&&!value.rpartes,'Manual synthetic distance must never invent a GPS route');
+    assert.equal((await runState()).checkpoint,null);await pupil.locator('#crRsFechar').waitFor({state:'visible'});
+    await screenshot(pupil,'11-running-server-confirmed');await pupil.locator('#crRsFechar').click();
+    summary.runningEvidence={mode:'free-manual',syntheticKilometres:0.02,seconds:value.s,pausedReloadPreserved:true,serverFinished:true,gpsVerified:false};
+  });
+  await check('a free For Time circuit preserves elapsed time and completed laps across a real reload',async()=>{
+    operation='open free circuit';await trainingTab('wod');assert.equal(await pupil.locator('[data-wodstart]').count(),0);
+    await pupil.locator('[data-wodt="fortime"]').click();await pupil.locator('#wodCap').fill('0');
+    operation='start free circuit';await pupil.locator('#wodGo').click();
+    await until(circuitState,s=>s.run&&s.seconds>=2,{code:'FREE_CIRCUIT_NOT_STARTED'});
+    await pupil.locator('#wfVolta').click();await pupil.locator('#wfVolta').click();await pupil.locator('#wfPausa').click();
+    circuitBefore=await circuitState();assert.equal(circuitBefore.run,false);assert.equal(circuitBefore.laps,2);
+    assert.equal(circuitBefore.checkpoint.sid,circuitBefore.sid);assert.equal(circuitBefore.checkpoint.elapsed,circuitBefore.seconds);
+    assert.equal(circuitBefore.checkpoint.voltas,2);assert.equal(circuitBefore.checkpoint.stage,'active');
+    assert(!(await eventRows()).some(r=>r.evento.session===circuitBefore.sid&&r.evento.type==='finish'));
+    operation='reload paused free circuit';await pupil.reload({waitUntil:'domcontentloaded'});await trainingTab('wod');
+    const restored=await circuitState();assert.equal(restored.sid,circuitBefore.sid);assert.equal(restored.run,false);
+    assert.equal(restored.seconds,circuitBefore.seconds);assert.equal(restored.laps,2);
+    assert.deepEqual(restored.checkpoint.laps,circuitBefore.checkpoint.laps);
+    await pupil.locator('#wodRetomar button').first().click();await pupil.waitForTimeout(1100);
+    assert.equal((await circuitState()).seconds,circuitBefore.seconds);await screenshot(pupil,'12-circuit-reloaded-paused');
+  });
+  await check('resumed free circuit saves its actual elapsed result with one start and one server finish',async()=>{
+    operation='resume free circuit';await pupil.locator('#wfPausa').click();
+    await until(circuitState,s=>s.run&&s.seconds>=circuitBefore.seconds+2,{code:'FREE_CIRCUIT_NOT_RESUMED'});
+    await pupil.locator('#wfPausa').click();const last=await circuitState();assert.equal(last.sid,circuitBefore.sid);assert.equal(last.laps,2);
+    operation='finish free circuit';await pupil.locator('#wfFim').click();
+    const {events,view}=await finishedSession(circuitBefore.sid,'circuito');circuitResult=view;
+    assert.equal(view.prescribed.tipo,'fortime');assert.equal(view.prescribed.config.wodCap,'0');assert.deepEqual(view.prescribed.receita,{});
+    const results=events.filter(e=>e.target==='result');assert.equal(results.length,1);assert.deepEqual(results[0].parents,[]);
+    const value=view.targets.result.value;assert.equal(value.sid,circuitBefore.sid);assert.equal(value.n,'Circuito livre');
+    assert.equal(value.tp,'fortime');assert.equal(value.v,Math.round(last.seconds));assert.equal(value.du,Math.round(last.seconds));
+    assert.equal(value.parcial,false);assert.equal(value.nf,0);assert.match(value.r,/2 voltas/);
+    assert.equal((await circuitState()).checkpoint,null);await screenshot(pupil,'13-circuit-server-confirmed');
+    summary.circuitEvidence={mode:'free-fortime',lapsPreserved:2,seconds:value.du,pausedReloadPreserved:true,serverFinished:true,prescriptionVerified:false};
+  });
+  await check('a third empty browser retrieves all three completed histories from the real server',async()=>{
+    operation='open empty history context';await pupil.context().close();
+    const fresh=await context('pupil-history',{width:390,height:844});assert.deepEqual((await fresh.storageState()).origins,[]);pupil=await fresh.newPage();
+    const networkStart=server.events.length;await pupil.goto(BASE+'/app/?t='+encodeURIComponent(token),{waitUntil:'domcontentloaded'});
+    await trainingTab('ficha');await pupil.locator('#thHistory > summary').click();
+    await pupil.getByRole('button',{name:'Sincronizar histórico',exact:true}).click();
+    const histories=await until(()=>pupil.evaluate(()=>window.__treinoHistorico.list()),ss=>[muscleSession,runBefore.sid,circuitBefore.sid].every(id=>ss.some(s=>s.id===id&&s.finished)),{code:'FRESH_SERVER_HISTORY_NOT_RESTORED'});
+    assert.equal(histories.length,3);assert.deepEqual(histories.map(s=>s.kind).sort(),['circuito','corrida','musculacao']);
+    assert.deepEqual(histories.find(s=>s.id===runBefore.sid).targets.result.value,runResult.targets.result.value);
+    assert.deepEqual(histories.find(s=>s.id===circuitBefore.sid).targets.result.value,circuitResult.targets.result.value);
+    const strength=histories.find(s=>s.id===muscleSession);assert.equal(strength.targets['0:0:0'].value.feito,true);
+    assert.equal(strength.targets['0:0:0'].value.kg,20);assert.equal(strength.targets['0:0:0'].value.r,5);
+    assert(server.events.slice(networkStart).some(e=>e.route==='rest:POST:/rpc/app_treino_eventos_lista'&&e.status===200));
+    await until(()=>pupil.locator('#thHistory .th-session').count(),n=>n===3,{code:'HISTORY_UI_NOT_RENDERED'});
+    const finalRows=await eventRows();assert.equal(finalRows.filter(r=>r.evento.type==='start').length,3);assert.equal(finalRows.filter(r=>r.evento.type==='finish').length,3);
+    await screenshot(pupil,'14-three-sports-server-history');summary.freshHistoryEvidence={emptyInitialStorage:true,completedSessions:3,serverReadObserved:true};
   });
   await check('journey has no JavaScript failures, external delivery, generated credentials or fabricated success',async()=>{
     assert.deepEqual(summary.browserErrors||[],[]);

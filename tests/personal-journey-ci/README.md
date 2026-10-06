@@ -12,6 +12,10 @@ O workflow separado só dispara na branch diagnóstica `codex/jornada-personal-a
 4. O navegador usa o formulário de login verdadeiro. A sessão vem do Auth, a conta Personal vem de `criar_personal`, o cadastro mínimo e a ficha vêm de cliques e campos da interface. O banco é observado para verificar os efeitos; não injeta esses dados no app.
 5. O Personal revisa e publica a primeira prescrição pelo botão da tela. O aluno novo não recebe token antecipado por fixture, convite, contrato ou mensagem.
 6. Outro contexto vazio abre `/app/` com o token realmente publicado, confere a ficha e registra uma série. A confirmação é verificada no evento persistido pelo servidor.
+7. A musculação é concluída pela interface. Em seguida, o aluno inicia uma **corrida livre com distância fictícia digitada manualmente** e um **circuito livre For Time**. Cada atividade é pausada, passa por recarga real da página e é retomada pelos botões da tela. O roteiro confere a mesma sessão, o tempo parado durante a pausa, os quilômetros e as voltas preservados.
+8. A finalização das duas atividades precisa chegar ao PostgreSQL: um início e um encerramento por sessão, resultado atual sem conflito, parentes de revisão válidos, duração ativa e origem manual correta. Nenhuma rota GPS é inventada. Um terceiro contexto inicialmente vazio consulta o histórico real do servidor e deve recuperar as três modalidades concluídas, com os mesmos resultados.
+
+Essas etapas adicionais cobrem execução, pausa, retomada e histórico dos **modos livres**. Não comprovam criar, prescrever e publicar corrida ou circuito pelo Personal. Os tempos curtos são medidos pelo cronômetro real do navegador durante o teste; não representam atividade física. A localização é explicitamente negada pelo contexto do navegador, sem substituir APIs nem fornecer coordenadas.
 
 ## Transporte e limites
 
