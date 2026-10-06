@@ -35,7 +35,7 @@ Objetos antigos de cobrança sem academia na metadata exigem conciliação antes
 | Conquistas | Percentual identifica a faixa atual e seus limites; não foi presumido erro aritmético |
 | Demo | Acesso claro ao teste do Personal, navegação com Alimentação preservada |
 | Exportação HQ | Solicitação auditada antes do CSV, com filtros, hash, quantidade e ator. Recibo não comprova que o aparelho salvou o arquivo |
-| Suporte legado | Ponte administrativa de leitura paginada em implementação nesta release; sem marcar como lido, importar ou enviar mensagem. O painel distingue resposta armazenada de entrega externa |
+| Suporte legado | Ponte administrativa de leitura paginada implementada, com cursor e limite de 50 registros; sem marcar como lido, importar ou enviar mensagem. O painel distingue resposta armazenada de entrega externa |
 | Grandes coleções HQ | **Pendente de escala**: substituir snapshot completo por agregados e páginas sem truncar indicadores. A ponte de suporte já deve nascer paginada. Não declarar teste de volume sem executá-lo |
 
 ## Validação e limites
