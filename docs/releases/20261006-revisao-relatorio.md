@@ -37,11 +37,12 @@ Objetos antigos de cobrança sem academia na metadata exigem conciliação antes
 | Exportação HQ | Solicitação auditada antes do CSV, com filtros, hash, quantidade e ator. Recibo não comprova que o aparelho salvou o arquivo |
 | Suporte legado | Ponte administrativa de leitura paginada implementada, com cursor e limite de 50 registros; sem marcar como lido, importar ou enviar mensagem. O painel distingue resposta armazenada de entrega externa |
 | Grandes coleções HQ | **Pendente de escala**: substituir snapshot completo por agregados e páginas sem truncar indicadores. A ponte de suporte já deve nascer paginada. Não declarar teste de volume sem executá-lo |
+| Indicadores do piloto | **Pendente**: instrumentar ativação, tempo até publicar, abandono por etapa, primeira sessão por modalidade e conversão; não há linha de base medida nesta entrega |
 
 ## Validação e limites
 
-Testes usam dados fictícios e rede interceptada/bancos descartáveis. As novas interfaces foram verificadas em 320, 390, 768 e 1440 pixels, claro/escuro. As três demos são regeneradas pelo builder canônico, sem manter cópia manual do aplicativo. Regressão completa e autorização HTTP com GoTrue/PostgREST devem aprovar o commit antes da integração.
+Testes usam dados fictícios e rede interceptada/bancos descartáveis. Cadastro e geometria do app do aluno foram conferidos em 320, 390, 768 e 1440 pixels, claro/escuro; o suporte legado foi conferido nas quatro larguras. Isso não representa homologação de todas as telas em todos os aparelhos. As três demos são regeneradas pelo builder canônico, sem manter cópia manual do aplicativo. Regressão completa e autorização HTTP com GoTrue/PostgREST devem aprovar o commit antes da integração.
 
-**Não verificado**: aparelhos físicos Android/iPhone, instalação PWA real, bateria e GPS em campo, piloto com cinco profissionais (meta quatro completarem primeiro treino sem ajuda), conta de pagamento e compras sandbox, entrega externa de suporte, carga representativa para dimensionamento. A marcação destes limites não altera os resultados dos testes automatizados.
+**Não verificado**: jornada completa Personal → publicação → Aluno com sessões reais em ambiente isolado (os testes HTTP de Auth desta rodada cobrem o HQ), aparelhos físicos Android/iPhone, instalação PWA real, bateria e GPS em campo, piloto com cinco profissionais (meta quatro completarem primeiro treino sem ajuda), conta de pagamento e compras sandbox, entrega externa de suporte, carga representativa para dimensionamento. A marcação destes limites não altera os resultados dos testes automatizados.
 
 Google Play, App Store, relógios e GPS nativo em segundo plano ficam fora desta etapa por decisão do responsável. A prévia privada Sites não participa da validação; domínio público principal continua `www.torqueon.com.br`.
