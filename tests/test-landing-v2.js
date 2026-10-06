@@ -8,6 +8,7 @@ catch (_) { chromium = require('/opt/node22/lib/node_modules/playwright').chromi
 const executablePath = process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
 const base = process.env.BASE_URL || 'http://127.0.0.1:8765';
 const screenshotDir = process.env.LANDING_SCREENSHOTS;
+const currentScreens = '/assets/vendas/atual-20261006/';
 let browser;
 
 async function imageReady(page, id, file) {
@@ -15,6 +16,25 @@ async function imageReady(page, id, file) {
     const image = document.getElementById(id);
     return image.complete && image.naturalWidth > 0 && (!file || image.src.endsWith(file));
   }, { id, file });
+}
+
+async function currentScreen(page, id, file, width) {
+  await imageReady(page, id, file);
+  const screen = await page.locator(`#${id}`).evaluate(img => {
+    return {
+      path: new URL(img.currentSrc || img.src).pathname,
+      naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight,
+      width: img.clientWidth, height: img.clientHeight,
+      fit: getComputedStyle(img).objectFit,
+      alt: img.alt
+    };
+  });
+  assert.equal(screen.path, currentScreens + file, `captura atual de ${id}`);
+  assert(screen.naturalWidth >= 390 && screen.naturalHeight >= 600, `resolução real de ${id}`);
+  assert(screen.width > 0 && screen.height > 0, `captura ${id} visível em ${width}px`);
+  assert(Math.abs(screen.width / screen.height - screen.naturalWidth / screen.naturalHeight) < .003, `proporção de ${id} em ${width}px`);
+  assert.equal(screen.fit, 'contain', `captura completa sem corte: ${id}`);
+  assert(screen.alt.trim().length > 15, `descrição acessível de ${id}`);
 }
 
 async function inspectScreen(page, imageId, closeButton = false) {
@@ -93,7 +113,7 @@ async function landingBrand(page) {
     for (const href of ['personal.html', 'demo-personal.html', 'demo-aluno.html', 'privacidade.html', 'torqueon.html']) {
       assert(await page.locator(`a[href="${href}"]`).count(), href);
     }
-    for (const id of ['app', 'recursos', 'sobre', 'duvidas', 'sua-marca', 'journey']) assert.equal(await page.locator(`[id="${id}"]`).count(), 1, `âncora antiga ${id}`);
+    for (const id of ['app', 'recursos', 'sobre', 'duvidas', 'sua-marca', 'journey', 'nutricao']) assert.equal(await page.locator(`[id="${id}"]`).count(), 1, `âncora preservada ou adicionada ${id}`);
     assert(await page.locator('a[href="demo-personal.html"], a[href="demo-aluno.html"]').evaluateAll(links => links.every(link => link.target === '_blank' && link.rel.includes('noopener') && link.rel.includes('noreferrer'))));
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://www.torqueon.com.br/personal-vendas.html');
     assert.equal(await page.locator('.price strong').textContent(), '49,90');
@@ -120,44 +140,52 @@ async function landingBrand(page) {
       assert.equal(await page.locator('#menuToggle').getAttribute('aria-expanded'), 'false');
     }
 
-    for (let i = 0; i < 7; i++) {
+    const featureFiles = ['painel-inicio.webp', 'painel-treinos.webp', 'painel-financeiro.webp', 'painel-alunos.webp', 'painel-chat.webp', 'painel-avaliacao.webp', 'painel-agenda.webp', 'painel-nutricao.webp'];
+    assert.equal(await page.locator('[data-feature]').count(), featureFiles.length);
+    for (let i = 0; i < featureFiles.length; i++) {
       await page.locator(`[data-feature="${i}"]`).click();
       await page.waitForFunction(index => {
         const button = document.querySelector(`[data-feature="${index}"]`);
         const tag = document.getElementById('feature-tag');
         const image = document.getElementById('feature-image');
-        const names = ['Seu dia', 'Produto', 'Financeiro', 'Alunos', 'Atendimento', 'Avaliação', 'Agenda'];
+        const names = ['Seu dia', 'Treinos', 'Financeiro', 'Alunos', 'Atendimento', 'Avaliação', 'Agenda', 'Nutrição'];
         return button.getAttribute('aria-selected') === 'true' && tag.textContent === names[index] && image.complete && image.naturalWidth;
       }, i);
+      await currentScreen(page, 'feature-image', featureFiles[i], width);
     }
-    await page.locator('[data-feature="6"]').focus();
+    await page.locator('[data-feature="7"]').focus();
     await page.keyboard.press('Home');
     assert.equal(await page.locator('[data-feature="0"]').getAttribute('aria-selected'), 'true');
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('[data-feature="1"]').getAttribute('aria-selected'), 'true');
     await page.keyboard.press('End');
-    assert.equal(await page.locator('[data-feature="6"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('[data-feature="7"]').getAttribute('aria-selected'), 'true');
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await page.locator('[data-feature="0"]').getAttribute('aria-selected'), 'true');
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await page.locator('[data-feature="7"]').getAttribute('aria-selected'), 'true');
     await inspectScreen(page, 'feature-image', true);
 
-    const studentFiles = ['app-fichas.webp', 'app-treino.webp', 'app-corrida.webp', 'app-conquistas.webp', 'app-wod.webp'];
+    const studentFiles = ['app-fichas.webp', 'app-treino.webp', 'app-corrida.webp', 'app-conquistas.webp', 'app-wod.webp', 'app-alimentacao.webp'];
+    assert.equal(await page.locator('[data-student]').count(), studentFiles.length);
     for (let i = 0; i < studentFiles.length; i++) {
       await page.locator(`[data-student="${i}"]`).click();
-      await imageReady(page, 'student-image', studentFiles[i]);
+      await currentScreen(page, 'student-image', studentFiles[i], width);
       assert.equal(await page.locator(`[data-student="${i}"]`).getAttribute('aria-selected'), 'true');
-      assert.match(await page.locator('#tourNumber').innerText(), new RegExp(`0${i + 1}\\s*/\\s*05`));
+      assert.match(await page.locator('#tourNumber').innerText(), new RegExp(`0${i + 1}\\s*/\\s*06`));
       await inspectScreen(page, 'student-image');
     }
     await page.locator('#tourNext').click();
     await imageReady(page, 'student-image', studentFiles[0]);
-    assert.match(await page.locator('#tourNumber').innerText(), /01\s*\/\s*05/);
+    assert.match(await page.locator('#tourNumber').innerText(), /01\s*\/\s*06/);
     await page.locator('#tourPrev').click();
-    await imageReady(page, 'student-image', studentFiles[4]);
-    assert.match(await page.locator('#tourNumber').innerText(), /05\s*\/\s*05/);
-    await page.locator('[data-student="4"]').focus();
+    await imageReady(page, 'student-image', studentFiles[5]);
+    assert.match(await page.locator('#tourNumber').innerText(), /06\s*\/\s*06/);
+    await page.locator('[data-student="5"]').focus();
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('[data-student="0"]').getAttribute('aria-selected'), 'true');
     await page.keyboard.press('End');
-    assert.equal(await page.locator('[data-student="4"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('[data-student="5"]').getAttribute('aria-selected'), 'true');
     await page.keyboard.press('Home');
     assert.equal(await page.locator('[data-student="0"]').getAttribute('aria-selected'), 'true');
     await page.keyboard.press('ArrowRight');
@@ -166,13 +194,32 @@ async function landingBrand(page) {
     const journeyFiles = ['painel-treinos.webp', 'app-inicio-novo.webp', 'painel-inicio.webp'];
     for (let i = 0; i < journeyFiles.length; i++) {
       await page.locator(`[data-scene="${i}"]`).click();
-      await imageReady(page, 'journey-image', journeyFiles[i]);
+      await currentScreen(page, 'journey-image', journeyFiles[i], width);
       assert(await page.locator(`#story${i}`).isVisible());
       assert(await page.locator(`#scene${i}`).evaluate(el => el.classList.contains('active')));
       assert.equal(await page.locator(`[data-scene="${i}"]`).getAttribute('aria-pressed'), 'true');
     }
     await inspectScreen(page, 'journey-image');
+    await currentScreen(page, 'hero-image', 'app-inicio-novo.webp', width);
     await inspectScreen(page, 'hero-image');
+
+    const nutrition = page.locator('#nutricao');
+    assert(await nutrition.isVisible(), `nutrição visível em ${width}px`);
+    assert.match(await nutrition.innerText(), /plano alimentar/i);
+    assert.match(await nutrition.innerText(), /receitas/i);
+    assert.match(await nutrition.innerText(), /compras/i);
+    for (const href of ['demo-personal.html', 'demo-aluno.html']) {
+      assert(await nutrition.locator(`a[href="${href}"]`).isVisible(), `demonstração da nutrição: ${href}`);
+    }
+    for (const [id, file] of [['nutrition-panel-image', 'painel-nutricao.webp'], ['nutrition-student-image', 'app-alimentacao.webp']]) {
+      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+      await currentScreen(page, id, file, width);
+      const geometry = await page.locator(`#${id}`).boundingBox();
+      assert(geometry.width >= 240 && geometry.height >= 240, `nutrição com imagem legível: ${id} em ${width}px`);
+      assert(geometry.x >= -1 && geometry.x + geometry.width <= width + 1, `nutrição dentro da tela: ${id} em ${width}px`);
+      assert.equal(await nutrition.locator(`[data-inspect="${id}"]`).count(), 1);
+      await inspectScreen(page, id, id === 'nutrition-panel-image');
+    }
 
     await editStudioName(page, 'TORQUE STUDIO', 'TORQUE STUDIO');
     assert.equal(await page.locator('#studioPreview').textContent(), 'TORQUE STUDIO');
@@ -220,6 +267,13 @@ async function landingBrand(page) {
     await page.locator('.faq summary').nth(1).click();
     await page.waitForFunction(() => document.querySelectorAll('.faq details[open]').length === 1);
     assert.notEqual(await page.locator('.faq details').nth(1).getAttribute('open'), null);
+    const nutritionFaq = page.locator('.faq details').filter({ has: page.locator('summary').filter({ hasText: /nutrição|alimentação/i }) });
+    assert.equal(await nutritionFaq.count(), 1, 'FAQ específico da nutrição');
+    await nutritionFaq.locator('summary').click();
+    await page.waitForFunction(() => document.querySelectorAll('.faq details[open]').length === 1);
+    assert.notEqual(await nutritionFaq.getAttribute('open'), null);
+    assert.match(await nutritionFaq.innerText(), /profissional|responsável/i);
+    assert.match(await nutritionFaq.innerText(), /plano|refeições|registros/i);
 
     const inlineVideoParent = await page.locator('#productVideo').evaluateHandle(video => video.parentElement);
     await page.locator('#openVideo').click();
@@ -244,7 +298,7 @@ async function landingBrand(page) {
       await page.evaluate(() => document.fonts.ready);
       await page.screenshot({ path: path.join(screenshotDir, `landing-${width}.png`), fullPage: true });
     }
-    console.log(`PASS ${width}px: proporções, navegação, tours, ampliação, marca, preço, movimento, vídeo, FAQ e recursos`);
+    console.log(`PASS ${width}px: capturas atuais, proporções, navegação, tours, nutrição, ampliação, marca, preço, movimento, vídeo, FAQ e recursos`);
     await context.close();
   }
 
@@ -283,6 +337,14 @@ async function landingBrand(page) {
   assert(await fallback.locator('.hero-actions a[href="personal.html?entrada=criar"]').isVisible());
   assert(await fallback.locator('a[href="demo-personal.html"]').first().isVisible());
   assert(await fallback.locator('#journey').isVisible());
+  assert(await fallback.locator('#nutricao').isVisible());
+  assert.match(await fallback.locator('#nutricao').innerText(), /plano alimentar/i);
+  for (const href of ['demo-personal.html', 'demo-aluno.html']) assert(await fallback.locator(`#nutricao a[href="${href}"]`).isVisible());
+  for (const [id, file] of [['nutrition-panel-image', 'painel-nutricao.webp'], ['nutrition-student-image', 'app-alimentacao.webp']]) {
+    await fallback.locator(`#${id}`).scrollIntoViewIfNeeded();
+    await currentScreen(fallback, id, file, 390);
+  }
+  assert(await fallback.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'nutrição sem JavaScript não cria rolagem lateral');
   assert(await fallback.locator('#productVideo').evaluate(video => video.controls && !video.autoplay));
   await nojs.close();
   assert.deepEqual(errors, []);

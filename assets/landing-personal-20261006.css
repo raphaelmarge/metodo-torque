@@ -573,6 +573,7 @@ body.has-pointer .cursor-glow {
 .phone-shell img {
   width: 100%;
   height: auto;
+  object-fit: contain;
   border-radius: 39px;
 }
 
@@ -979,6 +980,7 @@ body.has-pointer .cursor-glow {
 .dashboard-device img {
   width: 100%;
   height: auto;
+  object-fit: contain;
   border-radius: 37px;
   transition: opacity .22s ease, transform .48s var(--ease);
 }
@@ -2198,7 +2200,62 @@ html.motion-off { scroll-behavior: auto; }
   .topbar .nav-cta { padding-inline: 10px; gap: 6px; font-size: .73rem; }
   .scene-nav { gap: 6px; }
   .scene-nav button { padding-inline: 8px; font-size: .66rem; }
-  .student-rail button:last-child { grid-column: 1 / -1; }
+  .student-rail button:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .journey h2, .brand-studio h2 { font-size: clamp(2.5rem, 12vw, 4.4rem); }
   .whatsapp-float { right: 12px; bottom: 12px; }
+}
+
+/* Alimentação integrada: capturas reais, com a proporção nativa preservada. */
+.hero-nutrition-link { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 12px; color: #a7efc5; font-size: .83rem; text-decoration: none; }
+.hero-nutrition-link > span:first-child { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid #a7efc54d; border-radius: 50%; }
+.hero-nutrition-link:hover { color: #fff; }
+.nutrition { scroll-margin-top: 100px; }
+.nutrition-heading { display: grid; grid-template-columns: 1.2fr 1fr; align-items: end; gap: 48px; }
+.nutrition-heading .eyebrow { color: #a7efc5; }
+.nutrition-heading h2 { font-size: clamp(2.5rem, 5vw, 5.2rem); }
+.nutrition-heading h2 span { color: #a7efc5; }
+.nutrition-workspace { position: relative; display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: clamp(30px,5vw,68px); align-items: center; margin-top: 56px; padding: clamp(24px,4vw,54px); border: 1px solid #a7efc52b; border-radius: 34px; background: radial-gradient(ellipse at 85% 28%,#27774d20,transparent 65%),linear-gradient(135deg,#141019,#0e1613); }
+.nutrition-kicker { margin: 0 0 28px; color: #a7efc5; font-size: .72rem; letter-spacing: .13em; text-transform: uppercase; line-height: 1.7; }
+.nutrition-steps { list-style: none; margin: 0; padding: 0; }
+.nutrition-steps li { display: grid; grid-template-columns: 32px minmax(0,1fr); gap: 16px; padding: 23px 0; border-top: 1px solid var(--line); }
+.nutrition-steps li > span { padding-top: 5px; color: #a7efc5; font-size: .72rem; font-variant-numeric: tabular-nums; }
+.nutrition-steps h3 { margin: 0 0 10px; font-size: clamp(1.12rem,1.8vw,1.5rem); font-weight: 600; letter-spacing: -.025em; }
+.nutrition-steps p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.75; }
+.nutrition-actions { display: grid; justify-items: start; gap: 17px; margin-top: 20px; }
+.nutrition-actions .button { font-size: .85rem; }
+.nutrition-actions small { color: var(--muted); font-size: .73rem; line-height: 1.65; }
+.nutrition-actions .text-link { font-size: .82rem; }
+.nutrition-phones { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 20px; min-width: 0; }
+.nutrition-screen { margin: 0; min-width: 0; }
+.nutrition-screen:nth-child(2) { margin-top: 66px; }
+.nutrition-screen figcaption { margin-bottom: 20px; }
+.nutrition-screen figcaption span { display: block; color: #a7efc5; font-size: .58rem; letter-spacing: .12em; }
+.nutrition-screen figcaption strong { display: block; margin-top: 8px; font-size: .9rem; font-weight: 500; line-height: 1.5; }
+.nutrition-screen .phone-shell { padding: 5px; border-radius: 29px; box-shadow: 0 35px 60px -35px #000; }
+.nutrition-screen img { width: 100%; height: auto; object-fit: contain; border-radius: 24px; }
+.nutrition-screen .inspect-button { width: 100%; margin-top: 16px; padding-inline: 8px; gap: 7px; font-size: .73rem; }
+.nutrition-phones > .demo-note { grid-column: 1 / -1; margin: 0; text-align: center; }
+.nutrition-footer { display: flex; align-items: center; justify-content: space-between; gap: 36px; margin-top: 24px; padding-inline: 16px; }
+.nutrition-footer p { max-width: 700px; margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.75; }
+.nutrition-footer p strong { color: #a7efc5; font-weight: 500; }
+.nutrition-footer .text-link { flex: 0 0 auto; font-size: .78rem; }
+@media(max-width:1120px) {
+  .nutrition-workspace { gap: 28px; padding: 28px; }
+  .nutrition-phones { gap: 12px; }
+}
+@media(max-width:860px) {
+  .nutrition-heading { grid-template-columns: 1fr; gap: 20px; }
+  .nutrition-workspace { grid-template-columns: 1fr; gap: 44px; }
+  .nutrition-phones { width: min(550px,100%); justify-self: center; gap: 26px; }
+  .nutrition-footer { align-items: start; flex-direction: column; gap: 18px; padding-inline: 0; }
+}
+@media(max-width:560px) {
+  .nutrition-heading h2 { font-size: clamp(2.1rem,10vw,3.5rem); }
+  .nutrition-workspace { margin-top: 32px; padding: 24px 12px; border-radius: 24px; }
+  .nutrition-steps li { grid-template-columns: 22px minmax(0,1fr); gap: 10px; }
+  .nutrition-phones { grid-template-columns: minmax(0,1fr); gap: 32px; width: min(310px,100%); }
+  .nutrition-screen:nth-child(2) { margin-top: 0; }
+  .nutrition-screen figcaption { text-align: center; }
+  .nutrition-screen figcaption strong { font-size: 1rem; }
+  .nutrition-actions .button { width: 100%; padding-inline: 12px; }
 }

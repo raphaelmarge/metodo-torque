@@ -8,7 +8,7 @@ on:
       - personal-assinatura.html
       - app-personal-trainer.html
       - torqueon.html
-      - assets/landing-personal.*
+      - assets/landing-personal*
       - assets/personal-sales.*
       - assets/personal-sales-intent.js
       - assets/personal-saas-checkout.*
