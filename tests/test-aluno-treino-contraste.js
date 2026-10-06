@@ -2,7 +2,8 @@
  * Compõe fundos transparentes antes de medir; não depende de demo regenerada. */
 'use strict';
 const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
-const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || 'playwright');
+// setup-tests.sh instala a versão fixada pelo lock em tests/ci; sem depender de NODE_PATH.
+const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || './ci/node_modules/playwright');
 const BASE = process.env.BASE_URL || process.env.MT_BASE || 'http://127.0.0.1:8765';
 const ORIGIN = new URL(BASE).origin;
 global.self = global;
