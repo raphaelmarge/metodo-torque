@@ -16,15 +16,15 @@
       title: "Seu atendimento, por inteiro.",
       description: "Veja a próxima sessão presencial, quem precisa de contato na consultoria on-line e as cobranças pendentes — com a ação certa ao lado.",
       returnText: "A lista mental que você carrega o dia inteiro.",
-      image: "assets/vendas/painel-inicio.webp",
-      alt: "Painel inicial com a próxima sessão e a lista Resolver hoje"
+      image: "assets/vendas/atual-20261006/painel-inicio.webp",
+      alt: "Painel inicial do personal com próxima sessão e atalhos para acompanhar os alunos"
     },
     {
-      tag: "Produto",
+      tag: "Treinos",
       title: "Treino em minutos, não em noites.",
       description: "Prepare a sessão presencial ou a programação da consultoria on-line com vídeos, progressão, circuito e corrida. A IA sugere; você revisa e publica.",
       returnText: "A noite de domingo montando ficha.",
-      image: "assets/vendas/painel-treinos.webp",
+      image: "assets/vendas/atual-20261006/painel-treinos.webp",
       alt: "Tela de montagem de treino com fichas e opção de gerar com IA"
     },
     {
@@ -32,7 +32,7 @@
       title: "Cobrança sem caça ao recibo.",
       description: "Organize os recebimentos do presencial e da consultoria on-line. Atrasados, link, Pix e baixa ficam na mesma tela; o pagamento vai para sua conta.",
       returnText: "A planilha e a conversa constrangedora.",
-      image: "assets/vendas/painel-financeiro.webp",
+      image: "assets/vendas/atual-20261006/painel-financeiro.webp",
       alt: "Painel financeiro com recebido do mês e lista de pagamentos atrasados"
     },
     {
@@ -40,7 +40,7 @@
       title: "Perceba antes que ele suma.",
       description: "Acompanhe alunos presenciais e da consultoria no mesmo painel. Os filtros Ativos, Sumindo e Devendo ajudam a priorizar quem precisa de contato.",
       returnText: "O aluno que você só percebeu tarde demais.",
-      image: "assets/vendas/painel-alunos.webp",
+      image: "assets/vendas/atual-20261006/painel-alunos.webp",
       alt: "Lista de alunos com filtros Ativos, Sumindo e Devendo"
     },
     {
@@ -48,7 +48,7 @@
       title: "Uma conversa que não se perde.",
       description: "Tire dúvidas entre sessões e acompanhe a consultoria on-line pelo chat do app. Respostas rápidas e lembretes ajudam a manter o contato com cada aluno.",
       returnText: "As vinte respostas para a mesma pergunta.",
-      image: "assets/vendas/painel-chat.webp",
+      image: "assets/vendas/atual-20261006/painel-chat.webp",
       alt: "Chat com aluno e atalhos de respostas rápidas"
     },
     {
@@ -56,7 +56,7 @@
       title: "Resultado que o aluno enxerga.",
       description: "Compare as medições registradas e a evolução de cada aluno. Consulte o histórico nos encontros presenciais e no acompanhamento da consultoria on-line.",
       returnText: "Digitar medidas e montar laudo à mão.",
-      image: "assets/vendas/painel-avaliacao.webp",
+      image: "assets/vendas/atual-20261006/painel-avaliacao.webp",
       alt: "Histórico de avaliação física com comparação entre medições"
     },
     {
@@ -64,8 +64,16 @@
       title: "A sessão se resolve na linha.",
       description: "Organize as sessões presenciais junto ao acompanhamento on-line. Confirme pedidos, registre faltas e leve os horários para o calendário do celular.",
       returnText: "A remarcação que atravessa o seu dia.",
-      image: "assets/vendas/painel-agenda.webp",
+      image: "assets/vendas/atual-20261006/painel-agenda.webp",
       alt: "Agenda com pedidos de horário e ações de cada sessão"
+    },
+    {
+      tag: "Nutrição",
+      title: "Treino e alimentação, juntos.",
+      description: "Organize o plano alimentar por aluno, consulte a biblioteca de alimentos e acompanhe o diário com fotos. As refeições publicadas aparecem na área Alimentação do app.",
+      returnText: "O acompanhamento espalhado entre arquivos e mensagens.",
+      image: "assets/vendas/atual-20261006/painel-nutricao.webp",
+      alt: "Área Nutrição do Personal com plano alimentar individual e refeições de demonstração"
     }
   ];
 
@@ -73,32 +81,38 @@
     {
       title: "Ficha do mês",
       description: "Programação, exercícios e cargas para a sessão presencial ou os treinos da consultoria on-line.",
-      image: "assets/vendas/app-fichas.webp",
+      image: "assets/vendas/atual-20261006/app-fichas.webp",
       alt: "Lista de fichas e semana atual no aplicativo do aluno"
     },
     {
       title: "Treino guiado",
       description: "Vídeo, séries, descanso e cargas para seguir sua orientação, ao seu lado ou à distância.",
-      image: "assets/vendas/app-treino.webp",
+      image: "assets/vendas/atual-20261006/app-treino.webp",
       alt: "Treino guiado com exercício, carga e histórico da última sessão"
     },
     {
       title: "Corrida com GPS",
       description: "Mapa, ritmo e orientação por voz. O GPS depende da permissão de localização e da compatibilidade do aparelho.",
-      image: "assets/vendas/app-corrida.webp",
+      image: "assets/vendas/atual-20261006/app-corrida.webp",
       alt: "Corrida com distância, tempo, ritmo e calorias"
     },
     {
       title: "Conquistas",
       description: "XP, medalhas e sequência valorizam a constância nos treinos presenciais e da consultoria.",
-      image: "assets/vendas/app-conquistas.webp",
+      image: "assets/vendas/atual-20261006/app-conquistas.webp",
       alt: "Tela de conquistas com experiência, medalhas e sequência de treinos"
     },
     {
       title: "Circuitos",
       description: "Relógio, voltas e movimentos para acompanhar o circuito e registrar o resultado.",
-      image: "assets/vendas/app-wod.webp",
+      image: "assets/vendas/atual-20261006/app-wod.webp",
       alt: "Circuito com relógio, voltas e movimentos no aplicativo do aluno"
+    },
+    {
+      title: "Alimentação",
+      description: "Plano, diário com fotos, trocas aprovadas, receitas e lista de compras. A rotina alimentar ao lado dos treinos, no mesmo app.",
+      image: "assets/vendas/atual-20261006/app-alimentacao.webp",
+      alt: "Alimentação no aplicativo do aluno com refeições do plano e acesso ao diário"
     }
   ];
 
@@ -431,9 +445,9 @@
   var journey = document.getElementById("journey");
   var sceneIndex = 0;
   var scenes = [
-    { image: "assets/vendas/painel-treinos.webp", alt: "Painel do personal para planejar e revisar treinos" },
-    { image: "assets/vendas/app-inicio-novo.webp", alt: "Treino do dia publicado no aplicativo do aluno" },
-    { image: "assets/vendas/painel-inicio.webp", alt: "Painel do personal para acompanhar alunos e próximas sessões" }
+    { image: "assets/vendas/atual-20261006/painel-treinos.webp", alt: "Painel do personal para planejar e revisar treinos" },
+    { image: "assets/vendas/atual-20261006/app-inicio-novo.webp", alt: "Treino do dia publicado no aplicativo do aluno" },
+    { image: "assets/vendas/atual-20261006/painel-inicio.webp", alt: "Painel do personal para acompanhar alunos e próximas sessões" }
   ];
   function selectScene(index) {
     sceneIndex = index;
