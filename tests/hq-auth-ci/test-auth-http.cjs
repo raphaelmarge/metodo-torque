@@ -555,6 +555,16 @@ async function main() {
   await require('./test-operacao-http.cjs')({ client, check, rpc, good, rejected, waitRPC,
     rest: (route, options) => request(REST, route, options),
     users, accountA, accountB, anonKey, serviceKey });
+  const billingDeps={ client, check, rpc, good, rejected, waitRPC,
+    rest:(route,options)=>request(REST,route,options),
+    createUser, sessionId: user => claims(user.token).session_id,
+    revokeSession: async user => {
+      const id=claims(user.token).session_id;
+      good(await request(AUTH, '/logout?scope=local', { token:user.token }));
+      assert.equal(await scalar('select exists(select 1 from auth.sessions where id=$1)',[id]),false);
+    }, anonKey, serviceKey, transport:'http-real-auth' };
+  await require('./test-personal-billing-http.cjs')(billingDeps);
+  await require('./test-personal-billing-access-http.cjs')(billingDeps);
   observe('scope', 'Direct official Auth + PostgREST only. Kong/Envoy gateway, hosted project configuration, SMTP, frontend browser, MFA and production are outside this run.');
   summary.status = 'pass'; console.log('PASS ' + summary.checks.length + ' real Auth/PostgREST HTTP groups');
 }
