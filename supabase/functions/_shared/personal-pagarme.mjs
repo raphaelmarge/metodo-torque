@@ -10,8 +10,19 @@ const ID = /^[A-Za-z0-9_-]{3,100}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const requireThat = (condition, error) => { if (!condition) throw new TypeError(error); };
 function time(value, label) {
-  const ms = typeof value === 'string' ? Date.parse(value) : NaN;
-  requireThat(Number.isFinite(ms) && /(?:Z|[+-]\d\d:\d\d)$/.test(value), label);
+  // Validar o calendário ANTES de Date.parse: ele normaliza 30/02 para março.
+  // O contrato usa ISO com segundos e fuso explícito, aceitando frações da API.
+  const parts = typeof value === 'string' && /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  requireThat(parts, label);
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText, , zoneHour, zoneMinute] = parts;
+  const year = Number(yearText), month = Number(monthText), day = Number(dayText);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  requireThat(month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1] &&
+    Number(hourText) <= 23 && Number(minuteText) <= 59 && Number(secondText) <= 59 &&
+    (zoneHour === undefined || (Number(zoneHour) <= 23 && Number(zoneMinute) <= 59)), label);
+  const ms = Date.parse(value);
+  requireThat(Number.isFinite(ms), label);
   return ms;
 }
 const iso = ms => new Date(ms).toISOString();
@@ -44,16 +55,22 @@ export function preparePagarmeSubscription({ account, plan, cardToken, attemptId
   requireThat(/^cus_[A-Za-z0-9]+$/.test(account.customerId), 'invalid_bound_customer');
   requireThat(UUID.test(attemptId), 'invalid_reserved_attempt');
   requireThat(/^token_[A-Za-z0-9]+$/.test(cardToken), 'invalid_card_token');
-  requireThat(/^plan_[A-Za-z0-9]+$/.test(plan?.id) && plan.currency === 'BRL' &&
+  requireThat(/^plan_[A-Za-z0-9]+$/.test(plan?.id) && plan.status === 'active' && plan.currency === 'BRL' &&
     plan.interval === 'month' && plan.interval_count === 1 && plan.billing_type === 'prepaid' &&
     (plan.trial_period_days == null || plan.trial_period_days === 0) &&
     Array.isArray(plan.payment_methods) && plan.payment_methods.includes('credit_card') &&
-    Array.isArray(plan.items) && plan.items.length === 1 && plan.items[0].quantity === 1 &&
+    Array.isArray(plan.items) && plan.items.length === 1 && plan.items[0]?.status === 'active' && plan.items[0].quantity === 1 &&
     plan.items[0].pricing_scheme?.price === BASE_PRICE_CENTS &&
     (plan.items[0].pricing_scheme.scheme_type == null || plan.items[0].pricing_scheme.scheme_type === 'unit'),
     'provider_plan_differs_from_offer');
   const schedule = billingSchedule(account.createdAt, serverNow);
   const quote = quoteFirstMonth(policy, attribution);
+  // O piso herdado do plano não pode aumentar nem a mensalidade nem o 1º ciclo
+  // com desconto. Ausência/null/zero representam plano sem piso adicional.
+  for (const minimum of [plan.minimum_price, plan.items[0].pricing_scheme.minimum_price]) {
+    requireThat(minimum == null || (Number.isSafeInteger(minimum) && minimum >= 0 &&
+      minimum <= quote.payableCents), 'provider_minimum_price_differs_from_offer');
+  }
   const body = { code: 'tp_' + attemptId, plan_id: plan.id, customer_id: account.customerId,
     payment_method: 'credit_card', card_token: cardToken, installments: 1,
     metadata: { product: 'torque_personal_saas', academia_id: account.academiaId,
@@ -85,12 +102,17 @@ export function inspectPagarmeInvoice({ account, subscription, invoice, charges,
   if (!['pending', 'paid', 'canceled', 'scheduled', 'failed'].includes(invoice.status)) return review('unknown_invoice_status');
   if (!Array.isArray(charges) || charges.length !== 1) return review('charge_reconciliation_required');
   const charge = charges[0];
-  if (!/^ch_[A-Za-z0-9]+$/.test(charge.id) || charge.invoice?.id !== invoice.id || charge.customer?.id !== account.customerId ||
+  if (!/^ch_[A-Za-z0-9]+$/.test(charge?.id) || charge.invoice?.id !== invoice.id || charge.customer?.id !== account.customerId ||
       charge.currency !== 'BRL' || charge.payment_method !== 'credit_card') return review('charge_binding_mismatch');
   if (charge.status === 'chargedback' || charge.status === 'refunded' ||
       (charge.refunded_amount != null && charge.refunded_amount !== 0) ||
       ['refunded', 'partial_refunded', 'partial_void', 'voided', 'waiting_cancellation', 'error_on_refunding'].includes(charge.last_transaction?.status))
     return review('refund_or_dispute');
+  if (!['pending', 'paid', 'canceled', 'processing', 'failed', 'overpaid', 'underpaid'].includes(charge.status))
+    return review('unknown_charge_status');
+  if (charge.status === 'overpaid' || charge.status === 'underpaid') return review('payment_amount_mismatch');
+  if (charge.status === 'paid' && charge.last_transaction?.status !== 'captured')
+    return review('payment_capture_not_confirmed');
   if (invoice.status !== 'paid' || charge.status !== 'paid') return { status: 'unpaid', paidThrough: null };
   if (charge.amount !== invoice.amount || charge.paid_amount !== invoice.amount || invoice.amount !== account.expectedInvoiceCents)
     return review('payment_amount_mismatch');
