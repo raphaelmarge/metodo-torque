@@ -12493,11 +12493,19 @@ async function contextoAppAluno(browser, html, options = {}) {
     document.getElementById("wpSalva").click();
     await new Promise((r) => setTimeout(r, 300));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const circuito = (st.treinosV2[j.id].wods || []).find((w) => w.nome === "WOD do sábado");
+    // O HTML completo cresce com fichas, imagens e estilos. Cortar os primeiros
+    // 250 mil caracteres podia excluir justamente o aquecimento do circuito.
+    // Inspecione sua folha real, sem aceitar texto de outro treino ou do script.
+    const app = new DOMParser().parseFromString(window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()), "text/html");
+    const comeca = Array.from(app.querySelectorAll("#cardWod [data-wodstart]"))
+      .find((el) => circuito && el.getAttribute("data-wodstart") === circuito.id);
+    const folha = comeca && comeca.closest("details[data-wi]");
     return {
       lista: document.getElementById("wpLista").textContent,
       wods: (st.treinosV2[j.id].wods || []).length,
       temBanco: document.querySelectorAll("#wpExs option").length,
-      appHtml: window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()).slice(0, 250000),
+      appHtml: folha ? folha.outerHTML : "",
     };
   });
   ok(profWod.temBanco > 500, "o campo de exercício busca no banco (" + profWod.temBanco + " opções)");
