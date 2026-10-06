@@ -193,7 +193,10 @@ self.MT_moduloConta = function (cfg) {
       }
       // conta sem ilha ainda: cria a ilha deste produto com o nome do studio/consultório
       var nomeIlha = (cfg.nomeIlha && cfg.nomeIlha()) || cfg.marca + " de " + (user.email || "conta").split("@")[0];
-      return sb.rpc("criar_academia", { p_nome_academia: nomeIlha, p_nome_membro: "" }).then(function (rr) {
+      // A marca é a configuração fixa da página, não a URL ou o perfil do usuário.
+      // Personal nasce tipado no servidor; os demais produtos mantêm seu cadastro.
+      var rpcCadastro = cfg.marca === "PERSONAL" ? "criar_personal" : "criar_academia";
+      return sb.rpc(rpcCadastro, { p_nome_academia: nomeIlha, p_nome_membro: "" }).then(function (rr) {
         if (rr.error) { div.hidden = false; erro("Não deu para criar sua conta: " + rr.error.message); return; }
         if (cfg.salvaNome) cfg.salvaNome(nomeIlha);
         return vincula(user, silencioso);

@@ -7,12 +7,21 @@ on:
       - assets/hq-*.js
       - supabase/hq-*.sql
       - supabase/releases/**
+      - supabase/functions/personal-billing*/**
+      - supabase/functions/_shared/personal-billing*.mjs
+      - supabase/functions/_shared/personal-pagarme.mjs
+      - supabase/functions/_shared/personal-sales.mjs
+      - supabase-setup.sql
+      - supabase/migrations/*confiabilidade_interna*.sql
+      - supabase/migrations/*onboarding_integridade_e_retorno_reservado*.sql
       - supabase/rollback/**
       - supabase/migrations/*hq_referrals*.sql
       - supabase/migrations/*personal_cortesia*.sql
       - supabase/migrations/*hq_operacao_estados_exportacao*.sql
       - supabase/migrations/*hq_suporte_legado_leitura*.sql
       - tests/test-personal-cortesia-sql.js
+      - tests/test-personal-saas-*.js
+      - tests/test-personal-billing*.js
       - tests/test-hq-*.js
       - tests/hq-auth-ci/**
       - tests/sql/**

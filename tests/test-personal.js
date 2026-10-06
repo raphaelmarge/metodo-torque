@@ -10647,7 +10647,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       rpc: (nome, args) => {
         (window.__rpcs = window.__rpcs || []).push([nome, args]);
         if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
-        if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
+        if (nome === "criar_personal") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
         return Promise.resolve({ data: null, error: null });
       },
     };
@@ -10668,11 +10668,11 @@ async function contextoAppAluno(browser, html, options = {}) {
   await g.waitForSelector("#gateModulo", { state: "hidden", timeout: 8000 });
   const gateInfo = await g.evaluate(() => ({
     signUp: window.__signUp && window.__signUp.email,
-    criou: (window.__rpcs || []).some((r) => r[0] === "criar_academia" && r[1] && r[1].p_nome_academia === "Studio Gate"),
+    criou: (window.__rpcs || []).some((r) => r[0] === "criar_personal" && r[1] && r[1].p_nome_academia === "Studio Gate"),
     acad: JSON.parse(localStorage.getItem("mtapp:academia") || "null"),
   }));
   ok(gateInfo.signUp === "novo@personal.com" && gateInfo.criou && gateInfo.acad && gateInfo.acad.id === "acad-gate",
-    "criar conta cadastra na nuvem e já cria a ilha com o nome do studio");
+    "criar conta cadastra na nuvem e cria a ilha tipada como Personal com o nome do studio");
   await g.waitForSelector("#telaAssinatura", { state: "visible", timeout: 5000 });
   ok(/R\$ 49\s*\/mês/.test(await g.textContent("#telaAssinatura")),
     "a oferta de assinatura aparece sozinha depois do cadastro, com o preço mensal de R$ 49");
