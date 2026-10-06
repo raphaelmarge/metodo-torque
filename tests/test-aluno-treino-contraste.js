@@ -80,6 +80,17 @@ async function contrast(page,selector){
           ok(rows.length>0&&rows.every(r=>r.visible&&r.text&&!r.hasImage&&r.ratio>=4.5),
             width+' claro '+selector+': '+rows.map(r=>r.ratio.toFixed(2)).join('/')+':1');
         }
+        if(sub==='ficha'){
+          const marker=p.locator('.p2ck').first();
+          ok(await marker.textContent()==='',width+' claro: parte 2 inicialmente desmarcada');
+          await marker.click();
+          const marked=await marker.evaluate(el=>({text:el.textContent,color:getComputedStyle(el).color,
+            background:getComputedStyle(el).backgroundColor,opacity:getComputedStyle(el.closest('.p2row')).opacity}));
+          ok(marked.text==='✓'&&marked.color==='rgb(11, 16, 32)'&&marked.background==='rgb(96, 165, 250)'&&marked.opacity==='0.55',
+            width+' claro: marcação preserva tinta escura e fundo/estado originais');
+          await marker.click();
+          ok(await marker.textContent()==='',width+' claro: segundo clique restaura item desmarcado');
+        }
         ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),width+' '+sub+': sem transbordar');
         if(process.env.EVIDENCE_DIR){fs.mkdirSync(process.env.EVIDENCE_DIR,{recursive:true});await p.screenshot({path:path.join(process.env.EVIDENCE_DIR,width+'-claro-'+sub+'.png'),fullPage:true,animations:'disabled'});}
       }

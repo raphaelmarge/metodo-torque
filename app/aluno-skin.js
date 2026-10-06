@@ -798,7 +798,7 @@ html.claro body.aluno-v793 #trMes{background:var(--one-card)!important;border-co
 html.claro body.aluno-v793 #trMes b,html.claro body.aluno-v793 #trRaioX h2{color:var(--one-text)!important}
 html.claro body.aluno-v793 #trMes span{color:var(--one-muted)!important}
 html.claro body.aluno-v793 .aqbox :is(summary,b),html.claro body.aluno-v793 .exrow :is(.tecchip,.ex-tecnica){color:#8b4300!important}
-html.claro body.aluno-v793 .p2box>div:first-child>span:first-child,html.claro body.aluno-v793 .p2box>div:first-child b,html.claro body.aluno-v793 .p2box .p2ck,html.claro body.aluno-v793 .p2row>b,html.claro body.aluno-v793 .p2box .tmrbtn{color:#24598a!important}
+html.claro body.aluno-v793 .p2box>div:first-child>span:first-child,html.claro body.aluno-v793 .p2box>div:first-child b,html.claro body.aluno-v793 .p2row>b,html.claro body.aluno-v793 .p2box .tmrbtn{color:#24598a!important}
 html.claro body.aluno-v793 #thHistory button.sec{background:var(--one-control);color:var(--one-text);border-color:var(--one-border)}
 html.claro body.aluno-v793 #wodHist .wpk,html.claro body.aluno-v793 #crLivre,html.claro body.aluno-v793 #crTela [style*='color:#6e6a78']{color:var(--one-muted)!important}
 html.claro body.aluno-v793 :is(#crGpsCard,#fcCard){background:var(--one-card)!important;border-color:var(--one-border)!important}
