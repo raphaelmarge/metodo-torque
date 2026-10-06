@@ -354,8 +354,8 @@ async function main(){
   // requests an update push, invitation or another external delivery.
   let prescribedStudentId,prescribedPackage,prescribedRun,prescribedCircuit,runPrescription,circuitPrescription;
   await check('the Personal prescribes running and circuit for a second pupil through the actual editor',async()=>{
-    operation='create second pupil';await personal.locator('[data-nav="alunos"]').click();
-    await personal.locator('#btnNovoAluno').click();await personal.locator('#aNome').fill('Aluno prescrição CI');await personal.locator('#aAdd').click();
+    operation='open second pupil registration';await personal.locator('#abas [data-a="alunos"]').click();
+    await personal.locator('#btnNovoAluno').click();operation='save second pupil';await personal.locator('#aNome').fill('Aluno prescrição CI');await personal.locator('#aAdd').click();
     await personal.locator('#naTreino').waitFor({state:'visible'});
     const saved=await until(studio,s=>s?.valor?.alunos?.some(a=>a.nome==='Aluno prescrição CI'));
     const student=saved.valor.alunos.find(a=>a.nome==='Aluno prescrição CI');prescribedStudentId=student.id;
