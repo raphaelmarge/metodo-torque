@@ -12713,13 +12713,9 @@ async function contextoAppAluno(browser, html, options = {}) {
       if (mmAntes == null) localStorage.removeItem("ptmarcas"); else localStorage.setItem("ptmarcas", mmAntes);
       if (cardioAntes == null) localStorage.removeItem("ptcardio"); else localStorage.setItem("ptcardio", cardioAntes);
       window.__recordes(); window.__pintaMarcas();
-      // (e) o post da Comunidade leva o treino DO DIA (Semana do aluno), não a ficha A
-      const plAntes = (typeof PLANO !== "undefined") ? PLANO : undefined;
-      const dia = String(new Date().getDay());
-      window.PLANO = {}; window.PLANO[dia] = { tp: "wod", i: 0, n: "Circuito do dia" };
-      out.postWod = window.__treinoHoje();
-      window.PLANO = {}; out.postDescanso = window.__treinoHoje();
-      window.PLANO = plAntes;
+      // (e) Comunidade é verificada abaixo em um pacote isolado com circuito real.
+      // Este app foi montado antes do cadastro de circuitos: não inventar um
+      // índice em PLANO nem alterar os limites que o builder derivou do pacote.
       // (f) baixar meus dados leva tudo
       const ex = window.__exportaDados();
       out.exporta = "fotos_progresso" in ex && "chat" in ex && "questionarios" in ex && "volume_por_treino" in ex && "termo_aceito" in ex &&
@@ -12732,6 +12728,34 @@ async function contextoAppAluno(browser, html, options = {}) {
         const s = b.getAttribute("data-msec"); return !ROT[s] || b.querySelector(".mgtit").textContent === ROT[s]; });
       return out;
     });
+    // BEGIN fixture canônica Comunidade: permite reproduzir só este trecho.
+    const htmlComunidade = await p.evaluate(() => {
+      const plano = {};
+      plano[String(new Date().getDay())] = { tp: "wod", i: 0, n: "Circuito do dia" };
+      return window.MT_APP_ALUNO.monta({ a: { id: "comunidade-fixture", nome: "Aluno sintético", appTokenP: "comunidade-fixture-token" },
+        studio: "Studio sintético", planoApp: plano,
+        fichasApp: [{ titulo: "Ficha A não programada", itens: [{ nome: "Exercício sintético", series: 1, reps: "8", descanso: 30 }] }],
+        wodsApp: [{ id: "circuito-fixture", nome: "Circuito do dia", tipo: "amrap", min: 10, movs: [{ q: "10", n: "Movimento sintético" }] }] });
+    });
+    const ctxComunidade = await contextoAppAluno(b, htmlComunidade);
+    let comunidade;
+    try {
+      await ctxComunidade.route("**/*", r => new URL(r.request().url()).pathname === "/comunidade-fixture.html"
+        ? r.fulfill({ contentType: "text/html", body: htmlComunidade }) : r.abort());
+      const pagina = await ctxComunidade.newPage();
+      await pagina.goto(BASE + "/comunidade-fixture.html", { waitUntil: "domcontentloaded" });
+      comunidade = await pagina.evaluate(() => {
+        const out = { postWod: window.__treinoHoje(), circuitoExiste: !!document.querySelector('[data-wi="0"]') };
+        window.PLANO_DATAS = {}; window.PLANO_DATAS[isoHj()] = [];
+        out.descansoPorData = window.__treinoHoje();
+        window.PLANO_DATAS = {}; window.PLANO = {};
+        out.postDescanso = window.__treinoHoje();
+        window.PLANO[String(new Date().getDay())] = { tp: "wod", i: 1, n: "Circuito inexistente" };
+        out.indiceAusente = window.__treinoHoje();
+        return out;
+      });
+    } finally { await ctxComunidade.close(); }
+    // END fixture canônica Comunidade.
     ok(r751.hora, "💬 v751: a hora da mensagem é a LOCAL (o criado chega em UTC do Supabase)");
     ok(r751.rola && r751.ficouEmCima && r751.desceu,
       "💬 v751: repintar sem mensagem nova não puxa a rolagem de quem lê o histórico — mensagem nova, sim");
@@ -12745,8 +12769,10 @@ async function contextoAppAluno(browser, html, options = {}) {
       "🏆 v767: com mais de três, entra o atalho 'Ver as N em Cargas' (a lista inteira mora num lugar só) e o cabeçalho conta igual nas duas abas");
     ok(r751.formAbriu && r751.avisouVazio && r751.salvou && r751.apagou,
       "🏅 v751: marcar na mão é formulário dentro do card (valida, salva) e cada marca tem o ✕");
-    ok(r751.postWod === "Circuito do dia" && r751.postDescanso === "",
+    ok(comunidade.circuitoExiste && comunidade.postWod === "Circuito do dia" && comunidade.postDescanso === "",
       "👥 v751: o post da Comunidade leva o treino do DIA pela Semana do aluno (e nada no dia de descanso)");
+    ok(comunidade.descansoPorData === "" && comunidade.indiceAusente === "",
+      "👥 o post respeita descanso por data e não inventa circuito ausente do pacote");
     ok(r751.exporta, "📦 v751: 'Baixar meus dados' leva fotos, chat, questionários, volume, termo e todas as chaves pt*");
     ok(r751.menu, "☰ v751: a gaveta usa o mesmo rótulo da barra e não repete a aba fixa Treinos");
     const foto751 = await pApp.evaluate(async () => {
