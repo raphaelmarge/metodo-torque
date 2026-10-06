@@ -791,5 +791,19 @@ html.claro #guiaBox.player-template:not(.festa){--gpt-bg:#f8f8fb;--gpt-card:#fff
   css += "body.aluno-v793 [data-th-new-muscle]{background:transparent!important;color:var(--corc)!important;border:1px solid var(--corc)!important;box-shadow:none!important}html.claro body.aluno-v793 [data-th-new-muscle]{color:var(--cor)!important;border-color:var(--cor)!important}";
   css += "body.aluno-v793 #heroCarr .al-outro-treino{background:transparent!important;border:1px solid currentColor!important;box-shadow:none!important}body.aluno-v793 #lojaCard>div{flex-wrap:wrap}body.aluno-v793 #lojaCard .lojabt{min-height:44px;max-width:100%;white-space:normal}#lojaDestino,#lojaStatus,#agPedidoStatus{font-size:13px;line-height:1.5}#demoPersonalConvite .btnx{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}#demoPersonalConvite p,.me-range{display:block;font-size:12px;line-height:1.5;color:var(--one-muted,var(--corcl1));overflow-wrap:anywhere}";
   css += "@media(max-width:800px){body.aluno-v793 #navApp[data-items='5'] [data-msec='alimentacao']{flex:1.45!important}}";
+  // Contraste no tema claro: os cartões de treino mantêm o layout e adaptam
+  // também os fundos/acentos herdados da paleta escura. !important vence o inline legado.
+  css += `
+html.claro body.aluno-v793 #trMes{background:var(--one-card)!important;border-color:var(--one-border)!important}
+html.claro body.aluno-v793 #trMes b,html.claro body.aluno-v793 #trRaioX h2{color:var(--one-text)!important}
+html.claro body.aluno-v793 #trMes span{color:var(--one-muted)!important}
+html.claro body.aluno-v793 .aqbox :is(summary,b),html.claro body.aluno-v793 .exrow :is(.tecchip,.ex-tecnica){color:#8b4300!important}
+html.claro body.aluno-v793 .p2box>div:first-child>span:first-child,html.claro body.aluno-v793 .p2box>div:first-child b,html.claro body.aluno-v793 .p2box .p2ck,html.claro body.aluno-v793 .p2row>b,html.claro body.aluno-v793 .p2box .tmrbtn{color:#24598a!important}
+html.claro body.aluno-v793 #thHistory button.sec{background:var(--one-control);color:var(--one-text);border-color:var(--one-border)}
+html.claro body.aluno-v793 #wodHist .wpk,html.claro body.aluno-v793 #crLivre,html.claro body.aluno-v793 #crTela [style*='color:#6e6a78']{color:var(--one-muted)!important}
+html.claro body.aluno-v793 :is(#crGpsCard,#fcCard){background:var(--one-card)!important;border-color:var(--one-border)!important}
+html.claro body.aluno-v793 #crSinal{background:var(--one-control)}
+html.claro body.aluno-v793 #crSinal[data-estado=fraco]{background:#fff0d9}
+`;
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

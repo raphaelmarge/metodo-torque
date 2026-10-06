@@ -3360,7 +3360,7 @@
               "<div style='padding:0 16px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? "<ol class='presc-series' aria-label='Prescrição por série'>" + sd.map(function(s,i){return "<li><b>"+(i+1)+"ª série</b><span>"+esc(s.reps)+(/^[0-9\s,./–-]+$/.test(s.reps)?" reps":"")+" · "+s.descanso+" s"+(s.carga!=null?" · "+s.carga+" kg":"")+"</span></li>";}).join("")+"</ol>" : "") +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
-              (TECS_APP[it.tec] ? "<div style='color:#fdba74;margin-bottom:8px;'><b>" + esc(TECS_APP[it.tec][0]) + "</b> — " + esc(TECS_APP[it.tec][1]) + "</div>" : "") +
+              (TECS_APP[it.tec] ? "<div class='ex-tecnica' style='color:#fdba74;margin-bottom:8px;'><b>" + esc(TECS_APP[it.tec][0]) + "</b> — " + esc(TECS_APP[it.tec][1]) + "</div>" : "") +
               (it.obs ? "<div style='color:var(--corc);margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               (it.video ? "<button class='vidbtn' data-v='" + esc(it.video) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" : "") +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
@@ -3390,7 +3390,7 @@
         return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
       }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal.</div>") + "</div></div>" +
       // Raio-X no desenho da tela 25: grupo à esquerda, barra no meio, número à direita
-      (raioX.length ? "<div class='cardx'><div style='background:var(--bg1);border-radius:22px;padding:16px 18px;'>" +
+      (raioX.length ? "<div class='cardx' id='trRaioX'><div style='background:var(--bg1);border-radius:22px;padding:16px 18px;'>" +
         "<h2 style='margin-bottom:2px;letter-spacing:0;font-size:17px;color:#fff;text-transform:none;font-weight:800;'>Raio-X do treino</h2>" +
         "<div style='font-size:12.5px;color:#8a8695;margin-bottom:12px;'>séries por grupo, somando as " + (fichasApp ? fichasApp.length : 0) + " fichas</div>" +
         (function () {
@@ -3458,7 +3458,7 @@
           "<div style='padding:0 18px 18px;'>" +
           (c.obs ? "<div style='font-size:13px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;'>" + esc(c.obs) + "</div>" : "") +
           "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:10px;'>Começar</button></div></details>";
-      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:14px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
+      }).join("") + "<div id='crLivre' style='font-size:11.5px;color:#6e6a78;margin:14px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
       "<div id='crTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       /* v764: o pedido de GPS em dois passos — este card explica ANTES, e a
        * janelinha do navegador so aparece no toque em "Ligar o GPS". */
