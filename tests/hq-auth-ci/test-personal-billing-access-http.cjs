@@ -21,23 +21,31 @@ module.exports=async function({client,executeScript,check,rpc,rest,good,rejected
   await check('billing access: canonical application functions install on disposable table fixtures',async()=>{
     assert.equal(await scalar("select to_regclass('public.dados') is null and to_regclass('public.app_aluno') is null"),true);
     await run(`alter table public.membros add column if not exists nome text not null default '';
-      create table public.dados(academia_id uuid references public.academias(id),chave text,valor jsonb,atualizado timestamptz default clock_timestamp(),primary key(academia_id,chave));
-      create table public.app_aluno(token text primary key,academia_id uuid references public.academias(id),dados jsonb,retorno jsonb,login text,senha text,atualizado timestamptz default now(),revogado_em timestamptz);
+      alter table public.membros drop constraint if exists membros_academia_id_fkey;
+      alter table public.membros add constraint membros_academia_id_fkey foreign key(academia_id) references public.academias(id) on delete cascade;
+      alter table public.saas_clientes drop constraint if exists saas_clientes_academia_id_fkey;
+      alter table public.saas_clientes add constraint saas_clientes_academia_id_fkey foreign key(academia_id) references public.academias(id) on delete cascade;
+      create table public.dados(academia_id uuid references public.academias(id) on delete cascade,chave text,valor jsonb,atualizado timestamptz default clock_timestamp(),primary key(academia_id,chave));
+      create table public.app_aluno(token text primary key,academia_id uuid references public.academias(id) on delete cascade,dados jsonb,retorno jsonb,login text,senha text,atualizado timestamptz default now(),revogado_em timestamptz);
+      create table public.dados_hist(academia_id uuid,valor jsonb);create table public.app_aluno_hist(academia_id uuid,dados jsonb);
       create table public.push_subs(token text);
       alter table public.dados enable row level security;alter table public.app_aluno enable row level security;
       create policy dados_membros on public.dados for all to authenticated using(academia_id in(select public.minhas_academias())) with check(academia_id in(select public.minhas_academias()));
       create policy app_aluno_membros on public.app_aluno for all to authenticated using(academia_id in(select public.minhas_academias())) with check(academia_id in(select public.minhas_academias()));
       grant select,insert,update,delete on public.dados,public.app_aluno to authenticated;`);
     const setup=read('supabase-setup.sql');
-    for(const name of ['aluno_revoga_acesso','app_aluno_busca','app_retorno_mescla'])await run(extract(setup,name));
+    for(const name of ['aluno_revoga_acesso','app_aluno_busca','app_retorno_mescla','app_hist_apaga_academia','excluir_minha_conta'])await run(extract(setup,name));
     await run(extract(read('supabase/migrations/20260909190000_onboarding_integridade_e_retorno_reservado.sql'),'app_aluno_devolve'));
     await run(`revoke all on function public.aluno_revoga_acesso(text,boolean) from public,anon;
       grant execute on function public.aluno_revoga_acesso(text,boolean) to authenticated;
+      revoke all on function public.excluir_minha_conta(),public.app_hist_apaga_academia(uuid) from public,anon;
+      grant execute on function public.excluir_minha_conta() to authenticated;
       revoke all on function public.app_aluno_busca(text),public.app_aluno_devolve(text,jsonb) from public;
       grant execute on function public.app_aluno_busca(text),public.app_aluno_devolve(text,jsonb) to anon,authenticated;`);
     await run(read('supabase/migrations/20260926232430_confiabilidade_interna.sql'));
     for(const k of ['a','b']){
       await client.query("insert into public.academias(id,nome,criada,assinatura_status) values($1,$2,now()-interval '40 days',$3)",[ids[k],'Synthetic access '+k,k==='b'?'ativa':'trial']);
+      await client.query("insert into public.saas_clientes(academia_id,tipo,status) values($1,'personal','trial')",[ids[k]]);
       await client.query("insert into public.membros(academia_id,user_id,papel,nome) values($1,$2,'dono','Synthetic owner')",[ids[k],users[k].id]);
       await client.query("insert into public.app_aluno(token,academia_id,dados,retorno,login,senha) values($1,$2,'{\"workout\":true}','{\"sessions\":3}','synthetic-login','synthetic-hash')",[tokens[k],ids[k]]);
       await client.query("insert into public.dados(academia_id,chave,valor) values($1,'mtapp:ptStudio',$2)",[ids[k],docs(k)]);
@@ -100,11 +108,51 @@ module.exports=async function({client,executeScript,check,rpc,rest,good,rejected
     assert.equal(good(await rpc(users.a,'minha_assinatura')).travado,true);
     rejected(await patch(users.a,'a','Expired courtesy cannot write'),'PT402');
   });
+  await check('billing access: administrative denial overrides a paid period in the public subscription view',async()=>{
+    await client.query("insert into personal_billing.invoices(academia_id,id,charge_id,status,amount,period_start,period_end,paid_at) values($1,'in_Access','ch_Access','paid',4990,now()-interval '1 day',now()+interval '29 days',now()-interval '1 hour')",[ids.a]);
+    await client.query("update public.academias set assinatura_status='bloqueada' where id=$1",[ids.a]);
+    const blocked=good(await rpc(users.a,'minha_assinatura'));
+    assert.equal(blocked.travado,true);assert.equal(blocked.status,'bloqueada');
+    rejected(await patch(users.a,'a','Paid cannot override administrator block'),'PT402');
+  });
+  await check('billing access: unbound blocked states and expired courtesy retain their server restriction',async()=>{
+    for(const state of ['cortesia','bloqueada','cancelada','vencida']){
+      await client.query("update public.academias set assinatura_status=$1,assinatura_vence=now()-interval '1 second' where id=$2",[state,ids.b]);
+      assert.equal(good(await rpc(users.b,'minha_assinatura')).travado,true);
+      rejected(await req(users.b,'dados','b','PATCH',{valor:docs('b')}),'PT402');
+      rejected(await req(users.b,'app_aluno','b','PATCH',{dados:{workout:'Must not publish'}}),'PT402');
+    }
+    await client.query("update public.academias set assinatura_status='atrasada' where id=$1",[ids.b]);
+    assert.equal(good(await rpc(users.b,'minha_assinatura')).travado,false);
+    good(await req(users.b,'dados','b','PATCH',{valor:docs('b')}));
+  });
+  await check('billing access: deleting the local studio cannot erase the expired Personal product scope',async()=>{
+    await client.query("update public.academias set assinatura_status='trial' where id=$1",[ids.b]);
+    good(await req(users.b,'dados','b','DELETE'));
+    rejected(await req(users.b,'app_aluno','b','PATCH',{dados:{workout:'Must not publish'}}),'PT402');
+    assert.equal(good(await service('status',own('b'))).status.managed,false);
+    // Restore only the disposable fixture for the subsequent revoked-session test.
+    await client.query("update public.academias set assinatura_status='ativa' where id=$1",[ids.b]);
+    await client.query("insert into public.dados(academia_id,chave,valor) values($1,'mtapp:ptStudio',$2)",[ids.b,docs('b')]);
+  });
   await check('billing access: account cleanup remains allowed and revoked session cannot mutate data',async()=>{
     good(await req(users.a,'app_aluno','a','DELETE'));good(await req(users.a,'dados','a','DELETE'));
     assert.equal(await scalar('select count(*)::int from public.dados where academia_id=$1',[ids.a]),0);
     await revokeSession(users.b);
     assert.deepEqual(good(await req(users.b,'dados','b')),[]);
     rejected(await rpc(users.b,'dados_personal_patch',{p_academia:ids.b,p_operacoes:[]}),'PT409');
+  });
+  await check('billing access: canonical account deletion removes Auth and product data while retaining cancellation queue',async()=>{
+    await client.query("insert into public.dados_hist values($1,'{\"private\":true}');",[ids.a]);
+    await client.query("insert into public.app_aluno_hist values($1,'{\"private\":true}');",[ids.a]);
+    rejected(await rpc(anonKey,'excluir_minha_conta'),'42501');
+    const result=good(await rpc(users.a,'excluir_minha_conta'));assert.equal(result.ok,true);assert.equal(result.ilhas_apagadas,1);
+    assert.equal(await scalar('select count(*)::int from public.academias where id=$1',[ids.a]),0);
+    assert.equal(await scalar('select count(*)::int from auth.users where id=$1',[users.a.id]),0);
+    for(const table of ['membros','dados','app_aluno','dados_hist','app_aluno_hist'])assert.equal(await scalar('select count(*)::int from public.'+table+' where academia_id=$1',[ids.a]),0);
+    const row=(await client.query('select * from personal_billing.accounts where academia_id=$1',[ids.a])).rows[0];
+    assert(row.deleted_at);assert.equal(row.state,'cancel_pending');assert.equal(row.lease_id,null);
+    const due=good(await service('due',scope));assert(due.accounts.some(x=>x.academiaId===ids.a));
+    rejected(await service('status',own('a')),'42501');
   });
 };

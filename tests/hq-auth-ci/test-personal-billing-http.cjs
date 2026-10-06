@@ -29,6 +29,7 @@ module.exports=async function({client,executeScript,check,rpc,good,rejected,wait
     assert.deepEqual((await client.query('select * from public.academias order by id')).rows,original.rows);
     assert.equal(await scalar("select pg_get_functiondef('public.minha_assinatura()'::regprocedure)"),priorFunction);
     for(const key of ['a','b','legacy'])await client.query("insert into public.academias(id,nome,criada,assinatura_status) values($1,$2,now()-interval '40 days','trial')",[ids[key],'Synthetic billing '+key]);
+    for(const id of Object.values(ids))await client.query("insert into public.saas_clientes(academia_id,tipo,status) values($1,'personal','trial')",[id]);
     await client.query("insert into public.membros(academia_id,user_id,papel) values($1,$2,'dono'),($3,$4,'dono'),($5,$2,'dono'),($1,$6,'funcionario')",[ids.a,users.a.id,ids.b,users.b.id,ids.legacy,users.staff.id]);
   });
   await check('billing: direct anonymous/authenticated API roles cannot forge service actor or touch ledger',async()=>{
@@ -50,6 +51,17 @@ module.exports=async function({client,executeScript,check,rpc,good,rejected,wait
     for(const forged of [null,{}, {userId:users.a.id,sessionId:sessionId(users.b)}, {userId:users.a.id,sessionId:crypto.randomUUID()}])
       rejected(await call('status',{...own(),actor:forged}),'42501');
   });
+  await check('billing: other products and missing product metadata cannot start a Personal checkout',async()=>{
+    for(const kind of ['academia','studio','box','outro','nutri']){
+      await client.query('update public.saas_clientes set tipo=$1 where academia_id=$2',[kind,ids.b]);
+      assert.deepEqual(good(await call('accounts',{actor:actor(users.b)})).accounts,[]);
+      rejected(await call('reserve',{...own('b'),attemptId:crypto.randomUUID(),leaseId:crypto.randomUUID()}),'42501');
+    }
+    await client.query('delete from public.saas_clientes where academia_id=$1',[ids.b]);
+    rejected(await call('reserve',{...own('b'),attemptId:crypto.randomUUID(),leaseId:crypto.randomUUID()}),'42501');
+    await client.query("insert into public.saas_clientes(academia_id,tipo,status) values($1,'personal','trial')",[ids.b]);
+    assert.equal(await scalar('select count(*)::int from personal_billing.accounts'),0);
+  });
   await check('billing: legacy lifetime, courtesy and blocked accounts preserve effective access',async()=>{
     for(const [state,end,expected,young] of [
       ['vitalicia',null,true,false],['ativa',"now()-interval '1 day'",true,false],['atrasada',null,true,false],
@@ -59,6 +71,7 @@ module.exports=async function({client,executeScript,check,rpc,good,rejected,wait
       await client.query('update public.academias set assinatura_status=$1,assinatura_vence='+(end||'null')+',criada=now()-interval \''+(young?'1':'40')+' days\' where id=$2',[state,ids.legacy]);
       const s=await status('legacy');assert.equal(s.managed,false);assert.equal(s.accessActive,expected,state);
       if(state==='vitalicia'){assert.equal(s.accessKind,'lifetime');assert.equal(s.accessUntil,null);}
+      rejected(await call('reserve',{...own('legacy'),attemptId:crypto.randomUUID(),leaseId:crypto.randomUUID()}));
     }
   });
   await check('billing: 14-day trial and separate 3-day grace derive only from account creation',async()=>{
@@ -111,11 +124,18 @@ module.exports=async function({client,executeScript,check,rpc,good,rejected,wait
   await check('billing: confirmed paid period expires on server time without a webhook',async()=>{
     const paid=good(await commit(lid,[invoice]));assert.equal(paid.accessActive,true);assert.equal(paid.state,'paid');
     assert.equal(paid.canCancel,true);
+    await client.query("update public.academias set assinatura_status='bloqueada' where id=$1",[ids.a]);
+    const blocked=await status();assert.equal(blocked.accessActive,false);assert.equal(blocked.accessKind,'blocked');
+    await client.query("update public.academias set assinatura_status='trial' where id=$1",[ids.a]);
+    assert.equal((await status()).accessActive,true);
     await client.query("update personal_billing.invoices set period_end=now()-interval '1 second' where academia_id=$1",[ids.a]);
     const expired=await status();assert.equal(expired.accessActive,false);assert.equal(expired.state,'expired');
     await client.query('update personal_billing.invoices set period_end=$1 where academia_id=$2',[invoice.periodEnd,ids.a]);
   });
   await check('billing: cancel pending is honest and canceled renewal keeps only its paid period',async()=>{
+    await client.query("update public.saas_clientes set tipo='outro' where academia_id=$1",[ids.a]);
+    assert(good(await call('accounts',{actor:actor(users.a)})).accounts.some(x=>x.id===ids.a));
+    assert.equal((await status()).canCancel,true);
     lid=crypto.randomUUID();good(await call('cancel_request',{...own(),leaseId:lid}));
     assert.equal((await status()).state,'cancel_pending');assert.equal((await status()).renewalCanceled,false);
     const canceled=good(await commit(lid,[invoice],{subscriptionStatus:'canceled'}));
@@ -123,6 +143,7 @@ module.exports=async function({client,executeScript,check,rpc,good,rejected,wait
     assert.equal(canceled.canCancel,false);
     lid=await lease();const old=good(await commit(lid,[invoice]));assert.equal(old.renewalCanceled,true);
     assert.equal(Date.parse(old.paidThrough),Date.parse(invoice.periodEnd));
+    await client.query("update public.saas_clientes set tipo='personal' where academia_id=$1",[ids.a]);
   });
   await check('billing: event replay is unique and payload reuse cannot replace its meaning',async()=>{
     const e={eventId:'evt_Fixture',fingerprint:'a'.repeat(64),resourceKind:'invoice',resourceId:invoice.id};

@@ -565,6 +565,7 @@ async function main() {
     }, anonKey, serviceKey, transport:'http-real-auth' };
   await require('./test-personal-billing-http.cjs')(billingDeps);
   await require('./test-personal-billing-access-http.cjs')(billingDeps);
+  await require('./test-personal-signup-http.cjs')(billingDeps);
   observe('scope', 'Direct official Auth + PostgREST only. Kong/Envoy gateway, hosted project configuration, SMTP, frontend browser, MFA and production are outside this run.');
   summary.status = 'pass'; console.log('PASS ' + summary.checks.length + ' real Auth/PostgREST HTTP groups');
 }
