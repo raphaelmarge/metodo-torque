@@ -20,6 +20,8 @@ function ok(value, label) { assert.ok(value, label); checks++; console.log('OK '
 async function fixture(browser, demo) {
   const ctx = await browser.newContext({ viewport:{width:390,height:900}, timezoneId:'America/Sao_Paulo', serviceWorkers:'block' });
   const state = { fail:false, calls:[], records:{}, external:[], errors:[] };
+  let finishInitialRead;
+  state.initialRead = new Promise(resolve=>{finishInitialRead=resolve;});
   let html = MT_APP_ALUNO.monta(D);
   if (demo) html = html.replace(/localStorage/g,'__demoLS').replace('<head>', '<head>' +
     fs.readFileSync(path.join(__dirname,'../tools/demo-aluno/demo-bloco.html'),'utf8'));
@@ -32,6 +34,7 @@ async function fixture(browser, demo) {
     let value = {ok:true};
     if (fn === 'app_nutricao_estado') value = {ok:true,nutricao:{v:1,registros:state.records}};
     if (fn === 'app_nutricao_salva') {
+      if (state.retryGate) await state.retryGate;
       if (state.fail) value = {erro:'Falha fictícia'};
       else { for (const r of body.p_registros) state.records[r.id]=r; value={ok:true,nutricao:{v:1,registros:state.records}}; }
     }
@@ -39,7 +42,8 @@ async function fixture(browser, demo) {
     if (fn === 'app_treino_eventos_grava') value = {ok:true,ids:body.p_eventos.map(e=>e.id)};
     if (fn === 'app_agenda_lista' || fn === 'app_chat_lista') value = [];
     if (fn === 'app_aluno_busca') value = null;
-    return route.fulfill({contentType:'application/json',body:JSON.stringify(value)});
+    await route.fulfill({contentType:'application/json',body:JSON.stringify(value)});
+    if (fn === 'app_nutricao_estado') finishInitialRead();
   });
   const p = await ctx.newPage(); p.on('pageerror',e=>state.errors.push(e.message));
   await p.clock.setFixedTime(new Date('2026-10-06T12:00:00Z'));
@@ -61,22 +65,41 @@ async function measureContrast(p) {
   try {
     const real=await fixture(browser,false);
     try {
-      await Promise.all([real.p.waitForResponse(r=>r.url().endsWith('/app_nutricao_estado')),
-        real.p.evaluate(()=>window.dispatchEvent(new Event('online')))]);
+      // Consumir a consulta automática de 1200 ms antes de criar uma pendência.
+      // Um evento online adicional deixava a consulta original competir com a retentativa.
+      await new Promise((resolve,reject)=>{
+        const timeout=setTimeout(()=>reject(Error('Consulta inicial não respondeu.')),10000);
+        real.state.initialRead.then(()=>{clearTimeout(timeout);resolve();});
+      });
       await real.p.waitForFunction(()=>document.getElementById('ntpSync').textContent==='Alimentação sincronizada.');
       ok(real.state.calls.includes('app_nutricao_estado'),'produção mantém confirmação após resposta real do contrato, aqui simulada');
       real.state.fail=true; await real.p.locator('[data-ntp-comi="refeicao"]').click();
-      await real.p.evaluate(()=>window.__nutriAluno.sync());
+      // Deixar o debounce real de 700 ms tentar uma única vez; chamar sync() aqui
+      // não cancelava esse timer e criava uma segunda tentativa concorrente.
       await real.p.waitForFunction(()=>document.getElementById('ntpSync').textContent.includes('Falha fictícia'));
       ok((await real.p.locator('#ntpSync').innerText()).includes('aguardando envio'),'falha real mantém registro pendente e não informa simulação ou sucesso');
       ok(await real.p.locator('#ntpTentar').isVisible(),'produção oferece retentativa quando o envio falha');
       ok(await real.p.evaluate(()=>Object.keys(__nutriAluno.estado().registros).length===1),'falha de envio preserva a refeição no aparelho');
-      real.state.fail=false; await real.p.locator('#ntpTentar').click();
+      const beforeRetry=real.state.calls.filter(fn=>fn==='app_nutricao_salva').length;
+      ok(beforeRetry===1,'falha veio de uma única tentativa automática já encerrada');
+      await real.p.evaluate(()=>document.getElementById('ntpTentar').addEventListener('click',e=>{
+        window.__trustedRetryClick=e.isTrusted;
+      },{once:true}));
+      real.state.retryGate=new Promise(resolve=>{real.state.releaseRetry=resolve;});
+      real.state.fail=false;
+      await Promise.all([real.p.waitForRequest(r=>r.url().endsWith('/app_nutricao_salva')),
+        real.p.locator('#ntpTentar').click()]);
+      ok(await real.p.evaluate(()=>window.__trustedRetryClick===true) &&
+        real.state.calls.filter(fn=>fn==='app_nutricao_salva').length===beforeRetry+1,
+        'clique real do usuário iniciou exatamente a próxima tentativa');
+      ok(await real.p.locator('#ntpTentar').isDisabled() && Object.keys(real.state.records).length===0,
+        'resposta controlada mantém envio em andamento sem fabricar confirmação');
+      real.state.releaseRetry();
       await real.p.waitForFunction(()=>document.getElementById('ntpSync').textContent==='Alimentação sincronizada.');
       ok(Object.keys(real.state.records).length===1,'retentativa confirma o mesmo registro no servidor simulado');
       ok(!await real.p.locator('#ntpTentar').isVisible(),'confirmação real oculta retentativa sem negar o sucesso');
       ok(real.state.errors.length===0,'produção sintética sem erro JavaScript');
-    } finally { await real.ctx.close(); }
+    } finally { if(real.state.releaseRetry)real.state.releaseRetry(); await real.ctx.close(); }
     const demo=await fixture(browser,true);
     try {
       ok(/Demonstração.*simulada.*sem envio ao personal/.test(await demo.p.locator('#ntpSync').innerText()),'demo informa simulação na alimentação');
