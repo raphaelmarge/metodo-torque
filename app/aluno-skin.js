@@ -201,7 +201,7 @@
   css += ".gsecrow{flex-wrap:wrap;gap:8px}.gsecrow button,.altbtn,.ntSalva{min-height:44px;font-size:14px}.gtit{font-size:clamp(26px,7vw,36px);line-height:1.08}.gtiles{gap:10px}.gtile{min-height:88px}";
   css += ".ac-sync,.ac-resume,.ac-evolucao{font-size:14px;line-height:1.55;color:#c9c4d4}.ac-sync,.ac-resume{margin:16px 20px;padding:14px 16px;background:var(--bg4);border:1px solid var(--bg11);border-radius:16px}.ac-sync button{font:inherit;min-height:44px;border:0;background:none;color:var(--corc);text-decoration:underline}.ac-resume span{display:block;margin:6px 0 12px}.ac-resume b{font-size:18px;color:#fff}.ac-resume[hidden]{display:none!important}.ac-sync[data-estado=enviando]{border-color:var(--cor)}";
   css += ".ac-feedback{background:var(--bg2);color:#fff;border:1px solid var(--bg11);border-radius:20px;padding:20px;width:min(440px,calc(100vw - 24px));max-height:85dvh;overflow:auto}.ac-feedback::backdrop{background:rgba(0,0,0,.7)}.ac-feedback h2{font-size:22px}.ac-feedback label{display:block;font-size:15px}.ac-feedback textarea{display:block;width:100%;font:inherit;font-size:16px;margin:12px 0}.ac-feedback button{display:block;width:100%;margin-top:12px}.ac-feedback p{font-size:14px;line-height:1.5}";
-  css += "html.claro .ggrupo,html.claro .gtecl,html.claro .gdica,html.claro .gprox,html.claro .guvrow,html.claro .grelo,html.claro #gProg,html.claro #gReloTot{color:#625b70}html.claro .ac-sync,html.claro .ac-resume,html.claro .ac-evolucao{color:#51495e}html.claro .ac-resume b{color:#211b2c}html.claro .ac-feedback{background:#fff;color:#211b2c}";
+  css += "html.claro .ggrupo,html.claro .gtecl,html.claro .gdica,html.claro .gprox,html.claro .guvrow,html.claro .grelo,html.claro #gProg,html.claro #gReloTot{color:#625b70}html.claro .ac-sync,html.claro .ac-resume,html.claro .ac-evolucao{color:#51495e}html.claro .ac-resume{background:#fff;border-color:rgba(50,35,70,.16)}html.claro .ac-resume b{color:#211b2c}html.claro .ac-feedback{background:#fff;color:#211b2c}";
   css += ":focus-visible{outline:3px solid var(--corc);outline-offset:3px}@media(min-width:1100px){body{max-width:600px!important}#navApp,#menuApp{max-width:600px!important}.cardx{margin-left:28px;margin-right:28px}}@media(prefers-reduced-motion:reduce){.ac-resume,.ac-feedback{animation:none;scroll-behavior:auto}}";
   // v778: recordes recolhidos por padrão; summary mantém teclado e leitor de tela nativos.
   css += ".rec-detalhes>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;cursor:pointer;list-style:none;font-size:14px;font-weight:800}.rec-detalhes>summary::-webkit-details-marker{display:none}.rec-detalhes>summary::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 3px 4px 0;flex:none}.rec-detalhes[open]>summary::after{transform:rotate(225deg);margin-bottom:-4px}.rec-lista{padding-bottom:8px}";
@@ -788,6 +788,22 @@ html.claro #guiaBox.player-template:not(.festa){--gpt-bg:#f8f8fb;--gpt-card:#fff
 @media(max-height:600px){#guiaBox.player-template:focus-within>.gpt-top{display:none}#guiaBox.player-template #gCard{padding-bottom:8px!important}#guiaBox.player-template .gpt-confirm-help{display:none}#guiaBox.player-template>.gpt-rest-prescription{padding:5px 0;font-size:11px}#guiaBox.player-template>#gPe{padding-bottom:max(6px,env(safe-area-inset-bottom,0px))!important}#guiaBox.player-template #gResta{max-height:30dvh}}
 `;
   // Cinco atalhos visíveis: espaço extra para o nome completo, sem reduzir o toque.
+  css += "body.aluno-v793 [data-th-new-muscle]{background:transparent!important;color:var(--corc)!important;border:1px solid var(--corc)!important;box-shadow:none!important}html.claro body.aluno-v793 [data-th-new-muscle]{color:var(--cor)!important;border-color:var(--cor)!important}";
+  css += "body.aluno-v793 #heroCarr .al-outro-treino{background:transparent!important;border:1px solid currentColor!important;box-shadow:none!important}body.aluno-v793 #lojaCard>div{flex-wrap:wrap}body.aluno-v793 #lojaCard .lojabt{min-height:44px;max-width:100%;white-space:normal}#lojaDestino,#lojaStatus,#agPedidoStatus{font-size:13px;line-height:1.5}#demoPersonalConvite .btnx{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}#demoPersonalConvite p,.me-range{display:block;font-size:12px;line-height:1.5;color:var(--one-muted,var(--corcl1));overflow-wrap:anywhere}";
   css += "@media(max-width:800px){body.aluno-v793 #navApp[data-items='5'] [data-msec='alimentacao']{flex:1.45!important}}";
+  // Contraste no tema claro: os cartões de treino mantêm o layout e adaptam
+  // também os fundos/acentos herdados da paleta escura. !important vence o inline legado.
+  css += `
+html.claro body.aluno-v793 #trMes{background:var(--one-card)!important;border-color:var(--one-border)!important}
+html.claro body.aluno-v793 #trMes b,html.claro body.aluno-v793 #trRaioX h2{color:var(--one-text)!important}
+html.claro body.aluno-v793 #trMes span{color:var(--one-muted)!important}
+html.claro body.aluno-v793 .aqbox :is(summary,b),html.claro body.aluno-v793 .exrow :is(.tecchip,.ex-tecnica){color:#8b4300!important}
+html.claro body.aluno-v793 .p2box>div:first-child>span:first-child,html.claro body.aluno-v793 .p2box>div:first-child b,html.claro body.aluno-v793 .p2row>b,html.claro body.aluno-v793 .p2box .tmrbtn{color:#24598a!important}
+html.claro body.aluno-v793 #thHistory button.sec{background:var(--one-control);color:var(--one-text);border-color:var(--one-border)}
+html.claro body.aluno-v793 #wodHist .wpk,html.claro body.aluno-v793 #crLivre,html.claro body.aluno-v793 #crTela [style*='color:#6e6a78']{color:var(--one-muted)!important}
+html.claro body.aluno-v793 :is(#crGpsCard,#fcCard){background:var(--one-card)!important;border-color:var(--one-border)!important}
+html.claro body.aluno-v793 #crSinal{background:var(--one-control)}
+html.claro body.aluno-v793 #crSinal[data-estado=fraco]{background:#fff0d9}
+`;
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

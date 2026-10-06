@@ -1,0 +1,26 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Data=require('../assets/hq-ops-data');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright'),{createServer}=require('../tools/hq-ops/serve.cjs');
+let n=0;function ok(v,s){assert.ok(v,s);console.log('OK '+(++n)+' '+s);}
+(async()=>{const configured=process.env.BASE_URL||process.env.MT_BASE;const server=configured?null:createServer();if(server)await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=configured||'http://127.0.0.1:'+server.address().port;
+ assert.ok(['127.0.0.1','localhost','[::1]'].includes(new URL(base).hostname),'servidor de teste somente local');
+ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
+ try{const ctx=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}}),snapshot=Data.sampleSnapshot('2026-09-30T15:00:00Z');snapshot.meta.mode='server';
+ await ctx.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
+ await ctx.addInitScript(s=>{window.legacyCalls=[];window.legacyFailure=true;window.adminAllowed=true;window.MT_supabase={auth:{getSession:async()=>({data:{session:{user:{id:s.currentUserId}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},rpc:async(name,args)=>{
+  if(name==='hq_sou_admin')return {data:adminAllowed};if(name==='hq_ops_snapshot')return {data:s};
+  if(name==='hq_ops_legacy_support'){legacyCalls.push(args);if(legacyFailure)return {error:{code:'PGRST202'}};const next=args.p_cursor!==null;return {data:{version:1,ok:true,readOnly:true,asOf:s.now,scope:'legacyOnly',nextCursor:next?null:{at:s.now,source:'saas_tickets',id:s.accounts[0].id,cutoff:s.now,accountId:null},rows:[{id:'old-'+(next?'2':'1'),source:next?'suporte_chamados':'saas_tickets',accountId:args.p_academia||s.accounts[0].id,accountName:'Conta de teste',createdAt:s.now,direction:'cliente',status:'nao_lida_no_legado',protocol:'TESTE',message:next?'Mensagem da segunda página':'<img src=x onerror="window.injected=true"> conteúdo como texto',reply:next?'Resposta armazenada':'',truncated:false,delivery:'not_verified'}]}};}
+  return {error:{code:'PGRST202'}};}};},snapshot);
+ const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto(base+'/apps/hq.html');await p.locator('#hqMenu').click();await p.locator('.hq-nav [data-nav=support]').click();
+ ok(await p.locator('[data-hq-legacy-panel]').count()===1,'histórico anterior acessível no atendimento da central');
+ await p.locator('[data-hq-legacy=first]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Não foi possível'));ok(await p.locator('[data-hq-legacy=retry]').count()===1,'contrato ausente mostra falha e recarga, não ausência de mensagens');
+ await p.evaluate(()=>legacyFailure=false);await p.locator('[data-hq-legacy=retry]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Página 1'));
+ ok(await p.locator('[data-hq-legacy-list] img').count()===0&&!await p.evaluate(()=>window.injected),'texto histórico não executa HTML');ok((await p.locator('[data-hq-legacy-list]').innerText()).includes('Entrega externa não confirmada'),'interface não promete entrega de resposta');
+ await p.locator('[data-hq-legacy=next]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Página 2'));ok((await p.locator('[data-hq-legacy-list]').innerText()).includes('segunda página'),'próxima página usa o cursor recebido');
+ await p.locator('[data-hq-legacy=prev]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Página 1'));ok((await p.evaluate(()=>legacyCalls.at(-1))).p_cursor===null,'página anterior reutiliza cursor correto');
+ await p.locator('[data-hq-legacy-account]').selectOption(snapshot.accounts[1].id);await p.waitForFunction(()=>!document.querySelector('[data-hq-legacy-account]').disabled);ok((await p.evaluate(()=>legacyCalls.at(-1))).p_academia===snapshot.accounts[1].id,'filtro da conta é enviado ao servidor e reinicia paginação');
+ for(const width of [320,390,768,1440]){await p.setViewportSize({width,height:900});ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'histórico e controles cabem em '+width+'px');}
+ await p.evaluate(()=>adminAllowed=false);const count=await p.evaluate(()=>legacyCalls.length);await p.locator('[data-hq-legacy=first]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Não foi possível'));ok(await p.evaluate(()=>legacyCalls.length)===count,'perda de autorização impede nova consulta e remove conteúdo anterior');ok(!/conteúdo como texto/.test(await p.locator('[data-hq-legacy-list]').innerText()),'conteúdo sensível anterior não permanece após recusa');
+ ok(errors.length===0,'sem erros JavaScript: '+errors.join(';'));console.log(n+' verificações do histórico legado no navegador passaram.');
+ }finally{await browser.close();if(server)await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

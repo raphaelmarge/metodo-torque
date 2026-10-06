@@ -1,0 +1,36 @@
+'use strict';
+const assert=require('node:assert/strict'),{PGlite}=require('./runtime/node_modules/@electric-sql/pglite'),F=require('./_operacao-prioridades-sql');
+let checks=0;function ok(v,s){assert.ok(v,s);console.log('OK '+(++checks)+' '+s);}
+(async()=>{const db=new PGlite();try{
+ await db.exec(F.fixture);await db.exec(F.read(F.agenda));
+ const call=async(t='aluno-a',hora='09:00',obs='Pedido sintético',dia='2026-10-07')=>(await db.query('select public.app_agenda_pede($1,$2,$3,$4) r',[t,dia,hora,obs])).rows[0].r;
+ await db.exec('set role anon');const first=await call();ok(first.ok&&!first.duplicado&&first.status==='pedido','primeiro pedido confirmado por ID');
+ const again=await call('aluno-a','9:00','nova observação');ok(again.duplicado&&again.id===first.id,'repetição em outro formato e observação retorna mesma intenção');
+ const other=await call('aluno-b');ok(other.ok&&other.id!==first.id,'outro aluno mantém pedido próprio');
+ ok((await call('aluno-online')).erro==='atendimento_online','modalidade online preservada');
+ ok((await call('missing')).erro==='token_invalido','token inexistente recusado');
+ ok((await call('aluno-a','24:99')).erro==='hora_invalida','horário impossível não é truncado');
+ ok((await call('aluno-a','09:00','',null)).erro==='dia_invalido','data ausente recusada');
+ ok((await call('aluno-a','09:00','','2026-10-05')).erro==='dia_invalido','data passada recusada');
+ await db.exec('reset role');await db.query("update app_agenda set status='confirmado' where id=$1",[first.id]);await db.exec('set role anon');ok((await call()).status==='confirmado','horário confirmado não recebe outro pedido');
+ await db.exec('reset role');await db.query("update app_agenda set status='recusado' where id=$1",[first.id]);await db.exec('set role anon');const retry=await call();ok(retry.ok&&!retry.duplicado&&retry.id!==first.id,'recusa admite nova solicitação legítima');
+ for(let i=0;i<10;i++)ok((await call('aluno-limite',String(i).padStart(2,'0')+':00')).ok,'limite aceita intenção distinta '+i);
+ ok((await call('aluno-limite','00:00')).duplicado,'repetição permanece idempotente quando limite foi atingido');
+ ok((await call('aluno-limite','10:00')).erro==='muitos_pedidos','nova intenção após dez continua bloqueada');
+ await db.exec("reset role;update app_aluno set revogado_em=now() where token='aluno-revogado';set role anon;");ok((await call('aluno-revogado')).erro==='token_invalido','aluno revogado não agenda');
+ await assert.rejects(()=>db.query('select * from app_agenda'),/permission denied/);ok(true,'anon continua sem leitura direta de outras agendas');
+ await db.exec('reset role');const before=(await db.query('select count(*) n from app_agenda')).rows[0].n;await db.exec(F.read(F.agenda));ok((await db.query('select count(*) n from app_agenda')).rows[0].n===before,'migração não reescreve ou exclui históricos');
+ await db.exec(F.read('supabase/hq-ops-proposal.sql'));await db.exec(F.read(F.hq));
+ const actor=async n=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[F.uid(n)]);await db.exec('set role authenticated');};
+ const snap=async()=>(await db.query('select public.hq_ops_snapshot() s')).rows[0].s;
+ const audit=async(key='export-test-0001',rows=2)=>(await db.query("select public.hq_ops_export_audit('trials','{\"from\":\"2026-10-01\",\"to\":\"2026-10-31\"}',date_trunc('day',now()),$1,repeat('a',64),$2) r",[rows,key])).rows[0].r;
+ await actor(1);const s=await snap();ok(s.meta.exportAuditAvailable===true&&s.accounts.find(a=>a.id===F.uid(101)).trialEndsAt,'HQ conserva prazo explícito e status trial separado de cadastro');ok(s.accounts.find(a=>a.id===F.uid(102)).trialEndsAt===null,'HQ não inventa prazo ausente');ok(s.sources.integrations.updatedAt===null&&s.sources.subscriptions.updatedAt===null,'fontes não monitoradas não recebem falsa atualização');
+ const receipt=await audit();ok(receipt.ok&&receipt.effect==='export_request_recorded','solicitação de exportação gera recibo');ok((await audit()).replayed,'repetição gera apenas um registro');await assert.rejects(()=>audit('export-test-0001',3),/outro conteudo/);ok(true,'mesma chave com outro conteúdo recusada');
+ await actor(2);await assert.rejects(audit,/nao autorizado|não autorizado|operacional/i);ok(true,'usuário comum não exporta');
+ await db.exec('reset role');await db.query("insert into torque_hq.staff(user_id,role,enabled) values($1,'finance',true)",[F.uid(3)]);await actor(3);await assert.rejects(audit,/desativada/);ok(true,'cadastro staff não contorna gate desligado');
+ await db.exec('reset role;set role anon');await assert.rejects(audit,/permission denied/);ok(true,'anon sem execução de auditoria');await db.exec('reset role');
+ const auditRows=(await db.query("select action,after_value from torque_hq.audit where action='report.export.requested'")).rows;ok(auditRows.length===1&&auditRows[0].after_value.contentSha256==='a'.repeat(64),'auditoria contém hash e metadados sem CSV ou dados de clientes');ok((await db.query('select staff_enabled from torque_hq.settings')).rows[0].staff_enabled===false,'nenhuma ativação de equipe');
+ const secure=(await db.query("select has_function_privilege('anon','public.hq_ops_export_audit(text,jsonb,timestamptz,integer,text,text)','execute') anon,has_function_privilege('service_role','public.hq_ops_export_audit(text,jsonb,timestamptz,integer,text,text)','execute') service,has_schema_privilege('authenticated','torque_hq','usage') private")).rows[0];ok(!secure.anon&&!secure.service&&!secure.private,'privilégios mínimos preservados');
+ ok((await db.query("select length(payload_hash) n from torque_hq.commands where idempotency_key='export-test-0001'")).rows[0].n===64,'fingerprint do comando usa SHA256 como os demais comandos HQ');
+ console.log(checks+' verificações SQL isoladas aprovadas.');
+}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -57,6 +57,11 @@
     if (!(source && source.scope === 'opsOnly') && !(legacy && legacy.migrationPending)) return '';
     return notice(source && source.message || 'Esta fila mostra somente casos criados na nova central. O histórico anterior ainda não foi incorporado; uma fila vazia não significa ausência de chamados no sistema.') + (s.role === 'admin' || s.role === 'legacy_admin' ? '<p><a class="hq-btn" href="hq.html?legacy=1">Abrir atendimento do HQ legado</a></p>' : '');
   }
+  function legacySupportPanel(s,ctx) {
+    if (['admin','legacy_admin'].indexOf(s.role)<0) return '';
+    var available=typeof ctx.legacySupport==='function';
+    return '<section class="hq-card" data-hq-legacy-panel><h3>Histórico dos canais anteriores</h3><p class="hq-definition">Consulta separada de saas_tickets e suporte_chamados, em páginas de 25 registros. Não altera leitura, status ou respostas. Uma resposta armazenada não comprova entrega ao cliente.</p><label class="hq-field">Conta<select data-hq-legacy-account>'+optionList([['','Todas as contas']].concat(arr(s.accounts).map(function(a){return [a.id,a.name||'Conta'];})), '')+'</select></label><button type="button" class="hq-btn" data-hq-legacy="first"'+(available?'':' disabled')+'>Consultar histórico anterior</button><div data-hq-legacy-list role="region" aria-label="Histórico anterior de suporte"><p class="hq-muted">'+(available?'Histórico ainda não consultado.':'A demonstração não consulta mensagens reais.')+'</p></div><p role="status" aria-live="polite" data-hq-legacy-notice></p></section>';
+  }
   function contains(values, q) { if (!q) return true; return values.join(' ').toLocaleLowerCase('pt-BR').includes(String(q).toLocaleLowerCase('pt-BR')); }
   function matchesProduct(s, id, f) { var a = account(s, id); return !f.product || !!a && a.product === f.product; }
   function sum(values, prop) { return values.reduce(function (n, x) { return n + num(x[prop]); }, 0); }
@@ -119,10 +124,11 @@
     if (!routes[area]) return empty('Seção não disponível.');
     if (!can(c, AREA_PERMISSION[area])) return notice('Seu perfil não possui acesso a esta seção.');
     var required = { sales: ['leads'], customers: ['accounts'], finance: f.tab === 'payable' ? ['expenses', 'expensePayments'] : f.tab === 'movements' ? ['payments'] : ['invoices', 'payments'], support: ['cases'], health: ['incidents'], admin: ['audit'] }[area];
-    var missing = required.map(function (k) { return s.sources && s.sources[k]; }).filter(function (src) { return src && ['unavailable', 'error', 'loading'].indexOf(src.status) >= 0; });
-    if (missing.length) return shell(area, ({ sales: 'Funil comercial', customers: 'Clientes e assinaturas', finance: 'Financeiro', support: 'Atendimento', health: 'Problemas do app', admin: 'Auditoria' })[area], 'Não há dados suficientes para apresentar esta visão.', '', notice(missing[0].message || 'Fonte indisponível. Nenhum resultado foi interpretado como zero.') + (area === 'support' ? supportCoverage(s) : ''));
+    var missing = required.map(function (k) { var src = s.sources && s.sources[k]; return !src || src.complete === false || !Array.isArray(s[k]) ? {status:'unavailable',message:'Fonte ausente ou incompleta. Nenhum resultado foi interpretado como zero.'} : src; }).filter(function (src) { return ['ready', 'stale'].indexOf(src.status) < 0; });
+    if (missing.length) return shell(area, ({ sales: 'Funil comercial', customers: 'Clientes e assinaturas', finance: 'Financeiro', support: 'Atendimento', health: 'Problemas do app', admin: 'Auditoria' })[area], 'Não há dados suficientes para apresentar esta visão.', '', notice(missing[0].message || 'Fonte indisponível. Nenhum resultado foi interpretado como zero.') + (area === 'support' ? supportCoverage(s) + legacySupportPanel(s,c) : ''));
+    if (area === 'finance' && required.some(function(k){return s[k].some(function(row){var amount=(k==='invoices'||k==='expenses')&&row.totalCents!=null?row.totalCents:row.amountCents;return !Number.isSafeInteger(amount)||amount<0;});})) return shell(area,'Financeiro','Valores da fonte ainda não confirmados.','',notice('Há valores ausentes ou inválidos. Nenhum saldo foi considerado zero ou quitado. Atualize a consulta.'));
     var stale = required.some(function (k) { return s.sources && s.sources[k] && s.sources[k].status === 'stale'; });
-    return (stale ? notice('Dados da última consulta bem-sucedida. A atualização falhou; confira a origem antes de agir.') : '') + routes[area](s, c, f);
+    return (stale ? notice('Dados da última consulta bem-sucedida. A atualização falhou; confira a origem antes de agir.') : '') + routes[area](s, c, f) + (area==='support'?legacySupportPanel(s,c):'');
   }
   function create(tag, text, attrs) { var el = document.createElement(tag); if (text != null) el.textContent = String(text); Object.keys(attrs || {}).forEach(function (key) { el.setAttribute(key, String(attrs[key])); }); return el; }
   function field(name, title, type, value, options, required) { return { name: name, title: title, type: type || 'text', value: value == null ? '' : value, options: options, required: required !== false }; }
@@ -210,16 +216,36 @@
   function bind(container, ctx) {
     if (!container || typeof container.addEventListener !== 'function') return function () {};
     if (container.__hqSectionsUnbind) container.__hqSectionsUnbind();
+    var legacy={cursor:null,next:null,past:[],busy:false,sequence:0,disposed:false};
+    async function loadLegacy(action) {
+      if (legacy.busy || legacy.disposed || !can(ctx,'support.read') || typeof ctx.legacySupport!=='function') return;
+      var panel=container.querySelector('[data-hq-legacy-panel]');if(!panel)return;
+      var accountId=panel.querySelector('[data-hq-legacy-account]').value,box=panel.querySelector('[data-hq-legacy-list]'),note=panel.querySelector('[data-hq-legacy-notice]');
+      if(action==='first'){legacy.cursor=null;legacy.next=null;legacy.past=[];}
+      if(action==='next'&&legacy.next){legacy.past.push(legacy.cursor);legacy.cursor=legacy.next;}
+      if(action==='prev'&&legacy.past.length)legacy.cursor=legacy.past.pop();
+      var seq=++legacy.sequence;legacy.busy=true;note.textContent='Consultando histórico…';
+      panel.querySelectorAll('button,select').forEach(function(el){el.disabled=true;});
+      try {
+        var result=await ctx.legacySupport({cursor:legacy.cursor,accountId:accountId});if(legacy.disposed||seq!==legacy.sequence)return;
+        if(!result||result.ok!==true||!Array.isArray(result.rows)||result.readOnly!==true)throw Error('Resposta inválida');
+        legacy.next=result.nextCursor||null;
+        box.innerHTML=result.rows.length?result.rows.map(function(row){return '<article class="hq-notice"><header><strong>'+esc(row.accountName||'Conta sem identificação')+'</strong><small> · '+esc(row.source)+' · '+esc(timestamp(row.createdAt,ctx))+'</small></header><p>'+esc(row.protocol||'Mensagem sem protocolo')+' · '+esc(row.status||'Estado não informado')+'</p><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(row.message)+'</p>'+(row.reply?'<h4>Resposta registrada no canal anterior</h4><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(row.reply)+'</p>':'')+'<small>Entrega externa não confirmada nesta fonte.'+(row.truncated?' Texto longo abreviado nesta consulta; consulte o canal original para o conteúdo integral.':'')+'</small></article>';}).join(''):'<p class="hq-empty">Nenhum registro encontrado nesta consulta confirmada.</p>';
+        box.innerHTML+='<div class="hq-actions">'+(legacy.past.length?'<button type="button" class="hq-btn" data-hq-legacy="prev">Página anterior</button>':'')+(legacy.next?'<button type="button" class="hq-btn" data-hq-legacy="next">Próximos registros</button>':'')+'</div>';
+        note.textContent='Página '+(legacy.past.length+1)+' · '+result.rows.length+' registros · corte de criação: '+timestamp(result.asOf,ctx)+'. Leitura preservada no sistema anterior.';
+      } catch(error) {if(legacy.disposed||seq!==legacy.sequence)return;box.innerHTML='<p class="hq-notice" role="alert">Histórico indisponível. Nenhum resultado vazio foi confirmado.</p><button type="button" class="hq-btn" data-hq-legacy="retry">Tentar novamente</button>';note.textContent='Não foi possível consultar o histórico anterior.';}
+      finally {legacy.busy=false;if(!legacy.disposed&&seq===legacy.sequence)panel.querySelectorAll('button,select').forEach(function(el){el.disabled=false;});}
+    }
     function areaOf(el) { var a = el.closest('[data-hq-area]'); return a && a.getAttribute('data-hq-area'); }
     function navigate(el, name, value) { var area = areaOf(el); if (!area || typeof ctx.navigate !== 'function') return; var filters = Object.assign({}, ctx.filters || {}); filters[name] = value; if (name === 'tab') { delete filters.status; delete filters.due; } ctx.navigate(area, filters); }
-    function click(e) { var el = e.target && e.target.closest && e.target.closest('[data-hq-action],[data-hq-detail],[data-hq-set-filter]'); if (!el || !container.contains(el) || el.disabled) return;
+    function click(e) { var legacyButton=e.target&&e.target.closest&&e.target.closest('[data-hq-legacy]');if(legacyButton&&container.contains(legacyButton)){if(!legacyButton.disabled)loadLegacy(legacyButton.getAttribute('data-hq-legacy'));return;}var el = e.target && e.target.closest && e.target.closest('[data-hq-action],[data-hq-detail],[data-hq-set-filter]'); if (!el || !container.contains(el) || el.disabled) return;
       if (el.hasAttribute('data-hq-set-filter')) { navigate(el, el.getAttribute('data-hq-set-filter'), el.getAttribute('data-value') || ''); return; }
       if (el.hasAttribute('data-hq-detail')) { if (typeof ctx.openDetail === 'function') ctx.openDetail(el.getAttribute('data-hq-detail'), el.getAttribute('data-id')); else notify(ctx, 'Detalhes indisponíveis nesta conexão.'); return; }
       try { openAction(container, ctx, el.getAttribute('data-hq-action'), el.getAttribute('data-id'), el.getAttribute('data-account-id')); } catch (err) { notify(ctx, err && err.message || 'Não foi possível abrir esta ação.'); }
     }
-    function change(e) { var el = e.target; if (el && el.hasAttribute && el.hasAttribute('data-hq-filter')) navigate(el, el.getAttribute('data-hq-filter'), el.value); }
+    function change(e) { var el = e.target; if(el&&el.hasAttribute&&el.hasAttribute('data-hq-legacy-account'))return loadLegacy('first');if (el && el.hasAttribute && el.hasAttribute('data-hq-filter')) navigate(el, el.getAttribute('data-hq-filter'), el.value); }
     container.addEventListener('click', click); container.addEventListener('change', change);
-    var off = function () { container.removeEventListener('click', click); container.removeEventListener('change', change); delete container.__hqSectionsUnbind; }; container.__hqSectionsUnbind = off; return off;
+    var off = function () { legacy.disposed=true;legacy.sequence++;container.removeEventListener('click', click); container.removeEventListener('change', change); delete container.__hqSectionsUnbind; }; container.__hqSectionsUnbind = off; return off;
   }
   return { render: render, bind: bind };
 });
