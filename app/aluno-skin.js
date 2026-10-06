@@ -37,6 +37,8 @@
     /* Os quatro controles do circuito livre precisam caber sem esconder Zerar. */
     + "#wodLivre .wod-acoes{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}#wodLivre .wod-acoes>.btnx{min-width:0}@media(min-width:600px){#wodLivre .wod-acoes{grid-template-columns:repeat(4,minmax(0,1fr))}}"
     + "html.claro #wodLivre #wodVolta{color:var(--one-text,#211b2d)}html.claro #wodLivre #wodTermina{color:#15803d!important}"
+    /* A UI serializa o style inline; o tema não depende da grafia desse atributo. */
+    + "html.claro #wodLivre :is(#wodVolta,#wodTermina,#wodPreparo,#wodSomTeste){background:var(--one-card,#fff)!important}html.claro #wodLivre :is(#wodPreparo,#wodSomTeste){color:var(--one-text,#211b2d)}"
     + ".fichabox>summary{min-height:56px;align-items:center!important}"
     + ".kv{min-height:40px;align-items:center}"
 
