@@ -287,7 +287,8 @@
             if (typeof local.auditExport !== 'function' || !root.crypto || !root.crypto.subtle) throw Error('Auditoria indisponível');
             var digest = await root.crypto.subtle.digest('SHA-256', new TextEncoder().encode(csv));
             var contentSha256 = Array.from(new Uint8Array(digest)).map(function(b){return b.toString(16).padStart(2,'0');}).join(''), filters = {};
-            ['from','to','timeZone','product','metric','rowStatus','cohort'].forEach(function(k){if(typeof model.filters[k]==='string')filters[k]=model.filters[k];});
+            ['from','to','timeZone','product','metric','rowStatus','cohort','accountId','accountStatus','status'].forEach(function(k){if(typeof model.filters[k]==='string')filters[k]=model.filters[k];});
+            if(model.filters.cohort&&typeof model.filters.cohort==='object')filters.cohort=model.filters.cohort.from+'/'+model.filters.cohort.to;
             var receipt = await local.auditExport({report:model.report.id,filters:filters,snapshotAt:model.asOf||local.snapshot.now,rows:model.count,contentSha256:contentSha256,idempotencyKey:'export-'+root.crypto.randomUUID()});
             if (!receipt || receipt.ok !== true) throw Error('Auditoria não confirmada');
           }

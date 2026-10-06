@@ -29,6 +29,7 @@ Migrations criadas com Supabase CLI 2.118.0 `migration new`:
 
 1. `supabase/migrations/20261006144200_agenda_aluno_idempotente.sql`
 2. `supabase/migrations/20261006144202_hq_operacao_estados_exportacao.sql`
+3. `supabase/migrations/20261006145701_hq_suporte_legado_leitura.sql`
 
 Aplicar somente esses arquivos após CI da integração; não executar `db push`.
 HQ pressupõe OPS administrativo previamente instalado. Assinaturas das RPCs
@@ -55,7 +56,12 @@ Rollback: restaurar apenas as definições anteriores de `app_agenda_pede` e
 
 ## Limites
 
-Suporte legado e entrega externa não se tornam disponíveis por estes ajustes.
+O suporte legado passa a ter consulta administrativa paginada e somente leitura
+na mesma área de atendimento. A terceira migração não chama as funções antigas
+que marcam leitura, nem importa mensagens como casos. SQL13 e browser14 cobrem
+paginação com empates, filtro, escopo administrativo, recarga, XSS, preservação
+integral de linhas e telas 320/390/768/1440 sem overflow. A entrega externa
+continua sem confirmação: uma resposta armazenada não comprova recebimento.
 Pedido de cancelamento permanece solicitação administrativa; não cancela no
 provedor nem revoga acesso. Suporte continua distinguindo nota interna e
 rascunho não enviado. `staff_enabled=false` é preservado.
