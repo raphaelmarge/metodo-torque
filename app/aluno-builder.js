@@ -470,6 +470,7 @@
     }
     function status() {
       if (identidadePerdida) { porId('ntpSync').textContent = 'Alimentação pausada após a troca de acesso.'; porId('ntpTentar').hidden = true; return; }
+      if (DEMO) { porId('ntpSync').textContent = 'Demonstração · alimentação simulada nesta visita, sem envio ao personal.'; porId('ntpTentar').hidden = true; return; }
       var n = Object.keys(fila).length;
       porId('ntpSync').textContent = !ativo ? 'Acompanhamento em modo consulta. Histórico e pontos foram mantidos.' + (falha ? ' ' + falha : '') : !NUVEM || !TOKEN ? 'Registros salvos neste aparelho.' : salvando || recebendo ? 'Sincronizando alimentação…' : n ? 'Salvo neste aparelho · ' + n + ' registro(s) aguardando envio.' + (falha ? ' ' + falha : '') : falha || 'Alimentação sincronizada.';
       porId('ntpTentar').hidden = !NUVEM || !TOKEN || (!falha && (!ativo || !n)); porId('ntpTentar').disabled = salvando || recebendo;
