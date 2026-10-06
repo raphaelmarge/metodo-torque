@@ -118,7 +118,7 @@
     };
 
     function atualizaNovoAluno() {
-      var box = $("naOnboardingBox"), ck = $("naOnboarding"); if (!box || !ck) return; var c = cfgLida(); box.hidden = !c.ativo; ck.checked = c.ativo;
+      var box = $("naOnboardingBox"), ck = $("naOnboarding"); if (!box || !ck) return; var c = cfgLida(); box.hidden = !c.ativo; ck.checked = false;
     }
     document.addEventListener("click", function (e) {
       if (e.target.closest && e.target.closest("#btnNovoAluno")) setTimeout(atualizaNovoAluno);

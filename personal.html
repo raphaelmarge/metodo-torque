@@ -1911,8 +1911,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </div>
 
   <div class="card" id="obGuia" hidden style="margin-bottom: 16px; border-left: 4px solid var(--roxo);">
-    <div id="obP2">
-      <h2>Passo 2 de 4 · Como você cobra?</h2>
+    <div id="obP2" hidden>
+      <h2>Configuração opcional · Como você cobra?</h2>
       <p class="muted" style="margin: 6px 0 10px;">Dá pra mudar tudo depois em Financeiro → Planos. Escolha o que combina com o seu trabalho:</p>
       <div style="display: flex; flex-direction: column; gap: 9px;">
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="radio" name="obCobra" value="mes" checked style="width: 17px; height: 17px; margin-top: 2px;"><span><b>Mensalidade</b> — valor fixo por mês, com dia de vencimento.</span></label>
@@ -1931,7 +1931,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
     <div id="obP3" hidden>
-      <h2>Passo 3 de 4 · Como você recebe?</h2>
+      <h2>Configuração opcional · Como você recebe?</h2>
       <p class="muted" style="margin: 6px 0 10px;">Com a sua chave Pix, o sistema gera o QR de cobrança sozinho e o dinheiro cai <b>direto na sua conta</b>. Cartão e boleto você liga depois em Configurações → Receber dos alunos (Mercado Pago, Asaas, Pagar.me ou o link da sua plataforma).</p>
       <div class="linha-flex">
         <input id="obPix" placeholder="Sua chave Pix (celular, e-mail, CPF ou aleatória)" style="max-width: 320px;">
@@ -1939,12 +1939,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="obP3Pula" type="button">Agora não</button>
       </div>
     </div>
-    <div id="obP4" hidden>
-      <h2>Passo 4 de 4 · Bora treinar alguém 💪</h2>
-      <p class="muted" style="margin: 6px 0 10px;">Cadastre seu primeiro aluno: com 2 toques ele já ganha ficha de treino e o <b>app com o seu nome</b> pra acompanhar tudo pelo celular dele.</p>
-      <div style="display: flex; gap: 8px;">
+    <div id="obP4">
+      <h2>Comece pelo primeiro aluno</h2>
+      <p class="muted" style="margin: 6px 0 10px;">Cadastre o aluno, monte e revise o treino e publique no app com a sua marca. <b>Cobrança e contrato podem ficar para depois.</b> Você decide quando enviar o acesso.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn" id="obP4Aluno">Cadastrar meu primeiro aluno</button>
         <button class="btn sec" id="obP4Depois" type="button">Explorar antes</button>
+        <button class="btn sec" id="obConfiguraComercial" type="button">Configurar cobrança (opcional)</button>
       </div>
     </div>
   </div>
@@ -2098,30 +2099,38 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <dialog id="dlgNovoAluno">
       <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
         <div id="naPasso1">
-          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Novo aluno — passo 1 de 2 · Cadastro</h2>
+          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Novo aluno · Cadastro essencial</h2>
+          <p class="muted" style="margin: 6px 0; font-size: 12.5px;">Só o nome é obrigatório para começar o treino. Complete os outros dados quando precisar.</p>
           <div class="grid-2" style="margin-top: 10px;">
             <div class="campo"><label>Nome *</label><input id="aNome" placeholder="Nome completo"></div>
-            <label class="campo" for="aAtendimento">Tipo de atendimento<select id="aAtendimento"><option value="">Conforme o plano (cadastro antigo preservado)</option><option value="presencial">Personal presencial</option><option value="consultoria online">Consultoria online</option><option value="híbrido">Híbrido</option></select></label>
             <div class="campo"><label>WhatsApp</label><input id="aZap" placeholder="DDD + número" inputmode="numeric"></div>
-            <div class="campo"><label>E-mail (cria o acesso do app)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
+            <div class="campo"><label>E-mail (opcional)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
             <div class="campo"><label>Objetivo</label><input id="aObjetivo" placeholder="Ex.: hipertrofia, emagrecimento"></div>
+          </div>
+          <details id="naDadosComerciais" class="pfp-disclosure" style="margin-top: 10px;"><summary>Dados adicionais e contrato (opcional)</summary><div class="grid-2" style="margin-top: 10px;">
+            <label class="campo" for="aAtendimento">Tipo de atendimento<select id="aAtendimento"><option value="">Definir depois</option><option value="presencial">Personal presencial</option><option value="consultoria online">Consultoria online</option><option value="híbrido">Híbrido</option></select></label>
             <div class="campo"><label>Sexo <span style="font-weight:400;color:var(--tk-tx5);">(pras avaliações físicas)</span></label><select id="aSexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
             <div class="campo"><label>CPF</label><input id="aCpf" inputmode="numeric" placeholder="000.000.000-00"></div>
             <div class="campo"><label>CEP</label><input id="aCep" inputmode="numeric" placeholder="00000-000"></div>
             <div class="campo" style="grid-column: 1 / -1;"><label>Endereço</label><input id="aEnd" placeholder="Rua, nº, bairro — cidade/UF (o CEP preenche sozinho)"></div>
           </div>
-          <label class="ocp-switch" id="naOnboardingBox" hidden><input type="checkbox" id="naOnboarding"><span><b>Questionário e contrato antes da consultoria</b><small>Você pode dispensar este aluno sem desligar o recurso para os próximos.</small></span></label>
-          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora (login = e-mail, senha temporária junto). Anamnese e PAR-Q ficam no perfil.</p>
+          <label class="ocp-switch" id="naOnboardingBox" hidden><input type="checkbox" id="naOnboarding"><span><b>Exigir questionário e contrato antes da consultoria</b><small>Opcional. Marque somente se quiser bloquear a entrada deste aluno até o preenchimento. Também pode configurar depois no perfil.</small></span></label>
+          </details>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Salvar o cadastro não publica treino nem envia convite. O acesso só será enviado quando você escolher <b>Enviar acesso</b> no perfil.</p>
+          <p id="naCadastroStatus" role="status" aria-live="polite"></p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px;">
             <button class="btn sec" id="naCancela">Cancelar</button>
-            <button class="btn" id="aAdd">Continuar → contrato e venda</button>
+            <button class="btn" id="aAdd">Salvar aluno</button>
           </div>
         </div>
         <div id="naPasso2" hidden>
-          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Passo 2 de 2 · Contrato e venda</h2>
+          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Aluno salvo · Próximo passo</h2>
           <!-- o recado do acesso PRECISA aparecer aqui dentro: o #aAcessoStatus
                fica na tela de trás, escondido pelo próprio dialog -->
           <p id="naAcessoStatus" style="margin: 8px 0 0; font-size: 12.5px; line-height: 1.55;"></p>
+          <p class="muted">Monte musculação, corrida ou circuito. O treino fica salvo para revisão; publicar e enviar acesso são ações separadas.</p>
+          <div class="linha-flex"><button class="btn" id="naTreino">Montar treino</button><button class="btn sec" id="naPerfil">Abrir perfil completo</button><button class="btn sec" id="naSair">Concluir cadastro</button></div>
+          <details id="naComercial" class="pfp-disclosure"><summary>Contrato e venda (opcional)</summary>
           <div class="grid-2" style="margin-top: 10px;">
             <div class="campo"><label>Plano do studio (opcional)</label><select id="naPlano" style="width: 100%;"></select></div>
             <div class="campo"><label>Vence todo dia</label><input id="naVence" type="number" min="1" max="28" value="5"></div>
@@ -2140,10 +2149,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           </div>
           <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O plano define o valor, os treinos por semana e a modalidade — mas é <b>opcional</b>: o aluno já está salvo, e dá pra fechar contrato depois pelo perfil (aba Financeiro).</p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
-            <button class="btn sec" id="naSair">Sair — contrato depois</button>
-            <button class="btn sec" id="naPerfil">Abrir perfil completo</button>
-            <button class="btn" id="naConcluir">Concluir</button>
+            <button class="btn" id="naConcluir">Salvar contrato e venda</button>
           </div>
+          </details>
         </div>
       </div>
     </dialog>
@@ -4209,7 +4217,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!st.config.professor) st.config.professor = nome;
     S.write("ptStudio", st);
     verificaOnboarding();
-    obPasso(2);
+    obPasso(4);
     render();
   });
   // passo 2: modelo de cobrança → cria o(s) primeiro(s) plano(s)
@@ -4258,6 +4266,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("btnNovoAluno").click();
   });
   $("obP4Depois").addEventListener("click", function () { obFecha(); render(); });
+  $("obConfiguraComercial").addEventListener("click", function () { obPasso(2); });
   window.__obGuia = { passo: obPasso, fecha: obFecha, verifica: verificaOnboarding }; // testes
   /* v749: era uma VARIÁVEL congelada na carga — num tablet deixado aberto no
    * studio, no dia 1 o bloco Atrasados (que recalcula) falava do mês novo e a
@@ -4466,8 +4475,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       {
         "t": "O caminho inteiro em 4 passos",
         "p": [
-          "Em <b>Alunos → + Novo aluno</b>, cadastre o aluno e confira nome, contato e e-mail. O e-mail será usado no acesso dele.",
-          "Em <b>Treinos</b>, escolha esse aluno e monte uma ficha com os exercícios.",
+          "Em <b>Alunos → + Novo aluno</b>, salve o nome do aluno. Contato, documentos e contrato podem ficar para depois. Informar e-mail não envia convite.",
+          "Em <b>Treinos</b>, escolha esse aluno e monte musculação, corrida ou circuito.",
           "Revise e use <b>Salvar e publicar</b>. Salvar apenas um rascunho não atualiza o app do aluno.",
           "No perfil, confira <b>App e acesso</b> e envie o acesso pelo fluxo disponível. Confirme a publicação e o envio antes de orientar o aluno a entrar."
         ],
@@ -6036,7 +6045,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     alBusca = ""; alContexto = ""; $("alBusca").value = ""; alMostra = 60; renderAlunos(load());
   };
   window.__alBusca = function (q) { alBusca = q || ""; $("alBusca").value = alBusca; alMostra = 60; renderAlunos(load()); }; // testes
-  // assistente de novo aluno: cadastro completo → contrato e venda na sequência
+  // Cadastro mínimo confirmado, seguido de treino; comércio fica sob demanda.
   var naAlunoId = null;
   $("btnNovoAluno").addEventListener("click", function () {
     // O formulário mora em vAlunos: todos os atalhos precisam exibir a aba
@@ -6045,9 +6054,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ["aAtendimento", "aNome", "aZap", "aEmail", "aObjetivo", "aSexo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
     $("naPasso1").hidden = false;
     $("naPasso2").hidden = true;
+    $("naDadosComerciais").open = false;
+    $("naComercial").open = false;
+    $("naCadastroStatus").textContent = "";
     naAlunoId = null;
     $("dlgNovoAluno").showModal();
     $("aNome").focus();
+    $("dlgNovoAluno").scrollTop = 0;
   });
   $("naCancela").addEventListener("click", function () { $("dlgNovoAluno").close(); });
 
@@ -6145,22 +6158,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       atendimento: $("aAtendimento").value, ativo: true, desde: S.todayISO() };
     if ($("naOnboarding") && $("naOnboarding").checked) novo.onboardingConsultoria = { requerido: true, revisao: String(Date.now()) };
     st.alunos.push(novo);
-    save(st);
+    if (!st.config.dia1AlunoId) st.config.dia1AlunoId = novo.id;
+    if (save(st) === false) { $("naCadastroStatus").textContent = "Não foi possível salvar o aluno neste aparelho. Seus campos foram mantidos; tente novamente após liberar espaço."; return; }
     naAlunoId = novo.id;
-    if (email) {
-      // o dialog cobre a tela de trás: o recado vai nos dois lugares, senão o
-      // professor clica, o acesso é criado (ou falha) e ele não vê nada
-      var recado = function (html) { $("aAcessoStatus").innerHTML = html; $("naAcessoStatus").innerHTML = html; };
-      recado("Publicando o app de " + esc(nome.split(" ")[0]) + " e enviando o acesso por e-mail…");
-      criaAcessoAluno(novo.id, function (r) { recado(msgAcesso(r, novo)); });
-    } else {
-      $("naAcessoStatus").innerHTML = "<span class='muted'>Sem e-mail no cadastro — o acesso do app você manda depois, pelo perfil do aluno.</span>";
-    }
-    // passo 2: contrato e venda
+    $("naAcessoStatus").textContent = "Cadastro salvo. Nenhum convite foi enviado. Quando o treino estiver revisado e publicado, envie o acesso pelo perfil do aluno.";
+    $("aAcessoStatus").textContent = $("naAcessoStatus").textContent;
+    // Contrato e venda continuam disponíveis, sem interromper a prescrição.
     naPopulaPlanos("");
     $("naValor").value = "";
     $("naPasso1").hidden = true;
     $("naPasso2").hidden = false;
+  });
+  $("naTreino").addEventListener("click", function () {
+    if (!naAlunoId) return;
+    $("dlgNovoAluno").close();
+    vaiMontarTreino(naAlunoId);
   });
   function rotuloPlano(pl) {
     var qtd = pl.treinosSem == null ? "" : (+pl.treinosSem ? " · " + pl.treinosSem + "x/sem" : " · consultoria");
@@ -6247,7 +6259,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (plPagNa && +plPagNa.pacoteQtd > 0) pgNa.desc = "Pacote de " + plPagNa.pacoteQtd + " aulas";
       if (!incluiRecebimentosManuais(st, [pgNa])) return;
     }
-    save(st);
+    if (save(st) === false) { $("naAcessoStatus").textContent = "Não foi possível salvar o contrato e a venda. Os campos continuam preenchidos; tente novamente."; return; }
     $("dlgNovoAluno").close();
     var resumo = "✓ " + esc(a.nome.split(" ")[0]) + " cadastrado(a)" + (planoId ? " com contrato" : "") +
       ($("naPagar").checked && +$("naValor").value > 0 ? " e primeira venda registrada" : "") + ".";
@@ -6255,7 +6267,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (abrirPerfil) abrePerfil(a.id);
   }
   $("naConcluir").addEventListener("click", function () { naConclui(false); });
-  $("naPerfil").addEventListener("click", function () { naConclui(true); });
+  $("naPerfil").addEventListener("click", function () { $("dlgNovoAluno").close(); if (naAlunoId) abrePerfil(naAlunoId); });
   // sair no meio do passo 2: o aluno já está salvo — só fecha, sem contrato nem venda
   $("naSair").addEventListener("click", function () {
     $("dlgNovoAluno").close();
@@ -23028,23 +23040,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   };
 
   // ---------- primeiro dia guiado ----------
-  // Conta nova não tem o momento "uau" garantido: o professor pode passar o
-  // teste inteiro sem VER o app com a marca dele. Este card guia os 3 passos
-  // e some sozinho: na demo, pra quem já tem 4+ alunos, quando os 3 passos
-  // fecham ou quando o professor dispensa (config.dia1Off).
+  // Cada etapa usa evidência do MESMO aluno. Ficha vazia, token reservado e
+  // a flag antiga (gravada antes do window.open) não comprovam conclusão.
+  function dia1TemTreino(t) {
+    t = t || {};
+    return (t.fichas || []).some(function (f) { return (f.itens || []).some(function (i) { return !!(i.exId || i.nome); }); }) ||
+      (t.wods || []).some(function (w) { return (w.mov || []).some(function (m) { return !!String(m || "").trim(); }) || (w.movs || []).some(function (m) { return !!String(m.n || "").trim(); }); }) ||
+      (t.cardio || []).some(function (c) { return !!c.nome && ((c.blocos || []).length > 0 || +c.dist > 0 || +c.tempo > 0 || (c.tipo === "intervalado" && +c.reps > 0 && +c.tiro > 0)); });
+  }
+  // JSONB pode devolver chaves em outra ordem; ordem de exercícios continua material.
+  function dia1Canonico(v) {
+    if (Array.isArray(v)) return v.map(dia1Canonico);
+    if (!v || typeof v !== "object") return v;
+    var out = {}; Object.keys(v).sort().forEach(function (k) { out[k] = dia1Canonico(v[k]); }); return out;
+  }
+  function dia1Estado(st) {
+    var cfg = st.config || {}, alunos = (st.alunos || []).filter(function (a) { return a.ativo !== false; });
+    var a = alunos.find(function (x) { return x.id === cfg.dia1AlunoId; }) || alunos[0] || null;
+    var treino = !!a && dia1TemTreino((st.treinosV2 || {})[a.id]);
+    var publicado = !!(treino && a.appTokenP && a.appPubEm && !a.appRevogadoEm && dia1TemTreino(a.acompPublicado) &&
+      JSON.stringify(dia1Canonico(a.acompPublicado)) === JSON.stringify(dia1Canonico(MT_ACOMP.snapshot(st, a.id))));
+    var abertura = cfg.dia1AberturaConfirmada || {};
+    return { aluno: a, cadastro: !!a, treino: treino, publicado: publicado,
+      aberto: !!(publicado && abertura.alunoId === a.id && abertura.publicadoEm === a.appPubEm) };
+  }
   function pintaDia1(st) {
     var el = $("dia1Card");
     if (!el) return;
     var cfg = st.config || {};
     var demo = false;
     try { demo = !!localStorage.getItem("mtapp:ptDemo"); } catch (e) {}
-    var alunos = (st.alunos || []).filter(function (a) { return a.ativo !== false; });
-    var p1 = alunos.length > 0;
-    var p2 = alunos.some(function (a) { var tr = (st.treinosV2 || {})[a.id]; return tr && (tr.fichas || []).length; });
-    var p3 = !!cfg.dia1AppVisto;
-    if (demo || cfg.dia1Off || (p1 && p2 && p3) || alunos.length >= 4) { el.hidden = true; return; }
+    var etapa = dia1Estado(st);
+    if (demo || cfg.dia1Off || cfg.dia1ConcluidoEm || etapa.aberto) { el.hidden = true; return; }
     function passo(ok, n, txt, acao, rotulo) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--tk-bd2);">' +
+      return '<div data-d1-etapa="' + acao + '" data-concluido="' + !!ok + '" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--tk-bd2);">' +
         '<span style="flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:800;' +
         (ok ? "background:rgba(74,222,128,.15);color:var(--tk-ok);" : "background:var(--tk-roxoFraco);color:var(--tk-roxoTx);") + '">' + (ok ? "✓" : n) + "</span>" +
         '<span style="flex:1;min-width:0;font-size:13.5px;' + (ok ? "color:var(--tk-tx4);text-decoration:line-through;" : "") + '">' + txt + "</span>" +
@@ -23054,12 +23083,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.hidden = false;
     el.innerHTML = '<div class="card" style="margin-bottom:14px;">' +
       '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-      '<div style="flex:1;min-width:0;"><h2>Seu primeiro dia, em 3 passos</h2>' +
-      '<p class="muted" style="margin:3px 0 6px;font-size:12.5px;">No fim do terceiro você vê o app do aluno <b>com a sua marca</b> — é aí que a ficha cai.</p></div>' +
+      '<div style="flex:1;min-width:0;"><h2>Do cadastro ao primeiro treino publicado</h2>' +
+      '<p class="muted" style="margin:3px 0 6px;font-size:12.5px;">' + (etapa.aluno ? 'Acompanhando ' + esc(etapa.aluno.nome) + '. ' : '') + 'Salvar guarda a prescrição; publicar atualiza o app. O convite só sai em <b>Enviar acesso</b>, no perfil.</p></div>' +
       '<button class="btn sec mini" data-d1="fechar" aria-label="Dispensar o guia do primeiro dia" title="Dispensar">✕</button></div>' +
-      passo(p1, 1, "Cadastre seu primeiro aluno (leva 1 minuto)", "aluno", "+ Cadastrar") +
-      passo(p2, 2, "Monte a primeira ficha — ou deixe a IA montar", "ficha", "Montar") +
-      passo(p3, 3, "Abra o app do aluno e veja a sua marca nele", "app", "Abrir o app") +
+      passo(etapa.cadastro, 1, "Salvar o cadastro do aluno", "aluno", "+ Cadastrar") +
+      passo(etapa.treino, 2, "Salvar um treino de musculação, corrida ou circuito", "ficha", "Montar") +
+      passo(etapa.publicado, 3, "Revisar e publicar o treino no app", "publicar", "Revisar") +
+      passo(etapa.aberto, 4, "Conferir a abertura do app publicado", "app", "Abrir o app") +
+      '<p id="dia1Status" role="status" aria-live="polite" class="muted"></p>' +
       "</div>";
   }
   $("dia1Card").addEventListener("click", function (ev) {
@@ -23072,14 +23103,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       S.write("ptStudio", st); pintaDia1(st); return;
     }
     if (acao === "aluno") { $("btnNovoAluno").click(); return; }
-    if (acao === "ficha") { var b2 = document.querySelector('[data-a="treinos"]'); if (b2) b2.click(); return; }
+    var etapa = dia1Estado(st);
+    if (acao === "ficha" || acao === "publicar") {
+      if (!etapa.aluno) { $("btnNovoAluno").click(); return; }
+      vaiMontarTreino(etapa.aluno.id);
+      if (acao === "publicar") acPrevia(etapa.aluno.id, true);
+      return;
+    }
     if (acao === "app") {
-      var com = (st.alunos || []).find(function (a) { return a.ativo !== false && a.appTokenP; });
-      if (!com) { alert("Publique a ficha primeiro (em Treinos → Salvar e publicar) — aí o app do aluno nasce."); return; }
-      st.config = st.config || {}; st.config.dia1AppVisto = true;
-      S.write("ptStudio", st);
-      window.open("app/?t=" + com.appTokenP, "_blank");
-      pintaDia1(st);
+      var com = etapa.aluno, status = function (txt) { if ($("dia1Status")) $("dia1Status").textContent = txt; };
+      if (!etapa.publicado) { status("Revise e publique o treino deste aluno antes de abrir o app. Um rascunho salvo ainda não foi publicado."); return; }
+      var janela;
+      try { janela = window.open("app/?t=" + encodeURIComponent(com.appTokenP), "_blank"); } catch (e) {}
+      if (!janela) { status("O navegador bloqueou a abertura. Permita a nova janela e tente novamente; esta etapa continua pendente."); return; }
+      status("Aguardando o app carregar na nova janela…");
+      var tentativas = 0;
+      var verifica = function () {
+        try {
+          if (janela.closed) { status("A janela foi fechada antes da confirmação. Abra novamente para conferir."); return; }
+          var url = new URL(janela.location.href);
+          if (url.origin === location.origin && url.searchParams.get("t") === com.appTokenP && janela.document.getElementById("diasSem")) {
+            var atual = load(), atualEtapa = dia1Estado(atual);
+            if (!atualEtapa.publicado || !atualEtapa.aluno || atualEtapa.aluno.id !== com.id || atualEtapa.aluno.appPubEm !== com.appPubEm) { status("A publicação mudou enquanto o app abria. Confira a versão atual novamente."); return; }
+            atual.config.dia1AberturaConfirmada = { alunoId: com.id, publicadoEm: com.appPubEm, em: new Date().toISOString() };
+            atual.config.dia1ConcluidoEm = atual.config.dia1AberturaConfirmada.em;
+            if (S.write("ptStudio", atual) === false) { status("O app abriu, mas não foi possível guardar a conclusão neste aparelho."); return; }
+            pintaDia1(atual); return;
+          }
+        } catch (e) {}
+        if (++tentativas >= 60) { status("Não foi possível confirmar o carregamento. Confira a conexão e tente abrir novamente; a etapa continua pendente."); return; }
+        setTimeout(verifica, 500);
+      };
+      verifica();
     }
   });
   (function () {
@@ -23087,6 +23142,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderDashPT = function (st) { rd(st); try { pintaDia1(st); } catch (e) {} };
   })();
   window.__dia1 = pintaDia1; // teste
+  window.__dia1Estado = dia1Estado; // teste
 
   $("relCSV").addEventListener("click", function () {
     var st = load();

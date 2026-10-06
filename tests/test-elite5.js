@@ -182,6 +182,7 @@ function ok(cond, nome) {
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.click("#aAdd");
+  await p.locator('#naComercial > summary').click();
   await p.evaluate(() => { document.getElementById("naNovoPlano").open = true; });
   await p.fill("#naPlNome", "Mensal 3x/sem");
   await p.fill("#naPlValor", "400");

@@ -186,6 +186,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
+  await p.locator('#naDadosComerciais > summary').click();
   await p.fill("#aCpf", "111.222.333-44");
   await p.fill("#aCep", "30130010");
   await p.waitForTimeout(400);
@@ -196,7 +197,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     p1: document.getElementById("naPasso1").hidden,
     p2: !document.getElementById("naPasso2").hidden,
   }));
-  ok(passo2.p1 && passo2.p2, "passo 2 (contrato e venda) abre na sequência");
+  ok(passo2.p1 && passo2.p2, "cadastro confirmado abre a escolha do próximo passo");
+  await p.locator('#naComercial > summary').click();
   // sem plano ainda: cria um plano rápido com treinos/sem e modalidade
   await p.evaluate(() => { document.getElementById("naNovoPlano").open = true; });
   await p.fill("#naPlNome", "Mensal 3x/sem");
@@ -228,6 +230,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     await p.click("#btnNovoAluno");
     await p.fill("#aNome", "Cliente Sem Plano");
     await p.click("#aAdd");
+    await p.locator('#naComercial > summary').click();
     await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
     await p.click("#naConcluir");
     await p.waitForTimeout(150);
@@ -13185,7 +13188,8 @@ async function contextoAppAluno(browser, html, options = {}) {
       S.write("ptStudio", st0);
       window.__MT_LIMPANDO = false;
       window.__obGuia.verifica();
-      out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP2").hidden;
+      out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP4").hidden;
+      document.getElementById("obConfiguraComercial").click();
       // escolhe HORA-AULA → o campo da mensalidade some e o da aula aparece
       const rSes = document.querySelector('input[name="obCobra"][value="sessao"]');
       rSes.checked = true; rSes.dispatchEvent(new Event("change"));
@@ -13211,7 +13215,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       window.__obGuia.verifica();
       return out;
     });
-    ok(onb.guiaAparece, "🧭 professor novo (nome + nada cadastrado) cai no guia de 4 passos");
+    ok(onb.guiaAparece, "🧭 professor novo começa pelo aluno; configuração comercial permanece opcional");
     ok(onb.trocaCampos && onb.planoUnitario, "escolher hora-aula cria o plano UNITÁRIO: R$ por aula, ciclo 1, sem assinatura recorrente");
     ok(onb.passo3 && onb.pix && onb.passo4, "os passos seguem: chave Pix guardada e chegada no passo final");
     ok(onb.fim && onb.naoVolta, "terminar marca onboardFim e o guia não volta a encher o saco");
