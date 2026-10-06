@@ -3440,7 +3440,7 @@
       "<div id='wodFase' style='font-size:12px;font-weight:800;letter-spacing:.18em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
       "<div id='wodTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0;'>0:00</div>" +
       "<div id='wodInfo' style='font-size:12.5px;color:#a9a4b5;'></div></div>" +
-      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<div class='wod-acoes' style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='wodGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>+1 volta</button>" +
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +

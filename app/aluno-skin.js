@@ -34,6 +34,9 @@
     + "#crMetaBtn{min-height:44px!important}"        // "Defina uma meta": 36px
     + "#avBtn2{min-height:44px;min-width:44px}"      // avatar do topo: 42px (segue redondo)
     + ".rperow{gap:6px}"
+    /* Os quatro controles do circuito livre precisam caber sem esconder Zerar. */
+    + "#wodLivre .wod-acoes{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}#wodLivre .wod-acoes>.btnx{min-width:0}@media(min-width:600px){#wodLivre .wod-acoes{grid-template-columns:repeat(4,minmax(0,1fr))}}"
+    + "html.claro #wodLivre #wodVolta{color:var(--one-text,#211b2d)}html.claro #wodLivre #wodTermina{color:#15803d!important}"
     + ".fichabox>summary{min-height:56px;align-items:center!important}"
     + ".kv{min-height:40px;align-items:center}"
 
