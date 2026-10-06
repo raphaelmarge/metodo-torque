@@ -9572,7 +9572,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v755: questionário que ficou sem pergunta (a última foi excluída) era
     // "enviado" com sucesso e descartado em silêncio pelo pacote
     if (!payload.ps.length) { alert("Esse questionário ficou sem pergunta nenhuma — edite ele primeiro (card Perguntas)."); return; }
-    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var erroToken = preparaTokenAppAluno(st, a);
+    if (erroToken) { alert(erroToken); return; }
     var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     var link = location.origin + location.pathname.replace(/personal\.html$/, "") + "quest.html?t=" + a.appTokenP + "&q=" + b64;
     $("qeSaida").hidden = false;
@@ -9615,7 +9616,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // v755: sem pergunta, o pacote descarta o questionário e o professor fica
     // esperando resposta de uma coisa que o aluno nunca viu
     if (!payload.ps.length) { alert("Esse questionário ficou sem pergunta nenhuma — edite ele primeiro (card Perguntas)."); return; }
-    if (!a.appTokenP) a.appTokenP = S.uid() + S.uid();
+    var erroToken = preparaTokenAppAluno(st, a);
+    if (erroToken) { alert(erroToken); return; }
     a.questApp = {
       nome: q.nome,
       ps: payload.ps,
@@ -10937,6 +10939,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * publicava a ficha pela metade no meio da montagem. */
   function appPendente(st, a, soSistema) {
     if (!a.appTokenP || a.ativo === false) return false;
+    // Um token preparado após falha não autoriza publicar o primeiro rascunho automaticamente.
+    if (soSistema && a.appPublicacaoPendente && !a.appPubEm) return false;
     /* v755: acesso cortado não é pendência. A revogação apaga appPubEm/appVer,
      * então o aluno virava "pendente" na hora e a automática devolvia o pacote
      * inteiro dele pra nuvem — com push e link no WhatsApp. */
@@ -11030,19 +11034,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   /* Publica o app de UM aluno. A ficha nova só chega no celular dele depois
    * disto — e até agora a única porta era o botão de lote, que fica em
    * Treinos → Em grupo, longe de onde a ficha é montada. */
+  function preparaTokenAppAluno(st, a) {
+    if (a.appRevogadoEm) return APP_CORTADO;
+    if (a.appTokenP) return "";
+    try {
+      if (!window.crypto || typeof window.crypto.getRandomValues !== "function") throw new Error("crypto indisponível");
+      var bytes = new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      a.appTokenP = Array.from(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    } catch (e) { return "Não foi possível preparar um link seguro. Atualize o navegador e tente novamente."; }
+    a.appPublicacaoPendente = true;
+    if (S.write("ptStudio", st) === false) return "Não foi possível salvar o link do aluno. Confira o armazenamento e tente novamente.";
+    return "";
+  }
   function publicaAppDe(alunoId, cb) {
     cb = cb || function () {};
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
-    if (!a.appTokenP) { cb({ erro: "Este aluno ainda não tem o app criado. Abra o perfil dele e toque em Enviar acesso do app." }); return; }
     // v755: acesso cortado não recebe pacote nem push — religue primeiro
     if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { cb({ erro: "Entre na sua conta (Sua ilha) pra publicar o app." }); return; }
+    var primeiraPublicacao = !a.appTokenP || !!a.appPublicacaoPendente;
+    // Preparar o link não cria login nem envia convite. O CAS abaixo confirma o pacote.
+    // Conservar o token após falha permite retomar sem criar outro acesso na nuvem.
+    var erroToken = preparaTokenAppAluno(st, a);
+    if (erroToken) { cb({ erro: erroToken }); return; }
     publicaPacotes(nuvem, [a]).then(function (r) {
       if (r.erro) { cb({ erro: "Não deu pra publicar agora: " + r.erro }); return; }
-      pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
+      if (!primeiraPublicacao) pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
       render();
       cb({ ok: true, nome: a.nome });
     });
@@ -23579,7 +23600,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * sãos. Só vira {erro} quando ninguém sobrou, e sempre resolve (o contrato
      * acima) em vez de exceção solta dentro do botão. */
     var ids = alunos.map(function (a) { return a.id; });
-    return Promise.resolve(S.preparaAppsSeguros()).then(function (preparo) {
+    return Promise.resolve().then(function () { return S.preparaAppsSeguros(); }).then(function (preparo) {
       if (preparo && preparo.error) return { erro: preparo.error.message || "erro na sincronização", stamp: stamp, pulados: [] };
       /* Só monta os pacotes DEPOIS que o painel terminou o CAS. Recarrega os
        * alunos pelo id: os objetos recebidos podem ter sido criados antes da
@@ -23588,6 +23609,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ids.forEach(function (id) {
         var a = antesPublicar.alunos.find(function (x) { return x.id === id; });
         if (!a) { pulados.push({ id: id, nome: "", erro: "aluno mudou durante a publicação" }); return; }
+        if (a.appRevogadoEm || !a.appTokenP) { pulados.push({ id: id, nome: a.nome || "", erro: a.appRevogadoEm ? APP_CORTADO : "o link do aluno ainda não foi preparado" }); return; }
         try {
           linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
           sobem.push(a);
@@ -23600,13 +23622,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var st2 = load();
       sobem.forEach(function (a) {
         var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; a2.acompPublicado = referencias[a.id];
+        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; a2.acompPublicado = referencias[a.id]; delete a2.appPublicacaoPendente;
           if(acEdicao[a.id]) { a2.acompTempoEdicao = Math.round(acEdicao[a.id].ms/1000); delete acEdicao[a.id]; } }
       });
       S.write("ptStudio", st2);
       return { ok: true, stamp: stamp, linhas: linhas, pulados: pulados };
       }, function (e) { return { erro: "sem conexao" + (e && e.message ? " (" + e.message + ")" : ""), stamp: stamp, pulados: pulados }; });
-    });
+    }).catch(function () { return { erro: "sem conexao ao preparar a publicação", stamp: stamp, pulados: [] }; });
   }
   window.__publicaPacotes = publicaPacotes; // testes
   // v755: um recado so pro aluno com acesso cortado (publicar, mandar app, criar acesso)
@@ -23621,7 +23643,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a) return;
     // v755: "Mandar app" não republica quem está com o acesso cortado
     if (a.appRevogadoEm) { alert(APP_CORTADO); return; }
-    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var erroToken = preparaTokenAppAluno(st, a);
+    if (erroToken) { alert(erroToken); return; }
     /* O app é SÓ pelo link. O arquivo .html que a gente baixava aqui virava uma
      * foto congelada no celular do aluno: não recebia conserto, não recebia
      * treino novo, não tocava notificação e não dava pra cortar o acesso. Quem
@@ -23855,7 +23878,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.appRevogadoEm) { cb({ erro: APP_CORTADO }); return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { cb({ erro: "Entre na sua conta (Sua ilha) pra criar o acesso online." }); return; }
-    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var erroToken = preparaTokenAppAluno(st, a);
+    if (erroToken) { cb({ erro: erroToken }); return; }
     var stamp = new Date().toISOString();
     /* v755: o acessoEm tem de estar gravado ANTES de montar o pacote. O app
      * decide por ele qual card mostrar — sem acessoEm ele pede "crie um

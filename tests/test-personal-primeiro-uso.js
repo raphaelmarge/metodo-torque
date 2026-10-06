@@ -18,7 +18,8 @@ const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); check
     localStorage.setItem('mtapp:ptSemConta', '1');
     localStorage.setItem('mtapp:perfil', JSON.stringify({ nome: 'Teste isolado' }));
   });
-  const p = await ctx.newPage(), errors = [];
+  const p = await ctx.newPage(), errors = [], messages = [];
+  p.on('request', r => { if (/push-envia|envia-email|wa\.me/.test(r.url())) messages.push(r.url()); });
   p.on('pageerror', e => errors.push(e.message));
   p.on('dialog', d => d.dismiss());
   await p.goto(BASE + '/personal.html');
@@ -27,7 +28,7 @@ const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); check
   ok(await p.locator('#obP4').isVisible() && await p.locator('#obP2').isHidden(), 'Aluno é a primeira ação, antes de cobrança e Pix');
   await p.evaluate(() => {
     window.__primeiroCalls = [];
-    const cloud = window.mockNuvem({ aid: 'academia-ficticia', rpc: (name, args) => {
+    const cloud = window.mockNuvem({ aid: 'academia-ficticia', auth: { getSession: () => Promise.resolve({ data: { session: { access_token: 'fixture-sem-credencial-real' } } }) }, rpc: (name, args) => {
       window.__primeiroCalls.push({ name, args }); return Promise.resolve({ data: { ok: true }, error: null });
     } });
     window.MTStore.cloud = () => cloud; window.mockPublicacaoCas(cloud);
@@ -57,7 +58,7 @@ const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); check
   eq(await p.locator('#tAluno').inputValue(), await p.evaluate(() => window.__primeiroAluno), 'Montar treino abre o aluno cadastrado');
   const states = await p.evaluate(() => {
     const s = window.MTStore.read('ptStudio', {}), id = s.alunos[0].id, exId = s.exercicios[0].id, read = () => { const e = window.__dia1Estado(s); return [e.cadastro, e.treino, e.publicado, e.aberto]; };
-    s.config.dia1AppVisto = true; s.alunos[0].appTokenP = 'primeiro-uso-token';
+    s.config.dia1AppVisto = true;
     s.treinosV2[id] = { fichas: [{ id: 'vazia', titulo: 'A', itens: [] }] };
     const vazio = read();
     s.treinosV2[id] = { fichas: [{ id: 'ficha', titulo: 'A', itens: [{ exId, series: 3, reps: '10', descanso: 60 }] }] };
@@ -68,17 +69,87 @@ const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); check
     const corrida = read();
     window.MTStore.write('ptStudio', s); return { vazio, musculacao, circuito, corrida };
   });
-  eq(states.vazio, [true, false, false, false], 'Ficha vazia, token e flag legada não concluem treino, publicação ou abertura');
+  eq(states.vazio, [true, false, false, false], 'Ficha vazia e flag legada não concluem treino, publicação ou abertura');
   for (const modalidade of ['musculacao', 'circuito', 'corrida']) eq(states[modalidade], [true, true, false, false], modalidade + ': prescrição salva ainda não é publicação');
-  const failed = await p.evaluate(async () => {
-    const S = window.MTStore, orig = S.publicaAppsSeguros;
-    S.publicaAppsSeguros = () => Promise.resolve({ error: { message: 'Falha de teste' } });
-    const r = await window.__publicaPacotes(S.cloud(), S.read('ptStudio', {}).alunos);
-    S.publicaAppsSeguros = orig;
-    return { falhou: !!r.erro, publicado: window.__dia1Estado(S.read('ptStudio', {})).publicado };
+  async function publicarPelaTela() {
+    await p.click('#tdPublica'); await p.click('#acPublicar');
+    await p.waitForFunction(() => !document.getElementById('tEnviaApp').disabled);
+  }
+  await p.evaluate(() => { window.__primeiroCrypto=window.crypto.getRandomValues; window.crypto.getRandomValues=undefined; });
+  await publicarPelaTela();
+  ok(/Não foi possível preparar um link seguro/.test(await p.locator('#tEnvioStatus').innerText()), 'Sem gerador criptográfico, a publicação pede recuperação em vez de gerar credencial fraca');
+  eq(await p.evaluate(() => ({ token:!!window.MTStore.read('ptStudio', {}).alunos[0].appTokenP, calls:window.__primeiroCalls.filter(x=>x.name==='app_aluno_publica_cas').length })), { token:false, calls:0 }, 'Ausência de crypto não persiste token nem publica');
+  const cryptoPaths = await p.evaluate(async () => {
+    const S=window.MTStore,s=S.read('ptStudio', {}),id=s.alunos[0].id;
+    s.questPerguntas=[{id:'fixture-pergunta',sigla:'BEM',titulo:'Bem-estar',texto:'Como foi?',tipo:'texto'}];
+    s.questionarios=[{id:'fixture-questionario',nome:'Check-in fictício',perguntas:['fixture-pergunta']}];
+    S.write('ptStudio',s); window.__questPT.render();
+    document.getElementById('qeAluno').value=id;document.getElementById('qeQuest').value='fixture-questionario';
+    const alerts=[],original=window.alert;window.alert=message=>alerts.push(message);
+    try {
+      document.getElementById('qeGerar').click();document.getElementById('qeApp').click();
+      document.querySelector('#listaAlunos [data-alquick="'+id+'"]').click();
+      document.querySelector('#listaAlunos [data-app="'+id+'"]').click();
+      const access=await new Promise(resolve=>window.__acessoAluno.cria(id,resolve));
+      const a=S.read('ptStudio', {}).alunos[0];
+      return { alerts:alerts.length, secureErrors:alerts.every(x=>/link seguro/.test(x)), accessError:/link seguro/.test(access.erro||''), token:!!a.appTokenP, quest:!!a.questApp, acesso:!!a.acessoEm, calls:window.__primeiroCalls.filter(x=>/app_aluno_publica_cas|aluno_define_login|envia-email/.test(x.name)).length, output:!document.getElementById('qeSaida').hidden };
+    } finally { window.alert=original; }
   });
-  eq(failed, { falhou: true, publicado: false }, 'Falha de publicação não conclui a etapa');
-  ok(await p.evaluate(async () => { const S = window.MTStore; const r = await window.__publicaPacotes(S.cloud(), S.read('ptStudio', {}).alunos); return r.ok && window.__dia1Estado(S.read('ptStudio', {})).publicado; }), 'Resposta confirmada de publicação libera a abertura, sem contrato ou cobrança');
+  eq(cryptoPaths, { alerts:3,secureErrors:true,accessError:true,token:false,quest:false,acesso:false,calls:0,output:false }, 'Questionário por link/app, Publicar app e Enviar acesso também param sem crypto, sem efeitos colaterais');
+  await p.evaluate(() => { window.crypto.getRandomValues=window.__primeiroCrypto; });
+  await p.evaluate(() => { window.MTStore.write = (key, v) => key === 'ptStudio' ? false : window.__primeiroWrite(key, v); });
+  await publicarPelaTela();
+  ok(/Não foi possível salvar/.test(await p.locator('#tEnvioStatus').innerText()), 'Falha ao salvar o primeiro token impede publicação e permite tentar novamente');
+  eq(await p.evaluate(() => ({ token: !!window.MTStore.read('ptStudio', {}).alunos[0].appTokenP, calls: window.__primeiroCalls.filter(x => x.name === 'app_aluno_publica_cas').length })), { token: false, calls: 0 }, 'Token não persistido nunca é enviado ao servidor');
+  await p.evaluate(() => {
+    const S = window.MTStore; S.write = window.__primeiroWrite;
+    window.__primeiroPublica = S.publicaAppsSeguros;
+    S.publicaAppsSeguros = linhas => { window.__primeiroTentativas = (window.__primeiroTentativas || []).concat(linhas.map(l => l.token)); return Promise.reject(new Error('Falha de rede da fixture')); };
+  });
+  await publicarPelaTela();
+  ok(/Não deu pra publicar agora.*sem conexao/.test(await p.locator('#tEnvioStatus').innerText()), 'Falha de rede no botão real deixa publicação pendente');
+  const firstToken = await p.evaluate(() => window.MTStore.read('ptStudio', {}).alunos[0].appTokenP);
+  ok(/^[0-9a-f]{32}$/.test(firstToken), 'Publicar explicitamente prepara token de 128 bits pelo gerador criptográfico');
+  eq(await p.evaluate(() => {
+    const s = window.MTStore.read('ptStudio', {}), a = s.alunos[0], e = window.__dia1Estado(s);
+    return { publicado:e.publicado, aberto:e.aberto, acesso:!!a.acessoEm, carimbo:!!a.appPubEm, pendente:a.appPublicacaoPendente, automatico:window.__appsPendentes.pendente(s,a,true) };
+  }), { publicado:false, aberto:false, acesso:false, carimbo:false, pendente:true, automatico:false }, 'Falha não confirma acesso/publicação nem agenda publicação automática do rascunho');
+  ok(await p.evaluate(() => { const s=window.MTStore.read('ptStudio', {}),legado={...s.alunos[0],appTokenP:'token-legado-preservado',appVer:'mt-v001'};delete legado.appPublicacaoPendente;delete legado.appPubEm;return window.__appsPendentes.pendente(s,legado,true); }), 'App legado com token e versão antiga continua elegível à atualização automática sem appPubEm');
+  await publicarPelaTela();
+  eq(await p.evaluate(() => window.__primeiroTentativas), [firstToken, firstToken], 'Retry após rede usa exatamente o mesmo token');
+  await p.evaluate(() => { const S=window.MTStore; window.__primeiroPrepara=S.preparaAppsSeguros; S.preparaAppsSeguros=()=>Promise.reject(new Error('Rede caiu antes do CAS')); });
+  await publicarPelaTela();
+  ok(/sem conexao ao preparar/.test(await p.locator('#tEnvioStatus').innerText()), 'Falha ao preparar CAS devolve erro e destrava o botão para retry');
+  eq(await p.evaluate(() => window.__primeiroTentativas.length), 2, 'Falha no preparo não chega à publicação');
+  await p.evaluate(() => { window.MTStore.preparaAppsSeguros=()=>{ throw new Error('Falha síncrona no preparo'); }; });
+  await publicarPelaTela();
+  ok(/sem conexao ao preparar/.test(await p.locator('#tEnvioStatus').innerText()), 'Exceção síncrona no preparo também destrava o botão sem publicar');
+  await p.evaluate(() => { window.MTStore.preparaAppsSeguros=window.__primeiroPrepara; });
+  await p.evaluate(() => { window.MTStore.publicaAppsSeguros = window.__primeiroPublica; window.crypto.getRandomValues=undefined; });
+  await publicarPelaTela();
+  await p.evaluate(() => { window.crypto.getRandomValues=window.__primeiroCrypto; });
+  eq(await p.evaluate(() => window.MTStore.read('ptStudio', {}).alunos[0].appTokenP), firstToken, 'Token existente é reutilizado sem rotação, mesmo com gerador indisponível no retry');
+  ok(await p.evaluate(() => window.__dia1Estado(window.MTStore.read('ptStudio', {})).publicado), 'Botão real confirma a primeira publicação sem contrato ou cobrança');
+  eq(await p.evaluate(() => { const a=window.MTStore.read('ptStudio', {}).alunos[0]; return { token:a.appTokenP, pendente:!!a.appPublicacaoPendente, acesso:!!a.acessoEm, aberto:window.__dia1Estado(window.MTStore.read('ptStudio', {})).aberto }; }), { token:firstToken, pendente:false, acesso:false, aberto:false }, 'Publicar limpa apenas a preparação pendente, sem criar login nem fingir abertura do aluno');
+  eq(messages, [], 'Primeira publicação não dispara push, e-mail ou WhatsApp');
+  const revoked = await p.evaluate(async () => {
+    const S=window.MTStore, s=S.read('ptStudio', {}), a=s.alunos[0], before=window.__primeiroCalls.length;
+    a.appRevogadoEm=new Date().toISOString(); delete a.appTokenP; S.write('ptStudio',s);
+    const r=await new Promise(resolve=>window.__appsPendentes.publicaUm(a.id,resolve));
+    const after=S.read('ptStudio', {}), tokenCriado=!!after.alunos[0].appTokenP;
+    after.alunos[0].appTokenP=window.__primeiroTentativas[0]; delete after.alunos[0].appRevogadoEm; S.write('ptStudio',after);
+    return { bloqueado:/acesso.*cortado/.test(r.erro||''), tokenCriado, calls:window.__primeiroCalls.slice(before).filter(x=>x.name==='app_aluno_publica_cas').length };
+  });
+  eq(revoked, { bloqueado:true, tokenCriado:false, calls:0 }, 'Aluno revogado sem token não ganha outro token nem publicação');
+  const revokedDuring = await p.evaluate(async () => {
+    const S=window.MTStore, before=window.__primeiroCalls.length, id=S.read('ptStudio', {}).alunos[0].id;
+    S.preparaAppsSeguros=async()=>{ const s=S.read('ptStudio', {}); s.alunos[0].appRevogadoEm=new Date().toISOString(); S.write('ptStudio',s); return window.__primeiroPrepara(); };
+    const r=await new Promise(resolve=>window.__appsPendentes.publicaUm(id,resolve));
+    S.preparaAppsSeguros=window.__primeiroPrepara;
+    const s=S.read('ptStudio', {}); delete s.alunos[0].appRevogadoEm; S.write('ptStudio',s);
+    return { bloqueado:/acesso.*cortado/.test(r.erro||''), calls:window.__primeiroCalls.slice(before).filter(x=>x.name==='app_aluno_publica_cas').length };
+  });
+  eq(revokedDuring, { bloqueado:true, calls:0 }, 'Revogação confirmada durante o preparo também bloqueia o pacote');
   ok(await p.evaluate(() => {
     const S = window.MTStore, s = S.read('ptStudio', {});
     const reorder = v => Array.isArray(v) ? v.map(reorder) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).reverse().map(k => [k, reorder(v[k])])) : v;
@@ -98,7 +169,7 @@ const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); check
   await p.click('#dia1Card [data-d1="app"]');
   eq(await p.evaluate(() => window.__dia1Estado(window.MTStore.read('ptStudio', {})).aberto), false, 'Janela fechada antes do app não registra sucesso');
   // Popup real em rota interceptada: o primeiro documento é somente o loader.
-  await ctx.route('**/app/?t=primeiro-uso-token', route => route.fulfill({ contentType: 'text/html', body: '<p id="loading">Carregando fixture</p>' }));
+  await ctx.route('**/app/?t=' + firstToken, route => route.fulfill({ contentType: 'text/html', body: '<p id="loading">Carregando fixture</p>' }));
   await p.evaluate(() => { window.open = window.__primeiroOpen; });
   const popupPromise = ctx.waitForEvent('page'); await p.click('#dia1Card [data-d1="app"]'); const popup = await popupPromise;
   await popup.waitForLoadState('domcontentloaded');

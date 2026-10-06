@@ -15,6 +15,9 @@ O profissional passa a ter um fluxo autenticado de contratação e cancelamento,
 | Vencimento apenas na interface | Vigência no servidor e proteção da ficha/publicação; preserva leitura e revogação | API direta, RPC e fallback recusam escrita abrangida após expiração; benefício/admin bloqueado mantém sua política |
 | Conta de outro produto recebe preço Personal | Tipo protegido `saas_clientes`; cadastro Personal atômico antes do primeiro aluno | Academia/Nutri/não classificada não iniciam contrato Personal; assinatura já vinculada continua cancelável |
 | Reversão pode apagar cobrança | Procedimento anterior à ativação recusa qualquer ledger financeiro | Com ledger vazio restaura exatamente a RPC anterior e permissões; conta/evento presentes impedem remoção |
+| Primeira publicação exigia enviar acesso antes | A publicação explícita prepara o link, confirma o pacote e mantém o convite separado | Cliques reais sem token anterior, falhas de armazenamento/rede, repetição e revogação; primeira publicação não dispara convite nem push |
+
+Os cinco caminhos que criam links de aluno usam geração criptográfica de 128 bits. Links existentes não são rotacionados. Uma primeira tentativa pendente não autoriza atualização automática do rascunho; apps legados mantêm a atualização anterior. A revisão do primeiro uso passou em 53 verificações de navegador e 18 de concorrência, com serviços simulados; a jornada adicional com Auth real deve ser registrada separadamente.
 
 ## Evidência local antes do CI
 
