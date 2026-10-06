@@ -44,6 +44,16 @@ async function until(read,predicate,{timeout=20000,code='STATE_TIMEOUT'}={}){
 }
 async function rows(sql,params=[]){return (await client.query(sql,params)).rows;}
 async function screenshot(page,name){await page.screenshot({path:path.join(OUT,name+'.png'),fullPage:false,animations:'disabled'});}
+async function observeReceipt(page,selector,label){
+  // Read both indicators in one browser turn, after the server assertion.
+  // This is an observation, not a replacement for any persistence assertion.
+  const sample=()=>page.evaluate(sel=>({globalState:document.querySelector('#acSync')?.dataset.estado||null,
+    globalText:document.querySelector('#acSync span')?.textContent||null,receiptText:document.querySelector(sel)?.textContent||null}),selector);
+  const untilTime=Date.now()+6000;let state=await sample();
+  while(['pendente','enviando'].includes(state.globalState)&&Date.now()<untilTime){await page.waitForTimeout(250);state=await sample();}
+  summary.receiptStatus=summary.receiptStatus||[];summary.receiptStatus.push({activity:label,serverEventConfirmed:true,...state});
+  await screenshot(page,'receipt-status-'+label);
+}
 async function context(label,viewport){
   const ctx=await browser.newContext({viewport,locale:'pt-BR',timezoneId:'America/Sao_Paulo',serviceWorkers:'block',permissions:[]});
   // An empty permission override denies geolocation instead of leaving a prompt
@@ -220,6 +230,7 @@ async function main(){
     operation='finish prescribed strength session';await pupil.locator('#gFecharTreino').click();
     const {view}=await finishedSession(muscleSession,'musculacao');
     assert.equal(view.targets['0:0:0'].value.feito,true);assert.equal(view.targets['0:0:0'].value.kg,20);assert.equal(view.targets['0:0:0'].value.r,5);
+    await observeReceipt(pupil,'.ac-conclusao-status','strength');
     operation='close strength receipt';await pupil.locator('#gFim').click();await pupil.locator('#guiaBox').waitFor({state:'hidden'});
   });
   await check('free manual running preserves one paused session and its distance across a real reload',async()=>{
@@ -254,6 +265,7 @@ async function main(){
     assert.equal(value.origem,'manual');assert.equal(value.status,'completo');assert.deepEqual(value.etapas,[]);
     assert(!value.r&&!value.rpartes,'Manual synthetic distance must never invent a GPS route');
     assert.equal((await runState()).checkpoint,null);await pupil.locator('#crRsFechar').waitFor({state:'visible'});
+    await observeReceipt(pupil,'.cr-registro-status','running');
     await screenshot(pupil,'11-running-server-confirmed');await pupil.locator('#crRsFechar').click();
     summary.runningEvidence={mode:'free-manual',syntheticKilometres:0.02,seconds:value.s,pausedReloadPreserved:true,serverFinished:true,gpsVerified:false};
   });
@@ -286,6 +298,7 @@ async function main(){
     assert.equal(value.tp,'fortime');assert.equal(value.v,Math.round(last.seconds));assert.equal(value.du,Math.round(last.seconds));
     assert.equal(value.parcial,false);assert.equal(value.nf,0);assert.match(value.r,/2 voltas/);
     assert.equal((await circuitState()).checkpoint,null);await screenshot(pupil,'13-circuit-server-confirmed');
+    await observeReceipt(pupil,'#wodFimBox','circuit');
     summary.circuitEvidence={mode:'free-fortime',lapsPreserved:2,seconds:value.du,pausedReloadPreserved:true,serverFinished:true,prescriptionVerified:false};
   });
   await check('a third empty browser retrieves all three completed histories from the real server',async()=>{
