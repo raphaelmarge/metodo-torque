@@ -1,7 +1,7 @@
 /* Controles reais do circuito livre: geometria e ações, sem rede externa. */
 'use strict';
 const assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 global.self=global;global.MT_CLOUD=null;
 require('../app/aluno-skin');require('../app/aluno-builder');

@@ -1,7 +1,7 @@
 /* Recibos reais do builder; respostas atrasadas/falhas sintéticas, sem conta ou rede externa. */
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const {dados}=require('./test-aluno-player-experiencia');
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 global.self=global;global.MT_CLOUD={url:'https://recibos.invalid',anonKey:'fixture-publica'};
