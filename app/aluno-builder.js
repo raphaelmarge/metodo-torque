@@ -3440,7 +3440,7 @@
       "<div id='wodFase' style='font-size:12px;font-weight:800;letter-spacing:.18em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
       "<div id='wodTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0;'>0:00</div>" +
       "<div id='wodInfo' style='font-size:12.5px;color:#a9a4b5;'></div></div>" +
-      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<div class='wod-acoes' style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='wodGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>+1 volta</button>" +
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
@@ -3967,7 +3967,7 @@
       // v751: Sv devolve false quando o localStorage estourou — o aviso de 'memória cheia' das fotos dependia de uma exceção que nunca saía daqui
       "// Estado local de envio: sucesso só depois da confirmação do servidor.\n" +
       "var acSyncSeq=0,acSyncFalha=false,acSemEspaco=false,acSyncAtivos=0;\n" +
-      "function acSyncPinta(estado){var el=document.getElementById('acSync');if(!el)return;var hist=typeof TH!=='undefined'&&TH&&TH.syncState?TH.syncState():'local',pend=!!L('ptenvioPendente',false)||hist==='pendente'||hist==='erro',falha=acSyncFalha||hist==='erro';estado=estado||(acSyncAtivos>0||hist==='enviando'?'enviando':'');var st=estado==='identidade'?'identidade':acSemEspaco||hist==='erro-local'?'erro-local':DEMO?'demo':!NUVEM?'local':estado==='enviando'?'enviando':pend?(falha?'erro':'pendente'):L('ptenvioUlt','')&&hist==='sincronizado'?'sincronizado':'local';el.dataset.estado=st;el.querySelector('span').textContent=st==='identidade'?'O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.':st==='erro-local'?'Não foi possível salvar neste aparelho. Libere espaço e repita a ação.':st==='demo'?'Demonstração · registros simulados nesta visita, sem envio ao personal.':st==='enviando'?'Enviando registros…':st==='erro'?'Salvo neste aparelho · falha no envio. Tente novamente.':st==='pendente'?(navigator.onLine===false?'Salvo neste aparelho · aguardando conexão.':'Salvo neste aparelho · aguardando envio.'):st==='sincronizado'?'Registros sincronizados.':'Registros salvos neste aparelho.';el.hidden=false;el.querySelector('button').hidden=DEMO||!NUVEM||!pend||st==='enviando'||st==='erro-local';}\n" +
+      "function acSyncPinta(estado){var el=document.getElementById('acSync');if(!el)return;var hist=typeof TH!=='undefined'&&TH&&TH.syncState?TH.syncState():'local',pend=!!L('ptenvioPendente',false)||hist==='pendente'||hist==='erro',falha=acSyncFalha||hist==='erro';estado=estado||(acSyncAtivos>0||hist==='enviando'?'enviando':'');var st=estado==='identidade'?'identidade':acSemEspaco||hist==='erro-local'?'erro-local':DEMO?'demo':!NUVEM?'local':estado==='enviando'?'enviando':pend?(falha?'erro':'pendente'):L('ptenvioUlt','')&&hist==='sincronizado'?'sincronizado':'local';el.dataset.estado=st;el.querySelector('span').textContent=st==='identidade'?'O acesso mudou neste aparelho. Reabra o app deste aluno para continuar.':st==='erro-local'?'Não foi possível salvar neste aparelho. Libere espaço e repita a ação.':st==='demo'?'Demonstração · registros simulados nesta visita, sem envio ao personal.':st==='enviando'?'Enviando registros…':st==='erro'?'Salvo neste aparelho · falha no envio. Tente novamente.':st==='pendente'?(navigator.onLine===false?'Salvo neste aparelho · aguardando conexão.':'Salvo neste aparelho · aguardando envio.'):st==='sincronizado'?'Registros sincronizados.':'Registros salvos neste aparelho.';document.querySelectorAll('[data-ac-sync-status]').forEach(function(node){node.dataset.estado=st;node.textContent=el.querySelector('span').textContent.replace('Registros salvos','Salvo');});el.hidden=false;el.querySelector('button').hidden=DEMO||!NUVEM||!pend||st==='enviando'||st==='erro-local';}\n" +
       "function acMarcaSync(){acSyncSeq++;if(NUVEM&&!DEMO)try{localStorage.setItem('ptenvioPendente','true');}catch(e){}acSyncPinta();}\n" +
       "function acUso(tipo){if(!acIdentidadeAtual())return;var h=L('ptuso',{}),d=isoHj(),x=h[d]||{inicios:0,conclusoes:0,falhasSync:0};x[tipo]=(x[tipo]||0)+1;h[d]=x;Object.keys(h).sort().slice(0,-90).forEach(function(k){delete h[k];});try{localStorage.setItem('ptuso',JSON.stringify(h));}catch(e){}acMarcaSync();}\n" +
       "document.getElementById('acSync').querySelector('button').onclick=function(){devolveApp();if(typeof TH!=='undefined'&&TH)TH.synchronize();};\n" +
@@ -5556,7 +5556,7 @@
       "function wodMsgFim(msg,op){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
       // v747: msg leva a observação do aluno ('Placar salvo! … — obs: …') — escapa como o resto do placar
       "var eh9=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;');};" +
-      "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+eh9(msg)+\"</div>\"+" +
+      "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+eh9(msg)+\"</div><p class='ac-conclusao-status' data-ac-sync-status role='status'>\"+eh9(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.')+\"</p>\"+" +
       "(!L('ptfeitos',{})[wod.dia||isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'')+" +
       "((wod.acum>0&&!L('ptrpe',{})[wod.dia||isoHj()])?\"<div data-rpebox data-rpedia='\"+(wod.dia||isoHj())+\"'>\"+rpeHtml().replace('de hoje','deste circuito')+'</div>':'')+notaBox('wod')+" +
       "(op?arteBtns('wodShareArq','wodShareSem'):'');" +
@@ -5570,7 +5570,7 @@
       // o timer livre continua com a caixinha de sempre
       "if(wod.wodId){wodPlacar(msg,val);return;}" +
       "wodConfirmaLivre(msg);}" +
-      "function wodConfirmaLivre(msg){if(!wodR.contexto())return;wodR.ensure();var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst;if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(!TH.finish('circuito',wod.sid,wod.dia,lst.filter(function(x){return x.sid===wod.sid;})[0]))return;if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'));}" +
+      "function wodConfirmaLivre(msg){if(!wodR.contexto())return;wodR.ensure();var wr=L('ptwodres',{}),lst=wr.livre||[];if(!lst.some(function(x){return x.sid===wod.sid;})){lst.push({sid:wod.sid,d:wod.dia,n:'Circuito livre',r:msg,tp:wod.tipo,v:wod.fimVal==null?null:Math.round(wod.fimVal),parcial:!!wod.parcial||!!wod.estourou,nf:wod.estourou?1:0,du:Math.round(wod.acum)});wr.livre=lst;if(!Sv('ptwodres',wr)){wodR.aviso('Não foi possível salvar o resultado. Sua sessão foi mantida; tente concluir novamente.');return;}}if(!TH.finish('circuito',wod.sid,wod.dia,lst.filter(function(x){return x.sid===wod.sid;})[0]))return;if(wod.acum>0&&window.__acRegistraConclusao&&!window.__acRegistraConclusao({tipo:'circuito',id:wod.sid,data:wod.dia})){wodR.aviso('O resultado foi salvo, mas falta registrar o dia. Tente concluir novamente.');return;}wodR.aviso('');pintaWodRes();wodR.limpa();wodMsgFim(msg);}" +
       /* ---------- R2: placar de circuito por tipo ----------
        * AMRAP: voltas confirmadas + reps da última volta + tempo de cada volta
        * (dos toques no cronômetro) + comparação com a vez anterior.
@@ -5684,7 +5684,7 @@
       "tipo==='fortime'?[[wodFmt(st.t||0),'tempo']].concat(st.cf?[[{rx:'RX',esc:'ESCALADO',adp:'ADAPTADO'}[st.cf],'como fez']]:[]):" +
       "[[tot2,'reps'],[pior2!=null?pior2:'—','pior série']];" +
       "var rotW={amrap:'AMRAP',fortime:'For Time',emom:'EMOM',tabata:'Tabata'}[tipo]||'Circuito';" +
-      "ov.remove();wodMsgFim('Placar salvo! '+r+' · '+(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.'),{badge:'CIRCUITO',titulo:wod.wodNome,stats:stW,rodape:rotW});return;}});" +
+      "ov.remove();wodMsgFim('Placar salvo! '+r,{badge:'CIRCUITO',titulo:wod.wodNome,stats:stW,rodape:rotW});return;}});" +
       "pr();window.__wodPlacarEl=ov;}" +
       "window.__wodPlacar=wodPlacar;" +
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wodR.contexto()||wod.finished)return;var el2=wodR.tempo();if(el2<=0)return;" +
@@ -6357,7 +6357,7 @@
       "\"<div style='text-align:center;font-size:clamp(26px,8vw,34px);font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:6px;'>\"+crEh(reg.n)+'</div>'+" +
       "\"<div style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:4px;'>\"+(CRMODS[reg.m]||'Cardio')+' \u00b7 '+String(reg.d).slice(8,10)+'/'+String(reg.d).slice(5,7)+'</div>'+" +
       "\"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;'>\"+tiles.join('')+'</div>'+" +
-      "\"<p class='cr-registro-status'>\"+crEh(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.')+'</p>'+" +
+      "\"<p class='cr-registro-status' data-ac-sync-status role='status'>\"+crEh(window.__acStatusSalvo?window.__acStatusSalvo():'Salvo neste aparelho.')+'</p>'+" +
       "(reg.rpartes?\"<p class='cr-registro-status'>Trajeto com interrupções: o mapa mostra apenas os trechos registrados.</p>\":'')+" +
       "((reg.etapas&&reg.etapas.length)?\"<div class='cr-etapas-resumo'><b>Etapas realizadas</b><ol>\"+reg.etapas.map(function(x){return '<li>'+crEh(x.nome)+' · '+({completo:'concluída',pulado:'pulada',parcial:'parcial'}[x.status]||'parcial')+' · '+wodFmt(x.segundos)+(x.km?' · '+String(x.km).replace('.',',')+' km':'')+'</li>';}).join('')+'</ol></div>':'')+" +
       "((extras&&extras.length)?\"<div style='margin-top:16px;'>\"+extras.map(function(x){" +
@@ -7313,7 +7313,7 @@
       "\"<div class='fim-medalha' aria-hidden='true'><span>\"+icx(ICO.trofeu,46)+\"</span></div>\"+" +
       "\"<p class='fim-selo'>\"+(completo?(bateu?'Meta da semana batida':'Treino concluído'):'Sessão encerrada')+\"</p>\"+" +
       "\"<h2 id='fimTitulo'>\"+(completo?'Você concluiu o ':'Resumo do ')+esc2(f.n)+\"</h2>\"+" +
-      "\"<p class='fim-mensagem'>\"+(completo?(bateu?'Boa! Você cumpriu sua meta da semana.':'Boa! Mais uma sessão concluída.'):marc>0?'Treino parcial: '+marc+' de '+pres+' séries realizadas.':'Nenhuma série concluída. O dia não foi marcado por esta sessão.')+\"</p><p class='ac-conclusao-status' role='status'>\"+(marc>0?window.__acStatusSalvo():'Confira os registros abaixo.')+\"</p>\"+" +
+      "\"<p class='fim-mensagem'>\"+(completo?(bateu?'Boa! Você cumpriu sua meta da semana.':'Boa! Mais uma sessão concluída.'):marc>0?'Treino parcial: '+marc+' de '+pres+' séries realizadas.':'Nenhuma série concluída. O dia não foi marcado por esta sessão.')+\"</p><p class='ac-conclusao-status' role='status'\"+(marc>0?\" data-ac-sync-status\":'')+\">\"+(marc>0?window.__acStatusSalvo():'Confira os registros abaixo.')+\"</p>\"+" +
       "(stk9>0?\"<p class='fim-sequencia'>\"+(stk9===1?'Primeira semana cumprindo a meta':stk9+' semanas seguidas cumprindo a meta')+\"</p>\":'')+\"</section>\"+" +
       "\"<div class='fim-resumo' aria-label='Resumo principal do treino'>\"+" +
       "\"<div class='wtile2'><b>\"+dur9+\"</b><i>de treino</i></div>\"+" +
