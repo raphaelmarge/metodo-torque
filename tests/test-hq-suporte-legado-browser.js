@@ -2,7 +2,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Data=require('../assets/hq-ops-data');
 const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright'),{createServer}=require('../tools/hq-ops/serve.cjs');
 let n=0;function ok(v,s){assert.ok(v,s);console.log('OK '+(++n)+' '+s);}
-(async()=>{const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+(async()=>{const configured=process.env.BASE_URL||process.env.MT_BASE;const server=configured?null:createServer();if(server)await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=configured||'http://127.0.0.1:'+server.address().port;
+ assert.ok(['127.0.0.1','localhost','[::1]'].includes(new URL(base).hostname),'servidor de teste somente local');
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
  try{const ctx=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}}),snapshot=Data.sampleSnapshot('2026-09-30T15:00:00Z');snapshot.meta.mode='server';
  await ctx.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
@@ -21,5 +22,5 @@ let n=0;function ok(v,s){assert.ok(v,s);console.log('OK '+(++n)+' '+s);}
  for(const width of [320,390,768,1440]){await p.setViewportSize({width,height:900});ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'histórico e controles cabem em '+width+'px');}
  await p.evaluate(()=>adminAllowed=false);const count=await p.evaluate(()=>legacyCalls.length);await p.locator('[data-hq-legacy=first]').click();await p.waitForFunction(()=>document.querySelector('[data-hq-legacy-notice]').textContent.includes('Não foi possível'));ok(await p.evaluate(()=>legacyCalls.length)===count,'perda de autorização impede nova consulta e remove conteúdo anterior');ok(!/conteúdo como texto/.test(await p.locator('[data-hq-legacy-list]').innerText()),'conteúdo sensível anterior não permanece após recusa');
  ok(errors.length===0,'sem erros JavaScript: '+errors.join(';'));console.log(n+' verificações do histórico legado no navegador passaram.');
- }finally{await browser.close();await new Promise(r=>server.close(r));}
+ }finally{await browser.close();if(server)await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

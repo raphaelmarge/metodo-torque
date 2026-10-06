@@ -2,10 +2,11 @@
 // Isolated browser documents, synthetic RPC replies, no production requests.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
+const BASE=process.env.BASE_URL||process.env.MT_BASE||'http://127.0.0.1:8765';
 let checks=0;function ok(v,m){assert.ok(v,m);console.log('OK '+(++checks)+' '+m);}
 (async()=>{const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});try{
  const ctx=await browser.newContext({acceptDownloads:true,serviceWorkers:'block'}),p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
- await p.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="pt-BR"><body><div id="ptFlowAutoResumo"></div><div id="ptFlowAutoList"></div><main id="hq"></main></body></html>'}));await p.goto('http://localhost/isolated-operations');
+ await p.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="pt-BR"><body><div id="ptFlowAutoResumo"></div><div id="ptFlowAutoList"></div><main id="hq"></main></body></html>'}));await p.goto(BASE+'/isolated-operations');
  const js=fs.readFileSync(path.join(__dirname,'../assets/personal-fluxo.js'),'utf8'),start=js.indexOf('  function loadAutomationPanel()'),end=js.indexOf('  function triggerLabel(',start);
  await p.addScriptTag({content:`var state={autosBusy:false},loadCalls=0;function $(id){return document.getElementById(id);}function read(){return {alunos:[]};}function esc(v){return String(v);}function aluno(){return null;}function triggerLabel(v){return v;}function actionLabel(v){return v;}var responses={};function cloudCtx(){loadCalls++;return Promise.resolve({aid:'fixture',client:{from:function(name){var q={select:function(){return q;},eq:function(){return q;},order:function(){return q;},limit:function(){return Promise.resolve(responses[name]);}};return q;}}});}${js.slice(start,end)}`});
  async function load(a,b){await p.evaluate(({a,b})=>{responses={personal_automacoes:a,personal_automacao_fila:b};loadAutomationPanel();},{a,b});await p.waitForFunction(()=>!state.autosBusy);}
