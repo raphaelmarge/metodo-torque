@@ -10,6 +10,7 @@ O profissional passa a ter um fluxo autenticado de contratação e cancelamento,
 | Timeout pode levar a outra assinatura | Tentativa reservada atomicamente e recuperada por código; UI mantém apenas UUID | Resposta perdida não repete o POST financeiro; rejeição certificada anterior à reserva permite nova tentativa explícita |
 | `active` confundido com pagamento | Fatura e cobrança canônicas, valor, captura, período e vínculos conferidos | Status sem pagamento não concede prazo; repetição/ordem invertida não amplia acesso |
 | Cancelamento anunciado cedo ou sem recuperação | Confirmação do mesmo contrato e opção explícita de tentar novamente | Falha/HTTP202 permanece pendente; desligar novas vendas não impede cancelamento |
+| Renovação recusada escondida pelo período anterior pago | Aviso de recusa e prazo já pago visíveis juntos, com orientação para o suporte existente | Falha não aparece como pagamento confirmado, não reativa contrato cancelado e não dispara nova contratação |
 | Exclusão pode deixar cobrança órfã | Dados da conta são excluídos e referência financeira mínima mantém a tarefa de cancelamento | Exclusão durante POST recupera e cancela a mesma assinatura; não cria outra e não impede excluir dados |
 | Vencimento apenas na interface | Vigência no servidor e proteção da ficha/publicação; preserva leitura e revogação | API direta, RPC e fallback recusam escrita abrangida após expiração; benefício/admin bloqueado mantém sua política |
 | Conta de outro produto recebe preço Personal | Tipo protegido `saas_clientes`; cadastro Personal atômico antes do primeiro aluno | Academia/Nutri/não classificada não iniciam contrato Personal; assinatura já vinculada continua cancelável |
@@ -19,7 +20,7 @@ O profissional passa a ter um fluxo autenticado de contratação e cancelamento,
 
 - 47 verificações de integração em PostgreSQL descartável, com transportes Auth/Pagar.me simulados.
 - Revisão independente: 37 grupos em PostgreSQL e PGlite, 16 grupos de handler com SQL canônico e transporte simulado.
-- Navegador: 27 grupos de checkout, quatro larguras (320/390/768/1440), teclado, sessão, armazenamento, cancelamento e tokenização; 12 grupos de cadastro tipado e regressões de oferta/cadastro.
+- Navegador: 30 grupos de checkout, quatro larguras (320/390/768/1440), teclado, sessão, armazenamento, cancelamento, recusa na renovação e tokenização; 12 grupos de cadastro tipado e regressões de oferta/cadastro.
 - Reversão: três grupos que verificam restauração e recusa com registros financeiros.
 
 O harness no CI executa os contratos de autorização com GoTrue/PostgREST reais. Seu resultado, a regressão completa e o commit implantado devem constar no PR/registro da publicação. Os números locais não significam que a conta Pagar.me foi homologada.

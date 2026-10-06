@@ -37,6 +37,7 @@ O aplicativo também mantém dados locais para recuperação após falha de cone
 - Provar renovação, recusa, cancelamento, exclusão com criação em andamento, estorno e notificações repetidas/invertidas usando respostas reais saneadas.
 - Configurar e monitorar a execução periódica do reconciliador; só receber webhooks não garante recuperação de eventos perdidos.
 - Confirmar autenticação de webhook suportada pela conta. O suporte configurável a Basic não equivale a homologação no painel.
+- Definir e homologar a recuperação de renovação recusada, incluindo atualização do cartão. A interface informa a recusa e preserva o período pago, mas não oferece troca de cartão nem uma segunda contratação para o contrato já vinculado. O encaminhamento ao suporte não substitui esse procedimento financeiro.
 - Definir operação de retenção e remoção dos registros financeiros mínimos conforme obrigações aplicáveis, sem inventar prazo de retenção.
 
 Campanha, cupom e repasse continuam desligados. A primeira versão do checkout valida a mensalidade integral de 4.990 centavos; não se anuncia desconto até integrar a atribuição protegida e a conciliação correspondente.

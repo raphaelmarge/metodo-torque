@@ -227,6 +227,33 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
     assert(await f.page.locator('#billingCancel').isVisible());await f.close();pass('pagamento confirmado mostra prazo do servidor sem criar acesso local');
   }
   {
+    const f=await fixture({status:{state:'paid',managed:true,canCancel:true,retryAllowed:false,paymentIssue:'payment_failed',paidThrough:paidEnd,accessUntil:paidEnd}});
+    const copy=await f.page.locator('#billingStatus').innerText();
+    assert.match(copy,/A renovação não foi aprovada/);assert(!/Pagamento confirmado/.test(copy));
+    assert.match(copy,/O período já pago permanece até/);assert.match(copy,/Ajuda → Falar com o suporte/);
+    assert(copy.includes(await f.page.locator('#billingAccessEnd').innerText()),'prazo pago confirmado continua visível no aviso e no acesso');
+    assert(await f.page.locator('#salesCheckout').isDisabled());assert(await f.page.locator('#billingCancel').isVisible());
+    assert(!f.calls.some(x=>x.token||['checkout','cancel'].includes(x.body.action)),'aviso não dispara nova contratação nem cancelamento');
+    await f.close();pass('renovação recusada permanece visível durante o período já pago, sem oferecer outra contratação');
+  }
+  {
+    const f=await fixture({status:{state:'canceled',managed:true,canCancel:false,retryAllowed:false,renewalCanceled:true,paymentIssue:'payment_failed',paidThrough:paidEnd,accessUntil:paidEnd}});
+    const copy=await f.page.locator('#billingStatus').innerText();
+    assert.match(copy,/Renovação cancelada e confirmada/);assert.match(copy,/Uma cobrança anterior não foi aprovada/);
+    assert.match(copy,/Isso não reativa a renovação cancelada/);assert(!/Pagamento confirmado/.test(copy));
+    assert(copy.includes(await f.page.locator('#billingAccessEnd').innerText()),'cancelamento mantém o prazo pago retornado pelo servidor');
+    assert(await f.page.locator('#salesCheckout').isDisabled());assert(await f.page.locator('#billingCancel').isHidden());
+    assert(!f.calls.some(x=>x.token||['checkout','cancel'].includes(x.body.action)));
+    await f.close();pass('cobrança recusada anterior não oculta cancelamento confirmado nem altera prazo pago');
+  }
+  {
+    const f=await fixture({status:{state:'paid',managed:true,canCancel:true,retryAllowed:false,paymentIssue:null,paidThrough:paidEnd,accessUntil:paidEnd}});
+    assert.equal(await f.page.locator('#billingStatus').innerText(),'Pagamento confirmado para o período informado abaixo.');
+    assert.notEqual(await f.page.locator('#billingAccessEnd').innerText(),'Não confirmado');
+    assert(await f.page.locator('#salesCheckout').isDisabled());assert(await f.page.locator('#billingCancel').isVisible());
+    await f.close();pass('pagamento confirmado sem falha de renovação conserva mensagem e prazo normais');
+  }
+  {
     const f=await fixture({token:async route=>{await f.page.evaluate(()=>{window.__billingSession=null;});await route.fulfill({json:{id:'token_fixtureonly'}});}});
     await fill(f.page);await submit(f.page);
     assert(!f.calls.some(x=>x.body.action==='checkout'));

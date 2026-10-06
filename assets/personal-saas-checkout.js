@@ -132,7 +132,16 @@
         canceled:'Renovação cancelada e confirmada. O acesso já confirmado permanece até a data informada abaixo.',
         needs_review:'A situação precisa de conferência. Não faça outra contratação enquanto verificamos.'
       };
-      text('billingStatus', unknown ? 'Ainda não foi possível localizar a confirmação da sua tentativa. Atualize a situação; não faça uma nova contratação.' : descriptions[s.state]);
+      var statusMessage = descriptions[s.state];
+      if (s.paymentIssue === 'payment_failed') {
+        var paymentWarning = s.renewalCanceled
+          ? 'Uma cobrança anterior não foi aprovada. Isso não reativa a renovação cancelada.'
+          : (s.paidThrough ? 'A renovação não foi aprovada.' : 'O pagamento não foi aprovado. Nenhum novo período foi confirmado.');
+        if (s.paidThrough) paymentWarning += ' O período já pago permanece até ' + date(s.paidThrough) + '.';
+        statusMessage = (s.state === 'paid' ? '' : statusMessage + ' ') + paymentWarning;
+        if (s.accessActive) statusMessage += ' No painel, abra Ajuda → Falar com o suporte para conferir a cobrança.';
+      }
+      text('billingStatus', unknown ? 'Ainda não foi possível localizar a confirmação da sua tentativa. Atualize a situação; não faça uma nova contratação.' : statusMessage);
       text('billingTrialEnd', date(s.trialEndsAt)); text('billingAccessEnd', s.accessActive && s.accessKind === 'lifetime' ? 'Sem prazo (benefício vitalício)' : (s.accessKind === 'legacy' && s.accessUntil === null ? 'Prazo da assinatura anterior não informado' : date(s.accessUntil))); show('billingDates', true);
       text('billingChargeNotice', 'R$ 49,90 por mês. A primeira cobrança ocorre somente após os 14 dias completos de teste (a partir de ' + date(s.trialEndsAt) + '). Se o teste já terminou, a cobrança pode ocorrer nesta contratação. Renovação mensal até o cancelamento. Nenhum desconto está aplicado.');
       show('billingRefresh', true);
