@@ -344,7 +344,10 @@ Deno.serve(async (req: Request) => {
     if (!resp) return json({ erro: "Não foi possível confirmar o cancelamento no Pagar.me." }, 502);
     const dados: any = await resp.json().catch(() => ({}));
     if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + erroPagarme(dados, resp.status) }, 502);
-    return json({ ok: true, status: (dados && dados.status) || "canceled" });
+    if (dados.id !== id || dados.status !== "canceled") {
+      return json({ erro: "O Pagar.me recebeu a solicitação, mas não confirmou o cancelamento. Consulte a situação antes de tentar novamente." }, 502);
+    }
+    return json({ ok: true, status: "canceled" });
   }
 
   // ---------- consultar situação ----------

@@ -35,7 +35,7 @@ function setup(opts = {}) {
       if (opts.gatewayNetwork && method === opts.gatewayNetwork) throw new Error('Gateway fictício indisponível');
       if (opts.gatewayError && method === opts.gatewayError) return Response.json({ message: 'Falha fictícia' }, { status: 503 });
       if (method === 'POST') return Response.json({ id: u.pathname.endsWith('orders') ? 'or_nova' : 'sub_nova', status: 'active', charges: [{ id: 'ch_ficticia', status: 'pending', last_transaction: { qr_code: 'PIX-FICTICIO' } }], card: { brand: 'Fictícia', last_four_digits: '0000' } });
-      if (method === 'DELETE') return Response.json({ id: 'sub_propria', status: 'canceled' });
+      if (method === 'DELETE') return Response.json(opts.deleteResource || { id: 'sub_propria', status: 'canceled' });
       return Response.json(opts.resource || { id: decodeURIComponent(u.pathname.split('/').pop()), metadata: { academia_id: 'academia-a' }, status: 'active', next_billing_at: '2026-11-01', items: [{ pricing_scheme: { price: 12300 } }], charges: [{ status: 'paid', paid_at: '2026-10-06' }] });
     }
   };
@@ -113,6 +113,12 @@ const cancelar = { acao: 'assinatura_cancela', assinaturaId: 'sub_propria' };
   for (const opts of [{ revokedAfter: true }, { memberErrorAfter: true }]) await test('Vínculo revogado ou indisponível durante consulta impede DELETE', async () => { const x = setup(opts); const r = await x.send(cancelar); assert.ok(r.status === 403 || r.status === 503); assert.deepEqual(x.api().map(x => x.method), ['GET']); });
   for (const opts of [{ gatewayError: 'GET' }, { gatewayNetwork: 'GET' }]) await test('Falha ao consultar no gateway não tenta cancelamento', async () => { const x = setup(opts); assert.equal((await x.send(cancelar)).status, 502); assert.deepEqual(x.api().map(x => x.method), ['GET']); });
   for (const opts of [{ gatewayError: 'DELETE' }, { gatewayNetwork: 'DELETE' }]) await test('Falha no cancelamento não anuncia sucesso', async () => { const x = setup(opts); const r = await x.send(cancelar); assert.equal(r.status, 502); assert.equal(r.body.ok, undefined); });
+  for (const deleteResource of [{}, { id: 'sub_propria', status: 'active' }, { id: 'sub_outra', status: 'canceled' }]) {
+    await test('HTTP200 sem cancelamento confirmado da mesma assinatura não anuncia sucesso', async () => {
+      const x = setup({ deleteResource }); const r = await x.send(cancelar);
+      assert.equal(r.status, 502); assert.equal(r.body.ok, undefined); assert.match(r.body.erro, /não confirmou/);
+    });
+  }
   await test('Ping e chave pública mantêm os contratos existentes', async () => { const x = setup(); const r = await x.send({ acao: 'ping' }); assert.equal(r.body.chaveConfigurada, true); assert.ok(r.body.regras.includes('acao-normalizada')); assert.deepEqual((await x.send({ acao: 'chave_publica' })).body, { ok: true, publicKey: 'publica-ficticia' }); assert.equal(x.api().length, 0); });
   console.log(checks + ' cenários de autorização Pagar.me passaram; nenhuma chamada externa real.');
 })().catch(e => { console.error(e); process.exitCode = 1; });

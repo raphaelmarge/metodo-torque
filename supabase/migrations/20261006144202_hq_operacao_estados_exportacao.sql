@@ -93,7 +93,7 @@ begin
  if needed is null or not needed<@perms then raise exception using errcode='42501',message='Relatorio nao autorizado';end if;
  if p_filters is null or jsonb_typeof(p_filters)<>'object' or pg_column_size(p_filters)>4096 then raise exception 'Filtros invalidos';end if;
  for k in select jsonb_object_keys(p_filters) loop
-  if not k=any(array['from','to','timeZone','product','metric','rowStatus','cohort']) or jsonb_typeof(p_filters->k)<>'string' or length(p_filters->>k)>100 then raise exception 'Filtros invalidos';end if;
+  if not k=any(array['from','to','timeZone','product','metric','rowStatus','cohort','accountId','accountStatus','status']) or jsonb_typeof(p_filters->k)<>'string' or length(p_filters->>k)>100 then raise exception 'Filtros invalidos';end if;
  end loop;
  if p_snapshot_at is null or not isfinite(p_snapshot_at) or p_snapshot_at>now()+interval '5 minutes' or p_snapshot_at<now()-interval '1 day'
    or p_rows is null or p_rows<0 or p_rows>100000 or p_content_sha256 is null or p_content_sha256 !~ '^[a-f0-9]{64}$'
