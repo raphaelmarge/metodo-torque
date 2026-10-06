@@ -550,6 +550,11 @@ async function main() {
     observe('team', 'Versioned administrative registry tested via real Auth JWTs and direct PostgREST; no Auth users, staff, invitations, scopes or access grants are provisioned by team operations.');
     observe('team_recovery', 'Real HTTP disappearance/restoration confirms PostgREST cache reload; synthetic legacy overload is refused atomically, preserved until its explicit fixture cleanup.');
   });
+  // Test later additive migrations after the original release/suspension contracts.
+  // User identities and tokens remain those issued by real GoTrue above.
+  await require('./test-operacao-http.cjs')({ client, check, rpc, good, rejected, waitRPC,
+    rest: (route, options) => request(REST, route, options),
+    users, accountA, accountB, anonKey, serviceKey });
   observe('scope', 'Direct official Auth + PostgREST only. Kong/Envoy gateway, hosted project configuration, SMTP, frontend browser, MFA and production are outside this run.');
   summary.status = 'pass'; console.log('PASS ' + summary.checks.length + ' real Auth/PostgREST HTTP groups');
 }
