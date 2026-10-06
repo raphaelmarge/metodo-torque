@@ -85,6 +85,8 @@ function pass() { checks++; }
     assert.equal(href,'personal-assinatura.html?cupom=TESTE40&ref=parceiro_1');
     assert(await page.locator('[data-personal-trial]').evaluateAll(xs=>xs.length>0&&xs.every(a=>a.href.includes('entrada=criar'))));
     await page.locator('[data-sales-link]').first().click();
+    // O clique pode concluir no commit da navegação, antes dos scripts defer.
+    await page.waitForLoadState('domcontentloaded');
     assert.match(page.url(),/personal-assinatura\.html\?cupom=TESTE40/);
     assert.equal(await page.locator('#salesCoupon').inputValue(),'TESTE40');
   }

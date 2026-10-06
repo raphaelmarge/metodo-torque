@@ -9,7 +9,11 @@
   <link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/fonts/archivo.css">
   <link rel="stylesheet" href="assets/personal-sales.css">
+  <link rel="stylesheet" href="assets/personal-saas-checkout.css">
   <script src="assets/personal-sales-intent.js" defer></script>
+  <script src="assets/cloud-config.js" defer></script>
+  <script src="assets/vendor/supabase.js" defer></script>
+  <script src="assets/personal-saas-checkout.js" defer></script>
 </head>
 <body class="sales-page">
   <a class="sales-skip" href="#contratacao">Pular para a assinatura</a>
@@ -36,11 +40,71 @@
         </dl>
         <p class="sales-note">Um eventual desconto por cupom vale apenas para a primeira mensalidade. O valor e a validade precisam ser confirmados antes da contratação.</p>
         <div class="sales-notice" role="status">
-          <strong>Pagamento online ainda indisponível.</strong>
+          <strong id="salesAvailabilityTitle">Pagamento online ainda indisponível.</strong>
           <p id="salesAvailabilityCopy">Você pode iniciar o teste grátis. Nenhuma cobrança é feita nesta página.</p>
         </div>
         <button class="sales-button sales-button-disabled" id="salesCheckout" type="button" disabled aria-describedby="salesCheckoutHelp">Pagamento indisponível</button>
         <p class="sales-note" id="salesCheckoutHelp">A contratação será liberada quando for possível confirmar o pagamento e o acesso com segurança.</p>
+        <section id="billingPanel" class="billing-panel" aria-labelledby="billingTitle" hidden>
+          <h3 id="billingTitle">Sua assinatura</h3>
+          <p id="billingEnvironment" class="sales-notice" hidden>Ambiente de teste. Use somente dados fictícios; não há cobrança real.</p>
+          <label for="billingAccount">Conta do Personal</label>
+          <select id="billingAccount" disabled><option value="">Selecione sua conta</option></select>
+          <p id="billingStatus" role="status" aria-live="polite"></p>
+          <dl id="billingDates" class="sales-summary" hidden>
+            <div><dt>Teste grátis até</dt><dd id="billingTrialEnd">—</dd></div>
+            <div><dt>Acesso confirmado até</dt><dd id="billingAccessEnd">—</dd></div>
+          </dl>
+          <button id="billingRefresh" class="sales-button sales-button-secondary" type="button" hidden>Atualizar situação</button>
+          <button id="billingCancel" class="sales-button sales-button-secondary" type="button" hidden>Cancelar renovação</button>
+          <div id="billingCancelConfirm" class="sales-notice" hidden>
+            <p>Cancelar a renovação impede as próximas cobranças após a confirmação. O acesso já confirmado permanece até a data informada acima.</p>
+            <div class="sales-form-actions">
+              <button id="billingCancelYes" class="sales-button" type="button">Confirmar cancelamento da renovação</button>
+              <button id="billingCancelNo" class="sales-button sales-button-secondary" type="button">Manter renovação</button>
+            </div>
+          </div>
+          <form id="billingForm" hidden>
+            <fieldset id="billingFields">
+              <legend>Dados para a assinatura</legend>
+              <label for="billingName">Nome completo</label>
+              <input id="billingName" autocomplete="name" maxlength="100" required>
+              <label for="billingEmail">E-mail para cobrança</label>
+              <input id="billingEmail" type="email" autocomplete="email" maxlength="254" required>
+              <label for="billingDocument">CPF ou CNPJ <span class="sales-note">(opcional)</span></label>
+              <input id="billingDocument" inputmode="numeric" autocomplete="off" maxlength="18">
+              <label for="billingPhone">Celular com DDD <span class="sales-note">(opcional)</span></label>
+              <input id="billingPhone" type="tel" autocomplete="tel-national" maxlength="17">
+              <h4>Endereço de cobrança</h4>
+              <label for="billingAddress">Número, rua e bairro</label>
+              <input id="billingAddress" autocomplete="address-line1" maxlength="200" required>
+              <label for="billingAddressExtra">Complemento <span class="sales-note">(opcional)</span></label>
+              <input id="billingAddressExtra" autocomplete="address-line2" maxlength="100">
+              <label for="billingZip">CEP</label>
+              <input id="billingZip" inputmode="numeric" autocomplete="postal-code" maxlength="9" required>
+              <div class="billing-columns">
+                <div><label for="billingCity">Cidade</label><input id="billingCity" autocomplete="address-level2" maxlength="100" required></div>
+                <div><label for="billingState">Estado (UF)</label><input id="billingState" autocomplete="address-level1" autocapitalize="characters" maxlength="2" required></div>
+              </div>
+              <p class="sales-note">Endereço de cobrança no Brasil.</p>
+              <h4>Cartão de crédito</h4>
+              <p class="sales-note">Os dados do cartão são enviados diretamente ao Pagar.me. O Torque recebe apenas uma referência temporária para esta contratação.</p>
+              <label for="billingCardHolder">Nome impresso no cartão</label>
+              <input id="billingCardHolder" autocomplete="cc-name" maxlength="64" required data-card-field>
+              <label for="billingCardNumber">Número do cartão</label>
+              <input id="billingCardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required data-card-field>
+              <div class="billing-columns">
+                <div><label for="billingCardExpiry">Validade (MM/AAAA)</label><input id="billingCardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AAAA" maxlength="7" required data-card-field></div>
+                <div><label for="billingCardCvv">Código de segurança</label><input id="billingCardCvv" type="password" inputmode="numeric" autocomplete="off" maxlength="4" required data-card-field></div>
+              </div>
+              <p id="billingChargeNotice" class="sales-notice">R$ 49,90 por mês. A primeira cobrança ocorre somente após os 14 dias completos de teste. A renovação é mensal até o cancelamento.</p>
+              <label class="billing-consent"><input id="billingConsent" type="checkbox" required><span>Autorizo a assinatura mensal de R$ 49,90, com renovação automática até o cancelamento e primeira cobrança somente após o teste gratuito. Nenhum cupom ou desconto está aplicado. <a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a>.</span></label>
+              <button id="billingSubmit" class="sales-button" type="submit">Confirmar assinatura de R$ 49,90/mês</button>
+              <button id="billingClose" class="sales-button sales-button-secondary" type="button">Voltar sem contratar</button>
+            </fieldset>
+          </form>
+          <p id="billingMessage" class="sales-status" role="alert"></p>
+        </section>
         <a id="salesTrialAction" class="sales-button" data-personal-trial href="personal.html?entrada=criar">Começar meus 14 dias grátis</a>
         <a class="sales-back" href="personal-vendas.html">Voltar para conhecer o sistema</a>
       </section>
