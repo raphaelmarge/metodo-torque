@@ -1,0 +1,60 @@
+name: Diagnostico - jornada Personal com Auth real
+
+on:
+  push:
+    branches: [codex/jornada-personal-auth-20261006]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-journey-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TORQUE_PERSONAL_JOURNEY_CI: '1'
+      BASE_URL: http://127.0.0.1:58765
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verificar a fonte exata do produto e o escopo de diagnostico
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          node tests/personal-journey-ci/verify-source.cjs
+          node tests/personal-journey-ci/test-application-contracts.js
+          node tests/personal-journey-ci/test-transport.cjs
+          printf '## Jornada descartavel do Personal\n\nHarness: `%s`\n\nFonte do produto: `%s`\n\nSem deploy, projeto remoto, mensagens, compras ou confirmacao de e-mail.\n' "$GITHUB_SHA" "$(node -p "require('./tests/personal-journey-ci/source-base.json').sourceBaseSha")" >> "$GITHUB_STEP_SUMMARY"
+      - name: Instalar apenas as dependencias travadas e Chromium
+        run: |
+          npm ci --prefix tests/sql --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/runtime --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/ci --ignore-scripts --no-audit --no-fund
+          bash .github/scripts/prepara-playwright-ci.sh
+          node tests/ci/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Executar os 90 testes existentes e depois a jornada real no navegador
+        shell: bash
+        run: bash tests/hq-auth-ci/run.sh
+      - name: Guardar evidencias sem credenciais ou corpos HTTP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: personal-journey-${{ github.sha }}
+          path: |
+            artifacts/hq-auth-ci/*.json
+            artifacts/personal-journey-ci/*.json
+            artifacts/personal-journey-ci/*.png
+          if-no-files-found: warn
+          retention-days: 7

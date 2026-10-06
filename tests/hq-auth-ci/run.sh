@@ -225,4 +225,9 @@ node tests/test-personal-cortesia-sql.js --postgres
 "${compose[@]}" exec -T db psql -X -q -U postgres -d hq_auth_ci -v ON_ERROR_STOP=1 < "$infra/public-fixtures.sql"
 printf '%s\n' 'Minimal public fixtures installed after real Auth migrations.'
 node tests/hq-auth-ci/test-auth-http.cjs
+if [[ "${TORQUE_PERSONAL_JOURNEY_CI:-}" == 1 ]]; then
+  # Additive diagnostic only: the original 90 HTTP checks above still run first.
+  # Existing HQ workflows leave this flag unset and retain their exact behavior.
+  node tests/personal-journey-ci/test-browser.cjs
+fi
 printf '%s\n' 'Auth/PostgREST checks completed; discarding the entire stack.'
