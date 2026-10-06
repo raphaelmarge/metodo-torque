@@ -17,7 +17,15 @@ O workflow separado só dispara na branch diagnóstica `codex/jornada-personal-a
 9. Após cada confirmação no banco, uma leitura simultânea exige o estado global `sincronizado` e o mesmo estado/texto no nó dedicado do recibo. Os três recibos são rolados à vista e capturados. A prova anterior em c7 preserva a falha de texto; esta execução verifica a fonte mt-v857 declarada no manifesto.
 10. No mesmo grupo de conclusão do circuito, os quatro controles são medidos em 390 px: precisam caber no grupo e na tela, sem sobreposição ou rolagem horizontal, com área mínima de 44×44 px e centro acessível ao toque. A geometria e uma captura acompanham o resultado.
 
-Essas etapas adicionais cobrem execução, pausa, retomada e histórico dos **modos livres**. Não comprovam criar, prescrever e publicar corrida ou circuito pelo Personal. Os tempos curtos são medidos pelo cronômetro real do navegador durante o teste; não representam atividade física. A localização é explicitamente negada pelo contexto do navegador, sem substituir APIs nem fornecer coordenadas.
+Essas etapas preservam os **15 grupos anteriores**, incluindo a segurança final. A extensão seguinte acrescenta cinco grupos, sem substituir ou reduzir essas verificações:
+
+11. O Personal cadastra outro aluno fictício e usa os editores verdadeiros para prescrever uma corrida contínua de 0,02 km e um circuito For Time sem limite, com cinco agachamentos. Os documentos salvos são observados no banco; salvar não pode publicar ou criar acesso antecipadamente.
+12. O Personal revisa as duas prescrições e publica o primeiro pacote desse aluno pela interface. Outro contexto vazio recebe os mesmos identificadores e movimentos; nenhum convite ou push de atualização é solicitado.
+13. O aluno inicia a corrida prescrita, desliga pela interface o aquecimento/volta à calma opcionais e registra 0,02 km manualmente. Pausa, recarrega e retoma a mesma sessão. O servidor deve confirmar o alvo completo, origem manual, tempo ativo e prescrição correspondentes, sem rota inventada.
+14. O aluno executa o circuito prescrito, pausa, recarrega e retoma. Ao terminar, o placar permanece sem evento de resultado final/encerramento no servidor; outra recarga deve preservar sua revisão. Só o clique em **Salvar resultado** confirma a sessão, com a receita publicada e recibo sincronizado.
+15. Um contexto novamente vazio recupera do servidor apenas as duas sessões do segundo aluno, com os resultados e snapshots prescritos intactos, sem misturar as três sessões do primeiro.
+
+As prescrições verificadas são somente **contínuo por distância** e **For Time com um movimento**; outros formatos, intervalos, planejamento por calendário e programação completa continuam fora dessa extensão. Os tempos curtos são medidos pelo cronômetro real do navegador; distância, execução e conclusão são dados fictícios digitados pelo roteiro, não atividade física. A localização é explicitamente negada pelo navegador, sem substituir APIs nem fornecer coordenadas. A fonte continua `d8ef365` (mt-v857); o resultado lógico não valida o CSS de uma versão posterior.
 
 ## Transporte e limites
 

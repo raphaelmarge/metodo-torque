@@ -17,7 +17,8 @@ const summary={schemaVersion:1,scope:'real-browser-real-auth-real-postgrest-disp
   limitations:['Auth identity is created confirmed by the local admin API; self-signup, email delivery and email confirmation are not tested.',
     'No hosted Supabase gateway, production database, payment, AI, push, WhatsApp, GPS or external exercise media is used.',
     'Chat/agenda/nutrition background RPCs outside the installed minimum may return real missing-contract errors. Their behavior is not claimed.',
-    'Running and circuit use free activities, a synthetic manually entered distance and short real browser timers; their prescription/publication by the Personal and outdoor GPS are not tested.',
+    'Free and prescribed running/circuit use synthetic manual input and short real browser timers, not physical activity or outdoor GPS. Prescribed running is one continuous distance target; circuit is one For Time movement. Other prescription formats are not tested.',
+    'The source remains the exact declared d8ef365 product; these logical checks do not validate a later CSS release.',
     'This supplements, and never replaces, all 90 preceding Auth/PostgREST checks.'],network:[],externalBlocked:[],dialogs:[]};
 let phase='environment guard',operation='none',client,server,browser,personal,pupil,anonKey,serviceKey;
 const safeCode=v=>typeof v==='string'&&/^[a-zA-Z0-9_]{1,60}$/.test(v)?v:'UNCLASSIFIED';
@@ -100,7 +101,7 @@ async function context(label,viewport){
     page.on('pageerror',e=>{summary.browserErrors=summary.browserErrors||[];summary.browserErrors.push({context:label,name:safeCode(e.name)});});
     page.on('dialog',async dialog=>{
       const creating=operation==='create workout sheet'&&dialog.type()==='prompt'&&/^Nome da ficha/.test(dialog.message());
-      const endingCircuit=operation==='finish free circuit'&&dialog.type()==='confirm'&&dialog.message()==='Encerrar este circuito e revisar o resultado?';
+      const endingCircuit=['finish free circuit','review prescribed circuit'].includes(operation)&&dialog.type()==='confirm'&&dialog.message()==='Encerrar este circuito e revisar o resultado?';
       const blocked=dialog.type()==='alert'&&/ainda não tem o app criado/.test(dialog.message());
       summary.dialogs.push({context:label,type:dialog.type(),expected:creating||endingCircuit,code:blocked?'FIRST_PUBLICATION_REQUIRES_ACCESS':creating?'WORKOUT_NAME':endingCircuit?'FINISH_FREE_CIRCUIT':'DISMISSED'});
       if(creating)await dialog.accept('A — Treino isolado');else if(endingCircuit)await dialog.accept();else await dialog.dismiss();
@@ -347,6 +348,146 @@ async function main(){
     await until(()=>pupil.locator('#thHistory .th-session').count(),n=>n===3,{code:'HISTORY_UI_NOT_RENDERED'});
     const finalRows=await eventRows();assert.equal(finalRows.filter(r=>r.evento.type==='start').length,3);assert.equal(finalRows.filter(r=>r.evento.type==='finish').length,3);
     await screenshot(pupil,'14-three-sports-server-history');summary.freshHistoryEvidence={emptyInitialStorage:true,completedSessions:3,serverReadObserved:true};
+  });
+  // Additive extension: the preceding fourteen groups and the final safety group
+  // remain intact. A second pupil has a first publication, so this exercise never
+  // requests an update push, invitation or another external delivery.
+  let prescribedStudentId,prescribedPackage,prescribedRun,prescribedCircuit,runPrescription,circuitPrescription;
+  await check('the Personal prescribes running and circuit for a second pupil through the actual editor',async()=>{
+    operation='create second pupil';await personal.locator('[data-nav="alunos"]').click();
+    await personal.locator('#btnNovoAluno').click();await personal.locator('#aNome').fill('Aluno prescrição CI');await personal.locator('#aAdd').click();
+    await personal.locator('#naTreino').waitFor({state:'visible'});
+    const saved=await until(studio,s=>s?.valor?.alunos?.some(a=>a.nome==='Aluno prescrição CI'));
+    const student=saved.valor.alunos.find(a=>a.nome==='Aluno prescrição CI');prescribedStudentId=student.id;
+    assert.notEqual(prescribedStudentId,studentId);assert(!student.appTokenP);assert(!student.acessoEm);
+    operation='prescribe continuous running';await personal.locator('#naTreino').click();
+    await personal.locator('#trAbas [data-tra="cardio"]').click();await personal.locator('#cbAluno').selectOption(prescribedStudentId);
+    if(!await personal.locator('#cbNome').isVisible())await personal.locator('#cbEditor > summary').click();
+    await personal.locator('#cbNome').fill('Corrida prescrita CI');await personal.locator('#cbMod').selectOption('corrida');
+    await personal.locator('#cbModo').selectOption('simples');await personal.locator('#cbTipo').selectOption('continuo');
+    await personal.locator('#cbDist').fill('0.02');await personal.locator('#cbTempo').fill('0');await personal.locator('#cbSalva').click();
+    const cardioStored=await until(studio,s=>s?.valor?.treinosV2?.[prescribedStudentId]?.cardio?.length===1);
+    runPrescription=cardioStored.valor.treinosV2[prescribedStudentId].cardio[0];
+    assert.equal(runPrescription.nome,'Corrida prescrita CI');assert.equal(runPrescription.mod,'corrida');
+    assert.equal(runPrescription.tipo,'continuo');assert.equal(runPrescription.dist,0.02);assert.equal(runPrescription.tempo,0);
+    operation='prescribe For Time circuit';await personal.locator('#trAbas [data-tra="wod"]').click();
+    await personal.locator('#wpAluno').selectOption(prescribedStudentId);
+    if(!await personal.locator('#wpNome').isVisible())await personal.locator('#wpEditor > summary').click();
+    await personal.locator('#wpNome').fill('Circuito prescrito CI');await personal.locator('#wpTipo').selectOption('fortime');
+    await personal.locator('#wpCap').fill('0');await personal.locator('#wpMovLinhas .wpq').first().fill('5');
+    await personal.locator('#wpMovLinhas .wpe').first().fill('Agachamento livre');await personal.locator('#wpSalva').click();
+    const circuitStored=await until(studio,s=>s?.valor?.treinosV2?.[prescribedStudentId]?.wods?.length===1);
+    circuitPrescription=circuitStored.valor.treinosV2[prescribedStudentId].wods[0];
+    assert.equal(circuitPrescription.nome,'Circuito prescrito CI');assert.equal(circuitPrescription.tipo,'fortime');assert.equal(circuitPrescription.cap,0);
+    assert.deepEqual(circuitPrescription.movs,[{q:'5',n:'Agachamento livre'}]);
+    assert.equal((await rows('select 1 from public.app_aluno where academia_id=$1',[accountId])).length,1,'Saving both prescriptions must not publish this pupil');
+    assert(!circuitStored.valor.alunos.find(a=>a.id===prescribedStudentId).appTokenP);
+    await screenshot(personal,'16-two-prescriptions-saved');
+  });
+  await check('explicit first publication delivers both prescribed modalities to a new empty pupil context',async()=>{
+    operation='review two prescribed modalities';await personal.locator('#wpPublica').click();await personal.locator('#acPublicar').waitFor({state:'visible'});
+    const review=personal.locator('dialog[open]').filter({has:personal.locator('#acPublicar')});
+    assert.match(await review.innerText(),/Corrida prescrita CI/);assert.match(await review.innerText(),/Circuito prescrito CI/);
+    await screenshot(personal,'17-two-prescriptions-review');operation='publish two prescribed modalities';await personal.locator('#acPublicar').click();
+    prescribedPackage=await until(async()=>(await rows('select token,dados,revogado_em,visto_em from public.app_aluno where academia_id=$1',[accountId])).find(r=>r.dados?.dados?.a?.id===prescribedStudentId),r=>r?.dados?.dados?.cardiosApp?.length===1&&r?.dados?.dados?.wodsApp?.length===1);
+    assert.equal(prescribedPackage.revogado_em,null);assert.equal(prescribedPackage.visto_em,null);
+    assert.equal(prescribedPackage.dados.dados.cardiosApp[0].id,runPrescription.id);
+    assert.equal(prescribedPackage.dados.dados.cardiosApp[0].dist,0.02);
+    assert.equal(prescribedPackage.dados.dados.wodsApp[0].id,circuitPrescription.id);
+    assert.deepEqual(prescribedPackage.dados.dados.wodsApp[0].movs,circuitPrescription.movs);
+    const stored=await until(studio,s=>!!s?.valor?.alunos?.find(a=>a.id===prescribedStudentId)?.appPubEm);
+    assert(!stored.valor.alunos.find(a=>a.id===prescribedStudentId).acessoEm);
+    await pupil.context().close();token=prescribedPackage.token;
+    const fresh=await context('pupil-prescribed',{width:390,height:844});assert.deepEqual((await fresh.storageState()).origins,[]);pupil=await fresh.newPage();
+    operation='open both published prescriptions';await pupil.goto(BASE+'/app/?t='+encodeURIComponent(token),{waitUntil:'domcontentloaded'});
+    await trainingTab('cardio');assert.equal(await pupil.locator('[data-cbstart]').count(),1);
+    assert.equal(await pupil.locator('[data-cbstart]').getAttribute('data-cbstart'),runPrescription.id);
+    await trainingTab('wod');assert.equal(await pupil.locator('[data-wodstart]').count(),1);
+    assert.equal(await pupil.locator('[data-wodstart]').getAttribute('data-wodstart'),circuitPrescription.id);
+    await until(()=>rows('select visto_em from public.app_aluno where token=$1',[token]),r=>!!r[0]?.visto_em);
+    await screenshot(pupil,'18-two-prescriptions-delivered');
+  });
+  await check('prescribed continuous running survives pause and reload and confirms the manual distance target on the server',async()=>{
+    operation='prepare prescribed running';await trainingTab('cardio');
+    if(!await pupil.locator('[data-cbstart]').isVisible())await pupil.locator('[data-cbstart]').locator('xpath=ancestor::details').locator(':scope > summary').click();
+    await pupil.locator('[data-cbstart]').click();
+    assert.equal(await pupil.evaluate(async()=>(await navigator.permissions.query({name:'geolocation'})).state),'denied');
+    assert(await pupil.locator('#crLimiteInicio').isVisible());
+    // Use the actual option to disable optional warm-up/cool-down around the
+    // continuous prescription; the distance target itself remains unchanged.
+    await pupil.locator('#crCfgBtn').click();await pupil.locator('#crCfgBl').uncheck();await pupil.locator('#crCfgBtn').click();
+    await pupil.locator('#crKm').fill('0.02');await pupil.locator('#crGo').click();
+    await until(runState,s=>s.run&&s.seconds>=6,{code:'PRESCRIBED_RUN_NOT_STARTED'});await pupil.locator('#crGoF').click();
+    const paused=await runState();assert.equal(paused.gps,false);assert.equal(paused.km,0.02);
+    assert.equal(paused.checkpoint.plano.id,runPrescription.id);assert.equal(paused.checkpoint.plano.d,0.02);
+    operation='reload prescribed running';await pupil.reload({waitUntil:'domcontentloaded'});await trainingTab('cardio');await pupil.locator('#crRetomar').click();
+    const restored=await runState();assert.equal(restored.sid,paused.sid);assert.equal(restored.run,false);assert.equal(restored.seconds,paused.seconds);
+    assert.equal(restored.km,0.02);assert.equal(restored.checkpoint.plano.id,runPrescription.id);
+    await pupil.waitForTimeout(1100);assert.equal((await runState()).seconds,paused.seconds);
+    operation='resume prescribed running';await pupil.locator('#crGoF').click();
+    await until(runState,s=>s.run&&s.seconds>=paused.seconds+2,{code:'PRESCRIBED_RUN_NOT_RESUMED'});await pupil.locator('#crGoF').click();
+    const finalState=await runState();operation='finish prescribed running';await pupil.locator('#crFimF').click();
+    const {events,view}=await finishedSession(paused.sid,'corrida');prescribedRun=view;
+    assert.equal(view.prescribed.plano.id,runPrescription.id);assert.equal(view.prescribed.plano.n,runPrescription.nome);
+    assert.equal(view.prescribed.plano.t,'continuo');assert.equal(view.prescribed.plano.d,0.02);assert.equal(view.prescribed.blocos,null);
+    assert.equal(events.filter(e=>e.target==='result').length,1);assert.deepEqual(events.find(e=>e.target==='result').parents,[]);
+    const value=view.targets.result.value;assert.equal(value.n,runPrescription.nome);assert.equal(value.k,0.02);
+    assert.equal(value.status,'completo');assert.equal(value.origem,'manual');assert.equal(value.tempoBase,'ativo');
+    assert.equal(value.s,Math.round(finalState.seconds));assert.deepEqual(value.etapas,[]);assert(!value.r&&!value.rpartes);
+    await observeReceipt(pupil,'.cr-registro-status[data-ac-sync-status]','prescribed-running');await pupil.locator('#crRsFechar').click();
+    summary.prescribedRunningEvidence={source:'Personal UI to published pupil package',format:'continuous-distance',targetKm:0.02,
+      resultKm:value.k,resultStatus:value.status,origin:value.origem,optionalWarmupDisabledByUi:true,pausedReloadPreserved:true,serverFinished:true,gpsVerified:false};
+  });
+  await check('prescribed circuit review survives reload without premature finish and saves the published recipe to the server',async()=>{
+    operation='prepare prescribed circuit';await trainingTab('wod');
+    if(!await pupil.locator('[data-wodstart]').isVisible())await pupil.locator('[data-wodstart]').locator('xpath=ancestor::details').locator(':scope > summary').click();
+    await pupil.locator('[data-wodstart]').click();assert.equal(await pupil.locator('#wodCap').inputValue(),'0');
+    await pupil.locator('#wodGo').click();await until(circuitState,s=>s.run&&s.seconds>=2,{code:'PRESCRIBED_CIRCUIT_NOT_STARTED'});
+    assert.match(await pupil.locator('#wfAgora').innerText(),/Agachamento livre/);
+    await pupil.locator('#wfFeito').click();await pupil.locator('#wfPausa').click();const paused=await circuitState();
+    assert.equal(paused.laps,1);assert.equal(paused.checkpoint.receita.id,circuitPrescription.id);
+    operation='reload prescribed circuit';await pupil.reload({waitUntil:'domcontentloaded'});await trainingTab('wod');
+    await pupil.locator('#wodRetomar button').first().click();const restored=await circuitState();
+    assert.equal(restored.sid,paused.sid);assert.equal(restored.run,false);assert.equal(restored.seconds,paused.seconds);assert.equal(restored.laps,1);
+    await pupil.waitForTimeout(1100);assert.equal((await circuitState()).seconds,paused.seconds);
+    await pupil.locator('#wfPausa').click();await until(circuitState,s=>s.run&&s.seconds>=paused.seconds+2,{code:'PRESCRIBED_CIRCUIT_NOT_RESUMED'});
+    await pupil.locator('#wfPausa').click();const finished=await circuitState();operation='review prescribed circuit';await pupil.locator('#wfFim').click();
+    await pupil.locator('#wpSalvar').waitFor({state:'visible'});
+    assert(!(await eventRows()).some(r=>r.evento.session===paused.sid&&(r.evento.type==='finish'||r.evento.target==='result')),'Opening review must not finalize a prescribed circuit');
+    const reviewState=await circuitState();assert.equal(reviewState.checkpoint.stage,'review');
+    await screenshot(pupil,'19-prescribed-circuit-review-before-save');
+    operation='reload prescribed circuit review';await pupil.reload({waitUntil:'domcontentloaded'});await trainingTab('wod');
+    await pupil.locator('#wodRetomar button').first().click();await pupil.locator('#wpSalvar').waitFor({state:'visible'});
+    const reviewRestored=await circuitState();assert.equal(reviewRestored.sid,paused.sid);assert.equal(reviewRestored.seconds,finished.seconds);
+    assert.equal(reviewRestored.checkpoint.stage,'review');assert.deepEqual(reviewRestored.checkpoint.draft,reviewState.checkpoint.draft);
+    assert(!(await eventRows()).some(r=>r.evento.session===paused.sid&&(r.evento.type==='finish'||r.evento.target==='result')));
+    operation='save prescribed circuit result';await pupil.locator('#wpSalvar').click();
+    const {events,view}=await finishedSession(paused.sid,'circuito');prescribedCircuit=view;
+    assert.equal(view.prescribed.receita.id,circuitPrescription.id);assert.equal(view.prescribed.receita.n,circuitPrescription.nome);
+    assert.equal(view.prescribed.receita.t,'fortime');assert.equal(view.prescribed.receita.cap,0);assert.deepEqual(view.prescribed.receita.ms,circuitPrescription.movs);
+    assert.equal(events.filter(e=>e.target==='result').length,1);assert.deepEqual(events.find(e=>e.target==='result').parents,[]);
+    const value=view.targets.result.value;assert.equal(value.n,circuitPrescription.nome);assert.equal(value.tp,'fortime');
+    assert.equal(value.parcial,false);assert.equal(value.nf,0);assert.equal(value.v,Math.round(finished.seconds));assert.equal(value.du,Math.round(finished.seconds));
+    assert.deepEqual(JSON.parse(value.prescricao),view.prescribed.receita);assert.equal(value.sp.length,1);assert.equal((await circuitState()).checkpoint,null);
+    await observeReceipt(pupil,'#wodFimBox [data-ac-sync-status]','prescribed-circuit');
+    summary.prescribedCircuitEvidence={source:'Personal UI to published pupil package',format:'fortime',movements:1,registeredLaps:1,
+      pausedReloadPreserved:true,reviewReloadPreserved:true,noFinishBeforeSave:true,publishedRecipePreserved:true,serverFinished:true};
+  });
+  await check('a further empty browser restores both prescribed histories from the server without mixing pupil records',async()=>{
+    operation='open empty prescribed history context';await pupil.context().close();
+    const fresh=await context('pupil-prescribed-history',{width:390,height:844});assert.deepEqual((await fresh.storageState()).origins,[]);pupil=await fresh.newPage();
+    const networkStart=server.events.length;await pupil.goto(BASE+'/app/?t='+encodeURIComponent(token),{waitUntil:'domcontentloaded'});
+    await trainingTab('ficha');await pupil.locator('#thHistory > summary').click();await pupil.getByRole('button',{name:'Sincronizar histórico',exact:true}).click();
+    const histories=await until(()=>pupil.evaluate(()=>window.__treinoHistorico.list()),ss=>[prescribedRun.id,prescribedCircuit.id].every(id=>ss.some(s=>s.id===id&&s.finished)),{code:'PRESCRIBED_SERVER_HISTORY_NOT_RESTORED'});
+    assert.equal(histories.length,2);assert.deepEqual(histories.map(s=>s.kind).sort(),['circuito','corrida']);
+    for(const expected of [prescribedRun,prescribedCircuit]){
+      const actual=histories.find(s=>s.id===expected.id);assert.deepEqual(actual.prescribed,expected.prescribed);assert.deepEqual(actual.targets.result.value,expected.targets.result.value);
+    }
+    assert(!histories.some(s=>[muscleSession,runBefore.sid,circuitBefore.sid].includes(s.id)));
+    assert(server.events.slice(networkStart).some(e=>e.route==='rest:POST:/rpc/app_treino_eventos_lista'&&e.status===200));
+    const rr=await eventRows();assert.equal(rr.filter(r=>r.evento.type==='start').length,2);assert.equal(rr.filter(r=>r.evento.type==='finish').length,2);
+    await until(()=>pupil.locator('#thHistory .th-session').count(),n=>n===2,{code:'PRESCRIBED_HISTORY_UI_NOT_RENDERED'});
+    await screenshot(pupil,'20-prescribed-sports-server-history');summary.prescribedHistoryEvidence={emptyInitialStorage:true,completedSessions:2,serverReadObserved:true,previousPupilExcluded:true};
   });
   await check('journey has no JavaScript failures, external delivery, generated credentials or fabricated success',async()=>{
     assert.deepEqual(summary.browserErrors||[],[]);
