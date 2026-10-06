@@ -3,6 +3,7 @@
 // Application table fixtures are minimal; revocation/patch/return functions below
 // are loaded unchanged from canonical product sources, never replaced by stubs.
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path');
+const waitSchemaTable=require('./wait-schema-table.cjs');
 module.exports=async function({client,executeScript,check,rpc,rest,good,rejected,waitRPC,createUser,sessionId,revokeSession,anonKey,serviceKey,transport}){
   assert(['http-real-auth','sql-fixture'].includes(transport));
   const run=executeScript||client.query.bind(client),read=p=>fs.readFileSync(path.join(__dirname,'../..',p),'utf8');
@@ -55,6 +56,13 @@ module.exports=async function({client,executeScript,check,rpc,rest,good,rejected
     good(await service('reserve',{...own('a'),attemptId:crypto.randomUUID(),leaseId:crypto.randomUUID()}));
     await run(read('supabase/releases/personal-billing-optional/migrations/20261006162018_personal_billing_access_optin.sql'));
     await waitRPC(users.a,'minha_assinatura',r=>r.ok&&r.data?.via==='pagarme_saas');
+    for(const table of ['dados','app_aluno'])await waitSchemaTable({
+      probe:()=>req(users.a,table,'a'),assertReady:rows=>{
+        assert.equal(rows.length,1);assert.equal(rows[0].academia_id,ids.a);
+        if(table==='dados')assert.deepEqual(rows[0].valor,docs('a'));
+        else{assert.equal(rows[0].token,tokens.a);assert.deepEqual(rows[0].dados,{workout:true});}
+      }
+    });
   });
   await check('billing access: unbound legacy response is identical and only bound expired account locks',async()=>{
     assert.deepEqual(good(await rpc(users.b,'minha_assinatura')),legacyBefore);
