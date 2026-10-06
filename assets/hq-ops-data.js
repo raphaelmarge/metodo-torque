@@ -382,6 +382,23 @@
       n.assert(); n.emit(current); return clone(current);
     }
     function load() { n.assert(); if (!inflight) inflight = performLoad().finally(function () { inflight = null; }); return inflight; }
+    async function auditExport(input) {
+      n.assert(); var generation = authGeneration;
+      await authorize();
+      if (!current || current.currentUserId !== currentUser || current.permissions.indexOf('reports.export') < 0 || current.meta.exportAuditAvailable !== true) fail('EXPORT_AUDIT_UNAVAILABLE', 'Auditoria da exportação indisponível. Atualize a central.');
+      var result = await rpc('hq_ops_export_audit', {p_report:input.report,p_filters:input.filters,p_snapshot_at:input.snapshotAt,p_rows:input.rows,p_content_sha256:input.contentSha256,p_idempotency_key:input.idempotencyKey});
+      n.assert(); if (generation !== authGeneration || !result || result.ok !== true) fail('EXPORT_AUDIT_FAILED', 'A exportação não foi autorizada nesta sessão.');
+      return result;
+    }
+    async function legacySupport(input) {
+      n.assert(); var generation = authGeneration; input = input || {};
+      await authorize();
+      if (!legacyAdmin || !current || current.currentUserId !== currentUser) fail('FORBIDDEN','Histórico restrito a administradores existentes.');
+      var raw = await rpc('hq_ops_legacy_support',{p_cursor:input.cursor||null,p_limit:25,p_academia:input.accountId||null});
+      n.assert(); if (generation !== authGeneration) fail('FORBIDDEN','Sessão alterada durante a consulta.');
+      if (!raw || raw.version!==1 || raw.ok!==true || raw.readOnly!==true || !Array.isArray(raw.rows) || raw.rows.length>25 || !Number.isFinite(Date.parse(raw.asOf)) || raw.rows.some(function(r){return !r || ['saas_tickets','suporte_chamados'].indexOf(r.source)<0 || typeof r.message!=='string' || typeof r.reply!=='string';})) fail('INVALID_RESPONSE','Histórico não confirmado pelo servidor.');
+      return clone(raw);
+    }
     function command(raw) {
       var action = commandTail.then(async function () {
         n.assert(); var s = await load();
@@ -399,7 +416,7 @@
       });
       commandTail = action.catch(function () {}); return action;
     }
-    return { load: load, command: command, subscribe: n.subscribe.bind(n), dispose: function () { disposed = true; authGeneration += 1; n.dispose(); if (authSubscription && typeof authSubscription.unsubscribe === 'function') authSubscription.unsubscribe(); current = null; currentUser = null; } };
+    return { load: load, command: command, auditExport: auditExport, legacySupport: legacySupport, subscribe: n.subscribe.bind(n), dispose: function () { disposed = true; authGeneration += 1; n.dispose(); if (authSubscription && typeof authSubscription.unsubscribe === 'function') authSubscription.unsubscribe(); current = null; currentUser = null; } };
   }
   return Object.freeze({ version: 1, permissions: permissions, commandPermissions: Object.freeze(COMMANDS), states: STATES, sampleSnapshot: sampleSnapshot, createDemoStore: createDemoStore, createLiveStore: createLiveStore });
 }));

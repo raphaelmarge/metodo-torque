@@ -87,6 +87,8 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   await ca.route('https://torque-test.invalid/**',route=>{
     const url=route.request().url();
     if(url.endsWith('/app_aluno_devolve')){posted.push(route.request().postDataJSON());return route.fulfill({status:fail?503:200,contentType:'application/json',body:JSON.stringify({ok:!fail})});}
+    if(url.endsWith('/app_treino_eventos_lista'))return route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,eventos:[],cursor:'0',mais:false})});
+    if(url.endsWith('/app_treino_eventos_grava'))return route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,ids:route.request().postDataJSON().p_eventos.map(e=>e.id)})});
     return route.fulfill({contentType:'application/json',body:'null'});
   });
   await ca.route(BASE+'/acomp-test.html',route=>route.fulfill({contentType:'text/html',body:html}));
@@ -116,11 +118,11 @@ function ok(value, label) { assert.ok(value, label); console.log('  ✅ ' + labe
   const nota=await pa.evaluate(()=>JSON.parse(localStorage.getItem('ptnotas')).slice(-1)[0]);
   ok(nota.ex==='Supino teste' && nota.serie===2 && nota.ficha==='A — Teste','relato preserva exercício, ficha e série');
   await pa.click('[data-ac-close]');await pa.waitForFunction(()=>window.__acSync.pendente());
-  await pa.waitForFunction(()=>document.querySelector('#acSync span').textContent.includes('envio pendente'),null,{timeout:10000});
+  await pa.waitForFunction(()=>document.querySelector('#acSync span').textContent.includes('falha no envio'),null,{timeout:10000});
   ok(await pa.evaluate(()=>JSON.parse(localStorage.getItem('ptnotas')).length===1),'falha no servidor mantém os registros locais');
   fail=false;await pa.evaluate(()=>document.querySelector('#acSync button').click());
   await pa.waitForFunction(()=>!window.__acSync.pendente(),null,{timeout:10000});
-  ok(await pa.evaluate(()=>!!JSON.parse(localStorage.getItem('ptenvioUlt')) && document.getElementById('acSync').hidden && document.querySelector('#acSync span').textContent==='') && posted.some(x=>x.p_dados.notas.length),'confirmação do servidor quita a pendência e envia o relato sem deixar aviso no Início');
+  ok(await pa.evaluate(()=>!!JSON.parse(localStorage.getItem('ptenvioUlt')) && document.getElementById('acSync').dataset.estado==='sincronizado' && document.querySelector('#acSync span').textContent==='Registros sincronizados.') && posted.some(x=>x.p_dados.notas.length),'confirmação dos transportes quita a pendência e mostra registros sincronizados no Início');
   await clicarControle(pa, '#gSerie');await pa.evaluate(()=>window.__zeraDescanso());await clicarControle(pa, '#gSerie');
   await pa.reload();await pa.waitForFunction(()=>window.__acSessao);await pa.click('#navApp [data-msec="treino"]');await pa.click('#acRetomar button');
   ok(await pa.isVisible('#gFecharTreino') && await pa.locator('#gSerie').count()===0,'última série retoma na confirmação, sem série extra');

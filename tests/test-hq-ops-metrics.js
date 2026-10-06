@@ -98,6 +98,15 @@ test('limites locais se aplicam a pagamentos e gráficos, sem vazamento do dia s
   const r=M.compute(s,{...opts,now:s.now}); assert.equal(r.metrics.cashIn.value,2994);
   assert.equal(r.charts.daily.at(-1).metrics.cashIn.value,2994); assert.equal(r.charts.monthly[0].metrics.cashIn.value,2994);
 });
+test('prazo desconhecido, acesso desconhecido e fonte parcial nunca são ausência de atividade', () => {
+  const s=empty();s.accounts=[{...account('a','2026-09-01T10:00:00Z'),status:'ativo',trialStatus:'trial',trialEndsAt:null}];
+  assert.equal(M.compute(s,opts).metrics.trialsExpiring.status,'unavailable');
+  s.accounts[0].trialEndsAt='2026-10-01T10:00:00Z';assert.equal(M.compute(s,opts).metrics.trialsExpiring.value,1);
+  s.accounts[0].accessStatus='unknown';s.payments=[{id:'p',accountId:'a',amountCents:4990,paidAt:'2026-09-30T10:00:00Z',kind:'payment',confirmed:true,accessExpected:true}];
+  assert.equal(M.compute(s,opts).metrics.paidWithoutAccess.status,'unavailable');
+  s.sources.accounts.complete=false;assert.equal(M.compute(s,opts).metrics.trialsExpiring.value,null);
+});
+
 test('publicação/trial não contam como atividade humana; marcos não são funil sequencial', () => {
   const s=empty(); s.accounts=[account('a','2026-09-01T10:00:00Z','trial'),account('b','2026-09-29T10:00:00Z','trial')];
   s.accounts[1].trialEndsAt='2026-10-01T10:00:00Z';
@@ -106,7 +115,9 @@ test('publicação/trial não contam como atividade humana; marcos não são fun
   const r=M.compute(s,{...opts,cohortObservationDays:14}); assert.equal(r.metrics.publishedAccounts.value,1); assert.equal(r.metrics.activeAccounts.value,0);
   assert.equal(r.cohort.mature,1); assert.equal(r.cohort.immature,1); assert.equal(r.cohort.conversionPercentage,100);
   assert.equal(r.cohort.paid,1); assert.equal(r.cohort.checkout,0); assert.equal(r.cohort.sequential,false);
-  assert.equal(r.metrics.trialsExpiring.value,1);
+  assert.equal(r.metrics.trialsExpiring.value,null); assert.equal(r.metrics.trialsExpiring.status,'unavailable');
+  s.accounts[0].trialEndsAt='2026-09-15T10:00:00Z';
+  assert.equal(M.compute(s,opts).metrics.trialsExpiring.value,1,'com prazos completos, a contagem é verificável');
 });
 test('pagou sem acesso exige evidência explícita, vigência e tolerância', () => {
   const s=empty(); s.accounts=[{...account('a','2026-08-01T10:00:00Z'),accessStatus:'blocked'}];

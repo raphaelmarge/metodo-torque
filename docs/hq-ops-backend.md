@@ -64,7 +64,7 @@ Formas dos registros:
 | `audit` | `id,actorId,actorRole,action,objectId,reason,idempotencyKey,payloadHash,createdAt` |
 | `subscriptionRequests` | `id,accountId,externalId,effectiveAt,status,note,createdAt` |
 
-As contas usam os fatos de `academias` e `saas_clientes`. `status` é a classificação comercial legada; `accessStatus` é `academias.assinatura_status`. Não são equivalentes a pagamento confirmado. `trialEndsAt` permanece `null`: o backend não infere a data de criação como início contratual do trial.
+As contas usam os fatos de `academias` e `saas_clientes`. `status` é a classificação comercial legada; `accessStatus` é `academias.assinatura_status`. Não são equivalentes a pagamento confirmado. Na migração operacional de 6/10, `trialStatus` preserva o estado da assinatura e `trialEndsAt` usa somente `assinatura_vence` finito para trial; prazo ausente permanece desconhecido, sem inferir uma data pelo cadastro comercial.
 
 As fontes financeiras novas são **somente manuais** (`origin:'manual'`, `scope:'manualOnly'`). `ready` significa que esse livro manual está disponível, não que todas as operações reais do negócio foram reconciliadas. Não misturar automaticamente `saas_pagamentos` com este ledger. `competenceDate:null` é competência desconhecida, não a data do pagamento.
 
@@ -142,5 +142,31 @@ O teste de autorização no navegador abre a rota real `apps/hq.html` com client
 2. Manter `settings.staff_enabled=false` na ativacao minima. Uma futura abertura da equipe exige autorizacao separada para gate, staff habilitado, escopos e responsaveis. Definir MFA e sessao revogada antes do uso por equipe; a guarda atual usa `auth.uid` e vinculo administrativo, nao exige `aal2` nem consulta `auth.sessions`.
 3. Decidir importação dos leads/configuração antiga sem sincronizá-los pelo `dados` das academias. A proposta não migra `hqLeads`, `hqConfig`, tickets ou recebimentos históricos.
 4. Concluir Pagar.me e validar vínculo de cada objeto ao cliente, assinatura de webhook, idempotência, estorno, conciliação e segregação da cobrança SaaS. Asaas continua alternativa não conectada.
-5. Associar o módulo influencers existente por identificadores e contrato de eventos, sem criar cadastro paralelo. Regra aprovada: R$ 49,90 mensais, 14 dias grátis, primeira cobrança com cupom R$ 29,94, comissão única R$ 19,96 após pagamento, reserva R$ 4,99 e saldo Torque R$ 4,99; renovação sem comissão. Nenhum desses pagamentos é executado nesta proposta. Compra antes do trial permanece decisão pendente.
-6. Acrescentar paginação/filtros de servidor quando volume exigir. O snapshot inicial não limita silenciosamente a coleção; evitar usar o retorno integral como solução indefinida para bases grandes. Definir retenção da auditoria/idempotência e registro de exportações antes de crescimento.
+5. Associar o módulo influencers existente por identificadores e contrato de eventos, sem criar cadastro paralelo. Regra aprovada: R$ 49,90 mensais, 14 dias grátis, primeira cobrança com cupom R$ 29,94, comissão única R$ 19,96 após pagamento, reserva R$ 4,99 e saldo Torque R$ 4,99; renovação sem comissão. Nenhum desses pagamentos é executado nesta proposta. Em 6/10 o proprietário escolheu Pagar.me e cobrança somente após os 14 dias. A abertura da conta e a homologação continuam necessárias: `docs/personal/PAGARME-ATIVACAO-20261006.md`.
+6. Acrescentar paginação/filtros e agregados de servidor quando volume exigir. O snapshot inicial não limita silenciosamente a coleção; evitar usar o retorno integral como solução indefinida para bases grandes. A migração de 6/10 registra solicitações de exportação com hash do CSV, corte e filtros; retenção da auditoria/idempotência continua decisão operacional.
+
+## Ponte de leitura do suporte anterior — 6/10/2026
+
+`hq_ops_legacy_support(jsonb,integer,uuid)` consulta `saas_tickets` e
+`suporte_chamados` somente para administradores já presentes em `saas_admins`.
+A interface apresenta 25 registros por página, filtro de conta, próxima página,
+página anterior e erro com recarga. O servidor limita a 50, ordena por data,
+origem e ID, e mantém o mesmo corte de criação entre páginas. Alterações de
+status posteriores ao corte são lidas como estado atual, sem prometer snapshot
+histórico transacional entre chamadas.
+
+Não chama `hq_suporte_lista`, que marca mensagens como lidas. Não grava status,
+respostas, leitura, novos tickets, migrações de dados ou concessões de acesso.
+Email, nome do remetente e ID Auth não entram no resultado. Mensagens acima de
+8.000 caracteres são explicitamente abreviadas; o canal original permanece
+disponível. Resposta registrada nunca é apresentada como entregue.
+
+Essa leitura é separada dos casos operacionais: números da nova central seguem
+com escopo `opsOnly`, sem somar mensagens antigas como se fossem casos. Não há
+disparo externo de resposta, confirmação de entrega ou importação do histórico
+para `torque_hq.cases`.
+
+Migração allowlist adicional: `20261006145701_hq_suporte_legado_leitura.sql`.
+Índices de cursor e por conta preservam todas as linhas; DDL recusa espera de
+lock acima de 5s e execução acima de 30s. Não ampliar timeout automaticamente
+em produção: avaliar volume/contenção caso o índice não caiba nesse limite.

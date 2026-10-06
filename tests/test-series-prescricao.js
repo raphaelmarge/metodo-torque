@@ -216,11 +216,30 @@ const prescricao = [
   const html = global.MT_APP_ALUNO.monta(D);
   const ca = await browser.newContext(config);
   await ca.route('**://*.supabase.co/**', r => r.abort());
-  const devolvidos = [];
+  const devolvidos = [], eventosRemotos = [];
   await ca.route('https://torque-series.invalid/**', r => {
-    if (r.request().url().endsWith('/app_aluno_devolve')) {
+    const nome = new URL(r.request().url()).pathname.split('/').pop();
+    if (nome === 'app_aluno_devolve') {
       devolvidos.push(r.request().postDataJSON());
       return r.fulfill({ contentType: 'application/json', body: '{"ok":true}' });
+    }
+    // O status do aluno confirma os dois transportes. A fixture mantém o
+    // journal remoto entre recargas e devolve cursores/ACKs do contrato real.
+    if (nome === 'app_treino_eventos_lista' || nome === 'app_treino_eventos_grava') {
+      const args = r.request().postDataJSON();
+      assert.equal(args.t, 'token-series-teste');
+      if (nome === 'app_treino_eventos_lista') {
+        assert.match(args.p_apos, /^\d+$/);
+        return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true,
+          eventos: eventosRemotos.slice(Number(args.p_apos)), cursor: String(eventosRemotos.length), mais: false }) });
+      }
+      assert.ok(Array.isArray(args.p_eventos));
+      args.p_eventos.forEach(evento => {
+        const anterior = eventosRemotos.find(x => x.id === evento.id);
+        if (anterior) assert.deepEqual(evento, anterior, 'Reenvio mantém o mesmo evento');
+        else eventosRemotos.push(evento);
+      });
+      return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, ids: args.p_eventos.map(x => x.id) }) });
     }
     return r.fulfill({ contentType: 'application/json', body: 'null' });
   });
@@ -312,6 +331,13 @@ const prescricao = [
   await pa.waitForFunction(() => window.__acSync && !window.__acSync.pendente(), null, { timeout: 10000 });
   ok(devolvidos.some(x => Object.values(x.p_dados.cargas || {}).flat().filter(y => y.g === 2 && y.feito).length === 3),
     'sincronização envia as três execuções separadas para o personal');
+  const H = require('../app/treino-historico-core.js'), pacoteRemoto = Object.fromEntries(eventosRemotos.map(x => [x.id, x]));
+  const sessoesRemotas = eventosRemotos.filter(x => x.type === 'start').map(x => H.project(pacoteRemoto, x.session));
+  ok(sessoesRemotas.length === 1 && sessoesRemotas[0].finished, 'journal remoto confirma a mesma sessão concluída após a recarga');
+  igual(Object.values(sessoesRemotas[0].targets).map(x => x.value).filter(x => x && x.g === 2 && x.feito)
+    .map(x => ({ serie: x.serie, kg: x.kg, r: x.r })).sort((a, b) => a.serie - b.serie),
+    [{ serie: 1, kg: 20, r: 5 }, { serie: 2, kg: 25, r: 7 }, { serie: 3, kg: 30, r: 9 }],
+    'journal sincronizado preserva as três execuções efetivas sem trocar pelas metas');
   ok(errors.length === 0, 'editor e player não geram erros de JavaScript: ' + errors.join('; '));
   await ca.close();
   // O mesmo exercício pode aparecer duas vezes: execução e contagem pertencem ao slot.

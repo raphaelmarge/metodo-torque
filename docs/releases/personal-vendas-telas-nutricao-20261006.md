@@ -23,10 +23,12 @@ Produto: TORQUE PERSONAL. Rota: `personal-vendas.html`.
 
 - CSS e JS da landing recebem caminhos novos (`landing-personal-20261006`). Uma consulta com `?v=` não resolveria o cache anterior, que ignora query strings.
 - A página `app-personal-trainer.html` compartilha somente o CSS e teve sua referência ajustada.
-- Versão candidata mt-v854 nos três arquivos de versão; precache aponta para os arquivos renomeados. Capturas têm diretório novo, sem substituir URLs antigas de imagens.
+- Versão candidata mt-v856 nos três arquivos de versão; precache aponta para os arquivos renomeados. Capturas têm diretório novo, sem substituir URLs antigas de imagens.
 
 ## Verificação
 
 A suíte `tests/test-landing-v2.js` cobre 320, 375, 390, 430, 768 e 1440 pixels: proporção e carregamento das imagens, oito abas do painel, seis telas do aluno, ampliação e retorno de foco, navegação por teclado, WhatsApp, preço, demos, cadastro, vídeo, FAQ, marca, movimento reduzido e conteúdo sem JavaScript. Inclui os dois ampliadores e a FAQ da nutrição.
 
 Os resultados executados e o estado da publicação são registrados no PR. Este arquivo não declara a versão publicada antes da conclusão da implantação.
+
+Publicação autorizada em 06/10/2026. Integração com main 322ff106a6777069141971df9f0075ff64dd8695 (mt-v855), preservando as atualizações já aprovadas do aplicativo e do checkout. As capturas e o vídeo foram atualizados a partir dos demos desse commit.

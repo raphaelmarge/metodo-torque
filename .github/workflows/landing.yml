@@ -8,9 +8,10 @@ on:
       - personal-assinatura.html
       - app-personal-trainer.html
       - torqueon.html
-      - assets/landing-personal.*
+      - assets/landing-personal*
       - assets/personal-sales.*
       - assets/personal-sales-intent.js
+      - assets/personal-saas-checkout.*
       - assets/modulo-conta.js
       - assets/versao.js
       - sw.js
@@ -18,6 +19,10 @@ on:
       - assets/vendas/**
       - tests/test-landing-v2.js
       - tests/test-personal-sales-*.js
+      - tests/test-personal-saas-*.js
+      - tests/test-personal-signup-product.js
+      - supabase/functions/_shared/personal-billing-handler.mjs
+      - supabase/releases/personal-billing-optional/**
       - tests/test-versao.js
       - supabase/functions/_shared/personal-sales.mjs
       - supabase/functions/_shared/hq-referrals*
@@ -63,6 +68,8 @@ jobs:
           node tests/test-personal-sales-browser.js
           node tests/test-personal-sales-trial.js
           node tests/test-personal-sales-cache.js
+          node tests/test-personal-saas-checkout-browser.js
+          node tests/test-personal-signup-product.js
           node tests/test-hq-referrals-store.js
           node tests/test-hq-referrals-sql.js
           node tests/test-hq-referrals-browser.js

@@ -186,6 +186,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
+  await p.locator('#naDadosComerciais > summary').click();
   await p.fill("#aCpf", "111.222.333-44");
   await p.fill("#aCep", "30130010");
   await p.waitForTimeout(400);
@@ -196,7 +197,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     p1: document.getElementById("naPasso1").hidden,
     p2: !document.getElementById("naPasso2").hidden,
   }));
-  ok(passo2.p1 && passo2.p2, "passo 2 (contrato e venda) abre na sequência");
+  ok(passo2.p1 && passo2.p2, "cadastro confirmado abre a escolha do próximo passo");
+  await p.locator('#naComercial > summary').click();
   // sem plano ainda: cria um plano rápido com treinos/sem e modalidade
   await p.evaluate(() => { document.getElementById("naNovoPlano").open = true; });
   await p.fill("#naPlNome", "Mensal 3x/sem");
@@ -228,6 +230,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     await p.click("#btnNovoAluno");
     await p.fill("#aNome", "Cliente Sem Plano");
     await p.click("#aAdd");
+    await p.locator('#naComercial > summary').click();
     await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
     await p.click("#naConcluir");
     await p.waitForTimeout(150);
@@ -5412,7 +5415,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     const out = {
       itens: (st2.config.lojaItens || []).length,
       pacote: d.lojaApp.length === 2 && d.lojaApp.some((x) => x.n === "Camiseta do studio") && d.lojaApp.some((x) => x.n === "Massagem esportiva"),
-      app: html.indexOf("lojaCard") > -1 && html.indexOf("Quero esse") > -1 && html.indexOf("R$ 79,90") > -1,
+      app: html.indexOf("lojaCard") > -1 && html.indexOf("Pedir pelo WhatsApp") > -1 && html.indexOf("R$ 79,90") > -1,
       // v699: tela própria (fora do Início) e sem emoji na interface — inclusive
       // ESCAPADO (\uD83D...) dentro do handler do Quero esse, que foi por onde
       // o balão de chat escapou da primeira varredura
@@ -5443,7 +5446,7 @@ async function contextoAppAluno(browser, html, options = {}) {
     return out;
   });
   ok(lja.itens === 1 && lja.pacote, "🛍 produto do painel + serviço do cadastro entram juntos na vitrine");
-  ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Quero esse");
+  ok(lja.app, "🛍 o app mostra a Loja com preço e o botão Pedir pelo WhatsApp");
   ok(lja.soProdutos, "🛍 desligar os serviços tira só eles — os produtos ficam");
   ok(lja.semNada, "🛍 vitrine vazia = o card nem nasce no app");
   ok(lja.secao && lja.semEmoji, "🛍 v699: a Loja é tela própria (só pelo menu) e sem emoji na interface");
@@ -5501,10 +5504,10 @@ async function contextoAppAluno(browser, html, options = {}) {
     const html2 = window.__montaAppAluno(st2.alunos.find((x) => x.nome === "João Cliente"), new Date().toISOString());
     const out = {
       flag: d.lojaPg === 1,
-      comprar: html.indexOf(">Comprar</button>") > -1 && html.indexOf("var LOJAPG=1") > -1,
+      comprar: html.indexOf(">Ir ao pagamento</button>") > -1 && html.indexOf("var LOJAPG=1") > -1,
       chamaFn: html.indexOf("/functions/v1/pagamentos") > -1 && html.indexOf("acao:'loja'") > -1 &&
         html.indexOf("t:TOKEN,item:it") > -1,
-      semGw: html2.indexOf(">Quero esse</button>") > -1 && html2.indexOf("var LOJAPG=0") > -1,
+      semGw: html2.indexOf(">Pedir pelo " + (d.zapPersonal ? "WhatsApp" : "chat") + "</button>") > -1 && html2.indexOf("var LOJAPG=0") > -1,
     };
     // baixa: evento origem loja vira pagamento COM desc (não quita mensalidade)
     // — religa o gateway antes: o passo de cima desligou pra testar o fallback
@@ -5528,9 +5531,9 @@ async function contextoAppAluno(browser, html, options = {}) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
     return out;
   }, diaISO(new Date()));
-  ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Comprar no app (lojaPg no pacote)");
+  ok(v701.flag && v701.comprar, "v701: gateway ligado = botão Ir ao pagamento no app (lojaPg no pacote)");
   ok(v701.chamaFn, "v701: o Comprar chama a função pagamentos com ação loja — só nome do item, preço é do servidor");
-  ok(v701.semGw, "v701: sem gateway o botão segue Quero esse (WhatsApp)");
+  ok(v701.semGw, "v701: sem gateway o botão informa o canal de contato disponível");
   ok(v701.baixa, "v701: a baixa da compra entra COM desc — venda da loja nunca quita a mensalidade");
 
   // 📅 v702: Agenda — o Mês tem volta pra Semana (no celular era beco sem
@@ -10644,7 +10647,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       rpc: (nome, args) => {
         (window.__rpcs = window.__rpcs || []).push([nome, args]);
         if (nome === "personal_sessao_ativa") return Promise.resolve({data:true});
-        if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
+        if (nome === "criar_personal") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
         return Promise.resolve({ data: null, error: null });
       },
     };
@@ -10665,11 +10668,11 @@ async function contextoAppAluno(browser, html, options = {}) {
   await g.waitForSelector("#gateModulo", { state: "hidden", timeout: 8000 });
   const gateInfo = await g.evaluate(() => ({
     signUp: window.__signUp && window.__signUp.email,
-    criou: (window.__rpcs || []).some((r) => r[0] === "criar_academia" && r[1] && r[1].p_nome_academia === "Studio Gate"),
+    criou: (window.__rpcs || []).some((r) => r[0] === "criar_personal" && r[1] && r[1].p_nome_academia === "Studio Gate"),
     acad: JSON.parse(localStorage.getItem("mtapp:academia") || "null"),
   }));
   ok(gateInfo.signUp === "novo@personal.com" && gateInfo.criou && gateInfo.acad && gateInfo.acad.id === "acad-gate",
-    "criar conta cadastra na nuvem e já cria a ilha com o nome do studio");
+    "criar conta cadastra na nuvem e cria a ilha tipada como Personal com o nome do studio");
   await g.waitForSelector("#telaAssinatura", { state: "visible", timeout: 5000 });
   ok(/R\$ 49\s*\/mês/.test(await g.textContent("#telaAssinatura")),
     "a oferta de assinatura aparece sozinha depois do cadastro, com o preço mensal de R$ 49");
@@ -12490,11 +12493,19 @@ async function contextoAppAluno(browser, html, options = {}) {
     document.getElementById("wpSalva").click();
     await new Promise((r) => setTimeout(r, 300));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const circuito = (st.treinosV2[j.id].wods || []).find((w) => w.nome === "WOD do sábado");
+    // O HTML completo cresce com fichas, imagens e estilos. Cortar os primeiros
+    // 250 mil caracteres podia excluir justamente o aquecimento do circuito.
+    // Inspecione sua folha real, sem aceitar texto de outro treino ou do script.
+    const app = new DOMParser().parseFromString(window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()), "text/html");
+    const comeca = Array.from(app.querySelectorAll("#cardWod [data-wodstart]"))
+      .find((el) => circuito && el.getAttribute("data-wodstart") === circuito.id);
+    const folha = comeca && comeca.closest("details[data-wi]");
     return {
       lista: document.getElementById("wpLista").textContent,
       wods: (st.treinosV2[j.id].wods || []).length,
       temBanco: document.querySelectorAll("#wpExs option").length,
-      appHtml: window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()).slice(0, 250000),
+      appHtml: folha ? folha.outerHTML : "",
     };
   });
   ok(profWod.temBanco > 500, "o campo de exercício busca no banco (" + profWod.temBanco + " opções)");
@@ -12710,13 +12721,9 @@ async function contextoAppAluno(browser, html, options = {}) {
       if (mmAntes == null) localStorage.removeItem("ptmarcas"); else localStorage.setItem("ptmarcas", mmAntes);
       if (cardioAntes == null) localStorage.removeItem("ptcardio"); else localStorage.setItem("ptcardio", cardioAntes);
       window.__recordes(); window.__pintaMarcas();
-      // (e) o post da Comunidade leva o treino DO DIA (Semana do aluno), não a ficha A
-      const plAntes = (typeof PLANO !== "undefined") ? PLANO : undefined;
-      const dia = String(new Date().getDay());
-      window.PLANO = {}; window.PLANO[dia] = { tp: "wod", i: 0, n: "Circuito do dia" };
-      out.postWod = window.__treinoHoje();
-      window.PLANO = {}; out.postDescanso = window.__treinoHoje();
-      window.PLANO = plAntes;
+      // (e) Comunidade é verificada abaixo em um pacote isolado com circuito real.
+      // Este app foi montado antes do cadastro de circuitos: não inventar um
+      // índice em PLANO nem alterar os limites que o builder derivou do pacote.
       // (f) baixar meus dados leva tudo
       const ex = window.__exportaDados();
       out.exporta = "fotos_progresso" in ex && "chat" in ex && "questionarios" in ex && "volume_por_treino" in ex && "termo_aceito" in ex &&
@@ -12729,6 +12736,34 @@ async function contextoAppAluno(browser, html, options = {}) {
         const s = b.getAttribute("data-msec"); return !ROT[s] || b.querySelector(".mgtit").textContent === ROT[s]; });
       return out;
     });
+    // BEGIN fixture canônica Comunidade: permite reproduzir só este trecho.
+    const htmlComunidade = await p.evaluate(() => {
+      const plano = {};
+      plano[String(new Date().getDay())] = { tp: "wod", i: 0, n: "Circuito do dia" };
+      return window.MT_APP_ALUNO.monta({ a: { id: "comunidade-fixture", nome: "Aluno sintético", appTokenP: "comunidade-fixture-token" },
+        studio: "Studio sintético", planoApp: plano,
+        fichasApp: [{ titulo: "Ficha A não programada", itens: [{ nome: "Exercício sintético", series: 1, reps: "8", descanso: 30 }] }],
+        wodsApp: [{ id: "circuito-fixture", nome: "Circuito do dia", tipo: "amrap", min: 10, movs: [{ q: "10", n: "Movimento sintético" }] }] });
+    });
+    const ctxComunidade = await contextoAppAluno(b, htmlComunidade);
+    let comunidade;
+    try {
+      await ctxComunidade.route("**/*", r => new URL(r.request().url()).pathname === "/comunidade-fixture.html"
+        ? r.fulfill({ contentType: "text/html", body: htmlComunidade }) : r.abort());
+      const pagina = await ctxComunidade.newPage();
+      await pagina.goto(BASE + "/comunidade-fixture.html", { waitUntil: "domcontentloaded" });
+      comunidade = await pagina.evaluate(() => {
+        const out = { postWod: window.__treinoHoje(), circuitoExiste: !!document.querySelector('[data-wi="0"]') };
+        window.PLANO_DATAS = {}; window.PLANO_DATAS[isoHj()] = [];
+        out.descansoPorData = window.__treinoHoje();
+        window.PLANO_DATAS = {}; window.PLANO = {};
+        out.postDescanso = window.__treinoHoje();
+        window.PLANO[String(new Date().getDay())] = { tp: "wod", i: 1, n: "Circuito inexistente" };
+        out.indiceAusente = window.__treinoHoje();
+        return out;
+      });
+    } finally { await ctxComunidade.close(); }
+    // END fixture canônica Comunidade.
     ok(r751.hora, "💬 v751: a hora da mensagem é a LOCAL (o criado chega em UTC do Supabase)");
     ok(r751.rola && r751.ficouEmCima && r751.desceu,
       "💬 v751: repintar sem mensagem nova não puxa a rolagem de quem lê o histórico — mensagem nova, sim");
@@ -12742,8 +12777,10 @@ async function contextoAppAluno(browser, html, options = {}) {
       "🏆 v767: com mais de três, entra o atalho 'Ver as N em Cargas' (a lista inteira mora num lugar só) e o cabeçalho conta igual nas duas abas");
     ok(r751.formAbriu && r751.avisouVazio && r751.salvou && r751.apagou,
       "🏅 v751: marcar na mão é formulário dentro do card (valida, salva) e cada marca tem o ✕");
-    ok(r751.postWod === "Circuito do dia" && r751.postDescanso === "",
+    ok(comunidade.circuitoExiste && comunidade.postWod === "Circuito do dia" && comunidade.postDescanso === "",
       "👥 v751: o post da Comunidade leva o treino do DIA pela Semana do aluno (e nada no dia de descanso)");
+    ok(comunidade.descansoPorData === "" && comunidade.indiceAusente === "",
+      "👥 o post respeita descanso por data e não inventa circuito ausente do pacote");
     ok(r751.exporta, "📦 v751: 'Baixar meus dados' leva fotos, chat, questionários, volume, termo e todas as chaves pt*");
     ok(r751.menu, "☰ v751: a gaveta usa o mesmo rótulo da barra e não repete a aba fixa Treinos");
     const foto751 = await pApp.evaluate(async () => {
@@ -13185,7 +13222,8 @@ async function contextoAppAluno(browser, html, options = {}) {
       S.write("ptStudio", st0);
       window.__MT_LIMPANDO = false;
       window.__obGuia.verifica();
-      out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP2").hidden;
+      out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP4").hidden;
+      document.getElementById("obConfiguraComercial").click();
       // escolhe HORA-AULA → o campo da mensalidade some e o da aula aparece
       const rSes = document.querySelector('input[name="obCobra"][value="sessao"]');
       rSes.checked = true; rSes.dispatchEvent(new Event("change"));
@@ -13211,7 +13249,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       window.__obGuia.verifica();
       return out;
     });
-    ok(onb.guiaAparece, "🧭 professor novo (nome + nada cadastrado) cai no guia de 4 passos");
+    ok(onb.guiaAparece, "🧭 professor novo começa pelo aluno; configuração comercial permanece opcional");
     ok(onb.trocaCampos && onb.planoUnitario, "escolher hora-aula cria o plano UNITÁRIO: R$ por aula, ciclo 1, sem assinatura recorrente");
     ok(onb.passo3 && onb.pix && onb.passo4, "os passos seguem: chave Pix guardada e chegada no passo final");
     ok(onb.fim && onb.naoVolta, "terminar marca onboardFim e o guia não volta a encher o saco");
@@ -14567,6 +14605,7 @@ async function contextoAppAluno(browser, html, options = {}) {
         const ler = (sel) => Array.from(document.querySelectorAll(sel)).map((d) => ({
           letra: (d.querySelector("summary span") || {}).textContent,
           sub: (d.querySelector("summary span:nth-child(2) span") || {}).textContent || "",
+          dia: (d.querySelector("[data-plano-rotulo]") || {}).textContent || "",
           aberta: d.open,
         }));
         return { wod: ler("[data-wi]"), cardio: ler("[data-cri]") };
@@ -14583,7 +14622,7 @@ async function contextoAppAluno(browser, html, options = {}) {
         "🗂 as corridas e pedais viraram gavetas A/B/C, no mesmo desenho da ficha");
       // o rótulo do dia vem da Semana do aluno; qual deles cai em "hoje" muda
       // conforme o dia em que o teste roda, então a trava é só a de existir
-      ok(gavTr.cardio.concat(gavTr.wod).some((x) => /· (hoje|segunda|terça|quarta|quinta|sexta|sábado|domingo)/.test(x.sub)),
+      ok(gavTr.cardio.concat(gavTr.wod).some((x) => /^(Hoje|Amanhã|segunda-feira|terça-feira|quarta-feira|quinta-feira|sexta-feira|sábado|domingo)$/.test(x.dia)),
         "a tampa da gaveta diz em que dia da semana aquele treino está marcado");
       /* CONTINUO + TIROS na MESMA folha (pedido do Raphael): a tampa mostra as
        * duas partes, e o player guiado enfileira continuo ANTES dos tiros —

@@ -411,18 +411,21 @@
   ];
   function loadAutomationPanel() {
     var box = $('ptFlowAutoList'), label = $('ptFlowAutoResumo'); if (!box || state.autosBusy) return;
-    state.autosBusy = true; box.innerHTML = '<p class="muted">Carregando automações e providências…</p>';
+    state.autosBusy = true; if (label) label.textContent = 'Consultando a nuvem…'; box.innerHTML = '<p class="muted" role="status">Carregando automações e providências…</p>';
     cloudCtx().then(function (c) {
       if (!c) { label.textContent = 'Disponível quando a conta estiver conectada'; box.innerHTML = '<p class="muted">Entre na sua conta para usar automações compartilhadas entre computador e celular.</p>'; return; }
       return Promise.all([
         c.client.from('personal_automacoes').select('id,nome,gatilho,acao,ativa,criado_em').eq('academia_id', c.aid).order('criado_em', { ascending: false }).limit(40),
         c.client.from('personal_automacao_fila').select('id,aluno_id,gatilho,acao,status,criado_em').eq('academia_id', c.aid).eq('status', 'pendente').order('criado_em', { ascending: false }).limit(30)
       ]).then(function (rs) {
-        var autos = rs[0] && !rs[0].error ? rs[0].data || [] : [], queue = rs[1] && !rs[1].error ? rs[1].data || [] : [], st = read();
-        label.textContent = autos.filter(function (x) { return x.ativa; }).length + ' ativa(s) · ' + queue.length + ' providência(s)';
+        // A resolved Supabase promise can still carry an error. Neither failure
+        // nor an invalid response certifies an empty list.
+        if (rs.some(function (r) { return !r || r.error || !Array.isArray(r.data); })) throw new Error('Fonte de automações indisponível.');
+        var autos = rs[0].data, queue = rs[1].data, st = read();
+        label.textContent = autos.filter(function (x) { return x.ativa; }).length + ' ativa(s) nas últimas ' + autos.length + ' consultadas · ' + queue.length + (queue.length === 30 ? '+ ' : ' ') + 'providência(s) · atualizado às ' + new Date().toLocaleTimeString('pt-BR');
         box.innerHTML = '<div class="ptf-auto-cols"><div><h4>Automações</h4>' + (autos.length ? autos.map(function (x) { return '<div class="ptf-auto-item"><div><b>' + esc(x.nome) + '</b><span>' + esc(triggerLabel(x.gatilho)) + ' → ' + esc(actionLabel((x.acao || {}).tipo)) + '</span></div><em class="' + (x.ativa ? 'ok' : '') + '">' + (x.ativa ? 'ativa' : 'pausada') + '</em></div>'; }).join('') : '<p class="muted">Nenhuma automação criada.</p>') + '</div><div><h4>Providências</h4>' + (queue.length ? queue.map(function (x) { var a = aluno(st, x.aluno_id); return '<div class="ptf-auto-item"><div><b>' + esc(a ? a.nome : 'Aluno') + '</b><span>' + esc(actionLabel((x.acao || {}).tipo)) + ' · ' + esc(triggerLabel(x.gatilho)) + '</span></div><button type="button" class="btn sec mini" data-ptf-done="' + esc(x.id) + '">Concluir</button></div>'; }).join('') : '<p class="muted">Fila vazia.</p>') + '</div></div>';
       });
-    }).catch(function () { if (label) label.textContent = 'Não foi possível carregar agora'; if (box) box.innerHTML = '<p class="muted">A nuvem não respondeu. O restante do Personal continua funcionando.</p>'; }).finally(function () { state.autosBusy = false; });
+    }).catch(function () { if (label) label.textContent = 'Automações indisponíveis'; if (box) box.innerHTML = '<p class="muted" role="alert">Não foi possível consultar automações e providências. Nenhuma contagem foi confirmada.</p><button type="button" class="btn sec mini" data-ptf="reload-autos">Tentar novamente</button>'; }).finally(function () { state.autosBusy = false; });
   }
   function triggerLabel(v) { return { 'questionario.respondido': 'Questionário respondido', 'aluno.novo': 'Novo aluno', 'agenda.cancelada': 'Sessão cancelada' }[v] || v || 'evento'; }
   function actionLabel(v) { return { revisar_aluno: 'Revisar aluno', contatar_aluno: 'Entrar em contato', revisar_planejamento: 'Revisar planejamento' }[v] || v || 'Providência'; }
@@ -436,7 +439,7 @@
         if (!missing.length) return [];
         return c.client.auth.getSession().then(function (s) { var u = s.data && s.data.session && s.data.session.user; if (!u) throw new Error('Sessão expirada.'); return c.client.from('personal_automacoes').insert(missing.map(function (p) { return { academia_id: c.aid, autor_id: u.id, nome: p.nome, gatilho: p.gatilho, condicao: {}, acao: { tipo: p.acao }, ativa: true }; })); });
       });
-    }).then(function () { loadAutomationPanel(); }).catch(function (e) { alert(e.message || 'Não foi possível ativar agora.'); }).finally(function () { if (btn) btn.disabled = false; });
+    }).then(function (r) { if (r && r.error) throw r.error; loadAutomationPanel(); }).catch(function (e) { alert(e.message || 'Não foi possível ativar agora.'); }).finally(function () { if (btn) btn.disabled = false; });
   }
   function completeQueue(id, btn) {
     if (!id || !btn) return; btn.disabled = true;
