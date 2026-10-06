@@ -46,13 +46,17 @@ require('../app/aluno-skin.js');
 require('../app/aluno-builder.js');
 const weekly = { '1': [{tp:'ficha',i:0,n:'Semanal',h:'07:00'}], '2': {tp:'cardio',i:0,n:'Legado'} };
 const dated = { '2026-09-14': [{tp:'wod',i:0,n:'Por data',h:'18:00'}], '2026-09-21': [] };
-const html = global.MT_APP_ALUNO.monta({a:{nome:'Fixture isolada'},planoApp:weekly,planoDatas:dated});
+const html = global.MT_APP_ALUNO.monta({a:{nome:'Fixture isolada'},planoApp:weekly,planoDatas:dated,
+  fichasApp:[{titulo:'Semanal',itens:[{nome:'Exercício fictício',series:1,reps:'8',descanso:30}]}],
+  wodsApp:[{id:'wod-fixture',nome:'Por data',tipo:'amrap',min:10,movs:[{q:'10',n:'Movimento fictício'}]}],
+  cardiosApp:[{id:'cardio-fixture',nome:'Legado',mod:'corrida',tipo:'continuo',dist:3,tempo:20}]});
 const begin = html.indexOf('function plnDia('), end = html.indexOf('function plnPri(', begin);
 assert.ok(begin >= 0 && end > begin, 'Leitor de agenda canônico localizado');
 function payload(name) { const m = html.match(new RegExp('var '+name+'=(.+?);(?=var |function )')); assert.ok(m, name+' serializado'); return JSON.parse(m[1]); }
-const context = vm.createContext({PLANO:payload('PLANO'),PLANO_DATAS:payload('PLANO_DATAS')});
+const context = vm.createContext({PLANO:payload('PLANO'),PLANO_DATAS:payload('PLANO_DATAS'),PLANO_LIMITES:payload('PLANO_LIMITES')});
 ok('Pacote mantém a semana publicada',()=>assert.deepEqual(context.PLANO,weekly));
 ok('Pacote mantém o planejamento por data',()=>assert.deepEqual(context.PLANO_DATAS,dated));
+ok('Limites vêm do pacote canônico e correspondem às modalidades disponíveis',()=>assert.deepEqual(context.PLANO_LIMITES,{ficha:1,wod:1,cardio:1}));
 vm.runInContext(html.slice(begin,end), context, {timeout:1000});
 const get = expression => JSON.parse(JSON.stringify(vm.runInContext(expression,context,{timeout:1000})));
 const before = JSON.stringify({weekly:context.PLANO,dated:context.PLANO_DATAS});
@@ -65,6 +69,14 @@ ok('Dia sem treino retorna lista vazia',()=>assert.deepEqual(get('plnDia(0)'),[]
 ok('Consultar não modifica a fonte',()=>assert.equal(JSON.stringify({weekly:context.PLANO,dated:context.PLANO_DATAS}),before));
 context.PLANO_DATAS = Object.create({'2026-09-28':dated['2026-09-14']});
 ok('Propriedade herdada não substitui a prescrição',()=>assert.deepEqual(get("plnDia(1,'2026-09-28')"),weekly['1']));
+for (const tp of ['ficha','wod','cardio']) {
+  const valid = {tp,i:context.PLANO_LIMITES[tp]-1,n:'Último índice válido'};
+  const invalid = [context.PLANO_LIMITES[tp],-1,0.5,'0'].map(i=>({tp,i,n:'Índice inválido'}));
+  context.PLANO = {'3':[valid,...invalid,{tp:'desconhecido',i:0},null]};
+  context.PLANO_DATAS = {'2026-09-30':invalid};
+  ok(tp+': último índice válido permanece e índices fora do pacote são removidos',()=>assert.deepEqual(get('plnDia(3)'),[valid]));
+  ok(tp+': substituição por data com índices inválidos não recupera treino semanal',()=>assert.deepEqual(get("plnDia(3,'2026-09-30')"),[]));
+}
 ok('Gaveta original permanece sem cartão duplicado',()=>{
   assert.match(html,/id='semDia'/); assert.match(html,/data-semt=/); assert.doesNotMatch(html,/id='agHojeCard'/);
 });
