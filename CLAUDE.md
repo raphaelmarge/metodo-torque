@@ -6,6 +6,25 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v859 — Torque Nutri no ecossistema
+
+Revisão do paciente: capa/semana/hábitos no padrão Personal v818, renderer original de medalhas, avaliação física por paciente, circunferências/dobras/bioimpedância/segmentos, comparação por data e fotos por ângulo. Passaram 61 checks locais (21 acesso, 16 assets, 16 avaliação e 8 integração). A revogação de acesso confirmada online invalida o cache privado, incluindo tratamento de falha ao remover o armazenamento; a fila continua isolada e preservada por usuário. A revisão real por CUA cobriu início móvel nos dois temas, avaliação/medidas em desktop, evolução móvel com texto ampliado, Fotos vazio por ângulo e navegação Menu/Ajustes; o registro de 250 ml foi confirmado via WebMCP e o contraste do tema claro foi corrigido e conferido na página. Branch criada; PR, CI completo e deploy em andamento, ainda pendentes. E-mail real, ponta a ponta completo e produção não foram validados. Ver o registro da release para limites e proveniência.
+
+- `nutri/` hospeda a nova plataforma de nutrição: área do profissional e app do
+  paciente, prontuário, avaliações, prescrição, biblioteca, agenda, financeiro
+  manual, questionários, consultoria, comunidade, gamificação e personalização.
+- A entrada Nutri de `torqueon.html` passa a abrir `nutri/?entrar=1&perfil=nutri`.
+  O módulo anterior em `nutricao.html`, seus contratos e dados ficam preservados.
+- O projeto Supabase `mmdsmpetwhcfiyubhaah` é separado do banco da academia e do
+  Personal. O frontend contém somente a URL e chave publicável; não carrega
+  registros de pacientes nem credenciais privilegiadas.
+- PWA, convites e callbacks Auth resolvem dentro de `/nutri/`; o worker da raiz
+  não responde nessa rota, e o novo worker não intercepta outros produtos ou APIs.
+- A confirmação e recuperação por e-mail dependem da configuração das URLs Auth
+  no dashboard Supabase. IA, gateway e mensageria externa não estão provisionados.
+- Escopo, regressões e estado de publicação:
+  `docs/releases/mt-v859-torque-nutri-ecossistema.md`.
+
 ## v853 — Publicação integrada do Personal e do aluno
 
 - Integra as propostas #864–872: criação e rascunhos de fichas, troca de exercícios,
