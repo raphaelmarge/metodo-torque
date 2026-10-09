@@ -34,7 +34,7 @@ function harness({role='nutri',records=[],selected='a',user='pro'}={}){
   };
   globalThis.document={querySelector:sel=>nodes.get(sel.slice(1))||null,getElementById:id=>nodes.get(id)||null,querySelectorAll:sel=>sel==='[data-body-tab]'?buttons:[]};
   globalThis.window={open:()=>({document:{write:html=>printed=html,close(){}}})};
-  const H={state:()=>state,esc:escape,today:()=> '2026-10-08',dateLabel:x=>x,heading:(_k,t,s,action='')=>'<h1>'+t+'</h1><p>'+s+'</p>'+action,render:()=>{},modal:(_title,html)=>{lastHTML=html;parse(html);},run:fn=>fn(),logs:()=>[],moodName:x=>x};
+  const H={state:()=>state,esc:escape,today:()=> '2026-10-08',dateLabel:x=>x,heading:(_k,t,s,action='')=>'<h1>'+t+'</h1><p>'+s+'</p>'+action,render:()=>{},stats:()=>({days:0,target:5,xp:0}),modal:(_title,html)=>{lastHTML=html;parse(html);},run:fn=>fn(),logs:()=>[],moodName:x=>x};
   const A=createAssessments(H,{pat:id=>state.patients.find(x=>x.id===(id||state.selected)),
     saveRecord:async(...args)=>{saved.push(args);},
     draftModal:(title,body,submit,key)=>{draft={title,body,submit,key};parse(body);},
@@ -119,11 +119,11 @@ test('Patients can edit their own photos but cannot edit professional assessment
 test('Assessment HTML escapes notes and ignores injected measurement markup',()=>{
   const record=a('source',{day:'2026-03-01',weight:'<img src=x onerror=alert(1)>',height:170,source:'<script>bad()</script>',text:'<b>Not markup</b>'});
   const h=harness({records:[record],role:'patient',user:'patient-a'});
-  const html=h.A.view();assert(!html.includes('<script>bad'));assert(!html.includes('<img src=x'));assert(html.includes('&lt;b&gt;Not markup&lt;/b&gt;'));
+  h.A.open(record.id);const html=h.A.view();assert(!html.includes('<script>bad'));assert(!html.includes('<img src=x'));assert(html.includes('&lt;b&gt;Not markup&lt;/b&gt;'));
 });
 test('Changing patients clears the comparison and never carries an earlier patient into the report',()=>{
   const rows=[a('a1',{day:'2026-01-01',weight:70}),a('a2',{day:'2026-02-01',weight:68}),a('b1',{day:'2026-02-01',weight:90},{patient_id:'b'})];
-  const h=harness({records:rows});h.A.view();h.state.selected='b';const html=h.A.view();
+  const h=harness({records:rows});h.A.view();h.state.selected='b';h.A.view();h.A.open('b1');const html=h.A.view();
   assert(!html.includes('value="a1"'));assert(!html.includes('value="a2"'));assert(html.includes('value="b1"'));
   h.A.print(rows[2]);assert(!h.printed.includes('a1'));assert(h.printed.includes('Primeira avaliação'));
 });
@@ -134,8 +134,8 @@ test('A partial assessment can be printed and fat changes are expressed in perce
 });
 test('Photo comparator handles no/one/two photos and never combines angles or private records for patients',()=>{
   const rows=[a('front1',{day:'2026-01-01',angle:'front',image:photo},{kind:'progress_photo'}),a('front2',{day:'2026-02-01',angle:'front',image:photo},{kind:'progress_photo'}),a('back',{day:'2026-01-01',angle:'back',image:photo},{kind:'progress_photo'}),a('private',{day:'2026-01-01',angle:'front',image:photo},{kind:'progress_photo',visibility:'private'})];
-  const h=harness({role:'patient',user:'patient-a',records:[]});assert(h.A.photoPanel().includes('Nenhuma foto'));
-  h.state.records=rows.slice(0,1);assert(h.A.photoPanel().includes('Com duas fotos'));assert(!h.A.photoPanel().includes('id="body-photo-slider"'));
+  const h=harness({role:'patient',user:'patient-a',records:[]});assert(h.A.photoPanel().includes('Sua primeira foto'));
+  h.state.records=rows.slice(0,1);assert(h.A.photoPanel().includes('A próxima foto libera'));assert(!h.A.photoPanel().includes('id="body-photo-slider"'));
   const two=harness({role:'patient',user:'patient-a',records:rows});const html=two.A.photoPanel();assert(html.includes('id="body-photo-slider"'));
   const selectors=html.slice(html.indexOf('compare-controls'),html.indexOf('photo-stage'));assert(!selectors.includes('value="back"'));assert(!html.includes('value="private"'));
 });
@@ -146,6 +146,7 @@ test('Journey thresholds remain compatible with existing XP',()=>{
 });
 
 let failed=0;
-for(const {name,fn} of tests){try{await fn();console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack);}}
+for(const {name,fn} of tests){try{await fn();console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack.replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g,'[module]')); }}
 console.log((tests.length-failed)+'/'+tests.length+' assessment regressions passed.');
 if(failed)process.exitCode=1;
+

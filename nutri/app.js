@@ -13,7 +13,7 @@ const initials=(s)=>String(s).split(' ').slice(0,2).map(x=>x[0]).join('').toUppe
 const demoClinic={id:'demo-clinic',name:'Clínica Essência',professional_name:'Dra. Helena Costa',crn:'CRN de exemplo',color:'#5de0b4',weekly_goal:5,logo:''};
 const S={demo:true,role:'nutri',page:'overview',user:null,clinic:{...demoClinic},patients:[],plans:[],logs:[],appointments:[],messages:[],challenges:[],selected:null,resources:[],records:[],finances:[],posts:[],interactions:[],loading:false};
 let navNutri=[];
-const navPatient=[['today','◫','Meu dia'],['food','▤','Alimentação'],['progress','◷','Evolução'],['chat','☏','Minha nutri'],['more','☰','Menu']];
+const navPatient=[['today','◫','Meu dia'],['food','▤','Alimentação'],['progress','◷','Evolução'],['booking','▦','Agenda'],['more','☰','Menu']];
 function seedDemo(){
  const sample=[['Marina Santos','Criar uma rotina alimentar','Intolerância à lactose'],['Lucas Oliveira','Melhorar a disposição','Vegetariano'],['Beatriz Costa','Organizar as refeições',''],['Rafael Mendes','Nutrição esportiva',''],['Ana Luiza','Alimentação equilibrada','Alergia a amendoim'],['Pedro Alves','Ganhar consistência','']];
  S.patients=sample.map((p,i)=>({id:`demo-${i}`,clinic_id:S.clinic.id,clinician_id:'demo',name:p[0],goal:p[1],restrictions:p[2],email:`paciente${i+1}@exemplo.test`,created_at:new Date().toISOString()}));S.selected=S.patients[0].id;
@@ -234,3 +234,4 @@ async function syncQueue(){if(S.demo||!S.user||authStorageBlocked||!S.patients.l
 addEventListener('online',()=>{if(S.user&&queueCount())run(syncQueue);});
 if('serviceWorker' in navigator)navigator.serviceWorker.register(new URL('sw.js',appBase).href,{scope:appBase.pathname}).catch(()=>{});
 try{document.body.classList.toggle('large-text',!!JSON.parse(localStorage.getItem('torque-nutri-preferences')||'{}').large);}catch{}
+

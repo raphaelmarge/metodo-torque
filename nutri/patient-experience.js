@@ -127,7 +127,7 @@ export function createPatientExperience(H,P,A){
       '<section class="card patient-challenges"><h2>Desafios do consultório</h2>'+s().challenges.map(c=>{const value=H.metrics()[c.metric]||0;return '<div class="challenge-row">'+icon('target')+'<div class="grow"><b>'+esc(c.title)+'</b><div class="progress"><i style="width:'+Math.min(100,value/c.target*100)+'%"></i></div></div><span>'+value+' / '+c.target+'</span></div>';}).join('')+(s().challenges.length?'':'<p class="sub">Sua nutri ainda não publicou desafios.</p>')+'</section><p class="sub care-xp-policy">Desde '+esc(dateLabel(CARE_POLICY_START))+', os registros de cuidado somam até 20 XP por dia. Pesagem não soma pontos novos e confirmar plano seguido não gera bônus. Os créditos anteriores foram preservados; corrigir um registro não soma pontos novamente.</p>';
   }
   function menu(){
-    const groups=[['Minha rotina',['journal','recipes','goals','achievements']],['Meu acompanhamento',['clinical','forms','documents','booking','community']],['Conta e benefícios',['profile-settings','payments','benefits','settings','support']]];
+    const groups=[['Minha rotina',['journal','recipes','goals','achievements']],['Meu acompanhamento',['clinical','forms','documents','booking','chat','community']],['Conta e benefícios',['profile-settings','payments','benefits','settings','support']]];
     return heading('Tudo no seu lugar','Meu acompanhamento','As áreas da sua jornada, conectadas.')+
       '<section class="patient-profile-banner">'+avatar()+'<div class="grow"><h2>'+esc(pat()?.name||'Meu perfil')+'</h2><p>'+esc(pat()?.goal||'Seu objetivo será definido com a nutri.')+'</p></div><button class="btn small ghost" data-page="profile-settings">Editar perfil</button></section>'+
       groups.map(([name,ids])=>'<section class="patient-menu-section"><h2>'+name+'</h2><div class="patient-menu-grid">'+ids.map(id=>'<button data-page="'+id+'">'+icon(id)+'<span>'+esc(P.patientPages.find(x=>x[0]===id)?.[1]||id)+'</span>'+icon('arrow')+'</button>').join('')+'</div></section>').join('');
@@ -155,3 +155,4 @@ export function createPatientExperience(H,P,A){
   }
   return {home,achievements,menu,profile,coverSettings,bind,avatar,icon};
 }
+
