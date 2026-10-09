@@ -12,16 +12,19 @@ const ok = (v, label) => { assert.ok(v, label); checks++; console.log('OK ' + la
 const eq = (v, expected, label) => { assert.deepEqual(v, expected, label); checks++; console.log('OK ' + label); };
 (async () => {
   browser = comMockNuvem(await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium', args: ['--no-sandbox'] }));
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', locale: 'pt-BR' });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', locale: 'pt-BR', timezoneId: 'America/Sao_Paulo' });
   await ctx.route('**/*', route => new URL(route.request().url()).origin === new URL(BASE).origin ? route.continue() : route.abort('blockedbyclient'));
   await ctx.addInitScript(() => {
     localStorage.setItem('mtapp:ptSemConta', '1');
     localStorage.setItem('mtapp:perfil', JSON.stringify({ nome: 'Teste isolado' }));
   });
   const p = await ctx.newPage(), errors = [], messages = [];
-  p.on('request', r => { if (/push-envia|envia-email|wa\.me/.test(r.url())) messages.push(r.url()); });
+  p.on('request', r => { if (/push-envia|envia-email|wa\.me/.test(r.url())) messages.push({ url: r.url(), method: r.method(), postData: r.postData() }); });
   p.on('pageerror', e => errors.push(e.message));
   p.on('dialog', d => d.dismiss());
+  // Segunda fixa separa a publicação do lembrete semanal; os timers continuam reais.
+  // test-personal.js cobre a ausência na quarta e o envio na sexta com relógio fixo.
+  await p.clock.setFixedTime(new Date('2026-09-07T12:00:00Z'));
   await p.goto(BASE + '/personal.html');
   await p.waitForFunction(() => window.__ptStudio && window.__dia1Estado);
   await p.fill('#obNome', 'Personal fictício'); await p.click('#obOk');
