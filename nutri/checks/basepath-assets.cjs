@@ -94,19 +94,22 @@ for (const basepath of ['/', '/nutri/']) {
   });
 
   test(basepath + ': every HTML asset resolves locally and exists', async () => {
-    const indexURL = new URL(basepath + 'index.html', origin);
-    for (const match of html.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
+    for (const filename of ['index.html', 'demo-paciente.html', 'demo-nutricionista.html']) {
+    const indexURL = new URL(basepath + filename, origin);
+    const page = filename === 'index.html' ? html : fs.readFileSync(path.join(staticRoot, filename), 'utf8');
+    for (const match of page.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
       assert(!externalReference.test(match[1]), 'HTML reference must be relative: ' + match[1]);
       const url = new URL(match[1], indexURL);
       assert(url.pathname.startsWith(basepath));
       assert(fs.existsSync(path.join(staticRoot, match[1])), 'HTML asset must exist: ' + match[1]);
+    }
     }
   });
 
   test(basepath + ': install precaches only existing Nutri files beneath the worker URL', async () => {
     const h = worker(basepath);
     await h.dispatch('install').done();
-    assert.equal(h.calls.addAll.length, 38);
+    assert.equal(h.calls.addAll.length, 40);
     for (const asset of h.calls.addAll) {
       const url = new URL(asset);
       assert.equal(url.origin, origin);
@@ -171,6 +174,19 @@ for (const basepath of ['/', '/nutri/']) {
     assert.equal(navigation.body, 'nutri-index');
     const script = await h.request(basepath + 'app.js').done();
     assert.equal(script.type, 'error');
+    assert.equal(h.calls.put.length, 0);
+  });
+
+  test(basepath + ': dedicated demo navigation keeps its own entry offline', async () => {
+    const h = worker(basepath, {offline: true});
+    await h.dispatch('install').done();
+    for (const filename of ['demo-paciente.html', 'demo-nutricionista.html']) {
+      const event = h.request(basepath + filename + '?entrar=1', {mode: 'navigate'});
+      assert.equal(event.handled, true);
+      const result = await event.done();
+      assert.equal(result.url, origin + basepath + filename, 'The demo must not fall back to the account entry.');
+      assert.equal(result.body, 'precache');
+    }
     assert.equal(h.calls.put.length, 0);
   });
 

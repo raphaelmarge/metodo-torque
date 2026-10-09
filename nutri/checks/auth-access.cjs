@@ -51,10 +51,11 @@ function harness(options = {}) {
   const clients = [];
   const storedSession = () => JSON.parse(localStorage.getItem(storageKey) || 'null');
   const events = new Map();
-  const calls = {signOut: [], signUp: [], resetPasswordForEmail: [], updateUser: [], rpc: [], load: 0, reload: 0, stopRefresh: 0, startRefresh: 0, getUser: 0};
+  const calls = {signOut: [], signUp: [], resetPasswordForEmail: [], updateUser: [], rpc: [], assign: [], load: 0, reload: 0, stopRefresh: 0, startRefresh: 0, getUser: 0};
   let bootstrapEvent = options.bootstrapEvent;
   const location = new URL(options.url || 'https://unit.invalid/');
   location.reload = () => { calls.reload++; };
+  location.assign = next => { calls.assign.push(new URL(next, location).href); };
   const history = {replaceState(_state, _title, next) { location.href = new URL(next, location).href; }};
   const nodes = new Map();
   function node(id) {
@@ -171,7 +172,7 @@ function harness(options = {}) {
       async load() { calls.load++; }, resources() { return []; }
     }; }
   });
-  vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,action,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
+  vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
   const api = context.__authAccess;
   return {
     ...api, calls, nodes, localStorage, sessionStorage, location, storageKey, events, clients,
@@ -208,6 +209,115 @@ function assertPrivateDataCleared(h, {cacheRemains = false} = {}) {
 
 const tests = [];
 function test(name, fn) { tests.push({name, fn}); }
+
+class ObservedStorage extends MemoryStorage {
+  constructor() { super(); this.accesses = []; }
+  getItem(key) { this.accesses.push({method: 'getItem', key: String(key)}); return super.getItem(key); }
+  setItem(key, value) { this.accesses.push({method: 'setItem', key: String(key)}); return super.setItem(key, value); }
+  removeItem(key) { this.accesses.push({method: 'removeItem', key: String(key)}); return super.removeItem(key); }
+}
+
+function dedicatedDemoFixture(role) {
+  const localStorage = new ObservedStorage(), sessionStorage = new ObservedStorage();
+  localStorage.setItem('sb-unit-project-auth-token', JSON.stringify({user: A, access_token: 'unit-existing-access', refresh_token: 'unit-existing-refresh'}));
+  localStorage.setItem('sb-unit-project-auth-token-user', JSON.stringify({user: A}));
+  localStorage.setItem('sb-unit-project-auth-token-code-verifier', 'unit-existing-verifier');
+  const snapshot = {userId: A.id, savedAt: Date.now(), role: role === 'patient' ? 'nutri' : 'patient', clinic: {id: 'private-clinic', name: 'Private clinic'}};
+  for (const key of privateArrays) snapshot[key] = [{id: 'private-' + key, name: 'Private person'}];
+  localStorage.setItem('torque-nutri-cache:' + A.id, JSON.stringify(snapshot));
+  for (const user of [A, B]) {
+    localStorage.setItem('torque-nutri-queue:' + user.id, JSON.stringify([{operationId: randomUUID(), userId: user.id, patientId: 'private-patient', day: '2026-10-08', patch: {waterDelta: 250}}]));
+    sessionStorage.setItem('torque-nutri-draft:' + user.id + ':private-patient', '{"privateDraft":true}');
+  }
+  sessionStorage.setItem('torque-nutri-invite', 'b'.repeat(64));
+  localStorage.setItem('torque-nutri-theme', 'light');
+  const before = {local: [...localStorage.items], session: [...sessionStorage.items]};
+  localStorage.accesses = []; sessionStorage.accesses = [];
+  const filename = role === 'patient' ? 'demo-paciente.html' : 'demo-nutricionista.html';
+  const url = 'https://unit.invalid/nutri/' + filename + '?entrar=1&recuperar=1&perfil=' + snapshot.role
+    + '&convite=' + invite + '&code=unit-code&type=recovery&error=unit-error#access_token=unit&refresh_token=unit&type=recovery&error=unit-error';
+  return {localStorage, sessionStorage, before, url};
+}
+
+function assertDemoIsolation(h, fixture) {
+  assert.equal(h.clients.length, 0, 'A dedicated demo must never create a Supabase client, even with a stored session.');
+  assert.equal(h.calls.load, 0);
+  assert.equal(h.calls.getUser, 0);
+  assert.equal(h.calls.stopRefresh, 0);
+  assert.equal(h.calls.startRefresh, 0);
+  for (const key of ['signOut', 'signUp', 'resetPasswordForEmail', 'updateUser', 'rpc']) assert.equal(h.calls[key].length, 0, key);
+  assert.deepEqual([...fixture.localStorage.items], fixture.before.local, 'Session, clinical cache and queues must remain byte-for-byte unchanged.');
+  assert.deepEqual([...fixture.sessionStorage.items], fixture.before.session, 'Private drafts and the pending invitation must remain unchanged.');
+  assert.deepEqual(fixture.localStorage.accesses.filter(x => !(x.method === 'getItem' && ['torque-nutri-theme', 'torque-nutri-preferences'].includes(x.key))), [], 'Only neutral display preferences may be read; account storage must remain untouched.');
+  assert.deepEqual(fixture.sessionStorage.accesses, [], 'The demo must not read or overwrite a persisted invitation.');
+}
+
+for (const role of ['patient', 'nutri']) {
+  test('the dedicated ' + role + ' demo ignores Auth URLs and persisted private state', async () => {
+    const fixture = dedicatedDemoFixture(role), h = harness({...fixture, bootstrapEvent: 'PASSWORD_RECOVERY'});
+    await h.start();
+    assert.equal(h.S.demo, true);
+    assert.equal(h.S.user, null);
+    assert.equal(h.S.role, role);
+    assert.equal(h.S.page, role === 'patient' ? 'today' : 'overview');
+    assert.equal(h.getMode(), 'login');
+    assert.equal(h.getInvite(), '');
+    assert.equal(h.S.clinic.id, 'demo-clinic');
+    assert(h.S.patients.length > 0 && h.S.patients.every(p => p.id.startsWith('demo-')));
+    assert(!h.html().includes('Private person') && !h.html().includes(A.email));
+    assert(!h.nodes.has('auth-form') && !h.nodes.has('invite-redeem'));
+    assertDemoIsolation(h, fixture);
+  });
+
+  test('the dedicated ' + role + ' demo cannot switch profiles and opens the correct account route', async () => {
+    const fixture = dedicatedDemoFixture(role), h = harness(fixture);
+    await h.start();
+    assert(!h.html().includes('data-action="switch-role"'), 'The profile switch must be absent from the dedicated demo.');
+    assert(h.html().includes('data-action="auth"'), 'The dedicated demo must retain its account entry point.');
+    const page = h.S.page, selected = h.S.selected;
+    await h.action('switch-role');
+    assert.equal(h.S.role, role); assert.equal(h.S.page, page); assert.equal(h.S.selected, selected);
+    await assert.rejects(() => h.authSubmit(), /acesso ainda não está disponível/);
+    await h.action('auth');
+    assert.deepEqual(h.calls.assign, ['https://unit.invalid/nutri/?entrar=1&perfil=' + role]);
+    assert.equal(h.S.demo, true); assert.equal(h.S.user, null); assert.equal(h.S.page, page);
+    assertDemoIsolation(h, fixture);
+  });
+
+  test('reloading the dedicated ' + role + ' demo restores its own initial view without consuming real storage', async () => {
+    const fixture = dedicatedDemoFixture(role), h = harness(fixture);
+    await h.start();
+    const name = h.S.patients[0].name, clinic = h.S.clinic.name;
+    if (role === 'patient') {
+      await h.action('water');
+      assert.equal(h.S.logs.find(log => log.patient_id === h.S.selected && log.day === h.today()).water_ml, 250);
+    }
+    h.S.patients[0].name = 'Edited demo patient'; h.S.clinic.name = 'Edited demo clinic';
+    h.S.page = role === 'patient' ? 'food' : 'patients';
+    assertDemoIsolation(h, fixture);
+    const reload = harness({...fixture, online: false, queryError: true});
+    await reload.start();
+    assert.equal(reload.S.demo, true); assert.equal(reload.S.user, null); assert.equal(reload.S.role, role);
+    assert.equal(reload.S.page, role === 'patient' ? 'today' : 'overview');
+    assert.equal(reload.S.patients[0].name, name); assert.equal(reload.S.clinic.name, clinic);
+    if (role === 'patient') assert(!reload.S.logs.some(log => log.patient_id === reload.S.selected && log.water_ml === 250));
+    assert.equal(reload.getInvite(), '');
+    assertDemoIsolation(reload, fixture);
+  });
+
+  test('the account screen opens the dedicated demo for the selected ' + role + ' profile', async () => {
+    const other = role === 'patient' ? 'nutri' : 'patient';
+    const h = harness({url: 'https://unit.invalid/nutri/?entrar=1&perfil=' + other, user: null});
+    await h.start();
+    assert.equal(h.S.page, 'auth');
+    await h.nodes.get('auth-' + role).onclick();
+    await h.nodes.get('back-demo').onclick();
+    assert.deepEqual(h.calls.assign, ['https://unit.invalid/nutri/' + (role === 'patient' ? 'demo-paciente.html' : 'demo-nutricionista.html')]);
+    assert.equal(h.calls.rpc.length, 0);
+    assert.equal(h.calls.signUp.length, 0);
+    assert.equal(h.calls.signOut.length, 0);
+  });
+}
 
 test('confirmation links and their callback remain under /nutri/ with the patient invitation', async () => {
   for (const entry of ['https://unit.invalid/nutri/', 'https://unit.invalid/nutri/index.html']) {
