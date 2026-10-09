@@ -78,6 +78,34 @@ function worker(basepath, options = {}) {
 const tests = [];
 function test(name, run) { tests.push({name, run}); }
 const externalReference = /^(?:[a-z][a-z\d+.-]*:|\/)/i;
+// Follow the actual startup graph instead of relying on a fixed asset count.
+// WOFF2 is the shipped font source; old optional WOFF fallbacks are not shipped.
+function startupAssets() {
+  const assets = new Set(['./', 'index.html', 'demo-paciente.html', 'demo-nutricionista.html', 'assets/nutrition-cover.png', ...manifest.icons.map(icon => icon.src)]);
+  const walk = relative => {
+    if (assets.has(relative) && !['./', 'index.html'].includes(relative)) return;
+    assets.add(relative);
+    const file = path.join(staticRoot, relative);
+    assert(fs.existsSync(file), 'Startup asset must exist: ' + relative);
+    if (!/\.(?:js|css)$/.test(relative)) return;
+    const source = fs.readFileSync(file, 'utf8');
+    const references = relative.endsWith('.js')
+      ? [...source.matchAll(/^import\s+[^;\n]+?\s+from\s+['"]([^'"]+)['"];?/mg)].map(match => match[1])
+      : [...source.matchAll(/url\(\s*['"]?([^'"\s)]+)['"]?\s*\)/g)].map(match => match[1]).filter(value => value.endsWith('.woff2'));
+    for (const reference of references) {
+      assert(!externalReference.test(reference), 'Module/font dependency must stay local: ' + reference);
+      const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(relative), reference));
+      assert(!resolved.startsWith('../'), 'Dependency must stay beneath Nutri: ' + reference);
+      walk(resolved);
+    }
+  };
+  for (const filename of ['index.html', 'demo-paciente.html', 'demo-nutricionista.html']) {
+    const page = filename === 'index.html' ? html : fs.readFileSync(path.join(staticRoot, filename), 'utf8');
+    for (const match of page.matchAll(/\b(?:src|href)="([^"]+)"/g)) walk(match[1]);
+  }
+  return assets;
+}
+const requiredStartupAssets = startupAssets();
 
 for (const basepath of ['/', '/nutri/']) {
   test(basepath + ': manifest identity, scope, launch URL and icons stay in the installed directory', async () => {
@@ -109,7 +137,14 @@ for (const basepath of ['/', '/nutri/']) {
   test(basepath + ': install precaches only existing Nutri files beneath the worker URL', async () => {
     const h = worker(basepath);
     await h.dispatch('install').done();
-    assert.equal(h.calls.addAll.length, 40);
+    assert.equal(h.calls.addAll.length, h.STATIC_URLS.size);
+    assert.deepEqual([...h.calls.addAll].sort(), [...h.STATIC_URLS].sort());
+    for (const file of requiredStartupAssets) assert(h.STATIC_URLS.has(new URL(file, h.BASE).href),
+      'Startup dependency missing from offline precache: ' + file);
+    for (const file of ['care-progress.js', 'journal-model.js', 'food-journal.js', 'plan-recipes.js']) {
+      assert(requiredStartupAssets.has(file), 'The real module graph must include ' + file);
+      assert(h.STATIC_URLS.has(new URL(file, h.BASE).href), 'New Nutri module must be precached: ' + file);
+    }
     for (const asset of h.calls.addAll) {
       const url = new URL(asset);
       assert.equal(url.origin, origin);

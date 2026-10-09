@@ -150,7 +150,8 @@ test('o precache do portal não incorpora arquivos da plataforma /nutri/', async
   for (const url of h.calls.precache) assert(!/^\/nutri(?:\/|$)/.test(new URL(url).pathname), 'Arquivo Nutri no precache raiz: ' + url);
 });
 
-for (const check of ['auth-access.cjs', 'basepath-assets.cjs', 'assessment.mjs', 'platform-flows.cjs']) {
+for (const check of ['auth-access.cjs', 'basepath-assets.cjs', 'assessment.mjs', 'platform-flows.cjs',
+  'care-progress.mjs', 'journal-model.mjs', 'plan-recipes.mjs', 'patient-experience-phase1.mjs']) {
   test('checks reais do Torque Nutri: ' + check, () => {
     const filename = path.join(root, 'nutri/checks', check);
     assert(fs.existsSync(filename), 'Check Nutri ausente; o pacote deve incluir ' + filename);

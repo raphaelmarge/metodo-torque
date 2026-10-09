@@ -55,3 +55,63 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 
 #toast{z-index:60;max-width:calc(100vw - 32px);font-size:14px}#modal-feedback[hidden]{display:none}.assessment-context{margin-top:-10px;margin-bottom:22px}
 @media(max-width:800px){#toast{bottom:calc(92px + env(safe-area-inset-bottom))}.body-chart text{font-size:16px}}
+
+/* The next useful action comes before points and body measurements. */
+.contextual-care{margin-top:24px;overflow-wrap:anywhere}
+.contextual-care .card-head{align-items:flex-start;margin-bottom:12px}
+.contextual-care .card-head>svg{width:28px;height:28px;color:var(--brand);flex-shrink:0}
+.contextual-care h2{font-size:clamp(1.3rem,2.5vw,1.7rem);margin-top:7px;max-width:32ch}
+.contextual-care>.sub{max-width:70ch;margin-bottom:20px}
+.contextual-care.return-care,.contextual-care.first-care{border-color:color-mix(in srgb,var(--brand) 48%,var(--line))}
+.contextual-care .actions{align-items:stretch}
+.contextual-care .actions .btn{flex:0 1 auto;white-space:normal;text-align:center}
+.contextual-care .next-meal-foods{max-width:850px}
+.contextual-care .next-meal-foods>div{flex-wrap:wrap;gap:8px 20px}
+.contextual-care .next-meal-foods>div>span,.contextual-care .next-meal-foods b{min-width:0;overflow-wrap:anywhere}
+.care-completion{font-size:14px;line-height:1.6;color:var(--muted);margin-top:18px}
+.care-week-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:center}
+.care-week-summary>div{min-width:0}
+.care-week-summary h2{font-size:22px;margin-top:7px}
+.care-week-summary>.btn{white-space:normal;text-align:center}
+.care-week-summary>.progress{grid-column:1/-1;margin:0}
+.calendar-caption{font-size:12px;line-height:1.6;color:var(--muted);margin:-12px 0 22px}
+.habit-card strong{overflow-wrap:anywhere;line-height:1.4}
+.home-feedback .eyebrow,.plan-recipes .eyebrow{display:block;margin-bottom:9px}
+.home-feedback .document-text{margin:15px 0;font-size:15px}
+.plan-recipe-list{display:grid;gap:10px;margin-top:20px}
+.plan-recipe-list>button{display:flex;align-items:center;gap:13px;text-align:left;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:15px;background:var(--panel2);color:var(--text);min-width:0}
+.plan-recipe-list>button>svg{width:23px;height:23px;flex-shrink:0;color:var(--brand)}
+.plan-recipe-list>button>svg:last-child{margin-left:auto;width:18px;color:var(--muted)}
+.plan-recipe-list>button>span{min-width:0;overflow-wrap:anywhere}
+.plan-recipe-list b{display:block;font-size:15px;font-weight:600;line-height:1.5}
+.plan-recipe-list small{display:block;margin-top:5px;font-size:12px;line-height:1.5;color:var(--muted)}
+.history-meal{border-top:1px solid var(--line);padding:22px 0 5px;margin-top:18px;overflow-wrap:anywhere}
+.history-meal h3{font-size:17px;line-height:1.5;margin-bottom:8px}
+.history-meal small{font-size:12px;color:var(--muted);line-height:1.6}
+.day-history .summary-line{flex-wrap:wrap}
+.theme-light .contextual-care .card-head>svg,.theme-light .plan-recipe-list>button>svg{color:var(--text)}
+.large-text .contextual-care h2,.large-text .care-week-summary h2{font-size:1.55rem}
+.large-text .calendar-caption,.large-text .plan-recipe-list small,.large-text .history-meal small,.large-text .care-completion{font-size:17px}
+.large-text .plan-recipe-list b{font-size:18px}
+@media(max-width:800px){
+ .patient-main .contextual-care{margin-top:22px;padding:22px}
+ .contextual-care .actions>.btn{flex:1 1 12rem;font-size:14px;min-height:48px}
+ .contextual-care .next-meal-foods b{font-size:14px}
+ .care-week-summary{grid-template-columns:minmax(0,1fr);gap:14px}
+ .care-week-summary>.btn{justify-self:start}
+ .today-heading{flex-wrap:wrap;gap:12px}
+ .week-controls button{min-width:44px;min-height:44px}
+ .patient-week{grid-template-columns:repeat(7,minmax(44px,1fr));overflow-x:auto;padding:4px 0;max-width:100%}
+ .patient-main .top-actions .btn,.patient-main .top-actions [data-action="theme"]{min-height:44px;min-width:44px}
+ .journey-award{min-width:44px;min-height:44px}
+ .calendar-caption{font-size:13px;margin-top:-10px}
+ .habit-card strong{font-size:17px}
+ .care-week-summary h2{font-size:21px}
+ .patient-content-grid>div{min-width:0}
+}
+@media(max-width:380px){
+ .patient-main .contextual-care{padding:18px}
+ .habit-grid{grid-template-columns:minmax(0,1fr)}
+ .habit-card{min-height:0;padding:18px}
+ .habit-card>svg{margin-bottom:12px}
+}

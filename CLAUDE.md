@@ -6,6 +6,19 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v861 — Rotina e prazer no Torque Nutri
+
+- Registrar refeição abre o diário de consumo, com alimentos e porções para
+  confirmar. Edições preservam a versão histórica e reenvios usam a mesma operação.
+- Meu dia prioriza a próxima ação conforme horários, primeiro uso e retomada.
+  A semana acompanha cuidados registrados; adesão é uma confirmação separada.
+- XP novo desde 09/10/2026: cuidado +10, check-in +5, alimentação +5, até20/dia.
+  Pesagem isolada e confirmação de plano seguido não rendem pontos novos.
+- A nutri vincula preparos ao rascunho após revisão; o plano publicado conserva
+  snapshots. Favoritos guardam somente IDs locais por clínica, conta e paciente.
+- Cache Nutri v8. Sem migração ou mudança de Auth/cobrança. A release preserva
+  as demos mt-v860 e depende do PR #882. Ver docs/releases/mt-v861-rotina-paciente.md.
+
 ## v860 — Demos separadas do Torque Nutri
 
 - `/nutri/demo-paciente.html` abre o paciente; `/nutri/demo-nutricionista.html`
