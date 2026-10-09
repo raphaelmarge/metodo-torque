@@ -70,7 +70,17 @@ async function noOverflow(page, label) {
   const geometry = await page.evaluate(() => {
     const root = document.documentElement, body = document.body;
     const dialog = document.querySelector('#modal');
-    return {width: root.clientWidth, scroll: Math.max(root.scrollWidth, body.scrollWidth), dialog: dialog?.open ? {width: dialog.clientWidth, scroll: dialog.scrollWidth} : null};
+    const width = root.clientWidth, scroll = Math.max(root.scrollWidth, body.scrollWidth);
+    const overflowing = scroll > width + 1 ? [...document.querySelectorAll('body *')].flatMap(element => {
+      const box = element.getBoundingClientRect(), style = getComputedStyle(element);
+      if (!box.width || style.position === 'absolute' || style.position === 'fixed') return [];
+      if (box.right <= width + 1 && box.left >= -1) return [];
+      if (element.closest('.patient-week,.table-scroll,[hidden]')) return [];
+      return [{tag:element.tagName,id:element.id,class:element.className?.baseVal ?? element.className,
+        right:Math.round(box.right),left:Math.round(box.left),width:Math.round(box.width),minWidth:style.minWidth,
+        whiteSpace:style.whiteSpace,text:(element.textContent || '').trim().slice(0,70)}];
+    }).slice(-25) : [];
+    return {width, scroll, dialog: dialog?.open ? {width: dialog.clientWidth, scroll: dialog.scrollWidth} : null, overflowing};
   });
   if (OUT && (geometry.scroll > geometry.width + 1 || (geometry.dialog && geometry.dialog.scroll > geometry.dialog.width + 1))) {
     fs.mkdirSync(OUT, {recursive: true});
@@ -395,14 +405,12 @@ async function alternativeDraft() {
 
 (async () => {
   browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined), args: ['--no-sandbox']});
-  await realDemo();
-  await uncertainReplay('unknown-thrown');
-  await uncertainReplay('unknown-returned');
-  await retryFromAnotherEntryPoint();
-  await definitiveAfterUncertain();
-  await firstDefinitiveRejection();
-  await historicalDraft();
-  await alternativeDraft();
+  const failures = [];
+  for (const scenario of [realDemo, () => uncertainReplay('unknown-thrown'), () => uncertainReplay('unknown-returned'),
+    retryFromAnotherEntryPoint, definitiveAfterUncertain, firstDefinitiveRejection, historicalDraft, alternativeDraft]) {
+    try { await scenario(); } catch (error) { failures.push(error); console.error(error); }
+  }
+  if (failures.length) throw new AggregateError(failures, failures.length + ' cenários de rotina e diário falharam.');
   console.log(checks + ' verificações de rotina e diário alimentar passaram.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => {
   for (const context of contexts) await context.close().catch(() => {});

@@ -8,9 +8,10 @@
 /* Food reports share the existing dialog, clinic colors and theme tokens. */
 .journal-items{display:grid;gap:16px;margin:18px 0}
 .journal-food{min-width:0;border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--panel)}
-.journal-food legend{padding:0 8px;color:var(--text);font-weight:700}
-.journal-food input,.journal-food select{min-height:44px;max-width:100%}
+.journal-food legend{padding:0 8px;color:var(--text);font-weight:700;max-width:100%;overflow-wrap:anywhere}
+.journal-food input,.journal-food select{min-height:44px;max-width:100%;min-width:0}
+.journal-food label{min-width:0;overflow-wrap:anywhere}
 .journal-food .btn,.recipe-assignment .btn{min-height:44px;white-space:normal}
 .recipe-assignment{margin:12px 0 20px;padding:16px;border:1px solid var(--line);border-radius:14px}
 .recipe-card .btn,#modal-body [data-x="recipe-favorite"]{min-height:44px;white-space:normal}
-@media(max-width:560px){.journal-food .form-grid{grid-template-columns:1fr}.journal-food{padding:12px}}
+@media(max-width:560px){.journal-food .form-grid{grid-template-columns:minmax(0,1fr)}.journal-food{padding:12px}}

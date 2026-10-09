@@ -119,3 +119,13 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 .cover-brand,.cover-brand>div{min-width:0}
 .cover-brand b,.cover-brand span,.cover-copy h1,.cover-copy p{overflow-wrap:anywhere}
 .cover-copy .btn{max-width:100%;white-space:normal}
+/* Let enlarged content reflow instead of enforcing a single flex row. */
+.journey-strip{flex-wrap:wrap}
+.journey-strip>.grow{flex:1 1 140px;min-width:0;overflow-wrap:anywhere}
+.journey-award{flex-shrink:0}
+.patient-main .card-head>div{min-width:0;overflow-wrap:anywhere}
+.patient-main .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.next-meal-title{flex-wrap:wrap;overflow-wrap:anywhere}
+@media(max-width:800px){
+ .patient-layout .nav-btn{white-space:normal;overflow-wrap:anywhere}
+}
