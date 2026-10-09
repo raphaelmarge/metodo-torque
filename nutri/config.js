@@ -1,0 +1,1 @@
+window.TORQUE_NUTRI_CONFIG = { ecosystemUrl: 'https://www.torqueon.com.br/torqueon.html', supabaseUrl: 'https://mmdsmpetwhcfiyubhaah.supabase.co', publishableKey: 'sb_publishable_odJUE3I3nc-agfLZq7Hw9w_iae7FWBQ' };

@@ -16,6 +16,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.torqueon.com.br/nutri/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.torqueon.com.br/demo-personal.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

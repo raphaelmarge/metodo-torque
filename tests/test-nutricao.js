@@ -759,11 +759,30 @@ async function abaNt(p, a) {
   const rcCampos = await p.evaluate(() => (self.MT_RECEITAS || []).every((r) => r.n && r.cat && r.k > 0 && r.pt >= 0 && r.ing.length >= 2 && r.modo.length >= 2 && r.dica));
   ok(rcCampos, "toda receita tem ingredientes, preparo, macros e dica");
 
-  // site comercial tem o segmento
+  // O site comercial apresenta a nova plataforma; o módulo legado segue testado acima e abaixo.
   const pSite = await ctx.newPage();
   await pSite.goto(BASE + "/torqueon.html");
-  const corpo = await pSite.evaluate(() => document.body.textContent);
-  ok(/Nutricionista/.test(corpo) && /Dieta automática/.test(corpo), "segmento Nutricionista no site comercial");
+  const comercialNutri = await pSite.evaluate(() => {
+    const card = document.getElementById("segNutri");
+    return {
+      titulo: card?.querySelector("h3")?.textContent.trim() || "",
+      recursos: Array.from(card?.querySelectorAll("li") || [], li => li.textContent),
+      entradas: [
+        ["barra de acesso", document.getElementById("entrarNutri")?.getAttribute("href") || ""],
+        ["card Nutricionista", card?.querySelector("a.btn")?.getAttribute("href") || ""],
+      ],
+    };
+  });
+  ok(comercialNutri.titulo === "Nutricionista" &&
+    [/prontuário/i, /prescrições/i, /agenda.*consultas/i, /app do paciente/i].every(recurso =>
+      comercialNutri.recursos.some(texto => recurso.test(texto))),
+    "card Nutricionista apresenta prontuário, prescrições, agenda e app do paciente");
+  for (const [entrada, href] of comercialNutri.entradas) {
+    const destino = new URL(href, BASE);
+    ok(!!href && destino.origin === new URL(BASE).origin && destino.pathname === "/nutri/" &&
+      destino.searchParams.get("entrar") === "1" && destino.searchParams.get("perfil") === "nutri",
+      "entrada Nutri da " + entrada + " abre o acesso profissional da nova plataforma");
+  }
   await pSite.close();
 
   // login próprio do TORQUE NUTRI (gate verde do módulo)
