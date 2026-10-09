@@ -26,8 +26,10 @@ export function createFoodJournal(H,{pat,records,saveRecord,load,imageFile}){
   const patientId=pat().id,accountId=s().user?.id||'demo';
   const reference=resolveJournalPlan({published:H.published(),records:s().records,patientId,existing});
   const meals=reference.plan?.refeicoes||[],opKey=`torque-nutri-journal-pending:${accountId}:${patientId}:${existing?.id||'new'}`;
-  const draftKey=`torque-nutri-journal-draft:${accountId}:${patientId}:${existing?.id||'new:'+String(initialMealId||'manual')}`;
-  let attempt=null,draft=null;try{attempt=JSON.parse(sessionStorage.getItem(opKey)||'null');draft=JSON.parse(sessionStorage.getItem(draftKey)||'null');}catch{}
+  const draftPrefix=`torque-nutri-journal-draft:${accountId}:${patientId}:`,draftKey=draftPrefix+(existing?.id||'new:'+String(initialMealId||'manual'));
+  const originKey=opKey+':draft-origin';
+  let attempt=null,draft=null,origin=null;try{attempt=JSON.parse(sessionStorage.getItem(opKey)||'null');draft=JSON.parse(sessionStorage.getItem(draftKey)||'null');origin=sessionStorage.getItem(originKey);}catch{}
+  let uncertain=!!attempt;
   // Pending arguments are immutable until the RPC outcome and refreshed data are
   // known. This also keeps a retried report pinned to its original plan version.
   if(attempt&&(attempt.p_patient_id!==patientId||attempt.p_record_id!==(existing?.id||null)))throw Error('Envio pendente indisponível para este registro.');
@@ -68,9 +70,9 @@ export function createFoodJournal(H,{pat,records,saveRecord,load,imageFile}){
     return `<fieldset data-journal-row="${index}" class="journal-food"><legend>Alimento ${index+1}</legend>${alternatives.length>1?`<label>Opções prescritas<select data-journal-alternative="${index}">${alternatives.map((x,i)=>`<option value="${i}" ${x.id===row.id?'selected':''}>${esc(x.nome)} · ${esc(x.porcao)}</option>`).join('')}</select></label>`:''}<label>Alimento<input data-journal-name value="${esc(row.nome)}" maxlength="200" required></label><div class="form-grid"><label>Quantidade de porções<input data-journal-quantity type="number" min="0.01" max="1000" step="any" value="${esc(row.qtd)}" required></label><label>Medida de cada porção<input data-journal-portion value="${esc(row.porcao)}" maxlength="100" placeholder="Ex.: 100 g ou 1 unidade" required></label></div><button type="button" class="btn small ghost" data-journal-remove="${index}" aria-label="Remover alimento ${index+1}">Remover alimento</button></fieldset>`;
    }).join('');
    q('#journal-items').querySelectorAll('[data-journal-remove]').forEach(b=>b.onclick=()=>{capture();rows.splice(Number(b.dataset.journalRemove),1);if(q('#journal-how'))q('#journal-how').value='different';q('#journal-confirm').checked=false;draw();saveDraft();});
-   q('#journal-items').querySelectorAll('[data-journal-alternative]').forEach(el=>el.onchange=()=>{capture();const index=Number(el.dataset.journalAlternative),base=selected()?.itens?.find(x=>x.id===rows[index].id||x.substituicoes?.some(a=>a.id===rows[index].id));if(!base)return;rows[index]=itemRow([base,...(base.substituicoes||[])][Number(el.value)]);if(q('#journal-how'))q('#journal-how').value='substitution';draw();saveDraft();});
+   q('#journal-items').querySelectorAll('[data-journal-alternative]').forEach(el=>el.onchange=()=>{capture();const index=Number(el.dataset.journalAlternative),base=selected()?.itens?.find(x=>x.id===rows[index].id||x.substituicoes?.some(a=>a.id===rows[index].id));if(!base)return;rows[index]=itemRow([base,...(base.substituicoes||[])][Number(el.value)]);if(q('#journal-how'))q('#journal-how').value='substitution';q('#journal-confirm').checked=false;draw();saveDraft();});
   }
-  function lock(){q('#modal-form').querySelectorAll('input,textarea,select,button[type="button"]').forEach(el=>{if(el.id==='cancel-modal')return;delete el.dataset.busyLock;el.disabled=true;});q('#modal-form button[type="submit"]').textContent='Conferir envio';}
+  function lock(){uncertain=true;q('#modal-form').querySelectorAll('input,textarea,select,button[type="button"]').forEach(el=>{if(el.id==='cancel-modal')return;delete el.dataset.busyLock;el.disabled=true;});q('#modal-form button[type="submit"]').textContent='Conferir envio';}
   q('#journal-add').onclick=()=>{capture();if(rows.length>=100){toast('Use até 100 alimentos por registro.');return;}rows.push(blank());if(q('#journal-how'))q('#journal-how').value='different';q('#journal-confirm').checked=false;draw();saveDraft();};
   q('#journal-meal').onchange=()=>{selectedId=q('#journal-meal').value||null;rows=selected()?.itens?.map(itemRow)||[blank()];q('#journal-title').value=selected()?.titulo||'Minha refeição';if(q('#journal-how'))q('#journal-how').value=selectedId?'planned':'different';q('#journal-confirm').checked=false;draw();saveDraft();};
   if(q('#journal-how'))q('#journal-how').onchange=()=>{capture();if(q('#journal-how').value==='planned'&&selected()){rows=selected().itens.map(itemRow);draw();}q('#journal-confirm').checked=false;saveDraft();};
@@ -81,19 +83,25 @@ export function createFoodJournal(H,{pat,records,saveRecord,load,imageFile}){
    const before=H.stats(pat()).xp;
    if(!attempt){
     capture();if(!q('#journal-confirm').checked)throw Error('Confira os alimentos e confirme as quantidades consumidas.');
+    if(!existing&&selectedId&&findJournalForMeal({records:s().records,patientId,day:q('#journal-day').value,mealId:selectedId,planVersion:reference.planVersion}))throw Error('Esta refeição já tem um relato neste dia. Abra o registro no Diário para revisar os alimentos e porções.');
     const items=buildJournalItems(rows),note=q('#journal-note').value.trim(),how=q('#journal-how')?.selectedOptions[0]?.textContent;
     const data={day:q('#journal-day').value,mealId:existing?reference.mealId:selectedId,items,note:how?`Como foi: ${how}.\n${note}`.trim():note,image:q('#journal-image').files[0]?await imageFile(q('#journal-image').files[0]):d.image||null,planVersion:reference.planVersion};
     if(new TextEncoder().encode(JSON.stringify(data)).length>350000)throw Error('Este registro ficou grande. Reduza a foto ou a observação.');
     attempt={p_operation_id:uid(),p_patient_id:patientId,p_record_id:existing?.id||null,p_expected_version:existing?.version||null,p_title:q('#journal-title').value.trim(),p_data:data};
-    if(!s().demo)sessionStorage.setItem(opKey,JSON.stringify(attempt));
+    origin=draftKey;
+    if(!s().demo){sessionStorage.setItem(originKey,origin);sessionStorage.setItem(opKey,JSON.stringify(attempt));}
    }
    if(s().demo){await saveRecord('food_journal',attempt.p_title,attempt.p_data,'patient',existing,patientId);}
    else{
     let result;try{result=await H.database().rpc('save_food_journal',attempt);}catch(e){lock();throw e;}
-    if(result.error){if(['P0001','42501','22023','23503','23514','23505'].includes(result.error.code)){attempt=null;sessionStorage.removeItem(opKey);}else lock();throw Error(result.error.message);}
+    if(result.error){if(!uncertain&&['P0001','42501','22023','23503','23514','23505'].includes(result.error.code)){attempt=null;sessionStorage.removeItem(opKey);sessionStorage.removeItem(originKey);origin=null;}else lock();throw Error(result.error.message);}
     try{await load();}catch(e){lock();throw e;}render();
    }
-   sessionStorage.removeItem(opKey);sessionStorage.removeItem(draftKey);
+   sessionStorage.removeItem(opKey);sessionStorage.removeItem(originKey);
+   // Confirmation may have been entered through a different UI entry point.
+   // Clear its original draft, keeping unrelated unsent drafts untouched.
+   if(origin?.startsWith(draftPrefix))sessionStorage.removeItem(origin);
+   else if(!uncertain)sessionStorage.removeItem(draftKey);
    const gained=Math.max(0,H.stats(pat()).xp-before);toast('Refeição registrada para sua nutri.'+(gained?` +${gained} XP de cuidado.`:''));
   }
  }

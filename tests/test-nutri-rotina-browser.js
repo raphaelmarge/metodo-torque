@@ -66,11 +66,16 @@ async function saveModal(page) {
   await page.waitForFunction(() => !document.querySelector('#modal').open);
 }
 async function noOverflow(page, label) {
+  await page.evaluate(() => document.fonts.ready);
   const geometry = await page.evaluate(() => {
     const root = document.documentElement, body = document.body;
     const dialog = document.querySelector('#modal');
     return {width: root.clientWidth, scroll: Math.max(root.scrollWidth, body.scrollWidth), dialog: dialog?.open ? {width: dialog.clientWidth, scroll: dialog.scrollWidth} : null};
   });
+  if (OUT && (geometry.scroll > geometry.width + 1 || (geometry.dialog && geometry.dialog.scroll > geometry.dialog.width + 1))) {
+    fs.mkdirSync(OUT, {recursive: true});
+    await page.screenshot({path: path.join(OUT, 'nutri-rotina-overflow-' + label.replace(/[^a-z0-9]+/gi, '-') + '.png'), fullPage: true});
+  }
   assert(geometry.scroll <= geometry.width + 1, label + ': document horizontal overflow ' + JSON.stringify(geometry));
   if (geometry.dialog) assert(geometry.dialog.scroll <= geometry.dialog.width + 1, label + ': modal horizontal overflow ' + JSON.stringify(geometry));
 }
@@ -177,8 +182,12 @@ async function journalFixture({mode = 'success', existing = null, records = []} 
       published: () => fixture.published, logs: () => state.logs, stats: () => careSummary({patientId: fixture.patient, logs: state.logs, records: state.records, today: fixture.day, clinicGoal: 5}),
       database: () => ({async rpc(name, args) {
         if (name !== 'save_food_journal') throw Error('Unexpected RPC: ' + name);
-        calls.push({name, args: clone(args)}); const data = persist(args);
-        if (calls.length === 1 && fixture.mode === 'unknown-thrown') throw Error('Resposta de rede desconhecida após gravar');
+        calls.push({name, args: clone(args)});
+        if ((calls.length === 1 && fixture.mode === 'first-definitive') || (calls.length === 2 && fixture.mode === 'unknown-then-definitive')) {
+          return {data: null, error: {code: '42501', message: 'Permissão de gravação indisponível nesta tentativa'}};
+        }
+        const data = persist(args);
+        if (calls.length === 1 && ['unknown-thrown', 'unknown-then-definitive'].includes(fixture.mode)) throw Error('Resposta de rede desconhecida após gravar');
         if (calls.length === 1 && fixture.mode === 'unknown-returned') return {data: null, error: {code: 'PGRST000', message: 'Resposta de rede desconhecida após gravar'}};
         return {data, error: null};
       }}),
@@ -213,7 +222,7 @@ async function openFixture(h, existing = false) {
 async function fixtureResult(h) {
   return h.page.evaluate(() => {
     const f = window.__journalFixture;
-    return {calls: f.calls, records: f.state.records, remote: f.remote, stats: f.stats(), loads: f.getLoads(), errors: f.errors, keys: Object.keys(sessionStorage)};
+    return {calls: f.calls, records: f.state.records, remote: f.remote, stats: f.stats(), loads: f.getLoads(), errors: f.errors, keys: Object.keys(sessionStorage), storage: Object.fromEntries(Object.keys(sessionStorage).map(key => [key, sessionStorage.getItem(key)]))};
   });
 }
 async function uncertainReplay(mode) {
@@ -275,10 +284,100 @@ async function historicalDraft() {
   pass('historical draft preserves version, meal, idless item identity and partial macros after removal');
   assertIsolated(h, 'historical draft'); await h.context.close();
 }
+async function retryFromAnotherEntryPoint() {
+  const h = await journalFixture({mode: 'unknown-thrown'}), page = h.page;
+  const manual = `torque-nutri-journal-draft:${USER}:${PATIENT}:new:manual`;
+  const unrelated = `torque-nutri-journal-draft:${USER}:${PATIENT}:new:lunch`;
+  const pending = `torque-nutri-journal-pending:${USER}:${PATIENT}:new`;
+  const unrelatedValue = JSON.stringify({marker: 'Outro rascunho fictício, preservar exatamente'});
+  await page.evaluate(() => window.__journalFixture.J.open(null));
+  await page.locator('#journal-meal').selectOption('lunch');
+  await page.locator('#journal-note').fill('Este relato começou pelo diário manual.');
+  await page.evaluate(({key, value}) => sessionStorage.setItem(key, value), {key: unrelated, value: unrelatedValue});
+  await page.locator('#journal-confirm').check();
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.locator('#fixture-error').filter({hasText: 'Resposta de rede desconhecida'}).waitFor();
+  const first = await fixtureResult(h);
+  assert.equal(first.storage[pending + ':draft-origin'], manual, 'Pending origin is stored separately from the RPC payload.');
+  assert.deepEqual(Object.keys(first.calls[0].args).sort(), ['p_data', 'p_expected_version', 'p_operation_id', 'p_patient_id', 'p_record_id', 'p_title']);
+  await page.locator('#cancel-modal').click();
+  await openFixture(h); // Retry through the meal CTA, not the original diary CTA.
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.waitForFunction(() => !document.querySelector('#modal').open);
+  const saved = await fixtureResult(h);
+  assert.deepEqual(saved.calls[1], saved.calls[0]);
+  assert.equal(saved.remote.filter(row => row.kind === 'food_journal').length, 1);
+  assert.equal(saved.storage[unrelated], unrelatedValue, 'Confirming a pending operation must preserve every unrelated draft.');
+  assert.equal(saved.storage[manual], undefined);
+  assert.equal(saved.storage[pending], undefined);
+  assert.equal(saved.storage[pending + ':draft-origin'], undefined);
+  await page.evaluate(() => window.__journalFixture.J.open(null));
+  assert.equal(await page.locator('#journal-meal').inputValue(), '');
+  assert.equal(await page.locator('[data-journal-name]').inputValue(), '');
+  assert.equal(await page.locator('#journal-note').inputValue(), '', 'A confirmed manual report must not reappear as a new unsent draft.');
+  assert.equal(await page.locator('#journal-title').inputValue(), 'Minha refeição');
+  await page.locator('#cancel-modal').click();
+  pass('retrying a manual report through the meal CTA removes only its original draft and cannot duplicate the report');
+  assertIsolated(h, 'cross-entry retry'); await h.context.close();
+}
+async function definitiveAfterUncertain() {
+  const h = await journalFixture({mode: 'unknown-then-definitive'}), page = h.page;
+  const pending = `torque-nutri-journal-pending:${USER}:${PATIENT}:new`;
+  await openFixture(h);
+  await page.locator('#journal-note').fill('Um envio pode ter sido gravado antes de perder a permissão.');
+  await page.locator('#journal-confirm').check();
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.locator('#fixture-error').filter({hasText: 'Resposta de rede desconhecida'}).waitFor();
+  const first = await fixtureResult(h);
+  await page.locator('#cancel-modal').click();
+  await openFixture(h);
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.locator('#fixture-error').filter({hasText: 'Permissão de gravação'}).waitFor();
+  const rejectedRetry = await fixtureResult(h);
+  assert.deepEqual(rejectedRetry.calls[1], rejectedRetry.calls[0]);
+  assert.equal(rejectedRetry.storage[pending], first.storage[pending]);
+  assert.equal(rejectedRetry.storage[pending + ':draft-origin'], first.storage[pending + ':draft-origin']);
+  assert.equal(await page.locator('#journal-note').isDisabled(), true, 'A later known rejection does not prove the earlier uncertain attempt was rolled back.');
+  await page.locator('#cancel-modal').click();
+  await openFixture(h);
+  assert.equal(await page.locator('#journal-note').isDisabled(), true);
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.waitForFunction(() => !document.querySelector('#modal').open);
+  const confirmed = await fixtureResult(h);
+  assert.equal(confirmed.calls.length, 3);
+  assert.deepEqual(confirmed.calls[2], confirmed.calls[0]);
+  assert.equal(confirmed.remote.filter(row => row.kind === 'food_journal').length, 1);
+  assert.equal(confirmed.stats.dayXP, 15);
+  pass('a known SQL rejection after an uncertain commit keeps the original payload and draft origin immutable');
+  assertIsolated(h, 'uncertain then definitive'); await h.context.close();
+}
+async function firstDefinitiveRejection() {
+  const h = await journalFixture({mode: 'first-definitive'}), page = h.page;
+  await openFixture(h);
+  await page.locator('#journal-note').fill('Primeira tentativa rejeitada de forma definitiva.');
+  await page.locator('#journal-confirm').check();
+  await page.locator('#modal-form button[type="submit"]').click();
+  await page.locator('#fixture-error').filter({hasText: 'Permissão de gravação'}).waitFor();
+  const rejected = await fixtureResult(h);
+  assert.equal(rejected.remote.filter(row => row.kind === 'food_journal').length, 0);
+  assert(!rejected.keys.some(key => key.startsWith('torque-nutri-journal-pending:')));
+  assert.equal(await page.locator('#journal-note').isDisabled(), false, 'A first definitive rejection permits correcting the editable report.');
+  await page.locator('#journal-note').fill('Relato corrigido após recuperar a permissão.');
+  await saveModal(page);
+  const saved = await fixtureResult(h);
+  assert.equal(saved.calls.length, 2);
+  assert.notEqual(saved.calls[1].args.p_operation_id, saved.calls[0].args.p_operation_id);
+  assert.match(saved.calls[1].args.p_data.note, /Relato corrigido/);
+  assert.equal(saved.remote.filter(row => row.kind === 'food_journal').length, 1);
+  pass('a first definitive SQL rejection clears the unsent operation and permits an edited retry');
+  assertIsolated(h, 'first definitive rejection'); await h.context.close();
+}
 async function alternativeDraft() {
   const h = await journalFixture(), page = h.page;
   await openFixture(h);
+  await page.locator('#journal-confirm').check();
   await page.locator('[data-journal-alternative="0"]').selectOption('1');
+  assert.equal(await page.locator('#journal-confirm').isChecked(), false, 'Selecting another food requires a fresh consumption confirmation.');
   await page.locator('[data-journal-quantity]').fill('2.5');
   await page.locator('#journal-note').fill('Substituição prescrita, porção ajustada.');
   await page.locator('#cancel-modal').click();
@@ -299,6 +398,9 @@ async function alternativeDraft() {
   await realDemo();
   await uncertainReplay('unknown-thrown');
   await uncertainReplay('unknown-returned');
+  await retryFromAnotherEntryPoint();
+  await definitiveAfterUncertain();
+  await firstDefinitiveRejection();
   await historicalDraft();
   await alternativeDraft();
   console.log(checks + ' verificações de rotina e diário alimentar passaram.');

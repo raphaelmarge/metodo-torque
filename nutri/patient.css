@@ -115,3 +115,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
  .habit-card{min-height:0;padding:18px}
  .habit-card>svg{margin-bottom:12px}
 }
+/* Clinic titles and preparation names can be longer than the demo copy. */
+.cover-brand,.cover-brand>div{min-width:0}
+.cover-brand b,.cover-brand span,.cover-copy h1,.cover-copy p{overflow-wrap:anywhere}
+.cover-copy .btn{max-width:100%;white-space:normal}
