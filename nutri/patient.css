@@ -124,6 +124,9 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 .journey-strip>.grow{flex:1 1 140px;min-width:0;overflow-wrap:anywhere}
 .journey-award{flex-shrink:0}
 .patient-main .card-head>div{min-width:0;overflow-wrap:anywhere}
+.patient-main .card{overflow-wrap:anywhere}
+.patient-main .card-head{flex-wrap:wrap}
+.evolution-preview>div{min-width:0;overflow-wrap:anywhere}
 .patient-main .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .next-meal-title{flex-wrap:wrap;overflow-wrap:anywhere}
 @media(max-width:800px){
