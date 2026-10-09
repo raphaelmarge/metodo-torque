@@ -6,6 +6,15 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v860 — Demos separadas do Torque Nutri
+
+- `/nutri/demo-paciente.html` abre o paciente; `/nutri/demo-nutricionista.html`
+  abre o consultório. As duas usam o app compartilhado, sem trocar de perfil.
+- As demos dedicadas não inicializam Supabase nem carregam sessão, convite,
+  snapshot ou fila reais. Entrar na minha conta navega para a entrada normal.
+- Os novos HTMLs estão no cache Nutri v7. Fluxos reais e demos legadas da raiz
+  permanecem preservados. Detalhes em `docs/releases/mt-v860-demos-torque-nutri.md`.
+
 ## v859 — Torque Nutri no ecossistema
 
 Revisão do paciente: capa/semana/hábitos no padrão Personal v818, renderer original de medalhas, avaliação física por paciente, circunferências/dobras/bioimpedância/segmentos, comparação por data e fotos por ângulo. Passaram 61 checks locais (21 acesso, 16 assets, 16 avaliação e 8 integração). A revogação de acesso confirmada online invalida o cache privado, incluindo tratamento de falha ao remover o armazenamento; a fila continua isolada e preservada por usuário. A revisão real por CUA cobriu início móvel nos dois temas, avaliação/medidas em desktop, evolução móvel com texto ampliado, Fotos vazio por ângulo e navegação Menu/Ajustes; o registro de 250 ml foi confirmado via WebMCP e o contraste do tema claro foi corrigido e conferido na página. Branch criada; PR, CI completo e deploy em andamento, ainda pendentes. E-mail real, ponta a ponta completo e produção não foram validados. Ver o registro da release para limites e proveniência.
