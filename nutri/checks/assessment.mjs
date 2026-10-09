@@ -4,9 +4,11 @@ const root=fs.existsSync(new URL('../dist/assessment.js',import.meta.url))?new U
 const moduleURL=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');
 const assessmentURL=moduleURL(fs.readFileSync(new URL('assessment.js',root),'utf8'));
 const medalURL=moduleURL(fs.readFileSync(new URL('vendor/medalha-visual.js',root),'utf8'));
+const careURL=moduleURL(fs.readFileSync(new URL('care-progress.js',root),'utf8'));
 const {numberValue,fieldValue,validDay,recordDay,visibleRecords,composition,difference,safePhoto,createAssessments}=await import(assessmentURL);
 const patientSource=fs.readFileSync(new URL('patient-experience.js',root),'utf8')
-  .replace("'./assessment.js'",JSON.stringify(assessmentURL)).replace("'./vendor/medalha-visual.js'",JSON.stringify(medalURL));
+  .replace("'./assessment.js'",JSON.stringify(assessmentURL)).replace("'./vendor/medalha-visual.js'",JSON.stringify(medalURL))
+  .replace("'./care-progress.js'",JSON.stringify(careURL));
 const {journeyLevel}=await import(moduleURL(patientSource));
 
 const tests=[];

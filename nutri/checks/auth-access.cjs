@@ -22,6 +22,7 @@ assert(appPath, 'Application source not found in the configured static directory
 const original = fs.readFileSync(appPath, 'utf8');
 const source = original
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/, '')
+  .replace(/^import \{careSummary,mealPresence\} from '\.\/care-progress\.js';\r?\n/m, '')
   .replace(/^start\(\)\.catch\([^\n]*\);\r?$/m, '');
 assert.notEqual(source, original, 'The module import and automatic bootstrap must be intercepted.');
 assert(!/^import /m.test(source), 'Unexpected import: update the isolated harness explicitly.');
@@ -159,7 +160,7 @@ function harness(options = {}) {
   }
   function clinic() { return {id: 'unit-clinic', name: 'Consultório', professional_name: 'Nutricionista', color: '#5de0b4', weekly_goal: 5, logo: ''}; }
   const context = vm.createContext({
-    URL, URLSearchParams, Date, console, TextEncoder, AbortController, crypto: {randomUUID},
+    URL, URLSearchParams, Date, console, TextEncoder, AbortController, structuredClone, crypto: {randomUUID},
     window: {TORQUE_NUTRI_CONFIG: {supabaseUrl: 'https://unit-project.supabase.test', publishableKey: 'unit-test'}},
     supabase: {createClient}, document, localStorage, sessionStorage, location, history,
     navigator: {onLine: options.online !== false}, requestAnimationFrame(fn) { fn(); }, scrollTo() {},
@@ -172,6 +173,11 @@ function harness(options = {}) {
       async load() { calls.load++; }, resources() { return []; }
     }; }
   });
+  const careSource = fs.readFileSync(path.join(path.dirname(appPath), 'care-progress.js'), 'utf8')
+    .replace(/\bexport (?=(?:function|const) )/g, '');
+  assert(!/^import /m.test(careSource), 'Unexpected care module dependency: update the auth harness explicitly.');
+  vm.runInContext('(()=>{' + careSource + '\nObject.assign(globalThis,{careSummary,mealPresence});})()', context,
+    {filename: 'auth-care-progress.js'});
   vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
   const api = context.__authAccess;
   return {
@@ -191,6 +197,8 @@ function addPrivateData(h, user = A) {
   h.nodes.get('modal').open = true;
   h.localStorage.setItem('torque-nutri-cache:' + user.id, '{"private":true}');
   h.sessionStorage.setItem('torque-nutri-draft:' + user.id + ':unit-patient', '{"private":true}');
+  h.sessionStorage.setItem('torque-nutri-journal-draft:' + user.id + ':unit-patient:new', '{"private":true}');
+  h.sessionStorage.setItem('torque-nutri-journal-pending:' + user.id + ':unit-patient:new', '{"private":true}');
 }
 function assertPrivateDataCleared(h, {cacheRemains = false} = {}) {
   assert.equal(h.S.user, null);
@@ -203,6 +211,8 @@ function assertPrivateDataCleared(h, {cacheRemains = false} = {}) {
   for (const key of privateArrays) assert.equal(h.S[key].length, 0, key + ' must be cleared');
   if (!cacheRemains) assert.equal(h.localStorage.getItem('torque-nutri-cache:' + A.id), null);
   assert.equal(h.sessionStorage.getItem('torque-nutri-draft:' + A.id + ':unit-patient'), null);
+  assert.equal(h.sessionStorage.getItem('torque-nutri-journal-draft:' + A.id + ':unit-patient:new'), null);
+  assert.equal(h.sessionStorage.getItem('torque-nutri-journal-pending:' + A.id + ':unit-patient:new'), null);
   assert.equal(h.nodes.get('modal').open, false);
   assert.equal(h.S.page, 'auth');
 }

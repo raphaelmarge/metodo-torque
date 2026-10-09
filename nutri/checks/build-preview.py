@@ -20,13 +20,15 @@ for weight in [400, 500, 600, 700, 800]:
     font = dist / f"assets/fonts/files/archivo-latin-{weight}-normal.woff2"
     css += "@font-face{font-family:Archivo;font-style:normal;font-weight:" + str(weight) + ";src:url(" + data_uri(font, "font/woff2") + ") format('woff2');font-display:swap}"
 css += (dist / "style.css").read_text() + (dist / "patient.css").read_text()
-scripts = []
+scripts = ["window.TORQUE_NUTRI_DEMO_ROLE='patient';"]
 for name in ["vendor/receitas-db.js", "vendor/composicao-corporal.js", "vendor/nutricao-core.js",
              "vendor/medalhas-core.js", "vendor/identidade-marca.js", "vendor/alimentos-db.js"]:
     scripts.append((dist / name).read_text())
 modules = []
-for name in ["assessment.js", "vendor/medalha-visual.js", "patient-experience.js", "platform.js", "app.js"]:
+for name in ["care-progress.js", "journal-model.js", "food-journal.js", "plan-recipes.js",
+             "assessment.js", "vendor/medalha-visual.js", "patient-experience.js", "platform.js", "app.js"]:
     source = (dist / name).read_text()
+    exports = re.findall(r"\bexport (?:async )?(?:function|const|class) (\w+)", source)
     source = re.sub(r"^import .+?;\s*$", "", source, flags=re.M)
     source = re.sub(r"\bexport (?=(?:function|const) )", "", source)
     if name == "patient-experience.js":
@@ -36,7 +38,11 @@ for name in ["assessment.js", "vendor/medalha-visual.js", "patient-experience.js
         source = source.replace("role:'nutri',page:'overview'", "role:'patient',page:'today'")
         # A portable review must not initiate real authentication.
         source = source.replace("window.TORQUE_NUTRI_CONFIG||{}", "{}")
-    modules.append(source)
+    if exports:
+        # Each ESM's private helpers keep their own scope in the portable bundle.
+        modules.append("const {" + ",".join(exports) + "}=(()=>{\n" + source + "\nreturn {" + ",".join(exports) + "};})();")
+    else:
+        modules.append(source)
 scripts.append("(()=>{\n" + "\n".join(modules) + "\n})();")
 html = '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Torque Nutri · Prévia local demonstrativa</title><style>' + css + '</style><body><div id="app"></div><div id="toast" role="status" aria-live="polite"></div><dialog id="modal"><div id="modal-body"></div></dialog>'
 for script in scripts:
