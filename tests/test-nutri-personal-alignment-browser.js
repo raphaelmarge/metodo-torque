@@ -53,7 +53,7 @@ async function patient(){
  await p.locator('.body-tabs [data-body-tab="body"]').click();await p.locator('.body-map').waitFor();
  await p.locator('.body-tabs [data-body-tab="photos"]').click();
  assert.equal(await p.locator('#body-photo-slider').count(),0);
- const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=','base64');
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=','base64');
  for(const day of ['2026-09-01','2026-10-09']){
   await p.locator('[data-x="progress-photo"]').first().click();await p.locator('#photo-title').fill('Fixture '+day);await p.locator('#photo-day').fill(day);
   await p.locator('#photo-file').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:png});await save(p);
@@ -77,6 +77,7 @@ async function patient(){
 async function professional(){
  const h=await isolated('nutri'),p=h.page;await nav(p,'appointments');
  assert.equal(await p.locator('[data-calendar-day]').count(),7);
+ await checkLayout(p,'professional-week-1280');
  await p.locator('[data-calendar-view="month"]').click();await p.locator('[data-calendar-day="2026-10-15"]').click();
  const patientId=await p.locator('#schedule-patient option').nth(2).getAttribute('value');await p.locator('#schedule-patient').selectOption(patientId);
  await p.locator('[data-calendar-new]').first().click();assert.equal(await p.locator('#appointment-time').inputValue(),'2026-10-15T09:00');assert.equal(await p.locator('#appointment-patient').inputValue(),patientId);

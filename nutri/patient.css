@@ -153,6 +153,14 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 .schedule-day.is-today{border-color:var(--brand)}
 .schedule-day.selected{background:var(--brand);color:var(--on-brand,#101b15);border-color:var(--brand)}
 .schedule-day:focus-visible,.photo-modes .btn:focus-visible,.progress-shortcuts button:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.calendar-preview{display:none}
+@media(min-width:801px){
+ .week-view .schedule-day{justify-content:flex-start;min-height:158px;padding:12px 8px;gap:10px}
+ .week-view .calendar-preview{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0;text-align:left}
+ .calendar-preview>span{font-size:12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .calendar-preview strong{display:block;font-size:12px;font-weight:500}
+ .calendar-preview small{font-size:11px;line-height:1.5}
+}
 .calendar-dots{display:flex;gap:4px;height:5px;align-items:center}
 .calendar-dots i,.schedule-legend i{display:inline-block;width:5px;height:5px;background:var(--muted);border-radius:50%}
 .calendar-dots .confirmed,.schedule-legend .confirmed{background:var(--brand)}
