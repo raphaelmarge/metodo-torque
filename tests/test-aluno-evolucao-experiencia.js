@@ -3,6 +3,31 @@ const assert=require('assert/strict'),fs=require('fs'),path=require('path');
 let chromium;try{chromium=require('playwright').chromium;}catch(_){chromium=require('/opt/node22/lib/node_modules/playwright').chromium;}
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8765';
 let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '+m);}function eq(a,b,m){assert.deepEqual(a,b,m);checks++;console.log('OK: '+m);}
+async function checkCalendarTargets(page,context){
+ const selector='#mapaAno .ev800-map-nav button';
+ try{
+  // A cascata secIn pode durar mais de550ms. Aguarda seu término, sem esperar tamanhos aceitáveis.
+  await page.waitForFunction(selector=>{
+   const buttons=[...document.querySelectorAll(selector)],nodes=new Set();if(buttons.length!==2)return false;
+   for(const button of buttons)for(let node=button;node;node=node.parentElement)nodes.add(node);
+   return [...nodes].every(node=>node.getAnimations().every(animation=>!animation.pending&&['finished','idle'].includes(animation.playState)));
+  },selector,{polling:'raf',timeout:3000});
+  ok(await page.locator(selector).evaluateAll(bs=>bs.length===2&&bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'Setas do calendário mantêm alvos de toque de44px em '+context);
+ }catch(error){
+  try{
+   const diagnostic=await page.evaluate(selector=>{
+    const buttons=[...document.querySelectorAll(selector)],nodes=new Set();
+    for(const button of buttons)for(let node=button;node;node=node.parentElement)nodes.add(node);
+    return {viewport:{width:innerWidth,height:innerHeight},active:document.activeElement?.outerHTML,nodes:[...nodes].map(node=>{
+     const r=node.getBoundingClientRect(),s=getComputedStyle(node);
+     return {tag:node.tagName,id:node.id,class:node.className,rect:{x:r.x,y:r.y,width:r.width,height:r.height},offset:{width:node.offsetWidth,height:node.offsetHeight},client:{width:node.clientWidth,height:node.clientHeight},computed:Object.fromEntries(['width','height','minWidth','minHeight','boxSizing','display','flexBasis','flexShrink','transform','zoom','animationName','animationDuration','animationDelay','transitionProperty','transitionDuration','transitionDelay'].map(k=>[k,s[k]])),animations:node.getAnimations().map(a=>({name:a.animationName||a.transitionProperty||a.id,playState:a.playState,pending:a.pending,currentTime:a.currentTime,timing:a.effect?.getComputedTiming()}))};
+    })};
+   },selector);
+   console.error('Diagnóstico das setas do calendário em '+context+': '+JSON.stringify(diagnostic,null,2));
+  }catch(diagnosticError){console.error('Falha ao coletar diagnóstico das setas:',diagnosticError);}
+  throw error;
+ }
+}
 (async()=>{
  global.self=global;global.MT_CLOUD={url:'https://evolucao.invalid',anonKey:'teste'};
  require('../app/aluno-skin.js');require('../app/aluno-builder.js');
@@ -152,7 +177,7 @@ let browser,checks=0;function ok(v,m){assert.ok(v,m);checks++;console.log('OK: '
   ok(await page.locator('#evTopoNv').isVisible()&&await page.locator('#evXp').isVisible()&&await page.locator('#evFalta').isVisible()&&!await legendaXp.isVisible()&&await page.locator('#cqGrid>button:visible').count()===6,'Nível, XP, progresso e seis medalhas visíveis, sem explicação de pontos, em '+width+'px '+(claro?'claro':'escuro'));
   if(process.env.EVO_CAPTURE_DIR)await page.screenshot({path:path.join(process.env.EVO_CAPTURE_DIR,'resumo-'+width+'-'+(claro?'claro':'escuro')+'.png')});
   ok(await page.locator('#mapaAno').isVisible()&&await page.locator('#mapaAnoRol').isVisible(),'Mês e ano permanecem abertos em '+width+'px '+(claro?'claro':'escuro'));
-  ok(await page.locator('#mapaAno .ev800-map-nav button').evaluateAll(bs=>bs.length===2&&bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'Setas do calendário mantêm alvos de toque de44px em '+width+'px');
+  await checkCalendarTargets(page,width+'px '+(claro?'claro':'escuro'));
   // Dias são uma grade de sete colunas; não são as duas setas de navegação.
   // Em320px, impor44px em cada coluna faria a grade ultrapassar o conteúdo.
   const daysGeometry=await page.locator('#mapaAno [data-cal-dia]').evaluateAll(bs=>{
