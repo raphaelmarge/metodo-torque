@@ -29,6 +29,19 @@ async function save(page){await page.locator('#modal-form button[type="submit"]'
 function clean(h){assert.deepEqual(h.errors,[]);assert.deepEqual(h.writes,[]);assert.deepEqual(h.missing,[]);}
 async function patient(){
  const h=await isolated('patient'),p=h.page;
+ assert.equal(await p.locator('[data-action="water"]').count(),1);
+ assert.equal(await p.locator('.home-evolution,.journey-strip,.water-panel').count(),0);
+ await p.locator('#patient-notifications-button').click();
+ assert(await p.locator('.notification-item').count()>0);
+ await p.locator('#notifications-read-all').click();
+ assert.equal(await p.locator('.notification-item.unread').count(),0);
+ await p.locator('#close-modal').click();
+ assert.equal(await p.locator('.notification-badge').count(),0);
+ await p.locator('#patient-notifications-button').click();
+ await p.locator('.notification-item').filter({hasText:'Mensagem da sua nutri'}).first().click();
+ await p.locator('#message-body').waitFor();
+ assert.equal(await p.locator('.sidebar [aria-current="page"]').getAttribute('data-page'),'more');
+ pass('home has one hydration control and bell notices mark read and open the right destination');
  await nav(p,'booking');
  assert.equal(await p.locator('[data-calendar-day]').count(),42);
  assert.match(await p.locator('.schedule-hero').textContent(),/Próxima consulta/);
@@ -66,6 +79,12 @@ async function patient(){
  pass('evolution keeps detailed measurements and compares uploaded photos by angle, pointer and keyboard');
  for(const width of [320,375,800])for(const theme of ['dark','light']){
   await p.setViewportSize({width,height:900});await p.evaluate(t=>document.body.classList.toggle('theme-light',t==='light'),theme);
+  await nav(p,'today');
+  const buttons=await p.locator('.sidebar .nav-btn').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {width:r.width,height:r.height,top:r.top};}));
+  assert.equal(buttons.length,5);assert(buttons.every(r=>r.width>=44&&r.height>=44));
+  assert(Math.max(...buttons.map(r=>r.top))-Math.min(...buttons.map(r=>r.top))<2);
+  await checkLayout(p,'patient-home-'+width+'-'+theme);
+  await p.locator('#patient-notifications-button').click();await checkLayout(p,'patient-notifications-'+width+'-'+theme);await p.locator('#close-modal').click();
   await nav(p,'booking');await p.locator('[data-calendar-view="month"]').click();await checkLayout(p,'patient-calendar-'+width+'-'+theme);
   const sizes=await p.locator('[data-calendar-day]').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return [r.width,r.height];}));assert(sizes.every(([w,h])=>w>=44&&h>=44));
   await nav(p,'progress');await p.locator('.body-tabs [data-body-tab="summary"]').click();await checkLayout(p,'patient-progress-'+width+'-'+theme);

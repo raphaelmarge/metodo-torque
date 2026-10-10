@@ -58,7 +58,11 @@ async function navigate(page, destination) {
   await page.locator('.sidebar [data-page="' + destination + '"]').click();
 }
 async function xp(page) {
-  return Number((await page.locator('.journey-strip .grow small').textContent()).match(/(\d+)\s*XP/)[1]);
+  await navigate(page, 'more');
+  await page.locator('.patient-menu-grid [data-page="achievements"]').click();
+  const value = Number((await page.locator('.journey-level-card h2').textContent()).match(/(\d+)\s*XP/)[1]);
+  await navigate(page, 'today');
+  return value;
 }
 async function saveModal(page) {
   await page.locator('#journal-confirm').check();
@@ -102,7 +106,7 @@ async function realDemo() {
   await page.locator('.patient-experience').waitFor();
   const initialXP = await xp(page);
   assert.match(await page.locator('[data-action="followed"] strong').textContent(), /Você ainda não confirmou/);
-  await page.getByRole('button', {name: 'Ver meu plano alimentar', exact: false}).click();
+  await navigate(page, 'food');
   await page.locator('[data-log-meal="breakfast"]').click();
   await page.locator('#journal-confirm').waitFor();
   assert.equal(await page.locator('[data-journal-row]').count(), 3, 'Prescribed foods initialize the report without an automatic save.');
@@ -416,3 +420,4 @@ async function alternativeDraft() {
   for (const context of contexts) await context.close().catch(() => {});
   if (browser) await browser.close();
 });
+

@@ -29,3 +29,16 @@ Passaram localmente os checks de avaliação, integração em DOM simulado, cuid
 `tests/test-nutri-personal-alignment-browser.js` cobre as demos reais em Chromium com rede externa, escritas e WebSocket bloqueados: calendário, data/paciente do agendamento, remarcação sem envio, avaliações, fotos de teste, slider por mouse/teclado e geometria em 320/375/800 px, além do profissional em 375/1280 px. Sua execução depende do CI do commit; a inclusão do teste não comprova aprovação. Não houve inspeção visual local nem teste físico no iPhone.
 
 A proposta canônica deve ser revisada e passar pelos gates do repositório antes da integração. A prévia pública da Dra. Larissa é independente, com dados fictícios, foto autorizada e perfis separados por URL; publicar a prévia não equivale a publicar a aplicação de produção.
+
+## Ajuste da home e navegação — 10/10/2026
+
+Pedido: reduzir repetições, acrescentar sino no canto superior direito e organizar o menu inferior do paciente.
+
+- Home concentrada na próxima refeição e nos cuidados do dia. Água aparece uma vez, com adicionar/desfazer; calendário de dias, diário, check-in, confirmação explícita do plano e feedback profissional continuam disponíveis. Plano completo, evolução, receitas e conquistas permanecem nas suas áreas. Os botões de conta ficam no Menu.
+- Sino abre avisos internos originados apenas nos dados já carregados: plano publicado, mensagens recebidas da nutri, consultas e respostas, avaliações compartilhadas e orientação sobre diário visível. Clicar abre a área correspondente; marcar como lido não envia mensagens nem altera registros clínicos. Preferências de leitura isoladas por conta/clínica/paciente; na demo duram até recarregar. Não há serviço de push.
+- Menu móvel com Início, Plano, Evolução, Agenda e Menu. Destinos secundários destacam Menu, mantendo os acessos existentes. A causa da barra incompleta era a regra móvel antiga que escondia Agenda apesar das cinco colunas.
+- Cache Nutri atualizado de v9 para v10 e inclui `notifications.js`. Não há alterações em banco, RPCs, autenticação nem fórmulas de XP.
+
+Validação desta revisão: 7 casos de notificações, 11 de apresentação, 9 de integração e 29 de autenticação aprovados localmente. As duas demos personalizadas iniciaram e navegaram em DOM simulado sem chamadas de rede; foto original conferida por hash. A regressão Chromium foi ampliada para sino, leitura, destino, cinco botões visíveis/alinhados e home/modal em 320/375/800 px e ambos os temas. O teste de consumo continua verificando XP pela aba Conquistas.
+
+O CI anterior (run `38006592982`, commit `b999c9b`) falhou em 1 de 205 suítes: Agenda escondida no paciente móvel. A regra responsável foi corrigida nesta revisão; a execução do novo commit permanece necessária. Não houve teste visual local nem teste em iPhone físico.

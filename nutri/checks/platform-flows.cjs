@@ -41,6 +41,7 @@ for(const [name,exports] of [
   ['plan-recipes.js',['createPlanRecipes']],
   ['patient-experience.js',['createPatientExperience']],
   ['schedule.js',['createSchedule']],
+  ['notifications.js',['createPatientNotifications']],
   ['platform.js',['createPlatform']]
 ])loadModule(name,exports);
 const appSource=fs.readFileSync(path.join(root,'app.js'),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/^start\(\)\.catch\([^\n]*\);\r?$/m,'');
@@ -54,9 +55,11 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
     for(const [page] of P.pages){S.page=page;render();assert(nodes.get('app').innerHTML.length>300,page);assert(!nodes.get('app').innerHTML.includes('[object Object]'),page);}
   });
   await action('switch-role');
-  check('Patient home combines real meals, clinical overview and original medal renderer',()=>{
+  check('Patient home focuses on the next meal and daily care with one hydration control',()=>{
     S.page='today';render();const html=nodes.get('app').innerHTML;
-    for(const content of ['patient-cover','Minha rotina alimentar','Um cuidado possível agora','Hidratação','Você, em evolução','Registrar refeição','data:image/svg+xml;base64,'])assert(html.includes(content),content);
+    for(const content of ['patient-cover','Minha rotina alimentar','Um cuidado possível agora','Hidratação','Seus cuidados de hoje','Registrar refeição','patient-notifications-button'])assert(html.includes(content),content);
+    assert.equal((html.match(/data-action="water"/g)||[]).length,1);
+    assert(!html.includes('journey-strip'));assert(!html.includes('home-evolution'));
     assert(html.includes('patient-layout'));assert(!html.includes('NaN'));
   });
   check('Every patient area remains available including private follow-up modules',()=>{
@@ -72,7 +75,7 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
   await saveLog({mealId:'breakfast',completed:true});
   check('A legacy meal marker remains visible and does not confirm plan adherence',()=>{
     S.page='today';render();let html=nodes.get('app').innerHTML;
-    assert(html.includes('data-log-meal="lunch"'));assert(html.includes('1/4'));
+    assert(html.includes('data-log-meal="lunch"'));assert(html.includes('1 <span>registros'));
     const actual=S.logs.filter(x=>x.patient_id===S.selected).at(-1);assert.equal(actual.water_ml,250);assert.equal(actual.meals.filter(x=>x==='breakfast').length,1);
     assert.equal(actual.followed,false);
   });
@@ -83,7 +86,7 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
     const before=JSON.stringify(actual);
     S.records.push({id:'unit-loaded-journal',patient_id:S.selected,kind:'food_journal',visibility:'patient',version:1,
       data:{day:today(),mealId:'breakfast',planVersion:plan.version,items:[{id:'custom',nome:'Alimento informado',qtd:1,porcao:'1 unidade'}]}});
-    render();assert(nodes.get('app').innerHTML.includes('✓ Ver registro'));
+    S.page='food';render();assert(nodes.get('app').innerHTML.includes('Ver registro de hoje'));
     assert.equal(JSON.stringify(actual),before);
     const current=context.mealPresence({patientId:S.selected,day:today(),logs:S.logs,records:S.records,planVersion:plan.version});
     assert.equal(current.count,1);assert.equal(current.mealIds.filter(id=>id==='breakfast').length,1);

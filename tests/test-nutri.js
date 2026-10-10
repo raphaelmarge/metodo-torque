@@ -151,7 +151,7 @@ test('o precache do portal não incorpora arquivos da plataforma /nutri/', async
 });
 
 for (const check of ['auth-access.cjs', 'basepath-assets.cjs', 'assessment.mjs', 'platform-flows.cjs',
-  'care-progress.mjs', 'journal-model.mjs', 'plan-recipes.mjs', 'patient-experience-phase1.mjs', 'personal-alignment.mjs']) {
+  'care-progress.mjs', 'journal-model.mjs', 'plan-recipes.mjs', 'patient-experience-phase1.mjs', 'personal-alignment.mjs', 'notifications.mjs']) {
   test('checks reais do Torque Nutri: ' + check, () => {
     const filename = path.join(root, 'nutri/checks', check);
     assert(fs.existsSync(filename), 'Check Nutri ausente; o pacote deve incluir ' + filename);
