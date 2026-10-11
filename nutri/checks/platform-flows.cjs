@@ -9,7 +9,7 @@ const fixedTime=Date.parse('2026-10-09T12:00:00-03:00');
 class TestDate extends Date {constructor(...args){super(...(args.length?args:[fixedTime]));}static now(){return fixedTime;}}
 const root=fs.existsSync(path.resolve(__dirname,'../dist/app.js'))?path.resolve(__dirname,'../dist'):path.resolve(__dirname,'..');
 const memory=()=>{const values=new Map();return {getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k),key:i=>[...values.keys()][i],get length(){return values.size;}};};
-const nodes=new Map();
+const nodes=new Map(),bodyButtons=[{dataset:{bodyTab:"body"}}];
 const element=id=>({id,html:'',value:'',style:{},dataset:{},files:[],disabled:false,isConnected:true,open:false,addEventListener(){},querySelectorAll(){return[];},showModal(){this.open=true;},close(){this.open=false;},
  set innerHTML(html){this.html=String(html);if(id==='app')for(const key of [...nodes.keys()])if(!['app','modal','modal-body','toast'].includes(key))nodes.delete(key);for(const m of this.html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)){if(!nodes.has(m[1]))nodes.set(m[1],element(m[1]));nodes.get(m[1]).value=m[0].match(/\bvalue="([^"]*)"/)?.[1]||'';}},
  get innerHTML(){return this.html;}});
@@ -18,7 +18,7 @@ const context=vm.createContext({
  console,URL,URLSearchParams,Date:TestDate,Math,JSON,Map,Set,Object,Array,Number,String,Promise,RegExp,TextEncoder,AbortController,structuredClone,
  crypto:{randomUUID},btoa:s=>Buffer.from(s,'binary').toString('base64'),
  localStorage:memory(),sessionStorage:memory(),location:new URL('https://test.invalid/nutri/'),navigator:{onLine:true},
- document:{querySelector:selector=>nodes.get(selector.replace(/^#/,''))||null,querySelectorAll:()=>[],getElementById:id=>nodes.get(id),
+ document:{querySelector:selector=>nodes.get(selector.replace(/^#/,''))||null,querySelectorAll:s=>s==='[data-body-tab]'?bodyButtons:[],getElementById:id=>nodes.get(id),
    documentElement:{style:{setProperty(){}}},body:{classList:{add(){},remove(){},toggle(){},contains(){return false;}}}},
  requestAnimationFrame:fn=>fn(),scrollTo(){},addEventListener(){},setTimeout:()=>1,clearTimeout(){},
  history:{replaceState(){}}
@@ -33,13 +33,15 @@ function loadModule(name,exports){
 // Preserve module-local helpers: care/journal/assessment intentionally reuse
 // private names such as text, timestamp and validDay.
 for(const [name,exports] of [
-  ['assessment.js',['safePhoto','visibleRecords','recordDay','composition','numberValue','fieldValue','createAssessments']],
+  ['assessment.js',['validDay','safePhoto','visibleRecords','recordDay','composition','numberValue','fieldValue','createAssessments']],
   ['vendor/medalha-visual.js',['runtimeMedalhaVisual']],
   ['care-progress.js',['careSummary','mealPresence','nextMeal','CARE_POLICY_START']],
   ['journal-model.js',['resolveJournalPlan','buildJournalItems','findJournalForMeal']],
   ['food-journal.js',['createFoodJournal']],
   ['plan-recipes.js',['createPlanRecipes']],
   ['patient-experience.js',['createPatientExperience']],
+  ['schedule.js',['createSchedule']],
+  ['notifications.js',['createPatientNotifications']],
   ['platform.js',['createPlatform']]
 ])loadModule(name,exports);
 const appSource=fs.readFileSync(path.join(root,'app.js'),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/^start\(\)\.catch\([^\n]*\);\r?$/m,'');
@@ -53,9 +55,11 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
     for(const [page] of P.pages){S.page=page;render();assert(nodes.get('app').innerHTML.length>300,page);assert(!nodes.get('app').innerHTML.includes('[object Object]'),page);}
   });
   await action('switch-role');
-  check('Patient home combines real meals, clinical overview and original medal renderer',()=>{
+  check('Patient home focuses on the next meal and daily care with one hydration control',()=>{
     S.page='today';render();const html=nodes.get('app').innerHTML;
-    for(const content of ['patient-cover','Minha rotina alimentar','Um cuidado possível agora','Hidratação','Você, em evolução','Registrar refeição','data:image/svg+xml;base64,'])assert(html.includes(content),content);
+    for(const content of ['patient-cover','Minha rotina alimentar','Um cuidado possível agora','Hidratação','Seus cuidados de hoje','Registrar refeição','patient-notifications-button'])assert(html.includes(content),content);
+    assert.equal((html.match(/data-action="water"/g)||[]).length,1);
+    assert(!html.includes('journey-strip'));assert(!html.includes('home-evolution'));
     assert(html.includes('patient-layout'));assert(!html.includes('NaN'));
   });
   check('Every patient area remains available including private follow-up modules',()=>{
@@ -71,7 +75,7 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
   await saveLog({mealId:'breakfast',completed:true});
   check('A legacy meal marker remains visible and does not confirm plan adherence',()=>{
     S.page='today';render();let html=nodes.get('app').innerHTML;
-    assert(html.includes('data-log-meal="lunch"'));assert(html.includes('1/4'));
+    assert(html.includes('data-log-meal="lunch"'));assert(html.includes('1 <span>registros'));
     const actual=S.logs.filter(x=>x.patient_id===S.selected).at(-1);assert.equal(actual.water_ml,250);assert.equal(actual.meals.filter(x=>x==='breakfast').length,1);
     assert.equal(actual.followed,false);
   });
@@ -82,7 +86,7 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
     const before=JSON.stringify(actual);
     S.records.push({id:'unit-loaded-journal',patient_id:S.selected,kind:'food_journal',visibility:'patient',version:1,
       data:{day:today(),mealId:'breakfast',planVersion:plan.version,items:[{id:'custom',nome:'Alimento informado',qtd:1,porcao:'1 unidade'}]}});
-    render();assert(nodes.get('app').innerHTML.includes('✓ Ver registro'));
+    S.page='food';render();assert(nodes.get('app').innerHTML.includes('Ver registro de hoje'));
     assert.equal(JSON.stringify(actual),before);
     const current=context.mealPresence({patientId:S.selected,day:today(),logs:S.logs,records:S.records,planVersion:plan.version});
     assert.equal(current.count,1);assert.equal(current.mealIds.filter(id=>id==='breakfast').length,1);
@@ -90,13 +94,14 @@ function check(name,fn){fn();passed++;console.log('PASS '+name);}
     assert.equal(actual.followed,false);
   });
   check('Patient assessment excludes private professional notes while retaining the routine tab',()=>{
-    S.page='progress';render();const html=nodes.get('app').innerHTML;
+    S.page='progress';render();assert(nodes.get('app').innerHTML.includes('progress-hero'));bodyButtons[0].onclick();const html=nodes.get('app').innerHTML;
     assert(html.includes('Minha rotina'));assert(html.includes('Mapa de medidas'));assert(!html.includes('Paciente quer organizar os horários.'));
   });
   check('Empty patient views do not reuse another patient’s clinical data',()=>{
     S.selected='demo-1';S.page='progress';render();const html=nodes.get('app').innerHTML;
-    assert(html.includes('ainda não compartilhou'));assert(!html.includes('68,2'));
+    assert(html.includes('Suas avaliações aparecerão'));assert(!html.includes('68,2'));
     S.page='today';render();assert(nodes.get('app').innerHTML.includes('Lucas'));assert(!nodes.get('app').innerHTML.includes('Última avaliação'));
   });
   console.log(passed+'/'+passed+' platform integration checks passed.');
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});
+

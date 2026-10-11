@@ -141,7 +141,7 @@ for (const basepath of ['/', '/nutri/']) {
     assert.deepEqual([...h.calls.addAll].sort(), [...h.STATIC_URLS].sort());
     for (const file of requiredStartupAssets) assert(h.STATIC_URLS.has(new URL(file, h.BASE).href),
       'Startup dependency missing from offline precache: ' + file);
-    for (const file of ['care-progress.js', 'journal-model.js', 'food-journal.js', 'plan-recipes.js']) {
+    for (const file of ['care-progress.js', 'journal-model.js', 'food-journal.js', 'plan-recipes.js', 'notifications.js']) {
       assert(requiredStartupAssets.has(file), 'The real module graph must include ' + file);
       assert(h.STATIC_URLS.has(new URL(file, h.BASE).href), 'New Nutri module must be precached: ' + file);
     }
@@ -252,3 +252,4 @@ for (const basepath of ['/', '/nutri/']) {
   console.log(`${tests.length - failed}/${tests.length} basepath asset regressions passed.`);
   if (failed) process.exitCode = 1;
 })();
+

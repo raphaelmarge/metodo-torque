@@ -66,13 +66,14 @@ function fixture() {
     viewDay(day) { dayButtons = [{dataset: {viewDay: day}}]; experience.bind(); dayButtons[0].onclick(); }};
 }
 
-test('First use puts a useful action before XP and measurements without H.stats', () => {
+test('First use prioritizes the next action without duplicated home summaries', () => {
   const {experience} = fixture(), html = experience.home();
   assert(html.includes('first-care'));
-  assert(html.indexOf('contextual-care') < html.indexOf('journey-strip'));
-  assert(html.indexOf('contextual-care') < html.indexOf('home-evolution'));
+  assert(html.indexOf('contextual-care') < html.indexOf('habit-grid'));
+  for (const duplicate of ['journey-strip', 'home-evolution', 'home-recipes', 'water-panel', 'day-meals']) assert(!html.includes(duplicate));
+  assert.equal((html.match(/data-action="water"/g) || []).length, 1);
   assert(html.includes('patient-cover'));
-  assert(html.includes('TORQUE NUTRI'));
+  assert(html.includes('Organizar minha rotina'));
   assert(!html.includes('NaN'));
 });
 
@@ -124,13 +125,13 @@ test('A matching journal and quick marker count once without implying adherence'
   state.logs = [{patient_id: 'p1', day: TODAY, meals: ['lunch'], followed: false}];
   const html = experience.home();
   assert(html.includes('1 <span>registros'));
-  assert(html.includes('1/1 com registro'));
+  assert(html.includes('As refeições previstas para hoje têm registro'));
   assert(html.includes('Você ainda não confirmou'));
 });
 
 test('Associated recipe links use the published plan meal and snapshot', () => {
   const {experience} = fixture(), html = experience.home();
-  assert(html.includes('Arroz da rotina'));
+  assert(html.includes('Arroz'));
   assert(html.includes('data-x="plan-recipe" data-id="lunch"'));
   assert(html.includes('Ver preparo'));
   assert(!html.includes('Receita indicada automaticamente'));
@@ -189,3 +190,4 @@ for (const {name, fn} of tests) {
 globalThis.Date = RealDate;
 console.log(`${tests.length - failed}/${tests.length} patient presentation phase 1 checks passed.`);
 if (failed) process.exitCode = 1;
+

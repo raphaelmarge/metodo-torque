@@ -55,11 +55,24 @@ export function saveField(data,key,value) {
   for(const k of parts.slice(0,-1)){obj[k]={...(obj[k]&&typeof obj[k]==='object'?obj[k]:{})};obj=obj[k];}
   obj[parts.at(-1)]=value;
 }
+export function photoPair(records,patientId,role,angle,beforeId='',afterId='') {
+  const all=visibleRecords(records,patientId,role,['progress_photo']);
+  const list=all.filter(x=>(x.data.angle||'unspecified')===angle&&validDay(recordDay(x))&&safePhoto(x.data.image));
+  const after=list.find(x=>x.id===afterId)||list.at(-1);
+  const earlier=after?list.slice(0,list.indexOf(after)):[];
+  const before=earlier.find(x=>x.id===beforeId)||earlier[0];
+  return {all,list,after,earlier,before};
+}
+export function measurementHistory(records,metric,period='all',day='') {
+  if(!['weight','fat','leanMass','waist','hip'].includes(metric))return [];
+  let first='';if(['30','90','365'].includes(String(period))&&validDay(day)){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-Number(period)+1);first=d.toISOString().slice(0,10);}
+  return records.map(x=>({x,value:['waist','hip'].includes(metric)?fieldValue(x.data,metric):composition(x.data)[metric]})).filter(p=>p.value!=null&&validDay(recordDay(p.x))&&(!first||recordDay(p.x)>=first)&&(!validDay(day)||recordDay(p.x)<=day));
+}
 export function createAssessments(H,P) {
   const {esc,state,today,dateLabel,heading,render,modal,run}=H;
   const {pat,saveRecord,draftModal,imageFile,bind:bindPlatform}=P;
   const q=s=>document.querySelector(s),pro=()=>state().role==='nutri';
-  let context='',selected='',baseline='',tab='body',metric='weight',angle='front',photoA='',photoB='';
+  let context='',selected='',baseline='',tab='summary',metric='weight',period='all',angle='front',photoA='',photoB='',photoMode='compare',photoSplit=50;
   const all=()=>visibleRecords(state().records,state().selected,state().role);
   const photos=()=>visibleRecords(state().records,state().selected,state().role,['progress_photo']);
   const fmt=(n,d=1)=>n==null?'—':n.toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});
@@ -69,7 +82,7 @@ export function createAssessments(H,P) {
   const options=(list,id)=>list.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===id?'selected':'')+'>'+esc(date(recordDay(x))+' · '+x.title)+'</option>').join('');
   function selection(){
     const key=(state().user?.id||'demo')+':'+state().role+':'+state().selected;
-    if(context!==key){context=key;selected='';baseline='';photoA='';photoB='';tab='body';}
+    if(context!==key){context=key;selected='';baseline='';photoA='';photoB='';tab='summary';period='all';photoSplit=50;}
     const list=all(),current=list.find(x=>x.id===selected)||list.at(-1);
     selected=current?.id||'';
     const earlier=current?list.slice(0,list.indexOf(current)):[];
@@ -81,10 +94,10 @@ export function createAssessments(H,P) {
     return '<div class="body-stat"><span>'+label+'</span><strong>'+fmt(value)+'<small>'+unit+'</small></strong><p class="metric-delta">'+delta(diff,unit==='% '?'p.p.':unit)+'</p>'+(caption?'<small>'+caption+'</small>':'')+'</div>';
   }
   function chart(list){
-    const defs={weight:['Peso','kg'],fat:['Gordura corporal','%'],leanMass:['Massa livre de gordura','kg']},[label,unit]=defs[metric];
-    const points=list.map(x=>({x,value:composition(x.data)[metric]})).filter(p=>p.value!=null&&validDay(recordDay(p.x)));
-    let html='<section class="card chart-card"><div class="card-head"><div><span class="eyebrow">Histórico das consultas</span><h2>Evolução corporal</h2></div><label class="sr-only" for="body-metric">Medida do gráfico</label><select id="body-metric">'+Object.entries(defs).map(([k,[n]])=>'<option value="'+k+'" '+(metric===k?'selected':'')+'>'+n+'</option>').join('')+'</select></div>';
-    if(points.length<2)return html+'<div class="body-empty">O gráfico aparece com duas avaliações que tenham '+label.toLowerCase()+'. Cada ponto será uma medida registrada.</div></section>';
+    const defs={weight:['Peso','kg'],fat:['Gordura corporal','%'],leanMass:['Massa livre de gordura','kg'],waist:['Cintura','cm'],hip:['Quadril','cm']},[label,unit]=defs[metric];
+    const points=measurementHistory(list,metric,period,today());
+    let html='<section class="card chart-card"><div class="card-head"><div><span class="eyebrow">Histórico das consultas</span><h2>Evolução corporal</h2></div><label class="sr-only" for="body-metric">Medida do gráfico</label><select id="body-metric">'+Object.entries(defs).map(([k,[n]])=>'<option value="'+k+'" '+(metric===k?'selected':'')+'>'+n+'</option>').join('')+'</select></div><label class="trend-period">Período<select id="body-period">'+[['30','Últimos 30 dias'],['90','Últimos 90 dias'],['365','Último ano'],['all','Todo o histórico']].map(([id,name])=>'<option value="'+id+'" '+(period===id?'selected':'')+'>'+name+'</option>').join('')+'</select></label>';
+    if(points.length<2)return html+'<div class="body-empty">O gráfico deste período aparece com duas avaliações que tenham '+label.toLowerCase()+'. Cada ponto será uma medida registrada.</div></section>';
     const values=points.map(x=>x.value),min=Math.min(...values),max=Math.max(...values),pad=Math.max((max-min)*.2,metric==='fat'?1:.5),lo=Math.max(0,min-pad),hi=max+pad;
     const t0=Date.parse(recordDay(points[0].x)),t1=Date.parse(recordDay(points.at(-1).x));
     const x=(p,i)=>44+(t1===t0?i/(points.length-1):(Date.parse(recordDay(p.x))-t0)/(t1-t0))*584;
@@ -112,15 +125,25 @@ export function createAssessments(H,P) {
       '<section class="card"><h2>Índices calculados</h2><div class="measure-grid"><div><small>IMC (kg/m²)</small><b>'+fmt(c.bmi)+'</b></div><div><small>Relação cintura/quadril</small><b>'+fmt(c.whr,2)+'</b></div></div><p class="sub">IMC = peso ÷ altura². Relação cintura/quadril = cintura ÷ quadril. A interpretação faz parte do acompanhamento profissional.</p></section>';
   }
   function photoPanel(){
-    const allPhotos=photos(),list=allPhotos.filter(x=>(x.data.angle||'unspecified')===angle&&safePhoto(x.data.image));
-    const after=list.find(x=>x.id===photoB)||list.at(-1);
-    const earlier=after?list.slice(0,list.indexOf(after)):[];
-    const before=earlier.find(x=>x.id===photoA)||earlier[0];
+    const {all:allPhotos,list,after,earlier,before}=photoPair(state().records,state().selected,state().role,angle,photoA,photoB);
     photoA=before?.id||'';photoB=after?.id||'';
-    return '<section class="card photo-comparison"><div class="card-head"><div><span class="eyebrow">Registro visual</span><h2>Fotos de evolução</h2></div>'+button('+ Adicionar foto','progress-photo')+'</div><p class="sub">Fotos visíveis para você e seu profissional. Compare o mesmo ângulo e procure repetir luz, distância e postura.</p><div class="angle-tabs" role="group" aria-label="Ângulo da foto">'+PHOTO_ANGLES.map(([id,label])=>'<button class="btn small '+(id===angle?'selected':'ghost')+'" data-body-angle="'+id+'" aria-pressed="'+(id===angle)+'">'+label+' <small>'+allPhotos.filter(x=>(x.data.angle||'unspecified')===id).length+'</small></button>').join('')+'</div>'+
-      (after?'<div class="compare-controls"><label>Antes<select id="body-photo-before" '+(!before?'disabled':'')+'>'+(before?options(earlier,before.id):'<option>Adicione outra foto deste ângulo</option>')+'</select></label><label>Agora<select id="body-photo-after">'+options(list,after.id)+'</select></label></div><div class="photo-stage '+(!before?'single-photo':'')+'"><img src="'+esc(safePhoto(after.data.image))+'" alt="Foto de '+esc(date(recordDay(after)))+'">'+(before?'<div class="photo-before" id="photo-before-layer"><img src="'+esc(safePhoto(before.data.image))+'" alt="Foto de '+esc(date(recordDay(before)))+'"></div><div class="photo-divider" id="photo-divider"></div><span class="photo-tag before">Antes · '+esc(date(recordDay(before)))+'</span>':'')+'<span class="photo-tag after">Agora · '+esc(date(recordDay(after)))+'</span></div>'+(before?'<label class="photo-slider-label">Deslize para comparar<input type="range" min="0" max="100" value="50" id="body-photo-slider" aria-label="Divisão entre foto anterior e atual"></label>':'<p class="sub">Com duas fotos deste ângulo, você poderá comparar os registros deslizando sobre a imagem.</p>'):
-      '<div class="body-empty photo-empty"><span class="photo-outline" aria-hidden="true">+</span><h3>Seu próximo registro começa aqui</h3><p>Nenhuma foto de '+esc(PHOTO_ANGLES.find(x=>x[0]===angle)?.[1].toLowerCase())+' foi adicionada.</p>'+button('Adicionar foto','progress-photo')+'</div>')+
-      (allPhotos.length?'<details class="photo-history"><summary>Todas as fotos ('+allPhotos.length+')</summary><div class="photo-gallery">'+allPhotos.map(x=>'<article>'+ (safePhoto(x.data.image)?'<img loading="lazy" src="'+esc(safePhoto(x.data.image))+'" alt="'+esc(x.title)+'">':'<p>Imagem indisponível</p>')+'<b>'+esc(x.title)+'</b><small>'+esc(date(recordDay(x))+' · '+(PHOTO_ANGLES.find(a=>a[0]===(x.data.angle||'unspecified'))?.[1]||'Sem ângulo informado'))+'</small>'+((pro()||x.created_by===(state().demo?'patient-demo':state().user?.id))?button('Editar registro','record-edit',x.id,'small ghost'):'')+'</article>').join('')+'</div></details>':'')+'</section>';
+    const title=PHOTO_ANGLES.find(x=>x[0]===angle)?.[1]||'Sem ângulo informado';
+    let html='<section class="card photo-comparison"><div class="card-head"><div><span class="eyebrow">Seu progresso em imagens</span><h2>Antes e depois</h2></div>'+button('+ Adicionar foto','progress-photo')+'</div><p class="sub">Compare fotos do mesmo ângulo, mantendo luz, distância e postura semelhantes.</p><div class="angle-tabs" role="group" aria-label="Ângulo da foto">'+PHOTO_ANGLES.map(([id,label])=>'<button class="btn small '+(id===angle?'selected':'ghost')+'" data-body-angle="'+id+'" aria-pressed="'+(id===angle)+'"><b>'+label+'</b><small>'+allPhotos.filter(x=>(x.data.angle||'unspecified')===id).length+' fotos</small></button>').join('')+'</div>';
+    if(after){
+      html+='<div class="compare-controls"><label>Antes<select id="body-photo-before" '+(!before?'disabled':'')+'>'+(before?options(earlier,before.id):'<option>Adicione outra foto deste ângulo</option>')+'</select></label><label>Agora<select id="body-photo-after">'+options(list,after.id)+'</select></label></div>';
+      if(before)html+='<div class="photo-modes" role="group" aria-label="Modo de comparação">'+[['compare','Deslizar'],['side','Lado a lado']].map(([id,label])=>'<button class="btn small '+(photoMode===id?'primary':'ghost')+'" data-photo-mode="'+id+'" aria-pressed="'+(photoMode===id)+'">'+label+'</button>').join('')+'</div>';
+      if(before&&photoMode==='side')html+='<div class="photo-side-by-side">'+[[before,'Antes'],[after,'Agora']].map(([x,label])=>'<figure><img src="'+esc(safePhoto(x.data.image))+'" alt="'+esc(label+' · '+title+' · '+date(recordDay(x)))+'"><figcaption><b>'+label+'</b> · '+esc(date(recordDay(x)))+'</figcaption></figure>').join('')+'</div>';
+      else html+='<div class="photo-stage '+(!before?'single-photo':'')+'" id="body-photo-stage"><img src="'+esc(safePhoto(after.data.image))+'" alt="Agora · '+esc(title+' · '+date(recordDay(after)))+'">'+(before?'<div class="photo-before" id="photo-before-layer" style="clip-path:inset(0 '+(100-photoSplit)+'% 0 0)"><img src="'+esc(safePhoto(before.data.image))+'" alt="Antes · '+esc(title+' · '+date(recordDay(before)))+'"></div><div class="photo-divider" id="photo-divider" style="left:'+photoSplit+'%"><span class="photo-drag-handle" aria-hidden="true">‹ ›</span></div><span class="photo-tag before">Antes · '+esc(date(recordDay(before)))+'</span>':'')+'<span class="photo-tag after">Agora · '+esc(date(recordDay(after)))+'</span></div>'+(before?'<label class="photo-slider-label">Arraste a alça ou use o controle para comparar<input type="range" min="0" max="100" value="'+photoSplit+'" id="body-photo-slider" aria-label="Comparar antes e agora" aria-valuetext="'+photoSplit+'% da foto anterior"></label>':'<p class="sub">Este é seu primeiro registro deste ângulo. A próxima foto libera o antes e depois.</p>');
+    }else html+='<div class="body-empty photo-empty"><span class="photo-outline" aria-hidden="true">+</span><h3>Sua primeira foto de '+esc(title.toLowerCase())+'</h3><p>Um registro hoje ajuda a enxergar a sua jornada mais adiante.</p>'+button('Adicionar foto','progress-photo')+'</div>';
+    html+='<p class="photo-privacy">Confira a data e o ângulo de cada registro antes de comparar.</p>';
+    if(allPhotos.length)html+='<details class="photo-history"><summary>Histórico de fotos ('+allPhotos.length+')</summary><div class="photo-gallery">'+allPhotos.map(x=>'<article>'+(safePhoto(x.data.image)?'<img loading="lazy" src="'+esc(safePhoto(x.data.image))+'" alt="'+esc(x.title)+'">':'<p>Imagem indisponível</p>')+'<b>'+esc(x.title)+'</b><small>'+esc(date(recordDay(x))+' · '+(PHOTO_ANGLES.find(a=>a[0]===(x.data.angle||'unspecified'))?.[1]||'Sem ângulo informado'))+'</small>'+((pro()||x.created_by===(state().demo?'patient-demo':state().user?.id))?button('Editar registro','record-edit',x.id,'small ghost'):'')+'</article>').join('')+'</div></details>';
+    return html+'</section>';
+  }
+  function summary(list,current,previous){
+    const st=H.stats(pat()),c=composition(current?.data),b=composition(previous?.data),weightDelta=difference(c.weight,b.weight);
+    const headline=current?(c.weight!=null?fmt(c.weight)+' kg':'Avaliação registrada'):'Cada registro conta';
+    const caption=current?(c.weight!=null?'Peso na avaliação de ':'Última avaliação em ')+date(recordDay(current)):'Suas avaliações aparecerão aqui quando forem registradas e compartilhadas.';
+    return '<section class="progress-hero"><div><span class="eyebrow">Sua jornada até aqui</span><h2>'+headline+'</h2><p>'+esc(caption)+'</p>'+(current&&weightDelta!=null?'<span class="progress-change">'+delta(weightDelta,'kg')+' desde '+esc(date(recordDay(previous)))+'</span>':'')+'</div><div class="progress-constancy"><strong>'+st.days+' <small>/ '+st.target+'</small></strong><span>dias com cuidado nesta semana</span><b>'+st.xp+' XP de cuidado</b></div></section><div class="progress-shortcuts"><button data-body-tab="body"><span>Corpo</span><b>'+list.length+' avaliações</b><small>Medidas e composição</small></button><button data-body-tab="photos"><span>Antes e depois</span><b>'+photos().length+' fotos</b><small>Compare sua evolução</small></button><button data-body-tab="history"><span>Histórico</span><b>'+ (current?esc(date(recordDay(current))):'Seu primeiro registro')+'</b><small>Reveja cada avaliação</small></button></div>'+(current?'<div class="body-stats">'+measure('Peso',c.weight,'kg',weightDelta)+measure('Gordura corporal',c.fat,'% ',difference(c.fat,b.fat))+measure('Cintura',fieldValue(current.data,'waist'),'cm',difference(fieldValue(current.data,'waist'),fieldValue(previous?.data,'waist')))+measure('Quadril',fieldValue(current.data,'hip'),'cm',difference(fieldValue(current.data,'hip'),fieldValue(previous?.data,'hip')))+'</div>':'')+chart(list);
   }
   function history(list) {
     return '<section class="card"><div class="card-head"><h2>Avaliações anteriores</h2><span class="pill">'+list.length+' registros</span></div>'+list.slice().reverse().map(x=>'<div class="assessment-history-row"><span class="history-dot"></span><div class="grow"><b>'+esc(x.title)+'</b><p>'+esc(date(recordDay(x)))+' · '+esc(x.data.source||'Origem não informada')+'</p><small>'+esc(x.visibility==='private'?'Privada do profissional':'Compartilhada com o paciente')+' · versão '+esc(x.version)+'</small></div>'+button('Ver avaliação','body-open',x.id,'small')+(pro()?button('Editar','record-edit',x.id,'small ghost'):'')+'</div>').join('')+'</section>';
@@ -135,7 +158,8 @@ export function createAssessments(H,P) {
     const {list,current,previous,earlier}=selection();
     let html=heading(pro()?'Acompanhamento individual':'Cada etapa da sua jornada',pro()?'Avaliação física e corporal':'Minha evolução',pro()?'Medidas, composição, fotos e histórico no mesmo acompanhamento.':'Acompanhe suas medidas e reconheça o seu progresso.',pro()?button('+ Nova avaliação','assessment','','primary'):'<button class="btn" data-page="achievements">Minhas conquistas</button>');
     if(pro())html+='<label class="patient-selector">Paciente<select id="body-patient">'+state().patients.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===state().selected?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>';
-    html+='<div class="body-tabs" role="group" aria-label="Área da evolução">'+[['body','Visão geral'],['measures','Medidas'],['photos','Fotos'],['history','Histórico'],...(!pro()?[['routine','Minha rotina']]:[])].map(([id,label])=>'<button class="'+(tab===id?'active':'')+'" data-body-tab="'+id+'" aria-pressed="'+(tab===id)+'">'+label+'</button>').join('')+'</div>';
+    html+='<div class="body-tabs" role="group" aria-label="Área da evolução">'+[['summary','Resumo'],['body','Corpo'],['measures','Medidas'],['photos','Antes e depois'],['history','Histórico'],...(!pro()?[['routine','Minha rotina']]:[])].map(([id,label])=>'<button class="'+(tab===id?'active':'')+'" data-body-tab="'+id+'" aria-pressed="'+(tab===id)+'">'+label+'</button>').join('')+'</div>';
+    if(tab==='summary')return '<div class="assessment-app">'+html+summary(list,current,previous)+'</div>';
     if(tab==='photos')return '<div class="assessment-app">'+html+photoPanel()+'</div>';
     if(tab==='routine'&&!pro())return '<div class="assessment-app">'+html+routine()+'</div>';
     if(!current)return '<div class="assessment-app">'+html+'<section class="card body-empty"><h2>A sua história vai aparecer aqui</h2><p>'+ (pro()?'Registre a primeira avaliação deste paciente para acompanhar as próximas medidas.':'Sua nutricionista ainda não compartilhou uma avaliação. Você já pode organizar suas fotos na aba Fotos.')+'</p>'+(pro()?button('Registrar avaliação','assessment','','primary'):'<button class="btn" data-page="chat">Conversar com minha nutri</button>')+'</section></div>';
@@ -207,14 +231,19 @@ export function createAssessments(H,P) {
     win.document.write(html);win.document.close();
   }
   function bind(){
-    document.querySelectorAll('[data-body-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.bodyTab;render();});
-    document.querySelectorAll('[data-body-angle]').forEach(b=>b.onclick=()=>{angle=b.dataset.bodyAngle;photoA='';photoB='';render();});
+    document.querySelectorAll('[data-body-tab]').forEach(b=>b.onclick=()=>{if(state().busy)return;tab=b.dataset.bodyTab;render();});
+    document.querySelectorAll('[data-body-angle]').forEach(b=>b.onclick=()=>{if(state().busy)return;angle=b.dataset.bodyAngle;photoA='';photoB='';photoSplit=50;render();});
     const change=(id,fn)=>{if(q(id))q(id).onchange=e=>{if(state().busy)return;fn(e.target.value);render();};};
-    change('#body-current',v=>{selected=v;baseline='';});change('#body-baseline',v=>baseline=v);change('#body-metric',v=>metric=v);
+    change('#body-current',v=>{selected=v;baseline='';});change('#body-baseline',v=>baseline=v);change('#body-metric',v=>metric=v);change('#body-period',v=>period=v);
     change('#body-patient',v=>state().selected=v);change('#body-photo-before',v=>photoA=v);change('#body-photo-after',v=>{photoB=v;photoA='';});
-    if(q('#body-photo-slider'))q('#body-photo-slider').oninput=e=>{q('#photo-before-layer').style.clipPath='inset(0 '+(100-Number(e.target.value))+'% 0 0)';q('#photo-divider').style.left=e.target.value+'%';};
+    document.querySelectorAll('[data-photo-mode]').forEach(b=>b.onclick=()=>{if(state().busy)return;photoMode=b.dataset.photoMode;render();});
+    const slider=q('#body-photo-slider'),stage=q('#body-photo-stage');
+    const split=value=>{photoSplit=Math.max(0,Math.min(100,Number(value)||0));if(q('#photo-before-layer'))q('#photo-before-layer').style.clipPath='inset(0 '+(100-photoSplit)+'% 0 0)';if(q('#photo-divider'))q('#photo-divider').style.left=photoSplit+'%';if(slider){slider.value=String(photoSplit);slider.setAttribute('aria-valuetext',Math.round(photoSplit)+'% da foto anterior');}};
+    if(slider){slider.oninput=e=>split(e.target.value);if(stage){const move=e=>{const box=stage.getBoundingClientRect();if(box.width>0)split((e.clientX-box.left)/box.width*100);};stage.onpointerdown=e=>{if(e.button!==0)return;stage.setPointerCapture?.(e.pointerId);move(e);};stage.onpointermove=e=>{if(stage.hasPointerCapture?.(e.pointerId))move(e);};stage.onpointerup=e=>{if(stage.hasPointerCapture?.(e.pointerId))stage.releasePointerCapture(e.pointerId);};}}
+
   }
   return {view,edit,editPhoto,detail,print,bind,photoPanel,all,photos,composition,fmt,
     open(id){selection();if(!all().some(x=>x.id===id))return;selected=id;baseline='';tab='body';render();},
     showPhotos(){selection();tab='photos';state().page=pro()?'assessments':'progress';render();}};
 }
+

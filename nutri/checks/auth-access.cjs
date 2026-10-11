@@ -168,7 +168,7 @@ function harness(options = {}) {
     addEventListener(event, fn) { events.set(event, fn); },
     fetch() { throw Error('Network access is forbidden in this test.'); },
     createPlatform() { return {
-      pages: [['overview', 'O', 'Consultório']], patientPages: [], seed() {}, bind() {},
+      pages: [['overview', 'O', 'Consultório']], patientPages: [], seed() {}, bind() {}, notificationButton() { return ''; },
       views: {overview: () => '<div>Consultório</div>', today: () => '<div>Paciente</div>'},
       async load() { calls.load++; }, resources() { return []; }
     }; }
@@ -178,7 +178,7 @@ function harness(options = {}) {
   assert(!/^import /m.test(careSource), 'Unexpected care module dependency: update the auth harness explicitly.');
   vm.runInContext('(()=>{' + careSource + '\nObject.assign(globalThis,{careSummary,mealPresence});})()', context,
     {filename: 'auth-care-progress.js'});
-  vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
+  vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,render,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
   const api = context.__authAccess;
   return {
     ...api, calls, nodes, localStorage, sessionStorage, location, storageKey, events, clients,
@@ -283,7 +283,8 @@ for (const role of ['patient', 'nutri']) {
     const fixture = dedicatedDemoFixture(role), h = harness(fixture);
     await h.start();
     assert(!h.html().includes('data-action="switch-role"'), 'The profile switch must be absent from the dedicated demo.');
-    assert(h.html().includes('data-action="auth"'), 'The dedicated demo must retain its account entry point.');
+    if (role === 'patient') { h.S.page = 'more'; h.render(); }
+    assert(h.html().includes('data-action="auth"'), 'The dedicated demo must retain its account entry point, in Menu for the patient.');
     const page = h.S.page, selected = h.S.selected;
     await h.action('switch-role');
     assert.equal(h.S.role, role); assert.equal(h.S.page, page); assert.equal(h.S.selected, selected);
