@@ -6,6 +6,21 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v863 — Consolidação do Torque Nutri a partir do estudo
+
+- Início, ficha 360°, diário e fila de revisão usam registros existentes, com
+  contexto de paciente e versão. Relatórios por período distinguem registros
+  observados de adesão clínica.
+- Prescrição duplica/reordena refeições e alimentos, registra dias por refeição,
+  mostra a anamnese de origem e exige revisão antes de publicar.
+- Leituras de conta são atômicas e respostas de sessões antigas não restauram
+  dados privados. Cache incompleto ou misturado entre clínicas é recusado.
+- Financeiro identifica baixas manuais e valida versão/linha afetada. Observação
+  de receita é compartilhada com o paciente; nunca guardar nota clínica ali.
+- Cache Nutri v12, versão global mt-v863. Estado de banco, testes e implantação:
+  `docs/releases/mt-v863-consolidacao-nutri.md`. Gateway depende de escolha de
+  provedor e homologação; o estudo não autoriza presumir integração ativa.
+
 ## v861 — Rotina e prazer no Torque Nutri
 
 - Registrar refeição abre o diário de consumo, com alimentos e porções para

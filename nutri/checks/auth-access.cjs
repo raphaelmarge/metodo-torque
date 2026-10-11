@@ -23,6 +23,7 @@ const original = fs.readFileSync(appPath, 'utf8');
 const source = original
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/, '')
   .replace(/^import \{careSummary,mealPresence\} from '\.\/care-progress\.js';\r?\n/m, '')
+  .replace(/^import \{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError\} from '\.\/prescription\.js';\r?\n/m, '')
   .replace(/^start\(\)\.catch\([^\n]*\);\r?$/m, '');
 assert.notEqual(source, original, 'The module import and automatic bootstrap must be intercepted.');
 assert(!/^import /m.test(source), 'Unexpected import: update the isolated harness explicitly.');
@@ -52,7 +53,7 @@ function harness(options = {}) {
   const clients = [];
   const storedSession = () => JSON.parse(localStorage.getItem(storageKey) || 'null');
   const events = new Map();
-  const calls = {signOut: [], signUp: [], resetPasswordForEmail: [], updateUser: [], rpc: [], assign: [], load: 0, reload: 0, stopRefresh: 0, startRefresh: 0, getUser: 0};
+  const calls = {signOut: [], signUp: [], resetPasswordForEmail: [], updateUser: [], rpc: [], assign: [], queries: [], load: 0, reload: 0, stopRefresh: 0, startRefresh: 0, getUser: 0};
   let bootstrapEvent = options.bootstrapEvent;
   const location = new URL(options.url || 'https://unit.invalid/');
   location.reload = () => { calls.reload++; };
@@ -146,8 +147,10 @@ function harness(options = {}) {
   }
   function query(table) {
     const filters = {};
+    calls.queries.push({table,filters});
     const q = {
       select() { return q; }, eq(key, value) { filters[key] = value; return q; },
+      in(key, value) { filters[key] = Array.from(value); return q; },
       order() { return q; }, range() { return q; },
       async maybeSingle() { return options.queryError ? {data: null, error: {message: 'Simulated offline query failure'}} : {data: options.role === 'nutri' && table === 'clinics' ? clinic() : null, error: null}; },
       async single() { return {data: table === 'clinics' ? clinic() : null, error: null}; },
@@ -170,7 +173,7 @@ function harness(options = {}) {
     createPlatform() { return {
       pages: [['overview', 'O', 'Consultório']], patientPages: [], seed() {}, bind() {}, notificationButton() { return ''; },
       views: {overview: () => '<div>Consultório</div>', today: () => '<div>Paciente</div>'},
-      async load() { calls.load++; }, resources() { return []; }
+      async load(config) { calls.load++; if(options.platformLoad)return options.platformLoad(config);return {resources:[],records:[],finances:[],posts:[],interactions:[]}; }, resources() { return []; }
     }; }
   });
   const careSource = fs.readFileSync(path.join(path.dirname(appPath), 'care-progress.js'), 'utf8')
@@ -178,6 +181,8 @@ function harness(options = {}) {
   assert(!/^import /m.test(careSource), 'Unexpected care module dependency: update the auth harness explicitly.');
   vm.runInContext('(()=>{' + careSource + '\nObject.assign(globalThis,{careSummary,mealPresence});})()', context,
     {filename: 'auth-care-progress.js'});
+  const prescriptionSource=fs.readFileSync(path.join(path.dirname(appPath),'prescription.js'),'utf8').replace(/\bexport (?=(?:function|const) )/g,'');
+  vm.runInContext('(()=>{'+prescriptionSource+'\nObject.assign(globalThis,{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError});})()',context,{filename:'auth-prescription.js'});
   vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,render,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
   const api = context.__authAccess;
   return {
@@ -636,6 +641,56 @@ test('SIGNED_OUT with failed private cleanup blocks login until a successful ret
   await h.nodes.get('auth-retry-logout').onclick();
   assert.equal(h.localStorage.getItem('torque-nutri-cache:' + A.id), null);
   assert.equal(h.nodes.get('auth-form button[type=submit]').disabled, false);
+});
+
+test('an incomplete refresh preserves the complete prior snapshot and marks the failed read', async () => {
+  const options={user:A,role:'nutri'},h=harness(options);
+  await h.start();
+  h.S.patients[0].name='Última leitura completa';
+  h.S.records=[{id:'last-record',patient_id:'unit-patient'}];
+  h.cacheSnapshot();
+  const cached=h.localStorage.getItem('torque-nutri-cache:'+A.id);
+  options.platformLoad=async config=>{assert.equal(config.defer,true);assert.equal(config.context.clinic.id,'unit-clinic');throw Error('Plataforma indisponível');};
+  await assert.rejects(()=>h.loadData(),/Plataforma indisponível/);
+  assert.equal(h.S.patients[0].name,'Última leitura completa');
+  assert.equal(h.S.records[0].id,'last-record');
+  assert.equal(h.localStorage.getItem('torque-nutri-cache:'+A.id),cached);
+  assert.equal(h.S.loading,false);assert.match(h.S.loadError,/última leitura completa/);
+  options.platformLoad=null;await h.loadData();
+  assert.equal(h.S.loadError,'');assert.equal(h.S.loading,false);
+});
+
+test('a late refresh cannot restore private data after logout even if the same UID returns', async () => {
+  const options={user:A},h=harness(options);await h.start();
+  let release,started;const entered=new Promise(resolve=>{started=resolve;});
+  options.platformLoad=()=>new Promise(resolve=>{release=resolve;started();});
+  const pending=h.loadData();await entered;
+  await h.action('logout');
+  h.S.user=A; // Same account is not the same authentication lifecycle.
+  release({records:[{id:'stale-private-record'}]});
+  await assert.rejects(()=>pending,/sessão ou a leitura mudou/);
+  assert.equal(h.S.records.length,0);assert.equal(h.S.patients.length,0);
+  assert.equal(h.localStorage.getItem('torque-nutri-cache:'+A.id),null);
+  assert.equal(h.S.loading,false);
+});
+
+test('patient reads explicitly scope clinical tables to the selected clinic patient IDs',async()=>{
+  const h=harness({user:A});await h.start();
+  for(const table of ['plans','daily_logs','messages','appointments']){
+    const query=h.calls.queries.find(q=>q.table===table);
+    assert.deepEqual(query.filters.patient_id,['unit-patient'],table);
+  }
+  assert.equal(h.calls.queries.find(q=>q.table==='challenges').filters.clinic_id,'unit-clinic');
+});
+
+test('incomplete or mixed-clinic offline caches are refused without partially replacing current state',async()=>{
+ const h=harness({user:A});await h.start();h.cacheSnapshot();
+ const key='torque-nutri-cache:'+A.id,valid=JSON.parse(h.localStorage.getItem(key));
+ for(const alter of [d=>delete d.records,d=>d.patients[0].clinic_id='another-clinic',d=>d.records.push({id:'foreign',patient_id:'another-patient'})]){
+  const invalid=structuredClone(valid);alter(invalid);h.localStorage.setItem(key,JSON.stringify(invalid));
+  const before=JSON.stringify(h.S);assert.equal(h.restoreSnapshot(),false);assert.equal(JSON.stringify(h.S),before);
+ }
+ h.localStorage.setItem(key,JSON.stringify(valid));assert.equal(h.restoreSnapshot(),true);assert.equal(h.S.offline,true);
 });
 
 (async () => {
