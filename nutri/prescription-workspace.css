@@ -1,0 +1,231 @@
+/* Professional prescription workspace. Uses the clinic's existing palette and data. */
+.prescription-workspace{--prescription-soft:color-mix(in srgb,var(--brand) 7%,var(--panel));--prescription-accent:color-mix(in srgb,var(--brand) 36%,var(--line));min-width:0}
+.prescription-workspace :is(h1,h2,h3,p,label,button,summary,dd){overflow-wrap:anywhere}
+.prescription-workspace :is(button,input,textarea,select){min-width:0;max-width:100%}
+.prescription-workspace .btn{min-height:44px;min-width:44px;white-space:normal;line-height:1.35}
+.prescription-workspace .btn.primary{color:var(--on-brand,#101b15)}
+.prescription-workspace .btn:disabled{cursor:default;opacity:.42}
+.prescription-workspace .prescription-icon{width:18px;height:18px;flex:0 0 18px}
+.prescription-workspace .prescription-icon-btn{padding:0;width:44px;height:44px;flex:0 0 44px}
+.prescription-workspace .pill{white-space:normal;line-height:1.4}
+.prescription-workspace details>summary{cursor:pointer;min-height:48px;list-style:none;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;padding:12px 16px}
+.prescription-workspace details>summary::-webkit-details-marker{display:none}
+.prescription-workspace details>summary::after{content:'';width:7px;height:7px;flex:0 0 7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:auto;margin-right:2px;transition:transform .15s}
+.prescription-workspace details[open]>summary::after{transform:rotate(225deg)}
+.prescription-workspace details>summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:10px}
+.prescription-workspace .prescription-masthead{margin:22px 0 16px}
+.prescription-workspace .prescription-back{padding:0 8px;margin-left:-8px;border:0;color:var(--muted);min-height:44px;font-size:12px}
+.prescription-workspace .prescription-patient-heading{display:flex;align-items:center;gap:16px;margin-top:12px}
+.prescription-workspace .prescription-patient-heading>.avatar{width:52px;height:52px;border-radius:17px;font-size:17px;background:var(--prescription-soft);color:var(--text);border:1px solid var(--prescription-accent)}
+.prescription-workspace .prescription-patient-heading>div{min-width:0;flex:1}
+.prescription-workspace .prescription-patient-heading h1{font-size:30px;margin:6px 0;letter-spacing:-1px}
+.prescription-workspace .prescription-patient-heading .sub{margin:0;font-size:13px}
+.prescription-workspace .prescription-patient-heading>.pill{flex-shrink:0}
+.prescription-workspace .prescription-restriction{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin:16px 0 0;padding:10px 14px;border:1px solid var(--prescription-accent);border-left:3px solid var(--brand);border-radius:0 10px 10px 0;background:var(--prescription-soft);font-size:12px;line-height:1.5}
+.prescription-workspace .prescription-restriction b{font-size:11px;color:var(--muted);font-weight:600}
+.prescription-workspace .prescription-commandbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 14px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.prescription-workspace .prescription-draft-state{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.prescription-workspace .prescription-status-dot{width:6px;height:6px;border-radius:50%;background:var(--brand);flex:0 0 6px}
+.prescription-workspace .prescription-main-actions{display:flex;gap:10px;flex-shrink:0}
+.prescription-workspace .prescription-support{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:12px;margin-bottom:20px}
+.prescription-workspace .prescription-disclosure{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.prescription-workspace .prescription-support-content{padding:0 16px 16px}
+.prescription-workspace .prescription-support-content .sub{margin:0 0 10px}
+.prescription-workspace .prescription-support-content .actions{gap:8px}
+.prescription-workspace .prescription-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;grid-template-areas:'setup sidebar' 'meals sidebar';align-items:start;gap:20px}
+.prescription-workspace .prescription-setup{grid-area:setup;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.prescription-workspace .prescription-title-field{padding:18px 18px 0;margin-bottom:16px;font-size:12px;color:var(--muted)}
+.prescription-workspace .prescription-title-field input{font-size:17px;font-weight:600;background:var(--panel);color:var(--text)}
+.prescription-workspace .prescription-settings{border-top:1px solid var(--line)}
+.prescription-workspace .prescription-settings>summary{padding:12px 18px}
+.prescription-workspace .prescription-settings-content{padding:4px 18px 18px}
+.prescription-workspace .prescription-settings .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.prescription-workspace .prescription-settings label{font-size:12px;min-width:0}
+.prescription-workspace .prescription-settings textarea{min-height:130px;line-height:1.5}
+.prescription-workspace .prescription-settings-content>label:last-child{margin-bottom:0}
+.prescription-workspace .prescription-sidebar{grid-area:sidebar;min-width:0;position:sticky;top:18px}
+.prescription-workspace .prescription-summary{padding:20px;background:var(--panel);border:1px solid var(--prescription-accent);border-top:3px solid var(--brand);border-radius:16px}
+.prescription-workspace .prescription-summary-heading h2{font-size:15px}
+.prescription-workspace .prescription-summary-heading>span{display:block;font-size:11px;color:var(--muted);margin-top:6px}
+.prescription-workspace .prescription-energy{display:flex;align-items:baseline;gap:7px;margin:18px 0 20px;font-size:14px;color:var(--muted)}
+.prescription-workspace .prescription-energy strong{font-size:43px;font-weight:600;line-height:1;letter-spacing:-1.7px;color:var(--text);font-variant-numeric:tabular-nums}
+.prescription-workspace .prescription-macros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.prescription-workspace .prescription-macros>div{border-top:2px solid var(--line);padding-top:10px}
+.prescription-workspace .prescription-macros dt{font-size:10px;color:var(--muted);line-height:1.4}
+.prescription-workspace .prescription-macros dd{margin:6px 0 0;font-size:18px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.prescription-workspace .prescription-macros dd span{font-size:12px;color:var(--muted)}
+.prescription-workspace .prescription-total-note{font-size:11px;color:var(--muted);line-height:1.55;margin:16px 0 0}
+.prescription-workspace .prescription-catalog-note{font-size:11px;line-height:1.5;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--muted)}
+.prescription-workspace .prescription-context{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.prescription-workspace .prescription-disclosure-hint{color:var(--muted);font-size:11px;font-weight:400}
+.prescription-workspace .prescription-context-content{padding:0 16px 16px}
+.prescription-workspace .prescription-context-content>.sub{font-size:12px}
+.prescription-workspace .prescription-context dl{margin:14px 0}
+.prescription-workspace .prescription-context dl>div{border-top:1px solid var(--line);padding:12px 0}
+.prescription-workspace .prescription-context dt{font-size:11px;color:var(--muted)}
+.prescription-workspace .prescription-context dd{margin:5px 0 0;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.prescription-workspace .prescription-context .actions{display:grid}
+.prescription-workspace .prescription-publication-note{font-size:11px;color:var(--muted);line-height:1.6;margin:14px 4px 0}
+.prescription-workspace .prescription-meal-list{grid-area:meals;min-width:0}
+.prescription-workspace .prescription-section-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:4px 0 14px}
+.prescription-workspace .prescription-section-heading h2{font-size:16px}
+.prescription-workspace .prescription-section-heading>span{font-size:12px;color:var(--muted)}
+.prescription-workspace .prescription-meal{padding:0;margin-bottom:20px;border-radius:16px;background:var(--panel)}
+.prescription-workspace .prescription-meal-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--prescription-soft);border-radius:15px 15px 0 0}
+.prescription-workspace .prescription-meal-title{display:flex;gap:12px;align-items:center}
+.prescription-workspace .prescription-meal-number{height:38px;min-width:38px;border:1px solid var(--prescription-accent);border-radius:12px;display:grid;place-items:center;font-size:13px;font-weight:600;background:var(--panel)}
+.prescription-workspace .prescription-meal-title h2{font-size:15px;margin-bottom:5px}
+.prescription-workspace .prescription-meal-energy{font-size:11px;color:var(--muted)}
+.prescription-workspace .prescription-meal-energy b{font-weight:400}
+.prescription-workspace .prescription-meal-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prescription-workspace .prescription-move-tools{display:flex;gap:0;flex:0 0 88px}
+.prescription-workspace .prescription-move-tools>.btn{border-radius:0;border:1px solid var(--line);background:var(--panel)}
+.prescription-workspace .prescription-move-tools>.btn:first-child{border-radius:9px 0 0 9px;border-right:0}
+.prescription-workspace .prescription-move-tools>.btn:last-child{border-radius:0 9px 9px 0}
+.prescription-workspace .prescription-meal-tools>.btn{font-size:11px;padding:8px 10px}
+.prescription-workspace .prescription-meal-body{padding:18px}
+.prescription-workspace .prescription-meal-fields{grid-template-columns:minmax(0,1fr) 112px;gap:12px}
+.prescription-workspace .prescription-meal-fields label{font-size:12px;margin-bottom:0}
+.prescription-workspace .prescription-meal-fields input{font-size:16px}
+.prescription-workspace .prescription-days{border:0;padding:0;margin:18px 0;min-width:0}
+.prescription-workspace .prescription-days legend{font-size:12px;margin-bottom:9px}
+.prescription-workspace .prescription-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.prescription-workspace .prescription-day{position:relative;display:flex;margin:0;min-width:0;min-height:44px;cursor:pointer}
+.prescription-workspace .prescription-day input{position:absolute;inset:0;width:100%;height:100%;min-height:44px;margin:0;opacity:0;cursor:pointer}
+.prescription-workspace .prescription-day span{display:grid;place-items:center;width:100%;min-height:44px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);font-size:12px;color:var(--muted)}
+.prescription-workspace .prescription-day input:checked+span{background:var(--prescription-soft);border-color:var(--prescription-accent);color:var(--text);font-weight:600}
+.prescription-workspace .prescription-day input:checked+span::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--brand);position:absolute;bottom:6px}
+.prescription-workspace .prescription-day input:focus-visible+span{outline:3px solid var(--accent);outline-offset:3px}
+.prescription-workspace .prescription-days .sub{font-size:11px;margin:8px 0 0}
+.prescription-workspace .prescription-foods{display:grid;gap:12px}
+.prescription-workspace .prescription-food{border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--panel2) 45%,var(--panel));padding:12px}
+.prescription-workspace .prescription-food-heading{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.prescription-workspace .prescription-food-heading>div{min-width:0}
+.prescription-workspace .prescription-food-heading h3{font-size:14px;line-height:1.45}
+.prescription-workspace .prescription-food-heading p{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.4}
+.prescription-workspace .prescription-food-heading>.btn{color:var(--muted);background:transparent;border-color:transparent}
+.prescription-workspace .prescription-food-values{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 12px}
+.prescription-workspace .prescription-food-nutrients{display:grid;gap:5px;min-width:0}
+.prescription-workspace .prescription-food-nutrients>b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.prescription-workspace .prescription-food-nutrients>b span{font-size:11px;color:var(--muted);font-weight:400}
+.prescription-workspace .prescription-food-nutrients>span{font-size:10px;color:var(--muted);line-height:1.5}
+.prescription-workspace .prescription-food-nutrients i{font-style:normal;margin:0 3px}
+.prescription-workspace .prescription-food-values>label{font-size:11px;margin:0;gap:4px;flex:0 0 82px}
+.prescription-workspace .prescription-food-values input{min-height:44px;padding:8px 10px;font-size:16px;background:var(--panel)}
+.prescription-workspace .prescription-food-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.prescription-workspace .prescription-food-tools>.btn{font-size:11px;padding:8px 10px}
+.prescription-workspace .prescription-food-tools>.prescription-alternative{margin-left:auto}
+.prescription-workspace .prescription-substitutions{border-left:2px solid var(--prescription-accent);padding:5px 10px;margin:10px 0 14px}
+.prescription-workspace .prescription-substitutions>span{font-size:10px;color:var(--muted)}
+.prescription-workspace .prescription-substitutions p{font-size:12px;line-height:1.5;margin:4px 0 0}
+.prescription-workspace .recipe-assignment{background:var(--panel);padding:14px;margin:16px 0}
+.prescription-workspace .recipe-assignment .card-head{flex-wrap:wrap;margin-bottom:10px}
+.prescription-workspace .recipe-assignment h3{font-size:14px}
+.prescription-workspace .recipe-assignment .sub{font-size:12px}
+.prescription-workspace .prescription-meal-footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-top:16px}
+.prescription-workspace .prescription-meal-footer>.btn{font-size:12px}
+.prescription-workspace .prescription-meal-empty{text-align:center;padding:20px 12px;color:var(--muted)}
+.prescription-workspace .prescription-meal-empty p{font-size:14px;margin:0 0 8px}
+.prescription-workspace .prescription-meal-empty span{font-size:12px}
+.prescription-workspace .prescription-add-meal{width:100%;min-height:56px;border:1px dashed var(--prescription-accent);background:var(--prescription-soft);font-size:14px}
+.prescription-workspace .prescription-library-intro{display:flex;align-items:center;gap:18px;padding:24px;border:1px solid var(--prescription-accent);border-radius:18px;background:var(--prescription-soft);margin-bottom:24px}
+.prescription-workspace .prescription-intro-symbol{height:48px;width:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:15px;border:1px solid var(--prescription-accent);background:var(--panel)}
+.prescription-workspace .prescription-intro-symbol .prescription-icon{width:24px;height:24px}
+.prescription-workspace .prescription-library-intro>div:nth-child(2){flex:1;min-width:0}
+.prescription-workspace .prescription-library-intro .sub{font-size:12px;margin:8px 0 0;max-width:64ch}
+.prescription-workspace .prescription-plan-list{display:grid;gap:12px}
+.prescription-workspace .prescription-plan-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;align-items:center;gap:18px;border:1px solid var(--line);padding:22px;border-radius:16px;background:var(--panel)}
+.prescription-workspace .prescription-plan-row .avatar{width:44px;height:44px;border-radius:14px}
+.prescription-workspace .prescription-plan-row h2{font-size:15px}
+.prescription-workspace .prescription-plan-title{font-size:13px;margin:7px 0 0;color:var(--text)}
+.prescription-workspace .prescription-plan-row small{margin-top:6px;font-size:11px;line-height:1.5}
+.prescription-workspace .prescription-plan-state{text-align:right}
+.prescription-workspace .prescription-edit-plan{font-size:12px}
+@media(max-width:1150px){
+ .prescription-workspace .prescription-layout{grid-template-columns:minmax(0,1fr) 248px;gap:16px}
+ .prescription-workspace .prescription-summary{padding:16px}
+ .prescription-workspace .prescription-meal-head,.prescription-workspace .prescription-meal-body{padding:16px}
+ .prescription-workspace .prescription-food-tools>.prescription-alternative{margin-left:0}
+ .prescription-workspace .prescription-library-intro{flex-wrap:wrap}
+ .prescription-workspace .prescription-library-intro>.pill{margin-left:66px}
+ .prescription-workspace .prescription-plan-row{grid-template-columns:44px minmax(0,1fr) auto;gap:14px}
+ .prescription-workspace .prescription-plan-state{grid-column:2;grid-row:2;text-align:left}
+ .prescription-workspace .prescription-edit-plan{grid-column:3;grid-row:1/3}
+}
+@media(max-width:1050px){
+ .prescription-workspace .prescription-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:'sidebar' 'setup' 'meals';gap:16px}
+ .prescription-workspace .prescription-sidebar{position:static;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+ .prescription-workspace .prescription-summary{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:10px 18px;padding:16px 18px}
+ .prescription-workspace .prescription-summary-heading>span{margin-top:4px}
+ .prescription-workspace .prescription-energy{margin:0;justify-content:flex-end}
+ .prescription-workspace .prescription-energy strong{font-size:31px}
+ .prescription-workspace .prescription-macros{grid-column:1/-1}
+ .prescription-workspace .prescription-macros>div{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding-top:8px}
+ .prescription-workspace .prescription-macros dd{margin:0}
+ .prescription-workspace .prescription-total-note{margin:0;grid-column:1/-1}
+ .prescription-workspace .prescription-catalog-note{margin:0;padding:0;border:0;grid-column:1/-1}
+ .prescription-workspace .prescription-context{margin:0}
+ .prescription-workspace .prescription-context-content .actions{display:flex}
+ .prescription-workspace .prescription-publication-note{margin:0 4px}
+}
+@media(max-width:680px){
+ .prescription-workspace .prescription-masthead{margin:10px 0 12px}
+ .prescription-workspace .prescription-patient-heading{gap:10px;flex-wrap:wrap;margin-top:4px}
+ .prescription-workspace .prescription-patient-heading>.avatar{width:42px;height:42px;border-radius:13px;font-size:13px}
+ .prescription-workspace .prescription-patient-heading h1{font-size:24px;letter-spacing:-.7px}
+ .prescription-workspace .prescription-patient-heading .eyebrow{font-size:10px;letter-spacing:.09em}
+ .prescription-workspace .prescription-patient-heading>.pill{margin-left:52px;font-size:10px;padding:4px 8px}
+ .prescription-workspace .prescription-patient-heading .sub{font-size:12px}
+ .prescription-workspace .prescription-restriction{gap:3px 8px;margin-top:12px;padding:8px 10px;font-size:11px}
+ .prescription-workspace .prescription-commandbar{display:grid;gap:10px;padding:12px 0}
+ .prescription-workspace .prescription-main-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .prescription-workspace .prescription-main-actions>.btn{font-size:12px;padding:10px}
+ .prescription-workspace .prescription-support{gap:8px;margin-bottom:14px}
+ .prescription-workspace .prescription-disclosure>summary{font-size:11px;padding:10px;min-height:52px;gap:8px}
+ .prescription-workspace .prescription-support-content{padding:0 10px 12px}
+ .prescription-workspace .prescription-support-content .actions{display:grid}
+ .prescription-workspace .prescription-support-content .btn{font-size:11px}
+ .prescription-workspace .prescription-summary{padding:14px;gap:10px}
+ .prescription-workspace .prescription-summary-heading h2{font-size:13px}
+ .prescription-workspace .prescription-summary-heading>span{font-size:10px}
+ .prescription-workspace .prescription-energy strong{font-size:29px}
+ .prescription-workspace .prescription-energy>span{font-size:11px}
+ .prescription-workspace .prescription-macros>div{display:block}
+ .prescription-workspace .prescription-macros dt{font-size:10px}
+ .prescription-workspace .prescription-macros dd{font-size:17px;margin-top:5px}
+ .prescription-workspace .prescription-total-note,.prescription-workspace .prescription-catalog-note{font-size:10px}
+ .prescription-workspace .prescription-publication-note{font-size:10px}
+ .prescription-workspace .prescription-layout{gap:14px}
+ .prescription-workspace .prescription-title-field{padding:14px 14px 0;margin-bottom:14px}
+ .prescription-workspace .prescription-title-field input{font-size:16px}
+ .prescription-workspace .prescription-settings>summary{padding:12px 14px;font-size:12px}
+ .prescription-workspace .prescription-settings-content{padding:0 14px 14px}
+ .prescription-workspace .prescription-settings .form-grid{grid-template-columns:minmax(0,1fr);gap:0}
+ .prescription-workspace .prescription-meal-head{padding:14px;gap:12px}
+ .prescription-workspace .prescription-meal-tools{justify-content:space-between;width:100%}
+ .prescription-workspace .prescription-meal-title h2{font-size:14px}
+ .prescription-workspace .prescription-meal-body{padding:14px}
+ .prescription-workspace .prescription-meal-fields{grid-template-columns:minmax(0,1fr) 102px;gap:10px}
+ .prescription-workspace .prescription-meal-fields input{padding:10px}
+ .prescription-workspace .prescription-week{grid-template-columns:repeat(4,minmax(44px,1fr));gap:6px}
+ .prescription-workspace .prescription-food{padding:10px}
+ .prescription-workspace .prescription-food-heading h3{font-size:14px}
+ .prescription-workspace .prescription-food-values{gap:8px}
+ .prescription-workspace .prescription-food-nutrients i{margin:0 1px}
+ .prescription-workspace .prescription-food-values>label{flex-basis:74px}
+ .prescription-workspace .prescription-food-tools{gap:8px}
+ .prescription-workspace .prescription-food-tools>.prescription-alternative{margin-left:0;flex:1 1 100%;justify-content:flex-start}
+ .prescription-workspace .prescription-food-tools>.btn{font-size:11px}
+ .prescription-workspace .prescription-meal-footer{display:grid}
+ .prescription-workspace .prescription-meal-footer>.btn{width:100%}
+ .prescription-workspace .prescription-library-intro{padding:18px;gap:12px}
+ .prescription-workspace .prescription-library-intro>.prescription-intro-symbol{width:40px;height:40px;flex-basis:40px;border-radius:12px}
+ .prescription-workspace .prescription-library-intro h2{font-size:17px}
+ .prescription-workspace .prescription-library-intro>.pill{margin-left:0;font-size:11px}
+ .prescription-workspace .prescription-plan-row{grid-template-columns:40px minmax(0,1fr);gap:12px;padding:18px}
+ .prescription-workspace .prescription-plan-row .avatar{width:40px;height:40px}
+ .prescription-workspace .prescription-plan-row .prescription-plan-state{grid-column:1/-1;grid-row:auto}
+ .prescription-workspace .prescription-plan-row .prescription-edit-plan{grid-column:1/-1;grid-row:auto;width:100%}
+}
+.prescription-workspace .prescription-food-nutrients>b .prescription-food-energy-value{font-size:inherit;font-weight:inherit;color:var(--text)}
+.prescription-workspace .pill.green{color:color-mix(in srgb,var(--brand) 35%,var(--text));border:1px solid var(--prescription-accent)}

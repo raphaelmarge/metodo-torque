@@ -5,3 +5,72 @@
 @media(max-width:950px){.layout:not(.patient-layout) .badge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.layout:not(.patient-layout) .badge-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){.finance-workspace .patient-row{flex-wrap:wrap;align-items:flex-start}.finance-workspace .patient-row>.grow{flex:1 1 100%;min-width:0}.finance-workspace .patient-row>.actions{width:100%;justify-content:flex-start}}
+
+/* Shared controls: readable labels, equal hit areas and stable action rows. */
+.main .btn,#modal .btn{min-width:44px;min-height:44px;line-height:1.4;text-align:center;vertical-align:middle}
+.main .btn svg,#modal .btn svg{flex-shrink:0}
+.main .actions{min-width:0;align-items:stretch;gap:10px}
+.main .actions>.btn{max-width:100%;white-space:normal;overflow-wrap:break-word}
+.topbar .icon-button{width:44px;min-width:44px;height:44px;flex-shrink:0;padding:0}
+.main .week-controls button{min-width:44px;min-height:44px}
+.main>.heading,.follow-app>.heading,.finance-workspace>.heading{flex-wrap:wrap;align-items:center}
+.main>.heading>div:first-child,.follow-app>.heading>div:first-child,.finance-workspace>.heading>div:first-child{flex:1 1 18rem;min-width:0}
+.main>.heading>.actions,.follow-app>.heading>.actions,.finance-workspace>.heading>.actions{flex:0 1 auto;max-width:100%}
+.main>.heading>.btn,.follow-app>.heading>.btn,.finance-workspace>.heading>.btn{flex-shrink:0}
+.main .card-head{flex-wrap:wrap}
+.main .card-head>h2,.main .card-head>div:not(.actions){min-width:0}
+.main .patient-row{flex-wrap:wrap}
+.main .patient-row>.grow{flex:1 1 14rem;overflow-wrap:anywhere}
+.main .patient-row>.actions{flex-shrink:0;max-width:100%}
+.main .module-card{min-width:0;min-height:170px;gap:14px}
+.main .module-card>b{line-height:1.4;overflow-wrap:break-word}
+.main .module-card>.sub{margin-top:auto;padding-top:4px}
+.main .patient-menu-grid>button{line-height:1.4}
+.main .patient-menu-grid>button>span{min-width:0;overflow-wrap:break-word}
+.large-text .main .module-card>b{font-size:17px}
+
+/* The patient record keeps its quick links in one predictable grid. */
+.follow-app>.actions:has(>.btn:nth-child(3)),
+.follow-app>.card>.actions:has(>.btn:nth-child(3)){
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:10px
+}
+.follow-app>.actions:has(>.btn:nth-child(3))>.btn,
+.follow-app>.card>.actions:has(>.btn:nth-child(3))>.btn{width:100%;height:100%;padding:12px;justify-content:flex-start;text-align:left}
+.follow-app .patient-tile{gap:12px}
+.follow-app .patient-tile>.sub{margin:0}
+.follow-app .patient-tile>.actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-top:auto;padding-top:8px;width:100%}
+.follow-app .patient-tile>.actions>.btn{width:100%;height:100%}
+.follow-timeline{align-items:center;grid-template-columns:90px minmax(0,1fr) 132px}
+.follow-timeline>.actions>.btn{width:100%}
+
+@media(max-width:800px){
+ .main>.heading,.follow-app>.heading,.finance-workspace>.heading{gap:16px;align-items:flex-start}
+ .main>.heading>div:first-child,.follow-app>.heading>div:first-child,.finance-workspace>.heading>div:first-child{flex-basis:100%}
+ .main>.heading>.actions,.follow-app>.heading>.actions,.finance-workspace>.heading>.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));width:100%;max-width:none;justify-content:stretch}
+ .main>.heading .btn,.follow-app>.heading .btn,.finance-workspace>.heading .btn{font-size:14px;padding:11px 14px}
+ .large-text .main .heading .btn{font-size:17px}
+ .follow-app .patient-row>.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,7rem),1fr));width:100%}
+ .follow-app .patient-row>.actions>.btn{width:100%}
+ .follow-timeline{grid-template-columns:minmax(0,1fr) 132px;gap:10px 16px}
+ .follow-timeline>time{grid-column:1/-1}
+ .follow-timeline>.actions{align-self:center}
+}
+@media(max-width:680px){
+ .layout:not(.patient-layout) .topbar{gap:8px;flex-wrap:wrap;padding-block:12px}
+ .layout:not(.patient-layout) .top-actions{margin-left:auto}
+ .main .module-card{min-height:155px;padding:18px;gap:12px}
+ .main>.heading>.btn,.follow-app>.heading>.btn,.finance-workspace>.heading>.btn{width:100%}
+ .main>.card>.card-head,.finance-workspace .card-head{align-items:flex-start;gap:12px}
+ .main>.card>.card-head>.btn,.finance-workspace .card-head>.btn{flex-shrink:0}
+ .main>.card>.patient-row,.main .cols>.card>.patient-row,.finance-workspace .patient-row{align-items:flex-start}
+ .main>.card>.patient-row>.grow,.main .cols>.card>.patient-row>.grow{flex:1 1 100%}
+ .main>.card>.patient-row>.actions,.main .cols>.card>.patient-row>.actions,.finance-workspace .patient-row>.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));width:100%;justify-content:stretch}
+ .main>.card>.patient-row>.actions>.btn,.main .cols>.card>.patient-row>.actions>.btn,.finance-workspace .patient-row>.actions>.btn{width:100%}
+ .patient-main .journal-entry>.card-head>.btn{flex-shrink:0}
+}
+@media(max-width:380px){
+ .follow-timeline{grid-template-columns:minmax(0,1fr)}
+ .follow-timeline>.actions{max-width:100%}
+ .follow-timeline>.actions>.btn{width:100%}
+ .main .module-card{padding:15px}
+}

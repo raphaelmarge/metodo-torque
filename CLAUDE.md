@@ -6,6 +6,19 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v864 — Prescrição moderna e alinhamento do Torque Nutri
+
+- Ações e atalhos têm alinhamento consistente, áreas de toque de 44 px e
+  distribuição responsiva. Os dois demos continuam nas rotas dedicadas.
+- Editor de prescrição organiza refeições e alimentos em cartões, mantém o
+  resumo nutricional visível e recalcula os totais sem perder o foco da porção.
+  Rascunho, revisão, publicação, histórico, dias e substituições são preservados.
+- Plano do paciente apresenta horários, porções, alternativas, acesso ao diário,
+  preparos e lista de compras com dados da versão publicada.
+- Temas, marca personalizada e fonte ampliada preservados. Regressões visuais
+  em `tests/test-nutri-visual-workspace-browser.js`; cache Nutri v13 e mt-v864.
+  Mudança de apresentação, sem migração de banco, Auth ou gateway.
+
 ## v863 — Consolidação do Torque Nutri a partir do estudo
 
 - Início, ficha 360°, diário e fila de revisão usam registros existentes, com
