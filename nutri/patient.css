@@ -322,3 +322,50 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
  .patient-layout .nav-btn{white-space:normal;overflow-wrap:anywhere}
 }
 
+/* Atendimentos: horário, paciente e próxima ação no padrão da agenda Personal. */
+.schedule-workspace{min-width:0}
+.schedule-professional .schedule-hero{padding:18px 22px;margin-bottom:18px}
+.schedule-professional .schedule-hero h2{font-size:19px}
+.schedule-professional .schedule-hero .eyebrow{margin-bottom:6px}
+.schedule-professional .schedule-hero p{margin-top:6px}
+.appointment-day-summary{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px}
+.schedule-attendances{display:flex;flex-direction:column;gap:12px}
+.schedule-event.appointment-card{position:relative;grid-template-columns:60px minmax(0,1fr) 44px;gap:12px;padding:18px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);align-items:start}
+.appointment-card.is-next{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,var(--panel))}
+.appointment-next{display:block;color:var(--brand);font-size:11px;font-weight:600;line-height:1.5;margin-bottom:8px}
+.appointment-card .schedule-event-body>b{font-size:16px}
+.appointment-card .schedule-status{padding:0;background:none;border:0;margin:6px 0;font-size:12px}
+.appointment-card.status-completed .schedule-status{color:var(--brand)}
+.appointment-card.status-cancelled .schedule-status{text-decoration:line-through}
+.appointment-card .schedule-time b{font-size:18px}
+.appointment-card .schedule-event-body p{font-size:13px;margin:6px 0 14px}
+.appointment-primary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.appointment-primary .btn{flex:1 1 auto;padding:8px 10px}
+.appointment-options{min-width:0}
+.appointment-options summary{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line);border-radius:10px;cursor:pointer;list-style:none;color:var(--text);font-size:16px;letter-spacing:2px}
+.appointment-options summary::-webkit-details-marker{display:none}
+.appointment-options summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.appointment-options[open]{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 44px}
+.appointment-options[open] summary{grid-column:2}
+.appointment-options-panel{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:14px;border-top:1px solid var(--line);margin-top:10px}
+.appointment-options-panel>b{flex-basis:100%;font-size:12px;color:var(--muted);margin-bottom:4px}
+.appointment-options-panel .btn{flex:1 1 130px}
+@media(min-width:1100px){
+ .schedule-professional .schedule-workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:22px;align-items:start}
+ .schedule-professional .schedule-calendar,.schedule-professional .schedule-day-detail{padding:22px}
+ .schedule-professional .week-view .schedule-day{min-height:90px;padding:10px 2px}
+ .schedule-professional .calendar-preview{display:none}
+ .schedule-professional .schedule-month{font-size:18px}
+}
+@media(max-width:800px){
+ .schedule-professional .schedule-hero{display:none}
+ .schedule-professional .schedule-filter{margin-bottom:14px}
+ .schedule-professional .schedule-day-detail{padding:20px 14px}
+ .schedule-professional .week-view{min-width:326px;grid-template-columns:repeat(7,minmax(44px,1fr));gap:3px}
+ .schedule-professional .week-view .schedule-day{min-width:44px;min-height:58px}
+ .schedule-professional .week-view .schedule-day b{font-size:15px}
+ .schedule-professional .schedule-day-detail h2{font-size:20px}
+ .appointment-card .schedule-time b{font-size:16px}
+ .schedule-event.appointment-card{grid-template-columns:47px minmax(0,1fr) 44px;gap:8px;padding:14px 10px}
+ .appointment-primary{margin-left:-55px;margin-right:-52px;padding-top:4px}
+}

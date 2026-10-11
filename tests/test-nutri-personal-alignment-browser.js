@@ -102,10 +102,30 @@ async function professional(){
  await p.locator('[data-calendar-new]').first().click();assert.equal(await p.locator('#appointment-time').inputValue(),'2026-10-15T09:00');assert.equal(await p.locator('#appointment-patient').inputValue(),patientId);
  await p.locator('#appointment-note').fill('Consulta fictícia de revisão');await save(p);
  assert.match(await p.locator('.schedule-day-detail').textContent(),/Consulta fictícia de revisão/);
+ await p.locator('.schedule-day-detail .appointment-options summary').click();
  await p.locator('.schedule-day-detail [data-x="appointment-edit"]').click();await p.locator('#x-time').fill('2026-10-15T10:00');await save(p);
  assert.match(await p.locator('.schedule-day-detail').textContent(),/10:00/);
- pass('professional filters patients, schedules the selected date and edits the appointment');
- for(const width of [375,1280]){await p.setViewportSize({width,height:900});await checkLayout(p,'professional-calendar-'+width);}
+ assert.equal(await p.locator('.schedule-day-detail .appointment-card.is-next').count(),1);
+ assert.equal(await p.locator('.schedule-day-detail [data-patient]').getAttribute('data-patient'),patientId);
+ assert.match(await p.locator('.appointment-day-summary').textContent(),/1 atendimento · 0 realizados/);
+ await p.locator('.schedule-day-detail .appointment-primary [data-x="appointment-complete"]').click();await save(p);
+ assert.match(await p.locator('.appointment-day-summary').textContent(),/1 atendimento · 1 realizado/);
+ assert.equal(await p.locator('.schedule-day-detail .appointment-card.is-next').count(),0);
+ pass('professional filters, schedules, edits and completes an attendance with the correct patient shortcut');
+ for(const width of [320,375,800,1280])for(const theme of ['dark','light']){
+  await p.setViewportSize({width,height:900});await p.evaluate(t=>document.body.classList.toggle('theme-light',t==='light'),theme);
+  for(const view of ['week','month']){
+   await p.locator('[data-calendar-view="'+view+'"]').click();
+   await checkLayout(p,'professional-'+view+'-'+width+'-'+theme);
+   await p.locator('.schedule-day-detail .appointment-options summary').click();
+   await checkLayout(p,'professional-actions-'+view+'-'+width+'-'+theme);
+   await p.locator('.schedule-day-detail .appointment-options summary').click();
+  }
+ }
+ await p.locator('.schedule-day-detail [data-patient]').click();
+ await p.locator('[data-edit-plan]').first().waitFor();
+ assert.match(await p.locator('.main').textContent(),/Lucas Oliveira/);
+ pass('attendance actions fit mobile and desktop in both themes and open the selected patient profile');
  clean(h);await h.context.close();
 }
 (async()=>{try{browser=await chromium.launch({headless:true});await patient();await professional();console.log(checks+'/'+checks+' Nutri Personal browser checks passed.');}finally{await browser?.close();}})().catch(e=>{console.error(e.stack);process.exitCode=1;});

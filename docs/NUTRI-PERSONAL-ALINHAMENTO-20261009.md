@@ -42,3 +42,13 @@ Pedido: reduzir repetições, acrescentar sino no canto superior direito e organ
 Validação desta revisão: 7 casos de notificações, 11 de apresentação, 9 de integração e 29 de autenticação aprovados localmente. As duas demos personalizadas iniciaram e navegaram em DOM simulado sem chamadas de rede; foto original conferida por hash. A regressão Chromium foi ampliada para sino, leitura, destino, cinco botões visíveis/alinhados e home/modal em 320/375/800 px e ambos os temas. O teste de consumo continua verificando XP pela aba Conquistas.
 
 O CI anterior (run `38006592982`, commit `b999c9b`) falhou em 1 de 205 suítes: Agenda escondida no paciente móvel. A regra responsável foi corrigida nesta revisão; a execução do novo commit permanece necessária. Não houve teste visual local nem teste em iPhone físico.
+
+## Atendimentos na agenda — 10/10/2026
+
+Pedido de Raphael: aproximar a área de atendimentos da agenda do Torque Personal. Referência: `pintaAgendaDia` em `personal.html`, com horário, nome, estado, destaque do próximo atendimento, acesso à ficha e ações secundárias recolhidas.
+
+- Consultório: calendário e atendimentos do dia lado a lado no desktop; semana compacta e lista por horário no celular. O próximo atendimento agendado do dia fica destacado. Realizados e cancelados conservam seus estados.
+- Cartões mostram horário, duração, paciente e observação. Abrir ficha usa a navegação existente do paciente correto; Realizada permanece na ação principal do próximo atendimento. Remarcar, cancelar e exportar calendário continuam no menu de ações de cada consulta.
+- Resumo do dia usa apenas as consultas carregadas, incluindo os estados de histórico, e informa quantas foram realizadas. Pedidos mantêm confirmação/recusa separadas. Nenhum horário livre é presumido.
+- Cache Nutri v11. Sem mudança de banco, Auth, RPC, XP ou regras de gravação. Versionamento geral e publicação continuam pendentes do preparo da release.
+- Verificação local: 5 checks de alinhamento e 9 de integração aprovados. Dois cenários reais em Chromium aprovados com rede externa/escritas/socket bloqueados: filtro, agendamento, remarcação, conclusão e abertura da ficha correta. Geometria da semana/mês e ações abertas conferida em 320/375/800/1280 px e temas claro/escuro. Capturas desktop e móvel inspecionadas. Sem teste físico; o CI completo deve validar o novo commit.
