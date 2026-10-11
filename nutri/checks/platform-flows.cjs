@@ -42,6 +42,11 @@ for(const [name,exports] of [
   ['patient-experience.js',['createPatientExperience']],
   ['schedule.js',['createSchedule']],
   ['notifications.js',['createPatientNotifications']],
+  ['follow-up.js',['createFollowUp','questionnairePeriod','reviewQueue']],
+  ['finance.js',['createFinance']],
+  ['prescription.js',['WEEKDAYS','mealDaysLabel','duplicateMeal','duplicateFood','movePrescriptionItem','latestAnamnesis','publicationError']],
+  ['consultation.js',['createConsultation']],
+  ['settings.js',['createSettings']],
   ['platform.js',['createPlatform']]
 ])loadModule(name,exports);
 const appSource=fs.readFileSync(path.join(root,'app.js'),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/^start\(\)\.catch\([^\n]*\);\r?$/m,'');

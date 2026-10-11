@@ -94,5 +94,6 @@ export function createSchedule(H,P){
   document.querySelectorAll('[data-calendar-reschedule]').forEach(b=>b.onclick=()=>{if(s().busy)return;const ap=s().appointments.find(x=>x.id===b.dataset.calendarReschedule&&x.patient_id===s().selected);if(!ap)return;s().page='chat';render();const input=q('#message-body');if(input){input.value=`Olá! Preciso remarcar a consulta de ${date(calendarDay(ap.start_at))}, às ${time(ap.start_at)}. Podemos combinar outro horário?`;input.focus();}});
   if(q('#schedule-patient'))q('#schedule-patient').onchange=e=>{if(s().busy)return;filter=e.target.value;redraw('#schedule-patient');};
  }
- return {view:viewPage,bind};
+ function openPatient(id,day){prepare();filter=id||'';if(validDay(day))selected=day;s().page='appointments';render();}
+ return {view:viewPage,bind,openPatient};
 }
