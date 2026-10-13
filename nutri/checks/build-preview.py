@@ -26,7 +26,7 @@ for name in ["vendor/receitas-db.js", "vendor/composicao-corporal.js", "vendor/n
     scripts.append((dist / name).read_text())
 modules = []
 for name in ["care-progress.js", "journal-model.js", "food-journal.js", "plan-recipes.js",
-             "assessment.js", "vendor/medalha-visual.js", "patient-experience.js", "platform.js", "app.js"]:
+             "skinfolds.js", "assessment.js", "vendor/medalha-visual.js", "patient-experience.js", "platform.js", "app.js"]:
     source = (dist / name).read_text()
     exports = re.findall(r"\bexport (?:async )?(?:function|const|class) (\w+)", source)
     source = re.sub(r"^import .+?;\s*$", "", source, flags=re.M)

@@ -369,3 +369,26 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
  .schedule-event.appointment-card{grid-template-columns:47px minmax(0,1fr) 44px;gap:8px;padding:14px 10px}
  .appointment-primary{margin-left:-55px;margin-right:-52px;padding-top:4px}
 }
+/* Skinfold protocols share the assessment's palette and preserve input focus. */
+.skinfold-calculator{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:20px;margin:24px 0}
+.skinfold-calculator .card-head{align-items:center;gap:12px}
+.skinfold-calculator .eyebrow{font-size:10px;display:block;margin-bottom:7px}
+.skinfold-calculator .sub{font-size:12px;line-height:1.65}
+.skinfold-calculator .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.skinfold-calculator label{min-width:0;font-size:13px;line-height:1.5}
+.skinfold-location{font-size:11px;line-height:1.5;color:var(--muted)}
+.skinfold-calculator :is(input,select,.btn){min-height:44px;font-size:16px;min-width:0;max-width:100%}
+.skinfold-extra{border-top:1px solid var(--line);margin:10px 0}
+.skinfold-extra[hidden]{display:none}
+.skinfold-extra summary{padding:14px 0;min-height:44px;font-size:12px;line-height:1.6;cursor:pointer}
+.skinfold-result{padding:18px;border-radius:12px;background:color-mix(in srgb,var(--brand) 7%,var(--panel2));border:1px solid color-mix(in srgb,var(--brand) 25%,var(--line));margin:16px 0}
+.skinfold-result>span{display:block;font-size:12px;color:var(--muted);line-height:1.6}
+.skinfold-result>strong{display:block;font-size:34px;font-weight:600;letter-spacing:-.04em;margin:10px 0}
+.skinfold-result small{font-size:18px;margin-left:4px}
+.skinfold-result p{font-size:12px;line-height:1.6;margin:8px 0;color:var(--muted)}
+.skinfold-record-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+.skinfold-record-values p{margin:0;min-width:0;overflow-wrap:anywhere}
+.skinfold-record-values span{display:block;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.skinfold-record-values strong{font-size:21px;font-weight:600}
+.skinfold-record :is(h2,p){overflow-wrap:anywhere}
+@media(max-width:560px){.skinfold-calculator{padding:16px}.skinfold-calculator .form-grid{grid-template-columns:minmax(0,1fr)}.skinfold-calculator>.btn{width:100%;font-size:14px;white-space:normal}.skinfold-record-values{grid-template-columns:minmax(0,1fr)}}
