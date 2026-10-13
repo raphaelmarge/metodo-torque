@@ -1,3 +1,4 @@
+import {SKINFOLD_PROTOCOLS,calculateSkinfolds} from './skinfolds.js';
 // Assessment records retain their original flat fields and unknown JSON properties.
 // No clinical defaults, diagnostic classifications or inferred body measurements.
 export const BODY_FIELDS = [
@@ -11,7 +12,7 @@ export const BODY_FIELDS = [
   ['circ.forearmRight','Antebraço direito','cm',1,300],['circ.forearmLeft','Antebraço esquerdo','cm',1,300],
   ['circ.thighRight','Coxa direita','cm',1,300],['circ.thighLeft','Coxa esquerda','cm',1,300],
   ['circ.calfRight','Panturrilha direita','cm',1,300],['circ.calfLeft','Panturrilha esquerda','cm',1,300],
-  ...[['triceps','Tricipital'],['biceps','Bicipital'],['subscapular','Subescapular'],['suprailiac','Suprailíaca'],['abdominal','Abdominal'],['chest','Peitoral'],['midaxillary','Axilar média'],['thigh','Coxa'],['calf','Panturrilha']].map(([k,n])=>['skinfolds.'+k,n,'mm',0,150]),
+  ...[['triceps','Tricipital'],['biceps','Bicipital'],['subscapular','Subescapular'],['suprailiac','Suprailíaca'],['abdominal','Abdominal'],['chest','Peitoral'],['midaxillary','Axilar média'],['thigh','Coxa'],['thighProximal','Coxa proximal'],['calf','Panturrilha']].map(([k,n])=>['skinfolds.'+k,n,'mm',0,150]),
   ['bia.visceral','Gordura visceral (índice)','',0,100],['bia.phaseAngle','Ângulo de fase','°',0,30],
   ['bia.protein','Proteína corporal','kg',0,100],['bia.minerals','Minerais','kg',0,30],
   ...[['armRight','Braço direito'],['armLeft','Braço esquerdo'],['trunk','Tronco'],['legRight','Perna direita'],['legLeft','Perna esquerda']].flatMap(([k,n])=>[
@@ -77,6 +78,14 @@ export function createAssessments(H,P) {
   const photos=()=>visibleRecords(state().records,state().selected,state().role,['progress_photo']);
   const fmt=(n,d=1)=>n==null?'—':n.toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});
   const date=x=>validDay(x)?dateLabel(x):'Data não informada';
+  const protocolFor=id=>SKINFOLD_PROTOCOLS.find(x=>x.id===id);
+  const fatCaption=d=>d?.fatSource==='skinfolds'&&protocolFor(d.skinfoldProtocol)?'Estimativa: '+protocolFor(d.skinfoldProtocol).label+' + Siri':'Percentual informado';
+  function skinfoldSummary(data){
+    const protocol=protocolFor(data?.skinfoldProtocol);if(!protocol)return '';
+    const result=data.skinfoldResult,valid=result?.protocol===protocol.id&&result.formulaVersion===1&&numberValue(result.fat)>0&&numberValue(result.fat)<80&&numberValue(result.sum)>0&&numberValue(result.density)>0;
+    const siteName=key=>BODY_FIELDS.find(x=>x[0]==='skinfolds.'+key)?.[1]||key;
+    return '<section class="card skinfold-record"><span class="eyebrow">Dobras cutâneas</span><h2>'+esc(protocol.label)+'</h2>'+(valid?'<div class="skinfold-record-values"><p><span>Gordura estimada · Siri</span><strong>'+fmt(result.fat)+'%</strong></p><p><span>Soma das dobras</span><strong>'+fmt(result.sum)+' mm</strong></p><p><span>Densidade corporal</span><strong>'+fmt(result.density,4)+' g/cm³</strong></p></div><p class="sub">'+esc((result.sex==='F'?'Feminino':'Masculino')+' · '+result.age+' anos · '+Object.keys(result.sites||{}).map(siteName).join(', '))+'</p><p class="sub">'+(data.fatSource==='skinfolds'?'Esta estimativa é o percentual usado na composição corporal.':'O percentual da composição corporal foi informado separadamente; esta estimativa não o substitui.')+'</p>':'<p class="sub">Medidas registradas, sem estimativa calculada por este protocolo.</p>')+'<p class="sub">Para acompanhar a evolução, confira o protocolo e as condições de medição de cada avaliação.</p></section>';
+  }
   const delta=(n,u='')=>n==null?'Sem comparação':(n>0?'+':'')+fmt(n)+(u?' '+u:'');
   const button=(label,act,id='',cls='')=>'<button class="btn '+cls+'" data-x="'+act+'" data-id="'+esc(id)+'">'+label+'</button>';
   const options=(list,id)=>list.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===id?'selected':'')+'>'+esc(date(recordDay(x))+' · '+x.title)+'</option>').join('');
@@ -113,13 +122,13 @@ export function createAssessments(H,P) {
   }
   function compositionPanel(current,previous){
     const d=current.data,c=composition(d),b=composition(previous?.data);
-    return '<div class="body-stats">'+measure('Peso',c.weight,'kg',difference(c.weight,b.weight))+measure('Gordura corporal',c.fat,'% ',difference(c.fat,b.fat),'Percentual registrado')+measure('Massa livre de gordura',c.leanMass,'kg',difference(c.leanMass,b.leanMass),'Calculada a partir de peso e gordura')+measure('Cintura',fieldValue(d,'waist'),'cm',difference(fieldValue(d,'waist'),fieldValue(previous?.data,'waist')))+'</div><div class="body-columns">'+bodyMap(d,previous?.data)+'<section class="card composition-card"><span class="eyebrow">Composição corporal</span><h2>Além do peso</h2><div class="composition-ring '+(c.fat==null?'unknown':'')+'" style="--fat:'+ (c.fat??0)+'"><div><strong>'+fmt(c.fat)+'<small>%</small></strong><span>gordura corporal</span></div></div><div class="composition-legend"><div><i></i><span>Massa de gordura <small>Calculada</small></span><b>'+fmt(c.fatMass)+' kg</b></div><div><i></i><span>Massa livre de gordura <small>Calculada; inclui água, ossos e outros tecidos</small></span><b>'+fmt(c.leanMass)+' kg</b></div><div><span>Massa muscular <small>Valor registrado</small></span><b>'+fmt(c.muscle)+' kg</b></div><div><span>Água corporal <small>Valor registrado</small></span><b>'+fmt(c.water)+' L</b></div></div></section></div>';
+    return '<div class="body-stats">'+measure('Peso',c.weight,'kg',difference(c.weight,b.weight))+measure('Gordura corporal',c.fat,'% ',difference(c.fat,b.fat),esc(fatCaption(d)))+measure('Massa livre de gordura',c.leanMass,'kg',difference(c.leanMass,b.leanMass),'Calculada a partir de peso e gordura')+measure('Cintura',fieldValue(d,'waist'),'cm',difference(fieldValue(d,'waist'),fieldValue(previous?.data,'waist')))+'</div><div class="body-columns">'+bodyMap(d,previous?.data)+'<section class="card composition-card"><span class="eyebrow">Composição corporal</span><h2>Além do peso</h2><div class="composition-ring '+(c.fat==null?'unknown':'')+'" style="--fat:'+ (c.fat??0)+'"><div><strong>'+fmt(c.fat)+'<small>%</small></strong><span>gordura corporal</span></div></div><div class="composition-legend"><div><i></i><span>Massa de gordura <small>Calculada</small></span><b>'+fmt(c.fatMass)+' kg</b></div><div><i></i><span>Massa livre de gordura <small>Calculada; inclui água, ossos e outros tecidos</small></span><b>'+fmt(c.leanMass)+' kg</b></div><div><span>Massa muscular <small>Valor registrado</small></span><b>'+fmt(c.muscle)+' kg</b></div><div><span>Água corporal <small>Valor registrado</small></span><b>'+fmt(c.water)+' L</b></div></div></section></div>';
   }
   function measurements(current,previous){
     const d=current.data;
     const group=(title,fields)=>'<section class="card"><h2>'+title+'</h2><div class="table-scroll"><table class="measure-table"><thead><tr><th>Medida</th><th>Atual</th><th>Comparação</th><th>Variação</th></tr></thead><tbody>'+fields.map(([k,n,u])=>'<tr><th scope="row">'+n+'</th><td>'+fmt(fieldValue(d,k))+' '+u+'</td><td>'+fmt(fieldValue(previous?.data,k))+' '+u+'</td><td>'+delta(difference(fieldValue(d,k),fieldValue(previous?.data,k)),u==='%'?'p.p.':u)+'</td></tr>').join('')+'</tbody></table></div></section>';
     const c=composition(d);
-    return group('Medidas e circunferências',BODY_FIELDS.filter(x=>!['skinfolds','bia','segments'].includes(x[0].split('.')[0])))+
+    return skinfoldSummary(d)+group('Medidas e circunferências',BODY_FIELDS.filter(x=>!['skinfolds','bia','segments'].includes(x[0].split('.')[0])))+
       '<div class="body-columns">'+group('Dobras cutâneas',BODY_FIELDS.filter(x=>x[0].startsWith('skinfolds.')))+group('Bioimpedância',BODY_FIELDS.filter(x=>x[0].startsWith('bia.')))+'</div>'+
       group('Composição segmentar',BODY_FIELDS.filter(x=>x[0].startsWith('segments.')))+
       '<section class="card"><h2>Índices calculados</h2><div class="measure-grid"><div><small>IMC (kg/m²)</small><b>'+fmt(c.bmi)+'</b></div><div><small>Relação cintura/quadril</small><b>'+fmt(c.whr,2)+'</b></div></div><p class="sub">IMC = peso ÷ altura². Relação cintura/quadril = cintura ÷ quadril. A interpretação faz parte do acompanhamento profissional.</p></section>';
@@ -176,14 +185,15 @@ export function createAssessments(H,P) {
   function edit(existing){
     if(!pro())throw Error('A avaliação é registrada pelo profissional.');
     const d=existing?.data||{};
-    const fields=arr=>arr.map(([k,n,u,min,max])=>input(n+(u?' ('+u+')':''),'body-'+k,fieldValue(d,k),'number','min="'+min+'" max="'+max+'" step="0.1" inputmode="decimal"')).join('');
+    const fields=arr=>arr.map(([k,n,u,min,max])=>input(n+(u?' ('+u+')':''),'body-'+k,fieldValue(d,k),'number','min="'+min+'" max="'+max+'" step="0.1" inputmode="decimal"').replace('</label>',(k.startsWith('skinfolds.')?'<small class="skinfold-location"></small>':'')+'</label>')).join('');
     const patientId=existing?.patient_id||state().selected;
     if(!pat(patientId))throw Error('Selecione um paciente antes de avaliar.');
     let body='<p class="form-context">Paciente: <b>'+esc(pat(patientId).name)+'</b></p>'+input('Título','body-title',existing?.title||'Avaliação corporal','text','required maxlength="200"')+
       '<div class="form-grid">'+input('Data da avaliação','body-day',d.day||(existing&&validDay(recordDay(existing))?recordDay(existing):today()),'date','required max="'+today()+'"')+input('Idade informada (anos)','body-age',d.age,'number','min="0" max="130" step="1"')+
       '<label>Sexo informado<select id="body-sex"><option value="">Não informado</option><option value="F" '+(d.sex==='F'?'selected':'')+'>Feminino</option><option value="M" '+(d.sex==='M'?'selected':'')+'>Masculino</option></select></label><label>Visibilidade<select id="body-visibility"><option value="patient" '+(existing?.visibility!=='private'?'selected':'')+'>Compartilhar com paciente</option><option value="private" '+(existing?.visibility==='private'?'selected':'')+'>Somente profissional</option></select></label></div>'+
-      '<div class="form-grid">'+input('Origem / aparelho','body-source',d.source,'text','maxlength="200"')+input('Método / protocolo informado','body-method',d.method,'text','maxlength="200" placeholder="Ex.: bioimpedância do aparelho"')+'</div><fieldset class="assessment-fieldset"><legend>Dados principais</legend><div class="form-grid">'+fields(BODY_FIELDS.slice(0,5))+'</div></fieldset>';
-    for(const [label,group] of [['Circunferências','circ'],['Dobras cutâneas','skinfolds'],['Bioimpedância complementar','bia'],['Composição segmentar','segments']]){
+      '<div class="form-grid">'+input('Origem / aparelho','body-source',d.source,'text','maxlength="200"')+input('Método / protocolo informado','body-method',d.method,'text','maxlength="200" placeholder="Ex.: bioimpedância do aparelho"')+'</div><fieldset class="assessment-fieldset"><legend>Dados principais</legend><label>Origem do percentual de gordura<select id="body-fat-source"><option value="informed" '+(d.fatSource!=='skinfolds'?'selected':'')+'>Valor informado / outro método</option><option value="skinfolds" '+(d.fatSource==='skinfolds'?'selected':'')+'>Calcular pelas dobras</option></select></label><input id="body-fat-informed" type="hidden" value="'+esc(d.fatSource==='skinfolds'?(d.fatInformed??''):(fieldValue(d,'fat')??''))+'"><div class="form-grid">'+fields(BODY_FIELDS.slice(0,5))+'</div></fieldset>';
+    body+='<section class="skinfold-calculator" aria-labelledby="skinfold-title"><div class="card-head"><div><span class="eyebrow">Composição corporal</span><h2 id="skinfold-title">Dobras cutâneas</h2></div><span class="pill">mm</span></div><label>Protocolo de dobras<select id="body-skinfold-protocol"><option value="">Somente registrar medidas</option>'+SKINFOLD_PROTOCOLS.map(x=>'<option value="'+x.id+'" '+(d.skinfoldProtocol===x.id?'selected':'')+'>'+esc(x.label)+'</option>').join('')+'</select></label><p class="sub" id="body-skinfold-guidance">Selecione um protocolo para conferir os pontos e a estimativa.</p><div class="form-grid skinfold-fields" id="body-skinfold-fields">'+fields(BODY_FIELDS.filter(x=>x[0].startsWith('skinfolds.')))+'</div><details id="body-skinfold-extra" class="skinfold-extra"><summary>Outras dobras · não entram neste cálculo</summary><div class="form-grid" id="body-skinfold-extra-fields"></div></details><div class="skinfold-result" id="body-skinfold-result" role="status" aria-live="polite" aria-atomic="true"></div><button type="button" class="btn" id="body-skinfold-use" disabled>Usar estimativa na avaliação</button><p class="sub">Medidas em milímetros. A estimativa só substitui o percentual informado quando você escolhe usá-la. Em Dados principais, você pode voltar ao valor informado.</p></section>';
+    for(const [label,group] of [['Circunferências','circ'],['Bioimpedância complementar','bia'],['Composição segmentar','segments']]){
       const ff=BODY_FIELDS.filter(x=>x[0].startsWith(group+'.')||group==='circ'&&['waist','hip'].includes(x[0]));
       body+='<details class="assessment-form-section" '+(group==='circ'?'open':'')+'><summary>'+label+' <span>'+ff.filter(x=>fieldValue(d,x[0])!=null).length+' preenchidos</span></summary><div class="form-grid">'+fields(ff)+'</div></details>';
     }
@@ -195,8 +205,62 @@ export function createAssessments(H,P) {
       const data={...d,day,source:value('source'),method:value('method'),text:value('text'),sex:value('sex'),schemaVersion:2};
       const age=value('age');data.age=age===''?null:numberValue(age);if(age!==''&&(data.age==null||data.age<0||data.age>130||!Number.isInteger(data.age)))throw Error('Informe uma idade válida.');
       for(const [key,name,,min,max] of BODY_FIELDS){const raw=value(key),n=raw===''?null:numberValue(raw);if(raw!==''&&(n==null||n<min||n>max))throw Error('Confira o valor de '+name+'.');saveField(data,key,n);}
+      const protocol=value('skinfold-protocol'),source=value('fat-source');
+      if(protocol&&!protocolFor(protocol))throw Error('Selecione um protocolo de dobras válido.');
+      if(!['informed','skinfolds'].includes(source))throw Error('Confira a origem do percentual de gordura.');
+      const result=protocol?calculateSkinfolds({protocol,sex:data.sex,age:data.age,skinfolds:data.skinfolds}):null;
+      data.skinfoldProtocol=protocol;data.fatSource=source;
+      data.fatInformed=source==='informed'?data.fat:numberValue(value('fat-informed'));
+      if(source==='skinfolds'){
+        if(!result?.ok)throw Error(result?.error||'Escolha um protocolo para calcular pelas dobras.');
+        data.fat=Math.round(result.fat*10)/10;
+      }
+      data.skinfoldResult=result?.ok?{protocol:result.protocol,formulaVersion:result.formulaVersion,sex:result.sex,age:result.age,sum:result.sum,density:result.density,fat:result.fat,sites:{...result.sites}}:null;
       await saveRecord(existing?.kind||'assessment',title,data,value('visibility'),existing,patientId);
     },'assessment:'+(existing?existing.id+':v'+existing.version:patientId));
+    bindSkinfoldEditor();
+  }
+  function bindSkinfoldEditor(){
+    const form=q('#modal-form');if(!form)return;
+    const el=id=>document.getElementById('body-'+id),source=el('fat-source'),fat=el('fat'),informed=el('fat-informed');
+    const select=el('skinfold-protocol'),primary=el('skinfold-fields'),extra=el('skinfold-extra-fields'),extraDetails=el('skinfold-extra'),output=el('skinfold-result'),use=el('skinfold-use');
+    const fields=BODY_FIELDS.filter(x=>x[0].startsWith('skinfolds.'));
+    let lastSource=source.value,siteLayout='';
+    const labels=new Map(fields.map(([key])=>[key.split('.')[1],el(key).closest('label')]));
+    function update(event){
+      if(source.value!==lastSource){
+        if(source.value==='skinfolds')informed.value=fat.value;
+        else fat.value=informed.value;
+        lastSource=source.value;
+      }else if(event?.target===fat&&source.value==='informed')informed.value=fat.value;
+      const protocol=protocolFor(select.value),sex=el('sex').value,sites=protocol?.sites[sex];
+      const layout=select.value+':'+sex;
+      if(layout!==siteLayout){
+        const keys=sites||fields.map(([key])=>key.split('.')[1]);
+        for(const key of keys)primary.append(labels.get(key));
+        for(const [key,label] of labels)if(!keys.includes(key))extra.append(label);
+        extraDetails.hidden=!extra.children.length;siteLayout=layout;
+        for(const [key,label] of labels){
+          const hint=label.querySelector('.skinfold-location');
+          hint.textContent=key==='thighProximal'?'Guedes: terço superior da coxa, entre prega inguinal e patela.':key==='thigh'?'Pollock: ponto médio anterior da coxa.':key==='chest'&&sites?.includes(key)?(sex==='F'?'Pollock feminino: um terço da distância entre axila anterior e mamilo.':'Pollock masculino: metade da distância entre axila anterior e mamilo.'):'';
+          hint.hidden=!hint.textContent;
+        }
+      }
+      const range=protocol?.ageRanges[sex];
+      el('skinfold-guidance').textContent=!protocol?'Selecione um protocolo para conferir os pontos e a estimativa.':
+        'Informe sexo e idade nos dados da avaliação. '+(range?'Faixa do estudo: '+range[0]+' a '+range[1]+' anos. ':'')+(protocol.id==='guedes'?'Guedes usa a coxa proximal; Pollock usa o ponto médio da coxa. Os dois locais têm campos separados.':'Pollock usa a dobra anterior no ponto médio da coxa.')+(protocol.id!=='guedes'&&sex==='F'&&numberValue(el('age').value)>40?' '+protocol.scopeNote:'');
+      const skinfolds=Object.fromEntries(fields.map(([key])=>[key.split('.')[1],numberValue(el(key).value)]));
+      const result=protocol?calculateSkinfolds({protocol:protocol.id,sex,age:numberValue(el('age').value),skinfolds}):null;
+      const calculated=source.value==='skinfolds';fat.readOnly=calculated;
+      if(calculated)fat.value=result?.ok?String(Math.round(result.fat*10)/10):'';
+      output.innerHTML=result?.ok?'<span>Estimativa de gordura · '+esc(protocol.label)+' + Siri</span><strong>'+fmt(result.fat)+'<small>%</small></strong><p>Soma: '+fmt(result.sum)+' mm · Densidade: '+fmt(result.density,4)+' g/cm³</p><p>'+(calculated?'Estimativa em uso. Alterações nas medidas atualizam o percentual.':'Prévia: o percentual informado permanece preservado.')+'</p>':'<p>'+esc(result?.error||'Escolha um dos três protocolos para calcular o percentual estimado.')+'</p>';
+      use.disabled=!result?.ok||calculated;use.textContent=calculated?'Estimativa selecionada':'Usar estimativa na avaliação';
+    }
+    form.addEventListener('input',event=>{
+      if(['body-fat','body-fat-source','body-skinfold-protocol','body-sex','body-age'].includes(event.target.id)||event.target.id?.startsWith('body-skinfolds.'))update(event);
+    },true);
+    use.onclick=()=>{source.value='skinfolds';source.dispatchEvent(new Event('input',{bubbles:true}));};
+    update();
   }
   function editPhoto(existing){
     if(existing&&!pro()&&existing.created_by!==(state().demo?'patient-demo':state().user?.id))throw Error('Você só pode editar suas próprias fotos.');
@@ -227,7 +291,7 @@ export function createAssessments(H,P) {
     const rows=BODY_FIELDS.filter(([k])=>fieldValue(data,k)!=null||fieldValue(prev?.data,k)!=null);
     const win=window.open('','_blank');if(!win)throw Error('Permita abrir a janela de impressão.');
     const c=composition(data);
-    const html='<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório de avaliação corporal</title><style>body{font:14px system-ui;color:#20252b;max-width:860px;padding:30px;margin:auto}h1{font-size:26px}h2{margin-top:24px}table{border-collapse:collapse;width:100%}th,td{padding:9px 6px;text-align:left;border-bottom:1px solid #ddd}thead{display:table-header-group}tr{break-inside:avoid}p{line-height:1.6;white-space:pre-wrap}.muted{color:#53606b}button{padding:10px}@media print{button{display:none}body{padding:0}@page{margin:18mm}}</style><button onclick="window.print()">Imprimir / salvar PDF</button><h1>'+esc(state().clinic.name)+'</h1><h2>'+esc(record.title)+'</h2><p>'+esc(pat(record.patient_id)?.name)+' · '+esc(date(recordDay(record)))+'\nIdade informada: '+esc(numberValue(data.age)==null?'Não informada':data.age+' anos')+' · Sexo informado: '+esc(data.sex==='F'?'Feminino':data.sex==='M'?'Masculino':'Não informado')+'\nOrigem: '+esc(data.source||'Não informada')+'\nMétodo: '+esc(data.method||'Não informado')+'\nComparação: '+esc(prev?date(recordDay(prev))+' · '+prev.title+' · Origem: '+(prev.data.source||'Não informada')+' · Método: '+(prev.data.method||'Não informado'):'Primeira avaliação')+'</p><table><thead><tr><th>Medida</th><th>Atual</th><th>Anterior</th><th>Variação</th></tr></thead><tbody>'+rows.map(([k,n,u])=>'<tr><th>'+n+'</th><td>'+fmt(fieldValue(data,k))+' '+u+'</td><td>'+fmt(fieldValue(prev?.data,k))+' '+u+'</td><td>'+delta(difference(fieldValue(data,k),fieldValue(prev?.data,k)),u==='%'?'p.p.':u)+'</td></tr>').join('')+'</tbody></table><h2>Valores calculados</h2><p>IMC: '+fmt(c.bmi)+' kg/m² · Relação cintura/quadril: '+fmt(c.whr,2)+'\nMassa de gordura: '+fmt(c.fatMass)+' kg · Massa livre de gordura: '+fmt(c.leanMass)+' kg</p><p class="muted">As massas calculadas usam o peso e o percentual de gordura registrados. Massa livre de gordura inclui água, ossos e outros tecidos; não equivale à massa muscular. Campos não informados são exibidos como —.</p><h2>Observações do profissional</h2><p>'+esc(data.text||'Nenhuma observação registrada.')+'</p><p>'+esc(state().clinic.professional_name)+' · '+esc(state().clinic.crn)+'</p><p class="muted">Versão '+esc(record.version)+' · '+esc(record.visibility==='private'?'Registro privado do profissional':'Compartilhado com o paciente')+'</p></html>';
+    const html='<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório de avaliação corporal</title><style>body{font:14px system-ui;color:#20252b;max-width:860px;padding:30px;margin:auto}h1{font-size:26px}h2{margin-top:24px}table{border-collapse:collapse;width:100%}th,td{padding:9px 6px;text-align:left;border-bottom:1px solid #ddd}thead{display:table-header-group}tr{break-inside:avoid}p{line-height:1.6;white-space:pre-wrap}.muted{color:#53606b}button{padding:10px}@media print{button{display:none}body{padding:0}@page{margin:18mm}}</style><button onclick="window.print()">Imprimir / salvar PDF</button><h1>'+esc(state().clinic.name)+'</h1><h2>'+esc(record.title)+'</h2><p>'+esc(pat(record.patient_id)?.name)+' · '+esc(date(recordDay(record)))+'\nIdade informada: '+esc(numberValue(data.age)==null?'Não informada':data.age+' anos')+' · Sexo informado: '+esc(data.sex==='F'?'Feminino':data.sex==='M'?'Masculino':'Não informado')+'\nOrigem: '+esc(data.source||'Não informada')+'\nMétodo: '+esc(data.method||'Não informado')+'\nPercentual de gordura: '+esc(fatCaption(data))+'\nComparação: '+esc(prev?date(recordDay(prev))+' · '+prev.title+' · Origem: '+(prev.data.source||'Não informada')+' · Método: '+(prev.data.method||'Não informado'):'Primeira avaliação')+'</p>'+skinfoldSummary(data)+'<table><thead><tr><th>Medida</th><th>Atual</th><th>Anterior</th><th>Variação</th></tr></thead><tbody>'+rows.map(([k,n,u])=>'<tr><th>'+n+'</th><td>'+fmt(fieldValue(data,k))+' '+u+'</td><td>'+fmt(fieldValue(prev?.data,k))+' '+u+'</td><td>'+delta(difference(fieldValue(data,k),fieldValue(prev?.data,k)),u==='%'?'p.p.':u)+'</td></tr>').join('')+'</tbody></table><h2>Valores calculados</h2><p>IMC: '+fmt(c.bmi)+' kg/m² · Relação cintura/quadril: '+fmt(c.whr,2)+'\nMassa de gordura: '+fmt(c.fatMass)+' kg · Massa livre de gordura: '+fmt(c.leanMass)+' kg</p><p class="muted">As massas calculadas usam o peso e o percentual de gordura registrados. Massa livre de gordura inclui água, ossos e outros tecidos; não equivale à massa muscular. Campos não informados são exibidos como —.</p><h2>Observações do profissional</h2><p>'+esc(data.text||'Nenhuma observação registrada.')+'</p><p>'+esc(state().clinic.professional_name)+' · '+esc(state().clinic.crn)+'</p><p class="muted">Versão '+esc(record.version)+' · '+esc(record.visibility==='private'?'Registro privado do profissional':'Compartilhado com o paciente')+'</p></html>';
     win.document.write(html);win.document.close();
   }
   function bind(){

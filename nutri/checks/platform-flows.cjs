@@ -33,6 +33,7 @@ function loadModule(name,exports){
 // Preserve module-local helpers: care/journal/assessment intentionally reuse
 // private names such as text, timestamp and validDay.
 for(const [name,exports] of [
+  ['skinfolds.js',['SKINFOLD_PROTOCOLS','calculateSkinfolds']],
   ['assessment.js',['validDay','safePhoto','visibleRecords','recordDay','composition','numberValue','fieldValue','createAssessments']],
   ['vendor/medalha-visual.js',['runtimeMedalhaVisual']],
   ['care-progress.js',['careSummary','mealPresence','nextMeal','CARE_POLICY_START']],

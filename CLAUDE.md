@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v865 — Protocolos de dobras na avaliação da nutri
+
+- Avaliações incluem Pollock 3, Pollock 7 e Guedes 3, com pontos por sexo,
+  prévia por densidade + Siri e aplicação explícita ao percentual da avaliação.
+- Sexo e idade nunca são presumidos. O cálculo automático respeita as faixas
+  documentadas; registro manual continua disponível para medidas parciais.
+- Guedes feminino usa `thighProximal`, separada da coxa de Pollock. Percentual
+  informado pode ser restaurado; protocolo e entradas do cálculo ficam no
+  snapshot da avaliação e aparecem nas medidas e no relatório/PDF.
+- Motor puro `nutri/skinfolds.js`, cache Nutri v14, mt-v865. Referências,
+  decisões de compatibilidade e validação: `docs/releases/mt-v865-protocolos-dobras-nutri.md`.
+
 ## v864 — Prescrição moderna e alinhamento do Torque Nutri
 
 - Ações e atalhos têm alinhamento consistente, áreas de toque de 44 px e

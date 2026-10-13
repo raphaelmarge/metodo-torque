@@ -6,7 +6,7 @@ import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const moduleURL = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
 const read = name => fs.readFileSync(new URL(name, root), 'utf8');
-const assessmentURL = moduleURL(read('assessment.js'));
+const assessmentURL = moduleURL(read('assessment.js').replace("'./skinfolds.js'", JSON.stringify(moduleURL(read('skinfolds.js')))));
 const medalURL = moduleURL(read('vendor/medalha-visual.js'));
 const progressURL = moduleURL(read('care-progress.js'));
 const patientSource = read('patient-experience.js')
