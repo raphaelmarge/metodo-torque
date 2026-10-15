@@ -88,3 +88,26 @@ bloqueia navegação `file://`; um servidor local permite abri-lo.
 Para explorar o app servido normalmente, use `python3 -m http.server 8765` e
 acesse `/nutri/demo-nutricionista.html` ou `/nutri/demo-paciente.html`. Nenhuma
 prévia foi publicada em produção.
+
+## Correção de compatibilidade — quantidades legadas
+
+A revisão do commit `f7080cd` reproduziu que `Number("1,5")` ocultava a porção
+no app/PDF e excluía o alimento das compras. `shopping.js` agora compartilha uma
+conversão entre esses dois caminhos com a mesma regra de vírgula decimal de
+`MT_NUTRICAO.normalizaItem`, sem exigir nutrientes para calcular compras nem
+reescrever o plano. Ausência, vazio, booleanos, texto inválido, valores não
+finitos, zero e negativos continuam sem porção quantificada.
+
+Regressões cobrem principal e alternativa, vírgula/ponto decimal, espaços,
+preservação dos dados originais e as saídas de app, impressão/PDF e compras.
+O teste de cálculo falhou com o código anterior e passou após a correção.
+
+Validação local desta correção: 78 checks, em `test-nutri-shopping.js` (12),
+`test-nutri-shopping-browser.js` (13), `test-nutri-prescription.js` (6),
+`test-nutri-prescription-browser.js` (6), `nutri/checks/basepath-assets.cjs` (18)
+e `nutri/checks/plan-recipes.mjs` (23), além de `git diff --check` e sintaxe JS.
+Node 24.19.0, Playwright 1.63.0 e Chromium de sistema via adaptador local em
+`TORQUE_PLAYWRIGHT`; o download do Chromium empacotado recebeu HTTP 403.
+PDF validado pelo conteúdo da janela de impressão. A suíte global fica a cargo
+do CI do commit enviado; produção e impressão física não foram validadas.
+O cache v15 deste PR permanece, pois a entrega ainda não foi publicada.

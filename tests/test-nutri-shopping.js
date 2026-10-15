@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const {pathToFileURL}=require('node:url');
 const path=require('node:path');
+require('../nutri/vendor/nutricao-core.js');
 (async()=>{
  const {shoppingList,shoppingDates,portionLabel}=await import(pathToFileURL(path.join(__dirname,'../nutri/shopping.js')));
  let checks=0;const test=(name,fn)=>{fn();checks++;console.log('PASS '+name);};
@@ -18,5 +19,34 @@ const path=require('node:path');
  test('invalid selection never silently buys a different food',()=>{const r=shoppingList(plan,'2026-10-12','2026-10-12',{'0:0':99});assert.equal(r.items.length,1);assert(r.warnings.some(x=>x.includes('não está mais prescrita')));});
  test('recipes warn and never expand unstructured ingredients',()=>{const p={refeicoes:[{receitaId:'recipe',itens:[rice]}],receitas:[{id:'recipe',ing:['sal a gosto']}]};const r=shoppingList(p,'2026-10-12','2026-10-12');assert.equal(r.items.length,1);assert(r.warnings.some(x=>x.includes('manualmente')));});
  test('unknown portions stay unknown and source/manual fields remain untouched',()=>{const p={refeicoes:[{itens:[{nome:'Manual',qtd:1}]}]};const r=shoppingList(p,'2026-10-12','2026-10-12');assert.equal(r.items.length,0);assert.equal(r.warnings.length,1);assert.match(portionLabel(p.refeicoes[0].itens[0]),/não informada/);assert.deepEqual(plan,before);});
+ test('legacy decimal strings match normalizaItem for main and alternative without mutation',()=>{
+  for(const qtd of ['1,5',' 1,5 ','1.5',1.5]){
+   const alternative={...rice,id:'alt',nome:'Batata cozida',porcao:'1 unidade',qtd,substituicoes:[]};
+   const main={...rice,qtd,substituicoes:[alternative]};
+   const p={refeicoes:[{dias:[1,3,5],itens:[main]}]},snapshot=structuredClone(p);
+   for(const [item,choices] of [[main,{}],[alternative,{'0:0':0}]]){
+    const normalized=globalThis.MT_NUTRICAO.normalizaItem(item);
+    assert.equal(normalized.qtd,1.5);
+    assert.equal(portionLabel(item),portionLabel(normalized));
+    const result=shoppingList(p,'2026-10-12','2026-10-18',choices);
+    assert.deepEqual(result.items,[{nome:item.nome,porcao:item.porcao,qtd:4.5}]);
+    assert.deepEqual(result.warnings,[]);
+   }
+   assert.deepEqual(p,snapshot);
+  }
+ });
+ test('invalid and missing quantities stay unknown for main and alternative',()=>{
+  for(const qtd of [undefined,null,'','   ',true,false,NaN,Infinity,-Infinity,0,-1,'0','-1,5','abc','1,5 g','1,2,3','1.2.3']){
+   const item={...rice,qtd,substituicoes:[]};
+   assert.equal(globalThis.MT_NUTRICAO.normalizaItem(item),null);
+   assert.match(portionLabel(item),/Porção não informada/);
+   for(const [main,choices] of [[item,{}],[{...rice,substituicoes:[item]},{'0:0':0}]]){
+    const result=shoppingList({refeicoes:[{itens:[main]}]},'2026-10-12','2026-10-18',choices);
+    assert.deepEqual(result.items,[]);
+    assert.equal(result.warnings.length,1);
+    assert.match(result.warnings[0],/Porção incompleta/);
+   }
+  }
+ });
  console.log(`${checks} shopping checks passed`);
 })().catch(e=>{console.error(e);process.exitCode=1;});

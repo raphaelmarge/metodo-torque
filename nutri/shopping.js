@@ -1,7 +1,13 @@
 // Conservative shopping arithmetic: preserve the prescribed portion verbatim.
 // No equivalence, ingredient expansion or raw/cooked conversion is inferred.
+// Match the decimal-comma parsing in MT_NUTRICAO.normalizaItem without
+// defaulting absent quantities or requiring unrelated nutrient fields.
+function portionQuantity(value) {
+  if (value == null || typeof value === 'boolean' || !String(value).trim()) return NaN;
+  return Number(String(value).trim().replace(',', '.'));
+}
 export function portionLabel(item) {
-  const quantity = Number(item?.qtd);
+  const quantity = portionQuantity(item?.qtd);
   return Number.isFinite(quantity) && quantity > 0 && String(item?.porcao || '').trim()
     ? `${quantity.toLocaleString('pt-BR', {maximumFractionDigits: 6})} × ${item.porcao}`
     : 'Porção não informada — confira com sua nutri';
@@ -32,7 +38,7 @@ export function shoppingList(plan, start, end, choices = {}) {
         const item = selected === -1 ? main : Number.isInteger(selected) ? main.substituicoes?.[selected] : null;
         if (!item) { warnings.add('Uma opção escolhida não está mais prescrita. Selecione novamente.'); return; }
         if (item.receitaId) warnings.add('Preparos vinculados não são desmembrados em ingredientes. Confira a receita manualmente.');
-        const qtd = Number(item.qtd);
+        const qtd = portionQuantity(item.qtd);
         if (!item.nome || !item.porcao?.trim() || !Number.isFinite(qtd) || qtd <= 0) {
           warnings.add(`Porção incompleta de ${item.nome || 'alimento'}: confira com sua nutri antes de comprar.`); return;
         }
