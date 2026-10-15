@@ -40,6 +40,7 @@ for(const [name,exports] of [
   ['journal-model.js',['resolveJournalPlan','buildJournalItems','findJournalForMeal']],
   ['food-journal.js',['createFoodJournal']],
   ['plan-recipes.js',['createPlanRecipes']],
+  ['shopping.js',['portionLabel','shoppingDates','shoppingList']],
   ['patient-experience.js',['createPatientExperience']],
   ['schedule.js',['createSchedule']],
   ['notifications.js',['createPatientNotifications']],

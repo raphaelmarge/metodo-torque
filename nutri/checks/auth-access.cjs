@@ -21,6 +21,7 @@ const appPath = appCandidates.find(candidate => fs.existsSync(candidate) && fs.s
 assert(appPath, 'Application source not found in the configured static directory, dist/, or app.js beside checks/.');
 const original = fs.readFileSync(appPath, 'utf8');
 const source = original
+  .replace(/^import \{portionLabel\} from '\.\/shopping\.js';\r?\n/, '')
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/, '')
   .replace(/^import \{careSummary,mealPresence\} from '\.\/care-progress\.js';\r?\n/m, '')
   .replace(/^import \{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError\} from '\.\/prescription\.js';\r?\n/m, '')
@@ -181,6 +182,8 @@ function harness(options = {}) {
   assert(!/^import /m.test(careSource), 'Unexpected care module dependency: update the auth harness explicitly.');
   vm.runInContext('(()=>{' + careSource + '\nObject.assign(globalThis,{careSummary,mealPresence});})()', context,
     {filename: 'auth-care-progress.js'});
+  const shoppingSource=fs.readFileSync(path.join(path.dirname(appPath),'shopping.js'),'utf8').replace(/\bexport (?=(?:function|const) )/g,'');
+  vm.runInContext('(()=>{'+shoppingSource+'\nObject.assign(globalThis,{portionLabel});})()',context,{filename:'auth-shopping.js'});
   const prescriptionSource=fs.readFileSync(path.join(path.dirname(appPath),'prescription.js'),'utf8').replace(/\bexport (?=(?:function|const) )/g,'');
   vm.runInContext('(()=>{'+prescriptionSource+'\nObject.assign(globalThis,{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError});})()',context,{filename:'auth-prescription.js'});
   vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,render,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});

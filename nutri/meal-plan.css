@@ -144,3 +144,11 @@
  .large-text .plan-meal-head{flex-wrap:wrap}.large-text .plan-meal-title{flex-basis:calc(100% - 45px)}.large-text .plan-meal-energy{margin-left:42px}
  .large-text .plan-section-heading{flex-wrap:wrap}.large-text .plan-nutrient dt{font-size:15px}
 }
+
+.shopping-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.plan-shopping label{display:block;margin:12px 0;min-width:0}
+.plan-shopping input,.plan-shopping select{width:100%;min-width:0;max-width:100%;min-height:44px;font-size:16px}
+.plan-shopping li{gap:12px;overflow-wrap:anywhere}
+.plan-shopping li>span{min-width:0}
+.plan-shopping .notice{white-space:normal}
+@media(max-width:360px){.shopping-dates{grid-template-columns:1fr}}

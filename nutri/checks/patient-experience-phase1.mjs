@@ -10,6 +10,7 @@ const assessmentURL = moduleURL(read('assessment.js').replace("'./skinfolds.js'"
 const medalURL = moduleURL(read('vendor/medalha-visual.js'));
 const progressURL = moduleURL(read('care-progress.js'));
 const patientSource = read('patient-experience.js')
+  .replace("'./shopping.js'", JSON.stringify(moduleURL(read('shopping.js'))))
   .replace("'./assessment.js'", JSON.stringify(assessmentURL))
   .replace("'./vendor/medalha-visual.js'", JSON.stringify(medalURL))
   .replace("'./care-progress.js'", JSON.stringify(progressURL));

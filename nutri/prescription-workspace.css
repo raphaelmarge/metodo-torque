@@ -229,3 +229,9 @@
 }
 .prescription-workspace .prescription-food-nutrients>b .prescription-food-energy-value{font-size:inherit;font-weight:inherit;color:var(--text)}
 .prescription-workspace .pill.green{color:color-mix(in srgb,var(--brand) 35%,var(--text));border:1px solid var(--prescription-accent)}
+
+.substitution-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.substitution-row>span{min-width:0;overflow-wrap:anywhere}
+.substitution-row small{display:block;margin-top:4px}
+.substitution-row .actions{flex-shrink:0;flex-wrap:wrap}
+@media(max-width:600px){.substitution-row{align-items:flex-start;flex-direction:column}.substitution-row .actions{width:100%}}
