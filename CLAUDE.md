@@ -6,6 +6,23 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v866 — Acompanhamento do Personal e do aluno
+
+- Vídeos privados de execução com respostas por texto, desenho e áudio; versões
+  curta/casa/viagem aprovadas pelo professor; progressão por série com evidências.
+- Jornadas assistidas na Central Pro, compras por dia com despensa e substituições
+  aprovadas, relato de dificuldade e comparação das etapas da corrida com TCX.
+- O builder permanece canônico; demos regeneradas, caches mt-v866, navegação,
+  histórico, lista rápida de compras e fichas originais preservados.
+- Saúde nativa tem adaptador e fontes do plugin, mas depende de compilação e
+  homologação. O usuário ainda não possui as contas de desenvolvedor necessárias.
+  Não anunciar Apple/Google/Strava/Garmin como conectados no navegador.
+- Vídeos exigem três migrations e duas Edge Functions, com fila privada de
+  expurgo e segredo gerado no Vault. Consultar a sequência de ativação em
+  `docs/releases/mt-v866-tecnica-expurgo.md`; não inferir implantação pelo Git.
+- Escopo, dados e limites: `docs/releases/mt-v866-acompanhamento.md`. Conferir
+  o PR e a versão servida antes de declarar a release publicada.
+
 ## v865 — Protocolos de dobras na avaliação da nutri
 
 - Avaliações incluem Pollock 3, Pollock 7 e Guedes 3, com pontos por sexo,

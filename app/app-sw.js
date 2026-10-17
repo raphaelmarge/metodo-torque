@@ -14,7 +14,7 @@
  * então no iPhone o app-sw nunca reinstalava e a CACHE ficava congelada no nome
  * antigo (o activate nunca rodava de novo). tests/test-versao.js confere que
  * este número bate com o do assets/versao.js e o do sw.js. */
-var VERSION = "mt-v865";
+var VERSION = "mt-v866";
 var CACHE = "mt-app-" + VERSION;
 /* Motor do mapa 3D (MapLibre, ~1 MB), carregado sob demanda quando o aluno
  * abre "Ver o trajeto em 3D".
@@ -30,6 +30,13 @@ var MAPA = "mt-mapa-v1";
 var ESQUELETO = [
   "./",
   "index.html",
+  "evolucao-style.js",
+  "tecnica-video.js",
+  "treino-evolucao.js",
+  "nutricao-semana.js",
+  "../assets/corrida-analise.js",
+  "corrida-export.js",
+  "saude-conexoes.js",
   "aluno-builder.js",
   "medalhas-core.js", "metas-personalizadas.js", "metas-aluno.js", "conquistas-avancadas.js",
   "aluno-skin.js",     // v776: faltava — o app abria offline sem a cara do redesenho

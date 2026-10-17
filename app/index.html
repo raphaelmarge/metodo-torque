@@ -27,6 +27,13 @@
 <script src="metas-personalizadas.js"></script>
 <script src="metas-aluno.js"></script>
 <script src="conquistas-avancadas.js"></script>
+<script src="evolucao-style.js"></script>
+<script src="tecnica-video.js"></script>
+<script src="treino-evolucao.js"></script>
+<script src="nutricao-semana.js"></script>
+<script src="../assets/corrida-analise.js"></script>
+<script src="corrida-export.js"></script>
+<script src="saude-conexoes.js"></script>
 <script src="aluno-builder.js"></script>
 <!-- e o do paciente do NUTRI também (o pacote diz qual é pelo dados.tipo) -->
 <script src="nutri-skin.js"></script>
@@ -127,7 +134,7 @@
     if (!d) return [];
     var f = [];
     if (d.tipo === "nutri") { if (!self.MT_NUTRI_SKIN) f.push("nutri-skin.js"); if (!self.MT_APP_NUTRI) f.push("nutri-builder.js"); }
-    else { if (d.identidadeApp && !self.MT_IDENTIDADE_MARCA) f.push("../assets/identidade-marca.js"); if (!self.MT_MEDALHAS) f.push("medalhas-core.js"); if (d.metasPersonalizadasApp && d.metasPersonalizadasApp.length) { if (!self.MT_METAS_PESSOAIS) f.push("metas-personalizadas.js"); if (!self.MT_METAS_ALUNO) f.push("metas-aluno.js"); } if (d.conquistasAvancadasApp && !self.MT_CONQUISTAS_AVANCADAS) f.push("conquistas-avancadas.js"); if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
+    else { if (!self.MT_EVOLUCAO_STYLE) f.push("evolucao-style.js"); if (!self.MT_TECNICA_VIDEO) f.push("tecnica-video.js"); if (!self.MT_TREINO_VARIANTES) f.push("treino-evolucao.js"); if (!self.MT_NUTRICAO_SEMANA) f.push("nutricao-semana.js"); if (!self.MT_CORRIDA_ANALISE) f.push("../assets/corrida-analise.js"); if (!self.MT_CORRIDA_EXPORT) f.push("corrida-export.js"); if (!self.MT_SAUDE_CONEXOES) f.push("saude-conexoes.js"); if (d.identidadeApp && !self.MT_IDENTIDADE_MARCA) f.push("../assets/identidade-marca.js"); if (!self.MT_MEDALHAS) f.push("medalhas-core.js"); if (d.metasPersonalizadasApp && d.metasPersonalizadasApp.length) { if (!self.MT_METAS_PESSOAIS) f.push("metas-personalizadas.js"); if (!self.MT_METAS_ALUNO) f.push("metas-aluno.js"); } if (d.conquistasAvancadasApp && !self.MT_CONQUISTAS_AVANCADAS) f.push("conquistas-avancadas.js"); if (!self.MT_APP_SKIN) f.push("aluno-skin.js"); if ((d.nutricaoApp || guardado(chavesNutri(t).estado)) && !self.MT_NUTRICAO) f.push("../assets/nutricao-core.js"); if (d.onboardingApp && !self.MT_ONBOARDING_CONSULTORIA) f.push("../assets/onboarding-consultoria.js"); if (!self.MT_APP_ALUNO) f.push("aluno-builder.js"); }
     return f;
   }
   function construtorPresente(pac) {

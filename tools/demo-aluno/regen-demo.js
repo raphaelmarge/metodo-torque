@@ -252,6 +252,29 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         "0": [{ tp: "cardio", id: "dmc3" }],
       } },
     };
+    // Alternativas fictícias aprovadas pela mesma API do editor. Nenhuma ficha
+    // original é substituída; rascunho/versão/snapshot seguem o contrato real.
+    if (!window.MT_TREINO_EVOLUCAO) throw new Error("Editor de versões do treino ausente no gerador da demo.");
+    const TE = window.MT_TREINO_EVOLUCAO;
+    const variantStamp = new Date().toISOString();
+    let fichaA = st.treinosV2.demoAlx.fichas[0];
+    const curto = {
+      tipo: "curto", titulo: "Treino curto · 20 minutos", minutos: 20,
+      itens: [JSON.parse(JSON.stringify(fichaA.itens[0])), JSON.parse(JSON.stringify(fichaA.itens[3]))], p2: null
+    };
+    curto.itens[1].series = 2;
+    curto.itens[1].obs = "Exemplo de versão curta aprovada pelo personal na demonstração.";
+    fichaA = TE.approve(TE.saveDraft(fichaA, curto, st.exercicios, variantStamp, "demo-variante-curto"), "demo-variante-curto", variantStamp);
+    const casa = {
+      tipo: "casa", titulo: "Em casa · com halteres", minutos: 25, p2: null,
+      itens: [
+        { exId: mk("Supino com halteres no chão", "Peito", "Deite no chão e faça o movimento com controle; pare se sentir dor."), series: 3, reps: "10", carga: null, descanso: 60 },
+        { exId: fichaA.itens[4].exId, series: 3, reps: "12", carga: null, descanso: 45 },
+        { exId: mk("Flexão de braços", "Peito", "Mantenha o tronco alinhado e use a amplitude orientada pelo seu personal."), series: 2, reps: "8", carga: 0, descanso: 60 }
+      ]
+    };
+    fichaA = TE.approve(TE.saveDraft(fichaA, casa, st.exercicios, variantStamp, "demo-variante-casa"), "demo-variante-casa", variantStamp);
+    st.treinosV2.demoAlx.fichas[0] = fichaA;
     st.nutricaoV1 = { planos: { demoAlx: NUTRICAO_DEMO }, favoritos: [], alimentos: [], receitas: NUTRICAO_DEMO.receitas || [], modelos: [], historico: {} };
     window.MTStore.write("ptStudio", st);
     const stamp = new Date().toISOString();

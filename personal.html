@@ -3830,7 +3830,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         <img id="pfFotoImg" alt="" hidden><span id="pfIniciais">?</span>
       </button><input type="file" id="pfFotoInput" accept="image/*" hidden>
       <div class="pfid"><h2 id="pfTitulo">Perfil</h2><span id="pfDesde" class="muted"></span><div class="pfchips" id="pfChips"></div></div>
-      <div class="pfacoes pfp-actions"><button type="button" class="dbt sec" id="pfIrChat" title="abrir o chat com o aluno" aria-label="abrir o chat com o aluno">Chat</button><button type="button" class="dbt sec" id="pfIrAgenda" title="marcar sessão" aria-label="marcar sessão">Agendar</button></div>
+      <div class="pfacoes pfp-actions"><button type="button" class="dbt sec" id="pfIrChat" title="abrir o chat com o aluno" aria-label="abrir o chat com o aluno">Chat</button><button type="button" class="dbt sec" id="pfTecnicaVideo">Correção de execução</button><button type="button" class="dbt sec" id="pfIrAgenda" title="marcar sessão" aria-label="marcar sessão">Agendar</button></div>
     </div>
     <div id="pfAcoes" class="pfp-share" hidden><button class="btn sec mini" id="pfRelMes" title="relatório do mês do aluno — imprima ou salve em PDF pra mandar no WhatsApp">📄 Relatório do mês</button>
 <button class="btn sec mini" id="pfCardIG" title="gera uma imagem pronta pra postar no Instagram com o resultado do mês do aluno (com a sua cor e o seu logo)">🖼 Card pra postar</button>
@@ -4002,6 +4002,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="app/conquistas-avancadas.js"></script>
 <script src="assets/personal-conquistas-avancadas.js"></script>
 <script src="app/medalhas-catalogo.js"></script>
+<script src="app/evolucao-style.js"></script>
+<script src="app/tecnica-video.js"></script>
+<script src="app/treino-evolucao.js"></script>
+<script src="app/nutricao-semana.js"></script>
+<script src="assets/corrida-analise.js"></script>
+<script src="app/corrida-export.js"></script>
+<script src="app/saude-conexoes.js"></script>
+<script src="assets/personal-treino-evolucao.js"></script>
+<script src="assets/jornadas-core.js"></script>
+<script src="assets/personal-jornadas.js"></script>
+<script src="assets/personal-tecnica-video.js"></script>
+<link rel="stylesheet" href="app/tecnica-video.css">
+<link rel="stylesheet" href="assets/personal-treino-evolucao.css">
+<link rel="stylesheet" href="assets/personal-jornadas.css">
 <script src="app/aluno-builder.js"></script>
 <link rel="stylesheet" href="assets/personal-medalhas.css">
 <script src="assets/personal-medalhas.js"></script>
@@ -7462,7 +7476,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               (+x.k ? String((+x.k).toFixed(2)).replace(".", ",") + " km · " : "") + fmtSegP(x.s) +
               (x.p ? " · pace " + esc(String(x.p).slice(0, 8)) + " /km" : "") +
               (bpmOk(x.fc) ? " · <b>" + Math.round(+x.fc) + " bpm</b>" + (bpmOk(x.fcx) ? " (máx " + Math.round(+x.fcx) + ")" : "") : "") +
-              " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
+              " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span>" +
+              (window.MT_CORRIDA_ANALISE ? "<details><summary style='min-height:44px;display:flex;align-items:center;cursor:pointer'>Comparar etapas</summary>" + MT_CORRIDA_ANALISE.render(x) + "</details>" : "") + "</div>";
           }), 6, "registros anteriores");
         }
         // ---- batimentos: barra por treino (média) com o pico marcado em cima ----
@@ -14335,6 +14350,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (f.itens.length ? "~" + min + " min de treino" : "Ficha vazia") + "</div>" +
         '<details class="td-ficha-options" data-fopcoes="' + f.id + '" data-treino-aluno="' + esc(alunoId) + '"' + (opcoesFichaAbertas[chaveDetalhe] ? " open" : "") + '><summary>Opções da ficha</summary><div class="td-ficha-options-body">' +
         '<button type="button" class="btn sec mini" data-ac-lote="' + f.id + '">Editar séries em lote</button>' +
+        '<button type="button" class="btn sec mini" data-te-variants="' + esc(f.id) + '">Versões curta, casa e viagem</button>' +
+        '<button type="button" class="btn sec mini" data-te-progression="' + esc(f.id) + '">Revisar evolução por série</button>' +
         (f.capa ? '<img class="td-ficha-photo" src="' + f.capa + '" alt="capa da ficha">' : "") +
         '<button type="button" class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' +
         (f.capa ? "Trocar foto" : "Foto do treino") + "</button>" +
@@ -14405,6 +14422,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (focoSeletor && focoSeletor.isConnected) focoSeletor.focus({ preventScroll: true });
   }
   // cascata da ficha: tipo de treino filtra os grupamentos, que filtram o exercício.
+  if (window.MT_TREINO_EVOLUCAO) window.__treinoEvolucao = MT_TREINO_EVOLUCAO.install({
+    load: load, student: function () { return $("tAluno").value; },
+    identity: function () { var cloud = S.cloud && S.cloud(); return JSON.stringify([cloud && cloud.aid || "local", localStorage.getItem("mtsync:identidade")]); },
+    write: function (st) { return S.write("ptStudio", st); }, markChanged: marcaTreinoMudou,
+    render: renderFichas, uid: S.uid, today: S.todayISO
+  });
   // Na tela 2d quem aparece sao os CHIPS; o <select data-exsel> continua existindo,
   // escondido, porque e ele que o "+ Adicionar" le (e o que os testes dirigem).
   /* fid -> quantos chips mostrar (0/ausente = só os 5 primeiros). v750: é um
@@ -15270,7 +15293,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (indice >= 10 ? '<span class="muted">Fora do limite de 10 treinos enviados ao app</span>' : '') +
           '<span class="tag ok">' + (CB_MODS[c.mod] || c.mod) + "</span>" +
           '<span class="muted">' + esc(cbResumoCurto(c)) + "</span>" +
-          '<span class="trx-actions"><button class="btn sec mini" data-cbed="' + c.id + '">Editar</button><details class="trx-details trx-row-more"><summary>Mais opções</summary><div class="trx-actions">' +
+          '<span class="trx-actions"><button class="btn sec mini" data-cbed="' + c.id + '">Editar</button>' +
+          (window.MT_CORRIDA_EXPORT && Array.isArray(c.blocos) && c.blocos.length ? '<button class="btn sec mini" data-crexp="' + esc(c.id) + '">Exportar etapas</button>' : '') +
+          '<details class="trx-details trx-row-more"><summary>Mais opções</summary><div class="trx-actions">' +
           (c.capa ? '<img src="' + c.capa + '" alt="capa do treino" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
           '<button class="btn sec mini" data-ccapa="' + c.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (c.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
           '<button class="btn sec mini" data-ccapag="' + c.id + '" title="escolher do seu banco de imagens">Galeria</button>' +
@@ -15339,6 +15364,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ed = e.target.closest("[data-cbed]");
     var rm = e.target.closest("[data-cbrm]");
     var alunoId = $("cbAluno").value;
+    var exporta = e.target.closest("[data-crexp]");
+    if (alunoId && exporta && window.MT_CORRIDA_EXPORT) {
+      var salvo = (((load().treinosV2 || {})[alunoId] || {}).cardio || []).find(function (x) { return String(x.id) === exporta.dataset.crexp; });
+      if (!salvo) return;
+      try {
+        var planoExport = { n: salvo.nome, m: salvo.mod, bl: R809.expande(salvo.blocos) };
+        var arquivoExport = MT_CORRIDA_EXPORT.tcx(planoExport);
+        if (confirm(arquivoExport.warning + "\n\nBaixar arquivo?")) MT_CORRIDA_EXPORT.download(planoExport);
+      } catch (errorExport) { alert(errorExport.message); }
+      return;
+    }
     // foto do treino de corrida/bike: capa do card "treino de hoje" no dia dele
     var cc = e.target.closest("[data-ccapa]");
     var ccG = e.target.closest("[data-ccapag]");
@@ -23518,6 +23554,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * `D.t2` uma vez e nunca usava. Cada pacote publicado, e cada
        * app_aluno_busca do aluno, levava o dobro do necessário. */
       treino: treino, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs, mesApp: mesApp,
+      fichaIdsApp: (t2 && t2.fichas || []).map(function(f){return f.id||"";}),
+      treinoVariantesApp: window.MT_TREINO_EVOLUCAO ? MT_TREINO_EVOLUCAO.exporta(st, a.id, videoDoEx) : [],
       guiaFichasP: guiaFichasP, aqPorFicha: aqPorFicha, raioX: raioX,
       wodsApp: wodsApp, cardiosApp: cardiosApp, planoApp: planoApp, ve: cfgVe, menuOculta: menuOculta,
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
@@ -25685,6 +25723,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
   }
 
+  if (window.MT_PERSONAL_TECNICA) window.MT_PERSONAL_TECNICA.init();
   window.__ptStudio = { load: load, render: render }; // testes
   if (self.MT_PERSONAL_MARCA) self.MT_PERSONAL_MARCA.init({
     load: load, save: save, marca: marcaAppPendente,

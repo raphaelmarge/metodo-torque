@@ -6,7 +6,7 @@
 
   var state = {ctx:null, students:[], selected:null, detail:null, importRows:[], session:null,
     exercises:[], members:[], busy:{}, loaded:false, loadSequence:0, selectionSequence:0, epoch:0, inert:[], returnFocus:null};
-  var watchedClients=new WeakSet();
+  var watchedClients=new WeakSet(), journeys=null;
   var studentFields = ['ptProImportAluno','ptProSessAluno','ptProWaitAluno','ptProCredAluno','ptProTeamAluno'];
   var triggers = {'questionario.respondido':'Questionário respondido','aluno.novo':'Novo aluno','agenda.cancelada':'Sessão cancelada'};
   var actions = {revisar_aluno:'Revisar aluno',contatar_aluno:'Entrar em contato',revisar_planejamento:'Revisar planejamento'};
@@ -53,7 +53,7 @@
     state.ctx=next;return next;
   }
   function clearIdentity(){
-    state.epoch++;state.loadSequence++;state.selectionSequence++;
+    state.epoch++;state.loadSequence++;state.selectionSequence++;if(journeys)journeys.clear();
     state.loaded=false;state.students=[];state.selected=null;state.detail=null;state.session=null;state.exercises=[];state.ctx=null;
     state.queue=[];state.members=[];state.importRows=[];state.importSaved=false;state.creditReady=false;state.detailLoading=false;state.busy={};state.fileSequence=(state.fileSequence||0)+1;
     studentFields.forEach(function(f){if(q('#'+f))q('#'+f).value='';});
@@ -104,7 +104,7 @@
     field('Nome','<input id="ptProAutoNome" maxlength="160" placeholder="Ex.: Revisar novo questionário">')+
     field('Quando acontecer','<select id="ptProAutoGatilho">'+options(triggers)+'</select>')+
     field('Providência','<select id="ptProAutoAcao">'+options(actions)+'</select>')+
-    '<button id="ptProAutoSave" class="ptpro-btn" type="button">Criar automação</button><p id="ptProAutoStatus" class="ptpro-status" role="status"></p></div><div class="ptpro-card ptpro-wide"><h4>Suas regras</h4><div id="ptProAutoList" class="ptpro-list"></div><div class="ptpro-workout-toolbar"><h4>Fila de providências</h4><select id="ptProQueueFilter" aria-label="Filtrar providências"><option value="pendente">Pendentes</option><option value="all">Todas</option><option value="concluida">Concluídas</option></select></div><div id="ptProQueueList" class="ptpro-list"></div></div></div>');}
+    '<button id="ptProAutoSave" class="ptpro-btn" type="button">Criar automação</button><p id="ptProAutoStatus" class="ptpro-status" role="status"></p></div><div class="ptpro-card ptpro-wide"><h4>Suas regras</h4><div id="ptProAutoList" class="ptpro-list"></div><div class="ptpro-workout-toolbar"><h4>Fila de providências</h4><select id="ptProQueueFilter" aria-label="Filtrar providências"><option value="pendente">Pendentes</option><option value="all">Todas</option><option value="concluida">Concluídas</option></select></div><div id="ptProQueueList" class="ptpro-list"></div></div></div><section id="ptProJourneys" class="ptj-section" aria-label="Jornada do aluno"></section>');}
   function viewAgenda(){return panel('agenda','<div class="ptpro-head"><div><h3>Agenda inteligente</h3><p>Organize encaixes e acompanhe o saldo de sessões do aluno.</p></div></div><div class="ptpro-grid"><div class="ptpro-card"><h4>Entrar na lista de espera</h4>'+hiddenStudent('ptProWaitAluno')+
     '<div class="ptpro-row">'+field('Data','<input id="ptProWaitDia" type="date">')+field('Horário','<input id="ptProWaitHora" type="time">')+'</div>'+
     '<button id="ptProWaitSave" class="ptpro-btn" type="button">Adicionar à espera</button><p id="ptProWaitStatus" class="ptpro-status" role="status"></p></div><div class="ptpro-card"><h4>Créditos de sessões</h4>'+hiddenStudent('ptProCredAluno')+
@@ -120,6 +120,7 @@
     var b=document.createElement('button');b.id='ptProSuiteBtn';b.type='button';b.innerHTML=icon('note')+'<span>Central Pro</span>';menu.appendChild(b);
     var backdrop=document.createElement('div');backdrop.id='ptProSuite';backdrop.className='ptpro-backdrop';backdrop.setAttribute('aria-hidden','true');backdrop.inert=true;backdrop.innerHTML=markup();document.body.appendChild(backdrop);
     bind();labelFields();renderExercises();b.addEventListener('click',open);
+    if(window.PTJornadas)journeys=window.PTJornadas.mount(q('#ptProJourneys'),{context:context,assertContext:assertContext,client:sb,student:function(){return state.detail||state.selected;},openArea:async function(area){var c=await context(),aluno=assertStudent();await window.PTProContext.openArea(area,aluno,{client:sb(),context:c});}});
   }
   function bind(){
     q('#ptProClose').onclick=close;
@@ -185,7 +186,7 @@
     hideResults();if(changed)q('.ptpro-main').scrollTop=0;refresh(key);
   }
   function currentTab(){return q('[data-ptpro-tab].ativa').dataset.ptproTab;}
-  function refresh(key){if(key==='automacoes')loadAutos();if(key==='agenda'){loadWait();loadCredit();}if(key==='equipe')loadTeam();}
+  function refresh(key){if(key==='automacoes'){loadAutos();if(journeys)journeys.refresh();}if(key==='agenda'){loadWait();loadCredit();}if(key==='equipe')loadTeam();}
   async function loadStudents(){
     var sequence=++state.loadSequence;status('ptProStudentStatus','Carregando seus alunos…');q('#ptProRetryStudents').hidden=true;
     try{
@@ -212,7 +213,7 @@
   async function selectStudent(value,focus){
     if(Object.keys(state.busy).some(function(k){return state.busy[k];}))return;
     if(state.session&&value!==state.session.aluno_id){status('ptProSessStatus','Finalize o atendimento atual antes de trocar de aluno.','erro');return;}
-    var sequence=++state.selectionSequence;state.selected=state.students.find(function(s){return s.id===value;})||null;state.detail=state.selected;
+    var sequence=++state.selectionSequence;state.selected=state.students.find(function(s){return s.id===value;})||null;state.detail=state.selected;if(journeys)journeys.clear();
     if(!state.session){q('#ptProSessObs').value='';status('ptProSessStatus','');state.detailLoading=false;}
     studentFields.forEach(function(f){q('#'+f).value=state.selected?state.selected.id:'';});
     q('#ptProStudentSearch').value=state.selected?state.selected.name:'';q('#ptProClearStudent').hidden=!state.selected;
@@ -418,11 +419,11 @@
     var epoch=state.epoch;
     try{
       var c=await context(),cli=sb(),results=await Promise.all([
-        cli.from('personal_automacoes').select('id,nome,gatilho,acao,ativa,criado_em').eq('academia_id',c.academia_id).order('criado_em',{ascending:false}).limit(50),
+        cli.from('personal_automacoes').select('id,nome,gatilho,acao,ativa,criado_em').eq('academia_id',c.academia_id).or('acao->>tipo.is.null,acao->>tipo.neq.jornada_v1').order('criado_em',{ascending:false}).limit(50),
         cli.from('personal_automacao_fila').select('id,aluno_id,gatilho,acao,status,criado_em').eq('academia_id',c.academia_id).order('criado_em',{ascending:false}).limit(100)]);
       if(results[0].error)throw results[0].error;if(results[1].error)throw results[1].error;
       assertContext(c);
-      q('#ptProAutoList').innerHTML=(results[0].data||[]).map(function(a){return item(a.nome,(triggers[a.gatilho]||'Evento')+' → '+(actions[(a.acao||{}).tipo]||'Providência'),a.ativa?'Ativa':'Pausada','<button type="button" class="ptpro-link" data-auto-toggle="'+esc(a.id)+'" data-active="'+a.ativa+'">'+(a.ativa?'Pausar':'Ativar')+'</button>');}).join('')||empty('Nenhuma regra criada.');
+      q('#ptProAutoList').innerHTML=(results[0].data||[]).filter(function(a){return !(a.acao&&a.acao.tipo==='jornada_v1');}).map(function(a){return item(a.nome,(triggers[a.gatilho]||'Evento')+' → '+(actions[(a.acao||{}).tipo]||'Providência'),a.ativa?'Ativa':'Pausada','<button type="button" class="ptpro-link" data-auto-toggle="'+esc(a.id)+'" data-active="'+a.ativa+'">'+(a.ativa?'Pausar':'Ativar')+'</button>');}).join('')||empty('Nenhuma regra criada.');
       state.queue=results[1].data||[];renderQueue();
     }catch(err){if(epoch===state.epoch)status('ptProAutoStatus',errorMessage(err),'erro');}
   }
