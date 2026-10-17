@@ -6,11 +6,16 @@ Useful for visual review when the execution host cannot bind a local server.
 from pathlib import Path
 import base64
 import re
+import argparse
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--output", type=Path, help="Output directory for the isolated HTML preview")
+args = parser.parse_args()
 
 root = Path(__file__).resolve().parent.parent
 dist = root / "dist" if (root / "dist").is_dir() else root
-out = root / "review"
-out.mkdir(exist_ok=True)
+out = args.output or root / "review"
+out.mkdir(parents=True, exist_ok=True)
 
 def data_uri(path, mime):
     return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode()
@@ -19,18 +24,23 @@ css = ""
 for weight in [400, 500, 600, 700, 800]:
     font = dist / f"assets/fonts/files/archivo-latin-{weight}-normal.woff2"
     css += "@font-face{font-family:Archivo;font-style:normal;font-weight:" + str(weight) + ";src:url(" + data_uri(font, "font/woff2") + ") format('woff2');font-display:swap}"
-css += (dist / "style.css").read_text() + (dist / "patient.css").read_text()
+css += "\n".join((dist / name).read_text(encoding="utf-8") for name in ["style.css", "patient.css", "follow-up.css", "meal-plan.css", "prescription-workspace.css"])
 scripts = ["window.TORQUE_NUTRI_DEMO_ROLE='patient';"]
 for name in ["vendor/receitas-db.js", "vendor/composicao-corporal.js", "vendor/nutricao-core.js",
              "vendor/medalhas-core.js", "vendor/identidade-marca.js", "vendor/alimentos-db.js"]:
-    scripts.append((dist / name).read_text())
+    scripts.append((dist / name).read_text(encoding="utf-8"))
 modules = []
-for name in ["care-progress.js", "journal-model.js", "food-journal.js", "plan-recipes.js",
-             "skinfolds.js", "assessment.js", "vendor/medalha-visual.js", "patient-experience.js", "platform.js", "app.js"]:
-    source = (dist / name).read_text()
+for name in ["care-progress.js", "journal-model.js", "food-journal.js", "recipe-composition.js", "plan-recipes.js",
+             "skinfolds.js", "assessment.js", "vendor/medalha-visual.js", "shopping.js", "shopping-planner.js", "day-summary.js", "prescription.js", "plan-changes.js", "patient-experience.js",
+             "notifications.js", "schedule.js", "finance.js", "follow-up.js", "reminders.js", "reminder-settings.js", "settings.js",
+             "consultation.js", "platform.js", "app.js"]:
+    source = (dist / name).read_text(encoding="utf-8")
     exports = re.findall(r"\bexport (?:async )?(?:function|const|class) (\w+)", source)
     source = re.sub(r"^import .+?;\s*$", "", source, flags=re.M)
     source = re.sub(r"\bexport (?=(?:function|const) )", "", source)
+    # ESM metadata is not legal in the portable classic-script bundle. The
+    # demonstration never registers a worker or requests notification consent.
+    source = source.replace("import.meta.url", "window.location.href")
     if name == "patient-experience.js":
         source = source.replace("assets/nutrition-cover.png", data_uri(dist / "assets/nutrition-cover.png", "image/png"))
     if name == "app.js":
@@ -49,5 +59,5 @@ for script in scripts:
     html += "<script>" + script.replace("</script", "<\\/script") + "</script>"
 html += "</body></html>"
 target = out / "torque-nutri-preview.html"
-target.write_text(html)
+target.write_text(html, encoding="utf-8")
 print(f"Demo-only preview: {target} ({target.stat().st_size} bytes)")

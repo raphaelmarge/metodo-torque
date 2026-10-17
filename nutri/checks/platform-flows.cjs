@@ -26,7 +26,7 @@ const context=vm.createContext({
 context.window=context;context.globalThis=context;context.self=context;
 for(const name of ['receitas-db','composicao-corporal','nutricao-core','medalhas-core','identidade-marca','alimentos-db'])vm.runInContext(fs.readFileSync(path.join(root,'vendor',name+'.js'),'utf8'),context);
 function loadModule(name,exports){
-  const source=fs.readFileSync(path.join(root,name),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:function|const) )/g,'');
+  const source=fs.readFileSync(path.join(root,name),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:function|const) )/g,'').replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://test.invalid/nutri/').href));
   assert(!/^import |^export /m.test(source),'Unhandled module syntax in '+name);
   vm.runInContext('(()=>{'+source+'\nObject.assign(globalThis,{'+exports.join(',')+'});})()',context,{filename:name});
 }
@@ -39,14 +39,21 @@ for(const [name,exports] of [
   ['care-progress.js',['careSummary','mealPresence','nextMeal','CARE_POLICY_START']],
   ['journal-model.js',['resolveJournalPlan','buildJournalItems','findJournalForMeal']],
   ['food-journal.js',['createFoodJournal']],
+  ['recipe-composition.js',['recipeIngredient','normalizeRecipeComposition','recipeNutrition','makeRecipeFood','expandRecipeItem']],
   ['plan-recipes.js',['createPlanRecipes']],
+  ['shopping.js',['portionLabel','shoppingDates','shoppingList']],
+  ['shopping-planner.js',['plannerKey','planSignature','validatePlanner','readPlanner','savePlanner','createShoppingPlanner']],
+  ['prescription.js',['WEEKDAYS','mealDaysLabel','duplicateMeal','duplicateFood','movePrescriptionItem','latestAnamnesis','publicationError']],
+  ['day-summary.js',['DAY_NAMES','NUTRIENTS','validPlanDate','planWeekDays','nutrientNumber','nutrientLabel','prescribedTotals','planDaySummary','planDayControls','planDayNotice','planWeekTable']],
+  ['plan-changes.js',['comparePlans','previousPublishedPlan','renderPlanChanges']],
   ['patient-experience.js',['createPatientExperience']],
   ['schedule.js',['createSchedule']],
   ['notifications.js',['createPatientNotifications']],
   ['follow-up.js',['createFollowUp','questionnairePeriod','reviewQueue']],
   ['finance.js',['createFinance']],
-  ['prescription.js',['WEEKDAYS','mealDaysLabel','duplicateMeal','duplicateFood','movePrescriptionItem','latestAnamnesis','publicationError']],
   ['consultation.js',['createConsultation']],
+  ['reminders.js',['REMINDER_DEFAULTS','reminderPreferences','reminderSupport','createReminderController']],
+  ['reminder-settings.js',['createReminderSettings']],
   ['settings.js',['createSettings']],
   ['platform.js',['createPlatform']]
 ])loadModule(name,exports);

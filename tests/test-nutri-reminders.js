@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+(async()=>{
+ const moduleURL='data:text/javascript;base64,'+Buffer.from(fs.readFileSync(path.join(__dirname,'../nutri/reminders.js'))).toString('base64');
+ const {reminderPreferences,reminderSupport}=await import(moduleURL);
+ assert.equal(reminderPreferences().timezone,'America/Sao_Paulo');assert.throws(()=>reminderPreferences({timezone:'Mars/Olympus'}));assert.throws(()=>reminderPreferences({appointment_minutes:13}));assert.throws(()=>reminderPreferences({questionnaire_time:'25:00'}));assert.equal(reminderSupport({}),false);
+ const {allowedEndpoint,deliveryOutcome,createDispatcher}=await import('../supabase/releases/nutri-reminders/supabase/functions/nutri-reminders-dispatch/worker.mjs');
+ for(const host of ['https://fcm.googleapis.com/fcm/send/id','https://updates.push.services.mozilla.com/wpush/v2/id','https://web.push.apple.com/id','https://wns2-db5p.notify.windows.com/id'])assert(allowedEndpoint(host));
+ for(const host of ['http://fcm.googleapis.com/x','https://localhost/x','https://127.0.0.1/x','https://fcm.googleapis.com.evil.test/x','https://fcm.googleapis.com@evil.test/x','https://fcm.googleapis.com:8443/x','https://fcm.googleapis.com/x#evil'])assert(!allowedEndpoint(host));
+ assert.equal(deliveryOutcome(201),'sent');assert.equal(deliveryOutcome(410),'gone');assert.equal(deliveryOutcome(429),'retry');assert.equal(deliveryOutcome(400),'failed');
+ const now=Date.now(),job={id:'00000000-0000-4000-8000-000000000001',lease:'lease',kind:'appointment',userId:'user',expires_at:new Date(now+60000).toISOString(),subscription:{endpoint:'https://fcm.googleapis.com/id',keys:{}}};
+ let claimed=0,sent=0,outcomes=[],valid=true,sendStatus=201,throwTransport=false;
+ const config={enabled:'true',cronSecret:'synthetic-secret',publicKey:'public',privateKey:'private',subject:'mailto:test@example.test'};
+ const handler=createDispatcher({config,now:()=>now,rpc:async(action,data)=>{if(action==='claim'){claimed++;return [job];}if(action==='validate')return {valid};outcomes.push(data.outcome);return {};},send:async(s,p,o)=>{sent++;if(throwTransport)throw Error('network');const payload=JSON.parse(p);assert.deepEqual(Object.keys(payload).sort(),['kind','tag','userId']);assert.equal(o.TTL,60);return sendStatus;}});
+ const request=secret=>new Request('https://function.example.test',{method:'POST',headers:{'x-nutri-cron-secret':secret}});
+ assert.equal((await handler(request('wrong'))).status,401);assert.equal(claimed,0);
+ config.enabled='false';assert.equal((await (await handler(request(config.cronSecret))).json()).processed,0);assert.equal(claimed,0);config.enabled='true';
+ await handler(request(config.cronSecret));assert.equal(outcomes.pop(),'sent');assert.equal(sent,1);
+ valid=false;await handler(request(config.cronSecret));assert.equal(outcomes.pop(),'cancelled');assert.equal(sent,1);valid=true;
+ sendStatus=410;await handler(request(config.cronSecret));assert.equal(outcomes.pop(),'gone');
+ sendStatus=503;await handler(request(config.cronSecret));assert.equal(outcomes.pop(),'retry');
+ throwTransport=true;await handler(request(config.cronSecret));assert.equal(outcomes.pop(),'uncertain');
+ console.log('OK preferências, endpoints, autorização do cron, desligado, revalidação, payload privado, TTL, 410, retry e resultado incerto.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

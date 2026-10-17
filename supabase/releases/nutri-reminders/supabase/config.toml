@@ -1,0 +1,6 @@
+project_id = "torque-nutri-reminders"
+
+[functions.nutri-reminders-dispatch]
+# A dedicated high-entropy cron secret is checked by the handler. This endpoint
+# never accepts user JWTs as authority to dispatch reminders.
+verify_jwt = false
