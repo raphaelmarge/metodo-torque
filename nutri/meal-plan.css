@@ -1,4 +1,29 @@
 /* Published patient plan. All colors inherit the clinic and current theme. */
+.plan-day-controls{display:grid;gap:12px;margin:18px 0;min-width:0}
+.plan-day-controls>label{max-width:240px;margin:0}
+.plan-day-buttons{display:grid;grid-template-columns:repeat(7,minmax(44px,1fr));gap:6px;min-width:0}
+.plan-day-buttons .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:44px;min-height:48px;padding:7px 4px;font-size:12px}
+.plan-day-buttons .btn small{font-size:10px;color:var(--muted)}
+.plan-day-buttons .btn[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 15%,var(--panel));color:var(--text)}
+.prescription-summary .plan-day-buttons{grid-template-columns:repeat(4,minmax(44px,1fr))}
+.prescription-summary .plan-day-controls>label{max-width:none}
+.prescription-workspace .prescription-energy strong{overflow-wrap:anywhere}
+.plan-week-summary{margin:20px 0;font-size:13px}
+.plan-week-summary>p{line-height:1.6;color:var(--muted)}
+.plan-week-scroll{max-width:100%;overflow-x:auto}
+.plan-week-summary table{border-collapse:collapse;width:100%;font-size:12px}
+.plan-week-summary th,.plan-week-summary td{padding:10px 8px;border:1px solid var(--line);text-align:left;line-height:1.5}
+.plan-changes{border:1px solid var(--line);border-radius:16px;padding:20px;margin:0 0 26px;background:var(--panel);min-width:0}
+.plan-changes>h2{font-size:20px;margin:0 0 12px}
+.plan-changes>p{line-height:1.6}
+.plan-changes summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:600}
+.plan-changes ul{list-style:none;padding:0;margin:0}
+.plan-changes li{padding:16px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.plan-changes li>b{display:block;margin-bottom:12px;font-size:13px}
+.plan-changes li>div{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:4px 0}
+.plan-changes li>div>span{color:var(--muted);font-size:12px}
+.plan-changes li p{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.6}
+@media(max-width:600px){.plan-day-buttons{grid-template-columns:repeat(4,minmax(44px,1fr))}.plan-changes{padding:16px}.plan-week-summary th,.plan-week-summary td{padding:8px 6px}.plan-changes li>div{grid-template-columns:42px minmax(0,1fr);gap:8px}}
 .meal-plan{min-width:0;padding-top:12px;--plan-tint:color-mix(in srgb,var(--brand) 7%,var(--panel));--plan-accent:color-mix(in srgb,var(--brand) 35%,var(--text))}
 .meal-plan :is(h1,h2,h3,p){overflow-wrap:anywhere}
 .meal-plan svg{width:20px;height:20px;flex-shrink:0}

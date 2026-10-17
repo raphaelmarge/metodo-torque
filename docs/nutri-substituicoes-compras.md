@@ -1,5 +1,11 @@
 # Torque Nutri: substituições e compras por período
 
+Registro da primeira etapa do PR #888. A entrega integrada posterior está em
+[mt-v866 — evolução Nutri](releases/mt-v866-evolucao-nutri.md): acrescenta escolhas
+por dia persistidas neste aparelho, receitas quantificadas, totais por data,
+comparação entre versões e a implementação opcional dos lembretes. As limitações
+abaixo descrevem somente a primeira etapa.
+
 Base revisada: `565f6edcda0748222f4b29289325daebfbd65d91` (main, mt-v865).
 Branch: `codex/nutri-substituicoes-compras`. Entrega para revisão, sem merge ou deploy.
 

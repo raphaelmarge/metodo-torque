@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-const source=fs.readFileSync(new URL('../settings.js',import.meta.url),'utf8');
-const {settingsDiagnostics}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const {settingsDiagnostics}=await import(new URL('../settings.js',import.meta.url));
 const state={user:{id:'account'},clinic:{id:'clinic'},financeLedger:{available:true}};
 const read=patch=>settingsDiagnostics({state:{...state,...patch},databaseConfigured:true,queueCount:0}).find(x=>x.id==='reading');
 assert.equal(read({}).state,'available');assert.equal(read({loadError:'Falha'}).state,'error');assert.equal(read({offline:true}).state,'pending');assert.equal(read({loading:true}).state,'pending');assert.equal(read({demo:true}).state,'demo');

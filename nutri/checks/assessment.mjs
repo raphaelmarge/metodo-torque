@@ -7,11 +7,7 @@ const assessmentURL=moduleURL(fs.readFileSync(new URL('assessment.js',root),'utf
 const medalURL=moduleURL(fs.readFileSync(new URL('vendor/medalha-visual.js',root),'utf8'));
 const careURL=moduleURL(fs.readFileSync(new URL('care-progress.js',root),'utf8'));
 const {numberValue,fieldValue,validDay,recordDay,visibleRecords,composition,difference,safePhoto,createAssessments}=await import(assessmentURL);
-const patientSource=fs.readFileSync(new URL('patient-experience.js',root),'utf8')
-  .replace("'./shopping.js'",JSON.stringify(moduleURL(fs.readFileSync(new URL('shopping.js',root),'utf8'))))
-  .replace("'./assessment.js'",JSON.stringify(assessmentURL)).replace("'./vendor/medalha-visual.js'",JSON.stringify(medalURL))
-  .replace("'./care-progress.js'",JSON.stringify(careURL));
-const {journeyLevel}=await import(moduleURL(patientSource));
+const {journeyLevel}=await import(new URL('patient-experience.js',root));
 
 const tests=[];
 const test=(name,fn)=>tests.push({name,fn});

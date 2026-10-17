@@ -6,14 +6,6 @@ import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const moduleURL = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
 const read = name => fs.readFileSync(new URL(name, root), 'utf8');
-const assessmentURL = moduleURL(read('assessment.js').replace("'./skinfolds.js'", JSON.stringify(moduleURL(read('skinfolds.js')))));
-const medalURL = moduleURL(read('vendor/medalha-visual.js'));
-const progressURL = moduleURL(read('care-progress.js'));
-const patientSource = read('patient-experience.js')
-  .replace("'./shopping.js'", JSON.stringify(moduleURL(read('shopping.js'))))
-  .replace("'./assessment.js'", JSON.stringify(assessmentURL))
-  .replace("'./vendor/medalha-visual.js'", JSON.stringify(medalURL))
-  .replace("'./care-progress.js'", JSON.stringify(progressURL));
 
 const RealDate = Date;
 globalThis.Date = class extends RealDate {
@@ -22,7 +14,7 @@ globalThis.Date = class extends RealDate {
 globalThis.self = globalThis;
 await import(moduleURL(read('vendor/medalhas-core.js')));
 await import(moduleURL(read('vendor/nutricao-core.js')));
-const {createPatientExperience} = await import(moduleURL(patientSource));
+const {createPatientExperience} = await import(new URL('patient-experience.js',root));
 const TODAY = '2026-10-09';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));

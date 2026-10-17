@@ -3,8 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 vm.runInThisContext(fs.readFileSync(new URL('../vendor/nutricao-core.js', import.meta.url), 'utf8'));
-const source = fs.readFileSync(new URL('../plan-recipes.js', import.meta.url), 'utf8');
-const {createPlanRecipes, normalizeRecipeReference, favoriteStorageKey} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const {createPlanRecipes, normalizeRecipeReference, favoriteStorageKey} = await import(new URL('../plan-recipes.js', import.meta.url));
 const tests = [], test = (name, fn) => tests.push({name, fn});
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
 const memory = () => { const values = new Map(); return {getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, String(value)), values}; };

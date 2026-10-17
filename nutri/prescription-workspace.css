@@ -234,4 +234,7 @@
 .substitution-row>span{min-width:0;overflow-wrap:anywhere}
 .substitution-row small{display:block;margin-top:4px}
 .substitution-row .actions{flex-shrink:0;flex-wrap:wrap}
+.prescription-workspace .prescription-summary>.plan-day-controls,.prescription-workspace [data-prescription-day-note]{grid-column:1/-1;min-width:0}
+.prescription-workspace .prescription-macros dd{white-space:normal;overflow-wrap:anywhere}
+.prescription-workspace .prescription-summary input[type=date]{min-width:0;width:100%}
 @media(max-width:600px){.substitution-row{align-items:flex-start;flex-direction:column}.substitution-row .actions{width:100%}}
