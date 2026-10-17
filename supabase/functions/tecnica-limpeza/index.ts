@@ -1,7 +1,8 @@
 import {cleanupAdapter,cleanupHandler} from '../_shared/tecnica-cleanup.mjs';
 
 // Deploy with verify_jwt=false. This worker does not accept user identities:
-// the dedicated Vault-backed secret RPC below is mandatory and fails closed.
+// the dedicated Vault-backed Bearer secret RPC below is mandatory and fails
+// closed. This Bearer is not a user JWT, anon key or service-role API key.
 const base=Deno.env.get('SUPABASE_URL')||'',key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
 function makeApi(deadline:AbortSignal){return async function api(path:string,init:RequestInit={}){
   if(!base||!key)throw Error('Configuração indisponível.');

@@ -45,12 +45,14 @@ mensagens automáticas. Compras/despensa ficam no aparelho por aluno/plano. Rela
 de dificuldade seguem a fila de sincronização de refeições existente. Passos e
 sono permanecem locais e opcionais; não são enviados ao professor por este lote.
 
-Vídeos exigem as migrações `20261017180206_tecnica_video_privada.sql` e
-`20261017182409_tecnica_video_agendamento_privado.sql`, as funções `tecnica-video`
+Vídeos exigem as migrações `20261017180206_tecnica_video_privada.sql`,
+`20261017182409_tecnica_video_agendamento_privado.sql` e
+`20261017183412_tecnica_video_dispatch_http_privado.sql`, as funções `tecnica-video`
 e `tecnica-limpeza`, e a ativação da configuração do agendador somente após
-conferir o worker no projeto correto. A segunda migração protege a leitura da fila
-interna do pg_net, gera o segredo no Vault sem expô-lo e cria o job inicialmente
-inativo. Não modifica acesso público ao Storage nem utiliza service_role no cliente.
+conferir o worker no projeto correto. O segredo é gerado no Vault sem expô-lo e o
+job nasce inativo. A terceira migração evita enviar a credencial pela fila pública
+do pg_net, cuja permissão não pode ser revogada pelo papel postgres neste projeto.
+Não modifica acesso público ao Storage nem utiliza service_role no cliente.
 
 ## Verificação
 
@@ -61,12 +63,17 @@ TCX e preservação da lista de compras anterior. A seleção de regressão abra
 20 suítes de versão/cache, histórico, séries, player, offline, loader, início,
 evolução, alimentação, Central Pro e demos. Falhas iniciais de dependência no
 Windows foram resolvidas com o caminho explícito do Playwright; as verificações
-funcionais não foram afrouxadas.
+funcionais não foram afrouxadas. A revisão adicional cobriu o retry após upload
+confirmado pelo Storage com HTTP 400 Duplicate, a seleção do exercício original
+após uma variante e os contadores de exercícios com nomes repetidos.
 
 Testes adicionais: `test-evolucao-bundle-v866.js`,
 `test-evolucao-integracao-v866.js`, `test-evolucao-menu-compras-v866.js`,
 `test-tecnica-video-*`, `test-jornadas-*`, `test-nutricao-semana-v866.js`,
 `test-treino-evolucao-*` e `test-corrida-saude-*`.
 
-A validação local não substitui CI, publicação nem teste nativo. O estado remoto
-é registrado separadamente na entrega e no pull request.
+A validação local não substitui CI, publicação nem teste nativo. O backend de
+vídeos foi implantado e sua limpeza autenticada foi verificada em 17/10/2026 no
+projeto de produção do Personal; evidências e limites estão em
+`mt-v866-tecnica-expurgo.md`. A publicação do frontend é registrada separadamente
+na entrega e no pull request, depois dos checks do commit final.

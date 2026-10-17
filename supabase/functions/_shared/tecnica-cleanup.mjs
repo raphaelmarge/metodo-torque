@@ -50,8 +50,12 @@ export function cleanupHandler({authorize,cleanup}){
  const response=(status,body)=>new Response(JSON.stringify(body),{status,headers});
  return async function handle(req){
   if(req.method!=='POST')return response(405,{error:'Use POST.'});
-  const secret=req.headers.get('x-tecnica-secret')||'';
-  if(secret.length<32||secret.length>512)return response(401,{error:'Não autorizado.'});
+  // This Bearer is a dedicated Vault secret, not a Supabase user JWT/API key.
+  // Standard Authorization avoids forwarding a custom secret across origins
+  // when the scheduler's HTTP library follows a redirect.
+  const bearer=/^Bearer ([0-9a-f]{64})$/i.exec(req.headers.get('authorization')||'');
+  if(!bearer)return response(401,{error:'Não autorizado.'});
+  const secret=bearer[1];
   try{
    if(await authorize(secret)!==true)return response(401,{error:'Não autorizado.'});
    // Intentionally never parse the request body: no supplied path, tenant,

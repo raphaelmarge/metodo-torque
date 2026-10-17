@@ -4,10 +4,10 @@ let chromium;try{chromium=require('playwright').chromium;}catch(_){chromium=requ
 let browser,checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},ok=(v,m)=>{assert.ok(v,m);checks++;};
 const root=path.resolve(__dirname,'..'),asset=fs.readFileSync(path.join(root,'assets/demo-video.webm'));
 const wave=Buffer.alloc(44+1600);wave.write('RIFF',0);wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(8000,24);wave.writeUInt32LE(16000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(1600,40);
-const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',TA='token-student-a',URL_API='https://project.supabase.test',app='https://app.torque.test';
+const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',TA='token-student-a',URL_API='https://project.supabase.test',app=new URL(process.env.BASE_URL||'https://app.torque.test').origin;
 (async()=>{
  const {handler}=await import('../supabase/functions/_shared/tecnica-handler.mjs');const rows=new Map(),files=new Map(),media=new Map(),calls=[],unexpected=[],errors=[];
- let loseCreate=true,loseReply=true,maliciousMedia=false,delayList=null,listFailure='',active=true;
+ let loseCreate=true,loseReply=true,loseComplete=false,uploadFailure=false,duplicateUploads=0,maliciousMedia=false,delayList=null,listFailure='',active=true;const uploadHeaders=[];
  const conflict=()=>Object.assign(Error('Conflito'),{status:409});
  const db={
   student:async token=>token===TA&&active?{token,academia:A}:null,professional:async auth=>auth==='Bearer professional-a'?{user:'user-a',academia:A}:null,active:async t=>t===TA&&active,activeTokens:async(a,t)=>t.filter(x=>x===TA&&active),
@@ -29,9 +29,13 @@ const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',TA='token-student-a',URL_API='htt
   if(u.pathname==='/functions/v1/tecnica-video'){
    const b=req.postDataJSON();calls.push(b);if(b.action==='list'&&delayList)await delayList;
    if(b.action==='list'&&listFailure)return route.fulfill({status:listFailure==='json'?502:503,headers,contentType:'application/json',body:listFailure==='json'?'<html>unavailable</html>':JSON.stringify({error:'Consulta temporariamente indisponível.'})});
+   if(b.action==='complete'&&loseComplete){loseComplete=false;return route.abort('failed');}
    try{const result=await execute(b,req.headers().authorization);if(b.action==='create'&&loseCreate){loseCreate=false;return route.abort('failed');}if(b.action==='reply'&&loseReply){loseReply=false;return route.abort('failed');}return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(result)});}catch(e){return route.fulfill({status:e.status||500,headers,contentType:'application/json',body:JSON.stringify({error:e.message})});}
   }
-  if(u.pathname.startsWith('/storage/v1/object/upload/sign/tecnica-privada/')){const key=u.pathname.split('/tecnica-privada/')[1],body=req.postDataBuffer();media.set(key,{bytes:body.length,mime:req.headers()['content-type'],body});return route.fulfill({status:200,headers,body:'{}'});}
+  if(u.pathname.startsWith('/storage/v1/object/upload/sign/tecnica-privada/')){const key=u.pathname.split('/tecnica-privada/')[1],body=req.postDataBuffer();uploadHeaders.push(req.headers()['x-upsert']);
+   if(uploadFailure)return route.fulfill({status:400,headers,contentType:'application/json',body:JSON.stringify({statusCode:'400',error:'Bad Request',message:'Invalid upload request'})});
+   if(media.has(key)){duplicateUploads++;return route.fulfill({status:400,headers,contentType:'application/json',body:JSON.stringify({statusCode:'409',error:'Duplicate',message:'The resource already exists'})});}
+   media.set(key,{bytes:body.length,mime:req.headers()['content-type'],body});return route.fulfill({status:200,headers,body:'{}'});}
   if(u.pathname.startsWith('/storage/v1/object/sign/tecnica-privada/')){const m=media.get(u.pathname.split('/tecnica-privada/')[1]);return route.fulfill({status:200,headers,body:m?.body||asset,contentType:m?.mime||'video/webm'});}
   unexpected.push(req.url());return route.abort();
  });
@@ -40,7 +44,12 @@ const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',TA='token-student-a',URL_API='htt
  const video={name:'execucao.webm',mimeType:'video/webm',buffer:asset};await student.locator('input[type=file]').setInputFiles(video);await student.waitForFunction(()=>Number.isFinite(document.querySelector('video').duration));
  await student.locator('textarea').fill('Conferir braços');await student.locator('[data-send]').click();await student.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('conectar'));
  eq(rows.size,1,'Create processado mesmo quando resposta é perdida');eq(await student.locator('textarea').getAttribute('readonly'),'','Contexto permanece estável na tentativa repetida');
+ uploadFailure=true;await student.locator('[data-send]').click();await student.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('O envio falhou'));
+ eq(calls.filter(x=>x.action==='complete').length,0,'HTTP 400 genérico não avança para confirmação');eq(media.size,0,'HTTP 400 genérico não cria arquivo');ok([...files.values()].every(f=>!f.pronto),'HTTP 400 genérico mantém reserva incompleta');
+ uploadFailure=false;loseComplete=true;await student.locator('[data-send]').click();await student.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('conectar'));
+ eq(media.size,1,'Upload é preservado quando a confirmação não chega ao servidor');eq(calls.filter(x=>x.action==='complete').length,1,'Primeira confirmação foi tentada');ok([...files.values()].every(f=>!f.pronto),'Falha de confirmação não marca arquivo pronto');
  await student.locator('[data-send]').click();await student.locator('[data-delete]').waitFor();eq(rows.size,1,'Retry não cria análise duplicada');eq(calls.filter(x=>x.action==='create').map(x=>x.id).filter((x,i,a)=>a.indexOf(x)===i).length,1,'Mesmo ID em ambas as tentativas');
+ eq(duplicateUploads,1,'Retry recebe HTTP 400 Duplicate do Storage existente');eq(calls.filter(x=>x.action==='complete').length,2,'Duplicidade conhecida retoma a confirmação pelo handler');eq(media.size,1,'Retry mantém um único arquivo');ok(uploadHeaders.every(x=>x==='false'),'Nenhuma tentativa usa upsert');
  const id=[...rows.keys()][0];eq(rows.get(id).estado,'pendente','Upload real do formulário chega ao handler e marca pendente');eq(files.size,1,'Um vídeo reservado');ok(await student.evaluate(()=>revoked.length>0),'Preview é revogado ao sair do envio');
  await student.locator('[data-close]').click();
  const pro=await page();await pro.addScriptTag({path:path.join(root,'assets/personal-tecnica-video.js')});

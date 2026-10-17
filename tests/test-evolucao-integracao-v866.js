@@ -30,9 +30,9 @@ async function ready(p) {
   await p.waitForFunction(() => window.__treinoHistorico && window.__treinoHistorico.ready() && window.__seriesAluno && window.__treinoVariantes);
   await p.evaluate(() => { if (window.__tour && window.__tour.on()) window.__tour.fim(); });
 }
-async function openFicha(p, fi = 0) {
+async function openFicha(p, fi = 0, ei = null) {
   await p.click('#navApp [data-msec="treino"]');
-  const button = p.locator('.guiabtn[data-g="' + fi + '"]').first();
+  const button = p.locator(ei == null ? '.guiabtn[data-g="' + fi + '"]' : '.inibtn[data-g="' + fi + '"][data-e="' + ei + '"]').first();
   const parents = button.locator('xpath=ancestor::details');
   for (let i = await parents.count() - 1; i >= 0; i--) if (!await parents.nth(i).evaluate(e => e.open)) await parents.nth(i).locator(':scope > summary').click();
   await button.click();
@@ -73,7 +73,10 @@ const date = p => p.evaluate(() => { const d = new Date(); return d.getFullYear(
       if (S.write('ptStudio', st) === false) throw new Error('Não foi possível criar fixture local');
       const D = window.__dadosApp(a, stamp);
       Object.assign(D, { atualizador: '', botApp: null, qa: null, avs: [], planoApp: null, wodsApp: [], cardiosApp: [], sessApp: [] });
-      return { D, html: window.MT_APP_ALUNO.monta(D), legacy: window.MT_APP_ALUNO.monta(Object.assign({}, D, { treinoVariantesApp: [] })) };
+      const duplicate = JSON.parse(JSON.stringify(D));
+      duplicate.fichasApp[0].itens[1] = JSON.parse(JSON.stringify(duplicate.fichasApp[0].itens[0]));
+      duplicate.guiaFichasP[0].it[1] = JSON.parse(JSON.stringify(duplicate.guiaFichasP[0].it[0]));
+      return { D, html: window.MT_APP_ALUNO.monta(D), duplicate: window.MT_APP_ALUNO.monta(duplicate), legacy: window.MT_APP_ALUNO.monta(Object.assign({}, D, { treinoVariantesApp: [] })) };
     });
     equal(fixture.D.treinoVariantesApp[0].variantes.map(v => v.id), ['ei-curto', 'ei-casa'], 'Personal exporta as duas versões aprovadas, excluindo rascunho');
     equal(fixture.D.fichaIdsApp, ['ei-ficha'], 'identidade original viaja separada, preservando assinatura legada da GUIA');
@@ -131,6 +134,36 @@ const date = p => p.evaluate(() => { const d = new Date(); return d.getFullYear(
     equal([past.prescribed.varianteId, past.targets['0:0:1'].value.r, past.finished], ['ei-curto', 7, true], 'sessão anterior conserva snapshot e execução da variante após treino completo');
     ok(full[0].hid !== firstId, 'resultados de variante e original nunca compartilham a mesma sessão');
     await app.close();
+
+    const direct = await contextFor(browser, '/evolucao-exercicio.html', fixture.html); const x = await direct.newPage();
+    x.on('pageerror', e => errors.push('Exercício original: ' + e.message));
+    await x.goto(BASE + '/evolucao-exercicio.html'); await ready(x); await openFicha(x, 0, 1);
+    await x.getByRole('button', { name: /Curto aprovado/ }).click();
+    await x.waitForSelector('#gSerie', { state: 'visible' });
+    equal(await x.evaluate(() => [__gvDe().e, document.getElementById('gEx').textContent]), [0, 'Supino integração'], 'escolher variante pelo exercício original inicia sua lista própria no primeiro exercício');
+    const directId = (await journal(x))[0].id;
+    await x.click('#gFechar'); await openFicha(x, 0, 1);
+    equal(await x.getByRole('dialog', { name: 'Treino em andamento', exact: true }).count(), 1, 'exercício original não usa índice de uma variante em andamento');
+    equal((await journal(x)).map(s => s.id), [directId], 'aviso do exercício original não altera nem duplica sessão ativa');
+    await x.getByRole('button', { name: 'Continuar Curto aprovado', exact: true }).click();
+    equal(await x.evaluate(() => [GUIA[0].varianteId, __gvDe().e, document.getElementById('gEx').textContent]), ['ei-curto', 0, 'Supino integração'], 'retomar exige ação explícita e conserva o exercício da sessão');
+    await clicarControle(x, '#gSerie'); await x.evaluate(() => window.__zeraDescanso()); await clicarControle(x, '#gSerie');
+    await x.click('#gFecharTreino'); await x.click('#gFim'); await openFicha(x, 0, 1);
+    equal(await x.evaluate(() => [GUIA[0].varianteId || '', __gvDe().e, document.getElementById('gEx').textContent]), ['', 1, 'Remada integração'], 'após concluir variante, Iniciar exercício abre exatamente o exercício original escolhido');
+    await setValues(x, 30, 8, 7); await clicarControle(x, '#gSerie');
+    const directSessions = await journal(x);
+    equal(directSessions.length, 2, 'início original cria outra sessão após variante concluída');
+    equal(directSessions.find(s => s.id === directId).prescribed.varianteId, 'ei-curto', 'novo exercício original preserva snapshot da variante concluída');
+    equal((await records(x)).filter(r => !r.varianteId).map(r => [r.i, r.exercicioId, r.kg, r.r]), [['0:1:0', 'ei-remada', 30, 8]], 'registro pelo botão do exercício mantém posição e identidade originais');
+    await direct.close();
+
+    const duplicated = await contextFor(browser, '/evolucao-repetidos.html', fixture.duplicate); const dup = await duplicated.newPage();
+    dup.on('pageerror', e => errors.push('Exercício repetido: ' + e.message));
+    await dup.goto(BASE + '/evolucao-repetidos.html'); await ready(dup); await openFicha(dup);
+    await dup.getByRole('button', { name: /Curto aprovado/ }).click(); await clicarControle(dup, '#gSerie');
+    equal(await dup.locator('.setbtn').allTextContents(), ['0/2 séries ✓', '0/2 séries ✓'], 'nomes repetidos na ficha original não recebem contador da variante por fallback de posição');
+    equal((await journal(dup))[0].targets['0:0:0'].value.varianteId, 'ei-curto', 'série de nome repetido permanece registrada apenas na variante');
+    await duplicated.close();
 
     const legacy = await contextFor(browser, '/evolucao-legado.html', fixture.legacy); const l = await legacy.newPage();
     l.on('pageerror', e => errors.push('Legado: ' + e.message));

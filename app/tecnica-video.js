@@ -44,13 +44,21 @@
    document.body.appendChild(dialog);dialog.querySelector('[data-close]').onclick=close;dialog.addEventListener('cancel',function(e){e.preventDefault();close();});dialog.showModal();return dialog.querySelector('[data-body]');
   }
   async function busy(button,work){var tick=epoch;button.disabled=true;try{live();await work();}catch(e){status(e.message,tick);}finally{if(button.isConnected)button.disabled=false;}}
+  async function uploadedAlready(response){
+   if(response.status===409)return true;
+   if(response.status!==400)return false;
+   // Storage também devolve duplicidade como HTTP 400 por compatibilidade.
+   // Só esse erro permite retomar: complete ainda confere os bytes e o MIME.
+   var error;try{error=await response.json();}catch(_){return false;}
+   return !!error&&(error.code==='KeyAlreadyExists'||error.code==='ResourceAlreadyExists'||error.error==='Duplicate');
+  }
   async function upload(row,file,kind,fileId){
    var supported=kind==='video'?['video/mp4','video/webm','video/quicktime']:['audio/mp4','audio/mpeg','audio/webm','audio/ogg','audio/wav'];
    if(!file||file.size<1||file.size>(kind==='video'?26214400:8388608)||supported.indexOf(file.type)<0)throw Error(kind==='video'?'Escolha um vídeo MP4, WebM ou MOV de até 25 MB.':'Escolha um áudio M4A, MP3, WebM, OGG ou WAV de até 8 MB.');
    var tick=epoch,id=fileId||uuid();status('Enviando '+(kind==='video'?'vídeo':'áudio')+'…');
    if(cfg.demo){if(demoFiles[id])revoke(demoFiles[id].url);var url=URL.createObjectURL(file);demoFiles[id]={id:id,revisao:row.id,tipo:kind,mime:file.type,bytes:file.size,url:url};}
    else{var data=await call('upload',{id:row.id,fileId:id,mime:file.type,bytes:file.size});
-    if(!data.ready){var response=await request(mediaUrl(data.uploadUrl,true),{method:'PUT',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file},120000);if(!response.ok&&response.status!==409)throw Error('O envio falhou. Tente novamente com o mesmo arquivo.');}}
+    if(!data.ready){var response=await request(mediaUrl(data.uploadUrl,true),{method:'PUT',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file},120000);if(!response.ok&&!await uploadedAlready(response))throw Error('O envio falhou. Tente novamente com o mesmo arquivo.');}}
    live();if(tick!==epoch)throw Error('A tela foi fechada.');await call('complete',{id:row.id,fileId:id});return id;
   }
   async function open(context){

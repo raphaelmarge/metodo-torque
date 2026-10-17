@@ -59,8 +59,29 @@
       doc.body.appendChild(el); opened = el; el.showModal(); return true;
     }
     function beforeOpen(fi, ei, done) {
-      try { check(); if (!originals[fi]) return false; if (restoreOne(fi)) return false; return show(fi, done); }
+      try { check(); if (!originals[fi]) return false; if (restoreOne(fi)) return false; return show(fi, function () { done(C.guia[fi].varianteId ? 0 : ei); }); }
       catch (e) { if (C.notice) C.notice(e.message); if (C.closed) C.closed(); return true; }
+    }
+    // Os botões de exercício na ficha pertencem ao plano original. Seu índice
+    // não pode ser aplicado à lista, possivelmente menor, de uma variante.
+    function beforeOriginalExercise(fi, ei, done) {
+      try {
+        check(); var current = restoreOne(fi), original = originals[fi] && originals[fi].it[ei];
+        if (!original || !(current && current.prescribed && current.prescribed.varianteId)) return false;
+        if (current.finished) { select(fi, ''); done(ei); return true; }
+        if (opened) return true;
+        var message = 'Para iniciar ' + original.e + ' da ficha original, conclua primeiro ' + (current.prescribed.varianteNome || 'a versão em andamento') + '.';
+        if (!doc) { if (C.notice) C.notice(message); return true; }
+        var previous = doc.activeElement, el = doc.createElement('dialog');
+        el.className = 'te-aluno-dialog'; el.setAttribute('aria-label', 'Treino em andamento');
+        var title = doc.createElement('h2'); title.textContent = 'Seu treino está em andamento'; el.appendChild(title);
+        var description = doc.createElement('p'); description.textContent = message; el.appendChild(description);
+        var resume = doc.createElement('button'); resume.type = 'button'; resume.className = 'te-aluno-option'; resume.textContent = 'Continuar ' + (current.prescribed.varianteNome || 'treino em andamento');
+        resume.onclick = function () { try { check(); el.close(); done(null); } catch (e) { description.textContent = e.message; } }; el.appendChild(resume);
+        var back = doc.createElement('button'); back.type = 'button'; back.className = 'btnx'; back.textContent = 'Voltar'; back.onclick = function () { el.close(); }; el.appendChild(back);
+        el.addEventListener('close', function () { opened = null; el.remove(); if (C.closed) C.closed(); if (previous && previous.isConnected) previous.focus(); });
+        doc.body.appendChild(el); opened = el; el.showModal(); return true;
+      } catch (e) { if (C.notice) C.notice(e.message); if (C.closed) C.closed(); return true; }
     }
     function beforeNew(fi, done) {
       try {
@@ -72,7 +93,7 @@
         return show(fi, done);
       } catch (e) { if (C.notice) C.notice(e.message); if (C.closed) C.closed(); return true; }
     }
-    return { restore: restore, restoreOne: restoreOne, beforeOpen: beforeOpen, beforeNew: beforeNew, select: select, original: function (fi) { return copy(originals[fi]); }, dispose: function () { if (opened) opened.close(); } };
+    return { restore: restore, restoreOne: restoreOne, beforeOpen: beforeOpen, beforeOriginalExercise: beforeOriginalExercise, beforeNew: beforeNew, select: select, original: function (fi) { return copy(originals[fi]); }, dispose: function () { if (opened) opened.close(); } };
   }
   var api = { runtime: runtime }; root.MT_TREINO_VARIANTES = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

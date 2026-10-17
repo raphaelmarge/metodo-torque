@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const BASE = new URL(process.env.BASE_URL || 'https://torque-test.invalid').origin;
 let chromium;
 try { ({ chromium } = require(process.env.TORQUE_PLAYWRIGHT || 'playwright')); }
 catch (_) { ({ chromium } = require('/opt/node22/lib/node_modules/playwright')); }
@@ -14,7 +15,7 @@ const studentCss = fs.readFileSync(path.join(__dirname, '../app/treino-evolucao.
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   try {
     const context = await browser.newContext({ viewport: { width: 320, height: 800 }, serviceWorkers: 'block' });
-    const url = 'https://torque-test.invalid/treino-evolucao';
+    const url = BASE + '/treino-evolucao';
     await context.route('**/*', r => r.request().url() === url ? r.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html><head><meta charset="utf-8"><style>body{background:#0c0d11;color:#f3f3f6;font:16px Arial}.btn{padding:8px}button{cursor:pointer}*{box-sizing:border-box}</style></head><body><button data-te-variants="f">Versões</button><button data-te-progression="f">Evoluir</button></body></html>' }) : r.abort());
     const p = await context.newPage(); const errors = []; p.on('pageerror', e => errors.push(e.message));
     await p.goto(url); await p.addScriptTag({ content: source }); await p.addStyleTag({ content: css });
@@ -68,6 +69,9 @@ const studentCss = fs.readFileSync(path.join(__dirname, '../app/treino-evolucao.
     });
     assert.equal(await p.getByRole('dialog', { name: 'Qual versão cabe no seu dia?' }).count(), 1);
     await p.locator('.te-aluno-option').nth(1).click(); assert.equal(await p.evaluate(() => starts), 1); assert.ok(await p.evaluate(() => guia[0].varianteId));
+    // HTMLDialogElement.close() dispara "close" numa tarefa posterior; o módulo
+    // remove o elemento nesse evento, então aguarde a remoção antes de medi-la.
+    await p.locator('.te-aluno-dialog').waitFor({ state: 'detached' });
     assert.equal(await p.locator('.te-aluno-dialog').count(), 0);
     await p.evaluate(() => { student.beforeOpen(0, null, () => {}); }); assert.equal(await p.locator('.te-aluno-dialog').count(), 0); assert.equal(await p.evaluate(() => starts), 1);
     console.log('OK seletor aluno usa versão aprovada uma vez e retoma sem criar outra sessão');

@@ -5231,7 +5231,7 @@
        * no GUIA (Farmer's walk → Farmers walk) e a ficha guardava o ptsets com
        * ele: o recibo do player nao via as series marcadas na ficha. */
       "function exKey(n){return String(n==null?'':n).replace(/'/g,'');}" +
-      "function setChave(b){return b.dataset.setkey||exKey(b.dataset.ex);}function setValor(st,k,n){if(st[k]!=null)return +st[k]||0;if(k.charAt(0)==='@'){var p=k.slice(1).split(':');return typeof SR!=='undefined'&&SR?SR.feitas(+p[0],+p[1]):0;}return st[exKey(n)]||0;}" +
+      "function setChave(b){return b.dataset.setkey||exKey(b.dataset.ex);}function setValor(st,k,n){if(st[k]!=null)return +st[k]||0;if(k.charAt(0)==='@'){var p=k.slice(1).split(':');if(typeof GUIA!=='undefined'&&GUIA&&GUIA[+p[0]]&&GUIA[+p[0]].varianteId)return 0;return typeof SR!=='undefined'&&SR?SR.feitas(+p[0],+p[1]):0;}return st[exKey(n)]||0;}" +
       "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +
       "var n=setValor(st,setChave(b),b.dataset.ex),max=+b.dataset.n;b.textContent=n+'/'+max+' séries ✓';" +
       "b.style.background=n>=max?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg7)';});}" +
@@ -7007,7 +7007,7 @@
       "var c=gEl('gKg'),r=gEl('gReps');if(!c||!gv.reg)return;" +
       "GP.guarda();var ok=GP.salvaDraft(gv.reg,gv.rascunhos[gv.regi]||{kg:c.value,reps:r?r.value:''},gv.regi);if(ok){gv.sujo=false;GP.limpa(false);}else{var lab=gEl('gCgLab');if(lab){lab.textContent='Confira os valores antes de sair. Seu preenchimento foi mantido.';lab.setAttribute('role','alert');}}return ok;}" +
       // ---------- abrir / fechar ----------
-      "function abreGuia(fi,ei,variantChosen){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}if(!variantChosen&&treinoVariantes&&treinoVariantes.beforeOpen(fi,ei,function(){abreGuia(fi,ei,true);}))return;if(!GUIA[fi]||!TH.beginMuscle(fi,GUIA[fi],isoHj()))return;var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "function abreGuia(fi,ei,variantChosen){var antG=GP.antesAbrir(fi,ei);if(antG){fi=antG.f;ei=null;}if(!variantChosen&&treinoVariantes&&treinoVariantes.beforeOpen(fi,ei,function(startIndex){abreGuia(fi,startIndex,true);}))return;if(!GUIA[fi]||!TH.beginMuscle(fi,GUIA[fi],isoHj()))return;var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
       /* v751: as series ja marcadas HOJE pela ficha (ptsets_<dia>) semeiam o
        * player — 'Iniciar exercicio' no meio mostrava 'Serie 1 de 3' com a
@@ -7382,7 +7382,7 @@
       "document.addEventListener('click',function(e){" +
       "if(GP.clique(e))return;" +
       "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g,0);return;}" +
-      "var gi2=e.target.closest('.inibtn');if(gi2){abreGuia(+gi2.dataset.g,+gi2.dataset.e);return;}" +
+      "var gi2=e.target.closest('.inibtn');if(gi2){var fiOriginal=+gi2.dataset.g,eiOriginal=+gi2.dataset.e,pendOriginal=GP.antesAbrir(fiOriginal,eiOriginal);if(pendOriginal){abreGuia(pendOriginal.f);return;}if(treinoVariantes&&treinoVariantes.beforeOriginalExercise(fiOriginal,eiOriginal,function(startIndex){abreGuia(fiOriginal,startIndex,true);}))return;abreGuia(fiOriginal,eiOriginal);return;}" +
       "var gf=e.target.closest('[data-gfalta]');if(gf){gRepesca(+gf.dataset.gfalta);return;}" +
       "if(e.target.id==='gVoltaFim'){gConclui();return;}" +
       "if(e.target.id==='gFim'||e.target.id==='gFechar'){fechaGuia();return;}" +

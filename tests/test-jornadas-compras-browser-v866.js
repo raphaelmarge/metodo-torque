@@ -1,10 +1,11 @@
 /* UI real, mock de banco em memória; nenhuma chamada externa. */
 const assert=require('node:assert/strict'),path=require('node:path');
+const BASE=new URL(process.env.BASE_URL||'http://127.0.0.1:8765').origin;
 let chromium;try{chromium=require('playwright').chromium;}catch(_){chromium=require('/opt/node22/lib/node_modules/playwright').chromium;}
 let checks=0,browser;function eq(a,b,msg){assert.deepEqual(a,b,msg);checks++;}function ok(v,msg){assert.ok(v,msg);checks++;}
 (async()=>{
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox']});const p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
- await p.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html data-demo="central-pro"><body><main id="journey"></main><main id="week"></main></body></html>'}));await p.goto('http://127.0.0.1:8765/journey-test');await p.clock.setFixedTime(new Date('2026-10-17T15:00:00Z'));p.on('dialog',d=>d.accept());
+ await p.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html data-demo="central-pro"><body><main id="journey"></main><main id="week"></main></body></html>'}));await p.goto(BASE+'/journey-test');await p.clock.setFixedTime(new Date('2026-10-17T15:00:00Z'));p.on('dialog',d=>d.accept());
  for(const file of ['assets/jornadas-core.js','assets/personal-jornadas.js','assets/demo-central-pro-data.js','assets/nutricao-core.js','app/nutricao-semana.js'])await p.addScriptTag({path:path.resolve(__dirname,'..',file)});
  await p.addStyleTag({path:path.resolve(__dirname,'../app/nutricao-semana.css')});await p.addStyleTag({path:path.resolve(__dirname,'../assets/personal-jornadas.css')});
  await p.evaluate(()=>{window.selected={id:'demo-bruno',name:'Bruno de teste'};window.context={academia_id:'demo-academia',user:{id:'demo-prof-marina'},epoch:0};window.journey=PTJornadas.mount(document.querySelector('#journey'),{context:async()=>context,assertContext(c){if(c.epoch!==context.epoch)throw Error('Conta mudou');},client:()=>MT_CENTRAL_PRO_DEMO.client,student:()=>selected,openArea:async()=>true});return journey.refresh();});
