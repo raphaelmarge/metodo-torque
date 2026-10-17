@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v865";
+var VERSION = "mt-v866";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -43,6 +43,20 @@ var CORE = [
   "assets/relatorio-0809.css",
   "assets/personal-planejamento.css",
   "assets/personal-corrida.css",
+  "app/evolucao-style.js",
+  "app/tecnica-video.js",
+  "app/treino-evolucao.js",
+  "app/nutricao-semana.js",
+  "assets/corrida-analise.js",
+  "app/corrida-export.js",
+  "app/saude-conexoes.js",
+  "assets/personal-treino-evolucao.js",
+  "assets/personal-treino-evolucao.css",
+  "assets/jornadas-core.js",
+  "assets/personal-jornadas.js",
+  "assets/personal-jornadas.css",
+  "assets/personal-tecnica-video.js",
+  "app/tecnica-video.css",
   "assets/acompanhamento.js",
   "assets/prescricao-series.js",
   "assets/personal-usabilidade.css",

@@ -13,7 +13,8 @@
   "dependencies": {
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
-    "@capacitor/ios": "^7.0.0"
+    "@capacitor/ios": "^7.0.0",
+    "@torqueon/health": "file:aluno/health-plugin"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"

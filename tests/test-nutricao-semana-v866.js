@@ -1,0 +1,35 @@
+/* Compras planejadas por alternativa, unidade, versão e retorno existente. */
+const assert=require('node:assert/strict'),vm=require('node:vm');
+require('../assets/nutricao-core.js');const N=global.MT_NUTRICAO,Factory=require('../app/nutricao-semana.js'),C=Factory.create();
+let checks=0;function eq(a,b,msg){assert.deepEqual(a,b,msg);checks++;}function ok(v,msg){assert.ok(v,msg);checks++;}function fails(fn,msg){assert.throws(fn,undefined,msg);checks++;}
+const item=(id,nome,porcao,qtd,other={})=>({id,alimId:id,nome,porcao,qtd,k:10,pt:1,cb:1,g:1,...other});
+const p=N.normalizaPlano({id:'p',versao:1,ativo:true,inicio:'2026-10-19',fim:'2026-10-25',refeicoes:[{id:'almoco',titulo:'Almoço',dias:[1,2,3],itens:[item('arroz','Arroz','100 g',2,{substituicoes:[item('batata','Batata','150 g',1.5)]}),item('leite','Leite','200 ml',1)]},{id:'jantar',titulo:'Jantar',dias:[1],itens:[item('arroz','Arroz','0.1 kg',1),item('leite','Leite','200 g',1)]}]});
+const pristine=JSON.stringify(p);let s=C.state(p,null),lines=C.shopping(p,s,'2026-10-19',7,N);
+eq(lines.find(x=>x.nome==='Arroz').required,700,'Soma porções e gramas conhecidas do mesmo alimento');
+eq(lines.filter(x=>x.nome==='Leite').length,2,'Nunca converte ml em gramas nem mistura unidades');
+eq(lines.find(x=>x.unit==='porcao:200 ml').required,3,'Porções sem densidade continuam em porções');
+s=C.select(p,s,'2026-10-20','almoco',0,1,N);lines=C.shopping(p,s,'2026-10-19',7,N);
+eq(lines.find(x=>x.nome==='Batata').required,225,'Usa a quantidade da alternativa aprovada');
+eq(lines.find(x=>x.nome==='Arroz').required,500,'Substituição remove o original só no dia escolhido');
+eq(JSON.stringify(p),pristine,'Planejamento não altera a dieta publicada');
+fails(()=>C.select(p,s,'2026-10-20','almoco',0,9,N),'Alternativa não prescrita rejeitada');
+fails(()=>C.select(p,s,'2026-10-18','almoco',0,1,N),'Não seleciona refeição fora da vigência');
+fails(()=>C.select(p,s,'2026-10-22','almoco',0,1,N),'Respeita dias da refeição');
+const rice=lines.find(x=>x.nome==='Arroz');s=C.pantry(p,s,rice,'125,5');
+eq(C.shopping(p,s,'2026-10-19',7,N).find(x=>x.nome==='Arroz').buy,374.5,'Desconta estoque fracionado na mesma unidade');
+s=C.pantry(p,s,rice,1000);eq(C.shopping(p,s,'2026-10-19',7,N).find(x=>x.nome==='Arroz').buy,0,'Excesso em casa não gera compra negativa');
+fails(()=>C.pantry(p,s,rice,-1),'Estoque negativo rejeitado');fails(()=>C.pantry(p,s,rice,'infinito'),'Texto não vira zero');
+let bad=JSON.parse(JSON.stringify(s));bad.pantry[rice.key]={unit:'ml',amount:100};eq(C.shopping(p,bad,'2026-10-19',7,N).find(x=>x.nome==='Arroz').pantry,0,'Estoque de outra unidade ignorado');
+eq(Object.keys(C.state({...p,versao:2},s).selections).length,0,'Nova versão não reaproveita alternativas antigas');
+eq(Object.keys(C.state({...p,id:'outro'},s).pantry).length,0,'Outro plano não herda despensa antiga');
+eq(C.shopping(p,s,'2026-02-30',7,N),[],'Data inexistente não produz compras');
+eq(C.shopping(p,s,'2026-10-19',Infinity,N),[],'Período não é ilimitado');
+const record={id:'manual:1',d:'2026-10-19',titulo:'Almoço',itens:[item('arroz','Arroz','100 g',2)],observacao:'Estimativa conferida.',atualizadoEm:'2026-10-19T12:00:00.000Z'};
+let changed=C.difficulty(record,'tempo','Reunião atrasou','2026-10-19T12:10:00Z');
+eq(changed.id,record.id,'Dificuldade preserva identidade da refeição');eq(changed.itens,record.itens,'Não inventa ou altera consumo');
+ok(changed.observacao.startsWith(record.observacao),'Observação anterior preservada');
+eq(C.difficulty(changed,'tempo','Reunião atrasou','2026-10-20T12:10:00Z'),changed,'Reenvio do mesmo relato é idempotente');
+ok(N.normalizaRegistro(changed).observacao.includes('[Dificuldade]'),'Contrato de registro existente preserva o relato');
+fails(()=>C.difficulty(null,'tempo','','2026-10-19T12:10:00Z'),'Sem refeição não fabrica registro');
+const restored=vm.runInNewContext('('+Factory.create.toString()+')()');eq(restored.shopping(p,s,'2026-10-19',7,N).map(x=>x.buy).join(','),C.shopping(p,s,'2026-10-19',7,N).map(x=>x.buy).join(','),'Factory embarcada é autocontida');
+console.log(`PASS nutrição semana v866: ${checks} verificações`);

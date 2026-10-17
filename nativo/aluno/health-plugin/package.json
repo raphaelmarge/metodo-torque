@@ -1,0 +1,10 @@
+{
+  "name": "@torqueon/health",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Leitura opcional de HealthKit e Health Connect para o aluno",
+  "main": "index.js",
+  "files": ["index.js", "ios", "android", "TorqueHealth.podspec"],
+  "peerDependencies": {"@capacitor/core": "^7.0.0"},
+  "capacitor": {"ios": {"src": "ios"}, "android": {"src": "android"}}
+}

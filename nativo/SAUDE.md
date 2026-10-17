@@ -1,5 +1,13 @@
 # Relógio, bands e saúde — o caminho do app de verdade (iOS + Android)
 
+> Atualização mt-v866: há agora um plugin local de leitura em
+> `aluno/health-plugin`, com adaptador e consentimento em
+> `../app/saude-conexoes.js`. Veja `aluno/health-plugin/README.md` e
+> `../docs/releases/mt-v866-corrida-saude.md`. Swift/Kotlin estão implementados,
+> mas **não foram compilados nem homologados em aparelhos**. As receitas abaixo
+> descrevem a ponte legada e não comprovam integração ativa. Não instalar os
+> plugins sugeridos historicamente abaixo como se fossem pré-requisitos novos.
+
 Este documento é o mapa pra ligar smartwatch/band no TORQUE ON. A parte que
 NÃO depende de loja já está no ar; a parte nativa tem o contrato pronto — é
 plugar o shell da loja (esta pasta `nativo/`, Capacitor) e implementar a ponte.
