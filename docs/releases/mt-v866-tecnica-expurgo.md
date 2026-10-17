@@ -114,4 +114,3 @@ Fontes oficiais consultadas em 17/10/2026:
 - https://supabase.com/docs/guides/database/vault
 - https://supabase.com/docs/guides/database/extensions/pg_net
 - https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl
-

@@ -30,5 +30,3 @@ try{
  console.log('Integração corrida/saúde v866: '+n+' verificações passaram.');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
-
-
