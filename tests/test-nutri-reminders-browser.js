@@ -58,7 +58,30 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
    await bind(user);const pending=call('push',{data:{json:()=>({kind:'appointment',userId:user,tag:'race'})}});await displayStarted;await bind(null);release();await pending;return visible.length;
   },sw);
   assert.equal(race,0);assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
+  const ordering=await page.evaluate(async(source)=>{
+   const listeners={},visible=[],gates=new Map(),acks=[];
+   const fake={location:{href:location.origin+'/nutri/sw.js'},addEventListener:(name,fn)=>listeners[name]=fn,registration:{showNotification:async(title,data)=>{const n={...data,close:()=>visible.splice(visible.indexOf(n),1)};visible.push(n);},getNotifications:async()=>visible.slice()},clients:{get:async id=>{if(gates.has(id))await gates.get(id).promise;return {id,url:location.origin+(id==='outside'?'/personal.html':'/nutri/index.html')};}}};
+   new Function('self',source)(fake);
+   const gate=id=>{let release;const promise=new Promise(resolve=>release=resolve);gates.set(id,{promise,release});return ()=>{release();gates.delete(id);};};
+   const call=(name,args)=>{let promise;listeners[name]({...args,waitUntil:p=>promise=p});return promise;};
+   const bind=(userId,id='valid')=>call('message',{data:{type:'NUTRI_REMINDER_ACCOUNT',userId},source:{id},ports:[{postMessage:result=>acks.push({id,...result})}]});
+   const A='00000000-0000-4000-8000-000000000001',B='00000000-0000-4000-8000-000000000002',push=userId=>call('push',{data:{json:()=>({kind:'appointment',userId,tag:userId})}});
+   await bind(A);let release=gate('old-before-logout'),old=bind(A,'old-before-logout');await bind(null);release();await old;await push(A);const afterLogout=visible.length;
+   release=gate('old-before-switch');old=bind(A,'old-before-switch');await bind(B);release();await old;await push(A);await push(B);const afterSwitch=visible.map(n=>n.data.userId);
+   release=gate('logout-pending');const logout=bind(null,'logout-pending');await push(B);const whileLogoutPending=visible.length;release();await logout;
+   await bind(A,'outside');await push(A);const afterInvalid=visible.length;await bind(B);await push(B);const afterRecovery=visible.map(n=>n.data.userId);
+   // Await the worker's own deadline, not a fixed test sleep. A failed client
+   // lookup cannot strand all later messages or reopen the previous account.
+   const releaseTimeout=gate('lookup-timeout');await bind(null,'lookup-timeout');await push(B);const afterTimeout=visible.length;releaseTimeout();await bind(null);await bind(B);await push(B);
+   return {afterLogout,afterSwitch,whileLogoutPending,afterInvalid,afterRecovery,afterTimeout,final:visible.map(n=>n.data.userId),acks};
+  },sw);
+  const B='00000000-0000-4000-8000-000000000002';
+  assert.equal(ordering.afterLogout,0);assert.deepEqual(ordering.afterSwitch,[B]);assert.equal(ordering.whileLogoutPending,1);assert.equal(ordering.afterInvalid,0);assert.deepEqual(ordering.afterRecovery,[B]);assert.equal(ordering.afterTimeout,1);assert.deepEqual(ordering.final,[B]);
+  for(const id of ['old-before-logout','old-before-switch','outside','lookup-timeout'])assert.equal(ordering.acks.find(a=>a.id===id)?.ok,false,id);
+  assert.equal(ordering.acks.find(a=>a.id==='logout-pending')?.ok,true);
+  assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
   console.log('OK worker isola contas, persiste saída, deduplica tag, ignora texto sensível e mantém clique na origem.');
   console.log('OK logout concorrente ao showNotification fecha aviso exibido depois da revogação.');
+  console.log('OK vínculo atrasado não supera logout/troca de conta; push bloqueia imediatamente e falhas não bloqueiam próximas mensagens.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

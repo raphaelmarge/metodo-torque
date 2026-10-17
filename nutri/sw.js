@@ -7,40 +7,62 @@ const INDEX_URL = new URL('index.html', BASE).href;
 
 // The persisted binding is local to this worker scope. A queued push from a
 // previous account is discarded even after the browser has been closed.
-function reminderAccount(value,write=false){return new Promise((resolve,reject)=>{
+let reminderBindingRevision=0,reminderBindingBlocked=false;
+function reminderDeadline(operation){let timer;return Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Reminder operation timed out')),1500);})]).finally(()=>clearTimeout(timer));}
+function reminderAccount(value,write=false,revision=reminderBindingRevision){return new Promise((resolve,reject)=>{
+ let done=false,db=null,tx=null;
+ const finish=(error,result)=>{if(done)return;done=true;clearTimeout(timer);if(error)try{tx?.abort();}catch{}db?.close();error?reject(error):resolve(result);};
+ const timer=setTimeout(()=>finish(Error('Reminder storage timed out')),1500);
  const request=indexedDB.open('torque-nutri-push:'+BASE.pathname,1);
  request.onupgradeneeded=()=>request.result.createObjectStore('account');
- request.onerror=()=>reject(request.error);
- request.onsuccess=()=>{const db=request.result,tx=db.transaction('account',write?'readwrite':'readonly'),store=tx.objectStore('account'),op=write?store.put(value,'active'):store.get('active');let result=null;op.onsuccess=()=>{result=op.result;};tx.oncomplete=()=>{db.close();resolve(result);};tx.onerror=()=>{db.close();reject(tx.error);};};
+ request.onerror=()=>finish(request.error);
+ request.onblocked=()=>finish(Error('Reminder storage blocked'));
+ request.onsuccess=()=>{
+  if(done){request.result.close();return;}db=request.result;
+  // Check immediately before opening a write transaction. An older open()
+  // completing after logout must not enqueue a stale account write.
+  if(write&&revision!==reminderBindingRevision){finish(Error('Reminder account superseded'));return;}
+  try{tx=db.transaction('account',write?'readwrite':'readonly');const store=tx.objectStore('account'),op=write?store.put(value,'active'):store.get('active');let result=null;op.onsuccess=()=>{result=op.result;};tx.oncomplete=()=>finish(null,result);tx.onerror=()=>finish(tx.error);tx.onabort=()=>finish(tx.error||Error('Reminder transaction aborted'));}catch(error){finish(error);}
+ };
 });}
 self.addEventListener('message',event=>{
  if(event.data?.type!=='NUTRI_REMINDER_ACCOUNT')return;
  const userId=event.data.userId;
  if(userId!==null&&!/^[0-9a-f-]{36}$/i.test(userId||''))return;
+ // Invalidate synchronously, before source validation or storage awaits. Only
+ // the latest validated message can reopen delivery; failure stays closed.
+ const revision=++reminderBindingRevision;reminderBindingBlocked=true;
  event.waitUntil((async()=>{
-  const source=event.source?.id?await self.clients.get(event.source.id):null;
+  const source=event.source?.id?await reminderDeadline(self.clients.get(event.source.id)):null;
   if(!source||new URL(source.url).origin!==BASE.origin||!new URL(source.url).pathname.startsWith(BASE.pathname))throw Error('Invalid client');
-  await reminderAccount(userId,true);
-  for(const notification of await self.registration.getNotifications())if(notification.data?.userId!==userId)notification.close();
+  if(revision!==reminderBindingRevision)throw Error('Reminder account superseded');
+  await reminderAccount(userId,true,revision);
+  const notifications=await reminderDeadline(self.registration.getNotifications());
+  if(revision!==reminderBindingRevision)throw Error('Reminder account superseded');
+  for(const notification of notifications)if(notification.data?.userId!==userId)notification.close();
+  reminderBindingBlocked=false;
   event.ports[0]?.postMessage({ok:true});
  })().catch(()=>event.ports[0]?.postMessage({ok:false})));
 });
 self.addEventListener('push',event=>{
+ const revision=reminderBindingRevision;
  event.waitUntil((async()=>{
   let data;try{data=event.data?.json();}catch{return;}
   if(!data||!['appointment','questionnaire'].includes(data.kind)||!data.userId||!data.tag)return;
-  if(await reminderAccount()!==data.userId)return;
+  if(reminderBindingBlocked||await reminderAccount()!==data.userId||reminderBindingBlocked||revision!==reminderBindingRevision)return;
   await self.registration.showNotification('Torque Nutri',{body:data.kind==='appointment'?'Você tem um compromisso próximo. Abra o app para conferir.':'Há um lembrete para você. Abra o app para conferir.',icon:new URL('icon-192.png',BASE).href,badge:new URL('icon-192.png',BASE).href,tag:String(data.tag).slice(0,100),renotify:false,data:{userId:data.userId,page:data.kind==='appointment'?'booking':'forms'}});
   // A logout may finish while showNotification is waiting on the OS. Recheck
   // after display and close only this previous account's notification.
-  if(await reminderAccount()!==data.userId)for(const notification of await self.registration.getNotifications({tag:String(data.tag).slice(0,100)}))if(notification.data?.userId===data.userId)notification.close();
+  if(reminderBindingBlocked||revision!==reminderBindingRevision||await reminderAccount()!==data.userId)for(const notification of await self.registration.getNotifications({tag:String(data.tag).slice(0,100)}))if(notification.data?.userId===data.userId)notification.close();
  })().catch(()=>{}));
 });
 self.addEventListener('notificationclick',event=>{
+ const revision=reminderBindingRevision;
  event.notification.close();event.waitUntil((async()=>{
-  const data=event.notification.data;if(await reminderAccount()!==data?.userId)return;
+  const data=event.notification.data;if(reminderBindingBlocked||await reminderAccount()!==data?.userId||reminderBindingBlocked||revision!==reminderBindingRevision)return;
   const url=new URL('index.html',BASE);url.searchParams.set('reminder',data.page==='booking'?'booking':'forms');
   const clients=await self.clients.matchAll({type:'window',includeUncontrolled:false});
+  if(reminderBindingBlocked||revision!==reminderBindingRevision)return;
   for(const client of clients){if(new URL(client.url).pathname.startsWith(BASE.pathname)){await client.navigate(url.href);await client.focus();return;}}
   await self.clients.openWindow(url.href);
  })());
