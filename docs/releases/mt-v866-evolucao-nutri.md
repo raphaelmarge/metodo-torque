@@ -35,9 +35,12 @@ cache próprio do Nutri é v16, incluindo os novos módulos.
 
 Publicar o frontend não ativa envios. O serviço depende da release
 [`nutri-reminders`](../../supabase/releases/nutri-reminders/README.md) no projeto
-separado `mmdsmpetwhcfiyubhaah`: migração, Edge Function, par VAPID privado,
-contato do responsável e agendamento. Começa desligado; não cria assinaturas de
-pacientes por conta própria. Homologação deve usar conta/aparelho de teste com
+separado `mmdsmpetwhcfiyubhaah`. A estrutura SQL, a Edge Function v1 e a chave
+pública VAPID foram provisionadas em 17/10/2026, com o serviço desligado.
+Os secrets privados foram preparados fora do repositório, com o contato
+informado pelo responsável; seu cadastro remoto depende de autenticar o CLI.
+Cron e envio continuam pendentes. Não cria assinaturas de pacientes por conta
+própria. Homologação deve usar conta/aparelho de teste com
 consentimento explícito antes de habilitar o serviço.
 
 Nenhuma migração de planos é necessária: o schema capturado já conserva os novos

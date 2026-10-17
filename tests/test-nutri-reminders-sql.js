@@ -19,7 +19,16 @@ let checks=0;
    insert into public.patients(id,clinic_id,clinician_id,user_id,name,email,invite_code,invite_expires_at) values('${RA}','${CA}','${A}','${PA}','Paciente A','pa@example.test',null,null),('${RB}','${CB}','${B}','${PB}','Paciente B','pb@example.test',null,null);
    insert into public.appointments(id,patient_id,clinician_id,start_at,note) values('${AP}','${RA}','${A}',now()+interval '30 minutes','Sintético');
    insert into public.patient_records(id,patient_id,clinician_id,created_by,kind,title,visibility,data) values('${Q}','${RA}','${A}','${A}','questionnaire_assignment','Sintético','patient','{"questions":[{"id":"test","title":"Sintético","type":"text","required":true}],"intervalDays":7}');`);
-  await db.exec(fs.readFileSync(path.join(root,fs.readdirSync(root).find(x=>x.endsWith('.sql'))),'utf8'));
+  for(const migration of fs.readdirSync(root).filter(x=>x.endsWith('.sql')).sort())await db.exec(fs.readFileSync(path.join(root,migration),'utf8'));
+  await check('FKs de lembretes possuem índice completo válido com prefixo utilizável',async()=>{
+   const missing=(await query(`select c.conrelid::regclass as table_name,c.conname from pg_catalog.pg_constraint c
+    join pg_catalog.pg_class t on t.oid=c.conrelid join pg_catalog.pg_namespace n on n.oid=t.relnamespace
+    where c.contype='f' and n.nspname='private' and t.relname like 'nutri_push_%'
+     and not exists(select 1 from pg_catalog.pg_index i where i.indrelid=c.conrelid and i.indisvalid and i.indisready
+      and i.indpred is null and i.indexprs is null and i.indnkeyatts>=cardinality(c.conkey)
+      and (i.indkey::smallint[])[0:cardinality(c.conkey)-1] @> c.conkey)`)).rows;
+   assert.deepEqual(missing,[],'all reminder FK prefixes need an index, including inactive rows');
+  });
   await check('release começa desligada e não cria cron',async()=>{await who(PA);assert.equal((await rpc('snapshot')).enabled,false);await assert.rejects(()=>rpc('subscribe',{patient_id:RA,subscription,preferences:preference}),e=>e.code==='55000');});
   await check('anon, paciente alheio e profissional não inscrevem terceiro',async()=>{await who(null,'anon');await deny(()=>rpc('snapshot'));await who(PB);await deny(()=>rpc('snapshot'));await who(A);await deny(()=>rpc('snapshot'));await who(null);await deny(()=>rpc('snapshot'));});
   await check('tabelas privadas RLS sem grants e RPCs públicas invoker',async()=>{await who(null,'owner');for(const table of ['config','preferences','subscriptions','deliveries']){assert.equal(await scalar('select relrowsecurity from pg_class where oid=$1::regclass',['private.nutri_push_'+table]),true);assert.equal(await scalar("select has_table_privilege('authenticated',$1,'SELECT')",['private.nutri_push_'+table]),false);}assert.equal(await scalar("select bool_and(not prosecdef) from pg_proc where proname in('nutri_reminders','nutri_push_worker')"),true);await who(PA);await deny(()=>worker('claim'));await deny(()=>query('select * from private.nutri_push_subscriptions'));await deny(()=>query('select * from private.nutri_push_candidates(now())'));});

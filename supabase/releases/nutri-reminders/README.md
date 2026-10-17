@@ -1,6 +1,8 @@
 # Lembretes Web Push do Torque Nutri
 
-Release isolada do projeto Nutri `mmdsmpetwhcfiyubhaah`. Não aplicar no banco da academia/Personal. O código local foi implementado em 17/10/2026; banco, função, VAPID e cron não foram provisionados por esta implementação. A migração começa com `enabled=false` e não cria cron nem envia mensagens.
+Release isolada do projeto Nutri `mmdsmpetwhcfiyubhaah`. Não aplicar no banco da academia/Personal. Em 17/10/2026, a estrutura SQL foi aplicada e a função `nutri-reminders-dispatch` foi publicada (versão 1). A chave pública VAPID foi configurada, com `enabled=false`; par privado e segredo foram preparados fora do repositório, em diretório local protegido. O cadastro dos secrets Edge depende de autenticar o Supabase CLI: o conector disponível não oferece essa operação. Cron e envio permanecem desligados.
+
+A verificação remota confirmou quatro tabelas com RLS, nenhum acesso de `anon` à RPC do paciente, nenhum acesso de `authenticated` à RPC do worker e resposta HTTP 401 sem segredo. Não havia assinaturas nem entregas. O advisor de segurança informou somente [RLS sem políticas](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) nas quatro tabelas privadas: é intencional, pois clientes não recebem grants de tabela e o acesso é mediado por funções com autorização explícita. A publicação não comprova entrega em dispositivo.
 
 ## Comportamento
 
