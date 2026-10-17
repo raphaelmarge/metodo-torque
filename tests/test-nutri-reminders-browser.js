@@ -1,13 +1,16 @@
 // Synthetic UI/worker fixtures; blocks all external requests and permission UI.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
-(async()=>{const browser=await chromium.launch({headless:true});
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
  try{
-  const context=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}}),errors=[],external=[];
+  const context=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}}),errors=[],external=[],startupFailures=[];
   await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin!==new URL(BASE).origin||route.request().method()!=='GET'){external.push(url.href);return route.abort();}if(url.pathname.endsWith('/nutri/config.js'))return route.fulfill({contentType:'application/javascript',body:'window.TORQUE_NUTRI_CONFIG={};'});return route.continue();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(BASE+'/nutri/demo-paciente.html');await page.locator('.demo-notice').waitFor();
+  page.on('requestfailed',request=>startupFailures.push({url:request.url(),error:request.failure()?.errorText}));
+  page.on('response',response=>{if(response.status()>=400)startupFailures.push({url:response.url(),status:response.status()});});
+  try{await page.goto(BASE+'/nutri/demo-paciente.html');await page.locator('.demo-notice').waitFor();}
+  catch(error){throw new Error('Falha ao iniciar a demonstração sintética de lembretes: '+JSON.stringify({url:page.url(),pageErrors:errors,requests:startupFailures,blocked:external,body:await page.locator('body').innerText({timeout:2000}).then(text=>text.slice(0,1200)).catch(()=>'<indisponível>')}),{cause:error});}
   await page.locator('[data-page="more"]').first().click();await page.locator('[data-page="settings"]').last().click();
   assert.match(await page.locator('main').innerText(),/demonstração não pede permissão/);
   assert.equal(await page.locator('#reminder-preferences').count(),0);

@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,''),ORIGIN=new URL(BASE).origin;
 let browser,checks=0;const pass=name=>{checks++;console.log('PASS '+name);};
 (async()=>{
