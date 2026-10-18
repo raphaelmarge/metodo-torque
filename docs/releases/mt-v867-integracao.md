@@ -8,12 +8,13 @@ precache e poderia devolver um arquivo antigo mesmo após uma nova instalação.
 
 ## Ordem e recursos
 
-1. Integrar o #888 com mt-v866 e o worker próprio do Nutri v17.
-2. Integrar o #889 contendo o #888, com mt-v867 literal em `assets/versao.js`,
-   `sw.js` e `app/app-sw.js`.
-3. Publicar somente o artefato do commit aprovado pelo workflow Pages. O guard
-   existente pode suprimir uma implantação intermediária superada por outro
-   merge; por isso também se testa o salto direto 865 → 867.
+1. Consolidar o #888 com mt-v866 e o worker próprio do Nutri v17.
+2. Incorporar todos os commits finais do #888 no #889, com mt-v867 literal em
+   `assets/versao.js`, `sw.js` e `app/app-sw.js`.
+3. Após os checks dos dois HEADs, fazer merge commit do #889 na main: sua
+   ancestralidade integra também o #888, sem publicação intermediária.
+4. Publicar somente o artefato do commit aprovado pelo workflow Pages e
+   conferir o SHA servido. Testam-se tanto 865 → 866 → 867 como 865 → 867.
 
 O portal conserva os 14 recursos novos de acompanhamento; o esqueleto do aluno
 conserva os sete módulos novos. `app/evolucao-style.js` continua gerado pelas
@@ -29,6 +30,8 @@ do cache de cada release. Ativação remove somente o namespace do seu produto.
   assinatura e sem resposta não é considerado revogado. Troca de controlador
   refaz o vínculo atual. Respostas atrasadas continuam sem poder restaurar a
   conta anterior. Falha transitória de capacidade permite nova tentativa.
+  Consulta Push sem resposta tem prazo e falha explícita; nunca confirma
+  revogação desconhecida nem prende indefinidamente a entrada/saída.
 - Aluno: registro com `updateViaCache: none`, procura explícita de atualização
   e leitura de rede com `no-cache`, preservando os caminhos offline e os
   pacotes `{html,dados,ver,stamp}` anteriores. Não há limpeza de localStorage.
@@ -49,6 +52,10 @@ do cache de cada release. Ativação remove somente o namespace do seu produto.
 | `test-metas-personalizadas-core.js` | Fixture fornece a GUIA canônica ao gravador real; preserva os casos de identidade e legado. |
 | `test-personal.js` | Inclui a nova ação mantendo Chat/Agendar; verifica capture no input de foto; novas folhas usam a paleta do aluno, sem cores padrão vazando na personalização. |
 
+A validação ampliada também encontrou duas corridas de eventos nos testes:
+a leitura da despensa após Tab e a remoção do diálogo de versões após Escape.
+As asserções agora aguardam a atualização/remoção real, sem relaxar resultados.
+
 As demos foram regeneradas pelo gerador canônico. Não se removeu funcionalidade
 para acomodar as asserções.
 
@@ -57,11 +64,17 @@ para acomodar as asserções.
 - `tests/test-service-worker-upgrade.js`: workers reais em Chromium e WebKit;
   865 → 866 → 867 e 865 → 867; instalação interrompida, cache runtime antigo,
   recursos offline, rascunho, pacote legado, fila e caches de outros produtos.
+  O teste causa indisponibilidade real da origem e exige que uma requisição
+  não cacheada falhe antes de conferir os recursos preservados. Não usa
+  `setOffline(true)`, afetado pelo defeito Playwright 1.63 #42775 no WebKit.
 - `tests/test-nutri-update-browser.js`: worker publicado v14 → v17, sem reload,
   conta atual vinculada, saída legada, precache incompleto e recursos offline.
+  Não há serviço Push do sistema na fixture: `getSubscription` representa
+  explicitamente a ausência de inscrição, em ambos os motores. Instalação,
+  cache, mensagens e vínculo persistido usam o worker real.
 - `tests/test-nutri-reminders-browser.js`: consentimento explícito, revogação,
   corrida entre contas, reinício do worker e recuperação de resposta tardia.
-- Localmente passaram os testes de atualização em Chromium, versão (17),
+- Localmente passaram os testes de atualização em Chromium e WebKit, versão (17),
   integração de treinos (36), identidade/legado (47), versões/progressão (34),
   topo (100), painel móvel (19), infraestrutura (74) e bundle canônico.
   O CI do commit final é a referência para o lote completo e WebKit.

@@ -49,7 +49,7 @@ const studentCss = fs.readFileSync(path.join(__dirname, '../app/treino-evolucao.
     console.log('OK falha de gravação mantém formulário e troca de conta bloqueia confirmação obsoleta');
     const geometry = await p.locator('.te-dialog').evaluate(el => ({ viewport: innerWidth, right: el.getBoundingClientRect().right, overflow: el.scrollWidth - el.clientWidth }));
     assert.ok(geometry.right <= geometry.viewport && geometry.overflow <= 1, JSON.stringify(geometry));
-    await p.keyboard.press('Escape'); assert.equal(await p.locator('.te-dialog').count(), 0);
+    await p.keyboard.press('Escape'); await p.locator('.te-dialog').waitFor({ state: 'detached' }); assert.equal(await p.locator('.te-dialog').count(), 0);
     assert.equal(await p.evaluate(() => document.activeElement.textContent), 'Versões');
     console.log('OK editor móvel 320px sem transbordo, Escape e foco devolvido');
     await p.evaluate(() => { allowed = 'conta-a'; }); await p.getByRole('button', { name: 'Evoluir', exact: true }).click();

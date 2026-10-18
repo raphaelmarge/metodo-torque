@@ -10,9 +10,10 @@ const previous={portal:fs.readFileSync(path.join(__dirname,'fixtures/portal-sw-v
 const latest={portal:fs.readFileSync(path.join(root,'sw.js'),'utf8'),aluno:fs.readFileSync(path.join(root,'app/app-sw.js'),'utf8')};
 const version=fs.readFileSync(path.join(root,'assets/versao.js'),'utf8').match(/mt-v(\d+)/)[1];
 assert(Number(version)>866,'integration must not reuse mt-v866');
-let phase=865,broken=false,attempt=0;
+let phase=865,broken=false,attempt=0,unavailable=false;
 const types={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=http.createServer((req,res)=>{
+ if(unavailable){req.socket.destroy();return;}
  const url=new URL(req.url,'http://localhost'),p=url.pathname;
  if(p.endsWith('/upgrade-fixture.html')){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><meta charset="utf-8"><title>Upgrade</title><input id="draft" value="edição pendente">');}
  if(p==='/sw.js'||p==='/app/app-sw.js'){
@@ -40,7 +41,7 @@ async function update(page,script){
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
 }
 async function run(browser,base,product,direct=false){
- phase=865;broken=false;attempt++;
+ phase=865;broken=false;unavailable=false;attempt++;
  const context=await browser.newContext(),page=await context.newPage();
  const prefix=product==='portal'?'precache-mt-v':'mt-app-mt-v',script=product==='portal'?'/sw.js':'/app/app-sw.js';
  try{
@@ -74,7 +75,10 @@ async function run(browser,base,product,direct=false){
   assert(data.same);assert.equal(data.draft,'edição pendente');assert.match(data.package,/legacy fallback/);assert.match(data.queue,/queued/);
   assert(!data.keys.includes('runtime-mt-v866'));
   for(const key of ['mt-mapa-v1','mt-visao-v1','torque-nutri-platform:%2Fnutri%2F:v17','unrelated'])assert(data.keys.includes(key),key);
-  await context.setOffline(true);
+  // Playwright 1.63 WebKit's offline flag rejects SW responses (#42775).
+  // Stop origin responses instead; the negative control proves the outage.
+  unavailable=true;
+  assert(await page.evaluate(()=>fetch('/uncached-network-probe',{cache:'no-store'}).then(()=>false,()=>true)),'origin is unreachable');
   const builder=await page.evaluate(async()=>await (await fetch('/app/aluno-builder.js')).text());
   assert(builder.startsWith('/* release '+version+' */'),'new precache wins over old runtime offline');
   const modules=['/app/evolucao-style.js','/app/tecnica-video.js','/app/treino-evolucao.js','/app/nutricao-semana.js','/assets/corrida-analise.js','/app/corrida-export.js','/app/saude-conexoes.js'];
