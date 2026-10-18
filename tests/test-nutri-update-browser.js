@@ -6,6 +6,9 @@ const path = require('node:path');
 const http = require('node:http');
 const pw = require(process.env.TORQUE_PLAYWRIGHT || './ci/node_modules/playwright');
 const root = path.resolve(__dirname, '..');
+// Bind the test environment's local host, with an isolated ephemeral port.
+const fixtureHost=new URL(process.env.BASE_URL||'http://127.0.0.1').hostname;
+assert(['127.0.0.1','localhost'].includes(fixtureHost),'Use a local test server.');
 const legacy = fs.readFileSync(path.join(__dirname, 'fixtures/nutri-sw-v14.js'), 'utf8');
 const current = fs.readFileSync(path.join(root, 'nutri/sw.js'), 'utf8');
 const prefix = 'torque-nutri-platform:%2Fnutri%2F:';
@@ -96,8 +99,8 @@ async function scenario(browser, base, failInstall) {
   } finally { await context.close(); }
 }
 (async () => {
-  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  const base='http://127.0.0.1:'+server.address().port;
+  await new Promise(resolve=>server.listen(0,fixtureHost,resolve));
+  const base='http://'+fixtureHost+':'+server.address().port;
   // CI installs both engines. Local diagnostic runs can explicitly select one.
   for (const name of (process.env.TORQUE_UPDATE_BROWSER || 'chromium,webkit').split(',')) {
     const browser=await pw[name].launch({headless:true,...(name==='chromium'&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
