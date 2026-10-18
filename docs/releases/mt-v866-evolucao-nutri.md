@@ -83,7 +83,7 @@ em `deno check` inclusive no Deno 2.1.4, com lockfile v4.
 
 - O worker Nutri v17 revalida os arquivos HTTP e só ativa após completar todo
   o precache. A ativação não recarrega documentos nem apaga dados de pacientes.
-- O cliente aguarda a instalação e negocia o protocolo de vínculo; v14 sem
+- A instalação ocorre em paralelo à conta; o cliente negocia o protocolo de vínculo; v14 sem
   assinatura não causa aviso falso de revogação. Workers com assinatura e sem
   resposta continuam sendo tratados como erro. Troca de controlador refaz o
   vínculo da conta, sem pedir consentimento ou ativar o serviço.
