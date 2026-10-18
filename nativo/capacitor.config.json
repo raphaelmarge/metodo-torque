@@ -2,6 +2,7 @@
   "appId": "com.torqueon.academia",
   "appName": "TORQUE ON",
   "webDir": "www",
+  "includePlugins": [],
   "backgroundColor": "#121016",
   "android": {
     "allowMixedContent": false

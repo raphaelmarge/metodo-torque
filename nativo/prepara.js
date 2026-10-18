@@ -52,6 +52,9 @@ fs.writeFileSync(path.join(AQUI, "capacitor.config.json"), JSON.stringify({
   appId: p.appId,
   appName: p.appName,
   webDir: "www",
+  // Saúde pertence ao aluno. A variante sem saúde conserva o Android mínimo
+  // do Capacitor para aparelhos que não podem usar Health Connect.
+  includePlugins: id === "aluno" && process.env.TORQUE_HEALTH_ENABLED !== "0" ? ["@torqueon/health"] : [],
   backgroundColor: p.fundo,
   android: { allowMixedContent: false },
   ios: { contentInset: "always" },

@@ -29,9 +29,10 @@ construtor canônico do aplicativo. Não altera Academia nem o Nutri independent
 
 ## Limites reais
 
-A sincronização nativa ainda exige compilação e homologação em aparelhos,
-capabilities/permissões e as contas necessárias às lojas. Não houve compilação
-Swift/Kotlin nem teste em relógio. Strava/Garmin OAuth não está conectado. No
+A sincronização nativa ainda exige homologação em aparelhos, capabilities/permissões
+e as contas necessárias às lojas. A correção de compilação Android e suas
+variantes estão em `mt-v867-android.md`. Swift/iOS e relógios não foram
+homologados. Strava/Garmin OAuth não está conectado. No
 navegador, o app oferece importação de arquivos sem anunciar conexão ativa.
 
 O vídeo tem limite de 25 MB no servidor e no Storage; duração de até dois minutos

@@ -1,6 +1,7 @@
 package com.torqueon.health
 
 import android.content.Intent
+import android.os.Build
 import androidx.activity.result.ActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -47,7 +48,8 @@ class TorqueHealthPlugin : Plugin() {
     }
     @PluginMethod fun capabilities(call: PluginCall) {
         val available = HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
-        call.resolve(JSObject().put("available", available).put("platform", "android").put("kinds", JSArray(kinds.keys.toList())).put("reason", if (available) "" else "Instale ou atualize o Health Connect nos ajustes do Android."))
+        val reason = if (available) "" else if (Build.VERSION.SDK_INT < 28) "A leitura de saúde requer Android 9 ou superior." else "Instale ou atualize o Health Connect nos ajustes do Android."
+        call.resolve(JSObject().put("available", available).put("platform", "android").put("kinds", JSArray(kinds.keys.toList())).put("reason", reason))
     }
     @PluginMethod fun request(call: PluginCall) {
         try {

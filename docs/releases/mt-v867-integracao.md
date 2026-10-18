@@ -85,3 +85,8 @@ continuam desligados no serviço; habilitação e envio real dependem da
 homologação separada descrita na release Nutri. Saúde nativa e OAuth de relógios
 continuam sujeitos aos limites documentados no #889. O SHA e a versão de
 `release-info.json` precisam ser conferidos após o deploy.
+
+O build Android acionado após o merge encontrou uma incompatibilidade de SDK/AGP
+da biblioteca de saúde. A correção e a preservação da variante Android antiga
+estão documentadas em [mt-v867-android.md](mt-v867-android.md). Isso não altera
+os arquivos de runtime nem os namespaces de cache do frontend.
