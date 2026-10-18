@@ -14,8 +14,9 @@ const current = fs.readFileSync(path.join(root, 'nutri/sw.js'), 'utf8');
 const prefix = 'torque-nutri-platform:%2Fnutri%2F:';
 const user = '00000000-0000-4000-8000-000000000001';
 const types = {'.html':'text/html', '.js':'application/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml'};
-let upgraded = false, broken = false;
+let upgraded = false, broken = false, unavailable = false;
 const server = http.createServer((req, res) => {
+  if(unavailable){req.socket.destroy();return;}
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/nutri/upgrade-fixture.html') {
     res.setHeader('Content-Type', 'text/html');
@@ -35,8 +36,12 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 async function scenario(browser, base, failInstall) {
-  upgraded = false; broken = failInstall;
+  upgraded = false; broken = failInstall; unavailable = false;
   const context = await browser.newContext();
+  // This fixture has no OS push service or subscription. WebKitGTK exposes
+  // PushManager but its getSubscription can stay pending without that service.
+  // Worker install/cache/messaging and account binding remain real.
+  await context.addInitScript(()=>{if(globalThis.PushManager)Object.defineProperty(PushManager.prototype,'getSubscription',{configurable:true,value:async()=>null});});
   try {
     const page = await context.newPage(), errors = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -90,7 +95,10 @@ async function scenario(browser, base, failInstall) {
         open.onsuccess=()=>{const db=open.result,tx=db.transaction('account'),req=tx.objectStore('account').get('active');req.onsuccess=()=>resolve(req.result);tx.oncomplete=()=>db.close();};
       }));
       assert.equal(binding, user, 'activated worker receives the current account');
-      await context.setOffline(true);
+      // Playwright 1.63 WebKit kills SW responses with setOffline(true)
+      // (microsoft/playwright#42775). A real origin outage exercises fallback.
+      unavailable=true;
+      assert(await page.evaluate(()=>fetch('/uncached-network-probe',{cache:'no-store'}).then(()=>false,()=>true)),'origin is unreachable');
       for (const file of ['app.js','recipe-composition.js','shopping-planner.js','day-summary.js','reminders.js']) {
         assert(await page.evaluate(async file => (await fetch('/nutri/'+file)).ok, file), file+' works offline');
       }

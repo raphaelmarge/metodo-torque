@@ -25,6 +25,14 @@ export async function registerReminderWorker(base){
   return reg;
  }catch{return null;}
 }
+// Some browser/OS push backends can remain pending. An unknown subscription
+// is an error, never evidence that revocation succeeded.
+async function deviceSubscription(reg){
+ if(!reg?.pushManager?.getSubscription)return null;
+ let timer;
+ try{return await Promise.race([reg.pushManager.getSubscription(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Não foi possível consultar a inscrição de notificações deste navegador.')),4000);})]);}
+ finally{clearTimeout(timer);}
+}
 function workerMessage(worker,message,timeout){
  return new Promise((resolve,reject)=>{
   const channel=new MessageChannel();
@@ -59,7 +67,7 @@ export function createReminderController(H){
   if(!await supportsBinding(reg)){
    // v14 has no push/account protocol. With no subscription there is nothing
    // to revoke. Never treat an unresponsive subscribed worker as safe.
-   if(await reg.pushManager?.getSubscription())throw Error('Atualize o app para proteger os lembretes deste aparelho.');
+   if(await deviceSubscription(reg))throw Error('Atualize o app para proteger os lembretes deste aparelho.');
    return false;
   }
   if(expectedGeneration!==generation)return false;
@@ -89,7 +97,7 @@ export function createReminderController(H){
   const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('Permita as notificações nas configurações do navegador para ativar.');
   if(current!==generation)throw Error('A conta mudou. Entre novamente.');
   const reg=await registration();if(!reg?.active||!await supportsBinding(reg))throw Error('Abra novamente o app para concluir sua instalação.');
-  let subscription=await reg.pushManager.getSubscription();
+  let subscription=await deviceSubscription(reg);
   if(!subscription)subscription=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:publicKey(snapshot.public_key)});
   try{
    if(current!==generation)throw Error('A conta mudou. Entre novamente.');
@@ -101,7 +109,7 @@ export function createReminderController(H){
  async function save(preferences){const current=generation,result=await rpc('preferences',{patient_id:patientId(),preferences:reminderPreferences(preferences)});if(current===generation)snapshot={available:true,...result};return snapshot;}
  async function disable(all=false){
   // Clear the worker first, so already queued pushes cannot appear on this device.
-  await bindDevice(null);const reg=await registration(),sub=await reg?.pushManager?.getSubscription();
+  await bindDevice(null);const reg=await registration(),sub=await deviceSubscription(reg);
   if(sub)await sub.unsubscribe();
   await rpc('unsubscribe',{patient_id:patientId(),endpoint:all?null:sub?.endpoint||'',all});
   return await load();
@@ -111,7 +119,7 @@ export function createReminderController(H){
   const old=context,previous=db();context='';generation++;needsBinding=true;loading=null;snapshot={available:false,enabled:false};
   clearing=(async()=>{
    let failure=null;try{await bindDevice(null);}catch(error){failure=error;}
-   try{const reg=globalThis.navigator?.serviceWorker?await registration():null,sub=await reg?.pushManager?.getSubscription();
+   try{const reg=globalThis.navigator?.serviceWorker?await registration():null,sub=await deviceSubscription(reg);
     if(sub){let timer;try{await Promise.race([sub.unsubscribe(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Não foi possível desligar a inscrição deste navegador.')),4000);})]);}finally{clearTimeout(timer);}
      // Local account isolation must never wait for a network RPC on sign-out.
      if(old&&previous)Promise.resolve(previous.rpc('nutri_reminders',{p_action:'unsubscribe',p_data:{endpoint:sub.endpoint}})).catch(()=>{});

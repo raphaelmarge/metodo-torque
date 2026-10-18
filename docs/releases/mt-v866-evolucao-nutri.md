@@ -92,3 +92,9 @@ em `deno check` inclusive no Deno 2.1.4, com lockfile v4.
   WebKit no CI. Localmente foi executado em Chromium; iPhone físico não testado.
 - A primeira integração mantém mt-v866; a integração seguinte do Personal deve
   usar mt-v867, conservando o precache Nutri e os módulos das duas branches.
+
+A consulta de inscrição Push possui prazo de quatro segundos: ausência de resposta
+produz erro explícito, sem afirmar revogação nem bloquear indefinidamente a saída.
+Os testes de atualização usam workers reais em Chromium e WebKit, com origem
+indisponível para validar o cache e inscrição Push sinteticamente ausente. Envio e
+permissão do sistema continuam sujeitos à homologação no iPhone/PWA instalada.

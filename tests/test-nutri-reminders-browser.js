@@ -70,6 +70,15 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
   });
   assert.equal(noPush,true,'saída funciona quando PushManager não existe');
 
+  const pendingSubscription=await page.evaluate(async()=>{
+   const {createReminderController}=await import('/nutri/reminders.js');let cleared=false;
+   Object.defineProperty(navigator.serviceWorker,'getRegistration',{configurable:true,value:async()=>({active:{postMessage:(message,ports)=>{if(message.type==='NUTRI_REMINDER_ACCOUNT'&&message.userId===null)cleared=true;ports[0].postMessage(message.type==='NUTRI_REMINDER_CAPABILITIES'?{reminderAccount:1}:{ok:true});}},pushManager:{getSubscription:()=>new Promise(()=>{})}})});
+   const controller=createReminderController({state:()=>({demo:true}),database:()=>null});
+   let rejected=false;try{await controller.clearDevice();}catch(error){rejected=/consultar a inscrição/.test(error.message);}
+   return {cleared,rejected};
+  });
+  assert.deepEqual(pendingSubscription,{cleared:true,rejected:true},'API Push sem resposta não prende a saída nem confirma revogação desconhecida');
+
   console.log('OK worker suspenso permite nova tentativa e falha real de vínculo continua bloqueando.');
   const sw=fs.readFileSync(path.join(__dirname,'../nutri/sw.js'),'utf8');
   const noNotificationAPI=await page.evaluate(async(source)=>{
