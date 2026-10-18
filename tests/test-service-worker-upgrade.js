@@ -30,7 +30,7 @@ async function update(page,script){
  await page.evaluate(async script=>{
   const reg=await navigator.serviceWorker.register(script,{updateViaCache:'none'});
   await reg.update();
-  const worker=reg.installing||reg.waiting;
+  const worker=reg.installing||reg.waiting||reg.active;
   if(worker&&!['activated','redundant'].includes(worker.state))await new Promise((resolve,reject)=>{
    const timer=setTimeout(()=>{worker.removeEventListener('statechange',changed);reject(Error('worker lifecycle timed out'));},20000);
    function changed(){if(['activated','redundant'].includes(worker.state)){clearTimeout(timer);worker.removeEventListener('statechange',changed);resolve();}}
