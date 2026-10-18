@@ -18,6 +18,9 @@ android {
 repositories { google(); mavenCentral() }
 dependencies {
     implementation project(':capacitor-android')
+    // Plugin.getActivity() expõe AppCompatActivity; o Capacitor usa essa
+    // dependência internamente, mas não a exporta ao classpath do plugin.
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.has('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.7.0'}"
     implementation 'androidx.health.connect:connect-client:1.1.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0'
 }
