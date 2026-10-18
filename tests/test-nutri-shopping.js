@@ -1,0 +1,52 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {pathToFileURL}=require('node:url');
+const path=require('node:path');
+require('../nutri/vendor/nutricao-core.js');
+(async()=>{
+ const {shoppingList,shoppingDates,portionLabel}=await import(pathToFileURL(path.join(__dirname,'../nutri/shopping.js')));
+ let checks=0;const test=(name,fn)=>{fn();checks++;console.log('PASS '+name);};
+ const rice={id:'rice',nome:'Arroz cozido',alimId:'rice',porcao:'100 g',qtd:1.5,k:130,pt:3,cb:28,g:0,manual:'preservar',substituicoes:[{id:'potato',nome:'Batata cozida',porcao:'1 unidade',qtd:2}]};
+ const plan={refeicoes:[{id:'lunch',titulo:'Almoço',dias:[1,3,5],itens:[rice]},{id:'dinner',titulo:'Jantar',itens:[{...rice,qtd:1,porcao:'1 colher'}]}]};
+ const before=structuredClone(plan);
+ test('inclusive week respects weekdays and legacy meals without days',()=>{const r=shoppingList(plan,'2026-10-12','2026-10-18');assert.deepEqual(r.occurrences,[3,7]);assert.equal(r.items[0].qtd,4.5);assert.equal(r.items[1].qtd,7);});
+ test('chosen alternative replaces main, never doubles quantities',()=>{const r=shoppingList(plan,'2026-10-12','2026-10-18',{'0:0':0});assert.equal(r.items[0].nome,'Batata cozida');assert.equal(r.items[0].qtd,6);assert.equal(r.items.length,2);assert(!r.items.some(x=>x.porcao==='100 g'));});
+ test('different preparations and measures remain separate',()=>{const p={refeicoes:[{itens:[rice,{...rice,porcao:'0,1 kg'},{...rice,preparo:'outro'},{...rice,nome:'Arroz cru'}]}]};assert.equal(shoppingList(p,'2026-10-12','2026-10-12').items.length,4);});
+ test('identical prescribed portions aggregate with decimal quantity',()=>{const p={refeicoes:[{itens:[rice,structuredClone(rice)]}]};assert.equal(shoppingList(p,'2026-10-12','2026-10-12').items[0].qtd,3);assert.equal(portionLabel(rice),'1,5 × 100 g');});
+ test('invalid, reversed and excessive dates rejected; leap day accepted',()=>{for(const [a,b] of [['2026-02-30','2026-03-01'],['2026-10-14','2026-10-13'],['2026-10-01','2026-11-01'],['','2026-10-10']])assert.throws(()=>shoppingDates(a,b));assert.equal(shoppingDates('2028-02-28','2028-03-01').length,3);assert.equal(shoppingDates('2026-10-01','2026-10-31').length,31);});
+ test('start date restricts occurrences; review date warns but does not expire',()=>{const r=shoppingList({...plan,startOn:'2026-10-14',endOn:'2026-10-15'},'2026-10-12','2026-10-18');assert.deepEqual(r.occurrences,[2,5]);assert(r.warnings.some(x=>x.includes('revisão')));});
+ test('legacy explicit expiry and inactive plans respected',()=>{assert.deepEqual(shoppingList({...plan,inicio:'2026-10-14',fim:'2026-10-16'},'2026-10-12','2026-10-18').occurrences,[2,3]);assert.equal(shoppingList({...plan,ativo:false},'2026-10-12','2026-10-18').items.length,0);});
+ test('invalid selection never silently buys a different food',()=>{const r=shoppingList(plan,'2026-10-12','2026-10-12',{'0:0':99});assert.equal(r.items.length,1);assert(r.warnings.some(x=>x.includes('não está mais prescrita')));});
+ test('recipes warn and never expand unstructured ingredients',()=>{const p={refeicoes:[{receitaId:'recipe',itens:[rice]}],receitas:[{id:'recipe',ing:['sal a gosto']}]};const r=shoppingList(p,'2026-10-12','2026-10-12');assert.equal(r.items.length,1);assert(r.warnings.some(x=>x.includes('manualmente')));});
+ test('unknown portions stay unknown and source/manual fields remain untouched',()=>{const p={refeicoes:[{itens:[{nome:'Manual',qtd:1}]}]};const r=shoppingList(p,'2026-10-12','2026-10-12');assert.equal(r.items.length,0);assert.equal(r.warnings.length,1);assert.match(portionLabel(p.refeicoes[0].itens[0]),/não informada/);assert.deepEqual(plan,before);});
+ test('legacy decimal strings match normalizaItem for main and alternative without mutation',()=>{
+  for(const qtd of ['1,5',' 1,5 ','1.5',1.5]){
+   const alternative={...rice,id:'alt',nome:'Batata cozida',porcao:'1 unidade',qtd,substituicoes:[]};
+   const main={...rice,qtd,substituicoes:[alternative]};
+   const p={refeicoes:[{dias:[1,3,5],itens:[main]}]},snapshot=structuredClone(p);
+   for(const [item,choices] of [[main,{}],[alternative,{'0:0':0}]]){
+    const normalized=globalThis.MT_NUTRICAO.normalizaItem(item);
+    assert.equal(normalized.qtd,1.5);
+    assert.equal(portionLabel(item),portionLabel(normalized));
+    const result=shoppingList(p,'2026-10-12','2026-10-18',choices);
+    assert.deepEqual(result.items,[{nome:item.nome,porcao:item.porcao,qtd:4.5}]);
+    assert.deepEqual(result.warnings,[]);
+   }
+   assert.deepEqual(p,snapshot);
+  }
+ });
+ test('invalid and missing quantities stay unknown for main and alternative',()=>{
+  for(const qtd of [undefined,null,'','   ',true,false,NaN,Infinity,-Infinity,0,-1,'0','-1,5','abc','1,5 g','1,2,3','1.2.3']){
+   const item={...rice,qtd,substituicoes:[]};
+   assert.equal(globalThis.MT_NUTRICAO.normalizaItem(item),null);
+   assert.match(portionLabel(item),/Porção não informada/);
+   for(const [main,choices] of [[item,{}],[{...rice,substituicoes:[item]},{'0:0':0}]]){
+    const result=shoppingList({refeicoes:[{itens:[main]}]},'2026-10-12','2026-10-18',choices);
+    assert.deepEqual(result.items,[]);
+    assert.equal(result.warnings.length,1);
+    assert.match(result.warnings[0],/Porção incompleta/);
+   }
+  }
+ });
+ console.log(`${checks} shopping checks passed`);
+})().catch(e=>{console.error(e);process.exitCode=1;});

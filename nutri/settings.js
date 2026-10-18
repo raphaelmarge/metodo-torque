@@ -1,3 +1,4 @@
+import {createReminderSettings} from './reminder-settings.js';
 // These statuses describe this client's observations, not production health or
 // successful delivery by an external integration.
 export function settingsDiagnostics({state,databaseConfigured=false,queueCount=0}){
@@ -18,11 +19,13 @@ export function settingsDiagnostics({state,databaseConfigured=false,queueCount=0
 }
 export function createSettings(H,P){
  const {state,esc,heading,run,render}=H,q=selector=>document.querySelector(selector);
+ const reminders=createReminderSettings(H);
  function view(){
   const s=state(),pro=s.role==='nutri';let preference={};try{preference=JSON.parse(localStorage.getItem('torque-nutri-preferences')||'{}');}catch{}
   const section=(title,body,search='')=>`<section data-settings-section data-settings-keywords="${esc(title+' '+search)}">${P.card(title,body)}</section>`;
   let html=heading('Conta e plataforma',pro?'Configurações':'Ajustes e dados',pro?'Acesso, leitura dos dados e recursos do consultório.':'Seus ajustes de leitura e seus dados.')+`<label class="search">Buscar configuração<input id="settings-search" type="search" placeholder="Ex.: acesso, pagamentos ou texto maior"></label><p id="settings-empty" class="sub" hidden>Nenhuma configuração encontrada.</p>`;
   html+=section('Preferências',`<form id="x-preferences"><label class="check-label"><input id="x-large" type="checkbox" ${preference.large?'checked':''}> Texto maior</label><label class="check-label"><input id="x-water-reminder" type="checkbox" ${preference.waterReminder?'checked':''}> Mostrar lembrete de água ao abrir o app</label><button class="btn primary">Salvar ajustes</button></form><div class="actions">${P.btn('Alternar tema','theme')}${P.btn('Instalar aplicativo','install-app')}</div>`,'texto maior leitura água tema instalar');
+  html+=section('Lembretes no aparelho',reminders.view(),'notificações consultas questionários horário fuso desligar');
   const status=settingsDiagnostics({state:s,databaseConfigured:!!H.database(),queueCount:H.queueCount()});
   const read=status.find(x=>x.id==='reading');
   html+=section('Dados e histórico',`<p class="sub">Exporte uma cópia dos dados disponíveis para sua conta, com data e versão do formato.</p><div class="actions">${P.btn('Baixar meus dados','export-data')}${pro?P.btn('Importar pacientes','import-patients'):''}</div><p><b>${esc(read.label)}</b></p><p class="sub">${esc(read.description)}</p><p id="offline-queue-count" class="sub"></p><div class="actions">${P.btn('Sincronizar fila','sync-queue')}${!s.demo?'<button class="btn ghost" data-settings-refresh>Atualizar leitura</button>':''}</div>`,'backup exportar importar offline conexão sincronização fila');
@@ -36,6 +39,7 @@ export function createSettings(H,P){
   return html;
  }
  function bind(){
+  reminders.bind();
   const input=q('#settings-search');if(input)input.oninput=()=>{
    const term=input.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(),sections=[...document.querySelectorAll('[data-settings-section]')];
    for(const section of sections){const label=(section.dataset.settingsKeywords||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();section.hidden=!!term&&!label.includes(term);if(section.tagName==='DETAILS')section.open=!!term&&!section.hidden;}

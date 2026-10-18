@@ -428,9 +428,14 @@ const le = (p) => fs.readFileSync(path.join(raiz, p), "utf8");
     window.__MTSync._estado.sujas = { "mtapp:x": true };
     const c = oc();
     window.__MTSync._estado.sujas = {};
-    return { a, b, c, d: oc() };
+    const d = oc();
+    const modal=document.createElement('dialog');document.body.appendChild(modal);modal.showModal();
+    const duringModal=oc();modal.close();modal.remove();
+    const action=document.createElement('button');action.setAttribute('data-j-create','');action.textContent='Criar jornada';document.body.appendChild(action);
+    const duringJourney=oc();action.remove();
+    return { a, b, c, d, duringModal, duringJourney, after:oc() };
   });
-  t(r9.a === true && r9.b === false && r9.c === false && r9.d === true, "pwa-update só recarrega com a página ociosa (sem campo focado e sem envio pendente)");
+  t(r9.a === true && r9.b === false && r9.c === false && r9.d === true && r9.duringModal === false && r9.duringJourney === false && r9.after === true, "pwa-update só recarrega com a página ociosa (sem campo focado e sem envio pendente)");
 
   const semSw = le("apps/store.js");
   t(!/addEventListener\("controllerchange"/.test(semSw) && (le("assets/pwa-update.js").match(/addEventListener\("controllerchange"/g) || []).length === 1,

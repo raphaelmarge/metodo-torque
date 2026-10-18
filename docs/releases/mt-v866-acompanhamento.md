@@ -1,4 +1,6 @@
-# mt-v866 — Acompanhamento do Personal e do aluno
+# mt-v867 — Acompanhamento do Personal e do aluno
+
+A integração com o PR #888 usa **mt-v867**. O nome deste arquivo preserva a referência original do PR; consulte `mt-v867-integracao.md`.
 
 Implementação incremental sobre mt-v865, preservando as áreas existentes e o
 construtor canônico do aplicativo. Não altera Academia nem o Nutri independente.

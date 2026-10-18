@@ -7437,8 +7437,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     ok(b2b.compacto && /Alunos/.test(b2b.volta) && b2b.chips.length === 2,
       "🎨 2b: a ficha abre com cabeçalho compacto, voltar e os dois estados do aluno");
     ok(b2b.sub === b2b.objetivo, "🎨 2b: a linha abaixo do nome mostra o objetivo cadastrado");
-    ok(b2b.acoes.join(",") === "pfIrChat,pfIrAgenda" && b2b.montaEmTreino,
-      "🎨 2b: cabeçalho oferece Chat e Agendar; Montar treino pertence à área Treino");
+    ok(b2b.acoes.join(",") === "pfIrChat,pfTecnicaVideo,pfIrAgenda" && b2b.montaEmTreino,
+      "🎨 2b: cabeçalho oferece Chat, Analisar vídeo e Agendar; Montar treino pertence à área Treino");
     ok(/Próxima sessão/.test(b2b.prox), "🎨 2b: o Resumo diz quando é a próxima sessão");
     ok(b2b.kpis.length === 4 && /TREINOS NO MÊS/.test(b2b.kpis[0]) && /CHECK-IN/.test(b2b.kpis[3]),
       "🎨 2b: o Resumo abre com os quatro números do aluno");
@@ -7836,7 +7836,7 @@ async function contextoAppAluno(browser, html, options = {}) {
   }
   // foto de progresso: UM botão só. O capture='user' é que trancava no
   // autorretrato — sem ele o próprio celular oferece câmera OU galeria
-  ok(/id='fotoInput' type='file' accept='image\/\*' style/.test(appHtml) && !/capture=/.test(appHtml),
+  ok(/id='fotoInput' type='file' accept='image\/\*' style/.test(appHtml) && !/<input\b[^>]*\bid='fotoInput'[^>]*\bcapture=/.test(appHtml),
     "foto de progresso num botão só: sem capture, o celular pergunta se é câmera ou galeria");
   ok(/function guardaFotoProg\(f\)/.test(appHtml) && /window\.__fotoProg=guardaFotoProg/.test(appHtml),
     "a foto escolhida passa pelo mesmo corte de 480 px e pelo teto de 12 fotos");

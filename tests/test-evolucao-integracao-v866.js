@@ -7,7 +7,7 @@ process.env.TZ = 'America/Sao_Paulo';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || 'playwright');
+const { chromium } = require(process.env.TORQUE_PLAYWRIGHT || './ci/node_modules/playwright');
 const { clicarControle, preencherRegistro } = require('./helpers/player-template');
 const BASE = new URL(process.env.BASE_URL || 'http://127.0.0.1:8830').origin;
 if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(BASE).hostname)) throw new Error('Use um servidor local de teste.');

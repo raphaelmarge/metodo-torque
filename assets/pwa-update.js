@@ -11,7 +11,7 @@
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
 
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js").then(function (reg) {
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
       // update() devolve promessa e falha sozinha em aba fechando/rede caída —
       // sem o catch vira erro solto no console
       if (reg.update) { try { var p = reg.update(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
@@ -28,6 +28,12 @@
     try {
       var a = document.activeElement;
       if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox" && a.type !== "radio" && a.type !== "button") return false;
+      // Edição de variantes, análise de vídeo e jornadas podem continuar
+      // depois que o campo perde o foco. Não interromper modal ou envio.
+      if (document.querySelector('dialog[open]')) return false;
+      var pending = document.querySelectorAll('[data-j-create], [data-j-complete]:disabled, [data-send]:disabled, [data-answer]:disabled');
+      if (Array.prototype.some.call(pending, function (el) { return el.getClientRects().length > 0; })) return false;
+      if (Array.prototype.some.call(document.querySelectorAll('video,audio'), function (media) { return !media.paused && !media.ended; })) return false;
       var st = window.__MTSync && window.__MTSync._estado;
       if (st && st.sujas && Object.keys(st.sujas).length) return false;
     } catch (e) {}

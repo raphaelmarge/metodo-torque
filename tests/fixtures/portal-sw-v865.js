@@ -1,0 +1,378 @@
+/* Service worker do portal TORQUE ON — precache completo para uso offline. */
+importScripts("assets/content.js");
+
+/* A versão fica CRAVADA aqui, e não só no assets/versao.js.
+ *
+ * O navegador decide se existe service worker novo comparando os BYTES deste
+ * arquivo. Com a versão só no arquivo importado, o sw.js ficava igualzinho lote
+ * após lote — 18 versões seguidas, do mt-v491 ao mt-v509 — e o iPhone nunca
+ * trocava o service worker, porque o Safari não confere os arquivos importados.
+ * O aparelho seguia servindo do cache TODO js do site, inclusive o
+ * app/aluno-builder.js (o "código único" do app do aluno), e reiniciar o celular
+ * não adiantava: o problema não estava no aparelho, estava no aviso que nunca
+ * chegava. O pwa-update.js já pedia "procura versão nova" a cada abertura; era
+ * a resposta que vinha sempre igual.
+ *
+ * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
+var VERSION = "mt-v865";
+var PRECACHE = "precache-" + VERSION;
+var RUNTIME = "runtime-" + VERSION;
+// O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
+// PRÓPRIA, por dois motivos: o precache usa addAll (se um arquivo falhar, o
+// service worker inteiro não instala e o site perde o offline), e o RUNTIME é
+// apagado a cada versão nova — o professor baixaria os 17 MB de novo toda vez.
+var VISAO = "mt-visao-v1";
+/* Motor do mapa 3D (MapLibre, ~1 MB): mesma ideia da cache do leitor de
+ * imagem — cache PRÓPRIA, com versão independente da do site, pra o aluno não
+ * rebaixar 1 MB a cada mt-vNNN publicado. Fora do PRECACHE de propósito: o
+ * addAll é atômico e um caminho errado derrubaria o service worker inteiro. */
+var MAPA = "mt-mapa-v1";
+
+var CORE = [
+  "./",
+  "index.html",
+  "manifest.webmanifest",
+  "assets/app.css",
+  "assets/app.js",
+  "assets/content.js",
+  "assets/versao.js",
+  "assets/identidade-marca.js",
+  "assets/personal-marca.js",
+  "assets/personal-marca.css",
+  "assets/relatorio-0809.js",
+  "assets/relatorio-0809.css",
+  "assets/personal-planejamento.css",
+  "assets/personal-corrida.css",
+  "assets/acompanhamento.js",
+  "assets/prescricao-series.js",
+  "assets/personal-usabilidade.css",
+  "assets/personal-gestao.css",
+  "assets/personal-gestao.js",
+  "assets/nutricao-core.js",
+  "assets/personal-nutricao.js",
+  "assets/personal-nutricao.css",
+  "assets/onboarding-consultoria.js",
+  "assets/personal-onboarding.js",
+  "assets/personal-onboarding.css",
+  "assets/personal-torque-one.css",
+  "assets/personal-torque-one.js",
+  "assets/personal-fluxo.css",
+  "assets/personal-fluxo.js",
+  "assets/personal-estornos-core.js",
+  "assets/personal-estornos.js",
+  "assets/personal-estornos.css",
+  "assets/personal-pro-suite.css",
+  "assets/personal-pro-suite.js",
+  "assets/personal-pro-context.js",
+  "demo-central-pro.html",
+  "assets/demo-central-pro-data.js",
+  "assets/demo-central-pro.js",
+  "assets/demo-central-pro.css",
+  "assets/postural-core.js",
+  "assets/postural-store.js",
+  "assets/personal-postural.js",
+  "assets/personal-postural.css",
+  "assets/personal-acompanhamento.css",
+  "assets/personal-ferramentas.css",
+  "assets/personal-ferramentas.js",
+  "assets/personal-questionarios.js",
+  "assets/personal-questionarios.css",
+  "assets/personal-comunicacao.css",
+  "assets/pwa-update.js",
+  "assets/access-config.js",
+  "assets/access.js",
+  "assets/cloud-config.js",
+  "assets/mapa-config.js",
+  "assets/erro-funcao.js",
+  "assets/funcao-nuvem.js",
+  "assets/vendor/supabase.js",
+  "assets/vendor/qrcode.js",
+  "docs/gate.js",
+  "docs/preenchivel.js",
+  "docs/mobile.css",
+  "assets/icons/icon.svg",
+  "assets/icons/icon-192.png",
+  "assets/icons/icon-512.png",
+  "assets/icons/icon-maskable-512.png",
+  "assets/icons/logo-torque-claro.svg",
+  "assets/icons/logo-torque-escuro.svg",
+  "assets/fonts/archivo.css",
+  "assets/fonts/files/archivo-latin-400-normal.woff2",
+  "assets/fonts/files/archivo-latin-500-normal.woff2",
+  "assets/fonts/files/archivo-latin-600-normal.woff2",
+  "assets/fonts/files/archivo-latin-700-normal.woff2",
+  "assets/fonts/files/archivo-latin-800-normal.woff2",
+  "assets/vendor/react.production.min.js",
+  "assets/vendor/react-dom.production.min.js",
+  "docs/support.js",
+  "docs/doc-page.js",
+  "docs/image-slot.js",
+  "docs/deck-stage.js",
+  "apps/store.js",
+  "apps/store-backup.js",
+  "assets/studio-patches.js",
+  "assets/personal-confiabilidade.js",
+  "apps/apps.css",
+  "assets/pagarme-cartao.js",
+  "personal.html",
+  "personal-vendas.html",
+  // Somente a apresentacao estatica: nao valida cupom nem executa pagamento.
+  "personal-assinatura.html",
+  "assets/personal-sales-intent.js",
+  "assets/personal-sales.css",
+  "assets/personal-saas-checkout.js",
+  "assets/personal-saas-checkout.css",
+  "assets/landing-personal-20261006.css",
+  "assets/landing-personal-20261006.js",
+  "manifest-personal.webmanifest",
+  "torqueon.html",
+  "torquesys.html",
+  "apps/hq.html",
+  "assets/hq-referrals.js",
+  "assets/hq-referrals.css",
+  "assets/hq-ops.css",
+  "assets/hq-ops-metrics.js",
+  "assets/hq-ops-data.js",
+  "assets/hq-ops-sections.js",
+  "assets/hq-ops-reports.js",
+  "assets/hq-ops-app.js",
+  "assets/hq-ops-team.js",
+  "assets/hq-ops-team.css",
+  "apps/influencer.html",
+  "assets/hq-influencer-portal.js",
+  "assets/hq-influencer-portal.css",
+  "aluno-login.html",
+  "pagina.html",
+  "nutricao.html",
+  "manifest-nutricao.webmanifest",
+  "assets/alimentos-db.js",
+  "assets/receitas-db.js",
+  "assets/exercicios-db.js",
+  "assets/composicao-corporal.js",
+  "assets/avaliacao-ui.js",
+  "assets/scanner-visao.js",
+  "assets/scanner-corporal.js",
+  "assets/scanner-camera.js",
+  "assets/modulo-conta.js",
+  "assets/excluir-conta.js",
+  "assets/bot-builder.js",
+  // simulador de nuvem do demo do painel (auto-desligado fora do demo)
+  "assets/demo-nuvem.js",
+  // construtor do app do aluno: fonte única do código do app
+  "app/aluno-builder.js",
+  "app/medalhas-core.js",
+  "app/metas-personalizadas.js",
+  "app/metas-aluno.js",
+  "assets/personal-metas.js",
+  "app/conquistas-avancadas.js",
+  "assets/personal-conquistas-avancadas.js",
+  "app/medalhas-catalogo.js",
+  "assets/personal-medalhas.js",
+  "assets/personal-commerce-images.js",
+  "assets/personal-medalhas.css",
+  // skin do redesenho: a camada visual que o builder embute no app publicado
+  "app/aluno-skin.js",
+  // construtor do app do paciente (NUTRI): a mesma fonte única, a partir da v661
+  "app/nutri-builder.js",
+  // e a skin do paciente (camada visual, v665)
+  "app/nutri-skin.js",
+  "privacidade.html",
+  "excluir-conta.html",
+  "diagnostico.html",
+  "gifs.html",
+  "meta.html",
+  "quest.html",
+  "anamnese.html",
+  "assets/icons/icon-personal.svg",
+  "assets/icons/icon-personal-192.png",
+  "assets/icons/icon-nutri.svg",
+  "assets/icons/icon-nutri-192.png",
+];
+
+var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug + ".html"; })
+  .concat((self.MT_APPS || []).map(function (a) { return a.file; }));
+
+self.addEventListener("install", function (event) {
+  event.waitUntil(
+    caches.open(PRECACHE).then(function (cache) {
+      /* cache: "no-cache" REVALIDA cada arquivo no servidor (o GitHub Pages
+       * responde 304 pelo ETag quando o arquivo não mudou) — continua sem
+       * misturar página nova com script velho, mas só TRANSFERE o que mudou.
+       * v747: era "reload", que ignora até o ETag: os 7,8 MB do precache
+       * (fontes, react, bancos de dados, 152 páginas do curso) eram baixados
+       * de novo a cada mt-vNNN — e saíram 12 versões num único dia. */
+      // MT_APPS tambem pode listar personal.html; addAll rejeita URLs repetidas
+      // no mesmo lote, mesmo quando todos os arquivos respondem com sucesso.
+      var urls = CORE.concat(DOC_PAGES).filter(function (u, i, list) { return list.indexOf(u) === i; });
+      return cache.addAll(urls.map(function (u) {
+        return new Request(u, { cache: "no-cache" });
+      }));
+    }).then(function () { return self.skipWaiting(); })
+  );
+});
+
+self.addEventListener("activate", function (event) {
+  event.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) {
+        // v747: a cache do app do aluno (mt-app-*, do app/app-sw.js) é da MESMA
+        // origem e este activate a apagava a cada versão do site — o aluno que
+        // também abriu o portal perdia a cópia offline até a próxima abertura
+        // online. Quem cuida das mt-app-* é o app-sw.js.
+        if (k.indexOf("mt-app-") === 0) return null;
+        // Apagar apenas caches de codigo deste SW; dados/outros produtos nao
+        // pertencem a esta atualizacao (mapa e visao tambem permanecem).
+        if (/^(precache|runtime)-mt-v\d+$/.test(k) &&
+            k !== PRECACHE && k !== RUNTIME && k !== VISAO && k !== MAPA) return caches.delete(k);
+      }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
+
+/* Push do PROFESSOR (a partir da v682): o painel se inscreve com o token
+ * 'prof:<user_id>' na push_subs e recebe aviso de mensagem de aluno, pedido de
+ * horário e pagamento confirmado. O payload é o mesmo {t, b} do app do aluno. */
+self.addEventListener("push", function (event) {
+  var d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (err) {}
+  event.waitUntil(self.registration.showNotification(d.t || "TORQUE ON", {
+    body: d.b || "",
+    icon: "assets/icons/icon-personal-192.png",
+    badge: "assets/icons/icon-personal-192.png",
+  }));
+});
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: "window" }).then(function (lista) {
+    if (lista.length) return lista[0].focus();
+    return clients.openWindow("personal.html");
+  }));
+});
+
+// caches.match sem cacheName poderia devolver JS antigo do cache preservado
+// do aluno. Cada worker consulta somente suas copias da versao ativa.
+function matchPortalCache(request) {
+  return caches.match(request, { cacheName: RUNTIME, ignoreSearch: true }).then(function (hit) {
+    return hit || caches.match(request, { cacheName: PRECACHE, ignoreSearch: true });
+  });
+}
+
+self.addEventListener("fetch", function (event) {
+  var req = event.request;
+  if (req.method !== "GET") return;
+  var url = new URL(req.url);
+  if (url.origin !== location.origin) return;
+  // Torque Nutri tem worker, cache e escopo próprios sob /nutri/.
+  if (/^\/nutri(?:\/|$)/.test(url.pathname)) return;
+
+  // Pagamento/autenticacao e codigo financeiro nunca ganham fallback
+  // offline. A rota personal-assinatura.html e apenas uma tela estatica.
+  if (req.headers.has("authorization") ||
+      /^\/(?:api|auth\/v1|rest\/v1|functions\/v1|realtime\/v1)(?:\/|$)/.test(url.pathname) ||
+      url.pathname.indexOf("/supabase/functions/_shared/") > -1) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
+
+  // motor do mapa 3D: cache própria, que atravessa as trocas de versão do site
+  if (url.pathname.indexOf("/assets/vendor/maplibre/") > -1) {
+    event.respondWith(caches.open(MAPA).then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
+
+  // leitor de imagem: cache própria, que atravessa as trocas de versão do site
+  if (url.pathname.indexOf("/assets/vendor/mediapipe/") > -1) {
+    event.respondWith(caches.open(VISAO).then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
+
+  // código das Edge Functions (o funcoes.html copia dali pro Supabase), o
+  // supabase-setup.sql (o sql.html copia dali pro SQL Editor) e o construtor do
+  // app do aluno: SEMPRE rede primeiro. Servir do cache aqui fazia o professor
+  // copiar e publicar uma função VELHA sem perceber — foi assim que a
+  // chat-envia "republicada" continuou sem a IA de treino. Pro SQL é ainda mais
+  // sério: rodar uma versão velha do setup pode recriar estruturas erradas no
+  // banco. E o aluno-builder.js é a FONTE ÚNICA do app do aluno: servir ele do
+  // cache é o mesmo que desligar o conserto automático que ele existe pra dar.
+  // Nos três casos o cache continua valendo como reserva, pro app abrir offline.
+  // vídeo (.mp4) não passa pelo SW: o player pede pedaços (range) e uma
+  // resposta inteira vinda do cache quebraria o play no iPhone
+  if (url.pathname.endsWith(".mp4")) return;
+
+  if (url.pathname.indexOf("/supabase/functions/") > -1 ||
+      url.pathname.indexOf("supabase-setup.sql") > -1 ||
+      url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
+      url.pathname.endsWith("/assets/mapa-config.js") ||
+      url.pathname.indexOf("/app/aluno-skin.js") > -1 ||
+      url.pathname.indexOf("/app/medalhas-core.js") > -1 ||
+      url.pathname.indexOf("/app/medalhas-catalogo.js") > -1 ||
+      url.pathname.indexOf("/app/nutri-builder.js") > -1 ||
+      url.pathname.indexOf("/app/nutri-skin.js") > -1) {
+    event.respondWith(
+      fetch(req, { cache: "no-cache" }).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(RUNTIME).then(function (cache) { cache.put(req, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return matchPortalCache(req).then(function (hit) {
+          return hit || Response.error();
+        });
+      })
+    );
+    return;
+  }
+
+  // páginas (navegações): rede primeiro — quem está online sempre vê a
+  // versão nova sem precisar limpar cache; o cache só entra offline
+  if (req.mode === "navigate") {
+    event.respondWith(
+      // no-cache: revalida no servidor (senão o cache HTTP do navegador segura HTML velho)
+      fetch(req, { cache: "no-cache" }).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(RUNTIME).then(function (cache) { cache.put(req, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return matchPortalCache(req).then(function (hit) {
+          return hit || matchPortalCache("./");
+        });
+      })
+    );
+    return;
+  }
+
+  // demais arquivos (css/js/fontes/imagens): cache primeiro (rápido/offline)
+  event.respondWith(
+    matchPortalCache(req).then(function (hit) {
+      if (hit) return hit;
+      return fetch(req).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(RUNTIME).then(function (cache) { cache.put(req, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return Response.error();
+      });
+    })
+  );
+});

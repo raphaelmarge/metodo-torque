@@ -357,7 +357,11 @@
   }).catch(function (e) { anota("app_aluno_estado falhou: " + (e && e.message)); return buscaAntiga(); });
   // guarda o esqueleto (esta página + o construtor) pro app abrir sem internet
   try {
-    if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("app-sw.js");
+    if ("serviceWorker" in navigator && location.protocol === "https:") {
+      navigator.serviceWorker.register("app-sw.js", { updateViaCache: "none" }).then(function (reg) {
+        return reg.update();
+      }).catch(function () {});
+    }
   } catch (e) {}
   window.__appLoader = true; // testes
 })();

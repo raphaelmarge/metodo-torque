@@ -9,9 +9,18 @@
     function normalizaItem(it, semAlternativas) {
       if (!it || typeof it !== 'object') return null;
       var qtd = numero(it.qtd), nome = txt(it.nome, 200), k = numero(it.k), pt = numero(it.pt), cb = numero(it.cb), g = numero(it.g);
+      var composition = null;
+      if (Object.prototype.hasOwnProperty.call(it, 'recipeComposition')) {
+        composition = normalizaComposicao(it.recipeComposition);
+        if (!composition) return null;
+        var macros = {k:0,pt:0,cb:0,g:0};
+        composition.ingredients.forEach(function (ingredient) { ['k','pt','cb','g'].forEach(function (key) { macros[key] += ingredient[key] * ingredient.qtd / composition.yield; }); });
+        k=macros.k; pt=macros.pt; cb=macros.cb; g=macros.g;
+      }
       if (!nome || qtd === null || qtd <= 0 || qtd > 1000 || k === null || pt === null || cb === null || g === null) return null;
       if ([k, pt, cb, g].some(function (v) { return v > 100000; })) return null;
       var out = { id: txt(it.id, 100), alimId: txt(it.alimId, 250), nome: nome, porcao: txt(it.porcao, 100), qtd: qtd, k: k, pt: pt, cb: cb, g: g };
+      if (composition) out.recipeComposition = composition;
       var peso = numero(it.baseGramas);
       if (peso !== null && peso > 0 && peso <= 100000) out.baseGramas = peso;
       ['fonte','preparo','receitaId','categoria'].forEach(function (key) { if (it[key] != null) out[key] = txt(it[key], key === 'fonte' ? 400 : 120); });
@@ -20,6 +29,18 @@
         return nome && gramas !== null && gramas > 0 && gramas <= 100000 ? { nome: nome, gramas: gramas } : null;
       }).filter(Boolean);
       if (semAlternativas !== true && Array.isArray(it.substituicoes)) out.substituicoes = it.substituicoes.slice(0, 12).map(function (alt) { return normalizaItem(alt, true); }).filter(Boolean);
+      return out;
+    }
+    function normalizaComposicao(raw) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.v !== 1 || tamanhoJSON(raw) > 80000) return null;
+      var rendimento = numero(raw.yield), title=txt(raw.title,200), ingredients=lista(raw.ingredients);
+      if (!title || rendimento===null || rendimento<=0 || rendimento>1000 || !ingredients.length || ingredients.length>100 || !Array.isArray(raw.steps) || raw.steps.length>40 || (raw.unquantifiedIngredients!=null && (!Array.isArray(raw.unquantifiedIngredients)||raw.unquantifiedIngredients.length))) return null;
+      if (ingredients.some(function (it) { return !it || Object.prototype.hasOwnProperty.call(it,'recipeComposition') || !txt(it.porcao,100); })) return null;
+      var normalized=ingredients.map(function (it) { return normalizaItem(it,true); });
+      if (normalized.some(function (it) { return !it; })) return null;
+      var out={v:1,recipeId:txt(raw.recipeId,100),recipeVersion:Number.isInteger(raw.recipeVersion)&&raw.recipeVersion>0?raw.recipeVersion:1,title:title,yield:rendimento,ingredients:normalized,steps:raw.steps.map(function(step){return txt(step,1500);}).filter(Boolean),source:txt(raw.source,400)};
+      if(raw.notes)out.notes=txt(raw.notes,4000);
+      if (raw.reviewedAt) { if(!Number.isFinite(Date.parse(raw.reviewedAt)))return null;out.reviewedAt=txt(raw.reviewedAt,40); }
       return out;
     }
     function totalItens(itens) {
@@ -68,6 +89,7 @@
         ingredientes: lista(r.ingredientes || r.ing).slice(0, 100).map(function (x) { return txt(x, 500); }).filter(Boolean),
         modo: lista(r.modo).slice(0, 40).map(function (x) { return txt(x, 1500); }).filter(Boolean),
         itens: lista(r.itens).slice(0, 100).map(function (it) { return normalizaItem(it, true); }).filter(Boolean), fonte: txt(r.fonte, 400) };
+      if(r.notes||r.observacoes)out.notes=txt(r.notes||r.observacoes,4000);
       // Uma composição parcial é somente consultável; nunca prescrever uma receita omitindo ingredientes inválidos.
       if (lista(r.itens).length !== out.itens.length) { out.itens = []; out.composicaoIncompleta = true; }
       // O catálogo legado contém energia/proteína parciais; ausência de carboidrato/gordura não é zero.

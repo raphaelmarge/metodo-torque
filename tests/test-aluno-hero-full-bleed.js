@@ -33,10 +33,14 @@ let browser, count = 0;
 function ok(value, label) { assert.ok(value, label); count++; console.log('OK ' + label); }
 async function open(html, width = 390, height = 844) {
   const ctx = await browser.newContext({viewport: {width, height}, hasTouch: true, locale: 'pt-BR', timezoneId: 'America/Sao_Paulo', serviceWorkers: 'block', reducedMotion: 'reduce'});
-  await ctx.route('**/*', r => r.abort());
+  // Mesmo contexto seguro das páginas publicadas; about:blank não fornece
+  // crypto.randomUUID nem uma base para as URLs da demonstração.
+  const fixtureURL = new URL('/__hero-fixture.html', process.env.BASE_URL || 'http://localhost').href;
+  await ctx.route('**/*', r => r.request().url() === fixtureURL
+    ? r.fulfill({contentType: 'text/html; charset=utf-8', body: html}) : r.abort());
   const page = await ctx.newPage(), errors = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.setContent(html, {waitUntil: 'domcontentloaded'});
+  await page.goto(fixtureURL, {waitUntil: 'domcontentloaded'});
   await page.waitForFunction(() => window.__inicioAtualiza);
   const entrar = page.getByRole('button', {name: 'Entrar no meu app', exact: true});
   if (html === cadastro) { await entrar.waitFor({state: 'visible'}); await entrar.click(); }
