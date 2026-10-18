@@ -18,16 +18,89 @@ on:
         type: choice
         options: [apk, aab]
         default: apk
+      saude:
+        description: "Aluno: incluir saúde nativa (Android 8+); desligue para a variante compatível"
+        type: boolean
+        default: true
+  pull_request:
+    branches: [main]
+    paths: ["nativo/**", ".github/workflows/app-nativo.yml"]
   push:
     branches: [main]
     paths: ["nativo/**", ".github/workflows/app-nativo.yml"]
 
 permissions:
-  contents: write   # publica o APK de teste numa Release (link que abre no celular)
+  contents: read
 
 jobs:
-  build:
+  validar:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - produto: academia
+            saude: '0'
+            minimo: '23'
+            variante: academia
+          - produto: aluno
+            saude: '1'
+            minimo: '26'
+            variante: aluno
+          - produto: aluno
+            saude: '0'
+            minimo: '23'
+            variante: aluno-compat
+    env:
+      TORQUE_HEALTH_ENABLED: ${{ matrix.saude }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Instalar dependências e preparar o produto
+        run: |
+          npm install --prefix nativo --no-audit --no-fund
+          node nativo/prepara.js "${{ matrix.produto }}"
+      - name: Gerar e compilar o Android real
+        working-directory: nativo
+        run: |
+          npx cap add android
+          npx cap sync android
+          node ajusta-nativo.js android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Conferir o mínimo Android no APK gerado
+        env:
+          EXPECTED_MIN: ${{ matrix.minimo }}
+        run: |
+          TORQUE_AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -n 1)
+          "$TORQUE_AAPT" dump badging nativo/android/app/build/outputs/apk/debug/app-debug.apk | grep -F "sdkVersion:'$EXPECTED_MIN'"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validacao-android-${{ matrix.variante }}-${{ github.run_id }}
+          path: nativo/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # release apenas em push/manual, nunca em PR
+    env:
+      TORQUE_HEALTH_ENABLED: ${{ inputs.saude == false && '0' || '1' }}
+      TORQUE_NATIVE_PRODUCT: ${{ inputs.produto || 'academia' }}
+      TORQUE_NATIVE_VARIANT: ${{ inputs.produto == 'aluno' && inputs.saude == false && 'aluno-compat' || inputs.produto || 'academia' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,7 +116,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Montar o app do produto escolhido
-        run: node nativo/prepara.js "${{ inputs.produto || 'academia' }}"
+        run: node nativo/prepara.js "$TORQUE_NATIVE_PRODUCT"
 
       - name: Criar o projeto Android
         working-directory: nativo
@@ -108,7 +181,7 @@ jobs:
         if: ${{ (inputs.pacote || 'apk') == 'apk' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          PROD: ${{ inputs.produto || 'academia' }}
+          PROD: ${{ env.TORQUE_NATIVE_VARIANT }}
         run: |
           cp nativo/android/app/build/outputs/apk/debug/app-debug.apk "torqueon-$PROD.apk"
           gh release create "teste-$PROD" --title "Teste — TORQUE ON ($PROD)" \
@@ -120,7 +193,7 @@ jobs:
       - name: Publicar o pacote como artefato
         uses: actions/upload-artifact@v4
         with:
-          name: torqueon-${{ inputs.produto || 'academia' }}-${{ inputs.pacote || 'apk' }}
+          name: torqueon-${{ env.TORQUE_NATIVE_VARIANT }}-${{ inputs.pacote || 'apk' }}
           path: |
             nativo/android/app/build/outputs/apk/debug/app-debug.apk
             nativo/android/app/build/outputs/bundle/release/app-release.aab

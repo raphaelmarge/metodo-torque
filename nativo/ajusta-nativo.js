@@ -32,6 +32,23 @@ function android() {
     fs.writeFileSync(arq, s);
   }
   console.log("android: " + faltando.length + " permissões acrescentadas");
+  // O Health Connect 1.1 exige compileSdk 36/AGP >= 8.9.1. Só o produto
+  // que inclui esse plugin recebe seu minSdk 26; os demais mantêm o 23.
+  const config = JSON.parse(fs.readFileSync(path.join(AQUI, "capacitor.config.json"), "utf8"));
+  if ((config.includePlugins || []).includes("@torqueon/health")) {
+    const changes = [
+      ["android/variables.gradle", /compileSdkVersion\s*=\s*\d+/, "compileSdkVersion = 36"],
+      ["android/variables.gradle", /minSdkVersion\s*=\s*\d+/, "minSdkVersion = 26"],
+      ["android/build.gradle", /com\.android\.tools\.build:gradle:[\d.]+/, "com.android.tools.build:gradle:8.10.1"],
+      ["android/gradle/wrapper/gradle-wrapper.properties", /gradle-[\d.]+-(?:all|bin)\.zip/, "gradle-8.11.1-all.zip"],
+    ];
+    for (const [rel, pattern, replacement] of changes) {
+      const file = path.join(AQUI, rel), text = fs.readFileSync(file, "utf8");
+      if (!pattern.test(text)) throw new Error("Formato Android inesperado: " + rel);
+      fs.writeFileSync(file, text.replace(pattern, replacement));
+    }
+    console.log("android: Health Connect com SDK 36, mínimo 26 e AGP 8.10.1; targetSdk preservado");
+  }
 }
 
 function ios() {
