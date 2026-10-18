@@ -34,6 +34,20 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
   });
   assert.deepEqual(ui,{passive:0,permissions:1,enabled:1,saved:'11:45',disabled:0,unsubscribed:1,reloaded:true});
   console.log('OK opt-in por gesto, preferências, desligar e recarregar após saída/entrada da mesma conta.');
+  const activation=await page.evaluate(async()=>{
+   const {registerReminderWorker}=await import('/nutri/reminders.js');
+   const worker=new EventTarget();worker.state='activating';
+   const reg={active:worker,installing:null,waiting:null,update:async()=>{}};
+   const descriptor=Object.getOwnPropertyDescriptor(navigator.serviceWorker,'register');
+   Object.defineProperty(navigator.serviceWorker,'register',{configurable:true,value:async()=>reg});
+   try{
+    let settled=false;const pending=registerReminderWorker(new URL('/nutri/',location.href)).then(()=>{settled=true;});
+    await new Promise(resolve=>setTimeout(resolve,0));const before=settled;
+    worker.state='activated';worker.dispatchEvent(new Event('statechange'));await pending;
+    return {before,after:settled};
+   }finally{if(descriptor)Object.defineProperty(navigator.serviceWorker,'register',descriptor);else delete navigator.serviceWorker.register;}
+  });
+  assert.deepEqual(activation,{before:false,after:true},'registro acompanha o worker ativo que ainda está em activating');
   const recovery=await page.evaluate(async()=>{
    const {createReminderController}=await import('/nutri/reminders.js');
    let probes=0,binds=0,ack=true;

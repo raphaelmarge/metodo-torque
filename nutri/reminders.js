@@ -16,7 +16,7 @@ export async function registerReminderWorker(base){
  try{
   const reg=await navigator.serviceWorker.register(new URL('sw.js',base),{scope:base.pathname,updateViaCache:'none'});
   await reg.update().catch(()=>{});
-  const worker=reg.installing||reg.waiting;
+  const worker=reg.installing||reg.waiting||reg.active;
   if(worker&&worker.state!=='activated'&&worker.state!=='redundant')await new Promise(resolve=>{
    const finish=()=>{clearTimeout(timer);worker.removeEventListener('statechange',changed);resolve();};
    const changed=()=>{if(['activated','redundant'].includes(worker.state))finish();};
