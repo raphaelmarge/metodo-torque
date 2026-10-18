@@ -45,9 +45,11 @@ export function createReminderController(H){
   const worker=reg.active;
   if(!capabilities.has(worker)){
    const reply=await workerMessage(worker,{type:'NUTRI_REMINDER_CAPABILITIES'},1000).catch(()=>null);
-   capabilities.set(worker,reply?.reminderAccount===1);
+   // A suspended/mobile worker may miss a deadline; only cache a positive
+   // capability response so the next context can retry after recovery.
+   if(reply?.reminderAccount===1)capabilities.set(worker,true);
   }
-  return capabilities.get(worker);
+  return capabilities.get(worker)===true;
  }
  async function bindDevice(userId,expectedGeneration=generation){
   if(!globalThis.navigator?.serviceWorker)return;

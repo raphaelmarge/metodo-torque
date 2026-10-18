@@ -34,6 +34,20 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
   });
   assert.deepEqual(ui,{passive:0,permissions:1,enabled:1,saved:'11:45',disabled:0,unsubscribed:1,reloaded:true});
   console.log('OK opt-in por gesto, preferências, desligar e recarregar após saída/entrada da mesma conta.');
+  const recovery=await page.evaluate(async()=>{
+   const {createReminderController}=await import('/nutri/reminders.js');
+   let probes=0,binds=0,ack=true;
+   const worker={postMessage:(message,ports)=>{if(message.type==='NUTRI_REMINDER_CAPABILITIES'){if(++probes>1)ports[0].postMessage({reminderAccount:1});}else{binds++;ports[0].postMessage({ok:ack});}}};
+   Object.defineProperty(navigator.serviceWorker,'getRegistration',{configurable:true,value:async()=>({active:worker,pushManager:{getSubscription:async()=>null}})});
+   const id='00000000-0000-4000-8000-000000000001';
+   const controller=createReminderController({state:()=>({demo:false,role:'patient',user:{id},clinic:{id:'synthetic'},patients:[{user_id:id}]}),database:()=>null});
+   await controller.setContext();await controller.setContext();
+   ack=false;let rejected=false;try{await controller.rebind();}catch{rejected=true;}
+   ack=true;await controller.setContext();
+   return {probes,binds,rejected};
+  });
+  assert.deepEqual(recovery,{probes:2,binds:3,rejected:true});
+  console.log('OK worker suspenso permite nova tentativa e falha real de vínculo continua bloqueando.');
   const sw=fs.readFileSync(path.join(__dirname,'../nutri/sw.js'),'utf8');
   const guards=await page.evaluate(async(source)=>{
    const listeners={},shown=[],opened=[];let closed=0;
