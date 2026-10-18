@@ -99,7 +99,7 @@ export function createReminderController(H){
  async function save(preferences){const current=generation,result=await rpc('preferences',{patient_id:patientId(),preferences:reminderPreferences(preferences)});if(current===generation)snapshot={available:true,...result};return snapshot;}
  async function disable(all=false){
   // Clear the worker first, so already queued pushes cannot appear on this device.
-  await bindDevice(null);const reg=await registration(),sub=await reg?.pushManager.getSubscription();
+  await bindDevice(null);const reg=await registration(),sub=await reg?.pushManager?.getSubscription();
   if(sub)await sub.unsubscribe();
   await rpc('unsubscribe',{patient_id:patientId(),endpoint:all?null:sub?.endpoint||'',all});
   return await load();
@@ -109,7 +109,7 @@ export function createReminderController(H){
   const old=context,previous=db();context='';generation++;needsBinding=true;loading=null;snapshot={available:false,enabled:false};
   clearing=(async()=>{
    let failure=null;try{await bindDevice(null);}catch(error){failure=error;}
-   try{const reg=globalThis.navigator?.serviceWorker?await registration():null,sub=await reg?.pushManager.getSubscription();
+   try{const reg=globalThis.navigator?.serviceWorker?await registration():null,sub=await reg?.pushManager?.getSubscription();
     if(sub){let timer;try{await Promise.race([sub.unsubscribe(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Não foi possível desligar a inscrição deste navegador.')),4000);})]);}finally{clearTimeout(timer);}
      // Local account isolation must never wait for a network RPC on sign-out.
      if(old&&previous)Promise.resolve(previous.rpc('nutri_reminders',{p_action:'unsubscribe',p_data:{endpoint:sub.endpoint}})).catch(()=>{});

@@ -47,8 +47,23 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
    return {probes,binds,rejected};
   });
   assert.deepEqual(recovery,{probes:2,binds:3,rejected:true});
+  const noPush=await page.evaluate(async()=>{
+   const {createReminderController}=await import('/nutri/reminders.js');
+   Object.defineProperty(navigator.serviceWorker,'getRegistration',{configurable:true,value:async()=>({active:{postMessage:(message,ports)=>ports[0].postMessage(message.type==='NUTRI_REMINDER_CAPABILITIES'?{reminderAccount:1}:{ok:true})}})});
+   const controller=createReminderController({state:()=>({demo:false,role:'patient',user:{id:'00000000-0000-4000-8000-000000000001'},clinic:{id:'test'},patients:[{user_id:'00000000-0000-4000-8000-000000000001'}]}),database:()=>null});
+   await controller.setContext();await controller.clearDevice();return true;
+  });
+  assert.equal(noPush,true,'saída funciona quando PushManager não existe');
+
   console.log('OK worker suspenso permite nova tentativa e falha real de vínculo continua bloqueando.');
   const sw=fs.readFileSync(path.join(__dirname,'../nutri/sw.js'),'utf8');
+  const noNotificationAPI=await page.evaluate(async(source)=>{
+   const listeners={},acks=[];
+   const fake={location:{href:location.origin+'/nutri/sw.js'},addEventListener:(name,fn)=>listeners[name]=fn,registration:{},clients:{get:async id=>({id,url:location.origin+'/nutri/index.html'})}};
+   new Function('self',source)(fake);let pending;
+   listeners.message({data:{type:'NUTRI_REMINDER_ACCOUNT',userId:null},source:{id:'test'},ports:[{postMessage:ack=>acks.push(ack)}],waitUntil:p=>pending=p});await pending;return acks;
+  },sw);
+  assert.deepEqual(noNotificationAPI,[{ok:true}],'worker revoga vínculo sem depender da API de notificações');
   const guards=await page.evaluate(async(source)=>{
    const listeners={},shown=[],opened=[];let closed=0;
    const fake={location:{href:location.origin+'/nutri/sw.js'},addEventListener:(name,fn)=>{listeners[name]=fn;},registration:{showNotification:async(title,data)=>shown.push({title,...data}),getNotifications:async()=>[{close:()=>closed++}]},clients:{get:async id=>({id,url:location.origin+'/nutri/index.html'}),matchAll:async()=>[],openWindow:async url=>opened.push(url)}};

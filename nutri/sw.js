@@ -38,7 +38,7 @@ self.addEventListener('message',event=>{
   if(!source||new URL(source.url).origin!==BASE.origin||!new URL(source.url).pathname.startsWith(BASE.pathname))throw Error('Invalid client');
   if(revision!==reminderBindingRevision)throw Error('Reminder account superseded');
   await reminderAccount(userId,true,revision);
-  const notifications=await reminderDeadline(self.registration.getNotifications());
+  const notifications=self.registration.getNotifications?await reminderDeadline(self.registration.getNotifications()):[];
   if(revision!==reminderBindingRevision)throw Error('Reminder account superseded');
   for(const notification of notifications)if(notification.data?.userId!==userId)notification.close();
   reminderBindingBlocked=false;
