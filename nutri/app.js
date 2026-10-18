@@ -10,7 +10,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const today = () => { const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const uid=()=>crypto.randomUUID();
 const appBase=new URL('.',location.href);
-const reminderWorkerReady=registerReminderWorker(appBase);
+registerReminderWorker(appBase);
 const demoRole=location.pathname.endsWith('/demo-paciente.html')?'patient':location.pathname.endsWith('/demo-nutricionista.html')?'nutri':null;
 function ecosystemUrl(){try{if(!cfg.ecosystemUrl)return '';const u=new URL(cfg.ecosystemUrl,appBase);return u.protocol==='https:'?u.href:'';}catch{return '';}}
 function ecosystemLink(){const href=ecosystemUrl();return href?'<p class="sub"><a href="'+esc(href)+'">Ecossistema Torque On</a></p>':'';}
@@ -132,7 +132,7 @@ function createAuthClient(){
  return supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{storageKey:authStorageKey,storage}});
 }
 let db=createAuthClient();
-const reminders=createReminderController({state:()=>S,database:()=>db,workerReady:()=>reminderWorkerReady});
+const reminders=createReminderController({state:()=>S,database:()=>db});
 const P=createPlatform({state:()=>S,database:()=>db,reminders,sessionEpoch:()=>loadSequence,esc,uid,today,dateLabel,heading,modal,toast,render,run,errorCheck,allRows,basicProfile:profileView,published,stats,saveLog,loadData,openEditor,cacheEditor,action,syncQueue,queueCount,cacheSnapshot,syncEditor,printPlan,logs,metrics,badgeDefs,mealsView,moodName,brandView,progressView});
 navNutri=P.pages;
 const patientColumns='id,clinic_id,clinician_id,user_id,name,email,goal,restrictions,created_at,updated_at';

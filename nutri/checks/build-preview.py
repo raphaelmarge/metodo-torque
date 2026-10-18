@@ -44,7 +44,7 @@ for name in ["care-progress.js", "journal-model.js", "food-journal.js", "recipe-
     if name == "patient-experience.js":
         source = source.replace("assets/nutrition-cover.png", data_uri(dist / "assets/nutrition-cover.png", "image/png"))
     if name == "app.js":
-        source = source.replace("const reminderWorkerReady=registerReminderWorker(appBase);", "const reminderWorkerReady=Promise.resolve(null);")
+        source = source.replace("registerReminderWorker(appBase);", "")
         source = re.sub(r"^navigator\.serviceWorker\?\.addEventListener.*$", "", source, flags=re.M)
         source = re.sub(r"^if\('serviceWorker' in navigator\).*$", "", source, flags=re.M)
         source = source.replace("role:'nutri',page:'overview'", "role:'patient',page:'today'")

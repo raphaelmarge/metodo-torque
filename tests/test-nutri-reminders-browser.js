@@ -50,8 +50,9 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,'');
   const noPush=await page.evaluate(async()=>{
    const {createReminderController}=await import('/nutri/reminders.js');
    Object.defineProperty(navigator.serviceWorker,'getRegistration',{configurable:true,value:async()=>({active:{postMessage:(message,ports)=>ports[0].postMessage(message.type==='NUTRI_REMINDER_CAPABILITIES'?{reminderAccount:1}:{ok:true})}})});
-   const controller=createReminderController({state:()=>({demo:false,role:'patient',user:{id:'00000000-0000-4000-8000-000000000001'},clinic:{id:'test'},patients:[{user_id:'00000000-0000-4000-8000-000000000001'}]}),database:()=>null});
-   await controller.setContext();await controller.clearDevice();return true;
+   const controller=createReminderController({state:()=>({demo:false,role:'patient',user:{id:'00000000-0000-4000-8000-000000000001'},clinic:{id:'test'},patients:[{user_id:'00000000-0000-4000-8000-000000000001'}]}),database:()=>null,workerReady:()=>new Promise(()=>{})});
+   // An unrelated installation can stay pending forever; local logout still finishes.
+   await Promise.race([(async()=>{await controller.setContext();await controller.clearDevice();})(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Logout waited for network update')),1500))]);return true;
   });
   assert.equal(noPush,true,'saída funciona quando PushManager não existe');
 

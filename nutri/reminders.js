@@ -39,7 +39,9 @@ export function createReminderController(H){
  const state=H.state,db=H.database;
  const key=()=>{const s=state();return !s.demo&&s.role==='patient'&&s.user?.id&&s.patients?.find(p=>p.user_id===s.user.id)?s.user.id+':'+s.clinic.id:'';};
  const patientId=()=>state().patients?.find(p=>p.user_id===state().user?.id)?.id;
- async function registration(){if(H.workerReady)await H.workerReady();return await navigator.serviceWorker.getRegistration(new URL('./',import.meta.url));}
+ // Account isolation must not wait on a network update. controllerchange
+ // retries the binding when a newly installed worker takes over.
+ async function registration(){return await navigator.serviceWorker.getRegistration(new URL('./',import.meta.url));}
  const capabilities=new WeakMap();
  async function supportsBinding(reg){
   const worker=reg.active;
