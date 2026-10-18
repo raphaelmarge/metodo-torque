@@ -9,23 +9,67 @@ export function reminderPreferences(value={}){
 }
 export function reminderSupport(env=globalThis){return !!(env.isSecureContext&&env.navigator?.serviceWorker&&env.PushManager&&env.Notification);}
 function publicKey(value){const binary=atob(value.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(binary,x=>x.charCodeAt(0));}
+// A worker upgrade never reloads the page: drafts and in-flight records stay
+// with their current document. The new worker remains compatible with old clients.
+export async function registerReminderWorker(base){
+ if(!globalThis.navigator?.serviceWorker)return null;
+ try{
+  const reg=await navigator.serviceWorker.register(new URL('sw.js',base),{scope:base.pathname,updateViaCache:'none'});
+  await reg.update().catch(()=>{});
+  const worker=reg.installing||reg.waiting;
+  if(worker&&worker.state!=='activated'&&worker.state!=='redundant')await new Promise(resolve=>{
+   const finish=()=>{clearTimeout(timer);worker.removeEventListener('statechange',changed);resolve();};
+   const changed=()=>{if(['activated','redundant'].includes(worker.state))finish();};
+   const timer=setTimeout(finish,12000);worker.addEventListener('statechange',changed);changed();
+  });
+  return reg;
+ }catch{return null;}
+}
+function workerMessage(worker,message,timeout){
+ return new Promise((resolve,reject)=>{
+  const channel=new MessageChannel();
+  const finish=(error,value)=>{clearTimeout(timer);channel.port1.close();error?reject(error):resolve(value);};
+  const timer=setTimeout(()=>finish(Error('Não foi possível atualizar a proteção deste aparelho.')),timeout);
+  channel.port1.onmessage=e=>finish(null,e.data);
+  try{worker.postMessage(message,[channel.port2]);}catch(error){finish(error);}
+ });
+}
 export function createReminderController(H){
- let context='',generation=0,snapshot={available:false,enabled:false},loading=null,clearing=null;
+ let context='',generation=0,needsBinding=true,snapshot={available:false,enabled:false},loading=null,clearing=null;
  const state=H.state,db=H.database;
  const key=()=>{const s=state();return !s.demo&&s.role==='patient'&&s.user?.id&&s.patients?.find(p=>p.user_id===s.user.id)?s.user.id+':'+s.clinic.id:'';};
  const patientId=()=>state().patients?.find(p=>p.user_id===state().user?.id)?.id;
- async function registration(){return await navigator.serviceWorker.getRegistration(new URL('./',import.meta.url));}
+ async function registration(){if(H.workerReady)await H.workerReady();return await navigator.serviceWorker.getRegistration(new URL('./',import.meta.url));}
+ const capabilities=new WeakMap();
+ async function supportsBinding(reg){
+  const worker=reg.active;
+  if(!capabilities.has(worker)){
+   const reply=await workerMessage(worker,{type:'NUTRI_REMINDER_CAPABILITIES'},1000).catch(()=>null);
+   capabilities.set(worker,reply?.reminderAccount===1);
+  }
+  return capabilities.get(worker);
+ }
  async function bindDevice(userId,expectedGeneration=generation){
   if(!globalThis.navigator?.serviceWorker)return;
-  const reg=await registration();if(!reg?.active||expectedGeneration!==generation)return;
-  await new Promise((resolve,reject)=>{const channel=new MessageChannel(),timer=setTimeout(()=>reject(Error('Não foi possível atualizar a proteção deste aparelho.')),4000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();e.data?.ok?resolve():reject(Error('Não foi possível atualizar a proteção deste aparelho.'));};reg.active.postMessage({type:'NUTRI_REMINDER_ACCOUNT',userId:userId||null},[channel.port2]);});
+  const reg=await registration();if(!reg?.active||expectedGeneration!==generation)return false;
+  if(!await supportsBinding(reg)){
+   // v14 has no push/account protocol. With no subscription there is nothing
+   // to revoke. Never treat an unresponsive subscribed worker as safe.
+   if(await reg.pushManager?.getSubscription())throw Error('Atualize o app para proteger os lembretes deste aparelho.');
+   return false;
+  }
+  if(expectedGeneration!==generation)return false;
+  const result=await workerMessage(reg.active,{type:'NUTRI_REMINDER_ACCOUNT',userId:userId||null},4000);
+  if(!result?.ok)throw Error('Não foi possível atualizar a proteção deste aparelho.');
+  return true;
  }
  async function rpc(action,data={}){const result=await db().rpc('nutri_reminders',{p_action:action,p_data:data});if(result.error)throw result.error;return result.data;}
  async function setContext(){
   if(clearing)await clearing.catch(()=>{});
-  const next=key();if(next===context)return;
-  context=next;generation++;snapshot={available:false,enabled:false};loading=null;
-  await bindDevice(next?state().user.id:null);
+  const next=key();if(next===context&&!needsBinding)return;
+  if(next!==context){context=next;generation++;snapshot={available:false,enabled:false};loading=null;needsBinding=true;}
+  const current=generation,bound=await bindDevice(next?state().user.id:null,current);
+  if(current===generation)needsBinding=!bound;
  }
  async function load(){
   await setContext();if(!context)return snapshot;
@@ -40,7 +84,7 @@ export function createReminderController(H){
   // Must be directly reached from a click/submit; never request at startup.
   const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('Permita as notificações nas configurações do navegador para ativar.');
   if(current!==generation)throw Error('A conta mudou. Entre novamente.');
-  const reg=await registration();if(!reg?.active)throw Error('Abra novamente o app para concluir sua instalação.');
+  const reg=await registration();if(!reg?.active||!await supportsBinding(reg))throw Error('Abra novamente o app para concluir sua instalação.');
   let subscription=await reg.pushManager.getSubscription();
   if(!subscription)subscription=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:publicKey(snapshot.public_key)});
   try{
@@ -60,7 +104,7 @@ export function createReminderController(H){
  }
  function clearDevice(){
   if(clearing)return clearing;
-  const old=context,previous=db();context='';generation++;loading=null;snapshot={available:false,enabled:false};
+  const old=context,previous=db();context='';generation++;needsBinding=true;loading=null;snapshot={available:false,enabled:false};
   clearing=(async()=>{
    let failure=null;try{await bindDevice(null);}catch(error){failure=error;}
    try{const reg=globalThis.navigator?.serviceWorker?await registration():null,sub=await reg?.pushManager.getSubscription();
@@ -72,5 +116,5 @@ export function createReminderController(H){
    if(failure)throw failure;
   })().finally(()=>{clearing=null;});return clearing;
  }
- return {setContext,load,enable,save,disable,clearDevice,snapshot:()=>snapshot,revision:()=>generation,supported:()=>reminderSupport()};
+ return {setContext,rebind:()=>{needsBinding=true;return setContext();},load,enable,save,disable,clearDevice,snapshot:()=>snapshot,revision:()=>generation,supported:()=>reminderSupport()};
 }

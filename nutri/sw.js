@@ -1,6 +1,6 @@
 const BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'torque-nutri-platform:' + encodeURIComponent(BASE.pathname) + ':';
-const CACHE = CACHE_PREFIX + 'v16';
+const CACHE = CACHE_PREFIX + 'v17';
 const FILES = ['./', 'index.html', 'demo-paciente.html', 'demo-nutricionista.html', 'app.js', 'platform.js', 'prescription.js', 'shopping.js', 'shopping-planner.js', 'day-summary.js', 'plan-changes.js', 'recipe-composition.js', 'reminders.js', 'reminder-settings.js', 'consultation.js', 'settings.js', 'follow-up.js', 'follow-up.css', 'meal-plan.css', 'prescription-workspace.css', 'finance.js', 'assessment.js', 'skinfolds.js', 'schedule.js', 'notifications.js', 'patient-experience.js', 'care-progress.js', 'journal-model.js', 'food-journal.js', 'plan-recipes.js', 'patient.css', 'vendor/medalha-visual.js', 'assets/nutrition-cover.png', 'style.css', 'config.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'vendor/supabase.js', 'vendor/nutricao-core.js', 'vendor/medalhas-core.js', 'vendor/identidade-marca.js', 'vendor/alimentos-db.js', 'vendor/receitas-db.js', 'vendor/composicao-corporal.js', 'assets/fonts/archivo.css', 'assets/fonts/files/archivo-latin-600-normal.woff2', 'assets/fonts/files/archivo-latin-700-normal.woff2', 'assets/fonts/files/archivo-latin-800-normal.woff2', 'assets/fonts/files/archivo-latin-500-normal.woff2', 'assets/fonts/files/archivo-latin-400-normal.woff2', 'assets/fonts/files/archivo-latin-ext-700-normal.woff2', 'assets/fonts/files/archivo-latin-ext-800-normal.woff2', 'assets/fonts/files/archivo-vietnamese-400-normal.woff2', 'assets/fonts/files/archivo-vietnamese-500-normal.woff2', 'assets/fonts/files/archivo-latin-ext-600-normal.woff2', 'assets/fonts/files/archivo-latin-ext-400-normal.woff2', 'assets/fonts/files/archivo-vietnamese-800-normal.woff2', 'assets/fonts/files/archivo-vietnamese-700-normal.woff2', 'assets/fonts/files/archivo-vietnamese-600-normal.woff2', 'assets/fonts/files/archivo-latin-ext-500-normal.woff2'];
 const STATIC_URLS = new Set(FILES.map(file => new URL(file, BASE).href));
 const INDEX_URL = new URL('index.html', BASE).href;
@@ -26,6 +26,7 @@ function reminderAccount(value,write=false,revision=reminderBindingRevision){ret
  };
 });}
 self.addEventListener('message',event=>{
+ if(event.data?.type==='NUTRI_REMINDER_CAPABILITIES'){event.ports[0]?.postMessage({reminderAccount:1});return;}
  if(event.data?.type!=='NUTRI_REMINDER_ACCOUNT')return;
  const userId=event.data.userId;
  if(userId!==null&&!/^[0-9a-f-]{36}$/i.test(userId||''))return;
@@ -69,7 +70,7 @@ self.addEventListener('notificationclick',event=>{
 });
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll([...STATIC_URLS])));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll([...STATIC_URLS].map(url=>new Request(url,{cache:'no-cache'})))).then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(
@@ -83,7 +84,7 @@ self.addEventListener('fetch', event => {
   // Only public app files are cached. API calls and other Torque applications pass through.
   const cacheKey = new URL(url.pathname, BASE.origin).href;
   if (!STATIC_URLS.has(cacheKey)) return;
-  event.respondWith(fetch(request).then(response => {
+  event.respondWith(fetch(new Request(request,{cache:'no-cache'})).then(response => {
     const responseURL = response.url ? new URL(response.url) : url;
     const responseKey = new URL(responseURL.pathname, responseURL.origin).href;
     // Auth links may carry private codes in Response.url; never persist those responses.

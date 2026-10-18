@@ -26,7 +26,7 @@ const context=vm.createContext({
 context.window=context;context.globalThis=context;context.self=context;
 for(const name of ['receitas-db','composicao-corporal','nutricao-core','medalhas-core','identidade-marca','alimentos-db'])vm.runInContext(fs.readFileSync(path.join(root,'vendor',name+'.js'),'utf8'),context);
 function loadModule(name,exports){
-  const source=fs.readFileSync(path.join(root,name),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:function|const) )/g,'').replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://test.invalid/nutri/').href));
+  const source=fs.readFileSync(path.join(root,name),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:async function|function|const) )/g,'').replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://test.invalid/nutri/').href));
   assert(!/^import |^export /m.test(source),'Unhandled module syntax in '+name);
   vm.runInContext('(()=>{'+source+'\nObject.assign(globalThis,{'+exports.join(',')+'});})()',context,{filename:name});
 }
@@ -52,7 +52,7 @@ for(const [name,exports] of [
   ['follow-up.js',['createFollowUp','questionnairePeriod','reviewQueue']],
   ['finance.js',['createFinance']],
   ['consultation.js',['createConsultation']],
-  ['reminders.js',['REMINDER_DEFAULTS','reminderPreferences','reminderSupport','createReminderController']],
+  ['reminders.js',['REMINDER_DEFAULTS','reminderPreferences','reminderSupport','createReminderController','registerReminderWorker']],
   ['reminder-settings.js',['createReminderSettings']],
   ['settings.js',['createSettings']],
   ['platform.js',['createPlatform']]

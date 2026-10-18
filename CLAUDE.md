@@ -15,7 +15,7 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
   localmente por conta/paciente/plano/versão. Orientação textual não é calculada.
 - Lembretes Web Push são opcionais e dependem de ativação separada no Supabase;
   o frontend não habilita o serviço nem inscreve pacientes automaticamente.
-- Cache Nutri v16, mt-v866. Contratos e evidências:
+- Cache Nutri v17, mt-v866. Contratos e evidências:
   `docs/releases/mt-v866-evolucao-nutri.md`.
 
 ## v865 — Protocolos de dobras na avaliação da nutri

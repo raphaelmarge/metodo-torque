@@ -2,7 +2,7 @@ import {portionLabel} from './shopping.js';
 import {planDaySummary,planDayControls,planDayNotice,planWeekTable,prescribedTotals,nutrientLabel,nutrientNumber,validPlanDate} from './day-summary.js';
 import {comparePlans,renderPlanChanges} from './plan-changes.js';
 import {createPlatform} from './platform.js';
-import {createReminderController} from './reminders.js';
+import {createReminderController,registerReminderWorker} from './reminders.js';
 import {careSummary,mealPresence} from './care-progress.js';
 import {WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError} from './prescription.js';
 const $ = (s) => document.querySelector(s);
@@ -10,6 +10,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const today = () => { const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const uid=()=>crypto.randomUUID();
 const appBase=new URL('.',location.href);
+const reminderWorkerReady=registerReminderWorker(appBase);
 const demoRole=location.pathname.endsWith('/demo-paciente.html')?'patient':location.pathname.endsWith('/demo-nutricionista.html')?'nutri':null;
 function ecosystemUrl(){try{if(!cfg.ecosystemUrl)return '';const u=new URL(cfg.ecosystemUrl,appBase);return u.protocol==='https:'?u.href:'';}catch{return '';}}
 function ecosystemLink(){const href=ecosystemUrl();return href?'<p class="sub"><a href="'+esc(href)+'">Ecossistema Torque On</a></p>':'';}
@@ -131,7 +132,7 @@ function createAuthClient(){
  return supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{storageKey:authStorageKey,storage}});
 }
 let db=createAuthClient();
-const reminders=createReminderController({state:()=>S,database:()=>db});
+const reminders=createReminderController({state:()=>S,database:()=>db,workerReady:()=>reminderWorkerReady});
 const P=createPlatform({state:()=>S,database:()=>db,reminders,sessionEpoch:()=>loadSequence,esc,uid,today,dateLabel,heading,modal,toast,render,run,errorCheck,allRows,basicProfile:profileView,published,stats,saveLog,loadData,openEditor,cacheEditor,action,syncQueue,queueCount,cacheSnapshot,syncEditor,printPlan,logs,metrics,badgeDefs,mealsView,moodName,brandView,progressView});
 navNutri=P.pages;
 const patientColumns='id,clinic_id,clinician_id,user_id,name,email,goal,restrictions,created_at,updated_at';
@@ -349,6 +350,6 @@ function enqueue(op){if(!S.user)throw Error('Entre na conta para guardar registr
 function applyLocalLog(prev,change){const next={...prev,...change};if('waterDelta'in change){next.water_ml=Math.max(0,Math.min(20000,(prev.water_ml||0)+change.waterDelta));delete next.waterDelta;}if(change.mealId){next.meals=[...(prev.meals||[])].filter(x=>x!==change.mealId);if(change.completed)next.meals.push(change.mealId);delete next.mealId;delete next.completed;}const i=S.logs.findIndex(x=>x.patient_id===prev.patient_id&&x.day===prev.day);if(i<0)S.logs.push(next);else S.logs[i]=next;cacheSnapshot();}
 async function syncQueue(){if(S.demo||!S.user||authStorageBlocked||!S.patients.length)return;if(!navigator.onLine)throw Error('Conecte-se para enviar os registros guardados.');const activeUser=S.user.id;let all=queued();for(const op of [...all]){if(op.userId!==S.user.id)throw Error('A fila pertence a outra conta.');errorCheck(await db.rpc('record_log_once',{p_operation_id:op.operationId,p_patient_id:op.patientId,p_day:op.day,p_patch:op.patch}));if(S.user?.id!==activeUser)throw Error('A sessão mudou durante a sincronização.');all=all.filter(x=>x.operationId!==op.operationId);localStorage.setItem(queueKey(),JSON.stringify(all));}await loadData();render();toast('Registros sincronizados.');}
 addEventListener('online',()=>{if(S.user&&queueCount())run(syncQueue);});
-if('serviceWorker' in navigator)navigator.serviceWorker.register(new URL('sw.js',appBase).href,{scope:appBase.pathname}).catch(()=>{});
+navigator.serviceWorker?.addEventListener('controllerchange',()=>{reminders.rebind().catch(()=>{});});
 try{document.body.classList.toggle('large-text',!!JSON.parse(localStorage.getItem('torque-nutri-preferences')||'{}').large);}catch{}
 

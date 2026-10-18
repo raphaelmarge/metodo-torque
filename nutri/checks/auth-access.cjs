@@ -25,7 +25,7 @@ const source = original
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/m, '')
   .replace(/^import \{planDaySummary,planDayControls,planDayNotice,planWeekTable,prescribedTotals,nutrientLabel,nutrientNumber,validPlanDate\} from '\.\/day-summary\.js';\r?\n/m, '')
   .replace(/^import \{comparePlans,renderPlanChanges\} from '\.\/plan-changes\.js';\r?\n/m, '')
-  .replace(/^import \{createReminderController\} from '\.\/reminders\.js';\r?\n/m, '')
+  .replace(/^import \{createReminderController,registerReminderWorker\} from '\.\/reminders\.js';\r?\n/m, '')
   .replace(/^import \{careSummary,mealPresence\} from '\.\/care-progress\.js';\r?\n/m, '')
   .replace(/^import \{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError\} from '\.\/prescription\.js';\r?\n/m, '')
   .replace(/^start\(\)\.catch\([^\n]*\);\r?$/m, '');
@@ -181,23 +181,23 @@ function harness(options = {}) {
     }; }
   });
   const careSource = fs.readFileSync(path.join(path.dirname(appPath), 'care-progress.js'), 'utf8')
-    .replace(/\bexport (?=(?:function|const) )/g, '');
+    .replace(/\bexport (?=(?:async function|function|const) )/g, '');
   assert(!/^import /m.test(careSource), 'Unexpected care module dependency: update the auth harness explicitly.');
   vm.runInContext('(()=>{' + careSource + '\nObject.assign(globalThis,{careSummary,mealPresence});})()', context,
     {filename: 'auth-care-progress.js'});
   function loadModule(name,names){
     const code=fs.readFileSync(path.join(path.dirname(appPath),name),'utf8')
-      .replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:function|const) )/g,'')
+      .replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:async function|function|const) )/g,'')
       .replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://unit.test/nutri/').href));
     vm.runInContext('(()=>{'+code+'\nObject.assign(globalThis,{'+names.join(',')+'});})()',context,{filename:'auth-'+name});
   }
   loadModule('recipe-composition.js',['expandRecipeItem']);
   loadModule('shopping.js',['portionLabel','shoppingDates']);
-  const prescriptionSource=fs.readFileSync(path.join(path.dirname(appPath),'prescription.js'),'utf8').replace(/\bexport (?=(?:function|const) )/g,'');
+  const prescriptionSource=fs.readFileSync(path.join(path.dirname(appPath),'prescription.js'),'utf8').replace(/\bexport (?=(?:async function|function|const) )/g,'');
   vm.runInContext('(()=>{'+prescriptionSource+'\nObject.assign(globalThis,{WEEKDAYS,mealDaysLabel,duplicateMeal,duplicateFood,movePrescriptionItem,latestAnamnesis,publicationError});})()',context,{filename:'auth-prescription.js'});
   loadModule('day-summary.js',['planDaySummary','planDayControls','planDayNotice','planWeekTable','prescribedTotals','nutrientLabel','nutrientNumber','validPlanDate','NUTRIENTS']);
   loadModule('plan-changes.js',['comparePlans','renderPlanChanges']);
-  loadModule('reminders.js',['createReminderController']);
+  loadModule('reminders.js',['createReminderController','registerReminderWorker']);
   vm.runInContext(source + '\n;globalThis.__authAccess = {S,start,render,action,today,authSubmit,authView,joinView,loadData,cacheSnapshot,restoreSnapshot,getMode:()=>authMode,setMode:v=>authMode=v,getInvite:()=>pendingInvite};', context, {filename: appPath});
   const api = context.__authAccess;
   return {

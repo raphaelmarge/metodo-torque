@@ -2,7 +2,7 @@
 
 Implementação em `/nutri/`, continuando o PR #888. O Nutri legado e a nutrição
 integrada ao Personal mantêm os seus contratos. A versão global é mt-v866 e o
-cache próprio do Nutri é v16, incluindo os novos módulos.
+cache próprio do Nutri é v17, incluindo os novos módulos.
 
 ## Comportamento entregue
 
@@ -78,3 +78,17 @@ PostgreSQL externo permanece para o CI Linux, fora deste lote local.
 A prévia portátil foi navegada em 19 áreas do paciente, sem erros de JavaScript,
 rede, backend, registro de worker ou pedidos de permissão. O dispatcher passou
 em `deno check` inclusive no Deno 2.1.4, com lockfile v4.
+
+## Atualização consolidada com o PR #889
+
+- O worker Nutri v17 revalida os arquivos HTTP e só ativa após completar todo
+  o precache. A ativação não recarrega documentos nem apaga dados de pacientes.
+- O cliente aguarda a instalação e negocia o protocolo de vínculo; v14 sem
+  assinatura não causa aviso falso de revogação. Workers com assinatura e sem
+  resposta continuam sendo tratados como erro. Troca de controlador refaz o
+  vínculo da conta, sem pedir consentimento ou ativar o serviço.
+- `tests/test-nutri-update-browser.js` exercita v14 → v17, queda na instalação,
+  fila/rascunho, caches de outros produtos e recursos offline em Chromium e
+  WebKit no CI. Localmente foi executado em Chromium; iPhone físico não testado.
+- A primeira integração mantém mt-v866; a integração seguinte do Personal deve
+  usar mt-v867, conservando o precache Nutri e os módulos das duas branches.

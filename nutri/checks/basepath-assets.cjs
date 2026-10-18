@@ -22,15 +22,15 @@ function response(url, body = 'network', ok = true) {
 function worker(basepath, options = {}) {
   const listeners = new Map();
   const storage = new Map();
-  const calls = {fetch: [], addAll: [], put: [], deleted: [], claim: 0};
+  const calls = {fetch: [], addAll: [], put: [], deleted: [], claim: 0, skipWaiting: 0, cacheModes: []};
   const caches = {
     async open(name) {
       if (!storage.has(name)) storage.set(name, new Map());
       const entries = storage.get(name);
       return {
         async addAll(urls) {
-          calls.addAll.push(...urls);
-          for (const url of urls) entries.set(url, response(url, 'precache'));
+          calls.addAll.push(...urls.map(request=>request.url));
+          for (const request of urls) {assert.equal(request.cache,'no-cache');entries.set(request.url, response(request.url, 'precache'));}
         },
         async put(key, value) { calls.put.push({name, key}); entries.set(key, value); },
         async match(key) { return entries.get(typeof key === 'string' ? key : key.url); }
@@ -41,13 +41,16 @@ function worker(basepath, options = {}) {
   };
   const context = vm.createContext({
     URL, Set, Promise, caches,
+    Request: class {constructor(input,init={}){Object.assign(this,typeof input==='string'?{url:input,method:'GET',mode:'cors'}:input,init);}},
     self: {
       location: new URL(basepath + 'sw.js', origin),
       clients: {async claim() { calls.claim++; }},
+      async skipWaiting(){calls.skipWaiting++;},
       addEventListener(type, callback) { listeners.set(type, callback); }
     },
     async fetch(request) {
       calls.fetch.push(request.url);
+      assert.equal(request.cache,'no-cache');
       if (options.offline) throw Error('Mock offline');
       return response(options.responseURL || request.url, 'network', options.ok !== false);
     },
@@ -138,6 +141,7 @@ for (const basepath of ['/', '/nutri/']) {
     const h = worker(basepath);
     await h.dispatch('install').done();
     assert.equal(h.calls.addAll.length, h.STATIC_URLS.size);
+    assert.equal(h.calls.skipWaiting,1);
     assert.deepEqual([...h.calls.addAll].sort(), [...h.STATIC_URLS].sort());
     for (const file of requiredStartupAssets) assert(h.STATIC_URLS.has(new URL(file, h.BASE).href),
       'Startup dependency missing from offline precache: ' + file);

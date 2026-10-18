@@ -37,13 +37,15 @@ for name in ["care-progress.js", "journal-model.js", "food-journal.js", "recipe-
     source = (dist / name).read_text(encoding="utf-8")
     exports = re.findall(r"\bexport (?:async )?(?:function|const|class) (\w+)", source)
     source = re.sub(r"^import .+?;\s*$", "", source, flags=re.M)
-    source = re.sub(r"\bexport (?=(?:function|const) )", "", source)
+    source = re.sub(r"\bexport (?=(?:async function|function|const) )", "", source)
     # ESM metadata is not legal in the portable classic-script bundle. The
     # demonstration never registers a worker or requests notification consent.
     source = source.replace("import.meta.url", "window.location.href")
     if name == "patient-experience.js":
         source = source.replace("assets/nutrition-cover.png", data_uri(dist / "assets/nutrition-cover.png", "image/png"))
     if name == "app.js":
+        source = source.replace("const reminderWorkerReady=registerReminderWorker(appBase);", "const reminderWorkerReady=Promise.resolve(null);")
+        source = re.sub(r"^navigator\.serviceWorker\?\.addEventListener.*$", "", source, flags=re.M)
         source = re.sub(r"^if\('serviceWorker' in navigator\).*$", "", source, flags=re.M)
         source = source.replace("role:'nutri',page:'overview'", "role:'patient',page:'today'")
         # A portable review must not initiate real authentication.
