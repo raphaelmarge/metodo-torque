@@ -54,7 +54,7 @@ const memory={ptdc:{}},it={e:'Supino',exercicioId:'ex-a'},history=new Map();
 // O gravador agora depende do journal. Executa os módulos canônicos, com
 // armazenamento e concessão de uma única aba sintéticos, sem confirmar writes por mock.
 const storage={get length(){return history.size;},key:i=>[...history.keys()][i]||null,getItem:k=>history.has(k)?history.get(k):null,setItem:(k,v)=>history.set(k,v),removeItem:k=>history.delete(k)};
-const ctx={gv:{f:0,e:0},L:(k,d)=>JSON.parse(JSON.stringify(memory[k]||d)),Sv:(k,v)=>{memory[k]=v;return true;},isoHj:()=> '2026-10-06',storage,
+const ctx={GUIA:[{it:[it]}],gv:{f:0,e:0},L:(k,d)=>JSON.parse(JSON.stringify(memory[k]||d)),Sv:(k,v)=>{memory[k]=v;return true;},isoHj:()=> '2026-10-06',storage,
   crypto:require('node:crypto').webcrypto,clearTimeout,setTimeout,
   navigator:{locks:{request:(name,options,callback)=>Promise.resolve(callback({name}))}},
   document:{getElementById:()=>null},window:{addEventListener(){},removeEventListener(){}}};

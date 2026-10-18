@@ -105,6 +105,7 @@
     personal_importacoes: [],
     personal_sessoes: [],
     personal_automacoes: [
+      { id: '65a86cbf-0dc9-57db-a8d4-bbb80747bc62', academia_id: academia, autor_id: profissional, nome: 'Primeiras semanas · Demo', gatilho: 'aluno.novo', condicao: { modo: 'jornada_assistida' }, ativa: false, criado_em: carimbo, atualizado_em: carimbo, acao: {v:1,tipo:'jornada_v1',tenant:academia,user:profissional,student:'demo-ana',start:dataOffset(-7),pausedOn:'',pausedDays:0,steps:[{id:'entrada',day:0,title:'Orientar o primeiro treino',trigger:'sempre',previous:false},{id:'primeiro',day:3,title:'Conferir o primeiro treino',trigger:'treino',previous:true},{id:'semana',day:7,title:'Revisar a primeira semana e o check-in',trigger:'checkin',previous:true},{id:'plano',day:28,title:'Revisar o plano',trigger:'sempre',previous:true}],completed:{entrada:dataOffset(-7),primeiro:dataOffset(-4)},events:{treino:dataOffset(-4)}} },
       { id: 'demo-regra-questionario', academia_id: academia, autor_id: profissional, nome: 'Revisar resposta do aluno · Demo', gatilho: 'questionario.respondido', condicao: {}, acao: { tipo: 'revisar_aluno' }, ativa: true, criado_em: carimbo, atualizado_em: carimbo },
       { id: 'demo-regra-boas-vindas', academia_id: academia, autor_id: profissional, nome: 'Preparar boas-vindas · Demo', gatilho: 'aluno.novo', condicao: {}, acao: { tipo: 'contatar_aluno' }, ativa: true, criado_em: carimbo, atualizado_em: carimbo },
       { id: 'demo-regra-agenda', academia_id: academia, autor_id: profissional, nome: 'Reorganizar sessão cancelada · Demo', gatilho: 'agenda.cancelada', condicao: {}, acao: { tipo: 'revisar_planejamento' }, ativa: true, criado_em: carimbo, atualizado_em: carimbo },
@@ -157,7 +158,7 @@
     }
     if (t === 'personal_automacoes' || t === 'personal_automacao_fila') {
       exige(gatilhos.indexOf(r.gatilho) >= 0, 'Gatilho desconhecido no demo.');
-      exige(acoes.indexOf(r.acao.tipo) >= 0, 'Escolha uma ação disponível na Central Pro.');
+      exige(acoes.indexOf(r.acao.tipo) >= 0 || t === 'personal_automacoes' && r.acao.tipo === 'jornada_v1' && r.ativa === false && r.acao.tenant === academia && r.acao.user === profissional && conhecidoAluno(r.acao.student), 'Escolha uma ação disponível na Central Pro.');
     }
     if (t === 'personal_automacoes') { exige(texto(r.nome, 160), 'Dê um nome de até 160 caracteres à automação.'); exige(typeof r.ativa === 'boolean', 'Ativa precisa ser verdadeiro ou falso.'); }
     if (t === 'personal_automacao_fila') exige(tabelas.personal_automacoes.some(function (a) { return a.id === r.automacao_id; }), 'Automação de origem não encontrada.');
@@ -187,7 +188,7 @@
     chaves[t].forEach(function (ks) { rows.forEach(function (r, i) { exige(!rows.slice(0, i).some(function (p) { return mesmas(r, p, ks); }), 'Este registro já existe no demo.'); }); });
   }
   function consulta(t) {
-    var operacao = 'select', payload, conflitos, filtros = [], ordens = [], limite = null, selecao = null, um = false, falha = null, executada = null;
+    var operacao = 'select', payload, conflitos, filtros = [], ordens = [], limite = null, selecao = null, um = false, falha = null, executada = null, semJornadas = false;
     function tenta(fn) { if (executada) throw new Error('Esta consulta do demo já foi executada.'); if (!falha) { try { fn(); } catch (e) { falha = e; } } return api; }
     function escrita(op, valor, opts) {
       return tenta(function () {
@@ -205,7 +206,7 @@
         }
       });
     }
-    function aceita(r) { return filtros.every(function (f) { return (f[0] === 'dados->>origem' ? r.dados && r.dados.origem : r[f[0]]) === f[1]; }); }
+    function aceita(r) { return (!semJornadas || !r.acao || r.acao.tipo !== 'jornada_v1') && filtros.every(function (f) { return (f[0] === 'dados->>origem' ? r.dados && r.dados.origem : r[f[0]]) === f[1]; }); }
     function projeta(r) { if (!selecao) return copia(r); var p = {}; selecao.forEach(function (c) { p[c] = copia(r[c] === undefined ? null : r[c]); }); return p; }
     function executa() {
       try {
@@ -242,6 +243,7 @@
     var api = {
       select: function (cs) { return tenta(function () { exige(tem(campos, t), 'Tabela indisponível nesta demonstração.'); exige(cs === undefined || typeof cs === 'string', 'Seleção de campos inválida.'); if (cs && cs !== '*') { selecao = cs.split(',').map(function (c) { return c.trim(); }); selecao.forEach(function (c) { coluna(t, c); }); } else selecao = null; }); },
       eq: function (c, v) { return tenta(function () { if (c !== 'dados->>origem' || t !== 'personal_sessoes') coluna(t, c); exige(v === null || ['string', 'boolean', 'number'].indexOf(typeof v) >= 0 && (typeof v !== 'number' || Number.isFinite(v)), 'Valor de filtro inválido.'); filtros.push([c, v]); }); },
+      or: function (value) { return tenta(function () { exige(t === 'personal_automacoes' && value === 'acao->>tipo.is.null,acao->>tipo.neq.jornada_v1', 'Filtro OR indisponível no demo.'); semJornadas = true; }); },
       order: function (c, opts) { return tenta(function () { coluna(t, c); exige(!opts || opts.ascending === undefined || typeof opts.ascending === 'boolean', 'Ordenação inválida.'); ordens.push({ campo: c, asc: !opts || opts.ascending !== false }); }); },
       limit: function (n) { return tenta(function () { exige(Number.isSafeInteger(n) && n >= 0, 'Limite inválido.'); limite = n; }); },
       insert: function (v) { return escrita('insert', v); },

@@ -1,0 +1,35 @@
+/* Dias corridos, pausa, gates, isolamento e idempotência. Sem rede. */
+const assert=require('node:assert/strict');
+const C=require('../assets/jornadas-core.js');
+let checks=0;function ok(v,msg){assert.ok(v,msg);checks++;}function eq(a,b,msg){assert.deepEqual(a,b,msg);checks++;}function fails(fn,msg){assert.throws(fn,undefined,msg);checks++;}
+const scope={tenant:'academia-a',user:'personal-a'},start='2026-10-17';
+let j=C.create(scope,'aluno-a',start,C.template());
+eq(C.evaluate(j,start).map(s=>s.status),['disponivel','programada','programada','programada'],'Só entrada disponível no dia zero');
+eq(C.diff('2026-11-02','2026-10-31'),2,'Dias corridos independem do horário de verão');
+eq(C.day('2026-02-30'),null,'Rejeita dia inexistente');
+fails(()=>C.create(scope,'a','2026-02-30',C.template()),'Não inicia em data inexistente');
+eq(C.evaluate(j,'2026-10-24').map(s=>s.status),['disponivel','aguarda_etapa','aguarda_etapa','programada'],'Não avança etapas anteriores sem confirmação');
+j=C.change(j,scope,'aluno-a',{type:'complete',id:'entrada'},start);
+eq(C.evaluate(j,'2026-10-20')[1].status,'aguarda_gatilho','Dia não presume treino realizado');
+eq(C.evaluate(j,'2026-10-20',{treino:'2026-10-16'})[1].status,'aguarda_gatilho','Treino anterior ao ingresso não satisfaz o gatilho');
+eq(C.evaluate(j,'2026-10-20',{treino:'2026-10-21'})[1].status,'aguarda_gatilho','Treino futuro não satisfaz o gatilho');
+fails(()=>C.change(j,scope,'aluno-a',{type:'complete',id:'primeiro'},'2026-10-20'),'Exige gatilho para completar');
+j=C.change(j,scope,'aluno-a',{type:'event',event:'treino'},'2026-10-20');
+j=C.change(j,scope,'aluno-a',{type:'complete',id:'primeiro'},'2026-10-20');
+eq(C.change(j,scope,'aluno-a',{type:'complete',id:'primeiro'},'2026-10-21'),j,'Repetir clique mantém a primeira conclusão');
+eq(C.change(j,scope,'aluno-a',{type:'event',event:'treino'},'2026-10-21'),j,'Repetir gatilho não muda a origem');
+eq(C.evaluate(j,'2026-10-24',{checkin:'2026-10-23'})[2].status,'disponivel','Check-in disponível libera etapa após semana e anterior');
+const original=JSON.stringify(j);j=C.change(j,scope,'aluno-a',{type:'pause'},'2026-10-22');
+eq(C.evaluate(j,'2026-10-30',{checkin:'2026-10-25'})[2].status,'pausada','Pausa trava etapa mesmo com evidência');
+fails(()=>C.change(j,scope,'aluno-a',{type:'complete',id:'semana'},'2026-10-30',{checkin:'2026-10-25'}),'Não conclui quando pausada');
+j=C.change(j,scope,'aluno-a',{type:'resume'},'2026-10-27');
+eq(j.pausedDays,5,'Pausa desconta cinco dias da jornada');
+eq(C.evaluate(j,'2026-10-27',{checkin:'2026-10-25'})[2].remaining,2,'Retoma com dois dias ativos restantes');
+eq(C.change(j,scope,'aluno-a',{type:'resume'},'2026-10-28'),j,'Retomar novamente não adiciona dias');
+fails(()=>C.change(j,{...scope,tenant:'outra'},'aluno-a',{type:'pause'},start),'Outra academia não pode editar');
+fails(()=>C.change(j,{...scope,user:'outro'},'aluno-a',{type:'pause'},start),'Outro profissional não pode editar');
+fails(()=>C.change(j,scope,'aluno-b',{type:'pause'},start),'Outro aluno não pode editar');
+fails(()=>C.steps([{id:'a',day:0,title:'A',trigger:'sempre'},{id:'a',day:1,title:'B',trigger:'sempre'}]),'IDs repetidos rejeitados');
+fails(()=>C.steps([{id:'a',day:-1,title:'A',trigger:'sempre'}]),'Dia negativo rejeitado');
+ok(original!==JSON.stringify(j),'Pausa gerou uma nova versão');
+console.log(`PASS jornadas v866: ${checks} verificações`);

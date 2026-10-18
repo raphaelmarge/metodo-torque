@@ -6,6 +6,37 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v867 — Acompanhamento do Personal e do aluno
+
+- Vídeos privados de execução com respostas por texto, desenho e áudio; versões
+  curta/casa/viagem aprovadas pelo professor; progressão por série com evidências.
+- Jornadas assistidas na Central Pro, compras por dia com despensa e substituições
+  aprovadas, relato de dificuldade e comparação das etapas da corrida com TCX.
+- O builder permanece canônico; demos regeneradas, caches mt-v867, navegação,
+  histórico, lista rápida de compras e fichas originais preservados.
+- Saúde nativa tem adaptador e fontes do plugin, mas depende de compilação e
+  homologação. O usuário ainda não possui as contas de desenvolvedor necessárias.
+  Não anunciar Apple/Google/Strava/Garmin como conectados no navegador.
+- Vídeos exigem três migrations e duas Edge Functions, com fila privada de
+  expurgo e segredo gerado no Vault. Consultar a sequência de ativação em
+  `docs/releases/mt-v866-tecnica-expurgo.md`; não inferir implantação pelo Git.
+- Escopo, dados e limites: `docs/releases/mt-v866-acompanhamento.md`. Conferir
+  o PR e a versão servida antes de declarar a release publicada.
+
+- Integração dos PRs #888 e #889: `docs/releases/mt-v867-integracao.md`.
+
+## v866 — Planejamento semanal, receitas e mudanças do plano
+
+- `/nutri/` passa a calcular totais por data no editor, paciente e impressão;
+  compara rascunho/publicação e versões publicadas com o histórico do próprio plano.
+- Receitas têm ingredientes e rendimento revisados, cálculo por porção e snapshot
+  imutável. Compras expandem ingredientes e permitem alternativas por data, salvas
+  localmente por conta/paciente/plano/versão. Orientação textual não é calculada.
+- Lembretes Web Push são opcionais e dependem de ativação separada no Supabase;
+  o frontend não habilita o serviço nem inscreve pacientes automaticamente.
+- Cache Nutri v17, mt-v866. Contratos e evidências:
+  `docs/releases/mt-v866-evolucao-nutri.md`.
+
 ## v865 — Protocolos de dobras na avaliação da nutri
 
 - Avaliações incluem Pollock 3, Pollock 7 e Guedes 3, com pontos por sexo,
