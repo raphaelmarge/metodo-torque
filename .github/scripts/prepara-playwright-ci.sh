@@ -15,3 +15,15 @@ for source in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; 
     sudo mv -- "$source" "$RUNNER_TEMP/$(basename "$source").disabled"
   fi
 done
+
+# O mirror regional Azure pode entregar os pacotes Ubuntu muito lentamente.
+# Usa o arquivo oficial, mantendo suites, componentes, chaves e verificações.
+# Inclui as listas de mirrors usadas pelas imagens recentes do runner.
+for source in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors*.txt; do
+  if [[ -f "$source" ]] && grep -Eq 'https?://azure\.archive\.ubuntu\.com(/|[[:space:]]|$)' "$source"; then
+    backup="$RUNNER_TEMP/torque-apt-backup/${source#/etc/apt/}"
+    sudo mkdir -p -- "$(dirname "$backup")"
+    sudo cp -p -- "$source" "$backup"
+    sudo sed -E -i 's#https?://azure\.archive\.ubuntu\.com(/|[[:space:]]|$)#https://archive.ubuntu.com\1#g' "$source"
+  fi
+done
