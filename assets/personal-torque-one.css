@@ -373,3 +373,26 @@ body:not(.menu-fino) #abas button[data-a] .mi { display:inline-flex; width:19px;
   #pnCatalogo .pn-food-row > div { flex:1; min-width:0; }
   #pnCatalogo .pn-food-row > button { flex:none; margin:0; }
 }
+/* v868: as prioridades usam os dados e as ações do fluxo diário existente. */
+#vDash #ptFlowHoje{border-radius:20px;background:var(--pt-card);overflow:hidden}
+#vDash #ptFlowHoje .ptf-head{padding:22px 22px 0}
+#vDash #ptFlowHoje .ptf-head h2{font-size:27px;letter-spacing:-.7px;font-weight:650;margin-top:7px}
+#vDash #ptFlowHoje .ptf-head span{font-size:10px;letter-spacing:.14em;color:var(--pt-roxo-claro)}
+#vDash #ptFlowBest{margin:18px 22px;padding:20px;border:1px solid color-mix(in srgb,var(--pt-roxo) 40%,var(--pt-borda));border-radius:14px;background:color-mix(in srgb,var(--pt-roxo) 7%,var(--pt-card))}
+#vDash #ptFlowBest h3{font-size:23px;line-height:1.25;font-weight:650}
+#vDash .ptf-reviews{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 22px 22px;align-items:start}
+#vDash .ptf-review{min-width:0;border:1px solid var(--pt-borda);border-radius:14px;background:var(--pt-fundo)}
+#vDash .ptf-review summary{display:flex;align-items:center;gap:10px;padding:16px 14px;min-height:110px;cursor:pointer;list-style:none}
+#vDash .ptf-review summary::-webkit-details-marker{display:none}
+#vDash .ptf-review summary>span:nth-child(2){flex:1;min-width:0}
+#vDash .ptf-review b{display:block;font-size:14px;font-weight:650;line-height:1.4}
+#vDash .ptf-review small{display:block;font-size:12px;line-height:1.45;color:var(--pt-txt-4);margin-top:5px}
+#vDash .ptf-review-icon{display:grid;place-items:center;flex:none;width:32px;height:36px;border-radius:9px;background:color-mix(in srgb,var(--pt-roxo) 14%,transparent);color:var(--pt-roxo-claro);font-size:21px}
+#vDash .ptf-review-arrow{color:var(--pt-txt-4);font-size:23px}
+#vDash .ptf-review[open] .ptf-review-arrow{transform:rotate(90deg)}
+#vDash .ptf-review-list{border-top:1px solid var(--pt-borda);padding:4px 14px;max-height:330px;overflow:auto}
+#vDash .ptf-review-list button{display:block;text-align:left;width:100%;min-height:56px;padding:12px 0;border:0;border-bottom:1px solid var(--pt-borda);background:none;color:var(--pt-txt);font:inherit;font-size:14px;cursor:pointer}
+#vDash .ptf-review-list p{font-size:13px;line-height:1.6;color:var(--pt-txt-4)}
+#vDash .ptf-review :focus-visible{outline:2px solid var(--pt-roxo-claro);outline-offset:3px}
+@media(max-width:1000px){#vDash .ptf-reviews{grid-template-columns:1fr}#vDash .ptf-review summary{min-height:82px}}
+@media(max-width:800px){#vDash #ptFlowHoje .ptf-head{padding:20px 16px 0}#vDash #ptFlowBest{margin:16px;padding:16px}#vDash .ptf-reviews{padding:0 16px 16px}}

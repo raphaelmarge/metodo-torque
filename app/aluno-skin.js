@@ -422,14 +422,14 @@
         var cue=el('div','gpt-cue');cue.id='gTemplateCue';card.appendChild(cue);
         var presc=el('section','gpt-card gpt-prescription');presc.id='gTemplatePrescription';guidance.appendChild(presc);
         var hist=el('section','gpt-card gpt-history');hist.id='gTemplateHistory';guidance.appendChild(hist);
-        var records=el('details','gpt-records');records.id='gTemplateRecords';records.innerHTML='<summary>Registros deste exercício</summary><div class="gpt-record-list"></div>';guidance.appendChild(records);
+        var records=el('details','gpt-records');records.id='gTemplateRecords';records.open=true;records.innerHTML='<summary>Suas séries</summary><div class="gpt-record-list"></div>';card.appendChild(records);
         var success=el('div','gpt-success');success.id='gTemplateSuccess';success.setAttribute('role','status');card.appendChild(success);
         card.appendChild($('gMiolo2')); box.appendChild($('gPe')); box.appendChild($('gResta'));
         var prescribedRest=el('p','gpt-rest-prescription');prescribedRest.id='gTemplateRestPrescription';box.appendChild(prescribedRest);
         var confirmHelp=el('p','gpt-confirm-help','O descanso começa após o registro.');confirmHelp.id='gTemplateConfirmHelp';box.appendChild(confirmHelp);
         var nextSet=el('p','gpt-rest-next'); nextSet.id='gTemplateRestNext'; $('gResta').appendChild(nextSet);
         var nav=el('nav','gpt-bottom');nav.id='gTemplateBottom';nav.setAttribute('aria-label','Navegar entre exercícios');
-        nav.appendChild($('gVoltaEx'));nav.appendChild($('gPularEx'));card.appendChild(nav);
+        nav.appendChild($('gVoltaEx'));nav.appendChild($('gPularEx'));box.appendChild(nav);
       }
       function selectTab(name, focus) {
         tab=name;
@@ -450,11 +450,12 @@
         group.querySelectorAll('[data-gserie]').forEach(function(b){
           var si=Number(b.dataset.gserie),r=window.SR.registro(c.it,si),done=window.GP.feita(c.it,si),row=el('div','gpt-set-row'+(done?' done':''));
           row.dataset.gptRow=si;
+          row.classList.toggle('current',si===window.SR.indice(c.it));
           b.title='Selecionar série '+(si+1);row.appendChild(el('span','gpt-row-number',(si+1)+'ª'));
           var mark=el('span','gpt-set-mark',done?'✓':'');mark.setAttribute('aria-hidden','true');row.insertBefore(mark,row.firstChild);
           // A conclusão sem anotação não recebe números da prescrição.
           [['gpt-kg',r&&r.kg!=null?number(r.kg,' kg'):'— kg'],['gpt-reps',r&&r.r!=null?number(r.r,' reps'):'— reps'],['gpt-effort','RPE '+number(rpe(r&&r.rpe))],['gpt-state',done?'Registrada':r?'Anotação':'A registrar']].forEach(function(x){row.appendChild(el('span',x[0],x[1]));});
-          var edit=el('button','gpt-row-edit','⋮');edit.type='button';edit.dataset.gptEdit=si;edit.setAttribute('aria-label',(done?'Editar':'Registrar')+' série '+(si+1));row.appendChild(edit);
+          var edit=el('button','gpt-row-edit',done?'Editar':'Registrar');edit.type='button';edit.dataset.gptEdit=si;edit.setAttribute('aria-label',(done?'Editar':'Registrar')+' série '+(si+1));row.appendChild(edit);
           list.appendChild(row);
         });
         var selected=group.querySelector('[aria-pressed="true"]');if(selected){var bounds=group.getBoundingClientRect(),position=selected.getBoundingClientRect();if(position.right>bounds.right)group.scrollLeft+=position.right-bounds.right;else if(position.left<bounds.left)group.scrollLeft+=position.left-bounds.left;}
@@ -545,7 +546,26 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
   }
 
-  var js = "(" + playerTemplate.toString() + ")();";
+  function homePresentation() {
+    function ready() {
+      document.body.classList.add('experiencia-v868');
+      var top = document.getElementById('heroTopo'), carousel = document.getElementById('heroCarr');
+      if (top && carousel) {
+        carousel.before(top);
+        var greeting = document.getElementById('heroSauda');
+        if (greeting) {
+          var date = document.createElement('p'); date.id = 'inicioData'; greeting.after(date);
+          function paintDate() { date.textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long'}); }
+          paintDate(); document.addEventListener('visibilitychange', function () { if (!document.hidden) paintDate(); });
+        }
+      }
+      var week = document.getElementById('semBlock'), summary = document.getElementById('semResumo');
+      if (week && summary) week.querySelector('h2').after(summary);
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
+  }
+
+  var js = "(" + playerTemplate.toString() + ")();(" + homePresentation.toString() + ")();";
 
   css += "html.claro #guiaBox.player-template #gPe #gSerie,html.claro #guiaBox.player-template #gPe .prin{color:var(--gpt-on-accent)!important}#guiaBox.player-template #gGif{border:0!important}#guiaBox.player-template.festa #gPe #gFim{min-height:58px;background:#fff!important;color:var(--cor2)!important}";
   css += `
@@ -810,5 +830,68 @@ html.claro body.aluno-v793 :is(#crGpsCard,#fcCard){background:var(--one-card)!im
 html.claro body.aluno-v793 #crSinal{background:var(--one-control)}
 html.claro body.aluno-v793 #crSinal[data-estado=fraco]{background:#fff0d9}
 `;
+  css += `
+/* v868 — composição aprovada. Cores, imagens, navegação e eventos vêm do app. */
+body.aluno-v793.experiencia-v868:has(#heroCarr) #blocoHoje{padding-top:0}
+body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo{position:relative!important;inset:auto!important;padding:calc(22px + env(safe-area-inset-top,0px)) 20px 22px!important;align-items:center!important}
+body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo>div>div:first-child{color:var(--one-muted)!important;text-shadow:none}
+body.aluno-v793.experiencia-v868:has(#heroCarr) #heroSauda{font-size:28px!important;font-weight:650!important;letter-spacing:-.8px;line-height:1.2!important;color:var(--one-text)!important;text-shadow:none;margin-top:14px!important}
+body.aluno-v793.experiencia-v868 #inicioData{color:var(--one-muted);font-size:12px;line-height:1.5;margin:7px 0 0;text-transform:capitalize}
+body.aluno-v793.experiencia-v868:has(#heroCarr) :is(#sinoBtn,#avBtn2){background:var(--one-control)!important;border-color:var(--one-border)!important;color:var(--one-text)!important;backdrop-filter:none}
+body.aluno-v793.experiencia-v868 #heroCarr{width:calc(100% - 40px)!important;margin-inline:20px!important;gap:12px!important;border-radius:20px}
+body.aluno-v793.experiencia-v868 #heroCarr>div{height:350px!important;border-radius:20px!important;background:#14161c!important}
+body.aluno-v793.experiencia-v868 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(12,13,17,.06) 0%,rgba(12,13,17,.12) 24%,rgba(12,13,17,.58) 48%,rgba(12,13,17,.95) 78%,#14161c 100%)!important}
+body.aluno-v793.experiencia-v868 #heroCarr :is(.htit,#htTitulo){font-size:29px!important;line-height:1.12!important;font-weight:700!important;letter-spacing:-.8px!important;text-transform:none!important;color:#f3f3f6!important}
+body.aluno-v793.experiencia-v868 #heroCarr :is(.hsub,#htSub){color:#c6c7ce!important;font-size:13px!important}
+body.aluno-v793.experiencia-v868 #heroCarr .htk2{color:var(--corc)!important}
+body.aluno-v793.experiencia-v868 #heroCarr .btnx{border-radius:12px!important;min-height:52px}
+body.aluno-v793.experiencia-v868 #acSync{margin:10px 20px 0;padding:0;min-height:24px;font-size:12px}
+body.aluno-v793.experiencia-v868 #semBlock{background:var(--one-card);border:1px solid var(--one-border);border-radius:20px;padding:18px;margin-top:20px}
+body.aluno-v793.experiencia-v868 #semBlock h2{margin-bottom:10px;font-size:18px;font-weight:650}
+body.aluno-v793.experiencia-v868 #semContagem{display:none}
+body.aluno-v793.experiencia-v868 #semResumo{margin:8px 0 18px!important;font-size:13px!important;font-weight:500!important}
+body.aluno-v793.experiencia-v868 #spN b{font-size:23px;font-weight:650;color:var(--one-text)}
+body.aluno-v793.experiencia-v868 #spBar{height:6px!important;border:0!important}
+body.aluno-v793.experiencia-v868 #habWrap{margin-top:22px}
+body.aluno-v793.experiencia-v868 #inicioPendencias .al-atalho{background:var(--one-card);border:1px solid var(--one-border);border-radius:16px;padding:16px;margin:10px 0}
+body.aluno-v793.experiencia-v868 #navApp .nitem span:last-child{letter-spacing:0!important;font-size:11px!important;font-weight:600!important}
+#evPanorama{padding:20px;margin-bottom:26px;border:1px solid var(--one-border);border-radius:20px;background:var(--one-card);color:var(--one-text)}
+#evPanorama header,#evPanorama .ev-load-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#evPanorama header p{font-size:10px;letter-spacing:.15em;color:var(--one-muted);margin:0 0 7px}
+#evPanorama #evPanoramaTitle{font-size:27px;font-weight:650;letter-spacing:-.7px;margin:0}
+#evPanorama button{font:inherit;color:var(--one-text);cursor:pointer;min-height:44px;border:1px solid var(--one-border);border-radius:10px;background:var(--one-control)}
+#evPanoramaShare{width:44px;flex:none;font-size:23px!important}
+#evPanorama .ev-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:24px 0 18px;background:var(--one-bg);padding:4px;border-radius:12px}
+#evPanorama .ev-periods button{font-size:13px;border:0;background:transparent;color:var(--one-muted)}
+#evPanorama .ev-periods button[aria-pressed=true]{background:var(--cor);color:var(--cor-on,#fff)}
+#evPanorama .ev-panorama-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 0 22px;border-bottom:1px solid var(--one-border)}
+#evPanorama .ev-panorama-stats>div{display:flex;flex-direction:column;gap:4px}
+#evPanorama .ev-panorama-stats strong{font-size:35px;font-weight:650;line-height:1.2}
+#evPanorama .ev-panorama-stats span{font-size:12px;line-height:1.5;color:var(--one-muted)}
+#evPanorama h3{font-size:17px;font-weight:650;margin:20px 0 10px}
+#evPanoramaLoads{font-size:12px!important;border:0!important;background:none!important;color:var(--corc)!important;padding:8px 0}
+#evPanorama .ev-load-note,#evPanorama .ev-panorama-empty{font-size:12px;line-height:1.6;color:var(--one-muted);margin:0 0 10px}
+#evPanorama .ev-load-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:14px 0;border-bottom:1px solid var(--one-border)}
+#evPanorama .ev-load-row:last-child{border-bottom:0}
+#evPanorama .ev-load-row strong{font-size:14px;font-weight:550;line-height:1.5;grid-column:1/-1;overflow-wrap:anywhere}
+#evPanorama .ev-load-row span{font-size:15px;font-weight:650}
+#evPanorama .ev-load-row small{font-size:12px;align-self:center;color:var(--one-muted)}
+#evPanorama .ev-load-row[data-trend=up] small{color:var(--one-mint)}
+#evPanorama :focus-visible{outline:3px solid var(--corc);outline-offset:3px}
+#guiaBox.player-template #gTemplateRecords{order:6;margin:0;border:1px solid var(--gpt-line);border-radius:12px;background:var(--gpt-card)}
+#guiaBox.player-template>#gTemplateBottom{order:17;flex:none;padding:8px 0;border-top:1px solid var(--gpt-line);background:var(--gpt-bg)}
+#guiaBox.player-template #gTemplateRecords>summary{font-size:14px;font-weight:650;color:var(--gpt-text)}
+#guiaBox.player-template #gTemplateRecords .gpt-set-row{grid-template-columns:18px 22px minmax(0,1fr) minmax(0,1fr) 70px;min-height:56px;font-size:12px;padding:8px 4px}
+#guiaBox.player-template #gTemplateRecords .gpt-effort{grid-column:3/5;font-size:10px}
+#guiaBox.player-template #gTemplateRecords .gpt-row-edit{grid-column:5;grid-row:1/3;min-width:64px;min-height:44px;font-size:11px;color:var(--gpt-teal)}
+#guiaBox.player-template #gTemplateRecords .gpt-set-row.current{box-shadow:inset 3px 0 var(--gpt-accent);padding-left:8px;background:color-mix(in srgb,var(--gpt-accent) 7%,transparent)}
+#guiaBox.player-template .gserie-referencias{background:var(--gpt-card);padding:14px;border:1px solid var(--gpt-line);border-radius:12px}
+#guiaBox.player-template .gserie-referencias dd{font-size:13px;color:var(--gpt-text)}
+#guiaBox.player-template .gpt-progress{display:flex!important;margin:0 0 14px}
+#guiaBox.player-template.gpt-finished #gTemplateRecords{display:none}
+@media(max-width:360px){body.aluno-v793.experiencia-v868 #heroCarr{width:calc(100% - 28px)!important;margin-inline:14px!important}body.aluno-v793.experiencia-v868 #heroCarr>div{height:380px!important}#evPanorama{padding:16px}}
+@media(prefers-reduced-motion:reduce){body.experiencia-v868 *{scroll-behavior:auto!important}}
+`;
+
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

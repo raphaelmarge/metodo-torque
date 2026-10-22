@@ -22,7 +22,7 @@ let browser,checks=0;function ok(v,label){assert.ok(v,label);checks++;console.lo
   await p.goto(BASE+'/demo-personal.html');await p.locator('#btnDemo').click();await p.waitForURL(/personal.html/);
   await p.waitForFunction(()=>document.getElementById('ptFlowHoje')&&window.__PT_FLUXO__);
   ok(await p.locator('#ptFlowHoje').isVisible(),'Próxima melhor ação aparece dentro do Início');
-  ok(await p.locator('#ptFlowHoje').getByText('Próxima melhor ação').isVisible(),'Dashboard usa linguagem de fluxo, não módulo paralelo');
+  ok(await p.locator('#ptFlowHoje').getByText('Seu dia, organizado.').isVisible(),'Dashboard mantém a próxima ação no painel do dia aprovado');
   await p.waitForFunction(()=>document.getElementById('ptProSuiteBtn'));
   ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===1,'Fluxo diário mantém uma entrada própria para a Central Pro');
   await p.locator('#btnMenuPt').click();

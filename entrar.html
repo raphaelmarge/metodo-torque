@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Seu acesso — TORQUE ON</title>
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/fonts/archivo.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0c0d11;color:#f3f3f6;font:16px/1.5 Archivo,system-ui,sans-serif}a{color:#b994ff;text-underline-offset:4px}button,input{font:inherit}:focus-visible{outline:3px solid #b994ff;outline-offset:4px}[hidden]{display:none!important}
+    .access{max-width:1040px;min-height:100svh;margin:auto;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:64px;padding:48px 32px}.access-photo{position:relative;align-self:stretch;min-height:480px;border-radius:28px;overflow:hidden;background:#14161c}.access-photo img{width:100%;height:100%;position:absolute;object-fit:cover}.access-photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,#0c0d11e8)}.access-photo p{position:absolute;z-index:1;bottom:24px;left:28px;right:28px;font-size:30px;font-weight:650;line-height:1.18;letter-spacing:-1px}
+    .brand{display:block;color:inherit;text-decoration:none;font-size:20px;font-weight:800;letter-spacing:.07em}.brand span{color:#b994ff}.steps{display:flex;gap:20px;padding:0;margin:30px 0;list-style:none;color:#989baa;font-size:12px}.steps li:first-child{color:#b994ff}.steps b{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid #292c35;border-radius:50%;margin-right:5px}.steps li:first-child b{background:#8c54f7;border-color:#8c54f7;color:#fff}h1{font-size:34px;line-height:1.14;letter-spacing:-1px;margin:0 0 10px}p.intro{color:#989baa;margin:0 0 26px}fieldset{border:0;padding:0;margin:0}legend{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}.choice{position:relative;display:flex;gap:14px;align-items:center;border:1px solid #292c35;background:#14161c;border-radius:16px;padding:20px;margin:12px 0;cursor:pointer}.choice:has(:checked){border-color:#b994ff;background:#8c54f714;box-shadow:inset 0 0 0 1px #8c54f7}.choice input{accent-color:#8c54f7;width:20px;height:20px;flex-shrink:0}.choice strong,.choice small{display:block}.choice strong{font-size:17px}.choice small{color:#989baa;font-size:13px;margin-top:3px}.continue{width:100%;min-height:54px;border:0;border-radius:12px;background:#8c54f7;color:white;font-weight:650;cursor:pointer;margin-top:14px}.hint{color:#989baa;font-size:13px;line-height:1.6;border-top:1px solid #292c35;padding-top:20px;margin-top:28px}.hint strong{color:#f3f3f6}.back{display:inline-block;min-height:44px;padding:10px 0;margin-top:14px}select{width:100%;min-height:48px;padding:12px;border:1px solid #292c35;border-radius:10px;background:#1e2029;color:inherit;font:inherit}#professionalFields label{display:block;font-size:13px;margin:18px 0 8px}
+    @media(max-width:720px){.access{display:flex;flex-direction:column;align-items:stretch;gap:24px;padding:24px 20px 40px;max-width:480px}.access-photo{min-height:180px;order:1;border-radius:20px}.access-photo p{font-size:23px;bottom:8px;left:20px;max-width:220px}.access-main{display:contents}.brand{order:0}.access-content{order:2}.steps{margin:0 0 24px}h1{font-size:30px}.choice{padding:18px}.hint{margin-bottom:0}}
+  </style>
+</head>
+<body>
+  <main class="access">
+    <div class="access-photo"><img src="assets/vendas/lifestyle/coaching.webp" alt="" width="720" height="960"><p>Seu próximo passo<br>começa aqui.</p></div>
+    <div class="access-main">
+      <a class="brand" href="torqueon.html" aria-label="TORQUE ON — início">TORQUE <span>ON</span></a>
+      <div class="access-content">
+        <ol class="steps" aria-label="Etapas do acesso"><li aria-current="step"><b>1</b> Perfil</li><li><b>2</b> Acesso</li><li><b>3</b> Pronto</li></ol>
+        <h1>Como você quer entrar?</h1>
+        <p class="intro">Escolha seu perfil para seguir.</p>
+        <form id="accessForm" action="aluno-login.html">
+          <fieldset><legend>Seu perfil</legend>
+            <label class="choice"><input type="radio" name="perfil" value="aluno" checked><span><strong>Sou aluno</strong><small>Meus treinos, alimentação e evolução.</small></span></label>
+            <label class="choice"><input type="radio" name="perfil" value="profissional"><span><strong>Sou profissional</strong><small>Meus alunos e minha rotina de atendimento.</small></span></label>
+          </fieldset>
+          <div id="professionalFields" hidden><label for="product">Qual é a sua área?</label><select id="product"><option value="personal">Personal trainer</option><option value="nutri">Nutricionista</option><option value="academia">Academia ou studio</option></select></div>
+          <button class="continue" type="submit">Continuar →</button>
+        </form>
+        <noscript><p>Escolha seu acesso: <a href="aluno-login.html">Aluno</a>, <a href="personal.html">Personal</a>, <a href="nutricao.html">Nutricionista</a> ou <a href="index.html">Academia</a>.</p></noscript>
+        <p class="hint" id="accessHelp"><strong>Recebeu um convite?</strong><br>Abra o link que seu profissional enviou. Ele leva direto ao seu app. Você também pode entrar com seu login e senha.</p>
+        <a class="back" id="accessTrial" href="personal-vendas.html" hidden>Ainda não uso o Torque. Quero conhecer →</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    (function(){
+      'use strict';
+      var form=document.getElementById('accessForm'),fields=document.getElementById('professionalFields');
+      function update(){var pro=form.elements.perfil.value==='profissional';fields.hidden=!pro;document.getElementById('accessTrial').hidden=!pro;document.getElementById('accessHelp').hidden=pro;}
+      form.addEventListener('change',update);
+      form.addEventListener('submit',function(e){e.preventDefault();var routes={personal:'personal.html',nutri:'nutricao.html',academia:'index.html'};location.assign(form.elements.perfil.value==='aluno'?'aluno-login.html':routes[document.getElementById('product').value]);});
+      update();
+    })();
+  </script>
+</body>
+</html>

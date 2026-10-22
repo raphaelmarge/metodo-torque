@@ -134,8 +134,9 @@
     if (!root || !anchor || $('ptFlowHoje')) return;
     var box = document.createElement('section');
     box.id = 'ptFlowHoje'; box.className = 'ptf-today'; box.setAttribute('aria-labelledby', 'ptFlowHojeTit');
-    box.innerHTML = '<header class="ptf-head"><div><span>SEU DIA</span><h2 id="ptFlowHojeTit">Próxima melhor ação</h2></div><button type="button" class="ptf-icon" data-ptf="refresh" aria-label="Atualizar">↻</button></header>' +
+    box.innerHTML = '<header class="ptf-head"><div><span>Próxima melhor ação</span><h2 id="ptFlowHojeTit">Seu dia, organizado.</h2></div><button type="button" class="ptf-icon" data-ptf="refresh" aria-label="Atualizar">↻</button></header>' +
       '<div id="ptFlowBest" class="ptf-best"></div>' +
+      '<div id="ptFlowReviews" class="ptf-reviews"></div>' +
       '<nav class="ptf-quick" aria-label="Atalhos do dia"><button type="button" data-ptf="session-next">Iniciar sessão</button><button type="button" data-ptf="search">Busca universal</button><button type="button" data-ptf="autos">Automações</button></nav>';
     anchor.insertAdjacentElement('afterend', box);
     var resolver = $('dashResolver');
@@ -153,6 +154,26 @@
     el.innerHTML = '<div class="ptf-best-copy"><div class="ptf-best-kicker">' + (person || 'Hoje') + '</div><h3>' + esc(a.title) + '</h3><p>' + esc(a.note) + '</p></div>' +
       '<div class="ptf-best-actions"><button type="button" class="btn" data-ptf-best="' + esc(a.type) + '"' + (a.aluno ? ' data-aluno="' + esc(a.aluno.id) + '"' : '') + '>' + esc(a.primary) + '</button>' +
       (a.aluno ? '<button type="button" class="btn sec" data-ptf-profile="' + esc(a.aluno.id) + '">Aluno 360°</button>' : '') + '</div>';
+    renderReviews(st);
+  }
+
+  // Resumos da cópia sincronizada; ausência de registro não vira aluno faltoso.
+  // Vídeos são consultados pelo módulo privado somente ao abrir o aluno.
+  function renderReviews(st) {
+    var root = $('ptFlowReviews'); if (!root) return;
+    var opened = qa('details[open]', root).map(function (d) { return d.dataset.review; });
+    var acts = active(st), videos = acts.filter(function (a) { return !!a.appTokenP; });
+    var inactive = acts.map(function (a) { var last = lastDone(st, a.id); return { a:a, days:last ? daysBetween(last.data) : null }; })
+      .filter(function (x) { return x.days != null && x.days >= 10; }).sort(function (a,b) { return b.days-a.days; });
+    var stale = acts.map(function (a) { var t = st.treinosV2[a.id] || {}; return { a:a, days:(t.fichas || []).length ? daysBetween(trainingStamp(t,a)) : null }; })
+      .filter(function (x) { return x.days != null && x.days >= 56; }).sort(function (a,b) { return b.days-a.days; });
+    function card(key, icon, title, note, rows, empty) {
+      return '<details class="ptf-review" data-review="' + key + '"' + (opened.indexOf(key)>=0 ? ' open' : '') + '><summary><span class="ptf-review-icon" aria-hidden="true">' + icon + '</span><span><b>' + title + '</b><small>' + note + '</small></span><span class="ptf-review-arrow" aria-hidden="true">›</span></summary><div class="ptf-review-list">' + (rows || '<p>' + empty + '</p>') + '</div></details>';
+    }
+    function rows(list, type) { return list.map(function (x) { return '<button type="button" data-ptf-best="' + type + '" data-aluno="' + esc(x.a.id) + '"><span>' + esc(x.a.nome) + '</span><small>' + x.days + ' dias · ' + (type === 'workout' ? 'Revisar treino' : 'Ver acompanhamento') + ' →</small></button>'; }).join(''); }
+    root.innerHTML = card('videos','▷','Vídeos de execução','Escolha o aluno para consultar os envios',videos.map(function (a) { return '<button type="button" data-tecnica-aluno="' + esc(a.id) + '"><span>' + esc(a.nome) + '</span><small>Ver vídeos →</small></button>'; }).join(''),'Publique o app de um aluno para receber vídeos de execução.') +
+      card('inactive','↗',inactive.length + (inactive.length===1 ? ' aluno para retomar contato' : ' alunos para retomar contato'),'10 dias ou mais sem sessão concluída nos registros',rows(inactive,'profile'),'Nenhum aluno com esse intervalo nos registros disponíveis.') +
+      card('stale','↻',stale.length + (stale.length===1 ? ' treino para revisar' : ' treinos para revisar'),'Prescrição com 8 semanas ou mais',rows(stale,'workout'),'Nenhuma prescrição com esse prazo nos registros disponíveis.');
   }
 
   function mountSessionDialog() {

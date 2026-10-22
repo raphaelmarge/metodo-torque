@@ -1037,6 +1037,55 @@
     window.__evResumoPinta = function () { pintaCqTiles(); pintaConquistas(); pintaXP(); };
     window.__evTopoPinta('conq');
   }
+  // v868: resumo legível, somente leitura. As cargas passam pelo agrupador
+  // canônico, que distingue anotação, conclusão, substituição e carga zero.
+  function runtimePanorama() {
+    var root = document.getElementById('evResumo'); if (!root) return;
+    var panel = document.createElement('section'); panel.id = 'evPanorama';
+    panel.setAttribute('aria-labelledby', 'evPanoramaTitle');
+    panel.innerHTML = '<header><div><p>PASSO A PASSO</p><h2 id="evPanoramaTitle">Sua evolução</h2></div><button type="button" id="evPanoramaShare" aria-label="Compartilhar evolução">↗</button></header>' +
+      '<div class="ev-periods" role="group" aria-label="Período do resumo"><button type="button" data-ev-period="7" aria-pressed="false">7 dias</button><button type="button" data-ev-period="28" aria-pressed="true">4 semanas</button><button type="button" data-ev-period="90" aria-pressed="false">90 dias</button></div>' +
+      '<div id="evPanoramaStats" class="ev-panorama-stats" aria-live="polite"></div><div class="ev-load-head"><h3>Suas cargas</h3><button type="button" id="evPanoramaLoads">Ver todas →</button></div><p class="ev-load-note">Maior carga registrada por treino, do primeiro ao mais recente no período.</p><div id="evPanoramaLoadsList"></div>';
+    root.prepend(panel);
+    var period = 28;
+    function paint() {
+      var today = isoHj(), from = new Date(today + 'T12:00:00'); from.setDate(from.getDate() - period + 1);
+      var start = isoLoc(from), feitos = L('ptfeitos', {});
+      function inRange(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= start && d <= today && isoLoc(new Date(d + 'T12:00:00')) === d; }
+      var days = Object.keys(feitos).filter(function (d) { return feitos[d] && inRange(d); }).length;
+      document.getElementById('evPanoramaStats').innerHTML = '<div><strong>' + days + '</strong><span>Dias com treino</span></div><div><strong>' + (days * 7 / period).toLocaleString('pt-BR', {maximumFractionDigits:1}) + '</strong><span>Média de dias por semana</span></div>';
+      var core = window.__cgEvolucao, groups = core ? core.dados() : {}, rows = [];
+      Object.keys(groups).forEach(function (g) { groups[g].exs.forEach(function (x) {
+        var sessions = core.sessoes(x.all.filter(function (r) { return inRange(String(r.d || '')); })).filter(function (s) { return s.max != null; });
+        if (sessions.length < 2) return;
+        var first = sessions[0], last = sessions[sessions.length - 1];
+        // Duas fichas no mesmo dia não são uma comparação longitudinal.
+        if (first.d === last.d) return;
+        rows.push({name:x.n,first:first.max,last:last.max,date:last.d});
+      }); });
+      rows.sort(function (a,b) { return b.date.localeCompare(a.date) || a.name.localeCompare(b.name, 'pt-BR'); });
+      var list = document.getElementById('evPanoramaLoadsList'); list.replaceChildren();
+      rows.slice(0,3).forEach(function (r) {
+        var row = document.createElement('div'); row.className = 'ev-load-row';
+        var name = document.createElement('strong'); name.textContent = r.name;
+        var values = document.createElement('span'); values.textContent = r.first.toLocaleString('pt-BR') + ' → ' + r.last.toLocaleString('pt-BR') + ' kg';
+        var delta = document.createElement('small'), change = Math.round((r.last-r.first)*100)/100;
+        delta.textContent = (change > 0 ? '+' : '') + change.toLocaleString('pt-BR') + ' kg';
+        row.dataset.trend = change>0 ? 'up' : 'steady'; row.append(name,values,delta); list.appendChild(row);
+      });
+      if (!rows.length) { var empty = document.createElement('p'); empty.className = 'ev-panorama-empty'; empty.textContent = 'Registre cargas em dois dias diferentes para acompanhar a variação aqui.'; list.appendChild(empty); }
+    }
+    panel.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.evPeriod) { period = Number(b.dataset.evPeriod); panel.querySelectorAll('[data-ev-period]').forEach(function (p) { p.setAttribute('aria-pressed', String(p === b)); }); paint(); }
+      if (b.id === 'evPanoramaLoads') window.__evSub('cargas');
+      if (b.id === 'evPanoramaShare') { var share = document.getElementById('btnCardStories'); if (share) share.click(); }
+    });
+    // O resumo acompanha os mesmos repaints do calendário/constância, sem
+    // observers no próprio conteúdo e sem gravar preferências na conta.
+    new MutationObserver(paint).observe(document.getElementById('cqTiles'), {childList:true});
+    window.__evPanorama = {paint:paint}; paint();
+  }
   // foto de capa (ficha, circuito ou corrida): só data: de imagem entra no app
   function capaOk(u) { return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? String(u) : ""; }
   // Executado no app gerado: reorganiza os nós existentes, sem duplicar controles.
@@ -8833,6 +8882,7 @@
       // o selo de nível antigo dentro de Conquistas repetia o cabeçalho novo
       "var nc9=document.getElementById('nvCard');if(nc9&&document.getElementById('evTopo'))nc9.style.display='none';})();" +
       "(" + runtimeResumo.toString() + ")();" +
+      "(" + runtimePanorama.toString() + ")();" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
       // Preserva os atalhos existentes e acrescenta Alimentação quando disponível.
