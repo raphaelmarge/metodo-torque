@@ -30,6 +30,9 @@ Base: `8c41c47e7eede6cef7552f0ac7db77dc76b23b58` (v867).
   média representa dias por semana dentro do intervalo, não total de sessões.
 - Os 18 destinos do Personal, Central Pro, Alimentação, conquistas, calendários,
   esforço opcional, variantes e histórico continuam acessíveis.
+- A atualização do diário alimentar adia a repintura da lista de compras enquanto
+  um campo está em edição. O valor continua sendo confirmado ao sair do campo;
+  a troca de acesso limpa a tela imediatamente, sem gravar o rascunho anterior.
 - Demos são geradas por `tools/demo-aluno/regen-demo.js`, com dados fictícios.
   Versão `mt-v868` nos três pontos do cache. Nova entrada e foto no precache.
 

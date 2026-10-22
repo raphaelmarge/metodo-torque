@@ -20,6 +20,8 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
   e excluindo anotações não concluídas/futuro. Medalhas e calendários continuam.
 - Personal reúne atalhos para vídeos privados, contato e revisão da prescrição;
   assinatura destaca os prazos confirmados, sem inventar cartão ou próxima cobrança.
+- A atualização do diário alimentar preserva a digitação na despensa. O campo
+  confirma ao perder o foco; a troca de acesso limpa o formulário imediatamente.
 - Contrato e origem dos dados: `design/EXPERIENCIA-V868.md`. Verificar CI e Pages
   antes de declarar a versão publicada.
 
