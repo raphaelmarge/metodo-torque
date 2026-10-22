@@ -840,9 +840,9 @@ body.aluno-v793.experiencia-v868 #inicioData{color:var(--one-muted);font-size:12
 body.aluno-v793.experiencia-v868:has(#heroCarr) :is(#sinoBtn,#avBtn2){background:var(--one-control)!important;border-color:var(--one-border)!important;color:var(--one-text)!important;backdrop-filter:none}
 body.aluno-v793.experiencia-v868 #heroCarr{width:calc(100% - 40px)!important;margin-inline:20px!important;gap:12px!important;border-radius:20px}
 body.aluno-v793.experiencia-v868 #heroCarr>div{height:350px!important;border-radius:20px!important;background:#14161c!important}
-body.aluno-v793.experiencia-v868 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(12,13,17,.06) 0%,rgba(12,13,17,.12) 24%,rgba(12,13,17,.58) 48%,rgba(12,13,17,.95) 78%,#14161c 100%)!important}
-body.aluno-v793.experiencia-v868 #heroCarr :is(.htit,#htTitulo){font-size:29px!important;line-height:1.12!important;font-weight:700!important;letter-spacing:-.8px!important;text-transform:none!important;color:#f3f3f6!important}
-body.aluno-v793.experiencia-v868 #heroCarr :is(.hsub,#htSub){color:#c6c7ce!important;font-size:13px!important}
+body.aluno-v793.experiencia-v868 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg'],html.claro body.aluno-v793.experiencia-v868 #heroCarr>div>div[style*='pointer-events:none'][style*='linear-gradient(180deg']{background:linear-gradient(180deg,rgba(12,13,17,.06) 0%,rgba(12,13,17,.12) 24%,rgba(12,13,17,.58) 48%,rgba(12,13,17,.95) 78%,#14161c 100%)!important}
+body.aluno-v793.experiencia-v868 #heroCarr :is(.htit,#htTitulo),html.claro body.aluno-v793.experiencia-v868 #heroCarr :is(.htit,#htTitulo){font-size:29px!important;line-height:1.12!important;font-weight:700!important;letter-spacing:-.8px!important;text-transform:none!important;color:#f3f3f6!important}
+body.aluno-v793.experiencia-v868 #heroCarr :is(.hsub,#htSub),html.claro body.aluno-v793.experiencia-v868 #heroCarr :is(.hsub,#htSub){color:#c6c7ce!important;font-size:13px!important}
 body.aluno-v793.experiencia-v868 #heroCarr .htk2{color:var(--corc)!important}
 body.aluno-v793.experiencia-v868 #heroCarr .btnx{border-radius:12px!important;min-height:52px}
 body.aluno-v793.experiencia-v868 #acSync{margin:10px 20px 0;padding:0;min-height:24px;font-size:12px}

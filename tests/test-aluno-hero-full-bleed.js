@@ -1,4 +1,5 @@
-/* Foto no topo: demo e builder reais, com dados sintéticos e sem rede externa. */
+/* Composição v868 aprovada: demo e builder reais, sem rede externa.
+ * O nome histórico do arquivo permanece para os consumidores da suíte. */
 const assert = require('assert/strict');
 const fs = require('fs');
 const path = require('path');
@@ -72,16 +73,17 @@ async function geometry(page) {
         await page.setViewportSize({width,height}); await page.evaluate(() => window.scrollTo(0,0));
         await page.waitForTimeout(80);
         const g = await geometry(page), tag = name + ' ' + width + 'x' + height;
-        ok(Math.abs(g.carr.x-g.body.x)<1 && Math.abs(g.carr.w-g.body.w)<1 && Math.abs(g.carr.y-g.bloco.y)<1, tag + ': foto de ponta a ponta e no topo');
-        ok(g.radius==='0px' && g.card.h>=469 && g.card.h<=571 && g.fit==='cover', tag + ': altura original, sem moldura ou deformação');
-        ok(g.greeting==='rgb(255, 255, 255)' && g.top.bottom<g.title.y && g.button.bottom<=g.card.bottom+1, tag + ': saudação e conteúdo não se sobrepõem');
+        const margin=width<=360?14:20, heightExpected=width<=360?380:350;
+        ok(Math.abs(g.carr.x-g.body.x-margin)<1 && Math.abs(g.carr.w-(g.body.w-margin*2))<1 && g.carr.y>=g.top.bottom-1, tag + ': foto em card abaixo da saudação, com margens aprovadas');
+        ok(g.radius==='20px' && Math.abs(g.card.h-heightExpected)<1 && g.fit==='cover', tag + ': altura e cantos do novo card, sem deformação');
+        ok(g.greeting==='rgb(243, 243, 246)' && g.top.bottom<g.title.y && g.button.bottom<=g.card.bottom+1, tag + ': saudação e conteúdo não se sobrepõem');
         ok(g.bell.w>=43.5 && g.bell.h>=43.5 && g.avatar.w>=43.5 && g.avatar.h>=43.5 && g.controlsClickable && !g.overflow, tag + ': controles acessíveis e sem rolagem lateral');
       }
       await page.setViewportSize({width:390,height:844});
       await page.evaluate(() => {document.documentElement.classList.add('claro'); window.scrollTo(0,0);});
-      ok((await geometry(page)).greeting==='rgb(255, 255, 255)', name + ': saudação continua clara sobre a foto no tema claro');
-      ok(await page.locator('#htTitulo').evaluate(e => getComputedStyle(e).color==='rgb(33, 27, 45)'), name + ': título com contraste no degradê claro');
-      ok(await page.locator('#htSub').evaluate(e => getComputedStyle(e).color==='rgb(102, 94, 115)'), name + ': subtítulo legível no degradê claro');
+      ok((await geometry(page)).greeting==='rgb(33, 27, 45)', name + ': saudação escura no fundo do tema claro');
+      ok(await page.locator('#htTitulo').evaluate(e => getComputedStyle(e).color==='rgb(243, 243, 246)'), name + ': título claro sobre a foto com degradê escuro');
+      ok(await page.locator('#htSub').evaluate(e => getComputedStyle(e).color==='rgb(198, 199, 206)'), name + ': subtítulo legível sobre a foto também no tema claro');
       await page.evaluate(() => document.documentElement.classList.remove('claro'));
       await page.locator('#sinoBtn').click();
       ok(await page.locator('#sinoCx').isVisible(), name + ': sino funciona sobre a foto');
@@ -89,7 +91,7 @@ async function geometry(page) {
       for (const width of [801,1024,1280]) {
         await page.setViewportSize({width,height:900}); await page.evaluate(() => window.scrollTo(0,0));
         const g=await geometry(page);
-        ok(g.radius==='16px' && Math.abs(g.card.h-420)<1 && g.carr.y>g.top.bottom && !g.overflow, name + ': layout desktop preservado em '+width+'px');
+        ok(g.radius==='20px' && Math.abs(g.card.h-350)<1 && g.carr.y>=g.top.bottom-1 && !g.overflow, name + ': composição desktop sem sobreposição em '+width+'px');
       }
       assert.deepEqual(errors, []); ok(true,name + ': sem erros JavaScript');
     } finally {await ctx.close();}
@@ -100,5 +102,5 @@ async function geometry(page) {
   const first=await open(mount({...D,fichasApp:null,guiaFichasP:[],fexs:[]}));
   ok(await first.page.locator('#heroCarr').count()===0 && await first.page.locator('#primeiroDia').isVisible(),'primeiro dia sem treino mantém sua tela, sem carrossel vazio');
   assert.deepEqual(first.errors,[]); await first.ctx.close();
-  console.log('Hero full-bleed: '+count+' verificações passaram.');
+  console.log('Hero v868: '+count+' verificações passaram.');
 })().catch(e => {console.error(e);process.exitCode=1;}).finally(async () => {if(browser) await browser.close();});
