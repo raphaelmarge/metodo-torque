@@ -88,7 +88,7 @@ async function scenario(browser, base, failInstall) {
       }), 'activated');
     } else {
       assert(!result.keys.includes(prefix+'v14'));
-      assert(result.keys.includes(prefix+'v17'));
+      assert(result.keys.includes(prefix+'v18'));
       const binding = await page.evaluate(() => new Promise((resolve,reject) => {
         const open=indexedDB.open('torque-nutri-push:/nutri/',1);
         open.onerror=()=>reject(open.error);
@@ -99,7 +99,7 @@ async function scenario(browser, base, failInstall) {
       // (microsoft/playwright#42775). A real origin outage exercises fallback.
       unavailable=true;
       assert(await page.evaluate(()=>fetch('/uncached-network-probe',{cache:'no-store'}).then(()=>false,()=>true)),'origin is unreachable');
-      for (const file of ['app.js','recipe-composition.js','shopping-planner.js','day-summary.js','reminders.js']) {
+      for (const file of ['app.js','recipe-composition.js','shopping-planner.js','day-summary.js','reminders.js','food-catalog-data.js','food-measures.js','food-catalog.js','food-catalog.css','data/taco.json','data/openfoodfacts.json','data/README.md']) {
         assert(await page.evaluate(async file => (await fetch('/nutri/'+file)).ok, file), file+' works offline');
       }
     }
@@ -114,7 +114,7 @@ async function scenario(browser, base, failInstall) {
     const browser=await pw[name].launch({headless:true,...(name==='chromium'&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
     try {
       await scenario(browser,base,false);
-      console.log('OK '+name+': v14 → v17 sem reload, vínculo/rascunho/fila preservados, recursos offline e caches isolados');
+      console.log('OK '+name+': v14 → v18 sem reload, vínculo/rascunho/fila preservados, catálogo e medidas offline, caches isolados');
       await scenario(browser,base,true);
       console.log('OK '+name+': instalação interrompida mantém a versão anterior utilizável');
     } finally { await browser.close(); }

@@ -1,0 +1,1949 @@
+{
+  "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
+  "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
+  "policy": {
+    "purpose": "Conservative quarantine for label review; thresholds are data-quality screening limits, not clinical intake limits.",
+    "sourceUnits": "Only numeric OFF *_100g values are used: nutrient mass in g per 100 g/100 ml. No percentages or daily values are inferred.",
+    "sodiumMg": {
+      "beveragePer100ml": 500,
+      "ordinaryFoodPer100": 5000,
+      "identifiedSaltOrSeasoningPer100": 40000
+    },
+    "upperMgPer100": {
+      "calcium": 5000,
+      "iron": 100,
+      "potassium": 10000,
+      "cholesterol": 3000
+    },
+    "saltSodiumConsistency": "salt = sodium * 2.5; absolute tolerance 0.1 g or relative tolerance 10%, whichever is greater.",
+    "massBalance": "For base g only, protein + carbohydrates + fat + sodium + calcium + iron + potassium <= 105 g (5 g rounding margin). Never applied to ml.",
+    "cholesterolFatConsistency": "Cholesterol mass cannot exceed total fat mass by more than 20 mg (rounding margin).",
+    "action": "Exclude the whole record; never rescale, replace or silently omit a suspect nutrient.",
+    "saltReference": "https://github.com/openfoodfacts/data-imports/blob/master/docs/data-formats.md"
+  },
+  "excludedRows": 77,
+  "reasonCounts": {
+    "sodium_above_screening_limit": 41,
+    "mass_balance_above_100g": 17,
+    "salt_sodium_conflict": 34,
+    "iron_above_screening_limit": 5,
+    "calcium_above_screening_limit": 3,
+    "cholesterol_above_screening_limit": 1,
+    "cholesterol_exceeds_total_fat": 1
+  },
+  "records": [
+    {
+      "id": "off:7891000234006",
+      "barcode": "7891000234006",
+      "name": "Composto Lácteo Baunilha Nutren Active Lata 400g",
+      "brand": "NESTLE",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000234006",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 390.4761904761905,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 475.32984126984127,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 23.80952380952381,
+        "carbohydrates": 57.142857142857146,
+        "fat": 2.857142857142857,
+        "salt": 976.1904761904761,
+        "sodium": 390.4761904761905,
+        "calcium": 1.0317460317460319,
+        "iron": 0.01238095238095238
+      }
+    },
+    {
+      "id": "off:7891991001342",
+      "barcode": "7891991001342",
+      "name": "Guaraná",
+      "brand": "Antarctica",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891991001342",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 8.5,
+          "limitGPer100": 0.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 7.3,
+        "fat": 0.0,
+        "salt": 21.25,
+        "sodium": 8.5
+      }
+    },
+    {
+      "id": "off:7896002366267",
+      "barcode": "7896002366267",
+      "name": "12 Grãos Integral 53%",
+      "brand": "PULLMAN",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896002366267",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.376,
+          "saltGPer100": 0.36199999999999993,
+          "expectedSaltGPer100": 0.94
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 14.0,
+        "carbohydrates": 40.0,
+        "fat": 5.4,
+        "salt": 0.36199999999999993,
+        "sodium": 0.376
+      }
+    },
+    {
+      "id": "off:7894000050720",
+      "barcode": "7894000050720",
+      "name": "Maionese Light",
+      "brand": "Hellmann's",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894000050720",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.6,
+          "saltGPer100": 5.0,
+          "expectedSaltGPer100": 1.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 9.166666666666668,
+        "fat": 15.0,
+        "salt": 5.0,
+        "sodium": 0.6
+      }
+    },
+    {
+      "id": "off:7896048706041",
+      "barcode": "7896048706041",
+      "name": "Leite em Pó Desnatado Instantâneo",
+      "brand": "Lá Sereníssima",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896048706041",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.25,
+          "saltGPer100": 1.25,
+          "expectedSaltGPer100": 0.625
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 35.0,
+        "carbohydrates": 55.0,
+        "fat": 0.0,
+        "salt": 1.25,
+        "sodium": 0.25,
+        "calcium": 0.63,
+        "cholesterol": 0.0
+      }
+    },
+    {
+      "id": "off:7896028030661",
+      "barcode": "7896028030661",
+      "name": "Coco ralado úmido",
+      "brand": "Menina",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896028030661",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.06,
+          "saltGPer100": 0.0,
+          "expectedSaltGPer100": 0.15
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.6666666666666667,
+        "carbohydrates": 64.16666666666667,
+        "fat": 16.666666666666668,
+        "salt": 0.0,
+        "sodium": 0.06,
+        "calcium": 0.0135563425,
+        "iron": 0.00234271025,
+        "potassium": 0.343252375,
+        "cholesterol": 0.0
+      }
+    },
+    {
+      "id": "off:7891991000840",
+      "barcode": "7891991000840",
+      "name": "Água tônica",
+      "brand": "Antarctica,Ambev",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891991000840",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 9.4,
+          "limitGPer100": 0.5
+        },
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 9.4,
+          "saltGPer100": 0.02357,
+          "expectedSaltGPer100": 23.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 5.0,
+        "fat": 0.0,
+        "salt": 0.02357,
+        "sodium": 9.4
+      }
+    },
+    {
+      "id": "off:7891991002646",
+      "barcode": "7891991002646",
+      "name": "Guaraná",
+      "brand": "Antarctica",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891991002646",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 8.5,
+          "limitGPer100": 0.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 7.3,
+        "fat": 0.0,
+        "salt": 21.25,
+        "sodium": 8.5
+      }
+    },
+    {
+      "id": "off:7898226340375",
+      "barcode": "7898226340375",
+      "name": "Pão de Fôrma Sem Açúcar - Baldini - 350g",
+      "brand": "Baldini",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898226340375",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 360.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 414.6,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 11.0,
+        "carbohydrates": 42.0,
+        "fat": 1.6,
+        "salt": 900.0,
+        "sodium": 360.0
+      }
+    },
+    {
+      "id": "off:7898666240556",
+      "barcode": "7898666240556",
+      "name": "Molho Pesto",
+      "brand": "Cajeta",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898666240556",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 7.54742857142857,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 4.857142857142857,
+        "carbohydrates": 1.7142857142857142,
+        "fat": 24.0,
+        "salt": 18.86857142857143,
+        "sodium": 7.54742857142857
+      }
+    },
+    {
+      "id": "off:7896002300148",
+      "barcode": "7896002300148",
+      "name": "Pão intergral",
+      "brand": "Bimbo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896002300148",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.33399999999999996,
+          "saltGPer100": 1.67,
+          "expectedSaltGPer100": 0.835
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 10.8,
+        "carbohydrates": 46.0,
+        "fat": 2.2,
+        "salt": 1.67,
+        "sodium": 0.33399999999999996
+      }
+    },
+    {
+      "id": "off:7898666241560",
+      "barcode": "7898666241560",
+      "name": "Cebola caramelizada",
+      "brand": "Cajeta",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898666241560",
+      "issues": [
+        {
+          "rule": "iron_above_screening_limit",
+          "reportedGPer100": 1.911806,
+          "limitGPer100": 0.1
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.4,
+        "carbohydrates": 14.0,
+        "fat": 1.8,
+        "salt": 1.3284200000000002,
+        "sodium": 0.5313680000000001,
+        "calcium": 0.024999826225,
+        "iron": 1.911806,
+        "potassium": 0.18999834075,
+        "cholesterol": 5.45e-07
+      }
+    },
+    {
+      "id": "off:7891962014999",
+      "barcode": "7891962014999",
+      "name": "Biscoito água E Sal Bauducco Levíssimo Pacote 200g",
+      "brand": "BAUDUCCO",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891962014999",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 17.333333333333332,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 109.66666666666666,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 12.0,
+        "carbohydrates": 63.333333333333336,
+        "fat": 16.999999999999996,
+        "salt": 43.333333333333336,
+        "sodium": 17.333333333333332
+      }
+    },
+    {
+      "id": "off:7891098040886",
+      "barcode": "7891098040886",
+      "name": "ice tea leão sabor pêssego",
+      "brand": "leão",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891098040886",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 28.786666666666665,
+          "limitGPer100": 0.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 4.333333333333333,
+        "fat": 0.0,
+        "salt": 71.96666666666667,
+        "sodium": 28.786666666666665
+      }
+    },
+    {
+      "id": "off:7896181501572",
+      "barcode": "7896181501572",
+      "name": "Misso",
+      "brand": "Hinomoto",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896181501572",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 6.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 12.5,
+        "carbohydrates": 12.5,
+        "fat": 5.500000000000001,
+        "salt": 15.0,
+        "sodium": 6.0
+      }
+    },
+    {
+      "id": "off:7891000502204",
+      "barcode": "7891000502204",
+      "name": "grill",
+      "brand": "Maggi,Nestlé",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000502204",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 21.122,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 7.1,
+        "carbohydrates": 29.0,
+        "fat": 1.6,
+        "salt": 52.805,
+        "sodium": 21.122
+      }
+    },
+    {
+      "id": "off:7898901621249",
+      "barcode": "7898901621249",
+      "name": "canjica amarela tipo 1",
+      "brand": "Rio Imperial",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898901621249",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 16.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.4,
+        "carbohydrates": 9.0,
+        "fat": 1.1,
+        "salt": 40.0,
+        "sodium": 16.0
+      }
+    },
+    {
+      "id": "off:7898917852019",
+      "barcode": "7898917852019",
+      "name": "Croc apple",
+      "brand": "Flora Frutas Ltda",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898917852019",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 24.13,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 109.38,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.25,
+        "carbohydrates": 82.5,
+        "fat": 1.5,
+        "salt": 60.325,
+        "sodium": 24.13
+      }
+    },
+    {
+      "id": "off:7896112310020",
+      "barcode": "7896112310020",
+      "name": "Manteiga Taubaté sem sal",
+      "brand": "Comevap",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896112310020",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 16.800000000000004,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.24,
+        "carbohydrates": 1.12,
+        "fat": 84.60000000000001,
+        "salt": 42.0,
+        "sodium": 16.800000000000004
+      }
+    },
+    {
+      "id": "off:7891097101717",
+      "barcode": "7891097101717",
+      "name": "Iorgute de Morango Batavo",
+      "brand": "Batavo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891097101717",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 34.44444444444444,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "calcium_above_screening_limit",
+          "reportedGPer100": 74.44444444444444,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 129.66666666666666,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.111111111111111,
+        "carbohydrates": 16.666666666666668,
+        "fat": 2.0,
+        "salt": 86.11111111111111,
+        "sodium": 34.44444444444444,
+        "calcium": 74.44444444444444
+      }
+    },
+    {
+      "id": "off:7896292341197",
+      "barcode": "7896292341197",
+      "name": "Milho em conserva",
+      "brand": "Tradelli",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896292341197",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 296.9230769230769,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 315.6923076923077,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.923076923076923,
+        "carbohydrates": 14.615384615384615,
+        "fat": 1.2307692307692308,
+        "salt": 742.3076923076923,
+        "sodium": 296.9230769230769
+      }
+    },
+    {
+      "id": "off:7891095030262",
+      "barcode": "7891095030262",
+      "name": "Farofa de mandioca temperada",
+      "brand": "Yoki",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891095030262",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 522.8571428571429,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 613.1428571428572,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.1428571428571428,
+        "carbohydrates": 80.0,
+        "fat": 9.142857142857142,
+        "salt": 1307.142857142857,
+        "sodium": 522.8571428571429
+      }
+    },
+    {
+      "id": "off:7894904003495",
+      "barcode": "7894904003495",
+      "name": "Steak empanado de frango",
+      "brand": "Seara",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894904003495",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 645.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 682.0,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 11.0,
+        "carbohydrates": 13.0,
+        "fat": 13.0,
+        "salt": 1612.5,
+        "sodium": 645.0
+      }
+    },
+    {
+      "id": "off:7894904578207",
+      "barcode": "7894904578207",
+      "name": "Hamburger de carne de frango",
+      "brand": "Texas Burger - Seara",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894904578207",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 665.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 697.5,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 15.0,
+        "carbohydrates": 1.25,
+        "fat": 16.25,
+        "salt": 1662.5,
+        "sodium": 665.0
+      }
+    },
+    {
+      "id": "off:7891008119831",
+      "barcode": "7891008119831",
+      "name": "Talento Dark 50% Cacau Café",
+      "brand": "Garoto,Talento",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891008119831",
+      "issues": [
+        {
+          "rule": "iron_above_screening_limit",
+          "reportedGPer100": 0.13030303030303034,
+          "limitGPer100": 0.1
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 6.0606060606060606,
+        "carbohydrates": 63.63636363636363,
+        "fat": 30.303030303030305,
+        "salt": 0.11363636363636363,
+        "sodium": 0.045454545454545456,
+        "calcium": 0.030303030303030304,
+        "iron": 0.13030303030303034,
+        "potassium": 0.4242424242424243,
+        "cholesterol": 0.0
+      }
+    },
+    {
+      "id": "off:7891097000829",
+      "barcode": "7891097000829",
+      "name": "Creme de queijo tipo quark com calda de frutas vermelhas",
+      "brand": "Nuv - Batavo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891097000829",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 27.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 4.4,
+        "carbohydrates": 17.0,
+        "fat": 4.4,
+        "salt": 67.5,
+        "sodium": 27.0
+      }
+    },
+    {
+      "id": "off:7891331002824",
+      "barcode": "7891331002824",
+      "name": "Barra de banana com cobertura de chocolate",
+      "brand": "Nutry",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891331002824",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.004,
+          "saltGPer100": 87.5,
+          "expectedSaltGPer100": 0.01
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 3.5,
+        "carbohydrates": 55.0,
+        "fat": 9.5,
+        "salt": 87.5,
+        "sodium": 0.004
+      }
+    },
+    {
+      "id": "off:7898130777090",
+      "barcode": "7898130777090",
+      "name": "Polpa de maracujá",
+      "brand": "Canaã",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898130777090",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 15.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.2,
+        "carbohydrates": 23.0,
+        "fat": 0.5,
+        "salt": 37.5,
+        "sodium": 15.0
+      }
+    },
+    {
+      "id": "off:7896014403455",
+      "barcode": "7896014403455",
+      "name": "Polpa de uva",
+      "brand": "Brasfrut",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896014403455",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 8.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.6,
+        "carbohydrates": 13.0,
+        "fat": 0.2,
+        "salt": 20.0,
+        "sodium": 8.0
+      }
+    },
+    {
+      "id": "off:7898903899028",
+      "barcode": "7898903899028",
+      "name": "Cocorote",
+      "brand": "Dunas",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898903899028",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 37.5,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 123.5,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 5.749999999999999,
+        "carbohydrates": 72.5,
+        "fat": 7.75,
+        "salt": 93.75,
+        "sodium": 37.5
+      }
+    },
+    {
+      "id": "off:7894900087123",
+      "barcode": "7894900087123",
+      "name": "Alimento com soja sabor uva",
+      "brand": "ADES",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894900087123",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 10.0,
+          "limitGPer100": 0.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.6,
+        "carbohydrates": 2.85,
+        "fat": 0.0,
+        "salt": 25.0,
+        "sodium": 10.0
+      }
+    },
+    {
+      "id": "off:7891000084663",
+      "barcode": "7891000084663",
+      "name": "requeijão",
+      "brand": "Nestlé",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000084663",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.54,
+          "saltGPer100": 4.5,
+          "expectedSaltGPer100": 1.35
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 12.0,
+        "carbohydrates": 4.33333333333333,
+        "fat": 8.66666666666667,
+        "salt": 4.5,
+        "sodium": 0.54
+      }
+    },
+    {
+      "id": "off:7894900680508",
+      "barcode": "7894900680508",
+      "name": "Sprite Lemon Fresh",
+      "brand": "Sprite",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894900680508",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 14.0,
+          "limitGPer100": 0.5
+        },
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 14.0,
+          "saltGPer100": 0.0,
+          "expectedSaltGPer100": 35.0
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 0.0,
+        "fat": 0.0,
+        "salt": 0.0,
+        "sodium": 14.0
+      }
+    },
+    {
+      "id": "off:7891962051079",
+      "barcode": "7891962051079",
+      "name": "Bisc Cereale Maçã e Uva-Passa",
+      "brand": "Bauducco",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891962051079",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.20666666666666667,
+          "saltGPer100": 0.02,
+          "expectedSaltGPer100": 0.5166666666666666
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 10.0,
+        "carbohydrates": 60.0,
+        "fat": 16.0,
+        "salt": 0.02,
+        "sodium": 0.20666666666666667
+      }
+    },
+    {
+      "id": "off:7896009301049",
+      "barcode": "7896009301049",
+      "name": "Sardinhas com Óleo",
+      "brand": "COQUEIRO",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896009301049",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 413.3333333333333,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 450.404,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 22.666666666666668,
+        "carbohydrates": 1.3333333333333333,
+        "fat": 12.0,
+        "salt": 1033.3333333333333,
+        "sodium": 413.3333333333333,
+        "calcium": 1.0706666666666669,
+        "cholesterol": 0.08266666666666667
+      }
+    },
+    {
+      "id": "off:7891000256350",
+      "barcode": "7891000256350",
+      "name": "Fibermais Limão 300g",
+      "brand": "Nedtle",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000256350",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 6.8,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.9,
+        "carbohydrates": 1.3,
+        "fat": 0.0,
+        "salt": 17.0,
+        "sodium": 6.8
+      }
+    },
+    {
+      "id": "off:7897570180996",
+      "barcode": "7897570180996",
+      "name": "Natural ISO Whey - Sabor Baunilha",
+      "brand": "Nutrition'all",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7897570180996",
+      "issues": [
+        {
+          "rule": "iron_above_screening_limit",
+          "reportedGPer100": 0.15,
+          "limitGPer100": 0.1
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 86.66666666666667,
+        "carbohydrates": 7.0,
+        "fat": 0.0,
+        "salt": 0.375,
+        "sodium": 0.15,
+        "calcium": 0.39,
+        "iron": 0.15,
+        "potassium": 0.5566666666666666
+      }
+    },
+    {
+      "id": "off:7894904268573",
+      "barcode": "7894904268573",
+      "name": "Mortadela Defumada Fatiada",
+      "brand": "Pamplona",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894904268573",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 1.18,
+          "saltGPer100": 7.375,
+          "expectedSaltGPer100": 2.9499999999999997
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 13.0,
+        "carbohydrates": 5.0,
+        "fat": 22.000000000000004,
+        "salt": 7.375,
+        "sodium": 1.18
+      }
+    },
+    {
+      "id": "off:7896034610031",
+      "barcode": "7896034610031",
+      "name": "LEITE UHT DESNATADO",
+      "brand": "parmalat",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896034610031",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.065,
+          "saltGPer100": 0.325,
+          "expectedSaltGPer100": 0.1625
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 3.0,
+        "carbohydrates": 4.7,
+        "fat": 0.0,
+        "salt": 0.325,
+        "sodium": 0.065,
+        "calcium": 0.105
+      }
+    },
+    {
+      "id": "off:7894904252213",
+      "barcode": "7894904252213",
+      "name": "Levíssimo - Embutido de Lombo Cozido",
+      "brand": "Seara",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894904252213",
+      "issues": [
+        {
+          "rule": "cholesterol_above_screening_limit",
+          "reportedGPer100": 32.5,
+          "limitGPer100": 3
+        },
+        {
+          "rule": "cholesterol_exceeds_total_fat",
+          "cholesterolGPer100": 32.5,
+          "fatGPer100": 1.75
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 16.5,
+        "carbohydrates": 1.25,
+        "fat": 1.75,
+        "salt": 1.6573500000000003,
+        "sodium": 0.66294,
+        "cholesterol": 32.5
+      }
+    },
+    {
+      "id": "off:7898276600108",
+      "barcode": "7898276600108",
+      "name": "Feijão Caldo Nobre - Feijão Tradicional",
+      "brand": "Comércio de Cereais Good Ltda",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898276600108",
+      "issues": [
+        {
+          "rule": "calcium_above_screening_limit",
+          "reportedGPer100": 103.33333333333333,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "iron_above_screening_limit",
+          "reportedGPer100": 6.666666666666667,
+          "limitGPer100": 0.1
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 177.2,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 18.866666666666667,
+        "carbohydrates": 48.333333333333336,
+        "fat": 0.0,
+        "salt": 0.0,
+        "sodium": 0.0,
+        "calcium": 103.33333333333333,
+        "iron": 6.666666666666667
+      }
+    },
+    {
+      "id": "off:7896007886258",
+      "barcode": "7896007886258",
+      "name": "Missoshiru instantâneo",
+      "brand": "Sakura",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896007886258",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 6.760000000000001,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 22.999999999999996,
+        "carbohydrates": 39.0,
+        "fat": 11.000000000000002,
+        "salt": 16.9,
+        "sodium": 6.760000000000001
+      }
+    },
+    {
+      "id": "off:7891000360361",
+      "barcode": "7891000360361",
+      "name": "Iogurte Grego Morango",
+      "brand": "LEVE MAIS",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000360361",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.07666666666666667,
+          "saltGPer100": 0.5222222222222223,
+          "expectedSaltGPer100": 0.19166666666666668
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 4.777777777777778,
+        "carbohydrates": 13.333333333333334,
+        "fat": 4.444444444444445,
+        "salt": 0.5222222222222223,
+        "sodium": 0.07666666666666667,
+        "calcium": 0.142371462,
+        "iron": 2.31226e-05,
+        "potassium": 0.1898394,
+        "cholesterol": 0.01620785
+      }
+    },
+    {
+      "id": "off:7896051131038",
+      "barcode": "7896051131038",
+      "name": "Leite em pó desnatado instantâneo",
+      "brand": "Itambé",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896051131038",
+      "issues": [
+        {
+          "rule": "iron_above_screening_limit",
+          "reportedGPer100": 6.4,
+          "limitGPer100": 0.1
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 34.5,
+        "carbohydrates": 55.0,
+        "fat": 0.0,
+        "salt": 0.975,
+        "sodium": 0.39,
+        "calcium": 1.28,
+        "iron": 6.4
+      }
+    },
+    {
+      "id": "off:7896639800653",
+      "barcode": "7896639800653",
+      "name": "Brown Rice Toast",
+      "brand": "Okoshi",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896639800653",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 9.50231347,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.0,
+        "carbohydrates": 24.0,
+        "fat": 0.699999988079071,
+        "salt": 23.768267,
+        "sodium": 9.50231347,
+        "calcium": 0.04827237,
+        "iron": 0.00053978,
+        "potassium": 0.1281633,
+        "cholesterol": 0.0
+      }
+    },
+    {
+      "id": "off:7896496995219",
+      "barcode": "7896496995219",
+      "name": "Cacao Granola",
+      "brand": "mãe terra",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896496995219",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 10.5,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 12.250000000000002,
+        "carbohydrates": 57.5,
+        "fat": 14.75,
+        "salt": 26.25,
+        "sodium": 10.5,
+        "calcium": 0.0455,
+        "iron": 0.003945,
+        "potassium": 0.36175,
+        "cholesterol": 0.0
+      }
+    },
+    {
+      "id": "off:7891097103643",
+      "barcode": "7891097103643",
+      "name": "Iogurte zero",
+      "brand": "Batavo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891097103643",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.045,
+          "saltGPer100": 0.225,
+          "expectedSaltGPer100": 0.11249999999999999
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.8,
+        "carbohydrates": 4.1,
+        "fat": 0.0,
+        "salt": 0.225,
+        "sodium": 0.045,
+        "calcium": 0.106
+      }
+    },
+    {
+      "id": "off:7891048050644",
+      "barcode": "7891048050644",
+      "name": "Gelatina Dr.oetker De Limao 20g",
+      "brand": "Dr. Oetker",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891048050644",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.077,
+          "saltGPer100": 0.0375,
+          "expectedSaltGPer100": 0.1925
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.0,
+        "carbohydrates": 2.0,
+        "fat": 0.0,
+        "salt": 0.0375,
+        "sodium": 0.077
+      }
+    },
+    {
+      "id": "off:7891095154104",
+      "barcode": "7891095154104",
+      "name": "Colorífico Pó Kitano",
+      "brand": "Kitano",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891095154104",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 12.4,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 5.1,
+        "carbohydrates": 82.0,
+        "fat": 3.1,
+        "salt": 31.0,
+        "sodium": 12.4
+      }
+    },
+    {
+      "id": "off:7891143012592",
+      "barcode": "7891143012592",
+      "name": "Cream Cheese Light Polenghi Pote 150g",
+      "brand": "POLENGUINHO, Polenghi, Savencia",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891143012592",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.3333333333333333,
+          "saltGPer100": 0.0,
+          "expectedSaltGPer100": 0.8333333333333333
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 7.333333333333334,
+        "carbohydrates": 2.6666666666666665,
+        "fat": 16.999999999999996,
+        "salt": 0.0,
+        "sodium": 0.3333333333333333,
+        "calcium": 0.13452912,
+        "iron": 8.39168e-05,
+        "potassium": 0.1717672,
+        "cholesterol": 0.04
+      }
+    },
+    {
+      "id": "off:7896283006142",
+      "barcode": "7896283006142",
+      "name": "Pão de Forma Fatiado Tradicional Sem Glúten",
+      "brand": "Jasmine",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896283006142",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 404.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 464.8,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.2,
+        "carbohydrates": 54.0,
+        "fat": 4.6,
+        "salt": 1010.0,
+        "sodium": 404.0
+      }
+    },
+    {
+      "id": "off:7896066305622",
+      "barcode": "7896066305622",
+      "name": "Pão Integral Sem Casca Wickbold Pacote 450g",
+      "brand": "WICKBOLD",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896066305622",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.344,
+          "saltGPer100": 0.995,
+          "expectedSaltGPer100": 0.8599999999999999
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 10.0,
+        "carbohydrates": 44.0,
+        "fat": 2.4,
+        "salt": 0.995,
+        "sodium": 0.344
+      }
+    },
+    {
+      "id": "off:7898943163028",
+      "barcode": "7898943163028",
+      "name": "Sardina En Salsa De Tomate",
+      "brand": "ROBINSON CRUSOE",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898943163028",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.5893333333333334,
+          "saltGPer100": 0.8466666666666667,
+          "expectedSaltGPer100": 1.4733333333333334
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 18.666666666666668,
+        "carbohydrates": 1.4666666666666668,
+        "fat": 14.666666666666666,
+        "salt": 0.8466666666666667,
+        "sodium": 0.5893333333333334,
+        "calcium": 0.2786666666666667,
+        "cholesterol": 0.10666666666666667
+      }
+    },
+    {
+      "id": "off:7896030520181",
+      "barcode": "7896030520181",
+      "name": "Queijo Mussarela Reduzido em Gorduras Totais",
+      "brand": "Tirolez",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896030520181",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.45,
+          "saltGPer100": 3.75,
+          "expectedSaltGPer100": 1.125
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 28.0,
+        "carbohydrates": 1.3333333333333333,
+        "fat": 16.0,
+        "salt": 3.75,
+        "sodium": 0.45,
+        "calcium": 2.966666666666667,
+        "potassium": 0.50567,
+        "cholesterol": 0.008053333333333334
+      }
+    },
+    {
+      "id": "off:7894900025019",
+      "barcode": "7894900025019",
+      "name": "Refrigerante Café Espresso Coca Cola Lata 220ml",
+      "brand": "COCA-COLA",
+      "baseUnit": "ml",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7894900025019",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 3.28,
+          "limitGPer100": 0.5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 5.0,
+        "fat": 0.0,
+        "salt": 8.2,
+        "sodium": 3.28
+      }
+    },
+    {
+      "id": "off:7891203010506",
+      "barcode": "7891203010506",
+      "name": "Pão Sovado Panco Pacote 500g",
+      "brand": "PANCO",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891203010506",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.234,
+          "saltGPer100": 0.234,
+          "expectedSaltGPer100": 0.5850000000000001
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 10.0,
+        "carbohydrates": 60.0,
+        "fat": 3.6,
+        "salt": 0.234,
+        "sodium": 0.234
+      }
+    },
+    {
+      "id": "off:7899970402883",
+      "barcode": "7899970402883",
+      "name": "Chocolate Ao Leite Com Amendoim",
+      "brand": "Hershey's, Hersheys",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7899970402883",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 84.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 84.0,
+          "saltGPer100": 0.21,
+          "expectedSaltGPer100": 210.0
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 178.42647958823528,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 9.1,
+        "carbohydrates": 51.0,
+        "fat": 34.0,
+        "salt": 0.21,
+        "sodium": 84.0,
+        "calcium": 0.0759535294117647,
+        "iron": 0.000437823529411765,
+        "potassium": 0.250088235294118,
+        "cholesterol": 0.002
+      }
+    },
+    {
+      "id": "off:7896353302303",
+      "barcode": "7896353302303",
+      "name": "Margarina catupiry manteiga Extra com sal tablet",
+      "brand": "CATUPIRY",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896353302303",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 300.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 300.0,
+          "saltGPer100": 300.0,
+          "expectedSaltGPer100": 750.0
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 384.1504010776,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 0.0,
+        "carbohydrates": 0.0,
+        "fat": 84.0,
+        "salt": 300.0,
+        "sodium": 300.0,
+        "calcium": 0.06598783,
+        "iron": 0.0001431776,
+        "potassium": 0.08427007,
+        "cholesterol": 0.06928182
+      }
+    },
+    {
+      "id": "off:7898944830332",
+      "barcode": "7898944830332",
+      "name": "Pão De Forma Batata Doce Sem Glúten Zero Lactose Grani Amici Ancestrale Pacote 420g",
+      "brand": "GRANI AMICI",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898944830332",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 292.0,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 338.2,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.2,
+        "carbohydrates": 40.0,
+        "fat": 5.0,
+        "salt": 730.0,
+        "sodium": 292.0
+      }
+    },
+    {
+      "id": "off:7899621108874",
+      "barcode": "7899621108874",
+      "name": "Barra Proteína Best Whey Peanut Caramel",
+      "brand": "Atlética Nutrition",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7899621108874",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.22285714285714286,
+          "saltGPer100": 0.2785714285714286,
+          "expectedSaltGPer100": 0.5571428571428572
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 28.571428571428573,
+        "carbohydrates": 34.285714285714285,
+        "fat": 27.142857142857142,
+        "salt": 0.2785714285714286,
+        "sodium": 0.22285714285714286
+      }
+    },
+    {
+      "id": "off:7898215152460",
+      "barcode": "7898215152460",
+      "name": "Leite em Pó",
+      "brand": "Piracanjuba",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898215152460",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 221.42857142857142,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "mass_balance_above_100g",
+          "reportedMinimumMassG": 318.57142857142856,
+          "limitWithRoundingG": 105
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 14.285714285714286,
+        "carbohydrates": 71.42857142857143,
+        "fat": 11.428571428571429,
+        "salt": 553.5714285714286,
+        "sodium": 221.42857142857142
+      }
+    },
+    {
+      "id": "off:7891000390030",
+      "barcode": "7891000390030",
+      "name": "Achocolatado em pó Nescau",
+      "brand": "Nestlé",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000390030",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 20.4,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 3.6,
+        "carbohydrates": 12.0,
+        "fat": 0.3,
+        "salt": 51.0,
+        "sodium": 20.4
+      }
+    },
+    {
+      "id": "off:7896004008998",
+      "barcode": "7896004008998",
+      "name": "Pringles Cheddar And Bacon",
+      "brand": "Pringles",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896004008998",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.112,
+          "saltGPer100": 1.115,
+          "expectedSaltGPer100": 0.28
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 1.1,
+        "carbohydrates": 15.0,
+        "fat": 7.3,
+        "salt": 1.115,
+        "sodium": 0.112
+      }
+    },
+    {
+      "id": "off:7891167831667",
+      "barcode": "7891167831667",
+      "name": "Pate De Atum Com Azeitonas",
+      "brand": "Gomes Da Costa",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891167831667",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.59,
+          "saltGPer100": 1375.0,
+          "expectedSaltGPer100": 1.4749999999999999
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 11.000000000000002,
+        "carbohydrates": 5.0,
+        "fat": 11.000000000000002,
+        "salt": 1375.0,
+        "sodium": 0.59
+      }
+    },
+    {
+      "id": "off:7899941201804",
+      "barcode": "7899941201804",
+      "name": "100% Whey",
+      "brand": "Max Titanium",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7899941201804",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.293333333333333,
+          "saltGPer100": 1.70833333333333,
+          "expectedSaltGPer100": 0.7333333333333325
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 66.6666666666667,
+        "carbohydrates": 18.3333333333333,
+        "fat": 7.33333333333333,
+        "salt": 1.70833333333333,
+        "sodium": 0.293333333333333
+      }
+    },
+    {
+      "id": "off:7896336002527",
+      "barcode": "7896336002527",
+      "name": "Amendoin",
+      "brand": "Santa Helena",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896336002527",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.588,
+          "saltGPer100": 2.58,
+          "expectedSaltGPer100": 1.47
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 17.0,
+        "carbohydrates": 40.0,
+        "fat": 30.0,
+        "salt": 2.58,
+        "sodium": 0.588
+      }
+    },
+    {
+      "id": "off:7898270966965",
+      "barcode": "7898270966965",
+      "name": "Macarrão de arroz",
+      "brand": "Karui",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898270966965",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 5.9,
+          "limitGPer100": 5
+        },
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 5.9,
+          "saltGPer100": 0.0,
+          "expectedSaltGPer100": 14.75
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.8,
+        "carbohydrates": 30.5,
+        "fat": 0.65,
+        "salt": 0.0,
+        "sodium": 5.9
+      }
+    },
+    {
+      "id": "off:7898205925401",
+      "barcode": "7898205925401",
+      "name": "Natural Whey Maracujá",
+      "brand": "Verde Campo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898205925401",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 32.4,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 8.3,
+        "carbohydrates": 11.03896,
+        "fat": 0.0,
+        "salt": 81.0,
+        "sodium": 32.4
+      }
+    },
+    {
+      "id": "off:7898755180046",
+      "barcode": "7898755180046",
+      "name": "Bombom Crocante",
+      "brand": "Bono",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898755180046",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.26,
+          "saltGPer100": 0.325,
+          "expectedSaltGPer100": 0.65
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 35.0,
+        "carbohydrates": 30.0,
+        "fat": 14.666666666666668,
+        "salt": 0.325,
+        "sodium": 0.26
+      }
+    },
+    {
+      "id": "off:7898571520552",
+      "barcode": "7898571520552",
+      "name": "Yorgus Grego Coco",
+      "brand": "Yorgus",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898571520552",
+      "issues": [
+        {
+          "rule": "calcium_above_screening_limit",
+          "reportedGPer100": 80.0,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 9.3,
+        "carbohydrates": 10.0,
+        "fat": 3.2,
+        "salt": 0.0875,
+        "sodium": 0.035,
+        "calcium": 80.0
+      }
+    },
+    {
+      "id": "off:7898641074985",
+      "barcode": "7898641074985",
+      "name": "Dux Protein Bar",
+      "brand": "Dux",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898641074985",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.004166666666666667,
+          "saltGPer100": 0.2,
+          "expectedSaltGPer100": 0.010416666666666666
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 33.333333333333336,
+        "carbohydrates": 21.666666666666668,
+        "fat": 16.666666666666668,
+        "salt": 0.2,
+        "sodium": 0.004166666666666667,
+        "calcium": 0.36333333333333334
+      }
+    },
+    {
+      "id": "off:7896030521683",
+      "barcode": "7896030521683",
+      "name": "CREME DE RICOTA LIGHT O ORIGINAL",
+      "brand": "TIROLEZ",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896030521683",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.26999999999999996,
+          "saltGPer100": 0.9750000000000001,
+          "expectedSaltGPer100": 0.6749999999999999
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 9.0,
+        "carbohydrates": 2.6666666666666665,
+        "fat": 11.0,
+        "salt": 0.9750000000000001,
+        "sodium": 0.26999999999999996
+      }
+    },
+    {
+      "id": "off:7896412803031",
+      "barcode": "7896412803031",
+      "name": "ORQUÍDEA Farinha Panko",
+      "brand": "ORQUÍDEA",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7896412803031",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.4266666666666667,
+          "saltGPer100": 0.0,
+          "expectedSaltGPer100": 1.0666666666666667
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 11.0,
+        "carbohydrates": 73.33333333333333,
+        "fat": 3.666666666666667,
+        "salt": 0.0,
+        "sodium": 0.4266666666666667
+      }
+    },
+    {
+      "id": "off:7891097104794",
+      "barcode": "7891097104794",
+      "name": "Requeijão Light - Batavo",
+      "brand": "Batavo",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891097104794",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.54,
+          "saltGPer100": 4500.0,
+          "expectedSaltGPer100": 1.35
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 13.3333333333333,
+        "carbohydrates": 1.33333333333333,
+        "fat": 13.3333333333333,
+        "salt": 4500.0,
+        "sodium": 0.54
+      }
+    },
+    {
+      "id": "off:7898755180060",
+      "barcode": "7898755180060",
+      "name": "Cookies & Cream",
+      "brand": "BOLD",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898755180060",
+      "issues": [
+        {
+          "rule": "salt_sodium_conflict",
+          "sodiumGPer100": 0.2733333333333334,
+          "saltGPer100": 0.3625,
+          "expectedSaltGPer100": 0.6833333333333335
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 35.0,
+        "carbohydrates": 31.666666666666668,
+        "fat": 14.666666666666668,
+        "salt": 0.3625,
+        "sodium": 0.2733333333333334
+      }
+    },
+    {
+      "id": "off:7897277703047",
+      "barcode": "7897277703047",
+      "name": "Coalhada Ati latte 170g",
+      "brand": "Atilatte",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7897277703047",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 27.0588235294118,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.00000005609849,
+        "carbohydrates": 2.82352952396168,
+        "fat": 2.23529408959781,
+        "salt": 67.6470588235294,
+        "sodium": 27.0588235294118
+      }
+    },
+    {
+      "id": "off:7899686701133",
+      "barcode": "7899686701133",
+      "name": "Batata Palito Tradicional",
+      "brand": "Uni Sabor",
+      "baseUnit": "g",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7899686701133",
+      "issues": [
+        {
+          "rule": "sodium_above_screening_limit",
+          "reportedGPer100": 7.41176470588235,
+          "limitGPer100": 5
+        }
+      ],
+      "reportedGPer100": {
+        "proteins": 2.11764705882353,
+        "carbohydrates": 17.6470588235294,
+        "fat": 1.41176470588235,
+        "salt": 18.5294117647059,
+        "sodium": 7.41176470588235
+      }
+    }
+  ]
+}

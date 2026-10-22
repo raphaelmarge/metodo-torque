@@ -24,13 +24,13 @@ css = ""
 for weight in [400, 500, 600, 700, 800]:
     font = dist / f"assets/fonts/files/archivo-latin-{weight}-normal.woff2"
     css += "@font-face{font-family:Archivo;font-style:normal;font-weight:" + str(weight) + ";src:url(" + data_uri(font, "font/woff2") + ") format('woff2');font-display:swap}"
-css += "\n".join((dist / name).read_text(encoding="utf-8") for name in ["style.css", "patient.css", "follow-up.css", "meal-plan.css", "prescription-workspace.css"])
+css += "\n".join((dist / name).read_text(encoding="utf-8") for name in ["style.css", "patient.css", "follow-up.css", "meal-plan.css", "prescription-workspace.css", "food-catalog.css"])
 scripts = ["window.TORQUE_NUTRI_DEMO_ROLE='patient';"]
 for name in ["vendor/receitas-db.js", "vendor/composicao-corporal.js", "vendor/nutricao-core.js",
-             "vendor/medalhas-core.js", "vendor/identidade-marca.js", "vendor/alimentos-db.js"]:
+             "vendor/medalhas-core.js", "vendor/identidade-marca.js", "vendor/alimentos-db.js", "food-catalog-data.js"]:
     scripts.append((dist / name).read_text(encoding="utf-8"))
 modules = []
-for name in ["care-progress.js", "journal-model.js", "food-journal.js", "recipe-composition.js", "plan-recipes.js",
+for name in ["food-measures.js", "food-catalog.js", "care-progress.js", "journal-model.js", "food-journal.js", "recipe-composition.js", "plan-recipes.js",
              "skinfolds.js", "assessment.js", "vendor/medalha-visual.js", "shopping.js", "shopping-planner.js", "day-summary.js", "prescription.js", "plan-changes.js", "patient-experience.js",
              "notifications.js", "schedule.js", "finance.js", "follow-up.js", "reminders.js", "reminder-settings.js", "settings.js",
              "consultation.js", "platform.js", "app.js"]:

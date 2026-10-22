@@ -6,12 +6,69 @@
     function txt(v, max) { return String(v == null ? '' : v).trim().slice(0, max); }
     function numero(v) { if (v == null || typeof v === 'boolean' || !String(v).trim()) return null; var n = Number(String(v).trim().replace(',', '.')); return Number.isFinite(n) && n >= 0 ? n : null; }
     function lista(v) { return Array.isArray(v) ? v : []; }
+    // Optional measured-food snapshot; this stays inside the offline factory.
+    // The same validation is exercised against food-measures.js by its tests.
+    function normalizaMedida(raw) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.v !== 1 || ['g','ml'].indexOf(raw.baseUnit) < 0 || !raw.nutrients || typeof raw.nutrients !== 'object' || Array.isArray(raw.nutrients) || !Array.isArray(raw.measures) || raw.measures.length > 21) return null;
+      function num(v) {
+        if (v == null || typeof v === 'boolean' || (typeof v !== 'number' && typeof v !== 'string') || (typeof v === 'string' && !/^\s*\d+(?:[.,]\d+)?\s*$/.test(v))) return null;
+        var n=Number(String(v).trim().replace(',','.'));return Number.isFinite(n)&&n>=0?n:null;
+      }
+      var base=num(raw.baseAmount);
+      if (base===null || base<=0 || base>100000) return null;
+      var keys=['k','pt','cb','g','fb','sugars','saturated','sodiumMg','calciumMg','ironMg','potassiumMg','cholesterolMg','magnesiumMg','phosphorusMg','zincMg','vitaminCMg'],values={},invalid=false;
+      keys.forEach(function(key,index){
+        if(index>3&&!Object.prototype.hasOwnProperty.call(raw.nutrients,key))return;
+        var value=raw.nutrients[key],n=value==null||value===''?null:num(value);
+        if((value!=null&&value!==''&&n===null)||(n!==null&&n>100000))invalid=true;
+        values[key]=n;
+      });
+      if(invalid)return null;
+      var measures=[{id:raw.baseUnit,label:raw.baseUnit==='g'?'Grama (g)':'Mililitro (ml)',amount:1,unit:raw.baseUnit,source:'Unidade da base nutricional'}],ids=[raw.baseUnit];
+      raw.measures.forEach(function(measure){
+        if(!measure||typeof measure!=='object'){invalid=true;return;}
+        var id=txt(measure.id,100),label=txt(measure.label,100),amount=num(measure.amount);
+        if(!id||!label||amount===null||amount<=0||amount>100000||measure.unit!==raw.baseUnit){invalid=true;return;}
+        if(id===raw.baseUnit&&amount===1)return;
+        if(ids.indexOf(id)>=0){invalid=true;return;}
+        ids.push(id);measures.push({id:id,label:label,amount:amount,unit:raw.baseUnit,source:txt(measure.source,400)});
+      });
+      if(invalid||measures.length>21||ids.indexOf(txt(raw.selectedMeasureId,100))<0)return null;
+      var out={v:1,catalogId:txt(raw.catalogId,250),baseAmount:base,baseUnit:raw.baseUnit,nutrients:values,measures:measures,selectedMeasureId:txt(raw.selectedMeasureId,100)};
+      ['source','sourceUrl','brand','barcode','retrievedAt','sourceUpdatedAt'].forEach(function(key){if(raw[key]!=null)out[key]=txt(raw[key],key==='sourceUrl'?2000:400);});
+      return out;
+    }
+    function alimentoMedido(it) {
+      var measurement=normalizaMedida(it.measurement);if(!measurement)return null;
+      var selected=measurement.measures.filter(function(m){return m.id===measurement.selectedMeasureId;})[0],out={measurement:measurement};
+      Object.keys(measurement.nutrients).forEach(function(key){var value=measurement.nutrients[key];out[key]=value===null?null:value*(selected.amount/measurement.baseAmount);});
+      if(Object.keys(measurement.nutrients).some(function(key){return out[key]!==null&&(!Number.isFinite(out[key])||out[key]>100000);}))return null;
+      out.porcao=selected.id===selected.unit&&selected.amount===1?'1 '+selected.unit:(/^1\s/.test(selected.label)?selected.label:'1 '+selected.label)+' ('+String(Number(selected.amount.toPrecision(12))).replace('.',',')+' '+selected.unit+')';
+      out.baseGramas=measurement.baseUnit==='g'?selected.amount:null;
+      if(measurement.source)out.fonte=measurement.source;
+      return out;
+    }
     function normalizaItem(it, semAlternativas) {
       if (!it || typeof it !== 'object') return null;
+      if (Object.prototype.hasOwnProperty.call(it,'measurement')) {
+        if(Object.prototype.hasOwnProperty.call(it,'recipeComposition'))return null;
+        var measured=alimentoMedido(it);if(!measured)return null;
+        it=Object.assign({},it,measured);
+      }
       var qtd = numero(it.qtd), nome = txt(it.nome, 200), k = numero(it.k), pt = numero(it.pt), cb = numero(it.cb), g = numero(it.g);
       if (!nome || qtd === null || qtd <= 0 || qtd > 1000 || k === null || pt === null || cb === null || g === null) return null;
       if ([k, pt, cb, g].some(function (v) { return v > 100000; })) return null;
+      var extraNutrients={},invalidExtra=false;
+      ['fb','sugars','saturated','sodiumMg','calciumMg','ironMg','potassiumMg','cholesterolMg','magnesiumMg','phosphorusMg','zincMg','vitaminCMg'].forEach(function(key){
+        if(!Object.prototype.hasOwnProperty.call(it,key))return;
+        var value=it[key],n=numero(value);
+        if(value!=null&&value!==''&&(n===null||n>100000||(typeof value!=='number'&&typeof value!=='string')))invalidExtra=true;
+        extraNutrients[key]=n;
+      });
+      if(invalidExtra)return null;
       var out = { id: txt(it.id, 100), alimId: txt(it.alimId, 250), nome: nome, porcao: txt(it.porcao, 100), qtd: qtd, k: k, pt: pt, cb: cb, g: g };
+      Object.keys(extraNutrients).forEach(function(key){out[key]=extraNutrients[key];});
+      if(it.measurement){out.measurement=it.measurement;Object.keys(it.measurement.nutrients).forEach(function(key){out[key]=it[key];});}
       var peso = numero(it.baseGramas);
       if (peso !== null && peso > 0 && peso <= 100000) out.baseGramas = peso;
       ['fonte','preparo','receitaId','categoria'].forEach(function (key) { if (it[key] != null) out[key] = txt(it[key], key === 'fonte' ? 400 : 120); });

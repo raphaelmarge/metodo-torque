@@ -21,7 +21,9 @@ const appPath = appCandidates.find(candidate => fs.existsSync(candidate) && fs.s
 assert(appPath, 'Application source not found in the configured static directory, dist/, or app.js beside checks/.');
 const original = fs.readFileSync(appPath, 'utf8');
 const source = original
-  .replace(/^import \{portionLabel\} from '\.\/shopping\.js';\r?\n/, '')
+  .replace(/^import \{nutritionCatalog,foodBrowserMarkup,bindFoodBrowser,foodPortionModal,measuredFoodControls\} from '\.\/food-catalog\.js';\r?\n/m, '')
+  .replace(/^import \{changeFoodMeasure,updateFoodQuantity,formatFoodQuantity,parseFoodQuantity\} from '\.\/food-measures\.js';\r?\n/m, '')
+  .replace(/^import \{portionLabel\} from '\.\/shopping\.js';\r?\n/m, '')
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/m, '')
   .replace(/^import \{planDaySummary,planDayControls,planDayNotice,planWeekTable,prescribedTotals,nutrientLabel,nutrientNumber,validPlanDate\} from '\.\/day-summary\.js';\r?\n/m, '')
   .replace(/^import \{comparePlans,renderPlanChanges\} from '\.\/plan-changes\.js';\r?\n/m, '')
@@ -191,6 +193,8 @@ function harness(options = {}) {
       .replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://unit.test/nutri/').href));
     vm.runInContext('(()=>{'+code+'\nObject.assign(globalThis,{'+names.join(',')+'});})()',context,{filename:'auth-'+name});
   }
+  loadModule('food-measures.js',['FOOD_NUTRIENT_KEYS','parseFoodQuantity','normalizeFoodMeasurementSnapshot','foodMeasures','makeFoodItem','updateFoodQuantity','changeFoodMeasure','measuredItemNutrition','formatFoodQuantity']);
+  loadModule('food-catalog.js',['nutritionCatalog','foodBrowserMarkup','bindFoodBrowser','foodPortionModal','measuredFoodControls']);
   loadModule('recipe-composition.js',['expandRecipeItem']);
   loadModule('shopping.js',['portionLabel','shoppingDates']);
   const prescriptionSource=fs.readFileSync(path.join(path.dirname(appPath),'prescription.js'),'utf8').replace(/\bexport (?=(?:async function|function|const) )/g,'');

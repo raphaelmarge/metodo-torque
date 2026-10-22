@@ -10,7 +10,7 @@ class TestDate extends Date {constructor(...args){super(...(args.length?args:[fi
 const root=fs.existsSync(path.resolve(__dirname,'../dist/app.js'))?path.resolve(__dirname,'../dist'):path.resolve(__dirname,'..');
 const memory=()=>{const values=new Map();return {getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k),key:i=>[...values.keys()][i],get length(){return values.size;}};};
 const nodes=new Map(),bodyButtons=[{dataset:{bodyTab:"body"}}];
-const element=id=>({id,html:'',value:'',style:{},dataset:{},files:[],disabled:false,isConnected:true,open:false,addEventListener(){},querySelectorAll(){return[];},showModal(){this.open=true;},close(){this.open=false;},
+const element=id=>({id,html:'',value:'',style:{},dataset:{},files:[],disabled:false,isConnected:true,open:false,addEventListener(){},querySelector(selector){if(selector.startsWith('#'))return nodes.get(selector.slice(1))||null;if(/^\[data-catalog-[a-z-]+\]$/.test(selector)){const key=id+':'+selector;if(!nodes.has(key))nodes.set(key,element(key));return nodes.get(key);}return null;},querySelectorAll(){return[];},showModal(){this.open=true;},close(){this.open=false;},
  set innerHTML(html){this.html=String(html);if(id==='app')for(const key of [...nodes.keys()])if(!['app','modal','modal-body','toast'].includes(key))nodes.delete(key);for(const m of this.html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)){if(!nodes.has(m[1]))nodes.set(m[1],element(m[1]));nodes.get(m[1]).value=m[0].match(/\bvalue="([^"]*)"/)?.[1]||'';}},
  get innerHTML(){return this.html;}});
 for(const id of ['app','modal','modal-body','toast'])nodes.set(id,element(id));
@@ -29,6 +29,11 @@ function loadModule(name,exports){
   const source=fs.readFileSync(path.join(root,name),'utf8').replace(/^import .+?;\s*$/mg,'').replace(/\bexport (?=(?:async function|function|const) )/g,'').replace(/import\.meta\.url/g,JSON.stringify(new URL(name,'https://test.invalid/nutri/').href));
   assert(!/^import |^export /m.test(source),'Unhandled module syntax in '+name);
   vm.runInContext('(()=>{'+source+'\nObject.assign(globalThis,{'+exports.join(',')+'});})()',context,{filename:name});
+}
+vm.runInContext(fs.readFileSync(path.join(root,'food-catalog-data.js'),'utf8'),context);
+for(const name of ['food-measures.js','food-catalog.js']) {
+ const source=fs.readFileSync(path.join(root,name),'utf8');
+ loadModule(name,[...source.matchAll(/\bexport (?:async )?(?:function|const) (\w+)/g)].map(m=>m[1]));
 }
 // Preserve module-local helpers: care/journal/assessment intentionally reuse
 // private names such as text, timestamp and validDay.

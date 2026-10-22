@@ -1,0 +1,49 @@
+{
+  "version": "2026-10-22",
+  "records": 7201,
+  "sources": [
+    {
+      "file": "taco.json",
+      "records": 544,
+      "sha256": "d5be419ead153c4873c3912ec44968728eae2c4e531ab83aa5671569ea52dc4b"
+    },
+    {
+      "file": "openfoodfacts.json",
+      "records": 6657,
+      "sha256": "7a09933442c65cc12d62f7b9419c89a336609608410f734dabb3b72d46a5f380"
+    }
+  ],
+  "referenceUnits": {
+    "g": 7009,
+    "ml": 192
+  },
+  "withHouseholdOrLabelMeasures": 5017,
+  "categories": [
+    "Alimentos industrializados",
+    "Alimentos preparados",
+    "Bebidas",
+    "Bebidas (alcoólicas e não alcoólicas)",
+    "Carnes e derivados",
+    "Carnes, pescados e ovos",
+    "Cereais e derivados",
+    "Cereais, pães e massas",
+    "Doces e snacks",
+    "Frutas e derivados",
+    "Frutas e vegetais",
+    "Gorduras e óleos",
+    "Laticínios e alternativas",
+    "Leguminosas e derivados",
+    "Leite e derivados",
+    "Miscelâneas",
+    "Nozes e sementes",
+    "Oleaginosas e sementes",
+    "Outros alimentos industrializados",
+    "Ovos e derivados",
+    "Pescados e frutos do mar",
+    "Produtos açucarados",
+    "Suplementos",
+    "Verduras, hortaliças e derivados",
+    "Óleos, molhos e condimentos"
+  ],
+  "policy": "Catalog facts are snapshotted at prescription; legacy and private clinic data are not rewritten."
+}

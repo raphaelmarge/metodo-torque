@@ -6,6 +6,22 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v869 — Catálogo pesquisado e prescrição por medidas no Nutri
+
+- `/nutri/` usa catálogo público separado em `food-catalog-data.js`, gerado de
+  TACO e Open Food Facts com fontes e licenças em `nutri/data/README.md`.
+  Não substituir `MT_ALIMENTOS` legado nem alimentos particulares da clínica.
+- `food-measures.js` converte somente equivalências explícitas do alimento,
+  preserva a quantidade física ao trocar medida e copia a base para o plano.
+  Nunca assumir 1 ml = 1 g ou usar a mesma colher para todos os alimentos.
+- Prescrição, alternativas e composição de receitas usam o mesmo cálculo.
+  Marca, fonte e medidas acompanham o snapshot; atualizar catálogo não altera
+  planos publicados. Ausência de nutriente não equivale a zero.
+- Catálogo global permanece estático/offline; nenhuma migration de catálogo.
+  Cache Nutri v18 e global mt-v869. Escopo, contagens, filtros e validações:
+  `docs/releases/mt-v869-catalogo-nutri.md`. Conferir CI/Pages antes de declarar
+  implantação, e nunca contar embalagens repetidas como alimentos novos.
+
 ## v868 — Experiência aprovada: acesso, rotina e evolução
 
 - `entrar.html` orienta aluno/profissional aos acessos já existentes. Convites,

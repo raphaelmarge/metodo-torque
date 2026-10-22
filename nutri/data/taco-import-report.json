@@ -1,0 +1,929 @@
+{
+  "source": "TACO · NEPA/Unicamp · 4ª edição (2011)",
+  "sourceUrl": "https://nepa.unicamp.br/publicacoes/tabela-taco-excel/",
+  "measuresSourceUrl": "https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2008_2009/Tabela_de_Medidas_Referidas_para_os_Alimentos_Consumidos_no_Brasil/tabelamedidas_bd.zip",
+  "retrievedAt": "2026-10-22",
+  "accepted": 544,
+  "rejected": [
+    {
+      "id": 42,
+      "name": "Milho, amido, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 361.36682387826096,
+        "pt": 0.5978260869565217,
+        "cb": 87.14884391304349,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 66,
+      "name": "Abóbora, menina brasileira, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 13.605673913043486,
+        "pt": 0.6086956521739131,
+        "cb": 3.3013043478260893,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 91,
+      "name": "Batata, inglesa, cozida",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 51.588476636270656,
+        "pt": 1.1645833333333333,
+        "cb": 11.94375,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 92,
+      "name": "Batata, inglesa, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 64.3702260869565,
+        "pt": 1.7717391304347823,
+        "cb": 14.688260869565212,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 112,
+      "name": "Chuchu, cozido",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 18.53979053137702,
+        "pt": 0.41458333333333336,
+        "cb": 4.7934166666666655,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 142,
+      "name": "Pepino, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 9.533691304347819,
+        "pt": 0.8695652173913043,
+        "cb": 2.037101449275353,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 146,
+      "name": "Polvilho, doce",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 351.2267333333333,
+        "pt": 0.43,
+        "cb": 86.77333333333333,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 160,
+      "name": "Tomate, purê",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 27.93687971014494,
+        "pt": 1.36231884057971,
+        "cb": 6.894347826086953,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 161,
+      "name": "Tomate, salada",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 20.546909166666637,
+        "pt": 0.8104166666666668,
+        "cb": 5.117916666666662,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 170,
+      "name": "Acerola, polpa, congelada",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 21.936799999999977,
+        "pt": 0.5916666666666668,
+        "cb": 5.541333333333331,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 171,
+      "name": "Ameixa, calda, enlatada",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 182.84662000000003,
+        "pt": 0.4083333333333334,
+        "cb": 46.89266666666667,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 172,
+      "name": "Ameixa, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 52.54248260869565,
+        "pt": 0.7717391304347826,
+        "cb": 13.851594202898553,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 184,
+      "name": "Cajá-Manga, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 45.58096877372266,
+        "pt": 1.2791666666666666,
+        "cb": 11.434166666666664,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 209,
+      "name": "Laranja, baía, suco",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 36.64948260869561,
+        "pt": 0.6521739130434783,
+        "cb": 8.69782608695652,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 218,
+      "name": "Limão, cravo, suco",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 14.103733399311682,
+        "pt": 0.325,
+        "cb": 5.246666666666659,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 222,
+      "name": "Maçã, Fuji, com casca, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 55.51520000000005,
+        "pt": 0.2866666666666667,
+        "cb": 15.153333333333341,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 235,
+      "name": "Melancia, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 32.60662608695646,
+        "pt": 0.8840579710144928,
+        "cb": 8.139275362318838,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 236,
+      "name": "Melão, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 29.369391304347808,
+        "pt": 0.6775362318840581,
+        "cb": 7.525797101449274,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 240,
+      "name": "Nêspera, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 42.539198868195214,
+        "pt": 0.30833333333333335,
+        "cb": 11.528666666666659,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 244,
+      "name": "Pêssego, Aurora, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 36.327599024534216,
+        "pt": 0.825,
+        "cb": 9.321000000000005,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 245,
+      "name": "Pêssego, enlatado, em calda",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 63.142434782608696,
+        "pt": 0.7065217391304348,
+        "cb": 16.880144927536232,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 249,
+      "name": "Romã, crua",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 55.73900000000001,
+        "pt": 0.4041666666666667,
+        "cb": 15.105833333333335,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 252,
+      "name": "Tangerina, Poncã, suco",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 36.10879999999999,
+        "pt": 0.5217391304347826,
+        "cb": 8.8,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 254,
+      "name": "Umbu, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 37.016689999999976,
+        "pt": 0.8416666666666668,
+        "cb": 9.395333333333333,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 258,
+      "name": "Uva, suco concentrado, envasado",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 57.655359999999995,
+        "pt": "Tr",
+        "cb": 14.708000000000002,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 259,
+      "name": "Azeite, de dendê",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 260,
+      "name": "Azeite, de oliva, extra virgem",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 263,
+      "name": "Margarina, com óleo hidrogenado, com sal (65% de lipídeos)",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 596.1195169563294,
+        "pt": "Tr",
+        "cb": 0,
+        "g": 67.43433333333334
+      }
+    },
+    {
+      "id": 264,
+      "name": "Margarina, com óleo hidrogenado, sem sal (80% de lipídeos)",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 722.525625804901,
+        "pt": "Tr",
+        "cb": 0,
+        "g": 81.73366666666665
+      }
+    },
+    {
+      "id": 265,
+      "name": "Margarina, com óleo interesterificado, com sal (65%de lipídeos)",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 594.4516933333332,
+        "pt": "Tr",
+        "cb": 0,
+        "g": 67.24566666666665
+      }
+    },
+    {
+      "id": 266,
+      "name": "Margarina, com óleo interesterificado, sem sal (65% de lipídeos)",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 593.1374902381897,
+        "pt": "Tr",
+        "cb": 0,
+        "g": 67.097
+      }
+    },
+    {
+      "id": 267,
+      "name": "Óleo, de babaçu",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 268,
+      "name": "Óleo, de canola",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 269,
+      "name": "Óleo, de girassol",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 270,
+      "name": "Óleo, de milho",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 271,
+      "name": "Óleo, de pequi",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 272,
+      "name": "Óleo, de soja",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 884,
+        "pt": "NA",
+        "cb": "NA",
+        "g": 100
+      }
+    },
+    {
+      "id": 288,
+      "name": "Corimba, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 128.1554,
+        "pt": 17.366666666666667,
+        "cb": -0.026666666666666172,
+        "g": 5.986666666666667
+      }
+    },
+    {
+      "id": 322,
+      "name": "Tucunaré, filé, congelado, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 87.686483549277,
+        "pt": 17.958333333333336,
+        "cb": -0.04500000000000792,
+        "g": 1.22
+      }
+    },
+    {
+      "id": 337,
+      "name": "Carne, bovina, capa de contra-filé, sem gordura, grelhada",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 239.44363333333328,
+        "pt": 35.06333333333333,
+        "cb": -0.006666666666674814,
+        "g": 9.95
+      }
+    },
+    {
+      "id": 400,
+      "name": "Frango, fígado, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 106.48456666666667,
+        "pt": 17.58666666666667,
+        "cb": -0.02333333333333809,
+        "g": 3.49
+      }
+    },
+    {
+      "id": 450,
+      "name": "Iogurte, sabor abacaxi",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "*",
+        "pt": "*",
+        "cb": "*",
+        "g": "*"
+      }
+    },
+    {
+      "id": 457,
+      "name": "Leite, de vaca, desnatado, UHT",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "*",
+        "pt": "*",
+        "cb": "*",
+        "g": "*"
+      }
+    },
+    {
+      "id": 458,
+      "name": "Leite, de vaca, integral",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "*",
+        "pt": "*",
+        "cb": "*",
+        "g": "*"
+      }
+    },
+    {
+      "id": 472,
+      "name": "Cana, aguardente 1",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 215.6616,
+        "pt": null,
+        "cb": null,
+        "g": null
+      }
+    },
+    {
+      "id": 473,
+      "name": "Cana, caldo de",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 65.34359826898573,
+        "pt": "Tr",
+        "cb": 18.151000000000003,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 474,
+      "name": "Cerveja, pilsen 2",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 40.72018855062866,
+        "pt": 0.5625,
+        "cb": 3.3175,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 492,
+      "name": "Açúcar, cristal",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 386.84572399999996,
+        "pt": 0.32,
+        "cb": 99.61,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 494,
+      "name": "Açúcar, refinado",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 386.5748239999999,
+        "pt": 0.32,
+        "cb": 99.54,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 515,
+      "name": "Gelatina, sabores variados, pó",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": 380.22290000000004,
+        "pt": 8.886666666666667,
+        "cb": 89.22333333333333,
+        "g": "Tr"
+      }
+    },
+    {
+      "id": 516,
+      "name": "Sal, dietético",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "NA",
+        "pt": "NA",
+        "cb": "NA",
+        "g": "NA"
+      }
+    },
+    {
+      "id": 517,
+      "name": "Sal, grosso",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "NA",
+        "pt": "NA",
+        "cb": "NA",
+        "g": "NA"
+      }
+    },
+    {
+      "id": 591,
+      "name": "Coco,  verde, cru",
+      "reason": "macro_not_numeric",
+      "original": {
+        "k": "*",
+        "pt": "*",
+        "cb": "*",
+        "g": "*"
+      }
+    }
+  ],
+  "measures": [
+    {
+      "tacoId": 1,
+      "ibgeFoodId": 6300201,
+      "preparationCode": 99,
+      "measureCode": 12,
+      "grams": 63.0,
+      "reference": "Arroz integral cozido - colher de arroz cheia",
+      "sourceRow": 30,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 1,
+      "ibgeFoodId": 6300201,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 20.0,
+      "reference": "Arroz integral cozido - colher de sopa cheia",
+      "sourceRow": 33,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 1,
+      "ibgeFoodId": 6300201,
+      "preparationCode": 99,
+      "measureCode": 17,
+      "grams": 117.0,
+      "reference": "Arroz integral cozido - concha média cheia",
+      "sourceRow": 34,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 3,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 12,
+      "grams": 45.0,
+      "reference": "Arroz cozido - colher de arroz cheia",
+      "sourceRow": 8,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 3,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 25.0,
+      "reference": "Arroz cozido - colher de sopa cheia",
+      "sourceRow": 12,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 3,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 17,
+      "grams": 100.0,
+      "reference": "Arroz cozido - concha média cheia",
+      "sourceRow": 13,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 5,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 12,
+      "grams": 45.0,
+      "reference": "Arroz cozido - colher de arroz cheia",
+      "sourceRow": 8,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 5,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 25.0,
+      "reference": "Arroz cozido - colher de sopa cheia",
+      "sourceRow": 12,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 5,
+      "ibgeFoodId": 6300101,
+      "preparationCode": 99,
+      "measureCode": 17,
+      "grams": 100.0,
+      "reference": "Arroz cozido - concha média cheia",
+      "sourceRow": 13,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 7,
+      "ibgeFoodId": 6500401,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 15.0,
+      "reference": "Aveia flocos - colher de sopa cheia",
+      "sourceRow": 956,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 97,
+      "ibgeFoodId": 6401101,
+      "preparationCode": 2,
+      "measureCode": 12,
+      "grams": 38.0,
+      "reference": "Beterraba cozida - colher de arroz cheia",
+      "sourceRow": 770,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 97,
+      "ibgeFoodId": 6401101,
+      "preparationCode": 2,
+      "measureCode": 16,
+      "grams": 20.0,
+      "reference": "Beterraba cozida - colher de sopa cheia",
+      "sourceRow": 772,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 97,
+      "ibgeFoodId": 6401101,
+      "preparationCode": 2,
+      "measureCode": 103,
+      "grams": 125.0,
+      "reference": "Beterraba cozida - unidade média",
+      "sourceRow": 787,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 98,
+      "ibgeFoodId": 6401101,
+      "preparationCode": 1,
+      "measureCode": 16,
+      "grams": 16.0,
+      "reference": "Beterraba crua - colher de sopa cheia ralada",
+      "sourceRow": 759,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 98,
+      "ibgeFoodId": 6401101,
+      "preparationCode": 1,
+      "measureCode": 103,
+      "grams": 140.0,
+      "reference": "Beterraba crua - unidade média",
+      "sourceRow": 769,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 109,
+      "ibgeFoodId": 6401201,
+      "preparationCode": 2,
+      "measureCode": 12,
+      "grams": 40.0,
+      "reference": "Cenoura cozida - colher arroz cheia picado",
+      "sourceRow": 826,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 109,
+      "ibgeFoodId": 6401201,
+      "preparationCode": 2,
+      "measureCode": 16,
+      "grams": 25.0,
+      "reference": "Cenoura cozida - colher sopa cheia picado",
+      "sourceRow": 827,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 109,
+      "ibgeFoodId": 6401201,
+      "preparationCode": 2,
+      "measureCode": 103,
+      "grams": 100.0,
+      "reference": "Cenoura cozida - unidade média",
+      "sourceRow": 840,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 110,
+      "ibgeFoodId": 6401201,
+      "preparationCode": 1,
+      "measureCode": 16,
+      "grams": 12.0,
+      "reference": "Cenoura crua - colher de sopa cheia ralada",
+      "sourceRow": 810,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 110,
+      "ibgeFoodId": 6401201,
+      "preparationCode": 1,
+      "measureCode": 103,
+      "grams": 120.0,
+      "reference": "Cenoura crua - unidade média",
+      "sourceRow": 824,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 121,
+      "ibgeFoodId": 6501401,
+      "preparationCode": 99,
+      "measureCode": 12,
+      "grams": 33.0,
+      "reference": "Farinha de mandioca - colher de arroz",
+      "sourceRow": 1094,
+      "sourceReferenceCode": 14.0
+    },
+    {
+      "tacoId": 121,
+      "ibgeFoodId": 6501401,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 16.0,
+      "reference": "Farinha de mandioca - colher de sopa cheia",
+      "sourceRow": 1098,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 121,
+      "ibgeFoodId": 6501401,
+      "preparationCode": 99,
+      "measureCode": 17,
+      "grams": 110.0,
+      "reference": "Farinha de mandioca - concha",
+      "sourceRow": 1099,
+      "sourceReferenceCode": 14.0
+    },
+    {
+      "tacoId": 163,
+      "ibgeFoodId": 6802701,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 45.0,
+      "reference": "Abacate - colher de sopa cheio picado",
+      "sourceRow": 2985,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 163,
+      "ibgeFoodId": 6802701,
+      "preparationCode": 99,
+      "measureCode": 103,
+      "grams": 430.0,
+      "reference": "Abacate - unidade média",
+      "sourceRow": 2997,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 182,
+      "ibgeFoodId": 6801101,
+      "preparationCode": 1,
+      "measureCode": 103,
+      "grams": 75.0,
+      "reference": "Banana prata - unidade",
+      "sourceRow": 2837,
+      "sourceReferenceCode": 3.0
+    },
+    {
+      "tacoId": 226,
+      "ibgeFoodId": 6803101,
+      "preparationCode": 99,
+      "measureCode": 12,
+      "grams": 70.0,
+      "reference": "Mamão papaya - colher de arroz cheia",
+      "sourceRow": 3020,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 226,
+      "ibgeFoodId": 6803101,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 40.0,
+      "reference": "Mamão papaya - colher de sopa cheia",
+      "sourceRow": 3021,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 226,
+      "ibgeFoodId": 6803101,
+      "preparationCode": 99,
+      "measureCode": 103,
+      "grams": 310.0,
+      "reference": "Mamão papaya - unidade média",
+      "sourceRow": 3032,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 261,
+      "ibgeFoodId": 7901501,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 32.0,
+      "reference": "Manteiga - colher de sopa cheia",
+      "sourceRow": 8174,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 262,
+      "ibgeFoodId": 7901501,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 32.0,
+      "reference": "Manteiga - colher de sopa cheia",
+      "sourceRow": 8174,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 488,
+      "ibgeFoodId": 7803301,
+      "preparationCode": 2,
+      "measureCode": 103,
+      "grams": 45.0,
+      "reference": "Ovo de galinha cozido - unidade média",
+      "sourceRow": 7846,
+      "sourceReferenceCode": 1.0
+    },
+    {
+      "tacoId": 493,
+      "ibgeFoodId": 6900304,
+      "preparationCode": 99,
+      "measureCode": 16,
+      "grams": 19.0,
+      "reference": "Açúcar mascavo - colher de sopa cheia",
+      "sourceRow": 3389,
+      "sourceReferenceCode": 1.0
+    }
+  ],
+  "inputSha256": {
+    "taco-official.xlsx": "a66b8ec528daeabc63bc2b015fc9bd8c6d76b941c2fc0ed93a4311d449302d14",
+    "tabelamedidas_bd.xls": "e01bdc0c2945bbe701a59176a2ac0e3278d52ca2b12da52545d16c6fe990eefc"
+  },
+  "policy": "Tr/NA/*/blank are not zero. Missing numeric macros exclude food; missing optional nutrients stay null. No raw/cooked or g/ml conversions."
+}

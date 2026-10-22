@@ -47,6 +47,7 @@ jobs:
         with:
           node-version: 22
       - name: Preparar dependências dos testes
+        timeout-minutes: 10
         run: bash .github/scripts/setup-tests.sh
       - name: Registrar dependências antes da suíte demorada
         shell: bash
