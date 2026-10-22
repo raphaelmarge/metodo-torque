@@ -6326,8 +6326,8 @@ async function contextoAppAluno(browser, html, options = {}) {
     await ctxCapa.close();
     ok(hero.claro && hero.foto === "block" && hero.comfoto,
       "o card do dia com foto se marca como 'comfoto' pro tema não mandar no texto");
-    ok(hero.tit === "rgb(255, 255, 255)" && hero.sub === "rgb(214, 210, 223)",
-      "com foto, o nome do treino fica branco também no modo claro (era escuro sobre o véu escuro)");
+    ok(hero.tit === "rgb(243, 243, 246)" && hero.sub === "rgb(198, 199, 206)",
+      "com foto, título e apoio preservam as cores claras aprovadas também no tema claro");
   }
   /* Quem vence quando o aparelho e a nuvem discordam.
    *

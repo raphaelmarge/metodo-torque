@@ -163,17 +163,27 @@
     var root = $('ptFlowReviews'); if (!root) return;
     var opened = qa('details[open]', root).map(function (d) { return d.dataset.review; });
     var acts = active(st), videos = acts.filter(function (a) { return !!a.appTokenP; });
-    var inactive = acts.map(function (a) { var last = lastDone(st, a.id); return { a:a, days:last ? daysBetween(last.data) : null }; })
+    var lastDates = Object.create(null);
+    (st.sessoes || []).forEach(function (s) { if (s.feita && s.data && (!lastDates[s.alunoId] || String(s.data) > lastDates[s.alunoId])) lastDates[s.alunoId] = String(s.data); });
+    var inactive = acts.map(function (a) { return { a:a, days:daysBetween(lastDates[a.id]) }; })
       .filter(function (x) { return x.days != null && x.days >= 10; }).sort(function (a,b) { return b.days-a.days; });
     var stale = acts.map(function (a) { var t = st.treinosV2[a.id] || {}; return { a:a, days:(t.fichas || []).length ? daysBetween(trainingStamp(t,a)) : null }; })
       .filter(function (x) { return x.days != null && x.days >= 56; }).sort(function (a,b) { return b.days-a.days; });
-    function card(key, icon, title, note, rows, empty) {
-      return '<details class="ptf-review" data-review="' + key + '"' + (opened.indexOf(key)>=0 ? ' open' : '') + '><summary><span class="ptf-review-icon" aria-hidden="true">' + icon + '</span><span><b>' + title + '</b><small>' + note + '</small></span><span class="ptf-review-arrow" aria-hidden="true">›</span></summary><div class="ptf-review-list">' + (rows || '<p>' + empty + '</p>') + '</div></details>';
+    function card(g) {
+      return '<details class="ptf-review" data-review="' + g.key + '"' + (opened.indexOf(g.key)>=0 ? ' open' : '') + '><summary><span class="ptf-review-icon" aria-hidden="true">' + g.icon + '</span><span><b>' + g.title + '</b><small>' + g.note + '</small></span><span class="ptf-review-arrow" aria-hidden="true">›</span></summary><div class="ptf-review-list"></div></details>';
     }
     function rows(list, type) { return list.map(function (x) { return '<button type="button" data-ptf-best="' + type + '" data-aluno="' + esc(x.a.id) + '"><span>' + esc(x.a.nome) + '</span><small>' + x.days + ' dias · ' + (type === 'workout' ? 'Revisar treino' : 'Ver acompanhamento') + ' →</small></button>'; }).join(''); }
-    root.innerHTML = card('videos','▷','Vídeos de execução','Escolha o aluno para consultar os envios',videos.map(function (a) { return '<button type="button" data-tecnica-aluno="' + esc(a.id) + '"><span>' + esc(a.nome) + '</span><small>Ver vídeos →</small></button>'; }).join(''),'Publique o app de um aluno para receber vídeos de execução.') +
-      card('inactive','↗',inactive.length + (inactive.length===1 ? ' aluno para retomar contato' : ' alunos para retomar contato'),'10 dias ou mais sem sessão concluída nos registros',rows(inactive,'profile'),'Nenhum aluno com esse intervalo nos registros disponíveis.') +
-      card('stale','↻',stale.length + (stale.length===1 ? ' treino para revisar' : ' treinos para revisar'),'Prescrição com 8 semanas ou mais',rows(stale,'workout'),'Nenhuma prescrição com esse prazo nos registros disponíveis.');
+    var groups = [
+      {key:'videos',icon:'▷',title:'Vídeos de execução',note:'Escolha o aluno para consultar os envios',rows:function () { return videos.map(function (a) { return '<button type="button" data-tecnica-aluno="' + esc(a.id) + '"><span>' + esc(a.nome) + '</span><small>Ver vídeos →</small></button>'; }).join(''); },empty:'Publique o app de um aluno para receber vídeos de execução.'},
+      {key:'inactive',icon:'↗',title:inactive.length + (inactive.length===1 ? ' aluno para retomar contato' : ' alunos para retomar contato'),note:'10 dias ou mais sem sessão concluída nos registros',rows:function () { return rows(inactive,'profile'); },empty:'Nenhum aluno com esse intervalo nos registros disponíveis.'},
+      {key:'stale',icon:'↻',title:stale.length + (stale.length===1 ? ' treino para revisar' : ' treinos para revisar'),note:'Prescrição com 8 semanas ou mais',rows:function () { return rows(stale,'workout'); },empty:'Nenhuma prescrição com esse prazo nos registros disponíveis.'}
+    ];
+    root.innerHTML = groups.map(card).join('');
+    groups.forEach(function (g) {
+      var detail = q('[data-review="' + g.key + '"]', root), painted = false;
+      function paint() { if (!detail.open || painted) return; q('.ptf-review-list', detail).innerHTML = g.rows() || '<p>' + g.empty + '</p>'; painted = true; }
+      detail.addEventListener('toggle', paint); paint();
+    });
   }
 
   function mountSessionDialog() {
