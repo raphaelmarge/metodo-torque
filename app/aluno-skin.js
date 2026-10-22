@@ -835,6 +835,8 @@ html.claro body.aluno-v793 #crSinal[data-estado=fraco]{background:#fff0d9}
 body.aluno-v793.experiencia-v868:has(#heroCarr) #blocoHoje{padding-top:0}
 body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo{position:relative!important;inset:auto!important;padding:calc(22px + env(safe-area-inset-top,0px)) 20px 22px!important;align-items:center!important}
 body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo>div>div:first-child{color:var(--one-muted)!important;text-shadow:none}
+body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo .al-brand .al-brand-primary{color:var(--one-text)!important;text-shadow:none}
+body.aluno-v793.experiencia-v868:has(#heroCarr) #heroTopo .al-brand :is(.al-brand-secondary,.al-brand-slogan){color:var(--one-muted)!important;text-shadow:none}
 body.aluno-v793.experiencia-v868:has(#heroCarr) #heroSauda{font-size:28px!important;font-weight:650!important;letter-spacing:-.8px;line-height:1.2!important;color:var(--one-text)!important;text-shadow:none;margin-top:14px!important}
 body.aluno-v793.experiencia-v868 #inicioData{color:var(--one-muted);font-size:12px;line-height:1.5;margin:7px 0 0;text-transform:capitalize}
 body.aluno-v793.experiencia-v868:has(#heroCarr) :is(#sinoBtn,#avBtn2){background:var(--one-control)!important;border-color:var(--one-border)!important;color:var(--one-text)!important;backdrop-filter:none}

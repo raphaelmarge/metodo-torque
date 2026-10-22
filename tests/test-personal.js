@@ -16249,7 +16249,7 @@ async function contextoAppAluno(browser, html, options = {}) {
       const chips = [...document.querySelectorAll("[data-semd]")];
       const out = {
         semSeuDia: !document.getElementById("agHojeCard"),
-        // o calendário é o PRIMEIRO filho útil do card, logo abaixo da foto
+        // v868: progresso vem antes dos dias; o calendário mantém sua gaveta.
         ordemDentro: [...sb.querySelectorAll("#diasSem,#semDia,#semResumo,#coachTxt,#btnFeito")].map((e) => e.id).join(">"),
         // e o card da semana vem logo depois do carrossel (a "imagem")
         depoisDaFoto: !!(document.getElementById("blocoHoje").compareDocumentPosition(sb) & Node.DOCUMENT_POSITION_FOLLOWING),
@@ -16265,8 +16265,8 @@ async function contextoAppAluno(browser, html, options = {}) {
       out.fechou = document.getElementById("semDia").innerHTML === "" && window.__semDia.ve() === null;
       return out;
     });
-    ok(v771.semSeuDia && v771.depoisDaFoto && v771.ordemDentro === "diasSem>semDia>semResumo>coachTxt>btnFeito",
-      "📆 v771: o card 'Seu dia' saiu e o calendário subiu pra logo abaixo da foto (" + v771.ordemDentro + ")");
+    ok(v771.semSeuDia && v771.depoisDaFoto && v771.ordemDentro === "semResumo>diasSem>semDia>coachTxt>btnFeito",
+      "📆 v868: progresso e calendário ficam abaixo da foto, sem duplicar o card 'Seu dia' (" + v771.ordemDentro + ")");
     ok(v771.chips === 7 && v771.comPonto === 2,
       "📆 v771: os 7 dias viraram botões e só quem tem treino/sessão ganha o pontinho (" + v771.comPonto + " de 7)");
     ok(/07:30/.test(v771.gavetaSeg) && /Circuito do sábado/.test(v771.gavetaSeg) && /18:30/.test(v771.gavetaSeg),
@@ -16903,7 +16903,7 @@ async function contextoAppAluno(browser, html, options = {}) {
         coach: document.getElementById("coachTxt").textContent,
       };
     });
-    ok(/0 de 3 na semana/.test(sp1.txt) && /faltam 3 pra fechar a semana/.test(sp1.txt) && sp1.ordem === "diasSem>semDia>semResumo>coachTxt>btnFeito",
+    ok(/0 de 3 na semana/.test(sp1.txt) && /faltam 3 pra fechar a semana/.test(sp1.txt) && sp1.ordem === "semResumo>diasSem>semDia>coachTxt>btnFeito",
       "📊 v775: a linha #semResumo virou a faixa de progresso — 'N de META na semana' continua lá e o que falta vem junto (" + sp1.txt.slice(0, 60) + ")");
     ok(sp1.bar && sp1.bar.min === "0" && sp1.bar.max === "3" && sp1.bar.now === "0" && sp1.barW > 100 && sp1.fillW < 1,
       "📊 v775: a barra existe com aria (progressbar 0/3) e nasce vazia quando a semana ainda não começou");
