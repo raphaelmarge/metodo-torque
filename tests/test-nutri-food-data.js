@@ -31,12 +31,22 @@ const root=path.resolve(__dirname,'..');
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/catalog-manifest.json'),'utf8'));
  assert.equal(manifest.records,foods.length);
  const sha256=bytes=>require('node:crypto').createHash('sha256').update(bytes).digest('hex');
+ const sourceFoods=[];
  for(const source of manifest.sources){
    const bytes=fs.readFileSync(path.join(root,'nutri/data',source.file));
    assert.equal(sha256(bytes),source.sha256,source.file+' distributed checksum');
    assert.equal(JSON.parse(bytes).length,source.records);
+   sourceFoods.push(...JSON.parse(bytes));
  }
+ assert.deepEqual(foods,sourceFoods,'App catalog exactly matches the source files');
+ assert.deepEqual(JSON.parse(JSON.stringify(context.MT_NUTRI_FOOD_CATALOG_INFO)),manifest);
  const offReport=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/openfoodfacts-import-report.json'),'utf8'));
  assert.equal(offReport.sha256,manifest.sources.find(source=>source.file==='openfoodfacts.json').sha256);
+ const auditBytes=fs.readFileSync(path.join(root,'nutri/data',offReport.micronutrientQuality.auditFile));
+ assert.equal(sha256(auditBytes),offReport.micronutrientQuality.auditSha256);
+ assert.equal(offReport.acceptedRows+Object.values(offReport.rejectedRows).reduce((sum,n)=>sum+n,0),offReport.inputRows);
+ for(const code of ['7899970402883','7891097101717','7898276600108','7896051131038','7894904252213','7891991000840','7894900087123']){
+   assert(!foods.some(food=>food.id==='off:'+code),'Suspect source record stays quarantined: '+code);
+ }
  console.log('PASS source-specific household weights, explicit volume, provenance and count');
 })().catch(error=>{console.error(error);process.exitCode=1;});

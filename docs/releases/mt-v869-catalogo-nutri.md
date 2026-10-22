@@ -14,9 +14,9 @@ O catálogo do produto é estático, distribuído com o app e disponível offlin
 O novo `MT_NUTRI_FOODS` tem fontes identificadas e arquivos públicos separados.
 `MT_ALIMENTOS` legado, dados privados da clínica e planos já publicados permanecem
 intactos. Não houve importação em tabelas privadas ou modificação de schema.
-O manifest gerado em `nutri/data/catalog-manifest.json` registra 7.272 alimentos:
-544 TACO e 6.728 Open Food Facts, sendo 7.074 referências em g e 198 em ml.
-5.086 alimentos têm porção rotulada ou medida caseira explícita.
+O manifest gerado em `nutri/data/catalog-manifest.json` registra 7.201 alimentos:
+544 TACO e 6.657 Open Food Facts, sendo 7.009 referências em g e 192 em ml.
+5.017 alimentos têm porção rotulada ou medida caseira explícita.
 
 ## Dados e qualidade
 
@@ -29,7 +29,10 @@ O manifest gerado em `nutri/data/catalog-manifest.json` registra 7.272 alimentos
 - Open Food Facts: recorte brasileiro com marca/GTIN, base nutricional explícita,
   macros completos, filtros físicos/de qualidade e deduplicação. Dados
   colaborativos não são apresentados como rótulos individualmente revisados.
-  Fonte CSV oficial de 22/10/2026; 12.000 candidatos examinados, 6.728 aceitos.
+  Fonte CSV oficial de 22/10/2026; 12.000 candidatos examinados, 6.657 aceitos.
+  A triagem de micronutrientes excluiu 77 linhas antes da deduplicação, com
+  identificadores, valores originais e razões em `off-quality-exclusions.json`.
+  Não há correção presumida de unidades. O balanço de massa aplica-se só a g.
 - Fontes, licenças, política e downloads ficam em `nutri/data/README.md` e na
   biblioteca. Alimentos particulares não entram nos arquivos distribuídos.
 
@@ -54,6 +57,12 @@ Marcas aparecem no nome de novos itens prescritos para evitar ambiguidade.
 
 Testes de motor, catálogo, UI, receitas, compras, normalização e banco descartável
 cobrem invariância de massa/volume, nutrientes incompletos, persistência e isolamento.
+Todos os 7.201 registros passaram pelo motor e normalizador. Os checksums conferem
+os arquivos distribuídos com finais de linha LF. UI em Chrome: 10/10, incluindo
+remoção e inclusão com quantidade inválida. Atualização offline: 2/2 cenários.
+As três variantes canônicas da demo do aluno foram regeneradas (32 checks).
+O teste com bebida real confirmou 250 ml = 122,5 kcal e 2 copos = 400 ml = 196 kcal,
+com marca e quantidade preservadas na visão do paciente.
 As demos usam dados fictícios e não enviam alterações ao consultório.
 Verificar resultado dos testes e implantação do commit exato antes de registrar
 esta versão como publicada. A atualização usa Nutri cache v18 e global mt-v869.

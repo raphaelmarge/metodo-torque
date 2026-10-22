@@ -123,18 +123,18 @@
     "cholesterolMg": 84.8485
   },
   {
-    "n": "100% Whey",
+    "n": "100% WHEY",
     "c": "Alimentos industrializados",
     "p": "100 g",
-    "k": 406.67,
-    "pt": 66.667,
-    "cb": 18.333,
-    "g": 7.333,
-    "id": "off:7899941201804",
-    "barcode": "7899941201804",
-    "brand": "Max Titanium",
+    "k": 416.67,
+    "pt": 70.0,
+    "cb": 15.667,
+    "g": 7.0,
+    "id": "off:7899941201781",
+    "barcode": "7899941201781",
+    "brand": "MAX TITANIUM",
     "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7899941201804",
+    "sourceUrl": "https://world.openfoodfacts.org/product/7899941201781",
     "baseAmount": 100,
     "baseUnit": "g",
     "measures": [
@@ -148,10 +148,8 @@
     ],
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1787877348.0,
-    "sugars": 0.6667,
-    "saturated": 4.0,
-    "sodiumMg": 293.3333
+    "sourceUpdatedAt": 1776180323.0,
+    "saturated": 1.2
   },
   {
     "n": "100% whey max",
@@ -801,24 +799,24 @@
     "sodiumMg": 50.0
   },
   {
-    "n": "Achocolatado em pó Nescau",
+    "n": "Achocolatado em pó - Nescau",
     "c": "Alimentos industrializados",
     "p": "100 g",
-    "k": 69.0,
-    "pt": 3.6,
-    "cb": 12.0,
-    "g": 0.3,
-    "id": "off:7891000390030",
-    "barcode": "7891000390030",
+    "k": 86.0,
+    "pt": 3.5,
+    "cb": 13.0,
+    "g": 2.1,
+    "id": "off:7891000379691",
+    "barcode": "7891000379691",
     "brand": "Nestlé",
     "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000390030",
+    "sourceUrl": "https://world.openfoodfacts.org/product/7891000379691",
     "baseAmount": 100,
     "baseUnit": "g",
     "measures": [
       {
         "id": "rotulo",
-        "label": "Porção do rótulo: 20 g",
+        "label": "Porção do rótulo: 20g",
         "amount": 20.0,
         "unit": "g",
         "source": "Open Food Facts — porção informada no rótulo"
@@ -826,10 +824,13 @@
     ],
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1783800629.0,
-    "sugars": 9.6,
-    "saturated": 0.1,
-    "sodiumMg": 20400.0
+    "sourceUpdatedAt": 1775139270.0,
+    "fb": 0.4,
+    "sugars": 12.0,
+    "saturated": 1.3,
+    "sodiumMg": 51.0,
+    "calciumMg": 318.0,
+    "ironMg": 1.3
   },
   {
     "n": "Achocolatado em pó Nescau 550g Refil",
@@ -3761,38 +3762,6 @@
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775139353.0,
     "sodiumMg": 586.6667
-  },
-  {
-    "n": "Amendoin",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 501.0,
-    "pt": 17.0,
-    "cb": 40.0,
-    "g": 30.0,
-    "id": "off:7896336002527",
-    "barcode": "7896336002527",
-    "brand": "Santa Helena",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896336002527",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100 g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1781494280.0,
-    "fb": 6.4,
-    "sugars": 6.0,
-    "saturated": 4.4,
-    "sodiumMg": 588.0
   },
   {
     "n": "AmendoPower Protein bar",
@@ -8498,38 +8467,6 @@
     "sodiumMg": 117.0
   },
   {
-    "n": "Barra de banana com cobertura de chocolate",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 285.0,
-    "pt": 3.5,
-    "cb": 55.0,
-    "g": 9.5,
-    "id": "off:7891331002824",
-    "barcode": "7891331002824",
-    "brand": "Nutry",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891331002824",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 20 g",
-        "amount": 20.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1786820387.0,
-    "fb": 18.0,
-    "sugars": 31.0,
-    "saturated": 7.5,
-    "sodiumMg": 4.0
-  },
-  {
     "n": "Barra de Banana e Açaí - Supino",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -10292,38 +10229,6 @@
     "fb": 2.0
   },
   {
-    "n": "Barra Proteína Best Whey Peanut Caramel",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 457.14,
-    "pt": 28.571,
-    "cb": 34.286,
-    "g": 27.143,
-    "id": "off:7899621108874",
-    "barcode": "7899621108874",
-    "brand": "Atlética Nutrition",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7899621108874",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (35 g)",
-        "amount": 35.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1780357892.0,
-    "fb": 4.5714,
-    "sugars": 5.4286,
-    "saturated": 9.7143,
-    "sodiumMg": 222.8571
-  },
-  {
     "n": "Barra supino morango e banana",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -11851,36 +11756,6 @@
     "sourceUpdatedAt": 1775139527.0,
     "fb": 1.6,
     "saturated": 0.3
-  },
-  {
-    "n": "Batata Palito Tradicional",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 108.24,
-    "pt": 2.118,
-    "cb": 17.647,
-    "g": 1.412,
-    "id": "off:7899686701133",
-    "barcode": "7899686701133",
-    "brand": "Uni Sabor",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7899686701133",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 85.0g",
-        "amount": 85.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775140378.0,
-    "fb": 2.2353,
-    "sodiumMg": 7411.7647
   },
   {
     "n": "Batata petisco",
@@ -20138,38 +20013,6 @@
     "fb": 11.6667
   },
   {
-    "n": "Bombom Crocante",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 386.67,
-    "pt": 35.0,
-    "cb": 30.0,
-    "g": 14.667,
-    "id": "off:7898755180046",
-    "barcode": "7898755180046",
-    "brand": "Bono",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898755180046",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (60 g)",
-        "amount": 60.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1780147826.0,
-    "fb": 6.1667,
-    "sugars": 7.1667,
-    "saturated": 9.8333,
-    "sodiumMg": 260.0
-  },
-  {
     "n": "Bombom de chocolate",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -20598,42 +20441,6 @@
     "fb": 7.5,
     "saturated": 0.0,
     "sodiumMg": 4741.6667
-  },
-  {
-    "n": "Brown Rice Toast",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 112.0,
-    "pt": 2.0,
-    "cb": 24.0,
-    "g": 0.7,
-    "id": "off:7896639800653",
-    "barcode": "7896639800653",
-    "brand": "Okoshi",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896639800653",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30.0g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1785968064.0,
-    "fb": 1.0,
-    "sugars": 0.308,
-    "saturated": 0.3,
-    "sodiumMg": 9502.3135,
-    "calciumMg": 48.2724,
-    "ironMg": 0.5398,
-    "potassiumMg": 128.1633,
-    "cholesterolMg": 0.0
   },
   {
     "n": "Brownie Chocolate E Nozes Fin Arte Bandeja 300g",
@@ -22530,28 +22337,6 @@
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775137767.0,
     "fb": 2.6667
-  },
-  {
-    "n": "canjica amarela tipo 1",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 53.0,
-    "pt": 1.4,
-    "cb": 9.0,
-    "g": 1.1,
-    "id": "off:7898901621249",
-    "barcode": "7898901621249",
-    "brand": "Rio Imperial",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898901621249",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134263.0,
-    "saturated": 0.7,
-    "sodiumMg": 16000.0
   },
   {
     "n": "Canjica branca",
@@ -29714,37 +29499,6 @@
     "sodiumMg": 64.0
   },
   {
-    "n": "Coalhada Ati latte 170g",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 39.41,
-    "pt": 2.0,
-    "cb": 2.824,
-    "g": 2.235,
-    "id": "off:7897277703047",
-    "barcode": "7897277703047",
-    "brand": "Atilatte",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7897277703047",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 170.0g",
-        "amount": 170.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775140376.0,
-    "sugars": 2.2941,
-    "saturated": 1.4118,
-    "sodiumMg": 27058.8235
-  },
-  {
     "n": "Coalhada. Integral",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -30319,37 +30073,6 @@
     "sourceUpdatedAt": 1775139495.0,
     "fb": 10.3333,
     "saturated": 19.3333
-  },
-  {
-    "n": "Cocorote",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 382.5,
-    "pt": 5.75,
-    "cb": 72.5,
-    "g": 7.75,
-    "id": "off:7898903899028",
-    "barcode": "7898903899028",
-    "brand": "Dunas",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898903899028",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 40g",
-        "amount": 40.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136786.0,
-    "fb": 3.0,
-    "saturated": 4.5,
-    "sodiumMg": 37500.0
   },
   {
     "n": "Cogumelo Champignon Em Conserva Fatiado Raiola Copo 100g",
@@ -31551,36 +31274,36 @@
     "saturated": 13.0
   },
   {
-    "n": "Cookies & Cream",
+    "n": "Cookies & cream",
     "c": "Alimentos industrializados",
     "p": "100 g",
-    "k": 380.0,
-    "pt": 35.0,
-    "cb": 31.667,
-    "g": 14.667,
-    "id": "off:7898755180060",
-    "barcode": "7898755180060",
-    "brand": "BOLD",
+    "k": 348.0,
+    "pt": 30.0,
+    "cb": 28.0,
+    "g": 16.0,
+    "id": "off:7898755180534",
+    "barcode": "7898755180534",
+    "brand": "Bold",
     "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898755180060",
+    "sourceUrl": "https://world.openfoodfacts.org/product/7898755180534",
     "baseAmount": 100,
     "baseUnit": "g",
     "measures": [
       {
         "id": "rotulo",
-        "label": "Porção do rótulo: 1 Bar (60 g)",
-        "amount": 60.0,
+        "label": "Porção do rótulo: 1 unit (50 g)",
+        "amount": 50.0,
         "unit": "g",
         "source": "Open Food Facts — porção informada no rótulo"
       }
     ],
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1790608505.0,
-    "fb": 5.5,
-    "sugars": 7.6667,
-    "saturated": 9.8333,
-    "sodiumMg": 273.3333
+    "sourceUpdatedAt": 1775140242.0,
+    "fb": 10.0,
+    "sugars": 3.2,
+    "saturated": 10.8,
+    "sodiumMg": 84.0
   },
   {
     "n": "Cookies futurinho",
@@ -34049,36 +33772,6 @@
     "sodiumMg": 350.0
   },
   {
-    "n": "Creme de queijo tipo quark com calda de frutas vermelhas",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 125.0,
-    "pt": 4.4,
-    "cb": 17.0,
-    "g": 4.4,
-    "id": "off:7891097000829",
-    "barcode": "7891097000829",
-    "brand": "Nuv - Batavo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891097000829",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136433.0,
-    "saturated": 2.6,
-    "sodiumMg": 27000.0
-  },
-  {
     "n": "Creme de ricota",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -34844,36 +34537,6 @@
     "sugars": 20.0,
     "saturated": 9.6667,
     "sodiumMg": 290.0
-  },
-  {
-    "n": "Croc apple",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 367.5,
-    "pt": 1.25,
-    "cb": 82.5,
-    "g": 1.5,
-    "id": "off:7898917852019",
-    "barcode": "7898917852019",
-    "brand": "Flora Frutas Ltda",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898917852019",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 40g",
-        "amount": 40.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775135991.0,
-    "fb": 9.5,
-    "sodiumMg": 24130.0
   },
   {
     "n": "Croc com Queijo",
@@ -37848,39 +37511,6 @@
     "sodiumMg": 159.375
   },
   {
-    "n": "Dux Protein Bar",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 361.67,
-    "pt": 33.333,
-    "cb": 21.667,
-    "g": 16.667,
-    "id": "off:7898641074985",
-    "barcode": "7898641074985",
-    "brand": "Dux",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898641074985",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 60 g",
-        "amount": 60.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1784212355.0,
-    "fb": 15.1667,
-    "sugars": 2.0,
-    "saturated": 10.6667,
-    "sodiumMg": 4.1667,
-    "calciumMg": 363.3333
-  },
-  {
     "n": "Ebicen camarão 🍤",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -40502,36 +40132,6 @@
     "sourceUpdatedAt": 1775138391.0
   },
   {
-    "n": "Farofa de mandioca temperada",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 408.57,
-    "pt": 1.143,
-    "cb": 80.0,
-    "g": 9.143,
-    "id": "off:7891095030262",
-    "barcode": "7891095030262",
-    "brand": "Yoki",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891095030262",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 35g",
-        "amount": 35.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136363.0,
-    "fb": 8.0,
-    "saturated": 4.0
-  },
-  {
     "n": "Farofa De Mandioca Tradicional Dgoiás Pacote 400g",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -40881,39 +40481,6 @@
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775138669.0
-  },
-  {
-    "n": "Feijão Caldo Nobre - Feijão Tradicional",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 261.67,
-    "pt": 18.867,
-    "cb": 48.333,
-    "g": 0.0,
-    "id": "off:7898276600108",
-    "barcode": "7898276600108",
-    "brand": "Comércio de Cereais Good Ltda",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898276600108",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 60g",
-        "amount": 60.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775137709.0,
-    "fb": 21.6667,
-    "sugars": 0.0,
-    "saturated": 0.0,
-    "sodiumMg": 0.0,
-    "ironMg": 6666.6667
   },
   {
     "n": "Feijao Car Taruma 1kg",
@@ -45759,38 +45326,6 @@
     "sourceUpdatedAt": 1780092292.0
   },
   {
-    "n": "Gelatina Dr.oetker De Limao 20g",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 12.0,
-    "pt": 1.0,
-    "cb": 2.0,
-    "g": 0.0,
-    "id": "off:7891048050644",
-    "barcode": "7891048050644",
-    "brand": "Dr. Oetker",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891048050644",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100 g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1783792075.0,
-    "fb": 0.0,
-    "sugars": 2.0,
-    "saturated": 0.0,
-    "sodiumMg": 77.0
-  },
-  {
     "n": "Gelatina dr.oetker Morango 20g",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -49902,35 +49437,6 @@
     "sugars": 0.0,
     "saturated": 12.0,
     "sodiumMg": 101.0
-  },
-  {
-    "n": "Hamburger de carne de frango",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 211.25,
-    "pt": 15.0,
-    "cb": 1.25,
-    "g": 16.25,
-    "id": "off:7894904578207",
-    "barcode": "7894904578207",
-    "brand": "Texas Burger - Seara",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894904578207",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 80g",
-        "amount": 80.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136403.0,
-    "saturated": 4.5
   },
   {
     "n": "Hambúrguer",
@@ -55909,37 +55415,6 @@
     "saturated": 3.1111
   },
   {
-    "n": "Iorgute de Morango Batavo",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 93.33,
-    "pt": 2.111,
-    "cb": 16.667,
-    "g": 2.0,
-    "id": "off:7891097101717",
-    "barcode": "7891097101717",
-    "brand": "Batavo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891097101717",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 90g",
-        "amount": 90.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136333.0,
-    "saturated": 1.2222,
-    "sodiumMg": 34444.4444,
-    "calciumMg": 74444.4444
-  },
-  {
     "n": "Iorgute desnatado",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -58900,36 +58375,6 @@
     "saturated": 2.35
   },
   {
-    "n": "Leite em Pó",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 446.43,
-    "pt": 14.286,
-    "cb": 71.429,
-    "g": 11.429,
-    "id": "off:7898215152460",
-    "barcode": "7898215152460",
-    "brand": "Piracanjuba",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898215152460",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 28 g",
-        "amount": 28.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775139276.0,
-    "sugars": 60.7143,
-    "saturated": 6.7857
-  },
-  {
     "n": "Leite em Pó A2",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -59029,40 +58474,6 @@
     "sugars": 43.3333,
     "sodiumMg": 393.3333,
     "calciumMg": 1660.0
-  },
-  {
-    "n": "Leite em pó desnatado instantâneo",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 360.0,
-    "pt": 34.5,
-    "cb": 55.0,
-    "g": 0.0,
-    "id": "off:7896051131038",
-    "barcode": "7896051131038",
-    "brand": "Itambé",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896051131038",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 2.5 tbsp (20 g)",
-        "amount": 20.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775137902.0,
-    "fb": 7.0,
-    "sugars": 48.0,
-    "saturated": 0.0,
-    "sodiumMg": 390.0,
-    "calciumMg": 1280.0,
-    "ironMg": 6400.0
   },
   {
     "n": "Leite em pó integral",
@@ -60489,39 +59900,6 @@
     "ironMg": 48.5,
     "potassiumMg": 3900.0,
     "cholesterolMg": 0.0
-  },
-  {
-    "n": "Levíssimo - Embutido de Lombo Cozido",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 87.5,
-    "pt": 16.5,
-    "cb": 1.25,
-    "g": 1.75,
-    "id": "off:7894904252213",
-    "barcode": "7894904252213",
-    "brand": "Seara",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894904252213",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 40g",
-        "amount": 40.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775137705.0,
-    "fb": 0.0,
-    "sugars": 0.0,
-    "saturated": 0.75,
-    "sodiumMg": 662.94,
-    "cholesterolMg": 32500.0
   },
   {
     "n": "Limão",
@@ -64857,37 +64235,6 @@
     "sourceUpdatedAt": 1775138400.0
   },
   {
-    "n": "Manteiga Taubaté sem sal",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 770.0,
-    "pt": 0.24,
-    "cb": 1.12,
-    "g": 84.6,
-    "id": "off:7896112310020",
-    "barcode": "7896112310020",
-    "brand": "Comevap",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896112310020",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 10g",
-        "amount": 10.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136051.0,
-    "fb": 0.0,
-    "saturated": 49.7,
-    "sodiumMg": 16800.0
-  },
-  {
     "n": "Maple Glazed & Smoked Salmon Bites",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -67018,36 +66365,6 @@
     "sodiumMg": 301.6738
   },
   {
-    "n": "Milho em conserva",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 81.54,
-    "pt": 2.923,
-    "cb": 14.615,
-    "g": 1.231,
-    "id": "off:7896292341197",
-    "barcode": "7896292341197",
-    "brand": "Tradelli",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896292341197",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 130g",
-        "amount": 130.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136361.0,
-    "fb": 2.9231,
-    "saturated": 0.3846
-  },
-  {
     "n": "Milho em Conserva BONAIRE 170g",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -68831,37 +68148,6 @@
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775138083.0,
     "saturated": 13.0
-  },
-  {
-    "n": "Missoshiru instantâneo",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 340.0,
-    "pt": 23.0,
-    "cb": 39.0,
-    "g": 11.0,
-    "id": "off:7896007886258",
-    "barcode": "7896007886258",
-    "brand": "Sakura",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896007886258",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 10 g",
-        "amount": 10.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775137801.0,
-    "fb": 10.0,
-    "saturated": 2.0,
-    "sodiumMg": 6760.0
   },
   {
     "n": "Mist P/bolo Caneca Dr Oetker Brigadeiro 70gr",
@@ -71829,38 +71115,6 @@
     "sodiumMg": 1180.0
   },
   {
-    "n": "Mortadela Defumada Fatiada",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 270.0,
-    "pt": 13.0,
-    "cb": 5.0,
-    "g": 22.0,
-    "id": "off:7894904268573",
-    "barcode": "7894904268573",
-    "brand": "Pamplona",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894904268573",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 40 g",
-        "amount": 40.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1784600901.0,
-    "fb": 0.0,
-    "sugars": 0.5,
-    "saturated": 7.5,
-    "sodiumMg": 1180.0
-  },
-  {
     "n": "Mortadela Defumada Ouro",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -72750,41 +72004,6 @@
     "ironMg": 1.91,
     "potassiumMg": 227.0,
     "cholesterolMg": 0.0
-  },
-  {
-    "n": "Natural ISO Whey - Sabor Baunilha",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 370.0,
-    "pt": 86.667,
-    "cb": 7.0,
-    "g": 0.0,
-    "id": "off:7897570180996",
-    "barcode": "7897570180996",
-    "brand": "Nutrition'all",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7897570180996",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775137487.0,
-    "fb": 0.0,
-    "sugars": 0.0,
-    "saturated": 0.0,
-    "sodiumMg": 150.0,
-    "calciumMg": 390.0,
-    "ironMg": 150.0,
-    "potassiumMg": 556.6667
   },
   {
     "n": "Natural One Aveia",
@@ -90443,36 +89662,6 @@
     "sourceUpdatedAt": 1775136364.0
   },
   {
-    "n": "Polpa de maracujá",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 106.0,
-    "pt": 2.2,
-    "cb": 23.0,
-    "g": 0.5,
-    "id": "off:7898130777090",
-    "barcode": "7898130777090",
-    "brand": "Canaã",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898130777090",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136562.0,
-    "fb": 1.4,
-    "sodiumMg": 15000.0
-  },
-  {
     "n": "Polpa de Morango",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -90534,36 +89723,6 @@
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775138664.0
-  },
-  {
-    "n": "Polpa de uva",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 49.0,
-    "pt": 0.6,
-    "cb": 13.0,
-    "g": 0.2,
-    "id": "off:7896014403455",
-    "barcode": "7896014403455",
-    "brand": "Brasfrut",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896014403455",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136612.0,
-    "fb": 0.9,
-    "sodiumMg": 8000.0
   },
   {
     "n": "Polpa Mista de Frutas Vemelhas",
@@ -102956,40 +102115,6 @@
     "sodiumMg": 408.3333
   },
   {
-    "n": "Sardina En Salsa De Tomate",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 218.67,
-    "pt": 18.667,
-    "cb": 1.467,
-    "g": 14.667,
-    "id": "off:7898943163028",
-    "barcode": "7898943163028",
-    "brand": "ROBINSON CRUSOE",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898943163028",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 75 g",
-        "amount": 75.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1785109858.0,
-    "fb": 0.2667,
-    "sugars": 1.0667,
-    "saturated": 1.8667,
-    "sodiumMg": 589.3333,
-    "calciumMg": 278.6667,
-    "cholesterolMg": 106.6667
-  },
-  {
     "n": "Sardinha ao Óleo - Nautique",
     "c": "Alimentos industrializados",
     "p": "100 g",
@@ -106341,36 +105466,6 @@
     "fb": 12.0,
     "sugars": 37.0,
     "saturated": 20.0
-  },
-  {
-    "n": "Steak empanado de frango",
-    "c": "Alimentos industrializados",
-    "p": "100 g",
-    "k": 208.0,
-    "pt": 11.0,
-    "cb": 13.0,
-    "g": 13.0,
-    "id": "off:7894904003495",
-    "barcode": "7894904003495",
-    "brand": "Seara",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894904003495",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136378.0,
-    "fb": 1.6,
-    "saturated": 3.7
   },
   {
     "n": "Steak Perdigão",
@@ -119294,36 +118389,6 @@
     "calciumMg": 6.0208
   },
   {
-    "n": "Água tônica",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 21.0,
-    "pt": 0.0,
-    "cb": 5.0,
-    "g": 0.0,
-    "id": "off:7891991000840",
-    "barcode": "7891991000840",
-    "brand": "Antarctica,Ambev",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891991000840",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 350 ml",
-        "amount": 350.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1774372603.0,
-    "sugars": 5.0,
-    "sodiumMg": 9400.0
-  },
-  {
     "n": "AH! NATU Chá De Boldo Do Chile Ah Natu 30G",
     "c": "Bebidas",
     "p": "100 g",
@@ -119449,36 +118514,6 @@
     "sourceUpdatedAt": 1775136809.0,
     "sugars": 2.7,
     "sodiumMg": 9.0
-  },
-  {
-    "n": "Alimento com soja sabor uva",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 16.5,
-    "pt": 0.6,
-    "cb": 2.85,
-    "g": 0.0,
-    "id": "off:7894900087123",
-    "barcode": "7894900087123",
-    "brand": "ADES",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894900087123",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 200ml",
-        "amount": 200.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1777863036.0,
-    "sugars": 2.5,
-    "sodiumMg": 10000.0
   },
   {
     "n": "Almond breeze",
@@ -122585,37 +121620,6 @@
     "sodiumMg": 0.0
   },
   {
-    "n": "Guaraná",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 30.0,
-    "pt": 0.0,
-    "cb": 7.3,
-    "g": 0.0,
-    "id": "off:7891991001342",
-    "barcode": "7891991001342",
-    "brand": "Antarctica",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891991001342",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 200 ml",
-        "amount": 200.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1788821782.0,
-    "sugars": 7.3,
-    "saturated": 0.0,
-    "sodiumMg": 8500.0
-  },
-  {
     "n": "Guarana Antarctica",
     "c": "Bebidas",
     "p": "100 ml",
@@ -122885,38 +121889,6 @@
     "sugars": 0.0,
     "saturated": 0.0,
     "sodiumMg": 0.0
-  },
-  {
-    "n": "ice tea leão sabor pêssego",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 18.0,
-    "pt": 0.0,
-    "cb": 4.333,
-    "g": 0.0,
-    "id": "off:7891098040886",
-    "barcode": "7891098040886",
-    "brand": "leão",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891098040886",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 300ml",
-        "amount": 300.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134383.0,
-    "fb": 0.0,
-    "sugars": 4.3333,
-    "saturated": 0.0,
-    "sodiumMg": 28786.6667
   },
   {
     "n": "ice tea limão",
@@ -124993,36 +123965,6 @@
     "sodiumMg": 8.5
   },
   {
-    "n": "Refrigerante Café Espresso Coca Cola Lata 220ml",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 20.0,
-    "pt": 0.0,
-    "cb": 5.0,
-    "g": 0.0,
-    "id": "off:7894900025019",
-    "barcode": "7894900025019",
-    "brand": "COCA-COLA",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894900025019",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 220ml",
-        "amount": 220.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1773766946.0,
-    "sugars": 5.0,
-    "sodiumMg": 3280.0
-  },
-  {
     "n": "Refrigerante Citrus Schweppes Garrafa 1,5l",
     "c": "Bebidas",
     "p": "100 ml",
@@ -125870,35 +124812,6 @@
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775137142.0,
     "fb": 0.6
-  },
-  {
-    "n": "Sprite Lemon Fresh",
-    "c": "Bebidas",
-    "p": "100 ml",
-    "k": 0.0,
-    "pt": 0.0,
-    "cb": 0.0,
-    "g": 0.0,
-    "id": "off:7894900680508",
-    "barcode": "7894900680508",
-    "brand": "Sprite",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894900680508",
-    "baseAmount": 100,
-    "baseUnit": "ml",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 200ml",
-        "amount": 200.0,
-        "unit": "ml",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1781146458.0,
-    "sodiumMg": 14000.0
   },
   {
     "n": "Sú Fresh Nectar de Uva",
@@ -128597,38 +127510,6 @@
     "cholesterolMg": 398.0
   },
   {
-    "n": "Pate De Atum Com Azeitonas",
-    "c": "Carnes, pescados e ovos",
-    "p": "100 g",
-    "k": 160.0,
-    "pt": 11.0,
-    "cb": 5.0,
-    "g": 11.0,
-    "id": "off:7891167831667",
-    "barcode": "7891167831667",
-    "brand": "Gomes Da Costa",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891167831667",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (10 g)",
-        "amount": 10.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1784059417.0,
-    "fb": 0.0,
-    "sugars": 2.0,
-    "saturated": 2.0,
-    "sodiumMg": 590.0
-  },
-  {
     "n": "Patê de Atum Light",
     "c": "Carnes, pescados e ovos",
     "p": "100 g",
@@ -129180,39 +128061,6 @@
     "cholesterolMg": 96.0
   },
   {
-    "n": "Sardinhas com Óleo",
-    "c": "Carnes, pescados e ovos",
-    "p": "100 g",
-    "k": 205.33,
-    "pt": 22.667,
-    "cb": 1.333,
-    "g": 12.0,
-    "id": "off:7896009301049",
-    "barcode": "7896009301049",
-    "brand": "COQUEIRO",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896009301049",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 75 g",
-        "amount": 75.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1782829400.0,
-    "fb": 0.0,
-    "sugars": 0.0,
-    "saturated": 3.4667,
-    "calciumMg": 1070.6667,
-    "cholesterolMg": 82.6667
-  },
-  {
     "n": "Sardinhas com óleo",
     "c": "Carnes, pescados e ovos",
     "p": "100 g",
@@ -129439,38 +128287,6 @@
     "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1776707164.0
-  },
-  {
-    "n": "12 Grãos Integral 53%",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 264.0,
-    "pt": 14.0,
-    "cb": 40.0,
-    "g": 5.4,
-    "id": "off:7896002366267",
-    "barcode": "7896002366267",
-    "brand": "PULLMAN",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896002366267",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 portion (50 g)",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1781182383.0,
-    "fb": 6.8,
-    "sugars": 6.6,
-    "saturated": 0.8,
-    "sodiumMg": 376.0
   },
   {
     "n": "18 Grãos",
@@ -133102,42 +131918,6 @@
     "sugars": 30.0,
     "saturated": 10.0,
     "sodiumMg": 200.0
-  },
-  {
-    "n": "Cacao Granola",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 412.5,
-    "pt": 12.25,
-    "cb": 57.5,
-    "g": 14.75,
-    "id": "off:7896496995219",
-    "barcode": "7896496995219",
-    "brand": "mãe terra",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896496995219",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 40 g",
-        "amount": 40.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775138125.0,
-    "fb": 9.5,
-    "sugars": 0.0,
-    "saturated": 5.5,
-    "sodiumMg": 10500.0,
-    "calciumMg": 45.5,
-    "ironMg": 3.945,
-    "potassiumMg": 361.75,
-    "cholesterolMg": 0.0
   },
   {
     "n": "Cacau Granola",
@@ -139582,38 +138362,6 @@
     "sodiumMg": 1002.0968
   },
   {
-    "n": "Macarrão de arroz",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 138.5,
-    "pt": 2.8,
-    "cb": 30.5,
-    "g": 0.65,
-    "id": "off:7898270966965",
-    "barcode": "7898270966965",
-    "brand": "Karui",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898270966965",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 200.0g",
-        "amount": 200.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1777976563.0,
-    "fb": 0.6,
-    "sugars": 0.0,
-    "saturated": 0.25,
-    "sodiumMg": 5900.0
-  },
-  {
     "n": "Macarrão de arroz preto integral penne 200G - Casarão",
     "c": "Cereais, pães e massas",
     "p": "100 g",
@@ -141607,37 +140355,6 @@
     "sodiumMg": 583.184
   },
   {
-    "n": "Misso",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 150.0,
-    "pt": 12.5,
-    "cb": 12.5,
-    "g": 5.5,
-    "id": "off:7896181501572",
-    "barcode": "7896181501572",
-    "brand": "Hinomoto",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896181501572",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 20g",
-        "amount": 20.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134370.0,
-    "fb": 4.0,
-    "saturated": 0.0,
-    "sodiumMg": 6000.0
-  },
-  {
     "n": "MONAMA Granola Salgada Manjericão e Páprica",
     "c": "Cereais, pães e massas",
     "p": "100 g",
@@ -142430,38 +141147,6 @@
     "sugars": 0.0,
     "saturated": 2.0,
     "sodiumMg": 84.0
-  },
-  {
-    "n": "ORQUÍDEA Farinha Panko",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 370.0,
-    "pt": 11.0,
-    "cb": 73.333,
-    "g": 3.667,
-    "id": "off:7896412803031",
-    "barcode": "7896412803031",
-    "brand": "ORQUÍDEA",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896412803031",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30 g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1779750760.0,
-    "fb": 3.0,
-    "sugars": 3.6667,
-    "saturated": 2.0,
-    "sodiumMg": 426.6667
   },
   {
     "n": "PAGANINI Arroz Arbório Italiano Paganini",
@@ -143298,37 +141983,6 @@
     "cholesterolMg": 0.0
   },
   {
-    "n": "Pão De Forma Batata Doce Sem Glúten Zero Lactose Grani Amici Ancestrale Pacote 420g",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 212.0,
-    "pt": 1.2,
-    "cb": 40.0,
-    "g": 5.0,
-    "id": "off:7898944830332",
-    "barcode": "7898944830332",
-    "brand": "GRANI AMICI",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898944830332",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 50g",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775139130.0,
-    "fb": 2.2,
-    "sugars": 2.0,
-    "saturated": 1.2
-  },
-  {
     "n": "Pão de forma castanha do pará e quinoa",
     "c": "Cereais, pães e massas",
     "p": "100 g",
@@ -143360,37 +142014,6 @@
     "saturated": 0.6,
     "sodiumMg": 370.0,
     "ironMg": 0.0
-  },
-  {
-    "n": "Pão de Forma Fatiado Tradicional Sem Glúten",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 266.0,
-    "pt": 2.2,
-    "cb": 54.0,
-    "g": 4.6,
-    "id": "off:7896283006142",
-    "barcode": "7896283006142",
-    "brand": "Jasmine",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896283006142",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 50g",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1772991043.0,
-    "fb": 2.0,
-    "sugars": 2.2,
-    "saturated": 2.0
   },
   {
     "n": "Pão De Forma Inhame Sem Glúten Zero Lactose Grani Amici Ancestrale Pacote 420g",
@@ -143777,36 +142400,6 @@
     "sodiumMg": 376.0,
     "ironMg": 0.0,
     "cholesterolMg": 0.0
-  },
-  {
-    "n": "Pão de Fôrma Sem Açúcar - Baldini - 350g",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 226.0,
-    "pt": 11.0,
-    "cb": 42.0,
-    "g": 1.6,
-    "id": "off:7898226340375",
-    "barcode": "7898226340375",
-    "brand": "Baldini",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898226340375",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 50g",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775135220.0,
-    "fb": 7.2,
-    "saturated": 0.6
   },
   {
     "n": "Pão de Fôrma - Sem Açúcares, 12 Grãos, Fonte de Fibras, Zero Colesterol - Plusvita - 350g",
@@ -145065,38 +143658,6 @@
     "sourceUpdatedAt": 1775138514.0
   },
   {
-    "n": "Pão Integral Sem Casca Wickbold Pacote 450g",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 238.0,
-    "pt": 10.0,
-    "cb": 44.0,
-    "g": 2.4,
-    "id": "off:7896066305622",
-    "barcode": "7896066305622",
-    "brand": "WICKBOLD",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896066305622",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 50 g",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1787829175.0,
-    "fb": 6.2,
-    "sugars": 7.8,
-    "saturated": 0.4,
-    "sodiumMg": 344.0
-  },
-  {
     "n": "Pão Integral Sementes Pinheirense Pacote 400g",
     "c": "Cereais, pães e massas",
     "p": "100 g",
@@ -145180,38 +143741,6 @@
     "sugars": 1.0,
     "saturated": 0.0,
     "sodiumMg": 400.0
-  },
-  {
-    "n": "Pão intergral",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 248.0,
-    "pt": 10.8,
-    "cb": 46.0,
-    "g": 2.2,
-    "id": "off:7896002300148",
-    "barcode": "7896002300148",
-    "brand": "Bimbo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896002300148",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 50 g",
-        "amount": 50.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1789038137.0,
-    "fb": 6.2,
-    "sugars": 8.2,
-    "saturated": 0.4,
-    "sodiumMg": 334.0
   },
   {
     "n": "Pão Italiano Filão Basilicata Pacote 400g",
@@ -145614,38 +144143,6 @@
     "saturated": 0.3,
     "sodiumMg": 488.0,
     "ironMg": 0.0
-  },
-  {
-    "n": "Pão Sovado Panco Pacote 500g",
-    "c": "Cereais, pães e massas",
-    "p": "100 g",
-    "k": 312.0,
-    "pt": 10.0,
-    "cb": 60.0,
-    "g": 3.6,
-    "id": "off:7891203010506",
-    "barcode": "7891203010506",
-    "brand": "PANCO",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891203010506",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1779886297.0,
-    "fb": 2.5,
-    "sugars": 14.0,
-    "saturated": 1.2,
-    "sodiumMg": 234.0
   },
   {
     "n": "Pão Tipo Sírio Tradicional Mini",
@@ -149664,37 +148161,6 @@
     "sourceUpdatedAt": 1775134466.0
   },
   {
-    "n": "Bisc Cereale Maçã e Uva-Passa",
-    "c": "Doces e snacks",
-    "p": "100 g",
-    "k": 423.33,
-    "pt": 10.0,
-    "cb": 60.0,
-    "g": 16.0,
-    "id": "off:7891962051079",
-    "barcode": "7891962051079",
-    "brand": "Bauducco",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891962051079",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (30 g)",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1790152925.0,
-    "sugars": 19.0,
-    "saturated": 5.3333,
-    "sodiumMg": 206.6667
-  },
-  {
     "n": "BISC COOKIES CHOC 100G/110G BAUDUCCO",
     "c": "Doces e snacks",
     "p": "100 g",
@@ -149956,29 +148422,6 @@
     "saturated": 5.3333,
     "sodiumMg": 673.3333,
     "cholesterolMg": 0.0
-  },
-  {
-    "n": "Biscoito água E Sal Bauducco Levíssimo Pacote 200g",
-    "c": "Doces e snacks",
-    "p": "100 g",
-    "k": 450.0,
-    "pt": 12.0,
-    "cb": 63.333,
-    "g": 17.0,
-    "id": "off:7891962014999",
-    "barcode": "7891962014999",
-    "brand": "BAUDUCCO",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891962014999",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134586.0,
-    "fb": 4.0,
-    "saturated": 6.6667,
-    "sodiumMg": 17333.3333
   },
   {
     "n": "Biscoito amanteigado sabor coco",
@@ -153412,42 +151855,6 @@
     "sugars": 56.0,
     "saturated": 18.0,
     "sodiumMg": 92.0
-  },
-  {
-    "n": "Chocolate Ao Leite Com Amendoim",
-    "c": "Doces e snacks",
-    "p": "100 g",
-    "k": 554.0,
-    "pt": 9.1,
-    "cb": 51.0,
-    "g": 34.0,
-    "id": "off:7899970402883",
-    "barcode": "7899970402883",
-    "brand": "Hershey's, Hersheys",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7899970402883",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 fila (15 g)",
-        "amount": 15.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1773768374.0,
-    "fb": 3.7,
-    "sugars": 47.0,
-    "saturated": 15.0,
-    "sodiumMg": 84000.0,
-    "calciumMg": 75.9535,
-    "ironMg": 0.4378,
-    "potassiumMg": 250.0882,
-    "cholesterolMg": 2.0
   },
   {
     "n": "Chocolate Ao Leite Com Castanha De Caju Garoto Pacote 80g",
@@ -160078,38 +158485,6 @@
     "sodiumMg": 428.0
   },
   {
-    "n": "Pringles Cheddar And Bacon",
-    "c": "Doces e snacks",
-    "p": "100 g",
-    "k": 130.0,
-    "pt": 1.1,
-    "cb": 15.0,
-    "g": 7.3,
-    "id": "off:7896004008998",
-    "barcode": "7896004008998",
-    "brand": "Pringles",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896004008998",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 25 g",
-        "amount": 25.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1780356326.0,
-    "fb": 0.8,
-    "sugars": 0.7,
-    "saturated": 3.3,
-    "sodiumMg": 112.0
-  },
-  {
     "n": "Pringles churrasco",
     "c": "Doces e snacks",
     "p": "100 g",
@@ -162095,42 +160470,6 @@
     "sugars": 52.0,
     "saturated": 18.4,
     "sodiumMg": 112.0
-  },
-  {
-    "n": "Talento Dark 50% Cacau Café",
-    "c": "Doces e snacks",
-    "p": "100 g",
-    "k": 515.15,
-    "pt": 6.061,
-    "cb": 63.636,
-    "g": 30.303,
-    "id": "off:7891008119831",
-    "barcode": "7891008119831",
-    "brand": "Garoto,Talento",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891008119831",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 4 pieces 33 g",
-        "amount": 33.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775136415.0,
-    "fb": 6.0606,
-    "sugars": 54.5455,
-    "saturated": 18.1818,
-    "sodiumMg": 45.4545,
-    "calciumMg": 30.303,
-    "ironMg": 130.303,
-    "potassiumMg": 424.2424,
-    "cholesterolMg": 0.0
   },
   {
     "n": "Talento Dark 50% Cacau Menta",
@@ -164451,42 +162790,6 @@
     "sodiumMg": 0.0
   },
   {
-    "n": "Cebola caramelizada",
-    "c": "Frutas e vegetais",
-    "p": "100 g",
-    "k": 71.0,
-    "pt": 0.4,
-    "cb": 14.0,
-    "g": 1.8,
-    "id": "off:7898666241560",
-    "barcode": "7898666241560",
-    "brand": "Cajeta",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898666241560",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 35g",
-        "amount": 35.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134457.0,
-    "fb": 0.5,
-    "sugars": 0.0005,
-    "saturated": 1.2,
-    "sodiumMg": 531.368,
-    "calciumMg": 24.9998,
-    "ironMg": 1911.806,
-    "potassiumMg": 189.9983,
-    "cholesterolMg": 0.0005
-  },
-  {
     "n": "Champignon",
     "c": "Frutas e vegetais",
     "p": "100 g",
@@ -164745,42 +163048,6 @@
     "calciumMg": 14.0,
     "ironMg": 2.43,
     "potassiumMg": 356.0,
-    "cholesterolMg": 0.0
-  },
-  {
-    "n": "Coco ralado úmido",
-    "c": "Frutas e vegetais",
-    "p": "100 g",
-    "k": 433.33,
-    "pt": 1.667,
-    "cb": 64.167,
-    "g": 16.667,
-    "id": "off:7896028030661",
-    "barcode": "7896028030661",
-    "brand": "Menina",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896028030661",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 12 g",
-        "amount": 12.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1773530545.0,
-    "fb": 0.0,
-    "sugars": 60.8333,
-    "saturated": 15.8333,
-    "sodiumMg": 60.0,
-    "calciumMg": 13.5563,
-    "ironMg": 2.3427,
-    "potassiumMg": 343.2524,
     "cholesterolMg": 0.0
   },
   {
@@ -167105,37 +165372,6 @@
     "fb": 0.0,
     "saturated": 0.0,
     "sodiumMg": 3.3867
-  },
-  {
-    "n": "Natural Whey Maracujá",
-    "c": "Frutas e vegetais",
-    "p": "100 g",
-    "k": 80.0,
-    "pt": 8.3,
-    "cb": 11.039,
-    "g": 0.0,
-    "id": "off:7898205925401",
-    "barcode": "7898205925401",
-    "brand": "Verde Campo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898205925401",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 140g",
-        "amount": 140.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1781443315.0,
-    "fb": 0.5,
-    "sugars": 9.8,
-    "sodiumMg": 32400.0
   },
   {
     "n": "Ovinhos de amendoim",
@@ -169706,39 +167942,6 @@
     "sodiumMg": 0.0
   },
   {
-    "n": "Composto Lácteo Baunilha Nutren Active Lata 400g",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 361.9,
-    "pt": 23.81,
-    "cb": 57.143,
-    "g": 2.857,
-    "id": "off:7891000234006",
-    "barcode": "7891000234006",
-    "brand": "NESTLE",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000234006",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 31,5g",
-        "amount": 31.5,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775135534.0,
-    "fb": 5.3968,
-    "sugars": 38.0952,
-    "saturated": 1.5873,
-    "calciumMg": 1031.746,
-    "ironMg": 12.381
-  },
-  {
     "n": "Composto Lácteo Ninho Fases 1 Lata 800g",
     "c": "Laticínios e alternativas",
     "p": "100 g",
@@ -170115,42 +168318,6 @@
     "sugars": 0.999,
     "saturated": 12.0,
     "sodiumMg": 383.0
-  },
-  {
-    "n": "Cream Cheese Light Polenghi Pote 150g",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 193.33,
-    "pt": 7.333,
-    "cb": 2.667,
-    "g": 17.0,
-    "id": "off:7891143012592",
-    "barcode": "7891143012592",
-    "brand": "POLENGUINHO, Polenghi, Savencia",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891143012592",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30 g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1782854312.0,
-    "fb": 0.0,
-    "sugars": 2.3333,
-    "saturated": 11.0,
-    "sodiumMg": 333.3333,
-    "calciumMg": 134.5291,
-    "ironMg": 0.0839,
-    "potassiumMg": 171.7672,
-    "cholesterolMg": 40.0
   },
   {
     "n": "Cream Cheese Philadelphia Pote 150g",
@@ -171476,38 +169643,6 @@
     "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
     "sourceUpdatedAt": 1775137263.0,
     "sugars": 2.5,
-    "saturated": 7.0,
-    "sodiumMg": 270.0
-  },
-  {
-    "n": "CREME DE RICOTA LIGHT O ORIGINAL",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 146.67,
-    "pt": 9.0,
-    "cb": 2.667,
-    "g": 11.0,
-    "id": "off:7896030521683",
-    "barcode": "7896030521683",
-    "brand": "TIROLEZ",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896030521683",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30 g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1780963769.0,
-    "fb": 0.0,
-    "sugars": 2.6667,
     "saturated": 7.0,
     "sodiumMg": 270.0
   },
@@ -172960,42 +171095,6 @@
     "sugars": 11.1111,
     "saturated": 1.4444,
     "sodiumMg": 180.0
-  },
-  {
-    "n": "Iogurte Grego Morango",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 113.33,
-    "pt": 4.778,
-    "cb": 13.333,
-    "g": 4.444,
-    "id": "off:7891000360361",
-    "barcode": "7891000360361",
-    "brand": "LEVE MAIS",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000360361",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 90 g",
-        "amount": 90.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1792124810.0,
-    "fb": 0.0396,
-    "sugars": 13.3333,
-    "saturated": 2.4444,
-    "sodiumMg": 76.6667,
-    "calciumMg": 142.3715,
-    "ironMg": 0.0231,
-    "potassiumMg": 189.8394,
-    "cholesterolMg": 16.2079
   },
   {
     "n": "Iogurte Grego sabor Morango",
@@ -174845,38 +172944,6 @@
     "ironMg": 1.52
   },
   {
-    "n": "Iogurte zero",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 26.0,
-    "pt": 2.8,
-    "cb": 4.1,
-    "g": 0.0,
-    "id": "off:7891097103643",
-    "barcode": "7891097103643",
-    "brand": "Batavo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891097103643",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 portion (100 g)",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1783878660.0,
-    "fb": 0.0,
-    "sugars": 3.6,
-    "sodiumMg": 45.0,
-    "calciumMg": 106.0
-  },
-  {
     "n": "Iorgute Batavinho Morango Bob Esponja Batavo",
     "c": "Laticínios e alternativas",
     "p": "100 g",
@@ -175738,6 +173805,39 @@
     "cholesterolMg": 71.9963
   },
   {
+    "n": "Leite em pó",
+    "c": "Laticínios e alternativas",
+    "p": "100 g",
+    "k": 63.0,
+    "pt": 3.5,
+    "cb": 5.0,
+    "g": 3.3,
+    "id": "off:7898215152422",
+    "barcode": "7898215152422",
+    "brand": "Piracanjuba",
+    "source": "Open Food Facts",
+    "sourceUrl": "https://world.openfoodfacts.org/product/7898215152422",
+    "baseAmount": 100,
+    "baseUnit": "g",
+    "measures": [
+      {
+        "id": "rotulo",
+        "label": "Porção do rótulo: 25 g",
+        "amount": 25.0,
+        "unit": "g",
+        "source": "Open Food Facts — porção informada no rótulo"
+      }
+    ],
+    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
+    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
+    "sourceUpdatedAt": 1775139161.0,
+    "fb": 0.0,
+    "sugars": 5.0,
+    "saturated": 2.1,
+    "sodiumMg": 62.0,
+    "calciumMg": 114.0
+  },
+  {
     "n": "Leite em pó desnatado",
     "c": "Laticínios e alternativas",
     "p": "100 g",
@@ -175806,40 +173906,6 @@
     "ironMg": 0.0591,
     "potassiumMg": 309.1016,
     "cholesterolMg": 4.922
-  },
-  {
-    "n": "Leite em Pó Desnatado Instantâneo",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 350.0,
-    "pt": 35.0,
-    "cb": 55.0,
-    "g": 0.0,
-    "id": "off:7896048706041",
-    "barcode": "7896048706041",
-    "brand": "Lá Sereníssima",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896048706041",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 20 g",
-        "amount": 20.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1790937067.0,
-    "fb": 0.0,
-    "sugars": 55.0,
-    "saturated": 0.0,
-    "sodiumMg": 250.0,
-    "calciumMg": 630.0,
-    "cholesterolMg": 0.0
   },
   {
     "n": "leite em pó desnatado instantâneo",
@@ -177024,37 +175090,6 @@
     "saturated": 1.0,
     "sodiumMg": 76.0,
     "calciumMg": 110.0
-  },
-  {
-    "n": "LEITE UHT DESNATADO",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 31.0,
-    "pt": 3.0,
-    "cb": 4.7,
-    "g": 0.0,
-    "id": "off:7896034610031",
-    "barcode": "7896034610031",
-    "brand": "parmalat",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896034610031",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (100 g)",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1777943380.0,
-    "sugars": 4.7,
-    "sodiumMg": 65.0,
-    "calciumMg": 105.0
   },
   {
     "n": "Leite Uht Desnatado Colônia Holandesa Caixa 1l",
@@ -178770,41 +176805,6 @@
     "sugars": 0.0,
     "saturated": 13.0,
     "sodiumMg": 0.0
-  },
-  {
-    "n": "Margarina catupiry manteiga Extra com sal tablet",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 760.0,
-    "pt": 0.0,
-    "cb": 0.0,
-    "g": 84.0,
-    "id": "off:7896353302303",
-    "barcode": "7896353302303",
-    "brand": "CATUPIRY",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896353302303",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 10g",
-        "amount": 10.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1787318067.0,
-    "fb": 0.0,
-    "sugars": 0.0,
-    "saturated": 52.0,
-    "calciumMg": 65.9878,
-    "ironMg": 0.1432,
-    "potassiumMg": 84.2701,
-    "cholesterolMg": 69.2818
   },
   {
     "n": "Mezcla Láctea Condensada Azucarada",
@@ -180903,47 +178903,6 @@
     "cholesterolMg": 73.3333
   },
   {
-    "n": "Queijo Mussarela Reduzido em Gorduras Totais",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 263.33,
-    "pt": 28.0,
-    "cb": 1.333,
-    "g": 16.0,
-    "id": "off:7896030520181",
-    "barcode": "7896030520181",
-    "brand": "Tirolez",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7896030520181",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 2 Fatias (30 g)",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      },
-      {
-        "id": "rotulo-fatia",
-        "label": "Fatia (rótulo)",
-        "amount": 15.0,
-        "unit": "g",
-        "source": "Open Food Facts — equivalência explícita do rótulo: 2 Fatias (30 g)"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1791985632.0,
-    "sugars": 1.3333,
-    "saturated": 10.0,
-    "sodiumMg": 450.0,
-    "calciumMg": 2966.6667,
-    "potassiumMg": 505.67,
-    "cholesterolMg": 8.0533
-  },
-  {
     "n": "Queijo Parmesão Fracionado",
     "c": "Laticínios e alternativas",
     "p": "100 g",
@@ -181989,37 +179948,6 @@
     "cholesterolMg": 44.0
   },
   {
-    "n": "requeijão",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 143.33,
-    "pt": 12.0,
-    "cb": 4.333,
-    "g": 8.667,
-    "id": "off:7891000084663",
-    "barcode": "7891000084663",
-    "brand": "Nestlé",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000084663",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 serving (30 g)",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1791826757.0,
-    "sugars": 4.0,
-    "saturated": 4.6667,
-    "sodiumMg": 540.0
-  },
-  {
     "n": "Requeijão Cremoso",
     "c": "Laticínios e alternativas",
     "p": "100 g",
@@ -182932,37 +180860,6 @@
     "saturated": 7.0,
     "sodiumMg": 523.3333,
     "cholesterolMg": 40.0
-  },
-  {
-    "n": "Requeijão Light - Batavo",
-    "c": "Laticínios e alternativas",
-    "p": "100 g",
-    "k": 180.0,
-    "pt": 13.333,
-    "cb": 1.333,
-    "g": 13.333,
-    "id": "off:7891097104794",
-    "barcode": "7891097104794",
-    "brand": "Batavo",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891097104794",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 30 g",
-        "amount": 30.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1787011762.0,
-    "sugars": 1.3333,
-    "saturated": 6.6667,
-    "sodiumMg": 540.0
   },
   {
     "n": "Requeijão Light Zero Lactose Président Copo 200g",
@@ -185466,38 +183363,6 @@
     "sodiumMg": 110.0
   },
   {
-    "n": "Fibermais Limão 300g",
-    "c": "Suplementos",
-    "p": "100 g",
-    "k": 31.0,
-    "pt": 2.9,
-    "cb": 1.3,
-    "g": 0.0,
-    "id": "off:7891000256350",
-    "barcode": "7891000256350",
-    "brand": "Nedtle",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000256350",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 6.0g",
-        "amount": 6.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1792287243.0,
-    "fb": 7.2,
-    "sugars": 0.3,
-    "saturated": 0.0,
-    "sodiumMg": 6800.0
-  },
-  {
     "n": "Fresh Whey Chocolate e Avelã",
     "c": "Suplementos",
     "p": "100 g",
@@ -187162,38 +185027,6 @@
     "sodiumMg": 400.0
   },
   {
-    "n": "Colorífico Pó Kitano",
-    "c": "Óleos, molhos e condimentos",
-    "p": "100 g",
-    "k": 376.0,
-    "pt": 5.1,
-    "cb": 82.0,
-    "g": 3.1,
-    "id": "off:7891095154104",
-    "barcode": "7891095154104",
-    "brand": "Kitano",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891095154104",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 100g",
-        "amount": 100.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1782839858.0,
-    "fb": 2.2,
-    "sugars": 0.0,
-    "saturated": 0.6,
-    "sodiumMg": 12400.0
-  },
-  {
     "n": "Creme Crocante OVO",
     "c": "Óleos, molhos e condimentos",
     "p": "100 g",
@@ -188480,38 +186313,6 @@
     "cholesterolMg": 0.0
   },
   {
-    "n": "grill",
-    "c": "Óleos, molhos e condimentos",
-    "p": "100 g",
-    "k": 162.0,
-    "pt": 7.1,
-    "cb": 29.0,
-    "g": 1.6,
-    "id": "off:7891000502204",
-    "barcode": "7891000502204",
-    "brand": "Maggi,Nestlé",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7891000502204",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 colher de chá (5 g)",
-        "amount": 5.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775134367.0,
-    "fb": 1.8,
-    "sugars": 1.5,
-    "saturated": 0.3,
-    "sodiumMg": 21122.0
-  },
-  {
     "n": "HEINZ Maionese 390 g",
     "c": "Óleos, molhos e condimentos",
     "p": "100 g",
@@ -189638,38 +187439,6 @@
     "sugars": 2.5,
     "saturated": 4.8,
     "sodiumMg": 596.0
-  },
-  {
-    "n": "Maionese Light",
-    "c": "Óleos, molhos e condimentos",
-    "p": "100 g",
-    "k": 175.0,
-    "pt": 0.0,
-    "cb": 9.167,
-    "g": 15.0,
-    "id": "off:7894000050720",
-    "barcode": "7894000050720",
-    "brand": "Hellmann's",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7894000050720",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 1 Tbsp (12 g)",
-        "amount": 12.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1786294186.0,
-    "fb": 0.0,
-    "sugars": 3.3333,
-    "saturated": 2.5,
-    "sodiumMg": 600.0
   },
   {
     "n": "Maionese (Mayonnaise)",
@@ -192340,38 +190109,6 @@
     "fb": 3.0,
     "sugars": 22.0,
     "sodiumMg": 1770.0
-  },
-  {
-    "n": "Molho Pesto",
-    "c": "Óleos, molhos e condimentos",
-    "p": "100 g",
-    "k": 277.14,
-    "pt": 4.857,
-    "cb": 1.714,
-    "g": 24.0,
-    "id": "off:7898666240556",
-    "barcode": "7898666240556",
-    "brand": "Cajeta",
-    "source": "Open Food Facts",
-    "sourceUrl": "https://world.openfoodfacts.org/product/7898666240556",
-    "baseAmount": 100,
-    "baseUnit": "g",
-    "measures": [
-      {
-        "id": "rotulo",
-        "label": "Porção do rótulo: 35g",
-        "amount": 35.0,
-        "unit": "g",
-        "source": "Open Food Facts — porção informada no rótulo"
-      }
-    ],
-    "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-    "sourceUpdatedAt": 1775135160.0,
-    "fb": 0.5714,
-    "sugars": 0.5714,
-    "saturated": 5.4286,
-    "sodiumMg": 7547.4286
   },
   {
     "n": "Mostarda Amarela Etti Squeeze 190g",

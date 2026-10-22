@@ -3,46 +3,76 @@
   "sourceUrl": "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz",
   "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
   "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
-  "retrievedAt": "2026-10-22T19:24:36.285342+00:00",
+  "retrievedAt": "2026-10-22T19:32:26.658184+00:00",
   "license": "ODbL 1.0; individual contents DbCL 1.0",
   "licenseUrl": "https://opendatacommons.org/licenses/odbl/1.0/",
   "attribution": "Dados: Open Food Facts, sob ODbL. Catálogo derivado disponível para download sob a mesma licença.",
   "inputRows": 12000,
-  "acceptedRows": 6728,
+  "acceptedRows": 6657,
   "rejectedRows": {
     "non_descriptive_name": 6,
     "physical_limits": 113,
     "ambiguous_reference_unit": 1563,
     "invalid_name": 71,
     "inconsistent_energy_macros": 306,
+    "micro_sodium_above_screening_limit": 41,
     "nutrition_quality_flag": 1542,
     "invalid_gtin": 10,
     "missing_or_invalid_brand": 1388,
+    "micro_salt_sodium_conflict": 29,
     "sugars_exceed_carbohydrates": 19,
     "manual_quarantine_unresolved_serving_reference": 2,
     "manual_quarantine_brand_name_conflict": 5,
+    "micro_iron_above_screening_limit": 4,
+    "micro_cholesterol_above_screening_limit": 1,
+    "micro_calcium_above_screening_limit": 2,
     "saturated_exceeds_total_fat": 1,
-    "duplicate_product_brand": 246
+    "duplicate_product_brand": 240
   },
   "selectionScope": "Produtos listados para o Brasil com códigos GTIN iniciados em 789 ou 790; recorte para priorizar produtos nacionais. Não representa todos os produtos vendidos no Brasil.",
   "units": {
-    "g": 6530,
-    "ml": 198
+    "g": 6465,
+    "ml": 192
   },
   "categories": {
-    "Alimentos industrializados": 4339,
-    "Bebidas": 255,
-    "Carnes, pescados e ovos": 78,
-    "Cereais, pães e massas": 606,
-    "Doces e snacks": 501,
-    "Frutas e vegetais": 142,
-    "Laticínios e alternativas": 496,
+    "Alimentos industrializados": 4310,
+    "Bebidas": 249,
+    "Carnes, pescados e ovos": 76,
+    "Cereais, pães e massas": 595,
+    "Doces e snacks": 496,
+    "Frutas e vegetais": 139,
+    "Laticínios e alternativas": 486,
     "Oleaginosas e sementes": 27,
-    "Suplementos": 44,
-    "Óleos, molhos e condimentos": 240
+    "Suplementos": 43,
+    "Óleos, molhos e condimentos": 236
   },
-  "withLabeledServing": 5070,
-  "sha256": "5602fca91ae9976766646cc20ca064dbabdc455db5b37aae61312642a96f4593",
+  "withLabeledServing": 5001,
+  "micronutrientQuality": {
+    "excludedRows": 77,
+    "policy": {
+      "purpose": "Conservative quarantine for label review; thresholds are data-quality screening limits, not clinical intake limits.",
+      "sourceUnits": "Only numeric OFF *_100g values are used: nutrient mass in g per 100 g/100 ml. No percentages or daily values are inferred.",
+      "sodiumMg": {
+        "beveragePer100ml": 500,
+        "ordinaryFoodPer100": 5000,
+        "identifiedSaltOrSeasoningPer100": 40000
+      },
+      "upperMgPer100": {
+        "calcium": 5000,
+        "iron": 100,
+        "potassium": 10000,
+        "cholesterol": 3000
+      },
+      "saltSodiumConsistency": "salt = sodium * 2.5; absolute tolerance 0.1 g or relative tolerance 10%, whichever is greater.",
+      "massBalance": "For base g only, protein + carbohydrates + fat + sodium + calcium + iron + potassium <= 105 g (5 g rounding margin). Never applied to ml.",
+      "cholesterolFatConsistency": "Cholesterol mass cannot exceed total fat mass by more than 20 mg (rounding margin).",
+      "action": "Exclude the whole record; never rescale, replace or silently omit a suspect nutrient.",
+      "saltReference": "https://github.com/openfoodfacts/data-imports/blob/master/docs/data-formats.md"
+    },
+    "auditFile": "off-quality-exclusions.json",
+    "auditSha256": "958a58adb22da67777a258fdd21be661ed7cb4ea465fb9536679733febc05e52"
+  },
+  "sha256": "7a09933442c65cc12d62f7b9419c89a336609608410f734dabb3b72d46a5f380",
   "qualityNote": "Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes.",
   "unitPolicy": "Somente unidades explícitas g/ml em porção ou quantidade do produto, rejeitando conflitos; ml exige também categoria líquida inequívoca, sem pós, sorvetes ou congelados. Não converte massa em volume. Porções preservam texto e quantidade de rótulo; medidas individuais somente quando a contagem é explícita e simples."
 }

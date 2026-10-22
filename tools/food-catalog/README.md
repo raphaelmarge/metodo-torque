@@ -24,6 +24,8 @@ Não invente valores para elevar a contagem nem associe medidas por nome aproxim
 Após revisão, copie `off-selected.json` para `nutri/data/openfoodfacts.json`,
 `off-manifest.json` para `nutri/data/openfoodfacts-import-report.json` e os
 metadados da extração para `nutri/data/openfoodfacts-source-metadata.json`.
+Copie também `off-quality-exclusions.json` para `nutri/data/` para conservar
+os motivos e valores dos registros excluídos pela triagem de micronutrientes.
 Compile e valide:
 
 ```sh

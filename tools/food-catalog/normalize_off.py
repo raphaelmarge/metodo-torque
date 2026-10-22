@@ -115,7 +115,52 @@ def normalized_base(p):
         if any(re.search(r'powder|ice-cream|frozen|ice-pop',x) for x in p.get('categories_tags') or []): return None
     return basis
 
+MICRONUTRIENT_POLICY={
+    'purpose':'Conservative quarantine for label review; thresholds are data-quality screening limits, not clinical intake limits.',
+    'sourceUnits':'Only numeric OFF *_100g values are used: nutrient mass in g per 100 g/100 ml. No percentages or daily values are inferred.',
+    'sodiumMg':{'beveragePer100ml':500,'ordinaryFoodPer100':5000,'identifiedSaltOrSeasoningPer100':40000},
+    'upperMgPer100':{'calcium':5000,'iron':100,'potassium':10000,'cholesterol':3000},
+    'saltSodiumConsistency':'salt = sodium * 2.5; absolute tolerance 0.1 g or relative tolerance 10%, whichever is greater.',
+    'massBalance':'For base g only, protein + carbohydrates + fat + sodium + calcium + iron + potassium <= 105 g (5 g rounding margin). Never applied to ml.',
+    'cholesterolFatConsistency':'Cholesterol mass cannot exceed total fat mass by more than 20 mg (rounding margin).',
+    'action':'Exclude the whole record; never rescale, replace or silently omit a suspect nutrient.',
+    'saltReference':'https://github.com/openfoodfacts/data-imports/blob/master/docs/data-formats.md',
+}
+
+def micronutrient_issues(p, ns, basis, name):
+    """Detect suspect source values without guessing their intended units."""
+    issues=[]
+    present=set(p.get('categories_tags') or [])
+    salty_tags={'en:salts','en:table-salts','en:seasonings','en:bouillon-cubes','en:stock-cubes','en:broths','en:soy-sauces'}
+    salty=bool(present.intersection(salty_tags)) or bool(re.search(r'^(?:sal\b|tempero\b|caldo\b|fondor\b|shoyu\b)|\bmolho (?:de soja|ingles)\b',norm(name)))
+    beverage=basis=='ml' and 'en:beverages' in present
+    limits={'sodium':(.5 if beverage else 40 if salty else 5),'calcium':5,'iron':.1,'potassium':10,'cholesterol':3}
+    for nutrient,limit in limits.items():
+        value=ns.get(nutrient)
+        if value is None: continue
+        if not finite(value) or value<0:
+            issues.append({'rule':'invalid_'+nutrient,'reportedGPer100':value})
+        elif value>limit:
+            issues.append({'rule':nutrient+'_above_screening_limit','reportedGPer100':value,'limitGPer100':limit})
+    sodium,salt=ns.get('sodium'),ns.get('salt')
+    if finite(sodium) and finite(salt) and sodium>=0 and salt>=0:
+        expected=sodium*2.5
+        if abs(salt-expected)>max(.1,.1*max(salt,expected)):
+            issues.append({'rule':'salt_sodium_conflict','sodiumGPer100':sodium,'saltGPer100':salt,'expectedSaltGPer100':expected})
+    if basis=='g':
+        # Minerals are disjoint from these macronutrients. Do not add salt
+        # (it overlaps sodium) or cholesterol (it is part of total fat).
+        values=[ns.get(k) for k in ('proteins','carbohydrates','fat','sodium','calcium','iron','potassium')]
+        total=sum(v for v in values if finite(v) and v>=0)
+        if total>105:
+            issues.append({'rule':'mass_balance_above_100g','reportedMinimumMassG':total,'limitWithRoundingG':105})
+    cholesterol,fat=ns.get('cholesterol'),ns.get('fat')
+    if finite(cholesterol) and finite(fat) and cholesterol>fat+.02:
+        issues.append({'rule':'cholesterol_exceeds_total_fat','cholesterolGPer100':cholesterol,'fatGPer100':fat})
+    return issues
+
 rejections=collections.Counter()
+quality_exclusions=[]
 accepted=[]
 scanned=0
 for line in INPUT.open(encoding='utf8'):
@@ -152,6 +197,13 @@ for line in INPUT.open(encoding='utf8'):
         if not reason and finite(sugar) and (sugar<0 or sugar>carbs+max(.5,carbs*.02)): reason='sugars_exceed_carbohydrates'
         if not reason and finite(saturated) and (saturated<0 or saturated>fat+max(.5,fat*.02)): reason='saturated_exceeds_total_fat'
         if not reason and finite(fiber) and not 0<=fiber<=100: reason='invalid_fiber'
+        if not reason:
+            issues=micronutrient_issues(p,ns,basis,name)
+            if issues:
+                reason='micro_'+issues[0]['rule']
+                quality_exclusions.append({'id':'off:'+code,'barcode':code,'name':name,'brand':brand,'baseUnit':basis,
+                    'sourceUrl':'https://world.openfoodfacts.org/product/'+code,'issues':issues,
+                    'reportedGPer100':{k:ns[k] for k in ('proteins','carbohydrates','fat','salt','sodium','calcium','iron','potassium','cholesterol') if k in ns}})
     if reason:
         rejections[reason]+=1
         continue
@@ -183,6 +235,11 @@ for item in accepted:
 unique.sort(key=lambda x:(x['c'],norm(x['n']),norm(x['brand'])))
 outfile=ROOT/'off-selected.json'
 outfile.write_text(json.dumps(unique,ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
+quality_file=ROOT/'off-quality-exclusions.json'
+quality_audit={'sourceVersion':SOURCE_VERSION,'sourceDate':SOURCE_DATE,'policy':MICRONUTRIENT_POLICY,
+    'excludedRows':len(quality_exclusions),'reasonCounts':dict(collections.Counter(i['rule'] for q in quality_exclusions for i in q['issues'])),
+    'records':quality_exclusions}
+quality_file.write_text(json.dumps(quality_audit,ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
 manifest={'source':'Open Food Facts','sourceUrl':SOURCE_URL,'sourceVersion':SOURCE_VERSION,'sourceDate':SOURCE_DATE,
           'retrievedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'license':'ODbL 1.0; individual contents DbCL 1.0',
           'licenseUrl':'https://opendatacommons.org/licenses/odbl/1.0/',
@@ -192,6 +249,7 @@ manifest={'source':'Open Food Facts','sourceUrl':SOURCE_URL,'sourceVersion':SOUR
           'units':dict(collections.Counter(x['baseUnit'] for x in unique)),
           'categories':dict(collections.Counter(x['c'] for x in unique)),
           'withLabeledServing':sum(bool(x['measures']) for x in unique),
+          'micronutrientQuality':{'excludedRows':len(quality_exclusions),'policy':MICRONUTRIENT_POLICY,'auditFile':quality_file.name,'auditSha256':hashlib.sha256(quality_file.read_bytes()).hexdigest()},
           'sha256':hashlib.sha256(outfile.read_bytes()).hexdigest(),
           'qualityNote':'Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes.',
           'unitPolicy':'Somente unidades explícitas g/ml em porção ou quantidade do produto, rejeitando conflitos; ml exige também categoria líquida inequívoca, sem pós, sorvetes ou congelados. Não converte massa em volume. Porções preservam texto e quantidade de rótulo; medidas individuais somente quando a contagem é explícita e simples.'}

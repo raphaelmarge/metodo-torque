@@ -1,6 +1,6 @@
 {
   "version": "2026-10-22",
-  "records": 7272,
+  "records": 7201,
   "sources": [
     {
       "file": "taco.json",
@@ -9,15 +9,15 @@
     },
     {
       "file": "openfoodfacts.json",
-      "records": 6728,
-      "sha256": "5602fca91ae9976766646cc20ca064dbabdc455db5b37aae61312642a96f4593"
+      "records": 6657,
+      "sha256": "7a09933442c65cc12d62f7b9419c89a336609608410f734dabb3b72d46a5f380"
     }
   ],
   "referenceUnits": {
-    "g": 7074,
-    "ml": 198
+    "g": 7009,
+    "ml": 192
   },
-  "withHouseholdOrLabelMeasures": 5086,
+  "withHouseholdOrLabelMeasures": 5017,
   "categories": [
     "Alimentos industrializados",
     "Alimentos preparados",

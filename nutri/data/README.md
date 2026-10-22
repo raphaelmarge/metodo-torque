@@ -39,12 +39,16 @@ Consulte as [condições oficiais](https://openfoodfacts.github.io/openfoodfacts
 
 Origem: [CSV oficial do Open Food Facts](https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz),
 versão de 22/10/2026. Foram selecionados 12.000 candidatos brasileiros com
-prefixo GTIN 789/790; após os filtros, 6.728 produtos integram este recorte.
+prefixo GTIN 789/790; após os filtros, 6.657 produtos integram este recorte.
 O relatório `openfoodfacts-import-report.json` registra a versão, critérios,
 quantidades excluídas e checksum do recorte. São produtos identificados na fonte
 como vendidos no Brasil, com código de barras, marca e quatro macronutrientes
 completos, submetidos a filtros automáticos de coerência e duplicidade.
 O cadastro é colaborativo: isso não equivale a uma revisão manual de cada rótulo.
+Registros com micronutrientes suspeitos foram excluídos integralmente, sem tentar
+adivinhar a unidade ou corrigir o valor. O [relatório de exclusões](off-quality-exclusions.json)
+expõe os valores recebidos, critérios de triagem e identificadores. Os limites
+servem para exigir revisão da fonte; não são recomendações de consumo.
 
 As chaves `*_100g` da fonte significam 100 g ou 100 ml, conforme o alimento.
 Preservamos apenas referências cuja unidade é identificável, sem assumir que
@@ -66,4 +70,4 @@ equivalência conhecida conservam a porção cadastrada.
 
 Reprodução da importação: `tools/food-catalog/`. O total efetivamente distribuído
 e os checksums estão em [catalog-manifest.json](catalog-manifest.json).
-Esta edição reúne **7.272 alimentos**: 544 TACO e 6.728 Open Food Facts.
+Esta edição reúne **7.201 alimentos**: 544 TACO e 6.657 Open Food Facts.
