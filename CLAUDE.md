@@ -6,6 +6,25 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v868 — Experiência aprovada: acesso, rotina e evolução
+
+- `entrar.html` orienta aluno/profissional aos acessos já existentes. Convites,
+  login direto, recuperação e criação de conta mantêm seus caminhos.
+- No aluno, a composição aprovada substitui o topo full-bleed da v818 por
+  saudação separada e foto em card. Semana fica aberta; carrossel e retomada
+  permanecem canônicos. Alimentação continua na navegação principal.
+- Player mostra registros por série abertos, com edição explícita e navegação
+  fora da área rolável. Prescrição, checkpoint, conclusão e sincronização
+  continuam sob responsabilidade do executor existente.
+- Evolução resume dias com treino e cargas por período, incluindo carga zero
+  e excluindo anotações não concluídas/futuro. Medalhas e calendários continuam.
+- Personal reúne atalhos para vídeos privados, contato e revisão da prescrição;
+  assinatura destaca os prazos confirmados, sem inventar cartão ou próxima cobrança.
+- A atualização do diário alimentar preserva a digitação na despensa. O campo
+  confirma ao perder o foco; a troca de acesso limpa o formulário imediatamente.
+- Contrato e origem dos dados: `design/EXPERIENCIA-V868.md`. Verificar CI e Pages
+  antes de declarar a versão publicada.
+
 ## v867 — Acompanhamento do Personal e do aluno
 
 - Vídeos privados de execução com respostas por texto, desenho e áudio; versões

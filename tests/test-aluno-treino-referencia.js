@@ -42,7 +42,7 @@ function yesterday() { const d = new Date(); d.setDate(d.getDate() - 1); return 
     });
     ok(Math.abs(inputs.reps.top - inputs.kg.top) < 2 && inputs.reps.right <= inputs.kg.left, label + ': repetições e carga usam duas colunas, nessa ordem');
     ok(!await p.locator('#gRpe').isVisible() && await p.locator('#gRpe').inputValue() === '', label + ': esforço opcional começa recolhido e sem valor realizado inventado');
-    ok(await p.locator('#gTemplateGuidance').evaluate(node => !node.open) && await p.locator('#gTemplateRecords').evaluate(node => !node.open), label + ': detalhes e registros ficam disponíveis sem dominar a execução');
+    ok(await p.locator('#gTemplateGuidance').evaluate(node => !node.open) && await p.locator('#gTemplateRecords').evaluate(node => node.open && !node.closest('#gTemplateGuidance')), label + ': instruções ficam recolhidas e séries aparecem diretamente na execução aprovada');
     ok((await p.locator('#gTemplateRestPrescription').innerText()).includes('90'), label + ': descanso prescrito fica junto da confirmação');
     ok(await p.locator('#gSerie').evaluate(button => { const r = button.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.height >= 44; }), label + ': registrar série permanece alcançável');
     ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1 && document.getElementById('guiaBox').scrollWidth <= document.getElementById('guiaBox').clientWidth + 1), label + ': composição não cria rolagem horizontal');

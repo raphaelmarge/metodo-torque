@@ -22,7 +22,13 @@ let browser,checks=0;function ok(v,label){assert.ok(v,label);checks++;console.lo
   await p.goto(BASE+'/demo-personal.html');await p.locator('#btnDemo').click();await p.waitForURL(/personal.html/);
   await p.waitForFunction(()=>document.getElementById('ptFlowHoje')&&window.__PT_FLUXO__);
   ok(await p.locator('#ptFlowHoje').isVisible(),'Próxima melhor ação aparece dentro do Início');
-  ok(await p.locator('#ptFlowHoje').getByText('Próxima melhor ação').isVisible(),'Dashboard usa linguagem de fluxo, não módulo paralelo');
+  ok(await p.locator('#ptFlowHoje').getByText('Seu dia, organizado.').isVisible(),'Dashboard mantém a próxima ação no painel do dia aprovado');
+  ok(await p.locator('#ptFlowReviews .ptf-review-list button').count()===0,'Grupos fechados não montam listas de alunos fora da tela');
+  const videoStudents=await p.evaluate(()=>MTStore.read('ptStudio',{}).alunos.filter(a=>a.ativo!==false&&a.appTokenP).length);
+  await p.locator('[data-review="videos"]>summary').click();
+  await p.waitForFunction(n=>document.querySelectorAll('#ptFlowReviews [data-tecnica-aluno]').length===n,videoStudents);
+  ok(videoStudents>0&&await p.locator('#ptFlowReviews [data-tecnica-aluno]').count()===videoStudents,'Abrir Vídeos oferece a ação existente para todos os alunos publicados');
+  await p.locator('[data-review="videos"]>summary').click();
   await p.waitForFunction(()=>document.getElementById('ptProSuiteBtn'));
   ok(await p.getByRole('button',{name:'Central Pro',exact:true}).count()===1,'Fluxo diário mantém uma entrada própria para a Central Pro');
   await p.locator('#btnMenuPt').click();

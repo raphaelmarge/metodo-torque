@@ -25,6 +25,9 @@ const ok=(a,s)=>{assert.ok(a,s);checks++;console.log('OK '+s);};
  ok(await p.locator('#marcaForm').isVisible(),'editor no caminho normal da Personalização');
  eq(await p.locator('#marcaForm').evaluate(e=>e.closest('.ptf-pane').dataset.ptfPane),'marca','identidade na área de marca existente');
  eq(await p.locator('#marcaPreviewPrincipal').innerText(),'Cadastro original','prévia antiga não muda identidade');
+ // A rodada inicial da régua grava seu horário após cinco segundos; concluir
+ // essa inicialização antes de medir se a digitação altera o armazenamento.
+ await p.waitForFunction(()=>!!(MTStore.read('ptStudio',{}).config||{}).reguaRodouEm);
  const before=await p.evaluate(()=>localStorage.getItem('mtapp:ptStudio'));
  ok(!(await p.locator('#marcaMostrarSecundario').isChecked()),'segunda linha desligada por padrão');
  await p.locator('#marcaModo').selectOption('estudio');await p.locator('#marcaEstudio').fill('Studio Horizonte');await p.locator('#marcaProfissional').fill('Ana Silva');await p.locator('#marcaCurto').fill('Horizonte');await p.locator('#marcaSlogan').fill('Movimento com cuidado');
@@ -76,8 +79,15 @@ const ok=(a,s)=>{assert.ok(a,s);checks++;console.log('OK '+s);};
  eq(await student.evaluate(()=>window.__manApp.name),'Studio Horizonte','manifest público recebe a marca escolhida');
  eq(await student.evaluate(()=>window.__manApp.short_name),'Horizonte','manifest conserva o nome curto explícito');
  ok(await student.locator('#navApp').evaluate(e=>getComputedStyle(e,'::before').content.includes('Studio Horizonte')),'menu lateral de desktop usa a mesma marca');
- await student.evaluate(()=>document.documentElement.classList.add('claro'));
- ok(await student.locator('#heroTopo .al-brand-primary').evaluate(e=>getComputedStyle(e).color.includes('255, 255, 255')),'marca sobre foto continua legível no tema claro');
+ for(const theme of ['escuro','claro']){
+  await student.evaluate(t=>document.documentElement.classList.toggle('claro',t==='claro'),theme);
+  const contrasts=await student.evaluate(()=>{
+   const luminance=color=>{const rgb=color.match(/[\d.]+/g).slice(0,3).map(Number).map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;});return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
+   const bg=luminance(getComputedStyle(document.body).backgroundColor);
+   return [...document.querySelectorAll('#heroTopo .al-brand-primary,#heroTopo .al-brand-secondary,#heroTopo .al-brand-slogan')].map(e=>{const fg=luminance(getComputedStyle(e).color);return (Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05);});
+  });
+  ok(contrasts.length>=2&&contrasts.every(x=>x>=4.5),'marca e autoria têm contraste no cabeçalho '+theme);
+ }
  await student.evaluate(()=>document.documentElement.classList.remove('claro'));
  const getHtml=()=>p.evaluate(()=>MT_APP_ALUNO.monta(__dadosApp(__loadPT().alunos[0],new Date().toISOString())));
  // Longos e texto malicioso: a marca é texto, não template executável.

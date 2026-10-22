@@ -14,3 +14,24 @@
 .billing-consent input { flex:0 0 22px; width:22px; height:22px; min-height:22px; margin:3px 0 0; accent-color:#a882ff; }
 .billing-panel [aria-busy=true] { opacity:.8; }
 @media(max-width:380px) { .billing-columns { grid-template-columns:1fr; gap:0; } }
+
+/* v868: plano e situação confirmada com a mesma hierarquia do app. */
+.subscription-page{--sales-bg:#0c0d11;--sales-card:#14161c;--sales-line:#292c35;--sales-text:#f3f3f6;--sales-muted:#989baa;background:var(--sales-bg)}
+.subscription-page .sales-main{max-width:1000px;padding-top:16px}
+.subscription-page .sales-intro h1{font-size:clamp(30px,5vw,44px);font-weight:650}
+.subscription-page .sales-grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.subscription-page .sales-card{border-radius:20px}
+.subscription-page .sales-price strong{font-size:40px;font-weight:650}
+.subscription-benefits{list-style:none;padding:0;margin:24px 0;color:var(--sales-muted);font-size:14px}
+.subscription-benefits li{padding:6px 0 6px 24px;position:relative}
+.subscription-benefits li:before{content:'✓';position:absolute;left:0;color:#91e9b6}
+.subscription-page .billing-panel{padding:22px 18px;border:1px solid var(--sales-line);border-radius:16px;background:#1e202960}
+.subscription-page #billingStatus{padding:14px 0;font-size:15px;line-height:1.6}
+.subscription-page #billingDates{margin:0 0 16px}
+.subscription-page #billingCancel{color:#f3b0b0}
+.subscription-page :is(input,select){background:#1e2029;border-color:#454957}
+.subscription-page .sales-notice{border-radius:12px;background:#8c54f712;border-color:#8c54f7}
+.subscription-page .sales-button{border-radius:12px;min-height:50px;background:#8c54f7}
+.subscription-page .sales-button-secondary{background:transparent}
+.subscription-page .sales-button:disabled{background:#1e2029;color:#989baa}
+@media(max-width:720px){.subscription-page .sales-grid{grid-template-columns:1fr}.subscription-page .sales-header{padding:16px 20px}.subscription-page .sales-main{padding:16px 20px 48px}.subscription-page .sales-card{padding:22px 18px}.subscription-page .billing-panel{padding:18px 14px}}

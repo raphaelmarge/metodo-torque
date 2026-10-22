@@ -25,13 +25,22 @@
   .sec { background: transparent; color: #c4b5fd; border: 1px solid #514366; margin-top: 12px; min-height: 44px; }
   #recStatus { margin-top: 16px; line-height: 1.5; font-size: 14px; color: #ded7eb; }
   button:focus-visible, a:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+  body { background:#0c0d11; color:#f3f3f6; }
+  .cartao { max-width:440px; background:#14161c; border-color:#292c35; border-radius:24px; padding:32px 26px; box-shadow:none; }
+  .kicker { color:#b994ff; text-align:left; letter-spacing:.1em; }
+  h1 { text-align:left; font-size:30px; line-height:1.15; letter-spacing:-.8px; margin:24px 0 12px; }
+  .sub { text-align:left; color:#989baa; font-size:14px; }
+  input { background:#1e2029; border-color:#292c35; }
+  button { background:#8c54f7; font-weight:650; }
+  .nota { color:#989baa; }
+  .access-back { display:inline-flex; align-items:center; min-height:44px; color:#b994ff; font-size:13px; margin-top:16px; text-underline-offset:4px; }
 </style>
 </head>
 <body>
 
 <div class="cartao">
   <span class="kicker">TORQUE ON · ÁREA DO ALUNO</span>
-  <h1>Entrar no meu app 💪</h1>
+  <h1>Seu treino começa aqui.</h1>
   <p class="sub">Para alunos e pacientes de academias, studios, personal trainers e nutricionistas que usam o TORQUE ON.</p>
   <form id="frm">
     <label for="lg">E-mail (o mesmo do seu cadastro)</label>
@@ -63,6 +72,7 @@
     <button type="button" class="sec" id="recVoltar">Voltar para entrar</button>
   </section>
   <p class="nota" id="notaInicio">Primeira vez? Quando sua academia, personal ou nutricionista enviar o acesso, você recebe um e-mail: o login é o próprio e-mail e a senha temporária vai junto — troque a senha dentro do app, no card <b>Meu login</b>. Não recebeu (olhe o spam)? Peça pra te reenviarem o acesso. Também dá pra entrar com o celular cadastrado no app.</p>
+  <a class="access-back" href="entrar.html">← Escolher outro perfil</a>
 </div>
 
 <script src="assets/cloud-config.js"></script>
