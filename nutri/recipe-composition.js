@@ -1,5 +1,6 @@
 // Recipe quantities describe the whole preparation. Prescribed item quantities
 // describe servings. Copies travel with the published food, never a live link.
+import {updateFoodQuantity, FOOD_NUTRIENT_KEYS} from './food-measures.js';
 const MACROS = ['k','pt','cb','g'];
 const text = (value,max) => String(value ?? '').trim().slice(0,max);
 const number = value => value == null || typeof value === 'boolean' || !String(value).trim() ? null : Number(String(value).replace(',','.'));
@@ -10,16 +11,19 @@ function amount(value,max,label) {
 }
 export function recipeIngredient(raw) {
   if (!raw || typeof raw!=='object' || Object.prototype.hasOwnProperty.call(raw,'recipeComposition')) throw Error('Use alimentos simples como ingredientes da receita.');
+  if (Object.prototype.hasOwnProperty.call(raw,'measurement')) raw=updateFoodQuantity(raw,raw.qtd);
   const nome=text(raw.nome??raw.n,200),porcao=text(raw.porcao??raw.p,100);
   if (!nome||!porcao) throw Error('Cada ingrediente precisa de nome e medida.');
   const out={id:text(raw.id,100),alimId:text(raw.alimId||raw.id,250),nome,porcao,qtd:amount(raw.qtd,1000,'a quantidade do ingrediente')};
-  for (const key of MACROS) {
+  for (const key of FOOD_NUTRIENT_KEYS) {
+    if(!MACROS.includes(key)&&!Object.prototype.hasOwnProperty.call(raw,key))continue;
     const n=number(raw[key]);
     if (n!==null&&(!Number.isFinite(n)||n<0||n>100000)) throw Error('Confira os nutrientes de '+nome+'.');
     out[key]=n;
   }
   for (const key of ['fonte','preparo','categoria']) if(raw[key]??(key==='fonte'?raw.source:undefined))out[key]=text(raw[key]??raw.source,key==='fonte'?400:120);
   if(raw.baseGramas!=null)out.baseGramas=amount(raw.baseGramas,100000,'a medida em gramas');
+  if(raw.measurement)out.measurement=structuredClone(raw.measurement);
   return out;
 }
 export function normalizeRecipeComposition(raw) {
@@ -39,14 +43,15 @@ export function normalizeRecipeComposition(raw) {
 }
 export function recipeNutrition(raw) {
   const composition=normalizeRecipeComposition(raw),total={},perServing={};
-  for(const key of MACROS){total[key]=composition.unquantifiedIngredients?.length||composition.ingredients.some(it=>it[key]===null)?null:composition.ingredients.reduce((sum,it)=>sum+it[key]*it.qtd,0);perServing[key]=total[key]===null?null:total[key]/composition.yield;}
+  const keys=FOOD_NUTRIENT_KEYS.filter(key=>MACROS.includes(key)||composition.ingredients.some(it=>Object.prototype.hasOwnProperty.call(it,key)));
+  for(const key of keys){total[key]=composition.unquantifiedIngredients?.length||composition.ingredients.some(it=>it[key]==null)?null:composition.ingredients.reduce((sum,it)=>sum+it[key]*it.qtd,0);perServing[key]=total[key]===null?null:total[key]/composition.yield;}
   return {total,perServing,complete:MACROS.every(key=>perServing[key]!==null)};
 }
 export function makeRecipeFood(raw,servings,{id,reviewedAt=new Date().toISOString()}={}) {
   const composition=normalizeRecipeComposition({...raw,reviewedAt}),nutrition=recipeNutrition(composition);
   if(composition.unquantifiedIngredients?.length)throw Error('Há ingredientes sem quantidade no texto. Inclua todos no catálogo com suas quantidades e remova-os da lista sem quantificação antes de prescrever.');
   if(!nutrition.complete)throw Error('Há nutrientes não informados nos ingredientes. Complete a composição antes de prescrever porções; o preparo pode continuar como orientação.');
-  if(MACROS.some(key=>nutrition.perServing[key]>100000))throw Error('Os valores por porção excedem o limite. Confira ingredientes e rendimento.');
+  if(Object.values(nutrition.perServing).some(value=>value>100000))throw Error('Os valores por porção excedem o limite. Confira ingredientes e rendimento.');
   if(!id)throw Error('A porção prescrita precisa de uma identidade própria.');
   return {id:text(id,100),alimId:'recipe:'+composition.recipeId,nome:composition.title,porcao:'1 porção da receita',qtd:amount(servings,1000,'a quantidade de porções'),...nutrition.perServing,fonte:composition.source,recipeComposition:structuredClone(composition)};
 }

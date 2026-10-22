@@ -1,0 +1,34 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const {pathToFileURL}=require('node:url');
+const root=path.resolve(__dirname,'..');
+(async()=>{
+ const context={};context.self=context;
+ vm.runInNewContext(fs.readFileSync(path.join(root,'nutri/food-catalog-data.js'),'utf8'),context);
+ const foods=JSON.parse(JSON.stringify(context.MT_NUTRI_FOODS));
+ const {makeFoodItem,changeFoodMeasure,measuredItemNutrition}=await import(pathToFileURL(path.join(root,'nutri/food-measures.js')));
+ assert(foods.length>=3000,'At least 3,000 actual catalog records');assert.equal(new Set(foods.map(f=>f.id)).size,foods.length);
+ const {normalizaItem}=(()=>{const c={};c.self=c;vm.runInNewContext(fs.readFileSync(path.join(root,'nutri/vendor/nutricao-core.js'),'utf8'),c);return c.MT_NUTRICAO;})();
+ for(const food of foods){
+   assert(food.n&&food.source&&/^https:\/\//.test(food.sourceUrl),food.id);
+   const item=makeFoodItem(food,100,food.baseUnit,{id:'validation'}),saved=normalizaItem(item,true);
+   assert(saved,food.id+' survives persistence');
+   const nutrition=measuredItemNutrition(saved);
+   for(const key of ['k','pt','cb','g'])assert(Math.abs(nutrition.total[key]-food[key])<1e-8,food.id+' '+key);
+   for(const measure of food.measures){
+     const changed=changeFoodMeasure(item,measure.id);
+     assert(Math.abs(measuredItemNutrition(changed).baseQuantity-100)<1e-8,food.id+' quantity invariant');
+   }
+ }
+ console.log('PASS '+foods.length+' source records persist and calculate without inventing macros');
+ const rice=foods.find(f=>f.id==='taco:3'),oats=foods.find(f=>f.id==='taco:7');
+ assert.equal(rice.measures.find(m=>m.id==='ibge-16').amount,25);
+ assert.equal(oats.measures.find(m=>m.id==='ibge-16').amount,15);
+ assert(!foods.some(f=>f.id==='taco:2'&&f.measures.length),'Cooked rice measures cannot leak to raw rice');
+ const zero=foods.find(f=>f.k===0);assert(zero,'Known zero-energy products stay valid');
+ assert(foods.some(f=>f.baseUnit==='ml'),'Explicit volume reference available');
+ assert(foods.some(f=>f.id.startsWith('off:')&&f.brand&&f.barcode),'Real branded products available');
+ const manifest=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/catalog-manifest.json'),'utf8'));
+ assert.equal(manifest.records,foods.length);
+ console.log('PASS source-specific household weights, explicit volume, provenance and count');
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,0 +1,48 @@
+{
+  "source": "Open Food Facts",
+  "sourceUrl": "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz",
+  "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
+  "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
+  "retrievedAt": "2026-10-22T19:24:36.285342+00:00",
+  "license": "ODbL 1.0; individual contents DbCL 1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1.0/",
+  "attribution": "Dados: Open Food Facts, sob ODbL. Catálogo derivado disponível para download sob a mesma licença.",
+  "inputRows": 12000,
+  "acceptedRows": 6728,
+  "rejectedRows": {
+    "non_descriptive_name": 6,
+    "physical_limits": 113,
+    "ambiguous_reference_unit": 1563,
+    "invalid_name": 71,
+    "inconsistent_energy_macros": 306,
+    "nutrition_quality_flag": 1542,
+    "invalid_gtin": 10,
+    "missing_or_invalid_brand": 1388,
+    "sugars_exceed_carbohydrates": 19,
+    "manual_quarantine_unresolved_serving_reference": 2,
+    "manual_quarantine_brand_name_conflict": 5,
+    "saturated_exceeds_total_fat": 1,
+    "duplicate_product_brand": 246
+  },
+  "selectionScope": "Produtos listados para o Brasil com códigos GTIN iniciados em 789 ou 790; recorte para priorizar produtos nacionais. Não representa todos os produtos vendidos no Brasil.",
+  "units": {
+    "g": 6530,
+    "ml": 198
+  },
+  "categories": {
+    "Alimentos industrializados": 4339,
+    "Bebidas": 255,
+    "Carnes, pescados e ovos": 78,
+    "Cereais, pães e massas": 606,
+    "Doces e snacks": 501,
+    "Frutas e vegetais": 142,
+    "Laticínios e alternativas": 496,
+    "Oleaginosas e sementes": 27,
+    "Suplementos": 44,
+    "Óleos, molhos e condimentos": 240
+  },
+  "withLabeledServing": 5070,
+  "sha256": "baeebc8e4cf58503091e40a8dc5149f1a53ea265a387a64e3366a82730348e21",
+  "qualityNote": "Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes.",
+  "unitPolicy": "Somente unidades explícitas g/ml em porção ou quantidade do produto, rejeitando conflitos; ml exige também categoria líquida inequívoca, sem pós, sorvetes ou congelados. Não converte massa em volume. Porções preservam texto e quantidade de rótulo; medidas individuais somente quando a contagem é explícita e simples."
+}

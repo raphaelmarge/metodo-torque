@@ -1,4 +1,5 @@
 import {expandRecipeItem} from './recipe-composition.js';
+import {formatFoodQuantity, normalizeFoodMeasurementSnapshot} from './food-measures.js';
 // Preserve prescribed portions. Only explicit, reviewed recipe snapshots expand;
 // no food equivalence or raw/cooked conversion is inferred.
 // Match the decimal-comma parsing in MT_NUTRICAO.normalizaItem without
@@ -8,6 +9,9 @@ function portionQuantity(value) {
   return Number(String(value).trim().replace(',', '.'));
 }
 export function portionLabel(item) {
+  if (item && Object.prototype.hasOwnProperty.call(item,'measurement')) {
+    try { return formatFoodQuantity(item); } catch (_) { return 'Medida inválida — confira com sua nutri'; }
+  }
   const quantity = portionQuantity(item?.qtd);
   return Number.isFinite(quantity) && quantity > 0 && String(item?.porcao || '').trim()
     ? `${quantity.toLocaleString('pt-BR', {maximumFractionDigits: 6})} × ${item.porcao}`
@@ -44,12 +48,16 @@ export function shoppingList(plan, start, end, choices = {}, dailyChoices = {}) 
         catch (error) { warnings.add(error.message); return; }
         for (const entry of ingredients || [item]) {
           const qtd = portionQuantity(entry.qtd);
+          let measurement;
+          try { if(Object.prototype.hasOwnProperty.call(entry,'measurement'))measurement=normalizeFoodMeasurementSnapshot(entry.measurement); }
+          catch(error){warnings.add(error.message);continue;}
           if (!entry.nome || !entry.porcao?.trim() || !Number.isFinite(qtd) || qtd <= 0) {
             warnings.add(`Porção incompleta de ${entry.nome || 'alimento'}: confira com sua nutri antes de comprar.`); continue;
           }
           // Exact portion + identity + preparation: never merge incompatible measures.
-          const key = JSON.stringify([entry.alimId || '',entry.nome,entry.porcao,entry.preparo || '',entry.baseGramas ?? null,entry.receitaId || '']);
-          if (!items.has(key)) items.set(key,{nome:entry.nome,porcao:entry.porcao,qtd:0});
+          const selectedMeasure=measurement?.measures.find(measure=>measure.id===measurement.selectedMeasureId);
+          const key = JSON.stringify([entry.alimId || '',entry.nome,entry.porcao,entry.preparo || '',entry.baseGramas ?? null,entry.receitaId || '',selectedMeasure?[measurement.baseUnit,selectedMeasure.id,selectedMeasure.amount]:null]);
+          if (!items.has(key)) items.set(key,{nome:entry.nome,porcao:entry.porcao,qtd:0,...(measurement?{measurement}: {})});
           const total = items.get(key).qtd + qtd;
           if (!Number.isFinite(total)) { warnings.add('Quantidade fora do limite de cálculo. Confira a prescrição.'); continue; }
           items.get(key).qtd = total;

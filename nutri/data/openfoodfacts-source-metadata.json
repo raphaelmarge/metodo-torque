@@ -1,0 +1,13 @@
+{
+  "sourceUrl": "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz",
+  "sourceVersion": "official-csv-Thu, 22 Oct 2026 09:12:19 GMT",
+  "sourceDate": "Thu, 22 Oct 2026 09:12:19 GMT",
+  "contentLength": "1490707590",
+  "etag": "\"9d64ab1fab2cde5e078d4b4ef20d561f-285\"",
+  "retrievedAt": "2026-10-22T19:14:15.724201+00:00",
+  "scannedRows": 3271657,
+  "selectedRawRows": 12000,
+  "elapsedSeconds": 444,
+  "selection": "First 12000 rows in official CSV with country en:brazil, GTIN prefix789/790, and four numeric core nutrients.",
+  "rawSha256": "b7f2027308c8ff23a8a1d32a9d127bd8d169c4f3b7fc2651c650425aed4b1647"
+}
