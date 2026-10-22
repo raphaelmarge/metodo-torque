@@ -107,14 +107,14 @@ def run(taco_path, ibge_path, out):
     if len(rows) + len(rejected) != 597:
         raise ValueError('Unexpected TACO row count')
     out.mkdir(parents=True, exist_ok=True)
-    (out / 'taco.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    (out / 'taco.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     manifest = {'source': SOURCE, 'sourceUrl': TACO_URL, 'measuresSourceUrl': IBGE_URL,
                 'retrievedAt': '2026-10-22', 'accepted': len(rows), 'rejected': rejected,
                 'measures': evidence,
                 'inputSha256': {Path(p).name: hashlib.sha256(Path(p).read_bytes()).hexdigest()
                                 for p in [taco_path, ibge_path]},
                 'policy': 'Tr/NA/*/blank are not zero. Missing numeric macros exclude food; missing optional nutrients stay null. No raw/cooked or g/ml conversions.'}
-    (out / 'taco-import-report.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    (out / 'taco-import-report.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(json.dumps({'accepted': len(rows), 'rejected': len(rejected), 'foodWithMeasures': len(household),
                       'measures': len(evidence)}, ensure_ascii=False))
 

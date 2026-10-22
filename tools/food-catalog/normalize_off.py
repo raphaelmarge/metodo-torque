@@ -182,7 +182,7 @@ for item in accepted:
     codes.add(item['barcode']); signatures.add(signature); unique.append(item)
 unique.sort(key=lambda x:(x['c'],norm(x['n']),norm(x['brand'])))
 outfile=ROOT/'off-selected.json'
-outfile.write_text(json.dumps(unique,ensure_ascii=False,indent=2),encoding='utf8')
+outfile.write_text(json.dumps(unique,ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
 manifest={'source':'Open Food Facts','sourceUrl':SOURCE_URL,'sourceVersion':SOURCE_VERSION,'sourceDate':SOURCE_DATE,
           'retrievedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'license':'ODbL 1.0; individual contents DbCL 1.0',
           'licenseUrl':'https://opendatacommons.org/licenses/odbl/1.0/',
@@ -195,5 +195,5 @@ manifest={'source':'Open Food Facts','sourceUrl':SOURCE_URL,'sourceVersion':SOUR
           'sha256':hashlib.sha256(outfile.read_bytes()).hexdigest(),
           'qualityNote':'Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes.',
           'unitPolicy':'Somente unidades explícitas g/ml em porção ou quantidade do produto, rejeitando conflitos; ml exige também categoria líquida inequívoca, sem pós, sorvetes ou congelados. Não converte massa em volume. Porções preservam texto e quantidade de rótulo; medidas individuais somente quando a contagem é explícita e simples.'}
-(ROOT/'off-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')
+(ROOT/'off-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
 print(json.dumps(manifest,ensure_ascii=False,indent=2))

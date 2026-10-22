@@ -42,7 +42,7 @@
     "Óleos, molhos e condimentos": 240
   },
   "withLabeledServing": 5070,
-  "sha256": "baeebc8e4cf58503091e40a8dc5149f1a53ea265a387a64e3366a82730348e21",
+  "sha256": "5602fca91ae9976766646cc20ca064dbabdc455db5b37aae61312642a96f4593",
   "qualityNote": "Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes.",
   "unitPolicy": "Somente unidades explícitas g/ml em porção ou quantidade do produto, rejeitando conflitos; ml exige também categoria líquida inequívoca, sem pós, sorvetes ou congelados. Não converte massa em volume. Porções preservam texto e quantidade de rótulo; medidas individuais somente quando a contagem é explícita e simples."
 }

@@ -30,5 +30,13 @@ const root=path.resolve(__dirname,'..');
  assert(foods.some(f=>f.id.startsWith('off:')&&f.brand&&f.barcode),'Real branded products available');
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/catalog-manifest.json'),'utf8'));
  assert.equal(manifest.records,foods.length);
+ const sha256=bytes=>require('node:crypto').createHash('sha256').update(bytes).digest('hex');
+ for(const source of manifest.sources){
+   const bytes=fs.readFileSync(path.join(root,'nutri/data',source.file));
+   assert.equal(sha256(bytes),source.sha256,source.file+' distributed checksum');
+   assert.equal(JSON.parse(bytes).length,source.records);
+ }
+ const offReport=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/openfoodfacts-import-report.json'),'utf8'));
+ assert.equal(offReport.sha256,manifest.sources.find(source=>source.file==='openfoodfacts.json').sha256);
  console.log('PASS source-specific household weights, explicit volume, provenance and count');
 })().catch(error=>{console.error(error);process.exitCode=1;});

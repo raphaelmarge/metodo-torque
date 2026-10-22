@@ -5,12 +5,12 @@
     {
       "file": "taco.json",
       "records": 544,
-      "sha256": "267163580535a929c67611bddbed9cbf6763d1fdc14023f9cc79585f409c9429"
+      "sha256": "d5be419ead153c4873c3912ec44968728eae2c4e531ab83aa5671569ea52dc4b"
     },
     {
       "file": "openfoodfacts.json",
       "records": 6728,
-      "sha256": "baeebc8e4cf58503091e40a8dc5149f1a53ea265a387a64e3366a82730348e21"
+      "sha256": "5602fca91ae9976766646cc20ca064dbabdc455db5b37aae61312642a96f4593"
     }
   ],
   "referenceUnits": {
