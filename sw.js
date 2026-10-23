@@ -137,7 +137,7 @@ var CORE = [
   "assets/personal-saas-checkout.js",
   "assets/personal-saas-checkout.css",
   "assets/landing-personal-20261006.css",
-  "assets/landing-personal-20261006.js",
+  "assets/landing-personal-20261023.js",
   "manifest-personal.webmanifest",
   "torqueon.html",
   "torquesys.html",
