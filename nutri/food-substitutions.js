@@ -59,7 +59,10 @@ function classification(food){
   if(!food||own(food,'recipeComposition'))return null;
   const name=nameOf(food),category=key(food.categoria??food.cat??food.c);
   if(!name||/\b(cerveja|vinho|whisky|vodka|cachaca|licor|rum)\b/.test(name))return null;
-  if(/\b(alm[oa]ndega|bolinho|risoto|carreteiro|feijoada|sopa|caldo|salada|lasanha|pizza|sanduiche|hamburguer|croquete|panqueca|empad[ao]|torta|papinha|pure|maria[- ]mole|empanad[oa]|linguica|salsicha|mortadela|presunto|pate|figado|moela|coracao|rim|rins|miudos)\b/.test(name)||/\s\+\s|\bcom\b/.test(name))return null;
+  // "Com casca" is an anatomical description when it ends that descriptor;
+  // "com casca e mel" remains a mixture. A plus is a mixture even unspaced.
+  const mixtureName=name.replace(/\bcom casca(?=\s*(?:,|$))/g,'');
+  if(/\b(alm[oa]ndega|bolinho|risoto|carreteiro|feijoada|sopa|caldo|salada|lasanha|pizza|sanduiche|hamburguer|croquete|panqueca|empad[ao]|torta|papinha|pure|maria[- ]mole|empanad[oa]|linguica|salsicha|mortadela|presunto|pate|figado|moela|coracao|rim|rins|miudos)\b/.test(name)||/\+|\bcom\b/.test(mixtureName))return null;
   let group='',state='';
   // Confectionery precedes dairy, fruit and supplements mentioned as flavours.
   if(/\b(bala|balas|bombom|bananada|goiabada|geleia|doce|condensado|sorvete|creme de avela)\b/.test(name.replace(/\bbatata[- ]doce\b/g,'batata')))return null;
@@ -93,7 +96,10 @@ function classification(food){
   else if(/\b(feijao|lentilha|grao de bico|ervilha|soja)\b/.test(name)){group='Leguminosas';}
   else if(/\b(frango|galinha|peru|pato|carne|bovin[oa]|suin[oa]|porc[oa]|lombo|patinho|alcatra|picanha|coxao|musculo|acem|lagarto|file mignon|tilapia|salmao|sardinha|atum|pescada|merluza|peixe|corvina|bacalhau|camarao|ovo|ovos)\b/.test(name)){group='Carnes, pescados e ovos';}
   else if(/\b(amendoim|amendoa|castanha|noz|nozes|pistache|avela|gergelim|linhaca|chia|semente)\b/.test(name)||['nozes e sementes','oleaginosas e sementes'].includes(category)){group='Oleaginosas e sementes';state='Cru';}
-  else if(/^(banana|maca|pera|laranja|tangerina|mexerica|mamao|manga|abacaxi|melancia|melao|morango|uva|kiwi|pessego|ameixa|goiaba|acerola|caju|abacate|coco|figo|caqui|pitanga|jabuticaba|maracuja|limao|jaca|carambola|framboesa|amora|mirtilo)\b/.test(name)){group='Frutas';state='Cru';}
+  else if(/^(banana|maca|pera|laranja|tangerina|mexerica|mamao|manga|abacaxi|melancia|melao|morango|uva|kiwi|pessego|ameixa|goiaba|acerola|caju|abacate|coco|figo|caqui|pitanga|jabuticaba|maracuja|limao|jaca|carambola|framboesa|amora|mirtilo)\b/.test(name)){
+    if(/^(bebidas|laticinios|doces)\b/.test(category)||/\badocad[oa]s?\b/.test(name))return null;
+    group='Frutas';state='Cru';
+  }
   else if(category==='verduras, hortalicas e derivados'||/\b(brocolis|couve|alface|agriao|rucula|espinafre|tomate|pepino|cenoura|beterraba|abobrinha|abobora|berinjela|chuchu|quiabo|repolho|vagem|rabanete|cebola|pimentao|aspargo|palmito)\b/.test(name)){group='Hortaliças';}
   const prepared=preparation(name,food,state);
   return group&&prepared?{group,preparation:prepared}:null;
