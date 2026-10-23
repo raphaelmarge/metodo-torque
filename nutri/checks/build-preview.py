@@ -30,7 +30,7 @@ for name in ["vendor/receitas-db.js", "vendor/composicao-corporal.js", "vendor/n
              "vendor/medalhas-core.js", "vendor/identidade-marca.js", "vendor/alimentos-db.js", "food-catalog-data.js"]:
     scripts.append((dist / name).read_text(encoding="utf-8"))
 modules = []
-for name in ["food-measures.js", "food-catalog.js", "care-progress.js", "journal-model.js", "food-journal.js", "recipe-composition.js", "plan-recipes.js",
+for name in ["food-measures.js", "food-catalog.js", "food-substitutions.js", "food-substitution-ui.js", "care-progress.js", "journal-model.js", "food-journal.js", "recipe-composition.js", "plan-recipes.js",
              "skinfolds.js", "assessment.js", "vendor/medalha-visual.js", "shopping.js", "shopping-planner.js", "day-summary.js", "prescription.js", "plan-changes.js", "patient-experience.js",
              "notifications.js", "schedule.js", "finance.js", "follow-up.js", "reminders.js", "reminder-settings.js", "settings.js",
              "consultation.js", "platform.js", "app.js"]:

@@ -31,7 +31,7 @@ function loadModule(name,exports){
   vm.runInContext('(()=>{'+source+'\nObject.assign(globalThis,{'+exports.join(',')+'});})()',context,{filename:name});
 }
 vm.runInContext(fs.readFileSync(path.join(root,'food-catalog-data.js'),'utf8'),context);
-for(const name of ['food-measures.js','food-catalog.js']) {
+for(const name of ['food-measures.js','food-catalog.js','food-substitutions.js','food-substitution-ui.js']) {
  const source=fs.readFileSync(path.join(root,name),'utf8');
  loadModule(name,[...source.matchAll(/\bexport (?:async )?(?:function|const) (\w+)/g)].map(m=>m[1]));
 }
