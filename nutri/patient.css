@@ -277,6 +277,16 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 .trend-period select{width:auto;max-width:100%;margin:0;font-size:16px;min-height:44px}
 .chart-card .card-head{flex-wrap:wrap}
 .chart-card .card-head select{font-size:16px;max-width:100%;min-height:44px}
+.body-tabs button{min-width:44px;flex-shrink:0}
+.assessment-app>.heading{flex-wrap:wrap}
+.assessment-app>.heading>div:first-child{flex:1 1 18rem;min-width:0}
+.assessment-app>.heading>.btn{flex-shrink:0;white-space:normal}
+@media(max-width:800px){
+ .assessment-app>.heading>.btn{width:100%}
+ .chart-card .card-head{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ .chart-card .card-head select,.chart-card .trend-period select{width:100%;max-width:100%}
+ .chart-card .trend-period{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+}
 
 /* Keep original photos intact and make the comparison handle usable by touch. */
 .photo-modes{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
