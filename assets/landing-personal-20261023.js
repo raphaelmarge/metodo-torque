@@ -446,7 +446,7 @@
   var sceneIndex = 0;
   var scenes = [
     { image: "assets/vendas/atual-20261006/painel-treinos.webp", alt: "Painel do personal para planejar e revisar treinos" },
-    { image: "assets/vendas/atual-20261006/app-inicio-novo.webp", alt: "Treino do dia publicado no aplicativo do aluno" },
+    { image: "assets/vendas/atual-20261006/app-inicio-pernas.webp", alt: "Treino A Pernas publicado no aplicativo do aluno" },
     { image: "assets/vendas/atual-20261006/painel-inicio.webp", alt: "Painel do personal para acompanhar alunos e próximas sessões" }
   ];
   function selectScene(index) {
