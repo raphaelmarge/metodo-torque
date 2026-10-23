@@ -1,5 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {comDiaISO}=require('./_dia.js');
 let chromium;
 if(process.env.TORQUE_PLAYWRIGHT)({chromium}=require(process.env.TORQUE_PLAYWRIGHT));
 else{try{({chromium}=require('playwright'));}catch{({chromium}=require('/opt/node22/lib/node_modules/playwright'));}}
@@ -7,7 +8,7 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,''),ORI
 
 (async()=>{
  const executablePath=process.env.TORQUE_CHROMIUM_EXECUTABLE_PATH||process.env.TORQUE_BROWSER_EXECUTABLE;
- const browser=await chromium.launch({headless:true,...(executablePath?{executablePath}:{})});
+ const browser=comDiaISO(await chromium.launch({headless:true,...(executablePath?{executablePath}:{})}));
  let checks=0;const pass=name=>{checks++;console.log('PASS '+name);};
  try{
   const context=await browser.newContext({serviceWorkers:'block',timezoneId:'America/Sao_Paulo',viewport:{width:1280,height:900},hasTouch:true}),external=[],errors=[];
@@ -26,8 +27,8 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,''),ORI
    await page.locator('.demo-notice').waitFor();
    return page.evaluate(async()=>{
     const f=window.__patientChoicesFixture,{makeFoodItem}=await import('/nutri/food-measures.js');
-    const today=new Date(),day=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-    const tomorrow=new Date(day+'T12:00:00Z');tomorrow.setUTCDate(tomorrow.getUTCDate()+1);
+    const today=new Date(),day=diaISO(today),tomorrow=new Date(today);
+    tomorrow.setDate(tomorrow.getDate()+1);
     // Entirely synthetic fixtures isolate portion arithmetic from source accuracy.
     const food=(id,n,values,unit='g',measures=[])=>({id,n,c:'Demonstração isolada',baseAmount:100,baseUnit:unit,...values,measures,source:'Fixture de teste; não é prescrição real'});
     const rice=makeFoodItem(food('fixture:rice','Arroz de teste',{k:130,pt:2,cb:28,g:1}),150,'g',{id:'main-rice'});
@@ -36,13 +37,13 @@ const BASE=(process.env.BASE_URL||'http://127.0.0.1:8765').replace(/\/$/,''),ORI
     chicken.substituicoes=[makeFoodItem(food('fixture:tofu','Tofu de teste',{k:100,pt:10,cb:5,g:4},'g',[{id:'slice',label:'fatia de teste',amount:60,unit:'g',source:'Equivalência sintética explícita'}]),2,'slice',{id:'alt-tofu'})];
     const fruit={id:'main-fruit',nome:'Fruta de teste',porcao:'1 unidade',qtd:1,k:84,pt:1,cb:21,g:0,substituicoes:[makeFoodItem(food('fixture:milk','Bebida de teste',{k:50,pt:3,cb:5,g:2},'ml'),200,'ml',{id:'alt-milk'}),{id:'alt-unknown',nome:'Opção histórica incompleta',porcao:'1 unidade',qtd:2,k:20,pt:1,cb:null,g:0}]};
     const plan={v:1,titulo:'Plano isolado de escolhas',refeicoes:[
-     {id:'hidden-meal',titulo:'Refeição de outro dia',hora:'06:00',dias:[tomorrow.getUTCDay()],itens:[{id:'hidden-item',nome:'Não escolher hoje',porcao:'1 unidade',qtd:1,k:900,pt:90,cb:90,g:9}]},
+     {id:'hidden-meal',titulo:'Refeição de outro dia',hora:'06:00',dias:[tomorrow.getDay()],itens:[{id:'hidden-item',nome:'Não escolher hoje',porcao:'1 unidade',qtd:1,k:900,pt:90,cb:90,g:9}]},
      {id:'lunch',titulo:'Almoço de teste',hora:'12:00',dias:[],itens:[rice,chicken]},
      {id:'snack',titulo:'Lanche de teste',hora:'16:00',dias:[],itens:[fruit]}
     ]};
     const publication=f.published();publication.id='fixture-patient-plan';publication.version=7;publication.data=plan;
     f.S.records=[];f.S.logs=[];f.S.page='food';f.render();
-    return {day,tomorrow:tomorrow.toISOString().slice(0,10),patientId:f.S.selected};
+    return {day,tomorrow:diaISO(tomorrow),patientId:f.S.selected};
    });
   }
   const row=key=>page.locator('[data-patient-food-row="'+key+'"]');
