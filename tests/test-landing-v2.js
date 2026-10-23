@@ -191,7 +191,7 @@ async function landingBrand(page) {
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('[data-student="1"]').getAttribute('aria-selected'), 'true');
 
-    const journeyFiles = ['painel-treinos.webp', 'app-inicio-novo.webp', 'painel-inicio.webp'];
+    const journeyFiles = ['painel-treinos.webp', 'app-inicio-pernas.webp', 'painel-inicio.webp'];
     for (let i = 0; i < journeyFiles.length; i++) {
       await page.locator(`[data-scene="${i}"]`).click();
       await currentScreen(page, 'journey-image', journeyFiles[i], width);
@@ -200,7 +200,7 @@ async function landingBrand(page) {
       assert.equal(await page.locator(`[data-scene="${i}"]`).getAttribute('aria-pressed'), 'true');
     }
     await inspectScreen(page, 'journey-image');
-    await currentScreen(page, 'hero-image', 'app-inicio-novo.webp', width);
+    await currentScreen(page, 'hero-image', 'app-inicio-pernas.webp', width);
     await inspectScreen(page, 'hero-image');
 
     const nutrition = page.locator('#nutricao');
@@ -312,7 +312,7 @@ async function landingBrand(page) {
   }
   await page.locator('#story1').evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await page.waitForFunction(() => document.querySelector('[data-scene="1"]').getAttribute('aria-pressed') === 'true');
-  await imageReady(page, 'journey-image', 'app-inicio-novo.webp');
+  await imageReady(page, 'journey-image', 'app-inicio-pernas.webp');
   assert(!await page.locator('html').evaluate(el => el.classList.contains('motion-off')));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.waitForFunction(() => document.documentElement.classList.contains('motion-off'));

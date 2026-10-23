@@ -1,8 +1,14 @@
-/* Real, unmodified demo screens for personal-vendas.html.
+/* Real demo screens for personal-vendas.html.
  * Requires Playwright, sharp and Chrome/Chromium. Example (server already up):
  * BASE_URL=http://127.0.0.1:8877 CHROMIUM_PATH=/path/to/chrome node tools/capture-sales-screens.cjs
  * With no BASE_URL, a local static server is created on 127.0.0.1:8877.
  * Pass --video-only to rebuild the 24-second silent visual tour from captures.
+ * Pass --hero-only to rebuild just the opening screen and its video scene.
+ * The landing's opening screenshot uses the editorial title "Treino A Pernas"
+ * to match its leg-press photo. This title is set only in the isolated capture
+ * page and restored immediately; the app, demo files and training data are unchanged.
+ * That opening screen uses the published v856 demo from Git history so a title
+ * correction does not change its composition. Fetch HERO_DEMO_REF if unavailable.
  * Non-local requests are blocked except the exact public exercise GIF already
  * referenced by this demo. No API, authentication or database access is allowed.
  * Only existing fictitious demo data is used.
@@ -13,6 +19,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const { chromium } = require('playwright');
 const sharp = require('sharp');
 const root = path.resolve(__dirname, '..');
@@ -20,6 +27,7 @@ const output = path.join(root, 'assets/vendas/atual-20261006');
 const base = process.env.BASE_URL || 'http://127.0.0.1:8877';
 const chrome = process.env.CHROMIUM_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : undefined);
 const fixedTime = new Date('2026-10-05T12:00:00.000Z');
+const HERO_DEMO_REF = '748aa94448badc7384cdcf480d73db40e699bf8f';
 let server, browser;
 const errors = [];
 const captured = [];
@@ -83,7 +91,7 @@ async function pupil() {
   await p.goto(base + '/demo-aluno.html');
   await p.waitForSelector('#htVer');
   await settle(p);
-  await save(p, 'app-inicio-novo');
+  await heroCapture();
   await p.locator('#navApp [data-msec="treino"]').click();
   await settle(p);
   await save(p, 'app-fichas');
@@ -110,6 +118,24 @@ async function pupil() {
   await p.waitForSelector('#ntpTabRefeicoes');
   await save(p, 'app-alimentacao');
   await p.context().close();
+}
+async function heroCapture() {
+  const html = execFileSync('git', ['show', HERO_DEMO_REF + ':demo-aluno.html'], { cwd:root, encoding:'utf8', maxBuffer:20 * 1024 * 1024 });
+  const p = await page();
+  await p.route(base + '/demo-aluno.html', route => route.fulfill({ status:200, contentType:'text/html; charset=utf-8', body:html }));
+  await p.goto(base + '/demo-aluno.html');
+  await p.waitForSelector('#htVer');
+  await settle(p);
+  const title = p.locator('#htTitulo');
+  const original = await title.textContent();
+  assert.equal(original, 'Treino A Peito e tríceps', 'Expected demo workout before the editorial capture');
+  try {
+    await title.evaluate(el => { el.textContent = 'Treino A Pernas'; });
+    await save(p, 'app-inicio-pernas');
+  } finally {
+    await title.evaluate((el, text) => { el.textContent = text; }, original);
+    await p.context().close();
+  }
 }
 async function enterPersonal(p) {
   await p.goto(base + '/demo-personal.html');
@@ -175,7 +201,7 @@ async function video() {
   const sceneSpecs = [
     { title:['Sua rotina.', 'Um só painel.'], subtitle:'Alunos, sessões e acompanhamento.', left:'painel-inicio', right:'painel-alunos', labels:['Visão geral', 'Seus alunos'] },
     { title:['Do plano', 'à próxima série.'], subtitle:'Fichas no painel. Execução no aplicativo.', left:'painel-treinos', right:'app-treino', labels:['Fichas do aluno', 'Treino guiado'] },
-    { title:['O aluno sabe', 'o próximo passo.'], subtitle:'Treino do dia e conquistas na mesma jornada.', left:'app-inicio-novo', right:'app-conquistas', labels:['Início do aluno', 'Evolução e conquistas'] },
+    { title:['O aluno sabe', 'o próximo passo.'], subtitle:'Treino do dia e conquistas na mesma jornada.', left:'app-inicio-pernas', right:'app-conquistas', labels:['Início do aluno', 'Evolução e conquistas'] },
     { title:['Mais formas', 'de se movimentar.'], subtitle:'Corrida, bike e circuito.', left:'app-corrida', right:'app-wod', labels:['Corrida e bike', 'Circuito (WOD)'] },
     { title:['Treino e nutrição.', 'No mesmo fluxo.'], subtitle:'Plano alimentar, refeições e registros.', left:'painel-nutricao', right:'app-alimentacao', labels:['Nutrição no painel', 'Alimentação no app'], green:true },
     { title:['Acompanhamento', 'que continua.'], subtitle:'Organize a agenda e converse com o aluno.', left:'painel-agenda', right:'painel-chat', labels:['Agenda', 'Chat'] },
@@ -251,16 +277,18 @@ async function video() {
     console.log('Tour: recording finished');
     return poster;
   }, { scenes, font });
-  fs.writeFileSync(path.join(output, 'video-personal.mp4'), Buffer.concat(chunks));
-  fs.writeFileSync(path.join(output, 'video-poster.webp'), Buffer.from(poster, 'base64'));
+  fs.writeFileSync(path.join(output, 'video-personal-pernas.mp4'), Buffer.concat(chunks));
+  if (!process.argv.includes('--hero-only')) fs.writeFileSync(path.join(output, 'video-poster.webp'), Buffer.from(poster, 'base64'));
   await p.close();
-  console.log('Generated video-personal.mp4 (1280×720, 24 seconds, silent) and video-poster.webp');
+  console.log('Generated video-personal-pernas.mp4 (1280×720, 24 seconds, silent)');
 }
 (async () => {
   fs.mkdirSync(output, { recursive:true });
   await serve();
   browser = await chromium.launch({ executablePath:chrome, headless:true });
-  if (process.argv.includes('--nutrition-only')) {
+  if (process.argv.includes('--hero-only')) {
+    await heroCapture();
+  } else if (process.argv.includes('--nutrition-only')) {
     const p = await page();
     await enterPersonal(p);
     await tab(p, 'nutricao', '#vNutricao');
