@@ -18,7 +18,7 @@
   .qcard .dica { color: #8a8695; font-size: 12.5px; margin: -6px 0 10px; }
   label { display: block; font-size: 13px; font-weight: 700; margin-top: 12px; }
   label:first-of-type { margin-top: 0; }
-  input[type="text"], select, textarea { width: 100%; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; color: #fff; padding: 12px; font-family: inherit; font-size: 14.5px; margin-top: 5px; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea { width: 100%; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; color: #fff; padding: 12px; font-family: inherit; font-size: 16px; margin-top: 5px; min-height:44px; }
   textarea { min-height: 64px; }
   .chk { display: flex; align-items: flex-start; gap: 11px; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; padding: 11px 14px; margin-top: 8px; cursor: pointer; font-size: 14px; font-weight: 600; line-height: 1.45; }
   .chk input { width: 19px; height: 19px; flex: none; margin-top: 1px; accent-color: #7c3aed; }
@@ -27,13 +27,24 @@
   #fim { text-align: center; padding: 60px 10px; display: none; }
   #fim .e { font-size: 54px; }
   #erro { color: #fbbf24; font-size: 13.5px; text-align: center; margin-top: 12px; min-height: 18px; }
+  [hidden] { display:none !important; } .gm-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px; } .gm-grid .chk { margin-top:0; } .gm-detail { margin-top:16px;padding-top:14px;border-top:1px solid #322e3d; } .dica {line-height:1.5;} #anDraft {margin-top:12px;font-size:13px;color:#c7c0d7;line-height:1.5;}
 </style>
 </head>
 <body>
 <div id="form">
   <span class="k" id="marca">ANAMNESE</span>
   <h1 id="anTitulo">Complete seu cadastro</h1>
-  <p class="sub">Leva uns 3 minutos e vai direto pro seu treinador — é com isso que o treino sai do SEU tamanho. 💜</p>
+  <p class="sub">Conte seu histórico, seus objetivos e sua rotina. Seu personal revisa as informações antes de preparar sua etapa mensal. Você pode preencher aos poucos neste aparelho.</p>
+  <p id="anDraft" role="status"></p>
+
+  <div class="qcard">
+    <h2>Seu perfil</h2>
+    <label>Data de nascimento, se souber<input type="date" id="gmBirth"></label>
+    <label>Como deseja informar seu gênero? (opcional)<input type="text" id="gmGender" maxlength="100" placeholder="Sua identificação, se quiser informar"></label>
+    <p class="dica" style="margin-top:10px">Prioridades musculares, carga e dificuldade seguem seus objetivos e sua capacidade individual.</p>
+    <label>Há algum fator fisiológico a considerar, como gestação ou pós-parto?<select id="gmPhysiologyStatus"><option value="unknown">Não informado</option><option value="nao_sei">Não sei</option><option value="nao_se_aplica">Não se aplica</option><option value="reported">Sim, quero informar</option></select></label>
+    <label data-gm-when="gmPhysiologyStatus" hidden>Informação e orientações que recebeu<textarea id="gmPhysiology" maxlength="1000"></textarea></label>
+  </div>
 
   <div class="qcard">
     <h2>Saúde primeiro (PAR-Q)</h2>
@@ -53,6 +64,55 @@
     <label>Doenças ou condições de saúde<input type="text" id="fDoencas" placeholder="ex.: diabetes, asma — ou nenhuma"></label>
     <label>Medicamentos de uso contínuo<input type="text" id="fMeds" placeholder="ex.: nenhum"></label>
     <label>Histórico na família (coração, pressão, diabetes)<input type="text" id="fFamiliar" placeholder="ex.: pai hipertenso"></label>
+    <label>Condições atuais que podem precisar de adaptação<select id="gmHealth"><option value="unknown">Não informado</option><option value="not_sure">Não sei / preciso confirmar</option><option value="none">Não relato condição atual</option><option value="reported">Quero informar uma ou mais condições</option></select></label>
+    <div data-gm-when="gmHealth" hidden>
+      <label class="chk"><input type="checkbox" name="gmCondition" id="gmInjury" value="injury">Lesão ou cirurgia</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" id="gmDiabetes" value="diabetes">Diabetes</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" id="gmLimb" value="limb">Ausência de membro ou deficiência</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" value="cardiovascular">Condição cardiovascular</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" value="respiratory">Condição respiratória</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" value="neurological">Condição neurológica</label>
+      <label class="chk"><input type="checkbox" name="gmCondition" id="gmOtherCondition" value="other">Outra condição</label>
+      <label data-gm-when="gmOtherCondition" hidden>Qual condição?<input type="text" id="gmOther" maxlength="1000"></label>
+    </div>
+    <div class="gm-detail" data-gm-when="gmInjury" hidden>
+      <h3>Lesão ou cirurgia</h3>
+      <label>Região<input type="text" id="gmInjuryRegion" placeholder="Região envolvida"></label>
+      <label>Lado<select id="gmInjurySide"><option value="unknown">Não informado</option><option value="right">Direito</option><option value="left">Esquerdo</option><option value="both">Ambos</option><option value="na">Não se aplica</option></select></label>
+      <label>Fase de recuperação informada pelo profissional<input type="text" id="gmInjuryPhase" placeholder="Deixe em branco se não souber"></label>
+      <label>Limitações ou sintomas atuais<textarea id="gmInjuryLimits" maxlength="1000"></textarea></label>
+    </div>
+    <div class="gm-detail" data-gm-when="gmDiabetes" hidden>
+      <h3>Diabetes</h3>
+      <label>Tipo<select id="gmDiabetesType"><option value="unknown">Não sei / não informado</option><option value="type1">Tipo 1</option><option value="type2">Tipo 2</option><option value="gestational">Gestacional</option><option value="other">Outro</option></select></label>
+      <label>Tratamento informado pela equipe de saúde<input type="text" id="gmDiabetesTreatment" placeholder="Medicamentos e orientações relevantes"></label>
+      <label>Já teve episódios de hipoglicemia?<select id="gmHypo"><option value="unknown">Não sei / não informado</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+      <label>Complicações e cuidados que recebeu<textarea id="gmComplications" maxlength="1000"></textarea></label>
+    </div>
+    <div class="gm-detail" data-gm-when="gmLimb" hidden>
+      <h3>Capacidade e recursos</h3>
+      <label>Membro ou segmento, quando pertinente<input type="text" id="gmLimbSegment"></label>
+      <label>Lado, quando pertinente<input type="text" id="gmLimbSide"></label>
+    </div>
+    <label>Orientações e restrições recebidas de profissionais<textarea id="gmGuidance" maxlength="1000" placeholder="Registre o que foi orientado; o personal vai conferir"></textarea></label>
+    <label>Profissional responsável por essas orientações<input type="text" id="gmProfessional"></label>
+    <label>Data da orientação, se souber<input type="date" id="gmGuidanceDate"></label>
+    <p class="dica" style="margin-top:10px">O relato é mantido para revisão. Melhorar a dor ou o desempenho não retira uma restrição automaticamente.</p>
+  </div>
+
+  <div class="qcard">
+    <h2>Execução e acessibilidade</h2>
+    <p class="dica">Informe somente o que conhece. Campos vazios ficam como não informados.</p>
+    <label>Capacidades disponíveis para executar os exercícios</label>
+    <div class="gm-grid">
+      <label class="chk"><input type="checkbox" name="gmAvailable" value="support">Apoio</label><label class="chk"><input type="checkbox" name="gmAvailable" value="grip">Preensão</label><label class="chk"><input type="checkbox" name="gmAvailable" value="balance">Equilíbrio</label><label class="chk"><input type="checkbox" name="gmAvailable" value="mobility">Mobilidade</label><label class="chk"><input type="checkbox" name="gmAvailable" value="transfer">Transferências</label>
+    </div>
+    <label>Capacidades que precisam de adaptação ou avaliação</label>
+    <div class="gm-grid">
+      <label class="chk"><input type="checkbox" name="gmUnavailable" value="support">Apoio</label><label class="chk"><input type="checkbox" name="gmUnavailable" value="grip">Preensão</label><label class="chk"><input type="checkbox" name="gmUnavailable" value="balance">Equilíbrio</label><label class="chk"><input type="checkbox" name="gmUnavailable" value="mobility">Mobilidade</label><label class="chk"><input type="checkbox" name="gmUnavailable" value="transfer">Transferências</label>
+    </div>
+    <label>Detalhes sobre movimentos, apoio ou assistência<textarea id="gmFunction" maxlength="1000"></textarea></label>
+    <label>Prótese, órtese, apoio ou recursos que utiliza<textarea id="gmResources" maxlength="1000"></textarea></label>
   </div>
 
   <div class="qcard">
@@ -62,15 +122,38 @@
     <label>Fuma?<select id="fFuma"><option value="">—</option><option>não</option><option>sim</option><option>parei</option></select></label>
     <label>Álcool?<select id="fAlcool"><option value="">—</option><option>não bebo</option><option>socialmente</option><option>com frequência</option></select></label>
     <label>Como é sua alimentação hoje?<input type="text" id="fAlimentacao" placeholder="ex.: como de tudo, pouco doce"></label>
+    <label>Como está sua fadiga?<select id="gmFatigue"><option value="unknown">Não informado</option><option value="low">Baixa</option><option value="moderate">Moderada</option><option value="high">Alta</option><option value="nao_sei">Não sei avaliar</option></select></label>
+    <label>Algo importante sobre sua recuperação?<textarea id="gmRecovery" maxlength="1000"></textarea></label>
+    <label>Outras atividades físicas ou esforço na rotina<input type="text" id="gmOtherActivities"></label>
   </div>
 
   <div class="qcard">
     <h2>Seu treino</h2>
     <label>Experiência com treino<select id="fNivel"><option value="">—</option><option>iniciante</option><option>intermediário</option><option>avançado</option></select></label>
+    <p class="dica" style="margin-top:8px">Iniciante: desenvolvendo técnica e regularidade. Intermediário: prática consistente. Avançado: experiência consolidada. Seu personal confirma o nível para a modalidade.</p>
+    <label>Modalidade a que essa experiência se refere<input type="text" id="gmModality" placeholder="Ex.: musculação"></label>
+    <label>Regularidade nos últimos meses<input type="text" id="gmRegularity"></label>
+    <label>Movimentos com que já tem familiaridade<input type="text" id="gmFamiliarity"></label>
     <label>Há quanto tempo treina (ou parou há quanto tempo)?<input type="text" id="fTempo" placeholder="ex.: 1 ano, parei há 6 meses"></label>
-    <label>Quantos dias por semana você consegue treinar?<select id="fDias"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+    <label>Está retornando depois de uma pausa?<select id="gmReturning"><option value="unknown">Não informado</option><option value="nao">Não</option><option value="sim">Sim</option></select></label>
+    <div data-gm-when="gmReturning" hidden><label>Duração da pausa<input type="text" id="gmPause"></label><label>Motivo da pausa<input type="text" id="gmPauseReason"></label></div>
+    <label hidden>Dias por semana calculados pela seleção<select id="fDias"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
     <label>O que você GOSTA de treinar?<input type="text" id="fGosta" placeholder="ex.: musculação, correr"></label>
     <label>O que você NÃO gosta?<input type="text" id="fNaoGosta" placeholder="ex.: burpee, esteira"></label>
+    <label>Dias disponíveis</label>
+    <div class="gm-grid"><label class="chk"><input type="checkbox" name="gmDay" value="1">Segunda</label><label class="chk"><input type="checkbox" name="gmDay" value="2">Terça</label><label class="chk"><input type="checkbox" name="gmDay" value="3">Quarta</label><label class="chk"><input type="checkbox" name="gmDay" value="4">Quinta</label><label class="chk"><input type="checkbox" name="gmDay" value="5">Sexta</label><label class="chk"><input type="checkbox" name="gmDay" value="6">Sábado</label><label class="chk"><input type="checkbox" name="gmDay" value="0">Domingo</label></div>
+    <label>Minutos por sessão<input type="number" min="10" max="240" step="1" id="gmMinutes"></label>
+    <label>Onde pretende treinar?<select id="gmEnvironment"><option value="unknown">Não informado</option><option value="gym">Academia</option><option value="home">Em casa</option><option value="outdoors">Ao ar livre</option><option value="mixed">Mais de um ambiente</option></select></label>
+    <label>Equipamentos disponíveis</label>
+    <div class="gm-grid"><label class="chk"><input type="checkbox" name="gmEquipment" value="bodyweight">Peso corporal</label><label class="chk"><input type="checkbox" name="gmEquipment" value="dumbbells">Halteres</label><label class="chk"><input type="checkbox" name="gmEquipment" value="barbell">Barras</label><label class="chk"><input type="checkbox" name="gmEquipment" value="machines">Máquinas</label><label class="chk"><input type="checkbox" name="gmEquipment" value="cables">Cabos</label><label class="chk"><input type="checkbox" name="gmEquipment" value="bands">Elásticos</label><label class="chk"><input type="checkbox" name="gmEquipment" value="bench">Banco</label><label class="chk"><input type="checkbox" name="gmEquipment" value="cardio">Equipamento de cardio</label></div>
+  </div>
+  <div class="qcard">
+    <h2>Seus objetivos</h2>
+    <label>Objetivo principal<select id="gmGoal"><option value="">Selecione</option><option value="hypertrophy">Ganhar massa muscular</option><option value="fat_loss">Reduzir gordura corporal</option><option value="strength">Aumentar a força</option><option value="conditioning">Melhorar o condicionamento</option><option value="health">Saúde e autonomia</option></select></label>
+    <label>Objetivo secundário (opcional)<select id="gmSecondGoal"><option value="">Sem objetivo secundário</option><option value="hypertrophy">Ganhar massa muscular</option><option value="fat_loss">Reduzir gordura corporal</option><option value="strength">Aumentar a força</option><option value="conditioning">Melhorar o condicionamento</option><option value="health">Saúde e autonomia</option></select></label>
+    <label>Regiões que deseja priorizar (opcional)</label>
+    <p class="dica" style="margin-top:6px">Sem seleção: desenvolvimento equilibrado. O personal ajusta a prioridade ao seu objetivo.</p>
+    <div class="gm-grid"><label class="chk"><input type="checkbox" name="gmPriority" value="Peito">Peito</label><label class="chk"><input type="checkbox" name="gmPriority" value="Costas">Costas</label><label class="chk"><input type="checkbox" name="gmPriority" value="Ombros">Ombros</label><label class="chk"><input type="checkbox" name="gmPriority" value="Braços">Braços</label><label class="chk"><input type="checkbox" name="gmPriority" value="Pernas">Pernas</label><label class="chk"><input type="checkbox" name="gmPriority" value="Glúteos">Glúteos</label><label class="chk"><input type="checkbox" name="gmPriority" value="Abdômen">Abdômen</label></div>
   </div>
 
   <button class="btnx" id="btnEnviar">Enviar pro meu treinador ➤</button>
@@ -79,6 +162,9 @@
 <div id="fim"><div class="e">💪</div><h1>Anamnese enviada!</h1><p class="sub">Seu treinador já recebeu tudo — o próximo treino sai do seu tamanho. Pode fechar esta página.</p></div>
 
 <script src="assets/cloud-config.js"></script>
+<script src="assets/gerador-mensal-catalogo.js"></script>
+<script src="assets/gerador-mensal-core.js"></script>
+<script src="assets/anamnese-gerador-mensal.js"></script>
 <script>
 (function () {
   "use strict";
@@ -93,6 +179,14 @@
     return;
   }
   if (NOME) $("#anTitulo").textContent = "Complete seu cadastro, " + NOME.split(" ")[0];
+  var draftKey='tqAnamneseMensal:'+encodeURIComponent(TOKEN),submitted=false;
+  var refreshConditions;try{refreshConditions=window.MT_ANAMNESE_GERADOR_MENSAL.mount(document);}catch(e){$('#erro').textContent=e.message;$('#btnEnviar').disabled=true;return;}
+  function draftFieldKey(el){return el.id||el.name+':'+el.value;}
+  function draftSave(){if(submitted)return;var values={};document.querySelectorAll('#form input,#form select,#form textarea').forEach(function(el){values[draftFieldKey(el)]={value:el.value,checked:el.checked};});try{localStorage.setItem(draftKey,JSON.stringify(values));$('#anDraft').textContent='Rascunho salvo neste aparelho. Ainda não enviado ao personal.';}catch(e){$('#anDraft').textContent='Não foi possível guardar o rascunho. Mantenha esta página aberta até enviar.';}}
+  try{var draft=JSON.parse(localStorage.getItem(draftKey)||'null');if(draft){document.querySelectorAll('#form input,#form select,#form textarea').forEach(function(el){var v=draft[draftFieldKey(el)];if(v){if(el.type==='checkbox')el.checked=!!v.checked;else el.value=v.value;}});$('#anDraft').textContent='Seu rascunho foi recuperado neste aparelho.';}}catch(e){$('#anDraft').textContent='Não foi possível recuperar o rascunho local.';}
+  refreshConditions();
+  document.getElementById('form').addEventListener('input',draftSave);
+  document.getElementById('form').addEventListener('change',draftSave);
 
   /* Os nomes dos campos são EXATAMENTE os da anamnese do painel (a.anamnese):
    * parq1..7 + lesoes/doencas/meds/familiar/sono/estresse/fuma/alcool/
@@ -108,6 +202,8 @@
      ["fGosta", "gosta"], ["fNaoGosta", "naogosta"]].forEach(function (par) {
       an[par[1]] = String($("#" + par[0]).value || "").trim().slice(0, 300);
     });
+    an.geradorMensal=window.MT_ANAMNESE_GERADOR_MENSAL.collect(document);
+    if(an.geradorMensal.days.length)an.dias=String(an.geradorMensal.days.length);
     return an;
   }
   window.__anamnese = { monta: montaAnamnese }; // testes
@@ -116,6 +212,7 @@
     var an = montaAnamnese();
     // o mínimo pro treino não sair no escuro: nível e dias por semana
     if (!an.nivel || !an.dias) { $("#erro").textContent = "Falta dizer sua experiência e quantos dias por semana. 😉"; return; }
+    var pending=window.MT_ANAMNESE_GERADOR_MENSAL.errors(an.geradorMensal);if(pending.length){$('#erro').textContent=pending.join(' ');return;}
     var cfg = self.MT_CLOUD || {};
     if (!cfg.url) { $("#erro").textContent = "Configuração da nuvem ausente — avisa seu treinador."; return; }
     var btn = $("#btnEnviar");
@@ -124,8 +221,8 @@
       method: "POST",
       headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
       body: JSON.stringify({ t: TOKEN, p_dados: { anamnese: an, anamneseEm: new Date().toISOString() } }),
-    }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d && d.ok) { $("#form").style.display = "none"; $("#fim").style.display = "block"; window.scrollTo(0, 0); }
+    }).then(function (r) { if(!r.ok)throw Error('http');return r.json(); }).then(function (d) {
+      if (d && d.ok) { submitted=true;try{localStorage.removeItem(draftKey);}catch(e){}$("#form").style.display = "none"; $("#fim").style.display = "block"; window.scrollTo(0, 0); }
       else {
         btn.disabled = false; btn.textContent = "Enviar pro meu treinador ➤";
         var eMsg = (d && d.erro) ? d.erro : "Não deu — tenta de novo em instantes.";
@@ -134,7 +231,7 @@
       }
     }).catch(function () {
       btn.disabled = false; btn.textContent = "Enviar pro meu treinador ➤";
-      $("#erro").textContent = "Sem internet agora — tenta de novo em instantes.";
+      $("#erro").textContent = "Não foi possível enviar. Seu preenchimento continua aqui; tente novamente quando houver conexão.";
     });
   });
 })();
