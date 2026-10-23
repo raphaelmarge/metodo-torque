@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v872 — Escolhas de substituição no app do paciente Nutri
+
+- O paciente escolhe entre as alternativas publicadas pela nutricionista, com
+  porção própria e atualização de kcal/P/C/G no alimento, na refeição e no dia.
+- `patient-food-choices.js` guarda preferências locais por acesso, paciente,
+  versão/conteúdo do plano e data. Não altera a prescrição nem registra consumo.
+- Novos registros do diário começam com as escolhas daquela data e refeição;
+  histórico, rascunhos e edições manuais só mudam por ação explícita do paciente.
+- Impressão e planejamento de compras continuam com seus próprios contratos.
+  Cache Nutri v20 e global mt-v872. Detalhes:
+  `docs/releases/mt-v872-substituicoes-paciente-nutri.md`.
+
 ## v870 — Sugestões de substituições na prescrição Nutri
 
 - A ação por alimento abre opções com porções ajustadas e diferenças de

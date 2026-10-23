@@ -8,6 +8,7 @@ import {createSchedule} from './schedule.js';
 import {createAssessments} from './assessment.js';
 import {createPatientExperience} from './patient-experience.js';
 import {createFoodJournal} from './food-journal.js';
+import {createPatientFoodChoices} from './patient-food-choices.js';
 import {createPlanRecipes} from './plan-recipes.js';
 export function createPlatform(H){
  const {state,esc,uid,today,dateLabel,heading,modal,toast,render,run}=H;
@@ -170,11 +171,12 @@ export function createPlatform(H){
  const G=createConsultation(H,{pat,records,saveRecord,bind});
  const F=createFinance(H,{pat,resources,records,load,field,area,choices,btn,card,row,empty,money,download,bind});
  const U=createFollowUp(H,{pat,saveResource,btn,card,row,empty,financeForPatient:F.openPatient,scheduleForPatient:(id,day)=>C.openPatient(id,day)});
- const J=createFoodJournal(H,{pat,records,saveRecord,load,imageFile});
+ const foodChoices=createPatientFoodChoices(H,{pat});
+ const J=createFoodJournal(H,{pat,records,saveRecord,load,imageFile,foodChoices});
  const R=createPlanRecipes(H,{resources,pat,bind,saveResource});
  const A=createAssessments(H,{pat,saveRecord,draftModal,imageFile,bind});
  const C=createSchedule(H,{act});
- const E=createPatientExperience(H,{pat,resources,patientPages,saveResource,imageFile},A);
+ const E=createPatientExperience(H,{pat,resources,patientPages,saveResource,imageFile,foodChoices},A);
  const N=createPatientNotifications(H,{icon:E.icon});
  let installPrompt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
  return {pages,patientPages,seed,load,bind,records,resources,notificationButton:N.button,journalForMeal:J.forMeal,recipeAssignment:R.recipeAssignment,saveRecord,saveResource,icon:E.icon,avatar:E.avatar,financeForPatient:F.openPatient,views:{overview:U.overview,patients:U.patients,today:E.home,food:E.food,progress:A.view,achievements:E.achievements,brand:()=>H.brandView()+E.coverSettings(),more:()=>pro()?more():E.menu(),profile,appointments,library,recipes,assessments:clinical,clinical,questionnaires,forms,documents,journal,booking,finance:F.view,payments:F.payments,reports,operations,community,benefits,images,'profile-settings':E.profile,goals,professional,settings,support}};

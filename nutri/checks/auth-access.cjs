@@ -23,6 +23,7 @@ const original = fs.readFileSync(appPath, 'utf8');
 const source = original
   .replace(/^import \{nutritionCatalog,foodBrowserMarkup,bindFoodBrowser,foodPortionModal,measuredFoodControls\} from '\.\/food-catalog\.js';\r?\n/m, '')
   .replace(/^import \{foodSubstitutionModal,substitutionComparisonMarkup\} from '\.\/food-substitution-ui\.js';\r?\n/m, '')
+  .replace(/^import \{suggestFoodSubstitutions\} from '\.\/food-substitutions\.js';\r?\n/m, '')
   .replace(/^import \{changeFoodMeasure,updateFoodQuantity,formatFoodQuantity,parseFoodQuantity\} from '\.\/food-measures\.js';\r?\n/m, '')
   .replace(/^import \{portionLabel\} from '\.\/shopping\.js';\r?\n/m, '')
   .replace(/^import \{createPlatform\} from '\.\/platform\.js';\r?\n/m, '')

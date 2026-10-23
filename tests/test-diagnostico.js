@@ -4,11 +4,34 @@
 const path = require("path");
 const fs = require("fs");
 let chromium;
-try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
+if (process.env.TORQUE_PLAYWRIGHT) chromium = require(process.env.TORQUE_PLAYWRIGHT).chromium;
+else { try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; } }
 
 const RAIZ = path.join(__dirname, "..");
-const EXEC = fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined;
+const EXEC = process.env.TORQUE_BROWSER_EXECUTABLE || process.env.CHROMIUM_PATH || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 const BASE = process.env.BASE_URL || process.env.MT_BASE || "http://127.0.0.1:8765";
+const chamadasNaoSimuladas = [];
+
+async function contextoIsolado(browser) {
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  // Registrada antes dos mocks específicos: qualquer chamada esquecida falha
+  // localmente, em vez de depender da nuvem real ou do tempo de resposta dela.
+  await ctx.route("**/*", route => {
+    const request = route.request(), url = new URL(request.url());
+    if (url.origin !== new URL(BASE).origin || !["GET", "HEAD"].includes(request.method())) {
+      chamadasNaoSimuladas.push(request.method() + " " + url.pathname);
+      return route.abort();
+    }
+    return route.continue();
+  });
+  await ctx.route("**/assets/cloud-config.js", route => route.fulfill({
+    contentType: "application/javascript",
+    body: 'self.MT_CLOUD={url:"https://diagnostico-fixture.invalid",anonKey:"public-fixture-key"};',
+  }));
+  if (typeof ctx.routeWebSocket !== "function") throw Error("Playwright com routeWebSocket é necessário para isolar este teste.");
+  await ctx.routeWebSocket("**/*", socket => { chamadasNaoSimuladas.push("WebSocket"); socket.close(); });
+  return ctx;
+}
 
 let falhas = 0;
 // v756: o navegador vive FORA do IIFE pra o finally fechar mesmo quando a
@@ -235,7 +258,7 @@ async function testaAjudantes() {
   console.log("Diagnóstico da nuvem:");
 
   for (const c of CENARIOS) {
-    const ctx = await b.newContext();
+    const ctx = await contextoIsolado(b);
     const erros = [];
     // nuvem simulada: nada sai para a internet de verdade
     await ctx.route("**/functions/v1/chat-envia", (r) => {
@@ -271,7 +294,7 @@ async function testaAjudantes() {
     /* O teste do banco tem que mandar apikey E Authorization. Sem o segundo, o
      * Supabase responde 401 com a chave CERTA — foi assim que este diagnóstico
      * acusou injustamente a chave do projeto e mandou trocar o que funcionava. */
-    const ctx = await b.newContext();
+    const ctx = await contextoIsolado(b);
     let cabecalhos = null;
     await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => {
       cabecalhos = r.request().headers();
@@ -293,7 +316,7 @@ async function testaAjudantes() {
   {
     // testador de chave: descobrir qual chave o projeto aceita sem publicar o
     // site a cada palpite. E ele NUNCA pode encorajar o uso de chave secreta.
-    const ctx = await b.newContext();
+    const ctx = await contextoIsolado(b);
     await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "null" }));
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"ia":true}' }));
@@ -326,10 +349,12 @@ async function testaAjudantes() {
 
   {
     // o detalhe técnico é o que o Raphael copia e manda; tem que ter o status
-    const ctx = await b.newContext();
+    const ctx = await contextoIsolado(b);
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: 500, contentType: "application/json", body: '{"code":"BOOT_ERROR"}' }));
-    await ctx.route("**/rest/v1/", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+    await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
+    await ctx.route("**/functions/v1/push-envia", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
     const p = await ctx.newPage();
     await p.goto(BASE + "/diagnostico.html");
     await p.click("#btnRodar");
@@ -344,6 +369,7 @@ async function testaAjudantes() {
     await ctx.close();
   }
 
+  ok(chamadasNaoSimuladas.length === 0, "todos os cenários isolam a nuvem, sem chamada não simulada" + (chamadasNaoSimuladas.length ? " — " + chamadasNaoSimuladas.join(", ") : ""));
   await b.close();
   console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
   process.exit(falhas ? 1 : 0);

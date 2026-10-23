@@ -177,3 +177,27 @@
 .plan-shopping li>span{min-width:0}
 .plan-shopping .notice{white-space:normal}
 @media(max-width:360px){.shopping-dates{grid-template-columns:1fr}}
+
+/* Choices use the portion already published by the clinician. */
+.plan-nutrient dd .plan-total-value{font:inherit;letter-spacing:inherit;color:inherit}
+.plan-food-macros{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:11px;line-height:1.65;color:var(--muted);margin-top:8px}
+.plan-food-macros b{font-weight:500;color:var(--text)}
+.plan-food-macros>span{min-width:0;overflow-wrap:anywhere}
+.plan-choice-origin{font-size:11px;line-height:1.6;color:var(--muted);margin:5px 0 0}
+.plan-meal-macros{display:flex;flex-wrap:wrap;gap:6px 18px;padding:13px 24px;font-size:11px;line-height:1.6;border-bottom:1px solid var(--line);color:var(--muted)}
+.plan-meal-macros b{font-weight:500;color:var(--text)}
+.plan-choice-list{display:grid;gap:10px}
+.meal-plan .plan-choice{display:block;width:100%;min-width:0;min-height:44px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer;transition:border-color .16s,background .16s}
+.meal-plan .plan-choice:hover{border-color:var(--brand)}
+.meal-plan .plan-choice[aria-pressed=true]{border-color:var(--brand);background:var(--plan-tint)}
+.meal-plan .plan-choice:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.plan-choice-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;line-height:1.5;font-size:13px}
+.plan-choice-heading>b{font-weight:500;overflow-wrap:anywhere;min-width:0}
+.plan-choice-mark{display:grid;place-items:center;flex:0 0 22px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:13px}
+.plan-choice[aria-pressed=true] .plan-choice-mark{background:var(--brand);border-color:var(--brand);color:#10271e}
+.plan-choice-portion{display:block;font-size:15px;font-weight:600;line-height:1.6;margin-top:7px;overflow-wrap:anywhere}
+.plan-choice-caption{display:block;font-size:11px;line-height:1.6;margin-top:12px;color:var(--plan-accent)}
+.plan-choice .plan-food-macros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px}
+.large-text .meal-plan :is(.plan-food-macros,.plan-choice-origin,.plan-meal-macros,.plan-choice-heading,.plan-choice-portion,.plan-choice-caption){font-size:17px}
+@media(max-width:560px){.plan-meal-macros{padding:12px 18px;gap:6px 12px}.plan-food-macros{gap:4px 10px}.meal-plan .plan-choice{padding:13px}.plan-alternatives[open]{padding:0 9px 10px}}
+@media(prefers-reduced-motion:reduce){.meal-plan .plan-choice{transition:none}}
