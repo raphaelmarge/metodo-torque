@@ -1,10 +1,13 @@
-# mt-v873 — Alinhamento dos formulários do Torque Nutri
+# mt-v875 — Alinhamento dos formulários do Torque Nutri
 
 ## Escopo e correções
 
 Revisão da aplicação real `/nutri/`, sobre `main` em
-`70dd9b546cfa55d02224bbc513f52b379e96bbcd`, após a integração da escolha de
-substituições do paciente. Alterações restritas à apresentação e distribuição:
+`5adbc9a48ba7bd3b6d722ccef3fe3064025190e3`, preservando a integração da escolha
+de substituições do paciente e a publicação concorrente da landing Personal
+em mt-v874. O número mt-v873 inicialmente reservado por esta branch foi
+substituído por mt-v875 para não retroceder o cache global. Alterações do Nutri
+restritas à apresentação e distribuição:
 
 - `style.css`: o cabeçalho dos diálogos reserva uma coluna de 44 px para fechar.
   Títulos extensos quebram dentro da própria coluna, sem deslocar o X para baixo.
@@ -61,6 +64,6 @@ no resumo, mesmo quando o seletor nativo abrevia seu texto no celular.
   preservados; módulos disponíveis offline; instalação interrompida mantém
   o cache anterior. Consistência da versão global: 17 checks.
 
-Cache Nutri v21 e global mt-v873. A aprovação local não equivale a publicação:
+Cache Nutri v21 e global mt-v875. A aprovação local não equivale a publicação:
 conferir CI no HEAD exato, workflow Pages, commit e arquivos servidos, seguido
 de inspeção pública dos formulários alterados antes de anunciar conclusão.

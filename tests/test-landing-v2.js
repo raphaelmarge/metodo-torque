@@ -90,6 +90,73 @@ async function landingBrand(page) {
   });
 }
 
+async function salesClarity(page, width, initialViewport = true) {
+  const actions = page.locator('.hero-actions a, .hero-actions button');
+  assert.equal(await actions.count(), 2, 'o topo oferece somente teste grátis e demonstração');
+  const trial = page.locator('.hero-actions [data-personal-trial]');
+  assert.equal(await trial.count(), 1, 'o teste grátis é uma ação única no topo');
+  assert.match(await trial.innerText(), /14 dias grátis/i);
+  assert(await trial.evaluate(link => {
+    const url = new URL(link.href);
+    return url.pathname.endsWith('/personal.html') && url.searchParams.get('entrada') === 'criar';
+  }), 'o teste grátis abre o cadastro existente');
+  const demo = page.locator('.hero-actions a:not([data-personal-trial])');
+  assert.equal(await demo.count(), 1, 'a segunda ação apresenta a demonstração');
+  assert.match(await demo.innerText(), /demonstração|ver o sistema/i);
+  assert(await demo.evaluate(link => {
+    const url = new URL(link.href);
+    return url.pathname.endsWith('/demo-personal.html') ||
+      (url.pathname === location.pathname && url.hash === '#filme');
+  }), 'a demonstração leva ao painel ou ao vídeo existente');
+  assert.equal(await page.locator('.hero-actions a[data-sales-link]').count(), 0, 'a assinatura permanece fora da escolha inicial');
+
+  const heroText = await page.locator('.hero-copy').innerText();
+  assert.match(heroText, /14 dias grátis/i);
+  assert.match(heroText, /sem cartão/i);
+  const offer = await page.locator('.hero-copy').evaluate(root => {
+    const price = /R\$\s*49,90\s*(?:\/\s*mês|por mês|mensais)/i;
+    const candidates = Array.from(root.querySelectorAll('*')).filter(el => price.test(el.textContent));
+    const el = candidates.find(el => !Array.from(el.children).some(child => price.test(child.textContent)));
+    if (!el) return null;
+    const rect = el.getBoundingClientRect(), style = getComputedStyle(el);
+    return {
+      rendered: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+      top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left,
+      viewportHeight: innerHeight
+    };
+  });
+  assert(offer && offer.rendered, `a mensalidade está apresentada no topo em ${width}px`);
+  assert(offer.left >= -1 && offer.right <= width + 1, `o preço do topo cabe na largura de ${width}px`);
+  if (initialViewport) {
+    assert(offer.top >= 0 && offer.bottom <= offer.viewportHeight, `o preço aparece sem rolar em ${width}px`);
+    assert(await actions.evaluateAll(items => items.every(el => {
+      const r = el.getBoundingClientRect();
+      return r.width >= 44 && r.height >= 44 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= innerHeight;
+    })), `as duas ações cabem na primeira tela e têm área de toque em ${width}px`);
+  }
+
+  assert(await page.evaluate(() => {
+    const video = document.getElementById('filme'), brand = document.getElementById('sua-marca'), system = document.getElementById('sistema');
+    return !!(video && brand && system &&
+      (video.compareDocumentPosition(system) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      (brand.compareDocumentPosition(system) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+      video.getBoundingClientRect().top < system.getBoundingClientRect().top &&
+      brand.getBoundingClientRect().top < system.getBoundingClientRect().top);
+  }), 'vídeo e personalização aparecem antes do tour detalhado do sistema');
+  const about = page.locator('section#sobre');
+  assert.equal(await about.count(), 1, 'Sobre é uma seção de conteúdo, não uma âncora vazia');
+  assert(await about.isVisible(), 'a seção Sobre está disponível');
+  assert(await about.locator('h2').count(), 'Sobre tem título próprio');
+  assert.match(await about.innerText(), /TORQUE PERSONAL/);
+  assert.match(await about.innerText(), /suporte|equipe|atendimento/i);
+  assert.match(await about.innerText(), /14 dias|sem fidelidade|cancel/i);
+  assert(await about.locator('a[data-zap]').isVisible(), 'Sobre oferece contato com a equipe');
+  assert(await about.locator('a[href="privacidade.html"]').isVisible(), 'Sobre permite consultar a política de privacidade');
+  const comparison = page.getByText(/O que você deixa para trás/i);
+  assert.equal(await comparison.count(), 1, 'a comparação explica o que o profissional deixa para trás');
+  assert(await comparison.isVisible());
+}
+
 (async () => {
   browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] });
   const errors = [];
@@ -104,6 +171,7 @@ async function landingBrand(page) {
     await page.locator('img[src]:not([src=""])').evaluateAll(images => images.forEach(img => img.loading = 'eager'));
     await page.waitForFunction(() => Array.from(document.querySelectorAll('img[src]:not([src=""])')).every(img => img.complete && img.naturalWidth));
     await page.evaluate(() => document.fonts.ready);
+    await salesClarity(page, width);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `overflow at ${width}`);
     const ratios = await page.locator('.phone-shell img, .dashboard-device img, #journey-image').evaluateAll(images => images.filter(img => img.clientWidth && img.clientHeight).map(img => Math.abs(img.clientWidth / img.clientHeight - img.naturalWidth / img.naturalHeight)));
     assert(ratios.length >= 3, 'as telas reais continuam presentes');
@@ -332,6 +400,7 @@ async function landingBrand(page) {
   const nojs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const fallback = await nojs.newPage();
   await fallback.goto(base + '/personal-vendas.html');
+  await salesClarity(fallback, 390, false);
   assert(await fallback.locator('.hero-title').isVisible());
   assert(await fallback.locator('.price').isVisible());
   assert(await fallback.locator('.hero-actions a[href="personal.html?entrada=criar"]').isVisible());
