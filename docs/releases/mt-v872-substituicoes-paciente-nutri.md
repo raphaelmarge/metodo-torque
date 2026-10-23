@@ -1,9 +1,9 @@
-# mt-v871 — Escolhas de alimentos no app do paciente Nutri
+# mt-v872 — Escolhas de alimentos no app do paciente Nutri
 
 ## Fluxo e dados
 
 Implementação na rota real `/nutri/`, sobre `origin/main` em
-`c246ba0b6ade68934f290dd8bda5fa4ffa1f3ecb`. No plano alimentar, cada alimento
+`5ea514e9b98ed741aa8cb8ce405054426f9763d8`. No plano alimentar, cada alimento
 com alternativas publicadas oferece a ação “Substituir [alimento]”. O paciente
 vê a quantidade e kcal/proteínas/carboidratos/gorduras de cada opção e escolhe
 uma delas. O alimento principal continua disponível para desfazer a escolha.
@@ -56,7 +56,7 @@ passou seus 7 grupos. Versão global passou 17 checks.
 
 Atualização Chromium v14 para v20 verificada com novos módulos disponíveis
 offline e falha de instalação preservando a versão anterior. Cache Nutri v20,
-versão global mt-v871. O CI canônico Linux deve passar no HEAD antes do merge;
+versão global mt-v872. O CI canônico Linux deve passar no HEAD antes do merge;
 o workflow Pages e o commit servido devem ser conferidos antes de declarar
 publicação. Testes locais e demonstração não representam validação de registros
 clínicos reais.
