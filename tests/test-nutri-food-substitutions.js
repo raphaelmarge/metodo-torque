@@ -39,6 +39,8 @@ const {pathToFileURL}=require('node:url');
   const volumeCandidate=food('test:milk-volume','Leite parcialmente desnatado',{baseUnit:'ml',k:60,pt:3,cb:5,g:3,measures:[]});
   const massCandidate={...volumeCandidate,id:'test:milk-mass',n:'Leite semidesnatado',baseUnit:'g'};
   assert.deepEqual(suggest(milkTarget,[massCandidate,volumeCandidate]).map(v=>v.food.id),[volumeCandidate.id]);
+  assert.deepEqual(suggest({...milkTarget,measurement:undefined},[volumeCandidate]),[]);
+  assert.deepEqual(suggest({...rice,nome:'Leite integral',porcao:'1 porção',qtd:1},[massCandidate]),[],'generic mass-based milk does not prove liquid preparation');
   const legacy={id:'old-line',alimId:'old-food',nome:'Arroz cozido',porcao:'1 porção',qtd:'1,5',k:'130',pt:'3',cb:'28',g:'0,3'};
   const legacyBefore=structuredClone(legacy),legacyComparison=compare(legacy,target);near(legacyComparison.score,0);assert.deepEqual(legacy,legacyBefore);
   assert.equal(suggest(legacy,[potato])[0].item.qtd,300);
@@ -91,6 +93,7 @@ const {pathToFileURL}=require('node:url');
 
   const catalog=['taco.json','openfoodfacts.json'].flatMap(filename=>JSON.parse(fs.readFileSync(path.join(root,'nutri/data',filename),'utf8')));
   assert.equal(catalog.length,7201);const savedCatalog=JSON.stringify(catalog);
+  const ambiguousMilk=catalog.find(f=>f.id==='off:7898080640369');assert(ambiguousMilk);assert.deepEqual(suggest({...legacyMilk,porcao:'1 porção'},[ambiguousMilk]),[]);
   const realRice=makeFoodItem(catalog.find(f=>f.id==='taco:3'),150,'g',{id:'real-rice'});
   const examples=[realRice,{id:'demo-rice',nome:'Arroz cozido',porcao:'100 g',qtd:1,k:130,pt:3,cb:28,g:0},{id:'demo-chicken',nome:'Frango grelhado',porcao:'100 g',qtd:1,k:165,pt:31,cb:0,g:4},{id:'demo-papaya',nome:'Mamão',porcao:'1 porção',qtd:1,k:60,pt:1,cb:15,g:0}];
   for(const example of examples){

@@ -71,7 +71,13 @@ function classification(food){
   else if(/\b(iogurte|yogurt|kefir|coalhada)\b/.test(name)){group='Iogurtes e fermentados';state='Pronto para consumo';}
   else if(/\b(queijo|ricota|cottage|mussarela|mucarela|requeijao)\b/.test(name)){group='Queijos';state='Pronto para consumo';}
   else if(/\b(chocolate|achocolatado)\b/.test(name))return null;
-  else if(/\b(leite)\b/.test(name)){group='Leites';state='Pronto para consumo';}
+  else if(/\b(leite)\b/.test(name)){
+    group='Leites';
+    // A generic milk name in a mass-based packaged record may be milk powder.
+    // Its preparation is not established by a similar macro ratio. A volume
+    // basis/portion or an explicit liquid process provides a conservative hint.
+    if(food.baseUnit==='ml'||food.measurement?.baseUnit==='ml'||/\b(ml|mililitros?)\b/.test(key(food.porcao??food.p))||/\b(uht|liquid[oa]|pasteurizad[oa])\b/.test(name))state='Pronto para consumo';
+  }
   else if(/\b(pasta de amendoim|pasta de amendoa|pasta de castanha)\b/.test(name)){group='Pastas de oleaginosas';state='Pronto para consumo';}
   else if(/\b(azeite|oleo)\b/.test(name)){group='Óleos';state='Pronto para consumo';}
   else if(/\b(manteiga|margarina)\b/.test(name)){group='Manteigas e margarinas';state='Pronto para consumo';}
