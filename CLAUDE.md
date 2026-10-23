@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v873 — Alinhamento dos formulários do Torque Nutri
+
+- Cabeçalhos dos diálogos reservam a coluna do botão de fechar, inclusive
+  quando o título quebra em duas linhas no celular ou com texto ampliado.
+- Datas de compras se distribuem pela largura disponível do cartão; ano e
+  calendário nativo permanecem visíveis, com espaço entre rótulo e campo.
+- Relatórios acomodam datas em telas intermediárias; filtros de evolução,
+  abas e ação de avaliação preservam alinhamento e leitura no celular.
+- Revisão das telas de profissional e paciente, sem alteração de cálculos,
+  prescrição, escolhas, diário ou gravação. Cache Nutri v21 e global mt-v873.
+  Evidências e cobertura em `docs/releases/mt-v873-alinhamento-nutri.md`.
+
 ## v872 — Escolhas de substituição no app do paciente Nutri
 
 - O paciente escolhe entre as alternativas publicadas pela nutricionista, com
