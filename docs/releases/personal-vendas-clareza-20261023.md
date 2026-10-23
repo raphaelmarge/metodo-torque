@@ -1,4 +1,4 @@
-# TORQUE PERSONAL — oferta e demonstração (mt-v872)
+# TORQUE PERSONAL — oferta e demonstração (mt-v873)
 
 O topo explica o produto para personal trainers, oferece teste grátis e
 demonstração como duas ações principais e informa R$ 49,90/mês com contratação
@@ -34,3 +34,13 @@ preservação de dados/offline. Revisão independente sem problemas bloqueantes.
 Publicação solicitada pelo proprietário. O PR só deve ser mesclado após os
 checks do commit final. A conclusão do deploy e o commit servido pelo domínio
 serão verificados separadamente; este registro não comprova produção por si só.
+
+## Integração de publicação
+
+O PR #896 passou os checks completos do HEAD ac856ef e foi mesclado. Durante
+a execução, o PR #894 também entrou na main e reservou mt-v872 para Nutri.
+A integração mantém integralmente os dois trabalhos e usa mt-v873 nos três
+arquivos globais, sem reutilizar o nome de cache da outra publicação.
+A alteração de versão é isolada: validar versão, atualização e cache localmente,
+mais os checks relevantes; o Pages continua exigindo a suíte completa do
+commit integrado antes de disponibilizar qualquer artefato.
