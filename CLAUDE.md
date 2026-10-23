@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v870 — Sugestões de substituições na prescrição Nutri
+
+- A ação por alimento abre opções com porções ajustadas e diferenças de
+  kcal/proteínas/carboidratos/gorduras. A busca manual continua disponível.
+- `food-substitutions.js` faz a comparação local; `food-substitution-ui.js`
+  mostra a referência, as sugestões e a comparação ao editar a quantidade.
+  Calorias e macros próximos não representam equivalência clínica ou de alergênicos.
+- Só a confirmação adiciona o snapshot da alternativa ao rascunho. Publicação,
+  histórico, plano principal e contratos de pacientes continuam independentes.
+- Quantidades inválidas e alteração do alvo durante a revisão bloqueiam a inclusão.
+  Cache Nutri v19 e global mt-v870. Detalhes: `docs/releases/mt-v870-substituicoes-nutri.md`.
+
 ## v869 — Catálogo pesquisado e prescrição por medidas no Nutri
 
 - `/nutri/` usa catálogo público separado em `food-catalog-data.js`, gerado de
