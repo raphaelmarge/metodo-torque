@@ -2450,6 +2450,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vTreinos" hidden>
     <div class="trx-mobile-nav"><label for="trArea">Área de treinos</label><select id="trArea"><optgroup label="Prescrição"><option value="fichas">Musculação · fichas do aluno</option><option value="auto">Criar treino com IA</option><option value="wod">Circuito (WOD)</option><option value="cardio">Corrida e bike</option><option value="plano">Semana do aluno</option><option value="grupo">Treinos em grupo</option></optgroup><optgroup label="Biblioteca"><option value="ex">Exercícios</option><option value="videos">Conteúdos</option></optgroup></select></div>
     <div class="abas" id="trAbas" style="margin: 0 0 14px;">
+      <button type="button" data-tra="mensal">Gerador mensal</button>
       <button data-tra="fichas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Fichas do aluno</button>
       <button data-tra="auto"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Automático e IA</button>
       <button data-tra="grupo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg> Em grupo</button>
@@ -2580,6 +2581,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="trx-publish"><span>Salve as alterações e publique para atualizar o app do aluno.</span><button class="btn sec" id="plnPublica">Publicar no app</button></div>
     </section>
 
+    <section class="card trx-section" id="gmSection" data-trsec="mensal" hidden>
+      <div class="trx-heading"><div><h2>Gerador mensal</h2><p>Reúna a anamnese, confira a evolução e aprove a próxima etapa do aluno.</p></div></div>
+      <label class="trx-field" for="gmAluno">Aluno<select id="gmAluno"></select></label>
+      <div id="gmRoot"></div>
+    </section>
     <section class="card trx-section trx-ai" data-trsec="auto" hidden>
       <div class="trx-heading"><div><h2>Criar treino com IA</h2><p>Configure a proposta, confira o resultado e aplique ao aluno.</p></div></div>
       <ol class="trx-steps" aria-label="Etapas da criação"><li><span>1</span> Configurar</li><li><span>2</span> Revisar</li><li><span>3</span> Aplicar</li></ol>
@@ -4028,6 +4034,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/personal-estornos-core.js"></script>
 <script src="assets/personal-estornos.js"></script>
 <script src="assets/relatorio-0809.js"></script>
+<script src="assets/gerador-mensal-catalogo.js"></script>
+<script src="assets/gerador-mensal-core.js"></script>
+<script src="assets/personal-gerador-mensal-adapter.js"></script>
+<script src="assets/personal-gerador-mensal.js"></script>
+<link rel="stylesheet" href="assets/personal-gerador-mensal.css">
 <script>
 (function () {
   "use strict";
@@ -8266,7 +8277,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });
     if (!a) return;
-    var an = {};
+    var an = Object.assign({}, a.anamnese || {});
     for (var q = 1; q <= 7; q++) an["parq" + q] = $("parq" + q).checked;
     ["anLesoes", "anDoencas", "anMeds", "anFamiliar", "anSono", "anEstresse", "anFuma", "anAlcool",
      "anAlimentacao", "anNivel", "anTempo", "anDias", "anGosta", "anNaoGosta"].forEach(function (id) {
@@ -10956,6 +10967,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a.appTokenP || a.ativo === false) return false;
     // Um token preparado após falha não autoriza publicar o primeiro rascunho automaticamente.
     if (soSistema && a.appPublicacaoPendente && !a.appPubEm) return false;
+    var etapaMensal = a.geradorMensal && a.geradorMensal.active;
+    if (soSistema && etapaMensal && !etapaMensal.publishedAt) return false;
+    if (soSistema && etapaMensal && self.MT_PERSONAL_GERADOR_MENSAL && !self.MT_PERSONAL_GERADOR_MENSAL.isCurrent(st, a.id)) return false;
     /* v755: acesso cortado não é pendência. A revogação apaga appPubEm/appVer,
      * então o aluno virava "pendente" na hora e a automática devolvia o pacote
      * inteiro dele pra nuvem — com push e link no WhatsApp. */
@@ -11946,7 +11960,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var opsGt = (st.treinosGrupo || []).map(function (g) {
       return '<option value="' + g.id + '">' + esc(g.nome) + "</option>";
     }).join("");
-    ["sAluno", "pAluno", "tAluno", "avAluno", "avCmpAluno", "taAluno", "wpAluno", "cbAluno", "plnAluno"].forEach(function (id) {
+    ["sAluno", "pAluno", "tAluno", "avAluno", "avCmpAluno", "taAluno", "gmAluno", "wpAluno", "cbAluno", "plnAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
       sel.innerHTML = "<option value=''>— aluno —</option>" + opts +
@@ -14849,9 +14863,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }, true);
   // sub-links da parte de treino: cada bloco vive na sua própria tela
   var trAbaAtual = "fichas";
+  if ($("trArea")) { var gmOption = document.createElement("option"); gmOption.value = "mensal"; gmOption.textContent = "Gerador mensal · evolução validada"; $("trArea").querySelector("optgroup").prepend(gmOption); }
   function mostraTrAba(aba) {
-    if (["fichas", "auto", "grupo", "wod", "cardio", "plano", "ex", "videos"].indexOf(aba) < 0) aba = "fichas";
-    var alunosDasAreas = { fichas: "tAluno", auto: "taAluno", wod: "wpAluno", cardio: "cbAluno", plano: "plnAluno" };
+    if (["fichas", "mensal", "auto", "grupo", "wod", "cardio", "plano", "ex", "videos"].indexOf(aba) < 0) aba = "fichas";
+    var alunosDasAreas = { fichas: "tAluno", mensal: "gmAluno", auto: "taAluno", wod: "wpAluno", cardio: "cbAluno", plano: "plnAluno" };
     var origemAluno = $(alunosDasAreas[trAbaAtual]), destinoAluno = $(alunosDasAreas[aba]);
     // Aproveita o aluno em foco ao abrir uma área ainda sem seleção.
     // Seleções e rascunhos já existentes em cada área continuam intactos.
@@ -14869,6 +14884,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#trAbas button").forEach(function (b) { var ativo = b.getAttribute("data-tra") === aba; b.classList.toggle("ativa", ativo); b.setAttribute("aria-pressed", String(ativo)); });
     if (aba === "wod") { wpCarregaExs(); if (!document.querySelector("#wpMovLinhas .wp-mov")) wpMontaLinhas(); }
     if (aba === "plano" && window.__planoPT) window.__planoPT.render(); // opções sempre frescas
+    if (aba === "mensal" && window.MT_PERSONAL_GERADOR_MENSAL) window.MT_PERSONAL_GERADOR_MENSAL.render();
   }
   $("trAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-tra]");
@@ -17937,6 +17953,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       semana: tipo === "musculacao" ? t.semana : null });
   }
   function finalizaPrescricao(st, id, tipo, r, op, base, origem, params) {
+    var gmAlunoAtual = (load().alunos || []).find(function (a) { return a.id === id; });
+    if (tipo === "musculacao" && gmAlunoAtual && gmAlunoAtual.geradorMensal && gmAlunoAtual.geradorMensal.active) return {erro:"Este aluno usa o Gerador mensal. Gere e aprove a próxima etapa nessa área."};
     r.tipo = tipo;
     if (op && op.preview) {
       var t = (st.treinosV2 || {})[id] || {}, usados = {};
@@ -17986,6 +18004,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (d.aplicado) return { erro: "Este rascunho já foi aplicado." };
     var st = load(), a = (st.alunos || []).find(function (x) { return x.id === d.alunoId; });
     if (!a || a.ativo === false) return { erro: "O aluno não está mais ativo. O treino não foi alterado." };
+    if (d.tipo === "musculacao" && a.geradorMensal && a.geradorMensal.active) return {erro:"Use o Gerador mensal para revisar e aplicar a etapa deste aluno."};
     if (assinaturaPrescricao(st, d.alunoId, d.tipo) !== d.base) {
       return { erro: "O treino, a semana ou os dados que orientam a prescrição deste aluno mudaram desde a geração. Gere outra proposta para revisar a versão atual." };
     }
@@ -18032,6 +18051,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (op.preview) st = copiaPrescricao(st);
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) return { erro: "Escolha o aluno." };
+    if (a.geradorMensal && a.geradorMensal.active) return {erro:"Use o Gerador mensal para revisar e aplicar a etapa deste aluno."};
     var an = a.anamnese || {};
     if (+op.dias > 5) return { erro: "O gerador por catálogo monta até 5 dias por semana. Para 6 ou 7 dias, use Gerar com IA." };
     if (+op.duracao) return { erro: "A duração desejada é usada pela IA. Para gerar pelo catálogo, deixe a duração em branco ou use Gerar com IA." };
@@ -18114,6 +18134,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function evoluiTreino(alunoId, op) {
     op = op || {};
     var st = load();
+    var alunoMensal = (st.alunos || []).find(function (a) { return a.id === alunoId; });
+    if (alunoMensal && alunoMensal.geradorMensal && alunoMensal.geradorMensal.active) return { erro: "Este aluno usa o Gerador mensal. Valide a evolução no fechamento antes de aprovar a próxima etapa." };
     var base = assinaturaPrescricao(st, alunoId, "musculacao");
     if (op.preview) st = copiaPrescricao(st);
     var t = (st.treinosV2 || {})[alunoId];
@@ -18759,6 +18781,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       duracao: +op.duracao >= 10 && +op.duracao <= 180 ? Math.round(+op.duracao) : "" };
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) { cb({ erro: "Escolha o aluno." }); return; }
+    if (tipo === "musculacao" && a.geradorMensal && a.geradorMensal.active) { cb({erro:"Use o Gerador mensal para revisar e aplicar a etapa deste aluno."}); return; }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (Sua ilha) pra usar a IA de treino — sem nuvem, use o Gerar fichas." }); return; }
@@ -23334,13 +23357,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? { n: String(f.p2.n || "Cardio e alongamento").slice(0, 40),
             l: f.p2.l.slice(0, 12).map(function (ln) { return { t: String(ln.t || "").slice(0, 60), v: String(ln.v || "").slice(0, 24), o: String(ln.o || "").slice(0, 80) }; }) }
         : null;
-      return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
+      return { id: f.id, titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         var linhas = MT_APP_ALUNO.normalizaSeries(it);
-        return { exercicioId: typeof ex.id === "string" ? ex.id : "", nome: ex.nome || "?", video: String(it.video || "").trim() || videoDoEx(ex), gif: ex.semGif ? false : (ex.gif || ""), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
+        return { exId: it.exId, geradorMensal: it.geradorMensal ? JSON.parse(JSON.stringify(it.geradorMensal)) : undefined, exercicioId: typeof ex.id === "string" ? ex.id : "", nome: ex.nome || "?", video: String(it.video || "").trim() || (a.geradorMensal && a.geradorMensal.active ? String(ex.video || "") : videoDoEx(ex)), gif: a.geradorMensal && a.geradorMensal.active ? (ex.gif || false) : (ex.semGif ? false : (ex.gif || "")), desc: ex.descricao || "", series: linhas.length, reps: it.reps, descanso: descansoDe(it),
           carga: MT_APP_ALUNO.normalizaSeries({ carga: it.carga })[0].carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? linhas : undefined, obs: it.obs || "", tec: it.tec || "",
-          grupo: ex.grupo || "", alts: Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo), altsAprovadas: Array.isArray(it.alternativas) };
+          grupo: ex.grupo || "", alts: a.geradorMensal && a.geradorMensal.active ? [] : (Array.isArray(it.alternativas) ? it.alternativas : substApp(ex.nome || "", ex.grupo)), altsAprovadas: !!(a.geradorMensal && a.geradorMensal.active) || Array.isArray(it.alternativas) };
       }) };
     }) : null;
     /* Plano do mês: o pacote leva a semana JÁ RESOLVIDA (1 a 4) com o foco e o
@@ -23362,8 +23385,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
-      return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { exercicioId: it.exercicioId || "", e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
+      return { id: f.id, n: f.titulo || "Ficha", it: f.itens.map(function (it) {
+        return { exId: it.exId, geradorMensal: it.geradorMensal, exercicioId: it.exercicioId || "", e: (it.nome || "?").replace(/'/g, ""), m: it.gif === false ? false : (it.gif || ""), s: +it.series || 3, r: String(it.reps || ""), d: descansoDe(it), // v750: 0 é zero (bi-set)
           carga: it.carga == null ? null : it.carga,
           seriesDetalhadas: Array.isArray(it.seriesDetalhadas) && it.seriesDetalhadas.length ? MT_APP_ALUNO.normalizaSeries(it) : undefined,
           // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
@@ -23391,6 +23414,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
       return lista.slice(0, 6);
     });
+    if (a.geradorMensal && a.geradorMensal.active) aqPorFicha = [];
     // raio-X do treino: séries somadas por grupo muscular (todas as fichas)
     var raioX = (function () {
       var por = {};
@@ -23503,6 +23527,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      geradorMensal: self.MT_PERSONAL_GERADOR_MENSAL ? self.MT_PERSONAL_GERADOR_MENSAL.packet(st, a.id) : null,
       conquistasAvancadasApp: self.MT_CONQUISTAS_AVANCADAS ? {metas:self.MT_CONQUISTAS_AVANCADAS.list((a.conquistasAvancadas||{}).metas),manuais:((a.conquistasAvancadas||{}).manuais||[]).map(self.MT_CONQUISTAS_AVANCADAS.manual)} : {metas:[],manuais:[]},
       metasPersonalizadasApp: self.MT_METAS_PESSOAIS ? self.MT_METAS_PESSOAIS.list((st.config || {}).metasPersonalizadas) : [],
       medalhasApp: self.MT_MEDALHAS ? self.MT_MEDALHAS.pacote((st.config || {}).medalhasEvolutivas) : undefined,
@@ -23555,7 +23580,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
        * app_aluno_busca do aluno, levava o dobro do necessário. */
       treino: treino, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs, mesApp: mesApp,
       fichaIdsApp: (t2 && t2.fichas || []).map(function(f){return f.id||"";}),
-      treinoVariantesApp: window.MT_TREINO_EVOLUCAO ? MT_TREINO_EVOLUCAO.exporta(st, a.id, videoDoEx) : [],
+      treinoVariantesApp: a.geradorMensal && a.geradorMensal.active ? [] : (window.MT_TREINO_EVOLUCAO ? MT_TREINO_EVOLUCAO.exporta(st, a.id, videoDoEx) : []),
       guiaFichasP: guiaFichasP, aqPorFicha: aqPorFicha, raioX: raioX,
       wodsApp: wodsApp, cardiosApp: cardiosApp, planoApp: planoApp, ve: cfgVe, menuOculta: menuOculta,
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
@@ -23643,7 +23668,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       /* Só monta os pacotes DEPOIS que o painel terminou o CAS. Recarrega os
        * alunos pelo id: os objetos recebidos podem ter sido criados antes da
        * espera da rede e já não representar a revisão confirmada. */
-      var linhas = [], pulados = [], sobem = [], referencias = {}, antesPublicar = load();
+      var linhas = [], pulados = [], sobem = [], referencias = {}, etapasMensais = {}, antesPublicar = load();
       ids.forEach(function (id) {
         var a = antesPublicar.alunos.find(function (x) { return x.id === id; });
         if (!a) { pulados.push({ id: id, nome: "", erro: "aluno mudou durante a publicação" }); return; }
@@ -23652,6 +23677,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           linhas.push({ token: a.appTokenP, academia_id: nuvem.aid, dados: pacoteApp(a, stamp), atualizado: stamp });
           sobem.push(a);
           referencias[a.id] = MT_ACOMP.snapshot(antesPublicar, a.id);
+          etapasMensais[a.id] = a.geradorMensal && a.geradorMensal.active && a.geradorMensal.active.id;
         } catch (e) { pulados.push({ id: a.id, nome: a.nome || "", erro: (e && e.message) || "o app não montou" }); }
       });
       if (!linhas.length) return { erro: pulados.length ? pulados[0].erro : "nenhum aluno pra publicar", stamp: stamp, pulados: pulados };
@@ -23661,6 +23687,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sobem.forEach(function (a) {
         var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
         if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; a2.acompPublicado = referencias[a.id]; delete a2.appPublicacaoPendente;
+          if (etapasMensais[a.id] && a2.geradorMensal && a2.geradorMensal.active && a2.geradorMensal.active.id === etapasMensais[a.id]) {
+            a2.geradorMensal.active.publishedAt = stamp;
+            a2.geradorMensal.audit = a2.geradorMensal.audit || [];
+            a2.geradorMensal.audit.push({action:"stage_published",at:stamp,proposalId:etapasMensais[a.id]});
+          }
           if(acEdicao[a.id]) { a2.acompTempoEdicao = Math.round(acEdicao[a.id].ms/1000); delete acEdicao[a.id]; } }
       });
       S.write("ptStudio", st2);
@@ -25725,6 +25756,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   if (window.MT_PERSONAL_TECNICA) window.MT_PERSONAL_TECNICA.init();
   window.__ptStudio = { load: load, render: render }; // testes
+  if (self.MT_PERSONAL_GERADOR_MENSAL) self.MT_PERSONAL_GERADOR_MENSAL.init({
+    load: load, write: function (st) { return S.write("ptStudio", st); },
+    account: taContaLocal,
+    author: function () { return (S.usuario && (S.usuario() || {}).email) || ""; },
+    allowed: function () { var b = document.querySelector('#abas [data-a="treinos"]'); return !(b && b.style.display === "none"); },
+    apply: function (st, id, approved) { self.MT_PERSONAL_GERADOR_MENSAL.applyState(st, id, approved); marcaTreinoMudou(st, id); },
+    refresh: function () { render(); },
+    openTraining: function (id) { $("tAluno").value = id; $("tAluno").dispatchEvent(new Event("change", {bubbles:true})); mostraTrAba("fichas"); },
+    publish: function (id) { $("tAluno").value = id; $("tAluno").dispatchEvent(new Event("change", {bubbles:true})); mostraTrAba("fichas"); acPrevia(id, true); }
+  });
   if (self.MT_PERSONAL_MARCA) self.MT_PERSONAL_MARCA.init({
     load: load, save: save, marca: marcaAppPendente,
     render: function () { renderPers(); verificaOnboarding(); },
