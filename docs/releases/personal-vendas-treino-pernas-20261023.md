@@ -14,7 +14,8 @@ As demais capturas e o pôster de nutrição permanecem iguais.
 
 A nova imagem mantém 780×1688. Imagem, vídeo e JavaScript usam novos caminhos,
 com versão mt-v871 nos três arquivos de atualização, para evitar mídia antiga
-no cache. Os arquivos antigos de mídia continuam disponíveis para abas antigas.
+no cache. Os arquivos antigos de mídia e JavaScript continuam disponíveis para
+abas antigas e para a instalação do service worker legado durante a atualização.
 
 Validação local: landing em 320, 375, 390, 430, 768 e 1440px, incluindo proporções,
 ampliação, tours, vídeo, preço, demos e WhatsApp; teste de versão (17 verificações)
