@@ -57,8 +57,8 @@ export function planDayControls(day, prefix) {
     return `<button type="button" class="btn small ghost" data-plan-day="${date}" data-plan-day-context="${prefix}" aria-pressed="${date === day}"><span>${DAY_NAMES[weekday].slice(0,3)}</span><small>${date.slice(8)}/${date.slice(5,7)}</small></button>`;
   }).join('')}</div></div>`;
 }
-export function planDayNotice(summary) {
-  return `<p class="plan-caption prescription-total-note" data-day-note>${escapeDay(summary.label)} · ${summary.day.slice(8)}/${summary.day.slice(5,7)}/${summary.day.slice(0,4)} · ${summary.meals.length} refeições previstas. Totais dos alimentos principais, antes de escolher substituições.</p>${summary.unavailable ? `<p class="notice" data-day-unavailable>${escapeDay(summary.unavailable)}</p>` : !summary.meals.length ? '<p class="notice" data-day-unavailable>Nenhuma refeição prevista nesta data.</p>' : ''}${summary.warnings.map(warning => `<p class="notice warning">${escapeDay(warning)}</p>`).join('')}`;
+export function planDayNotice(summary, {choices = false} = {}) {
+  return `<p class="plan-caption prescription-total-note" data-day-note>${escapeDay(summary.label)} · ${summary.day.slice(8)}/${summary.day.slice(5,7)}/${summary.day.slice(0,4)} · ${summary.meals.length} refeições previstas. ${choices ? 'Totais das opções escolhidas para esta data. Escolher não registra consumo.' : 'Totais dos alimentos principais, antes de escolher substituições.'}</p>${summary.unavailable ? `<p class="notice" data-day-unavailable>${escapeDay(summary.unavailable)}</p>` : !summary.meals.length ? '<p class="notice" data-day-unavailable>Nenhuma refeição prevista nesta data.</p>' : ''}${summary.warnings.map(warning => `<p class="notice warning">${escapeDay(warning)}</p>`).join('')}`;
 }
 export function planWeekTable(plan, day) {
   const days = planWeekDays(day);

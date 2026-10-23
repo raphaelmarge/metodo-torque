@@ -1,5 +1,6 @@
 import {nutritionCatalog,foodBrowserMarkup,bindFoodBrowser,foodPortionModal,measuredFoodControls} from './food-catalog.js';
 import {foodSubstitutionModal,substitutionComparisonMarkup} from './food-substitution-ui.js';
+import {suggestFoodSubstitutions} from './food-substitutions.js';
 import {changeFoodMeasure,updateFoodQuantity,formatFoodQuantity,parseFoodQuantity} from './food-measures.js';
 import {portionLabel} from './shopping.js';
 import {planDaySummary,planDayControls,planDayNotice,planWeekTable,prescribedTotals,nutrientLabel,nutrientNumber,validPlanDate} from './day-summary.js';
@@ -33,7 +34,14 @@ function seedDemo(){
  let d=new Date();d.setHours(14,30,0,0);S.appointments=[{id:uid(),patient_id:S.selected,start_at:d.toISOString(),note:'Consulta de retorno'}];S.challenges=[{id:uid(),title:'Diário em dia',metric:'nutriDias',target:7},{id:uid(),title:'Água e rotina',metric:'habitosAgua',target:5}];P.seed();
 }
 function localDay(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function samplePlan(p){return {v:1,id:uid(),titulo:'Minha rotina alimentar',objetivo:p.goal,orientacoes:'Organize os horários conforme sua rotina. Converse com sua nutricionista sobre qualquer dificuldade.',responsavel:S.clinic.professional_name,crn:S.clinic.crn,aguaMl:2000,refeicoes:[{id:'breakfast',hora:'07:30',titulo:'Café da manhã',itens:[food('Pão integral','2 fatias',1,124,5,23,2),food('Ovo cozido','2 unidades',1,140,12,1,10),food('Mamão','1 porção',1,60,1,15,0)]},{id:'lunch',hora:'12:30',titulo:'Almoço',itens:[food('Arroz cozido','100 g',1,130,3,28,0),food('Feijão','1 concha',1,77,5,14,0),p.restrictions==='Vegetariano'?food('Tofu','150 g',1,114,12,3,7):food('Frango grelhado','100 g',1,165,31,0,4),food('Salada de folhas','1 porção',1,20,1,3,0)]},{id:'snack',hora:'16:00',titulo:'Lanche da tarde',itens:[food('Banana','1 unidade',1,89,1,23,0),food('Aveia','30 g',1,117,5,20,2)]},{id:'dinner',hora:'19:30',titulo:'Jantar',itens:[p.restrictions==='Vegetariano'?food('Grão-de-bico cozido','150 g',1,246,13,41,4):food('Tilápia grelhada','150 g',1,192,39,0,4),food('Batata-doce','150 g',1,129,2,30,0),food('Legumes cozidos','1 porção',1,60,3,10,1)]}]};}
+function samplePlan(p){const plan={v:1,id:uid(),titulo:'Minha rotina alimentar',objetivo:p.goal,orientacoes:'Organize os horários conforme sua rotina. Converse com sua nutricionista sobre qualquer dificuldade.',responsavel:S.clinic.professional_name,crn:S.clinic.crn,aguaMl:2000,refeicoes:[{id:'breakfast',hora:'07:30',titulo:'Café da manhã',itens:[food('Pão integral','2 fatias',1,124,5,23,2),food('Ovo cozido','2 unidades',1,140,12,1,10),food('Mamão','1 porção',1,60,1,15,0)]},{id:'lunch',hora:'12:30',titulo:'Almoço',itens:[food('Arroz cozido','100 g',1,130,3,28,0),food('Feijão','1 concha',1,77,5,14,0),p.restrictions==='Vegetariano'?food('Tofu','150 g',1,114,12,3,7):food('Frango grelhado','100 g',1,165,31,0,4),food('Salada de folhas','1 porção',1,20,1,3,0)]},{id:'snack',hora:'16:00',titulo:'Lanche da tarde',itens:[food('Banana','1 unidade',1,89,1,23,0),food('Aveia','30 g',1,117,5,20,2)]},{id:'dinner',hora:'19:30',titulo:'Jantar',itens:[p.restrictions==='Vegetariano'?food('Grão-de-bico cozido','150 g',1,246,13,41,4):food('Tilápia grelhada','150 g',1,192,39,0,4),food('Batata-doce','150 g',1,129,2,30,0),food('Legumes cozidos','1 porção',1,60,3,10,1)]}]};
+ // Published fictional examples use the same catalogue and portion calculator.
+ // Real patient plans only gain alternatives through clinician publication.
+ const rice=plan.refeicoes[1].itens[0];
+ const examples=nutritionCatalog().filter(item=>['taco:102','off:7897122600149'].includes(item.id));
+ if(p.id==='demo-0')rice.substituicoes=suggestFoodSubstitutions(rice,examples,{limit:2}).map(({item})=>({...item,id:uid()}));
+ return plan;
+}
 function food(nome,porcao,qtd,k,pt,cb,g){return {id:uid(),alimId:nome,nome,porcao,qtd,k,pt,cb,g};}
 function toast(s){if($('#modal')?.open&&$('#modal-feedback')){$('#modal-feedback').textContent=s;$('#modal-feedback').hidden=false;}$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>$('#toast').style.display='none',3800);}
 function patient(){return S.patients.find(p=>p.id===S.selected)||S.patients[0];}

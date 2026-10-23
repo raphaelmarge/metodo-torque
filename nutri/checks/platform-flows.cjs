@@ -51,6 +51,7 @@ for(const [name,exports] of [
   ['prescription.js',['WEEKDAYS','mealDaysLabel','duplicateMeal','duplicateFood','movePrescriptionItem','latestAnamnesis','publicationError']],
   ['day-summary.js',['DAY_NAMES','NUTRIENTS','validPlanDate','planWeekDays','nutrientNumber','nutrientLabel','prescribedTotals','planDaySummary','planDayControls','planDayNotice','planWeekTable']],
   ['plan-changes.js',['comparePlans','previousPublishedPlan','renderPlanChanges']],
+  ['patient-food-choices.js',['createPatientFoodChoices']],
   ['patient-experience.js',['createPatientExperience']],
   ['schedule.js',['createSchedule']],
   ['notifications.js',['createPatientNotifications']],
