@@ -13,13 +13,17 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
   obrigatórias. A base passa a 48 exercícios e 25 opções de equipamento.
 - Busca e seleção por nome substituem campos de IDs. A proposta oferece trocas
   compatíveis, registradas pelo personal, com carga novamente a definir.
-- A tela principal reúne resumo do aluno, eventuais dados faltantes e “Confirmar
-  e gerar treino”. A ação confirma perfil e protocolo, valida e gera em uma única
-  gravação; uma falha não salva aprovações parciais. Ajustes ficam recolhidos.
+- O caminho principal é “Gerar treino” → fichas em abas → “Usar este treino”. O
+  perfil tem atalho para o gerador com o aluno selecionado. Dados e parâmetros ficam
+  em janela própria, por categoria; a tela pede apenas informações essenciais ausentes.
+- Gerar confirma perfil/protocolo e salva validação/proposta juntas. Usar aprova e
+  aplica em uma única gravação, depois abre a prévia para publicação explícita.
+  Falha de gravação ou proposta desatualizada não deixa aprovação/aplicação parcial.
+  Início futuro apenas aprova, sem antecipar aplicação. O modo separado continua disponível.
 - O mês ativo exige relato mensal do aluno. Progressão e adaptações têm confirmação
   específica; relatos novos não são reconhecidos automaticamente. Anamnese
   estruturada mais recente precisa ser carregada para revisão.
-- Aprovar, aplicar e publicar continuam separados. Os 17 grupos permanecem no motor;
+- A publicação continua separada. Os 17 grupos permanecem no motor;
   rascunhos e treino vigente são preservados. O caminho de revisão detalhada continua disponível.
 - Anamnese deixa equipamentos como informação opcional para academia. Nenhuma
   alteração de banco ou do pacote do aluno. Cache global e aluno mt-v877.
