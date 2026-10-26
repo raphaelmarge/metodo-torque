@@ -11,17 +11,31 @@ const uid = '00000000-0000-4000-8000-000000000010';
 const trial = new Date(Date.now()+14*86400000).toISOString();
 const paidEnd = new Date(Date.now()+44*86400000).toISOString();
 const pan = '4000000000000010', cvv = '987';
+// O UUID legítimo contém os mesmos dígitos do CVV: buscar substrings no JSON
+// gera falso positivo. O contrato abaixo confere todos os campos e valores.
+const collisionAttemptId = '00000987-0000-4000-8000-000000000003';
+function expectedCheckout() {
+  return {action:'checkout',academiaId:aid,attemptId:collisionAttemptId,cardToken:'token_fixtureonly',customer:{
+    name:'Profissional Fictício',email:'pessoa@example.invalid',
+    address:{line_1:'100, Rua de Teste, Centro',zip_code:'30110000',city:'Belo Horizonte',state:'MG',country:'BR'}
+  }};
+}
+function assertCheckoutPayload(body) {
+  assert.match(body.attemptId,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  assert.deepEqual(body,expectedCheckout(),'Torque recebe exclusivamente UUID, token e os dados de cliente esperados; nenhum dado de cartão');
+}
 let browser, checks = 0;
 const pass = name => { checks++; console.log('PASS '+name); };
 const config = {ok:true,enabled:true,configured:true,managementEnabled:true,environment:'test',priceCents:4990,trialDays:14,publicKey:'pk_test_fixtureonly',tokenizeUrl:'https://api.pagar.me/core/v5/tokens'};
 const status = {ok:true,enabled:true,academiaId:aid,state:'trial',trialEndsAt:trial,paidThrough:null,accessUntil:trial,accessActive:true,renewalCanceled:false,attemptId:null,retryAllowed:true,managed:false,canCancel:false};
 async function fixture(opts={}) {
   const c=await browser.newContext({viewport:{width:opts.width||390,height:950}});
-  await c.addInitScript(({uid,anonymous,blocked})=>{
+  await c.addInitScript(({uid,anonymous,blocked,attemptId})=>{
+    if(attemptId)Object.defineProperty(window.crypto,'randomUUID',{value:()=>attemptId});
     window.__billingSession=anonymous?null:{access_token:'fixture-session-only',user:{id:uid,email:'profissional@example.invalid'}};
     window.MT_supabase={auth:{getSession:async()=>({data:{session:window.__billingSession},error:null}),onAuthStateChange:fn=>{window.__billingAuthChanged=fn;return{data:{subscription:{unsubscribe(){}}}};}}};
     if(blocked)Object.defineProperty(window,'sessionStorage',{get(){throw Error('blocked');}});
-  },{uid,anonymous:!!opts.anonymous,blocked:!!opts.blocked});
+  },{uid,anonymous:!!opts.anonymous,blocked:!!opts.blocked,attemptId:opts.attemptId});
   const calls=[],external=[],errors=[]; let current={...status,...opts.status};
   await c.route('**/*',async route=>{
     const req=route.request(),url=req.url();
@@ -67,6 +81,20 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
   assert.throws(()=>api.validStatus({...status,state:'canceled',renewalCanceled:false},aid));
   assert.throws(()=>api.cardInput({holder:'TESTE PESSOA',number:pan,expiry:'00/2030',cvv}));
   pass('contratos rejeitam preço, chave secreta, destino, conta e acesso inválidos');
+  assert(collisionAttemptId.includes(cvv));assertCheckoutPayload(expectedCheckout());
+  for(const mutate of [
+    body=>{body.cvv=cvv;},
+    body=>{body.card={number:pan,cvv};},
+    body=>{body.customer.cvv=cvv;},
+    body=>{body.customer.name+=' '+cvv;},
+    body=>{body.customer.address.line_2=cvv;},
+    body=>{body.customer.email=pan+'@example.invalid';},
+    body=>{body.attemptId=cvv;}
+  ]) {
+    const leaked=expectedCheckout();mutate(leaked);
+    assert.throws(()=>assertCheckoutPayload(leaked),{name:'AssertionError'});
+  }
+  pass('contrato exato aceita coincidência no UUID e rejeita PAN/CVV em campos extras ou permitidos');
   browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});
   {
     const f=await fixture({anonymous:true});
@@ -87,7 +115,7 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
   }
   pass('configuração inválida não abre cartão');
   for(const width of [320,390,768,1440]) {
-    const f=await fixture({width});await fill(f.page);
+    const f=await fixture({width,attemptId:width===390?collisionAttemptId:undefined});await fill(f.page);
     assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert.equal(await f.page.locator('[data-card-field][name]').count(),0,'cartão nunca participa de submit HTML nativo');
     assert.match(await f.page.locator('#billingEnvironment').innerText(),/teste/);
@@ -101,7 +129,7 @@ async function submit(page) {await page.locator('#billingSubmit').click();await 
       const token=f.calls.find(x=>x.token), checkout=f.calls.find(x=>x.body.action==='checkout');
       assert(token.url.endsWith('?appId=pk_test_fixtureonly'));assert.equal(token.headers.authorization,undefined);
       assert.equal(token.body.type,'card');assert.equal(token.body.card.number,pan);assert.equal(token.body.card.cvv,cvv);
-      assert(!JSON.stringify(checkout.body).includes(pan));assert(!JSON.stringify(checkout.body).includes(cvv));
+      assert(!JSON.stringify(checkout.body).includes(pan));assertCheckoutPayload(checkout.body);
       assert.deepEqual(Object.keys(checkout.body).sort(),['academiaId','action','attemptId','cardToken','customer']);
       assert.equal(checkout.body.customer.address.country,'BR');assert.equal(checkout.headers.authorization,'Bearer fixture-session-only');
       const storage=await f.page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));
