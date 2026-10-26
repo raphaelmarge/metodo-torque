@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v875";
+var VERSION = "mt-v876";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -36,6 +36,12 @@ var CORE = [
   "assets/app.js",
   "assets/content.js",
   "assets/versao.js",
+  "assets/gerador-mensal-catalogo.js",
+  "assets/gerador-mensal-core.js",
+  "assets/personal-gerador-mensal-adapter.js",
+  "assets/personal-gerador-mensal.js",
+  "assets/personal-gerador-mensal.css",
+  "assets/anamnese-gerador-mensal.js",
   "assets/identidade-marca.js",
   "assets/personal-marca.js",
   "assets/personal-marca.css",
