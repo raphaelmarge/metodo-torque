@@ -6,6 +6,11 @@
 @media(max-width:680px){.layout:not(.patient-layout) .badge-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){.finance-workspace .patient-row{flex-wrap:wrap;align-items:flex-start}.finance-workspace .patient-row>.grow{flex:1 1 100%;min-width:0}.finance-workspace .patient-row>.actions{width:100%;justify-content:flex-start}}
 
+/* Reserve enough room for native dates, including enlarged text. */
+.follow-report-filter{grid-template-columns:minmax(11rem,1fr) minmax(11rem,1fr) minmax(140px,2fr) auto}
+@media(max-width:1100px){.follow-report-filter{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.follow-report-filter{grid-template-columns:minmax(0,1fr)}}
+
 /* Shared controls: readable labels, equal hit areas and stable action rows. */
 .main .btn,#modal .btn{min-width:44px;min-height:44px;line-height:1.4;text-align:center;vertical-align:middle}
 .main .btn svg,#modal .btn svg{flex-shrink:0}

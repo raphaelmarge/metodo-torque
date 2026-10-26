@@ -8,6 +8,10 @@
 /* Food reports share the existing dialog, clinic colors and theme tokens. */
 #modal{padding:clamp(12px,4vw,28px)}
 #modal .card-head{flex-wrap:wrap}
+/* Long dialog titles keep their close control in the same header row. */
+#modal-body>.card-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}
+#modal-body>.card-head h2{line-height:1.4;align-self:center}
+#modal-body>.card-head #close-modal{width:44px;height:44px;padding:0}
 #modal .card-head h2,#modal-form,#modal label{min-width:0;overflow-wrap:anywhere}
 #modal input,#modal select,#modal textarea{min-width:0}
 #modal .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}

@@ -170,8 +170,9 @@
  .large-text .plan-section-heading{flex-wrap:wrap}.large-text .plan-nutrient dt{font-size:15px}
 }
 
-.shopping-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.plan-shopping label{display:block;margin:12px 0;min-width:0}
+.shopping-dates{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:16px 10px;margin:16px 0}
+.plan-shopping label{display:grid;gap:8px;margin:12px 0;min-width:0}
+.shopping-dates>label{margin:0}
 .plan-shopping input,.plan-shopping select{width:100%;min-width:0;max-width:100%;min-height:44px;font-size:16px}
 .plan-shopping li{gap:12px;overflow-wrap:anywhere}
 .plan-shopping li>span{min-width:0}

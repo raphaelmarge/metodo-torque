@@ -69,6 +69,72 @@ async function equalRows(locator, label, footer = false) {
   }
 }
 function clean(h) { assert.deepEqual(h.errors,[]); assert.deepEqual(h.external,[]); assert.deepEqual(h.missing,[]); }
+async function readableDates(locator, label) {
+  const fields = await locator.evaluateAll(elements => elements.map(element => {
+    const style = getComputedStyle(element), box = element.getBoundingClientRect();
+    const canvas = document.createElement('canvas'), context = canvas.getContext('2d');
+    context.font = style.font;
+    const required = context.measureText('28/10/2026').width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 32;
+    const range = document.createRange(); range.selectNode(element.parentElement.firstChild);
+    return {width:box.width,required,labelGap:box.top-range.getBoundingClientRect().bottom};
+  }));
+  assert(fields.length, label + ': no date fields');
+  assert(fields.every(field=>field.width>=field.required && field.labelGap>=5),label + ': date text or calendar picker is squeezed ' + JSON.stringify(fields));
+}
+async function formAlignment() {
+  const h = await isolated('patient'), p = h.page;
+  await nav(p,'food');
+  for(const width of [320,390,768,1280]) for(const large of [false,true]) {
+    await p.setViewportSize({width,height:900});
+    await p.evaluate(value=>document.body.classList.toggle('large-text',value),large);
+    await readableDates(p.locator('.shopping-dates input'),'shopping dates at '+width+(large?' large':''));
+    await viewport(p,'shopping dates at '+width);
+  }
+  clean(h); await h.context.close();
+  pass('shopping dates keep the full year, native picker and label spacing at desktop and mobile widths');
+  const professional = await isolated(), editor = professional.page;
+  await nav(editor,'reports');
+  for(const width of [320,390,768,1024,1280]) for(const large of [false,true]) {
+    await editor.setViewportSize({width,height:900});
+    await editor.evaluate(value=>document.body.classList.toggle('large-text',value),large);
+    await readableDates(editor.locator('.follow-report-filter input[type="date"]'),'report dates at '+width+(large?' large':''));
+    await viewport(editor,'report filters at '+width);
+  }
+  pass('report dates remain readable between tablet and desktop breakpoints');
+  await editor.setViewportSize({width:1280,height:900});
+  await nav(editor,'plans');
+  await editor.locator('[data-edit-plan="demo-0"]').click();
+  await editor.locator('.prescription-disclosure').filter({has:editor.locator('[data-x="save-template"]')}).locator('summary').click();
+  await editor.locator('[data-x="save-template"]').click();
+  for(const width of [320,390,768,1280]) for(const large of [false,true]) {
+    await editor.setViewportSize({width,height:900});
+    await editor.evaluate(value=>document.body.classList.toggle('large-text',value),large);
+    const boxes = await editor.locator('#modal-body>.card-head').evaluate(head=>{
+      const title=head.querySelector('h2').getBoundingClientRect(), close=head.querySelector('#close-modal').getBoundingClientRect();
+      return {title:{x:title.x,right:title.right,y:title.y,bottom:title.bottom},close:{x:close.x,y:close.y,bottom:close.bottom}};
+    });
+    assert(boxes.title.right<=boxes.close.x-7 && boxes.close.y<boxes.title.bottom && boxes.title.y<boxes.close.bottom,'long dialog title pushes close button onto a separate row at '+width+': '+JSON.stringify(boxes));
+    await targets(editor.locator('#close-modal'),'dialog close at '+width);
+    await viewport(editor,'long dialog title at '+width);
+  }
+  await editor.locator('#close-modal').click();
+  assert.equal(await editor.locator('#modal[open]').count(),0);
+  await nav(editor,'assessments');
+  for(const width of [320,390,768]) {
+    await editor.setViewportSize({width,height:900});
+    const controls=await editor.locator('#body-metric,#body-period').evaluateAll(elements=>elements.map(e=>{const r=e.getBoundingClientRect();return {x:r.x,width:r.width};}));
+    assert.equal(controls.length,2);
+    assert(Math.abs(controls[0].x-controls[1].x)<1 && Math.abs(controls[0].width-controls[1].width)<1,'stacked chart filters have uneven edges at '+width+': '+JSON.stringify(controls));
+    await targets(editor.locator('.body-tabs button'),'assessment tabs at '+width);
+    const clippedTabs=await editor.locator('.body-tabs button').evaluateAll(elements=>elements.filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent));
+    assert.deepEqual(clippedTabs,[],'assessment tab labels overlap at '+width);
+    const action=await editor.locator('.assessment-app>.heading>[data-x="assessment"]').evaluate(e=>{const r=e.getBoundingClientRect(),title=e.parentElement.firstElementChild.getBoundingClientRect();return {width:r.width,scroll:e.scrollWidth,client:e.clientWidth,top:r.top,titleBottom:title.bottom};});
+    assert(action.width>=140 && action.scroll<=action.client+1 && action.top>=action.titleBottom-1,'new assessment action is squeezed beside the title at '+width);
+    await viewport(editor,'chart filters at '+width);
+  }
+  clean(professional); await professional.context.close();
+  pass('long dialog headings retain the close button on the right with usable keyboard and touch targets');
+}
 async function sharedShortcuts() {
   const h = await isolated(), p = h.page;
   for (const width of [320,375,800,1280]) for (const light of [false,true]) {
@@ -228,6 +294,7 @@ async function prescriptionWorkspace() {
     await sharedShortcuts();
     await prescriptionWorkspace();
     await patientPlan();
+    await formAlignment();
     console.log(checks+'/'+checks+' Nutri visual workspace browser checks passed.');
   } finally { await browser?.close(); }
 })().catch(error=>{ console.error(error.stack); process.exitCode=1; });
