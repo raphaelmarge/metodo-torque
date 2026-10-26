@@ -8,6 +8,10 @@ O motor produz uma proposta para um intervalo com início e fim explícitos. Nã
 
 Mesmas entradas e versões produzem a mesma proposta. A previsibilidade descreve a decisão e a continuidade do planejamento, sem prometer resultados físicos. O caminho principal é JavaScript local e não chama modelo de linguagem.
 
+Na interface, o caminho principal é **escolher aluno → conferir resumo → confirmar e gerar treino**. O cadastro preenche objetivo, nível, dias, duração e protocolo. Somente idade, autoria ou situação de saúde ausentes aparecem como campos adicionais. O botão explicita a confirmação profissional do perfil e do protocolo; validação e proposta são persistidas juntas, somente quando ambas passam. A aprovação da ficha, aplicação e publicação continuam separadas.
+
+Os ajustes completos ficam em uma área recolhida. Para etapas ativas, o resumo apresenta o relato mensal: um relato avulso de saúde não o substitui. Permitir progressão exige confirmação específica de execução, esforço e metas, além dos registros comparáveis exigidos pelo motor. Readaptação e orientações individuais também conservam confirmações explícitas. Retornos recebidos depois de abrir a tela exigem recarregar; anamnese estruturada mais recente que o perfil revisado precisa ser carregada antes de gerar. Não há inferência de cura nem reconhecimento automático de alertas.
+
 ## 2. Objetivos e prioridades
 
 Há cinco objetivos: ganhar massa (`hipertrofia`), reduzir gordura (`emagrecimento`), aumentar força (`forca`), melhorar condicionamento (`condicionamento`) e saúde/autonomia (`saude`). O perfil aceita objetivo secundário e prioridades musculares separados. Preferências apenas ordenam opções já compatíveis; não ultrapassam restrições, equipamentos ou tempo.

@@ -43,7 +43,7 @@ function ok(v, label) { assert.ok(v, label); n++; console.log('OK ' + label); }
     }, seed);
     await p.locator('#gmAluno').selectOption('gm-test-a');
     eq(await p.locator('#gmMinutes').inputValue(), '60', 'painel real carrega perfil do aluno escolhido');
-    await p.locator('#gmDataConfirmed').check(); await p.locator('#gmPrepare').click();
+    await p.locator('#gmQuickGenerate').click();
     ok(await p.evaluate(() => !!MTStore.read('ptStudio', {}).alunos[0].geradorMensal.proposal), 'geração persiste no MTStore real');
     eq(await p.evaluate(() => testPublishCalls), 0, 'geração não publica por CAS');
     await p.locator('#gmApproveCheck').check(); await p.locator('#gmApprove').click();

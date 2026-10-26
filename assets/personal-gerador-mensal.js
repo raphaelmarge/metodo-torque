@@ -1,7 +1,7 @@
 /* Gerador mensal: revisão humana, propostas e publicação separadas. */
 (function (root) {
   'use strict';
-  var ctx, editor, base, identity, dirty = false, drafts = {}, message = '';
+  var ctx, editor, base, identity, sourceHash, dirty = false, drafts = {}, message = '';
   var C = function () { return root.MT_GERADOR_MENSAL; };
   var A = function () { return root.MT_GERADOR_MENSAL_ADAPTER; };
   var $ = function (id) { return document.getElementById(id); };
@@ -15,7 +15,7 @@
   function current() { return $('gmAluno') && $('gmAluno').value; }
   function account() { return String(ctx.account()); }
   function key() { return account()+':'+current(); }
-  function status(s, bad) { message=s; var el=$('gmStatus'); if(el){el.textContent=s;el.classList.toggle('gm-error',!!bad);} }
+  function status(s, bad) { message=s; var el=$('gmStatus'); if(el){el.textContent=s;el.classList.toggle('gm-error',!!bad);if(bad)el.focus({preventScroll:false});} }
   function showIssues(issues) { return Array.from(new Set((issues || []).map(function (v) { return typeof v==='string'?v:(v.message||v.mensagem||v.code||JSON.stringify(v)); }))).join(' '); }
   function get(o,p) { return p.split('.').reduce(function (v,k) { return v==null?undefined:v[k]; },o); }
   function set(o,p,v) { var ps=p.split('.'), k=ps.pop(), t=o;ps.forEach(function(x){if(!t[x]||typeof t[x]!=='object')t[x]={};t=t[x];});t[k]=v; }
@@ -36,7 +36,7 @@
   function bindChoices() {
     document.querySelectorAll('#gmForm .gm-picker').forEach(function(box){
       function update(){var count=box.querySelectorAll('input[type="checkbox"]:checked').length, query=normalizeName(box.querySelector('input[type="search"]').value), visible=0;
-        box.querySelector('[data-gm-count]').textContent=count?'('+count+' selecionados)':'(opcional)';
+        box.querySelector('[data-gm-count]').textContent=count?'('+count+' selecionados)':box.id==='gmAllowed'?'':'(opcional)';
         box.querySelectorAll('[data-gm-option]').forEach(function(row){row.hidden=!!query&&!normalizeName(row.textContent).includes(query);if(!row.hidden)visible++;});box.querySelector('[data-gm-empty]').hidden=visible>0;
       }box.addEventListener('input',update);box.addEventListener('change',update);update();
     });
@@ -88,24 +88,25 @@
   Object.assign(labels,{durationToleranceMinutes:'Tolerância da duração (min)',minExercises:'Exercícios mínimos por sessão',readaptationSets:'Séries na readaptação',maxWeeklyPrimarySets:'Máximo de séries semanais por músculo primário',maximumDays:'Dias máximos de treino por semana',minimumRecoveryHours:'Intervalo mínimo entre sessões (h)',targetRpeMin:'Esforço mínimo RPE (1–10)',targetRpeMax:'Esforço máximo RPE (1–10)',maxExercises:'Exercícios máximos por sessão',doses:'Dose',healthDetails:'Detalhes de saúde',injury:'Lesão ou cirurgia',region:'Região',side:'Lado',phase:'Fase relatada',limitations:'Limitações',limb:'Ausência de membro / deficiência',segment:'Segmento',diabetes:'Diabetes',type:'Tipo',treatment:'Tratamento relatado',hypoglycemia:'Histórico de hipoglicemia',complications:'Complicações relatadas',professional:'Profissional que orientou',guidanceDate:'Data da orientação',functional:'Capacidade funcional',available:'Capacidades confirmadas',unavailable:'Capacidades limitadas',resources:'Apoios e recursos',details:'Detalhes',reportedAt:'Data do relato',healthStatus:'Situação de saúde',conditions:'Condições relatadas',recovery:'Recuperação',physiology:'Fatores fisiológicos',sleep:'Sono',fatigue:'Fadiga',adherence:'Adesão (%)',plannedEligible:'Sessões elegíveis',completed:'Sessões realizadas',paused:'Pausas autorizadas',missed:'Ausências confirmadas',unknown:'Sessões sem confirmação',coverage:'Cobertura dos registros (%)',extraSessions:'Sessões adicionais',completedSets:'Séries concluídas',perception:'Percepção de evolução',difficulty:'Dificuldades',symptoms:'Sintomas',healthChanges:'Mudanças de saúde',routineChanged:'Mudança de rotina',routineNotes:'Observações da rotina',minutes:'Minutos por sessão',author:'Responsável',at:'Data',name:'Nome',source:'Fonte',population:'População',prerequisites:'Pré-condições',requiredData:'Dados necessários',exceptions:'Exceções',limits:'Limites',technicalOwner:'Responsável técnico',clinicallyValidated:'Algoritmo clinicamente validado',editorialDate:'Data editorial',reviewedAt:'Revisado em'});
   function capture() {
     if(!editor||!$('gmForm'))return;
-    var values={};$('gmForm').querySelectorAll('input,textarea,select').forEach(function(el){var id=el.id||el.dataset.gmConfig||el.name;if(id)values[id]=el.type==='checkbox'?el.checked:el.value;});
-    drafts[identity]={values:values,base:base,dirty:dirty};
+    var values={};document.querySelectorAll('#gmForm input,#gmForm textarea,#gmForm select,#gmReview input,#gmReview textarea,#gmReview select,#gmQuickReview input').forEach(function(el){var id=el.id||el.dataset.gmConfig||el.name;if(id)values[id]=el.type==='checkbox'?el.checked:el.value;});
+    drafts[identity]={values:values,base:base,sourceHash:sourceHash,dirty:dirty};
   }
   function refresh(force) {
     if(!ctx||!$('gmRoot')||!C()||!A())return;
     if(!force)capture();
-    var st=ctx.load(),id=current(),a=person(st,id); identity=key();dirty=false;
+    var st=ctx.load(),id=current(),a=person(st,id);if(force||identity!==key())message='';identity=key();dirty=false;
     if(!a){editor=null; $('gmRoot').innerHTML='<p class="muted">Escolha um aluno para preparar a próxima etapa.</p>';return;}
-    editor=defaults(a,st);base=JSON.stringify(a.geradorMensal||null);
+    editor=defaults(a,st);base=JSON.stringify(a.geradorMensal||null);sourceHash=C().hash(A().build(st,id));
     var p=editor.perfil,g=p.guidance,catalog=root.MT_GERADOR_MENSAL_CATALOGO||{}, eq=options(catalog.EQUIPMENT||catalog.equipment,equipment), conditions=(p.conditions||[]).map(function(v){return (v.name||v.id||'')+(v.details?' — '+v.details:'');}).join('\n');
     var eqLabels=catalog.equipmentLabels||{};eq=eq.map(function(v){return [v[0],eqLabels[v[0]]||v[1]];});
     var exerciseOptions=A().build(st,id).catalog.map(function(e){return [e.id,e.nome+' · '+equipmentName(e)];}).sort(function(a,b){return a[1].localeCompare(b[1]);}), functionOptions=options(catalog.functionalLabels,[]);
     var legacy=(((st.treinosV2||{})[id]||{}).fichas||[]).length>0&&!editor.active;
     var rawAn=(a.retorno||{}).anamnese||a.anamnese||{};
-    $('gmRoot').innerHTML='<div class="gm-overview"><div><span class="gm-eyebrow">Planejamento acompanhado</span><h3>'+esc(a.nome)+'</h3><p>'+ (editor.active?'Etapa atual: '+esc(editor.active.start)+' a '+esc(editor.active.end):'Primeira etapa: confirme o perfil e os parâmetros para gerar.')+'</p></div><button type="button" class="btn sec" id="gmReload">Recarregar dados</button></div>'+
-      '<p class="gm-note">Confira os dados do aluno e gere a série. A opção Academia usa equipamentos comuns; se faltar algum, você escolhe uma substituição pelo nome.</p>'+
+    $('gmRoot').innerHTML='<div class="gm-overview"><div><span class="gm-eyebrow">'+(editor.active?'Próximo mês':'Novo treino')+'</span><h3>'+esc(a.nome)+'</h3></div><button type="button" class="btn sec" id="gmReload">Recarregar dados</button></div>'+
+      '<p id="gmStatus" role="status" aria-live="polite" tabindex="-1">'+esc(message)+'</p>'+
+      '<div id="gmQuick"></div><details class="gm-section" id="gmAdvanced"><summary>Editar dados e ajustes</summary>'+
       (editor.active?'<div class="gm-actions"><button type="button" class="btn sec" id="gmExtraordinaryStart">Preparar revisão extraordinária da etapa</button><button type="button" class="btn sec" id="gmRequestReview">Solicitar fechamento ao aluno</button></div>':'')+
-      '<form id="gmForm"><details class="gm-section" open><summary>1. Perfil e anamnese</summary><div class="gm-grid">'+
+      '<form id="gmForm"><details class="gm-section" open><summary>Perfil e rotina</summary><div class="gm-grid">'+
       field('gmAge','Idade na próxima etapa',p.age,'number','min="1" max="120"')+
       select('gmLevel','Nível na musculação',p.level,options(C().LEVELS,levels))+
       select('gmObjective','Objetivo principal',p.objective,options(C().OBJECTIVES,goals))+
@@ -125,26 +126,28 @@
       check('gmPregnant','Gestação informada',p.physiology&&p.physiology.pregnant)+check('gmPostpartum','Pós-parto informado',p.physiology&&p.physiology.postpartum)+check('gmRequiresProtocol','Outra necessidade de protocolo específico',p.physiology&&(p.physiology.requiresProtocol||p.physiology.status==='reported'))+
       '</div></details><details class="gm-source"><summary>Respostas da anamnese já cadastrada</summary><div class="gm-readable">'+readable(rawAn)+'</div><p>O relato original é preservado. As confirmações abaixo pertencem ao personal.</p><button type="button" class="btn sec" id="gmImportProfile">Carregar relato mais recente para revisão</button></details>'+
       check('gmProfileConfirmed','Revisei a anamnese, o nível, os objetivos e a disponibilidade',!!p.reviewedAt)+'</details>'+
-      '<details class="gm-section" id="gmHealthDetails"><summary>2. Adaptações de saúde, quando necessárias</summary><p class="gm-help">Selecione pelo nome. As orientações anteriores continuam valendo até sua revisão.</p><div class="gm-grid">'+
+      '<details class="gm-section" id="gmHealthDetails"><summary>Adaptações de saúde</summary><p class="gm-help">Informe a orientação uma vez e confira sua validade nos próximos meses. Selecione os exercícios autorizados pelo nome.</p><div class="gm-grid">'+
       text('gmConditions','Condições, lesões ou cirurgias (uma por linha)',conditions)+
+      '<details class="gm-source gm-wide"><summary>Capacidade funcional, membros e apoios</summary><div class="gm-grid">'+
       picker('gmFunctionalAvailable','Capacidades confirmadas',p.functional.available,functionOptions)+
       picker('gmFunctionalUnavailable','Capacidades limitadas ou indisponíveis',p.functional.unavailable,functionOptions)+
-      text('gmFunctionNotes','Membro, lado, segmento, prótese/órtese, apoios e adaptações',p.functional.notes||[p.functional.details,p.functional.resources].filter(Boolean).join(' · '))+
+      text('gmFunctionNotes','Membro, lado, segmento, prótese/órtese, apoios e adaptações',p.functional.notes||[p.functional.details,p.functional.resources].filter(Boolean).join(' · '))+'</div></details>'+
       '<details class="gm-source gm-wide"><summary>Detalhes de saúde informados na anamnese</summary><div class="gm-readable">'+readable(p.healthDetails||{})+'</div></details>'+
       field('gmGuidanceAuthor','Responsável pela orientação',g.author)+field('gmGuidanceDate','Data da orientação',g.date,'date')+
       field('gmGuidanceExpires','Validade da orientação (se definida)',g.expiresAt,'date')+
       text('gmGuidanceScope','Escopo, limitações e orientações vigentes',g.scope)+
-      text('gmExecutionNotes','Posição, amplitude e ajustes de execução orientados',g.executionNotes)+
       picker('gmAllowed','Exercícios autorizados pela orientação individual',g.allowedExerciseIds,exerciseOptions)+
+      '<details class="gm-source gm-wide"><summary>Limites e ajustes específicos (quando houver)</summary><div class="gm-grid">'+
+      text('gmExecutionNotes','Posição, amplitude e ajustes de execução orientados',g.executionNotes)+
       picker('gmBlocked','Exercícios restritos',g.blockedExerciseIds,exerciseOptions)+
       picker('gmPatterns','Movimentos restritos',g.blockedPatterns,patterns)+
       field('gmMaxLoad','Limite de carga orientado (kg; deixe vazio se não definido)',(g.limits||{}).maxLoadKg,'number','min="0" step="any"')+
       field('gmMaxSets','Limite de séries orientado (se definido)',(g.limits||{}).maxSets,'number','min="1"')+
       field('gmMaxReps','Limite de repetições orientado (se definido)',(g.limits||{}).maxReps,'number','min="1"')+
       field('gmMinRest','Descanso mínimo orientado (s; se definido)',(g.limits||{}).minRestSeconds,'number','min="0"')+
-      '</div>'+check('gmGuidanceReviewed','Conferi o escopo das orientações vigentes e as adaptações',g.reviewed)+
+      '</div></details></div>'+check('gmGuidanceReviewed','Conferi o escopo das orientações vigentes e as adaptações',g.reviewed)+
       '<p class="gm-help">A melhora relatada não retira uma restrição. Condições sem protocolo compatível seguem com prescrição manual e revisão individual.</p></details>'+
-      '<details class="gm-section" open><summary>3. Conferir o planejamento sugerido</summary><p id="gmDoseSummary" class="gm-note"></p><p class="gm-help">Etapa: '+esc(editor.nextPeriod.start)+' a '+esc(editor.nextPeriod.end)+'. Datas e parâmetros preenchidos automaticamente para sua revisão.</p>'+field('gmAuthor','Personal responsável',editor.config.author||ctx.author())+'<details class="gm-source"><summary>Ajustar datas e limites (opcional)</summary><div class="gm-grid">'+
+      '<details class="gm-section" open><summary>Datas e parâmetros</summary><p id="gmDoseSummary" class="gm-note"></p><p class="gm-help">Etapa: '+esc(editor.nextPeriod.start)+' a '+esc(editor.nextPeriod.end)+'. Datas e parâmetros preenchidos automaticamente para sua revisão.</p>'+field('gmAuthor','Personal responsável',editor.config.author||ctx.author())+'<details class="gm-source"><summary>Ajustar datas e limites (opcional)</summary><div class="gm-grid">'+
       field('gmPeriodStart','Fechamento: início',editor.period.start,'date')+field('gmPeriodEnd','Fechamento: fim',editor.period.end,'date')+
       field('gmNextStart','Próxima etapa: início',editor.nextPeriod.start,'date')+field('gmNextEnd','Próxima etapa: fim',editor.nextPeriod.end,'date')+
       '</div><p class="gm-help">Os valores iniciais são propostas editáveis. Confira sua adequação ao aluno antes de aprovar; não representam validação clínica automática.</p>'+
@@ -152,30 +155,31 @@
       '<details class="gm-source"><summary>Incrementos de carga por exercício (opcional)</summary><p class="gm-help">Quando necessário, informe o menor aumento de carga disponível. Deixe vazio para usar o degrau geral aprovado.</p><div class="gm-grid">'+exerciseOptions.map(function(e,i){return field('gmIncrement'+i,e[1]+' — incremento (kg)',(editor.config.loadIncrements||{})[e[0]],'number','min="0.01" max="100" step="any" data-gm-increment="'+esc(e[0])+'"');}).join('')+'</div></details></details>'+
       check('gmConfigApproved','Revisei e aprovo estes parâmetros para este aluno',editor.config.approved)+
       '</details><div class="gm-actions"><button type="submit" class="btn" id="gmSave">Salvar perfil e parâmetros</button><span id="gmDirty" class="gm-help"></span></div></form>'+
-      '<section class="gm-section"><h3>4. '+(editor.active?'Conferir a evolução mensal':'Confirmar o ponto de partida')+'</h3><div id="gmEvidence"></div><details class="gm-source"'+(legacy||editor.active?' open':'')+'><summary>Revisão do personal e situações específicas</summary><div class="gm-grid">'+
+      '<section class="gm-section" id="gmReview"><h3>'+(editor.active?'Conferir a evolução mensal':'Confirmar o ponto de partida')+'</h3><div id="gmEvidence"></div><details class="gm-source"'+(legacy||editor.active?' open':'')+'><summary>Revisão do personal e situações específicas</summary><div class="gm-grid">'+
       select('gmReviewStatus','Resultado da revisão','confirmed',[['confirmed','Dados confirmados'],['corrected','Dados corrigidos e confirmados'],['insufficient','Informações insuficientes']])+
       (legacy?select('gmAdoptionReason','Motivo do primeiro planejamento','',[['','Selecione ou descreva abaixo'],['Revisei o treino anterior e o ponto de partida para iniciar o acompanhamento mensal.','Iniciar acompanhamento mensal com o treino anterior revisado']]):'')+
       text('gmReviewNotes','Leitura do mês, correções e motivo das decisões','')+
       '</div><div class="gm-checks">'+check('gmTechnique','Execução conferida e adequada',false)+check('gmEffort','Esforço compatível com o planejado',false)+check('gmTarget','Metas de desempenho cumpridas',false)+check('gmClinical','Mudanças de saúde e orientações revisadas',false)+'</div>'+
       check('gmReadaptation','Confirmei a readaptação após a pausa',false)+check('gmInitialAdoption','Primeira adoção do gerador para treino anterior: revisei a situação inicial e descrevi o motivo; sem progressão automática',false)+check('gmExtraordinary','Esta é uma revisão extraordinária por saúde ou mudança relevante; descrevi o motivo',false)+'</details>'+check('gmDataConfirmed','Conferi as informações usadas neste fechamento',false)+
       '<div class="gm-actions"><button type="button" class="btn" id="gmPrepare">Confirmar e gerar proposta</button></div><details class="gm-source" id="gmSeparateActions"><summary>Validar e gerar em etapas separadas</summary><div class="gm-actions"><button type="button" class="btn sec" id="gmValidate">Validar fechamento</button><button type="button" class="btn sec" id="gmGenerate">Gerar próxima etapa</button></div></details></section>'+
-      '<section class="gm-section"><h3>5. Conferir a proposta</h3><div id="gmProposal"></div></section>'+
-      '<details class="gm-section"><summary>Consultar exercícios e critérios de planejamento</summary><div id="gmCatalog"></div><div id="gmReferences"></div></details>'+
-      '<div id="gmActiveActions"></div><details class="gm-section"><summary>Histórico de etapas e decisões</summary><div id="gmHistory"></div></details>'+
-      '<p id="gmStatus" role="status" aria-live="polite" tabindex="-1">'+esc(message)+'</p>';
+      '<details class="gm-section"><summary>Consultar exercícios e critérios de planejamento</summary><div id="gmCatalog"></div><div id="gmReferences"></div></details></details>'+
+      '<section class="gm-section" id="gmProposalSection" hidden><div class="gm-proposal-heading"><h3>Confira o treino</h3><button type="button" class="btn sec" id="gmBack">Voltar aos dados</button></div><div id="gmProposal"></div></section>'+
+      '<div id="gmActiveActions"></div><details class="gm-section"><summary>Histórico de etapas e decisões</summary><div id="gmHistory"></div></details>';
     var dr=drafts[identity];
-    if(dr&&!force){base=dr.base;dirty=dr.dirty;Object.keys(dr.values).forEach(function(id){var el=$(id)||Array.from($('gmForm').querySelectorAll('[data-gm-config]')).find(function(x){return x.dataset.gmConfig===id;});if(el){if(el.type==='checkbox')el.checked=dr.values[id];else el.value=dr.values[id];}});}
+    if(dr&&!force){base=dr.base;sourceHash=dr.sourceHash;dirty=dr.dirty;Object.keys(dr.values).forEach(function(id){var el=$(id)||Array.from($('gmForm').querySelectorAll('[data-gm-config]')).find(function(x){return x.dataset.gmConfig===id;});if(el){if(el.type==='checkbox')el.checked=dr.values[id];else el.value=dr.values[id];}});}
     bindChoices();
     if($('gmAdoptionReason'))$('gmAdoptionReason').onchange=function(){if(value('gmAdoptionReason'))$('gmReviewNotes').value=value('gmAdoptionReason');};
     $('gmForm').addEventListener('input',function(e){if(e.target.type==='search')return;dirty=true;$('gmDirty').textContent='Alterações ainda não salvas';});
-    $('gmForm').addEventListener('change',function(e){if(e.target.type!=='search')dirty=true;});
+    $('gmForm').addEventListener('change',function(e){if(e.target.type!=='search'){dirty=true;renderQuick(st,id);}});
     $('gmForm').onsubmit=function(e){e.preventDefault();run(saveForm);};
     $('gmReload').onclick=function(){delete drafts[identity];refresh(true);status('Dados atuais carregados.');};
-    if($('gmExtraordinaryStart'))$('gmExtraordinaryStart').onclick=function(){run(function(){guard(false);$('gmPeriodEnd').value=today();$('gmNextStart').value=today();$('gmNextEnd').value=editor.active.end>=today()?editor.active.end:dayAfter(addMonth(today()),-1);$('gmExtraordinary').checked=true;dirty=true;$('gmDirty').textContent='Datas de revisão extraordinária ainda não salvas';status('Revise o perfil e salve as datas. Depois confirme a revisão extraordinária, descreva o motivo e confira as orientações. A etapa vigente continua preservada até aplicar.');});};
+    if($('gmExtraordinaryStart'))$('gmExtraordinaryStart').onclick=function(){run(function(){guard(false);$('gmPeriodEnd').value=today();$('gmNextStart').value=today();$('gmNextEnd').value=editor.active.end>=today()?editor.active.end:dayAfter(addMonth(today()),-1);$('gmExtraordinary').checked=true;dirty=true;$('gmDirty').textContent='Datas de revisão extraordinária ainda não salvas';renderQuick(st,id);status('Revise o perfil e salve as datas. Depois confirme a revisão extraordinária, descreva o motivo e confira as orientações. A etapa vigente continua preservada até aplicar.');});};
     if($('gmRequestReview'))$('gmRequestReview').onclick=function(){run(function(){var o=guard(true);o.a.geradorMensal.reviewRequested=true;write(o);status('Solicitação preparada. Publique no app para liberar o envio antecipado do fechamento.');});};
     $('gmImportProfile').onclick=function(){run(function(){var o=guard(false),an=(o.a.retorno||{}).anamnese||o.a.anamnese||{},p=an.geradorMensal;if(!p)throw Error('Ainda não há relato estruturado do aluno. Preencha e revise o perfil nesta tela.');var g=clone(o.a.geradorMensal||editor),old=clone(g.perfil);g.perfil=Object.assign({},old,clone(p),{reviewedAt:null,source:'relato_para_revisao'});g.perfil.guidance=Object.assign({},old.guidance,{reviewed:false});g.perfil.conditions=(old.conditions||[]).concat((p.conditions||[]).filter(function(c){return !(old.conditions||[]).some(function(v){return v.id===c.id;});}));g.perfil.functional=g.perfil.functional||{};g.perfil.functional.unavailable=Array.from(new Set((old.functional&&old.functional.unavailable||[]).concat(g.perfil.functional.unavailable||[])));g.validation=null;g.proposal=null;g.approvedProposal=null;g.audit=g.audit||[];g.audit.push({action:'reported_profile_loaded',at:new Date().toISOString(),previousProfile:old,reportedAt:p.reportedAt});o.a.geradorMensal=g;write(o);delete drafts[identity];refresh(true);status('Relato carregado sem aprovação. As restrições anteriores foram preservadas para sua revisão.');});};
     $('gmValidate').onclick=function(){run(validate);};$('gmGenerate').onclick=function(){run(generate);};$('gmPrepare').onclick=function(){run(prepareProposal);};
-    renderEvidence(st,id);renderProposal(st,id);renderCatalog();renderHistory(a);
+    renderEvidence(st,id);renderQuick(st,id);renderProposal(st,id);renderCatalog();renderHistory(a);
+    if(dr&&!force)Object.keys(dr.values).filter(function(id){return id.indexOf('gmQuick')===0;}).forEach(function(id){if($(id))$(id).checked=dr.values[id];});
+    $('gmBack').onclick=function(){$('gmQuick').hidden=false;$('gmAdvanced').hidden=false;$('gmQuick').scrollIntoView({block:'start'});};
     if(dirty)$('gmDirty').textContent='Alterações ainda não salvas';
   }
   function run(fn) { try { fn(); } catch(e) { status(e.message||'Não foi possível concluir. Confira os dados.',true); } }
@@ -192,9 +196,8 @@
   function input(o) { return A().build(o.st,o.id); }
   function value(id) { return $(id).value.trim(); }
   function number(id,nullable) { var t=value(id),n=Number(t.replace(',','.'));if(nullable&&!t)return null;if(!t||!Number.isFinite(n))throw Error('Confira o campo '+$(id).closest('label').textContent.trim()+'.');return n; }
-  function saveForm() {
-    if(!$('gmForm').reportValidity())return false;
-    var o=guard(false),gm=clone(editor),p=gm.perfil, now=new Date().toISOString(), author=value('gmAuthor');
+  function readForm() {
+    var gm=clone(editor),p=gm.perfil, now=new Date().toISOString(), author=value('gmAuthor');
     p.age=number('gmAge',true);p.level=value('gmLevel');p.objective=value('gmObjective');p.secondaryObjective=value('gmSecondary');p.minutes=number('gmMinutes');p.priorities=picked('gmPriorities');p.days=[0,1,2,3,4,5,6].filter(function(d){return $('gmDay'+d).checked;});
     p.equipmentMode=value('gmEquipmentMode');
     p.equipment=Array.from($('gmForm').querySelectorAll('[id^="gmEq_"]:checked')).map(function(el){return el.id.slice(5);});
@@ -211,7 +214,105 @@
     if(gm.config.approved&&!author)throw Error('Informe o personal responsável pelos parâmetros.');
     gm.updatedAt=now;gm.updatedBy=author;gm.validation=null;gm.proposal=null;gm.approvedProposal=null;
     gm.audit=gm.audit||[];gm.audit.push({action:'profile_saved',at:now,author:author,account:account()});
+    return gm;
+  }
+  function saveForm() {
+    if(!$('gmForm').reportValidity())return false;
+    var o=guard(false),gm=readForm();
     o.a.geradorMensal=gm;write(o);dirty=false;delete drafts[identity];refresh(true);status('Perfil e parâmetros salvos. Confira e valide o fechamento.');return true;
+  }
+  function reveal(id) {
+    var el=$(id);if(!el)return;
+    document.querySelectorAll('#gmForm > details,#gmReview > details').forEach(function(box){if(!box.contains(el)&&box!==el)box.open=false;});
+    for(var node=el;node&&node!==$('gmRoot');node=node.parentElement){node.hidden=false;if(node.tagName==='DETAILS')node.open=true;}
+    el.scrollIntoView({block:'center',behavior:'smooth'});if(el.matches('input,select,textarea,button'))el.focus({preventScroll:true});
+  }
+  function clinicalForm() {
+    return value('gmHealth')==='reported'||!!value('gmConditions')||picked('gmFunctionalUnavailable').length>0||$('gmPregnant').checked||$('gmPostpartum').checked||$('gmRequiresProtocol').checked;
+  }
+  function monthlyReport(st,id) {
+    var r=A().build(st,id).training.monthReport;
+    return (r.revisions||[]).filter(function(v){return v.kind==='monthly';}).sort(function(a,b){return b.createdAt.localeCompare(a.createdAt);})[0]||null;
+  }
+  function newerAnamnesis(a) {
+    var an=(a.retorno||{}).anamnese||a.anamnese||{},p=an.geradorMensal,g=a.geradorMensal&&a.geradorMensal.perfil;
+    var at=p&&(p.reportedAt||(a.retorno||{}).anamneseEm);
+    return !!(g&&g.reviewedAt&&at&&Date.parse(at)>Date.parse(g.reviewedAt));
+  }
+  function renderQuick(st,id) {
+    var a=person(st,id),gm=editor,p=gm.perfil,previous={};
+    if($('gmQuickReview'))$('gmQuickReview').querySelectorAll('input').forEach(function(el){previous[el.id]=el.checked;});
+    var data=A().build(st,id),report=monthlyReport(st,id),health=data.training.monthReport.pendingHealthReview,clinical=clinicalForm(),reportData=report&&report.data||{};
+    var legacy=data.training.previousFichas.length>0&&!gm.active,returning=$('gmReturning').checked;
+    var days=[0,1,2,3,4,5,6].filter(function(d){return $('gmDay'+d).checked;}).map(function(d){return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d];});
+    var missing=[];
+    if(!value('gmAge'))missing.push(field('gmQuickAge','Idade',null,'number','min="1" max="120" data-gm-copy="gmAge"'));
+    if(!value('gmAuthor'))missing.push(field('gmQuickAuthor','Seu nome como personal','','text','data-gm-copy="gmAuthor"'));
+    if(value('gmHealth')==='unknown')missing.push(select('gmQuickHealth','Após conferir a anamnese, há alguma condição ou limitação?','unknown',[['unknown','Selecione'],['none','Não há condições ou limitações informadas'],['reported','Sim, precisa de adaptações']]).replace('<select ','<select data-gm-copy="gmHealth" '));
+    var rawAn=(a.retorno||{}).anamnese||a.anamnese||{};
+    var healthText=health?'Novo relato de saúde para revisar':clinical?'Adaptações individuais':value('gmHealth')==='none'?'Sem condições ou limitações informadas':'Saúde ainda não confirmada';
+    var hints=[rawAn.lesoes&&'Lesões: '+rawAn.lesoes,rawAn.doencas&&'Condições: '+rawAn.doencas,rawAn.meds&&'Medicamentos: '+rawAn.meds,value('gmConditions'),p.functional&&p.functional.notes].filter(Boolean);
+    if(newerAnamnesis(a))healthText='Anamnese atualizada pelo aluno — carregar para revisão';
+    var reviewText=legacy?'Ao confirmar, você valida o perfil, os parâmetros e o ponto de partida do treino anterior. As cargas serão avaliadas novamente.':gm.active?'Ao confirmar, você valida o relato mensal, o perfil e os parâmetros desta próxima etapa.':'Ao confirmar, você valida a anamnese, o perfil e os parâmetros sugeridos para este aluno.';
+    var reportLabels={melhorou:'Percebeu melhora',manteve:'Percebeu manutenção',piorou:'Percebeu piora',nao_sei:'Não soube avaliar'};
+    $('gmQuick').innerHTML='<div class="gm-quick-card"><div class="gm-proposal-heading"><h3>Dados do aluno</h3><button type="button" class="btn sec" data-gm-reveal="gmObjective">Editar</button></div><dl class="gm-summary">'+
+      [['Objetivo',(goals.find(function(v){return v[0]===value('gmObjective');})||[])[1]||'Escolher objetivo'],['Nível',(levels.find(function(v){return v[0]===value('gmLevel');})||[])[1]||'Escolher nível'],['Rotina',days.join(' · ')+' · '+value('gmMinutes')+' min'],['Local',value('gmEquipmentMode')==='standard_gym'?'Academia · equipamentos comuns':'Equipamentos personalizados']].map(function(v){return '<div><dt>'+esc(v[0])+'</dt><dd>'+esc(v[1])+'</dd></div>';}).join('')+'</dl><p class="gm-help">Se um aparelho não estiver disponível, escolha uma substituição no treino.</p>'+
+      '<div class="gm-quick-health"><strong>'+esc(healthText)+'</strong>'+(hints.length?'<p>'+esc(hints.join(' · '))+'</p>':'')+(newerAnamnesis(a)?'<button type="button" class="btn sec" data-gm-reveal="gmImportProfile">Carregar anamnese atualizada</button>':clinical||health?'<button type="button" class="btn sec" data-gm-reveal="'+(health?'gmEvidence':'gmHealthDetails')+'">Revisar adaptações</button>':'')+'</div>'+
+      '<details class="gm-source"><summary>Ver anamnese e informações complementares</summary><div class="gm-readable">'+readable(rawAn)+'</div><button type="button" class="btn sec" data-gm-reveal="gmImportProfile">Atualizar dados a partir do relato</button></details>'+
+      (missing.length?'<div class="gm-missing"><strong>Falta só completar</strong><div class="gm-grid">'+missing.join('')+'</div></div>':'')+'</div>'+
+      '<div id="gmQuickReview">'+(gm.active?'<div class="gm-quick-card"><h3>Evolução do mês</h3>'+(report?'<p>'+esc(reportLabels[reportData.perception]||'Relato enviado')+' · '+esc(report.createdAt.slice(0,10))+'</p><div class="gm-readable">'+readable(reportData)+'</div><button type="button" class="btn sec" data-gm-reveal="gmEvidence">Conferir registros e avaliações</button>':'<p>O aluno ainda precisa enviar o fechamento mensal desta etapa.</p><button type="button" class="btn sec" id="gmQuickRequest">Solicitar pelo app</button>')+'</div>':'')+
+      (gm.active&&report&&!returning?check('gmQuickProgress','Conferi a execução, o esforço e as metas atingidas; permitir progressão quando os registros forem comparáveis.',previous.gmQuickProgress)+'<p class="gm-help">Sem essa confirmação, o sistema não aumenta a carga por evolução.</p>':'')+
+      (returning?check('gmQuickReadaptation','Conferi o retorno após a pausa e confirmo uma etapa de readaptação.',previous.gmQuickReadaptation):'')+
+      (clinical?'<div class="gm-note"><strong>Orientação em uso</strong><p>'+esc(value('gmGuidanceScope')||'Preencha as orientações individuais em Revisar adaptações.')+'</p>'+check('gmQuickClinical','Conferi as orientações individuais e confirmo que estão válidas para esta etapa.',previous.gmQuickClinical)+'</div>':'')+'</div>'+
+      '<div class="gm-quick-plan"><h3>'+(legacy?'Primeiro planejamento mensal':'Planejamento sugerido')+'</h3><p>'+esc(value('gmNextStart'))+' a '+esc(value('gmNextEnd'))+'</p><p class="gm-help">'+esc($('gmDoseSummary').textContent)+'</p><p class="gm-help">'+esc(reviewText)+'</p><button type="button" class="btn" id="gmQuickGenerate">Confirmar e gerar treino</button></div>';
+    $('gmQuick').querySelectorAll('[data-gm-reveal]').forEach(function(el){el.onclick=function(){reveal(el.dataset.gmReveal);};});
+    $('gmQuick').querySelectorAll('[data-gm-copy]').forEach(function(el){
+      function copy(){var target=$(el.dataset.gmCopy);target.value=el.value;dirty=true;$('gmDirty').textContent='Alterações ainda não salvas';}
+      el.oninput=copy;el.onchange=function(){copy();if(el.tagName==='SELECT')$(el.dataset.gmCopy).dispatchEvent(new Event('change',{bubbles:true}));};
+    });
+    if($('gmQuickRequest'))$('gmQuickRequest').onclick=function(){$('gmRequestReview').click();reveal('gmActiveActions');};
+    $('gmQuickGenerate').onclick=function(){run(quickGenerate);};
+  }
+  function quickGenerate() {
+    var o=guard(false);
+    // A confirmação vale para o resumo visto, nunca para novos retornos recebidos em segundo plano.
+    if(C().hash(input(o))!==sourceHash)throw Error('Há informações novas do aluno. Recarregue os dados e confira o resumo antes de gerar.');
+    if(newerAnamnesis(o.a)){reveal('gmImportProfile');throw Error('O aluno atualizou a anamnese. Carregue esse relato para revisar antes de gerar.');}
+    if(!$('gmForm').checkValidity()){var invalid=$('gmForm').querySelector(':invalid');reveal(invalid&&invalid.id||'gmForm');throw Error('Confira o campo destacado antes de gerar.');}
+    var gm=readForm(),now=new Date().toISOString(),legacy=input(o).training.previousFichas.length>0&&!gm.active;
+    if(!gm.config.author){reveal('gmQuickAuthor');throw Error('Informe seu nome como personal.');}
+    if(gm.active&&!monthlyReport(o.st,o.id)){reveal('gmQuickReview');throw Error('A próxima etapa precisa do fechamento mensal enviado pelo aluno.');}
+    if($('gmExtraordinary').checked){reveal('gmReview');throw Error('Conclua a revisão extraordinária nos ajustes, com o motivo e as orientações atuais.');}
+    gm.perfil.reviewedAt=now;gm.perfil.reviewedBy=gm.config.author;gm.config.approved=true;
+    if($('gmQuickClinical')&&$('gmQuickClinical').checked)gm.perfil.guidance.reviewed=true;
+    var review={author:gm.config.author,at:now,status:value('gmReviewStatus'),notes:value('gmReviewNotes'),techniqueConfirmed:false,effortConfirmed:false,targetMet:false,clinicalReviewed:!!($('gmQuickClinical')&&$('gmQuickClinical').checked)||$('gmClinical').checked};
+    if($('gmQuickProgress')&&$('gmQuickProgress').checked)review.techniqueConfirmed=review.effortConfirmed=review.targetMet=true;
+    if(legacy)review.notes=[review.notes,'Confirmei o perfil, os parâmetros e o ponto de partida do treino anterior para iniciar o acompanhamento mensal, com nova avaliação das cargas.'].filter(Boolean).join(' ');
+    collectReview(gm,review);
+    gm.manualReview.initialAdoptionConfirmed=legacy;gm.manualReview.initialAdoptionReason=legacy?review.notes:'';
+    gm.manualReview.readaptationConfirmed=!!($('gmQuickReadaptation')&&$('gmQuickReadaptation').checked);
+    o.a.geradorMensal=gm;
+    var r=C().validate(input(o),review);
+    if(!r.ok){revealQuickIssues(r.issues);throw Error(showIssues(r.issues));}
+    gm.validation=r.validation;
+    var generated=C().generate(input(o),gm.validation);
+    if(!generated.ok){revealQuickIssues(generated.issues);throw Error(showIssues(generated.issues));}
+    gm.proposal=generated.proposal;gm.audit.push({action:'quick_generation_confirmed',at:now,author:review.author,validation:clone(r.validation)});
+    write(o);dirty=false;delete drafts[identity];refresh(true);status('Treino pronto para conferir. Troque exercícios se precisar e aprove a proposta.');$('gmProposalSection').scrollIntoView({block:'start'});
+  }
+  function revealQuickIssues(issues) {
+    var targets={age:'gmAge',healthStatus:'gmHealth',objective:'gmObjective',level:'gmLevel',days:'gmDay1',minutes:'gmMinutes',guidance:'gmHealthDetails',functional:'gmHealthDetails',returning:'gmQuickReadaptation',config:'gmAuthor',nextPeriod:'gmNextStart',period:'gmPeriodStart'};
+    var first=(issues||[]).find(function(i){return i.severity==='error';});
+    if(first)reveal(targets[first.field]||'gmReview');
+  }
+  function collectReview(gm,review) {
+    if(review.status==='corrected'&&!review.notes)throw Error('Descreva as correções realizadas.');
+    var health=Array.from($('gmEvidence').querySelectorAll('[data-gm-health]:checked')).map(function(el){return el.dataset.gmHealth;});
+    if(health.length&&(!review.clinicalReviewed||!review.notes))throw Error('Descreva a revisão das mudanças de saúde e confirme as orientações.');
+    gm.healthReviewedRevisionIds=Array.from(new Set((gm.healthReviewedRevisionIds||[]).concat(health)));
+    gm.sessionReviews=gm.sessionReviews||{};
+    $('gmEvidence').querySelectorAll('[data-gm-session]').forEach(function(el){if(el.value==='unreviewed')return;gm.sessionReviews[el.dataset.gmSession]={reviewed:true,status:el.value,recordsComplete:el.closest('tr').querySelector('[data-gm-complete]').checked,author:review.author,at:review.at};});
+    gm.manualReview={readaptationConfirmed:$('gmReadaptation').checked,initialAdoptionConfirmed:$('gmInitialAdoption').checked,initialAdoptionReason:$('gmInitialAdoption').checked?review.notes:'',extraordinaryConfirmed:$('gmExtraordinary').checked,extraordinaryReason:$('gmExtraordinary').checked?review.notes:'',author:review.author,at:review.at,notes:review.notes};
   }
   function prepareProposal() {
     guard(false);
@@ -235,12 +336,7 @@
     var review={author:gm.config.author,at:new Date().toISOString(),status:value('gmReviewStatus'),notes:value('gmReviewNotes'),techniqueConfirmed:$('gmTechnique').checked,effortConfirmed:$('gmEffort').checked,targetMet:$('gmTarget').checked,clinicalReviewed:$('gmClinical').checked};
     if(review.status==='corrected'&&!review.notes)throw Error('Descreva as correções realizadas.');
     if(review.status==='insufficient'){gm.validation=null;gm.proposal=null;gm.approvedProposal=null;gm.audit=gm.audit||[];gm.audit.push({action:'insufficient_data',at:review.at,author:review.author,notes:review.notes});write(o);renderEvidence(o.st,o.id);renderProposal(o.st,o.id);status('Pendência registrada. Complete as informações antes de gerar outra etapa.');return;}
-    var health=Array.from($('gmEvidence').querySelectorAll('[data-gm-health]:checked')).map(function(el){return el.dataset.gmHealth;});
-    if(health.length && (!review.clinicalReviewed || !review.notes))throw Error('Descreva a revisão das mudanças de saúde e confirme as orientações.');
-    gm.healthReviewedRevisionIds=Array.from(new Set((gm.healthReviewedRevisionIds||[]).concat(health)));
-    gm.sessionReviews=gm.sessionReviews||{};
-    $('gmEvidence').querySelectorAll('[data-gm-session]').forEach(function(el){if(el.value==='unreviewed')return;gm.sessionReviews[el.dataset.gmSession]={reviewed:true,status:el.value,recordsComplete:el.closest('tr').querySelector('[data-gm-complete]').checked,author:review.author,at:review.at};});
-    gm.manualReview={readaptationConfirmed:$('gmReadaptation').checked,initialAdoptionConfirmed:$('gmInitialAdoption').checked,initialAdoptionReason:$('gmInitialAdoption').checked?review.notes:'',extraordinaryConfirmed:$('gmExtraordinary').checked,extraordinaryReason:$('gmExtraordinary').checked?review.notes:'',author:review.author,at:review.at,notes:review.notes};
+    collectReview(gm,review);
     var r=C().validate(input(o),review);
     if(!r.ok)throw Error(showIssues(r.issues)||'Confira as pendências antes de validar.');
     gm.validation=r.validation;gm.proposal=null;gm.approvedProposal=null;gm.audit=gm.audit||[];gm.audit.push({action:'data_validated',at:review.at,author:review.author,validation:clone(r.validation)});
@@ -271,6 +367,8 @@
   }
   function renderProposal(st,id) {
     var a=person(st,id),gm=a.geradorMensal||{},p=gm.approvedProposal&&gm.approvedProposal.proposal||gm.proposal;
+    $('gmProposalSection').hidden=!p;$('gmQuick').hidden=!!p&&!dirty;
+    if(p&&!dirty)$('gmAdvanced').open=false;
     if(!p){$('gmProposal').innerHTML='<p class="muted">A proposta aparecerá aqui depois da validação e da geração.</p>';return;}
     var cat=A().build(st,id).catalog||[];
     $('gmProposal').innerHTML='<p><strong>'+esc((p.period||{}).start)+' a '+esc((p.period||{}).end)+'</strong></p>'+
