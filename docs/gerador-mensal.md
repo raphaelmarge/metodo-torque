@@ -30,7 +30,7 @@ O perfil estruturado fica em `aluno.geradorMensal.perfil`. A anamnese enviada pe
 | 8 | Objetivos | Principal e secundário; dose aprovada e componentes complementares |
 | 9 | Prioridades e preferências | Regiões e exercícios preferidos/evitados dentro da compatibilidade |
 | 10 | Agenda e duração | Dias e minutos, período real, preparação, execução, descanso e transição |
-| 11 | Equipamentos e ambiente | Interseção com requisitos explícitos do catálogo |
+| 11 | Equipamentos e ambiente | Academia padrão sugerida ou lista explícita; interseção com requisitos dos exercícios |
 | 12 | Recuperação e rotina | Sono, fadiga, atividades e percepção; contexto para revisão |
 | 13 | Etapa anterior | Fichas anteriores e continuidade dos movimentos compatíveis |
 | 14 | Desempenho | Séries efetivamente feitas, presença e escalas de esforço separadas |
@@ -70,7 +70,11 @@ O ciclo mensal, os cinco objetivos, os estados de revisão, o cálculo de tempo 
 
 ## 7. Catálogo
 
-`assets/gerador-mensal-catalogo.js` contém 22 exercícios de suporte inicial com IDs estáveis `gm-*`, padrões de movimento, músculos primários, equipamentos, posição, requisitos funcionais, apoio, lateralidade, unidade, base da carga e variação. São metadados estruturais iniciais (`reviewType: structural_seed`, `professionalReviewRequired: true`), sem revisão clínica externa; precisam de conferência individual pelo personal. `metadata.reviewed` identifica a estrutura cadastrada, sem atestar revisão clínica. A biblioteca pessoal só participa quando contém metadados explícitos revisados, autor e data. Nome parecido não cria equivalência de máquina nem autorização clínica.
+`assets/gerador-mensal-catalogo.js` contém 48 exercícios e 25 opções de equipamento, com IDs estáveis internos `gm-*`, padrões de movimento, músculos primários, equipamentos, posição, requisitos funcionais, apoio, lateralidade, unidade, base da carga e variação. A interface usa nomes e busca, sem solicitar códigos. São metadados estruturais iniciais (`reviewType: structural_seed`, `professionalReviewRequired: true`), sem revisão clínica externa; precisam de conferência individual pelo personal. `metadata.reviewed` identifica a estrutura cadastrada, sem atestar revisão clínica. A biblioteca pessoal só participa quando contém metadados explícitos revisados, autor e data. Nome parecido não cria equivalência de máquina nem autorização clínica.
+
+Novos perfis usam `equipmentMode: standard_gym`: o motor considera um conjunto explícito de equipamentos comuns, sem afirmar que a academia possui todos. A lista original permanece separada e não é preenchida como inventário confirmado. Perfis anteriores revisados ou com equipamentos informados mantêm a seleção `custom`; relatos de casa, ar livre e ambiente misto também permanecem específicos. A anamnese de quem escolhe academia pode ser enviada sem marcar aparelhos.
+
+Na proposta, “Trocar / aparelho indisponível” apresenta alternativas por nome e equipamento. Elas mantêm padrão e músculos primários, respeitam nível, preferências, autorizações, vetos, dose, tempo e volume. A ação troca todas as ocorrências daquele exercício, registra motivo e autoria e deixa a carga a definir. Não libera substituições autônomas no app do aluno nem modifica a ficha ativa. O personal ainda confere e aprova a proposta.
 
 A dose contabiliza somente músculos primários, com limite semanal e estimativa de sessão. Variações e equipamentos diferentes não recebem automaticamente a carga anterior. As orientações individuais restringem o catálogo; a interface não deve usar rótulos universais de exercício seguro para determinada doença.
 
@@ -113,6 +117,8 @@ XP e nível físico são conceitos distintos. Os marcos mensais reconhecem parti
 ## 12. Experiência
 
 O aluno mantém a ficha ativa, registra sessões e envia fechamento ou mudança de saúde. O personal recebe perfil, pendências, relato, indicadores, parâmetros, validação e proposta com motivos. Aplicar significa atualizar o painel; publicar continua sendo uma ação separada.
+
+O formulário prioriza objetivo, nível, dias, tempo e revisão da anamnese, aproveitando os dados cadastrados. Preferências, capacidades e exercícios autorizados são selecionados pelo nome. Datas, protocolo e responsável têm preenchimento inicial; ajustes avançados ficam recolhidos. “Confirmar e gerar proposta” salva o perfil e executa validação e geração, preservando as confirmações explícitas do personal. Dados insuficientes continuam bloqueados. A alternativa de validar e gerar separadamente permanece disponível. Rascunhos e falhas de persistência conservam os campos.
 
 Cada proposta identifica mudanças, continuidade, fonte validada, restrições vigentes, dose, estimativa de tempo, pendências e o que acompanhar. Referências completas ficam nos detalhes do personal. O app do aluno recebe a explicação necessária e os dados de execução, sem anexar a anamnese clínica.
 

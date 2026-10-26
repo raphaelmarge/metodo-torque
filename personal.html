@@ -25759,7 +25759,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   if (self.MT_PERSONAL_GERADOR_MENSAL) self.MT_PERSONAL_GERADOR_MENSAL.init({
     load: load, write: function (st) { return S.write("ptStudio", st); },
     account: taContaLocal,
-    author: function () { return (S.usuario && (S.usuario() || {}).email) || ""; },
+    author: function () { return (S.usuario && (S.usuario() || {}).email) || (S.read("perfil", {}) || {}).nome || ""; },
     allowed: function () { var b = document.querySelector('#abas [data-a="treinos"]'); return !(b && b.style.display === "none"); },
     apply: function (st, id, approved) { self.MT_PERSONAL_GERADOR_MENSAL.applyState(st, id, approved); marcaTreinoMudou(st, id); },
     refresh: function () { render(); },

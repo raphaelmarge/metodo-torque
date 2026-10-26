@@ -6,6 +6,20 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v877 — Gerador mensal com equipamentos comuns e trocas por nome
+
+- Novos perfis podem gerar com academia padrão sem inventário. Equipamentos
+  explícitos anteriores permanecem específicos; saúde e revisão mensal continuam
+  obrigatórias. A base passa a 48 exercícios e 25 opções de equipamento.
+- Busca e seleção por nome substituem campos de IDs. A proposta oferece trocas
+  compatíveis, registradas pelo personal, com carga novamente a definir.
+- “Confirmar e gerar proposta” reúne salvar, validar e gerar, após confirmações
+  explícitas. Aprovar, aplicar e publicar continuam separados. Parâmetros avançados
+  ficam recolhidos; os 17 grupos de dados permanecem no motor.
+- Anamnese deixa equipamentos como informação opcional para academia. Nenhuma
+  alteração de banco ou do pacote do aluno. Cache global e aluno mt-v877.
+- Conferir CI e Pages antes de declarar esta versão publicada.
+
 ## v876 — Gerador mensal de treinos
 
 - Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e

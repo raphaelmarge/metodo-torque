@@ -144,8 +144,10 @@
     <div class="gm-grid"><label class="chk"><input type="checkbox" name="gmDay" value="1">Segunda</label><label class="chk"><input type="checkbox" name="gmDay" value="2">Terça</label><label class="chk"><input type="checkbox" name="gmDay" value="3">Quarta</label><label class="chk"><input type="checkbox" name="gmDay" value="4">Quinta</label><label class="chk"><input type="checkbox" name="gmDay" value="5">Sexta</label><label class="chk"><input type="checkbox" name="gmDay" value="6">Sábado</label><label class="chk"><input type="checkbox" name="gmDay" value="0">Domingo</label></div>
     <label>Minutos por sessão<input type="number" min="10" max="240" step="1" id="gmMinutes"></label>
     <label>Onde pretende treinar?<select id="gmEnvironment"><option value="unknown">Não informado</option><option value="gym">Academia</option><option value="home">Em casa</option><option value="outdoors">Ao ar livre</option><option value="mixed">Mais de um ambiente</option></select></label>
-    <label>Equipamentos disponíveis</label>
+    <p class="dica">Se treina em academia, não precisa listar os aparelhos. O personal poderá usar equipamentos comuns e ajustar as substituições.</p>
+    <details id="gmEquipmentDetails"><summary>Informar equipamentos específicos (opcional)</summary>
     <div class="gm-grid"><label class="chk"><input type="checkbox" name="gmEquipment" value="bodyweight">Peso corporal</label><label class="chk"><input type="checkbox" name="gmEquipment" value="dumbbells">Halteres</label><label class="chk"><input type="checkbox" name="gmEquipment" value="barbell">Barras</label><label class="chk"><input type="checkbox" name="gmEquipment" value="machines">Máquinas</label><label class="chk"><input type="checkbox" name="gmEquipment" value="cables">Cabos</label><label class="chk"><input type="checkbox" name="gmEquipment" value="bands">Elásticos</label><label class="chk"><input type="checkbox" name="gmEquipment" value="bench">Banco</label><label class="chk"><input type="checkbox" name="gmEquipment" value="cardio">Equipamento de cardio</label></div>
+    </details>
   </div>
   <div class="qcard">
     <h2>Seus objetivos</h2>
