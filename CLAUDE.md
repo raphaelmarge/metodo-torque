@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v876 — Gerador mensal de treinos
+
+- Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e
+  evolução relatada pelo aluno, confirmada pelo personal, em propostas locais
+  por regras. Não consome tokens de IA na geração e não progride cargas por XP.
+- Revisão profissional, aprovação, aplicação e publicação são etapas distintas;
+  mudanças de saúde exigem nova revisão e não são tratadas como cura automática.
+- O catálogo inicial exige conferência individual do personal. O escopo inicial
+  é musculação; detalhes, 17 grupos de parâmetros e limites em
+  `docs/gerador-mensal.md`. Cache global e do aluno mt-v876.
+- Conferir CI e GitHub Pages antes de declarar esta versão publicada.
+
 ## v875 — Alinhamento dos formulários do Torque Nutri
 
 - Cabeçalhos dos diálogos reservam a coluna do botão de fechar, inclusive

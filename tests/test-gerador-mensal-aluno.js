@@ -2,7 +2,7 @@
 'use strict';
 const assert=require('assert/strict'),fs=require('fs'),path=require('path');
 let pw;try{pw=require('playwright');}catch(e){pw=require(process.env.PLAYWRIGHT_PATH||'/opt/node22/lib/node_modules/playwright');}
-const root=path.resolve(__dirname,'..'),BASE='http://127.0.0.1:8794';
+const root=path.resolve(__dirname,'..'),BASE=new URL(process.env.BASE_URL||'http://127.0.0.1:8794').origin;
 global.self=global;global.MT_CLOUD={url:'https://mensal-test.invalid',anonKey:'fixture'};
 require('../app/aluno-skin.js');require('../app/aluno-builder.js');
 const monthly={version:1,active:{id:'ciclo-outubro',start:'2026-10-01',end:'2026-10-31',summary:'Consolidar o planejamento.',watch:['Registrar esforço.'],approvedAt:'2026-10-01'},privateHealth:'NAO_PODE_PUBLICAR',profile:{diagnosis:'NAO_PODE_PUBLICAR'}};

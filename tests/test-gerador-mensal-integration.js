@@ -18,7 +18,7 @@ function ok(v, label) { assert.ok(v, label); n++; console.log('OK ' + label); }
   const browser = await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'America/Sao_Paulo', serviceWorkers: 'block' });
   await context.addInitScript(MOCK_NUVEM);
-  const origin = 'https://torque-panel-test.invalid', external = [], errors = [];
+  const origin = new URL(process.env.BASE_URL || 'https://torque-panel-test.invalid').origin, external = [], errors = [];
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     if (url.origin !== origin) { external.push(url.href); return route.abort(); }

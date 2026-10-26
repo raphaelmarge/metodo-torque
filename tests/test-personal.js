@@ -2182,7 +2182,13 @@ async function contextoAppAluno(browser, html, options = {}) {
     document.getElementById("parq5").checked = true;
     document.getElementById("fLesoes").value = "joelho em 2020";
     document.getElementById("fNivel").value = "iniciante";
-    document.getElementById("fDias").value = "3";
+    document.getElementById("gmGoal").value = "saude";
+    document.getElementById("gmMinutes").value = "45";
+    [1, 3, 5].forEach((dia) => {
+      const campo = document.querySelector('[name="gmDay"][value="' + dia + '"]');
+      campo.checked = true;
+      campo.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     document.getElementById("btnEnviar").click();
     await new Promise((r) => setTimeout(r, 300));
     return { titulo, fim: document.getElementById("fim").style.display };
@@ -2190,7 +2196,9 @@ async function contextoAppAluno(browser, html, options = {}) {
   ok(/Maria/.test(anPag.titulo), "📋 a página da anamnese cumprimenta o aluno pelo nome do link");
   ok(anPag.fim === "block" && anCorpo && anCorpo.t === "tokAn9" &&
     anCorpo.p_dados.anamnese.parq5 === true && anCorpo.p_dados.anamnese.lesoes === "joelho em 2020" &&
-    anCorpo.p_dados.anamnese.nivel === "iniciante" && anCorpo.p_dados.anamnese.dias === "3" && !!anCorpo.p_dados.anamneseEm,
+    anCorpo.p_dados.anamnese.nivel === "iniciante" && anCorpo.p_dados.anamnese.dias === "3" && !!anCorpo.p_dados.anamneseEm &&
+    anCorpo.p_dados.anamnese.geradorMensal.objective === "saude" && anCorpo.p_dados.anamnese.geradorMensal.minutes === 45 &&
+    JSON.stringify(anCorpo.p_dados.anamnese.geradorMensal.days) === "[1,3,5]" && anCorpo.p_dados.anamnese.geradorMensal.status === "relatada",
     "enviar manda a anamnese pelo MESMO app_aluno_devolve (token validado lá dentro) com os campos do painel");
   const anTrava = await pAn.evaluate(async () => {
     document.getElementById("fim").style.display = "none";

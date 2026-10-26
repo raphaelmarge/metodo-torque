@@ -19,7 +19,7 @@ function ok(value, name) { assert.ok(value, name); n++; console.log('OK ' + name
 (async () => {
   const browser = await playwright.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 360, height: 900 }, timezoneId: 'America/Sao_Paulo', serviceWorkers: 'block' });
-  const origin = 'https://gerador-torque-test.invalid';
+  const origin = new URL(process.env.BASE_URL || 'https://gerador-torque-test.invalid').origin;
   const blocked = [], errors = [];
   await context.route('**/*', route => {
     if (route.request().url() === origin + '/') return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{background:#0c0d11;color:#f3f3f6;margin:0;padding:12px;font:16px Arial}.btn{padding:12px}input,textarea,select{font:inherit}section{min-width:0}</style></head><body><section id="gmSection"><label>Aluno<select id="gmAluno"><option value="gm-test-a">Aluno A</option><option value="gm-test-b">Aluno B</option></select></label><div id="gmRoot"></div></section></body></html>' });
