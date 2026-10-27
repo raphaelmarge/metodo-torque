@@ -895,5 +895,21 @@ body.aluno-v793.experiencia-v868 #navApp .nitem span:last-child{letter-spacing:0
 @media(prefers-reduced-motion:reduce){body.experiencia-v868 *{scroll-behavior:auto!important}}
 `;
 
+  css += `
+/* Evolução orientada ao objetivo, após o nível e as medalhas. */
+#evPanorama [hidden]{display:none!important}
+#evPanorama #evPanoramaTitle{font-size:25px;line-height:1.2}
+#evFocoDescricao{margin:12px 0 20px!important}
+#evSemanaMeta{padding:16px;border-radius:14px;background:var(--one-control);border:1px solid var(--one-border)}
+#evSemanaMeta strong{font-size:16px;line-height:1.4;display:block}
+#evSemanaMeta progress{display:block;width:100%;height:8px;margin:12px 0;accent-color:var(--cor)}
+#evSemanaMeta progress::-webkit-progress-bar{background:var(--one-border);border-radius:8px}
+#evSemanaMeta progress::-webkit-progress-value{background:var(--cor);border-radius:8px}
+#evSemanaMeta progress::-moz-progress-bar{background:var(--cor);border-radius:8px}
+#evSemanaMeta p{font-size:12px;line-height:1.6;color:var(--one-muted);margin:0}
+#evPanorama :is(#evFocoCardio,#evFocoAvaliacao)>p{font-size:13px;line-height:1.6}
+#evFocoAvaliacao button{padding:10px 14px;font-size:13px;margin:4px 0 16px}
+#evPanorama .ev-load-dates{grid-column:1/-1;font-size:11px}
+`;
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

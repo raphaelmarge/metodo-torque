@@ -291,12 +291,15 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     });
     const semCadastro = window.__montaAppAluno(direto, stamp);
     window.MTStore.write("ptStudio", JSON.parse(snap));
-    return { comCadastro, semCadastro };
+    return { comCadastro, semCadastro, comparaveis: [
+      {nome:'Supino reto',id:st.exercicios.find(e=>e.nome==='Supino reto').id,ficha:0,antes:67.5,depois:70,reps:10,equipamento:'barra e banco'},
+      {nome:'Remada curvada',id:st.exercicios.find(e=>e.nome==='Remada curvada').id,ficha:1,antes:70,depois:72.5,reps:12,equipamento:'barra'}
+    ] };
   }, { CAPAS, NUTRICAO_DEMO });
   await br.close();
   // O simulador e os dados de acompanhamento são os mesmos nas duas entradas.
   const mapa = '<script src="assets/mapa-config.js"><\/script>';
-  const bloco = mapa + fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";");
+  const bloco = mapa + fs.readFileSync(path.join(__dirname, "demo-bloco.html"), "utf8").replace("/* NUTRICAO_DEMO_FIXTURE */", "var __demoNutriPlano = " + JSON.stringify(NUTRICAO_DEMO).replace(/</g, "\\u003c") + ";").replace("/* EVOLUCAO_DEMO_FIXTURE */", "var __demoComparaveis = " + JSON.stringify(apps.comparaveis).replace(/</g, "\\u003c") + ";");
   function prepara(html) {
     if (!html || html.length < 50000) throw new Error("Builder retornou uma demo incompleta.");
     let out = html.replace(/localStorage/g, "__demoLS");

@@ -7,7 +7,7 @@
   else root.MT_GERADOR_MENSAL = api;
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (catalogModule) {
   'use strict';
-  var VERSION = '1.0.0', RULE_VERSION = '2026-10-23.1';
+  var VERSION = '1.1.0', RULE_VERSION = '2026-10-26.1';
   var OBJECTIVES = { hipertrofia: 'Ganhar massa muscular', emagrecimento: 'Reduzir gordura corporal', forca: 'Aumentar a força', condicionamento: 'Melhorar o condicionamento', saude: 'Saúde e autonomia' };
   var LEVELS = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' };
   var PARAMETERS = [
@@ -85,6 +85,7 @@
     // Identity/gamification never participate in selection or prescribed dose.
     ['gender', 'genero', 'sexo', 'sex', 'xp', 'points', 'pontos', 'gamification'].forEach(function (k) { delete p[k]; });
     p.days = sorted(list(p.days).map(Number)); p.equipment = sorted(p.equipment); p.priorities = sorted(p.priorities);
+    if (p.equipmentMode === 'standard_gym') p.equipment = sorted(catalogModule.presets.standard_gym);
     p.conditions = list(p.conditions); p.functional = p.functional || { unavailable: [], available: [] };
     p.guidance = p.guidance || {}; p.preferences = p.preferences || { prefer: [], avoid: [] };
     var catalog = input.catalog === undefined ? clone(catalogModule.exercises) : clone(Array.isArray(input.catalog) ? input.catalog : input.catalog.exercises || []);
@@ -243,6 +244,20 @@
     if (ex.complexity > ({iniciante:1,intermediario:2,avancado:3}[p.level]||1)) return false;
     return true;
   }
+  // A troca mantém o padrão e os músculos primários, além de todas as restrições.
+  // A conferência final usa reviseProposal, inclusive volume, tempo e dose.
+  function alternatives(input, proposal, validation, fichaId, itemIndex) {
+    if (!checkProposal(input, proposal, validation).ok) return [];
+    var d=normalize(input), f=proposal.fichas.find(function(f){return f.id===fichaId;}), it=f&&f.itens[itemIndex];
+    var original=it&&d.catalog.find(function(ex){return ex.id===it.exId;});
+    if(!original)return [];
+    return d.catalog.filter(function(ex){return ex.id!==original.id && compatible(ex,d.profile) && ex.pattern===original.pattern && stable(sorted(ex.primaryMuscles))===stable(sorted(original.primaryMuscles));}).filter(function(ex){
+      return reviseProposal(input,proposal,validation,[{fichaId:fichaId,itemIndex:itemIndex,changes:{exId:ex.id,carga:null}}],{author:validation.author,at:validation.at,reason:'Conferência de alternativa para revisão do personal'}).ok;
+    }).sort(function(a,b){
+      function overlap(ex){return ex.equipment.filter(function(eq){return original.equipment.indexOf(eq)>=0;}).length;}
+      return overlap(a)-overlap(b)||a.complexity-b.complexity||a.nome.localeCompare(b.nome);
+    });
+  }
   function previousItems(d){var all={};d.training.previousFichas.forEach(function(f){list(f.itens).forEach(function(it){if(!all[it.exId])all[it.exId]=it;});});return all;}
   function executionContext(ex,p){var g=p.guidance||{};return {id:'gm-context-'+hash({exercise:ex.id,version:ex.version||'1',equipment:ex.equipment,position:ex.position,range:ex.range,requirements:ex.requirements,guidance:{scope:g.scope||'',executionNotes:g.executionNotes||'',limits:g.limits||{}},functional:p.functional||{}}),source:'prescribed_configuration',reviewRequired:true};}
   function estimatedMinutes(items,c){return Math.round((c.warmupMinutes*60+items.reduce(function(n,it){return n+it.series*Number(it.reps)*c.secondsPerRep+Math.max(0,it.series-1)*it.descanso+c.transitionSeconds;},0))/6)/10;}
@@ -270,7 +285,7 @@
       patternOrder.forEach(function(pattern){
         if(items.length>=dose.maxExercises)return;
         var choices=candidates.filter(function(ex){return ex.pattern===pattern && ex.primaryMuscles.every(function(m){return (weekly[m]||0)+sets<=c.maxWeeklyPrimarySets;});});
-        choices.sort(function(a,b){function rank(ex){return (previous[ex.id]?-100:0)+(list(p.preferences.prefer).indexOf(ex.id)>=0?-20:0)+(used[ex.id]||0)*2+ex.complexity;}return rank(a)-rank(b)||a.id.localeCompare(b.id);});
+        choices.sort(function(a,b){function rank(ex){var common=p.equipmentMode==='standard_gym'&&['gm-legpress','gm-flexora','gm-supino-maquina','gm-puxada-frente','gm-remada-baixa','gm-elevacao-lateral','gm-rosca-halteres','gm-triceps-polia','gm-abdominal-solo','gm-panturrilha-sentada'].indexOf(ex.id)>=0;return (previous[ex.id]?-100:0)+(list(p.preferences.prefer).indexOf(ex.id)>=0?-20:0)+(used[ex.id]||0)*2+ex.complexity-(common?3:0);}return rank(a)-rank(b)||a.id.localeCompare(b.id);});
         if(!choices.length)return;
         var ex=choices[0],old=previous[ex.id],load=null,action='initial',why='Dose inicial revisada; avaliar a carga individualmente.',evolution=null,context=executionContext(ex,p);
         var itemSets=sets,itemReps=reps,itemRest=rest;
@@ -305,6 +320,7 @@
     // Calendar spacing is surfaced for review; no implicit recovery prescription.
     p.days.forEach(function(day,i){if(p.days.length>1){var next=p.days[(i+1)%p.days.length];var hours=((next-day+7)%7)*24;if(hours<c.minimumRecoveryHours)issues.push(issue('recovery_spacing','A agenda tem intervalo menor que o mínimo aprovado; revise a distribuição.'));}});
     if(issues.some(function(i){return i.severity==='error';}))return{ok:false,proposal:null,issues:issues};
+    if(p.equipmentMode==='standard_gym')notes.push('Preparado com equipamentos comuns de academia, sem exigir inventário. Se algum aparelho não estiver disponível, use as substituições antes de aprovar.');
     if(!progressAllowed)notes.push('Nenhuma progressão automática de carga: exige fechamento confirmado, técnica, esforço, meta e registros comparáveis.');
     if(extraordinary)notes.push('Revisão extraordinária da etapa em execução: '+d.training.manualReview.extraordinaryReason+'. Não há progressão automática de carga nesta revisão.');
     if(initialAdoption)notes.push('Primeira adoção do gerador: '+validation.initialAdoption.reason+'. O personal revisou o ponto de partida; a ausência de fechamento legado não cria evolução nem carga automática.');
@@ -362,5 +378,5 @@
     next.justifications.push({action:'professional_revision',message:r.reason,author:r.author,at:r.at});next.contentHash=hash(proposalContent(next));
     return{ok:true,proposal:next,issues:next.issues||[]};
   }
-  return{VERSION:VERSION,RULE_VERSION:RULE_VERSION,OBJECTIVES:OBJECTIVES,LEVELS:LEVELS,EVIDENCE:EVIDENCE,PARAMETERS:PARAMETERS,defaultConfig:defaultConfig,prepare:prepare,snapshot:snapshot,validate:validate,generate:generate,checkProposal:checkProposal,reviseProposal:reviseProposal,metrics:metrics,hash:hash,catalogValid:catalogValid};
+  return{VERSION:VERSION,RULE_VERSION:RULE_VERSION,OBJECTIVES:OBJECTIVES,LEVELS:LEVELS,EVIDENCE:EVIDENCE,PARAMETERS:PARAMETERS,defaultConfig:defaultConfig,prepare:prepare,snapshot:snapshot,validate:validate,generate:generate,checkProposal:checkProposal,reviseProposal:reviseProposal,alternatives:alternatives,metrics:metrics,hash:hash,catalogValid:catalogValid};
 }));

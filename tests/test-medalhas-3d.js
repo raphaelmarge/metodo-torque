@@ -65,8 +65,9 @@ function svgText(src) { return src.includes(';base64,') ? Buffer.from(src.split(
     const sensorBase = await page.evaluate(() => __3dSensors.size);
     eq(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--cor').trim()), '#0ea5e9', 'paleta personalizada do aluno permanece aplicada');
     eq(await page.evaluate(() => __meAluno.estados().find(x => x.d.id === 'fran-3d').p.valor), 2, 'progresso conserva duas conclusões e exclui NF');
-    eq(await page.locator('#cqGrid > button:visible').count(), 6, 'grade mantém seis medalhas visíveis');
+    eq(await page.locator('#cqGrid > button:visible').count(), 6, 'grade mostra seis medalhas antes da expansão');
 
+    await page.locator('#cqVerMais').click();
     async function drag(selector) {
       const medal = page.locator(selector); await medal.scrollIntoViewIfNeeded();
       const before = await medal.evaluate(el => el.style.transform), box = await medal.boundingBox();
@@ -137,7 +138,6 @@ function svgText(src) { return src.includes(';base64,') ? Buffer.from(src.split(
       await page.evaluate(() => { delete DeviceOrientationEvent.requestPermission; });
     }
 
-    await page.locator('#cqVerMais').click();
     await page.locator('#cqGrid > [data-cqi][data-cqok="1"]').first().click();
     ok(await page.locator('#cqFull').isVisible(), 'medalha legada conserva seu modal');
     await imageSource('#cqMed'); await drag('#cqMed');

@@ -6,6 +6,36 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v877 — Gerador prático e evolução do aluno por objetivo
+
+- Novos perfis podem gerar com academia padrão sem inventário. Equipamentos
+  explícitos anteriores permanecem específicos; saúde e revisão mensal continuam
+  obrigatórias. A base passa a 48 exercícios e 25 opções de equipamento.
+- Busca e seleção por nome substituem campos de IDs. A proposta oferece trocas
+  compatíveis, registradas pelo personal, com carga novamente a definir.
+- O caminho principal é “Gerar treino” → fichas em abas → “Usar este treino”. O
+  perfil tem atalho para o gerador com o aluno selecionado. Dados e parâmetros ficam
+  em janela própria, por categoria; a tela pede apenas informações essenciais ausentes.
+- Gerar confirma perfil/protocolo e salva validação/proposta juntas. Usar aprova e
+  aplica em uma única gravação, depois abre a prévia para publicação explícita.
+  Falha de gravação ou proposta desatualizada não deixa aprovação/aplicação parcial.
+  Início futuro apenas aprova, sem antecipar aplicação. O modo separado continua disponível.
+- O mês ativo exige relato mensal do aluno. Progressão e adaptações têm confirmação
+  específica; relatos novos não são reconhecidos automaticamente. Anamnese
+  estruturada mais recente precisa ser carregada para revisão.
+- A publicação continua separada. Os 17 grupos permanecem no motor;
+  rascunhos e treino vigente são preservados. O caminho de revisão detalhada continua disponível.
+- Anamnese deixa equipamentos como informação opcional para academia.
+- Evolução mantém nível e XP abertos no topo, seguidos de seis medalhas visíveis
+  e botão para ver todas. Depois vêm objetivo, meta semanal, registros comparáveis
+  e avaliações ou atividades. Descanso programado faz parte da meta; a próxima
+  conquista sugerida respeita o objetivo e a escolha fixada pelo aluno.
+- O pacote recebe `objetivoApp` opcional, a partir do treino aplicado ou cadastro.
+  Pacotes antigos continuam válidos. Sem alteração de banco, prescrição, cálculo de
+  XP ou confirmação mensal. Ver `docs/releases/mt-v877-evolucao-objetivo.md`.
+  Cache global e aluno mt-v877.
+- Conferir CI e Pages antes de declarar esta versão publicada.
+
 ## v876 — Gerador mensal de treinos
 
 - Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e

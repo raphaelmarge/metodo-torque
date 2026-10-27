@@ -19,6 +19,34 @@ function followup(){
   });return input;
 }
 function run(){let count=0;function test(name,fn){fn();count++;console.log('ok '+count+' - '+name);}
+  test('academia padrão gera sem inventário e preserva os 17 parâmetros',()=>{
+    const i=fixture(),p=i.student.geradorMensal.perfil;p.equipment=[];p.equipmentMode='standard_gym';
+    const r=generate(i);assert(r.proposal.fichas.every(f=>f.itens.length>=3));assert(r.proposal.notes.some(n=>n.includes('sem exigir inventário')));
+    assert(r.proposal.exercises.every(ex=>ex.equipment.every(eq=>catalog.presets.standard_gym.includes(eq))));assert.equal(core.PARAMETERS.length,17);assert.deepEqual(p.equipment,[]);
+    assert(catalog.equipment.includes('barra')&&catalog.equipment.includes('smith')&&catalog.equipment.includes('puxador'));
+  });
+  test('equipamentos escolhidos manualmente nunca são ampliados pelo padrão',()=>{
+    const i=fixture(),p=i.student.geradorMensal.perfil;p.equipmentMode='custom';p.equipment=['cadeira','colchonete','parede'];
+    const r=generate(i);assert(r.proposal.exercises.every(ex=>ex.equipment.every(eq=>p.equipment.includes(eq))));
+    p.equipment=[];assert.equal(core.generate(i,core.validate(i,decision()).validation).ok,false);
+  });
+  test('alternativas preservam músculos, nível, equipamentos e restrições',()=>{
+    const i=fixture(),p=i.student.geradorMensal.perfil;p.equipmentMode='standard_gym';p.preferences.avoid=['gm-flexao-parede'];
+    p.guidance.blockedExerciseIds=['gm-flexao-banco'];const r=generate(i),f=r.proposal.fichas[0],index=f.itens.findIndex(it=>it.exId==='gm-supino-maquina');
+    assert.equal(core.alternatives(i,r.proposal,r.validation,f.id,index).length,0);
+    p.preferences.avoid=[];const next=generate(i),nf=next.proposal.fichas[0],ni=nf.itens.findIndex(it=>it.exId==='gm-supino-maquina');
+    const choices=core.alternatives(i,next.proposal,next.validation,nf.id,ni);assert.deepEqual(choices.map(ex=>ex.id),['gm-flexao-parede']);assert.equal(choices[0].complexity,1);assert.equal(choices[0].pattern,'push');
+    const changed=core.reviseProposal(i,next.proposal,next.validation,[{fichaId:nf.id,itemIndex:ni,changes:{exId:choices[0].id,carga:null}}],{author:'Personal',at:'2026-10-26',reason:'Equipamento indisponível'});
+    assert(changed.ok);assert.equal(changed.proposal.fichas[0].itens[ni].carga,null);assert.deepEqual(changed.proposal.weeklyPrimarySets,next.proposal.weeklyPrimarySets);
+    p.healthStatus='unknown';assert.deepEqual(core.alternatives(i,next.proposal,next.validation,nf.id,ni),[]);
+  });
+  test('academia padrão e substituições não dispensam autorização individual de saúde',()=>{
+    const i=fixture(),p=i.student.geradorMensal.perfil;p.equipmentMode='standard_gym';p.healthStatus='reported';p.conditions=[{id:'lesao',name:'Lesão relatada'}];
+    assert(!core.validate(i,decision({clinicalReviewed:true})).ok);
+    p.guidance={reviewed:true,author:'Responsável',date:'2026-10-26',scope:'Orientação individual',allowedExerciseIds:['gm-supino-maquina','gm-extensora','gm-flexora','gm-remada-maquina']};
+    const r=generate(i,{clinicalReviewed:true}),f=r.proposal.fichas[0],index=f.itens.findIndex(it=>it.exId==='gm-supino-maquina');
+    assert(r.proposal.exercises.every(ex=>p.guidance.allowedExerciseIds.includes(ex.id)));assert.deepEqual(core.alternatives(i,r.proposal,r.validation,f.id,index),[]);
+  });
   test('primeira etapa exige revisão/configuração aprovada e nunca inventa kg',()=>{const input=fixture(),r=generate(input);assert.equal(r.proposal.fichas.length,3);assert(r.proposal.fichas.every(f=>f.itens.every(it=>it.carga===null)));input.config.approved=false;assert.equal(core.validate(input,decision()).ok,false);});
   test('mesmas entradas produzem a mesma proposta sem alterar a origem',()=>{const i=fixture(),before=copy(i),a=generate(i),b=generate(copy(i));assert.deepEqual(a,b);assert.deepEqual(i,before);assert.equal(core.PARAMETERS.length,17);assert.equal(Object.keys(core.OBJECTIVES).length,5);});
   test('gênero e XP não mudam assinatura, seleção ou dose',()=>{const i=fixture(),a=generate(i);i.student.geradorMensal.perfil.genderIdentity='outro';i.student.geradorMensal.perfil.xp=999999;i.student.xp=999999;assert.deepEqual(generate(i),a);});

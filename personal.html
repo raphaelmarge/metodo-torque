@@ -2582,7 +2582,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </section>
 
     <section class="card trx-section" id="gmSection" data-trsec="mensal" hidden>
-      <div class="trx-heading"><div><h2>Gerador mensal</h2><p>Reúna a anamnese, confira a evolução e aprove a próxima etapa do aluno.</p></div></div>
+      <div class="trx-heading"><div><h2>Gerador mensal</h2><p>Escolha o aluno, confira os dados e gere o treino.</p></div></div>
       <label class="trx-field" for="gmAluno">Aluno<select id="gmAluno"></select></label>
       <div id="gmRoot"></div>
     </section>
@@ -3958,7 +3958,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <details class="pfp-disclosure" id="pfAvalHistorico"><summary>Medidas, gráficos e histórico</summary><div class="pfp-detail-body"><div class="pfp-form-actions"><button class="btn mini" id="pfRelPdf" title="tabela de peso, % de gordura, cintura, quadril, braço e RCQ de todas as medições, mais as suas últimas anotações — pronto pra imprimir ou salvar em PDF"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Medidas e anotações (PDF)</button></div><div id="pfPeso" class="muted"></div></div></details>
   </section>
   <section class="card pfp-section" data-pfsec="treino" hidden>
-    <div class="pfp-section-head"><h2>Treino</h2><button type="button" class="dbt" id="pfMontaTreino">Editar treino</button></div>
+    <div class="pfp-section-head"><h2>Treino</h2><div class="linha-flex"><button type="button" class="btn" id="pfGeraMensal">Novo treino mensal</button><button type="button" class="dbt" id="pfMontaTreino">Editar treino</button></div></div>
     <div id="pfPlanoResumo"></div><section class="pfp-group"><h3>Fichas cadastradas</h3><div id="pfFicha" class="muted"></div></section>
   </section>
 </section>
@@ -6747,6 +6747,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (id === "pfIrFin") { mostraPfAba("fin"); return; }
     if (id === "pfIrAgenda") { if (perfilId && !R809.online(load().alunos.find(function(a){return a.id===perfilId;}))) alExecutaAcao(perfilId, "agendar"); return; }
     if (id === "pfMontaTreino" && perfilId) { vaiMontarTreino(perfilId); return; }
+    if (id === "pfGeraMensal" && perfilId) {
+      var alunoMensalId=perfilId;vaiMontarTreino(alunoMensalId);
+      $("gmAluno").value=alunoMensalId;$("gmAluno").dispatchEvent(new Event("change",{bubbles:true}));
+      mostraTrAba("mensal");return;
+    }
     if (id === "pfNovaAval") { abreAvaliacaoDoPerfil(); return; }
     if (id === "pfEnviarQuest") { abreQuestionarioDoPerfil(); return; }
     if (origem && origem.hasAttribute("data-pfagenda")) { abreAgendaDoPerfil(); return; }
@@ -23527,6 +23532,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      objetivoApp: String((t2 && t2.objetivo) || a.objetivo || "").slice(0,120),
       geradorMensal: self.MT_PERSONAL_GERADOR_MENSAL ? self.MT_PERSONAL_GERADOR_MENSAL.packet(st, a.id) : null,
       conquistasAvancadasApp: self.MT_CONQUISTAS_AVANCADAS ? {metas:self.MT_CONQUISTAS_AVANCADAS.list((a.conquistasAvancadas||{}).metas),manuais:((a.conquistasAvancadas||{}).manuais||[]).map(self.MT_CONQUISTAS_AVANCADAS.manual)} : {metas:[],manuais:[]},
       metasPersonalizadasApp: self.MT_METAS_PESSOAIS ? self.MT_METAS_PESSOAIS.list((st.config || {}).metasPersonalizadas) : [],
@@ -25759,7 +25765,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   if (self.MT_PERSONAL_GERADOR_MENSAL) self.MT_PERSONAL_GERADOR_MENSAL.init({
     load: load, write: function (st) { return S.write("ptStudio", st); },
     account: taContaLocal,
-    author: function () { return (S.usuario && (S.usuario() || {}).email) || ""; },
+    author: function () { return (S.usuario && (S.usuario() || {}).email) || (S.read("perfil", {}) || {}).nome || ""; },
     allowed: function () { var b = document.querySelector('#abas [data-a="treinos"]'); return !(b && b.style.display === "none"); },
     apply: function (st, id, approved) { self.MT_PERSONAL_GERADOR_MENSAL.applyState(st, id, approved); marcaTreinoMudou(st, id); },
     refresh: function () { render(); },

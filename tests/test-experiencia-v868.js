@@ -1,6 +1,6 @@
 /* Resumo novo: dados reais, carga zero, anotações/futuro e acesso por perfil. */
 const assert = require('node:assert/strict');
-const {chromium} = require('./ci/node_modules/playwright');
+let chromium;try{chromium=require('./ci/node_modules/playwright').chromium;}catch(_){chromium=require('playwright').chromium;}
 const {dados} = require('./test-aluno-player-experiencia');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8765';
 global.self=global;
@@ -20,6 +20,7 @@ function date(offset) { const d=new Date();d.setDate(d.getDate()+offset);return 
       {d:date(0),i:'0:0:1',g:2,feito:false,kg:800,r:10},
       {d:date(1),i:'0:0:0',g:2,feito:true,kg:999,r:10}
     ]}};
+    init.ptdc['Agachamento do teste'].forEach(r=>Object.assign(r,{exercicioId:'agachamento-teste',unit:'kg',equipment:'barra',loadBasis:'total',variation:'livre',context:'mesma execução'}));
     await c.addInitScript(init=>{for(const [k,v] of Object.entries(init))localStorage.setItem(k,JSON.stringify(v));},init);
     const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
     await p.goto(BASE+'/experiencia-test.html');await p.waitForFunction(()=>window.__evPanorama);

@@ -19,9 +19,9 @@ const dados={ptfeitos:{'2026-09-07':1,'2026-09-08':1},ptwodres:{a:[{d:'2026-09-0
  await p.clock.setFixedTime(new Date('2026-09-11T12:00:00-03:00'));await p.goto(BASE+'/medalhas-sinteticas.html');await p.waitForFunction(()=>window.__meAluno&&window.__evSub&&window.__testeCQ);
  await p.evaluate(()=>{__trocaSec('evolucao');__evSub('conq');});
  eq(await p.locator('#cqGrid>[data-me-id]').count(),defs.length,'somente as sete definições publicadas viram famílias no aluno');
- eq(await p.locator('#cqGrid>button:visible').count(),6,'seis medalhas visíveis na grade sem abrir tudo');
+ eq(await p.locator('#cqGrid>button:visible').count(),6,'grade mantém seis medalhas visíveis sem expansão');
  const legacyCount=await p.locator('#cqGrid>[data-cqi]').count();ok(legacyCount>0,'conquistas legadas e seus identificadores permanecem acessíveis');
- ok(await p.locator('#meProxima').isVisible()&&await p.locator('#meProxima').evaluate(e=>e.parentElement.id==='evReconhecimentos'&&!!(e.compareDocumentPosition(document.getElementById('cqGrid'))&Node.DOCUMENT_POSITION_FOLLOWING)),'próximo objetivo fica visível antes da grade, na seção de medalhas');
+ ok(await p.locator('#meProxima').isVisible()&&await p.locator('#meProxima').evaluate(e=>e.parentElement.id==='evReconhecimentos'&&!!(e.compareDocumentPosition(document.getElementById('cqGrid'))&Node.DOCUMENT_POSITION_PRECEDING)),'próxima conquista permanece acessível depois da grade de medalhas');
  const state=await p.evaluate(()=>__meAluno.estados().map(x=>[x.d.id,x.p.valor,x.p.nivel,x.p.proxima]));
  eq(state.find(x=>x[0]==='teste-fran'),['teste-fran',2,1,3],'Fran conta resultados completos adaptados e Rx, excluindo não concluído');
  eq(state.find(x=>x[0]==='corrida-registros')[1],2,'corrida por tempo sem GPS conta como sessão no aluno');
@@ -30,13 +30,13 @@ const dados={ptfeitos:{'2026-09-07':1,'2026-09-08':1},ptwodres:{a:[{d:'2026-09-0
  const antes=await fontes(),xp=await p.evaluate(()=>__testeXP()),contagem=await p.evaluate(()=>__testeCQ());
  const soma=await p.evaluate(()=>__meAluno.pinta());eq(soma,{n:6,tot:7},'uma família conquistada conta uma medalha, independente do número de níveis');
  await p.evaluate(()=>{for(let i=0;i<4;i++){__evResumoPinta();__meAluno.pinta();}});eq(await p.evaluate(()=>__testeCQ()),contagem,'repintar não acumula medalhas no retorno ao personal');
- await p.locator('[data-me-id="teste-fran"]').click();ok(await p.locator('#meDetalhe').isVisible(),'toque abre evolução individual em diálogo');
+ await p.locator('#cqVerMais').click();await p.locator('[data-me-id="teste-fran"]').click();ok(await p.locator('#meDetalhe').isVisible(),'toque abre evolução individual em diálogo');
  ok((await p.locator('#meDetalhe').textContent()).includes('Bronze · Nível 1 conquistado')&&(await p.locator('#meDetalhe .me-milestones').textContent()).includes('Prata'),'nível atual e próximos degraus têm nomes visuais distintos');
  await p.locator('#meDetalhe [data-me-pin]').click();ok((await p.locator('#meProxima').textContent()).includes('Fran')&&(await p.locator('#meProxima').textContent()).includes('fixado'),'aluno pode fixar a medalha prioritária');
  eq(await p.evaluate(()=>__testeCQ()),contagem,'fixar objetivo não altera contadores de retorno');
  ok(!(await p.evaluate(()=>__meAluno.chave)).includes(D.a.appTokenP),'chave da preferência não expõe token em texto');
  await p.locator('#meDetalhe [data-me-share]').click();await p.waitForSelector('#artePrev img');ok(await p.locator('#artePrev #arteShare').isVisible(),'compartilhar conquista reaproveita a prévia de arte existente');await p.locator('#arteFecha').click();
- await p.locator('#cqVerMais').click();eq(await p.locator('#cqGrid>button:visible').count(),await p.locator('#cqGrid>button').count(),'expandir mostra novas famílias e todas as medalhas legadas');
+ eq(await p.locator('#cqGrid>button:visible').count(),await p.locator('#cqGrid>button').count(),'expandir mostra novas famílias e todas as medalhas legadas');
  await p.locator('#cqGrid>[data-cqi][data-cqok="1"]').first().click();ok(await p.locator('#cqFull').isVisible(),'medalha legada conserva seu modal anterior');await p.evaluate(()=>{document.getElementById('cqFull').style.display='none';});
  await p.evaluate(()=>{__evSub('corpo');__evSub('conq');});ok((await p.locator('#meProxima').textContent()).includes('Fran'),'navegar entre abas preserva prioridade');
  eq(await fontes(),antes,'consulta, expansão, prioridade e arte não alteram fontes de atividade');eq(await p.evaluate(()=>__testeXP()),xp,'explorar medalhas não concede XP');eq(posts,0,'interações de consulta não enviam atividade para o backend');
