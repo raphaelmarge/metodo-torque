@@ -26,7 +26,7 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - A publicação continua separada. Os 17 grupos permanecem no motor;
   rascunhos e treino vigente são preservados. O caminho de revisão detalhada continua disponível.
 - Anamnese deixa equipamentos como informação opcional para academia.
-- Evolução do aluno destaca meta semanal, registros comparáveis e avaliações ou
+- Evolução do aluno mostra as medalhas primeiro, seguidas de meta semanal, registros comparáveis e avaliações ou
   atividades conforme o objetivo publicado. Descanso programado faz parte da meta;
   uma conquista pertinente fica em destaque e o nível/XP passa para detalhes.
 - O pacote recebe `objetivoApp` opcional, a partir do treino aplicado ou cadastro.

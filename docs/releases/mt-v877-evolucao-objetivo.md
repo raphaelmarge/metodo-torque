@@ -5,7 +5,7 @@ de tratar como publicada. A versão mt-v877 já estava reservada para o gerador.
 
 ## Comportamento
 
-- Resumo começa pelo objetivo e pela meta semanal. Hipertrofia e força priorizam
+- Resumo começa pelas medalhas, seguido do objetivo e da meta semanal. Hipertrofia e força priorizam
   cargas comparáveis; emagrecimento e saúde mostram avaliação antes das cargas;
   condicionamento destaca as atividades registradas. O intervalo de 7, 28 ou 90
   dias continua disponível.

@@ -1090,7 +1090,8 @@
     panel.innerHTML = '<header><div><p>SEU OBJETIVO</p><h2 id="evPanoramaTitle">Sua evolução</h2></div><button type="button" id="evPanoramaShare" aria-label="Compartilhar evolução">↗</button></header><p id="evFocoDescricao" class="ev-load-note"></p><section id="evSemanaMeta" aria-label="Meta semanal"></section>' +
       '<div class="ev-periods" role="group" aria-label="Período do resumo"><button type="button" data-ev-period="7" aria-pressed="false">7 dias</button><button type="button" data-ev-period="28" aria-pressed="true">4 semanas</button><button type="button" data-ev-period="90" aria-pressed="false">90 dias</button></div>' +
       '<div id="evPanoramaStats" class="ev-panorama-stats" aria-live="polite"></div><section id="evFocoCardio" hidden></section><section id="evFocoAvaliacao" hidden></section><section id="evFocoCargas"><div class="ev-load-head"><h3>Cargas comparáveis</h3><button type="button" id="evPanoramaLoads">Ver histórico →</button></div><p class="ev-load-note">Mesmo exercício, equipamento, execução e repetições. A variação não é uma orientação para aumentar a carga.</p><div id="evPanoramaLoadsList"></div></section>';
-    root.prepend(panel);
+    var reconhecimentos=document.getElementById('evReconhecimentos');
+    if(reconhecimentos)reconhecimentos.after(panel);else root.prepend(panel);
     var period = 28;
     function node(tag,txt,parent,cls){var el=document.createElement(tag);if(txt!=null)el.textContent=txt;if(cls)el.className=cls;parent.appendChild(el);return el;}
     function date(d){return d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);}
@@ -5055,7 +5056,7 @@
       "var cqAberto=false;var CQATUAL=[];var CQGANHAS={n:0,tot:0};" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
-      "if(!cqAberto){var g6=document.getElementById('meProxima')||document.getElementById('evPanorama')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
+      "if(!cqAberto){var g6=document.getElementById('meProxima')||document.getElementById('evReconhecimentos')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
       /* ---------- conquista em tela cheia (estilo Nike Run) ----------
        * Tocou numa medalha: abre por cima, a medalha gigante gira com o
        * movimento do celular e o brilho anda junto. O <div> é criado na hora

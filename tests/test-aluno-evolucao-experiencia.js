@@ -56,7 +56,7 @@ async function checkCalendarTargets(page,context){
  const resumoInicial=await fontesResumo();
  await page.evaluate(()=>{window.__trocaSec('evolucao');window.__evSub('conq');});
  eq(await page.locator('#evAbas [data-evsub-bt=conq]').textContent(),'Resumo','Resumo mantém a rota conq existente');
- ok(!await page.locator('#evTopoNv').isVisible(),'Nível e XP começam recolhidos depois do progresso');
+ ok(!await page.locator('#evTopoNv').isVisible(),'Nível e XP começam recolhidos na seção de conquistas');
  await page.locator('#evJornada summary').click();
  ok(await page.locator('#evXp').isVisible()&&await page.locator('#evNvNum').isVisible(),'Nível e XP continuam acessíveis no detalhe');
  const legendaXp=page.locator('#evTopoNv').getByText(/treino ou cardio = 10 XP/);
@@ -66,7 +66,7 @@ async function checkCalendarTargets(page,context){
  ok(await page.locator('#cqTiles').isVisible()&&await page.locator('#cqGraf').isVisible(),'Constância e semanas continuam acessíveis depois das medalhas');
  eq(await page.locator('#evReconhecimentos>h2').textContent(),'Uma conquista por vez','Medalhas têm título próprio e visível');
  ok(await page.locator('#evReconhecimentos').evaluate(e=>e.tagName==='SECTION'&&!e.closest('details')),'Medalhas ficam em seção permanente, sem acordeão externo');
- ok(await page.evaluate(()=>{const ids=['evReconhecimentos','evTopoNv','evResumoTitulo','cqTiles','cqGraf','evCalendario'];return ids.every((id,i)=>!i||!!(document.getElementById(ids[i-1]).compareDocumentPosition(document.getElementById(id))&Node.DOCUMENT_POSITION_FOLLOWING));}),'Leitura segue medalhas, detalhe do nível, constância, semanas e calendário');
+ ok(await page.evaluate(()=>{const ids=['evReconhecimentos','evTopoNv','evPanorama','evResumoTitulo','cqTiles','cqGraf','evCalendario'];return ids.every((id,i)=>!i||!!(document.getElementById(ids[i-1]).compareDocumentPosition(document.getElementById(id))&Node.DOCUMENT_POSITION_FOLLOWING));}),'Leitura começa pelas medalhas, depois objetivo, constância e calendário');
  eq(await page.locator('#cqTiles>div').nth(0).locator('b').textContent(),'1 de 3 dias','Meta semanal não exige sequência de dias corridos');
  eq(await page.locator('#cqTiles>div').nth(1).locator('b').textContent(),'3','Total do mês mantém a conta existente');
  eq(await page.locator('#evResumo').getAttribute('data-evsub'),'conq','Cartão reorganizado conserva classificação Evolução');
@@ -120,8 +120,8 @@ async function checkCalendarTargets(page,context){
  await page.locator('#cqVerMais').click();
  eq(await page.locator('#cqGrid>button:visible').count(),6,'Mostrar menos volta às seis medalhas sem esconder toda a seção');
  eq(await page.locator('#cqVerMais').getAttribute('aria-expanded'),'false','Recolher atualiza o estado acessível');
- await page.waitForFunction(()=>{const r=document.getElementById('evPanorama').getBoundingClientRect();return r.top>=-1&&r.top<innerHeight;});
- ok(await page.locator('#evPanorama').evaluate(e=>e.getBoundingClientRect().top<innerHeight/4),'Recolher retorna ao resumo do objetivo');
+ await page.waitForFunction(()=>{const r=document.getElementById('evReconhecimentos').getBoundingClientRect();return r.top>=-1&&r.top<innerHeight;});
+ ok(await page.locator('#evReconhecimentos').evaluate(e=>e.getBoundingClientRect().top<innerHeight/4),'Recolher mantém o aluno na seção de medalhas');
  await page.evaluate(()=>{window.__evSub('cargas');window.__evSub('conq');});
  eq(await page.locator('#cqGrid>button:visible').count(),6,'Navegar também preserva medalhas parcialmente recolhidas');
  eq(await page.locator('#cqGrid>button').evaluateAll(bs=>bs.map(b=>({indice:b.dataset.cqi,conquistada:b.dataset.cqok,texto:b.textContent}))),medalhasIniciais,'Expandir, recolher e navegar não alteram medalhas nem seus valores');
