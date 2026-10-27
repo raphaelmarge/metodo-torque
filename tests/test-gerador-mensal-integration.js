@@ -88,6 +88,7 @@ function ok(v, label) { assert.ok(v, label); n++; console.log('OK ' + label); }
     ok(exported && exported.active && exported.active.id, 'pacote exporta identificação da etapa aplicada');
     ok(!JSON.stringify(exported).match(/conditions|healthDetails|anamnese|clinicalReviewed|birthDate|guidance/), 'pacote mensal não envia anamnese clínica');
     const packet = await p.evaluate(() => __pacoteApp(MTStore.read('ptStudio', {}).alunos[0], '2026-11-01T15:00:00Z'));
+    eq(packet.dados.objetivoApp,saved.treinosV2['gm-test-a'].objetivo,'pacote exporta objetivo da etapa aplicada para a evolução do aluno');
     eq(packet.dados.geradorMensal.active.id, saved.alunos[0].geradorMensal.active.id, 'pacote completo contém a etapa aprovada');
     ok(packet.dados.fichasApp[0].itens[0].geradorMensal.context, 'metadados comparáveis acompanham a execução prescrita');
     ok(await p.locator('#acPublicar').isVisible(), 'Usar este treino aplica e abre a prévia existente para conferência final');

@@ -987,6 +987,39 @@
     return { svg: svg, paleta: paleta, url: url };
   }
 
+  // Somente leitura: objetivo e evidências de evolução não prescrevem treino nem concedem XP.
+  function evolucaoObjetivo() {
+    function norm(v) { return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+    function objetivo(v) {
+      var grupos={hipertrofia:['hipertrofia','musculo','ganhar musculo','ganhar massa','ganhar massa muscular'],emagrecimento:['emagrecimento','emagrecer','reduzir gordura corporal','perder peso'],forca:['forca','aumentar a forca','ganhar forca'],condicionamento:['condicionamento','melhorar o condicionamento','condicionamento fisico'],saude:['saude','saude e autonomia','saude e disposicao']};
+      return Object.keys(grupos).find(function(k){return grupos[k].indexOf(norm(v))>=0;})||'';
+    }
+    var nomes={hipertrofia:'Ganhar massa muscular',emagrecimento:'Reduzir gordura corporal',forca:'Aumentar a força',condicionamento:'Melhorar o condicionamento',saude:'Saúde e autonomia'};
+    function prioridade(d,goal) {
+      var ordem=goal==='forca'||goal==='hipertrofia'?['semanasMeta','diasCarga','diasTreino','checkins']:goal==='condicionamento'?['semanasMeta','corridas','pedais','caminhadas','circuitos','diasTreino']:['semanasMeta','diasTreino','checkins','habitosSono','diasTresHabitos'];
+      var i=ordem.indexOf(d.metrica);return i<0?100:i;
+    }
+    function data(d) { var dt=new Date(d+'T12:00:00Z');return /^\d{4}-\d{2}-\d{2}$/.test(d||'')&&Number.isFinite(+dt)&&dt.toISOString().slice(0,10)===d; }
+    function stable(v) { if(v&&typeof v==='object')return Array.isArray(v)?v.map(stable):Object.keys(v).sort().reduce(function(o,k){o[k]=stable(v[k]);return o;},{});return v; }
+    function numero(v) { return (typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isFinite(+v); }
+    function texto(v) { return typeof v==='string'&&v.trim()!==''; }
+    function cargas(sessoes) {
+      var grupos={};sessoes.forEach(function(s){s.linhas.forEach(function(o){var r=o.r;
+        // Nome igual e carga maior não comprovam equipamento, dose ou execução equivalentes.
+        if(!o.conta||r.g!==2||r.feito!==true||!texto(r.exercicioId)||r.unit!=='kg'||!texto(r.loadBasis)||!texto(r.equipment)||typeof r.variation!=='string'||!(texto(r.context)||r.context&&typeof r.context==='object'&&!Array.isArray(r.context)&&Object.keys(r.context).length)||!numero(r.r)||+r.r<=0||!numero(r.kg)||+r.kg<0)return;
+        var key=JSON.stringify(stable([r.exercicioId,r.unit,r.loadBasis,r.equipment,r.variation,r.context,r.varianteId||'',+r.r])),g=grupos[key]||(grupos[key]={reps:+r.r,dias:{}});
+        g.dias[s.d]=g.dias[s.d]==null?+r.kg:Math.max(g.dias[s.d],+r.kg);
+      });});
+      return Object.keys(grupos).map(function(k){var g=grupos[k],ds=Object.keys(g.dias).sort();return ds.length<2?null:{first:g.dias[ds[0]],last:g.dias[ds[ds.length-1]],from:ds[0],date:ds[ds.length-1],reps:g.reps};}).filter(Boolean).sort(function(a,b){return b.date.localeCompare(a.date)||a.from.localeCompare(b.from);})[0]||null;
+    }
+    function semana(feitos,hoje,meta) {
+      var seg=new Date(hoje+'T12:00:00Z');seg.setUTCDate(seg.getUTCDate()-((seg.getUTCDay()+6)%7));var inicio=seg.toISOString().slice(0,10),total=0;
+      Object.keys(feitos||{}).forEach(function(d){if(feitos[d]&&data(d)&&d>=inicio&&d<=hoje)total++;});
+      return {feitos:total,meta:Math.max(1,Math.min(7,Number(meta)||3))};
+    }
+    function feitosValidos(feitos,hoje){return Object.keys(feitos||{}).reduce(function(out,d){if(feitos[d]&&data(d)&&d<=hoje)out[d]=feitos[d];return out;},{});}
+    return {objetivo:objetivo,nomes:nomes,prioridade:prioridade,cargas:cargas,data:data,semana:semana,feitos:feitosValidos};
+  }
   function runtimeMedalhas(M, selecionadas, icones) {
     if (!M) return null;
     var tokenTexto=String(TOKEN||'local'),hashA=2166136261,hashB=5381;for(var hi=0;hi<tokenTexto.length;hi++){hashA=Math.imul(hashA^tokenTexto.charCodeAt(hi),16777619);hashB=Math.imul(hashB,33)^tokenTexto.charCodeAt(hi);}
@@ -1006,8 +1039,8 @@
     function estados(){var m=M.metricas(snapshot());return defs.map(function(d){return {d:d,p:M.progresso(d,m)};});}
     function faixaTexto(p){return p.proxima==null?'Faixas disponíveis concluídas':p.percentual+'% da faixa: '+fmt(p.atual)+' → '+fmt(p.proxima);}
     function alvoTexto(x){return x.p.proxima==null?'Marcos do histórico alcançados':fmt(x.p.valor)+' de '+fmt(x.p.proxima)+' '+unidade(x.d,x.p.proxima);}
-    function metaAtual(lista){var elegiveis=lista.filter(function(x){return x.p.proxima!=null;}),fixa=elegiveis.find(function(x){return x.d.id===pin;});return fixa||elegiveis.sort(function(a,b){return b.p.percentual-a.p.percentual;})[0]||{d:base,p:M.progresso(base,M.metricas(snapshot()))};}
-    function pinta(){var grid=document.getElementById('cqGrid');if(!grid||!identidade())return;var lista=estados(),meta=metaAtual(lista),box=document.getElementById('meProxima');if(!box){box=document.createElement('section');box.id='meProxima';box.className='me-next';box.setAttribute('aria-label','Próximo objetivo');grid.before(box);}box.innerHTML='<div class="me-next-head"><span>Seu próximo objetivo</span><button type="button" data-me-open="'+e(meta.d.id)+'">Ver evolução</button></div><h3>'+e(meta.d.n)+'</h3><p>'+e(alvoTexto(meta))+'</p><progress max="100" value="'+meta.p.percentual+'" aria-label="Progresso para o próximo nível"></progress><span class="me-next-level">'+(meta.p.nivel?'Nível '+meta.p.nivel+' conquistado · ':'')+'próximo: nível '+(meta.p.nivel+1)+(pin===meta.d.id?' · fixado':'')+'</span><small class="me-range">'+e(faixaTexto(meta.p))+'</small>';
+    function metaAtual(lista){var goal=EV_FOCO.objetivo(OBJETIVO_APP||(L('ptonb',{})||{}).obj),elegiveis=lista.filter(function(x){return x.p.proxima!=null;}),fixa=elegiveis.find(function(x){return x.d.id===pin;});return fixa||elegiveis.filter(function(x){return EV_FOCO.prioridade(x.d,goal)<100;}).sort(function(a,b){return EV_FOCO.prioridade(a.d,goal)-EV_FOCO.prioridade(b.d,goal)||b.p.percentual-a.p.percentual;})[0]||{d:base,p:M.progresso(base,M.metricas(snapshot()))};}
+    function pinta(){var grid=document.getElementById('cqGrid');if(!grid||!identidade())return;var lista=estados(),meta=metaAtual(lista),box=document.getElementById('meProxima');if(!box){box=document.createElement('section');box.id='meProxima';box.className='me-next';box.setAttribute('aria-label','Próxima conquista');grid.before(box);}box.innerHTML='<div class="me-next-head"><span>Sua próxima conquista</span><button type="button" data-me-open="'+e(meta.d.id)+'">Ver evolução</button></div><h3>'+e(meta.d.n)+'</h3><p>'+e(alvoTexto(meta))+'</p><progress max="100" value="'+meta.p.percentual+'" aria-label="Progresso para o próximo nível"></progress><span class="me-next-level">'+(meta.p.nivel?'Nível '+meta.p.nivel+' conquistado · ':'')+'próximo: nível '+(meta.p.nivel+1)+(pin===meta.d.id?' · fixado':'')+'</span><small class="me-range">'+e(faixaTexto(meta.p))+'</small>';
       grid.querySelectorAll('[data-me-id]').forEach(function(el){el.remove();});var frag=document.createDocumentFragment();lista.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='me-badge';b.dataset.meId=x.d.id;b.dataset.meOpen=x.d.id;b.dataset.meRank=String(Math.min(6,x.p.nivel));b.dataset.cqok=x.p.nivel>0?'1':'0';b.setAttribute('aria-label',x.d.n+'. Nível '+x.p.nivel+'. '+alvoTexto(x));b.innerHTML='<span class="me-icon">'+icon(x.d)+'</span><strong>'+e(x.d.n)+'</strong><span class="me-tier">'+(x.p.nivel?faixa(x.p.nivel)+' · '+x.p.nivel:'Bronze à vista')+'</span><span class="me-step">'+e(x.p.proxima==null?'Marcos alcançados':fmt(x.p.valor)+' / '+fmt(x.p.proxima))+'</span><progress max="100" value="'+x.p.percentual+'" aria-label="Próxima meta de '+e(x.d.n)+'"></progress><span class="me-range">'+e(faixaTexto(x.p))+'</span>';frag.appendChild(b);});grid.prepend(frag);var mais=document.getElementById('cqVerMais'),total=grid.querySelectorAll(':scope>button').length;if(mais){var aberto=mais.getAttribute('aria-expanded')==='true';grid.classList.toggle('enc',!aberto&&total>6);mais.style.display=total>6?'':'none';mais.textContent=aberto?'Mostrar menos':'Ver todas as '+total+' conquistas';}return {n:lista.filter(function(x){return x.p.nivel>0;}).length,tot:lista.length};
     }
     function fecha(){cqDesligaGiro();if(modal&&modal.open)modal.close();if(focoAnterior&&focoAnterior.isConnected)focoAnterior.focus();}
@@ -1035,8 +1068,11 @@
     mapaAnual.id = 'mapaHistoricoAno'; anual.appendChild(mapaAnual);
     var reconhecimentos = document.createElement('section'), titulo = document.createElement('h2');
     reconhecimentos.id = 'evReconhecimentos'; reconhecimentos.setAttribute('aria-labelledby', 'evMedalhasTitulo');
-    titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Suas medalhas'; reconhecimentos.appendChild(titulo);
+    titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Uma conquista por vez'; reconhecimentos.appendChild(titulo);
     ['meProxima', 'cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
+    var jornada=document.createElement('details'),jornadaTitulo=document.createElement('summary');jornada.id='evJornada';jornadaTitulo.textContent='Meu nível e XP';jornada.appendChild(jornadaTitulo);
+    if(porId('evTopoNv'))jornada.appendChild(porId('evTopoNv'));
+    var nota=document.createElement('p');nota.textContent='XP reconhece seus registros. As cargas e as adaptações de saúde continuam sob revisão do personal.';jornada.appendChild(nota);reconhecimentos.appendChild(jornada);
     [reconhecimentos, h, tiles, porId('cqGraf'), calendario, anual, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
     if (window.__mapaMes) window.__mapaMes.pinta();
     window.__evResumoContagem = function () {
@@ -1051,25 +1087,37 @@
     var root = document.getElementById('evResumo'); if (!root) return;
     var panel = document.createElement('section'); panel.id = 'evPanorama';
     panel.setAttribute('aria-labelledby', 'evPanoramaTitle');
-    panel.innerHTML = '<header><div><p>PASSO A PASSO</p><h2 id="evPanoramaTitle">Sua evolução</h2></div><button type="button" id="evPanoramaShare" aria-label="Compartilhar evolução">↗</button></header>' +
+    panel.innerHTML = '<header><div><p>SEU OBJETIVO</p><h2 id="evPanoramaTitle">Sua evolução</h2></div><button type="button" id="evPanoramaShare" aria-label="Compartilhar evolução">↗</button></header><p id="evFocoDescricao" class="ev-load-note"></p><section id="evSemanaMeta" aria-label="Meta semanal"></section>' +
       '<div class="ev-periods" role="group" aria-label="Período do resumo"><button type="button" data-ev-period="7" aria-pressed="false">7 dias</button><button type="button" data-ev-period="28" aria-pressed="true">4 semanas</button><button type="button" data-ev-period="90" aria-pressed="false">90 dias</button></div>' +
-      '<div id="evPanoramaStats" class="ev-panorama-stats" aria-live="polite"></div><div class="ev-load-head"><h3>Suas cargas</h3><button type="button" id="evPanoramaLoads">Ver todas →</button></div><p class="ev-load-note">Maior carga registrada por treino, do primeiro ao mais recente no período.</p><div id="evPanoramaLoadsList"></div>';
+      '<div id="evPanoramaStats" class="ev-panorama-stats" aria-live="polite"></div><section id="evFocoCardio" hidden></section><section id="evFocoAvaliacao" hidden></section><section id="evFocoCargas"><div class="ev-load-head"><h3>Cargas comparáveis</h3><button type="button" id="evPanoramaLoads">Ver histórico →</button></div><p class="ev-load-note">Mesmo exercício, equipamento, execução e repetições. A variação não é uma orientação para aumentar a carga.</p><div id="evPanoramaLoadsList"></div></section>';
     root.prepend(panel);
     var period = 28;
+    function node(tag,txt,parent,cls){var el=document.createElement(tag);if(txt!=null)el.textContent=txt;if(cls)el.className=cls;parent.appendChild(el);return el;}
+    function date(d){return d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);}
     function paint() {
+      if(typeof acIdentidadeAtual==='function'&&!acIdentidadeAtual())return;
       var today = isoHj(), from = new Date(today + 'T12:00:00'); from.setDate(from.getDate() - period + 1);
       var start = isoLoc(from), feitos = L('ptfeitos', {});
-      function inRange(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= start && d <= today && isoLoc(new Date(d + 'T12:00:00')) === d; }
+      function inRange(d) { return EV_FOCO.data(d) && d >= start && d <= today; }
+      var goal=EV_FOCO.objetivo(OBJETIVO_APP||(L('ptonb',{})||{}).obj);
+      panel.dataset.objective=goal;
+      document.getElementById('evPanoramaTitle').textContent=EV_FOCO.nomes[goal]||'Seu acompanhamento';
+      document.getElementById('evFocoDescricao').textContent={hipertrofia:'Acompanhe a constância, as cargas e suas avaliações.',forca:'Veja sua constância e compare registros equivalentes.',emagrecimento:'Acompanhe a rotina e as avaliações, além do peso.',condicionamento:'Acompanhe a constância e o tempo de atividade registrado.',saude:'Valorize a regularidade e acompanhe suas avaliações.'}[goal]||'Seu progresso a partir dos registros disponíveis.';
+      var week=EV_FOCO.semana(feitos,today,META),weekEl=document.getElementById('evSemanaMeta');weekEl.replaceChildren();
+      node('strong',week.feitos+' de '+week.meta+' dias nesta semana',weekEl);
+      var progress=node('progress',null,weekEl);progress.max=week.meta;progress.value=Math.min(week.feitos,week.meta);progress.setAttribute('aria-label','Dias com treino nesta semana');
+      var dateOverride=typeof PLANO_DATAS!=='undefined'&&PLANO_DATAS&&Object.prototype.hasOwnProperty.call(PLANO_DATAS,today);
+      var hasPlan=dateOverride?Array.isArray(PLANO_DATAS[today])&&!PLANO_DATAS[today].length||plnHoje().length>0:typeof PLANO!=='undefined'&&PLANO&&Object.keys(PLANO).some(function(d){return plnDia(Number(d)).length>0;});
+      var activePeriod=typeof GERADOR_MENSAL==='undefined'||!GERADOR_MENSAL||today>=GERADOR_MENSAL.active.start&&today<=GERADOR_MENSAL.active.end;
+      var rest=!!(hasPlan&&activePeriod&&!plnHoje().length);
+      weekEl.dataset.rest=String(rest);
+      node('p',rest?'Hoje é descanso planejado. Sua meta é semanal.':week.feitos>=week.meta?'Meta da semana alcançada. Siga os próximos dias do seu plano.':'Os dias de descanso fazem parte do plano. Não é preciso treinar todos os dias.',weekEl);
       var days = Object.keys(feitos).filter(function (d) { return feitos[d] && inRange(d); }).length;
       document.getElementById('evPanoramaStats').innerHTML = '<div><strong>' + days + '</strong><span>Dias com treino</span></div><div><strong>' + (days * 7 / period).toLocaleString('pt-BR', {maximumFractionDigits:1}) + '</strong><span>Média de dias por semana</span></div>';
       var core = window.__cgEvolucao, groups = core ? core.dados() : {}, rows = [];
       Object.keys(groups).forEach(function (g) { groups[g].exs.forEach(function (x) {
-        var sessions = core.sessoes(x.all.filter(function (r) { return inRange(String(r.d || '')); })).filter(function (s) { return s.max != null; });
-        if (sessions.length < 2) return;
-        var first = sessions[0], last = sessions[sessions.length - 1];
-        // Duas fichas no mesmo dia não são uma comparação longitudinal.
-        if (first.d === last.d) return;
-        rows.push({name:x.n,first:first.max,last:last.max,date:last.d});
+        var comparison=EV_FOCO.cargas(core.sessoes(x.all.filter(function(r){return inRange(String(r.d||''));})));
+        if(comparison)rows.push(Object.assign({name:x.n},comparison));
       }); });
       rows.sort(function (a,b) { return b.date.localeCompare(a.date) || a.name.localeCompare(b.name, 'pt-BR'); });
       var list = document.getElementById('evPanoramaLoadsList'); list.replaceChildren();
@@ -1078,20 +1126,34 @@
         var name = document.createElement('strong'); name.textContent = r.name;
         var values = document.createElement('span'); values.textContent = r.first.toLocaleString('pt-BR') + ' → ' + r.last.toLocaleString('pt-BR') + ' kg';
         var delta = document.createElement('small'), change = Math.round((r.last-r.first)*100)/100;
-        delta.textContent = (change > 0 ? '+' : '') + change.toLocaleString('pt-BR') + ' kg';
-        row.dataset.trend = change>0 ? 'up' : 'steady'; row.append(name,values,delta); list.appendChild(row);
+        delta.textContent = (change > 0 ? '+' : '') + change.toLocaleString('pt-BR') + ' kg · '+r.reps+' repetições';
+        row.append(name,values,delta);node('small',date(r.from)+' → '+date(r.date),row,'ev-load-dates');list.appendChild(row);
       });
-      if (!rows.length) { var empty = document.createElement('p'); empty.className = 'ev-panorama-empty'; empty.textContent = 'Registre cargas em dois dias diferentes para acompanhar a variação aqui.'; list.appendChild(empty); }
+      if (!rows.length) node('p','Ainda não há dois dias com registros comparáveis. Suas cargas anteriores continuam disponíveis no histórico.',list,'ev-panorama-empty');
+      var assessment=document.getElementById('evFocoAvaliacao');assessment.replaceChildren();assessment.hidden=['hipertrofia','emagrecimento','saude'].indexOf(goal)<0;
+      if(!assessment.hidden){node('h3','Avaliação física',assessment);var av=(AVS||[]).filter(function(v){return v&&inRange(v.data);}).sort(function(a,b){return b.data.localeCompare(a.data);})[0];
+        if(av){node('p','Última no período · '+date(av.data),assessment,'ev-load-note');var values=[['peso','Peso','kg'],['cintura','Cintura','cm'],['gordura','Gordura','%']].filter(function(v){return av[v[0]]!=null&&av[v[0]]!==''&&Number.isFinite(+av[v[0]]);});values.forEach(function(v){node('p',v[1]+': '+Number(av[v[0]]).toLocaleString('pt-BR')+' '+v[2],assessment);});if(!values.length)node('p','Consulte os detalhes registrados pelo personal.',assessment);}
+        else node('p','Sem avaliação registrada neste período. As anteriores continuam em Corpo.',assessment,'ev-panorama-empty');
+        var avButton=node('button','Ver avaliações',assessment);avButton.type='button';avButton.dataset.evTarget='corpo';
+      }
+      var cardio=document.getElementById('evFocoCardio');cardio.replaceChildren();cardio.hidden=goal!=='condicionamento';
+      if(!cardio.hidden){node('h3','Atividade registrada',cardio);var sessions=(L('ptcardio',[])||[]).filter(function(r){return r&&inRange(r.d)&&['corrida','caminhada','bike'].indexOf(r.m)>=0&&Number.isFinite(+r.s)&&+r.s>=5&&!r.nf&&!r.parcial;});
+        if(sessions.length){node('p',sessions.length+' atividades · '+Math.round(sessions.reduce(function(sum,r){return sum+Number(r.s);},0)/60)+' min registrados',cardio);node('p','Corrida, caminhada e bike. Tempo registrado não mede sozinho seu condicionamento.',cardio,'ev-load-note');}else node('p','Sem registros de corrida, caminhada ou bike neste período.',cardio,'ev-panorama-empty');
+      }
+      // Objetivos de força priorizam cargas; nos demais, avaliação/atividade vêm primeiro.
+      if(goal==='hipertrofia'||goal==='forca')panel.insertBefore(document.getElementById('evFocoCargas'),cardio);else panel.appendChild(document.getElementById('evFocoCargas'));
     }
     panel.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       if (b.dataset.evPeriod) { period = Number(b.dataset.evPeriod); panel.querySelectorAll('[data-ev-period]').forEach(function (p) { p.setAttribute('aria-pressed', String(p === b)); }); paint(); }
       if (b.id === 'evPanoramaLoads') window.__evSub('cargas');
+      if (b.dataset.evTarget) window.__evSub(b.dataset.evTarget);
       if (b.id === 'evPanoramaShare') { var share = document.getElementById('btnCardStories'); if (share) share.click(); }
     });
     // O resumo acompanha os mesmos repaints do calendário/constância, sem
     // observers no próprio conteúdo e sem gravar preferências na conta.
     new MutationObserver(paint).observe(document.getElementById('cqTiles'), {childList:true});
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)paint();});
     window.__evPanorama = {paint:paint}; paint();
   }
   // foto de capa (ficha, circuito ou corrida): só data: de imagem entra no app
@@ -3376,8 +3438,8 @@
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
       "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
       // ---------- Evolução (telas 49/41/42/32): cabeçalho por aba + 4 pílulas ----------
-      // Conquistas mostra o anel do nível; Corpo/Cargas/Marcas trocam o
-      // cabeçalho pelo número da aba (delta de peso, recordes e marcas do mês)
+      // Resumo move o nível para os detalhes; Corpo/Cargas/Marcas mantêm
+      // o cabeçalho com o número da aba (delta de peso, recordes e marcas do mês).
       "<div class='cardx ev793-top' id='evTopo' style='margin:0;'>" +
       "<div class='ev793-heading' style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;display:flex;align-items:center;gap:16px;'>" +
       "<span id='evTopoNv' style='display:flex;align-items:center;gap:16px;flex:1;min-width:0;'>" +
@@ -4068,6 +4130,7 @@
       "</div>" +
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
       "<script>(" + runtimeHistorico.toString() + ")();var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
+      ",OBJETIVO_APP=" + jsonApp(D.objetivoApp || a.objetivo || "") + ",EV_FOCO=(" + evolucaoObjetivo.toString() + ")()" +
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",DEMO=window.__TORQUE_DEMO===true,TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) +
       ",MEULOGIN=" + jsonApp(a.acessoEm ? String(a.email || "").trim().toLowerCase() : "") + ",GERADOR_MENSAL=" + jsonApp(D.geradorMensal&&D.geradorMensal.active?{version:1,active:{id:D.geradorMensal.active.id,start:D.geradorMensal.active.start,end:D.geradorMensal.active.end,summary:D.geradorMensal.active.summary,watch:D.geradorMensal.active.watch,approvedAt:D.geradorMensal.active.approvedAt},reviewRequested:!!D.geradorMensal.reviewRequested}:null) + ";" +
@@ -4569,12 +4632,9 @@
       "\"<span id='spFalta' style='font-size:12px;font-weight:800;color:\"+(p.fechada?'var(--corc)':'#6e6a78')+\";'>\"+(p.fechada?'semana fechada':(p.falta===1?'falta 1':'faltam '+p.falta)+' pra fechar a semana')+'</span></div>'+" +
       "\"<div id='spBar' role='progressbar' aria-valuemin='0' aria-valuemax='\"+p.meta+\"' aria-valuenow='\"+Math.min(p.naSem,p.meta)+\"' aria-label='\"+p.naSem+' de '+p.meta+\" treinos na semana' style='height:8px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg10);overflow:hidden;margin-top:9px;'>\"+" +
       "\"<div id='spFill' style='height:100%;width:\"+pct+\"%;border-radius:99px;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\";" +
-      /* as duas sequências (dias e semanas) convivem de propósito com ícone,
-       * cor e palavra diferentes — a lição da v584 era juntar duas coisas com
-       * a MESMA cara. Sem separador "•": a 390 px a linha quebra e um bullet
-       * solto liderava a linha de baixo; ícone + cor já separam os itens. */
+      /* A constância destaca semanas na meta, respeitando os dias de descanso.
+       * A semana do plano continua acessível na mesma linha. */
       "var sub=[];" +
-      "if(p.seqDias>0)sub.push(\"<span style='color:#fb923c;display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.chama,15)+p.seqDias+' dia'+(p.seqDias>1?'s':'')+' seguido'+(p.seqDias>1?'s':'')+'</span>');" +
       "if(p.seqSem>=2)sub.push(\"<span style='color:var(--corc);display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.trofeu,15)+p.seqSem+' semanas seguidas na meta</span>');" +
       "if(p.mes)sub.push(\"<span style='display:inline-flex;align-items:center;gap:4px;'>\"+icx(ICO.cal,15)+'semana '+p.mes.s+' de 4 do plano</span>');" +
       "h+=\"<div id='spSub' style='display:\"+(sub.length?'flex':'none')+\";align-items:center;gap:6px 14px;flex-wrap:wrap;margin-top:9px;font-size:12px;font-weight:700;color:#6e6a78;'>\"+sub.join('')+'</div>';" +
@@ -4995,7 +5055,7 @@
       "var cqAberto=false;var CQATUAL=[];var CQGANHAS={n:0,tot:0};" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
-      "if(!cqAberto){var g6=document.getElementById('evTopo')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
+      "if(!cqAberto){var g6=document.getElementById('meProxima')||document.getElementById('evPanorama')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
       /* ---------- conquista em tela cheia (estilo Nike Run) ----------
        * Tocou numa medalha: abre por cima, a medalha gigante gira com o
        * movimento do celular e o brilho anda junto. O <div> é criado na hora
@@ -5049,7 +5109,7 @@
       "document.addEventListener('click',function(e8){var b8=e8.target.closest&&e8.target.closest('[data-cqi]');" +
       "if(b8)cqAbre(+b8.getAttribute('data-cqi'));});" +
       "window.__cqAbre=cqAbre;" +
-      "function pintaConquistas(){var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
+      "function pintaConquistas(){var f=EV_FOCO.feitos(L('ptfeitos',{}),isoHj());var total=Object.keys(f).length;var seq=seqMax(f);" +
       "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).filter(function(k){return (dc[k]||[]).some(cargaConcluida);}).length;" +
       "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
       "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
@@ -5207,7 +5267,7 @@
       // o cartão de PESO saiu daqui (pedido do Raphael) — o peso mora na aba
       // Corpo; fica só a SEQUÊNCIA, na largura toda
       "function pintaCqTiles(){var el=document.getElementById('cqTiles');if(!el)return;" +
-      "var f=L('ptfeitos',{});var sq=seqAtual(f);var rec=seqMax(f);" +
+      "var f=EV_FOCO.feitos(L('ptfeitos',{}),isoHj());" +
       "function cqTile(rot,val,un9,sub,cor){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>\"+rot+'</div>'+" +
       "\"<b style='font-size:24px;font-weight:900;'>\"+val+(un9?\"<small style='font-size:12px;font-weight:800;'> \"+un9+'</small>':'')+'</b>'+" +
       "(sub?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(cor||'#8a8695')+\";'>\"+sub+'</div>':'')+'</div>';}" +
@@ -5223,7 +5283,7 @@
       "s29=dif9?Math.abs(dif9)+(dif9>0?' a mais':' a menos')+' que em '+mn9+' até aqui':'igual a '+mn9+' até aqui';" +
       "c29=dif9>0?'#4ade80':dif9<0?'#f87171':'#8a8695';}" +
       "else{s29=tot9>noMes9?tot9+' no total':'seu primeiro mês';}" +
-      "el.innerHTML=cqTile('Sequência',sq,sq===1?'dia':'dias',rec?'recorde de '+rec+(rec===1?' dia':' dias'):'','#fbbf24')+" +
+      "el.innerHTML=cqTile('Meta semanal',EV_FOCO.semana(f,isoHj(),META).feitos,'de '+META+' dias','Descanso faz parte do plano')+" +
       "cqTile('Treinos no mês',noMes9,'',s29,c29)+" +
       "(function(){var sw9=streakSem(f);" +
       "return \"<div style='grid-column:1/-1;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'>\"+" +
@@ -8405,6 +8465,7 @@
       "pintaMarcas();window.__pintaMarcas=pintaMarcas;" +
       // cabeçalho da Evolução por aba (corpo = delta do peso; cargas/marcas = novidades do mês)
       "window.__evTopoPinta=function(aba){var nv9=document.getElementById('evTopoNv'),alt=document.getElementById('evTopoAlt');if(!nv9||!alt)return;" +
+      "var heading=alt.closest('.ev793-heading');if(heading)heading.style.display=aba==='conq'&&document.getElementById('evJornada')?'none':'flex';" +
       "nv9.style.display=aba==='conq'?'flex':'none';alt.style.display=aba==='conq'?'none':'block';" +
       "var K=document.getElementById('evAltK'),N=document.getElementById('evAltN'),S=document.getElementById('evAltS');var mesK=isoHj().slice(0,7);" +
       "if(aba==='conq'){var pr=semProgCalc(L('ptfeitos',{}));K.textContent='Evolução';N.textContent=pr.naSem+' de '+pr.meta;S.textContent='treinos nesta semana';return;}" +
@@ -9356,6 +9417,6 @@
     return htmlApp;
   }
 
-  raiz.MT_APP_ALUNO = { monta: monta, normalizaSeries: normalizaSeries, runtimeGeradorMensal: runtimeGeradorMensal };
+  raiz.MT_APP_ALUNO = { monta: monta, normalizaSeries: normalizaSeries, runtimeGeradorMensal: runtimeGeradorMensal, evolucaoObjetivo: evolucaoObjetivo };
   raiz.MT_CQICONS = MT_CQICONS;
 })(typeof self !== "undefined" ? self : this);

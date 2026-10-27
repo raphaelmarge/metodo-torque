@@ -23532,6 +23532,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       atendimento: R809.atendimento(a),
+      objetivoApp: String((t2 && t2.objetivo) || a.objetivo || "").slice(0,120),
       geradorMensal: self.MT_PERSONAL_GERADOR_MENSAL ? self.MT_PERSONAL_GERADOR_MENSAL.packet(st, a.id) : null,
       conquistasAvancadasApp: self.MT_CONQUISTAS_AVANCADAS ? {metas:self.MT_CONQUISTAS_AVANCADAS.list((a.conquistasAvancadas||{}).metas),manuais:((a.conquistasAvancadas||{}).manuais||[]).map(self.MT_CONQUISTAS_AVANCADAS.manual)} : {metas:[],manuais:[]},
       metasPersonalizadasApp: self.MT_METAS_PESSOAIS ? self.MT_METAS_PESSOAIS.list((st.config || {}).metasPersonalizadas) : [],

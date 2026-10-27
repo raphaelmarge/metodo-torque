@@ -44,6 +44,11 @@ var __demoOnboardingAceite=null;
     var l=[];for(var w=56;w>=0;w-=2){var t=(56-w)/56;
       l.push({d:iso(w*7+2),kg:Math.round((ex[1]+(ex[2]-ex[1])*t)*2)/2,r:ex[3]-(w%6===0?2:0),g:1});}
     dc[ex[0]]=l;});
+  /* Dois exemplos fictícios de séries concluídas com o mesmo contexto. O legado permanece. */
+  /* EVOLUCAO_DEMO_FIXTURE */
+  (typeof __demoComparaveis==='undefined'?[]:__demoComparaveis).forEach(function(ex){
+    [[16,ex.antes],[2,ex.depois]].forEach(function(v){dc[ex.nome].push({d:iso(v[0]),kg:v[1],r:ex.reps,g:2,feito:true,i:ex.ficha+':0:0',serie:1,exercicioId:ex.id,unit:'kg',loadBasis:'total',equipment:ex.equipamento,variation:'padrao',context:'mesma execução fictícia aprovada para a demonstração'});});
+  });
   var hab={};for(var i=60;i>=0;i--){hab[iso(i)]={0:true,1:i%3!==0,2:true,3:i%2===0};}
   var fotos=[{d:iso(420),img:svgf("ANTES","#4c4560")},{d:iso(3),img:svgf("AGORA","#7c3aed")}];
   var chat=[

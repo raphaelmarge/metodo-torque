@@ -6,7 +6,7 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
-## v877 — Gerador mensal com equipamentos comuns e trocas por nome
+## v877 — Gerador prático e evolução do aluno por objetivo
 
 - Novos perfis podem gerar com academia padrão sem inventário. Equipamentos
   explícitos anteriores permanecem específicos; saúde e revisão mensal continuam
@@ -25,8 +25,14 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
   estruturada mais recente precisa ser carregada para revisão.
 - A publicação continua separada. Os 17 grupos permanecem no motor;
   rascunhos e treino vigente são preservados. O caminho de revisão detalhada continua disponível.
-- Anamnese deixa equipamentos como informação opcional para academia. Nenhuma
-  alteração de banco ou do pacote do aluno. Cache global e aluno mt-v877.
+- Anamnese deixa equipamentos como informação opcional para academia.
+- Evolução do aluno destaca meta semanal, registros comparáveis e avaliações ou
+  atividades conforme o objetivo publicado. Descanso programado faz parte da meta;
+  uma conquista pertinente fica em destaque e o nível/XP passa para detalhes.
+- O pacote recebe `objetivoApp` opcional, a partir do treino aplicado ou cadastro.
+  Pacotes antigos continuam válidos. Sem alteração de banco, prescrição, cálculo de
+  XP ou confirmação mensal. Ver `docs/releases/mt-v877-evolucao-objetivo.md`.
+  Cache global e aluno mt-v877.
 - Conferir CI e Pages antes de declarar esta versão publicada.
 
 ## v876 — Gerador mensal de treinos
