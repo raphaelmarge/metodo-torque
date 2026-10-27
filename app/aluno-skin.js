@@ -896,7 +896,7 @@ body.aluno-v793.experiencia-v868 #navApp .nitem span:last-child{letter-spacing:0
 `;
 
   css += `
-/* Evolução orientada ao objetivo: evidências primeiro, detalhes acessíveis. */
+/* Evolução orientada ao objetivo, após o nível e as medalhas. */
 #evPanorama [hidden]{display:none!important}
 #evPanorama #evPanoramaTitle{font-size:25px;line-height:1.2}
 #evFocoDescricao{margin:12px 0 20px!important}
@@ -910,15 +910,6 @@ body.aluno-v793.experiencia-v868 #navApp .nitem span:last-child{letter-spacing:0
 #evPanorama :is(#evFocoCardio,#evFocoAvaliacao)>p{font-size:13px;line-height:1.6}
 #evFocoAvaliacao button{padding:10px 14px;font-size:13px;margin:4px 0 16px}
 #evPanorama .ev-load-dates{grid-column:1/-1;font-size:11px}
-#evReconhecimentos:has(#meProxima) #cqGrid.enc>button{display:none!important}
-#evReconhecimentos:has(#meProxima) #cqGrid.enc{display:none!important}
-#evJornada{border:1px solid var(--one-border);border-radius:14px;padding:0 16px;margin:18px 0}
-#evJornada>summary{min-height:52px;display:flex;align-items:center;cursor:pointer;font-weight:600;font-size:14px}
-#evJornada>summary:after{content:'+';margin-left:auto;color:var(--one-muted)}
-#evJornada[open]>summary:after{content:'−'}
-#evJornada #evTopoNv{margin:8px 0;padding:12px 0;background:none;box-shadow:none}
-#evJornada>p{font-size:12px;line-height:1.6;color:var(--one-muted);margin:12px 0 18px}
-#evJornada summary:focus-visible{outline:3px solid var(--corc);outline-offset:3px}
 `;
   raiz.MT_APP_SKIN = { css: css, js: js };
 })(self);

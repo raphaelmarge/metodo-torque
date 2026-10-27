@@ -1068,11 +1068,8 @@
     mapaAnual.id = 'mapaHistoricoAno'; anual.appendChild(mapaAnual);
     var reconhecimentos = document.createElement('section'), titulo = document.createElement('h2');
     reconhecimentos.id = 'evReconhecimentos'; reconhecimentos.setAttribute('aria-labelledby', 'evMedalhasTitulo');
-    titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Uma conquista por vez'; reconhecimentos.appendChild(titulo);
-    ['meProxima', 'cqGrid', 'cqVerMais'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
-    var jornada=document.createElement('details'),jornadaTitulo=document.createElement('summary');jornada.id='evJornada';jornadaTitulo.textContent='Meu nível e XP';jornada.appendChild(jornadaTitulo);
-    if(porId('evTopoNv'))jornada.appendChild(porId('evTopoNv'));
-    var nota=document.createElement('p');nota.textContent='XP reconhece seus registros. As cargas e as adaptações de saúde continuam sob revisão do personal.';jornada.appendChild(nota);reconhecimentos.appendChild(jornada);
+    titulo.id = 'evMedalhasTitulo'; titulo.textContent = 'Suas medalhas'; reconhecimentos.appendChild(titulo);
+    ['cqGrid', 'cqVerMais', 'meProxima'].forEach(function (id) { var el = porId(id); if (el) reconhecimentos.appendChild(el); });
     [reconhecimentos, h, tiles, porId('cqGraf'), calendario, anual, porId('retroCard'), porId('btnCardStories')].forEach(function (el) { if (el) box.appendChild(el); });
     if (window.__mapaMes) window.__mapaMes.pinta();
     window.__evResumoContagem = function () {
@@ -3439,7 +3436,7 @@
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
       "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
       // ---------- Evolução (telas 49/41/42/32): cabeçalho por aba + 4 pílulas ----------
-      // Resumo move o nível para os detalhes; Corpo/Cargas/Marcas mantêm
+      // Resumo mostra nível e XP no topo; Corpo/Cargas/Marcas mantêm
       // o cabeçalho com o número da aba (delta de peso, recordes e marcas do mês).
       "<div class='cardx ev793-top' id='evTopo' style='margin:0;'>" +
       "<div class='ev793-heading' style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;display:flex;align-items:center;gap:16px;'>" +
@@ -5056,7 +5053,7 @@
       "var cqAberto=false;var CQATUAL=[];var CQGANHAS={n:0,tot:0};" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
-      "if(!cqAberto){var g6=document.getElementById('meProxima')||document.getElementById('evReconhecimentos')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
+      "if(!cqAberto){var g6=document.getElementById('evReconhecimentos')||document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
       /* ---------- conquista em tela cheia (estilo Nike Run) ----------
        * Tocou numa medalha: abre por cima, a medalha gigante gira com o
        * movimento do celular e o brilho anda junto. O <div> é criado na hora
@@ -8466,7 +8463,6 @@
       "pintaMarcas();window.__pintaMarcas=pintaMarcas;" +
       // cabeçalho da Evolução por aba (corpo = delta do peso; cargas/marcas = novidades do mês)
       "window.__evTopoPinta=function(aba){var nv9=document.getElementById('evTopoNv'),alt=document.getElementById('evTopoAlt');if(!nv9||!alt)return;" +
-      "var heading=alt.closest('.ev793-heading');if(heading)heading.style.display=aba==='conq'&&document.getElementById('evJornada')?'none':'flex';" +
       "nv9.style.display=aba==='conq'?'flex':'none';alt.style.display=aba==='conq'?'none':'block';" +
       "var K=document.getElementById('evAltK'),N=document.getElementById('evAltN'),S=document.getElementById('evAltS');var mesK=isoHj().slice(0,7);" +
       "if(aba==='conq'){var pr=semProgCalc(L('ptfeitos',{}));K.textContent='Evolução';N.textContent=pr.naSem+' de '+pr.meta;S.textContent='treinos nesta semana';return;}" +

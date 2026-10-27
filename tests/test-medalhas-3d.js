@@ -65,7 +65,7 @@ function svgText(src) { return src.includes(';base64,') ? Buffer.from(src.split(
     const sensorBase = await page.evaluate(() => __3dSensors.size);
     eq(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--cor').trim()), '#0ea5e9', 'paleta personalizada do aluno permanece aplicada');
     eq(await page.evaluate(() => __meAluno.estados().find(x => x.d.id === 'fran-3d').p.valor), 2, 'progresso conserva duas conclusões e exclui NF');
-    eq(await page.locator('#cqGrid > button:visible').count(), 0, 'grade fica recolhida com conquista prioritária visível');
+    eq(await page.locator('#cqGrid > button:visible').count(), 6, 'grade mostra seis medalhas antes da expansão');
 
     await page.locator('#cqVerMais').click();
     async function drag(selector) {

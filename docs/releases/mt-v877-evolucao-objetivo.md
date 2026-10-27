@@ -5,7 +5,9 @@ de tratar como publicada. A versão mt-v877 já estava reservada para o gerador.
 
 ## Comportamento
 
-- Resumo começa pelas medalhas, seguido do objetivo e da meta semanal. Hipertrofia e força priorizam
+- Nível e XP ficam sempre visíveis no cabeçalho original. Logo abaixo aparecem
+  seis medalhas, com botão para expandir as demais. Depois vêm objetivo e meta
+  semanal. Hipertrofia e força priorizam
   cargas comparáveis; emagrecimento e saúde mostram avaliação antes das cargas;
   condicionamento destaca as atividades registradas. O intervalo de 7, 28 ou 90
   dias continua disponível.
@@ -14,7 +16,7 @@ de tratar como publicada. A versão mt-v877 já estava reservada para o gerador.
   válida, considera substituições por data e os limites da etapa mensal.
 - Uma conquista fica em destaque conforme o objetivo. A escolha fixada pelo aluno
   prevalece. Todas as conquistas, detalhes, medalhas 3D e compartilhamento continuam
-  acessíveis. Nível e XP ficam em “Meu nível e XP”.
+  acessíveis. A grade nunca fica totalmente recolhida, mesmo ao usar “Mostrar menos”.
 - Calendários, Corpo, histórico de cargas, Marcas e metas personalizadas permanecem.
   A alteração não concede XP, não aumenta cargas e não interpreta melhora clínica.
   O gerador mensal continua exigindo relato do aluno e confirmação do personal.
@@ -39,7 +41,7 @@ sintéticos com contexto explícito, gerados pelo pipeline canônico.
 
 - Suíte `test-aluno-evolucao-objetivo.js`: cinco objetivos, legado/ausência/objetivo
   ambíguo, descanso, datas inválidas/futuras, zero e cargas inválidas, diferenças de
-  contexto, filtros, prioridade/pin, nível recolhido e navegação para Corpo.
+  contexto, filtros, prioridade/pin, XP aberto no topo, seis medalhas visíveis e navegação para Corpo.
 - Regressões de Evolução, Início, experiência v868, medalhas evolutivas/3D, metas
   personalizadas e integração do objetivo do treino no pacote do aluno.
 - Geometria em 320, 390 e 1280 px, temas claro e escuro, preservação das fontes

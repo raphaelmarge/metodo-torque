@@ -26,9 +26,10 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 - A publicação continua separada. Os 17 grupos permanecem no motor;
   rascunhos e treino vigente são preservados. O caminho de revisão detalhada continua disponível.
 - Anamnese deixa equipamentos como informação opcional para academia.
-- Evolução do aluno mostra as medalhas primeiro, seguidas de meta semanal, registros comparáveis e avaliações ou
-  atividades conforme o objetivo publicado. Descanso programado faz parte da meta;
-  uma conquista pertinente fica em destaque e o nível/XP passa para detalhes.
+- Evolução mantém nível e XP abertos no topo, seguidos de seis medalhas visíveis
+  e botão para ver todas. Depois vêm objetivo, meta semanal, registros comparáveis
+  e avaliações ou atividades. Descanso programado faz parte da meta; a próxima
+  conquista sugerida respeita o objetivo e a escolha fixada pelo aluno.
 - O pacote recebe `objetivoApp` opcional, a partir do treino aplicado ou cadastro.
   Pacotes antigos continuam válidos. Sem alteração de banco, prescrição, cálculo de
   XP ou confirmação mensal. Ver `docs/releases/mt-v877-evolucao-objetivo.md`.
