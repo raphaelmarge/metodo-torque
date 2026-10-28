@@ -93,8 +93,10 @@ const {pathToFileURL}=require('node:url');
   assert.deepEqual(suggest(target,[{...a,archived:true},{...b,_resource:{archived:true}}]),[]);
   pass('stable catalog identity, barcodes, exclusions and limits prevent self suggestions and repeated candidates');
 
-  const catalog=['taco.json','openfoodfacts.json'].flatMap(filename=>JSON.parse(fs.readFileSync(path.join(root,'nutri/data',filename),'utf8')));
-  assert.equal(catalog.length,7201);const savedCatalog=JSON.stringify(catalog);
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/catalog-manifest.json'),'utf8'));
+  const quarantined=new Set(JSON.parse(fs.readFileSync(path.join(root,'nutri/data',manifest.quarantine.file),'utf8')).records.map(x=>x.id));
+  const catalog=manifest.sources.flatMap(source=>JSON.parse(fs.readFileSync(path.join(root,'nutri/data',source.file),'utf8'))).filter(food=>!quarantined.has(food.id));
+  assert.equal(catalog.length,manifest.records);const savedCatalog=JSON.stringify(catalog);
   const ambiguousMilk=catalog.find(f=>f.id==='off:7898080640369');assert(ambiguousMilk);assert.deepEqual(suggest({...legacyMilk,porcao:'1 porção'},[ambiguousMilk]),[]);
   const realApple=makeFoodItem(catalog.find(f=>f.id==='taco:221'),100,'g',{id:'real-apple'});
   assert(suggest(realApple,catalog).length>0,'a whole apple with skin is not a mixed dish');
@@ -111,6 +113,6 @@ const {pathToFileURL}=require('node:url');
   }
   assert.deepEqual(suggest({id:'demo-beans',nome:'Feijão',porcao:'1 concha',qtd:1,k:77,pt:5,cb:14,g:0},catalog),[],'unknown preparation is not inferred from a ladle');
   assert.equal(JSON.stringify(catalog),savedCatalog);
-  pass('real 7,201-food catalog supports measured rice and legacy demo foods without changing the catalog or guessing bean preparation');
+  pass('full active food catalog supports measured rice and legacy demo foods without changing the catalog or guessing bean preparation');
   console.log(passed+' food substitution groups passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

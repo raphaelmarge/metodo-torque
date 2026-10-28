@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v876";
+var VERSION = "mt-v878";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -168,6 +168,13 @@ var CORE = [
   "nutricao.html",
   "manifest-nutricao.webmanifest",
   "assets/alimentos-db.js",
+  "assets/alimentos-catalogo-compartilhado.js",
+  "nutri/food-catalog-data.js",
+  "nutri/data/taco.json",
+  "nutri/data/openfoodfacts.json",
+  "nutri/data/openfoodfacts-expansion-20261028.json",
+  "nutri/data/README.md",
+  "nutri/data/catalog-quarantine.json",
   "assets/receitas-db.js",
   "assets/exercicios-db.js",
   "assets/composicao-corporal.js",

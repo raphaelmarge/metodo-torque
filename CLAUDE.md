@@ -6,6 +6,22 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v878 — Catálogo alimentar compartilhado
+
+- O Personal e o Nutri usam `nutri/food-catalog-data.js` como fonte pública
+  comum. O adaptador `assets/alimentos-catalogo-compartilhado.js` mantém os
+  1.548 registros legados do Personal e acrescenta o catálogo completo do Nutri.
+- Ampliação de 5.000 produtos reais com marca, código de barras, fonte e
+  composição por 100 g/ml: 12.199 no Nutri e 13.747 públicos no Personal.
+  Dados, licenças, filtros e relatórios em `nutri/data/README.md`.
+- Busca por nome, marca e código; referências com nomes iguais ficam distintas.
+  Valores de planos anteriores, favoritos e alimentos privados são preservados.
+- O pacote do aluno mantém a biblioteca legada/privada e os novos alimentos
+  usados ou favoritados, sem incorporar a base pública inteira nem elevar os
+  limites de publicação. Não há alteração de banco ou do builder do aluno.
+- Cache global/aluno mt-v878 e Nutri v22. Não considerar publicado até merge,
+  implantação e conferência. Registro em `docs/releases/mt-v878-catalogo-compartilhado.md`.
+
 ## v876 — Gerador mensal de treinos
 
 - Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e

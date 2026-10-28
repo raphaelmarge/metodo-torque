@@ -1575,14 +1575,16 @@ async function abaNt(p, a) {
       window.MTStore.write("ntStudio", st);
       const dados = window.__iaDietaDados(st.pacientes[0]);
       const linhaBeb = dados.split("\n").find((l) => l.indexOf("Bebidas: ") === 0) || "";
-      const itens = (dados.match(/ \| /g) || []).length + 16;
+      const itens = (dados.match(/ kcal\)/g) || []).length;
+      const categorias = Array.from(new Set(self.MT_ALIMENTOS.map(a=>a.c)));
       const solto = window.__alimPorNomeSolto("ARROZ BRANCO COZIDO!");
-      return { itens, tam: dados.length, favNaFrente: linhaBeb.indexOf("Bebidas: " + ultimaBebida) === 0, total: self.MT_ALIMENTOS.length,
+      return { itens, tam: dados.length, categoriasCobertas:categorias.every(c=>dados.includes('\n'+c+': ')), favNaFrente: linhaBeb.indexOf("Bebidas: " + ultimaBebida) === 0, total: self.MT_ALIMENTOS.length,
         solto: solto && solto.nome, nada: window.__alimPorNomeSolto("comida inventada xyz") };
     });
-    // o banco inteiro tem ~73 KB e a chat-envia aceita 60000 em dados: o teto sobe até caber (1153 = 74%, era 639 = 41%)
-    ok(ia.itens >= 1100 && ia.tam <= 60000,
-      "🥦 v747: a IA de dieta recebe " + ia.itens + " de " + ia.total + " alimentos (era 40 por categoria = 41%), dentro do teto da chat-envia");
+    // Branded names are longer. Coverage and the request budget, not the old
+    // 1,100-item count for a 1,548-item catalog, define the expanded contract.
+    ok(ia.categoriasCobertas && ia.itens > 0 && ia.tam <= 60000,
+      "🥦 IA de dieta recebe " + ia.itens + " de " + ia.total + " alimentos, cobre todas as categorias e respeita o teto da chat-envia");
     ok(ia.favNaFrente, "🥦 v747: o alimento favorito do nutricionista vai na FRENTE da categoria dele — nunca fica fora do corte");
     ok(ia.solto === "Arroz branco cozido" && ia.nada === null,
       "🥦 v747: nome que a IA devolve em CAIXA ALTA/pontuação é recuperado; o inventado continua fora (e agora aparece pelo nome no aviso)");

@@ -5,6 +5,7 @@ from pathlib import Path
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output-dir',type=Path,default=Path(__file__).parent)
 parser.add_argument('--limit',type=int,default=12000)
+parser.add_argument('--imports-only',action='store_true',help='Products sold in Brazil with GTIN prefixes other than 789/790')
 args=parser.parse_args()
 root=args.output_dir
 root.mkdir(parents=True,exist_ok=True)
@@ -30,7 +31,8 @@ with urllib.request.urlopen(request,timeout=90) as response:
         for row in reader:
             scanned+=1
             if scanned%100000==0: print(json.dumps({'scanned':scanned,'selected':selected,'seconds':round(time.time()-started)}),flush=True)
-            if not row.get('code','').startswith(('789','790')):continue
+            domestic_prefix=row.get('code','').startswith(('789','790'))
+            if domestic_prefix == args.imports_only:continue
             countries=tags(row.get('countries_tags',''))
             if 'en:brazil' not in countries:continue
             if any(number(row.get(k+'_100g')) is None for k in ('energy-kcal','proteins','carbohydrates','fat')):continue
@@ -48,7 +50,8 @@ with urllib.request.urlopen(request,timeout=90) as response:
                 f.flush();print(json.dumps({'scanned':scanned,'selected':selected,'seconds':round(time.time()-started)}),flush=True)
             if selected>=args.limit:break
 metadata.update({'scannedRows':scanned,'selectedRawRows':selected,'elapsedSeconds':round(time.time()-started),
-                 'selection':f'First {args.limit} rows in official CSV with country en:brazil, GTIN prefix789/790, and four numeric core nutrients.',
+                 'selection':f'First {args.limit} rows in official CSV with country en:brazil, '+('GTIN prefixes other than 789/790' if args.imports_only else 'GTIN prefix789/790')+', and four numeric core nutrients.',
+                 'selectionScope':'Produtos listados para venda no Brasil; '+('GTIN fora dos prefixos 789/790 (inclui importados).' if args.imports_only else 'GTIN nos prefixos 789/790.'),
                  'rawSha256':hashlib.sha256(out.read_bytes()).hexdigest()})
 (root/'off-source-metadata.json').write_text(json.dumps(metadata,indent=2),encoding='utf8')
 print(json.dumps(metadata),flush=True)

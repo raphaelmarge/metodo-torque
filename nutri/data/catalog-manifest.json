@@ -1,6 +1,6 @@
 {
-  "version": "2026-10-22",
-  "records": 7201,
+  "version": "2026-10-28",
+  "records": 12199,
   "sources": [
     {
       "file": "taco.json",
@@ -11,13 +11,23 @@
       "file": "openfoodfacts.json",
       "records": 6657,
       "sha256": "7a09933442c65cc12d62f7b9419c89a336609608410f734dabb3b72d46a5f380"
+    },
+    {
+      "file": "openfoodfacts-expansion-20261028.json",
+      "records": 5000,
+      "sha256": "13761c8d770a1388cf9b47d2b5b21d558963cb34a319ac31d79b312bc41c3867"
     }
   ],
-  "referenceUnits": {
-    "g": 7009,
-    "ml": 192
+  "quarantine": {
+    "file": "catalog-quarantine.json",
+    "records": 2,
+    "sha256": "2e3f1cd052d22027f2b62633f339e658b168a708753e2ff44455aef27a42b194"
   },
-  "withHouseholdOrLabelMeasures": 5017,
+  "referenceUnits": {
+    "g": 11934,
+    "ml": 265
+  },
+  "withHouseholdOrLabelMeasures": 9832,
   "categories": [
     "Alimentos industrializados",
     "Alimentos preparados",
