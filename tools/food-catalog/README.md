@@ -38,3 +38,49 @@ O compilador exige ao menos 3.000 registros reais, identidades únicas, fontes,
 quatro nutrientes completos e medidas na mesma unidade da referência. A suíte
 confere cada alimento e a invariância da quantidade ao trocar sua medida.
 Atualizações do catálogo também exigem revisar o cache de `nutri/sw.js`.
+
+## Ampliação aditiva e catálogo compartilhado (28/10/2026)
+
+Não substitua os JSONs anteriores para ampliar a biblioteca. A expansão fica em
+arquivo próprio, com rastreabilidade e deduplicação contra os registros publicados.
+Os extratos de entrada ficam fora do repositório. Exemplo (diretórios diferentes):
+
+```sh
+python tools/food-catalog/fetch_off_csv.py --output-dir /pesquisa/gtin-br --limit 30000
+python tools/food-catalog/fetch_off_csv.py --output-dir /pesquisa/importados --limit 3000 --imports-only
+node tools/food-catalog/combine-off.mjs /pesquisa/combinado /pesquisa/gtin-br /pesquisa/importados
+python tools/food-catalog/normalize_off.py --input /pesquisa/combinado/off-brazil-bulk.jsonl --metadata /pesquisa/combinado/off-source-metadata.json --output-dir /pesquisa/combinado/normalizado
+node tools/food-catalog/expand-off.mjs /pesquisa/combinado/normalizado
+```
+
+Copie os metadados do extrato combinado para
+`nutri/data/off-expansion-source-metadata.json`. O combinador exige a mesma
+versão/ETag e valida os checksums das entradas; o normalizador também confere a
+entrada combinada. Os prefixos GTIN são apenas um recorte de seleção, não prova
+do país de fabricação. Todos os registros continuam exigindo o país de venda
+Brasil na fonte. A triagem nutricional não foi relaxada para atingir o total.
+
+O seletor exige exatamente 5.000 novos produtos, elimina código repetido,
+produto/marca/unidade e nome de exibição já existentes, distribui a seleção por
+categoria e marca e registra os descartes. Se faltarem produtos válidos, falha
+antes de gravar. Confira relatórios e amostras; não invente nem reescale nutrientes.
+
+```sh
+node tools/food-catalog/build.mjs
+node tests/test-food-catalog-expansion.js
+node tests/test-nutri-food-data.js
+node tests/test-food-catalog-shared-ui.js
+node tests/test-nutri-food-catalog-ui.js
+```
+
+Os testes de interface usam os pré-requisitos Playwright/Chromium do projeto e
+`BASE_URL` apontando para um servidor local. O Personal carrega o catálogo
+canônico seguido de `assets/alimentos-catalogo-compartilhado.js`; não mantenha
+uma cópia independente dos novos produtos. O adaptador não reescreve objetos
+legados, dados privados ou prescrições e pode ser carregado novamente sem
+duplicar registros. Atualizar também `sw.js` e a versão global do projeto.
+
+O compilador aplica `nutri/data/catalog-quarantine.json` antes de disponibilizar
+novas prescrições. Os JSONs anteriores continuam intactos para auditoria, e
+planos salvos conservam seus snapshots. O manifesto identifica o arquivo de
+quarentena e seu checksum; testes conferem a composição ativa exata.

@@ -245,7 +245,7 @@ manifest={'source':'Open Food Facts','sourceUrl':SOURCE_URL,'sourceVersion':SOUR
           'licenseUrl':'https://opendatacommons.org/licenses/odbl/1.0/',
           'attribution':'Dados: Open Food Facts, sob ODbL. Catálogo derivado disponível para download sob a mesma licença.',
           'inputRows':scanned,'acceptedRows':len(unique),'rejectedRows':dict(rejections),
-          'selectionScope':'Produtos listados para o Brasil com códigos GTIN iniciados em 789 ou 790; recorte para priorizar produtos nacionais. Não representa todos os produtos vendidos no Brasil.',
+          'selectionScope':source_meta.get('selectionScope','Produtos listados para o Brasil com códigos GTIN iniciados em 789 ou 790; recorte para priorizar produtos nacionais. Não representa todos os produtos vendidos no Brasil.'),
           'units':dict(collections.Counter(x['baseUnit'] for x in unique)),
           'categories':dict(collections.Counter(x['c'] for x in unique)),
           'withLabeledServing':sum(bool(x['measures']) for x in unique),

@@ -1,0 +1,52 @@
+{
+  "version": "2026-10-28",
+  "source": "Open Food Facts",
+  "sourceUrl": "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz",
+  "sourceVersion": "official-csv-Wed, 28 Oct 2026 09:05:12 GMT",
+  "sourceDate": "Wed, 28 Oct 2026 09:05:12 GMT",
+  "license": "ODbL 1.0; individual contents DbCL 1.0",
+  "candidateRecords": 12865,
+  "candidateSha256": "85f4be896cfc76dec312f96c3a8d04c1f46f022b6c2bdf5f5fd9758dff3b64f0",
+  "existingOFFRecords": 6657,
+  "eligibleAdditionalRecords": 6210,
+  "selectedRecords": 5000,
+  "skipped": {
+    "existing_barcode": 6545,
+    "existing_product_brand_unit": 104,
+    "source_reference_needs_review": 1,
+    "existing_display_name": 4,
+    "measure_exceeds_quantity_contract": 1
+  },
+  "selectionExclusions": [
+    {
+      "id": "off:7891000251355",
+      "reason": "Powder named Alpino em Pó reports 72 kcal per 100 g; dry/prepared reference unresolved in source sample. Do not infer or rescale.",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7891000251355"
+    },
+    {
+      "id": "off:7802410004349",
+      "reason": "Changing 100 g/ml to the reported serving exceeds the 1,000-measure contract.",
+      "measures": [
+        {
+          "id": "rotulo",
+          "label": "Porção do rótulo: 0,03 g",
+          "amount": 0.03,
+          "unit": "g",
+          "source": "Open Food Facts — porção informada no rótulo"
+        }
+      ],
+      "sourceUrl": "https://world.openfoodfacts.org/product/7802410004349"
+    }
+  ],
+  "selection": "5,000 additional products; round-robin category and brand; exact barcode, normalized product/brand/unit and legacy display-name deduplication. Existing composition is preserved.",
+  "units": {
+    "g": 4927,
+    "ml": 73
+  },
+  "brands": 2845,
+  "sourceFile": "openfoodfacts-expansion-20261028.json",
+  "sha256": "13761c8d770a1388cf9b47d2b5b21d558963cb34a319ac31d79b312bc41c3867",
+  "qualityReport": "off-expansion-normalization-report.json",
+  "qualityAudit": "off-expansion-quality-exclusions.json",
+  "qualityNote": "Rótulos cadastrados na base colaborativa, filtrados automaticamente. Não são revisão clínica nem validação manual individual. Nutrientes ausentes permanecem ausentes."
+}

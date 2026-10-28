@@ -58,7 +58,7 @@ fibras, açúcares e gorduras saturadas, em g.
 
 ## Prescrição e atualização
 
-Os dois arquivos são bases independentes reunidas em um catálogo coletivo na
+Os arquivos de TACO e Open Food Facts são bases independentes reunidas em um catálogo coletivo na
 interface. A base Open Food Facts é oferecida separadamente para download sob
 sua licença. Esses arquivos não contêm dados de clínicas, pacientes ou alimentos
 privados. As licenças dos dados não alteram a licença do código do aplicativo.
@@ -70,4 +70,38 @@ equivalência conhecida conservam a porção cadastrada.
 
 Reprodução da importação: `tools/food-catalog/`. O total efetivamente distribuído
 e os checksums estão em [catalog-manifest.json](catalog-manifest.json).
-Esta edição reúne **7.201 alimentos**: 544 TACO e 6.657 Open Food Facts.
+A edição de 22/10/2026 reúne 7.201 alimentos: 544 TACO e 6.657 Open Food Facts.
+
+## Catálogo compartilhado com o Personal — 28/10/2026
+
+A ampliação acrescenta **5.000 produtos** em
+[openfoodfacts-expansion-20261028.json](openfoodfacts-expansion-20261028.json),
+sob as mesmas licenças ODbL/DbCL e sem modificar o recorte anterior. O catálogo
+Torque Nutri passa a **12.199 registros**. O Personal carrega esse mesmo arquivo
+compilado e mantém seus 1.548 alimentos legados, totalizando **13.747 registros
+públicos**, além dos alimentos próprios do profissional.
+
+A identidade pública é preservada por fonte e código; nome, marca e porção
+aparecem na busca. Coincidências de nome recebem a fonte ou o identificador
+para distinguir referências diferentes. As calorias, macronutrientes e
+nutrientes opcionais não são estimados nem recalculados para criar produtos.
+
+A origem e as extrações estão em
+[off-expansion-source-metadata.json](off-expansion-source-metadata.json).
+O [relatório de normalização](off-expansion-normalization-report.json) documenta
+os mesmos filtros da edição anterior e aponta o
+[registro das exclusões](off-expansion-quality-exclusions.json). O
+[relatório da seleção final](off-expansion-report.json) informa deduplicação,
+unidades, marcas, seleção de exatamente 5.000 registros e checksum. Dois
+registros adicionais ficam fora: referência seca/preparada pendente de revisão
+e porção de rótulo incompatível com o limite de quantidade do aplicativo.
+
+No Personal, planos, favoritos e alimentos privados conservam seus dados.
+A biblioteca completa fica no painel. Para respeitar o contrato de publicação,
+o pacote do aluno mantém os alimentos legados e privados e acrescenta os
+produtos compartilhados usados no plano, nas alternativas, nas receitas ou
+nos favoritos. Os limites existentes continuam validados, sem truncar o plano.
+
+Duas referências antigas com possível confusão entre porção e 100 g foram
+retiradas do catálogo ativo até revisão: [quarentena](catalog-quarantine.json).
+Os arquivos de origem e os snapshots já prescritos permanecem intactos.

@@ -433,13 +433,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <h2>Banco de alimentos (curadoria)</h2>
       <p class="muted" style="font-size: 13px;">Banco brasileiro com centenas de itens — do arroz ao fast food e industrializados. <b>Desmarque o que você NÃO quer</b> que apareça nas dietas e no app dos pacientes; marque de volta quando quiser.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-        <input id="alBusca" placeholder="Buscar alimento…" style="flex: 2; min-width: 180px;">
+        <input id="alBusca" placeholder="Nome, marca ou código de barras" style="flex: 2; min-width: 180px;">
         <select id="alCat" style="min-width: 180px;"><option value="">Todas as categorias</option></select>
         <button class="btn sec mini" id="alFavBtn" aria-pressed="false" title="mostrar só os alimentos que você mais prescreve">★ Favoritos</button>
         <button class="btn sec mini" id="alCatOn">✓ Ativar categoria</button>
         <button class="btn sec mini" id="alCatOff">✕ Desativar categoria</button>
       </div>
       <div id="alResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
+      <p class="muted" style="font-size:12px">Catálogo do Torque Nutri: TACO/UNICAMP e <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener noreferrer">Open Food Facts</a> (ODbL/DbCL). <a href="nutri/data/README.md" target="_blank" rel="noopener">Fontes, licenças e downloads</a>. Confira a porção e o rótulo.</p>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-alsec="add" hidden>
       <h2>Código de barras (Open Food Facts)</h2>
@@ -944,6 +945,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 <script src="assets/erro-funcao.js"></script>
 <script src="assets/funcao-nuvem.js"></script>
 <script src="assets/alimentos-db.js"></script>
+<script src="nutri/food-catalog-data.js"></script>
+<script src="assets/alimentos-catalogo-compartilhado.js"></script>
 <script src="assets/composicao-corporal.js"></script>
 <script src="assets/receitas-db.js"></script>
 <script src="assets/bot-builder.js"></script>
@@ -2804,8 +2807,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         return c + ": " + porCat[c].slice(0, cap).map(function (x) { return x.t; }).join(" | ");
       }).join("\n");
     };
-    var cap = 40, txt = monta(cap);
-    [60, 80, 100, 130, 180, 250].forEach(function (c) { var t = monta(c); if (t.length <= orcamento) { cap = c; txt = t; } });
+    // More categories and longer branded names can exceed the budget even at
+    // 40 items/category. Find a fitting cap from zero; never send an oversized list.
+    var cap = 0, txt = '';
+    for(var c=1;c<=250;c++){var t=monta(c);if(t.length>orcamento)break;cap=c;txt=t;}
     return { texto: txt, cap: cap };
   }
   window.__catalogoDietaIA = catalogoDietaIA; // testes
@@ -3064,7 +3069,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       if (cat && cat !== "Meus alimentos" && a.c !== cat) return false;
       if (cat === "Meus alimentos") return false;
       // a busca varre nome E categoria (procurar "fruta" agora acha as frutas)
-      if (busca && (a.n + " " + a.c).toLowerCase().indexOf(busca) === -1) return false;
+      if (busca && (a.n + " " + a.c + " " + (a.barcode || '')).toLowerCase().indexOf(busca) === -1) return false;
       return true;
     });
     // favoritos primeiro (sem favoritos, a ordem fica igual à de antes)

@@ -38,7 +38,11 @@ const root=path.resolve(__dirname,'..');
    assert.equal(JSON.parse(bytes).length,source.records);
    sourceFoods.push(...JSON.parse(bytes));
  }
- assert.deepEqual(foods,sourceFoods,'App catalog exactly matches the source files');
+ const quarantineBytes=fs.readFileSync(path.join(root,'nutri/data',manifest.quarantine.file));
+ assert.equal(sha256(quarantineBytes),manifest.quarantine.sha256);
+ const quarantined=new Set(JSON.parse(quarantineBytes).records.map(record=>record.id));
+ assert.equal(quarantined.size,manifest.quarantine.records);
+ assert.deepEqual(foods,sourceFoods.filter(food=>!quarantined.has(food.id)),'App catalog exactly matches source files after documented quarantine');
  assert.deepEqual(JSON.parse(JSON.stringify(context.MT_NUTRI_FOOD_CATALOG_INFO)),manifest);
  const offReport=JSON.parse(fs.readFileSync(path.join(root,'nutri/data/openfoodfacts-import-report.json'),'utf8'));
  assert.equal(offReport.sha256,manifest.sources.find(source=>source.file==='openfoodfacts.json').sha256);

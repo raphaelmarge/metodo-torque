@@ -5,7 +5,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const files=['taco.json','openfoodfacts.json'];
+const files=['taco.json','openfoodfacts.json','openfoodfacts-expansion-20261028.json'];
+const quarantineFile='catalog-quarantine.json',quarantineBytes=fs.readFileSync(path.join(root,'nutri/data',quarantineFile));
+const quarantined=new Set(JSON.parse(quarantineBytes).records.map(record=>record.id));
 const foods=[],ids=new Set(),sources=[];
 for(const file of files){
   const bytes=fs.readFileSync(path.join(root,'nutri/data',file));
@@ -16,12 +18,13 @@ for(const file of files){
     if(['k','pt','cb','g'].some(key=>typeof food[key]!=='number'||!Number.isFinite(food[key])||food[key]<0))throw Error('Missing/invalid macro: '+food.id);
     if(food.k>900||['pt','cb','g'].some(key=>food[key]>100)||food.pt+food.cb+food.g>105)throw Error('Invalid physical limits: '+food.id);
     if((food.measures||[]).some(m=>!m.id||!m.label||m.unit!==food.baseUnit||!Number.isFinite(m.amount)||m.amount<=0||!m.source))throw Error('Invalid measure: '+food.id);
-    ids.add(food.id);foods.push(food);
+    ids.add(food.id);if(!quarantined.has(food.id))foods.push(food);
   }
   sources.push({file,records:rows.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
 }
 if(foods.length<3000)throw Error('At least 3,000 distinct source records are required. Actual: '+foods.length);
-const manifest={version:'2026-10-22',records:foods.length,sources,
+const manifest={version:'2026-10-28',records:foods.length,sources,
+  quarantine:{file:quarantineFile,records:quarantined.size,sha256:crypto.createHash('sha256').update(quarantineBytes).digest('hex')},
   referenceUnits:Object.fromEntries(['g','ml'].map(unit=>[unit,foods.filter(f=>f.baseUnit===unit).length])),
   withHouseholdOrLabelMeasures:foods.filter(f=>f.measures?.length).length,
   categories:[...new Set(foods.map(f=>f.c))].sort(),

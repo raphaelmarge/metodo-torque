@@ -1,0 +1,16 @@
+{
+  "version": "2026-10-28",
+  "policy": "Exclude from new searches and prescriptions pending source-label review. Preserve raw source files and existing prescription snapshots. Never infer a correction.",
+  "records": [
+    {
+      "id": "off:7898215152422",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898215152422",
+      "reason": "Leite em pó reports 63 kcal, 3.5 g protein, 5 g carbohydrates and 3.3 g fat per 100 g; dry/prepared reference is unresolved. Label serving is 25 g."
+    },
+    {
+      "id": "off:7898215150343",
+      "sourceUrl": "https://world.openfoodfacts.org/product/7898215150343",
+      "reason": "Queijo parmesão ralado reports 39 kcal, 3 g protein and 3 g fat per 100 g, alongside a 10 g label serving; possible serving/reference confusion requires label review."
+    }
+  ]
+}
