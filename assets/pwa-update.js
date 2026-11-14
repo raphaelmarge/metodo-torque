@@ -9,6 +9,8 @@
  */
 (function () {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+  var portalBase = new URL("../", document.currentScript && document.currentScript.src || new URL("assets/pwa-update.js", location.href).href);
+  var portalWorker = new URL("sw.js", portalBase);
 
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
@@ -52,19 +54,25 @@
     });
   }
 
-  /* Saída de emergência: apaga tudo que está guardado e começa do zero. Os
-   * ~17 MB do leitor de imagem ficam, porque baixar de novo num celular no 4G
-   * é castigo — e eles não têm versão pra ficar velha. */
+  /* Reinstala somente o código deste portal. O app do aluno, outros produtos,
+   * os recursos pesados sem versão, dados e filas não pertencem a esta limpeza. */
   window.MT_ATUALIZA = function () {
-    var guardar = "mt-visao-v1";
     var limpa = (typeof caches === "undefined") ? Promise.resolve() :
       caches.keys().then(function (ks) {
-        return Promise.all(ks.map(function (k) { return k === guardar ? null : caches.delete(k); }));
+        return Promise.all(ks.filter(function (k) { return /^(precache|runtime)-mt-v\d+$/.test(k); })
+          .map(function (k) { return caches.delete(k); }));
       });
     return limpa.then(function () {
       return navigator.serviceWorker.getRegistrations();
     }).then(function (regs) {
-      return Promise.all(regs.map(function (r) { return r.unregister(); }));
+      return Promise.all(regs.filter(function (r) {
+        if (r.scope !== portalBase.href) return false;
+        return [r.active, r.waiting, r.installing].some(function (worker) {
+          if (!worker) return false;
+          try { var url = new URL(worker.scriptURL); return url.origin === portalWorker.origin && url.pathname === portalWorker.pathname; }
+          catch (e) { return false; }
+        });
+      }).map(function (r) { return r.unregister(); }));
     }).catch(function () {}).then(function () {
       location.reload();
     });

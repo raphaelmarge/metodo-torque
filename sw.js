@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v876";
+var VERSION = "mt-v879";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -284,8 +284,9 @@ self.addEventListener("fetch", function (event) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  // Torque Nutri tem worker, cache e escopo próprios sob /nutri/.
-  if (/^\/nutri(?:\/|$)/.test(url.pathname)) return;
+  // Produtos independentes possuem worker/cache próprios. Mesmo na primeira
+  // visita (antes de instalarem seu worker), não entregar o portal como fallback.
+  if (/^\/(?:nutri|torque-one)(?:\/|$)/.test(url.pathname)) return;
 
   // Pagamento/autenticacao e codigo financeiro nunca ganham fallback
   // offline. A rota personal-assinatura.html e apenas uma tela estatica.

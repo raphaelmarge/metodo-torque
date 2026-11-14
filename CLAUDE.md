@@ -6,6 +6,18 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v879 — Convivência entre os produtos instalados
+
+- O worker da raiz ignora `/torque-one/` e `/nutri/`, incluindo a primeira
+  visita antes da instalação do worker de cada produto. Não serve o portal
+  como fallback offline para essas rotas independentes.
+- Atualizar o portal limpa apenas `precache/runtime-mt-vN` e desregistra
+  somente seu próprio worker. Mantém caches do aluno, One, Nutri, mapa e visão,
+  além de dados e filas locais. Revogar acesso no loader continua apagando os
+  registros legados, mas desregistra apenas o worker do próprio `/app/`.
+- Versão global e worker aluno em mt-v879. Sem alteração de banco ou do Nutri
+  independente. Evidências e limitações em `docs/releases/mt-v879-convivencia.md`.
+
 ## v876 — Gerador mensal de treinos
 
 - Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e
