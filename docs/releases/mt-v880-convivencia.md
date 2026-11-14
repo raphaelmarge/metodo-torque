@@ -68,6 +68,13 @@ variantes de demo (32) e entrada de demo (40). O upgrade Chromium verifica
 portal e aluno nos caminhos 865 → 866 → 880 e 865 → 880, incluindo instalação
 interrompida e uso offline. WebKit e a suíte completa ficam a cargo do CI.
 
+O run de CI `43621268111` falhou em inicializar o contêiner, antes de checkout
+ou testes: a porta fixa 55432 estava ocupada. O workflow agora solicita uma
+porta livre do host para o PostgreSQL 17.11 e injeta a porta atribuída somente
+no step das suítes. Mantém o banco local sintético e o health check, sem retry
+automático ou exclusão de testes. Configuração baseada no [mapeamento oficial
+de portas dos serviços GitHub Actions](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers#mapping-docker-host-and-service-container-ports).
+
 Não houve merge, publicação, alteração de banco remoto ou validação de produção.
 Instalações ainda controladas por um worker anterior precisam receber esta
 versão online; a alteração no repositório não substitui o código já instalado.
