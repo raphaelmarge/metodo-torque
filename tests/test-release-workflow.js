@@ -23,8 +23,9 @@ const lock = JSON.parse(read('tests/ci/package-lock.json'));
 assert.deepEqual(lock.packages[''].dependencies, manifest.dependencies);
 ok(true, 'Manifesto e lock têm as mesmas dependências');
 ok(/npm ci --prefix tests\/ci --ignore-scripts/.test(setup) && !/npm install/.test(setup), 'CI exige lock e não executa scripts de instalação');
-ok(/image: postgres:17\.11/.test(tests) && /55432:5432/.test(tests), 'Concorrência usa PostgreSQL isolado com versão fixa');
-ok(/PGTESTURL: postgresql:\/\/postgres:torque-test-only@127\.0\.0\.1:55432\/postgres/.test(tests), 'Suíte SQL recebe somente o serviço local fictício');
+ok(/image: postgres:17\.11/.test(tests) && /ports:\s*\n\s*- 5432\/tcp/.test(tests) && !/55432:5432/.test(tests), 'Concorrência usa PostgreSQL fixado com porta livre atribuída pelo Docker');
+const sqlTestStep=(tests.match(/- name: Rodar todas as suítes, sem repetição automática[\s\S]*?(?=\n      - name:)/)||[])[0]||'';
+ok(/env:\s*\n\s*PGTESTURL: postgresql:\/\/postgres:torque-test-only@127\.0\.0\.1:\$\{\{ job\.services\.postgres\.ports\['5432'\] \}\}\/postgres/.test(sqlTestStep), 'Suíte SQL recebe no próprio step a porta real do serviço local fictício');
 ok(/npm ci --prefix tests\/sql --ignore-scripts/.test(setup), 'Dependências SQL seguem lock e instalação sem scripts');
 const pinned = manifest.dependencies.playwright;
 ok(/^\d+\.\d+\.\d+$/.test(pinned) &&

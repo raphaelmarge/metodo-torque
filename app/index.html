@@ -222,7 +222,17 @@
         });
       }
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-        navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+        var appBase = new URL("./", location.href), appWorker = new URL("app-sw.js", appBase);
+        navigator.serviceWorker.getRegistrations().then(function (rs) {
+          return Promise.all(rs.filter(function (r) {
+            if (r.scope !== appBase.href) return false;
+            return [r.active, r.waiting, r.installing].some(function (worker) {
+              if (!worker) return false;
+              try { var url = new URL(worker.scriptURL); return url.origin === appWorker.origin && url.pathname === appWorker.pathname; }
+              catch (e) { return false; }
+            });
+          }).map(function (r) { return r.unregister(); }));
+        }).catch(function () {});
       }
     } catch (e) {}
   }
