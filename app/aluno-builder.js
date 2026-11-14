@@ -1795,15 +1795,76 @@
       function packet() { var all = read(), out = Object.create(null); Object.keys(all).sort().forEach(function (k) { out[k] = canonical(all[k]); }); return out; }
       return { start: start, record: record, finish: finish, ingest: ingest, list: list, read: read, packet: packet, session: function (sid) { return project(read(), sid); } };
     }
-    // All writers sharing a browser origin must use this serialized adapter.
-    // Fail closed if locks are absent; do not pretend localStorage has CAS.
+    // Web Locks serialize callbacks, but localStorage can still expose a stale
+    // renderer snapshot after a lock changes tabs. The transactional copy is
+    // authoritative for this adapter; local events remain an immutable mirror.
+    // New events are staged in memory until commit, so an aborted transaction
+    // cannot later be promoted from the mirror. Existing local events are kept.
+    // Integration contract: use the project's namespaced IDB factory, a stable
+    // student/account scope, and an active() guard that revokes old identities.
+    // A reset must remove that scope from BOTH stores, with writers stopped;
+    // clearing only its mirror restores it from IDB. Never wipe another scope.
+    // Do not mix this adapter and create()/lease writers for the same scope
+    // without an explicit reconciliation protocol: sharing a Web Lock does
+    // not make a renderer's localStorage snapshot authoritative or current.
+    // The current player uses create() with a session-long lock, not this adapter.
     function createLocked(options) {
       if (!options.locks || typeof options.locks.request !== 'function') fail('LOCKS_UNAVAILABLE');
-      var store = create(options), out = {};
+      var idb = options.indexedDB || (typeof indexedDB !== 'undefined' ? indexedDB : null);
+      if (!idb || typeof idb.open !== 'function') fail('TRANSACTION_STORAGE_UNAVAILABLE');
+      var store = create(options), out = {}, database = null;
+      function openDatabase() {
+        if (database) return database;
+        database = new Promise(function (resolve, reject) {
+          var request = idb.open('tqWorkoutJournal:v1', 1), abandoned = false;
+          request.onupgradeneeded = function () { request.result.createObjectStore('journals'); };
+          request.onerror = function () { database = null; reject(request.error); };
+          request.onblocked = function () { abandoned = true; database = null; var e = new Error('TRANSACTION_STORAGE_BLOCKED'); e.code = e.message; reject(e); };
+          request.onsuccess = function () {
+            if (abandoned) { request.result.close(); return; }
+            request.result.onversionchange = function () { request.result.close(); database = null; };
+            resolve(request.result);
+          };
+        });
+        return database;
+      }
+      function transaction(method, args) {
+        return openDatabase().then(function (db) {
+          return new Promise(function (resolve, reject) {
+            var tx = db.transaction('journals', 'readwrite'), journal = tx.objectStore('journals');
+            var request = journal.get(options.scope), result, failure, committed;
+            tx.oncomplete = function () {
+              // IDB already committed. Mirror failure is not a failed save;
+              // every read through this adapter can recover the durable copy.
+              try { store.ingest(committed); }
+              catch (error) { if (options.mirrorError) { try { options.mirrorError(error, { committed: true }); } catch (_) {} } }
+              resolve(result);
+            };
+            tx.onabort = function () { reject(failure || tx.error || new Error('TRANSACTION_ABORTED')); };
+            request.onsuccess = function () {
+              try {
+                // No await inside the transaction: hydration, operation and
+                // snapshot update stay in the same active IDB transaction.
+                var rows = Object.create(null), keys = [];
+                var memory = {
+                  get length() { return keys.length; }, key: function (i) { return keys[i] || null; },
+                  getItem: function (key) { return own(rows, key) ? rows[key] : null; },
+                  setItem: function (key, value) { if (!own(rows, key)) keys.push(key); rows[key] = String(value); }
+                };
+                var staged = create(Object.assign({}, options, { storage: memory, changed: null }));
+                staged.ingest(merge(request.result || {}, store.read()));
+                result = staged[method].apply(staged, args);
+                committed = staged.packet();
+                journal.put(committed, options.scope);
+              } catch (error) { failure = error; tx.abort(); }
+            };
+          });
+        });
+      }
       Object.keys(store).forEach(function (method) {
         out[method] = function () {
           var args = Array.prototype.slice.call(arguments);
-          return options.locks.request('tqWorkoutJournal:' + encodeURIComponent(options.scope), function () { return store[method].apply(store, args); });
+          return options.locks.request('tqWorkoutJournal:' + encodeURIComponent(options.scope), function () { return transaction(method, args); });
         };
       });
       return out;
