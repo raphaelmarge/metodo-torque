@@ -4,6 +4,10 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const pw=require(process.env.TORQUE_PLAYWRIGHT||'./ci/node_modules/playwright');
 const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+// Reuse the runner's local host, but reserve an independent ephemeral port so
+// this failure-injection server cannot replace or interrupt the normal suite.
+const fixtureHost=new URL(process.env.BASE_URL||'http://127.0.0.1').hostname;
+assert(['127.0.0.1','localhost'].includes(fixtureHost),'Use a local test server.');
 const version=read('assets/versao.js').match(/MT_VERSAO\s*=\s*"(mt-v\d+)"/)[1];
 let base,offlineOne=false,rpcMode='offline',checks=0;
 const same=(a,b)=>{assert.deepEqual(a,b);checks++;};
@@ -119,7 +123,7 @@ async function run(browser){
  }finally{await context.close();}
 }
 (async()=>{
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+server.address().port;
+ await new Promise(resolve=>server.listen(0,fixtureHost,resolve));base='http://'+fixtureHost+':'+server.address().port;
  for(const name of (process.env.TORQUE_UPDATE_BROWSER||'chromium,webkit').split(',')){
   const browser=await pw[name].launch({headless:true,...(name==='chromium'&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{await run(browser);console.log('OK '+name+': convivência, primeira visita, atualização e revogação isoladas.');}finally{await browser.close();}
