@@ -24,3 +24,11 @@
 .recipe-assignment{margin:12px 0 20px;padding:16px;border:1px solid var(--line);border-radius:14px}
 .recipe-card .btn,#modal-body [data-x="recipe-favorite"]{min-height:44px;white-space:normal}
 @media(max-width:560px){.journal-food .form-grid{grid-template-columns:minmax(0,1fr)}.journal-food{padding:12px}}
+
+/* Authorized portrait, used only by the two dedicated demonstrations. */
+.professional-portrait{display:block;width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--panel2)}
+.professional-portrait>img{display:block;width:100%;height:150%;object-fit:cover;object-position:50% 0}
+.demo-professional-profile{display:flex;align-items:center;gap:16px;margin:24px 0 0;padding:16px 20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.demo-professional-profile>div{min-width:0;overflow-wrap:anywhere}
+.demo-professional-profile b{display:block;font-size:18px}
+.demo-professional-profile>div>span{display:block;margin-top:5px;font-size:13px;line-height:1.5;color:var(--muted)}
