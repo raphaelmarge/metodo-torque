@@ -6,6 +6,14 @@ Deploy automático a cada merge na `main`. Dados: localStorage (offline-first) +
 Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 **português do Brasil, nível iniciante** (ele não é programador).
 
+## v877 — Demos da Dra. Larissa Macedo
+
+- As duas rotas dedicadas de demonstração do Nutri mostram o nome e o retrato
+  da Dra. Larissa Macedo, recuperados da prévia pública anterior autorizada.
+- Personalização restrita às demos; contas e dados reais permanecem intactos.
+  Cache Nutri v22 e versão global mt-v877. Origem e verificações em
+  `docs/releases/mt-v877-demos-larissa.md`; conferir CI e Pages antes de declarar publicação.
+
 ## v876 — Gerador mensal de treinos
 
 - Treinos → Gerador mensal combina anamnese, disponibilidade, objetivos e

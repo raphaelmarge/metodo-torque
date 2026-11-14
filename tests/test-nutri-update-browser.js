@@ -88,7 +88,7 @@ async function scenario(browser, base, failInstall) {
       }), 'activated');
     } else {
       assert(!result.keys.includes(prefix+'v14'));
-      assert(result.keys.includes(prefix+'v21'));
+      assert(result.keys.includes(prefix+'v22'));
       const binding = await page.evaluate(() => new Promise((resolve,reject) => {
         const open=indexedDB.open('torque-nutri-push:/nutri/',1);
         open.onerror=()=>reject(open.error);
@@ -114,7 +114,7 @@ async function scenario(browser, base, failInstall) {
     const browser=await pw[name].launch({headless:true,...(name==='chromium'&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
     try {
       await scenario(browser,base,false);
-      console.log('OK '+name+': v14 → v21 sem reload, vínculo/rascunho/fila preservados, catálogo e medidas offline, caches isolados');
+      console.log('OK '+name+': v14 → v22 sem reload, vínculo/rascunho/fila preservados, catálogo e medidas offline, caches isolados');
       await scenario(browser,base,true);
       console.log('OK '+name+': instalação interrompida mantém a versão anterior utilizável');
     } finally { await browser.close(); }

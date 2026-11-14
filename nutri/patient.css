@@ -402,3 +402,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}butto
 .skinfold-record-values strong{font-size:21px;font-weight:600}
 .skinfold-record :is(h2,p){overflow-wrap:anywhere}
 @media(max-width:560px){.skinfold-calculator{padding:16px}.skinfold-calculator .form-grid{grid-template-columns:minmax(0,1fr)}.skinfold-calculator>.btn{width:100%;font-size:14px;white-space:normal}.skinfold-record-values{grid-template-columns:minmax(0,1fr)}}
+
+.cover-brand>.professional-portrait{width:56px;height:56px;margin:0;border:1px solid #ffffff40}
+.cover-brand>.professional-portrait>img{max-width:none}
+@media(max-width:400px){.cover-brand:has(>.professional-portrait){gap:8px}.cover-brand>.professional-portrait{width:44px;height:44px}}

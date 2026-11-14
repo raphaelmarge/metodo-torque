@@ -20,7 +20,7 @@ function ecosystemUrl(){try{if(!cfg.ecosystemUrl)return '';const u=new URL(cfg.e
 function ecosystemLink(){const href=ecosystemUrl();return href?'<p class="sub"><a href="'+esc(href)+'">Ecossistema Torque On</a></p>':'';}
 const dateLabel=(s)=>new Date(s.length===10?s+'T12:00':s).toLocaleDateString('pt-BR',{day:'numeric',month:'short'});
 const initials=(s)=>String(s).split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
-const demoClinic={id:'demo-clinic',name:'Clínica Essência',professional_name:'Dra. Helena Costa',crn:'CRN de exemplo',color:'#5de0b4',weekly_goal:5,logo:''};
+const demoClinic={id:'demo-clinic',name:'Clínica Essência',professional_name:demoRole?'Dra. Larissa Macedo':'Dra. Helena Costa',professional_photo:demoRole?'assets/larissa-macedo.jpeg':'',crn:'CRN de exemplo',color:'#5de0b4',weekly_goal:5,logo:''};
 const S={demo:true,role:'nutri',page:'overview',user:null,clinic:{...demoClinic},patients:[],plans:[],logs:[],appointments:[],messages:[],challenges:[],selected:null,resources:[],records:[],finances:[],posts:[],interactions:[],financeLedger:{available:false},loading:false};
 let navNutri=[];
 let loadSequence=0;
@@ -51,6 +51,7 @@ function logToday(){return logs().find(x=>x.day===today())||{patient_id:patient(
 function stats(p=patient()){return careSummary({patientId:p?.id,logs:S.logs,records:S.records,today:today(),clinicGoal:S.clinic.weekly_goal});}
 function shell(content){
  const isPatient=S.role==='patient',nav=isPatient?navPatient:[...navNutri,['more','☰','Menu']];
+ if(demoRole&&S.demo&&!isPatient&&S.page==='overview')content=`<div class="demo-professional-profile"><span class="professional-portrait"><img src="${esc(S.clinic.professional_photo)}" alt="${esc(S.clinic.professional_name)}"></span><div><b>${esc(S.clinic.professional_name)}</b><span>Nutricionista · Consultório de demonstração</span></div></div>`+content;
  const active=isPatient&&!navPatient.some(x=>x[0]===S.page)?'more':S.page;
  const logo=S.clinic.logo?`<img class="logo" src="${esc(S.clinic.logo)}" alt="${esc(S.clinic.name)}">`:`<div class="wordmark"><span class="mark">T</span>torque<span> nutri</span></div>`;
  const accountActions=S.demo?`${demoRole?'':`<button class="btn small ghost" data-action="switch-role">${isPatient?'Ver app da nutri':'Ver app do paciente'}</button>`}<button class="btn small" data-action="auth">Entrar na minha conta</button>`:'<button class="btn small ghost" data-action="refresh">Atualizar</button><button class="btn small" data-action="logout">Sair</button>';
