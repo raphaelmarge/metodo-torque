@@ -20,3 +20,5 @@ O arquivo foi copiado sem edição. O enquadramento circular é feito pelo CSS.
 ## Verificação
 
 Passaram os checks locais de versão (17), caminhos/cache (18), autenticação e isolamento (33), integração das áreas (9) e apresentação do paciente (11). O teste visual passou seus dez grupos, com quatro larguras e ambos os temas; a atualização real em Chromium de v14 para v22 preservou rascunho, fila, vínculo e recursos offline, incluindo instalação interrompida. A inspeção visual das duas homes locais confirmou nome e retrato. CI e implantação devem ser conferidos no commit da entrega antes de declarar publicação.
+
+O primeiro CI executou 260 suítes: 259 passaram e o teste de identidade do Personal falhou ao procurar um recibo fictício com data fixa de setembro, fora dos 30 pagamentos mais recentes. A falha foi reproduzida localmente. A fixture agora usa a data local de hoje do app; as mesmas 66 verificações passaram, sem alterar o produto nem as asserções. A nova execução completa é necessária para aprovar o commit corrigido.

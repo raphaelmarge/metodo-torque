@@ -113,8 +113,9 @@ const ok=(a,s)=>{assert.ok(a,s);checks++;console.log('OK '+s);};
  eq(await p.locator('#marcaModo').inputValue(),'estudio','opt-out mantém o destaque escolhido');
  if(process.env.TORQUE_EVIDENCE_DIR){fs.mkdirSync(process.env.TORQUE_EVIDENCE_DIR,{recursive:true});await p.setViewportSize({width:390,height:1000});await student.setViewportSize({width:390,height:1000});await p.locator('.ptmarca').screenshot({path:path.join(process.env.TORQUE_EVIDENCE_DIR,'identidade-editor-mobile.png')});await student.screenshot({path:path.join(process.env.TORQUE_EVIDENCE_DIR,'identidade-aluno-mobile.png')});}
  // A marca é cabeçalho comercial; assinatura do recibo continua sendo a pessoa.
+ // Use hoje do app: o histórico mostra os 30 mais recentes e a demo gera datas relativas.
  await p.setViewportSize({width:1280,height:1000});
- await p.evaluate(()=>{const s=MTStore.read('ptStudio',{});s.pagamentos.push({id:'marca-recibo-ficticio',alunoId:s.alunos[0].id,data:'2026-09-14',valor:25,forma:'Dinheiro',tipoRecebimento:'aulas'});localStorage.setItem('mtapp:ptStudio',JSON.stringify(s));window.__marcaRecibo='';window.open=()=>({document:{write:x=>{__marcaRecibo+=x;},close(){}}});__renderPT();document.querySelector('#abas [data-a="pagamentos"]').click();});
+ await p.evaluate(()=>{const s=MTStore.read('ptStudio',{});s.pagamentos.push({id:'marca-recibo-ficticio',alunoId:s.alunos[0].id,data:MTStore.todayISO(),valor:25,forma:'Dinheiro',tipoRecebimento:'aulas'});localStorage.setItem('mtapp:ptStudio',JSON.stringify(s));window.__marcaRecibo='';window.open=()=>({document:{write:x=>{__marcaRecibo+=x;},close(){}}});__renderPT();document.querySelector('#abas [data-a="pagamentos"]').click();});
  await p.locator('#listaPagamentos [data-recibo="marca-recibo-ficticio"]').click();
  const diario=await p.locator('#pgHoje').textContent();
  ok(diario.includes('Entrou hoje:')&&diario.includes('Devolvido hoje:'),'movimento diário mantém entradas e devoluções separadas: '+diario);
