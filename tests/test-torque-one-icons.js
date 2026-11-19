@@ -98,6 +98,7 @@ async function main() {
         if (currentLight !== light) await personal.locator('#btnTemaPt').click();
         if (light) {
           await student.locator('#navMenuApp').click();
+          await student.locator('#menuApp [data-msec=ajustes]').click();
           await student.locator('#btnTemaApp').click();
           assert.ok(await student.locator('html').evaluate(el => el.classList.contains('claro')));
         }
