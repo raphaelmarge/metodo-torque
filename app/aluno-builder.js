@@ -2743,10 +2743,11 @@
       "--cor:" + COR + ";--cor2:" + COR2 + ";--corc:" + CORC + ";--cor-on:" + textoSobre(COR) + ";" +
       "--cor-esc:" + CORE + ";--cor-cl1:" + CORCL1 + ";--cor-cl2:" + CORCL2 + ";" +
       "--cor-rgb:" + rgbDe(COR) + ";--corc-rgb:" + rgbDe(CORC) + ";--bg0-rgb:" + rgbDe(PAL[0]) + ";" +
+      "--to-icon-accent-dark:" + destaqueEscuro + ";--to-icon-accent-light:" + destaqueClaro + ";" +
       PAL.map(function (c, i) { return "--bg" + i + ":" + c + ";"; }).join("") +
       "}" +
-      "#navApp,#menuApp{--to-icon-ink:var(--one-text,#f3f3f6);--to-icon-accent:" + destaqueEscuro + "}" +
-      "html.claro :is(#navApp,#menuApp){--to-icon-ink:var(--one-text,#211b2d);--to-icon-accent:" + destaqueClaro + "}" +
+      "#navApp,#menuApp{--to-icon-ink:var(--one-text,#f3f3f6);--to-icon-accent:var(--to-icon-accent-dark)}" +
+      "html.claro :is(#navApp,#menuApp){--to-icon-ink:var(--one-text,#211b2d);--to-icon-accent:var(--to-icon-accent-light)}" +
       "*{box-sizing:border-box;margin:0}body{font-family:'Archivo',system-ui,sans-serif;background:var(--bg0);color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(104px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}a{color:var(--corc)}a:hover{color:var(--cor-cl1)}" +
       // faixa colorida no topo: o app do aluno abre com a cor do studio, e a
       // sequência e os hábitos do dia moram DENTRO dela (só no Início — nas
