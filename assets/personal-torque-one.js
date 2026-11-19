@@ -1,10 +1,28 @@
 /* Torque ONE: shell and presentation. Existing buttons remain the route owners. */
 (function () {
   'use strict';
+  function installNavigationIcons() {
+    var icons = window.TorqueOneIcons;
+    if (!icons) return;
+    var routeIcons = {
+      dash: 'inicio', pagamentos: 'financeiro', quest: 'questionarios', sitepro: 'minha-pagina',
+      config: 'configuracoes', pers: 'personalizacao', conta: 'sua-ilha'
+    };
+    document.querySelectorAll('#abas button[data-a], #navPt button').forEach(function (button) {
+      var previous = button.querySelector('svg.mi');
+      if (!previous) return;
+      var route = button.dataset.a || button.dataset.nav || (button.id === 'btnMenuPt' ? 'menu' : '');
+      var icon = icons.render(routeIcons[route] || route, Number(previous.getAttribute('width')));
+      if (!icon) return;
+      previous.outerHTML = icon;
+      button.querySelector('.torque-one-icon').classList.add('mi');
+    });
+  }
   function init() {
     var byId = function (id) { return document.getElementById(id); };
     var menu = byId('abas'), top = document.querySelector('.topo-marca');
     if (!menu || !top || byId('oneBreadcrumb')) return;
+    installNavigationIcons();
     byId('menuBuscaPt').setAttribute('aria-label', 'Buscar no menu');
     var brand = menu.querySelector('.mcab-txt');
     brand.innerHTML = '<b class="one-wordmark">TORQUE <em>ONE</em></b><span class="one-brand-caption">TORQUE PERSONAL</span>';

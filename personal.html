@@ -3215,7 +3215,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </section>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Cores do app</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca — a <b>paleta inteira</b> do app do aluno muda junto: botões, gráficos, gradientes, cronômetros e até o card pro Stories, com os tons claro e escuro calculados sozinhos. O seu painel pinta na hora.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca para os ícones, botões, gráficos, gradientes, cronômetros e o card pro Stories. Os ícones ajustam o contraste no modo claro e no escuro. O painel muda na hora. Use <b>Publicar</b> para levar a nova cor aos apps dos alunos.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;" id="persPre"></div>
       <div class="linha-flex" style="gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Ou uma cor só sua
@@ -4067,13 +4067,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // na conta aqui (roxo de TEXTO escurece pra ter contraste, igual à folha).
   var TOKENS_COR = ["--roxo", "--roxo-2", "--pt-roxo", "--pt-roxo-esc", "--pt-roxo-claro",
     "--pt-roxo-clar2", "--pt-roxo-avatar", "--pt-roxo-fundo", "--pt-roxo-prof",
-    "--pt-sel", "--pt-sel-borda", "--pt-grad-faixa", "--pt-grad-card", "--pt-grad-barra"];
+    "--pt-sel", "--pt-sel-borda", "--pt-grad-faixa", "--pt-grad-card", "--pt-grad-barra",
+    "--pt-icon-light", "--pt-icon-dark"];
   function aplicaTema(st) {
     var cor = corOk((st.config || {}).cor);
     var R = document.documentElement.style;
     if (cor) {
       var claro = document.documentElement.dataset.tema === "claro";
       var esc = escurece(cor, .18), prof = escurece(cor, .65), rgb = rgbDe(cor);
+      if (window.TorqueOneIcons) {
+        // Inclui o fundo tonal da aba selecionada. Os dois tons também acompanham
+        // a troca de tema disparada por outra janela, sem alterar a cor salva.
+        R.setProperty("--pt-icon-light", window.TorqueOneIcons.accent(cor, "#d7d8db"));
+        R.setProperty("--pt-icon-dark", window.TorqueOneIcons.accent(cor, "#3c3d42"));
+      }
       R.setProperty("--roxo", cor);
       R.setProperty("--roxo-2", esc);
       R.setProperty("--pt-roxo", cor);

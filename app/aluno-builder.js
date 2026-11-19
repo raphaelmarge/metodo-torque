@@ -1338,10 +1338,147 @@
   };
   // "#7c3aed" -> "124,58,237" — deixa rgba(var(--x),.18) funcionar
   function rgbDe(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }
+  var torqueIconShapes = {
+    "inicio": [
+      "<path d='M2.8 10.8 10.7 4a2 2 0 0 1 2.6 0l7.9 6.8M5 10v8.5a1.6 1.6 0 0 0 1.6 1.6h10.8a1.6 1.6 0 0 0 1.6-1.6V10'/>",
+      "<path d='M9.6 19.9v-5.7a.8.8 0 0 1 .8-.8h3.2a.8.8 0 0 1 .8.8v5.7'/>"
+    ],
+    "alunos": [
+      "<circle cx='9' cy='7.9' r='3.45'/><path d='M2.8 19.4v-1c0-2.6 2.6-4.5 6.2-4.5s6.2 1.9 6.2 4.5v1'/>",
+      "<path d='M15.45 4.95a3.05 3.05 0 0 1 0 5.9m1.3 3.35c2.65.45 4.45 2.13 4.45 4.25v.95'/>"
+    ],
+    "agenda": [
+      "<rect x='3.5' y='5.3' width='17' height='15.4' rx='2.5'/><path d='M7.7 3v4m8.6-4v4M4 10h16'/>",
+      "<rect x='12.6' y='13.2' width='4.8' height='4.3' rx='1' fill='currentColor' stroke='none'/>"
+    ],
+    "financeiro": [
+      "<path d='M4.1 8.2V7.1c0-.9.6-1.7 1.5-1.9l10.8-2c1-.17 1.9.54 1.9 1.56v2.7'/><rect x='3' y='7.5' width='18' height='12.7' rx='2.4'/>",
+      "<path d='M20.9 11.9h-4.05a1.95 1.95 0 0 0 0 3.9h4.05'/>"
+    ],
+    "chat": [
+      "<path d='M5.45 3.95h13.1a2.65 2.65 0 0 1 2.65 2.65v8.05a2.65 2.65 0 0 1-2.65 2.65H9.1l-5.4 3.5v-4.1a2.6 2.6 0 0 1-.9-2.05V6.6a2.65 2.65 0 0 1 2.65-2.65Z'/>",
+      "<path d='M7.1 8.4h9.8m-9.8 4.2h6.35'/>"
+    ],
+    "ajuda": [
+      "<circle cx='12' cy='12' r='9'/>",
+      "<path d='M9.5 8.6A2.55 2.55 0 0 1 12.16 6.8c1.67 0 2.78 1.05 2.78 2.44 0 1.25-.77 1.87-1.74 2.53-.83.57-1.2 1.06-1.2 2.1'/><circle cx='12' cy='17.1' r='1.06' fill='currentColor' stroke='none'/>"
+    ],
+    "menu": [
+      "<path d='M3.9 5.9h16.2M3.9 18.1h16.2'/>",
+      "<path d='M3.9 12h12.2'/>"
+    ],
+    "evolucao": [
+      "<path d='M3.4 4v14.4a1.7 1.7 0 0 0 1.7 1.7H21'/>",
+      "<path d='m6.8 14.5 4.3-4.35 3 2.65 5.95-6.25m-4.2 0h4.2v4.2'/>"
+    ],
+    "treinos": [
+      "<rect x='4.8' y='6' width='4.1' height='12' rx='1.6'/><rect x='15.1' y='6' width='4.1' height='12' rx='1.6'/><path d='M3 10.2v3.6m18-3.6v3.6'/>",
+      "<path d='M9 12h6'/>"
+    ],
+    "nutricao": [
+      "<path d='M12 8.1C9.4 6.9 6.5 6.7 4.8 8.8c-3.1 3.9.4 11.4 4.1 11.9 1.2.2 2.1-.6 3.1-.6s1.9.8 3.1.6c3.7-.5 7.2-8 4.1-11.9-1.5-1.8-3.5-2-5.4-1.4'/>",
+      "<path d='M11.9 7.9c-.2-1.5-.8-2.7-1.8-3.7'/><path d='M12.3 6.3c.1-2.3 1.6-3.7 4.5-3.8-.1 2.6-1.6 4-4.5 3.8Z' fill='currentColor' stroke='none'/>"
+    ],
+    "avaliacoes": [
+      "<rect x='3.6' y='4.2' width='16.8' height='16' rx='3.2'/>",
+      "<path d='M7.8 10.3a5.3 5.3 0 0 1 8.4 0m-4.2 2.5 1.5-2.1'/>"
+    ],
+    "questionarios": [
+      "<path d='M8.5 5h-2a1.8 1.8 0 0 0-1.8 1.8v12.4A1.8 1.8 0 0 0 6.5 21h11a1.8 1.8 0 0 0 1.8-1.8V6.8A1.8 1.8 0 0 0 17.5 5h-2'/><rect x='8.6' y='3' width='6.8' height='4.1' rx='1.4'/>",
+      "<path d='M8.8 11.6h6.4m-6.4 4.1h4.1'/>"
+    ],
+    "desafio": [
+      "<path d='M7.2 3.4h9.6v5.2a4.8 4.8 0 1 1-9.6 0Zm-.1 2H3.3v1.3c0 2.6 1.8 4.4 4.5 4.4m9.1-5.7h3.8v1.3c0 2.6-1.8 4.4-4.5 4.4'/>",
+      "<path d='M12 13.5v4.1m-4.1 2.8h8.2m-6.9-.1.5-1.2c.3-.9 1-1.4 2-1.4h.6c1 0 1.7.5 2 1.4l.5 1.2'/>"
+    ],
+    "relatorios": [
+      "<path d='M14.4 3H6.5a1.7 1.7 0 0 0-1.7 1.7v14.6A1.7 1.7 0 0 0 6.5 21h11a1.7 1.7 0 0 0 1.7-1.7V7.8ZM14.4 3v4.8h4.8'/>",
+      "<path d='M8.6 16.8v-2.5m3.4 2.5v-4.1m3.4 4.1v-6'/>"
+    ],
+    "assessoria": [
+      "<circle cx='8.1' cy='11.8' r='3.25'/><path d='M2.9 20.5v-.8a5.2 5.2 0 0 1 10.4 0v.8'/>",
+      "<path d='M13.9 3.5h5.5c.95 0 1.7.75 1.7 1.7v3.4c0 .95-.75 1.7-1.7 1.7h-2.1l-3.6 2.4v-2.45a1.7 1.7 0 0 1-1.5-1.65V5.2c0-.95.75-1.7 1.7-1.7Z'/>"
+    ],
+    "minha-pagina": [
+      "<rect x='2.95' y='4.2' width='18.1' height='15.6' rx='2.2'/><path d='M3.4 8.9h17.2'/>",
+      "<rect x='6.8' y='12.2' width='10.4' height='3.8' rx='1.05' fill='currentColor' stroke='none'/>"
+    ],
+    "configuracoes": [
+      "<path d='m10.2 3-.55 2.05-1.7.96-2.06-.58-1.8 3.13 1.52 1.52v1.94L4.09 13.5l1.8 3.13 2.06-.58 1.7.96.55 2.05h3.6l.55-2.05 1.7-.96 2.06.58 1.8-3.13-1.52-1.48v-1.94l1.52-1.52-1.8-3.13-2.06.58-1.7-.96L13.8 3Z' transform='translate(0 1)'/>",
+      "<circle cx='12' cy='12' r='2.65'/>"
+    ],
+    "personalizacao": [
+      "<path d='M16.8 6.9h2.1a1.7 1.7 0 0 1 1.7 1.7v2.3c0 .85-.55 1.48-1.38 1.69l-7.02 1.79v1.18'/><rect x='10.38' y='15.7' width='3.65' height='5.25' rx='1.35'/>",
+      "<rect x='3.5' y='3.5' width='13.3' height='6.8' rx='1.8'/>"
+    ],
+    "imagens": [
+      "<rect x='3' y='3.8' width='18' height='16.4' rx='2.2'/>",
+      "<path d='m3.75 16.8 3.82-3.82 2.55 2.55 4.85-4.85 5.28 5.28'/><circle cx='8.0' cy='8.45' r='1.35' fill='currentColor' stroke='none'/>"
+    ],
+    "sua-ilha": [
+      "<path d='M10.2 17.2c1.6-2.65 2.45-5.05 2.58-8.3M3.05 20.1c2.85-2.1 5.7-3 8.95-3s6.1.9 8.95 3'/>",
+      "<path d='M12.8 8.85c-2.55-3.72-6.05-3.93-8.5-1.4m8.5 1.4c-3.28-.35-5.34 1.21-6.25 3.4m6.25-3.4c.13-3.12 2.6-5.65 5.65-5.85m-5.65 5.85c2.85-1.82 5.87-1.17 7.84 1.35'/>"
+    ]
+  };
+  // O HTML do aluno é autônomo. Os grupos são montados antes da exportação
+  // e herdam as cores do documento que os exibe.
+  function torqueIcon(name, size) {
+    if (!Object.prototype.hasOwnProperty.call(torqueIconShapes, name)) return "";
+    var sides = torqueIconShapes[name];
+    var pixels = Number(size);
+    if (!(pixels > 0 && isFinite(pixels))) pixels = 24;
+    return '<svg xmlns="http://www.w3.org/2000/svg" class="torque-one-icon" aria-hidden="true" focusable="false" width="' + pixels +
+      '" height="' + pixels + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">' +
+      '<g style="color:var(--to-icon-ink,inherit)" stroke="currentColor">' + sides[0] + '</g>' +
+      '<g style="color:var(--to-icon-accent,inherit)" stroke="currentColor">' + sides[1] + '</g></svg>';
+  }
+
+  function iconRgb(color) {
+    var value = String(color || "").trim();
+    if (/^#[a-f\d]{3}$/i.test(value)) value = value.replace(/[a-f\d]/gi, function (c) { return c + c; });
+    if (/^#[a-f\d]{6}$/i.test(value)) return value.slice(1).match(/../g).map(function (c) { return parseInt(c, 16); });
+    var rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(value);
+    if (rgb && rgb.slice(1).every(function (v) { return Number(v) <= 255; })) return rgb.slice(1).map(Number);
+    return null;
+  }
+
+  function luminancia(rgb) {
+    var linear = rgb.map(function (channel) {
+      var v = channel / 255;
+      return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
+    });
+    return .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2];
+  }
+
+  function iconAccent(brand, surface) {
+    var background = iconRgb(surface) || [12, 13, 17];
+    var lum = luminancia(background);
+    var dark = lum < .179;
+    var rgb = iconRgb(brand);
+    if (!rgb) return dark ? "#b994ff" : "#7040bf";
+    function ratio(channels) {
+      var other = luminancia(channels);
+      return (Math.max(other, lum) + .05) / (Math.min(other, lum) + .05);
+    }
+    var contrast = ratio(rgb);
+    // Uma marca branca ou preta ainda precisa de duas tintas distintas.
+    var nearNeutral = Math.max.apply(null, rgb) - Math.min.apply(null, rgb) < 24;
+    var soften = nearNeutral && contrast > 6;
+    var target = soften ? background : (dark ? [255, 255, 255] : [0, 0, 0]);
+    var result = rgb;
+    for (var step = 1; step <= 40 && (soften ? contrast > 6 : contrast < 4.5); step++) {
+      result = rgb.map(function (value, i) {
+        return Math.round(value + (target[i] - value) * step / 40);
+      });
+      contrast = ratio(result);
+    }
+    return "#" + result.map(function (n) { return n.toString(16).padStart(2, "0"); }).join("");
+  }
+
+  raiz.TorqueOneIcons = { render: torqueIcon, accent: iconAccent };
+
   function textoSobre(hex) {
-    var n = parseInt(String(hex).slice(1), 16);
-    var canal = function (v) { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
-    var lum = .2126 * canal((n >> 16) & 255) + .7152 * canal((n >> 8) & 255) + .0722 * canal(n & 255);
+    var lum = luminancia(iconRgb(hex) || [0, 0, 0]);
     var comBranco = 1.05 / (lum + .05);
     var comPreto = (lum + .05) / .05;
     return comPreto >= comBranco ? "#000" : "#fff";
@@ -2306,6 +2443,26 @@
     var urlOk = function (u) { u = String(u || "").trim(); return /^https?:\/\/[^\s'"<>]+$/i.test(u) ? u.slice(0, 300) : ""; };
     var COR = D.COR, COR2 = D.COR2, CORC = D.CORC, CORE = D.CORE, CORCL1 = D.CORCL1, CORCL2 = D.CORCL2;
     var PAL = D.PAL || [], LOGOAPP = D.LOGOAPP || "";
+    // O HTML exportado leva os símbolos consigo e herda a cor do pacote deste studio.
+    var icones = raiz.TorqueOneIcons;
+    var corIcones = String(COR).toLowerCase() === "#7c3aed" && String(CORC).toLowerCase() === "#a78bfa" ? null : COR;
+    // As superfícies conservadoras incluem a tonalidade do botão ativo nos dois temas.
+    var destaqueEscuro = icones.accent(corIcones, "#41434a");
+    var destaqueClaro = icones.accent(corIcones, "#d4d2d8");
+    var iconesMenu = {
+      inicio: icones.render("inicio", 21),
+      treino: icones.render("treinos", 21),
+      evolucao: icones.render("evolucao", 21),
+      alimentacao: icones.render("nutricao", 21),
+      feed: icones.render("alunos", 21),
+      agenda: icones.render("agenda", 21),
+      chat: icones.render("chat", 21),
+      quest: icones.render("questionarios", 21),
+      pagamento: icones.render("financeiro", 21),
+      ajustes: icones.render("configuracoes", 21),
+      menu: icones.render("menu", 21),
+      ajuda: icones.render("ajuda", 21)
+    };
     function marcaHtml(comLogo) {
       var imagem = raiz.MT_IDENTIDADE_MARCA && raiz.MT_IDENTIDADE_MARCA.logo(LOGOAPP);
       return "<div class='al-brand' aria-label='Identidade do acompanhamento'>" +
@@ -2588,6 +2745,8 @@
       "--cor-rgb:" + rgbDe(COR) + ";--corc-rgb:" + rgbDe(CORC) + ";--bg0-rgb:" + rgbDe(PAL[0]) + ";" +
       PAL.map(function (c, i) { return "--bg" + i + ":" + c + ";"; }).join("") +
       "}" +
+      "#navApp,#menuApp{--to-icon-ink:var(--one-text,#f3f3f6);--to-icon-accent:" + destaqueEscuro + "}" +
+      "html.claro :is(#navApp,#menuApp){--to-icon-ink:var(--one-text,#211b2d);--to-icon-accent:" + destaqueClaro + "}" +
       "*{box-sizing:border-box;margin:0}body{font-family:'Archivo',system-ui,sans-serif;background:var(--bg0);color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(104px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}a{color:var(--corc)}a:hover{color:var(--cor-cl1)}" +
       // faixa colorida no topo: o app do aluno abre com a cor do studio, e a
       // sequência e os hábitos do dia moram DENTRO dela (só no Início — nas
@@ -3084,12 +3243,9 @@
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
       "<nav id='navApp'" + (MARCA.personalizado ? " data-al-brand='" + esc(studio) + "'" : "") + " aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
-      [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Hoje"],
-        ["<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>", "Treinos"],
-        ["<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>", "Evolução"],
-        ["<path d='M4 6.5h16M4 12h16M4 17.5h16'/>", "Menu"]].map(function (mN) {
+      [["inicio", "Hoje"], ["treino", "Treinos"], ["evolucao", "Evolução"], ["menu", "Menu"]].map(function (mN) {
         return "<button class='nitem' style='flex:1;min-width:0;background:none;border:none;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;'>" +
-          "<span style='line-height:0;'><svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + mN[0] + "</svg></span>" +
+          "<span style='line-height:0;'>" + iconesMenu[mN[0]] + "</span>" +
           "<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>" + mN[1] + "</span></button>";
       }).join("") +
       "</nav>" +
@@ -8881,22 +9037,21 @@
       "try{if(window.__sino)window.__sino.pinta();}catch(e0s){}" +
       "try{pintaAgHoje();}catch(e0b){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
-      // (ícones de traço em SVG — herdam a cor da aba via currentColor)
+      // Compartilha os SVGs já renderizados com a barra inicial e a gaveta.
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
-      "var MENU=[" +
-      "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Hoje']," +
-      "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treinos']," +
-      "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
-      "['alimentacao',\"<circle cx='12' cy='12' r='7'/><path d='M3 3v6M1 3v4c0 3 4 3 4 0V3M3 9v12M21 3v18M21 3c-3 2-3 8 0 8'/>\",'Alimentação']," +
-      // com o feed ligado a Comunidade vira a 4ª aba fixa (a Agenda vai pro menu ☰)
-      "['feed',\"<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>\",'Turma']," +
-      "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
-      "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
-      "['quest',\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\",'Questionários']," +
-      "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
-      "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']," +
+      "var iconesMenu=" + jsonApp(iconesMenu) + ";var MENU=[" +
+      "['inicio',iconesMenu.inicio,'Hoje']," +
+      "['treino',iconesMenu.treino,'Treinos']," +
+      "['evolucao',iconesMenu.evolucao,'Evolução']," +
+      "['alimentacao',iconesMenu.alimentacao,'Alimentação']," +
+      "['feed',iconesMenu.feed,'Turma']," +
+      "['agenda',iconesMenu.agenda,'Agenda']," +
+      "['chat',iconesMenu.chat,'Chat']," +
+      "['quest',iconesMenu.quest,'Questionários']," +
+      "['util',ic(\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\"),'Utilidades']," +
+      "['pagamento',iconesMenu.pagamento,'Plano']," +
       // Ajustes fica por último de propósito: aparece na gaveta ☰, não nas abas de baixo
-      "['ajustes',\"<circle cx='12' cy='12' r='3.2'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z'/>\",'Ajustes']];" +
+      "['ajustes',iconesMenu.ajustes,'Ajustes']];" +
       // áreas desligadas pelo professor nas Configurações somem do menu
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
@@ -8972,14 +9127,14 @@
       "var comida=itens.find(function(m){return m[0]==='alimentacao';});if(comida&&!fixos.some(function(m){return m[0]==='alimentacao';}))fixos.push(comida);" +
       "function btnNav(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+m[1]+\"</span>\"+" +
       "\"<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
       "(m[0]==='chat'?\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid var(--bg0);'></span>\":'')+'</button>';}" +
       "var nav=document.getElementById('navApp');" +
       "nav.setAttribute('data-items',String(fixos.length+1));" +
       "nav.innerHTML=fixos.map(btnNav).join('')+" +
       "\"<button class='nitem' id='navMenuApp' aria-label='Abrir o menu com todas as áreas' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(\"<path d='M4 6.5h16M4 12h16M4 17.5h16'/>\")+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+iconesMenu.menu+\"</span>\"+" +
       "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;'>Menu</span>\"+" +
       "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid var(--bg0);'></span></button>\";" +
       // menu (tela 01): página com cabeçalho roxo (foto + nome + studio),
@@ -8993,7 +9148,7 @@
       // v751: o rótulo é o MESMO do MENU (barra, título e gaveta) — 'Calendário'/'Minhas fichas' só existiam aqui
       "var MTIT={};itens.forEach(function(m){MTIT[m[0]]=m[2];});" +
       "function mgRow(sec,extra){return \"<button class='nitem mgrow' data-msec='\"+sec+\"'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(MICO[sec])+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+MICO[sec]+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>\"+(MTIT[sec]||sec)+\"</span><span class='mgsub'></span></span>\"+" +
       "(extra||\"<span class='mgchev'>\"+CHEV+'</span>')+'</button>';}" +
       "var mgg=['alimentacao','chat','agenda','treino','util','feed','pagamento'].filter(function(s){return MICO[s]&&!fixos.some(function(f9){return f9[0]===s;});});" +
@@ -9002,7 +9157,7 @@
       "\"<span style='flex:1;min-width:0;'><span class='mgnome'></span><span class='mgstudio'></span></span></div>\"+" +
       // o atalho existe com questionário do personal OU com o check-in da semana
       "(MICO.quest?\"<button class='nitem mgq' id='mgQaBt' data-msec='quest'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\")+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+iconesMenu.quest+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
       "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
       "(mgg.length?\"<div class='mgcard'>\"+mgg.map(function(s){return mgRow(s,s==='chat'?\"<span class='mgbadge' id='mgChatB' style='display:none;'></span><span class='mgchev'>\"+CHEV+'</span>':null);}).join('')+'</div>':'')+" +
@@ -9027,7 +9182,7 @@
         "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" : "") +
       // ❓ Ajuda (v706): sempre presente — todo app tem a tela de ajuda
       "\"<div class='mgcard'><button class='nitem mgrow' data-msec='ajuda'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(\"<circle cx='12' cy='12' r='8.5'/><path d='M9.6 9.3a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.5'/><circle cx='12' cy='16.8' r='.5'/>\")+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+iconesMenu.ajuda+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Ajuda</span><span class='mgsub'>como usar cada parte do app</span></span>\"+" +
       "\"<span class='mgchev'>\"+CHEV+'</span></button></div>'+" +
       "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +

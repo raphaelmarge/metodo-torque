@@ -131,6 +131,14 @@ body { font-family: Archivo, Arial, sans-serif; background: var(--pt-fundo); col
 #navPt, html[data-tema="claro"] #navPt { background: var(--pt-fundo); border-top-color: var(--pt-borda); }
 #navPt button { min-height: 48px; color: var(--pt-txt-4); font-weight: 600; }
 #navPt button.ativa, html[data-tema="claro"] #navPt button.ativa { background: var(--pt-one-active); color: var(--pt-one-active-text); }
+#abas, #navPt {
+  --to-icon-ink: var(--pt-txt);
+  --to-icon-accent: var(--pt-icon-dark, var(--pt-roxo-claro));
+}
+html[data-tema="claro"] :is(#abas, #navPt) {
+  --to-icon-accent: var(--pt-icon-light, var(--pt-roxo-claro));
+}
+#abas button[data-a] .torque-one-icon { opacity: 1; }
 /* Each subarea retains its existing tabs or mobile selector and visibility rules. */
 :is(#agAbas,#pgAbas,#trAbas,#pnAbas,#qtAbas,#avAbas,#dsAbas,#relAbas,#chAbas,#pfAbas) > button {
   min-height: 44px; font-weight: 600; letter-spacing: 0; text-transform: none;
