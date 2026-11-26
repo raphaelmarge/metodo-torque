@@ -34,19 +34,24 @@ function versaoAtual() {
   return m[1];
 }
 
-// Cada lançamento é um commit cujo assunto começa em "mt-vNNN:".
-// Números REPETIDOS são normais aqui: quando duas conversas trabalham em
-// paralelo, as duas numeram a partir do mesmo ponto. O briefing mostra isso em
-// vez de esconder, senão o Claude Design confia num número que quer dizer duas
-// coisas.
+// Preserva os registros antigos e acrescenta integrações de PR da linha principal.
 function lancamentos() {
-  const linhas = git(["log", "--format=%s", "HEAD"]).split("\n");
+  const principais = new Set(git(["rev-list", "--first-parent", "HEAD"]).split("\n"));
+  const registros = git(["log", "--format=%H%x00%s%x00%b%x00", "HEAD"]).split("\0");
   const lista = [];
-  for (const l of linhas) {
-    const m = l.match(/^(mt-v(\d+)):\s*(.+?)\s*(?:\(#(\d+)\))?$/);
-    if (m) lista.push({ ver: m[1], n: Number(m[2]), texto: m[3], pr: m[4] || "" });
+  for (let i = 0; i + 2 < registros.length; i += 3) {
+    const sha = registros[i].trim(), assunto = registros[i+1], corpo = registros[i+2];
+    const antigo = assunto.match(/^(mt-v(\d+)):\s*(.+?)\s*(?:\(#(\d+)\))?$/);
+    const merge = assunto.match(/^Merge pull request #(\d+) from /);
+    if (antigo) {
+      lista.push({ver: antigo[1], n: Number(antigo[2]), texto: antigo[3], pr: antigo[4] || "", sha, estado: "Registro histórico; deploy não verificado"});
+    } else if (merge && principais.has(sha)) {
+      const txt = git(["ls-tree", sha, "--", "assets/versao.js"]) ? git(["show", sha + ":assets/versao.js"]) : "";
+      const v = txt.match(/MT_VERSAO\s*=\s*"(mt-v(\d+))"/);
+      lista.push({ver: v ? v[1] : "?", n: v ? Number(v[2]) : null, texto: corpo.trim().split("\n")[0] || assunto, pr: merge[1], sha, estado: "Integrado; deploy não verificado"});
+    }
   }
-  return lista; // já vem do mais novo pro mais velho
+  return lista;
 }
 
 // em que versão este arquivo encostou pela última vez
@@ -74,12 +79,12 @@ const atrasoSkin = nSkin === null ? null : nAtual - nSkin;
 
 // números que aparecem mais de uma vez = trabalho em paralelo
 const conta = new Map();
-for (const l of lista) conta.set(l.ver, (conta.get(l.ver) || 0) + 1);
+for (const l of lista.filter(l => l.n !== null)) conta.set(l.ver, (conta.get(l.ver) || 0) + 1);
 const repetidos = [...conta.entries()].filter(([, n]) => n > 1).map(([v]) => v)
   .sort((a, b) => Number(b.replace("mt-v", "")) - Number(a.replace("mt-v", "")));
 
 const tabela = lista.slice(0, QUANTOS)
-  .map((l) => `| ${l.ver} | ${l.texto}${l.pr ? ` ([#${l.pr}](https://github.com/raphaelmarge/metodo-torque/pull/${l.pr}))` : ""} |`)
+  .map((l) => `| ${l.ver} | ${l.texto.replace(/\|/g, "\\|") }${l.pr ? ` ([#${l.pr}](https://github.com/raphaelmarge/metodo-torque/pull/${l.pr}))` : ""} | [${l.sha.slice(0,7)}](https://github.com/raphaelmarge/metodo-torque/commit/${l.sha}) | ${l.estado} |`)
   .join("\n");
 
 const blocoRepetidos = repetidos.length
@@ -105,14 +110,14 @@ const md = `# Recado pro Claude Design — estado do app do aluno
 
 | | |
 |---|---|
-| App em | **${versao}** |
+| Versão no repositório | **${versao}** |
 | Estado do repo em | ${dataRepo} (commit \`${commit}\`) |
 | Repositório | \`raphaelmarge/metodo-torque\` |
-| Lançamentos no histórico | ${lista.length} |
+| Registros no histórico | ${lista.length} |
 
 > 🤖 Este arquivo é **gerado** por \`tools/briefing-design/gera.js\`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
-> lidas do próprio repositório, então elas nunca ficam desatualizadas.
+> lidas do próprio repositório, e não comprovam publicação em produção.
 
 ---
 
