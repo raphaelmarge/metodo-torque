@@ -1,0 +1,30 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const {execFileSync} = require("node:child_process");
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "briefing-"));
+const git = (...args) => execFileSync("git", args, {cwd:dir, encoding:"utf8", stdio:["ignore","pipe","pipe"]}).trim();
+try {
+  git("init","-b","main"); git("config","user.name","Test"); git("config","user.email","test@example.invalid");
+  for (const d of ["assets","app","design","tools/briefing-design"]) fs.mkdirSync(path.join(dir,d),{recursive:true});
+  const write = (p,s) => fs.writeFileSync(path.join(dir,p),s);
+  const commit = (m) => {git("add",".");git("commit","-m",m);};
+  write("assets/versao.js",'MT_VERSAO = "mt-v847"');
+  write("app/aluno-skin.js","skin");write("app/aluno-builder.js","builder");
+  commit("mt-v847: Histórico (#800)");
+  git("checkout","-b","icons");
+  write("assets/versao.js",'MT_VERSAO = "mt-v878"'); commit("Ícones");
+  git("checkout","main");git("merge","--no-ff","icons","-m","Merge pull request #904 from example/icons","-m","Torque One | Ícones");
+  const a=git("rev-parse","HEAD");
+  git("checkout","-b","fix");write("app/aluno-builder.js","fix");commit("Corrige tema");
+  git("checkout","main");git("merge","--no-ff","fix","-m","Merge pull request #905 from example/fix","-m","Corrige tema para publicar a mt-v878");
+  const b=git("rev-parse","HEAD");
+  fs.copyFileSync(path.join(__dirname,"gera.js"),path.join(dir,"tools/briefing-design/gera.js"));
+  execFileSync(process.execPath,[path.join(dir,"tools/briefing-design/gera.js")]);
+  const md=fs.readFileSync(path.join(dir,"design/BRIEFING-CLAUDE-DESIGN.md"),"utf8");
+  for(const x of ["mt-v847","mt-v878","/pull/904","/pull/905",a,b,"Integrado; deploy não verificado","Torque One \\| Ícones"]) assert.ok(md.includes(x),x);
+  assert.ok(md.indexOf("/pull/905") < md.indexOf("/pull/904"));
+  assert.ok(!md.includes("publica o site **na hora**"));
+  console.log("Histórico, referências, ordem e distinção de deploy: OK");
+} finally {fs.rmSync(dir,{recursive:true,force:true});}
